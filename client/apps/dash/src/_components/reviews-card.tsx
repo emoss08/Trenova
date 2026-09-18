@@ -136,7 +136,7 @@ function ReviewRow({ review }: { review: PortalReview }) {
             <li key={goal.id} className="flex items-center gap-1.5 text-xs">
               <TargetIcon className="size-3.5 text-muted-foreground" />
               <span>{t(goal.title)}</span>
-              <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+              <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-[10px]">
                 {REVIEW_GOAL_STATUS_LABELS[goal.status as ReviewGoalStatus] ?? goal.status}
               </Badge>
             </li>

@@ -15,10 +15,10 @@ describe("credentialHealthMeta", () => {
     expect(credentialHealthMeta("ExpiringSoon").rank).toBeLessThan(
       credentialHealthMeta("Valid").rank,
     );
-    expect(credentialHealthMeta("Valid").badgeVariant).toBe("active");
+    expect(credentialHealthMeta("Valid").badgeVariant).toBe("success");
     expect(credentialHealthMeta("ExpiringSoon").badgeVariant).toBe("warning");
-    expect(credentialHealthMeta("Expired").badgeVariant).toBe("inactive");
-    expect(credentialHealthMeta("Missing").badgeVariant).toBe("outline");
+    expect(credentialHealthMeta("Expired").badgeVariant).toBe("danger");
+    expect(credentialHealthMeta("Missing").badgeVariant).toBe("neutral");
   });
 });
 

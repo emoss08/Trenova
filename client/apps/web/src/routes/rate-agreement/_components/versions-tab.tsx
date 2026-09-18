@@ -72,7 +72,7 @@ export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
           {versions.map((version) => (
             <TableRow key={version.id ?? version.versionNumber}>
               <TableCell>
-                <Badge variant="outline" className="text-2xs font-mono">
+                <Badge variant="neutral" appearance="outline" className="text-2xs font-mono">
                   {t("v{0}", version.versionNumber)}
                 </Badge>
               </TableCell>

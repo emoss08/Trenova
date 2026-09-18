@@ -227,7 +227,7 @@ function OfferRow({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
-          <Badge variant="outline" className="h-4 shrink-0 rounded px-1 text-[9px] tabular-nums">
+          <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded px-1 text-[9px] tabular-nums">
             #{offer.rank}
           </Badge>
           <span className="truncate text-xs font-medium">
@@ -351,7 +351,7 @@ export function TenderLivePanel({
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-1.5">
         <TenderStatusBadge status={tender.status} />
-        <Badge variant="outline" className="h-4 rounded px-1 text-[9px]">
+        <Badge variant="neutral" appearance="outline" className="h-4 rounded px-1 text-[9px]">
           {TENDER_MODE_LABEL[tender.mode]}
         </Badge>
         {tender.routingGuide && (

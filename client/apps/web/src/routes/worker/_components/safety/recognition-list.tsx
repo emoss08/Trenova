@@ -74,11 +74,11 @@ export function RecognitionList({ recognitions, canDelete, busy, onDelete }: Rec
               </div>
               {recognition.message ? <p className="text-xs">{recognition.message}</p> : null}
               <div className="mt-auto flex flex-wrap items-center gap-1.5">
-                <Badge variant="outline">
+                <Badge variant="neutral" appearance="outline">
                   {RECOGNITION_KIND_LABELS[recognition.kind as RecognitionKind] ?? recognition.kind}
                 </Badge>
                 {!recognition.visibleToWorker ? (
-                  <Badge variant="secondary">
+                  <Badge variant="neutral">
                     <EyeOffIcon />
                     {t("Internal")}
                   </Badge>

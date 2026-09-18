@@ -122,7 +122,7 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
               <span className="flex min-w-0 flex-wrap items-center gap-2">
                 <span className="font-medium">{enrollment.benefitPlan?.name ?? t("Plan")}</span>
                 {enrollment.benefitPlan ? (
-                  <Badge variant="secondary">
+                  <Badge variant="neutral">
                     {benefitPlanTypeLabel(enrollment.benefitPlan.planType)}
                   </Badge>
                 ) : null}

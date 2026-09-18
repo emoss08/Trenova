@@ -120,7 +120,7 @@ export function InjuryList({ workerId }: { workerId: string }) {
                     {injury.recordable ? <Badge variant="info">{t("On the 300 log")}</Badge> : null}
                     {injury.status === "Open" ? <Badge variant="warning">{t("Open")}</Badge> : null}
                     {injury.privacyCase ? (
-                      <Badge variant="secondary">{t("Privacy case")}</Badge>
+                      <Badge variant="neutral">{t("Privacy case")}</Badge>
                     ) : null}
                   </span>
                   <span className="flex items-center gap-2">

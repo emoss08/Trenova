@@ -28,7 +28,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DistanceProfileRow>[] {
       accessorKey: "status",
       header: t("Status"),
       cell: ({ row }) => (
-        <Badge variant={row.original.status === "Active" ? "active" : "inactive"}>
+        <Badge variant={row.original.status === "Active" ? "success" : "danger"}>
           {row.original.status}
         </Badge>
       ),

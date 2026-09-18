@@ -295,7 +295,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
           <div className="flex flex-col gap-3">
             <div className="bg-muted/30 rounded-lg border p-3">
               <div className="mb-1.5 flex items-center gap-2">
-                <Badge variant={batch.status === "Failed" ? "warning" : "secondary"}>
+                <Badge variant={batch.status === "Failed" ? "warning" : "neutral"}>
                   {batch.status}
                 </Badge>
                 <span className="font-mono text-xs">{batch.fileName}</span>

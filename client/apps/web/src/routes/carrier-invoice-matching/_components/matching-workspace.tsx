@@ -587,7 +587,7 @@ function MatchList({
               )}
               {wasAutoAccepted(match) && (
                 <Badge
-                  variant="active"
+                  variant="success"
                   className="h-4 px-1 text-[9px]"
                   title={t("Resolved automatically because the variance was within tolerance")}
                 >

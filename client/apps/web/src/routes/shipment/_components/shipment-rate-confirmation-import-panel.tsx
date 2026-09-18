@@ -403,7 +403,7 @@ export function ShipmentRateConfirmationImportPanel({
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <DialogTitle>{t("Import from Rate Confirmation")}</DialogTitle>
-                <Badge variant="secondary">{t("Guided workflow")}</Badge>
+                <Badge variant="neutral">{t("Guided workflow")}</Badge>
               </div>
               <DialogDescription>
                 {t(

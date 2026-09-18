@@ -103,7 +103,7 @@ export function InboundFilePanel({
             <EDIPartnerRef partner={detail.partner} />
           </DetailField>
           <DetailField label={t("Method")}>
-            <Badge variant="outline">{detail.method}</Badge>
+            <Badge variant="neutral" appearance="outline">{detail.method}</Badge>
           </DetailField>
           <DetailField label={t("Remote Path")} fullWidth>
             <span className="font-mono text-xs">{detail.remotePath}</span>
@@ -134,7 +134,7 @@ export function InboundFilePanel({
                   className="bg-background flex items-center justify-between rounded-md border px-3 py-2"
                 >
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{message.transactionSet}</Badge>
+                    <Badge variant="neutral">{message.transactionSet}</Badge>
                     <span className="text-muted-foreground font-mono text-xs">
                       {t("ST {0}", message.transactionControlNumber || "—")}
                     </span>

@@ -23,7 +23,7 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <Badge
-          variant={result.matched ? "active" : "inactive"}
+          variant={result.matched ? "success" : "danger"}
           className="gap-1.5 px-3 py-1 text-sm"
         >
           {result.matched ? (
@@ -34,7 +34,7 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
           {result.matched ? t("Matched") : t("Not Matched")}
         </Badge>
         <Badge
-          variant={result.validationPassed ? "active" : "inactive"}
+          variant={result.validationPassed ? "success" : "danger"}
           className="gap-1.5 px-3 py-1 text-sm"
         >
           {result.validationPassed ? (
@@ -116,9 +116,9 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
 }
 
 function confidenceVariant(confidence: number) {
-  if (confidence >= 0.9) return "active";
+  if (confidence >= 0.9) return "success";
   if (confidence >= 0.7) return "warning";
-  return "inactive";
+  return "danger";
 }
 
 function AnalysisCard({ title, analysis }: { title: string; analysis: DocumentParsingAnalysis }) {
@@ -327,7 +327,7 @@ function FieldsTable({
                 </Badge>
               </td>
               <td className="py-1.5 pr-4">
-                <Badge variant="secondary">{field.source}</Badge>
+                <Badge variant="neutral">{field.source}</Badge>
               </td>
               <td className="py-1.5">
                 {field.reviewRequired && <Badge variant="warning">{t("Review")}</Badge>}
@@ -384,7 +384,7 @@ function DiffCard({
         {hasChanges && (
           <div className="flex flex-wrap gap-2">
             {diff.addedFields?.map((f) => (
-              <Badge key={`af-${f}`} variant="active" className="gap-1">
+              <Badge key={`af-${f}`} variant="success" className="gap-1">
                 + {f}
               </Badge>
             ))}
@@ -394,7 +394,7 @@ function DiffCard({
               </Badge>
             ))}
             {diff.addedStopRoles?.map((r) => (
-              <Badge key={`ar-${r}`} variant="active" className="gap-1">
+              <Badge key={`ar-${r}`} variant="success" className="gap-1">
                 {t("+ stop: {0}", r)}
               </Badge>
             ))}

@@ -60,7 +60,7 @@ function NotificationRow({
             {sourceLabel}
           </Badge>
           {operation && (
-            <Badge variant="outline" className="text-2xs h-5">
+            <Badge variant="neutral" appearance="outline" className="text-2xs h-5">
               {operation}
             </Badge>
           )}

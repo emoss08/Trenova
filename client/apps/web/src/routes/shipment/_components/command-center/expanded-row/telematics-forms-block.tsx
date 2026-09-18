@@ -71,7 +71,7 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
       >
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
-            <Badge variant="outline" className="max-w-full truncate">
+            <Badge variant="neutral" appearance="outline" className="max-w-full truncate">
               {submission.templateName}
             </Badge>
           </div>
@@ -85,7 +85,7 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {submission.applied ? (
-            <Badge variant="active">
+            <Badge variant="success">
               {t(
                 "Applied {0} {1}",
                 submission.appliedFields,
@@ -93,7 +93,7 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
               )}
             </Badge>
           ) : (
-            <Badge variant="secondary">{t("Not applied")}</Badge>
+            <Badge variant="neutral">{t("Not applied")}</Badge>
           )}
           {hasFields ? (
             <ChevronDownIcon

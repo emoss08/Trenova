@@ -70,12 +70,12 @@ export function InsightDetailCard({
         <button type="button" onClick={onOpen} className="min-w-0 flex-1 cursor-pointer text-left">
           <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
             <Badge variant={SEVERITY_TONE[insight.severity]}>{insight.severity}</Badge>
-            <Badge variant="outline">{t(CATEGORY_LABELS[insight.category])}</Badge>
+            <Badge variant="neutral" appearance="outline">{t(CATEGORY_LABELS[insight.category])}</Badge>
             {insight.status !== "Active" && (
-              <Badge variant="secondary">{statusLabel(insight, t)}</Badge>
+              <Badge variant="neutral">{statusLabel(insight, t)}</Badge>
             )}
             {stale && (
-              <Badge variant="outline" className="gap-1">
+              <Badge variant="neutral" appearance="outline" className="gap-1">
                 <ClockAlertIcon className="size-2.5" />
                 {t("Numbers may be out of date")}
               </Badge>

@@ -22,7 +22,7 @@ describe("trainingHealthMeta", () => {
     expect([...ranks].sort((a, b) => a - b)).toEqual(ranks);
     expect(trainingHealthMeta("Overdue").blocks).toBe(true);
     expect(trainingHealthMeta("DueSoon").blocks).toBe(false);
-    expect(trainingHealthMeta("Current").badgeVariant).toBe("active");
+    expect(trainingHealthMeta("Current").badgeVariant).toBe("success");
   });
 });
 

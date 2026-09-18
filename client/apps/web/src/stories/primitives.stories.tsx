@@ -110,7 +110,7 @@ function StatefulControls() {
           Delete
         </Button>
         <Button isLoading loadingText="Saving" />
-        <Badge variant="active">Active</Badge>
+        <Badge variant="success">Active</Badge>
         <Badge variant="warning">Delayed</Badge>
         <Badge variant="info">In review</Badge>
       </Section>

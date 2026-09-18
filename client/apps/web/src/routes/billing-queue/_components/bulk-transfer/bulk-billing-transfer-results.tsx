@@ -277,7 +277,7 @@ function DocumentChips({ result }: { result: BulkBillingTransferResult }) {
           {result.missingRequirements.map((requirement) => (
             <Badge
               key={requirement.documentTypeId}
-              variant="outline"
+              variant="neutral" appearance="outline"
               className="max-h-5 text-[10px]"
             >
               {requirement.documentTypeName}

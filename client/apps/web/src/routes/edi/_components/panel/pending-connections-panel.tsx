@@ -71,7 +71,7 @@ export function PendingConnectionsPanel() {
             {t("Accepting creates reciprocal internal partners and communication profiles.")}
           </div>
         </div>
-        <Badge variant="outline">{pending.length}</Badge>
+        <Badge variant="neutral" appearance="outline">{pending.length}</Badge>
       </div>
       <Table>
         <TableHeader>

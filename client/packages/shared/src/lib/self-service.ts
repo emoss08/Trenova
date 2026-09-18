@@ -37,9 +37,9 @@ export function policyStanding(policy: {
 export type StandingTone = { variant: BadgeVariant; label: string };
 
 export const POLICY_STANDING_TONES: Record<PolicyStandingValue, StandingTone> = {
-  signed: { variant: "active", label: "Signed" },
+  signed: { variant: "success", label: "Signed" },
   outstanding: { variant: "warning", label: "Needs your signature" },
-  read: { variant: "active", label: "Read" },
+  read: { variant: "success", label: "Read" },
   unread: { variant: "info", label: "Please read" },
 };
 
@@ -100,9 +100,9 @@ export type ChangeRequestTone = { variant: BadgeVariant; label: string };
 
 const CHANGE_REQUEST_TONES: Record<string, ChangeRequestTone> = {
   Pending: { variant: "warning", label: "Waiting on the office" },
-  Approved: { variant: "active", label: "Approved" },
-  Rejected: { variant: "inactive", label: "Not approved" },
-  Withdrawn: { variant: "secondary", label: "Withdrawn" },
+  Approved: { variant: "success", label: "Approved" },
+  Rejected: { variant: "danger", label: "Not approved" },
+  Withdrawn: { variant: "neutral", label: "Withdrawn" },
 };
 
 export function changeRequestTone(status: string): ChangeRequestTone {

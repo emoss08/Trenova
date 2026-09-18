@@ -341,7 +341,7 @@ function CredentialsCard({
   const problems = summary.expiredCount + summary.missingCount;
   const state: CardState =
     problems > 0
-      ? { variant: "inactive", label: `${problems} lapsed` }
+      ? { variant: "danger", label: `${problems} lapsed` }
       : summary.expiringCount > 0
         ? { variant: "warning", label: `${summary.expiringCount} expiring` }
         : null;
@@ -373,7 +373,7 @@ function TrainingCard({ summary, onOpen }: { summary: OverviewTraining; onOpen: 
   const soon = summary.dueCount + summary.expiringCount;
   const state: CardState =
     problems > 0
-      ? { variant: "inactive", label: `${problems} behind` }
+      ? { variant: "danger", label: `${problems} behind` }
       : soon > 0
         ? { variant: "warning", label: `${soon} due soon` }
         : null;
@@ -404,7 +404,7 @@ function SafetyCard({ card, onOpen }: { card: OverviewSafety; onOpen: () => void
 
   const state: CardState =
     card.rating === "AtRisk"
-      ? { variant: "inactive", label: t("At risk") }
+      ? { variant: "danger", label: t("At risk") }
       : card.rating === "Watch"
         ? { variant: "warning", label: t("Watch") }
         : null;

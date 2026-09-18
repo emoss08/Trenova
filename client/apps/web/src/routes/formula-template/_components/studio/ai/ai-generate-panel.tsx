@@ -250,7 +250,7 @@ export function AiGeneratePanel({
                                   = {String(variable.defaultValue)}
                                 </span>
                               )}
-                            <Badge variant="outline" className="text-2xs">
+                            <Badge variant="neutral" appearance="outline" className="text-2xs">
                               {variable.type}
                             </Badge>
                           </span>

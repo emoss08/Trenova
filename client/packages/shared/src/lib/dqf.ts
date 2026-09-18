@@ -15,7 +15,7 @@ export type DQFItemStatusValue =
 
 export type DQFSectionValue = "Credentials" | "Documents" | "SafetyHistory" | "DrugAlcohol";
 
-export type DQFTone = "active" | "inactive" | "warning" | "secondary";
+export type DQFTone = "success" | "danger" | "warning" | "neutral";
 
 export const DQF_SECTION_LABELS: Record<DQFSectionValue, string> = {
   Credentials: "Licences, medical and recurring reviews",
@@ -52,15 +52,15 @@ export function dqfItemStatusLabel(status: string): string {
 export function dqfItemTone(status: string): DQFTone {
   switch (status) {
     case "Satisfied":
-      return "active";
+      return "success";
     case "ExpiringSoon":
       return "warning";
     case "Expired":
     case "Missing":
     case "Outstanding":
-      return "inactive";
+      return "danger";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 
@@ -88,10 +88,10 @@ export function verificationStatusLabel(status: string): string {
 export function verificationTone(status: string): DQFTone {
   switch (status) {
     case "Received":
-      return "active";
+      return "success";
     case "NoResponse":
     case "NotApplicable":
-      return "secondary";
+      return "neutral";
     default:
       return "warning";
   }

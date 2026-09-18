@@ -162,7 +162,7 @@ export function PriceHistoryDrawer({
                     <td className="px-3 py-1.5">${Number(price.price).toFixed(3)}</td>
                     <td className="px-3 py-1.5">
                       <Badge
-                        variant={price.isManual ? "outline" : "secondary"}
+                        variant={price.isManual ? "neutral" : "neutral"}
                         className="text-2xs"
                       >
                         {price.isManual ? t("Manual") : t("EIA")}

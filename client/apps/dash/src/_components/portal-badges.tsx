@@ -4,11 +4,11 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];
 
 const moveStatusVariants: Record<string, { label: string; variant: BadgeVariant }> = {
-  New: { label: "New", variant: "secondary" },
+  New: { label: "New", variant: "neutral" },
   Assigned: { label: "Assigned", variant: "info" },
-  InTransit: { label: "In Transit", variant: "purple" },
-  Completed: { label: "Completed", variant: "active" },
-  Canceled: { label: "Canceled", variant: "inactive" },
+  InTransit: { label: "In Transit", variant: "info" },
+  Completed: { label: "Completed", variant: "success" },
+  Canceled: { label: "Canceled", variant: "danger" },
 };
 
 export function LoadStatusBadge({ status }: { status: string }) {
@@ -21,9 +21,9 @@ export function LoadStatusBadge({ status }: { status: string }) {
 const disputeStatusVariants: Record<string, { label: string; variant: BadgeVariant }> = {
   Open: { label: "Open", variant: "info" },
   InReview: { label: "In Review", variant: "warning" },
-  Resolved: { label: "Resolved", variant: "active" },
-  Denied: { label: "Denied", variant: "inactive" },
-  Withdrawn: { label: "Withdrawn", variant: "secondary" },
+  Resolved: { label: "Resolved", variant: "success" },
+  Denied: { label: "Denied", variant: "danger" },
+  Withdrawn: { label: "Withdrawn", variant: "neutral" },
 };
 
 export function DisputeStatusBadge({ status }: { status: string }) {
@@ -43,9 +43,9 @@ export const disputeCategoryLabels: Record<string, string> = {
 
 const ptoStatusVariants: Record<string, { label: string; variant: BadgeVariant }> = {
   Requested: { label: "Requested", variant: "info" },
-  Approved: { label: "Approved", variant: "active" },
-  Rejected: { label: "Denied", variant: "inactive" },
-  Cancelled: { label: "Cancelled", variant: "secondary" },
+  Approved: { label: "Approved", variant: "success" },
+  Rejected: { label: "Denied", variant: "danger" },
+  Cancelled: { label: "Cancelled", variant: "neutral" },
 };
 
 export function PtoStatusBadge({ status }: { status: string }) {
@@ -67,10 +67,10 @@ export const ptoTypeLabels: Record<string, string> = {
 
 const expenseStatusVariants: Record<string, { label: string; variant: BadgeVariant }> = {
   Pending: { label: "Pending", variant: "info" },
-  Approved: { label: "Approved", variant: "active" },
-  Rejected: { label: "Rejected", variant: "inactive" },
-  Reimbursed: { label: "Reimbursed", variant: "active" },
-  Cancelled: { label: "Cancelled", variant: "secondary" },
+  Approved: { label: "Approved", variant: "success" },
+  Rejected: { label: "Rejected", variant: "danger" },
+  Reimbursed: { label: "Reimbursed", variant: "success" },
+  Cancelled: { label: "Cancelled", variant: "neutral" },
 };
 
 export function ExpenseStatusBadge({ status }: { status: string }) {

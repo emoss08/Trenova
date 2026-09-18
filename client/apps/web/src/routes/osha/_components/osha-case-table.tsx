@@ -300,7 +300,7 @@ export function OshaCaseTable({
                         </FormMark>
                       ) : (
                         <Badge
-                          variant="secondary"
+                          variant="neutral"
                           title={caseClassificationLabel(entry.classification)}
                         >
                           {t("Off the log")}

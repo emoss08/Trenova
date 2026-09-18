@@ -66,9 +66,9 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
                 <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2 pb-3">
                   <span className="flex min-w-0 flex-wrap items-center gap-1.5">
                     <span className="truncate font-medium">{ack.policy?.title ?? t("Policy")}</span>
-                    <Badge variant="outline">{t("v{0}", ack.versionLabel)}</Badge>
+                    <Badge variant="neutral" appearance="outline">{t("v{0}", ack.versionLabel)}</Badge>
                     {superseded ? (
-                      <Badge variant="secondary">
+                      <Badge variant="neutral">
                         {t("Superseded by v{0}", ack.policy?.versionLabel)}
                       </Badge>
                     ) : null}

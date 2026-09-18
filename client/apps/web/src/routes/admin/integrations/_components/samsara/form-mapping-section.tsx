@@ -370,7 +370,7 @@ function MappingRow({
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-2">
           <p className="truncate text-sm font-medium">{mapping.name}</p>
-          <Badge variant="secondary" className="shrink-0">
+          <Badge variant="neutral" className="shrink-0">
             {mapping.items.length} {mapping.items.length === 1 ? "field" : "fields"}
           </Badge>
         </div>

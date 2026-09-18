@@ -17,7 +17,7 @@ const statusStyles: Record<RecurringShipmentStatus, string> = {
 
 export function RecurringShipmentStatusBadge({ status }: { status: RecurringShipmentStatus }) {
   return (
-    <Badge variant="outline" className={cn("font-medium", statusStyles[status])}>
+    <Badge variant="neutral" appearance="outline" className={cn("font-medium", statusStyles[status])}>
       {status}
     </Badge>
   );

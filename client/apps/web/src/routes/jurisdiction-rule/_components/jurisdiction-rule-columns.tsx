@@ -8,10 +8,10 @@ import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 const VERIFICATION_VARIANT: Record<
   JurisdictionVerificationState,
-  "active" | "inactive" | "warning"
+  "success" | "danger" | "warning"
 > = {
-  Verified: "active",
-  Unverified: "inactive",
+  Verified: "success",
+  Unverified: "danger",
   Disputed: "warning",
 };
 
@@ -53,7 +53,7 @@ export function getColumns(t: TranslateFn): ColumnDef<JurisdictionRuleRow>[] {
       accessorKey: "status",
       header: t("Status"),
       cell: ({ row }) => (
-        <Badge variant={row.original.status === "Active" ? "active" : "inactive"}>
+        <Badge variant={row.original.status === "Active" ? "success" : "danger"}>
           {row.original.status}
         </Badge>
       ),

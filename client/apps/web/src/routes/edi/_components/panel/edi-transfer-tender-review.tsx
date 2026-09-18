@@ -47,7 +47,7 @@ export function TransferOverview({ transfer, mappingRows }: TenderReviewProps) {
         <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <EDITransferStatusBadge status={transfer.status} />
-            <Badge variant={unresolvedCount > 0 ? "outline" : "active"}>
+            <Badge variant={unresolvedCount > 0 ? "neutral" : "success"}>
               {unresolvedCount > 0
                 ? t("{0} unresolved mappings", unresolvedCount)
                 : t("Ready to accept")}
@@ -151,10 +151,10 @@ export function TenderRouteReview({ transfer, mappingRows }: TenderReviewProps) 
                 </div>
               </div>
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-                <Badge variant="outline">{move.loaded ? t("Loaded") : t("Empty")}</Badge>
-                <Badge variant="outline">{t("{0} stops", move.stops.length)}</Badge>
+                <Badge variant="neutral" appearance="outline">{move.loaded ? t("Loaded") : t("Empty")}</Badge>
+                <Badge variant="neutral" appearance="outline">{t("{0} stops", move.stops.length)}</Badge>
                 {move.distance && (
-                  <Badge variant="outline">{t("{0} mi", move.distance.toLocaleString())}</Badge>
+                  <Badge variant="neutral" appearance="outline">{t("{0} mi", move.distance.toLocaleString())}</Badge>
                 )}
               </div>
             </div>
@@ -200,11 +200,11 @@ function TenderStopCard({
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={stop.type === "Pickup" ? "active" : "secondary"}>{stop.type}</Badge>
+              <Badge variant={stop.type === "Pickup" ? "success" : "neutral"}>{stop.type}</Badge>
               <span className="text-muted-foreground text-xs">
                 {t("Stop {0}", stop.sequence + 1)}
               </span>
-              <Badge variant="outline">{stop.scheduleType}</Badge>
+              <Badge variant="neutral" appearance="outline">{stop.scheduleType}</Badge>
             </div>
             <div className="mt-2 truncate text-sm font-medium">{formatStopName(stop, mapping)}</div>
             {stopAddress && (
@@ -296,7 +296,7 @@ function ReviewSection({
           {icon}
           {title}
         </div>
-        <Badge variant="outline">{count}</Badge>
+        <Badge variant="neutral" appearance="outline">{count}</Badge>
       </div>
       <div className="space-y-2 p-3">
         {count === 0 ? <EDIEmptyState message={empty} /> : children}

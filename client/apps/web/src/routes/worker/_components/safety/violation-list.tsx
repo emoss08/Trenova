@@ -87,14 +87,14 @@ export function ViolationList({
           {violations.map((violation) => (
             <li key={violation.id} className="flex items-center justify-between gap-2 text-[11px]">
               <span className="flex min-w-0 items-center gap-1.5">
-                <Badge variant="secondary">{csaBasicLabel(violation.basic)}</Badge>
+                <Badge variant="neutral">{csaBasicLabel(violation.basic)}</Badge>
                 {violation.code ? (
                   <span className="text-muted-foreground shrink-0 tabular-nums">
                     {violation.code}
                   </span>
                 ) : null}
                 <span className="truncate">{t(violation.description)}</span>
-                {violation.outOfService ? <Badge variant="inactive">{t("OOS")}</Badge> : null}
+                {violation.outOfService ? <Badge variant="danger">{t("OOS")}</Badge> : null}
               </span>
               <span className="flex shrink-0 items-center gap-1">
                 <span className="text-muted-foreground tabular-nums">

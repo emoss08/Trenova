@@ -180,17 +180,17 @@ export const ENROLLMENT_STANDING_LABELS: Record<EnrollmentStanding, string> = {
 
 export function enrollmentStandingTone(
   standing: EnrollmentStanding,
-): "active" | "inactive" | "warning" | "secondary" {
+): "success" | "danger" | "warning" | "neutral" {
   switch (standing) {
     case "covered":
-      return "active";
+      return "success";
     case "ended":
-      return "inactive";
+      return "danger";
     case "starting":
     case "ending":
       return "warning";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 

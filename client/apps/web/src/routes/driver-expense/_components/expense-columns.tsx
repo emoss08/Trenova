@@ -10,10 +10,10 @@ type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];
 
 export const expenseStatusMeta: Record<string, { label: string; variant: BadgeVariant }> = {
   Pending: { label: "Pending", variant: "info" },
-  Approved: { label: "Approved", variant: "active" },
-  Rejected: { label: "Rejected", variant: "inactive" },
-  Reimbursed: { label: "Reimbursed", variant: "active" },
-  Cancelled: { label: "Cancelled", variant: "secondary" },
+  Approved: { label: "Approved", variant: "success" },
+  Rejected: { label: "Rejected", variant: "danger" },
+  Reimbursed: { label: "Reimbursed", variant: "success" },
+  Cancelled: { label: "Cancelled", variant: "neutral" },
 };
 
 export function DriverExpenseStatusBadge({ status }: { status: string }) {
@@ -80,7 +80,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverExpenseRow>[] {
       header: t("Receipt"),
       cell: ({ row }) =>
         row.original.receiptDocumentId ? (
-          <Badge variant="secondary">{t("Attached")}</Badge>
+          <Badge variant="neutral">{t("Attached")}</Badge>
         ) : (
           <span className="text-muted-foreground text-xs">—</span>
         ),

@@ -139,7 +139,7 @@ function PlanRow({ plan, cost, totalEnrolled, canUpdate, onEdit, onOpenRoster }:
         <span className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="truncate text-sm font-medium">{plan.name}</span>
           <span className="text-muted-foreground text-xs tabular-nums">{plan.code}</span>
-          {archived ? <Badge variant="inactive">{t("Archived")}</Badge> : null}
+          {archived ? <Badge variant="danger">{t("Archived")}</Badge> : null}
         </span>
         <span className="text-muted-foreground truncate text-xs">{detail.join(" · ")}</span>
         <div className="flex items-center gap-2">

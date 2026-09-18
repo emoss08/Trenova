@@ -117,7 +117,7 @@ export function AssertionsEditor() {
         summary.length > 0 ? (
           <div className="flex items-center gap-1.5">
             {summary.map((s) => (
-              <Badge key={s} variant="outline" className="font-normal">
+              <Badge key={s} variant="neutral" appearance="outline" className="font-normal">
                 {s}
               </Badge>
             ))}

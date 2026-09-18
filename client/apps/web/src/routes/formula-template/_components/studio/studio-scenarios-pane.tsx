@@ -241,7 +241,7 @@ export function StudioScenariosPane({
           <span className="text-sm font-semibold">{t("Scenarios")}</span>
           {results && (
             <Badge
-              variant={results.failed === 0 ? "active" : "inactive"}
+              variant={results.failed === 0 ? "success" : "danger"}
               className={cn("text-2xs", isStale && "opacity-60")}
             >
               {t("{0}/{1} passing", results.passed, results.total)}

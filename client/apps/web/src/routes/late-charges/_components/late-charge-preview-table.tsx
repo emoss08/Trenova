@@ -166,7 +166,7 @@ function CustomerRows({
               </Link>
             ) : null}
             {customer.debitMemoId ? (
-              <Badge variant={customer.posted ? "active" : "secondary"}>
+              <Badge variant={customer.posted ? "success" : "neutral"}>
                 {customer.posted ? t("Posted") : t("Draft")}
               </Badge>
             ) : null}

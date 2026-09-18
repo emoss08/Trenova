@@ -79,7 +79,7 @@ export default function IndexSection() {
                   <td className="text-muted-foreground px-4 py-2.5">{entry.index.fuelType}</td>
                   <td className="px-4 py-2.5">
                     <Badge
-                      variant={entry.index.source === "EIA" ? "secondary" : "outline"}
+                      variant={entry.index.source === "EIA" ? "neutral" : "neutral"}
                       className="text-2xs"
                     >
                       {entry.index.source === "EIA" ? t("DOE / EIA") : t("Custom")}
@@ -93,7 +93,7 @@ export default function IndexSection() {
                   </td>
                   <td className="px-4 py-2.5">
                     <Badge
-                      variant="outline"
+                      variant="neutral" appearance="outline"
                       className={
                         entry.index.isActive
                           ? "text-2xs border-emerald-500/40 text-emerald-600 dark:text-emerald-400"

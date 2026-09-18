@@ -163,7 +163,7 @@ function DirectoryRailItem({
           {t("Updated {0}", formatUnixDateTimeOrDash(directory.updatedAt || directory.createdAt))}
         </div>
       </div>
-      <Badge variant={directory.enabled ? "active" : "inactive"}>
+      <Badge variant={directory.enabled ? "success" : "danger"}>
         {directory.enabled ? t("Enabled") : t("Disabled")}
       </Badge>
     </button>

@@ -352,7 +352,7 @@ export function DocumentShipmentDraftReviewDialog({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {signals.map((signal) => (
-                    <Badge key={signal} variant="secondary">
+                    <Badge key={signal} variant="neutral">
                       {signal}
                     </Badge>
                   ))}
@@ -367,7 +367,7 @@ export function DocumentShipmentDraftReviewDialog({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {missingFields.map((field) => (
-                    <Badge key={field} variant="outline">
+                    <Badge key={field} variant="neutral" appearance="outline">
                       {field}
                     </Badge>
                   ))}
@@ -394,7 +394,7 @@ export function DocumentShipmentDraftReviewDialog({
                           {stop.role === "delivery" ? t("Delivery") : t("Pickup")} #{stop.sequence}
                         </div>
                         {stop.pageNumber ? (
-                          <Badge variant="outline">{t("Page {0}", stop.pageNumber)}</Badge>
+                          <Badge variant="neutral" appearance="outline">{t("Page {0}", stop.pageNumber)}</Badge>
                         ) : null}
                       </div>
                       <div className="text-muted-foreground mt-1 text-xs">
@@ -466,7 +466,7 @@ export function DocumentShipmentDraftReviewDialog({
         <DialogHeader className="border-b px-6 pt-6 pb-4">
           <div className="flex flex-wrap items-center gap-2">
             <DialogTitle>{t("Create Shipment from Document")}</DialogTitle>
-            {draft?.status ? <Badge variant="secondary">{draft.status}</Badge> : null}
+            {draft?.status ? <Badge variant="neutral">{draft.status}</Badge> : null}
           </div>
           <DialogDescription>
             {t(

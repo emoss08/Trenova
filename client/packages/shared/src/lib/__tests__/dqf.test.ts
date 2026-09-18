@@ -41,12 +41,12 @@ describe("verificationSettled", () => {
 
 describe("tones", () => {
   it("grades items and investigations", () => {
-    expect(dqfItemTone("Satisfied")).toBe("active");
+    expect(dqfItemTone("Satisfied")).toBe("success");
     expect(dqfItemTone("ExpiringSoon")).toBe("warning");
-    expect(dqfItemTone("Missing")).toBe("inactive");
-    expect(verificationTone("Received")).toBe("active");
+    expect(dqfItemTone("Missing")).toBe("danger");
+    expect(verificationTone("Received")).toBe("success");
     expect(verificationTone("Requested")).toBe("warning");
-    expect(verificationTone("NoResponse")).toBe("secondary");
+    expect(verificationTone("NoResponse")).toBe("neutral");
   });
 });
 

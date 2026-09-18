@@ -147,7 +147,7 @@ function TemplateDesignerHeader() {
           {selectedVersion ? <VersionStatusBadge version={selectedVersion} /> : null}
           {hasUnsavedChanges && <Badge variant="warning">{t("Unsaved")}</Badge>}
           {!isEditable && selectedVersion ? (
-            <Badge variant="outline">{t("Read-only")}</Badge>
+            <Badge variant="neutral" appearance="outline">{t("Read-only")}</Badge>
           ) : null}
         </div>
         <div className="text-muted-foreground text-xs">

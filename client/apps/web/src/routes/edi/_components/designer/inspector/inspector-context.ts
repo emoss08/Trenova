@@ -41,7 +41,7 @@ export function buildMessageInspectorContext({
     subtitle: `${message.transactionSet} ${message.direction} generated ${formatUnix(message.generatedAt)}`,
     status: {
       label: message.status,
-      variant: message.status === "Generated" ? "active" : "inactive",
+      variant: message.status === "Generated" ? "success" : "danger",
     },
     rawX12: message.rawX12,
     rawFilename: buildX12Filename(message),

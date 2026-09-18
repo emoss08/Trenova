@@ -122,7 +122,7 @@ export function DocumentCard({
               }}
             >
               <Badge
-                variant="secondary"
+                variant="neutral"
                 className="hover:bg-secondary/80 h-5 cursor-pointer px-1.5 py-0 text-[10px]"
               >
                 <HistoryIcon className="mr-0.5 size-3" />
@@ -136,12 +136,12 @@ export function DocumentCard({
             </Badge>
           )}
           {document.contentStatus === "Failed" && (
-            <Badge variant="outline" className="h-5 px-1.5 py-0 text-[10px]">
+            <Badge variant="neutral" appearance="outline" className="h-5 px-1.5 py-0 text-[10px]">
               {t("Extraction failed")}
             </Badge>
           )}
           {document.shipmentDraftStatus === "Ready" && (
-            <Badge variant="teal" className="h-5 px-1.5 py-0 text-[10px]">
+            <Badge variant="success" className="h-5 px-1.5 py-0 text-[10px]">
               {t("Shipment draft ready")}
             </Badge>
           )}

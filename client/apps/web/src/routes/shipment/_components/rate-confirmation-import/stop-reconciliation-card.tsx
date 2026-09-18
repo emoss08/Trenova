@@ -177,7 +177,7 @@ export function StopReconciliationCard({
         </div>
         <div className="flex items-center gap-1.5">
           {stop.appointmentRequired && (
-            <Badge variant="outline" className="text-2xs h-4 px-1">
+            <Badge variant="neutral" appearance="outline" className="text-2xs h-4 px-1">
               {t("Appt")}
             </Badge>
           )}

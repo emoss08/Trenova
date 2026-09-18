@@ -189,11 +189,11 @@ export function MoveCard({
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <div className="flex items-center gap-2">
           <Badge variant={statusConfig.variant}>{t(statusConfig.label)}</Badge>
-          {move?.loaded && <Badge variant="secondary">{t("Loaded")}</Badge>}
+          {move?.loaded && <Badge variant="neutral">{t("Loaded")}</Badge>}
           {move?.distance ? (
             <span className="text-muted-foreground text-xs">{t("{0} mi", move.distance)}</span>
           ) : null}
-          {move?.distanceSource ? <Badge variant="outline">{move.distanceSource}</Badge> : null}
+          {move?.distanceSource ? <Badge variant="neutral" appearance="outline">{move.distanceSource}</Badge> : null}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -415,14 +415,14 @@ const moveStatusConfig: Record<
   MoveStatus,
   {
     label: string;
-    variant: "secondary" | "info" | "orange" | "active" | "inactive";
+    variant: "neutral" | "info" | "warning" | "success" | "danger";
   }
 > = {
-  New: { label: "New", variant: "secondary" },
+  New: { label: "New", variant: "neutral" },
   Assigned: { label: "Assigned", variant: "info" },
-  InTransit: { label: "In Transit", variant: "orange" },
-  Completed: { label: "Completed", variant: "active" },
-  Canceled: { label: "Canceled", variant: "inactive" },
+  InTransit: { label: "In Transit", variant: "info" },
+  Completed: { label: "Completed", variant: "success" },
+  Canceled: { label: "Canceled", variant: "danger" },
 };
 
 const stopTypeLabels: Record<StopType, string> = {

@@ -4,7 +4,7 @@
  * beside a paper 300 should see the same phrases.
  */
 
-export type InjuryTone = "active" | "inactive" | "warning" | "secondary" | "info";
+export type InjuryTone = "success" | "danger" | "warning" | "neutral" | "info";
 
 export const CASE_CLASSIFICATION_LABELS: Record<string, string> = {
   NotRecordable: "Not recordable",
@@ -37,13 +37,13 @@ export function classificationTone(value: string): InjuryTone {
   switch (value) {
     case "Death":
     case "DaysAway":
-      return "inactive";
+      return "danger";
     case "JobTransferOrRestriction":
       return "warning";
     case "OtherRecordable":
       return "info";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 
@@ -87,13 +87,13 @@ export function claimStatusLabel(value: string): string {
 export function claimStatusTone(value: string): InjuryTone {
   switch (value) {
     case "Accepted":
-      return "active";
+      return "success";
     case "Denied":
-      return "inactive";
+      return "danger";
     case "Filed":
       return "warning";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 

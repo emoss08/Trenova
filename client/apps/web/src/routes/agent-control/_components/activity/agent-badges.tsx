@@ -14,36 +14,36 @@ import type { ComponentProps } from "react";
 type Variant = NonNullable<ComponentProps<typeof Badge>["variant"]>;
 
 const RUN_STATUS: Record<AgentRunStatus, { label: string; variant: Variant }> = {
-  Pending: { label: "Pending", variant: "outline" },
+  Pending: { label: "Pending", variant: "neutral" },
   GatheringContext: { label: "Gathering context", variant: "info" },
   Diagnosing: { label: "Working", variant: "info" },
   AwaitingDecision: { label: "Awaiting decision", variant: "warning" },
-  Completed: { label: "Completed", variant: "active" },
-  ShadowCompleted: { label: "Completed in shadow", variant: "purple" },
-  Failed: { label: "Failed", variant: "inactive" },
+  Completed: { label: "Completed", variant: "success" },
+  ShadowCompleted: { label: "Completed in shadow", variant: "info" },
+  Failed: { label: "Failed", variant: "danger" },
 };
 
 const PROPOSAL_STATUS: Record<AgentProposalStatus, { label: string; variant: Variant }> = {
   Pending: { label: "Awaiting decision", variant: "warning" },
-  Accepted: { label: "Accepted", variant: "active" },
-  Modified: { label: "Accepted with changes", variant: "teal" },
-  Rejected: { label: "Rejected", variant: "inactive" },
-  Expired: { label: "Expired", variant: "outline" },
-  Superseded: { label: "Superseded", variant: "outline" },
+  Accepted: { label: "Accepted", variant: "success" },
+  Modified: { label: "Accepted with changes", variant: "info" },
+  Rejected: { label: "Rejected", variant: "danger" },
+  Expired: { label: "Expired", variant: "neutral" },
+  Superseded: { label: "Superseded", variant: "neutral" },
 };
 
 const TIER: Record<AgentAutonomyTier, { label: string; variant: Variant }> = {
-  Propose: { label: "Proposes only", variant: "outline" },
-  ActWithApproval: { label: "Acts with approval", variant: "indigo" },
-  AutoExecute: { label: "Acts on its own", variant: "purple" },
+  Propose: { label: "Proposes only", variant: "neutral" },
+  ActWithApproval: { label: "Acts with approval", variant: "info" },
+  AutoExecute: { label: "Acts on its own", variant: "brand" },
 };
 
 const TRIGGER: Record<AgentRunTrigger, { label: string; variant: Variant }> = {
-  Manual: { label: "Manual", variant: "outline" },
+  Manual: { label: "Manual", variant: "neutral" },
   Chat: { label: "Chat", variant: "info" },
-  Scheduled: { label: "Scheduled", variant: "teal" },
-  Event: { label: "Event", variant: "orange" },
-  Continuous: { label: "Continuous", variant: "pink" },
+  Scheduled: { label: "Scheduled", variant: "accent-teal" },
+  Event: { label: "Event", variant: "accent-amber" },
+  Continuous: { label: "Continuous", variant: "accent-violet" },
 };
 
 const AGENT_TYPE: Record<AgentType, string> = {
@@ -54,17 +54,17 @@ const AGENT_TYPE: Record<AgentType, string> = {
 };
 
 const SEVERITY: Record<AgentSeverity, { label: string; variant: Variant }> = {
-  Low: { label: "Low", variant: "outline" },
+  Low: { label: "Low", variant: "neutral" },
   Medium: { label: "Medium", variant: "info" },
   High: { label: "High", variant: "warning" },
-  Critical: { label: "Critical", variant: "inactive" },
+  Critical: { label: "Critical", variant: "danger" },
 };
 
 const RESOLUTION: Record<AgentResolutionState, { label: string; variant: Variant }> = {
   Open: { label: "Open", variant: "warning" },
   InReview: { label: "In review", variant: "info" },
-  Resolved: { label: "Resolved", variant: "active" },
-  Dismissed: { label: "Dismissed", variant: "outline" },
+  Resolved: { label: "Resolved", variant: "success" },
+  Dismissed: { label: "Dismissed", variant: "neutral" },
 };
 
 function Labelled({

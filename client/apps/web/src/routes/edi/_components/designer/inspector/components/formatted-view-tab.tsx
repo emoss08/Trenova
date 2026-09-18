@@ -47,8 +47,8 @@ export default function FormattedViewTab({
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-sm font-semibold">{segment.segmentId}</span>
                 <span className="text-sm">{segment.name}</span>
-                {isControlSegment(segment) ? <Badge variant="outline">{t("Control")}</Badge> : null}
-                {segment.malformed ? <Badge variant="inactive">{t("Malformed")}</Badge> : null}
+                {isControlSegment(segment) ? <Badge variant="neutral" appearance="outline">{t("Control")}</Badge> : null}
+                {segment.malformed ? <Badge variant="danger">{t("Malformed")}</Badge> : null}
                 {segmentDiagnostics.length > 0 ? (
                   <Badge variant="warning">{segmentDiagnostics.length}</Badge>
                 ) : null}

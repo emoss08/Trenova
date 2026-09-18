@@ -2,7 +2,7 @@ import type { WorkerTrainingHealth } from "../types/worker-training";
 
 export type TrainingHealthMeta = {
   label: string;
-  badgeVariant: "active" | "warning" | "inactive" | "secondary";
+  badgeVariant: "success" | "warning" | "danger" | "neutral";
   textClass: string;
   ringClass: string;
   dotClass: string;
@@ -15,7 +15,7 @@ export type TrainingHealthMeta = {
 const HEALTH_META: Record<WorkerTrainingHealth, TrainingHealthMeta> = {
   Missing: {
     label: "Missing",
-    badgeVariant: "secondary",
+    badgeVariant: "neutral",
     textClass: "text-muted-foreground",
     ringClass: "border-dashed border-muted-foreground/40",
     dotClass: "bg-muted-foreground/60",
@@ -24,7 +24,7 @@ const HEALTH_META: Record<WorkerTrainingHealth, TrainingHealthMeta> = {
   },
   Failed: {
     label: "Failed",
-    badgeVariant: "inactive",
+    badgeVariant: "danger",
     textClass: "text-red-600 dark:text-red-400",
     ringClass: "border-red-500/40 bg-red-500/5",
     dotClass: "bg-red-500",
@@ -33,7 +33,7 @@ const HEALTH_META: Record<WorkerTrainingHealth, TrainingHealthMeta> = {
   },
   Expired: {
     label: "Expired",
-    badgeVariant: "inactive",
+    badgeVariant: "danger",
     textClass: "text-red-600 dark:text-red-400",
     ringClass: "border-red-500/40 bg-red-500/5",
     dotClass: "bg-red-500",
@@ -42,7 +42,7 @@ const HEALTH_META: Record<WorkerTrainingHealth, TrainingHealthMeta> = {
   },
   Overdue: {
     label: "Overdue",
-    badgeVariant: "inactive",
+    badgeVariant: "danger",
     textClass: "text-red-600 dark:text-red-400",
     ringClass: "border-red-500/40 bg-red-500/5",
     dotClass: "bg-red-500",
@@ -69,7 +69,7 @@ const HEALTH_META: Record<WorkerTrainingHealth, TrainingHealthMeta> = {
   },
   Scheduled: {
     label: "Scheduled",
-    badgeVariant: "secondary",
+    badgeVariant: "neutral",
     textClass: "text-sky-600 dark:text-sky-400",
     ringClass: "border-sky-500/30",
     dotClass: "bg-sky-500",
@@ -78,7 +78,7 @@ const HEALTH_META: Record<WorkerTrainingHealth, TrainingHealthMeta> = {
   },
   Current: {
     label: "Current",
-    badgeVariant: "active",
+    badgeVariant: "success",
     textClass: "text-green-600 dark:text-green-400",
     ringClass: "border-border",
     dotClass: "bg-green-500",

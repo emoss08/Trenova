@@ -69,7 +69,7 @@ export function BillingUsageTab() {
           label={t("Access State")}
           value={summary.active ? "Active" : "Blocked"}
           detail={formatReason(summary.reason)}
-          tone={summary.active ? "active" : "inactive"}
+          tone={summary.active ? "success" : "danger"}
         />
         <SummaryCard
           icon={KeyRoundIcon}
@@ -87,7 +87,7 @@ export function BillingUsageTab() {
               ? `${numberFormatter.format(deniedFeatures)} denied`
               : "All listed features enabled"
           }
-          tone="teal"
+          tone="info"
         />
         <SummaryCard
           icon={GaugeIcon}
@@ -97,7 +97,7 @@ export function BillingUsageTab() {
             summary.subscription?.currentPeriodStart,
             summary.subscription?.currentPeriodEnd,
           )}
-          tone="orange"
+          tone="warning"
         />
       </div>
 
@@ -147,7 +147,7 @@ export function BillingUsageTab() {
                     <span className="truncate text-sm font-medium">
                       {formatCatalogKey(feature.featureKey)}
                     </span>
-                    <Badge variant={feature.allowed ? "active" : "inactive"}>
+                    <Badge variant={feature.allowed ? "success" : "danger"}>
                       {feature.allowed ? t("Enabled") : t("Denied")}
                     </Badge>
                   </div>
@@ -178,7 +178,7 @@ function SummaryCard({
   label: string;
   value: string;
   detail: string;
-  tone: "active" | "inactive" | "info" | "teal" | "orange";
+  tone: "success" | "danger" | "info" | "warning";
 }) {
   const t = useT();
 
@@ -191,7 +191,7 @@ function SummaryCard({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <p className="text-muted-foreground text-xs font-medium">{label}</p>
-            <Badge variant={tone}>{tone === "inactive" ? t("Needs action") : t("Current")}</Badge>
+            <Badge variant={tone}>{tone === "danger" ? t("Needs action") : t("Current")}</Badge>
           </div>
           <p className="mt-1 truncate text-lg font-semibold">{value}</p>
           <p className="text-muted-foreground mt-0.5 truncate text-xs">{detail}</p>
@@ -216,7 +216,7 @@ function UsageMeter({ usage }: { usage: BillingUsageSummary }) {
             {formatPeriod(usage.windowStart, usage.windowEnd)}
           </p>
         </div>
-        <Badge variant={limited ? "info" : "active"}>
+        <Badge variant={limited ? "info" : "success"}>
           {limited ? `${percent}%` : t("Unlimited")}
         </Badge>
       </div>

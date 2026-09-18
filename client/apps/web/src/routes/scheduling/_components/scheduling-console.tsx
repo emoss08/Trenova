@@ -154,7 +154,7 @@ export default function SchedulingConsole() {
               <ClockIcon className="size-3.5" />
               {t("Shifts")}
               {stats.active > 0 ? (
-                <Badge variant="secondary" className="text-2xs ml-1.5 h-4 px-1 tabular-nums">
+                <Badge variant="neutral" className="text-2xs ml-1.5 h-4 px-1 tabular-nums">
                   {stats.active}
                 </Badge>
               ) : null}
@@ -169,7 +169,7 @@ export default function SchedulingConsole() {
                   {awaitingOffice}
                 </Badge>
               ) : openSwaps > 0 ? (
-                <Badge variant="secondary" className="text-2xs ml-1.5 h-4 px-1 tabular-nums">
+                <Badge variant="neutral" className="text-2xs ml-1.5 h-4 px-1 tabular-nums">
                   {openSwaps}
                 </Badge>
               ) : null}
@@ -432,8 +432,8 @@ function ShiftCard({ template, onEdit }: { template: ShiftTemplateRow; onEdit?: 
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          {retired ? <Badge variant="inactive">{t("Retired")}</Badge> : null}
-          <Badge variant={template.activeAssignmentCount > 0 ? "active" : "secondary"}>
+          {retired ? <Badge variant="danger">{t("Retired")}</Badge> : null}
+          <Badge variant={template.activeAssignmentCount > 0 ? "success" : "neutral"}>
             {t("{0} on it", template.activeAssignmentCount)}
           </Badge>
         </div>

@@ -145,7 +145,7 @@ export function LoadDocuments({ shipmentId }: { shipmentId: string }) {
                 </p>
               </div>
               {doc.documentTypeName ? (
-                <Badge variant="secondary">{doc.documentTypeName}</Badge>
+                <Badge variant="neutral">{doc.documentTypeName}</Badge>
               ) : null}
             </li>
           ))}

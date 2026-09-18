@@ -115,7 +115,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
                       <code className="bg-muted rounded px-1.5 py-0.5 text-xs">{token.prefix}</code>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={token.status === "active" ? "active" : "inactive"}>
+                      <Badge variant={token.status === "active" ? "success" : "danger"}>
                         {toTitleCase(token.status)}
                       </Badge>
                     </TableCell>

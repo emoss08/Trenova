@@ -174,7 +174,7 @@ function DisciplineRow({ action }: { action: PortalDisciplinaryAction }) {
           </p>
         </div>
         {acknowledged ? (
-          <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[10px]">
+          <Badge variant="neutral" appearance="outline" className="shrink-0 px-1.5 py-0 text-[10px]">
             {t("Read")}
           </Badge>
         ) : null}

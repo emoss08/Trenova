@@ -187,12 +187,12 @@ export function ImportTemplateDialog({
                     <span className="truncate font-medium">{template.name}</span>
                     <div className="flex shrink-0 items-center gap-1">
                       {(template.testCases?.length ?? 0) > 0 && (
-                        <Badge variant="outline" className="text-2xs">
+                        <Badge variant="neutral" appearance="outline" className="text-2xs">
                           {template.testCases?.length}{" "}
                           {template.testCases?.length === 1 ? "scenario" : "scenarios"}
                         </Badge>
                       )}
-                      <Badge variant="outline" className="text-2xs">
+                      <Badge variant="neutral" appearance="outline" className="text-2xs">
                         {template.type}
                       </Badge>
                     </div>

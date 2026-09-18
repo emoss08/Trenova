@@ -36,7 +36,7 @@ export function GraphQLExplorerPage() {
         description={t("Browse, search, and run every persisted GraphQL operation in the client")}
         actions={
           index ? (
-            <Badge variant="secondary" className="font-normal">
+            <Badge variant="neutral" className="font-normal">
               {t(
                 "{0} operations · {1} fragments",
                 index.catalog.operationCount,

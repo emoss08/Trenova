@@ -20,25 +20,25 @@ interface PacketCompletenessPanelProps {
   summary: DocumentPacketSummary;
 }
 
-type BadgeVariant = "teal" | "inactive" | "pink" | "warning" | "purple" | "outline";
+type BadgeVariant = "info" | "danger" | "warning" | "neutral";
 
 function getStatusBadgeVariant(
   status: DocumentPacketItem["status"] | DocumentPacketSummary["status"],
 ): BadgeVariant {
   switch (status) {
     case "Complete":
-      return "teal";
+      return "info";
     case "Missing":
     case "Incomplete":
-      return "inactive";
+      return "danger";
     case "Expired":
-      return "pink";
+      return "info";
     case "ExpiringSoon":
       return "warning";
     case "NeedsReview":
-      return "purple";
+      return "info";
     default:
-      return "outline";
+      return "neutral";
   }
 }
 
@@ -103,21 +103,21 @@ function PacketItem({ item }: { item: DocumentPacketItem }) {
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {item.required && (
-          <Badge variant="outline" className="text-2xs">
+          <Badge variant="neutral" appearance="outline" className="text-2xs">
             {t("Required")}
           </Badge>
         )}
         {item.allowMultiple && (
-          <Badge variant="outline" className="text-2xs">
+          <Badge variant="neutral" appearance="outline" className="text-2xs">
             {t("Multiple")}
           </Badge>
         )}
         {item.documentCount > 0 ? (
-          <Badge variant="secondary" className="text-2xs">
+          <Badge variant="neutral" className="text-2xs">
             {t("{0, plural, one {# doc} other {# docs}}", item.documentCount)}
           </Badge>
         ) : (
-          <Badge variant="outline" className="text-2xs text-muted-foreground">
+          <Badge variant="neutral" appearance="outline" className="text-2xs text-muted-foreground">
             {t("No docs")}
           </Badge>
         )}
@@ -154,12 +154,12 @@ export function PacketCompletenessPanel({ summary }: PacketCompletenessPanelProp
               {t("{0}/{1} rules satisfied", summary.satisfiedRules, summary.totalRules)}
             </span>
             {summary.missingRequired > 0 && (
-              <Badge variant="inactive" className="text-2xs">
+              <Badge variant="danger" className="text-2xs">
                 {t("{0} missing", summary.missingRequired)}
               </Badge>
             )}
             {summary.expired > 0 && (
-              <Badge variant="pink" className="text-2xs">
+              <Badge variant="danger" className="text-2xs">
                 {t("{0} expired", summary.expired)}
               </Badge>
             )}
@@ -169,7 +169,7 @@ export function PacketCompletenessPanel({ summary }: PacketCompletenessPanelProp
               </Badge>
             )}
             {summary.needsReview > 0 && (
-              <Badge variant="purple" className="text-2xs">
+              <Badge variant="info" className="text-2xs">
                 {t("{0} review", summary.needsReview)}
               </Badge>
             )}

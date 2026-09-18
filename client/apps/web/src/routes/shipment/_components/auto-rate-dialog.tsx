@@ -199,7 +199,7 @@ function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: 
                 >
                   <span className="text-muted-foreground flex items-center gap-2">
                     {accessorial.description || accessorial.accessorialChargeId}
-                    <Badge variant="outline" className="text-[10px]">
+                    <Badge variant="neutral" appearance="outline" className="text-[10px]">
                       {accessorial.method}
                     </Badge>
                   </span>

@@ -132,7 +132,7 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
       <div className="flex items-center gap-1.5">
         <Building2Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
         <span className="truncate text-xs font-medium">{move.assignedCarrierName}</span>
-        <Badge variant="active" className="h-4 shrink-0 rounded px-1 text-[9px]">
+        <Badge variant="success" className="h-4 shrink-0 rounded px-1 text-[9px]">
           {t("Carrier")}
         </Badge>
       </div>

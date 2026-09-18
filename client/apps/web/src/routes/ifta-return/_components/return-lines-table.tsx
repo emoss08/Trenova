@@ -95,10 +95,10 @@ function LineRow({ line }: { line: IftaReturnLine }) {
         <div className="flex items-center gap-1.5">
           <span className="font-medium">{line.jurisdiction.code}</span>
           <span className="text-muted-foreground text-xs">{line.jurisdiction.name}</span>
-          {missingRate ? <Badge variant="inactive">{t("No rate")}</Badge> : null}
-          {line.isIftaMember ? null : <Badge variant="outline">{t("Non-member")}</Badge>}
+          {missingRate ? <Badge variant="danger">{t("No rate")}</Badge> : null}
+          {line.isIftaMember ? null : <Badge variant="neutral" appearance="outline">{t("Non-member")}</Badge>}
           {line.jurisdiction.hasSurcharge ? (
-            <Badge variant="outline">{t("Surcharge")}</Badge>
+            <Badge variant="neutral" appearance="outline">{t("Surcharge")}</Badge>
           ) : null}
         </div>
       </TableCell>

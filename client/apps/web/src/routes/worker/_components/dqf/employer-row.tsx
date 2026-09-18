@@ -134,7 +134,7 @@ export function EmployerRow({
           <Badge variant={verificationTone(verification.status)}>
             {verificationStatusLabel(verification.status)}
           </Badge>
-          {verification.wasDotRegulated ? null : <Badge variant="secondary">{t("Non-DOT")}</Badge>}
+          {verification.wasDotRegulated ? null : <Badge variant="neutral">{t("Non-DOT")}</Badge>}
         </div>
 
         <ol className="flex items-center gap-2" aria-label={t("Investigation progress")}>

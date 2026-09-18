@@ -9,8 +9,8 @@ describe("complianceStatusMeta", () => {
   });
 
   it("maps the three server values onto the badge palette", () => {
-    expect(complianceStatusMeta("Compliant").badgeVariant).toBe("active");
-    expect(complianceStatusMeta("NonCompliant").badgeVariant).toBe("inactive");
+    expect(complianceStatusMeta("Compliant").badgeVariant).toBe("success");
+    expect(complianceStatusMeta("NonCompliant").badgeVariant).toBe("danger");
     expect(complianceStatusMeta("Pending").badgeVariant).toBe("warning");
   });
 
@@ -23,7 +23,7 @@ describe("complianceStatusMeta", () => {
   it("falls back to a neutral meta for an unknown value", () => {
     const meta = complianceStatusMeta("Suspended");
     expect(meta.label).toBe("Suspended");
-    expect(meta.badgeVariant).toBe("secondary");
+    expect(meta.badgeVariant).toBe("neutral");
     expect(meta.good).toBe(false);
   });
 });

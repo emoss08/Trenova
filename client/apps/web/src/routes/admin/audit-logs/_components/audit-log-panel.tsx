@@ -83,7 +83,7 @@ function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Badge variant="outline">{summary}</Badge>
+        <Badge variant="neutral" appearance="outline">{summary}</Badge>
         <Button
           type="button"
           variant="ghost"

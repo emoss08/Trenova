@@ -78,16 +78,16 @@ export const DELEGATION_STATE_LABELS: Record<DelegationState, string> = {
 
 export function delegationStateTone(
   state: DelegationState,
-): "active" | "inactive" | "warning" | "secondary" {
+): "success" | "danger" | "warning" | "neutral" {
   switch (state) {
     case "active":
-      return "active";
+      return "success";
     case "revoked":
-      return "inactive";
+      return "danger";
     case "scheduled":
       return "warning";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 

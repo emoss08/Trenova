@@ -135,7 +135,7 @@ export function PTOLiabilityDialog({
                         </TableCell>
                         <TableCell>
                           <Badge
-                            variant="outline"
+                            variant="neutral" appearance="outline"
                             className={cn(
                               "px-1.5 py-0 text-[10px]",
                               row.onTermination === "PayOut"

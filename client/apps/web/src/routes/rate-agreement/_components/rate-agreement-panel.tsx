@@ -169,7 +169,7 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
         </Button>
       )}
       {agreement.currentVersionNumber ? (
-        <Badge variant="outline" className="mr-1 font-mono text-xs">
+        <Badge variant="neutral" appearance="outline" className="mr-1 font-mono text-xs">
           {t("v{0}", agreement.currentVersionNumber)}
         </Badge>
       ) : null}

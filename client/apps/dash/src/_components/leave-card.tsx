@@ -56,7 +56,7 @@ export function LeaveCard() {
             )}
           </p>
         </div>
-        {entitlement.exhausted ? <Badge variant="inactive">{t("Used up")}</Badge> : null}
+        {entitlement.exhausted ? <Badge variant="danger">{t("Used up")}</Badge> : null}
       </div>
 
       <p className="mt-3 text-2xl font-semibold tabular-nums">
@@ -92,7 +92,7 @@ export function LeaveCard() {
                 {leaveCaseStatusLabel(row.status)}
               </Badge>
               {row.fmlaDesignated ? <Badge variant="info">{t("Counts as FMLA")}</Badge> : null}
-              <Badge variant="secondary">{leaveFrequencyLabel(row.frequency)}</Badge>
+              <Badge variant="neutral">{leaveFrequencyLabel(row.frequency)}</Badge>
             </div>
             <p className="text-muted-foreground mt-0.5">
               {t(

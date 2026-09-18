@@ -430,7 +430,7 @@ export default function FormulaTemplateBacktestTab({
                 "Run a backtest to preview how the candidate expression would change charges on shipments already rated by this template.",
               )}
               {template?.currentVersionNumber ? (
-                <Badge variant="outline" className="text-2xs ml-1 font-mono">
+                <Badge variant="neutral" appearance="outline" className="text-2xs ml-1 font-mono">
                   {t("head v{0}", template.currentVersionNumber)}
                 </Badge>
               ) : null}

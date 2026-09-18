@@ -94,7 +94,7 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
       <div>
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-medium">{t("Cost Estimate")}</p>
-          <Badge variant="secondary" className="text-2xs">
+          <Badge variant="neutral" className="text-2xs">
             {formatPerMile(parseDecimal(data.profile.totalCpm))}
           </Badge>
         </div>
@@ -129,7 +129,7 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
             >
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="text-muted-foreground truncate">{line.name}</span>
-                <Badge variant="outline" className={badge.className}>
+                <Badge variant="neutral" appearance="outline" className={badge.className}>
                   {t(badge.label)}
                 </Badge>
               </span>

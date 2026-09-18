@@ -108,7 +108,7 @@ function TagInputInner({
         onClick={() => inputRef.current?.focus()}
       >
         {value.map((tag, i) => (
-          <Badge key={`${tag}-${i}`} variant="secondary" className="gap-1 pr-1">
+          <Badge key={`${tag}-${i}`} variant="neutral" className="gap-1 pr-1">
             {tag}
             {!disabled && (
               <button

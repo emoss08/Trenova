@@ -224,7 +224,7 @@ function CandidateRow({
       <div className="flex min-w-0 flex-col items-start gap-1">
         <ShipmentStatusBadge status={candidate.status} />
         {candidate.billingTransferStatus === "SentBackToOps" ? (
-          <Badge variant="orange" className="max-h-5 text-[10px]">
+          <Badge variant="warning" className="max-h-5 text-[10px]">
             {t("Sent back")}
           </Badge>
         ) : null}

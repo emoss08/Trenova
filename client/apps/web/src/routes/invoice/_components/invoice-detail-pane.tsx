@@ -614,7 +614,7 @@ function MessagePreview({ sendPlan }: { sendPlan: InvoiceSendPlan }) {
         </span>
         <span className="flex items-center gap-1.5">
           {t("Read receipt")}
-          <Badge variant={sendPlan.openTracking ? "active" : "outline"}>
+          <Badge variant={sendPlan.openTracking ? "success" : "neutral"}>
             {sendPlan.openTracking ? t("Enabled") : t("Disabled")}
           </Badge>
         </span>
@@ -656,13 +656,13 @@ function DeliveryPackageList({ parts }: { parts: InvoiceSendPlan["parts"] }) {
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
                 <span className="text-sm font-semibold">{t("Part {0}", part.partNumber)}</span>
-                <Badge variant="outline">{formatFileSize(part.estimatedSizeBytes)}</Badge>
+                <Badge variant="neutral" appearance="outline">{formatFileSize(part.estimatedSizeBytes)}</Badge>
               </div>
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-                <Badge variant="outline">
+                <Badge variant="neutral" appearance="outline">
                   {formatCount(part.attachments.length, "attachment")}
                 </Badge>
-                <Badge variant="outline">{formatCount(part.links.length, "link")}</Badge>
+                <Badge variant="neutral" appearance="outline">{formatCount(part.links.length, "link")}</Badge>
               </div>
             </div>
 
@@ -953,9 +953,9 @@ function MetadataCell({ label, value }: { label: string; value: string }) {
 }
 
 const SEND_STATUS_VARIANTS: Record<InvoiceSendStatus, BadgeVariant> = {
-  NotSent: "outline",
+  NotSent: "neutral",
   Sending: "info",
-  Sent: "active",
+  Sent: "success",
   PartiallySent: "warning",
-  Failed: "inactive",
+  Failed: "danger",
 };

@@ -128,7 +128,7 @@ export function RecordEntryDialog({
           <DialogTitle className="flex items-center gap-2">
             {entry ? t("Correct the entry") : t("Record hours")}
             {entry && entry.source !== "Clock" ? (
-              <Badge variant="secondary">{entry.source}</Badge>
+              <Badge variant="neutral">{entry.source}</Badge>
             ) : null}
           </DialogTitle>
           <DialogDescription>

@@ -33,12 +33,12 @@ export const PRIORITY_CONFIG: Record<
 > = {
   critical: {
     icon: createElement(CircleAlertIcon, { className: "size-4 text-red-500" }),
-    badge: "inactive",
+    badge: "danger",
     dot: "bg-red-500",
   },
   high: {
     icon: createElement(TriangleAlertIcon, { className: "size-4 text-orange-500" }),
-    badge: "orange",
+    badge: "warning",
     dot: "bg-orange-500",
   },
   medium: {
@@ -48,7 +48,7 @@ export const PRIORITY_CONFIG: Record<
   },
   low: {
     icon: createElement(CircleCheckIcon, { className: "size-4 text-muted-foreground" }),
-    badge: "outline",
+    badge: "neutral",
     dot: "bg-muted-foreground",
   },
 };

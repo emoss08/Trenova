@@ -65,16 +65,16 @@ export function enrollmentStatusLabel(value: string): string {
 
 export function enrollmentStatusTone(
   value: string,
-): "active" | "inactive" | "warning" | "secondary" {
+): "success" | "danger" | "warning" | "neutral" {
   switch (value) {
     case "Active":
-      return "active";
+      return "success";
     case "Ended":
-      return "inactive";
+      return "danger";
     case "Pending":
       return "warning";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 

@@ -169,7 +169,7 @@ function SummaryChips({ batch }: { batch: FuelPurchaseImportBatch }) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {chips.map((chip) => (
-        <Badge key={chip.label} variant="secondary" className="gap-1 px-2 py-0.5 text-[11px]">
+        <Badge key={chip.label} variant="neutral" className="gap-1 px-2 py-0.5 text-[11px]">
           <span className="text-muted-foreground">{t(chip.label)}</span>
           <span className="tabular-nums">{chip.value}</span>
         </Badge>

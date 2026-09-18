@@ -129,10 +129,10 @@ export function AgingBadge({ daysPastDue }: { daysPastDue: number }) {
   const t = useT();
 
   if (daysPastDue <= 0) {
-    return <Badge variant="active">{t("Current")}</Badge>;
+    return <Badge variant="success">{t("Current")}</Badge>;
   }
   if (daysPastDue <= 30) {
-    return <Badge variant="orange">{t("{0}d overdue", daysPastDue)}</Badge>;
+    return <Badge variant="warning">{t("{0}d overdue", daysPastDue)}</Badge>;
   }
-  return <Badge variant="inactive">{t("{0}d overdue", daysPastDue)}</Badge>;
+  return <Badge variant="danger">{t("{0}d overdue", daysPastDue)}</Badge>;
 }

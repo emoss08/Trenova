@@ -41,13 +41,13 @@ const STATUS_LABELS: Record<WorkItemStatus, string> = {
 
 const STATUS_VARIANTS: Record<
   WorkItemStatus,
-  "default" | "secondary" | "warning" | "info" | "active"
+  "neutral" | "warning" | "info" | "success"
 > = {
-  Open: "secondary",
+  Open: "neutral",
   Assigned: "info",
   InReview: "warning",
-  Resolved: "active",
-  Dismissed: "default",
+  Resolved: "success",
+  Dismissed: "neutral",
 };
 
 export function BankReceiptQueuePage() {
@@ -402,7 +402,7 @@ function WorkItemDetail({
               <span className="text-xs font-medium">{receipt.memo || "—"}</span>
             </PropertyCell>
             <PropertyCell label={t("Status")}>
-              <Badge variant="secondary">{receipt.status}</Badge>
+              <Badge variant="neutral">{receipt.status}</Badge>
             </PropertyCell>
             {receipt.exceptionReason ? (
               <PropertyCell label={t("Exception Reason")}>

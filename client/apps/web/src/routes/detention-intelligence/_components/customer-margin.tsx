@@ -59,12 +59,12 @@ function CustomerRow({
             {row.customerName || row.customerId}
           </p>
           {losing ? (
-            <Badge variant="inactive" className="text-2xs h-4 shrink-0 px-1">
+            <Badge variant="danger" className="text-2xs h-4 shrink-0 px-1">
               {t("Loss")}
             </Badge>
           ) : null}
           {row.disputeCount > 0 ? (
-            <Badge variant="outline" className="text-2xs h-4 shrink-0 px-1">
+            <Badge variant="neutral" appearance="outline" className="text-2xs h-4 shrink-0 px-1">
               {t("{0} disputed", row.disputeCount)}
             </Badge>
           ) : null}

@@ -33,7 +33,7 @@ function ReviewEntry({ review }: { review: FormulaTemplateReview }) {
       <div className="min-w-0 space-y-0.5">
         <div className="flex items-center gap-1.5">
           <Badge
-            variant="outline"
+            variant="neutral" appearance="outline"
             className={cn("text-2xs border-transparent px-1 py-0", TONE_CLASSES[decision.tone])}
           >
             {t(decision.label)}

@@ -33,12 +33,12 @@ const PAGE_SIZE = 50;
 const FILTERS: readonly ImportRowFilter[] = ["all", "new", "duplicates", "errors"];
 
 const STATUS_VARIANT: Record<FuelPurchaseImportRowStatus, BadgeVariant> = {
-  New: "active",
+  New: "success",
   DuplicateInFile: "warning",
   AlreadyImported: "warning",
-  Error: "inactive",
+  Error: "danger",
   Committed: "info",
-  Skipped: "outline",
+  Skipped: "neutral",
 };
 
 type ImportReviewTableProps = {

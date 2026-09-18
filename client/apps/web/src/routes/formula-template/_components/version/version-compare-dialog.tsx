@@ -44,7 +44,7 @@ export function VersionCompareDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {t("Compare Versions")}
-            <Badge variant="outline" className="font-mono">
+            <Badge variant="neutral" appearance="outline" className="font-mono">
               {t("v{0} → v{1}", fromVersion, toVersion)}
             </Badge>
           </DialogTitle>

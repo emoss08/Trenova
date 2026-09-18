@@ -200,7 +200,7 @@ export function getColumns(
       header: t("Tax"),
       cell: ({ row }) => (
         <Badge
-          variant={row.original.taxPaid ? "active" : "warning"}
+          variant={row.original.taxPaid ? "success" : "warning"}
           className="px-1.5 py-0 text-[10px]"
         >
           {row.original.taxPaid ? t("Paid") : t("Untaxed")}

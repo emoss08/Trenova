@@ -137,7 +137,7 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
                   </TooltipContent>
                 </Tooltip>
               )}
-              <Badge variant="inactive" className="h-4 shrink-0 rounded px-1 text-[9.5px]">
+              <Badge variant="danger" className="h-4 shrink-0 rounded px-1 text-[9.5px]">
                 {t("{0} failed", status.failureCount)}
               </Badge>
             </>

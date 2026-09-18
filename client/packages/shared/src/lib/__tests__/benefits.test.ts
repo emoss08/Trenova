@@ -25,10 +25,10 @@ describe("labels", () => {
 
 describe("enrollmentStatusTone", () => {
   it("grades the four states", () => {
-    expect(enrollmentStatusTone("Active")).toBe("active");
-    expect(enrollmentStatusTone("Ended")).toBe("inactive");
+    expect(enrollmentStatusTone("Active")).toBe("success");
+    expect(enrollmentStatusTone("Ended")).toBe("danger");
     expect(enrollmentStatusTone("Pending")).toBe("warning");
-    expect(enrollmentStatusTone("Waived")).toBe("secondary");
+    expect(enrollmentStatusTone("Waived")).toBe("neutral");
   });
 });
 

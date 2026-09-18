@@ -217,7 +217,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
           <div className="flex flex-col gap-3">
             <div className="bg-muted/30 rounded-lg border p-3">
               <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                <Badge variant={errorCount > 0 ? "warning" : "secondary"}>
+                <Badge variant={errorCount > 0 ? "warning" : "neutral"}>
                   {errorCount > 0 ? t("Needs attention") : t("Ready")}
                 </Badge>
                 {fileName ? <span className="font-mono text-xs">{fileName}</span> : null}

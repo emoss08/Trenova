@@ -34,8 +34,8 @@ function formatDate(unix?: number | null): string {
 
 const invitationStatusVariants: Record<string, React.ComponentProps<typeof Badge>["variant"]> = {
   Pending: "warning",
-  Accepted: "active",
-  Revoked: "inactive",
+  Accepted: "success",
+  Revoked: "danger",
 };
 
 export default function WorkerPortalTab({ workerId }: { workerId: string }) {
@@ -118,11 +118,11 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
             <p className="text-sm font-semibold">{t("Dash access")}</p>
           </div>
           {data.linked ? (
-            <Badge variant="active">{t("Linked")}</Badge>
+            <Badge variant="success">{t("Linked")}</Badge>
           ) : hasPending ? (
             <Badge variant="warning">{t("Invited")}</Badge>
           ) : (
-            <Badge variant="secondary">{t("Not set up")}</Badge>
+            <Badge variant="neutral">{t("Not set up")}</Badge>
           )}
         </div>
 
@@ -221,7 +221,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
                     )}
                   </p>
                 </div>
-                <Badge variant={invitationStatusVariants[invitation.status] ?? "secondary"}>
+                <Badge variant={invitationStatusVariants[invitation.status] ?? "neutral"}>
                   {invitation.status}
                 </Badge>
               </li>

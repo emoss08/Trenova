@@ -101,16 +101,16 @@ function EnvelopeStatusBadge({ assessment }: { assessment: PermitAssessment }) {
   const t = useT();
 
   if (hasOpenRequirements(assessment)) {
-    return <Badge variant="inactive">{t("Permits outstanding")}</Badge>;
+    return <Badge variant="danger">{t("Permits outstanding")}</Badge>;
   }
   if (isOversize(assessment)) {
-    return <Badge variant="active">{t("Permits in place")}</Badge>;
+    return <Badge variant="success">{t("Permits in place")}</Badge>;
   }
   if (!assessment.routeResolved) {
-    return <Badge variant="outline">{t("Route not resolved")}</Badge>;
+    return <Badge variant="neutral" appearance="outline">{t("Route not resolved")}</Badge>;
   }
 
-  return <Badge variant="active">{t("Legal on this route")}</Badge>;
+  return <Badge variant="success">{t("Legal on this route")}</Badge>;
 }
 
 function EnvelopeBody({
@@ -430,10 +430,10 @@ function DimensionTile({ row }: { row: DimensionRow }) {
 }
 
 const REQUIREMENT_STATUS_VARIANT: Record<RequirementStatus, BadgeVariant> = {
-  Open: "inactive",
-  Satisfied: "active",
-  Waived: "outline",
-  Superseded: "outline",
+  Open: "danger",
+  Satisfied: "success",
+  Waived: "neutral",
+  Superseded: "neutral",
 };
 
 function RequirementRow({
@@ -516,10 +516,10 @@ function RequirementRow({
 }
 
 const PERMIT_STATUS_VARIANT: Record<PermitStatus, BadgeVariant> = {
-  Active: "active",
+  Active: "success",
   Pending: "warning",
-  Expired: "inactive",
-  Void: "outline",
+  Expired: "danger",
+  Void: "neutral",
 };
 
 function PermitRow({ permit, onEdit }: { permit: Permit; onEdit: () => void }) {

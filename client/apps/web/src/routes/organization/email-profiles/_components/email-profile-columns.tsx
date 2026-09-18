@@ -7,7 +7,7 @@ import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { emailProfileStatusChoices, emailProviderChoices } from "./email-profile-constants";
 
 function StatusBadge({ status }: { status: EmailProfile["status"] }) {
-  return <Badge variant={status === "Active" ? "active" : "inactive"}>{status}</Badge>;
+  return <Badge variant={status === "Active" ? "success" : "danger"}>{status}</Badge>;
 }
 
 export function getColumns(t: TranslateFn): ColumnDef<EmailProfile>[] {

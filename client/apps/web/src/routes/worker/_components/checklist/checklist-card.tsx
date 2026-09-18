@@ -58,13 +58,13 @@ export function ChecklistCard({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-sm font-semibold">{checklist.name}</h3>
-              <Badge variant="outline">
+              <Badge variant="neutral" appearance="outline">
                 {CHECKLIST_KIND_LABELS[checklist.kind as ChecklistKind] ?? checklist.kind}
               </Badge>
               {checklist.status === "Completed" ? (
-                <Badge variant="active">{t("Completed")}</Badge>
+                <Badge variant="success">{t("Completed")}</Badge>
               ) : checklist.status === "Cancelled" ? (
-                <Badge variant="inactive">{t("Cancelled")}</Badge>
+                <Badge variant="danger">{t("Cancelled")}</Badge>
               ) : null}
             </div>
             <p className="text-muted-foreground mt-0.5 text-xs">

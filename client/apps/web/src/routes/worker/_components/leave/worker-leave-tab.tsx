@@ -168,7 +168,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                   )}
                 </p>
               </InfoPopover>
-              {entitlement.exhausted ? <Badge variant="inactive">{t("Exhausted")}</Badge> : null}
+              {entitlement.exhausted ? <Badge variant="danger">{t("Exhausted")}</Badge> : null}
               {entitlement.militaryCaregiver ? (
                 <Badge variant="info">{t("Military caregiver — 26 weeks")}</Badge>
               ) : null}
@@ -239,7 +239,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                     {leaveCase.fmlaDesignated ? (
                       <Badge variant="info">{t("Designated FMLA")}</Badge>
                     ) : null}
-                    <Badge variant="secondary">{leaveFrequencyLabel(leaveCase.frequency)}</Badge>
+                    <Badge variant="neutral">{leaveFrequencyLabel(leaveCase.frequency)}</Badge>
                     {leaveCase.certificationStatus === "NotRequired" ? null : (
                       <Badge variant={certificationTone(leaveCase.certificationStatus)}>
                         {t(
@@ -249,7 +249,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                       </Badge>
                     )}
                     {leaveCase.certificationLate ? (
-                      <Badge variant="inactive">{t("Past the deadline")}</Badge>
+                      <Badge variant="danger">{t("Past the deadline")}</Badge>
                     ) : null}
                   </span>
                   <span className="flex flex-wrap items-center gap-1">
@@ -370,7 +370,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                             {t("{0} h", formatLeaveHours(entry.hours))}
                           </span>
                           {entry.countsAgainstEntitlement ? null : (
-                            <Badge variant="secondary">{t("Not counted")}</Badge>
+                            <Badge variant="neutral">{t("Not counted")}</Badge>
                           )}
                         </span>
                         {canUpdate ? (

@@ -74,7 +74,7 @@ export function ProviderCard({
             >
               {provider.name}
             </button>
-            <Badge variant={provider.enabled ? "active" : "inactive"}>
+            <Badge variant={provider.enabled ? "success" : "danger"}>
               {provider.enabled ? t("Enabled") : t("Disabled")}
             </Badge>
             {provider.trusted && (
@@ -127,7 +127,7 @@ export function ProviderCard({
           <span className="text-muted-foreground text-[11px]">{t("No tasks assigned")}</span>
         ) : (
           taskLabels.map((label) => (
-            <Badge key={label} variant="secondary" className="text-[10px]">
+            <Badge key={label} variant="neutral" className="text-[10px]">
               {label}
             </Badge>
           ))

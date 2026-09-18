@@ -37,8 +37,8 @@ describe("violationProhibits", () => {
 
 describe("drugAlcoholStatusMeta", () => {
   it("says what each status means for dispatch", () => {
-    expect(drugAlcoholStatusMeta("Prohibited").tone).toBe("inactive");
-    expect(drugAlcoholStatusMeta("Clear").tone).toBe("active");
+    expect(drugAlcoholStatusMeta("Prohibited").tone).toBe("danger");
+    expect(drugAlcoholStatusMeta("Clear").tone).toBe("success");
     expect(drugAlcoholStatusMeta("Pending").tone).toBe("warning");
   });
 
@@ -50,11 +50,11 @@ describe("drugAlcoholStatusMeta", () => {
 
 describe("tones", () => {
   it("grades results and query answers", () => {
-    expect(dotResultTone("Positive")).toBe("inactive");
-    expect(dotResultTone("NegativeDilute")).toBe("active");
+    expect(dotResultTone("Positive")).toBe("danger");
+    expect(dotResultTone("NegativeDilute")).toBe("success");
     expect(dotResultTone("Pending")).toBe("warning");
-    expect(clearinghouseResultTone("NoViolations")).toBe("active");
-    expect(clearinghouseResultTone("ConsentDenied")).toBe("inactive");
+    expect(clearinghouseResultTone("NoViolations")).toBe("success");
+    expect(clearinghouseResultTone("ConsentDenied")).toBe("danger");
     expect(clearinghouseResultTone("Pending")).toBe("warning");
   });
 });

@@ -35,7 +35,7 @@ export function getCommunicationProfileColumns(
     {
       accessorKey: "method",
       header: t("Method"),
-      cell: ({ row }) => <Badge variant="outline">{row.original.method}</Badge>,
+      cell: ({ row }) => <Badge variant="neutral" appearance="outline">{row.original.method}</Badge>,
       size: 120,
       meta: {
         label: t("Method"),
@@ -90,7 +90,7 @@ export function getCommunicationProfileColumns(
           return (
             <div className="flex flex-wrap gap-1">
               {secretState.map((secret) => (
-                <Badge key={secret.key} variant="secondary">
+                <Badge key={secret.key} variant="neutral">
                   {secret.key}
                 </Badge>
               ))}

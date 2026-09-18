@@ -24,8 +24,8 @@ type CustomerMixProps = {
 };
 
 const PICKUP_STATUS: Record<PickupStatus, { label: string; variant: BadgeVariant }> = {
-  scheduled: { label: "Scheduled", variant: "outline" },
-  confirmed: { label: "Confirmed", variant: "active" },
+  scheduled: { label: "Scheduled", variant: "neutral" },
+  confirmed: { label: "Confirmed", variant: "success" },
   tentative: { label: "Tentative", variant: "warning" },
   unassigned: { label: "Needs coverage", variant: "warning" },
 };

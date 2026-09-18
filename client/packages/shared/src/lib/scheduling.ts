@@ -236,7 +236,7 @@ export type RotaTone = {
 
 const ROTA_TONES: Record<string, RotaTone> = {
   Off: {
-    variant: "outline",
+    variant: "neutral",
     cell: "bg-muted/30 text-muted-foreground border-transparent",
     dot: "bg-muted-foreground/40",
     label: "Off",
@@ -248,7 +248,7 @@ const ROTA_TONES: Record<string, RotaTone> = {
     label: "Scheduled",
   },
   Assigned: {
-    variant: "active",
+    variant: "success",
     cell: "border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400",
     dot: "bg-green-600",
     label: "Assigned",
@@ -260,13 +260,13 @@ const ROTA_TONES: Record<string, RotaTone> = {
     label: "Time off",
   },
   Leave: {
-    variant: "purple",
+    variant: "info",
     cell: "border-purple-600/30 bg-purple-600/10 text-purple-700 dark:text-purple-400",
     dot: "bg-purple-600",
     label: "Leave",
   },
   Unavailable: {
-    variant: "inactive",
+    variant: "danger",
     cell: "border-red-600/30 bg-red-600/10 text-red-700 dark:text-red-400",
     dot: "bg-red-600",
     label: "Unavailable",
@@ -281,18 +281,18 @@ export function rotaStateTone(state: string): RotaTone {
 export type StatusTone = { variant: BadgeVariant; label: string };
 
 export const AVAILABILITY_TONES: Record<string, StatusTone> = {
-  Preferred: { variant: "active", label: "Preferred" },
+  Preferred: { variant: "success", label: "Preferred" },
   Available: { variant: "info", label: "Available" },
-  Unavailable: { variant: "inactive", label: "Unavailable" },
+  Unavailable: { variant: "danger", label: "Unavailable" },
 };
 
 export const SWAP_STATUS_TONES: Record<string, StatusTone> = {
   Proposed: { variant: "info", label: "Awaiting colleague" },
   Accepted: { variant: "warning", label: "Awaiting approval" },
-  Approved: { variant: "active", label: "Approved" },
-  Declined: { variant: "inactive", label: "Declined" },
-  Rejected: { variant: "inactive", label: "Rejected" },
-  Withdrawn: { variant: "secondary", label: "Withdrawn" },
+  Approved: { variant: "success", label: "Approved" },
+  Declined: { variant: "danger", label: "Declined" },
+  Rejected: { variant: "danger", label: "Rejected" },
+  Withdrawn: { variant: "neutral", label: "Withdrawn" },
 };
 
 export type SwapAction = "accept" | "decline" | "withdraw";

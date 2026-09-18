@@ -117,7 +117,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
             <div className="flex items-center gap-2">
               <Badge variant={standing.tone}>{t(standing.label)}</Badge>
               {file.standing.returnToDuty !== "NotRequired" ? (
-                <Badge variant="secondary">{returnToDutyLabel(file.standing.returnToDuty)}</Badge>
+                <Badge variant="neutral">{returnToDutyLabel(file.standing.returnToDuty)}</Badge>
               ) : null}
               <InfoPopover title={t("Testing standing")}>
                 <p>
@@ -210,8 +210,8 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
           ) : null}
           <div className="rounded-md border p-3 text-xs">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="inactive">{dotViolationTypeLabel(openViolation.violationType)}</Badge>
-              <Badge variant="secondary">{dotViolationStatusLabel(openViolation.status)}</Badge>
+              <Badge variant="danger">{dotViolationTypeLabel(openViolation.violationType)}</Badge>
+              <Badge variant="neutral">{dotViolationStatusLabel(openViolation.status)}</Badge>
               <span className="text-muted-foreground">
                 {formatUnixDate(openViolation.occurredAt)}
               </span>
@@ -306,7 +306,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                         ? dotTestStatusLabel(test.status)
                         : dotTestResultLabel(test.result)}
                     </Badge>
-                    {test.isDot ? null : <Badge variant="secondary">{t("Non-DOT")}</Badge>}
+                    {test.isDot ? null : <Badge variant="neutral">{t("Non-DOT")}</Badge>}
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="text-muted-foreground tabular-nums">

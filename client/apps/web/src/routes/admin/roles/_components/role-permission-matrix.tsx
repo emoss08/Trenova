@@ -232,7 +232,7 @@ export function RolePermissionMatrix({
             className="h-9 pl-9 text-sm"
           />
         </div>
-        <Badge variant="outline" className="shrink-0 text-xs font-normal">
+        <Badge variant="neutral" appearance="outline" className="shrink-0 text-xs font-normal">
           {t("{0} selected", permissions.length)}
         </Badge>
       </div>

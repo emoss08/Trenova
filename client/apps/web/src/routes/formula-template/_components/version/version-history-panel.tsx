@@ -506,12 +506,12 @@ function VersionItem({
                 {t("v{0}", version.versionNumber)}
               </span>
               {isCurrent && (
-                <Badge variant="active" className="text-xs">
+                <Badge variant="success" className="text-xs">
                   {t("Current")}
                 </Badge>
               )}
               {isSelectedForCompare && (
-                <Badge variant="outline" className="border-primary text-primary text-xs">
+                <Badge variant="neutral" appearance="outline" className="border-primary text-primary text-xs">
                   {t("Selected")}
                 </Badge>
               )}

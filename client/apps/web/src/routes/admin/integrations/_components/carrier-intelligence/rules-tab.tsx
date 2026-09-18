@@ -48,12 +48,12 @@ type FormPath = Path<CarrierIntelSettingsFormValues>;
 
 const actionBadgeVariant: Record<
   CarrierIntelRuleAction,
-  "inactive" | "warning" | "info" | "outline"
+  "danger" | "warning" | "info" | "neutral"
 > = {
-  Block: "inactive",
+  Block: "danger",
   Warn: "warning",
   Notify: "info",
-  Off: "outline",
+  Off: "neutral",
 };
 
 type RuleGroup = {
@@ -332,7 +332,7 @@ function RuleRow({
         <div className={cn("space-y-1", !supported && "opacity-70")}>
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-sm font-medium">{definition.label}</span>
-            {definition.gateRelevant ? <Badge variant="outline">{t("Gates tenders")}</Badge> : null}
+            {definition.gateRelevant ? <Badge variant="neutral" appearance="outline">{t("Gates tenders")}</Badge> : null}
             {!supported ? (
               <Tooltip>
                 <TooltipTrigger

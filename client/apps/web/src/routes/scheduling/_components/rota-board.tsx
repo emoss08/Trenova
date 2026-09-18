@@ -234,7 +234,7 @@ function WeekTotal({
 
   const conflicts =
     summary.conflicts > 0 ? (
-      <Badge variant="inactive" className={cn("gap-1", !compact && "mt-0.5")}>
+      <Badge variant="danger" className={cn("gap-1", !compact && "mt-0.5")}>
         <AlertTriangleIcon className="size-3" />
         {summary.conflicts}
       </Badge>

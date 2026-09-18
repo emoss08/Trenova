@@ -4,7 +4,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { type BadgeAttrProps } from "@trenova/shared/components/status-badge";
+import { type BadgeClassAttrProps } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { accessorialChargeMethodChoices, statusChoices } from "@/lib/choices";
 import { formatCurrency } from "@trenova/shared/lib/utils";
@@ -41,22 +41,22 @@ function formatAmount(row: AccessorialChargeRow): string {
 function MethodBadge({ method }: { method: AccessorialChargeRow["method"] }) {
   const t = useT();
 
-  const methodAttributes: Record<AccessorialChargeRow["method"], BadgeAttrProps> = {
+  const methodAttributes: Record<AccessorialChargeRow["method"], BadgeClassAttrProps> = {
     Flat: {
-      variant: "active",
+      accent: "accent-sky",
       text: t("Flat"),
     },
     PerUnit: {
-      variant: "indigo",
+      accent: "accent-indigo",
       text: t("Per Unit"),
     },
     Percentage: {
-      variant: "warning",
+      accent: "accent-violet",
       text: t("Percentage"),
     },
   };
   return (
-    <Badge variant={methodAttributes[method].variant} className="max-h-6">
+    <Badge variant={methodAttributes[method].accent} className="max-h-6">
       {methodAttributes[method].text}
     </Badge>
   );

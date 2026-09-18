@@ -123,12 +123,12 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
           <div className="flex items-center gap-2">
             <div className="flex flex-wrap gap-1">
               {summaryParts.slice(0, 3).map((part) => (
-                <Badge key={part} variant="secondary" className="text-[10px] font-normal">
+                <Badge key={part} variant="neutral" className="text-[10px] font-normal">
                   {part}
                 </Badge>
               ))}
               {summaryParts.length > 3 && (
-                <Badge variant="secondary" className="text-[10px] font-normal">
+                <Badge variant="neutral" className="text-[10px] font-normal">
                   +{summaryParts.length - 3}
                 </Badge>
               )}

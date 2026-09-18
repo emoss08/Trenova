@@ -184,7 +184,7 @@ function DriverOptionRow(option: DriverOption) {
   return (
     <div className="flex w-full items-center justify-between gap-2">
       <span>{option.name}</span>
-      <Badge variant={option.status === "Available" ? "active" : "secondary"}>
+      <Badge variant={option.status === "Available" ? "success" : "neutral"}>
         {option.status}
       </Badge>
     </div>

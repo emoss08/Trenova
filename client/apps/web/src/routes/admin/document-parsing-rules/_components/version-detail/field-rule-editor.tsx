@@ -113,9 +113,9 @@ function FieldItem({
             <span>
               {defaultKey ? `${defaultKey} — ${defaultLabel}` : t("Field {0}", index + 1)}
             </span>
-            {isRequired && <Badge variant="active">{t("Required")}</Badge>}
+            {isRequired && <Badge variant="success">{t("Required")}</Badge>}
             {typeof confidence === "number" && confidence > 0 && (
-              <Badge variant="outline">{Math.round(confidence * 100)}%</Badge>
+              <Badge variant="neutral" appearance="outline">{Math.round(confidence * 100)}%</Badge>
             )}
           </div>
           <div className="flex items-center gap-1">

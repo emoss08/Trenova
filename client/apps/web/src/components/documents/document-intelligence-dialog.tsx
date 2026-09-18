@@ -40,13 +40,13 @@ interface DocumentIntelligenceDialogProps {
 function statusBadgeVariant(status: Document["contentStatus"]) {
   switch (status) {
     case "Indexed":
-      return "active";
+      return "success";
     case "Extracting":
       return "warning";
     case "Failed":
-      return "outline";
+      return "neutral";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 
@@ -107,10 +107,10 @@ function normalizeDraftFields(
 }
 
 function confidenceVariant(confidence?: number) {
-  if (confidence == null) return "secondary";
-  if (confidence >= 0.85) return "active";
+  if (confidence == null) return "neutral";
+  if (confidence >= 0.85) return "success";
   if (confidence >= 0.7) return "warning";
-  return "outline";
+  return "neutral";
 }
 
 function formatStopSummary(stop: DocumentIntelligenceStop) {
@@ -138,13 +138,13 @@ function formatAIAcceptanceStatus(status?: string) {
 function aiAcceptanceVariant(status?: string) {
   switch (status) {
     case "accepted":
-      return "active";
+      return "success";
     case "rejected":
-      return "outline";
+      return "neutral";
     case "not_attempted":
-      return "secondary";
+      return "neutral";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 
@@ -179,13 +179,13 @@ function ConflictSection({ conflicts }: { conflicts: DocumentIntelligenceConflic
                 {conflict.label || conflict.key || t("Conflict")}
               </span>
               {conflict.pageNumbers.length > 0 ? (
-                <Badge variant="outline">{t("Pages {0}", conflict.pageNumbers.join(", "))}</Badge>
+                <Badge variant="neutral" appearance="outline">{t("Pages {0}", conflict.pageNumbers.join(", "))}</Badge>
               ) : null}
             </div>
             {conflict.values.length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-2">
                 {conflict.values.map((value) => (
-                  <Badge key={value} variant="secondary">
+                  <Badge key={value} variant="neutral">
                     {value}
                   </Badge>
                 ))}
@@ -237,9 +237,9 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
                   {formatConfidence(stop.confidence)}
                 </Badge>
               ) : null}
-              {stop.reviewRequired ? <Badge variant="outline">{t("Review")}</Badge> : null}
+              {stop.reviewRequired ? <Badge variant="neutral" appearance="outline">{t("Review")}</Badge> : null}
               {stop.pageNumber ? (
-                <Badge variant="secondary">{t("Page {0}", stop.pageNumber)}</Badge>
+                <Badge variant="neutral">{t("Page {0}", stop.pageNumber)}</Badge>
               ) : null}
             </div>
           </div>
@@ -370,7 +370,7 @@ function AnalysisSnapshotCard({
             {formatConfidence(analysis.overallConfidence)}
           </Badge>
           {analysis.reviewStatus ? (
-            <Badge variant={analysis.reviewStatus === "Ready" ? "active" : "outline"}>
+            <Badge variant={analysis.reviewStatus === "Ready" ? "success" : "neutral"}>
               {analysis.reviewStatus}
             </Badge>
           ) : null}
@@ -403,7 +403,7 @@ function AnalysisSnapshotCard({
           </div>
           <div className="flex flex-wrap gap-2">
             {analysis.missingFields.map((field) => (
-              <Badge key={field} variant="secondary">
+              <Badge key={field} variant="neutral">
                 {field}
               </Badge>
             ))}
@@ -453,7 +453,7 @@ function AIDiagnosticsSection({
               {formatAIAcceptanceStatus(diagnostics.acceptanceStatus)}
             </Badge>
             {diagnostics.rejectionReason ? (
-              <Badge variant="secondary">
+              <Badge variant="neutral">
                 {formatDiagnosticReason(diagnostics.rejectionReason)}
               </Badge>
             ) : null}
@@ -577,7 +577,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
           </div>
           <div className="flex flex-wrap gap-2">
             {signals.map((signal) => (
-              <Badge key={signal} variant="secondary">
+              <Badge key={signal} variant="neutral">
                 {signal}
               </Badge>
             ))}
@@ -593,7 +593,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
           </div>
           <div className="flex flex-wrap gap-2">
             {missingFields.map((field) => (
-              <Badge key={field} variant="outline">
+              <Badge key={field} variant="neutral" appearance="outline">
                 {field}
               </Badge>
             ))}
@@ -622,8 +622,8 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
                   {formatConfidence(field.confidence)}
                 </Badge>
               ) : null}
-              {field.reviewRequired ? <Badge variant="outline">{t("Review")}</Badge> : null}
-              {field.conflict ? <Badge variant="outline">{t("Conflict")}</Badge> : null}
+              {field.reviewRequired ? <Badge variant="neutral" appearance="outline">{t("Review")}</Badge> : null}
+              {field.conflict ? <Badge variant="neutral" appearance="outline">{t("Conflict")}</Badge> : null}
             </div>
           </div>
           <div className="mt-2 text-sm whitespace-pre-wrap">{formatValue(field.value)}</div>
@@ -670,12 +670,12 @@ function ContentSection({
                 {formatConfidence(intelligence.overallConfidence)}
               </Badge>
               {intelligence.reviewStatus !== "Ready" ? (
-                <Badge variant="outline">{t("Review")}</Badge>
+                <Badge variant="neutral" appearance="outline">{t("Review")}</Badge>
               ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
               {intelligence.signals.map((signal) => (
-                <Badge key={signal} variant="secondary">
+                <Badge key={signal} variant="neutral">
                   {signal}
                 </Badge>
               ))}
@@ -708,9 +708,9 @@ function ContentSection({
                     {t("Page {0}", page.pageNumber)}
                   </span>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{page.sourceKind}</Badge>
+                    <Badge variant="neutral">{page.sourceKind}</Badge>
                     {page.preprocessingApplied ? (
-                      <Badge variant="outline">{t("Preprocessed")}</Badge>
+                      <Badge variant="neutral" appearance="outline">{t("Preprocessed")}</Badge>
                     ) : null}
                   </div>
                 </div>
@@ -843,10 +843,10 @@ export function DocumentIntelligenceDialog({
                     <Badge variant="info">{document.detectedKind}</Badge>
                   ) : null}
                   {document.shipmentDraftStatus === "Ready" ? (
-                    <Badge variant="teal">{t("Shipment draft ready")}</Badge>
+                    <Badge variant="success">{t("Shipment draft ready")}</Badge>
                   ) : null}
                   {shipmentDraft?.attachedShipmentId ? (
-                    <Badge variant="active">{t("Attached to shipment")}</Badge>
+                    <Badge variant="success">{t("Attached to shipment")}</Badge>
                   ) : null}
                 </div>
                 <DialogDescription>

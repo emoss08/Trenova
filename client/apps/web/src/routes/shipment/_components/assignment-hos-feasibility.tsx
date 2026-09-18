@@ -19,21 +19,21 @@ import { useMemo, useState } from "react";
 const FEASIBILITY_STALE_MS = 30_000;
 
 const VERDICT_META: Record<string, { label: string; variant: BadgeVariant }> = {
-  feasible: { label: "Feasible", variant: "active" },
+  feasible: { label: "Feasible", variant: "success" },
   tight: { label: "Tight", variant: "warning" },
-  infeasible: { label: "Infeasible", variant: "inactive" },
-  unknown: { label: "Unknown", variant: "outline" },
+  infeasible: { label: "Infeasible", variant: "danger" },
+  unknown: { label: "Unknown", variant: "neutral" },
 };
 
-const UNKNOWN_VERDICT = { label: "Unknown", variant: "outline" as BadgeVariant };
+const UNKNOWN_VERDICT = { label: "Unknown", variant: "neutral" as BadgeVariant };
 
 const DUTY_STATUS_META: Record<string, { label: string; variant: BadgeVariant }> = {
-  driving: { label: "Driving", variant: "info" },
-  onDuty: { label: "On duty", variant: "warning" },
-  offDuty: { label: "Off duty", variant: "outline" },
-  sleeperBed: { label: "Sleeper", variant: "purple" },
-  yardMove: { label: "Yard move", variant: "teal" },
-  personalConveyance: { label: "Personal", variant: "teal" },
+  driving: { label: "Driving", variant: "accent-emerald" },
+  onDuty: { label: "On duty", variant: "accent-amber" },
+  offDuty: { label: "Off duty", variant: "neutral" },
+  sleeperBed: { label: "Sleeper", variant: "accent-violet" },
+  yardMove: { label: "Yard move", variant: "accent-sky" },
+  personalConveyance: { label: "Personal", variant: "accent-teal" },
 };
 
 function verdictMeta(verdict: string): { label: string; variant: BadgeVariant } {
@@ -75,7 +75,7 @@ function FeasibilityRow({
           )}
           {driver.tractorCode && (
             <Badge
-              variant="outline"
+              variant="neutral" appearance="outline"
               className="border-border h-4 shrink-0 rounded px-1 font-mono text-[9px]"
             >
               {driver.tractorCode}
@@ -260,7 +260,7 @@ export function AssignmentHosFeasibility({
             <span className="text-xs font-semibold">{t("HOS feasibility")}</span>
             {!feasibilityQuery.isLoading && !feasibilityQuery.isError && drivers.length > 0 && (
               <Badge
-                variant={feasibleCount > 0 ? "active" : "warning"}
+                variant={feasibleCount > 0 ? "success" : "warning"}
                 className="h-4 rounded px-1 text-[9px]"
               >
                 {t("{0} feasible", feasibleCount)}

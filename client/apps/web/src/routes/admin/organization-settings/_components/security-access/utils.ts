@@ -105,7 +105,7 @@ export function riskVariant(value: string): BadgeVariant {
     case "created":
     case "updated":
     case "completed":
-      return "active";
+      return "success";
     case "challenge":
     case "pending":
       return "warning";
@@ -114,22 +114,22 @@ export function riskVariant(value: string): BadgeVariant {
     case "failed":
     case "error":
     case "revoked":
-      return "inactive";
+      return "danger";
     default:
-      return "outline";
+      return "neutral";
   }
 }
 
 export function outcomeVariant(value: string): BadgeVariant {
   switch (value) {
     case "success":
-      return "active";
+      return "success";
     case "challenge":
       return "warning";
     case "denied":
     case "failed":
-      return "inactive";
+      return "danger";
     default:
-      return "outline";
+      return "neutral";
   }
 }

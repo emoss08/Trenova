@@ -41,7 +41,7 @@ export function DirectoryDetailHeader({
               {directory?.tenantSlug || t("Select a directory")}
             </h3>
             {directory && (
-              <Badge variant={directory.enabled ? "active" : "inactive"}>
+              <Badge variant={directory.enabled ? "success" : "danger"}>
                 {directory.enabled ? t("Enabled") : t("Disabled")}
               </Badge>
             )}

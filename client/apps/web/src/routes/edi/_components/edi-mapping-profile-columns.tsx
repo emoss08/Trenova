@@ -59,7 +59,7 @@ export function getMappingProfileColumns(t: TranslateFn): ColumnDef<EDIMappingPr
         const rowEntries = row.original.entries;
         const count = rowEntries ? rowEntries.length : 0;
         return count > 0 ? (
-          <Badge variant="secondary">{count.toLocaleString()}</Badge>
+          <Badge variant="neutral">{count.toLocaleString()}</Badge>
         ) : (
           <DataTablePlaceholder text={t("None")} />
         );

@@ -13,7 +13,7 @@ export type ReturnToDutyStatusValue =
   | "FollowUpTesting"
   | "Complete";
 
-export type BadgeTone = "active" | "inactive" | "info" | "warning" | "secondary";
+export type BadgeTone = "success" | "danger" | "info" | "warning" | "neutral";
 
 type StatusMeta = {
   label: string;
@@ -26,7 +26,7 @@ export const DRUG_ALCOHOL_STATUS_META: Record<DrugAlcoholStatusValue, StatusMeta
   Clear: {
     label: "Clear",
     detail: "Nothing on the testing record stands in the way of dispatch.",
-    tone: "active",
+    tone: "success",
   },
   Pending: {
     label: "Awaiting result",
@@ -38,13 +38,13 @@ export const DRUG_ALCOHOL_STATUS_META: Record<DrugAlcoholStatusValue, StatusMeta
     detail:
       "The driver must not perform safety-sensitive functions until the " +
       "return-to-duty process is finished (49 CFR 382.501).",
-    tone: "inactive",
+    tone: "danger",
   },
   Unknown: {
     label: "Not on file",
     detail:
       "No test is on file. Nothing has been found against the driver, and nothing clears them either.",
-    tone: "secondary",
+    tone: "neutral",
   },
 };
 
@@ -119,10 +119,10 @@ export function isViolatingResult(result: string): boolean {
 }
 
 export function dotResultTone(result: string): BadgeTone {
-  if (isViolatingResult(result)) return "inactive";
-  if (result === "Negative" || result === "NegativeDilute") return "active";
+  if (isViolatingResult(result)) return "danger";
+  if (result === "Negative" || result === "NegativeDilute") return "success";
   if (result === "Pending") return "warning";
-  return "secondary";
+  return "neutral";
 }
 
 export const DOT_VIOLATION_TYPE_LABELS: Record<string, string> = {
@@ -181,8 +181,8 @@ export function clearinghouseResultLabel(value: string): string {
 }
 
 export function clearinghouseResultTone(result: string): BadgeTone {
-  if (result === "NoViolations") return "active";
-  if (result === "ViolationsFound" || result === "ConsentDenied") return "inactive";
+  if (result === "NoViolations") return "success";
+  if (result === "ViolationsFound" || result === "ConsentDenied") return "danger";
   return "warning";
 }
 

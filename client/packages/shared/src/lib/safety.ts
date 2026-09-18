@@ -12,7 +12,7 @@ import {
 
 export type SafetyRatingMeta = {
   label: string;
-  badgeVariant: "active" | "warning" | "inactive" | "outline";
+  badgeVariant: "success" | "warning" | "danger" | "neutral";
   textClass: string;
   ringTone: "success" | "warning" | "critical";
   /** Best first, so a list of workers can be sorted worst-last. */
@@ -22,14 +22,14 @@ export type SafetyRatingMeta = {
 const RATING_META: Record<SafetyRating, SafetyRatingMeta> = {
   Excellent: {
     label: "Excellent",
-    badgeVariant: "active",
+    badgeVariant: "success",
     textClass: "text-green-600 dark:text-green-400",
     ringTone: "success",
     rank: 0,
   },
   Good: {
     label: "Good",
-    badgeVariant: "outline",
+    badgeVariant: "neutral",
     textClass: "text-sky-600 dark:text-sky-400",
     ringTone: "success",
     rank: 1,
@@ -43,7 +43,7 @@ const RATING_META: Record<SafetyRating, SafetyRatingMeta> = {
   },
   AtRisk: {
     label: "At risk",
-    badgeVariant: "inactive",
+    badgeVariant: "danger",
     textClass: "text-red-600 dark:text-red-400",
     ringTone: "critical",
     rank: 3,

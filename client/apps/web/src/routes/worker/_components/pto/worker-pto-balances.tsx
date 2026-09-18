@@ -211,7 +211,7 @@ function PolicyChip({ assignment }: { assignment: PTOPolicyAssignment | null }) 
   }
   return (
     <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-      <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+      <Badge variant="neutral" className="px-1.5 py-0 text-[10px]">
         {assignment.ptoPolicy.code}
       </Badge>
       {t(
@@ -261,7 +261,7 @@ function BalanceCard({ balance }: { balance: WorkerPTOBalanceView }) {
           {typeLabel(balance.ptoType)}
         </p>
         {!balance.enforced ? (
-          <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+          <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-[10px]">
             {t("Not enforced")}
           </Badge>
         ) : null}
@@ -433,7 +433,7 @@ function AssignmentHistory({ assignments }: { assignments: PTOPolicyAssignment[]
       <ul className="text-muted-foreground flex flex-col gap-0.5 text-xs">
         {assignments.map((assignment) => (
           <li key={assignment.id} className="flex items-center gap-2">
-            <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+            <Badge variant="neutral" className="px-1.5 py-0 text-[10px]">
               {assignment.ptoPolicy?.code ?? "—"}
             </Badge>
             <span>

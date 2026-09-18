@@ -45,7 +45,7 @@ function CarrierStatusCell({ row }: { row: CarrierRow }) {
     <EditableStatusBadge
       status={row.status}
       options={carrierStatusChoices}
-      variants={{ DoNotUse: "inactive" }}
+      variants={{ DoNotUse: "danger" }}
       onStatusChange={handleStatusChange}
     />
   );
@@ -242,7 +242,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
       header: t("Blockers"),
       cell: ({ row }) =>
         row.original.intelBlockingCount > 0 ? (
-          <Badge variant="inactive" className="max-h-5 tabular-nums">
+          <Badge variant="danger" className="max-h-5 tabular-nums">
             {row.original.intelBlockingCount}
           </Badge>
         ) : (

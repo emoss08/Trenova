@@ -1,6 +1,12 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Badge, badgeVariants } from "@trenova/shared/components/ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { cn } from "@trenova/shared/lib/utils";
+import {
+  phaseTone,
+  type BadgeAttrProps,
+  type BadgeClassAttrProps,
+  type StatusPhase,
+} from "@trenova/shared/lib/status-phase";
 import type { BillingQueueStatus } from "@trenova/shared/types/billing-queue";
 import type { CustomerPaymentStatus } from "@trenova/shared/types/customer-payment";
 import type {
@@ -49,21 +55,17 @@ import type {
 } from "@trenova/shared/types/fuel-ifta-enums";
 import { ptoTypeMeta } from "../lib/pto";
 import type { PTOStatus, PTOType } from "@trenova/shared/types/worker";
-import type { VariantProps } from "class-variance-authority";
 import { CheckCheckIcon, CheckIcon, ClockIcon, LockIcon, XIcon } from "lucide-react";
 import type React from "react";
 
-export type BadgeAttrProps = {
-  variant: VariantProps<typeof badgeVariants>["variant"];
-  text: string;
-  description?: string;
-  icon?: React.ReactNode;
-};
+
 
 type StatusBadgeProps = {
   status: string;
   className?: string;
 };
+
+export type { BadgeAttrProps, BadgeClassAttrProps, StatusPhase };
 
 export type PlainBadgeAttrProps = {
   text: string;
@@ -71,32 +73,18 @@ export type PlainBadgeAttrProps = {
   className?: string;
 };
 
-const STATUS_VARIANTS: Record<
-  string,
-  | "default"
-  | "secondary"
-  | "active"
-  | "inactive"
-  | "info"
-  | "purple"
-  | "orange"
-  | "indigo"
-  | "pink"
-  | "teal"
-  | "warning"
-  | "outline"
-> = {
+const STATUS_PHASES: Record<string, StatusPhase> = {
   active: "active",
-  inactive: "inactive",
-  draft: "secondary",
-  pending: "warning",
-  completed: "default",
-  cancelled: "inactive",
-  processing: "secondary",
-  inreview: "warning",
+  inactive: "failed",
+  draft: "draft",
+  pending: "awaiting",
+  completed: "complete",
+  cancelled: "failed",
+  processing: "active",
+  inreview: "awaiting",
   // Compliance statuses
-  compliant: "active",
-  noncompliant: "inactive",
+  compliant: "complete",
+  noncompliant: "failed",
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -115,10 +103,14 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   const normalizedStatus = status.toLowerCase();
-  const variant = STATUS_VARIANTS[normalizedStatus] || "outline";
+  const phase = STATUS_PHASES[normalizedStatus];
 
   return (
-    <Badge variant={variant} className={cn("capitalize", className)}>
+    <Badge
+      variant={phase ? phaseTone(phase) : "neutral"}
+      appearance={phase ? "subtle" : "outline"}
+      className={cn("capitalize", className)}
+    >
       {STATUS_ICONS[normalizedStatus]}
       {status}
     </Badge>
@@ -129,7 +121,7 @@ export function BooleanBadge({ value }: { value: boolean }) {
   const t = useT();
 
   return (
-    <Badge variant={value ? "active" : "inactive"} className="max-h-5">
+    <Badge variant={value ? "success" : "danger"} className="max-h-5">
       {value ? t("Yes") : t("No")}
     </Badge>
   );
@@ -140,25 +132,25 @@ export function PTOStatusBadge({ status }: { status: PTOStatus }) {
 
   const ptoStatusAttrs: Record<PTOStatus, BadgeAttrProps> = {
     Requested: {
-      variant: "purple",
+      phase: "awaiting",
       text: t("Requested"),
     },
     Approved: {
-      variant: "active",
+      phase: "complete",
       text: t("Approved"),
     },
     Cancelled: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Cancelled"),
     },
     Rejected: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Rejected"),
     },
   };
 
   return (
-    <Badge variant={ptoStatusAttrs[status].variant} className="max-h-5">
+    <Badge variant={phaseTone(ptoStatusAttrs[status].phase)} className="max-h-5">
       {ptoStatusAttrs[status].text}
     </Badge>
   );
@@ -174,18 +166,18 @@ export function PermissionScopeBadge({ scope }: { scope?: string }) {
   const valueAttrs: Record<string, BadgeAttrProps> = {
     full: {
       text: t("Full Access"),
-      variant: "secondary",
+      phase: "draft",
       icon: <CheckIcon />,
     },
     restricted: {
       text: t("Restricted"),
-      variant: "secondary",
+      phase: "draft",
       icon: <LockIcon />,
     },
   };
 
   return (
-    <Badge variant={valueAttrs[scope].variant} className="max-h-5">
+    <Badge variant={phaseTone(valueAttrs[scope].phase)} className="max-h-5">
       {valueAttrs[scope].icon}
       {valueAttrs[scope].text}
     </Badge>
@@ -217,66 +209,66 @@ export function ShipmentStatusBadge({
 
   const statusAttributes: Record<ShipmentStatus, BadgeAttrProps> = {
     ["New"]: {
-      variant: "purple",
+      phase: "draft",
       text: t("New"),
       description: t("Shipment has been created and is pending initial assignment."),
     },
     [shipmentStatusSchema.enum.PartiallyAssigned]: {
-      variant: "indigo",
+      phase: "active",
       text: t("Partially Assigned"),
       description: t(
         "Equipment or worker assignments are pending for one or more moves within this shipment.",
       ),
     },
     [shipmentStatusSchema.enum.PartiallyCompleted]: {
-      variant: "indigo",
+      phase: "active",
       text: t("Partially Completed"),
       description: t("Some moves within this shipment have been completed, but not all."),
     },
     [shipmentStatusSchema.enum.Assigned]: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Assigned"),
       description: t(
         "All required equipment and workers have been assigned to this shipment's moves.",
       ),
     },
     [shipmentStatusSchema.enum.InTransit]: {
-      variant: "info",
+      phase: "active",
       text: t("In Transit"),
       description: t(
         "Active shipment with cargo currently in transport between designated locations.",
       ),
     },
     [shipmentStatusSchema.enum.Delayed]: {
-      variant: "orange",
+      phase: "attention",
       text: t("Delayed"),
       description: t(
         "Shipment has exceeded scheduled arrival or delivery timeframes at one or more stops.",
       ),
     },
     [shipmentStatusSchema.enum.Completed]: {
-      variant: "active",
+      phase: "complete",
       text: t("Completed"),
       description: t(
         "All transportation activities for this shipment have been successfully completed.",
       ),
     },
     [shipmentStatusSchema.enum.Invoiced]: {
-      variant: "teal",
+      phase: "complete",
       text: t("Invoiced"),
       description: t(
         "Invoice has been generated and posted for completed transportation services.",
       ),
     },
     [shipmentStatusSchema.enum.ReadyToInvoice]: {
-      variant: "pink",
+      phase: "awaiting",
       text: t("Ready to Invoice"),
       description: t(
         "All moves within this shipment have been completed, and the shipment is ready to be invoiced.",
       ),
     },
     [shipmentStatusSchema.enum.Canceled]: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Canceled"),
       description: t(
         "Shipment has been terminated and will not be completed as originally planned.",
@@ -286,7 +278,7 @@ export function ShipmentStatusBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn(className, "max-h-5 uppercase")}
     >
       {statusAttributes[status].text}
@@ -307,30 +299,30 @@ export function ShipmentTenderStatusBadge({
 
   const statusAttributes: Record<ShipmentTenderStatus, BadgeAttrProps> = {
     Tendered: {
-      variant: "info",
+      phase: "active",
       text: t("Tendered"),
     },
     Accepted: {
-      variant: "active",
+      phase: "complete",
       text: t("Accepted"),
     },
     Rejected: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Rejected"),
     },
     Expired: {
-      variant: "orange",
+      phase: "failed",
       text: t("Expired"),
     },
     Canceled: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Canceled"),
     },
   };
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn(className, "max-h-5 uppercase")}
     >
       {statusAttributes[status].text}
@@ -340,35 +332,35 @@ export function ShipmentTenderStatusBadge({
 
 export const billingQueueStatusBadges: Record<BillingQueueStatus, BadgeAttrProps> = {
   ReadyForReview: {
-    variant: "info",
+    phase: "active",
     text: "Ready for Review",
   },
   InReview: {
-    variant: "purple",
+    phase: "awaiting",
     text: "In Review",
   },
   Approved: {
-    variant: "active",
+    phase: "complete",
     text: "Approved",
   },
   Posted: {
-    variant: "teal",
+    phase: "complete",
     text: "Posted",
   },
   OnHold: {
-    variant: "warning",
+    phase: "awaiting",
     text: "On Hold",
   },
   SentBackToOps: {
-    variant: "orange",
+    phase: "attention",
     text: "Sent Back to Ops",
   },
   Exception: {
-    variant: "inactive",
+    phase: "failed",
     text: "Exception",
   },
   Canceled: {
-    variant: "inactive",
+    phase: "failed",
     text: "Canceled",
   },
 };
@@ -386,10 +378,10 @@ export function BillingQueueStatusBadge({
 
   if (!status) return null;
 
-  const { variant, text } = billingQueueStatusBadges[status];
+  const { phase, text } = billingQueueStatusBadges[status];
 
   return (
-    <Badge variant={variant} title={title} className={cn(className, "max-h-5")}>
+    <Badge variant={phaseTone(phase)} title={title} className={cn(className, "max-h-5")}>
       {t(text)}
     </Badge>
   );
@@ -458,21 +450,21 @@ export function InvoiceStatusBadge({
 
   const statusAttributes: Record<InvoiceStatus, BadgeAttrProps> = {
     Draft: {
-      variant: "secondary",
+      phase: "draft",
       text: t("Draft"),
     },
     Posted: {
-      variant: "active",
+      phase: "complete",
       text: t("Posted"),
     },
     Voided: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Voided"),
     },
   };
 
   return (
-    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-5")}>
+    <Badge variant={phaseTone(statusAttributes[status].phase)} className={cn(className, "max-h-5")}>
       {statusAttributes[status].text}
     </Badge>
   );
@@ -597,13 +589,13 @@ export function InvoiceDisputeCaseStatusBadge({
   const t = useT();
 
   const statusAttributes: Record<InvoiceDisputeCaseStatus, BadgeAttrProps> = {
-    Open: { variant: "orange", text: t("Open") },
-    Resolved: { variant: "active", text: t("Resolved") },
-    Withdrawn: { variant: "secondary", text: t("Withdrawn") },
+    Open: { phase: "active", text: t("Open") },
+    Resolved: { phase: "complete", text: t("Resolved") },
+    Withdrawn: { phase: "draft", text: t("Withdrawn") },
   };
 
   return (
-    <Badge variant={statusAttributes[status].variant} className={cn("max-h-5", className)}>
+    <Badge variant={phaseTone(statusAttributes[status].phase)} className={cn("max-h-5", className)}>
       {statusAttributes[status].text}
     </Badge>
   );
@@ -625,18 +617,18 @@ export function InvoiceEdiSendStatusBadge({
   const t = useT();
 
   const statusAttributes: Record<InvoiceEdiSendStatus, BadgeAttrProps> = {
-    NotSent: { variant: "outline", text: t("Not sent") },
-    NotConfigured: { variant: "secondary", text: t("Not configured") },
-    Queued: { variant: "info", text: t("Queued") },
-    Generated: { variant: "info", text: t("Generated") },
-    Sending: { variant: "info", text: t("Sending") },
-    Sent: { variant: "active", text: t("Sent") },
-    Failed: { variant: "inactive", text: t("Failed") },
-    DeadLettered: { variant: "inactive", text: t("Dead-lettered") },
+    NotSent: { phase: "draft", text: t("Not sent") },
+    NotConfigured: { phase: "draft", text: t("Not configured") },
+    Queued: { phase: "active", text: t("Queued") },
+    Generated: { phase: "active", text: t("Generated") },
+    Sending: { phase: "active", text: t("Sending") },
+    Sent: { phase: "complete", text: t("Sent") },
+    Failed: { phase: "failed", text: t("Failed") },
+    DeadLettered: { phase: "failed", text: t("Dead-lettered") },
   };
 
   return (
-    <Badge variant={statusAttributes[status].variant} className={cn("max-h-5", className)}>
+    <Badge variant={phaseTone(statusAttributes[status].phase)} className={cn("max-h-5", className)}>
       {statusAttributes[status].text}
     </Badge>
   );
@@ -721,44 +713,44 @@ export function OrderStatusBadge({
 
   const statusAttributes: Record<OrderStatus, BadgeAttrProps> = {
     Draft: {
-      variant: "secondary",
+      phase: "draft",
       text: t("Draft"),
       description: t("Order has been created but not yet confirmed."),
     },
     Confirmed: {
-      variant: "purple",
+      phase: "complete",
       text: t("Confirmed"),
       description: t("Order has been confirmed and is ready to be worked."),
     },
     InProgress: {
-      variant: "info",
+      phase: "active",
       text: t("In Progress"),
       description: t("Order is actively being fulfilled."),
     },
     Completed: {
-      variant: "active",
+      phase: "complete",
       text: t("Completed"),
       description: t("Order fulfillment has been completed."),
     },
     Billed: {
-      variant: "teal",
+      phase: "complete",
       text: t("Billed"),
       description: t("Order has been billed to the customer."),
     },
     Closed: {
-      variant: "outline",
+      phase: "draft",
       text: t("Closed"),
       description: t("Order has been closed and finalized."),
     },
     Canceled: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Canceled"),
       description: t("Order has been canceled and will not be fulfilled."),
     },
   };
 
   return (
-    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-5")}>
+    <Badge variant={phaseTone(statusAttributes[status].phase)} className={cn(className, "max-h-5")}>
       {statusAttributes[status].text}
     </Badge>
   );
@@ -771,57 +763,57 @@ export function EDITransferStatusBadge({ status }: { status?: EDITransferStatus 
 
   const attrs: Record<EDITransferStatus, BadgeAttrProps> = {
     Submitted: {
-      variant: "purple",
+      phase: "awaiting",
       text: t("Submitted"),
       description: t("Tender has been submitted and is awaiting review by the receiving side."),
     },
     MappingRequired: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Mapping Required"),
       description: t("Tender references entities that are not mapped for this partner yet."),
     },
     PendingApproval: {
-      variant: "info",
+      phase: "active",
       text: t("Pending Approval"),
       description: t("Tender is ready for the receiving organization to approve or reject."),
     },
     Processing: {
-      variant: "secondary",
+      phase: "draft",
       text: t("Processing"),
       description: t("Approval is running and the target shipment is being created."),
     },
     Approved: {
-      variant: "active",
+      phase: "complete",
       text: t("Approved"),
       description: t("Tender was accepted and the target shipment has been created."),
     },
     Rejected: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Rejected"),
       description: t("Tender was rejected by the receiving side."),
     },
     Expired: {
-      variant: "outline",
+      phase: "draft",
       text: t("Expired"),
       description: t("Tender expired before it was actioned."),
     },
     Canceled: {
-      variant: "outline",
+      phase: "draft",
       text: t("Canceled"),
       description: t("Tender was canceled or superseded."),
     },
     Failed: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Failed"),
       description: t("Tender processing failed. Review the failure reason for details."),
     },
   };
   const attr = attrs[status as EDITransferStatus];
   if (!attr) {
-    return <Badge variant="outline">{status}</Badge>;
+    return <Badge variant="neutral" appearance="outline">{status}</Badge>;
   }
   return (
-    <Badge variant={attr.variant} className="max-h-5" title={t(attr.description)}>
+    <Badge variant={phaseTone(attr.phase)} className="max-h-5" title={t(attr.description)}>
       {attr.text}
     </Badge>
   );
@@ -841,7 +833,7 @@ export function EDIPartnerReadinessBadge({
   if (ready) {
     return (
       <Badge
-        variant="active"
+        variant="success"
         className="max-h-5"
         title={t("All onboarding checklist items are complete.")}
       >
@@ -865,7 +857,7 @@ export function EDITestCaseVerdictBadge({ passed }: { passed: boolean }) {
 
   return (
     <Badge
-      variant={passed ? "active" : "inactive"}
+      variant={passed ? "success" : "danger"}
       className="max-h-5"
       title={
         passed
@@ -889,37 +881,37 @@ export function EDIMessageDeliveryStatusBadge({
 
   const attrs: Record<EDIMessageDeliveryStatus, BadgeAttrProps> = {
     Queued: {
-      variant: "purple",
+      phase: "queued",
       text: t("Queued"),
       description: t("Message is queued for delivery to the trading partner."),
     },
     Sending: {
-      variant: "info",
+      phase: "active",
       text: t("Sending"),
       description: t("Delivery to the trading partner is in progress."),
     },
     Sent: {
-      variant: "active",
+      phase: "complete",
       text: t("Sent"),
       description: t("Message was delivered to the trading partner."),
     },
     Failed: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Failed"),
       description: t("The last delivery attempt failed. Retries are scheduled automatically."),
     },
     DeadLettered: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Dead Lettered"),
       description: t("Delivery retries were exhausted. Retry manually after fixing the cause."),
     },
   };
   const attr = attrs[status as EDIMessageDeliveryStatus];
   if (!attr) {
-    return <Badge variant="outline">{status}</Badge>;
+    return <Badge variant="neutral" appearance="outline">{status}</Badge>;
   }
   return (
-    <Badge variant={attr.variant} className="max-h-5" title={t(attr.description)}>
+    <Badge variant={phaseTone(attr.phase)} className="max-h-5" title={t(attr.description)}>
       {attr.text}
     </Badge>
   );
@@ -936,39 +928,39 @@ export function EDIMessageAckStatusBadge({
 
   const attrs: Record<EDIMessageAcknowledgmentStatus, BadgeAttrProps> = {
     NotExpected: {
-      variant: "outline",
+      phase: "draft",
       text: t("Not Expected"),
       description: t("No acknowledgment is expected for this message."),
     },
     Pending: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Ack Pending"),
       description: t("Waiting for the trading partner to acknowledge this message."),
     },
     Accepted: {
-      variant: "active",
+      phase: "complete",
       text: t("Accepted"),
       description: t("The trading partner acknowledged and accepted this message."),
     },
     Rejected: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Rejected"),
       description: t(
         "The trading partner rejected this message. Review the acknowledgment errors.",
       ),
     },
     Failed: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Ack Failed"),
       description: t("Acknowledgment processing failed."),
     },
   };
   const attr = attrs[status as EDIMessageAcknowledgmentStatus];
   if (!attr) {
-    return <Badge variant="outline">{status}</Badge>;
+    return <Badge variant="neutral" appearance="outline">{status}</Badge>;
   }
   return (
-    <Badge variant={attr.variant} className="max-h-5" title={t(attr.description)}>
+    <Badge variant={phaseTone(attr.phase)} className="max-h-5" title={t(attr.description)}>
       {attr.text}
     </Badge>
   );
@@ -981,42 +973,42 @@ export function EDIInboundFileStatusBadge({ status }: { status?: EDIInboundFileS
 
   const attrs: Record<EDIInboundFileStatus, BadgeAttrProps> = {
     Received: {
-      variant: "purple",
+      phase: "active",
       text: t("Received"),
       description: t("File was pulled from the partner mailbox and is awaiting processing."),
     },
     Parsed: {
-      variant: "info",
+      phase: "active",
       text: t("Parsed"),
       description: t("File envelope was parsed and transactions are being processed."),
     },
     Processed: {
-      variant: "active",
+      phase: "complete",
       text: t("Processed"),
       description: t("Every transaction in this file was processed successfully."),
     },
     PartiallyProcessed: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Partial"),
       description: t("Some transactions processed with warnings. Review the failure reason."),
     },
     Quarantined: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Quarantined"),
       description: t("The file could not be processed. Fix the cause and reprocess."),
     },
     Duplicate: {
-      variant: "outline",
+      phase: "draft",
       text: t("Duplicate"),
       description: t("This interchange was already processed and was skipped."),
     },
   };
   const attr = attrs[status as EDIInboundFileStatus];
   if (!attr) {
-    return <Badge variant="outline">{status}</Badge>;
+    return <Badge variant="neutral" appearance="outline">{status}</Badge>;
   }
   return (
-    <Badge variant={attr.variant} className="max-h-5" title={t(attr.description)}>
+    <Badge variant={phaseTone(attr.phase)} className="max-h-5" title={t(attr.description)}>
       {attr.text}
     </Badge>
   );
@@ -1033,34 +1025,34 @@ export function DriverSettlementStatusBadge({
 
   const statusAttributes: Record<DriverSettlementStatus, BadgeAttrProps> = {
     Draft: {
-      variant: "secondary",
+      phase: "draft",
       text: t("Draft"),
       description: t(
         "Settlement is being assembled — pay, earnings, and deductions can still change.",
       ),
     },
     PendingApproval: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Pending Approval"),
       description: t("Submitted for review and waiting on an approver."),
     },
     Approved: {
-      variant: "info",
+      phase: "active",
       text: t("Approved"),
       description: t("Approved and locked; deduction side effects have been applied."),
     },
     Posted: {
-      variant: "purple",
+      phase: "complete",
       text: t("Posted"),
       description: t("Journalized to the general ledger and awaiting payment."),
     },
     Paid: {
-      variant: "active",
+      phase: "complete",
       text: t("Paid"),
       description: t("Paid out to the driver; the settlement is final."),
     },
     Voided: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Voided"),
       description: t("Reversed — pay events returned to the pool and side effects were undone."),
     },
@@ -1068,7 +1060,7 @@ export function DriverSettlementStatusBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn("max-h-5", className)}
       title={t(statusAttributes[status].description)}
     >
@@ -1082,17 +1074,17 @@ export function SettlementBatchStatusBadge({ status }: { status: SettlementBatch
 
   const statusAttributes: Record<SettlementBatchStatus, BadgeAttrProps> = {
     Open: {
-      variant: "info",
+      phase: "active",
       text: t("Open"),
       description: t("Batch is accepting settlements; generation tops it up as pay accrues."),
     },
     Completed: {
-      variant: "active",
+      phase: "complete",
       text: t("Completed"),
       description: t("Batch is closed; late accruals settle individually or in the next period."),
     },
     Canceled: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Canceled"),
       description: t("Batch was canceled and no longer collects settlements."),
     },
@@ -1100,7 +1092,7 @@ export function SettlementBatchStatusBadge({ status }: { status: SettlementBatch
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className="max-h-5"
       title={t(statusAttributes[status].description)}
     >
@@ -1114,24 +1106,24 @@ export function PayAdvanceStatusBadge({ status }: { status: PayAdvanceStatus }) 
 
   const statusAttributes: Record<PayAdvanceStatus, BadgeAttrProps> = {
     Outstanding: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Outstanding"),
       description: t("Nothing recovered yet — the full amount comes out of upcoming settlements."),
     },
     PartiallyRecovered: {
-      variant: "info",
+      phase: "active",
       text: t("Partially Recovered"),
       description: t(
         "Some of the advance has been recovered; the rest is withheld from future settlements.",
       ),
     },
     Recovered: {
-      variant: "active",
+      phase: "complete",
       text: t("Recovered"),
       description: t("Fully recovered from the driver's settlements."),
     },
     WrittenOff: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Written Off"),
       description: t("Remaining balance was written off and will not be recovered."),
     },
@@ -1139,7 +1131,7 @@ export function PayAdvanceStatusBadge({ status }: { status: PayAdvanceStatus }) 
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className="max-h-5"
       title={t(statusAttributes[status].description)}
     >
@@ -1153,17 +1145,17 @@ export function RecurringEarningStatusBadge({ status }: { status: RecurringEarni
 
   const statusAttributes: Record<RecurringEarningStatus, BadgeAttrProps> = {
     Active: {
-      variant: "active",
+      phase: "complete",
       text: t("Active"),
       description: t("Added automatically to each qualifying settlement."),
     },
     Paused: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Paused"),
       description: t("Temporarily skipped by settlements; resume to start paying again."),
     },
     Completed: {
-      variant: "secondary",
+      phase: "draft",
       text: t("Completed"),
       description: t("Reached its lifetime cap and stopped permanently."),
     },
@@ -1171,7 +1163,7 @@ export function RecurringEarningStatusBadge({ status }: { status: RecurringEarni
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className="max-h-5"
       title={t(statusAttributes[status].description)}
     >
@@ -1185,17 +1177,17 @@ export function RecurringDeductionStatusBadge({ status }: { status: RecurringDed
 
   const statusAttributes: Record<RecurringDeductionStatus, BadgeAttrProps> = {
     Active: {
-      variant: "active",
+      phase: "complete",
       text: t("Active"),
       description: t("Withheld automatically from each qualifying settlement."),
     },
     Paused: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Paused"),
       description: t("Temporarily skipped by settlements; resume to start withholding again."),
     },
     Completed: {
-      variant: "secondary",
+      phase: "draft",
       text: t("Completed"),
       description: t("Reached its lifetime cap and stopped permanently."),
     },
@@ -1203,7 +1195,7 @@ export function RecurringDeductionStatusBadge({ status }: { status: RecurringDed
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className="max-h-5"
       title={t(statusAttributes[status].description)}
     >
@@ -1217,12 +1209,12 @@ export function EscrowAccountStatusBadge({ status }: { status: EscrowAccountStat
 
   const statusAttributes: Record<EscrowAccountStatus, BadgeAttrProps> = {
     Active: {
-      variant: "active",
+      phase: "complete",
       text: t("Active"),
       description: t("Accepting contributions and accruing interest per 49 CFR 376.12(k)."),
     },
     Closed: {
-      variant: "secondary",
+      phase: "draft",
       text: t("Closed"),
       description: t("Closed out — the balance was refunded or applied."),
     },
@@ -1230,7 +1222,7 @@ export function EscrowAccountStatusBadge({ status }: { status: EscrowAccountStat
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className="max-h-5"
       title={t(statusAttributes[status].description)}
     >
@@ -1244,17 +1236,17 @@ export function DriverPayEventStatusBadge({ status }: { status: DriverPayEventSt
 
   const statusAttributes: Record<DriverPayEventStatus, BadgeAttrProps> = {
     Accrued: {
-      variant: "info",
+      phase: "active",
       text: t("Accrued"),
       description: t("Earned but not yet on a settlement — waiting in the unsettled pool."),
     },
     Settled: {
-      variant: "active",
+      phase: "complete",
       text: t("Settled"),
       description: t("Attached to a settlement as earning lines."),
     },
     Voided: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Voided"),
       description: t("Canceled (move canceled or reverted) and excluded from pay."),
     },
@@ -1262,7 +1254,7 @@ export function DriverPayEventStatusBadge({ status }: { status: DriverPayEventSt
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className="max-h-5"
       title={t(statusAttributes[status].description)}
     >
@@ -1278,14 +1270,14 @@ export function PayeeClassificationBadge({
 }) {
   const t = useT();
 
-  const attributes: Record<PayeeClassification, BadgeAttrProps> = {
+  const attributes: Record<PayeeClassification, BadgeClassAttrProps> = {
     CompanyDriver: {
-      variant: "info",
+      accent: "accent-sky",
       text: t("Company Driver"),
       description: t("W-2 employee — settlements post to the driver pay expense account."),
     },
     OwnerOperator: {
-      variant: "purple",
+      accent: "accent-violet",
       text: t("Owner-Operator"),
       description: t("1099 contractor — settlements post to the purchased transportation account."),
     },
@@ -1293,7 +1285,7 @@ export function PayeeClassificationBadge({
 
   return (
     <Badge
-      variant={attributes[classification].variant}
+      variant={attributes[classification].accent}
       className="max-h-5"
       title={t(attributes[classification].description)}
     >
@@ -1313,38 +1305,38 @@ export function CarrierSettlementStatusBadge({
 
   const statusAttributes: Record<CarrierSettlementStatus, BadgeAttrProps> = {
     Draft: {
-      variant: "secondary",
+      phase: "draft",
       text: t("Draft"),
       description: t(
         "Statement is being assembled — cost events and adjustments can still change.",
       ),
     },
     PendingApproval: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Pending Approval"),
       description: t("Submitted for review and waiting on an approver."),
     },
     Approved: {
-      variant: "info",
+      phase: "active",
       text: t("Approved"),
       description: t("Approved and locked, ready to post to the general ledger."),
     },
     Posted: {
-      variant: "purple",
+      phase: "complete",
       text: t("Posted"),
       description: t(
         "Journalized as purchased transportation against accounts payable; awaiting payment.",
       ),
     },
     Paid: {
-      variant: "active",
+      phase: "complete",
       text: t("Paid"),
       description: t(
         "Disbursed to the carrier — the cash journal and ledger payment are recorded.",
       ),
     },
     Voided: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Voided"),
       description: t("Reversed — cost events returned to the pool and GL postings were reversed."),
     },
@@ -1352,7 +1344,7 @@ export function CarrierSettlementStatusBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn("max-h-5", className)}
       title={t(statusAttributes[status].description)}
     >
@@ -1370,17 +1362,17 @@ export function CarrierSettlementBatchStatusBadge({
 
   const statusAttributes: Record<CarrierSettlementBatchStatus, BadgeAttrProps> = {
     Open: {
-      variant: "info",
+      phase: "active",
       text: t("Open"),
       description: t("AP run is accepting settlements; generation tops it up as cost accrues."),
     },
     Completed: {
-      variant: "active",
+      phase: "complete",
       text: t("Completed"),
       description: t("AP run is closed; late accruals settle in the next period."),
     },
     Canceled: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Canceled"),
       description: t("Batch was canceled and no longer collects settlements."),
     },
@@ -1388,7 +1380,7 @@ export function CarrierSettlementBatchStatusBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className="max-h-5"
       title={t(statusAttributes[status].description)}
     >
@@ -1402,22 +1394,22 @@ export function CarrierCostEventStatusBadge({ status }: { status: CarrierCostEve
 
   const statusAttributes: Record<CarrierCostEventStatus, BadgeAttrProps> = {
     Pending: {
-      variant: "info",
+      phase: "active",
       text: t("Pending"),
       description: t("Accrued purchased-transportation cost not yet on a settlement."),
     },
     Attached: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Attached"),
       description: t("On a draft settlement — locked until the settlement is processed or voided."),
     },
     Settled: {
-      variant: "active",
+      phase: "complete",
       text: t("Settled"),
       description: t("Included on a posted carrier settlement."),
     },
     Voided: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Voided"),
       description: t("Canceled (assignment or shipment canceled) and excluded from settlement."),
     },
@@ -1425,7 +1417,7 @@ export function CarrierCostEventStatusBadge({ status }: { status: CarrierCostEve
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className="max-h-5"
       title={t(statusAttributes[status].description)}
     >
@@ -1445,27 +1437,27 @@ export function CarrierInvoiceMatchStatusBadge({
 
   const statusAttributes: Record<CarrierInvoiceMatchStatus, BadgeAttrProps> = {
     Suggested: {
-      variant: "secondary",
+      phase: "draft",
       text: t("Suggested"),
       description: t("System-proposed pairing of a carrier invoice with an assignment."),
     },
     Matched: {
-      variant: "info",
+      phase: "active",
       text: t("Matched"),
       description: t("Invoice total agrees with the negotiated buy rate within tolerance."),
     },
     Variance: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Variance"),
       description: t("Invoice total differs from the buy rate beyond the configured tolerance."),
     },
     Resolved: {
-      variant: "active",
+      phase: "complete",
       text: t("Resolved"),
       description: t("Accepted — the invoice is reconciled against the assignment."),
     },
     Rejected: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Rejected"),
       description: t("Dismissed — the invoice does not bill this assignment."),
     },
@@ -1473,7 +1465,7 @@ export function CarrierInvoiceMatchStatusBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn("max-h-5", className)}
       title={t(statusAttributes[status].description)}
     >
@@ -1493,22 +1485,22 @@ export function CarrierComplianceStatusBadge({
 
   const statusAttributes: Record<CarrierComplianceStatus, BadgeAttrProps> = {
     Pending: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Pending"),
       description: t("Compliance review has not been completed for this carrier."),
     },
     Qualified: {
-      variant: "active",
+      phase: "complete",
       text: t("Qualified"),
       description: t("The carrier passed the compliance review and can be assigned freight."),
     },
     Disqualified: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Disqualified"),
       description: t("The carrier failed compliance and must not be assigned freight."),
     },
     Expired: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Expired"),
       description: t("The carrier's qualification lapsed and must be renewed before assignment."),
     },
@@ -1516,7 +1508,7 @@ export function CarrierComplianceStatusBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn("max-h-5", className)}
       title={t(statusAttributes[status].description)}
     >
@@ -1536,22 +1528,22 @@ export function CarrierSafetyRatingBadge({
 
   const statusAttributes: Record<CarrierSafetyRating, BadgeAttrProps> = {
     Satisfactory: {
-      variant: "active",
+      phase: "complete",
       text: t("Satisfactory"),
       description: t("FMCSA rated the carrier satisfactory."),
     },
     Conditional: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Conditional"),
       description: t("FMCSA found deficiencies — review before assigning freight."),
     },
     Unsatisfactory: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Unsatisfactory"),
       description: t("FMCSA rated the carrier unsatisfactory — do not assign freight."),
     },
     NotRated: {
-      variant: "secondary",
+      phase: "draft",
       text: t("Not Rated"),
       description: t("FMCSA has not issued a safety rating for this carrier."),
     },
@@ -1559,7 +1551,7 @@ export function CarrierSafetyRatingBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn("max-h-5", className)}
       title={t(statusAttributes[status].description)}
     >
@@ -1579,17 +1571,17 @@ export function CarrierAssignmentStatusBadge({
 
   const statusAttributes: Record<CarrierAssignmentStatus, BadgeAttrProps> = {
     Pending: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Pending"),
       description: t("The carrier has been assigned but has not confirmed the rate yet."),
     },
     Confirmed: {
-      variant: "active",
+      phase: "complete",
       text: t("Confirmed"),
       description: t("The carrier confirmed the negotiated rate for this move."),
     },
     Canceled: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Canceled"),
       description: t("The carrier assignment was canceled or replaced."),
     },
@@ -1597,7 +1589,7 @@ export function CarrierAssignmentStatusBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn("max-h-5", className)}
       title={t(statusAttributes[status].description)}
     >
@@ -1619,27 +1611,27 @@ export function TenderStatusBadge({
 
   const statusAttributes: Record<TenderStatus, BadgeAttrProps> = {
     Active: {
-      variant: "info",
+      phase: "active",
       text: t("Active"),
       description: t("Offers are out to carriers and a response is pending."),
     },
     Accepted: {
-      variant: "active",
+      phase: "complete",
       text: t("Accepted"),
       description: t("A carrier accepted the tender and the move is covered."),
     },
     Exhausted: {
-      variant: "orange",
+      phase: "failed",
       text: t("Exhausted"),
       description: t("Every carrier declined or timed out — the move is still uncovered."),
     },
     Canceled: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Canceled"),
       description: t("The tender was canceled by a dispatcher."),
     },
     NeedsReview: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Needs Review"),
       description: t(
         "A carrier accepted but auto-assignment failed — assign the move manually or cancel.",
@@ -1649,7 +1641,7 @@ export function TenderStatusBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn("max-h-5", className)}
       title={t(statusAttributes[status].description)}
     >
@@ -1671,47 +1663,47 @@ export function TenderOfferStatusBadge({
 
   const statusAttributes: Record<TenderOfferStatus, BadgeAttrProps> = {
     Pending: {
-      variant: "secondary",
+      phase: "draft",
       text: t("Pending"),
       description: t("Queued behind a higher-ranked carrier; nothing has been sent yet."),
     },
     Sent: {
-      variant: "info",
+      phase: "active",
       text: t("Sent"),
       description: t("Delivered to the carrier and awaiting their response."),
     },
     Accepted: {
-      variant: "active",
+      phase: "complete",
       text: t("Accepted"),
       description: t("The carrier accepted this offer."),
     },
     Declined: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Declined"),
       description: t("The carrier declined this offer."),
     },
     Expired: {
-      variant: "orange",
+      phase: "failed",
       text: t("Expired"),
       description: t("The offer window elapsed without a response."),
     },
     Withdrawn: {
-      variant: "outline",
+      phase: "draft",
       text: t("Withdrawn"),
       description: t("The offer was withdrawn when the tender was canceled."),
     },
     Superseded: {
-      variant: "outline",
+      phase: "draft",
       text: t("Superseded"),
       description: t("Another carrier accepted first; this offer no longer stands."),
     },
     Skipped: {
-      variant: "outline",
+      phase: "draft",
       text: t("Skipped"),
       description: t("The waterfall skipped this carrier."),
     },
     DeliveryFailed: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Delivery Failed"),
       description: t("The offer could not be delivered on its channel."),
     },
@@ -1719,7 +1711,7 @@ export function TenderOfferStatusBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn("max-h-5", className)}
       title={t(statusAttributes[status].description)}
     >
@@ -1739,22 +1731,22 @@ export function RateConfirmationStatusBadge({
 
   const statusAttributes: Record<RateConfirmationStatus, BadgeAttrProps> = {
     Generated: {
-      variant: "secondary",
+      phase: "draft",
       text: t("Generated"),
       description: t("Rate confirmation PDF is filed but has not been sent to the carrier."),
     },
     Sent: {
-      variant: "info",
+      phase: "active",
       text: t("Sent"),
       description: t("Emailed to the carrier's rate confirmation contacts."),
     },
     Confirmed: {
-      variant: "active",
+      phase: "complete",
       text: t("Confirmed"),
       description: t("The carrier confirmed the negotiated rate."),
     },
     Voided: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Voided"),
       description: t("Superseded by a newer revision or voided manually."),
     },
@@ -1762,7 +1754,7 @@ export function RateConfirmationStatusBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn("max-h-5", className)}
       title={t(statusAttributes[status].description)}
     >
@@ -1782,19 +1774,19 @@ export function IftaReturnStatusBadge({
 
   const statusAttributes: Record<IftaReturnStatus, BadgeAttrProps> = {
     Draft: {
-      variant: "secondary",
+      phase: "draft",
       text: t("Draft"),
       description: t("Worksheet can still change"),
       icon: <ClockIcon />,
     },
     Finalized: {
-      variant: "info",
+      phase: "active",
       text: t("Finalized"),
       description: t("Locked; reopen with a reason to change"),
       icon: <LockIcon />,
     },
     Filed: {
-      variant: "active",
+      phase: "complete",
       text: t("Filed"),
       description: t("Submitted to the base jurisdiction"),
       icon: <CheckCheckIcon />,
@@ -1803,7 +1795,7 @@ export function IftaReturnStatusBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn("max-h-5", className)}
       title={t(statusAttributes[status].description)}
     >
@@ -1824,27 +1816,27 @@ export function FuelPurchaseImportStatusBadge({
 
   const statusAttributes: Record<FuelPurchaseImportStatus, BadgeAttrProps> = {
     Pending: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Pending"),
       description: t("Statement received; waiting to be parsed."),
     },
     Parsed: {
-      variant: "info",
+      phase: "active",
       text: t("Parsed"),
       description: t("Rows are ready for review; nothing is imported until you commit."),
     },
     Committed: {
-      variant: "active",
+      phase: "complete",
       text: t("Committed"),
       description: t("New rows became fuel purchases."),
     },
     Discarded: {
-      variant: "outline",
+      phase: "draft",
       text: t("Discarded"),
       description: t("Thrown away without importing anything."),
     },
     Failed: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Failed"),
       description: t("The statement could not be parsed; fix the file and stage it again."),
     },
@@ -1852,7 +1844,7 @@ export function FuelPurchaseImportStatusBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn("max-h-5", className)}
       title={t(statusAttributes[status].description)}
     >
@@ -1872,19 +1864,19 @@ export function FuelCardStatusBadge({
 
   const statusAttributes: Record<FuelCardStatus, BadgeAttrProps> = {
     Active: {
-      variant: "active",
+      phase: "complete",
       text: t("Active"),
       description: t("Purchases on this card import and record normally."),
     },
     Suspended: {
-      variant: "warning",
+      phase: "awaiting",
       text: t("Suspended"),
       description: t(
         "Temporarily on hold; imported purchases are flagged until it is reactivated.",
       ),
     },
     Cancelled: {
-      variant: "inactive",
+      phase: "failed",
       text: t("Cancelled"),
       description: t("Closed with the provider; it cannot be reactivated."),
     },
@@ -1892,7 +1884,7 @@ export function FuelCardStatusBadge({
 
   return (
     <Badge
-      variant={statusAttributes[status].variant}
+      variant={phaseTone(statusAttributes[status].phase)}
       className={cn("max-h-5", className)}
       title={t(statusAttributes[status].description)}
     >

@@ -77,7 +77,7 @@ export function TotalCompCard() {
                   {enrollment.benefitPlan?.name ?? t("Cover")}
                 </span>
                 {enrollment.benefitPlan ? (
-                  <Badge variant="secondary">
+                  <Badge variant="neutral">
                     {benefitPlanTypeLabel(enrollment.benefitPlan.planType)}
                   </Badge>
                 ) : null}

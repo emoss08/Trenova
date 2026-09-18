@@ -28,10 +28,10 @@ type DisciplineLadderProps = {
 
 const LADDER: DisciplinaryLevel[] = disciplinaryLevelSchema.options;
 
-const STATUS_VARIANT: Record<DisciplinaryStatus, "warning" | "outline" | "inactive"> = {
+const STATUS_VARIANT: Record<DisciplinaryStatus, "warning" | "neutral" | "danger"> = {
   Active: "warning",
-  Rescinded: "outline",
-  Expired: "inactive",
+  Rescinded: "neutral",
+  Expired: "danger",
 };
 
 /**

@@ -5,7 +5,7 @@ export type CredentialHealthTone = "ok" | "soon" | "overdue" | "missing";
 export type CredentialHealthMeta = {
   label: string;
   tone: CredentialHealthTone;
-  badgeVariant: "active" | "warning" | "inactive" | "outline";
+  badgeVariant: "success" | "warning" | "danger" | "neutral";
   textClass: string;
   ringClass: string;
   dotClass: string;
@@ -17,7 +17,7 @@ const HEALTH_META: Record<CredentialHealth, CredentialHealthMeta> = {
   Missing: {
     label: "Missing",
     tone: "missing",
-    badgeVariant: "outline",
+    badgeVariant: "neutral",
     textClass: "text-muted-foreground",
     ringClass: "border-dashed border-muted-foreground/40",
     dotClass: "bg-muted-foreground/60",
@@ -26,7 +26,7 @@ const HEALTH_META: Record<CredentialHealth, CredentialHealthMeta> = {
   Expired: {
     label: "Expired",
     tone: "overdue",
-    badgeVariant: "inactive",
+    badgeVariant: "danger",
     textClass: "text-red-600 dark:text-red-400",
     ringClass: "border-red-500/40 bg-red-500/5",
     dotClass: "bg-red-500",
@@ -44,7 +44,7 @@ const HEALTH_META: Record<CredentialHealth, CredentialHealthMeta> = {
   Valid: {
     label: "Valid",
     tone: "ok",
-    badgeVariant: "active",
+    badgeVariant: "success",
     textClass: "text-green-600 dark:text-green-400",
     ringClass: "border-border",
     dotClass: "bg-green-500",

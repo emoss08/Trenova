@@ -14,8 +14,8 @@ describe("safetyRatingMeta", () => {
     const order = ["Excellent", "Good", "Watch", "AtRisk"] as const;
     const ranks = order.map((rating) => safetyRatingMeta(rating).rank);
     expect([...ranks].sort((a, b) => a - b)).toEqual(ranks);
-    expect(safetyRatingMeta("Excellent").badgeVariant).toBe("active");
-    expect(safetyRatingMeta("AtRisk").badgeVariant).toBe("inactive");
+    expect(safetyRatingMeta("Excellent").badgeVariant).toBe("success");
+    expect(safetyRatingMeta("AtRisk").badgeVariant).toBe("danger");
     expect(safetyRatingMeta("Watch").label).toBe("Watch");
   });
 });

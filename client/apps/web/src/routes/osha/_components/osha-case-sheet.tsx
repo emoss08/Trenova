@@ -93,7 +93,7 @@ function CaseDetail({
             {caseClassificationLabel(entry.classification)}
           </Badge>
           {entry.status === "Open" ? <Badge variant="warning">{t("Open")}</Badge> : null}
-          {entry.recordable ? null : <Badge variant="secondary">{t("Off the log")}</Badge>}
+          {entry.recordable ? null : <Badge variant="neutral">{t("Off the log")}</Badge>}
         </div>
         <SheetDescription>
           {t(

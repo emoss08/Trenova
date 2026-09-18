@@ -59,7 +59,7 @@ function relativeTime(ts: number): string {
 
 function statusVariant(
   status: string,
-): "default" | "active" | "inactive" | "warning" | "info" | "secondary" | "orange" {
+): "neutral" | "success" | "danger" | "warning" | "info" {
   switch (status) {
     case "Active":
     case "Completed":
@@ -67,7 +67,7 @@ function statusVariant(
     case "Extracted":
     case "Indexed":
     case "Ready":
-      return "active";
+      return "success";
     case "Failed":
     case "Rejected":
     case "Canceled":
@@ -85,11 +85,11 @@ function statusVariant(
     case "Initiated":
     case "Paused":
     case "Unavailable":
-      return "secondary";
+      return "neutral";
     case "Unsupported":
-      return "orange";
+      return "warning";
     default:
-      return "default";
+      return "neutral";
   }
 }
 
@@ -365,14 +365,14 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
       <div className="grid gap-2.5 md:grid-cols-4">
         <MetadataCell label={t("Resource")}>
           <div className="flex items-center gap-1.5">
-            <Badge variant="outline">{doc.resourceType}</Badge>
+            <Badge variant="neutral" appearance="outline">{doc.resourceType}</Badge>
             <CopyableId value={doc.resourceId} />
           </div>
         </MetadataCell>
         <MetadataCell label={t("Version")}>
           <span className="font-mono">{t("v{0}", doc.versionNumber)}</span>
           {doc.isCurrentVersion && (
-            <Badge variant="active" className="ml-1.5">
+            <Badge variant="success" className="ml-1.5">
               {t("Current")}
             </Badge>
           )}
@@ -399,7 +399,7 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
         </MetadataCell>
         <MetadataCell label={t("Detected Kind")}>
           {doc.detectedKind ? (
-            <Badge variant="secondary">{doc.detectedKind}</Badge>
+            <Badge variant="neutral">{doc.detectedKind}</Badge>
           ) : (
             <span className="text-muted-foreground">{t("Not classified")}</span>
           )}
@@ -513,7 +513,7 @@ function VersionsSection({ versions }: { versions: Document[] }) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <CopyableId value={v.id} />
-                {v.isCurrentVersion && <Badge variant="active">{t("Current")}</Badge>}
+                {v.isCurrentVersion && <Badge variant="success">{t("Current")}</Badge>}
               </div>
               <div className="text-muted-foreground mt-0.5 flex items-center gap-1 text-[11px]">
                 <ClockIcon className="size-3" />

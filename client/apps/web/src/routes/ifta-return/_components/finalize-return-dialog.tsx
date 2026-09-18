@@ -84,7 +84,7 @@ export function FinalizeReturnDialog({
           <ul className="mt-3 flex max-h-40 flex-col gap-1 overflow-y-auto rounded-md border p-2">
             {missing.map((line) => (
               <li key={line.id} className="flex items-center gap-2 text-xs">
-                <Badge variant="inactive">{t("No rate")}</Badge>
+                <Badge variant="danger">{t("No rate")}</Badge>
                 <span className="font-medium">{line.jurisdiction.code}</span>
                 <span className="text-muted-foreground">{line.jurisdiction.name}</span>
                 <span className="text-muted-foreground">

@@ -40,7 +40,7 @@ export function DQFFileHeader({ file, canCreate, onAddEmployer, onOpenTab }: DQF
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-sm font-semibold">{t("Driver qualification file")}</h3>
-            <Badge variant={file.complete ? "active" : "inactive"}>
+            <Badge variant={file.complete ? "success" : "danger"}>
               {file.complete ? t("Complete") : t("Incomplete")}
             </Badge>
             <InfoPopover title={t("Driver qualification file")}>
@@ -118,7 +118,7 @@ export function DQFFileHeader({ file, canCreate, onAddEmployer, onOpenTab }: DQF
               {t("Previous-employer investigation was due")}{" "}
               {formatUnixDate(file.safetyHistoryDueAt)}
               {file.safetyHistoryLate ? (
-                <Badge variant="inactive" title={t("49 CFR 391.23(c)(1)")}>
+                <Badge variant="danger" title={t("49 CFR 391.23(c)(1)")}>
                   {t("Late")}
                 </Badge>
               ) : null}

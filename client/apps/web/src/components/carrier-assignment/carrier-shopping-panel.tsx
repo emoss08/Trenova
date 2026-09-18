@@ -160,7 +160,7 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
                           {option.carrierName || option.carrierId}
                         </span>
                         {option.guideRank > 0 && (
-                          <Badge variant="secondary" className="text-2xs h-4.5">
+                          <Badge variant="neutral" className="text-2xs h-4.5">
                             {t("Guide #{0}", option.guideRank)}
                           </Badge>
                         )}

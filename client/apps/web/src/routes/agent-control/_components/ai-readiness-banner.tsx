@@ -87,7 +87,7 @@ export function AIReadinessBanner({ onOpenProviders }: AIReadinessBannerProps) {
         </p>
         <div className="flex flex-wrap gap-1.5">
           {readiness.uncovered.map((task) => (
-            <Badge key={task.task} variant="outline">
+            <Badge key={task.task} variant="neutral" appearance="outline">
               {task.label}
               {task.requiresTrust ? ` · ${t("needs a trusted provider")}` : ""}
             </Badge>

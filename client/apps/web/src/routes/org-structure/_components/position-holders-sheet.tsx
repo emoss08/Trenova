@@ -106,7 +106,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
           <SheetTitle className="flex items-center gap-2">
             {position?.title ?? t("Position")}
             {position ? (
-              <Badge variant={position.isDrivingPosition ? "info" : "secondary"}>
+              <Badge variant={position.isDrivingPosition ? "info" : "neutral"}>
                 {position.isDrivingPosition ? t("Driving") : t("Front office")}
               </Badge>
             ) : null}
@@ -219,7 +219,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
                     </Link>
                     <span className="flex items-center gap-2">
                       {holder.status !== "Active" ? (
-                        <Badge variant="inactive">{holder.status}</Badge>
+                        <Badge variant="danger">{holder.status}</Badge>
                       ) : null}
                       {canAssign ? (
                         <Button

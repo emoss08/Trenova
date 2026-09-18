@@ -379,7 +379,7 @@ function ReceiptDetail({
                   <SectionLabel>{t("Match Suggestions")}</SectionLabel>
                 </div>
                 {suggestionsQuery.data ? (
-                  <Badge variant="secondary">{t("{0} found", suggestionsQuery.data.length)}</Badge>
+                  <Badge variant="neutral">{t("{0} found", suggestionsQuery.data.length)}</Badge>
                 ) : null}
               </div>
               <div className="mt-2">
@@ -468,7 +468,7 @@ function SuggestionTable({
 }
 
 function ScoreBadge({ score }: { score: number }) {
-  const variant = score >= 80 ? "active" : score >= 50 ? "orange" : "secondary";
+  const variant = score >= 80 ? "success" : score >= 50 ? "warning" : "neutral";
   return (
     <Badge variant={variant} className="tabular-nums">
       {score}%

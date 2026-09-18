@@ -58,7 +58,7 @@ export function RotaAttention({ rows, swaps, onOpenSwaps }: RotaAttentionProps) 
             {t("Needs a look")}
           </h3>
           {total > 0 ? (
-            <Badge variant="inactive" className="text-2xs h-4 px-1 tabular-nums">
+            <Badge variant="danger" className="text-2xs h-4 px-1 tabular-nums">
               {total}
             </Badge>
           ) : null}
@@ -107,7 +107,7 @@ function AttentionList({
       name: conflict.name,
       detail: `${formatShiftDate(conflict.date)} · rostered while ${rotaStateTone(conflict.state).label.toLowerCase()}`,
       badge: "Conflict",
-      tone: "inactive" as const,
+      tone: "danger" as const,
     })),
     ...unrostered.map((worker) => ({
       key: `unrostered-${worker.workerId}`,

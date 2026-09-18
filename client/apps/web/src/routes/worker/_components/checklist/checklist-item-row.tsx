@@ -26,11 +26,11 @@ type ChecklistItemRowProps = {
   onReopen: (item: WorkerChecklistItemRow) => void;
 };
 
-const STATUS_BADGE: Record<ChecklistItemStatus, "active" | "warning" | "outline" | "secondary"> = {
-  Pending: "outline",
-  Done: "active",
+const STATUS_BADGE: Record<ChecklistItemStatus, "success" | "warning" | "neutral"> = {
+  Pending: "neutral",
+  Done: "success",
   Skipped: "warning",
-  NotApplicable: "secondary",
+  NotApplicable: "neutral",
 };
 
 function settledLine(item: WorkerChecklistItemRow): string | null {
@@ -161,14 +161,14 @@ export function ChecklistItemRow({
             <span className="text-2xs text-muted-foreground uppercase">{t("Optional")}</span>
           ) : null}
           {auto ? (
-            <Badge variant="outline" title={t("Completes itself from evidence")}>
+            <Badge variant="neutral" appearance="outline" title={t("Completes itself from evidence")}>
               {t("Auto")}
             </Badge>
           ) : null}
           {status !== "Pending" ? (
             <Badge variant={STATUS_BADGE[status]}>{CHECKLIST_ITEM_STATUS_LABELS[status]}</Badge>
           ) : null}
-          {pending && item.overdue ? <Badge variant="inactive">{t("Overdue")}</Badge> : null}
+          {pending && item.overdue ? <Badge variant="danger">{t("Overdue")}</Badge> : null}
         </div>
         {item.description ? (
           <p className="text-muted-foreground text-xs">{t(item.description)}</p>

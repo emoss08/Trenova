@@ -180,7 +180,7 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
                         </span>
                       </span>
                       {done ? (
-                        <Badge variant="active">{t("Signed")}</Badge>
+                        <Badge variant="success">{t("Signed")}</Badge>
                       ) : (
                         <Badge variant="warning">{t("Outstanding")}</Badge>
                       )}

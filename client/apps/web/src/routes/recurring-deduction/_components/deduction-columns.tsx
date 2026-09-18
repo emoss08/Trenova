@@ -29,9 +29,9 @@ export function deductionStatusInput(row: RecurringDeductionRow, status: Recurri
 }
 
 const deductionStatusVariants = {
-  Active: "active",
+  Active: "success",
   Paused: "warning",
-  Completed: "secondary",
+  Completed: "neutral",
 } as const;
 
 function StatusCell({ row }: { row: RecurringDeductionRow }) {

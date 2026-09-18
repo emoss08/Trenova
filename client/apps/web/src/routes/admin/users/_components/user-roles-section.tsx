@@ -73,7 +73,7 @@ export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRoles
             const role = roles.find((r) => r.id === roleId);
             if (!role) return null;
             return (
-              <Badge key={roleId} variant="secondary" className="gap-1 pr-1.5">
+              <Badge key={roleId} variant="neutral" className="gap-1 pr-1.5">
                 {role.name}
                 <button
                   type="button"

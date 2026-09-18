@@ -46,11 +46,11 @@ export function isRoundStatusFilter(value: string): value is RoundStatusFilter {
   return (ROUND_STATUS_FILTERS as readonly string[]).includes(value);
 }
 
-export type RoundTone = "active" | "warning" | "inactive";
+export type RoundTone = "success" | "warning" | "danger";
 
 export function roundStatusTone(status: string): RoundTone {
-  if (status === "Final") return "active";
-  if (status === "Cancelled") return "inactive";
+  if (status === "Final") return "success";
+  if (status === "Cancelled") return "danger";
   return "warning";
 }
 

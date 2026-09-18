@@ -421,10 +421,10 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
     >
       {blocked ? <CircleAlertIcon className="size-3.5" /> : <SendIcon className="size-3.5" />}
       <span className="font-medium">{t("Customer EDI 214 {0}", trigger)}</span>
-      <Badge variant={blocked ? "inactive" : available || ready ? "active" : "secondary"}>
+      <Badge variant={blocked ? "danger" : available || ready ? "success" : "neutral"}>
         {label}
       </Badge>
-      {readiness.mandatory && <Badge variant="outline">{t("Mandatory")}</Badge>}
+      {readiness.mandatory && <Badge variant="neutral" appearance="outline">{t("Mandatory")}</Badge>}
       {readiness.messageId && (
         <span className="font-mono text-[11px]">{t("Message {0}", readiness.messageId)}</span>
       )}
@@ -432,9 +432,9 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
         <span className="font-mono text-[11px]">{t("Last {0}", ediStatus.lastMessageId)}</span>
       )}
       {ediStatus?.deliveryStatus && (
-        <Badge variant="outline">{t("Delivery {0}", ediStatus.deliveryStatus)}</Badge>
+        <Badge variant="neutral" appearance="outline">{t("Delivery {0}", ediStatus.deliveryStatus)}</Badge>
       )}
-      {ediStatus?.ackStatus && <Badge variant="outline">{t("ACK {0}", ediStatus.ackStatus)}</Badge>}
+      {ediStatus?.ackStatus && <Badge variant="neutral" appearance="outline">{t("ACK {0}", ediStatus.ackStatus)}</Badge>}
       {diagnostic && <span className="min-w-0 flex-1 truncate">{diagnostic}</span>}
       {!diagnostic && ediStatus?.lastDiagnostic && (
         <span className="min-w-0 flex-1 truncate">{ediStatus.lastDiagnostic}</span>

@@ -22,8 +22,8 @@ export function getMessageColumns(t: TranslateFn): ColumnDef<EDIMessageRow>[] {
       header: t("Transaction"),
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Badge variant="secondary">{row.original.transactionSet}</Badge>
-          <Badge variant="outline">{row.original.direction}</Badge>
+          <Badge variant="neutral">{row.original.transactionSet}</Badge>
+          <Badge variant="neutral" appearance="outline">{row.original.direction}</Badge>
         </div>
       ),
       size: 170,
@@ -79,7 +79,7 @@ export function getMessageColumns(t: TranslateFn): ColumnDef<EDIMessageRow>[] {
       header: t("Delivery"),
       cell: ({ row }) => {
         if (row.original.direction === "Inbound") {
-          return <Badge variant="outline">{t("Received")}</Badge>;
+          return <Badge variant="neutral" appearance="outline">{t("Received")}</Badge>;
         }
         if (!row.original.deliveryStatus) {
           return <DataTablePlaceholder text={t("Not queued")} />;

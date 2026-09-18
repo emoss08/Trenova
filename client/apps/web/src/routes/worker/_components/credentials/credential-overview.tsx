@@ -14,10 +14,10 @@ type CredentialOverviewProps = {
 
 const COMPLIANCE_CHIP: Record<
   string,
-  { label: string; variant: "active" | "inactive" | "warning" }
+  { label: string; variant: "success" | "danger" | "warning" }
 > = {
-  Compliant: { label: "Compliant", variant: "active" },
-  NonCompliant: { label: "Non-compliant", variant: "inactive" },
+  Compliant: { label: "Compliant", variant: "success" },
+  NonCompliant: { label: "Non-compliant", variant: "danger" },
   Pending: { label: "Pending review", variant: "warning" },
 };
 

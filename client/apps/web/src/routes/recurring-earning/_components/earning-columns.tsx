@@ -25,9 +25,9 @@ export function earningStatusInput(row: RecurringEarningRow, status: RecurringEa
 }
 
 const earningStatusVariants = {
-  Active: "active",
+  Active: "success",
   Paused: "warning",
-  Completed: "secondary",
+  Completed: "neutral",
 } as const;
 
 function StatusCell({ row }: { row: RecurringEarningRow }) {

@@ -85,17 +85,17 @@ const CYCLE_LIMIT_MS = 70 * HOUR_MS;
 const BREAK_LIMIT_MS = 8 * HOUR_MS;
 
 const dutyStatusMeta: Record<string, { label: string; variant: BadgeVariant }> = {
-  driving: { label: "Driving", variant: "info" },
-  onDuty: { label: "On Duty", variant: "warning" },
-  offDuty: { label: "Off Duty", variant: "secondary" },
-  sleeperBed: { label: "Sleeper Berth", variant: "purple" },
-  yardMove: { label: "Yard Move", variant: "teal" },
-  personalConveyance: { label: "Personal Conveyance", variant: "teal" },
+  driving: { label: "Driving", variant: "accent-emerald" },
+  onDuty: { label: "On Duty", variant: "accent-amber" },
+  offDuty: { label: "Off Duty", variant: "neutral" },
+  sleeperBed: { label: "Sleeper Berth", variant: "accent-violet" },
+  yardMove: { label: "Yard Move", variant: "accent-sky" },
+  personalConveyance: { label: "Personal Conveyance", variant: "accent-teal" },
 };
 
 function getDutyStatusMeta(dutyStatus: string | null): { label: string; variant: BadgeVariant } {
   if (!dutyStatus) {
-    return { label: translate("Unknown"), variant: "secondary" };
+    return { label: translate("Unknown"), variant: "neutral" };
   }
   return dutyStatusMeta[dutyStatus] ?? { label: toTitleCase(dutyStatus), variant: "secondary" };
 }
@@ -327,7 +327,7 @@ function ViolationRow({ violation }: { violation: WorkerHosViolation }) {
         <span className="text-muted-foreground text-xs">
           {formatUnixDate(violation.violationStartAt)}
         </span>
-        <Badge variant="inactive">{formatDurationMs(violation.durationMs)}</Badge>
+        <Badge variant="danger">{formatDurationMs(violation.durationMs)}</Badge>
       </div>
     </li>
   );
@@ -636,9 +636,9 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
   }
 
   const certifiedBadge = dailyLog.isCertified ? (
-    <Badge variant="active">{t("Certified")}</Badge>
+    <Badge variant="success">{t("Certified")}</Badge>
   ) : (
-    <Badge variant="outline">{t("Uncertified")}</Badge>
+    <Badge variant="neutral" appearance="outline">{t("Uncertified")}</Badge>
   );
 
   return (
@@ -695,7 +695,7 @@ function HosLogEntryRow({ entry, nowCap }: { entry: WorkerHosLogEntry; nowCap: n
           </div>
         ) : null}
       </div>
-      <Badge variant="secondary">{formatDurationMs(durationMs)}</Badge>
+      <Badge variant="neutral">{formatDurationMs(durationMs)}</Badge>
     </li>
   );
 }
@@ -860,7 +860,7 @@ function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission })
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Badge variant="secondary">
+          <Badge variant="neutral">
             {submission.fields.length} {pluralize("field", submission.fields.length)}
           </Badge>
           {hasFields ? (
@@ -969,7 +969,7 @@ function HosLiveState({
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant={statusMeta.variant}>{t(statusMeta.label)}</Badge>
         {state.currentVehicleId ? (
-          <Badge variant="outline" className="gap-1">
+          <Badge variant="neutral" appearance="outline" className="gap-1">
             <TruckIcon className="size-3" />
             <span className="font-mono">{state.currentVehicleId}</span>
           </Badge>

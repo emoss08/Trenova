@@ -564,7 +564,7 @@ export function SecretProfileFields({
           <div className="mb-2 text-sm font-medium">{t("Saved Secrets")}</div>
           <div className="flex flex-wrap gap-1.5">
             {secretState.map((secret) => (
-              <Badge key={secret.key} variant="secondary">
+              <Badge key={secret.key} variant="neutral">
                 {t("{0} saved", secret.key)}
               </Badge>
             ))}

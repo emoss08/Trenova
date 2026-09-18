@@ -6,7 +6,7 @@ import {
 
 export type StandingMeta = {
   label: string;
-  badgeVariant: "active" | "warning" | "inactive" | "outline";
+  badgeVariant: "success" | "warning" | "danger" | "neutral";
   textClass: string;
   ringTone: "success" | "warning" | "critical";
   /** A one-line reading of the verdict, for the summary line under the badge. */
@@ -18,7 +18,7 @@ export type StandingMeta = {
 const STANDING_META: Record<WorkerStanding, StandingMeta> = {
   Good: {
     label: WORKER_STANDING_LABELS.Good,
-    badgeVariant: "active",
+    badgeVariant: "success",
     textClass: "text-green-600 dark:text-green-400",
     ringTone: "success",
     blurb: "Nothing on the record needs attention.",
@@ -34,7 +34,7 @@ const STANDING_META: Record<WorkerStanding, StandingMeta> = {
   },
   AtRisk: {
     label: WORKER_STANDING_LABELS.AtRisk,
-    badgeVariant: "inactive",
+    badgeVariant: "danger",
     textClass: "text-red-600 dark:text-red-400",
     ringTone: "critical",
     blurb: "Something on the record has already lapsed.",
@@ -42,7 +42,7 @@ const STANDING_META: Record<WorkerStanding, StandingMeta> = {
   },
   Blocked: {
     label: WORKER_STANDING_LABELS.Blocked,
-    badgeVariant: "inactive",
+    badgeVariant: "danger",
     textClass: "text-red-600 dark:text-red-400",
     ringTone: "critical",
     blurb: "The worker cannot be put on a load today.",
@@ -52,7 +52,7 @@ const STANDING_META: Record<WorkerStanding, StandingMeta> = {
 
 const FALLBACK: StandingMeta = {
   label: "Unknown",
-  badgeVariant: "outline",
+  badgeVariant: "neutral",
   textClass: "text-muted-foreground",
   ringTone: "warning",
   blurb: "The standing could not be worked out.",

@@ -137,7 +137,7 @@ function DailyLogRow({ log }: { log: MyHosDailyLog }) {
         ) : null}
       </div>
       {log.isCertified ? (
-        <Badge variant="active">{t("Certified")}</Badge>
+        <Badge variant="success">{t("Certified")}</Badge>
       ) : (
         <Badge variant="warning">{t("Uncertified")}</Badge>
       )}

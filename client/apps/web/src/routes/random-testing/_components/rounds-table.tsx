@@ -93,7 +93,7 @@ export function RoundsTable({
               <TableCell className="py-2">
                 {draw.pool ? (
                   <span className="flex min-w-0 items-center gap-1.5">
-                    <Badge variant="secondary">{draw.pool.code}</Badge>
+                    <Badge variant="neutral">{draw.pool.code}</Badge>
                     <span className="text-muted-foreground truncate">{draw.pool.name}</span>
                   </span>
                 ) : (

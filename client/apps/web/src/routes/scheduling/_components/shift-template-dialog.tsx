@@ -462,7 +462,7 @@ function ShiftPreview({
         </div>
       </dl>
 
-      {retired ? <Badge variant="inactive">{t("Retired")}</Badge> : null}
+      {retired ? <Badge variant="danger">{t("Retired")}</Badge> : null}
     </aside>
   );
 }

@@ -38,7 +38,7 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
               )}
             </InfoPopover>
           }
-          right={overview.missed > 0 ? <Badge variant="inactive">{t("Missed")}</Badge> : null}
+          right={overview.missed > 0 ? <Badge variant="danger">{t("Missed")}</Badge> : null}
         />
         <NumberFlow value={overview.owedNow} className={VALUE_CLASS} aria-label={t("Owed now")} />
         <KpiSub>

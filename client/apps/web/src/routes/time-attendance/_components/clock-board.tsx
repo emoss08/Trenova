@@ -81,7 +81,7 @@ export function ClockBoard({
             {t("On the clock now")}
           </h3>
           {ranked.length > 0 ? (
-            <Badge variant="secondary" className="text-2xs h-4 px-1 tabular-nums">
+            <Badge variant="neutral" className="text-2xs h-4 px-1 tabular-nums">
               {ranked.length}
             </Badge>
           ) : null}

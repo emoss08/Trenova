@@ -774,7 +774,7 @@ export const equipmentClassChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<EquipmentClass>>;
 
 export const fieldSensitivityChoices = [
-  { value: "public", label: "Public", color: "#15803d", variant: "active" },
+  { value: "public", label: "Public", color: "#15803d", variant: "success" },
   { value: "internal", label: "Internal", color: "#0ea5e9", variant: "info" },
   {
     value: "restricted",
@@ -786,7 +786,7 @@ export const fieldSensitivityChoices = [
     value: "confidential",
     label: "Confidential",
     color: "#dc2626",
-    variant: "inactive",
+    variant: "danger",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<FieldSensitivity>>;
 

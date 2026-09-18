@@ -14,13 +14,13 @@ import { ShipmentRouteMap } from "./shipment-preview-map";
 
 const moveStatusConfig: Record<
   MoveStatus,
-  { label: string; variant: "secondary" | "info" | "orange" | "active" | "inactive" }
+  { label: string; variant: "neutral" | "info" | "warning" | "success" | "danger" }
 > = {
-  New: { label: "New", variant: "secondary" },
+  New: { label: "New", variant: "neutral" },
   Assigned: { label: "Assigned", variant: "info" },
-  InTransit: { label: "In Transit", variant: "orange" },
-  Completed: { label: "Completed", variant: "active" },
-  Canceled: { label: "Canceled", variant: "inactive" },
+  InTransit: { label: "In Transit", variant: "info" },
+  Completed: { label: "Completed", variant: "success" },
+  Canceled: { label: "Canceled", variant: "danger" },
 };
 
 const stopDotColor: Record<MoveStatus, string> = {

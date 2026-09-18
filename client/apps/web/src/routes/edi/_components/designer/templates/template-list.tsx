@@ -135,7 +135,7 @@ function TemplateListItem({
         >
           <div className="flex items-center justify-between gap-2">
             <span className="truncate text-sm font-medium">{template.name}</span>
-            <Badge variant={template.status === "Active" ? "active" : "outline"}>
+            <Badge variant={template.status === "Active" ? "success" : "neutral"}>
               {template.status}
             </Badge>
           </div>

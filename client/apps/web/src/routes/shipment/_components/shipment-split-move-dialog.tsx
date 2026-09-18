@@ -124,7 +124,7 @@ function MiniStopRow({
           ) : null}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <Badge variant="secondary">{stopTypeLabels[stopType]}</Badge>
+          <Badge variant="neutral">{stopTypeLabels[stopType]}</Badge>
           {time ? (
             <span className="text-2xs text-muted-foreground">
               {time.date} {time.time}
@@ -214,7 +214,7 @@ function AfterSplitPreview({
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-muted/50 rounded-lg border p-3">
           <div className="mb-2 flex items-center gap-2">
-            <Badge variant="secondary">{t("Original")}</Badge>
+            <Badge variant="neutral">{t("Original")}</Badge>
             {hasAssignment && (
               <span className="text-2xs text-muted-foreground">{t("keeps assignment")}</span>
             )}

@@ -37,9 +37,9 @@ import { toast } from "sonner";
 export const DISTANCE_CONTROLS_PATH = "/admin/distance-controls";
 
 const TONE_BADGE: Record<IftaProblemTone, BadgeVariant> = {
-  danger: "inactive",
+  danger: "danger",
   warn: "warning",
-  info: "outline",
+  info: "neutral",
 };
 
 const TONE_LABEL: Record<IftaProblemTone, string> = {

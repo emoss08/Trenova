@@ -124,10 +124,10 @@ export function getTransferColumns(
 
         return (
           <div className="flex flex-wrap gap-1">
-            <Badge variant={unresolvedCount > 0 ? "outline" : "active"}>
+            <Badge variant={unresolvedCount > 0 ? "neutral" : "success"}>
               {unresolvedCount > 0 ? t("{0} unresolved", unresolvedCount) : t("Resolved")}
             </Badge>
-            <Badge variant="secondary">{t("{0} total", totalCount)}</Badge>
+            <Badge variant="neutral">{t("{0} total", totalCount)}</Badge>
           </div>
         );
       },

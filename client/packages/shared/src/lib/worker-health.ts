@@ -4,7 +4,7 @@ import { workerTrainingHealthSchema } from "../types/worker-training-health";
 
 export type WorkerHealthMeta = {
   label: string;
-  badgeVariant: "active" | "inactive" | "warning" | "secondary";
+  badgeVariant: "success" | "danger" | "warning" | "neutral";
   /** Colour for a status dot; the only colour a dense roster row carries. */
   dotClass: string;
   /** Whether the state is the one a manager wants to see. */
@@ -12,10 +12,10 @@ export type WorkerHealthMeta = {
 };
 
 const DOT_BY_VARIANT: Record<WorkerHealthMeta["badgeVariant"], string> = {
-  active: "bg-green-500",
-  inactive: "bg-red-500",
-  warning: "bg-amber-500",
-  secondary: "bg-muted-foreground/60",
+  success: "bg-success",
+  danger: "bg-danger",
+  warning: "bg-warning",
+  neutral: "bg-foreground-subtle/60",
 };
 
 export const COMPLIANCE_STATUS_LABELS: Record<string, string> = {
@@ -33,15 +33,15 @@ export function complianceStatusMeta(value: string): WorkerHealthMeta {
     case "Compliant":
       return {
         label: complianceStatusLabel(value),
-        badgeVariant: "active",
-        dotClass: DOT_BY_VARIANT.active,
+        badgeVariant: "success",
+        dotClass: DOT_BY_VARIANT.success,
         good: true,
       };
     case "NonCompliant":
       return {
         label: complianceStatusLabel(value),
-        badgeVariant: "inactive",
-        dotClass: DOT_BY_VARIANT.inactive,
+        badgeVariant: "danger",
+        dotClass: DOT_BY_VARIANT.danger,
         good: false,
       };
     case "Pending":
@@ -54,8 +54,8 @@ export function complianceStatusMeta(value: string): WorkerHealthMeta {
     default:
       return {
         label: complianceStatusLabel(value),
-        badgeVariant: "secondary",
-        dotClass: DOT_BY_VARIANT.secondary,
+        badgeVariant: "neutral",
+        dotClass: DOT_BY_VARIANT.neutral,
         good: false,
       };
   }

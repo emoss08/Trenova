@@ -84,7 +84,7 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
     <div className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-xs font-medium">{guide.name}</span>
-        <Badge variant="outline" className="h-4 rounded px-1 text-[9px]">
+        <Badge variant="neutral" appearance="outline" className="h-4 rounded px-1 text-[9px]">
           {ROUTING_GUIDE_TIER_LABEL[guide.specificity] ?? t("Unranked")}
         </Badge>
         <span className="text-muted-foreground text-[10px]">{formatRoutingGuideLane(guide)}</span>
@@ -95,7 +95,7 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
           className="bg-muted/30 flex items-center justify-between gap-2 rounded border px-2 py-1"
         >
           <div className="flex min-w-0 items-center gap-1.5">
-            <Badge variant="outline" className="h-4 shrink-0 rounded px-1 text-[9px] tabular-nums">
+            <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded px-1 text-[9px] tabular-nums">
               #{entry.rank}
             </Badge>
             <span className="truncate text-[11px] font-medium">

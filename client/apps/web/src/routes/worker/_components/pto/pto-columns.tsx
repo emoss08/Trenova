@@ -184,7 +184,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerPTORow>[] {
         <span className="font-table tabular-nums">
           {ptoDaysOf(row.original)}
           {row.original.autoApproved ? (
-            <Badge variant="outline" className="ml-1.5 px-1 py-0 text-[10px]">
+            <Badge variant="neutral" appearance="outline" className="ml-1.5 px-1 py-0 text-[10px]">
               {t("Auto")}
             </Badge>
           ) : null}

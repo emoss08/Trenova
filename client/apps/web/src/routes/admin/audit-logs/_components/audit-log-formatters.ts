@@ -135,7 +135,7 @@ export function operationVariant(operation: string): BadgeVariant {
 
   switch (normalized) {
     case "create":
-      return "active";
+      return "success";
     case "update":
       return "info";
     case "archive":
@@ -149,11 +149,11 @@ export function operationVariant(operation: string): BadgeVariant {
     case "unlock":
     case "activate":
     case "reopen":
-      return "teal";
+      return "info";
     case "read":
-      return "outline";
+      return "neutral";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 
@@ -198,7 +198,7 @@ export function changeTypeLabel(type: AuditChangeType) {
 export function changeTypeVariant(type: AuditChangeType): BadgeVariant {
   switch (type) {
     case "added":
-      return "active";
+      return "success";
     case "removed":
       return "warning";
     default:

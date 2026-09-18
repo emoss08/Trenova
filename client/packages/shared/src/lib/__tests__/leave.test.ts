@@ -60,10 +60,10 @@ describe("labels and tones", () => {
   });
 
   it("grades case and certification states", () => {
-    expect(leaveCaseStatusTone("Approved")).toBe("active");
-    expect(leaveCaseStatusTone("Denied")).toBe("inactive");
+    expect(leaveCaseStatusTone("Approved")).toBe("success");
+    expect(leaveCaseStatusTone("Denied")).toBe("danger");
     expect(leaveCaseStatusTone("Pending")).toBe("warning");
-    expect(certificationTone("Overdue")).toBe("inactive");
-    expect(certificationTone("Received")).toBe("active");
+    expect(certificationTone("Overdue")).toBe("danger");
+    expect(certificationTone("Received")).toBe("success");
   });
 });

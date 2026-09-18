@@ -61,7 +61,7 @@ export function TrainingCard() {
             {t("{0, plural, one {# needs} other {# need}} attention", attention)}
           </Badge>
         ) : (
-          <Badge variant="active">{t("All current")}</Badge>
+          <Badge variant="success">{t("All current")}</Badge>
         )}
       </div>
 

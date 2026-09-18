@@ -157,15 +157,15 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
                           ? `${entry.worker.firstName} ${entry.worker.lastName}`
                           : entry.workerId}
                       </span>
-                      <Badge variant="secondary">
+                      <Badge variant="neutral">
                         {entry.substance === "Alcohol" ? t("Alcohol") : t("Drug")}
                       </Badge>
                       <Badge
                         variant={
                           entry.status === "Completed"
-                            ? "active"
+                            ? "success"
                             : entry.status === "Missed"
-                              ? "inactive"
+                              ? "danger"
                               : "warning"
                         }
                       >

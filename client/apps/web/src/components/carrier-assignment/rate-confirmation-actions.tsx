@@ -101,7 +101,7 @@ export function RateConfirmationActions({
             </span>
             {latest.generatedVia === "TenderAcceptance" && (
               <Badge
-                variant="outline"
+                variant="neutral" appearance="outline"
                 className="max-h-5 text-[10px]"
                 title={t("Generated automatically when the carrier accepted the tender")}
               >
@@ -110,7 +110,7 @@ export function RateConfirmationActions({
             )}
             {latest.status === "Confirmed" && latest.confirmedVia && (
               <Badge
-                variant="outline"
+                variant="neutral" appearance="outline"
                 className="max-h-5 text-[10px]"
                 title={t("How the carrier's confirmation was captured")}
               >

@@ -170,7 +170,7 @@ export function ReceiptView({ receipt, onUseValues, className }: ReceiptViewProp
                   <span className="flex shrink-0 items-center gap-2">
                     <span className="font-mono tabular-nums">{formatValue(variable.value)}</span>
                     <Badge
-                      variant="outline"
+                      variant="neutral" appearance="outline"
                       className={cn("text-2xs border-transparent px-1 py-0", source.className)}
                     >
                       {source.label === "shipment" ? variable.source : source.label}

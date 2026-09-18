@@ -62,7 +62,7 @@ export default function RunConsole({ isWorkflowRunning }: { isWorkflowRunning: b
           <TerminalIcon className="size-3.5" />
           {t("Run Console")}
           {isWorkflowRunning && (
-            <Badge variant="active" className="ml-2">
+            <Badge variant="success" className="ml-2">
               {t("Live")}
             </Badge>
           )}

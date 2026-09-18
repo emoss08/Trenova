@@ -181,7 +181,7 @@ export function ExploreView({
             {chart.title || chart.type}
           </button>
         ))}
-        <Badge variant="secondary" className="tabular-nums">
+        <Badge variant="neutral" className="tabular-nums">
           {t("{0, plural, one {# row} other {# rows}}", rows.length)}
         </Badge>
         {preview.data?.truncated && (

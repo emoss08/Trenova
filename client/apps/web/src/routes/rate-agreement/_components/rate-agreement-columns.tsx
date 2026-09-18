@@ -71,7 +71,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RateAgreementRow>[] {
         <div className="flex items-center gap-1.5">
           <span className="font-medium">{row.original.name}</span>
           {row.original.currentVersionNumber > 1 && (
-            <Badge variant="outline" className="text-[10px]">
+            <Badge variant="neutral" appearance="outline" className="text-[10px]">
               {t("v{0}", row.original.currentVersionNumber)}
             </Badge>
           )}

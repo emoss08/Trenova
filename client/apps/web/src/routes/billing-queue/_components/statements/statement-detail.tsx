@@ -155,7 +155,7 @@ export function StatementDetail({
           <Tooltip>
             <TooltipTrigger
               render={
-                <Badge variant="outline" tabIndex={0} className="gap-1">
+                <Badge variant="neutral" appearance="outline" tabIndex={0} className="gap-1">
                   <BotIcon className="size-3" />
                   {t("Auto-bills")}
                 </Badge>

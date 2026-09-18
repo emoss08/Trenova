@@ -85,7 +85,7 @@ function DocumentHeader({
           <CopyIconButton value={name} label={t("Copy name")} />
         </div>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <Badge variant="secondary" className="font-normal">
+          <Badge variant="neutral" className="font-normal">
             {domain}
           </Badge>
           <span className="text-muted-foreground font-mono text-xs">{sourceFile}</span>

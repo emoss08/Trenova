@@ -124,7 +124,7 @@ export function ScheduleCard() {
             </p>
           </div>
         </div>
-        {week.shiftCode ? <Badge variant="secondary">{week.shiftCode}</Badge> : null}
+        {week.shiftCode ? <Badge variant="neutral">{week.shiftCode}</Badge> : null}
       </div>
 
       <div className="mt-4 flex flex-col gap-2">

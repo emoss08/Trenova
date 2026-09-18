@@ -265,7 +265,7 @@ export function InvoiceOverviewTab({
                             {lineageInvoice.billType} · {lineageInvoice.status}
                           </p>
                         </div>
-                        <Badge variant={current ? "active" : "secondary"} className="shrink-0">
+                        <Badge variant={current ? "success" : "neutral"} className="shrink-0">
                           {current ? t("Current") : t("Superseded")}
                         </Badge>
                       </div>

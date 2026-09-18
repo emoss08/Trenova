@@ -27,15 +27,15 @@ const HOS_DISPLAY_LIMIT = 8;
 const CLOCK_TICK_MS = 15_000;
 
 const DUTY_STATUS: Record<string, { label: string; variant: BadgeVariant }> = {
-  driving: { label: "Driving", variant: "info" },
-  onDuty: { label: "On duty", variant: "warning" },
-  offDuty: { label: "Off duty", variant: "outline" },
-  sleeperBed: { label: "Sleeper", variant: "purple" },
-  yardMove: { label: "Yard move", variant: "teal" },
-  personalConveyance: { label: "Personal", variant: "teal" },
+  driving: { label: "Driving", variant: "accent-emerald" },
+  onDuty: { label: "On duty", variant: "accent-amber" },
+  offDuty: { label: "Off duty", variant: "neutral" },
+  sleeperBed: { label: "Sleeper", variant: "accent-violet" },
+  yardMove: { label: "Yard move", variant: "accent-sky" },
+  personalConveyance: { label: "Personal", variant: "accent-teal" },
 };
 
-const UNKNOWN_DUTY = { label: "Unknown", variant: "outline" as BadgeVariant };
+const UNKNOWN_DUTY = { label: "Unknown", variant: "neutral" as BadgeVariant };
 
 function hasViolation(state: WorkerHosState): boolean {
   return state.shiftDrivingViolationMs > 0 || state.cycleViolationMs > 0;

@@ -72,9 +72,9 @@ export function PoolRow({
       <div className="flex min-w-0 flex-col gap-0.5">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <span className="truncate text-sm font-medium">{pool.name}</span>
-          <Badge variant="secondary">{pool.code}</Badge>
-          {pool.isDefault ? <Badge variant="outline">{t("Default")}</Badge> : null}
-          {pool.status !== "Active" ? <Badge variant="inactive">{t("Inactive")}</Badge> : null}
+          <Badge variant="neutral">{pool.code}</Badge>
+          {pool.isDefault ? <Badge variant="neutral" appearance="outline">{t("Default")}</Badge> : null}
+          {pool.status !== "Active" ? <Badge variant="danger">{t("Inactive")}</Badge> : null}
           {pool.meetsDotMinimums ? null : (
             <Badge variant="warning">{t("Below the DOT minimum")}</Badge>
           )}

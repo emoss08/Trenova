@@ -512,7 +512,7 @@ function TimesheetSheet({
                             {entry.clockedOutAt ? ` – ${formatPunchTime(entry.clockedOutAt)}` : ""}
                           </span>
                           {entry.source !== "Clock" ? (
-                            <Badge variant="secondary">{entry.source}</Badge>
+                            <Badge variant="neutral">{entry.source}</Badge>
                           ) : null}
                         </span>
                         {entry.editReason ? (

@@ -41,12 +41,12 @@ type ReviewCardProps = {
 
 const STATUS_VARIANT: Record<
   PerformanceReviewStatus,
-  "active" | "warning" | "inactive" | "outline"
+  "success" | "warning" | "danger" | "neutral"
 > = {
-  Draft: "outline",
+  Draft: "neutral",
   Submitted: "warning",
-  Acknowledged: "active",
-  Closed: "outline",
+  Acknowledged: "success",
+  Closed: "neutral",
 };
 
 export function ReviewCard({
@@ -133,7 +133,7 @@ export function ReviewCard({
             <li key={goal.id} className="flex items-center gap-1.5 text-xs">
               <TargetIcon className="text-muted-foreground size-3.5" />
               <span>{t(goal.title)}</span>
-              <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+              <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-[10px]">
                 {REVIEW_GOAL_STATUS_LABELS[goal.status as ReviewGoalStatus] ?? goal.status}
               </Badge>
               {goal.dueAt ? (

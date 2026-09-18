@@ -214,7 +214,7 @@ export function ReportRefMultiAutocomplete({
       {values.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {values.map((id) => (
-            <Badge key={id} variant="secondary" className="gap-1 pr-1">
+            <Badge key={id} variant="neutral" className="gap-1 pr-1">
               <span className="max-w-40 truncate">{labels[id] ?? id}</span>
               <Button
                 variant="ghost"

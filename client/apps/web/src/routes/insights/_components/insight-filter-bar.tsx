@@ -118,7 +118,7 @@ function FilterChip({
           {label}
         </button>
       }
-      variant={selected ? "default" : "outline"}
+      variant={selected ? "neutral" : "neutral"}
       className={cn("cursor-pointer transition-colors", !selected && "hover:bg-muted")}
     />
   );

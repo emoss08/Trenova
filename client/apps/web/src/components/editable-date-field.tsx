@@ -42,7 +42,7 @@ export function EditableDateField({
 
   const displayDate = formattedDate ? generateDateOnlyString(formattedDate) : "No date";
 
-  const variant = date ? "active" : "inactive";
+  const variant = date ? "success" : "danger";
 
   const handleDateSelect = useCallback(
     (newDate: Date | undefined) => {
@@ -53,7 +53,7 @@ export function EditableDateField({
 
   if (disabled) {
     return (
-      <Badge variant="outline" className={className}>
+      <Badge variant="neutral" appearance="outline" className={className}>
         {displayDate}
       </Badge>
     );

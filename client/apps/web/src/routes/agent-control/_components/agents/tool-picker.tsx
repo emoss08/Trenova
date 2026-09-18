@@ -187,7 +187,7 @@ export function ToolPicker({
                             {tool.name}
                           </span>
                           {tool.kind === "query" ? (
-                            <Badge variant="outline" className="h-4 gap-1 px-1 text-[10px]">
+                            <Badge variant="neutral" appearance="outline" className="h-4 gap-1 px-1 text-[10px]">
                               <SearchIcon className="size-2.5" />
                               {t("Reads")}
                             </Badge>

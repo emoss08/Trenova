@@ -209,7 +209,7 @@ export function DashLoadDetailPage() {
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">{t("Route")}</h2>
-          <Badge variant="secondary">
+          <Badge variant="neutral">
             {t("{0, plural, one {# stop} other {# stops}}", load.stops.length)}
           </Badge>
         </div>

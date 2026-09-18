@@ -6,9 +6,9 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import type { FormulaTemplateRow } from "@/lib/graphql/formula-template-table";
 
-const TYPE_BADGE_VARIANT: Record<string, "info" | "purple"> = {
+const TYPE_BADGE_VARIANT: Record<string, "info"> = {
   FreightCharge: "info",
-  AccessorialCharge: "purple",
+  AccessorialCharge: "info",
 };
 
 export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
@@ -94,7 +94,7 @@ export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
       accessorKey: "currentVersionNumber",
       header: t("Version"),
       cell: ({ row }) => (
-        <Badge variant="outline" className="font-mono text-xs">
+        <Badge variant="neutral" appearance="outline" className="font-mono text-xs">
           {row.original.currentVersionNumber ? t("v{0}", row.original.currentVersionNumber) : "—"}
         </Badge>
       ),
@@ -139,7 +139,7 @@ export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
       cell: ({ row }) => {
         const count = row.original.scenarioCount ?? 0;
         return count > 0 ? (
-          <Badge variant="outline" className="font-mono text-xs">
+          <Badge variant="neutral" appearance="outline" className="font-mono text-xs">
             {count}
           </Badge>
         ) : (

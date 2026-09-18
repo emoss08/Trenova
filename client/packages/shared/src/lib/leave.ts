@@ -4,7 +4,7 @@
  * same phrases.
  */
 
-export type LeaveTone = "active" | "inactive" | "warning" | "secondary" | "info";
+export type LeaveTone = "success" | "danger" | "warning" | "neutral" | "info";
 
 export const MEASUREMENT_METHOD_LABELS: Record<string, string> = {
   CalendarYear: "Calendar year",
@@ -45,13 +45,13 @@ export function leaveCaseStatusLabel(value: string): string {
 export function leaveCaseStatusTone(value: string): LeaveTone {
   switch (value) {
     case "Approved":
-      return "active";
+      return "success";
     case "Denied":
-      return "inactive";
+      return "danger";
     case "Pending":
       return "warning";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 
@@ -81,14 +81,14 @@ export function certificationStatusLabel(value: string): string {
 export function certificationTone(value: string): LeaveTone {
   switch (value) {
     case "Received":
-      return "active";
+      return "success";
     case "Overdue":
     case "Insufficient":
-      return "inactive";
+      return "danger";
     case "Requested":
       return "warning";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 

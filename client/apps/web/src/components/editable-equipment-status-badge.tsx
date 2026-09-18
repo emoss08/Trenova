@@ -19,9 +19,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 
 const EQUIPMENT_STATUS_VARIANTS: Record<EquipmentStatus, BadgeVariant> = {
-  Available: "active",
-  AtMaintenance: "purple",
-  OutOfService: "inactive",
+  Available: "success",
+  AtMaintenance: "info",
+  OutOfService: "danger",
   Sold: "warning",
 };
 

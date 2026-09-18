@@ -28,7 +28,7 @@ export function getColumns(t: TranslateFn): ColumnDef<JurisdictionRuleOverride>[
         return applied.length > 0 ? (
           <div className="flex flex-wrap gap-1">
             {applied.map((label) => (
-              <Badge key={label} variant="outline">
+              <Badge key={label} variant="neutral" appearance="outline">
                 {label}
               </Badge>
             ))}

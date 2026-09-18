@@ -270,7 +270,7 @@ export function InvoiceApprovalPage() {
                       </p>
                     </div>
                     <div className="mt-1.5 flex items-center gap-1.5">
-                      <Badge variant="secondary">{KIND_LABELS[row.kind]}</Badge>
+                      <Badge variant="neutral">{KIND_LABELS[row.kind]}</Badge>
                       <span className="text-2xs text-muted-foreground">
                         {row.submittedByName || t("Unknown")}
                       </span>
@@ -371,7 +371,7 @@ function ApprovalDetail({
 
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="warning">{t("Pending Approval")}</Badge>
-        <Badge variant="secondary">{KIND_LABELS[selectedRow.kind]}</Badge>
+        <Badge variant="neutral">{KIND_LABELS[selectedRow.kind]}</Badge>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-2">
@@ -441,7 +441,7 @@ function ApprovalDetail({
                   <Badge variant="info">{t("Replacement Review")}</Badge>
                 ) : null}
                 {selectedRow.wouldCreateUnappliedCredit ? (
-                  <Badge variant="orange">{t("Unapplied Credit")}</Badge>
+                  <Badge variant="warning">{t("Unapplied Credit")}</Badge>
                 ) : null}
               </div>
             ) : null}

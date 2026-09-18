@@ -67,9 +67,9 @@ export function JournalEntryPostingCard({
         >
           {entry.entryNumber}
         </Link>
-        <Badge variant="outline">{entry.entryType}</Badge>
+        <Badge variant="neutral" appearance="outline">{entry.entryType}</Badge>
         <AccountingStatusBadge status={entry.status} />
-        {entry.isReversal ? <Badge variant="orange">{t("Reversal")}</Badge> : null}
+        {entry.isReversal ? <Badge variant="warning">{t("Reversal")}</Badge> : null}
         {!isBalanced ? (
           <span className="inline-flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
             <TriangleAlertIcon className="size-3" />

@@ -87,7 +87,7 @@ function UsageChip({
     <HoverCard>
       <HoverCardTrigger
         render={
-          <Badge variant={data.inUse ? "info" : "outline"} className="gap-1 text-xs">
+          <Badge variant={data.inUse ? "info" : "neutral"} className="gap-1 text-xs">
             <UsersIcon className="size-3" />
             {data.inUse ? t("In use ({0})", total) : t("Not in use")}
           </Badge>
@@ -131,7 +131,7 @@ function ScenarioBadge({ summary }: { summary: ScenarioSummary }) {
       <TooltipTrigger
         render={
           <Badge
-            variant={allPassing ? "active" : "inactive"}
+            variant={allPassing ? "success" : "danger"}
             className={cn("gap-1 text-xs", (summary.isStale || summary.isPending) && "opacity-60")}
           >
             <FlaskConicalIcon className="size-3" />
@@ -222,7 +222,7 @@ export function StudioHeader({
               <ColorOptionValue color={statusChoice.color} value={statusChoice.label} />
             )}
             {template?.currentVersionNumber != null && (
-              <Badge variant="outline" className="font-mono text-xs">
+              <Badge variant="neutral" appearance="outline" className="font-mono text-xs">
                 {t("v{0}", template.currentVersionNumber)}
               </Badge>
             )}

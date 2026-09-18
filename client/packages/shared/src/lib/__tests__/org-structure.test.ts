@@ -55,10 +55,10 @@ describe("delegationState", () => {
 
 describe("delegationStateTone", () => {
   it("grades the four states", () => {
-    expect(delegationStateTone("active")).toBe("active");
-    expect(delegationStateTone("revoked")).toBe("inactive");
+    expect(delegationStateTone("active")).toBe("success");
+    expect(delegationStateTone("revoked")).toBe("danger");
     expect(delegationStateTone("scheduled")).toBe("warning");
-    expect(delegationStateTone("ended")).toBe("secondary");
+    expect(delegationStateTone("ended")).toBe("neutral");
   });
 });
 

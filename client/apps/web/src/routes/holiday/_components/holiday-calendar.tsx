@@ -413,13 +413,13 @@ function EntryRow({
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {entry.recursAnnually ? (
-          <Badge variant="outline" className="gap-1 px-1.5 py-0 text-[10px]">
+          <Badge variant="neutral" appearance="outline" className="gap-1 px-1.5 py-0 text-[10px]">
             <RepeatIcon className="size-3" />
             {t("Every year")}
           </Badge>
         ) : null}
         <Badge
-          variant="outline"
+          variant="neutral" appearance="outline"
           className={cn(
             "px-1.5 py-0 text-[10px]",
             isBlackout

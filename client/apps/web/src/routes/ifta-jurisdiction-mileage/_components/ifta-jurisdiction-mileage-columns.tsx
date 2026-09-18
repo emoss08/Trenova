@@ -23,9 +23,9 @@ const LOADED_OPTIONS = [
 ] satisfies ReadonlyArray<GenericSelectOption<boolean>>;
 
 const SOURCE_VARIANTS: Record<IftaMileageSource, BadgeVariant> = {
-  Manual: "purple",
+  Manual: "info",
   RouteCalculation: "info",
-  Telematics: "secondary",
+  Telematics: "neutral",
 };
 
 export function getColumns(

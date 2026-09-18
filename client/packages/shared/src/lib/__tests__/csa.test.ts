@@ -71,10 +71,10 @@ describe("trendDirection", () => {
 
 describe("safetyRatingTone", () => {
   it("grades the four ratings", () => {
-    expect(safetyRatingTone("Excellent")).toBe("active");
-    expect(safetyRatingTone("AtRisk")).toBe("inactive");
+    expect(safetyRatingTone("Excellent")).toBe("success");
+    expect(safetyRatingTone("AtRisk")).toBe("danger");
     expect(safetyRatingTone("Watch")).toBe("warning");
-    expect(safetyRatingTone("Good")).toBe("secondary");
+    expect(safetyRatingTone("Good")).toBe("neutral");
   });
 });
 

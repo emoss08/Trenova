@@ -495,7 +495,7 @@ function WidgetCard({
               <span className="min-w-0 flex-1 truncate text-xs font-medium">{t(option.label)}</span>
               {onCanvas > 0 && (
                 <Badge
-                  variant="outline"
+                  variant="neutral" appearance="outline"
                   className="border-border/70 h-4 shrink-0 border px-1 text-[9px]"
                 >
                   {onCanvas > 1 ? t("{0}× on canvas", onCanvas) : t("On canvas")}

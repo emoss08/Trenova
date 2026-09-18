@@ -58,7 +58,7 @@ describe("EDI inspector context", () => {
     const context = buildMessageInspectorContext(messageInspection());
 
     expect(context.title).toBe("Message 0003");
-    expect(context.status).toEqual({ label: "Generated", variant: "active" });
+    expect(context.status).toEqual({ label: "Generated", variant: "success" });
     expect(context.payload?.filename).toBe("edi-message-msg_1.json");
     expect(context.provenanceRows).toContainEqual(["Message ID", "msg_1"]);
     expect(context.controlRows[2]).toEqual(["Transaction Control Number", "0003"]);

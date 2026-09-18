@@ -58,7 +58,7 @@ describe("dutyStatusInfo", () => {
 
   it("title-cases unknown statuses", () => {
     const info = dutyStatusInfo("waitingAtShipper");
-    expect(info.variant).toBe("secondary");
+    expect(info.variant).toBe("neutral");
     expect(info.label.toLowerCase()).toContain("waiting");
   });
 

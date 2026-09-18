@@ -203,7 +203,7 @@ function FixtureForm({
             )}
             action={
               lineCount > 0 ? (
-                <Badge variant="outline" className="font-normal">
+                <Badge variant="neutral" appearance="outline" className="font-normal">
                   {t("{0, plural, one {# line} other {# lines}}", lineCount)}
                 </Badge>
               ) : undefined
@@ -257,7 +257,7 @@ function FixtureForm({
               {pageFields.length > 0 && (
                 <div className="mb-2 flex flex-wrap gap-1">
                   {pageFields.map((pf, idx) => (
-                    <Badge key={pf.id} variant="secondary" className="font-mono text-xs">
+                    <Badge key={pf.id} variant="neutral" className="font-mono text-xs">
                       {t("Page {0}", pf.pageNumber || idx + 1)}
                     </Badge>
                   ))}

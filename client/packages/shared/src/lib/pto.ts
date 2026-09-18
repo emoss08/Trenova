@@ -2,7 +2,7 @@ import type { PTOStatus, PTOType } from "../types/worker";
 
 export type PTOTypeMeta = {
   label: string;
-  badgeVariant: "purple" | "inactive" | "info" | "active" | "pink" | "teal" | "secondary";
+  badgeVariant: "info" | "danger" | "success" | "neutral";
   barClass: string;
   dotClass: string;
   accentClass: string;
@@ -11,14 +11,14 @@ export type PTOTypeMeta = {
 export const PTO_TYPE_META: Record<PTOType, PTOTypeMeta> = {
   Vacation: {
     label: "Vacation",
-    badgeVariant: "purple",
+    badgeVariant: "info",
     barClass: "bg-purple-600/80 text-white",
     dotClass: "bg-purple-600",
     accentClass: "from-purple-600 to-purple-600/5",
   },
   Sick: {
     label: "Sick",
-    badgeVariant: "inactive",
+    badgeVariant: "danger",
     barClass: "bg-red-600/80 text-white",
     dotClass: "bg-red-600",
     accentClass: "from-red-600 to-red-600/5",
@@ -32,28 +32,28 @@ export const PTO_TYPE_META: Record<PTOType, PTOTypeMeta> = {
   },
   Bereavement: {
     label: "Bereavement",
-    badgeVariant: "active",
+    badgeVariant: "success",
     barClass: "bg-green-600/80 text-white",
     dotClass: "bg-green-600",
     accentClass: "from-green-600 to-green-600/5",
   },
   Maternity: {
     label: "Maternity",
-    badgeVariant: "pink",
+    badgeVariant: "info",
     barClass: "bg-pink-600/80 text-white",
     dotClass: "bg-pink-600",
     accentClass: "from-pink-600 to-pink-600/5",
   },
   Paternity: {
     label: "Paternity",
-    badgeVariant: "teal",
+    badgeVariant: "info",
     barClass: "bg-teal-600/80 text-white",
     dotClass: "bg-teal-600",
     accentClass: "from-teal-600 to-teal-600/5",
   },
   Personal: {
     label: "Personal",
-    badgeVariant: "secondary",
+    badgeVariant: "neutral",
     barClass: "bg-slate-500/80 text-white",
     dotClass: "bg-slate-500",
     accentClass: "from-slate-500 to-slate-500/5",

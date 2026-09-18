@@ -139,10 +139,10 @@ export type TimesheetTone = {
 };
 
 const TIMESHEET_TONES: Record<string, TimesheetTone> = {
-  Open: { variant: "secondary", label: "Open" },
+  Open: { variant: "neutral", label: "Open" },
   Submitted: { variant: "warning", label: "Awaiting approval" },
-  Approved: { variant: "active", label: "Approved" },
-  Rejected: { variant: "inactive", label: "Sent back" },
+  Approved: { variant: "success", label: "Approved" },
+  Rejected: { variant: "danger", label: "Sent back" },
   Locked: { variant: "info", label: "Paid" },
 };
 
