@@ -116,6 +116,7 @@ function StopMarker({
   };
   return (
     <div className="relative">
+      {/* design-tokens-ignore: a map pin sits on satellite imagery, not on a themed surface, so its halo stays absolute white. */}
       <div className={cn("size-2.5 rounded-full ring-2 ring-white", color(point.stop.type))} />
       {activeIdx === idx && (
         <div className="border-border bg-popover text-2xs text-popover-foreground absolute -top-1.5 left-1/2 z-1 -translate-x-1/2 -translate-y-full rounded border px-2 py-1 whitespace-nowrap shadow-md">

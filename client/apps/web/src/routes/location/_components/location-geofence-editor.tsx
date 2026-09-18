@@ -310,6 +310,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
                   }}
                 >
                   <div
+                    // design-tokens-ignore: a geofence handle sits on map imagery, not on a themed surface.
                     className="size-3 rounded-full border-2 border-white shadow-md ring-1 ring-black/20"
                     style={{ backgroundColor: SHAPE_COLORS.center }}
                   />

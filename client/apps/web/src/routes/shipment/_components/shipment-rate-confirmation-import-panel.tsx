@@ -441,7 +441,7 @@ export function ShipmentRateConfirmationImportPanel({
                       <div
                         className={
                           isComplete
-                            ? "flex size-6 items-center justify-center rounded-full bg-success text-white"
+                            ? "flex size-6 items-center justify-center rounded-full bg-success text-foreground-on-solid"
                             : isActive
                               ? "bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full"
                               : "bg-muted text-muted-foreground flex size-6 items-center justify-center rounded-full"

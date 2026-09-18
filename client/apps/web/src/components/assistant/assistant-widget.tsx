@@ -92,7 +92,7 @@ export function AssistantWidget() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
               onClick={() => setExpanded(false)}
-              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+              className="fixed inset-0 z-40 bg-scrim backdrop-blur-[2px]"
             />
           )}
           <m.section

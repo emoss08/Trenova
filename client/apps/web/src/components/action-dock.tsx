@@ -96,4 +96,5 @@ export function ActionDockIndicator({
  * surface, where the standard outline button would vanish.
  */
 export const ACTION_DOCK_SECONDARY_BUTTON =
+  // design-tokens-ignore: a glass overlay tints the surface behind it, so it is a translucent white and black rather than a theme colour.
   "border-none bg-white/20 text-background hover:bg-white/30 hover:text-background dark:bg-black/20 dark:hover:bg-black/30";

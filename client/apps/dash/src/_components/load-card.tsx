@@ -214,7 +214,7 @@ export function StopTimeline({
                     "mt-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors disabled:opacity-60",
                     action === "Arrive"
                       ? "bg-primary text-primary-foreground"
-                      : "bg-success text-white",
+                      : "bg-success text-foreground-on-solid",
                   )}
                 >
                   {checkIn.isPending

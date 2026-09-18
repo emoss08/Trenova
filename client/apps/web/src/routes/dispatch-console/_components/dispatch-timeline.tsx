@@ -36,11 +36,11 @@ const MIN_SPAN_SECONDS = 1800;
 const NOW_TICK_MS = 60_000;
 
 const UNCOVERED_TONE: Record<UrgencyBucket, string> = {
-  Late: "bg-destructive/75 text-white hover:bg-destructive/90",
+  Late: "bg-destructive/75 text-foreground-on-solid hover:bg-destructive/90",
   Now: "bg-warning/80 text-warning-foreground hover:bg-warning",
-  Today: "bg-info/70 text-white hover:bg-info/85",
-  Tomorrow: "bg-accent-violet/65 text-white hover:bg-accent-violet/80",
-  Planned: "bg-muted-foreground/40 text-white hover:bg-muted-foreground/55",
+  Today: "bg-info/70 text-foreground-on-solid hover:bg-info/85",
+  Tomorrow: "bg-accent-violet/65 text-foreground-on-solid hover:bg-accent-violet/80",
+  Planned: "bg-muted-foreground/40 text-foreground-on-solid hover:bg-muted-foreground/55",
 };
 
 type MoveSpan = {

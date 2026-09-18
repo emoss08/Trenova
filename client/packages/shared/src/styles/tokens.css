@@ -73,8 +73,10 @@
   --surface-active: oklch(0.945 0 0);
   --surface-selected: oklch(0.955 0.012 263);
 
-  /* The scrim behind dialogs and sheets. */
+  /* The dim behind an overlay. Two weights: the standard one, and the light
+     one the blur-backed dialogs use, where the blur does most of the work. */
   --scrim: oklch(0.145 0 0 / 0.45);
+  --scrim-subtle: oklch(0.145 0 0 / 0.1);
 
   /* Content --------------------------------------------------------------
      Four weights. `subtle` is the lightest text that still clears AA on
@@ -290,6 +292,7 @@
   --surface-selected: oklch(0.25 0.03 263);
 
   --scrim: oklch(0 0 0 / 0.7);
+  --scrim-subtle: oklch(0 0 0 / 0.35);
 
   --foreground: oklch(1 0 0);
   --foreground-muted: oklch(0.78 0 0);
@@ -551,6 +554,7 @@
   --color-surface-active: var(--surface-active);
   --color-surface-selected: var(--surface-selected);
   --color-scrim: var(--scrim);
+  --color-scrim-subtle: var(--scrim-subtle);
 
   /* Content */
   --color-foreground: var(--foreground);

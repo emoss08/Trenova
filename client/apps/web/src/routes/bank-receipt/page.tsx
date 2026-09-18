@@ -452,7 +452,7 @@ function SuggestionTable({
                 <Button
                   size="xs"
                   type="button"
-                  className="bg-success text-white hover:bg-success"
+                  className="bg-success text-foreground-on-solid hover:bg-success"
                   onClick={() => onMatch(suggestion.customerPaymentId)}
                   disabled={isMatching}
                 >

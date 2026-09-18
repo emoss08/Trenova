@@ -164,7 +164,7 @@ export function CommentsToolbar({
                 <ListFilterIcon className="size-3.5" />
                 {t("Filter")}
                 {activeCount > 0 && (
-                  <span className="bg-brand text-2xs rounded-full px-1.5 font-medium text-white">
+                  <span className="bg-brand text-2xs rounded-full px-1.5 font-medium text-foreground-on-solid">
                     {activeCount}
                   </span>
                 )}

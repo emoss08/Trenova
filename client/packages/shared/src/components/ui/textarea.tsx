@@ -127,7 +127,7 @@ function AITextarea({ className, isInvalid, onChange, ...props }: TextareaProps)
                     className={cn(
                       "inline-flex items-center gap-1.5",
                       "rounded-md border px-2 py-0.5 text-xs font-medium shadow-xs",
-                      "animate-fadeIn transition-colors duration-200 hover:bg-black/5 dark:hover:bg-white/5",
+                      "animate-fadeIn transition-colors duration-200 hover:bg-surface-hover",
                       currentItem.colors.bg,
                       currentItem.colors.border,
                     )}
@@ -155,7 +155,7 @@ function AITextarea({ className, isInvalid, onChange, ...props }: TextareaProps)
           >
             <div className="flex items-center gap-1.5">
               {icon}
-              <span className="whitespace-nowrap text-black/70 dark:text-white/70">{text}</span>
+              <span className="whitespace-nowrap text-foreground-muted">{text}</span>
             </div>
           </button>
         ))}

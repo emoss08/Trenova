@@ -604,7 +604,7 @@ function StopTimelineItem({
         <div
           className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full ${stopStatusBgColor[status]}`}
         >
-          {createElement(statusIcon, { className: "size-3 text-white" })}
+          {createElement(statusIcon, { className: "size-3 text-foreground-on-solid" })}
         </div>
         {hasErrors && errorMessages && errorMessages.length > 0 && (
           <Tooltip>

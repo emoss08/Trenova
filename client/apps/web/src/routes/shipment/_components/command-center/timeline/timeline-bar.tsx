@@ -145,8 +145,8 @@ export function TimelineBarItem({
             className={cn(
               "font-table ml-auto flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-3xs font-semibold tabular-nums",
               bar.dwell.severity === "critical"
-                ? "bg-destructive/90 text-white"
-                : "bg-warning/90 text-white",
+                ? "bg-destructive/90 text-foreground-on-solid"
+                : "bg-warning/90 text-foreground-on-solid",
             )}
           >
             <TimerIcon className="size-2.5 animate-pulse" />

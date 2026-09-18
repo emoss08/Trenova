@@ -154,7 +154,7 @@ export function InvoiceAdjustmentTypeSelector({
                   isSelected ? "border-brand bg-brand" : "border-muted-foreground/30",
                 )}
               >
-                {isSelected ? <div className="size-1.5 rounded-full bg-white" /> : null}
+                {isSelected ? <div className="size-1.5 rounded-full bg-foreground-on-solid" /> : null}
               </div>
             </button>
           );

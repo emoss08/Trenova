@@ -67,7 +67,7 @@ export function RecommendedBadge({
       {/* Main badge */}
       <m.div
         className={cn(
-          "relative overflow-hidden rounded px-2 text-xs font-semibold text-white select-none",
+          "relative overflow-hidden rounded px-2 text-xs font-semibold text-foreground-on-solid select-none",
           className,
         )}
         initial={{ scale: 0.9, opacity: 0 }}

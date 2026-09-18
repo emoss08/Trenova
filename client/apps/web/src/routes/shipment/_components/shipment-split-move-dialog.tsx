@@ -108,7 +108,7 @@ function MiniStopRow({
     <div className="relative flex items-start gap-3">
       <div className="flex flex-col items-center">
         <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent-violet">
-          <div className="size-2 rounded-full bg-white" />
+          <div className="size-2 rounded-full bg-foreground-on-solid" />
         </div>
         {showConnector && <div className="mt-0.5 h-12 w-0.5 bg-accent-violet" />}
       </div>

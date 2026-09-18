@@ -359,8 +359,8 @@ function MonthCard({
               className={cn(
                 "mx-auto flex size-6 items-center justify-center rounded-full text-xs tabular-nums transition-colors",
                 kind === "Holiday" &&
-                  "bg-success font-semibold text-white hover:bg-success",
-                kind === "Blackout" && "bg-danger font-semibold text-white hover:bg-danger",
+                  "bg-success font-semibold text-foreground-on-solid hover:bg-success",
+                kind === "Blackout" && "bg-danger font-semibold text-foreground-on-solid hover:bg-danger",
                 !kind && "text-foreground/80 hover:bg-muted",
                 todayKey === key && !kind && "ring-primary ring-1",
               )}

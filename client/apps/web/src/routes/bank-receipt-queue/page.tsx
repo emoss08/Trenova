@@ -506,7 +506,7 @@ function WorkItemDetail({
                   <Button
                     size="sm"
                     type="button"
-                    className="bg-success text-white hover:bg-success"
+                    className="bg-success text-foreground-on-solid hover:bg-success"
                     onClick={() => {
                       setShowResolveForm(true);
                       setShowDismissForm(false);
@@ -555,7 +555,7 @@ function WorkItemDetail({
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
-                      className="bg-success text-white hover:bg-success"
+                      className="bg-success text-foreground-on-solid hover:bg-success"
                       type="button"
                       disabled={!resolutionType || resolveMutation.isPending}
                       onClick={() =>

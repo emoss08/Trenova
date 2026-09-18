@@ -110,7 +110,7 @@ function HeatCell({ value, max, origin, destination, total }: CellProps) {
               "border-border-2 flex h-6.5 items-center justify-center rounded-[3px] border font-mono text-xs tabular-nums",
               value === 0 && "text-muted-foreground",
               value > 0 && !isHighIntensity && "text-foreground",
-              isHighIntensity && "text-white",
+              isHighIntensity && "text-foreground-on-solid",
             )}
             style={{
               background:

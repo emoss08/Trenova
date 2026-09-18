@@ -126,7 +126,7 @@ function StepDot({ state }: { state: StepState }) {
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 500, damping: 25 }}
           >
-            <CheckIcon className="size-2.5 stroke-[3] text-white" />
+            <CheckIcon className="size-2.5 stroke-[3] text-foreground-on-solid" />
           </m.div>
         )}
         {state === "active" && (
