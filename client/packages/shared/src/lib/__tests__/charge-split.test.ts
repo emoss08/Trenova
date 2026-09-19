@@ -7,7 +7,7 @@ import {
   summarizeBillingByPayer,
   toChargeAllocationInput,
 } from "@trenova/shared/lib/charge-split";
-import type { ChargeAllocation } from "@trenova/shared/types/shipment";
+import type { ChargeAllocation, Shipment } from "@trenova/shared/types/shipment";
 import { describe, expect, it } from "vitest";
 
 function row(
@@ -222,7 +222,7 @@ describe("nestChargeAllocations / toChargeAllocationInput", () => {
       additionalCharges: [
         { id: "ac_1", allocations: [] },
         { id: undefined, allocations: [row({ billToCustomerId: "c", percent: 100 })] },
-      ] as never,
+      ] as NonNullable<Shipment["additionalCharges"]>,
     });
     expect(nested.freightAllocations).toEqual([freight]);
     expect(nested.additionalCharges[0].allocations).toEqual([forCharge]);

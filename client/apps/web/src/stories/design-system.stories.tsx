@@ -3,6 +3,14 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Switch } from "@trenova/shared/components/ui/switch";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@trenova/shared/components/ui/table";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { BADGE_ACCENTS, BADGE_TONES } from "@trenova/shared/types/badge";
 import type { BadgeAccent, BadgeTone } from "@trenova/shared/types/badge";
@@ -387,4 +395,98 @@ export const Focus: Story = {
       await expect(getComputedStyle(invalid).boxShadow).not.toBe("none");
     });
   },
+};
+
+/* --------------------------------------------------------- shape and rhythm */
+
+/* The three things that changed shape rather than colour. A radius story is
+   worth having because the collapse from seven values to two is invisible in a
+   diff — `rounded-2xl` still reads as `rounded-2xl` at every call site, and only
+   the rendered corner shows that it now lands on the surface radius. */
+
+export const Radius: Story = {
+  render: () => (
+    <Grid>
+      <Section
+        title="Radius"
+        hint="Two values and a pill. rounded-sm/md resolve to --radius-control, rounded-lg through 4xl to --radius-surface."
+      >
+        <div className="flex flex-wrap items-end gap-4">
+          {[
+            { cls: "rounded-sm", note: "control" },
+            { cls: "rounded-md", note: "control" },
+            { cls: "rounded-lg", note: "surface" },
+            { cls: "rounded-xl", note: "surface" },
+            { cls: "rounded-2xl", note: "surface" },
+            { cls: "rounded-full", note: "pill" },
+          ].map(({ cls, note }) => (
+            <div key={cls} className="flex flex-col items-center gap-1.5">
+              <div className={`bg-sunken border-border size-16 border ${cls}`} />
+              <code className="text-2xs">{cls}</code>
+              <span className="text-foreground-subtle text-3xs uppercase">{note}</span>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        title="Weight"
+        hint="400 body, 500 label, 600 heading. font-medium was written 1,794 times against 94 font-normal, so nothing could be emphasised by weight."
+      >
+        <div className="flex flex-col gap-1">
+          <p className="text-base font-semibold">Heading — 600, card and section titles</p>
+          <p className="text-base font-medium">Label — 500, column heads, field labels, badges</p>
+          <p className="text-base font-normal">Body — 400, cells and values</p>
+        </div>
+      </Section>
+    </Grid>
+  ),
+};
+
+export const Density: Story = {
+  render: () => (
+    <Grid>
+      <Section
+        title="Density"
+        hint="Row height is a token, not whatever padding a cell carried. The compact table below repoints --row-h; nothing else differs."
+      >
+        <div className="flex flex-wrap gap-6">
+          {[
+            { label: "comfortable — --row-h, 30px", cls: "" },
+            { label: "compact — --row-h-compact, 26px", cls: "[--row-h:var(--row-h-compact)]" },
+          ].map(({ label, cls }) => (
+            <div key={label} className="flex flex-col gap-2">
+              <span className="text-foreground-subtle text-2xs uppercase">{label}</span>
+              <div className="border-border overflow-hidden rounded-lg border">
+                <Table className={cls}>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Pro</TableHead>
+                      <TableHead>Lane</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {[
+                      { pro: "118-0224", lane: "Laredo → Dallas", tone: "info" as const, at: "In transit" },
+                      { pro: "118-0231", lane: "Dallas → Memphis", tone: "warning" as const, at: "Detained" },
+                      { pro: "118-0245", lane: "Memphis → Atlanta", tone: "success" as const, at: "Delivered" },
+                    ].map((row) => (
+                      <TableRow key={row.pro}>
+                        <TableCell className="font-mono tabular-nums">{row.pro}</TableCell>
+                        <TableCell>{row.lane}</TableCell>
+                        <TableCell>
+                          <Badge variant={row.tone}>{row.at}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+    </Grid>
+  ),
 };

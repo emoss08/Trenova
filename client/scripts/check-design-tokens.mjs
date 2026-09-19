@@ -23,6 +23,8 @@ import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { glob } from "node:fs/promises";
 
+import { auditPalette } from "./palette-audit.mjs";
+
 const ROOT = new URL("..", import.meta.url).pathname;
 const GITHUB = process.argv.includes("--format=github");
 
@@ -153,13 +155,20 @@ async function auditTokenLayer() {
     const names = (block) =>
       new Set([...block.matchAll(/^\s{2}(--[a-z0-9-]+):/gm)].map((m) => m[1]));
     const dark = names(stripped.slice(darkAt));
-    const themeIndependent = /^--(hue-|radius$|ring-width|ring-opacity|kpi-|elevation-flat)/;
+    // Geometry and the hue plan are the same in both themes by definition; a
+    // corner radius does not get darker.
+    const themeIndependent =
+      /^--(hue-|radius|ring-width|ring-opacity|kpi-|row-|cell-|elevation-flat)/;
     for (const name of names(stripped.slice(0, darkAt))) {
       if (!dark.has(name) && !themeIndependent.test(name)) {
         problems.push(`${name} is defined for light only; a themed token needs a value in .dark too.`);
       }
     }
   }
+
+  // The colours themselves: AA on every pair the design leans on, every value
+  // inside sRGB, and the three hues around the brand still apart.
+  problems.push(...auditPalette(src));
 
   // Compile for real and confirm each declared utility reaches the output.
   const names = declaredUtilities(src);
