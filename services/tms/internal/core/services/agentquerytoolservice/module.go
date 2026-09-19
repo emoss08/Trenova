@@ -8,6 +8,7 @@ var Module = fx.Module("agent-query-tool-service",
 		fx.Annotate(newSearchShipmentsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newGetWorkerTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newSearchWorkerTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(newListExpiringCredentialsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		NewRegistry,
 	),
 )

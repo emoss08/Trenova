@@ -10,6 +10,7 @@ const TOOL_TITLES: Record<string, string> = {
   search_shipments: "Search shipments",
   get_worker: "Look up driver",
   search_worker: "Search drivers",
+  list_expiring_credentials: "Check expiring credentials",
   flag_for_manual_review: "Flag for manual review",
   request_missing_docs: "Request missing documents",
   attach_document_to_bqi: "Attach document to billing item",

@@ -584,6 +584,12 @@ func (r *repository) ListExpiring(
 			true,
 		)
 	}
+	if len(req.CredentialTypeCodes) > 0 {
+		q = q.Where(
+			buncolgen.WorkerCredentialTypeColumns.Code.WithAlias(typeAlias).In(),
+			bun.In(req.CredentialTypeCodes),
+		)
+	}
 
 	if err := q.Scan(ctx); err != nil {
 		r.l.Error("failed to list expiring worker credentials", zap.Error(err))

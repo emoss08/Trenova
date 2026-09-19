@@ -79,6 +79,11 @@ type ListExpiringWorkerCredentialsRequest struct {
 	Limit       int                   `json:"limit"`
 	// RequiredOnly restricts the walk to credential types flagged required.
 	RequiredOnly bool `json:"requiredOnly"`
+	// CredentialTypeCodes narrows the walk to those credential types, by code.
+	// It belongs in the query rather than in the caller: taking a page of every
+	// expiring credential and keeping the medical cards among them reports two
+	// when there are forty, and nothing in the result says so.
+	CredentialTypeCodes []string `json:"credentialTypeCodes"`
 }
 
 type PatchProfileCredentialFieldRequest struct {

@@ -157,6 +157,16 @@ func requirePulid(params map[string]any, key string) (pulid.ID, error) {
 	return id, nil
 }
 
+// optionalBool reads a flag the caller may leave out. Anything that is not a
+// literal true is false, including a model that helpfully sends the string
+// "true" — a flag that silently widens a compliance query on a type confusion
+// is worse than one that stays narrow.
+func optionalBool(params map[string]any, key string) bool {
+	value, _ := params[key].(bool)
+
+	return value
+}
+
 func optionalInt(params map[string]any, key string, fallback int) int {
 	raw, ok := params[key]
 	if !ok {
