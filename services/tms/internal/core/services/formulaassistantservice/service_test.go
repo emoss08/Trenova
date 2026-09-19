@@ -2,6 +2,7 @@ package formulaassistantservice
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/ailog"
@@ -41,6 +42,28 @@ func (s *stubCompletion) StreamChat(
 	serviceports.ChatStreamSink,
 ) (*serviceports.ChatCompletionResult, error) {
 	return nil, nil
+}
+
+// The formula assistant runs its calls inline; it never defers one. The stub
+// still has to satisfy the whole port, so these report plainly that there is
+// nothing to poll rather than returning a zero submission a caller would wait on.
+func (s *stubCompletion) SubmitBackground(
+	ctx context.Context,
+	req *serviceports.StructuredCompletionRequest,
+) (*serviceports.BackgroundSubmission, error) {
+	result, err := s.CompleteStructured(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &serviceports.BackgroundSubmission{Result: result}, nil
+}
+
+func (s *stubCompletion) PollBackground(
+	context.Context,
+	*serviceports.BackgroundPollRequest,
+) (*serviceports.BackgroundOutcome, error) {
+	return nil, errors.New("the formula assistant runs inline and issues no handle to poll")
 }
 
 func (s *stubCompletion) CompleteStructured(
@@ -281,15 +304,19 @@ func TestLogCallRecordsUsage(t *testing.T) {
 		"shipment",
 		"per mile",
 		&serviceports.StructuredCompletionResult{
-			Text:         "{}",
-			InputTokens:  120,
-			OutputTokens: 30,
+			Text:            "{}",
+			ModelIdentifier: "qwen2.5-coder:32b",
+			InputTokens:     120,
+			OutputTokens:    30,
 		},
 	)
 
 	require.Len(t, aiLogRepo.created, 1)
 	entry := aiLogRepo.created[0]
-	assert.Equal(t, ailog.ModelClaudeOpus5, entry.Model)
+	// The log used to record a fixed constant, which said the same thing on
+	// every row and stopped being true the moment a second provider could serve
+	// the task. What ran is what the provider reported.
+	assert.Equal(t, ailog.Model("qwen2.5-coder:32b"), entry.Model)
 	assert.Equal(t, ailog.OperationFormulaGenerate, entry.Operation)
 	assert.Equal(t, 120, entry.PromptTokens)
 	assert.Equal(t, 30, entry.CompletionTokens)

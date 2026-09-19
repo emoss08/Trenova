@@ -225,10 +225,34 @@ func (a *Activities) SubmitAndAwaitDocumentAIExtractionActivity( //nolint:funlen
 
 		now := timeutils.NowUnix()
 		row.ResponseID = submission.ResponseID
+		row.ProviderID = submission.ProviderID
 		row.Model = submission.Model
 		row.SubmittedAt = &now
 		row.FailureCode = ""
 		row.FailureMessage = ""
+
+		// No configured provider could defer the call, so the router ran it
+		// inline and the answer is already here. Returning it completes the
+		// activity now rather than parking a row the poller can never resolve:
+		// there is no handle to poll, and the result cannot be asked for twice.
+		if submission.ExtractResult != nil {
+			row.Status = documentaiextraction.StatusCompleted
+			row.CompletedAt = &now
+			if _, err = a.aiExtractionRepo.Update(ctx, row); err != nil {
+				return nil, err
+			}
+
+			return &AsyncAIExtractionCompletion{
+				Model:           submission.Model,
+				ExtractedAt:     payload.ExtractedAt,
+				Status:          services.AIBackgroundExtractionStatusCompleted,
+				RawStatus:       "inline",
+				ExtractResult:   submission.ExtractResult,
+				SubmittedAt:     &now,
+				AcceptanceState: string(aiAcceptanceStatusAccepted),
+			}, nil
+		}
+
 		if _, err = a.aiExtractionRepo.Update(ctx, row); err != nil {
 			return nil, err
 		}
@@ -284,7 +308,7 @@ func (a *Activities) PollPendingDocumentAIExtractionsActivity( //nolint:gocognit
 				Status:          services.AIBackgroundExtractionStatusFailed,
 				RawStatus:       "expired",
 				FailureCode:     "ai_extract_timeout",
-				FailureMessage:  "OpenAI background extraction exceeded the maximum wait time",
+				FailureMessage:  "Background AI extraction exceeded the maximum wait time",
 				SubmittedAt:     row.SubmittedAt,
 				LastPolledAt:    row.LastPolledAt,
 				AcceptanceState: string(aiAcceptanceStatusRejected),
@@ -311,6 +335,7 @@ func (a *Activities) PollPendingDocumentAIExtractionsActivity( //nolint:gocognit
 				},
 				DocumentID: row.DocumentID,
 				ResponseID: row.ResponseID,
+				ProviderID: row.ProviderID,
 			},
 		)
 		if pollErr != nil {

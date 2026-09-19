@@ -470,8 +470,11 @@ func (s *Service) logCall(
 			hex.EncodeToString(promptHash[:]),
 			promptPreview,
 		),
-		Response:         "sha256=" + hex.EncodeToString(responseHash[:]),
-		Model:            ailog.ModelClaudeOpus5,
+		Response: "sha256=" + hex.EncodeToString(responseHash[:]),
+		// The model is what the provider reported, not a constant. Several
+		// providers can serve this task now, so a fixed name would make every
+		// row claim a model that may never have run.
+		Model:            ailog.Model(result.ModelIdentifier),
 		Operation:        operation,
 		Object:           object,
 		PromptTokens:     result.InputTokens,

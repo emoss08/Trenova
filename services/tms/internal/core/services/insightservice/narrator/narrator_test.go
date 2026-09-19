@@ -386,3 +386,25 @@ func TestNarrate_KeepsTheDetectorHeadlineWhenTheModelReturnsNone(t *testing.T) {
 
 	assert.Equal(t, finding.Headline, result[finding.DedupeKey].Headline)
 }
+
+// These two satisfy the completion port; the narrator's stub runs every call inline and
+// never defers one, so a submission carries its answer and there is no handle
+// to poll.
+func (c *stubCompletion) SubmitBackground(
+	ctx context.Context,
+	req *services.StructuredCompletionRequest,
+) (*services.BackgroundSubmission, error) {
+	result, err := c.CompleteStructured(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &services.BackgroundSubmission{Result: result}, nil
+}
+
+func (c *stubCompletion) PollBackground(
+	context.Context,
+	*services.BackgroundPollRequest,
+) (*services.BackgroundOutcome, error) {
+	return nil, errors.New("this completion runs inline and issues no handle to poll")
+}

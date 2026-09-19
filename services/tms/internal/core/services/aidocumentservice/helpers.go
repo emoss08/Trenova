@@ -1,11 +1,9 @@
-package openaidocumentservice
+package aidocumentservice
 
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -24,13 +22,14 @@ func convertExtractResponse(parsed *extractResponse) *serviceports.AIExtractResu
 		return result
 	}
 
-	result.DocumentKind = parsed.DocumentKind
-	result.OverallConfidence = parsed.OverallConfidence
-	result.ReviewStatus = parsed.ReviewStatus
+	result.DocumentKind = strings.TrimSpace(parsed.DocumentKind)
+	result.OverallConfidence = clampAIConfidence(parsed.OverallConfidence)
+	result.ReviewStatus = normalizeReviewStatus(parsed.ReviewStatus)
 	result.MissingFields = parsed.MissingFields
 	result.Signals = parsed.Signals
 	result.Stops = parsed.Stops
 	result.Conflicts = parsed.Conflicts
+
 	for i := range parsed.Fields {
 		field := &parsed.Fields[i]
 		key := strings.TrimSpace(field.Key)
@@ -53,67 +52,23 @@ func convertExtractResponse(parsed *extractResponse) *serviceports.AIExtractResu
 	return result
 }
 
-func extractResponseText(envelope *responsesEnvelope) string {
-	if envelope == nil {
-		return ""
-	}
-	if strings.TrimSpace(envelope.OutputText) != "" {
-		return envelope.OutputText
-	}
-	for _, output := range envelope.Output {
-		for _, content := range output.Content {
-			if strings.TrimSpace(content.Text) != "" {
-				return content.Text
-			}
-		}
-	}
-	return ""
-}
-
-func errorCode(envelope *responsesEnvelope) string {
-	if envelope == nil || envelope.Error == nil {
-		return ""
-	}
-	return strings.TrimSpace(envelope.Error.Code)
-}
-
-func errorMessage(envelope *responsesEnvelope) string {
-	if envelope == nil || envelope.Error == nil {
-		return ""
-	}
-	return strings.TrimSpace(envelope.Error.Message)
-}
-
-func responseIncompleteReason(envelope *responsesEnvelope) string {
-	if envelope == nil || envelope.IncompleteDetails == nil {
-		return ""
-	}
-	return strings.TrimSpace(envelope.IncompleteDetails.Reason)
-}
-
-func incompleteFailureMessage(status, reason string) string {
-	if strings.TrimSpace(reason) == "" {
-		return ""
-	}
-
-	if strings.EqualFold(status, "incomplete") {
-		return fmt.Sprintf("AI background extraction ended incomplete: %s", reason)
-	}
-
-	return fmt.Sprintf("AI background extraction ended with status %s: %s", status, reason)
-}
-
 func firstNonEmpty(values ...string) string {
 	for _, value := range values {
 		if trimmed := strings.TrimSpace(value); trimmed != "" {
 			return trimmed
 		}
 	}
+
 	return ""
 }
 
+// redactPrompt keeps a document's text out of the AI log. The prompt is a
+// customer's rate confirmation; the log is read to audit what was asked, which
+// a hash and a short preview answer without copying the document into a second
+// table.
 func redactPrompt(systemPrompt, userPrompt string) string {
 	sum := sha256.Sum256([]byte(userPrompt))
+
 	return fmt.Sprintf(
 		"system=%q user_sha256=%s user_preview=%q",
 		systemPrompt,
@@ -124,6 +79,7 @@ func redactPrompt(systemPrompt, userPrompt string) string {
 
 func redactResponse(text string) string {
 	sum := sha256.Sum256([]byte(text))
+
 	return fmt.Sprintf(
 		"sha256=%s preview=%q",
 		hex.EncodeToString(sum[:]),
@@ -151,23 +107,6 @@ func clampAIConfidence(value float64) float64 {
 	if value > 1 {
 		return 1
 	}
-	return value
-}
 
-func isRetryableAIError(err error) bool {
-	if err == nil {
-		return false
-	}
-	if ae, ok := errors.AsType[*apiError](err); ok {
-		switch ae.StatusCode {
-		case http.StatusTooManyRequests,
-			http.StatusInternalServerError,
-			http.StatusBadGateway,
-			http.StatusServiceUnavailable,
-			http.StatusGatewayTimeout:
-			return true
-		}
-		return false
-	}
-	return strings.Contains(strings.ToLower(err.Error()), "timeout")
+	return value
 }

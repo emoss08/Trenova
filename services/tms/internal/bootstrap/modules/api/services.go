@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentproposalservice"
 	"github.com/emoss08/trenova/internal/core/services/agentrunservice"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
+	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/aiproviderservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
@@ -115,7 +116,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/modeprofileservice"
 	"github.com/emoss08/trenova/internal/core/services/networkpulseservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
-	"github.com/emoss08/trenova/internal/core/services/openaidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/orderderivation"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
@@ -549,7 +549,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 	apikeyservice.New,
 	notificationservice.New,
-	openaidocumentservice.New,
+	aidocumentservice.New,
 	shipmentimportassistantservice.New,
 	tablechangealertservice.New,
 	tablechangealertservice.NewConsumer,

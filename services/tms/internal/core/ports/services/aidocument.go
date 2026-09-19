@@ -118,16 +118,34 @@ const (
 	AIBackgroundExtractionStatusFailed    AIBackgroundExtractionStatus = "failed"
 )
 
+// AIBackgroundExtractSubmission is the outcome of handing an extraction to a
+// provider for deferred execution.
+//
+// ProviderID is part of the handle, not decoration: a response id is meaningful
+// only to the endpoint that issued it, so a poll that reached a different
+// provider would at best 404 and at worst read someone else's call. It is
+// persisted alongside the response id for exactly that reason.
+//
+// ExtractResult is set when no configured provider could defer the call and it
+// therefore ran inline. The answer is already here and there is nothing to poll
+// — which is what lets an install running only a local model keep document
+// extraction at all, rather than losing it to a protocol feature it lacks.
 type AIBackgroundExtractSubmission struct {
-	ResponseID string `json:"responseId"`
-	Model      string `json:"model"`
-	Status     string `json:"status"`
+	ResponseID    string           `json:"responseId"`
+	ProviderID    pulid.ID         `json:"providerId"`
+	Model         string           `json:"model"`
+	Status        string           `json:"status"`
+	ExtractResult *AIExtractResult `json:"extractResult,omitempty"`
 }
 
 type AIBackgroundExtractPollRequest struct {
 	TenantInfo pagination.TenantInfo
 	DocumentID pulid.ID
 	ResponseID string
+	// ProviderID names the endpoint that issued ResponseID. A submission that
+	// predates this field carries a nil id; the poll fails rather than guessing
+	// at a provider, because guessing wrong reads another endpoint's call.
+	ProviderID pulid.ID
 }
 
 type AIBackgroundExtractPollResult struct {

@@ -1,4 +1,4 @@
-package openaidocumentservice
+package aidocumentservice
 
 func buildRouteSchema() map[string]any {
 	return map[string]any{

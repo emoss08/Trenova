@@ -845,3 +845,25 @@ func svc(repo *stubRepo, ds ...detector.Detector) *Service {
 		allowedResources: map[permission.Resource]bool{permission.ResourceShipment: true},
 	}, ds...)
 }
+
+// These two satisfy the completion port; this stub runs every call inline and
+// never defers one, so a submission carries its answer and there is no handle
+// to poll.
+func (f failingCompletion) SubmitBackground(
+	ctx context.Context,
+	req *services.StructuredCompletionRequest,
+) (*services.BackgroundSubmission, error) {
+	result, err := f.CompleteStructured(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &services.BackgroundSubmission{Result: result}, nil
+}
+
+func (f failingCompletion) PollBackground(
+	context.Context,
+	*services.BackgroundPollRequest,
+) (*services.BackgroundOutcome, error) {
+	return nil, errors.New("this completion runs inline and issues no handle to poll")
+}

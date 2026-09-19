@@ -35,6 +35,7 @@ type Extraction struct {
 	ActivityID     string   `json:"activityId"     bun:"activity_id,type:VARCHAR(255),notnull"`
 	TaskToken      []byte   `json:"taskToken"      bun:"task_token,type:BYTEA,notnull"`
 	ResponseID     string   `json:"responseId"     bun:"response_id,type:VARCHAR(255),nullzero"`
+	ProviderID     pulid.ID `json:"providerId"     bun:"provider_id,type:VARCHAR(100),nullzero"`
 	Model          string   `json:"model"          bun:"model,type:VARCHAR(100),nullzero"`
 	Status         Status   `json:"status"         bun:"status,type:VARCHAR(32),notnull,default:'Pending'"`
 	FailureCode    string   `json:"failureCode"    bun:"failure_code,type:VARCHAR(100),nullzero"`

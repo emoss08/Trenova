@@ -61,6 +61,7 @@ var ExtractionColumns = struct {
 	ActivityID     Column // "activity_id" → qualified: "dae.activity_id"
 	TaskToken      Column // "task_token" → qualified: "dae.task_token"
 	ResponseID     Column // "response_id" → qualified: "dae.response_id"
+	ProviderID     Column // "provider_id" → qualified: "dae.provider_id"
 	Model          Column // "model" → qualified: "dae.model"
 	Status         Column // "status" → qualified: "dae.status"
 	FailureCode    Column // "failure_code" → qualified: "dae.failure_code"
@@ -84,6 +85,7 @@ var ExtractionColumns = struct {
 	ActivityID:     NewColumn("activity_id", "dae"),
 	TaskToken:      NewColumn("task_token", "dae"),
 	ResponseID:     NewColumn("response_id", "dae"),
+	ProviderID:     NewColumn("provider_id", "dae"),
 	Model:          NewColumn("model", "dae"),
 	Status:         NewColumn("status", "dae"),
 	FailureCode:    NewColumn("failure_code", "dae"),
@@ -113,6 +115,7 @@ var ExtractionFieldMap = map[string]string{
 	"activityId":     "activity_id",
 	"taskToken":      "task_token",
 	"responseId":     "response_id",
+	"providerId":     "provider_id",
 	"model":          "model",
 	"status":         "status",
 	"failureCode":    "failure_code",
@@ -140,6 +143,7 @@ var ExtractionInsertableColumns = []string{
 	"activity_id",
 	"task_token",
 	"response_id",
+	"provider_id",
 	"model",
 	"status",
 	"failure_code",
@@ -214,6 +218,7 @@ var ExtractionFilter = struct {
 	ActivityID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "activityId" → DB: "activity_id"
 	TaskToken      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taskToken" → DB: "task_token"
 	ResponseID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "responseId" → DB: "response_id"
+	ProviderID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
 	Model          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
 	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	FailureCode    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureCode" → DB: "failure_code"
@@ -260,6 +265,9 @@ var ExtractionFilter = struct {
 	},
 	ResponseID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("responseId", op, value)
+	},
+	ProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerId", op, value)
 	},
 	Model: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("model", op, value)
