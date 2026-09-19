@@ -20,12 +20,17 @@ function Card({
   );
 }
 
+/* A header that carries a rule is a panel header, and it gets the sunken
+   surface so the panel reads as titled rather than as a block of text with a
+   line under it. A header without a rule is just the top of the card and stays
+   on the card surface. The distinction is already in the markup, so no call
+   site has to opt in. */
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-header"
       className={cn(
-        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-4 group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
+        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-4 group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:-mt-4 [.border-b]:bg-sunken [.border-b]:pt-4 [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:-mt-3 group-data-[size=sm]/card:[.border-b]:pt-3 group-data-[size=sm]/card:[.border-b]:pb-3",
         className,
       )}
       {...props}
@@ -38,7 +43,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-title"
       className={cn(
-        "text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
+        "text-base leading-snug font-semibold group-data-[size=sm]/card:text-sm",
         className,
       )}
       {...props}

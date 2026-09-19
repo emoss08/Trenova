@@ -40,6 +40,31 @@ Three, and each may only reference the one above it.
 | Semantic | `--danger`, `--sunken`, `--foreground-subtle`, … | Yes — this is the API |
 | Mapping | the `@theme` block that makes utilities | No |
 
+## The hue plan
+
+Everything coloured in the product resolves to one of ten hues, declared once in
+layer 1.
+
+`--hue-neutral: 75` is the spine. Every grey carries a little of it — the canvas,
+the panels, the rules, the four text weights. They were `oklch(L 0 0)` before:
+chroma exactly zero, which is the clearest sign a palette was inherited rather
+than chosen. The canvas is a warm off-white and panels are near-white, so a panel
+reads as a panel without a shadow to say so, and nothing on screen is pure white.
+
+`--hue-brand: 52` is copper. Blue was the previous brand, which is also what
+`--info` is, so a primary button and an informational badge were drawn in the same
+colour. Copper belongs to the warm ground and nothing else competes with it.
+
+Copper sits between red and amber, so four things crowd the same arc and each step
+is pinned at least 20° from the next:
+
+```
+danger 25  →  brand 52  →  warning 78  →  amber 98
+```
+
+`pnpm lint:design` fails if any of those gaps closes. Amber landing at 98 is why
+the *category* accent reads as a citron rather than as a dimmer warning.
+
 ## Colour
 
 ### Tones — severity
@@ -59,6 +84,12 @@ The tones are `neutral`, `brand`, `info`, `success`, `warning`, `danger`.
 `--x-foreground` keeps the meaning it already had here — *the readable version of
 this tone* — which is why it is darker than `--x`. Text on a **solid** tone fill
 is `text-foreground-on-solid`, not `--x-foreground`.
+
+`--foreground-on-solid` is near-white in light mode and near-**black** in dark,
+because a dark theme's tone fills are the light end of their ramp. `--warning`
+shipped for months as `oklch(0.75 0.16 70)` and drew near-white text on a solid
+badge at 2.1:1; every solid fill now clears AA against the ink that lands on it,
+and the check asserts it.
 
 Pick a tone by what the operator should do, not by what the thing is called. An
 overdue invoice is `warning`. A shipment in transit is `info`, not `warning` —
@@ -137,6 +168,52 @@ Fonts: `font-sans` (Inter) for everything; `font-mono` (Geist Mono) for numbers
 that must align in a column — load numbers, IDs, currency, timestamps. Pair it
 with `tabular-nums`.
 
+### Weight
+
+Three steps, and each has to mean something:
+
+| Weight | For |
+|---|---|
+| `font-normal` (400) | body copy, table cells, values |
+| `font-medium` (500) | labels — column heads, field labels, badges, button text |
+| `font-semibold` (600) | headings — card and panel titles, section titles |
+
+`font-medium` was written 1,794 times against 94 `font-normal`, so 500 became the
+weight everything was set in and emphasis had to be spent on size or colour
+instead. The primitives that stamp a weight now follow the table above; a value
+in a cell takes no weight class at all.
+
+## Radius
+
+Two values, plus the pill.
+
+| Token | Value | For |
+|---|---|---|
+| `--radius-control` | 6px | buttons, inputs, chips, menu rows |
+| `--radius-surface` | 8px | cards, panels, dialogs, popovers, table containers |
+| `rounded-full` | — | badges and avatars |
+
+There were seven in use — `rounded-md` 1,032 times, `rounded-lg` 780, bare
+`rounded` 268, `rounded-sm` 108, `rounded-2xl` 99, `rounded-xl` 46 — which is the
+same as having none, because nothing could be told apart by its corner. The whole
+Tailwind scale is now pointed at the two real values, so existing call sites are
+unchanged and an eighth corner has nowhere to land.
+
+## Density
+
+Row rhythm is a token, not whatever padding a cell happened to carry.
+
+| Token | Value | For |
+|---|---|---|
+| `--row-h` | 30px | table body row, comfortable |
+| `--row-h-compact` | 26px | table body row, compact |
+| `--row-head-h` | 32px | column header row |
+| `--cell-px` | 10px | horizontal cell padding, header and body alike |
+
+`TableRow` spends `h-(--row-h)` and `TableCell` spends `px-(--cell-px)`, so two
+tables on the same screen line up. A denser table repoints the token —
+`[--row-h:var(--row-h-compact)]` — rather than patching padding onto every cell.
+
 ## Elevation
 
 Four steps, defined in both themes. Enterprise surfaces are flat: a card is a
@@ -169,9 +246,9 @@ utility turns red:
 sequence appear inside a comment body. CSS comments do not nest, so it ends the
 comment early and every `@utility` after it silently stops generating a rule —
 a focus utility that emits nothing removes the focus indicator without failing a
-build, a test or a type check. This happened once. `styles/__tests__/tokens.test.ts`
-now compiles the real file and asserts every declared `@utility` reaches the
-output, so it cannot happen quietly again.
+build, a test or a type check. This happened once. `pnpm lint:design` now
+compiles the real file and asserts every declared `@utility` reaches the output,
+so it cannot happen quietly again.
 
 ## Badge
 
@@ -190,6 +267,10 @@ Two axes, neither of them a colour.
 Variants used to be named by colour — `purple`, `orange`, `teal`. Once a variant
 is called `purple` there is no correct answer to "what colour is a tender?", so
 every caller answered differently. That is what the split above prevents.
+
+A badge is a pill. It is the one thing on screen that is never a container, and
+the shape says so before the colour does — which is also why it is the only
+component that does not take one of the two radii.
 
 ## Status metadata
 
@@ -238,10 +319,16 @@ differently depending on the theme.
 2. Add it to **both** `:root` and `.dark` in `tokens.css`. A token defined in one
    theme is the `--shadow-*` bug again.
 3. Map it in the `@theme` block so it reaches a utility.
-4. Check contrast: anything carrying text needs ≥ 4.5:1 against its background
-   (≥ 3:1 for large text).
+4. Run `pnpm lint:design`. It reads the oklch values straight out of `tokens.css`
+   and fails on a pair below AA, a value outside sRGB (the browser would show it
+   somewhere other than where you placed it), a hairline that is invisible
+   against the surface it divides, or the warm hues drifting back together.
 5. Note it here if it introduces a new concept rather than a rung on an existing
    ladder.
+
+The audit is not a substitute for looking at it. It catches the failures that are
+invisible in review — a 2.1:1 badge passes a screenshot check because the text is
+*there* — but it has nothing to say about whether the colour is right.
 
 ## Colours outside the token system
 

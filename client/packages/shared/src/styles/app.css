@@ -29,7 +29,7 @@
   }
 
   ::selection {
-    color: var(--color-black);
+    color: var(--color-highlight-foreground);
     background: var(--color-highlight);
   }
 }

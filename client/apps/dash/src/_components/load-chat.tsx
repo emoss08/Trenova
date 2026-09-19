@@ -67,7 +67,7 @@ function ChatMessage({ comment }: { comment: PortalLoadComment }) {
             </span>
           ) : null}
           {urgent ? (
-            <Badge variant={comment.priority === "Urgent" ? "inactive" : "orange"}>
+            <Badge variant={comment.priority === "Urgent" ? "danger" : "warning"}>
               {comment.priority}
             </Badge>
           ) : null}

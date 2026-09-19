@@ -48,12 +48,16 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
   );
 }
 
+/* Row height comes from --row-h rather than from whatever padding a cell
+   happens to carry, so two tables on the same screen line up. A caller that
+   wants a denser table repoints the token (`[--row-h:var(--row-h-compact)]`)
+   instead of patching padding onto every cell. */
 function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-brand/10",
+        "h-(--row-h) border-b transition-colors hover:bg-surface-hover data-[state=selected]:bg-surface-selected",
         className,
       )}
       {...props}
@@ -66,7 +70,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-10 bg-sidebar px-2 text-left align-middle font-table text-sm font-medium whitespace-nowrap text-muted-foreground uppercase [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "h-(--row-head-h) bg-sunken px-(--cell-px) text-left align-middle font-table text-2xs font-medium tracking-wider whitespace-nowrap text-foreground-subtle uppercase [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className,
       )}
       {...props}
@@ -79,7 +83,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "px-(--cell-px) py-1 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className,
       )}
       {...props}

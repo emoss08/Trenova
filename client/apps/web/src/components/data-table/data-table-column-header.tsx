@@ -58,9 +58,16 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <DropdownMenu>
+        {/* -ml-2.5 cancels the button's own px-2.5 so a sortable title starts
+            on the same vertical as an unsortable one and as the cells below it,
+            and the type matches TableHead rather than the button's default. */}
         <DropdownMenuTrigger
           render={
-            <Button variant="ghost" size="sm" className="data-open:bg-accent -ml-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="data-open:bg-accent -ml-2.5 text-2xs font-medium tracking-wider"
+            >
               <span className="uppercase">{title}</span>
               {showSortIndex && (
                 <span className="bg-primary text-primary-foreground ml-1 flex size-4 items-center justify-center rounded-full text-2xs font-medium">

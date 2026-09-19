@@ -22,24 +22,41 @@
 /* ---------------------------------------------------------------------------
    1. PRIMITIVES
 
-   The categorical hue family. Eight hues at matched lightness and chroma so no
-   series in a chart, and no agent tile, reads heavier than its neighbours. The
-   same eight serve agent identity and chart series: one hue family, two uses,
-   so a teal agent and a teal series are the same teal.
+   The hue plan. Everything coloured in the product resolves to one of these.
 
-   These carry no meaning. Meaning is the tone ladder in layer 2 — encoding a
-   warning in `amber` here would say a chart series is a warning.
+   --hue-neutral is the spine. Every grey in Trenova carries a little of it:
+   the canvas, the panels, the rules, the four text weights. A grey at chroma
+   exactly 0 is the clearest sign a palette was inherited rather than chosen,
+   and until now every neutral here was oklch(L 0 0). They are warm now, which
+   is also easier to sit in front of for a shift than a pure white ground.
+
+   The warm arc is pinned apart on purpose. Copper sits between red and amber,
+   so without a deliberate gap a primary action, a destructive action, a
+   warning and the amber category all converge into one orange:
+
+     danger 25  →  brand 52  →  warning 78  →  amber 98
+
+   Each step is at least 20°, and check-design-tokens.mjs fails if any of them
+   closes. Amber landing at 98 is why the category reads as a citron rather
+   than as a dimmer warning.
+
+   The eight categorical hues carry no meaning. Meaning is the tone ladder in
+   layer 2 — encoding a warning in `amber` here would say a chart series is a
+   warning.
    --------------------------------------------------------------------------- */
 
 :root {
+  --hue-neutral: 75;
+  --hue-brand: 52;
+
   --hue-indigo: 274;
   --hue-teal: 195;
-  --hue-amber: 70;
+  --hue-amber: 98;
   --hue-rose: 12;
   --hue-emerald: 160;
   --hue-sky: 236;
   --hue-violet: 305;
-  --hue-slate: 255;
+  --hue-slate: 75;
 }
 
 /* ---------------------------------------------------------------------------
@@ -47,7 +64,21 @@
    --------------------------------------------------------------------------- */
 
 :root {
-  --radius: 0.375rem;
+  /* Two radii, not seven -------------------------------------------------
+     `rounded-md` (1032 uses), `rounded-lg` (780), bare `rounded` (268),
+     `rounded-sm` (108), `rounded-2xl` (99) and `rounded-xl` (46) were six
+     different corners for the same two jobs, which is the same as having
+     none: nothing could be told apart by its corner. There are two now, and
+     the mapping block below points the whole Tailwind scale at them, so no
+     call site changes and no seventh value can be invented.
+
+       control  buttons, inputs, badges, chips, menu rows
+       surface  cards, panels, dialogs, popovers, table containers
+
+     `rounded-full` is untouched; a pill is a third thing, not a radius. */
+  --radius-control: 0.375rem; /* 6px */
+  --radius-surface: 0.5rem; /* 8px */
+  --radius: var(--radius-control);
 
   /* Surfaces -------------------------------------------------------------
      A real ladder, deepest to shallowest. Previously `--secondary`, `--muted`
@@ -61,49 +92,59 @@
        raised    popovers, menus, combobox lists
        overlay   dialogs and sheets
 
+     The canvas is a warm off-white and the panels are near-white, so a panel
+     reads as a panel without needing a shadow to say so. Pure white is kept
+     for nothing: it is the one value that cannot be a deliberate choice.
+
      The interaction fills (hover/active/selected) are separate from the
      surfaces so a hover state never has to borrow a container's colour. */
-  --canvas: oklch(1 0 0);
-  --card: oklch(1 0 0);
-  --sunken: oklch(0.974 0 0);
-  --raised: oklch(1 0 0);
-  --overlay: oklch(1 0 0);
+  --canvas: oklch(0.968 0.005 var(--hue-neutral));
+  --card: oklch(0.995 0.003 var(--hue-neutral));
+  --sunken: oklch(0.95 0.007 var(--hue-neutral));
+  --raised: oklch(0.995 0.003 var(--hue-neutral));
+  --overlay: oklch(0.995 0.003 var(--hue-neutral));
 
-  --surface-hover: oklch(0.962 0 0);
-  --surface-active: oklch(0.945 0 0);
-  --surface-selected: oklch(0.955 0.012 263);
+  --surface-hover: oklch(0.953 0.008 var(--hue-neutral));
+  --surface-active: oklch(0.928 0.011 var(--hue-neutral));
+  --surface-selected: oklch(0.945 0.022 58);
 
   /* The dim behind an overlay. Two weights: the standard one, and the light
      one the blur-backed dialogs use, where the blur does most of the work. */
-  --scrim: oklch(0.145 0 0 / 0.45);
-  --scrim-subtle: oklch(0.145 0 0 / 0.1);
+  --scrim: oklch(0.212 0.011 var(--hue-neutral) / 0.45);
+  --scrim-subtle: oklch(0.212 0.011 var(--hue-neutral) / 0.1);
 
   /* Content --------------------------------------------------------------
      Four weights. `subtle` is the lightest text that still clears AA on
-     --card; anything lighter is decoration, not content, and belongs to
+     --sunken — the hardest ground it lands on, since column headers sit
+     there; anything lighter is decoration, not content, and belongs to
      --border. */
-  --foreground: oklch(0.145 0 0);
-  --foreground-muted: oklch(0.44 0 0);
-  --foreground-subtle: oklch(0.556 0 0);
-  --foreground-on-solid: oklch(0.985 0 0);
+  --foreground: oklch(0.212 0.011 var(--hue-neutral));
+  --foreground-muted: oklch(0.473 0.022 var(--hue-neutral));
+  --foreground-subtle: oklch(0.528 0.024 var(--hue-neutral));
+  --foreground-on-solid: oklch(0.982 0.008 62);
 
   /* Borders --------------------------------------------------------------
      subtle  dividers inside a component
      default component outlines
      strong  hover and emphasis */
-  --border-subtle: oklch(0.945 0 0);
-  --border: oklch(0.922 0 0);
-  --border-strong: oklch(0.87 0 0);
+  --border-subtle: oklch(0.928 0.011 var(--hue-neutral));
+  --border: oklch(0.893 0.014 var(--hue-neutral));
+  --border-strong: oklch(0.845 0.018 var(--hue-neutral));
 
   /* Brand ----------------------------------------------------------------
      The one accent the product spends. Everything else on screen is neutral
-     or a tone; brand marks the primary action and the active nav row. */
-  --brand: oklch(0.55 0.22 263);
-  --brand-hover: oklch(0.5 0.22 263);
-  --brand-foreground: oklch(0.985 0 0);
-  --brand-subtle: oklch(0.955 0.03 263);
-  --brand-subtle-foreground: oklch(0.42 0.2 263);
-  --brand-border: oklch(0.88 0.06 263);
+     or a tone; brand marks the primary action and the active nav row.
+
+     Copper, not blue. Blue is what every product in this category reaches for
+     and it is also --info, so a primary button and an informational badge were
+     drawn in the same colour. Copper belongs to the warm ground, and nothing
+     else on screen competes with it. */
+  --brand: oklch(0.545 0.135 var(--hue-brand));
+  --brand-hover: oklch(0.49 0.126 var(--hue-brand));
+  --brand-foreground: oklch(0.982 0.008 62);
+  --brand-subtle: oklch(0.955 0.024 58);
+  --brand-subtle-foreground: oklch(0.45 0.115 var(--hue-brand));
+  --brand-border: oklch(0.885 0.048 56);
 
   /* Tones ----------------------------------------------------------------
      Five rungs each, and the reason the raw palette was reached for before:
@@ -116,52 +157,58 @@
 
      --tone-foreground keeps the meaning it already had in this codebase
      ("the readable version of this tone"), which is why it is darker than
-     --tone. Text on a *solid* tone fill is --foreground-on-solid. */
+     --tone. Text on a solid tone fill is --foreground-on-solid.
 
-  --danger: oklch(0.577 0.245 27.3);
-  --danger-hover: oklch(0.52 0.245 27.3);
-  --danger-foreground: oklch(0.505 0.21 27.3);
-  --danger-subtle: oklch(0.965 0.02 27.3);
-  --danger-subtle-foreground: oklch(0.46 0.19 27.3);
-  --danger-border: oklch(0.89 0.07 27.3);
+     --tone itself carries a second, unstated requirement that the old values
+     missed: --foreground-on-solid has to be readable on it. `--warning` was
+     oklch(0.75 0.16 70), a bright amber, and a solid warning badge drew
+     near-white text on it at 2.1:1. Every solid fill here now clears AA
+     against the ink that lands on it, and the check enforces it. */
 
-  --warning: oklch(0.75 0.16 70);
-  --warning-hover: oklch(0.7 0.16 70);
-  --warning-foreground: oklch(0.52 0.12 70);
-  --warning-subtle: oklch(0.97 0.03 70);
-  --warning-subtle-foreground: oklch(0.47 0.11 70);
-  --warning-border: oklch(0.89 0.08 70);
+  --danger: oklch(0.49 0.175 25);
+  --danger-hover: oklch(0.44 0.175 25);
+  --danger-foreground: oklch(0.472 0.168 25);
+  --danger-subtle: oklch(0.958 0.018 25);
+  --danger-subtle-foreground: oklch(0.435 0.16 25);
+  --danger-border: oklch(0.879 0.04 25);
 
-  --success: oklch(0.63 0.16 155);
-  --success-hover: oklch(0.58 0.16 155);
-  --success-foreground: oklch(0.48 0.13 155);
-  --success-subtle: oklch(0.965 0.025 155);
-  --success-subtle-foreground: oklch(0.43 0.12 155);
-  --success-border: oklch(0.88 0.07 155);
+  --warning: oklch(0.55 0.112 78);
+  --warning-hover: oklch(0.5 0.102 78);
+  --warning-foreground: oklch(0.515 0.105 78);
+  --warning-subtle: oklch(0.964 0.028 85);
+  --warning-subtle-foreground: oklch(0.475 0.099 78);
+  --warning-border: oklch(0.887 0.052 84);
 
-  --info: oklch(0.6 0.16 255);
-  --info-hover: oklch(0.55 0.16 255);
-  --info-foreground: oklch(0.47 0.15 255);
-  --info-subtle: oklch(0.96 0.025 255);
-  --info-subtle-foreground: oklch(0.44 0.14 255);
-  --info-border: oklch(0.88 0.06 255);
+  --success: oklch(0.475 0.097 149);
+  --success-hover: oklch(0.425 0.097 149);
+  --success-foreground: oklch(0.465 0.095 149);
+  --success-subtle: oklch(0.958 0.02 147);
+  --success-subtle-foreground: oklch(0.43 0.09 149);
+  --success-border: oklch(0.885 0.035 147);
 
-  --neutral: oklch(0.45 0 0);
-  --neutral-hover: oklch(0.38 0 0);
-  --neutral-foreground: oklch(0.44 0 0);
-  --neutral-subtle: oklch(0.965 0 0);
-  --neutral-subtle-foreground: oklch(0.42 0 0);
-  --neutral-border: oklch(0.9 0 0);
+  --info: oklch(0.446 0.075 235);
+  --info-hover: oklch(0.4 0.075 235);
+  --info-foreground: oklch(0.446 0.075 235);
+  --info-subtle: oklch(0.954 0.016 230);
+  --info-subtle-foreground: oklch(0.42 0.07 235);
+  --info-border: oklch(0.884 0.03 228);
+
+  --neutral: oklch(0.473 0.022 var(--hue-neutral));
+  --neutral-hover: oklch(0.4 0.022 var(--hue-neutral));
+  --neutral-foreground: oklch(0.473 0.022 var(--hue-neutral));
+  --neutral-subtle: oklch(0.948 0.009 var(--hue-neutral));
+  --neutral-subtle-foreground: oklch(0.43 0.02 var(--hue-neutral));
+  --neutral-border: oklch(0.895 0.014 var(--hue-neutral));
 
   /* Focus ----------------------------------------------------------------
      One ring, everywhere. There were five treatments before — neutral/50 at
      3px on buttons, brand/30 at 4px on inputs, a translucent black on auth,
      brand/18 on the composer — which is why focus never looked like one
      system. Components spend --ring and --ring-width; they do not pick. */
-  --ring: oklch(0.55 0.22 263);
+  --ring: oklch(0.545 0.135 var(--hue-brand));
   --ring-width: 3px;
   --ring-opacity: 0.35;
-  --ring-danger: oklch(0.577 0.245 27.3);
+  --ring-danger: oklch(0.49 0.175 25);
 
   /* Elevation ------------------------------------------------------------
      Four steps, and defined in BOTH themes — light mode previously had no
@@ -203,45 +250,45 @@
 
      -on-subtle is darkened well below the solid in light mode; the solid at
      L 0.55 on its own 14% tint only reaches ~3.2:1, short of AA for body text. */
-  --accent-indigo: oklch(0.55 0.2 var(--hue-indigo));
-  --accent-indigo-subtle: oklch(0.96 0.03 var(--hue-indigo));
-  --accent-indigo-on-subtle: oklch(0.42 0.18 var(--hue-indigo));
-  --accent-indigo-border: oklch(0.88 0.07 var(--hue-indigo));
+  --accent-indigo: oklch(0.55 0.185 var(--hue-indigo));
+  --accent-indigo-subtle: oklch(0.952 0.023 var(--hue-indigo));
+  --accent-indigo-on-subtle: oklch(0.42 0.17 var(--hue-indigo));
+  --accent-indigo-border: oklch(0.878 0.06 var(--hue-indigo));
 
-  --accent-teal: oklch(0.58 0.12 var(--hue-teal));
-  --accent-teal-subtle: oklch(0.96 0.025 var(--hue-teal));
-  --accent-teal-on-subtle: oklch(0.43 0.11 var(--hue-teal));
-  --accent-teal-border: oklch(0.88 0.06 var(--hue-teal));
+  --accent-teal: oklch(0.55 0.093 var(--hue-teal));
+  --accent-teal-subtle: oklch(0.952 0.028 var(--hue-teal));
+  --accent-teal-on-subtle: oklch(0.42 0.071 var(--hue-teal));
+  --accent-teal-border: oklch(0.878 0.055 var(--hue-teal));
 
-  --accent-amber: oklch(0.62 0.15 var(--hue-amber));
-  --accent-amber-subtle: oklch(0.97 0.03 var(--hue-amber));
-  --accent-amber-on-subtle: oklch(0.46 0.11 var(--hue-amber));
-  --accent-amber-border: oklch(0.89 0.07 var(--hue-amber));
+  --accent-amber: oklch(0.55 0.112 var(--hue-amber));
+  --accent-amber-subtle: oklch(0.952 0.032 var(--hue-amber));
+  --accent-amber-on-subtle: oklch(0.42 0.086 var(--hue-amber));
+  --accent-amber-border: oklch(0.878 0.06 var(--hue-amber));
 
-  --accent-rose: oklch(0.58 0.18 var(--hue-rose));
-  --accent-rose-subtle: oklch(0.96 0.03 var(--hue-rose));
-  --accent-rose-on-subtle: oklch(0.45 0.16 var(--hue-rose));
-  --accent-rose-border: oklch(0.89 0.07 var(--hue-rose));
+  --accent-rose: oklch(0.55 0.17 var(--hue-rose));
+  --accent-rose-subtle: oklch(0.952 0.024 var(--hue-rose));
+  --accent-rose-on-subtle: oklch(0.42 0.15 var(--hue-rose));
+  --accent-rose-border: oklch(0.878 0.062 var(--hue-rose));
 
-  --accent-emerald: oklch(0.56 0.14 var(--hue-emerald));
-  --accent-emerald-subtle: oklch(0.96 0.025 var(--hue-emerald));
-  --accent-emerald-on-subtle: oklch(0.42 0.12 var(--hue-emerald));
-  --accent-emerald-border: oklch(0.88 0.06 var(--hue-emerald));
+  --accent-emerald: oklch(0.55 0.124 var(--hue-emerald));
+  --accent-emerald-subtle: oklch(0.952 0.028 var(--hue-emerald));
+  --accent-emerald-on-subtle: oklch(0.42 0.095 var(--hue-emerald));
+  --accent-emerald-border: oklch(0.878 0.055 var(--hue-emerald));
 
-  --accent-sky: oklch(0.57 0.14 var(--hue-sky));
-  --accent-sky-subtle: oklch(0.96 0.025 var(--hue-sky));
-  --accent-sky-on-subtle: oklch(0.43 0.13 var(--hue-sky));
-  --accent-sky-border: oklch(0.88 0.06 var(--hue-sky));
+  --accent-sky: oklch(0.55 0.118 var(--hue-sky));
+  --accent-sky-subtle: oklch(0.952 0.027 var(--hue-sky));
+  --accent-sky-on-subtle: oklch(0.42 0.09 var(--hue-sky));
+  --accent-sky-border: oklch(0.878 0.055 var(--hue-sky));
 
-  --accent-violet: oklch(0.56 0.2 var(--hue-violet));
-  --accent-violet-subtle: oklch(0.96 0.03 var(--hue-violet));
-  --accent-violet-on-subtle: oklch(0.43 0.18 var(--hue-violet));
-  --accent-violet-border: oklch(0.88 0.07 var(--hue-violet));
+  --accent-violet: oklch(0.55 0.185 var(--hue-violet));
+  --accent-violet-subtle: oklch(0.952 0.029 var(--hue-violet));
+  --accent-violet-on-subtle: oklch(0.42 0.165 var(--hue-violet));
+  --accent-violet-border: oklch(0.878 0.062 var(--hue-violet));
 
-  --accent-slate: oklch(0.5 0.03 var(--hue-slate));
-  --accent-slate-subtle: oklch(0.96 0.006 var(--hue-slate));
-  --accent-slate-on-subtle: oklch(0.42 0.025 var(--hue-slate));
-  --accent-slate-border: oklch(0.88 0.012 var(--hue-slate));
+  --accent-slate: oklch(0.55 0.028 var(--hue-slate));
+  --accent-slate-subtle: oklch(0.952 0.01 var(--hue-slate));
+  --accent-slate-on-subtle: oklch(0.42 0.024 var(--hue-slate));
+  --accent-slate-border: oklch(0.878 0.016 var(--hue-slate));
 
   /* Agent identity is the accent family under its existing name. */
   --agent-indigo: var(--accent-indigo);
@@ -254,19 +301,30 @@
   --agent-slate: var(--accent-slate);
 
   /* Navigation ------------------------------------------------------------ */
-  --nav-active: oklch(0.93 0.02 263);
-  --nav-active-foreground: oklch(0.45 0.2 263);
+  --nav-active: oklch(0.93 0.026 58);
+  --nav-active-foreground: oklch(0.45 0.115 var(--hue-brand));
 
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.15 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.955 0 0);
-  --sidebar-accent-foreground: oklch(0.15 0 0);
-  --sidebar-border: oklch(0.922 0 0);
+  --sidebar: oklch(0.958 0.006 var(--hue-neutral));
+  --sidebar-foreground: oklch(0.212 0.011 var(--hue-neutral));
+  --sidebar-primary: oklch(0.212 0.011 var(--hue-neutral));
+  --sidebar-primary-foreground: oklch(0.982 0.008 62);
+  --sidebar-accent: oklch(0.935 0.01 var(--hue-neutral));
+  --sidebar-accent-foreground: oklch(0.212 0.011 var(--hue-neutral));
+  --sidebar-border: oklch(0.893 0.014 var(--hue-neutral));
   --sidebar-ring: var(--ring);
 
-  --highlight: oklch(0.8 0.16 86);
+  --highlight: oklch(0.86 0.13 88);
+  --highlight-foreground: oklch(0.212 0.011 var(--hue-neutral));
+
+  /* Density ---------------------------------------------------------------
+     Row rhythm, named once. Table rows were sized by whatever padding the
+     call site happened to write, so two tables on the same screen did not
+     line up. The data table's density control now picks between these two
+     instead of patching `[&_td]:py-1` over the top of the comfortable one. */
+  --row-h: 1.875rem; /* 30px — comfortable */
+  --row-h-compact: 1.625rem; /* 26px */
+  --row-head-h: 2rem; /* 32px */
+  --cell-px: 0.625rem; /* 10px */
 
   --kpi-h: 110px;
   --kpi-h-sm: 86px;
@@ -281,73 +339,77 @@
    --------------------------------------------------------------------------- */
 
 .dark {
-  --canvas: oklch(0 0 0);
-  --card: oklch(0.14 0 0);
-  --sunken: oklch(0.1 0 0);
-  --raised: oklch(0.18 0 0);
-  --overlay: oklch(0.18 0 0);
+  --canvas: oklch(0.179 0.007 var(--hue-neutral));
+  --card: oklch(0.207 0.008 var(--hue-neutral));
+  --sunken: oklch(0.16 0.007 var(--hue-neutral));
+  --raised: oklch(0.234 0.01 var(--hue-neutral));
+  --overlay: oklch(0.234 0.01 var(--hue-neutral));
 
-  --surface-hover: oklch(0.22 0 0);
-  --surface-active: oklch(0.27 0 0);
-  --surface-selected: oklch(0.25 0.03 263);
+  --surface-hover: oklch(0.262 0.012 var(--hue-neutral));
+  --surface-active: oklch(0.3 0.014 var(--hue-neutral));
+  --surface-selected: oklch(0.28 0.028 58);
 
-  --scrim: oklch(0 0 0 / 0.7);
-  --scrim-subtle: oklch(0 0 0 / 0.35);
+  --scrim: oklch(0.1 0.006 var(--hue-neutral) / 0.7);
+  --scrim-subtle: oklch(0.1 0.006 var(--hue-neutral) / 0.35);
 
-  --foreground: oklch(1 0 0);
-  --foreground-muted: oklch(0.78 0 0);
-  --foreground-subtle: oklch(0.64 0 0);
-  --foreground-on-solid: oklch(0.985 0 0);
+  --foreground: oklch(0.954 0.011 var(--hue-neutral));
+  --foreground-muted: oklch(0.76 0.022 var(--hue-neutral));
+  --foreground-subtle: oklch(0.63 0.024 var(--hue-neutral));
 
-  --border-subtle: oklch(0.2 0 0);
-  --border: oklch(0.26 0 0);
-  --border-strong: oklch(0.36 0 0);
+  /* Dark tone fills are the LIGHT end of their ramp — success sits at 0.70 —
+     so the near-white this held before drew 2.5:1 on a solid badge. The ink
+     that reads on a dark theme's solid fill is dark. */
+  --foreground-on-solid: oklch(0.19 0.013 var(--hue-neutral));
 
-  --brand: oklch(0.58 0.21 263);
-  --brand-hover: oklch(0.64 0.21 263);
-  --brand-foreground: oklch(0.99 0 0);
-  --brand-subtle: oklch(0.26 0.06 263);
-  --brand-subtle-foreground: oklch(0.82 0.11 263);
-  --brand-border: oklch(0.36 0.1 263);
+  --border-subtle: oklch(0.268 0.012 var(--hue-neutral));
+  --border: oklch(0.315 0.014 var(--hue-neutral));
+  --border-strong: oklch(0.4 0.019 var(--hue-neutral));
 
-  --danger: oklch(0.62 0.23 27.3);
-  --danger-hover: oklch(0.67 0.23 27.3);
-  --danger-foreground: oklch(0.75 0.17 27.3);
-  --danger-subtle: oklch(0.24 0.07 27.3);
-  --danger-subtle-foreground: oklch(0.84 0.12 27.3);
-  --danger-border: oklch(0.36 0.11 27.3);
+  --brand: oklch(0.67 0.14 55);
+  --brand-hover: oklch(0.72 0.14 55);
+  --brand-foreground: oklch(0.183 0.014 62);
+  --brand-subtle: oklch(0.3 0.058 55);
+  --brand-subtle-foreground: oklch(0.84 0.09 60);
+  --brand-border: oklch(0.39 0.082 55);
 
-  --warning: oklch(0.78 0.15 70);
-  --warning-hover: oklch(0.83 0.15 70);
-  --warning-foreground: oklch(0.83 0.13 70);
-  --warning-subtle: oklch(0.25 0.06 70);
-  --warning-subtle-foreground: oklch(0.88 0.11 70);
-  --warning-border: oklch(0.37 0.08 70);
+  --danger: oklch(0.615 0.19 25);
+  --danger-hover: oklch(0.665 0.19 25);
+  --danger-foreground: oklch(0.715 0.155 25);
+  --danger-subtle: oklch(0.29 0.07 25);
+  --danger-subtle-foreground: oklch(0.85 0.082 25);
+  --danger-border: oklch(0.38 0.095 25);
 
-  --success: oklch(0.7 0.15 155);
-  --success-hover: oklch(0.75 0.15 155);
-  --success-foreground: oklch(0.79 0.13 155);
-  --success-subtle: oklch(0.23 0.06 155);
-  --success-subtle-foreground: oklch(0.85 0.11 155);
-  --success-border: oklch(0.35 0.08 155);
+  --warning: oklch(0.74 0.122 82);
+  --warning-hover: oklch(0.785 0.122 82);
+  --warning-foreground: oklch(0.805 0.112 82);
+  --warning-subtle: oklch(0.3 0.052 82);
+  --warning-subtle-foreground: oklch(0.88 0.092 85);
+  --warning-border: oklch(0.39 0.062 82);
 
-  --info: oklch(0.66 0.16 255);
-  --info-hover: oklch(0.71 0.16 255);
-  --info-foreground: oklch(0.77 0.14 255);
-  --info-subtle: oklch(0.24 0.07 255);
-  --info-subtle-foreground: oklch(0.84 0.11 255);
-  --info-border: oklch(0.36 0.1 255);
+  --success: oklch(0.699 0.115 149);
+  --success-hover: oklch(0.745 0.115 149);
+  --success-foreground: oklch(0.77 0.11 149);
+  --success-subtle: oklch(0.3 0.055 149);
+  --success-subtle-foreground: oklch(0.86 0.09 149);
+  --success-border: oklch(0.385 0.07 149);
 
-  --neutral: oklch(0.65 0 0);
-  --neutral-hover: oklch(0.72 0 0);
-  --neutral-foreground: oklch(0.78 0 0);
-  --neutral-subtle: oklch(0.23 0 0);
-  --neutral-subtle-foreground: oklch(0.85 0 0);
-  --neutral-border: oklch(0.34 0 0);
+  --info: oklch(0.698 0.083 232);
+  --info-hover: oklch(0.745 0.083 232);
+  --info-foreground: oklch(0.77 0.08 232);
+  --info-subtle: oklch(0.3 0.045 232);
+  --info-subtle-foreground: oklch(0.86 0.07 232);
+  --info-border: oklch(0.385 0.06 232);
 
-  --ring: oklch(0.62 0.2 263);
+  --neutral: oklch(0.66 0.018 var(--hue-neutral));
+  --neutral-hover: oklch(0.72 0.018 var(--hue-neutral));
+  --neutral-foreground: oklch(0.76 0.022 var(--hue-neutral));
+  --neutral-subtle: oklch(0.27 0.011 var(--hue-neutral));
+  --neutral-subtle-foreground: oklch(0.87 0.016 var(--hue-neutral));
+  --neutral-border: oklch(0.37 0.015 var(--hue-neutral));
+
+  --ring: oklch(0.67 0.14 55);
   --ring-opacity: 0.45;
-  --ring-danger: oklch(0.62 0.23 27.3);
+  --ring-danger: oklch(0.615 0.19 25);
 
   /* Heavier than light mode: on a dark ground a shadow has to carry more of
      the separation, because the lightness gap between surfaces is smaller. */
@@ -366,45 +428,45 @@
   --chart-7: var(--accent-sky);
   --chart-8: var(--accent-slate);
 
-  --accent-indigo: oklch(0.72 0.16 var(--hue-indigo));
-  --accent-indigo-subtle: oklch(0.26 0.06 var(--hue-indigo));
-  --accent-indigo-on-subtle: oklch(0.84 0.1 var(--hue-indigo));
-  --accent-indigo-border: oklch(0.37 0.09 var(--hue-indigo));
+  --accent-indigo: oklch(0.72 0.146 var(--hue-indigo));
+  --accent-indigo-subtle: oklch(0.285 0.06 var(--hue-indigo));
+  --accent-indigo-on-subtle: oklch(0.85 0.074 var(--hue-indigo));
+  --accent-indigo-border: oklch(0.38 0.084 var(--hue-indigo));
 
-  --accent-teal: oklch(0.75 0.11 var(--hue-teal));
-  --accent-teal-subtle: oklch(0.24 0.05 var(--hue-teal));
-  --accent-teal-on-subtle: oklch(0.85 0.09 var(--hue-teal));
-  --accent-teal-border: oklch(0.36 0.07 var(--hue-teal));
+  --accent-teal: oklch(0.72 0.089 var(--hue-teal));
+  --accent-teal-subtle: oklch(0.285 0.048 var(--hue-teal));
+  --accent-teal-on-subtle: oklch(0.85 0.06 var(--hue-teal));
+  --accent-teal-border: oklch(0.38 0.064 var(--hue-teal));
 
-  --accent-amber: oklch(0.79 0.14 var(--hue-amber));
-  --accent-amber-subtle: oklch(0.25 0.06 var(--hue-amber));
-  --accent-amber-on-subtle: oklch(0.87 0.11 var(--hue-amber));
-  --accent-amber-border: oklch(0.37 0.08 var(--hue-amber));
+  --accent-amber: oklch(0.72 0.111 var(--hue-amber));
+  --accent-amber-subtle: oklch(0.285 0.058 var(--hue-amber));
+  --accent-amber-on-subtle: oklch(0.85 0.063 var(--hue-amber));
+  --accent-amber-border: oklch(0.38 0.077 var(--hue-amber));
 
-  --accent-rose: oklch(0.73 0.16 var(--hue-rose));
-  --accent-rose-subtle: oklch(0.25 0.07 var(--hue-rose));
-  --accent-rose-on-subtle: oklch(0.85 0.11 var(--hue-rose));
-  --accent-rose-border: oklch(0.37 0.1 var(--hue-rose));
+  --accent-rose: oklch(0.72 0.145 var(--hue-rose));
+  --accent-rose-subtle: oklch(0.285 0.064 var(--hue-rose));
+  --accent-rose-on-subtle: oklch(0.85 0.083 var(--hue-rose));
+  --accent-rose-border: oklch(0.38 0.087 var(--hue-rose));
 
-  --accent-emerald: oklch(0.74 0.13 var(--hue-emerald));
-  --accent-emerald-subtle: oklch(0.23 0.06 var(--hue-emerald));
-  --accent-emerald-on-subtle: oklch(0.85 0.1 var(--hue-emerald));
-  --accent-emerald-border: oklch(0.35 0.08 var(--hue-emerald));
+  --accent-emerald: oklch(0.72 0.111 var(--hue-emerald));
+  --accent-emerald-subtle: oklch(0.285 0.056 var(--hue-emerald));
+  --accent-emerald-on-subtle: oklch(0.85 0.069 var(--hue-emerald));
+  --accent-emerald-border: oklch(0.38 0.077 var(--hue-emerald));
 
-  --accent-sky: oklch(0.74 0.12 var(--hue-sky));
-  --accent-sky-subtle: oklch(0.24 0.06 var(--hue-sky));
-  --accent-sky-on-subtle: oklch(0.85 0.1 var(--hue-sky));
-  --accent-sky-border: oklch(0.36 0.08 var(--hue-sky));
+  --accent-sky: oklch(0.72 0.111 var(--hue-sky));
+  --accent-sky-subtle: oklch(0.285 0.056 var(--hue-sky));
+  --accent-sky-on-subtle: oklch(0.85 0.072 var(--hue-sky));
+  --accent-sky-border: oklch(0.38 0.077 var(--hue-sky));
 
-  --accent-violet: oklch(0.73 0.16 var(--hue-violet));
-  --accent-violet-subtle: oklch(0.25 0.07 var(--hue-violet));
-  --accent-violet-on-subtle: oklch(0.85 0.11 var(--hue-violet));
-  --accent-violet-border: oklch(0.37 0.1 var(--hue-violet));
+  --accent-violet: oklch(0.72 0.157 var(--hue-violet));
+  --accent-violet-subtle: oklch(0.285 0.064 var(--hue-violet));
+  --accent-violet-on-subtle: oklch(0.85 0.093 var(--hue-violet));
+  --accent-violet-border: oklch(0.38 0.087 var(--hue-violet));
 
-  --accent-slate: oklch(0.72 0.02 var(--hue-slate));
-  --accent-slate-subtle: oklch(0.24 0.008 var(--hue-slate));
-  --accent-slate-on-subtle: oklch(0.85 0.015 var(--hue-slate));
-  --accent-slate-border: oklch(0.36 0.012 var(--hue-slate));
+  --accent-slate: oklch(0.72 0.024 var(--hue-slate));
+  --accent-slate-subtle: oklch(0.285 0.02 var(--hue-slate));
+  --accent-slate-on-subtle: oklch(0.85 0.014 var(--hue-slate));
+  --accent-slate-border: oklch(0.38 0.022 var(--hue-slate));
 
   --agent-indigo: var(--accent-indigo);
   --agent-teal: var(--accent-teal);
@@ -415,19 +477,20 @@
   --agent-violet: var(--accent-violet);
   --agent-slate: var(--accent-slate);
 
-  --nav-active: oklch(0.28 0.03 263);
-  --nav-active-foreground: oklch(0.78 0.14 263);
+  --nav-active: oklch(0.3 0.045 58);
+  --nav-active-foreground: oklch(0.84 0.09 60);
 
-  --sidebar: oklch(0.14 0 0);
-  --sidebar-foreground: oklch(1 0 0);
-  --sidebar-primary: oklch(1 0 0);
-  --sidebar-primary-foreground: oklch(0 0 0);
-  --sidebar-accent: oklch(0.22 0 0);
-  --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-border: oklch(0.26 0 0);
+  --sidebar: oklch(0.16 0.007 var(--hue-neutral));
+  --sidebar-foreground: oklch(0.954 0.011 var(--hue-neutral));
+  --sidebar-primary: oklch(0.954 0.011 var(--hue-neutral));
+  --sidebar-primary-foreground: oklch(0.179 0.007 var(--hue-neutral));
+  --sidebar-accent: oklch(0.245 0.011 var(--hue-neutral));
+  --sidebar-accent-foreground: oklch(0.954 0.011 var(--hue-neutral));
+  --sidebar-border: oklch(0.268 0.012 var(--hue-neutral));
   --sidebar-ring: var(--ring);
 
-  --highlight: oklch(0.8 0.16 86);
+  --highlight: oklch(0.8 0.13 88);
+  --highlight-foreground: oklch(0.179 0.007 var(--hue-neutral));
 }
 
 /* ---------------------------------------------------------------------------
@@ -680,6 +743,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
 
   /* Compatibility colour aliases */
   --color-background: var(--background);
@@ -705,14 +769,19 @@
   --color-invert: var(--invert);
   --color-invert-foreground: var(--invert-foreground);
 
-  /* Radius ---------------------------------------------------------------- */
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  /* Radius ----------------------------------------------------------------
+     Seven names, two values. The whole Tailwind scale is pointed at the two
+     real radii so `rounded-md` on a button and `rounded-2xl` on a card land on
+     the corner each of them should have had, without touching 2,300 call
+     sites. A new `rounded-3xl` cannot introduce an eighth corner because
+     there is nowhere for it to land. */
+  --radius-sm: var(--radius-control);
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-surface);
+  --radius-xl: var(--radius-surface);
+  --radius-2xl: var(--radius-surface);
+  --radius-3xl: var(--radius-surface);
+  --radius-4xl: var(--radius-surface);
 
   /* Elevation ------------------------------------------------------------- */
   --shadow-flat: var(--elevation-flat);
@@ -740,6 +809,16 @@
   --container-dialog-sm: 25rem; /* 400px */
   --container-dialog: 32.5rem; /* 520px */
   --container-panel: 22.5rem; /* 360px */
+
+  /* Weight ----------------------------------------------------------------
+     Three steps, and each has to mean something. `font-medium` is written
+     1,794 times against 94 `font-normal`, so 500 became the weight everything
+     was set in and emphasis had to be spent on size or colour instead. The
+     primitives that stamp a weight now follow: body 400, label 500 (uppercase
+     column heads, field labels, badges), heading 600. */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
 
   --animate-flow-down: flow-down 1.5s linear infinite;
 }

@@ -98,7 +98,7 @@ function ReviewRow({ review }: { review: PortalReview }) {
           {review.overallScore ? (
             <span className="text-lg font-semibold tabular-nums">{review.overallScore}</span>
           ) : null}
-          <Badge variant={needsSignOff ? "warning" : "outline"}>
+          <Badge variant={needsSignOff ? "warning" : "neutral"} appearance={needsSignOff ? "subtle" : "outline"}>
             {PERFORMANCE_REVIEW_STATUS_LABELS[status] ?? status}
           </Badge>
         </div>

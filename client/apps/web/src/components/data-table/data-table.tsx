@@ -750,9 +750,13 @@ export function DataTable<TData extends Record<string, any>>({
                     data-density={density}
                     className={cn(
                       "border-separate border-spacing-0",
-                      density === "compact" && "[&_td]:py-1 [&_td]:text-xs [&_th]:h-8",
+                      // Density repoints the row-height token; the cells read it,
+                      // so the two densities stay the same table at two sizes
+                      // rather than one table with padding patched over it.
+                      density === "compact" &&
+                        "[--row-h:var(--row-h-compact)] [&_td]:py-0.5 [&_td]:text-xs",
                     )}
-                    containerClassName="max-h-[calc(65vh_-_var(--top-bar-height))] rounded-md border border-border"
+                    containerClassName="max-h-[calc(65vh_-_var(--top-bar-height))] rounded-lg border border-border"
                     style={{ ...columnSizeVars, minWidth: `${totalSize}px` }}
                   >
                     <TableHeader className="bg-muted sticky top-0 z-20 backdrop-blur-sm">

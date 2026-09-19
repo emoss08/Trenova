@@ -222,13 +222,26 @@ names the token to use instead.
   does not — a HOS duty status and a pricing method are categories, not severities.
 - Status maps declare a lifecycle **phase** (`draft`/`queued`/`active`/`awaiting`/`attention`/
   `complete`/`closed`/`failed`) and the tone follows, so a new status cannot pick a colour.
+- Every grey carries `--hue-neutral` (warm, 75) and the brand is copper at 52. The warm arc
+  is pinned 20° apart — danger 25 → brand 52 → warning 78 → amber 98 — because copper sits
+  between red and amber and they otherwise converge into one orange.
+- Two radii: `--radius-control` (6px) for controls, `--radius-surface` (8px) for containers.
+  The whole `rounded-*` scale points at them; a badge is `rounded-full`.
+- Weight means something: 400 body, 500 label, 600 heading. A value in a cell takes no
+  weight class at all.
+- Row rhythm is `--row-h` / `--row-h-compact` / `--row-head-h` / `--cell-px`. A denser table
+  repoints the token; it does not patch padding onto every cell.
 - Missing colour? Add a token to `tokens.css` — in **both** `:root` and `.dark` — rather than
   reaching for the palette. An incomplete set is what caused the drift in the first place.
 - Genuine exceptions take `design-tokens-ignore: <reason>` in a comment on or above the line.
+- `pnpm lint:design` also reads the oklch values out of `tokens.css` and fails on a contrast
+  pair below AA, a value outside sRGB, a hairline invisible against its surface, or the warm
+  hues closing up. `--foreground-on-solid` is near-white in light and near-**black** in dark,
+  because a dark theme's tone fills are the light end of their ramp.
 - Editing `tokens.css`: never let a comment-terminator sequence appear inside a comment body.
   It ends the comment early and every `@utility` after it silently stops emitting — which
-  removes focus indicators without failing anything. `styles/__tests__/tokens.test.ts`
-  compiles the file and asserts each declared `@utility` reaches the output.
+  removes focus indicators without failing anything. `pnpm lint:design` compiles the file and
+  asserts each declared `@utility` reaches the output.
 
 ## Generated Code
 
