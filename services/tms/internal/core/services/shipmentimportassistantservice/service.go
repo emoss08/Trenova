@@ -6,22 +6,18 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json" //nolint:depguard // external API payloads
-	"errors"
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/ailog"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -30,9 +26,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/openai/openai-go/v3"
-	"github.com/openai/openai-go/v3/option"
-	"github.com/openai/openai-go/v3/responses"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -44,7 +37,7 @@ type Params struct {
 	Logger               *zap.Logger
 	Config               *config.Config
 	DB                   *postgres.Connection
-	Integration          *integrationservice.Service
+	Completion           serviceports.CompletionService
 	AILogRepo            repositories.AILogRepository
 	ChatRepo             repositories.ShipmentImportChatRepository
 	ChatCacheRepo        repositories.ShipmentImportChatCacheRepository
@@ -64,7 +57,7 @@ type Service struct {
 	logger               *zap.Logger
 	cfg                  *config.DocumentIntelligenceConfig
 	db                   *postgres.Connection
-	integration          *integrationservice.Service
+	completion           serviceports.CompletionService
 	aiLogRepo            repositories.AILogRepository
 	chatRepo             repositories.ShipmentImportChatRepository
 	chatCacheRepo        repositories.ShipmentImportChatCacheRepository
@@ -87,7 +80,7 @@ func New(
 		logger:               p.Logger.Named("service.shipment-import-assistant"),
 		cfg:                  p.Config.GetDocumentIntelligenceConfig(),
 		db:                   p.DB,
-		integration:          p.Integration,
+		completion:           p.Completion,
 		aiLogRepo:            p.AILogRepo,
 		chatRepo:             p.ChatRepo,
 		chatCacheRepo:        p.ChatCacheRepo,
@@ -167,301 +160,6 @@ SUGGEST_QUICK_ACTIONS:
   - type="action": Triggers an app action. Use action="create_shipment" for the final step.
 - Suggestions must be DIRECT ANSWERS to the question you just asked.`
 
-func buildTools() []responses.ToolUnionParam { //nolint:funlen // legacy workflow
-	return []responses.ToolUnionParam{
-		{OfFunction: &responses.FunctionToolParam{
-			Name:        "accept_field",
-			Description: openai.String("Accept an extracted field value as correct"),
-			Parameters: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"field_key": map[string]any{"type": "string"},
-				},
-				"required":             []string{"field_key"},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name:        "accept_all_confident",
-			Description: openai.String("Accept all high-confidence extracted fields at once"),
-			Parameters: map[string]any{
-				"type":                 "object",
-				"properties":           map[string]any{},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name:        "set_field_value",
-			Description: openai.String("Set or override an extracted field value"),
-			Parameters: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"field_key": map[string]any{"type": "string"},
-					"value":     map[string]any{"type": "string"},
-				},
-				"required":             []string{"field_key", "value"},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name: "set_required_field",
-			Description: openai.String(
-				"Set a required shipment field by entity ID after confirming with the user",
-			),
-			Parameters: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"field_key": map[string]any{
-						"type": "string",
-						"enum": []string{
-							"customerId",
-							"serviceTypeId",
-							"shipmentTypeId",
-							"formulaTemplateId",
-						},
-					},
-					"entity_id": map[string]any{"type": "string"},
-					"label":     map[string]any{"type": "string"},
-				},
-				"required":             []string{"field_key", "entity_id", "label"},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name:        "search_customers",
-			Description: openai.String("Search the customer database by name"),
-			Parameters: map[string]any{
-				"type":                 "object",
-				"properties":           map[string]any{"query": map[string]any{"type": "string"}},
-				"required":             []string{"query"},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name:        "search_locations",
-			Description: openai.String("Search the location database by name, city, or address"),
-			Parameters: map[string]any{
-				"type":                 "object",
-				"properties":           map[string]any{"query": map[string]any{"type": "string"}},
-				"required":             []string{"query"},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name:        "search_service_types",
-			Description: openai.String("Search available service types"),
-			Parameters: map[string]any{
-				"type":                 "object",
-				"properties":           map[string]any{"query": map[string]any{"type": "string"}},
-				"required":             []string{"query"},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name: "set_stop_location",
-			Description: openai.String(
-				"Set a stop's location by matching to an existing location in the system",
-			),
-			Parameters: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"stop_index": map[string]any{
-						"type":        "integer",
-						"description": "0-based index of the stop",
-					},
-					"location_id": map[string]any{
-						"type":        "string",
-						"description": "ID of the location to assign",
-					},
-				},
-				"required":             []string{"stop_index", "location_id"},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name: "set_stop_schedule",
-			Description: openai.String(
-				"Set a stop's scheduled pickup/delivery window. Provide ISO 8601 datetime strings.",
-			),
-			Parameters: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"stop_index": map[string]any{
-						"type":        "integer",
-						"description": "0-based index of the stop",
-					},
-					"window_start": map[string]any{
-						"type":        "string",
-						"description": "Start time as ISO 8601 (e.g. 2025-03-15T08:00:00Z)",
-					},
-					"window_end": map[string]any{
-						"type":        "string",
-						"description": "End time as ISO 8601 (optional)",
-					},
-				},
-				"required":             []string{"stop_index", "window_start"},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name: "set_shipment_field",
-			Description: openai.String(
-				"Set a top-level shipment field like bol, weight, pieces, freightChargeAmount",
-			),
-			Parameters: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"field": map[string]any{
-						"type":        "string",
-						"description": "Field name (bol, weight, pieces, freightChargeAmount, proNumber)",
-					},
-					"value": map[string]any{"type": "string", "description": "Value to set"},
-				},
-				"required":             []string{"field", "value"},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name: "get_customer_requirements",
-			Description: openai.String(
-				"Check if a customer requires BOL for invoicing. Call this after setting the customer.",
-			),
-			Parameters: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"customer_id": map[string]any{"type": "string"},
-				},
-				"required":             []string{"customer_id"},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name: "get_shipment_control",
-			Description: openai.String(
-				"Get the organization's shipment control settings (weight limits, BOL checking, etc.)",
-			),
-			Parameters: map[string]any{
-				"type":                 "object",
-				"properties":           map[string]any{},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name:        "search_shipment_types",
-			Description: openai.String("Search available shipment types"),
-			Parameters: map[string]any{
-				"type":                 "object",
-				"properties":           map[string]any{"query": map[string]any{"type": "string"}},
-				"required":             []string{"query"},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name:        "search_formula_templates",
-			Description: openai.String("Search available rating methods / formula templates"),
-			Parameters: map[string]any{
-				"type":                 "object",
-				"properties":           map[string]any{"query": map[string]any{"type": "string"}},
-				"required":             []string{"query"},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name: "add_location",
-			Description: openai.String(
-				"Create a new location in the system from extracted address data. Use this when no matching location exists. The location will be created and its ID returned so you can assign it to a stop.",
-			),
-			Parameters: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"name": map[string]any{
-						"type":        "string",
-						"description": "Location name (e.g. company/facility name)",
-					},
-					"address_line1": map[string]any{
-						"type":        "string",
-						"description": "Street address",
-					},
-					"city": map[string]any{"type": "string", "description": "City name"},
-					"state_abbrev": map[string]any{
-						"type":        "string",
-						"description": "Two-letter US state abbreviation (e.g. CA, TX, NY)",
-					},
-					"postal_code": map[string]any{"type": "string", "description": "ZIP code"},
-				},
-				"required": []string{
-					"name",
-					"address_line1",
-					"city",
-					"state_abbrev",
-					"postal_code",
-				},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name: "create_shipment",
-			Description: openai.String(
-				"Create the shipment. Only call this when ALL required fields and stop locations are set. This triggers the actual shipment creation.",
-			),
-			Parameters: map[string]any{
-				"type":                 "object",
-				"properties":           map[string]any{},
-				"additionalProperties": false,
-			},
-		}},
-		{OfFunction: &responses.FunctionToolParam{
-			Name: "suggest_quick_actions",
-			Description: openai.String(
-				"Provide 2-3 action buttons. Call at the end of every response. type='prompt' for confirmations, type='input' when user needs to type a value, type='action' for triggering app actions like creating the shipment.",
-			),
-			Parameters: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"suggestions": map[string]any{
-						"type": "array",
-						"items": map[string]any{
-							"type": "object",
-							"properties": map[string]any{
-								"label": map[string]any{
-									"type":        "string",
-									"description": "Button label",
-								},
-								"prompt": map[string]any{
-									"type":        "string",
-									"description": "For type=prompt: message to send. For type=input: prefix before user's typed value (e.g. 'Search for customer ')",
-								},
-								"type": map[string]any{
-									"type":        "string",
-									"enum":        []string{"prompt", "input", "action", "date"},
-									"description": "prompt = sends message. input = shows text field. action = triggers app action. date = shows a date+time picker.",
-								},
-								"action": map[string]any{
-									"type":        "string",
-									"description": "For type=action: the action ID (e.g. 'create_shipment')",
-								},
-								"placeholder": map[string]any{
-									"type":        "string",
-									"description": "For type=input: placeholder text in the input field",
-								},
-								"submitLabel": map[string]any{
-									"type":        "string",
-									"description": "For type=input: submit button label. Use 'Confirm' for values, 'Search' for queries. Default: 'Search'",
-								},
-							},
-							"required":             []string{"label", "prompt", "type"},
-							"additionalProperties": false,
-						},
-						"maxItems": 3,
-					},
-				},
-				"required":             []string{"suggestions"},
-				"additionalProperties": false,
-			},
-		}},
-	}
-}
-
 func (s *Service) buildConversationContextMap(
 	ctx context.Context,
 	req *serviceports.ShipmentImportChatRequest,
@@ -531,6 +229,17 @@ func (s *Service) buildConversationContext(
 	return data
 }
 
+// systemMessage carries the instructions and the state of the import. The
+// state is rebuilt every turn rather than replayed from the conversation,
+// because a field the operator accepted two turns ago is current fact, and
+// showing the model its own older view of it is how it contradicts itself.
+func (s *Service) systemMessage(
+	ctx context.Context,
+	req *serviceports.ShipmentImportChatRequest,
+) string {
+	return systemPrompt + "\n\nCurrent state:\n" + string(s.buildConversationContext(ctx, req))
+}
+
 func (s *Service) buildDefaultOptions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -598,30 +307,6 @@ func (s *Service) buildDefaultOptions(
 	}
 }
 
-func (s *Service) buildConversationInput(
-	req *serviceports.ShipmentImportChatRequest,
-	contextJSON []byte,
-) responses.ResponseNewParamsInputUnion {
-	items := []responses.ResponseInputItemUnionParam{
-		{OfMessage: &responses.EasyInputMessageParam{
-			Role: "system",
-			Content: responses.EasyInputMessageContentUnionParam{
-				OfString: openai.String(
-					systemPrompt + "\n\nCurrent state:\n" + string(contextJSON),
-				),
-			},
-		}},
-		{OfMessage: &responses.EasyInputMessageParam{
-			Role: "user",
-			Content: responses.EasyInputMessageContentUnionParam{
-				OfString: openai.String(req.UserMessage),
-			},
-		}},
-	}
-
-	return responses.ResponseNewParamsInputUnion{OfInputItemList: items}
-}
-
 func (s *Service) ensureConversation(
 	ctx context.Context,
 	req *serviceports.ShipmentImportChatRequest,
@@ -662,41 +347,6 @@ func (s *Service) ensureConversation(
 		UserID:         req.TenantInfo.UserID,
 		Status:         shipmentimportchat.ConversationStatusActive,
 	})
-}
-
-func friendlyStreamError(err error) string {
-	if apiErr, ok := errors.AsType[*openai.Error](err); ok {
-		switch apiErr.StatusCode {
-		case http.StatusTooManyRequests:
-			return "The AI provider is temporarily rate-limited. Please wait a few seconds and try again."
-		case http.StatusUnauthorized, http.StatusForbidden:
-			return "AI authentication failed. Please check the API key configuration."
-		case http.StatusBadRequest:
-			return "The AI request was invalid. Try starting a new conversation."
-		default:
-			if apiErr.StatusCode >= http.StatusInternalServerError {
-				return "The AI provider is experiencing issues. Please try again shortly."
-			}
-		}
-	}
-
-	if errors.Is(err, context.DeadlineExceeded) {
-		return "The AI request timed out. Please try again."
-	}
-	if errors.Is(err, context.Canceled) {
-		return "The request was canceled."
-	}
-
-	// Mid-stream errors aren't typed — fall back to string matching on the raw message.
-	msg := err.Error()
-	if strings.Contains(msg, "rate_limit") {
-		return "The AI provider is temporarily rate-limited. Please wait a few seconds and try again."
-	}
-	if strings.Contains(msg, "context_length_exceeded") {
-		return "The conversation is too long for the AI to process. Try starting a new import."
-	}
-
-	return "AI assistant encountered an error. Please try again."
 }
 
 func normalizeSuggestions(
@@ -824,6 +474,7 @@ func (s *Service) persistConversationTurn(
 	suggestions []serviceports.ShipmentImportSuggestion,
 	toolCalls []serviceports.ShipmentImportToolCallRecord,
 	actions []serviceports.ShipmentImportAction,
+	model string,
 	resultStatus shipmentimportchat.TurnResultStatus,
 	errorMessage string,
 ) error {
@@ -860,7 +511,7 @@ func (s *Service) persistConversationTurn(
 			AssistantMessage:       assistantMessage,
 			RequestConversationID:  req.ConversationID,
 			ResponseConversationID: responseConversationID,
-			Model:                  openai.ChatModelGPT5_4,
+			Model:                  model,
 			ResultStatus:           resultStatus,
 			ErrorMessage:           errorMessage,
 			ContextJSON:            encodedPayload.ContextJSON,
@@ -1002,6 +653,7 @@ func (s *Service) recordFailedTurn(
 		nil,
 		toolCalls,
 		actions,
+		"",
 		shipmentimportchat.TurnResultStatusFailed,
 		errorMessage,
 	); err != nil {
@@ -1042,211 +694,6 @@ func (s *Service) updateConversationStatus(
 	}
 
 	return nil
-}
-
-func (s *Service) Chat( //nolint:funlen // legacy workflow
-	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
-) (*serviceports.ShipmentImportChatResponse, error) {
-	conversation, err := s.ensureConversation(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	runtimeCfg, err := s.integration.GetRuntimeConfig(ctx, req.TenantInfo, integration.TypeOpenAI)
-	if err != nil {
-		s.recordFailedTurn(
-			ctx,
-			req,
-			conversation,
-			req.ConversationID,
-			"",
-			nil,
-			nil,
-			"OpenAI integration is not configured",
-		)
-		return nil, errortypes.NewBusinessError("OpenAI integration is not configured")
-	}
-
-	apiKey := runtimeCfg.Config["apiKey"]
-	if apiKey == "" {
-		s.recordFailedTurn(
-			ctx,
-			req,
-			conversation,
-			req.ConversationID,
-			"",
-			nil,
-			nil,
-			"OpenAI API key is missing",
-		)
-		return nil, errortypes.NewBusinessError("OpenAI API key is missing")
-	}
-
-	client := openai.NewClient(
-		option.WithAPIKey(apiKey),
-		option.WithMaxRetries(5),
-	)
-
-	contextJSON := s.buildConversationContext(ctx, req)
-
-	params := responses.ResponseNewParams{
-		Model: openai.ChatModelGPT5_4,
-		Input: s.buildConversationInput(req, contextJSON),
-		Tools: buildTools(),
-	}
-	if req.ConversationID != "" {
-		params.PreviousResponseID = openai.String(req.ConversationID)
-	}
-
-	var (
-		actions        []serviceports.ShipmentImportAction
-		suggestions    []serviceports.ShipmentImportSuggestion
-		toolCallLog    []serviceports.ShipmentImportToolCallRecord
-		finalText      string
-		conversationID = req.ConversationID
-	)
-
-	for range 5 {
-		resp, respErr := client.Responses.New(ctx, params)
-		if respErr != nil {
-			userMsg := friendlyStreamError(respErr)
-			s.logger.Error("OpenAI API error", zap.Error(respErr))
-			s.recordFailedTurn(
-				ctx,
-				req,
-				conversation,
-				conversationID,
-				finalText,
-				toolCallLog,
-				actions,
-				userMsg,
-			)
-			return nil, errortypes.NewBusinessError(userMsg)
-		}
-
-		conversationID = resp.ID
-
-		toolOutputs, hasToolCalls := s.collectToolOutputsFromResponse(
-			ctx,
-			req.TenantInfo,
-			resp,
-			&finalText,
-			&suggestions,
-			&actions,
-			&toolCallLog,
-		)
-
-		if !hasToolCalls {
-			break
-		}
-
-		params = responses.ResponseNewParams{
-			Model:              openai.ChatModelGPT5_4,
-			PreviousResponseID: openai.String(conversationID),
-			Input:              responses.ResponseNewParamsInputUnion{OfInputItemList: toolOutputs},
-			Tools:              buildTools(),
-		}
-	}
-
-	suggestions = normalizeSuggestions(suggestions)
-	if err = s.persistConversationTurn(
-		ctx,
-		req,
-		conversation,
-		conversationID,
-		finalText,
-		suggestions,
-		toolCallLog,
-		actions,
-		shipmentimportchat.TurnResultStatusCompleted,
-		"",
-	); err != nil {
-		return nil, err
-	}
-
-	s.logAICall(ctx, req, finalText)
-
-	return &serviceports.ShipmentImportChatResponse{
-		Message:        finalText,
-		ConversationID: conversationID,
-		Actions:        actions,
-		Suggestions:    suggestions,
-		ToolCalls:      toolCallLog,
-	}, nil
-}
-
-func (s *Service) collectToolOutputsFromResponse(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	resp *responses.Response,
-	finalText *string,
-	suggestions *[]serviceports.ShipmentImportSuggestion,
-	actions *[]serviceports.ShipmentImportAction,
-	toolCallLog *[]serviceports.ShipmentImportToolCallRecord,
-) ([]responses.ResponseInputItemUnionParam, bool) {
-	var (
-		toolOutputs  []responses.ResponseInputItemUnionParam
-		hasToolCalls bool
-	)
-
-	for i := range resp.Output {
-		item := &resp.Output[i]
-		switch item.Type {
-		case "message":
-			for j := range item.Content {
-				content := &item.Content[j]
-				if content.Type == "output_text" {
-					*finalText = content.Text
-				}
-			}
-
-		case "function_call":
-			hasToolCalls = true
-			fc := item.AsFunctionCall()
-
-			if fc.Name == "suggest_quick_actions" {
-				var sugArgs struct {
-					Suggestions []serviceports.ShipmentImportSuggestion `json:"suggestions"`
-				}
-				if err := sonic.Unmarshal([]byte(fc.Arguments), &sugArgs); err == nil {
-					*suggestions = sugArgs.Suggestions
-				}
-
-				toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
-					OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-						CallID: openai.String(fc.CallID),
-						Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
-							OfString: openai.String(`{"ok":true}`),
-						},
-					},
-				})
-				continue
-			}
-
-			result, toolActions := s.executeToolCall(ctx, tenantInfo, fc.Name, fc.Arguments)
-			*actions = append(*actions, toolActions...)
-
-			*toolCallLog = append(*toolCallLog, serviceports.ShipmentImportToolCallRecord{
-				Name:   fc.Name,
-				CallID: fc.CallID,
-				Status: toolCallStatusFromResult(result),
-				Input:  fc.Arguments,
-				Output: result,
-			})
-
-			toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
-				OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-					CallID: openai.String(fc.CallID),
-					Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
-						OfString: openai.String(result),
-					},
-				},
-			})
-		}
-	}
-
-	return toolOutputs, hasToolCalls
 }
 
 func toolCallStatusFromResult(result string) string {
@@ -1927,258 +1374,6 @@ func (s *Service) logAICall(
 	if _, err := s.aiLogRepo.Create(ctx, entry); err != nil {
 		s.logger.Error("failed to log AI call", zap.Error(err))
 	}
-}
-
-func (s *Service) ChatStream( //nolint:funlen,gocognit // legacy workflow
-	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
-	emit func(serviceports.StreamEvent),
-) error {
-	conversation, err := s.ensureConversation(ctx, req)
-	if err != nil {
-		return err
-	}
-
-	runtimeCfg, err := s.integration.GetRuntimeConfig(ctx, req.TenantInfo, integration.TypeOpenAI)
-	if err != nil {
-		s.recordFailedTurn(
-			ctx,
-			req,
-			conversation,
-			req.ConversationID,
-			"",
-			nil,
-			nil,
-			"OpenAI integration is not configured",
-		)
-		return errortypes.NewBusinessError("OpenAI integration is not configured")
-	}
-
-	apiKey := runtimeCfg.Config["apiKey"]
-	if apiKey == "" {
-		s.recordFailedTurn(
-			ctx,
-			req,
-			conversation,
-			req.ConversationID,
-			"",
-			nil,
-			nil,
-			"OpenAI API key is missing",
-		)
-		return errortypes.NewBusinessError("OpenAI API key is missing")
-	}
-
-	client := openai.NewClient(
-		option.WithAPIKey(apiKey),
-		option.WithMaxRetries(5),
-	)
-
-	contextJSON := s.buildConversationContext(ctx, req)
-
-	params := responses.ResponseNewParams{
-		Model: openai.ChatModelGPT5_4,
-		Input: s.buildConversationInput(req, contextJSON),
-		Tools: buildTools(),
-	}
-	if req.ConversationID != "" {
-		params.PreviousResponseID = openai.String(req.ConversationID)
-	}
-
-	var (
-		allActions        []serviceports.ShipmentImportAction
-		latestSuggestions []serviceports.ShipmentImportSuggestion
-		toolCallLog       []serviceports.ShipmentImportToolCallRecord
-		conversationID    string
-		fullText          strings.Builder
-	)
-
-	for round := range 5 {
-		// For subsequent rounds, start a new message bubble in the UI
-		if round > 0 {
-			emit(serviceports.StreamEvent{Event: "new_message", Data: nil})
-		}
-
-		stream := client.Responses.NewStreaming(ctx, params)
-
-		type pendingCall struct {
-			callID string
-			name   string
-			args   string
-		}
-		var pendingCalls []pendingCall
-
-		for stream.Next() {
-			event := stream.Current()
-
-			switch event.Type {
-			case "response.output_text.delta":
-				delta := event.AsResponseOutputTextDelta()
-				fullText.WriteString(delta.Delta)
-				emit(
-					serviceports.StreamEvent{
-						Event: "text_delta",
-						Data:  map[string]string{"delta": delta.Delta},
-					},
-				)
-
-			case "response.output_item.done":
-				item := event.AsResponseOutputItemDone()
-				if item.Item.Type == "function_call" {
-					pendingCalls = append(pendingCalls, pendingCall{
-						callID: item.Item.CallID,
-						name:   item.Item.Name,
-						args:   item.Item.Arguments.OfString,
-					})
-				}
-
-			case "response.completed":
-				completed := event.AsResponseCompleted()
-				conversationID = completed.Response.ID
-			}
-		}
-
-		if stream.Err() != nil {
-			streamErr := stream.Err()
-			s.logger.Error("stream error", zap.Error(streamErr))
-			userMsg := friendlyStreamError(streamErr)
-			s.recordFailedTurn(
-				ctx,
-				req,
-				conversation,
-				conversationID,
-				fullText.String(),
-				toolCallLog,
-				allActions,
-				userMsg,
-			)
-			emit(
-				serviceports.StreamEvent{
-					Event: "error",
-					Data:  map[string]string{"message": userMsg},
-				},
-			)
-
-			return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
-		}
-
-		// No tool calls — we're done
-		if len(pendingCalls) == 0 {
-			break
-		}
-
-		// Execute tool calls and build outputs for next round
-		var toolOutputs []responses.ResponseInputItemUnionParam
-
-		for _, pc := range pendingCalls {
-			if pc.name == "suggest_quick_actions" {
-				var sugArgs struct {
-					Suggestions []serviceports.ShipmentImportSuggestion `json:"suggestions"`
-				}
-				if err = sonic.Unmarshal([]byte(pc.args), &sugArgs); err == nil {
-					latestSuggestions = sugArgs.Suggestions
-				}
-				toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
-					OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-						CallID: openai.String(pc.callID),
-						Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
-							OfString: openai.String(`{"ok":true}`),
-						},
-					},
-				})
-				continue
-			}
-
-			// Emit tool start
-			emit(
-				serviceports.StreamEvent{
-					Event: "tool_call_start",
-					Data:  map[string]string{"name": pc.name, "callId": pc.callID},
-				},
-			)
-
-			// Execute the tool
-			result, toolActions := s.executeToolCall(ctx, req.TenantInfo, pc.name, pc.args)
-			allActions = append(allActions, toolActions...)
-
-			status := "completed"
-			if result != "" {
-				var check map[string]any
-				if json.Unmarshal([]byte(result), &check) == nil {
-					if _, hasErr := check["error"]; hasErr {
-						status = "error"
-					}
-				}
-			}
-
-			toolCallLog = append(toolCallLog, serviceports.ShipmentImportToolCallRecord{
-				Name:   pc.name,
-				CallID: pc.callID,
-				Status: status,
-				Input:  pc.args,
-				Output: result,
-			})
-
-			emit(serviceports.StreamEvent{Event: "tool_call_done", Data: map[string]any{
-				"name":    pc.name,
-				"callId":  pc.callID,
-				"status":  status,
-				"result":  result,
-				"actions": toolActions,
-			}})
-
-			toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
-				OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-					CallID: openai.String(pc.callID),
-					Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
-						OfString: openai.String(result),
-					},
-				},
-			})
-		}
-
-		// Start next round with tool outputs
-		params = responses.ResponseNewParams{
-			Model:              openai.ChatModelGPT5_4,
-			PreviousResponseID: openai.String(conversationID),
-			Input:              responses.ResponseNewParamsInputUnion{OfInputItemList: toolOutputs},
-			Tools:              buildTools(),
-		}
-	}
-
-	// Emit suggestions only at the very end (so they match the final question, not intermediate steps)
-	latestSuggestions = normalizeSuggestions(latestSuggestions)
-	if len(latestSuggestions) > 0 {
-		emit(
-			serviceports.StreamEvent{
-				Event: "suggestions",
-				Data:  map[string]any{"suggestions": latestSuggestions},
-			},
-		)
-	}
-
-	emit(serviceports.StreamEvent{Event: "done", Data: map[string]any{
-		"conversationId": conversationID,
-		"actions":        allActions,
-	}})
-
-	if err = s.persistConversationTurn(
-		ctx,
-		req,
-		conversation,
-		conversationID,
-		fullText.String(),
-		latestSuggestions,
-		toolCallLog,
-		allActions,
-		shipmentimportchat.TurnResultStatusCompleted,
-		"",
-	); err != nil {
-		return err
-	}
-
-	s.logAICall(ctx, req, fullText.String())
-	return nil
 }
 
 func (s *Service) GetHistory(
