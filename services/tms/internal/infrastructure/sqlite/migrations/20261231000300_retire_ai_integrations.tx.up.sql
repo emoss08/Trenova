@@ -4,4 +4,4 @@
 -- Source: 20261231000300_retire_ai_integrations.tx.up.sql
 
 DELETE FROM "integrations"
-WHERE "type" IN ('OpenAI', 'Anthropic');
+WHERE "type" = 'OpenAI';
