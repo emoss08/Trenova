@@ -139,8 +139,12 @@ func (t Template) StarterTools() []string {
 		return []string{
 			"get_shipment",
 			"search_shipments",
+			"list_shipments",
 			"get_worker",
 			"search_worker",
+			"list_workers",
+			"list_tractors",
+			"list_trailers",
 			"list_expiring_credentials",
 			"assign_move",
 		}
@@ -148,6 +152,11 @@ func (t Template) StarterTools() []string {
 		return []string{
 			"get_shipment",
 			"search_shipments",
+			"list_shipments",
+			"list_customers",
+			"list_reports",
+			"run_report",
+			"get_report_run",
 			"request_missing_docs",
 			"flag_for_manual_review",
 			"transition_item_to_in_review",
@@ -156,11 +165,17 @@ func (t Template) StarterTools() []string {
 		return []string{
 			"get_worker",
 			"search_worker",
+			"list_workers",
 			"list_expiring_credentials",
+			"list_tractors",
+			"list_trailers",
+			"list_reports",
+			"run_report",
+			"get_report_run",
 			"flag_for_manual_review",
 		}
 	case TemplateCustomerAssistant:
-		return []string{"get_shipment", "search_shipments"}
+		return []string{"get_shipment", "search_shipments", "list_shipments", "list_customers"}
 	case TemplateGeneralAssistant:
 		return nil
 	case TemplateBillingException:

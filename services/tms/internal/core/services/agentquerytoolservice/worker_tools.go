@@ -2,8 +2,10 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -144,4 +146,15 @@ func (t *searchWorkerTool) Query(
 	}
 
 	return criteria.result(result.Items, len(result.Items)), nil
+}
+
+// workerName is how a person names a driver. Every tool that returns a worker
+// row needs it, and a driver whose record carries only one of the two names
+// should still read as a name rather than a stray space.
+func workerName(w *worker.Worker) string {
+	if w == nil {
+		return ""
+	}
+
+	return strings.TrimSpace(w.FirstName + " " + w.LastName)
 }

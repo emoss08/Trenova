@@ -184,3 +184,12 @@ func optionalInt(params map[string]any, key string, fallback int) int {
 		return fallback
 	}
 }
+
+// optionalObject reads a nested object the caller may leave out. A model that
+// sends null rather than omitting the key means the same thing, and a tool that
+// treats the two differently fails on a distinction the model cannot see.
+func optionalObject(params map[string]any, key string) map[string]any {
+	value, _ := params[key].(map[string]any)
+
+	return value
+}

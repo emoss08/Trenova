@@ -193,11 +193,7 @@ func toExpiringRow(credential *worker.WorkerCredential, now int64) expiringCrede
 		row.CredentialCode = credential.CredentialType.Code
 	}
 
-	if credential.Worker != nil {
-		row.WorkerName = strings.TrimSpace(
-			credential.Worker.FirstName + " " + credential.Worker.LastName,
-		)
-	}
+	row.WorkerName = workerName(credential.Worker)
 
 	return row
 }

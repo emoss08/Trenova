@@ -34,6 +34,58 @@ describe("describeToolCall", () => {
       subject: "",
     });
   });
+
+  /**
+   * A filtered list carries no scalar argument at all — its whole question is
+   * inside the filters array — so without this it reads as a bare "List
+   * shipments" and the reader cannot tell what was asked.
+   */
+  it("summarizes the filters a list call applied", () => {
+    expect(
+      describeToolCall("list_shipments", {
+        filters: [{ field: "status", operator: "eq", value: "Delivered" }],
+        limit: 25,
+      }),
+    ).toEqual({
+      title: "List shipments",
+      subject: "status Delivered",
+    });
+  });
+
+  it("reads a relative window as a window", () => {
+    expect(
+      describeToolCall("list_trailers", {
+        filters: [{ field: "registrationExpiry", operator: "nextndays", days: 30 }],
+      }),
+    ).toEqual({
+      title: "List trailers",
+      subject: "registrationExpiry next 30d",
+    });
+  });
+
+  it("keeps a long filter list to a readable length", () => {
+    expect(
+      describeToolCall("list_workers", {
+        filters: [
+          { field: "status", operator: "eq", value: "Active" },
+          { field: "type", operator: "eq", value: "Employee" },
+          { field: "city", operator: "contains", value: "Dallas" },
+        ],
+      }).subject,
+    ).toBe("status Active, type Employee +1");
+  });
+
+  it("names the report a run was started for", () => {
+    expect(
+      describeToolCall("run_report", {
+        reportKey: "ar_aging_by_customer",
+        parameters: { asOf: "2026-03-01" },
+      }),
+    ).toEqual({
+      title: "Start report",
+      subject: "ar_aging_by_customer",
+    });
+  });
 });
 
 /**

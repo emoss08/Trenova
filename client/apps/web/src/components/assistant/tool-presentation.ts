@@ -11,6 +11,15 @@ const TOOL_TITLES: Record<string, string> = {
   get_worker: "Look up driver",
   search_worker: "Search drivers",
   list_expiring_credentials: "Check expiring credentials",
+  list_workers: "List drivers",
+  list_shipments: "List shipments",
+  list_tractors: "List tractors",
+  list_trailers: "List trailers",
+  list_customers: "List customers",
+  list_locations: "List locations",
+  list_reports: "Browse reports",
+  run_report: "Start report",
+  get_report_run: "Check report run",
   flag_for_manual_review: "Flag for manual review",
   request_missing_docs: "Request missing documents",
   attach_document_to_bqi: "Attach document to billing item",
@@ -20,6 +29,8 @@ const TOOL_TITLES: Record<string, string> = {
 /** Argument keys that name the record a tool was about, most specific first. */
 const SUBJECT_KEYS = [
   "proNumber",
+  "reportKey",
+  "runId",
   "workerNumber",
   "query",
   "search",
@@ -35,6 +46,71 @@ export type ToolCallDescription = {
   subject: string;
 };
 
+/** How many filters fit on one line before the rest become a count. */
+const VISIBLE_FILTERS = 2;
+
+type ToolFilter = {
+  field?: unknown;
+  operator?: unknown;
+  value?: unknown;
+  values?: unknown;
+  days?: unknown;
+};
+
+/**
+ * What a filter was asking for, in as few words as it takes to recognize it.
+ *
+ * A list tool carries its whole question inside `filters`, so without this the
+ * call reads as a bare "List shipments" and the reader cannot tell whether it
+ * asked for yesterday's deliveries or everything.
+ */
+function describeFilter(filter: ToolFilter): string {
+  const field = typeof filter.field === "string" ? filter.field : "";
+  if (field === "") {
+    return "";
+  }
+
+  const operator = typeof filter.operator === "string" ? filter.operator : "";
+
+  if (typeof filter.days === "number") {
+    const span = operator === "lastndays" ? "last" : "next";
+    return `${field} ${span} ${filter.days}d`;
+  }
+  if (Array.isArray(filter.values)) {
+    return `${field} ${filter.values.join("/")}`;
+  }
+  if (typeof filter.value === "string" || typeof filter.value === "number") {
+    return `${field} ${filter.value}`;
+  }
+  if (operator === "isnull") {
+    return `${field} empty`;
+  }
+  if (operator === "isnotnull") {
+    return `${field} set`;
+  }
+
+  return `${field} ${operator}`.trim();
+}
+
+function describeFilters(raw: unknown): string {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return "";
+  }
+
+  const parts = raw
+    .filter((entry): entry is ToolFilter => typeof entry === "object" && entry !== null)
+    .map(describeFilter)
+    .filter((part) => part !== "");
+  if (parts.length === 0) {
+    return "";
+  }
+
+  const shown = parts.slice(0, VISIBLE_FILTERS).join(", ");
+  const hidden = parts.length - VISIBLE_FILTERS;
+
+  return hidden > 0 ? `${shown} +${hidden}` : shown;
+}
+
 /**
  * The one line a reader sees for a tool call: what was done, and to what.
  *
@@ -48,6 +124,11 @@ export function describeToolCall(
 ): ToolCallDescription {
   const title = TOOL_TITLES[name] ?? humanizeToolName(name);
   const values = args ?? {};
+
+  const filters = describeFilters(values.filters);
+  if (filters !== "") {
+    return { title, subject: filters };
+  }
 
   for (const key of SUBJECT_KEYS) {
     const value = values[key];
