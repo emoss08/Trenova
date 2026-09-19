@@ -6,7 +6,6 @@ export const statusOptions = ["all", "connected", "disconnected"];
 export const integrationModalTypes = [
   "Samsara",
   "GoogleMaps",
-  "OpenAI",
   "OpenWeatherMap",
   "OANDAExchangeRates",
   "EIAFuelPrices",

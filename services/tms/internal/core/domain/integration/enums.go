@@ -6,8 +6,6 @@ const (
 	TypeGoogleMaps         = Type("GoogleMaps")
 	TypeSamsara            = Type("Samsara")
 	TypeHERE               = Type("HERE")
-	TypeOpenAI             = Type("OpenAI")
-	TypeAnthropic          = Type("Anthropic")
 	TypeOpenWeatherMap     = Type("OpenWeatherMap")
 	TypeOANDAExchangeRates = Type("OANDAExchangeRates")
 	TypeEIAFuelPrices      = Type("EIAFuelPrices")
@@ -48,8 +46,6 @@ func (v Type) IsValid() bool {
 	case TypeGoogleMaps,
 		TypeSamsara,
 		TypeHERE,
-		TypeOpenAI,
-		TypeAnthropic,
 		TypeOpenWeatherMap,
 		TypeOANDAExchangeRates,
 		TypeEIAFuelPrices,

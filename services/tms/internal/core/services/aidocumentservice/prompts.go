@@ -34,6 +34,17 @@ const (
 	schemaNameExtract = "rate_confirmation_extract"
 )
 
+// section builds one delimited context section.
+//
+// The title is a call argument rather than a Title: field literal on purpose.
+// These strings are addressed to a model, not to a person, and the i18n
+// extractor harvests any Title field it finds (shared/cmd/i18n-extract) — which
+// would put prompt headings into the translation catalogs and make what the
+// model is shown depend on the operator's locale.
+func section(title, content string) serviceports.ContextSection {
+	return serviceports.ContextSection{Title: title, Trusted: false, Content: content}
+}
+
 /*
 Everything a document carries is untrusted.
 
@@ -45,42 +56,29 @@ single concatenated user string could not do.
 */
 func buildRouteContext(req *serviceports.AIRouteRequest) serviceports.DelimitedContext {
 	sections := []serviceports.ContextSection{
-		{Title: "Filename", Trusted: false, Content: strings.TrimSpace(req.FileName)},
+		section("Filename", strings.TrimSpace(req.FileName)),
 	}
 
 	if req.Fingerprint != nil {
-		sections = append(sections, serviceports.ContextSection{
-			Title:   "Provider Fingerprint Hint",
-			Trusted: false,
-			Content: fmt.Sprintf(
+		sections = append(sections, section(
+			"Provider Fingerprint Hint",
+			fmt.Sprintf(
 				"provider=%s kindHint=%s confidence=%.2f signals=%s",
 				req.Fingerprint.Provider,
 				req.Fingerprint.KindHint,
 				req.Fingerprint.Confidence,
 				strings.Join(req.Fingerprint.Signals, ", "),
 			),
-		})
+		))
 	}
 
 	if req.Features != nil {
-		sections = append(sections, serviceports.ContextSection{
-			Title:   "Normalized Features",
-			Trusted: false,
-			Content: formatFeatures(req.Features),
-		})
+		sections = append(sections, section("Normalized Features", formatFeatures(req.Features)))
 	}
 
 	sections = append(sections,
-		serviceports.ContextSection{
-			Title:   "Document Text Excerpt",
-			Trusted: false,
-			Content: stringutils.Truncate(req.Text, routeTextLimit),
-		},
-		serviceports.ContextSection{
-			Title:   "Page Summaries",
-			Trusted: false,
-			Content: formatPages(req.Pages, routePageLimit),
-		},
+		section("Document Text Excerpt", stringutils.Truncate(req.Text, routeTextLimit)),
+		section("Page Summaries", formatPages(req.Pages, routePageLimit)),
 	)
 
 	return serviceports.DelimitedContext{Sections: sections}
@@ -89,12 +87,8 @@ func buildRouteContext(req *serviceports.AIRouteRequest) serviceports.DelimitedC
 func buildExtractContext(req *serviceports.AIExtractRequest) serviceports.DelimitedContext {
 	return serviceports.DelimitedContext{
 		Sections: []serviceports.ContextSection{
-			{Title: "Filename", Trusted: false, Content: strings.TrimSpace(req.FileName)},
-			{
-				Title:   "Document Pages",
-				Trusted: false,
-				Content: formatPages(req.Pages, extractPageLimit),
-			},
+			section("Filename", strings.TrimSpace(req.FileName)),
+			section("Document Pages", formatPages(req.Pages, extractPageLimit)),
 		},
 	}
 }

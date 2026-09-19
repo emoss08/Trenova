@@ -40,7 +40,6 @@ import { GoogleIntegrationModal } from "./google/google-integration-modal";
 import { IntegrationMarketplaceHeader } from "./integration-marketplace-header";
 import { EIAFuelPricesIntegrationModal } from "./eia/eia-integration-modal";
 import { OANDAExchangeRatesIntegrationModal } from "./oanda/oanda-integration-modal";
-import { OpenAIIntegrationModal } from "./openai/openai-integration-modal";
 import { OpenWeatherMapIntegrationModal } from "./openweathermap/openweathermap-integration-modal";
 import {
   ComdataFuelIntegrationModal,
@@ -81,10 +80,6 @@ const catalogLogoSizeByType: Record<
   string,
   { containerClassName: string; imageClassName: string }
 > = {
-  OpenAI: {
-    containerClassName: "-top-7 -right-12 size-28",
-    imageClassName: "size-32",
-  },
   OpenWeatherMap: {
     containerClassName: "-top-7 -right-6 h-24 w-32",
     imageClassName: "h-28 w-36",
@@ -407,10 +402,6 @@ export function IntegrationCatalogCard() {
       <GoogleIntegrationModal
         open={searchParams.type === "GoogleMaps"}
         onOpenChange={setModalOpen("GoogleMaps")}
-      />
-      <OpenAIIntegrationModal
-        open={searchParams.type === "OpenAI"}
-        onOpenChange={setModalOpen("OpenAI")}
       />
       <OpenWeatherMapIntegrationModal
         open={searchParams.type === "OpenWeatherMap"}

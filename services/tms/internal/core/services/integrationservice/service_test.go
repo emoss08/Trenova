@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const expectedCatalogItems = 17
+const expectedCatalogItems = 16
 
 type stubIntegrationRepo struct {
 	listByTenantResult []*integration.Integration
@@ -188,15 +188,14 @@ func TestListCatalogSortedBySortOrderThenName(t *testing.T) {
 	require.Equal(t, integration.TypeGoogleMaps, resp.Items[3].Type)
 	require.Equal(t, integration.TypePCMiler, resp.Items[4].Type)
 	require.Equal(t, integration.TypeOpenWeatherMap, resp.Items[5].Type)
-	require.Equal(t, integration.TypeOpenAI, resp.Items[6].Type)
-	require.Equal(t, integration.TypeOANDAExchangeRates, resp.Items[7].Type)
-	require.Equal(t, integration.TypeEIAFuelPrices, resp.Items[8].Type)
-	require.Equal(t, integration.TypeWEXFuel, resp.Items[9].Type)
-	require.Equal(t, integration.TypeComdataFuel, resp.Items[10].Type)
-	require.Equal(t, integration.TypeRampFuel, resp.Items[11].Type)
-	require.Equal(t, integration.TypeAmazonSES, resp.Items[12].Type)
-	require.Equal(t, integration.TypeSendGrid, resp.Items[13].Type)
-	require.Equal(t, integration.TypeMailgun, resp.Items[14].Type)
+	require.Equal(t, integration.TypeOANDAExchangeRates, resp.Items[6].Type)
+	require.Equal(t, integration.TypeEIAFuelPrices, resp.Items[7].Type)
+	require.Equal(t, integration.TypeWEXFuel, resp.Items[8].Type)
+	require.Equal(t, integration.TypeComdataFuel, resp.Items[9].Type)
+	require.Equal(t, integration.TypeRampFuel, resp.Items[10].Type)
+	require.Equal(t, integration.TypeAmazonSES, resp.Items[11].Type)
+	require.Equal(t, integration.TypeSendGrid, resp.Items[12].Type)
+	require.Equal(t, integration.TypeMailgun, resp.Items[13].Type)
 }
 
 func TestListCatalogIncludesPlannedEmailProviderLogos(t *testing.T) {

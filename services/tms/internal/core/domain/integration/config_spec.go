@@ -86,28 +86,6 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 			},
 		},
 	},
-	TypeOpenAI: {
-		Fields: []ConfigFieldSpec{
-			{
-				Key:       "apiKey",
-				Label:     "API Key",
-				Type:      ConfigFieldTypePassword,
-				Required:  true,
-				Sensitive: true,
-			},
-		},
-	},
-	TypeAnthropic: {
-		Fields: []ConfigFieldSpec{
-			{
-				Key:       "apiKey",
-				Label:     "API Key",
-				Type:      ConfigFieldTypePassword,
-				Required:  true,
-				Sensitive: true,
-			},
-		},
-	},
 	TypeOpenWeatherMap: {
 		Fields: []ConfigFieldSpec{
 			{

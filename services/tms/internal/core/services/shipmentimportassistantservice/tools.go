@@ -8,12 +8,27 @@ import (
 // shape rather than a vendor SDK's, so the same list serves whichever provider
 // the completion router picks for this organization.
 
+// tool builds one spec.
+//
+// The description is a call argument rather than a Description: field literal on
+// purpose. These strings are addressed to a model, not to a person, and the i18n
+// extractor harvests any Description field it finds (shared/cmd/i18n-extract) —
+// which would put seventeen prompts into the translation catalogs and make what
+// the assistant is told depend on the operator's locale.
+func tool(name, description string, parameters map[string]any) serviceports.ToolSpec {
+	return serviceports.ToolSpec{
+		Name:        name,
+		Description: description,
+		Parameters:  parameters,
+	}
+}
+
 func buildTools() []serviceports.ToolSpec { //nolint:funlen // one entry per tool the assistant may call
 	return []serviceports.ToolSpec{
-		{
-			Name:        "accept_field",
-			Description: "Accept an extracted field value as correct",
-			Parameters: map[string]any{
+		tool(
+			"accept_field",
+			"Accept an extracted field value as correct",
+			map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"field_key": map[string]any{"type": "string"},
@@ -21,20 +36,20 @@ func buildTools() []serviceports.ToolSpec { //nolint:funlen // one entry per too
 				"required":             []string{"field_key"},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "accept_all_confident",
-			Description: "Accept all high-confidence extracted fields at once",
-			Parameters: map[string]any{
+		),
+		tool(
+			"accept_all_confident",
+			"Accept all high-confidence extracted fields at once",
+			map[string]any{
 				"type":                 "object",
 				"properties":           map[string]any{},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "set_field_value",
-			Description: "Set or override an extracted field value",
-			Parameters: map[string]any{
+		),
+		tool(
+			"set_field_value",
+			"Set or override an extracted field value",
+			map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"field_key": map[string]any{"type": "string"},
@@ -43,11 +58,11 @@ func buildTools() []serviceports.ToolSpec { //nolint:funlen // one entry per too
 				"required":             []string{"field_key", "value"},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "set_required_field",
-			Description: "Set a required shipment field by entity ID after confirming with the user",
-			Parameters: map[string]any{
+		),
+		tool(
+			"set_required_field",
+			"Set a required shipment field by entity ID after confirming with the user",
+			map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"field_key": map[string]any{
@@ -65,41 +80,41 @@ func buildTools() []serviceports.ToolSpec { //nolint:funlen // one entry per too
 				"required":             []string{"field_key", "entity_id", "label"},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "search_customers",
-			Description: "Search the customer database by name",
-			Parameters: map[string]any{
+		),
+		tool(
+			"search_customers",
+			"Search the customer database by name",
+			map[string]any{
 				"type":                 "object",
 				"properties":           map[string]any{"query": map[string]any{"type": "string"}},
 				"required":             []string{"query"},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "search_locations",
-			Description: "Search the location database by name, city, or address",
-			Parameters: map[string]any{
+		),
+		tool(
+			"search_locations",
+			"Search the location database by name, city, or address",
+			map[string]any{
 				"type":                 "object",
 				"properties":           map[string]any{"query": map[string]any{"type": "string"}},
 				"required":             []string{"query"},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "search_service_types",
-			Description: "Search available service types",
-			Parameters: map[string]any{
+		),
+		tool(
+			"search_service_types",
+			"Search available service types",
+			map[string]any{
 				"type":                 "object",
 				"properties":           map[string]any{"query": map[string]any{"type": "string"}},
 				"required":             []string{"query"},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "set_stop_location",
-			Description: "Set a stop's location by matching to an existing location in the system",
-			Parameters: map[string]any{
+		),
+		tool(
+			"set_stop_location",
+			"Set a stop's location by matching to an existing location in the system",
+			map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"stop_index": map[string]any{
@@ -114,11 +129,11 @@ func buildTools() []serviceports.ToolSpec { //nolint:funlen // one entry per too
 				"required":             []string{"stop_index", "location_id"},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "set_stop_schedule",
-			Description: "Set a stop's scheduled pickup/delivery window. Provide ISO 8601 datetime strings.",
-			Parameters: map[string]any{
+		),
+		tool(
+			"set_stop_schedule",
+			"Set a stop's scheduled pickup/delivery window. Provide ISO 8601 datetime strings.",
+			map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"stop_index": map[string]any{
@@ -137,11 +152,11 @@ func buildTools() []serviceports.ToolSpec { //nolint:funlen // one entry per too
 				"required":             []string{"stop_index", "window_start"},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "set_shipment_field",
-			Description: "Set a top-level shipment field like bol, weight, pieces, freightChargeAmount",
-			Parameters: map[string]any{
+		),
+		tool(
+			"set_shipment_field",
+			"Set a top-level shipment field like bol, weight, pieces, freightChargeAmount",
+			map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"field": map[string]any{
@@ -153,11 +168,11 @@ func buildTools() []serviceports.ToolSpec { //nolint:funlen // one entry per too
 				"required":             []string{"field", "value"},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "get_customer_requirements",
-			Description: "Check if a customer requires BOL for invoicing. Call this after setting the customer.",
-			Parameters: map[string]any{
+		),
+		tool(
+			"get_customer_requirements",
+			"Check if a customer requires BOL for invoicing. Call this after setting the customer.",
+			map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"customer_id": map[string]any{"type": "string"},
@@ -165,40 +180,40 @@ func buildTools() []serviceports.ToolSpec { //nolint:funlen // one entry per too
 				"required":             []string{"customer_id"},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "get_shipment_control",
-			Description: "Get the organization's shipment control settings (weight limits, BOL checking, etc.)",
-			Parameters: map[string]any{
+		),
+		tool(
+			"get_shipment_control",
+			"Get the organization's shipment control settings (weight limits, BOL checking, etc.)",
+			map[string]any{
 				"type":                 "object",
 				"properties":           map[string]any{},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "search_shipment_types",
-			Description: "Search available shipment types",
-			Parameters: map[string]any{
+		),
+		tool(
+			"search_shipment_types",
+			"Search available shipment types",
+			map[string]any{
 				"type":                 "object",
 				"properties":           map[string]any{"query": map[string]any{"type": "string"}},
 				"required":             []string{"query"},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "search_formula_templates",
-			Description: "Search available rating methods / formula templates",
-			Parameters: map[string]any{
+		),
+		tool(
+			"search_formula_templates",
+			"Search available rating methods / formula templates",
+			map[string]any{
 				"type":                 "object",
 				"properties":           map[string]any{"query": map[string]any{"type": "string"}},
 				"required":             []string{"query"},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "add_location",
-			Description: "Create a new location in the system from extracted address data. Use this when no matching location exists. The location will be created and its ID returned so you can assign it to a stop.",
-			Parameters: map[string]any{
+		),
+		tool(
+			"add_location",
+			"Create a new location in the system from extracted address data. Use this when no matching location exists. The location will be created and its ID returned so you can assign it to a stop.",
+			map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"name": map[string]any{
@@ -225,20 +240,20 @@ func buildTools() []serviceports.ToolSpec { //nolint:funlen // one entry per too
 				},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "create_shipment",
-			Description: "Create the shipment. Only call this when ALL required fields and stop locations are set. This triggers the actual shipment creation.",
-			Parameters: map[string]any{
+		),
+		tool(
+			"create_shipment",
+			"Create the shipment. Only call this when ALL required fields and stop locations are set. This triggers the actual shipment creation.",
+			map[string]any{
 				"type":                 "object",
 				"properties":           map[string]any{},
 				"additionalProperties": false,
 			},
-		},
-		{
-			Name:        "suggest_quick_actions",
-			Description: "Provide 2-3 action buttons. Call at the end of every response. type='prompt' for confirmations, type='input' when user needs to type a value, type='action' for triggering app actions like creating the shipment.",
-			Parameters: map[string]any{
+		),
+		tool(
+			"suggest_quick_actions",
+			"Provide 2-3 action buttons. Call at the end of every response. type='prompt' for confirmations, type='input' when user needs to type a value, type='action' for triggering app actions like creating the shipment.",
+			map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"suggestions": map[string]any{
@@ -281,6 +296,6 @@ func buildTools() []serviceports.ToolSpec { //nolint:funlen // one entry per too
 				"required":             []string{"suggestions"},
 				"additionalProperties": false,
 			},
-		},
+		),
 	}
 }

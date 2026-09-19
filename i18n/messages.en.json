@@ -5898,22 +5898,13 @@
       "routes/agent-control"
     ]
   },
-  "AI background extraction response did not include an ID": {
+  "AI document intelligence is disabled": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "service/openaidocumentservice"
-    ]
-  },
-  "AI document intelligence is disabled": {
-    "sites": 4,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/openaidocumentservice"
+      "service/aidocumentservice"
     ]
   },
   "AI features are disabled": {
@@ -5950,15 +5941,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "AI response did not contain structured output": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/openaidocumentservice"
     ]
   },
   "AM": {
@@ -6016,7 +5998,7 @@
     ]
   },
   "API Key": {
-    "sites": 10,
+    "sites": 8,
     "scope": [
       "go"
     ],
@@ -24686,7 +24668,7 @@
     ]
   },
   "Cancel": {
-    "sites": 244,
+    "sites": 243,
     "scope": [
       "ts"
     ],
@@ -34485,15 +34467,6 @@
       "routes/admin"
     ]
   },
-  "Connect with OpenAI": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Connect with OpenWeatherMap": {
     "sites": 1,
     "scope": [
@@ -35543,7 +35516,7 @@
       "routes/customer"
     ]
   },
-  "Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if the OpenAI integration is configured.": {
+  "Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if a provider is configured.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -38420,15 +38393,6 @@
     ]
   },
   "Create an API key and webhook in": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Create an API key in the": {
     "sites": 1,
     "scope": [
       "ts"
@@ -55022,15 +54986,6 @@
     ]
   },
   "Enable Okta sign-in": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Enable OpenAI": {
     "sites": 1,
     "scope": [
       "ts"
@@ -77890,15 +77845,6 @@
       "routes/carrier-monitoring"
     ]
   },
-  "It powers document classification, extraction and shipment import, which are switched on in Document Intelligence. The assistant, agents and operational insights route through AI Providers instead, where any model endpoint can be connected.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "It seems you got a little bit lost": {
     "sites": 1,
     "scope": [
@@ -85114,7 +85060,7 @@
       "routes/worker"
     ]
   },
-  "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on a configured and enabled OpenAI integration.": {
+  "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on an enabled AI provider that serves document work.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -104130,24 +104076,6 @@
       "api/handlers"
     ]
   },
-  "OpenAI API key is missing": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/shipmentimportassistantservice"
-    ]
-  },
-  "OpenAI Logo": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "OpenAI Responses": {
     "sites": 1,
     "scope": [
@@ -104155,42 +104083,6 @@
     ],
     "areas": [
       "api/handlers"
-    ]
-  },
-  "OpenAI credential for document intelligence and shipment import. The assistant, agents and insights route through AI Providers instead.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "OpenAI dashboard.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "OpenAI integration is not configured": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/shipmentimportassistantservice"
-    ]
-  },
-  "OpenAI integration updated": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "OpenAI's Responses API, and endpoints serving the same shape.": {
@@ -114272,15 +114164,6 @@
       "routes/admin"
     ]
   },
-  "PostGIS spatial queries": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Postal Code": {
     "sites": 11,
     "scope": [
@@ -114450,24 +114333,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "PostgreSQL": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Postgres full-text search": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Posting Accounts": {
@@ -132951,15 +132816,6 @@
       "routes/edi"
     ]
   },
-  "SELECT ... FOR UPDATE row locking": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "SFTP Endpoint": {
     "sites": 1,
     "scope": [
@@ -133048,15 +132904,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "SQLite": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "SSN": {
@@ -133716,7 +133563,7 @@
     ]
   },
   "Save Changes": {
-    "sites": 37,
+    "sites": 36,
     "scope": [
       "ts"
     ],
@@ -134286,7 +134133,7 @@
     ]
   },
   "Saving...": {
-    "sites": 58,
+    "sites": 57,
     "scope": [
       "ts"
     ],
@@ -152266,6 +152113,15 @@
       "routes/driver-settlement"
     ]
   },
+  "The AI provider neither deferred the extraction nor returned a result": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aidocumentservice"
+    ]
+  },
   "The AI provider that started this call no longer exists": {
     "sites": 1,
     "scope": [
@@ -160983,6 +160839,15 @@
       "routes/insights"
     ]
   },
+  "This extraction has no AI provider recorded and cannot be checked — run it again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aidocumentservice"
+    ]
+  },
   "This feature requires a valid Google Maps API key.": {
     "sites": 1,
     "scope": [
@@ -161454,15 +161319,6 @@
     ]
   },
   "This keeps the record for audit/history but removes it from future mileage lookups.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "This key is for document intelligence": {
     "sites": 1,
     "scope": [
       "ts"
@@ -163967,15 +163823,6 @@
     ],
     "areas": [
       "api/handlers"
-    ]
-  },
-  "Toggle AI provider availability for this business unit.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Toggle Sidebar": {
@@ -170114,6 +169961,24 @@
       "packages/shared/types"
     ]
   },
+  "Use an AI provider for structured extraction on supported document kinds.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Use an AI provider to improve document-kind routing when deterministic classification is insufficient.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Use base free time": {
     "sites": 2,
     "scope": [
@@ -170184,24 +170049,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Use the OpenAI integration for structured extraction on supported document kinds.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Use the OpenAI integration to improve document-kind routing when deterministic classification is insufficient.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Use the expression currently in the editor": {
@@ -170396,15 +170243,6 @@
     ]
   },
   "Used by the server for Resend REST API calls.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Used for AI-assisted document classification and structured extraction.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -181051,15 +180889,6 @@
       "apps/web/components"
     ]
   },
-  "advisory locks": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "against approved v{0}": {
     "sites": 1,
     "scope": [
@@ -181319,15 +181148,6 @@
       "template/report.delivery.email"
     ]
   },
-  "concurrent index creation": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "confirmed by {0}": {
     "sites": 1,
     "scope": [
@@ -181400,15 +181220,6 @@
       "go/other"
     ]
   },
-  "database session diagnostics": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "date range cannot exceed 366 days": {
     "sites": 1,
     "scope": [
@@ -181443,15 +181254,6 @@
     ],
     "areas": [
       "routes/recurring-shipment"
-    ]
-  },
-  "declarative table partitioning": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "did not apply.": {
@@ -183560,15 +183362,6 @@
       "routes/agent-control"
     ]
   },
-  "exact decimal arithmetic": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "example.com, subsidiary.com": {
     "sites": 1,
     "scope": [
@@ -183603,15 +183396,6 @@
     ],
     "areas": [
       "routes/invoice"
-    ]
-  },
-  "exclusion constraints": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "external EDI connections can be configured but are not accepted through invite flow": {
@@ -184011,15 +183795,6 @@
       "service/samsarasyncservice"
     ]
   },
-  "logical-replication change data capture": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "mapped Samsara driver is deactivated": {
     "sites": 1,
     "scope": [
@@ -184045,15 +183820,6 @@
     ],
     "areas": [
       "routes/rate-agreement"
-    ]
-  },
-  "materialized views": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "maximum active api keys reached": {
@@ -185287,15 +185053,6 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
-    ]
-  },
-  "trigram similarity search": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "type must be one of: all, Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity": {

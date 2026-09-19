@@ -112,7 +112,7 @@ function PlatformAvailabilityCard() {
         <CardTitle>{t("Platform Availability")}</CardTitle>
         <CardDescription>
           {t(
-            "Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if the OpenAI integration is configured.",
+            "Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if a provider is configured.",
           )}
         </CardDescription>
       </CardHeader>
@@ -160,7 +160,7 @@ function ClassificationAndExtractionCard() {
         <CardTitle>{t("Classification And Extraction")}</CardTitle>
         <CardDescription>
           {t(
-            "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on a configured and enabled OpenAI integration.",
+            "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on an enabled AI provider that serves document work.",
           )}
         </CardDescription>
       </CardHeader>
@@ -184,7 +184,7 @@ function ClassificationAndExtractionCard() {
               name="enableAiAssistedClassification"
               label={t("Enable AI-Assisted Classification")}
               description={t(
-                "Use the OpenAI integration to improve document-kind routing when deterministic classification is insufficient.",
+                "Use an AI provider to improve document-kind routing when deterministic classification is insufficient.",
               )}
               position="left"
               disabled={!enabled}
@@ -220,7 +220,7 @@ function ClassificationAndExtractionCard() {
               name="enableAiAssistedExtraction"
               label={t("Enable AI-Assisted Extraction")}
               description={t(
-                "Use the OpenAI integration for structured extraction on supported document kinds.",
+                "Use an AI provider for structured extraction on supported document kinds.",
               )}
               position="left"
               disabled={!enabled}
