@@ -118,9 +118,9 @@ func TestRun_AnswersAndRecordsTheTurn(t *testing.T) {
 func TestRun_RefusesAToolNotEnabledEvenWhenRegistered(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("search_workers", map[string]any{}, nil)
+	tool := queryTool("search_worker", map[string]any{}, nil)
 	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
-		toolTurn("search_workers", map[string]any{"query": "Maria"}),
+		toolTurn("search_worker", map[string]any{"query": "Maria"}),
 		textTurn("I cannot look that up."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []serviceports.AgentQueryTool{tool}},
@@ -475,7 +475,7 @@ func TestToolSummaries_DescribeOnlyEnabledRegisteredTools(t *testing.T) {
 
 	query := &stubQueryRegistry{Tools: []serviceports.AgentQueryTool{
 		queryTool("get_shipment", nil, nil),
-		queryTool("search_workers", nil, nil),
+		queryTool("search_worker", nil, nil),
 	}}
 	action := &stubActionRegistry{Tools: []serviceports.AgentTool{
 		actionTool("assign_move", agent.TierActWithApproval, nil),

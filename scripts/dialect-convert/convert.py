@@ -315,6 +315,12 @@ class Converter:
             return False
         if "[" in expr or "::" in expr or "~" in expr:
             return False
+        # Postgres spells JSONB containment "?" and key removal "-". SQLite
+        # reads "?" as a bind parameter, so a literal one in generated SQL is
+        # always a Postgres-only expression that slipped through rather than
+        # something the target can run.
+        if "?" in expr:
+            return False
         if "SELECT" in expr.upper() or "SIMILAR TO" in expr.upper():
             return False
         for name in RE["func_call"].findall(expr):

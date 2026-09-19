@@ -136,7 +136,7 @@ func (t Template) StarterInstructions() string {
 func (t Template) StarterTools() []string {
 	switch t {
 	case TemplateDispatchAssistant:
-		return []string{"get_shipment", "search_shipments", "get_worker", "search_workers", "assign_move"}
+		return []string{"get_shipment", "search_shipments", "get_worker", "search_worker", "assign_move"}
 	case TemplateBillingAssistant:
 		return []string{
 			"get_shipment",
@@ -146,7 +146,7 @@ func (t Template) StarterTools() []string {
 			"transition_item_to_in_review",
 		}
 	case TemplateComplianceAssistant:
-		return []string{"get_worker", "search_workers", "flag_for_manual_review"}
+		return []string{"get_worker", "search_worker", "flag_for_manual_review"}
 	case TemplateCustomerAssistant:
 		return []string{"get_shipment", "search_shipments"}
 	case TemplateGeneralAssistant:
@@ -163,9 +163,9 @@ func (t Template) StarterTools() []string {
 			"raise_exception",
 		}
 	case TemplateDispatchAssignment:
-		return []string{"get_shipment", "search_shipments", "get_worker", "search_workers", "assign_move", "raise_exception"}
+		return []string{"get_shipment", "search_shipments", "get_worker", "search_worker", "assign_move", "raise_exception"}
 	case TemplateImportAssistant:
-		return []string{"search_shipments", "search_workers"}
+		return []string{"search_shipments", "search_worker"}
 	default:
 		return nil
 	}

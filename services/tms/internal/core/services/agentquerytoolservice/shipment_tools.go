@@ -85,8 +85,10 @@ func newSearchShipmentsTool(repo repositories.ShipmentRepository) serviceports.A
 func (t *searchShipmentsTool) Name() string { return "search_shipments" }
 
 func (t *searchShipmentsTool) Description() string {
-	return "Search shipments by free text such as a pro number, BOL, customer name, or city. " +
-		"Returns a list of matches with their ids, which get_shipment can then expand."
+	return "List shipments, optionally narrowed by free text such as a pro number, " +
+		"BOL, customer name, or city, and by status. Call it with no query to see the " +
+		"most recent shipments. Returns matches with their ids, which get_shipment " +
+		"can then expand."
 }
 
 func (t *searchShipmentsTool) ParamSchema() map[string]any {
@@ -95,7 +97,7 @@ func (t *searchShipmentsTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"query": map[string]any{
 				"type":        "string",
-				"description": "Text to search for",
+				"description": "Optional text to match. Omit to list shipments unfiltered.",
 			},
 			"status": map[string]any{
 				"type":        "string",
@@ -106,7 +108,6 @@ func (t *searchShipmentsTool) ParamSchema() map[string]any {
 				"description": "How many results to return, at most 25",
 			},
 		},
-		"required":             []string{"query"},
 		"additionalProperties": false,
 	}
 }
@@ -123,10 +124,10 @@ func (t *searchShipmentsTool) Query(
 		return nil, err
 	}
 
-	query, err := requireString(params.Params, "query")
-	if err != nil {
-		return nil, err
-	}
+	// Optional for the same reason as on search_worker: the repository applies a
+	// text search only when the term is non-empty, so requiring one here refused
+	// a call the layer beneath would have served.
+	query := optionalString(params.Params, "query")
 
 	// A model asked for "all shipments" will happily request a limit of 10000,
 	// which would blow the context window and the query budget at once.
@@ -135,7 +136,11 @@ func (t *searchShipmentsTool) Query(
 		limit = defaultSearchLimit
 	}
 
-	status, _ := params.Params["status"].(string)
+	status := optionalString(params.Params, "status")
+
+	criteria := newSearchCriteria("shipments")
+	criteria.text(query)
+	criteria.field("status", status)
 
 	result, err := t.repo.List(ctx, &repositories.ListShipmentsRequest{
 		Filter: &pagination.QueryOptions{
@@ -156,5 +161,5 @@ func (t *searchShipmentsTool) Query(
 		return nil, err
 	}
 
-	return result.Items, nil
+	return criteria.result(result.Items, len(result.Items)), nil
 }

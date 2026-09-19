@@ -69,6 +69,29 @@ func (s *ScriptedCompletion) CompleteStructured(
 	}, nil
 }
 
+// SubmitBackground runs the call inline, which is the same answer the router
+// gives for a provider whose protocol cannot defer — so a test that exercises
+// the deferred path against this stub sees the shape a self-hosted model would
+// really produce rather than a handle that never resolves.
+func (s *ScriptedCompletion) SubmitBackground(
+	ctx context.Context,
+	req *serviceports.StructuredCompletionRequest,
+) (*serviceports.BackgroundSubmission, error) {
+	result, err := s.CompleteStructured(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &serviceports.BackgroundSubmission{Result: result}, nil
+}
+
+func (s *ScriptedCompletion) PollBackground(
+	_ context.Context,
+	_ *serviceports.BackgroundPollRequest,
+) (*serviceports.BackgroundOutcome, error) {
+	return nil, errors.New("scripted completion runs inline and issues no handle to poll")
+}
+
 type StubQueryTool struct {
 	ToolName   string
 	Result     any

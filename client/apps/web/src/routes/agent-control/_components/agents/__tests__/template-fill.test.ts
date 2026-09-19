@@ -8,7 +8,7 @@ const starter: AgentTemplate = {
   label: "Dispatch coverage",
   description: "Covers moves with no driver.",
   starterInstructions: "Review moves with no driver and propose assignments.",
-  starterTools: ["get_shipment", "search_workers", "assign_move"],
+  starterTools: ["get_shipment", "search_worker", "assign_move"],
   starterTrigger: "Scheduled",
   starterEvents: [],
   starterCron: "*/30 * * * *",

@@ -104,7 +104,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 				"We run mostly reefer freight out of the Los Angeles terminal. When a driver is " +
 				"asked about, check hours of service before anything else.",
 			Guardrails:      []string{"Promise a delivery time to a customer", "Change a rate"},
-			ToolNames:       []string{"get_shipment", "search_shipments", "get_worker", "search_workers"},
+			ToolNames:       []string{"get_shipment", "search_shipments", "get_worker", "search_worker"},
 			AutonomyCeiling: agent.TierActWithApproval,
 			TriggerMode:     agentdefinition.TriggerChat,
 			Enabled:         true,
@@ -140,7 +140,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Template:       agentdefinition.TemplateComplianceAssistant,
 			Instructions: agentdefinition.TemplateComplianceAssistant.StarterInstructions() + "\n\n" +
 				"Medical cards and hazmat endorsements are the two we most often miss.",
-			ToolNames:       []string{"get_worker", "search_workers"},
+			ToolNames:       []string{"get_worker", "search_worker"},
 			AutonomyCeiling: agent.TierPropose,
 			TriggerMode:     agentdefinition.TriggerChat,
 			Enabled:         true,
@@ -182,7 +182,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Instructions: "Each weekday morning, review shipments that are late, moves without a driver, " +
 				"and billing items that are blocked. Write a short digest grouped by urgency with the " +
 				"pro numbers and names a dispatcher needs to act.",
-			ToolNames:       []string{"search_shipments", "search_workers"},
+			ToolNames:       []string{"search_shipments", "search_worker"},
 			AutonomyCeiling: agent.TierPropose,
 			TriggerMode:     agentdefinition.TriggerScheduled,
 			CronExpression:  "0 6 * * 1-5",

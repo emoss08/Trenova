@@ -15,7 +15,7 @@ describe("describeToolCall", () => {
   });
 
   it("uses the search text for a search", () => {
-    expect(describeToolCall("search_workers", { query: "Ortiz", limit: 10 })).toEqual({
+    expect(describeToolCall("search_worker", { query: "Ortiz", limit: 10 })).toEqual({
       title: "Search drivers",
       subject: "“Ortiz”",
     });

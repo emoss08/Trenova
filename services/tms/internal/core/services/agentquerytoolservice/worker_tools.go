@@ -21,7 +21,7 @@ func (t *getWorkerTool) Name() string { return "get_worker" }
 
 func (t *getWorkerTool) Description() string {
 	return "Retrieve one worker (driver) by id, including their profile and current state. " +
-		"Use search_workers first when you only have a name."
+		"Use search_worker first when you only have a name."
 }
 
 func (t *getWorkerTool) ParamSchema() map[string]any {
@@ -67,44 +67,46 @@ func (t *getWorkerTool) Query(
 	})
 }
 
-type searchWorkersTool struct {
+type searchWorkerTool struct {
 	repo repositories.WorkerRepository
 }
 
-func newSearchWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQueryTool {
-	return &searchWorkersTool{repo: repo}
+func newSearchWorkerTool(repo repositories.WorkerRepository) serviceports.AgentQueryTool {
+	return &searchWorkerTool{repo: repo}
 }
 
-func (t *searchWorkersTool) Name() string { return "search_workers" }
+func (t *searchWorkerTool) Name() string { return "search_worker" }
 
-func (t *searchWorkersTool) Description() string {
-	return "Search workers (drivers) by name or code. Returns matches with their ids, " +
-		"which get_worker can then expand."
+func (t *searchWorkerTool) Description() string {
+	return "List workers (drivers), optionally narrowed by a name or code. " +
+		"Call it with no query to see who is on the roster; pass a query only when " +
+		"you already have a name. Returns matches with their ids, which get_worker " +
+		"can then expand. To find drivers by a licence or medical card date, use " +
+		"list_expiring_credentials instead — this tool does not filter on dates."
 }
 
-func (t *searchWorkersTool) ParamSchema() map[string]any {
+func (t *searchWorkerTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
 			"query": map[string]any{
 				"type":        "string",
-				"description": "Name or code to search for",
+				"description": "Optional name or code to match. Omit to list workers unfiltered.",
 			},
 			"limit": map[string]any{
 				"type":        "integer",
 				"description": "How many results to return, at most 25",
 			},
 		},
-		"required":             []string{"query"},
 		"additionalProperties": false,
 	}
 }
 
-func (t *searchWorkersTool) PermissionResource() permission.Resource {
+func (t *searchWorkerTool) PermissionResource() permission.Resource {
 	return permission.ResourceWorker
 }
 
-func (t *searchWorkersTool) Query(
+func (t *searchWorkerTool) Query(
 	ctx context.Context,
 	params serviceports.QueryToolParams,
 ) (any, error) {
@@ -112,15 +114,19 @@ func (t *searchWorkersTool) Query(
 		return nil, err
 	}
 
-	query, err := requireString(params.Params, "query")
-	if err != nil {
-		return nil, err
-	}
+	// The term is optional because the repository never needed it:
+	// ApplyCursorFilters only applies a text search when Query is non-empty, so
+	// an empty one already means "the most recent N". Requiring it here made
+	// the tool reject a call the layer beneath it would have served.
+	query := optionalString(params.Params, "query")
 
 	limit := optionalInt(params.Params, "limit", defaultSearchLimit)
 	if limit <= 0 || limit > maxSearchLimit {
 		limit = defaultSearchLimit
 	}
+
+	criteria := newSearchCriteria("workers")
+	criteria.text(query)
 
 	result, err := t.repo.List(ctx, &repositories.ListWorkersRequest{
 		Filter: &pagination.QueryOptions{
@@ -137,5 +143,5 @@ func (t *searchWorkersTool) Query(
 		return nil, err
 	}
 
-	return result.Items, nil
+	return criteria.result(result.Items, len(result.Items)), nil
 }

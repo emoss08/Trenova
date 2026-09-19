@@ -28,6 +28,22 @@ type registry struct {
 	ordered []serviceports.AgentQueryTool
 }
 
+// legacyToolNames maps a name an agent may still have saved to the tool that
+// now carries it.
+//
+// A tool name is persisted — in agent_definitions.tool_names and as a key in
+// tool_tiers — so renaming one is a data change. The migration rewrites both
+// columns, but a definition written by an API client that hard-coded the old
+// name would otherwise resolve to nothing, and the failure mode is silent: the
+// agent simply stops being able to look drivers up. Resolving the old name
+// costs one map entry.
+//
+// These are deliberately absent from Descriptors, so the model is never offered
+// a name we no longer want it to learn.
+var legacyToolNames = map[string]string{
+	"search_workers": "search_worker",
+}
+
 func NewRegistry(p RegistryParams) serviceports.AgentQueryToolRegistry {
 	byName := make(map[string]serviceports.AgentQueryTool, len(p.Tools))
 	ordered := make([]serviceports.AgentQueryTool, 0, len(p.Tools))
@@ -38,6 +54,15 @@ func NewRegistry(p RegistryParams) serviceports.AgentQueryToolRegistry {
 		}
 		byName[tool.Name()] = tool
 		ordered = append(ordered, tool)
+	}
+
+	for legacy, current := range legacyToolNames {
+		if _, taken := byName[legacy]; taken {
+			continue
+		}
+		if tool, ok := byName[current]; ok {
+			byName[legacy] = tool
+		}
 	}
 
 	return &registry{byName: byName, ordered: ordered}
@@ -97,6 +122,25 @@ func requireString(params map[string]any, key string) (string, error) {
 	}
 
 	return strings.TrimSpace(value), nil
+}
+
+// optionalString reads a string the caller may leave out.
+//
+// Absent, null and the empty string all mean "not given", which is the same
+// thing to every filter that takes one: a model that omits an argument and one
+// that sends "" are asking for the same unfiltered result.
+func optionalString(params map[string]any, key string) string {
+	raw, ok := params[key]
+	if !ok || raw == nil {
+		return ""
+	}
+
+	value, ok := raw.(string)
+	if !ok {
+		return ""
+	}
+
+	return strings.TrimSpace(value)
 }
 
 func requirePulid(params map[string]any, key string) (pulid.ID, error) {
