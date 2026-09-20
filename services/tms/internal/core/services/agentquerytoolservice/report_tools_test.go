@@ -383,8 +383,8 @@ func TestRequireReportParameters_NamesTheChoicesAndSaysToAsk(t *testing.T) {
 
 	require.Error(t, err)
 	message := err.Error()
-	assert.Contains(t, message, "windowDays (Window in days), which takes any value")
-	assert.Contains(t, message, "fleet (Fleet), one of: Regional, OTR, Local")
+	assert.Contains(t, message, "windowDays (Window in days), a single value")
+	assert.Contains(t, message, "fleet (Fleet), a single value drawn from: Regional, OTR, Local")
 	assert.Contains(t, message, "call ask_user")
 	assert.Contains(t, message, "do not invent choices")
 }

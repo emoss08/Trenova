@@ -159,6 +159,15 @@ func (c *Catalog) Rank(
 	query string,
 	limit int,
 ) []serviceports.AgentToolDescriptor {
+	return c.rank(allowed, query, limit, 0)
+}
+
+func (c *Catalog) rank(
+	allowed []string,
+	query string,
+	limit int,
+	minScore int,
+) []serviceports.AgentToolDescriptor {
 	if limit <= 0 {
 		return nil
 	}
@@ -179,7 +188,11 @@ func (c *Catalog) Rank(
 				continue
 			}
 		}
-		candidates = append(candidates, scored{entry: entry, score: score(entry, terms)})
+		value := score(entry, terms)
+		if value < minScore {
+			continue
+		}
+		candidates = append(candidates, scored{entry: entry, score: value})
 	}
 
 	// Ties break on catalog position so the same question always produces the
@@ -207,12 +220,18 @@ func (c *Catalog) Rank(
 
 // Find is the model's recovery path when pre-selection guessed wrong. It returns
 // whole descriptors, schema included, because a name alone is not callable.
+//
+// Unlike Rank it returns only tools that actually matched. Rank is pre-selection
+// and must always fill its slots — a turn needs a toolbox whatever the wording —
+// but a search that answers a nonsense query with six arbitrary tools and the
+// words "these tools are now callable" is worse than an empty answer: it tells
+// the model it found what it was looking for.
 func (c *Catalog) Find(
 	allowed []string,
 	query string,
 	limit int,
 ) []serviceports.AgentToolDescriptor {
-	return c.Rank(allowed, query, limit)
+	return c.rank(allowed, query, limit, 1)
 }
 
 // Names lists every tool in the catalog, in a stable order.

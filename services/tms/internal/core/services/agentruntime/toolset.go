@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -138,14 +139,60 @@ func (s *Service) resolveFind(set *toolSet, arguments map[string]any) string {
 	}
 
 	if added == 0 {
+		return s.nothingLoaded(set, need)
+	}
+
+	return fmt.Sprintf("These tools are now callable:\n%s", b.String())
+}
+
+// nothingLoaded explains an empty search without overstating it.
+//
+// Searching only what the agent holds is correct — find_tools must never reach
+// past its configuration — but the old answer turned that into "this system
+// does not track it", and a model repeated it as fact. Asked four times whether
+// a reports tool existed, it said no four times, growing more certain each
+// time, while list_reports sat in the catalog unassigned to that agent.
+//
+// So the catalog is searched a second time with no allowlist, and the answer
+// distinguishes the two cases it was conflating: nothing like this exists, or
+// it exists and this agent was not given it. The second names the tools, because
+// "ask an administrator to enable something" is not actionable without the name
+// — the person ended up supplying it from their side of the conversation.
+//
+// Naming them widens nothing. The specs are not loaded and the guard still
+// refuses a call to anything outside the allowlist.
+func (s *Service) nothingLoaded(set *toolSet, need string) string {
+	elsewhere := make([]serviceports.AgentToolDescriptor, 0, foundToolsLimit)
+	for _, descriptor := range s.catalog.Find(nil, need, foundToolsLimit) {
+		if _, held := set.loaded[descriptor.Name]; held {
+			continue
+		}
+		if slices.Contains(set.allowed, descriptor.Name) {
+			continue
+		}
+		elsewhere = append(elsewhere, descriptor)
+	}
+
+	if len(elsewhere) == 0 {
 		return fmt.Sprintf(
 			"Nothing further matched %q, and everything that did is already loaded. "+
-				"Use what you have, or tell the person this system does not track it.",
+				"Use what you have. If this system genuinely does not track it, say so "+
+				"— but only about the data, not about tools you cannot see.",
 			need,
 		)
 	}
 
-	return fmt.Sprintf("These tools are now callable:\n%s", b.String())
+	var b strings.Builder
+	fmt.Fprintf(&b, "Nothing you can call matched %q. These exist in this system but "+
+		"are not enabled for this agent:\n", need)
+	for _, descriptor := range elsewhere {
+		fmt.Fprintf(&b, "- %s: %s\n", descriptor.Name, firstSentence(descriptor.Description))
+	}
+	b.WriteString("\nYou cannot call them. Tell the person these exist and that an " +
+		"administrator can add them to this agent in Agent Control, naming them exactly " +
+		"as above. Do not say the system has no such capability.")
+
+	return b.String()
 }
 
 func (s *Service) configuredSpecs(

@@ -465,3 +465,54 @@ func TestCoerceDateValue_StillRefusesWhatIsNotADate(t *testing.T) {
 	assert.Contains(t, err.Error(), "YYYY-MM-DD")
 	assert.Contains(t, err.Error(), "today")
 }
+
+// "Delivered but not yet handed to billing" is a question about an enum column
+// being null, and it is one of the most ordinary things asked of one. Refusing
+// isnull here sent a model round the houses reconstructing the same answer from
+// a status filter and a date window, and then telling the person what "not
+// billed" had been taken to mean.
+func TestListTool_FiltersAnEnumOnBeingUnset(t *testing.T) {
+	t.Parallel()
+
+	capture := &capturedList{}
+	tool := newListTool(probeSpec(capture))
+
+	_, err := tool.Query(t.Context(), testParams(filterParams(
+		map[string]any{"field": "status", "operator": "isnull"},
+	)))
+	require.NoError(t, err)
+	require.NotNil(t, capture.opts)
+
+	require.Len(t, capture.opts.FieldFilters, 1)
+	assert.Equal(t, "status", capture.opts.FieldFilters[0].Field)
+	assert.Equal(t, dbtype.OpIsNull, capture.opts.FieldFilters[0].Operator)
+}
+
+func TestListTool_FiltersAnEnumOnBeingSet(t *testing.T) {
+	t.Parallel()
+
+	capture := &capturedList{}
+	tool := newListTool(probeSpec(capture))
+
+	_, err := tool.Query(t.Context(), testParams(filterParams(
+		map[string]any{"field": "status", "operator": "isnotnull"},
+	)))
+	require.NoError(t, err)
+	require.Len(t, capture.opts.FieldFilters, 1)
+	assert.Equal(t, dbtype.OpIsNotNull, capture.opts.FieldFilters[0].Operator)
+}
+
+// The refusal used to read "which is a enum field".
+func TestListTool_NamesTheFieldKindWithoutManglingTheArticle(t *testing.T) {
+	t.Parallel()
+
+	capture := &capturedList{}
+	tool := newListTool(probeSpec(capture))
+
+	_, err := tool.Query(t.Context(), testParams(filterParams(
+		map[string]any{"field": "status", "operator": "contains", "value": "Act"},
+	)))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `is not an operator for the enum field "status"`)
+	assert.NotContains(t, err.Error(), "a enum")
+}

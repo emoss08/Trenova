@@ -207,7 +207,12 @@ export function MessageThread({
                 {turn && (
                   <MessageScrollerItem messageId="turn-in-progress" scrollAnchor>
                     <div className="flex flex-col gap-4">
-                      <StreamingTurn turn={turn} onRetry={retry} onDismiss={dismiss} />
+                      <StreamingTurn
+                        turn={turn}
+                        onRetry={retry}
+                        onDismiss={dismiss}
+                        onAnswer={answer}
+                      />
                     </div>
                   </MessageScrollerItem>
                 )}

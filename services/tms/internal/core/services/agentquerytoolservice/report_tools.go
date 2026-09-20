@@ -27,9 +27,14 @@ type reportRunner interface {
 }
 
 type reportParameterRow struct {
-	Name          string   `json:"name"`
-	Label         string   `json:"label,omitempty"`
-	Required      bool     `json:"required"`
+	Name     string `json:"name"`
+	Label    string `json:"label,omitempty"`
+	Required bool   `json:"required"`
+	// Shape is what to send, in words: "a JSON array of enum", "a single int".
+	// Without it the model is guessing at the container, and the guesses are bad
+	// ones — {"item": [...]} went out five times against a report that takes a
+	// plain array, with a different explanation narrated each time.
+	Shape         string   `json:"shape"`
 	AllowedValues []string `json:"allowedValues,omitempty"`
 }
 
@@ -137,6 +142,7 @@ func toCatalogRow(entry *canned.Entry) reportCatalogRow {
 			Name:          parameter.Name,
 			Label:         parameter.Label,
 			Required:      parameter.Required,
+			Shape:         describeParameterShape(parameter),
 			AllowedValues: parameter.AllowedValues,
 		})
 	}
@@ -197,7 +203,10 @@ func (t *runReportTool) ParamSchema() map[string]any {
 			"parameters": map[string]any{
 				"type": "object",
 				"description": "The report's parameters, keyed by the names list_reports " +
-					"gave. Supply every parameter it marks required.",
+					"gave, each in the shape it named. A list parameter takes a plain " +
+					"JSON array and nothing else — [\"A\",\"B\"], never " +
+					"{\"item\":[\"A\"]} and never a comma-separated string. Supply " +
+					"every parameter marked required.",
 			},
 			"format": map[string]any{
 				"type":        "string",
@@ -243,7 +252,7 @@ func (t *runReportTool) Query(
 		return nil, err
 	}
 
-	values := optionalObject(params.Params, "parameters")
+	values := normalizeReportParameters(entry, optionalObject(params.Params, "parameters"))
 	if err = requireReportParameters(entry, values); err != nil {
 		return nil, err
 	}
@@ -356,13 +365,14 @@ func describeMissingParameter(parameter report.ParameterDef) string {
 		label = parameter.Name
 	}
 
+	shape := describeParameterShape(parameter)
 	if len(parameter.AllowedValues) == 0 {
-		return fmt.Sprintf("%s (%s), which takes any value", parameter.Name, label)
+		return fmt.Sprintf("%s (%s), %s", parameter.Name, label, shape)
 	}
 
 	return fmt.Sprintf(
-		"%s (%s), one of: %s",
-		parameter.Name, label, strings.Join(parameter.AllowedValues, ", "),
+		"%s (%s), %s drawn from: %s",
+		parameter.Name, label, shape, strings.Join(parameter.AllowedValues, ", "),
 	)
 }
 

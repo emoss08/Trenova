@@ -4,6 +4,10 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { CircleAlertIcon } from "lucide-react";
 import { AssistantFrame, AssistantProse, RefusalNotice, UserBubble } from "./message-items";
+import { askRequestsFromSteps } from "./ask-requests";
+import { ChoicePrompt } from "./choice-prompt";
+import { ReportRunCard } from "./report-run-card";
+import { reportRunsFromSteps } from "./report-runs";
 import { ToolTimeline, type ToolStep } from "./tool-activity";
 import { describeToolCall } from "./tool-presentation";
 import type { TurnState } from "./turn-stream";
@@ -20,12 +24,23 @@ export function StreamingTurn({
   turn,
   onRetry,
   onDismiss,
+  onAnswer,
 }: {
+  /** Answering a question the live turn asked, before the turn is saved. */
+  onAnswer: (value: string) => void;
   turn: TurnState;
   onRetry?: () => void;
   onDismiss: () => void;
 }) {
   const t = useT();
+
+  const steps = turn.segments.flatMap((segment) =>
+    segment.kind === "tool"
+      ? [{ id: segment.callId, name: segment.name, content: segment.content }]
+      : [],
+  );
+  const asks = askRequestsFromSteps(steps);
+  const reportRuns = reportRunsFromSteps(steps);
 
   const hasBody = turn.segments.length > 0;
   const showFrame = hasBody || turn.status === "guarding" || turn.status === "working";
@@ -51,6 +66,12 @@ export function StreamingTurn({
               <ToolTimeline key={`tools-${index}`} steps={group.steps} live />
             ),
           )}
+          {reportRuns.map((run) => (
+            <ReportRunCard key={run.runId} run={run} />
+          ))}
+          {asks.map((ask) => (
+            <ChoicePrompt key={ask.callId} request={ask} answered={false} onAnswer={onAnswer} />
+          ))}
           <StatusLine turn={turn} />
         </AssistantFrame>
       )}

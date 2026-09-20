@@ -76,6 +76,7 @@ func (s *Service) Run(
 
 	tools := s.newToolSet(definition, req.Input)
 	runtimeContext.ToolsDisclosed = tools.disclosed
+	repeats := newRepeatGuard()
 
 	system := definition.BuildSystemPrompt(runtimeContext)
 	messages := toAdapterMessages(req.History)
@@ -158,7 +159,17 @@ func (s *Service) Run(
 				continue
 			}
 
+			if previous, repeated := repeats.seen(call); repeated {
+				outcome := failedOutcome("%s", repeatRefusal(call.Name, previous))
+				result.ToolCallsUsed++
+				s.recordToolResult(result, &messages, call, outcome, emit)
+				continue
+			}
+
 			outcome := s.dispatch(ctx, req, call, completion.Text)
+			if outcome.failed {
+				repeats.record(call, outcome.content)
+			}
 			result.ToolCallsUsed++
 			s.recordToolResult(result, &messages, call, outcome, emit)
 		}

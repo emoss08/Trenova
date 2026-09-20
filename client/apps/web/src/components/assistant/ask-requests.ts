@@ -49,6 +49,33 @@ export function askRequestsFrom(tools: readonly ToolExchange[]): ThreadAskReques
   return requests;
 }
 
+/**
+ * The same questions, read out of a turn that is still streaming.
+ *
+ * A live turn has no saved messages yet, so it cannot go through the thread
+ * grouping — but the question is in the tool result either way, and the person
+ * should not watch a turn end, see nothing, and wonder what they were asked.
+ * The position is the one a saved message would not have yet, so a live prompt
+ * is never marked answered.
+ */
+export function askRequestsFromSteps(
+  steps: readonly { id: string; name: string; content: string }[],
+): ThreadAskRequest[] {
+  const requests: ThreadAskRequest[] = [];
+
+  for (const step of steps) {
+    if (step.name !== ASK_TOOL || step.content === "") {
+      continue;
+    }
+    const parsed = parseAskResult(step.content);
+    if (parsed !== null) {
+      requests.push({ ...parsed, sequence: Number.MAX_SAFE_INTEGER, callId: step.id });
+    }
+  }
+
+  return requests;
+}
+
 type ParsedAsk = Omit<ThreadAskRequest, "sequence" | "callId">;
 
 /**

@@ -247,3 +247,42 @@ func runtimeContextWith(
 ) agentdefinition.RuntimeContext {
 	return agentdefinition.RuntimeContext{Tools: summaries, ToolsDisclosed: disclosed}
 }
+
+// Asked four times whether a reports tool existed, the assistant said no four
+// times and grew more certain, while list_reports sat in the catalog unassigned
+// to that agent. The search is still correctly confined to the agent's own
+// tools; the answer is what was wrong.
+func TestResolveFind_SaysAToolExistsButIsNotEnabled(t *testing.T) {
+	t.Parallel()
+
+	service, names := wideRuntime(t)
+	definition := testDefinition("list_customers", "list_locations")
+
+	set := service.newToolSet(definition, "anything")
+	set.disclosed = true
+
+	answer := service.resolveFind(set, map[string]any{"need": "driver medical card expiry"})
+
+	require.Contains(t, names, "list_expiring_credentials")
+	assert.Contains(t, answer, "not enabled for this agent")
+	assert.Contains(t, answer, "list_expiring_credentials")
+	assert.Contains(t, answer, "Agent Control")
+	assert.Contains(t, answer, "Do not say the system has no such capability")
+	assert.NotContains(t, specNames(set.specs), "list_expiring_credentials",
+		"naming a tool must not load it")
+}
+
+// Nothing matched anywhere is a different answer, and it still must not let the
+// model generalise from a tool search to what the business tracks.
+func TestResolveFind_DoesNotClaimTheSystemLacksSomethingItDidNotSearchFor(t *testing.T) {
+	t.Parallel()
+
+	service, _ := wideRuntime(t)
+	set := service.newToolSet(testDefinition("list_customers"), "anything")
+	set.disclosed = true
+
+	answer := service.resolveFind(set, map[string]any{"need": "zzzz no such thing zzzz"})
+
+	assert.Contains(t, answer, "only about the data, not about tools you cannot see")
+	assert.NotContains(t, answer, "not enabled for this agent")
+}

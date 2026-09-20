@@ -72,3 +72,26 @@ function parseRunResult(content: string): ThreadReportRun | null {
 
   return { runId, reportKey: typeof reportKey === "string" ? reportKey : "" };
 }
+
+/**
+ * The same runs, read out of a turn that is still streaming, so a report the
+ * assistant just started begins reporting its progress immediately rather than
+ * after the turn has been saved and refetched.
+ */
+export function reportRunsFromSteps(
+  steps: readonly { name: string; content: string }[],
+): ThreadReportRun[] {
+  const runs = new Map<string, ThreadReportRun>();
+
+  for (const step of steps) {
+    if (!RUN_BEARING_TOOLS.has(step.name) || step.content === "") {
+      continue;
+    }
+    const parsed = parseRunResult(step.content);
+    if (parsed !== null && !runs.has(parsed.runId)) {
+      runs.set(parsed.runId, parsed);
+    }
+  }
+
+  return [...runs.values()];
+}

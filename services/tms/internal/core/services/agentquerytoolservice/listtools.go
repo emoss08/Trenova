@@ -110,7 +110,15 @@ var operatorsByKind = map[filterKind][]dbtype.Operator{
 		dbtype.OpEqual, dbtype.OpNotEqual, dbtype.OpContains, dbtype.OpStartsWith,
 		dbtype.OpEndsWith, dbtype.OpIn, dbtype.OpNotIn, dbtype.OpIsNull, dbtype.OpIsNotNull,
 	},
-	filterEnum: {dbtype.OpEqual, dbtype.OpNotEqual, dbtype.OpIn, dbtype.OpNotIn},
+	// isnull and isnotnull belong here for the same reason they belong on text,
+	// date and number: an enum column is nullable too, and "has no billing
+	// transfer state yet" is one of the most ordinary questions asked of one.
+	// Leaving them off sent a model round the houses building the same answer
+	// out of a status filter and a date window.
+	filterEnum: {
+		dbtype.OpEqual, dbtype.OpNotEqual, dbtype.OpIn, dbtype.OpNotIn,
+		dbtype.OpIsNull, dbtype.OpIsNotNull,
+	},
 	filterDate: {
 		dbtype.OpGreaterThan, dbtype.OpGreaterThanOrEqual, dbtype.OpLessThan,
 		dbtype.OpLessThanOrEqual, dbtype.OpLastNDays, dbtype.OpNextNDays, dbtype.OpToday,
@@ -353,8 +361,8 @@ func (t *listTool) buildFilter(
 	operator := dbtype.Operator(strings.ToLower(optionalString(condition, "operator")))
 	if !operatorAllowed(field.Kind, operator) {
 		return nil, fmt.Errorf(
-			"%q is not an operator for %q, which is a %s field; use one of: %s",
-			operator, field.Name, field.Kind, joinOperators(operatorsByKind[field.Kind]),
+			"%q is not an operator for the %s field %q; use one of: %s",
+			operator, field.Kind, field.Name, joinOperators(operatorsByKind[field.Kind]),
 		)
 	}
 
