@@ -2,6 +2,15 @@ import { describe, expect, it } from "vitest";
 import { reportRunsFrom } from "./report-runs";
 import type { ToolExchange } from "./thread-view";
 
+/**
+ * How the server actually stores a tool result: fenced as untrusted data under
+ * a "Result from <tool>" line, never as bare JSON. Building fixtures any other
+ * way tests a contract nothing implements.
+ */
+function fenced(payload: string): string {
+  return `Result from run_report:\n<untrusted_data>\n${payload}\n</untrusted_data>`;
+}
+
 function exchange(name: string, content: string, toolFailed = false): ToolExchange {
   return {
     call: { id: `call_${name}_${content.length}`, name, arguments: {} },
@@ -32,12 +41,14 @@ describe("reportRunsFrom", () => {
     const runs = reportRunsFrom([
       exchange(
         "run_report",
-        JSON.stringify({
-          runId: "rrun_01M3034Q2N7JD99RA1D8DGH1ZF",
-          reportKey: "expiring-worker-credentials",
-          status: "queued",
-          finished: false,
-        }),
+        fenced(
+          JSON.stringify({
+            runId: "rrun_01M3034Q2N7JD99RA1D8DGH1ZF",
+            reportKey: "expiring-worker-credentials",
+            status: "queued",
+            finished: false,
+          }),
+        ),
       ),
     ]);
 
@@ -49,28 +60,32 @@ describe("reportRunsFrom", () => {
   it("shows one card when a run is started and then checked on", () => {
     const payload = { runId: "rrun_1", reportKey: "expiring-worker-credentials" };
     const runs = reportRunsFrom([
-      exchange("run_report", JSON.stringify({ ...payload, status: "queued" })),
-      exchange("get_report_run", JSON.stringify({ ...payload, status: "succeeded" })),
+      exchange("run_report", fenced(JSON.stringify({ ...payload, status: "queued" }))),
+      exchange("get_report_run", fenced(JSON.stringify({ ...payload, status: "succeeded" }))),
     ]);
 
     expect(runs).toHaveLength(1);
   });
 
   it("ignores tools that carry no run", () => {
-    expect(reportRunsFrom([exchange("list_reports", JSON.stringify({ results: [] }))])).toEqual([]);
+    expect(
+      reportRunsFrom([exchange("list_reports", fenced(JSON.stringify({ results: [] })))]),
+    ).toEqual([]);
   });
 
   it("survives a tool result that is not the JSON it should be", () => {
     // Results are truncated when long and can carry a plain-text error. A parse
     // failure must not take the whole message down with it.
-    expect(reportRunsFrom([exchange("run_report", '{"runId":"rrun_1","stat')])).toEqual([]);
-    expect(reportRunsFrom([exchange("run_report", "the report could not be authorized")])).toEqual(
-      [],
-    );
+    expect(reportRunsFrom([exchange("run_report", fenced('{"runId":"rrun_1","stat'))])).toEqual([]);
+    expect(
+      reportRunsFrom([
+        exchange("run_report", 'Tool "run_report" failed: you do not have permission'),
+      ]),
+    ).toEqual([]);
   });
 
   it("ignores a failed call, which has no run to follow", () => {
-    const failed = exchange("run_report", JSON.stringify({ runId: "rrun_1" }), true);
+    const failed = exchange("run_report", fenced(JSON.stringify({ runId: "rrun_1" })), true);
     expect(reportRunsFrom([failed])).toEqual([]);
   });
 });

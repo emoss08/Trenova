@@ -105,7 +105,28 @@ describe("parseToolResult", () => {
     });
   });
 
+  // The notice is the one the server actually writes (agentruntime/fence.go),
+  // not the "…(truncated)" marker it replaced. A fixture copied from the old
+  // implementation kept passing while every real truncated result fell through
+  // as ordinary text with nothing saying it was short.
   it("reports truncation and returns the text when the JSON was cut short", () => {
+    const content =
+      'Result from search_shipments:\n<untrusted_data>\n[{"proNumber":"S1"},{"pro\n\n' +
+      "[This result was cut off here: it was too long to return in full, so the text " +
+      "above ends mid-record and the records after it are missing entirely. Do not " +
+      "infer, complete, or count anything from the cut-off portion. Narrow your " +
+      "filters and call the tool again, and tell the person you are working from a " +
+      "partial result until you do.]\n</untrusted_data>";
+
+    expect(parseToolResult(content)).toEqual({
+      kind: "text",
+      text: '[{"proNumber":"S1"},{"pro',
+      truncated: true,
+    });
+  });
+
+  // Threads saved before the notice was reworded still have to read correctly.
+  it("still recognises the marker the server used to write", () => {
     const content =
       'Result from search_shipments:\n<untrusted_data>\n[{"proNumber":"S1"},{"pro\n…(truncated)\n</untrusted_data>';
 

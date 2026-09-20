@@ -1,3 +1,4 @@
+import { parseToolResult } from "./tool-presentation";
 import type { ToolExchange } from "./thread-view";
 
 /** A report run the assistant started, as the thread records it. */
@@ -43,18 +44,23 @@ export function reportRunsFrom(tools: readonly ToolExchange[]): ThreadReportRun[
 }
 
 /**
- * A tool result is a model-facing payload, not a typed contract: it is whatever
- * the tool wrote, it may be truncated, and a failed parse must leave the thread
- * rendering rather than take the message down with it.
+ * A saved tool result is not the JSON the tool returned. The runtime fences it
+ * as untrusted data under a "Result from <tool>" line and may cut a long one
+ * short, so JSON.parse on the stored content fails on every single result —
+ * which is exactly how this shipped showing no card at all. parseToolResult is
+ * what already knows that shape; going through it is both the fix and the only
+ * way this stays correct when the fence changes.
+ *
+ * A result that is truncated, a failure, or not JSON yields nothing rather than
+ * taking the message down with it.
  */
 function parseRunResult(content: string): ThreadReportRun | null {
-  let payload: unknown;
-  try {
-    payload = JSON.parse(content);
-  } catch {
+  const result = parseToolResult(content);
+  if (result.kind !== "json") {
     return null;
   }
 
+  const payload = result.value;
   if (typeof payload !== "object" || payload === null) {
     return null;
   }
