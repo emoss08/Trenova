@@ -239,19 +239,24 @@ func (s *WorkerSeed) Run(ctx context.Context, tx bun.Tx) error {
 				}
 
 				profile := &worker.WorkerProfile{
-					ID:               profileID,
-					WorkerID:         workerID,
-					BusinessUnitID:   org.BusinessUnitID,
-					OrganizationID:   org.ID,
-					LicenseStateID:   state.ID,
-					DOB:              dob,
-					LicenseNumber:    def.license,
-					CDLClass:         def.cdlClass,
-					Endorsement:      def.endorsment,
-					HazmatExpiry:     hazmatExpiry,
-					LicenseExpiry:    licenseExpiry,
-					HireDate:         hireDate,
-					ComplianceStatus: worker.ComplianceStatusCompliant,
+					ID:             profileID,
+					WorkerID:       workerID,
+					BusinessUnitID: org.BusinessUnitID,
+					OrganizationID: org.ID,
+					LicenseStateID: state.ID,
+					DOB:            dob,
+					LicenseNumber:  def.license,
+					CDLClass:       def.cdlClass,
+					Endorsement:    def.endorsment,
+					HazmatExpiry:   hazmatExpiry,
+					LicenseExpiry:  licenseExpiry,
+					HireDate:       hireDate,
+					// Pending, not Compliant: no credential exists yet at this
+					// point in the seed order, so claiming compliance here is
+					// asserting a fact nothing has established. The credential
+					// seed derives the real status from the domain roll-up once
+					// the credentials are in.
+					ComplianceStatus: worker.ComplianceStatusPending,
 					IsQualified:      true,
 					CreatedAt:        now,
 					UpdatedAt:        now,
