@@ -48,6 +48,12 @@ type Response struct {
 	// Refused reports that the model declined the request outright, which is a
 	// business outcome rather than a transport failure and must not be retried.
 	Refused bool
+	// Truncated reports that the model stopped because it hit its output limit
+	// rather than because it was finished. Every protocol names this
+	// differently — finish_reason "length", stop_reason "max_tokens", an
+	// incomplete response, done_reason "length" — and none of them used to be
+	// read, so a reply cut off by the limit looked exactly like a finished one.
+	Truncated bool
 }
 
 // Adapter speaks one wire protocol.

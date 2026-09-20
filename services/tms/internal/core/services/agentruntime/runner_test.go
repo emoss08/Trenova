@@ -529,3 +529,79 @@ func TestRun_ReturnsWhatRanWhenTheModelFailsMidTurn(t *testing.T) {
 	assert.Equal(t, conversation.RoleTool, result.Messages[2].Role)
 	assert.Equal(t, 1, tool.Calls)
 }
+
+// Arguments the adapter could not parse used to arrive as an empty map, and the
+// tool ran on it. For a list tool that is an unfiltered page reported back as
+// the filtered answer. The call is refused instead, and the refusal says why.
+func TestRun_RefusesACallWhoseArgumentsWereCutOff(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("list_shipments", map[string]any{"results": []any{}}, nil)
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		{
+			ToolCalls: []serviceports.ToolCall{{
+				ID:             "call_1",
+				Name:           "list_shipments",
+				Arguments:      map[string]any{},
+				ArgumentsError: "unexpected end of JSON input",
+			}},
+			ModelIdentifier: "test-model",
+		},
+		textTurn("I could not run that."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{
+		Tools: []serviceports.AgentQueryTool{tool},
+	}, &stubActionRegistry{}, nil)
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("list_shipments"),
+		Actor:      testActor(),
+		Input:      "unbilled shipments",
+	})
+	require.NoError(t, err)
+
+	assert.Zero(t, tool.Calls, "a tool is never run on arguments that did not parse")
+	require.True(t, result.Messages[2].ToolFailed)
+	assert.Contains(t, result.Messages[2].Content, "not valid JSON")
+}
+
+// Every call in a completion used to execute whatever the remaining budget was,
+// so an agent allowed one call could make ten in a single batch.
+func TestRun_HoldsTheToolBudgetWithinABatch(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("get_worker", map[string]any{"name": "x"}, nil)
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		{
+			ToolCalls: []serviceports.ToolCall{
+				{ID: "c1", Name: "get_worker", Arguments: map[string]any{"id": "w1"}},
+				{ID: "c2", Name: "get_worker", Arguments: map[string]any{"id": "w2"}},
+				{ID: "c3", Name: "get_worker", Arguments: map[string]any{"id": "w3"}},
+			},
+			ModelIdentifier: "test-model",
+		},
+		textTurn("done"),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{
+		Tools: []serviceports.AgentQueryTool{tool},
+	}, &stubActionRegistry{}, nil)
+	definition := testDefinition("get_worker")
+	definition.MaxToolCalls = 2
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "three drivers",
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, 2, tool.Calls)
+	var refused int
+	for _, message := range result.Messages {
+		if message.Role == conversation.RoleTool && message.ToolFailed {
+			refused++
+			assert.Contains(t, message.Content, "budget")
+		}
+	}
+	assert.Equal(t, 1, refused, "the third call is answered with a refusal, not silence")
+}

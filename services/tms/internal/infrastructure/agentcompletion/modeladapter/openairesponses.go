@@ -145,6 +145,7 @@ func (a openAIResponsesAdapter) responseFrom(call *Call, envelope *responsesEnve
 		InputTokens:     envelope.Usage.InputTokens,
 		OutputTokens:    envelope.Usage.OutputTokens,
 		Refused:         refused,
+		Truncated:       responsesTruncated(envelope),
 	}
 }
 
@@ -360,7 +361,21 @@ func (a openAIResponsesAdapter) Stream(
 		InputTokens:     completed.Usage.InputTokens,
 		OutputTokens:    completed.Usage.OutputTokens,
 		Refused:         refused || finalRefused,
+		Truncated:       responsesTruncated(completed),
 	}, nil
+}
+
+// responsesTruncated reads the Responses API's two ways of saying the output
+// limit was hit: the response status, and the reason on an incomplete one.
+func responsesTruncated(envelope *responsesEnvelope) bool {
+	if envelope == nil {
+		return false
+	}
+	if envelope.IncompleteDetails != nil && envelope.IncompleteDetails.Reason == "max_output_tokens" {
+		return true
+	}
+
+	return envelope.Status == "incomplete"
 }
 
 func toResponsesInput(system string, messages []Message) []responsesItem {
@@ -436,14 +451,12 @@ func splitResponsesOutput(resp *responsesEnvelope) (string, []ToolCall, bool) {
 		item := &resp.Output[idx]
 
 		if item.Type == "function_call" {
-			args := map[string]any{}
-			if trimmed := strings.TrimSpace(item.Arguments); trimmed != "" {
-				_ = sonic.Unmarshal([]byte(trimmed), &args)
-			}
+			args, argsErr := decodeArguments(item.Arguments)
 			toolCalls = append(toolCalls, ToolCall{
-				ID:        item.CallID,
-				Name:      item.Name,
-				Arguments: args,
+				ID:             item.CallID,
+				Name:           item.Name,
+				Arguments:      args,
+				ArgumentsError: argsErr,
 			})
 			continue
 		}

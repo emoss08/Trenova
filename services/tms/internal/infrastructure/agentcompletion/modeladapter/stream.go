@@ -260,11 +260,23 @@ func streamError(errType, message string) error {
 // decodeArguments turns a JSON-encoded argument string into a map. Unparseable
 // arguments become an empty map for the same reason the blocking path tolerates
 // them: the tool's own validation reports a clearer error than a failed turn.
-func decodeArguments(raw string) map[string]any {
+// decodeArguments reads a tool call's argument text. The second value is the
+// parse failure, in words, or empty.
+//
+// It used to swallow the failure and return an empty map, on the theory that
+// the tool would then report a clear validation error. Some tools do. A list
+// tool does not: given no filters it lists, and the model reports the first
+// page as the answer to the question it actually asked. The failure is
+// returned so the runtime can refuse the call and say why.
+func decodeArguments(raw string) (map[string]any, string) {
 	args := map[string]any{}
-	if trimmed := strings.TrimSpace(raw); trimmed != "" {
-		_ = sonic.Unmarshal([]byte(trimmed), &args)
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return args, ""
+	}
+	if err := sonic.Unmarshal([]byte(trimmed), &args); err != nil {
+		return map[string]any{}, err.Error()
 	}
 
-	return args
+	return args, ""
 }

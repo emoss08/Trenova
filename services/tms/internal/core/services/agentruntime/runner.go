@@ -149,6 +149,34 @@ func (s *Service) Run(
 				},
 			})
 
+			// Arguments that did not parse are not arguments. The tool used to
+			// run on the empty map that stood in for them, and a list tool given
+			// no filters lists everything.
+			if call.ArgumentsError != "" {
+				outcome := failedOutcome(
+					"Tool %q was not run: its arguments were not valid JSON (%s). "+
+						"This usually means the reply hit its output limit partway through "+
+						"the call. Send it again with complete arguments.",
+					call.Name, call.ArgumentsError,
+				)
+				s.recordToolResult(result, &messages, call, outcome, emit)
+				continue
+			}
+
+			// The budget is per call, not per batch. A model that asks for ten
+			// tools in one completion does not get ten when it was allowed one;
+			// the calls past the line are answered, so the model knows, but not
+			// run.
+			if result.ToolCallsUsed >= budget {
+				outcome := failedOutcome(
+					"Tool %q was not run: this turn's tool budget of %d is spent. "+
+						"Answer with what you have.",
+					call.Name, budget,
+				)
+				s.recordToolResult(result, &messages, call, outcome, emit)
+				continue
+			}
+
 			if call.Name == findToolsName {
 				outcome := toolOutcome{content: s.resolveFind(tools, call.Arguments)}
 				result.ToolCallsUsed++

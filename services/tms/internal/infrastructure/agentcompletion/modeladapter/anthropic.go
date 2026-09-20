@@ -49,6 +49,8 @@ type anthropicBlock struct {
 	ID    string         `json:"id,omitempty"`
 	Name  string         `json:"name,omitempty"`
 	Input map[string]any `json:"input,omitempty"`
+	// InputError is why streamed input JSON did not parse; never on the wire.
+	InputError string `json:"-"`
 
 	// tool_result
 	ToolUseID string `json:"tool_use_id,omitempty"`
@@ -137,6 +139,7 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 		InputTokens:     envelope.Usage.InputTokens,
 		OutputTokens:    envelope.Usage.OutputTokens,
 		Refused:         envelope.StopReason == "refusal",
+		Truncated:       envelope.StopReason == "max_tokens",
 	}, nil
 }
 
@@ -273,7 +276,7 @@ func (a anthropicAdapter) Stream(
 			block.Text = streamed.text.String()
 		case "tool_use":
 			if raw := streamed.input.String(); strings.TrimSpace(raw) != "" {
-				block.Input = decodeArguments(raw)
+				block.Input, block.InputError = decodeArguments(raw)
 			}
 			if block.Input == nil {
 				block.Input = map[string]any{}
@@ -291,6 +294,7 @@ func (a anthropicAdapter) Stream(
 		InputTokens:     usage.InputTokens,
 		OutputTokens:    usage.OutputTokens,
 		Refused:         stopReason == "refusal",
+		Truncated:       stopReason == "max_tokens",
 	}, nil
 }
 
@@ -368,9 +372,10 @@ func splitAnthropicContent(blocks []anthropicBlock) (string, []ToolCall) {
 			}
 		case "tool_use":
 			toolCalls = append(toolCalls, ToolCall{
-				ID:        block.ID,
-				Name:      block.Name,
-				Arguments: block.Input,
+				ID:             block.ID,
+				Name:           block.Name,
+				Arguments:      block.Input,
+				ArgumentsError: block.InputError,
 			})
 		}
 	}

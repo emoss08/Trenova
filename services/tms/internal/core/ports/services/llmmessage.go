@@ -42,6 +42,11 @@ type ToolCall struct {
 	ID        string         `json:"id"`
 	Name      string         `json:"name"`
 	Arguments map[string]any `json:"arguments"`
+	// ArgumentsError is set when the provider's argument text did not parse —
+	// usually because the reply hit its output limit partway through the JSON.
+	// The runtime refuses such a call rather than running the tool on the
+	// empty map that used to stand in for it.
+	ArgumentsError string `json:"argumentsError,omitempty"`
 }
 
 // UserMessage is the common single-turn case.

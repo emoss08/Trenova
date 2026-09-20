@@ -192,6 +192,7 @@ func (s *Service) attemptChat(
 		OutputTokens:    resp.OutputTokens,
 		ProviderID:      provider.ID,
 		ProviderKind:    provider.Kind,
+		Truncated:       resp.Truncated,
 	}, emitted, nil
 }
 
