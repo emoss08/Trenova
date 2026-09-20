@@ -47,10 +47,19 @@ export function ModelPicker({ options, value, onChange, disabled = false }: Mode
     [options, value],
   );
 
-  // Nothing to choose between is not a choice worth showing. One provider is
-  // the same answer either way, and an empty list means the organization has
-  // not configured the assistant at all.
-  if (options.length < 2) {
+  // Shown from the first provider onwards, not the second.
+  //
+  // This is an indicator as much as a picker: with one provider there is
+  // nothing to choose, but which model is answering is still worth seeing, and
+  // it is the only place a person can see it before the reply arrives.
+  //
+  // Hiding it below two also made three different situations look identical —
+  // one provider configured, a second provider that was never given the
+  // assistant task, and an endpoint that failed — which is a bad way to find
+  // out which one you have. Nothing renders only when the organization has no
+  // assistant provider at all, and in that case the assistant does not work
+  // either and says so elsewhere.
+  if (options.length === 0) {
     return null;
   }
 

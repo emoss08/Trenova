@@ -67,7 +67,16 @@ export class AssistantService {
   /** The models this organization has made available to the assistant. */
   public async listProviders() {
     const response = await api.get("/assistant/providers/");
-    return safeParse(assistantProviderListSchema, response, "Assistant Providers").results;
+    // safeParse resolves a promise, so the await belongs here rather than on
+    // the caller: reading .results off the promise itself yields undefined, the
+    // query stores undefined, and the picker quietly renders nothing.
+    const parsed = await safeParse(
+      assistantProviderListSchema,
+      response,
+      "Assistant Providers",
+    );
+
+    return parsed.results;
   }
 
   public async sendMessage(
