@@ -39,7 +39,7 @@ export type ModelPickerProps = {
  * actually answered rather than assuming it was this one.
  */
 export function ModelPicker({ options, value, onChange, disabled = false }: ModelPickerProps) {
-  const { t } = useT();
+  const t = useT();
   const [open, setOpen] = useState(false);
 
   const selected = useMemo(

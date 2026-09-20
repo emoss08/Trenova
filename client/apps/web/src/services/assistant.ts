@@ -10,6 +10,7 @@ import {
   toolCatalogSchema,
   assistantMessageListSchema,
   assistantProposalListSchema,
+  assistantProviderListSchema,
   assistantThreadListSchema,
   assistantThreadSchema,
   parseAssistantStreamEvent,
@@ -70,11 +71,7 @@ export class AssistantService {
     // safeParse resolves a promise, so the await belongs here rather than on
     // the caller: reading .results off the promise itself yields undefined, the
     // query stores undefined, and the picker quietly renders nothing.
-    const parsed = await safeParse(
-      assistantProviderListSchema,
-      response,
-      "Assistant Providers",
-    );
+    const parsed = await safeParse(assistantProviderListSchema, response, "Assistant Providers");
 
     return parsed.results;
   }
