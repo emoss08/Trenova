@@ -78,3 +78,45 @@ func TestStreamChat_KeepsWhatArrivedWhenTheStreamDies(t *testing.T) {
 	assert.Equal(t, streamed.String(), result.Text,
 		"what was saved and what the reader watched have to be the same text")
 }
+
+// A stream that dies before saying anything has nothing worth keeping, so the
+// usual fallthrough to the next provider still applies.
+func TestStreamChat_FallsThroughWhenNothingWasSaid(t *testing.T) {
+	t.Parallel()
+
+	dead := dyingStreamServer(t, nil)
+	// A streaming server, not the plain-JSON one: the router streams whenever
+	// the adapter can, so a fake that only answers the non-streaming shape
+	// parses as an empty reply rather than as the fallthrough's success.
+	good := completeStreamServer(t, "Answered by the second provider.")
+
+	service := newTestService(t,
+		chatProvider("dies-first", dead.URL, 10),
+		chatProvider("answers", good.URL, 20),
+	)
+
+	result, err := service.StreamChat(t.Context(), chatRequest(pulid.Nil), func(string) {})
+	require.NoError(t, err)
+
+	assert.False(t, result.Truncated)
+	assert.Contains(t, result.Text, "second provider")
+}
+
+// completeStreamServer sends a whole reply and terminates it properly, which is
+// what the fallthrough needs to land on.
+func completeStreamServer(t *testing.T, content string) *httptest.Server {
+	t.Helper()
+
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+
+		flusher, ok := w.(http.Flusher)
+		require.True(t, ok)
+
+		payload := `{"choices":[{"delta":{"content":"` + content + `"}}]}`
+		_, _ = w.Write([]byte("data: " + payload + "\n\n"))
+		_, _ = w.Write([]byte("data: [DONE]\n\n"))
+		flusher.Flush()
+	}))
+}
