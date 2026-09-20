@@ -64,13 +64,16 @@ type workerRow struct {
 	// The compliance fields travel with the row because they are the reason
 	// the row was asked for. A roster filtered on an endorsement that then
 	// comes back without it leaves the reader to trust the filter blindly.
-	Endorsement       string `json:"endorsement,omitempty"`
-	CDLClass          string `json:"cdlClass,omitempty"`
-	ComplianceStatus  string `json:"complianceStatus,omitempty"`
-	Qualified         *bool  `json:"qualified,omitempty"`
-	HazmatExpiry      int64  `json:"hazmatExpiry,omitempty"`
-	LicenseExpiry     int64  `json:"licenseExpiry,omitempty"`
-	MedicalCardExpiry int64  `json:"medicalCardExpiry,omitempty"`
+	Endorsement      string `json:"endorsement,omitempty"`
+	CDLClass         string `json:"cdlClass,omitempty"`
+	ComplianceStatus string `json:"complianceStatus,omitempty"`
+	Qualified        *bool  `json:"qualified,omitempty"`
+	// Always present, never omitted: a missing credential date is the finding,
+	// and a key that disappears when nothing is on file reads as nothing to
+	// worry about.
+	HazmatExpiry      optionalDate `json:"hazmatExpiry"`
+	LicenseExpiry     optionalDate `json:"licenseExpiry"`
+	MedicalCardExpiry optionalDate `json:"medicalCardExpiry"`
 }
 
 func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQueryTool {
@@ -82,7 +85,10 @@ func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQu
 			"CDL class, compliance status, and licence, medical card or hazmat expiry. " +
 			"This answers who holds an endorsement and who is qualified to drive. Use " +
 			"search_worker when you have a name, and list_expiring_credentials for the " +
-			"separately tracked credential documents.",
+			"separately tracked credential documents. A credential reading \"none on " +
+			"file\" means nothing was recorded, not that it is current — a driver with " +
+			"no medical card on file is a bigger problem than one expiring soon, so " +
+			"report them rather than passing over them.",
 		resource: permission.ResourceWorker,
 		config:   querybuilder.GetFieldConfiguration((*worker.Worker)(nil)),
 		fields: []listField{
@@ -152,15 +158,15 @@ func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQu
 }
 
 type shipmentRow struct {
-	ID                 string `json:"id"`
-	ProNumber          string `json:"proNumber"`
-	BOL                string `json:"bol,omitempty"`
-	Status             string `json:"status"`
-	Customer           string `json:"customer,omitempty"`
-	TotalCharge        string `json:"totalCharge,omitempty"`
-	ActualShipDate     int64  `json:"actualShipDate,omitempty"`
-	ActualDeliveryDate int64  `json:"actualDeliveryDate,omitempty"`
-	BillingStatus      string `json:"billingStatus,omitempty"`
+	ID                 string       `json:"id"`
+	ProNumber          string       `json:"proNumber"`
+	BOL                string       `json:"bol,omitempty"`
+	Status             string       `json:"status"`
+	Customer           string       `json:"customer,omitempty"`
+	TotalCharge        string       `json:"totalCharge,omitempty"`
+	ActualShipDate     optionalDate `json:"actualShipDate"`
+	ActualDeliveryDate optionalDate `json:"actualDeliveryDate"`
+	BillingStatus      string       `json:"billingStatus,omitempty"`
 }
 
 func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.AgentQueryTool {
@@ -212,12 +218,10 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 				if item.TotalChargeAmount.Valid {
 					row.TotalCharge = item.TotalChargeAmount.Decimal.String()
 				}
-				if item.ActualShipDate != nil {
-					row.ActualShipDate = *item.ActualShipDate
-				}
-				if item.ActualDeliveryDate != nil {
-					row.ActualDeliveryDate = *item.ActualDeliveryDate
-				}
+				row.ActualShipDate = expectedDate(
+					derefInt64(item.ActualShipDate), "not shipped yet")
+				row.ActualDeliveryDate = expectedDate(
+					derefInt64(item.ActualDeliveryDate), "not delivered yet")
 				if item.Customer != nil {
 					row.Customer = item.Customer.Name
 				}
@@ -229,17 +233,17 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 }
 
 type equipmentRow struct {
-	ID                 string `json:"id"`
-	Code               string `json:"code"`
-	Status             string `json:"status"`
-	Make               string `json:"make,omitempty"`
-	Model              string `json:"model,omitempty"`
-	Year               int    `json:"year,omitempty"`
-	LicensePlate       string `json:"licensePlate,omitempty"`
-	OwnershipType      string `json:"ownershipType,omitempty"`
-	RegistrationExpiry int64  `json:"registrationExpiry,omitempty"`
-	LastInspectionDate int64  `json:"lastInspectionDate,omitempty"`
-	AssignedTo         string `json:"assignedTo,omitempty"`
+	ID                 string       `json:"id"`
+	Code               string       `json:"code"`
+	Status             string       `json:"status"`
+	Make               string       `json:"make,omitempty"`
+	Model              string       `json:"model,omitempty"`
+	Year               int          `json:"year,omitempty"`
+	LicensePlate       string       `json:"licensePlate,omitempty"`
+	OwnershipType      string       `json:"ownershipType,omitempty"`
+	RegistrationExpiry optionalDate `json:"registrationExpiry"`
+	LastInspectionDate optionalDate `json:"lastInspectionDate"`
+	AssignedTo         string       `json:"assignedTo,omitempty"`
 }
 
 func equipmentFields() []listField {
@@ -296,9 +300,7 @@ func newListTractorsTool(repo repositories.TractorRepository) serviceports.Agent
 				if item.Year != nil {
 					row.Year = *item.Year
 				}
-				if item.RegistrationExpiry != nil {
-					row.RegistrationExpiry = *item.RegistrationExpiry
-				}
+				row.RegistrationExpiry = pointerDate(item.RegistrationExpiry)
 				if item.PrimaryWorker != nil {
 					row.AssignedTo = workerName(item.PrimaryWorker)
 				}
@@ -345,12 +347,8 @@ func newListTrailersTool(repo repositories.TrailerRepository) serviceports.Agent
 				if item.Year != nil {
 					row.Year = *item.Year
 				}
-				if item.RegistrationExpiry != nil {
-					row.RegistrationExpiry = *item.RegistrationExpiry
-				}
-				if item.LastInspectionDate != nil {
-					row.LastInspectionDate = *item.LastInspectionDate
-				}
+				row.RegistrationExpiry = pointerDate(item.RegistrationExpiry)
+				row.LastInspectionDate = pointerDate(item.LastInspectionDate)
 
 				return row
 			}), nil
@@ -495,11 +493,7 @@ func applyProfile(row *workerRow, profile *worker.WorkerProfile) {
 	row.ComplianceStatus = string(profile.ComplianceStatus)
 	row.Qualified = &profile.IsQualified
 
-	if profile.HazmatExpiry != nil {
-		row.HazmatExpiry = *profile.HazmatExpiry
-	}
-	row.LicenseExpiry = profile.LicenseExpiry
-	if profile.MedicalCardExpiry != nil {
-		row.MedicalCardExpiry = *profile.MedicalCardExpiry
-	}
+	row.HazmatExpiry = pointerDate(profile.HazmatExpiry)
+	row.LicenseExpiry = recordedDate(profile.LicenseExpiry)
+	row.MedicalCardExpiry = pointerDate(profile.MedicalCardExpiry)
 }

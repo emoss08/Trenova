@@ -35,15 +35,15 @@ type ptoLister interface {
 // use. The stored entity carries the ledger balance, the search vector and
 // three user relations, none of which answer who is out on Thursday.
 type timeOffRow struct {
-	ID         string `json:"id"`
-	WorkerID   string `json:"workerId"`
-	WorkerName string `json:"workerName,omitempty"`
-	Status     string `json:"status"`
-	Type       string `json:"type"`
-	StartDate  int64  `json:"startDate"`
-	EndDate    int64  `json:"endDate"`
-	Days       string `json:"days"`
-	Reason     string `json:"reason,omitempty"`
+	ID         string       `json:"id"`
+	WorkerID   string       `json:"workerId"`
+	WorkerName string       `json:"workerName,omitempty"`
+	Status     string       `json:"status"`
+	Type       string       `json:"type"`
+	StartDate  optionalDate `json:"startDate"`
+	EndDate    optionalDate `json:"endDate"`
+	Days       string       `json:"days"`
+	Reason     string       `json:"reason,omitempty"`
 	// Decision carries the reason attached to a rejection or a cancellation,
 	// so "why was this turned down" is answerable without a second lookup.
 	Decision string `json:"decision,omitempty"`
@@ -260,8 +260,8 @@ func toTimeOffRow(pto *worker.WorkerPTO) timeOffRow {
 		WorkerName: workerName(pto.Worker),
 		Status:     string(pto.Status),
 		Type:       string(pto.Type),
-		StartDate:  pto.StartDate,
-		EndDate:    pto.EndDate,
+		StartDate:  recordedDate(pto.StartDate),
+		EndDate:    recordedDate(pto.EndDate),
 		Days:       pto.Days.String(),
 		Reason:     pto.Reason,
 	}

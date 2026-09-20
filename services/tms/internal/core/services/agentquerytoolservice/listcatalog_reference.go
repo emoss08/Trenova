@@ -421,16 +421,18 @@ func newListLocationCategoriesTool(
 }
 
 type invoiceRow struct {
-	ID               string `json:"id"`
-	Number           string `json:"number"`
-	Status           string `json:"status"`
-	SettlementStatus string `json:"settlementStatus"`
-	DisputeStatus    string `json:"disputeStatus,omitempty"`
-	BillTo           string `json:"billTo,omitempty"`
-	ProNumber        string `json:"proNumber,omitempty"`
-	TotalAmount      string `json:"totalAmount,omitempty"`
-	InvoiceDate      int64  `json:"invoiceDate,omitempty"`
-	DueDate          int64  `json:"dueDate,omitempty"`
+	ID               string       `json:"id"`
+	Number           string       `json:"number"`
+	Status           string       `json:"status"`
+	SettlementStatus string       `json:"settlementStatus"`
+	DisputeStatus    string       `json:"disputeStatus,omitempty"`
+	BillTo           string       `json:"billTo,omitempty"`
+	ProNumber        string       `json:"proNumber,omitempty"`
+	TotalAmount      string       `json:"totalAmount,omitempty"`
+	InvoiceDate      optionalDate `json:"invoiceDate"`
+	// A receivable with no due date is not a receivable that is current; it is
+	// one nobody gave terms to. Omitting the key made it look like the former.
+	DueDate optionalDate `json:"dueDate"`
 }
 
 func newListInvoicesTool(repo repositories.InvoiceRepository) serviceports.AgentQueryTool {
@@ -489,10 +491,8 @@ func newListInvoicesTool(repo repositories.InvoiceRepository) serviceports.Agent
 					BillTo:           item.BillToName,
 					ProNumber:        item.ShipmentProNumber,
 					TotalAmount:      item.TotalAmount.String(),
-					InvoiceDate:      item.InvoiceDate,
-				}
-				if item.DueDate != nil {
-					row.DueDate = *item.DueDate
+					InvoiceDate:      recordedDate(item.InvoiceDate),
+					DueDate:          pointerDate(item.DueDate),
 				}
 
 				return row

@@ -30,13 +30,13 @@ const (
 // and the user who verified it. None of that helps answer who needs a new
 // medical card, and all of it costs context the model needs for the answer.
 type expiringCredentialRow struct {
-	WorkerID        string `json:"workerId"`
-	WorkerName      string `json:"workerName"`
-	CredentialType  string `json:"credentialType"`
-	CredentialCode  string `json:"credentialCode"`
-	Number          string `json:"number,omitempty"`
-	ExpiresAt       int64  `json:"expiresAt"`
-	DaysUntilExpiry int64  `json:"daysUntilExpiry"`
+	WorkerID        string       `json:"workerId"`
+	WorkerName      string       `json:"workerName"`
+	CredentialType  string       `json:"credentialType"`
+	CredentialCode  string       `json:"credentialCode"`
+	Number          string       `json:"number,omitempty"`
+	ExpiresAt       optionalDate `json:"expiresAt"`
+	DaysUntilExpiry int64        `json:"daysUntilExpiry"`
 	// Expired is stated rather than left to be derived from a negative day
 	// count, because the difference between "renew this" and "this driver
 	// should not be dispatched" is the whole point of the question.
@@ -182,8 +182,8 @@ func toExpiringRow(credential *worker.WorkerCredential, now int64) expiringCrede
 		Number:   credential.Number,
 	}
 
+	row.ExpiresAt = pointerDate(credential.ExpiresAt)
 	if credential.ExpiresAt != nil {
-		row.ExpiresAt = *credential.ExpiresAt
 		row.DaysUntilExpiry = (*credential.ExpiresAt - now) / secondsPerDay
 		row.Expired = *credential.ExpiresAt < now
 	}
