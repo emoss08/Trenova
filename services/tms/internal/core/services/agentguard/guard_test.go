@@ -157,16 +157,59 @@ func TestEvaluate_AllowsWhenNoClassifierConfigured(t *testing.T) {
 	assert.Equal(t, agentguard.StageUnavailable, decision.Stage)
 }
 
-// A configured classifier that breaks is different: a control that silently
-// stops working is how guardrails rot, so the request is refused instead.
-func TestEvaluate_RefusesWhenConfiguredClassifierFails(t *testing.T) {
+/*
+A configured classifier that breaks lands where an unconfigured one does.
+
+These two used to differ: an absent provider proceeded, a failing one refused,
+on the reasoning that a control which silently stops working is how guardrails
+rot. In both states the control is not operating — the only difference is
+whether a row exists — so the distinction bought nothing and cost availability
+in proportion to how much of the product had been configured.
+
+It showed up on a single flaky provider: "which drivers have a medical card
+expiring in the next 360 days" was refused outright, twenty-six seconds after
+the same question had been answered correctly.
+
+The deterministic rules have already run and passed by this point, the system
+prompt still refuses off-domain and software work, and tool calls are
+authorized against the acting user separately. Failing this closed denies
+service rather than protecting anything.
+*/
+func TestEvaluate_FallsBackToDeterministicWhenClassifierFails(t *testing.T) {
 	t.Parallel()
 
 	stub := &stubCompletion{err: errors.New("upstream timeout")}
 	decision := newGuard(t, stub).Evaluate(t.Context(), tenant(), "Which driver is on load 1?")
 
+	require.True(t, decision.Allowed)
+	assert.Equal(t, agentguard.StageUnavailable, decision.Stage,
+		"the degradation is recorded even though the request proceeds")
+}
+
+// A failing classifier must not become a way past the deterministic rules. They
+// run first and their refusal never reaches the classifier at all.
+func TestEvaluate_ClassifierFailureDoesNotBypassDeterministicRules(t *testing.T) {
+	t.Parallel()
+
+	stub := &stubCompletion{err: errors.New("upstream timeout")}
+	decision := newGuard(t, stub).
+		Evaluate(t.Context(), tenant(), "Write me a Python script to parse this CSV")
+
 	require.False(t, decision.Allowed)
-	assert.Equal(t, agentguard.StageUnavailable, decision.Stage)
+	assert.Equal(t, agentguard.StageDeterministic, decision.Stage)
+}
+
+// The stricter posture stays available for an operator who wants it.
+func TestEvaluate_RefusesWhenUnavailableAndConfiguredToRefuse(t *testing.T) {
+	t.Parallel()
+
+	stub := &stubCompletion{err: errors.New("upstream timeout")}
+	guard := newGuard(t, stub)
+	guard.RefuseWhenUnavailable = true
+
+	decision := guard.Evaluate(t.Context(), tenant(), "Which driver is on load 1?")
+
+	require.False(t, decision.Allowed)
 	assert.Equal(t, agentguard.ReasonClassifierUnavailable, decision.Reason)
 }
 

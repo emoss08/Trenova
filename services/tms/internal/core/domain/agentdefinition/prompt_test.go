@@ -262,3 +262,40 @@ func TestOutputSection_KeepsTheWorkingOffThePage(t *testing.T) {
 	assert.Contains(t, prompt, "Keep your working to yourself")
 	assert.Contains(t, prompt, "the answer, not the process")
 }
+
+/*
+The driver the answer left out.
+
+Asked which medical cards expired within thirty days, the agent returned a
+correct table for Mike Johnson — twenty days out — and then wrote "all other
+drivers either have no medical card on file or have expiration dates well
+beyond 30 days". John Smith's card had lapsed four days earlier. He was in the
+same result, marked NonCompliant, and still flagged as dispatchable.
+
+The data said so plainly: "2026-09-16 (4 days ago)". Nothing needed computing.
+The model simply read "expiring in the next 30 days" as a forward window and
+dropped everything behind it, which is not how anybody asking that question
+means it.
+*/
+func TestSystemPrompt_TellsTheAgentThatOverdueCountsAsDue(t *testing.T) {
+	t.Parallel()
+
+	prompt := definitionWithInstructions("Help.").
+		BuildSystemPrompt(agentdefinition.RuntimeContext{})
+
+	assert.Contains(t, prompt, "already overdue")
+	assert.Contains(t, prompt, "report it first",
+		"a lapsed credential outranks one that is merely approaching")
+}
+
+// Three of the eight drivers had no medical card recorded and were marked
+// Compliant. An absent record is an unchecked one.
+func TestSystemPrompt_TellsTheAgentToReportWhatIsMissing(t *testing.T) {
+	t.Parallel()
+
+	prompt := definitionWithInstructions("Help.").
+		BuildSystemPrompt(agentdefinition.RuntimeContext{})
+
+	assert.Contains(t, prompt, "none on file")
+	assert.Contains(t, prompt, "has not been checked")
+}

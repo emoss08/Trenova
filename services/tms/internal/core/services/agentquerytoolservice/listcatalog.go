@@ -52,13 +52,19 @@ const endorsementNote = "single letter: O none, N tanker, H hazmat, " +
 	"For hazmat match both H and X"
 
 type workerRow struct {
-	ID                string `json:"id"`
-	Name              string `json:"name"`
-	Status            string `json:"status"`
-	Type              string `json:"type"`
-	DriverType        string `json:"driverType"`
-	City              string `json:"city,omitempty"`
-	FleetCode         string `json:"fleetCode,omitempty"`
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Status     string `json:"status"`
+	Type       string `json:"type"`
+	DriverType string `json:"driverType"`
+	City       string `json:"city,omitempty"`
+	FleetCode  string `json:"fleetCode,omitempty"`
+	// CanBeAssigned folds the compliance block into the stored flag, because
+	// the stored flag alone answers a narrower question than its name does.
+	// The column means "no employment-level block"; the domain additionally
+	// refuses to dispatch a worker whose credentials are NonCompliant
+	// (worker.Standing). A row that reported the column verbatim said a driver
+	// whose medical card had lapsed four days earlier was dispatchable.
 	CanBeAssigned     bool   `json:"canBeAssigned"`
 	AssignmentBlocked string `json:"assignmentBlocked,omitempty"`
 	// The compliance fields travel with the row because they are the reason
@@ -527,6 +533,17 @@ func applyProfile(row *workerRow, profile *worker.WorkerProfile) {
 	row.CDLClass = string(profile.CDLClass)
 	row.ComplianceStatus = string(profile.ComplianceStatus)
 	row.Qualified = &profile.IsQualified
+
+	// The same rule worker.Standing applies, at the only point this projection
+	// can apply it. Standing also weighs training, safety and checklists, which
+	// a list row does not load — so this can still be too generous, never too
+	// strict, and a caller deciding whether to dispatch should open the record.
+	if profile.ComplianceStatus == worker.ComplianceStatusNonCompliant {
+		row.CanBeAssigned = false
+		if row.AssignmentBlocked == "" {
+			row.AssignmentBlocked = "Credentials are not compliant"
+		}
+	}
 
 	row.HazmatExpiry = pointerDate(profile.HazmatExpiry)
 	row.LicenseExpiry = recordedDate(profile.LicenseExpiry)
