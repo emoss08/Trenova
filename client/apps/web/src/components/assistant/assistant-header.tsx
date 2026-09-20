@@ -1,14 +1,15 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { AgentTile } from "@/components/agent-identity/agent-tile";
+import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AssistantThread } from "@/types/assistant";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
-import type { AssistantThread } from "@/types/assistant";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -20,7 +21,6 @@ import {
   XIcon,
 } from "lucide-react";
 import { useState } from "react";
-import { AgentTile } from "@/components/agent-identity/agent-tile";
 
 type AssistantHeaderProps = {
   agents: AgentDefinitionRow[];
@@ -62,13 +62,13 @@ export function AssistantHeader({
     : t("Ask about anything you can see in Trenova");
 
   return (
-    <div className="border-border/70 flex items-center gap-2 border-b px-3 py-2">
+    <div className="border-border/70 flex justify-between items-center gap-2 border-b px-3 py-2">
       <Popover open={agentMenuOpen} onOpenChange={setAgentMenuOpen}>
         <PopoverTrigger
           render={
             <button
               type="button"
-              className="hover:bg-muted/60 flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-left transition-colors"
+              className="hover:bg-muted/60 flex max-w-fit items-center gap-2 rounded-md p-2 text-left transition-colors"
               aria-label={t("Choose an agent")}
               disabled={agents.length === 0}
             />
