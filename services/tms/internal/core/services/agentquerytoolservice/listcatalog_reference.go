@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -562,6 +563,69 @@ func newListCarriersTool(repo repositories.CarrierRepository) serviceports.Agent
 					SafetyRating:     string(item.SafetyRating),
 					DOTNumber:        item.DOTNumber,
 					MCNumber:         item.MCNumber,
+				}
+			}), nil
+		},
+	})
+}
+
+type holdReasonRow struct {
+	ID             string `json:"id"`
+	Code           string `json:"code"`
+	Label          string `json:"label"`
+	Type           string `json:"type"`
+	Description    string `json:"description,omitempty"`
+	Severity       string `json:"defaultSeverity,omitempty"`
+	BlocksDispatch bool   `json:"blocksDispatch"`
+	BlocksDelivery bool   `json:"blocksDelivery"`
+	BlocksBilling  bool   `json:"blocksBilling"`
+}
+
+func newListHoldReasonsTool(
+	repo repositories.HoldReasonRepository,
+) serviceports.AgentQueryTool {
+	return newListTool(listSpec{
+		name:         "list_hold_reasons",
+		entityPlural: "hold reasons",
+		summary: "List the reasons a shipment can be put on hold, and what each one " +
+			"blocks — dispatch, delivery, billing. Call this before place_shipment_hold: " +
+			"the reason decides the hold's behaviour, so it has to be one this " +
+			"organization actually configured rather than one you describe.",
+		resource: permission.ResourceHoldReason,
+		config:   querybuilder.GetFieldConfiguration((*holdreason.HoldReason)(nil)),
+		fields: []listField{
+			{
+				Name:   "type",
+				Kind:   filterEnum,
+				Values: []string{"OperationalHold", "ComplianceHold", "CustomerHold", "FinanceHold"},
+			},
+			{Name: "code", Kind: filterText, Sortable: true},
+			{Name: "label", Kind: filterText, Sortable: true},
+			{
+				Name: "active",
+				Kind: filterBool,
+				Note: "only an active reason can be used on a new hold",
+			},
+			{Name: "defaultBlocksDispatch", Kind: filterBool},
+			{Name: "defaultBlocksBilling", Kind: filterBool},
+		},
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+			result, err := repo.List(ctx, &repositories.ListHoldReasonRequest{Filter: opts})
+			if err != nil {
+				return nil, err
+			}
+
+			return listRows(result.Items, func(item *holdreason.HoldReason) any {
+				return holdReasonRow{
+					ID:             item.ID.String(),
+					Code:           item.Code,
+					Label:          item.Label,
+					Type:           string(item.Type),
+					Description:    item.Description,
+					Severity:       string(item.DefaultSeverity),
+					BlocksDispatch: item.DefaultBlocksDispatch,
+					BlocksDelivery: item.DefaultBlocksDelivery,
+					BlocksBilling:  item.DefaultBlocksBilling,
 				}
 			}), nil
 		},

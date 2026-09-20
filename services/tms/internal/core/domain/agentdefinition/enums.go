@@ -146,7 +146,11 @@ func (t Template) StarterTools() []string {
 			"list_tractors",
 			"list_trailers",
 			"list_expiring_credentials",
+			"list_hold_reasons",
 			"assign_move",
+			"add_shipment_comment",
+			"place_shipment_hold",
+			"release_shipment_hold",
 		}
 	case TemplateBillingAssistant:
 		return []string{
@@ -160,6 +164,8 @@ func (t Template) StarterTools() []string {
 			"request_missing_docs",
 			"flag_for_manual_review",
 			"transition_item_to_in_review",
+			"list_accessorial_charges",
+			"add_shipment_comment",
 		}
 	case TemplateComplianceAssistant:
 		return []string{
@@ -175,7 +181,14 @@ func (t Template) StarterTools() []string {
 			"flag_for_manual_review",
 		}
 	case TemplateCustomerAssistant:
-		return []string{"get_shipment", "search_shipments", "list_shipments", "list_customers"}
+		return []string{
+			"get_shipment",
+			"search_shipments",
+			"list_shipments",
+			"list_customers",
+			"list_invoices",
+			"add_shipment_comment",
+		}
 	case TemplateGeneralAssistant:
 		return nil
 	case TemplateBillingException:

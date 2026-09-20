@@ -174,3 +174,45 @@ func TestBuildSystemPrompt_ReportModeAsksForASummary(t *testing.T) {
 	assert.Contains(t, prompt, "## Output")
 	assert.Contains(t, prompt, "summary")
 }
+
+/*
+The rules that stop the failures we actually saw.
+
+The preamble covers what the agent may not do. None of it covers how to use a
+tool well, and every production failure so far has been that: a search that
+matched nothing reported as "there are no driver records in the system", a
+question answered from the model's own knowledge instead of a lookup, an id
+guessed rather than resolved. These are cheap to state and they matter most to
+the weakest model, which is the one most likely to fill a gap with a guess.
+*/
+func TestSystemPrompt_TellsTheAgentHowToReadAnEmptyResult(t *testing.T) {
+	t.Parallel()
+
+	prompt := definitionWithInstructions("Help.").
+		BuildSystemPrompt(agentdefinition.RuntimeContext{})
+
+	assert.Contains(t, prompt, "matched nothing")
+	assert.Contains(t, prompt, "does not mean",
+		"an empty page is not evidence the organization holds no such records")
+}
+
+func TestSystemPrompt_TellsTheAgentToLookUpRatherThanRecall(t *testing.T) {
+	t.Parallel()
+
+	prompt := definitionWithInstructions("Help.").
+		BuildSystemPrompt(agentdefinition.RuntimeContext{})
+
+	assert.Contains(t, prompt, "Look it up")
+	assert.Contains(t, prompt, "identifier")
+}
+
+// A rejected argument that names the ones that would work is a correction, not
+// a dead end — but only if the agent is told to read it that way.
+func TestSystemPrompt_TellsTheAgentToActOnARejectedArgument(t *testing.T) {
+	t.Parallel()
+
+	prompt := definitionWithInstructions("Help.").
+		BuildSystemPrompt(agentdefinition.RuntimeContext{})
+
+	assert.Contains(t, prompt, "names the ones that work")
+}

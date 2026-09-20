@@ -474,6 +474,7 @@ func listCatalogSpecs() []listSpec {
 		specOf(newListAccessorialChargesTool(nil)),
 		specOf(newListDocumentTypesTool(nil)),
 		specOf(newListLocationCategoriesTool(nil)),
+		specOf(newListHoldReasonsTool(nil)),
 	}
 }
 
