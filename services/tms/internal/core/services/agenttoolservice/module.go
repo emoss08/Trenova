@@ -4,7 +4,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
-	"github.com/emoss08/trenova/internal/core/services/workerptoservice"
 	"go.uber.org/fx"
 )
 
@@ -31,10 +30,15 @@ var Module = fx.Module("agent-tool-service",
 	),
 )
 
-// The fleet and time-off services are concrete structs rather than ports, so
-// the tools take the narrow interface they actually use and the widening
+// The tools take the narrow interface they actually use, and the widening
 // happens here. That is also what lets each tool be tested without standing up
 // the audit log, the realtime bus and the PTO ledger behind it.
+//
+// What is asked for here has to be what the graph holds, which is not the same
+// question as what the package exports. The fleet services are provided as
+// concrete structs; workerptoservice is provided through fx.As, so only
+// services.WorkerPTOService is in the graph and asking for the struct builds
+// fine and fails at startup.
 
 func provideUpdateTractorStatusTool(tractors *tractorservice.Service) services.AgentTool {
 	return newUpdateTractorStatusTool(tractors)
@@ -44,14 +48,14 @@ func provideUpdateTrailerStatusTool(trailers *trailerservice.Service) services.A
 	return newUpdateTrailerStatusTool(trailers)
 }
 
-func provideApproveWorkerPTOTool(pto *workerptoservice.Service) services.AgentTool {
+func provideApproveWorkerPTOTool(pto services.WorkerPTOService) services.AgentTool {
 	return newApproveWorkerPTOTool(pto)
 }
 
-func provideRejectWorkerPTOTool(pto *workerptoservice.Service) services.AgentTool {
+func provideRejectWorkerPTOTool(pto services.WorkerPTOService) services.AgentTool {
 	return newRejectWorkerPTOTool(pto)
 }
 
-func provideCancelWorkerPTOTool(pto *workerptoservice.Service) services.AgentTool {
+func provideCancelWorkerPTOTool(pto services.WorkerPTOService) services.AgentTool {
 	return newCancelWorkerPTOTool(pto)
 }

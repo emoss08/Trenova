@@ -3,7 +3,6 @@ package agentquerytoolservice
 import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
-	"github.com/emoss08/trenova/internal/core/services/workerptoservice"
 	"go.uber.org/fx"
 )
 
@@ -64,6 +63,6 @@ func provideGetReportRunTool(reports *reporting.Service) services.AgentQueryTool
 	return newGetReportRunTool(reports)
 }
 
-func provideListTimeOffTool(pto *workerptoservice.Service) services.AgentQueryTool {
+func provideListTimeOffTool(pto services.WorkerPTOService) services.AgentQueryTool {
 	return newListTimeOffTool(pto)
 }
