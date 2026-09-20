@@ -22,7 +22,7 @@ go generate ./internal/infrastructure/database/seeder/...          # pkg/seedhel
 go generate ./internal/api/graphql/projection/...                  # internal/api/graphql/projection/specs_gen.go
 go generate ./internal/infrastructure/database/reportcatalog/...   # pkg/reportcatalog/catalog_gen.go
 
-go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency
+go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency --outputTypes json,yaml
 go run ./cmd/openapi-postprocess                                   # then: git diff --quiet -- docs
 ```
 

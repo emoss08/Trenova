@@ -275,7 +275,7 @@ jobs:
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency
+          go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency --outputTypes json,yaml
           go run ./cmd/openapi-postprocess
           if ! git diff --quiet -- docs; then
             echo "::error::OpenAPI spec is stale - run 'task docs-generate' and commit"
