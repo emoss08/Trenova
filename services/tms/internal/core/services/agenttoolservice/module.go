@@ -15,6 +15,7 @@ var Module = fx.Module("agent-tool-service",
 		fx.Annotate(newPlaceShipmentHoldTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(newReleaseShipmentHoldTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(newCancelShipmentTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(newRecordStopActualTool, fx.ResultTags(`group:"agent_tools"`)),
 		NewRegistry,
 	),
 )
