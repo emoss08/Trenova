@@ -48,7 +48,17 @@ func fromToolCallRecords(records []conversation.ToolCallRecord) []serviceports.T
 func toAdapterMessages(history []conversation.Message) []serviceports.Message {
 	messages := make([]serviceports.Message, 0, len(history)+1)
 
-	for _, msg := range history {
+	// The history is the newest N messages of the thread, and that cut lands
+	// wherever it lands — including between an assistant's tool calls and the
+	// results that answer them. Every provider rejects a conversation that
+	// opens on an orphaned tool result or on tool calls with nothing answering
+	// them, so replay starts at the first whole turn.
+	start := 0
+	for start < len(history) && history[start].Role != conversation.RoleUser {
+		start++
+	}
+
+	for _, msg := range history[start:] {
 		switch msg.Role {
 		case conversation.RoleAssistant:
 			if msg.Refused {

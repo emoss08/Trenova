@@ -17,7 +17,11 @@ import { AgentTile, type AgentTileSize } from "@/components/agent-identity/agent
 import type { AssistantMessage, AssistantPageContext, AssistantProposal } from "@/types/assistant";
 import { CheckIcon, CopyIcon, MapPinIcon, ShieldAlertIcon } from "lucide-react";
 import { useCallback, useState, type ReactNode } from "react";
+import { askRequestsFrom } from "./ask-requests";
+import { ChoicePrompt } from "./choice-prompt";
 import { ProposalCard } from "./proposal-card";
+import { ReportRunCard } from "./report-run-card";
+import { reportRunsFrom } from "./report-runs";
 import type { ThreadEntry } from "./thread-view";
 import { ToolTimeline, type ToolStep } from "./tool-activity";
 
@@ -187,13 +191,23 @@ export function AssistantEntry({
   entry,
   proposals,
   threadId,
+  latestUserSequence,
+  onAnswer,
 }: {
   entry: Extract<ThreadEntry, { kind: "assistant" }>;
   proposals: AssistantProposal[];
+  /** Where the newest user turn sits, so a settled question stops asking. */
+  latestUserSequence: number;
+  onAnswer: (value: string) => void;
   threadId: string;
 }) {
   const t = useT();
   const { message, tools } = entry;
+
+  // A report run outlives the turn that started it, so the thread follows it
+  // rather than leaving the reader to ask again for the outcome.
+  const reportRuns = reportRunsFrom(tools);
+  const asks = askRequestsFrom(tools);
 
   const steps: ToolStep[] = tools.map((exchange) => ({
     id: exchange.call.id,
@@ -236,6 +250,17 @@ export function AssistantEntry({
     >
       {steps.length > 0 && <ToolTimeline steps={steps} />}
       {message.content !== "" && <AssistantProse content={message.content} />}
+      {reportRuns.map((run) => (
+        <ReportRunCard key={run.runId} run={run} />
+      ))}
+      {asks.map((ask) => (
+        <ChoicePrompt
+          key={ask.callId}
+          request={ask}
+          answered={latestUserSequence > ask.sequence}
+          onAnswer={onAnswer}
+        />
+      ))}
       {proposals.map((proposal) => (
         <ProposalCard key={proposal.id} proposal={proposal} threadId={threadId} />
       ))}

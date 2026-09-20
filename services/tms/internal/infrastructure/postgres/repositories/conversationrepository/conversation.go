@@ -130,6 +130,7 @@ func (r *repository) UpdateThread(
 		}).
 		Set(cols.Title.Set(), thread.Title).
 		Set(cols.Status.Set(), thread.Status).
+		Set(cols.PreferredProviderID.Set(), thread.PreferredProviderID).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 		Set(cols.Version.Set(), thread.Version).
 		Exec(ctx)

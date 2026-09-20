@@ -26,8 +26,12 @@ type GetAgentProposalByIDRequest struct {
 }
 
 type UpdateAgentProposalStatusRequest struct {
-	ID         pulid.ID              `json:"id"`
-	Status     agent.ProposalStatus  `json:"status"`
+	ID     pulid.ID             `json:"id"`
+	Status agent.ProposalStatus `json:"status"`
+	// FromStatus, when set, makes the update conditional: the row changes only
+	// if it still holds this status, and a race that lost is reported as a
+	// conflict rather than silently overwriting the winner.
+	FromStatus agent.ProposalStatus  `json:"-"`
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 

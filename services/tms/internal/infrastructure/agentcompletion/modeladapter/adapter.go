@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 )
@@ -47,6 +48,12 @@ type Response struct {
 	// Refused reports that the model declined the request outright, which is a
 	// business outcome rather than a transport failure and must not be retried.
 	Refused bool
+	// Truncated reports that the model stopped because it hit its output limit
+	// rather than because it was finished. Every protocol names this
+	// differently — finish_reason "length", stop_reason "max_tokens", an
+	// incomplete response, done_reason "length" — and none of them used to be
+	// read, so a reply cut off by the limit looked exactly like a finished one.
+	Truncated bool
 }
 
 // Adapter speaks one wire protocol.
@@ -62,7 +69,45 @@ type Call struct {
 	Provider *aiprovider.Provider
 	APIKey   string
 	Client   *http.Client
-	Request  *Request
+	// StreamClient serves streaming calls, which need no whole-request
+	// deadline: http.Client.Timeout spans reading the body, so a client that
+	// carries one severs a healthy stream partway through a long answer. A
+	// stalled stream is caught by an idle guard instead. Falls back to Client
+	// when unset.
+	StreamClient *http.Client
+	// StreamIdle is how long a stream may go silent before it is abandoned.
+	// Measured between reads, so a slow model is not a stalled one.
+	StreamIdle time.Duration
+	Request    *Request
+}
+
+// defaultStreamIdle is the silence a stream is allowed when nothing configures
+// one.
+//
+// Five minutes, not ninety seconds. A model that streams its reasoning resets
+// this on every thinking delta, but one that reasons out of sight sends nothing
+// at all until its first answer token, and a hard question on a heavy model can
+// hold that silence for minutes. This is a dead-connection check, nothing more:
+// waiting five minutes on a socket that has actually died is a far smaller cost
+// than severing a live answer that was about to arrive.
+const defaultStreamIdle = 5 * time.Minute
+
+// streamHTTPClient is the client a streaming call should use.
+func (c *Call) streamHTTPClient() *http.Client {
+	if c.StreamClient != nil {
+		return c.StreamClient
+	}
+
+	return c.Client
+}
+
+// streamIdleTimeout is the silence this call tolerates.
+func (c *Call) streamIdleTimeout() time.Duration {
+	if c.StreamIdle > 0 {
+		return c.StreamIdle
+	}
+
+	return defaultStreamIdle
 }
 
 // Registry resolves an adapter for a provider's protocol.

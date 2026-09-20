@@ -144,6 +144,7 @@ describe("reduceTurn", () => {
             organizationId: "org",
             userId: "u",
             agentDefinitionId: "agdef",
+            preferredProviderId: "",
             title: "t",
             status: "Active",
             lastMessageAt: 0,

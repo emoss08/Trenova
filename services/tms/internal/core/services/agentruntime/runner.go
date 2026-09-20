@@ -8,6 +8,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -73,8 +74,9 @@ func (s *Service) Run(
 		}},
 	}
 
-	tools := s.newToolSet(definition, req.Input)
+	tools := s.newToolSet(definition, req.Input, req.Unattended)
 	runtimeContext.ToolsDisclosed = tools.disclosed
+	repeats := newRepeatGuard()
 
 	system := definition.BuildSystemPrompt(runtimeContext)
 	messages := toAdapterMessages(req.History)
@@ -96,10 +98,14 @@ func (s *Service) Run(
 			System:              system,
 			Messages:            messages,
 			Tools:               tools.specs,
-			PreferredProviderID: definition.PreferredProviderID,
+			PreferredProviderID: preferredProvider(req, definition),
 		}, sink)
 		if err != nil {
-			return nil, err
+			// What ran travels with the error. The caller decides whether to
+			// keep it, but it cannot keep what it was never handed: a model that
+			// died after a tool wrote something used to take the record of that
+			// write with it.
+			return result, err
 		}
 
 		result.Model = completion.ModelIdentifier
@@ -143,6 +149,34 @@ func (s *Service) Run(
 				},
 			})
 
+			// Arguments that did not parse are not arguments. The tool used to
+			// run on the empty map that stood in for them, and a list tool given
+			// no filters lists everything.
+			if call.ArgumentsError != "" {
+				outcome := failedOutcome(
+					"Tool %q was not run: its arguments were not valid JSON (%s). "+
+						"This usually means the reply hit its output limit partway through "+
+						"the call. Send it again with complete arguments.",
+					call.Name, call.ArgumentsError,
+				)
+				s.recordToolResult(result, &messages, call, outcome, emit)
+				continue
+			}
+
+			// The budget is per call, not per batch. A model that asks for ten
+			// tools in one completion does not get ten when it was allowed one;
+			// the calls past the line are answered, so the model knows, but not
+			// run.
+			if result.ToolCallsUsed >= budget {
+				outcome := failedOutcome(
+					"Tool %q was not run: this turn's tool budget of %d is spent. "+
+						"Answer with what you have.",
+					call.Name, budget,
+				)
+				s.recordToolResult(result, &messages, call, outcome, emit)
+				continue
+			}
+
 			if call.Name == findToolsName {
 				outcome := toolOutcome{content: s.resolveFind(tools, call.Arguments)}
 				result.ToolCallsUsed++
@@ -150,7 +184,24 @@ func (s *Service) Run(
 				continue
 			}
 
+			if call.Name == askUserName {
+				outcome := toolOutcome{content: resolveAsk(call.Arguments)}
+				result.ToolCallsUsed++
+				s.recordToolResult(result, &messages, call, outcome, emit)
+				continue
+			}
+
+			if previous, repeated := repeats.seen(call); repeated {
+				outcome := failedOutcome("%s", repeatRefusal(call.Name, previous))
+				result.ToolCallsUsed++
+				s.recordToolResult(result, &messages, call, outcome, emit)
+				continue
+			}
+
 			outcome := s.dispatch(ctx, req, call, completion.Text)
+			if outcome.failed {
+				repeats.record(call, outcome.content)
+			}
 			result.ToolCallsUsed++
 			s.recordToolResult(result, &messages, call, outcome, emit)
 		}
@@ -258,10 +309,20 @@ func (s *Service) finish(
 		return result
 	}
 
-	result.Reply = completion.Text
+	reply := completion.Text
+	if completion.Truncated {
+		// Said in the reply rather than left to an error banner, because this
+		// is saved and read back later: somebody opening the thread tomorrow
+		// has to be able to tell a finished answer from one that stopped in the
+		// middle of a sentence.
+		reply += truncationNotice
+		result.Truncated = true
+	}
+
+	result.Reply = reply
 	result.Messages = append(result.Messages, conversation.Message{
 		Role:         conversation.RoleAssistant,
-		Content:      completion.Text,
+		Content:      reply,
 		Model:        completion.ModelIdentifier,
 		ProviderID:   completion.ProviderID,
 		InputTokens:  completion.InputTokens,
@@ -270,6 +331,16 @@ func (s *Service) finish(
 
 	return result
 }
+
+// truncationNotice marks a reply the provider stopped partway through.
+//
+// A model that dies mid-sentence used to take its whole answer with it: the
+// reader watched a correct list of drivers appear and then be replaced by "the
+// assistant could not finish this reply". Keeping the text is most of the fix;
+// saying where it stopped is the rest, because an answer that ends mid-clause
+// is one somebody could otherwise act on as though it were complete.
+const truncationNotice = "\n\n_This reply was cut off before it finished. " +
+	"Ask again to get the rest._"
 
 func (s *Service) ToolSummaries(
 	definition *agentdefinition.Definition,
@@ -299,4 +370,23 @@ func (s *Service) ToolSummaries(
 	}
 
 	return summaries
+}
+
+// preferredProvider resolves whose choice of model wins.
+//
+// The reader's beats the administrator's default: the definition pins a
+// provider for everyone using that agent, while a person picking in the
+// composer is choosing for their own conversation. Neither can reach a provider
+// the organization has not enabled for this task — the router filters its
+// candidates before any preference is applied — so this decides ordering, never
+// access.
+func preferredProvider(
+	req *serviceports.RunRequest,
+	definition *agentdefinition.Definition,
+) pulid.ID {
+	if !req.PreferredProviderID.IsNil() {
+		return req.PreferredProviderID
+	}
+
+	return definition.PreferredProviderID
 }

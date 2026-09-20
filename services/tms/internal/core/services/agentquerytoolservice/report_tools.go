@@ -27,9 +27,14 @@ type reportRunner interface {
 }
 
 type reportParameterRow struct {
-	Name          string   `json:"name"`
-	Label         string   `json:"label,omitempty"`
-	Required      bool     `json:"required"`
+	Name     string `json:"name"`
+	Label    string `json:"label,omitempty"`
+	Required bool   `json:"required"`
+	// Shape is what to send, in words: "a JSON array of enum", "a single int".
+	// Without it the model is guessing at the container, and the guesses are bad
+	// ones — {"item": [...]} went out five times against a report that takes a
+	// plain array, with a different explanation narrated each time.
+	Shape         string   `json:"shape"`
 	AllowedValues []string `json:"allowedValues,omitempty"`
 }
 
@@ -137,6 +142,7 @@ func toCatalogRow(entry *canned.Entry) reportCatalogRow {
 			Name:          parameter.Name,
 			Label:         parameter.Label,
 			Required:      parameter.Required,
+			Shape:         describeParameterShape(parameter),
 			AllowedValues: parameter.AllowedValues,
 		})
 	}
@@ -175,10 +181,15 @@ func newRunReportTool(
 func (t *runReportTool) Name() string { return "run_report" }
 
 func (t *runReportTool) Description() string {
-	return "Start one of the reports from list_reports. Reports always run in the " +
-		"background — this returns a run id immediately and no rows. Tell the person " +
-		"the report has started, then use get_report_run to check on it. Never " +
-		"describe figures from a report you have only started."
+	return "Start one of the reports from list_reports. Take every parameter you can " +
+		"from what the person already said — a request naming a window, a date range " +
+		"or a customer has supplied it — and ask_user for the rest, offering the " +
+		"allowed values list_reports gave rather than choices you made up. Reports " +
+		"always run in the background — this returns a run id immediately and no " +
+		"rows. Say that it has started and stop there: the conversation tracks the " +
+		"run itself and shows the person its progress, its row count and a download " +
+		"button as soon as it finishes, so there is nothing to poll and nowhere to " +
+		"send them. Never describe figures from a report you have only started."
 }
 
 func (t *runReportTool) ParamSchema() map[string]any {
@@ -192,7 +203,10 @@ func (t *runReportTool) ParamSchema() map[string]any {
 			"parameters": map[string]any{
 				"type": "object",
 				"description": "The report's parameters, keyed by the names list_reports " +
-					"gave. Supply every parameter it marks required.",
+					"gave, each in the shape it named. A list parameter takes a plain " +
+					"JSON array and nothing else — [\"A\",\"B\"], never " +
+					"{\"item\":[\"A\"]} and never a comma-separated string. Supply " +
+					"every parameter marked required.",
 			},
 			"format": map[string]any{
 				"type":        "string",
@@ -238,7 +252,7 @@ func (t *runReportTool) Query(
 		return nil, err
 	}
 
-	values := optionalObject(params.Params, "parameters")
+	values := normalizeReportParameters(entry, optionalObject(params.Params, "parameters"))
 	if err = requireReportParameters(entry, values); err != nil {
 		return nil, err
 	}
@@ -262,8 +276,10 @@ func (t *runReportTool) Query(
 	status := toRunStatus(run)
 	status.ReportKey = entry.Key
 	status.Note = fmt.Sprintf(
-		"%q has been queued and is not finished. Say that it has started; "+
-			"call get_report_run with runId %s to check on it.",
+		"%q has been queued and is not finished. Tell the person it is running and "+
+			"that the result will appear here with a download button when it is done. "+
+			"Do not call get_report_run to poll it and do not send them to the Reports "+
+			"page; the conversation is already showing run %s.",
 		entry.Name, run.ID.String(),
 	)
 
@@ -304,6 +320,12 @@ func (t *runReportTool) authorizeExport(
 // requireReportParameters answers a missing parameter in the report's own words.
 // The compiler would reject the run anyway, but it would do it in terms of the
 // definition, and a model cannot act on "parameter binding failed".
+//
+// The answer carries each missing parameter's allowed values and says to put
+// them to the person, because the alternative is what shipped: a model inventing
+// "common choices are 7, 14 or 30" from nothing, and a reader retyping one of
+// them. Where the values are constrained these are the real ones, so the
+// question cannot offer a choice the report would then reject.
 func requireReportParameters(entry *canned.Entry, values map[string]any) error {
 	if entry.Definition == nil {
 		return nil
@@ -320,7 +342,7 @@ func requireReportParameters(entry *canned.Entry, values map[string]any) error {
 		if parameter.Default != nil {
 			continue
 		}
-		missing = append(missing, parameter.Name)
+		missing = append(missing, describeMissingParameter(parameter))
 	}
 
 	if len(missing) == 0 {
@@ -328,8 +350,29 @@ func requireReportParameters(entry *canned.Entry, values map[string]any) error {
 	}
 
 	return fmt.Errorf(
-		"%q needs these parameters before it can run: %s",
-		entry.Name, strings.Join(missing, ", "),
+		"%q cannot run yet. It still needs: %s. If the person's request already "+
+			"says what to use, use that. Otherwise call ask_user with the values "+
+			"above as the options — do not invent choices, and do not pick one "+
+			"yourself",
+		entry.Name, strings.Join(missing, "; "),
+	)
+}
+
+// describeMissingParameter names one parameter and what it will accept.
+func describeMissingParameter(parameter report.ParameterDef) string {
+	label := parameter.Label
+	if label == "" {
+		label = parameter.Name
+	}
+
+	shape := describeParameterShape(parameter)
+	if len(parameter.AllowedValues) == 0 {
+		return fmt.Sprintf("%s (%s), %s", parameter.Name, label, shape)
+	}
+
+	return fmt.Sprintf(
+		"%s (%s), %s drawn from: %s",
+		parameter.Name, label, shape, strings.Join(parameter.AllowedValues, ", "),
 	)
 }
 
@@ -344,9 +387,12 @@ func newGetReportRunTool(reports reportRunner) serviceports.AgentQueryTool {
 func (t *getReportRunTool) Name() string { return "get_report_run" }
 
 func (t *getReportRunTool) Description() string {
-	return "Check on a report started by run_report. Returns whether it has finished, " +
-		"how many rows it produced, and why it failed if it did. A run that is still " +
-		"queued or running has no rows yet — say so rather than guessing at figures."
+	return "Check on a report started by run_report, when the person asks a question " +
+		"about the run that its own progress display does not answer. Returns whether " +
+		"it has finished, how many rows it produced, and why it failed if it did. The " +
+		"conversation already shows progress and offers the download, so do not call " +
+		"this on a loop to wait for a result. A run that is still queued or running has " +
+		"no rows yet — say so rather than guessing at figures."
 }
 
 func (t *getReportRunTool) ParamSchema() map[string]any {
@@ -398,12 +444,14 @@ func describeRun(run *report.ReportRun) reportRunStatus {
 	case run.Error != nil && run.Error.Message != "":
 		status.Note = "The report did not finish: " + run.Error.Message
 	case run.Status == report.RunStatusSucceeded:
-		// The artifact is downloaded from Reports, where the link is issued
-		// against the person's own session. A presigned URL handed to a chat
-		// message expires in under a minute and reads as broken by the time
-		// anyone clicks it.
+		// The download is offered in the conversation, by a button that mints
+		// the link when it is clicked. A presigned URL written into a message
+		// expires in under a minute, so it reads as broken by the time anyone
+		// clicks it, and it carries the authority of whoever the model was
+		// acting for rather than of whoever opens the thread later.
 		status.Note = fmt.Sprintf(
-			"The report finished with %d rows and is ready to download from Reports.",
+			"The report finished with %d rows. It is already shown in this conversation "+
+				"with a download button, so do not offer a link or direct them elsewhere.",
 			run.RowCount,
 		)
 		if run.Truncated {

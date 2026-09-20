@@ -10,6 +10,7 @@ package agentquerytoolservice
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -180,6 +181,16 @@ func optionalInt(params map[string]any, key string, fallback int) int {
 		return value
 	case int64:
 		return int(value)
+	case string:
+		// "30" is 30. Models send numbers as strings often enough that
+		// refusing the string form turned a valid request into "needs a
+		// whole number of days", which the model then retried identically.
+		parsed, err := strconv.Atoi(strings.TrimSpace(value))
+		if err != nil {
+			return fallback
+		}
+
+		return parsed
 	default:
 		return fallback
 	}

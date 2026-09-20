@@ -7,7 +7,8 @@ import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
-import type { AssistantPageContext } from "@/types/assistant";
+import type { AssistantPageContext, AssistantProviderOption } from "@/types/assistant";
+import { ModelPicker } from "./model-picker";
 import { ArrowUpIcon, MapPinIcon, SquareIcon, XIcon } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useCallback, useRef, useState } from "react";
@@ -27,6 +28,10 @@ export type ComposerProps = {
   pageContext?: AssistantPageContext | null;
   contextIncluded?: boolean;
   onToggleContext?: () => void;
+  /** The models this organization offers, and the one this thread is set to. */
+  providers?: readonly AssistantProviderOption[];
+  providerId?: string;
+  onPickProvider?: (providerId: string) => void;
   /** Opening questions, shown in the toolbar until one is used or dismissed. */
   suggestions?: Suggestion[];
   onDismissSuggestion?: (prompt: string) => void;
@@ -56,6 +61,9 @@ export function Composer({
   pageContext,
   contextIncluded = true,
   onToggleContext,
+  providers = [],
+  providerId = "",
+  onPickProvider,
   suggestions = [],
   onDismissSuggestion,
   compact = false,
@@ -179,6 +187,15 @@ export function Composer({
                       />
                       <TooltipContent>{t("Ask a different agent")}</TooltipContent>
                     </Tooltip>
+                  )}
+
+                  {onPickProvider && (
+                    <ModelPicker
+                      options={providers}
+                      value={providerId}
+                      onChange={onPickProvider}
+                      disabled={disabled || active}
+                    />
                   )}
 
                   {pageContext && onToggleContext && (

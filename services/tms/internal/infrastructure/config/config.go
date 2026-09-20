@@ -648,6 +648,8 @@ type DocumentIntelligenceConfig struct {
 	OCRTimeout              time.Duration `mapstructure:"ocrTimeout"`
 	EnableAI                bool          `mapstructure:"enableAI"`
 	AITimeout               time.Duration `mapstructure:"aiTimeout"`
+	AIStreamIdleTimeout     time.Duration `mapstructure:"aiStreamIdleTimeout"`
+	AICompletionTimeout     time.Duration `mapstructure:"aiCompletionTimeout"`
 	AIMaxInputChars         int           `mapstructure:"aiMaxInputChars"         validate:"omitempty,min=1000,max=500000"`
 	AIExtractionMaxTokens   int           `mapstructure:"aiExtractionMaxTokens"   validate:"omitempty,min=256,max=32768"`
 	AIMaxRetries            int           `mapstructure:"aiMaxRetries"            validate:"omitempty,min=0,max=10"`
@@ -694,6 +696,37 @@ func (c *DocumentIntelligenceConfig) GetAITimeout() time.Duration {
 	}
 
 	return c.AITimeout
+}
+
+// GetAICompletionTimeout bounds one blocking call to a model.
+//
+// Separate from GetAITimeout, which is sized for a reachability probe: asking
+// whether an endpoint answers is a second or two of work, while asking a model
+// to read a prompt and write an answer is minutes on a loaded or self-hosted
+// one. Sharing the probe's budget made a long answer fail outright on providers
+// that do not stream, which looks to the reader exactly like an outage.
+func (c *DocumentIntelligenceConfig) GetAICompletionTimeout() time.Duration {
+	if c.AICompletionTimeout <= 0 {
+		return 5 * time.Minute
+	}
+
+	return c.AICompletionTimeout
+}
+
+// GetAIStreamIdleTimeout is how long a streaming reply may go silent.
+//
+// A stream cannot use GetAITimeout: that one bounds a whole request, and
+// http.Client applies it to reading the body, so a long answer arriving
+// perfectly well would be severed partway through. What a stream needs bounded
+// is silence, measured between reads, which is long by default because the gap
+// before the first token of a considered answer is ordinary rather than a
+// fault.
+func (c *DocumentIntelligenceConfig) GetAIStreamIdleTimeout() time.Duration {
+	if c.AIStreamIdleTimeout <= 0 {
+		return 5 * time.Minute
+	}
+
+	return c.AIStreamIdleTimeout
 }
 
 func (c *DocumentIntelligenceConfig) GetAIMaxInputChars() int {

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -51,17 +52,22 @@ type Service struct {
 	// provider allowed onto a private network cannot lend that reach to another.
 	clientsMu sync.Mutex
 	clients   map[bool]*http.Client
+	// streamClients are the same, minus the whole-request deadline. Kept apart
+	// rather than shared because a blocking call wants that deadline and a
+	// stream is killed by it.
+	streamClients map[bool]*http.Client
 }
 
 func New(p Params) serviceports.CompletionService {
 	return &Service{
-		logger:     p.Logger.Named("service.completion-router"),
-		ai:         p.Config.GetAIConfig(),
-		cfg:        p.Config.GetDocumentIntelligenceConfig(),
-		repo:       p.Repo,
-		encryption: p.Encryption,
-		adapters:   modeladapter.NewRegistry(),
-		clients:    make(map[bool]*http.Client, 2),
+		logger:        p.Logger.Named("service.completion-router"),
+		ai:            p.Config.GetAIConfig(),
+		cfg:           p.Config.GetDocumentIntelligenceConfig(),
+		repo:          p.Repo,
+		encryption:    p.Encryption,
+		adapters:      modeladapter.NewRegistry(),
+		clients:       make(map[bool]*http.Client, 2),
+		streamClients: make(map[bool]*http.Client, 2),
 	}
 }
 
@@ -326,6 +332,9 @@ func (s *Service) executeWithRetry(
 			zap.Int("attempt", attempt+1),
 			zap.Error(err),
 		)
+		if waitErr := waitBeforeRetry(ctx, attempt); waitErr != nil {
+			return nil, waitErr
+		}
 	}
 
 	return nil, lastErr
@@ -353,7 +362,44 @@ func (s *Service) resolveAPIKey(provider *aiprovider.Provider) (string, error) {
 	return decrypted, nil
 }
 
+// retryDelay is how long to wait before attempt n+1. It doubles from half a
+// second and stops at five, because the errors worth retrying — a 429, a 5xx
+// — are the ones an immediate retry makes worse. Retrying a rate limit at once
+// just spends the next request on the same limit.
+func retryDelay(attempt int) time.Duration {
+	const (
+		base = 500 * time.Millisecond
+		cap  = 5 * time.Second
+	)
+
+	delay := base << attempt
+	if delay > cap || delay <= 0 {
+		return cap
+	}
+
+	return delay
+}
+
+// waitBeforeRetry sleeps out the delay, or returns the context's error the
+// moment it is cancelled: a person who stopped a reply is not kept waiting
+// for a backoff to elapse.
+func waitBeforeRetry(ctx context.Context, attempt int) error {
+	timer := time.NewTimer(retryDelay(attempt))
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
+}
+
 // clientFor returns the shared client matching the provider's egress policy.
+//
+// Its deadline is the completion budget, not the probe budget: this client
+// carries generations, and a model writing a long answer routinely outlasts the
+// time a reachability check is allowed.
 func (s *Service) clientFor(provider *aiprovider.Provider) *http.Client {
 	s.clientsMu.Lock()
 	defer s.clientsMu.Unlock()
@@ -362,18 +408,61 @@ func (s *Service) clientFor(provider *aiprovider.Provider) *http.Client {
 	if client, ok := s.clients[allowPrivate]; ok {
 		return client
 	}
+	if s.clients == nil {
+		s.clients = make(map[bool]*http.Client, 2)
+	}
 
-	policy := httpsafe.Policy{
+	client := httpsafe.NewClientWithPolicy(
+		s.cfg.GetAICompletionTimeout(),
+		s.egressPolicy(allowPrivate),
+	)
+	s.clients[allowPrivate] = client
+
+	return client
+}
+
+// streamClientFor returns the client streaming calls use.
+//
+// It differs from clientFor in one way that matters: no whole-request timeout.
+// http.Client.Timeout spans reading the response body, so on a streamed reply
+// it is a wall-clock budget for the entire answer — the connection is severed
+// mid-sentence however healthy it is and however fast the tokens are arriving.
+// That is what made long answers stop partway through and be reported as cut
+// off. Liveness is enforced between bytes instead, by the idle guard the
+// adapters wrap the body in, so a slow answer is allowed and a silent one is
+// not.
+func (s *Service) streamClientFor(provider *aiprovider.Provider) *http.Client {
+	s.clientsMu.Lock()
+	defer s.clientsMu.Unlock()
+
+	allowPrivate := provider.AllowPrivateNetwork
+	if client, ok := s.streamClients[allowPrivate]; ok {
+		return client
+	}
+	if s.streamClients == nil {
+		s.streamClients = make(map[bool]*http.Client, 2)
+	}
+
+	// A stream's time-to-headers is bounded by the same silence budget as its
+	// body, not by the probe timeout: an endpoint that holds the headers until
+	// it has something to say is slow, not down.
+	policy := s.egressPolicy(allowPrivate)
+	policy.ResponseHeaderTimeout = s.cfg.GetAIStreamIdleTimeout()
+	client := httpsafe.NewStreamingClientWithPolicy(policy)
+	s.streamClients[allowPrivate] = client
+
+	return client
+}
+
+// egressPolicy is the network guard both clients share.
+func (s *Service) egressPolicy(allowPrivate bool) httpsafe.Policy {
+	return httpsafe.Policy{
 		AllowPrivateNetworks: allowPrivate,
 		// A self-hosted model holds the connection open while it generates and
 		// sends nothing until the first token, which on a loaded GPU outlasts the
 		// transport default.
 		ResponseHeaderTimeout: s.cfg.GetAITimeout(),
 	}
-	client := httpsafe.NewClientWithPolicy(s.cfg.GetAITimeout(), policy)
-	s.clients[allowPrivate] = client
-
-	return client
 }
 
 // aiDisabledMessage names the key rather than the symptom.

@@ -212,9 +212,30 @@ export const assistantThreadSchema = z.object({
   title: z.string().optional().default(""),
   status: threadStatusSchema,
   lastMessageAt: z.number().default(0),
+  /** The model this conversation is set to. Empty means the org's own order. */
+  preferredProviderId: optionalIdSchema,
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
+});
+
+/**
+ * One entry in the model picker.
+ *
+ * A provider record also holds the endpoint and an encrypted key; neither is
+ * here, because this list is readable by anyone who may use the assistant
+ * while the records themselves are not.
+ */
+export const assistantProviderOptionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  kind: z.string(),
+  model: z.string(),
+  trusted: z.boolean().default(false),
+});
+
+export const assistantProviderListSchema = z.object({
+  results: z.array(assistantProviderOptionSchema).default([]),
 });
 
 export const assistantThreadListSchema = z.object({
@@ -372,6 +393,7 @@ export type ToolCatalogEntry = z.infer<typeof toolCatalogEntrySchema>;
 export type AgentEventDescriptor = z.infer<typeof agentEventDescriptorSchema>;
 export type SaveAgentDefinitionRequest = z.infer<typeof saveAgentDefinitionRequestSchema>;
 export type AssistantThread = z.infer<typeof assistantThreadSchema>;
+export type AssistantProviderOption = z.infer<typeof assistantProviderOptionSchema>;
 export type AssistantMessage = z.infer<typeof assistantMessageSchema>;
 export type AssistantPageContext = z.infer<typeof pageContextSchema>;
 export type SendMessageResult = z.infer<typeof sendMessageResultSchema>;

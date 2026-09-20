@@ -29,10 +29,20 @@ type RunRequest struct {
 	// RunID is set for a background run so auto-executing tools can tie what
 	// they do to it. A chat turn has no run until proposals are recorded.
 	RunID pulid.ID
+	// Unattended says nobody is reading as this runs — an event-driven or
+	// scheduled agent. Tools that put a question to a person are withheld,
+	// since a question nobody will answer only ends the run on it.
+	Unattended bool
 	// History is the conversation so far, oldest first, excluding Input.
 	History []conversation.Message
 	Input   string
 	Emit    AssistantStreamEmitter
+	// PreferredProviderID is the reader's own choice for this turn, which wins
+	// over the definition's. An administrator pins a default for everyone on
+	// the agent; a person picking a model in the composer is overriding that
+	// default for their own conversation, so the more specific choice applies.
+	// Empty falls back to the definition, and then to priority order.
+	PreferredProviderID pulid.ID
 }
 
 type RunResult struct {
@@ -47,6 +57,9 @@ type RunResult struct {
 	ProviderID    pulid.ID
 	ToolCallsUsed int
 	Exhausted     bool
+	// Truncated reports that the provider stopped partway through the reply.
+	// The turn still counts as finished and Reply holds what arrived.
+	Truncated bool
 }
 
 type AgentRuntime interface {

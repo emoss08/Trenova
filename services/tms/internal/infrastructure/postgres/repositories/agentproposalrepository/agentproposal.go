@@ -254,8 +254,13 @@ func (r *repository) UpdateStatus(
 		NewUpdate().
 		Model(entity).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
+			scoped := buncolgen.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
 				Where(cols.ID.Eq(), req.ID)
+			if req.FromStatus != "" {
+				scoped = scoped.Where(cols.Status.Eq(), req.FromStatus)
+			}
+
+			return scoped
 		}).
 		Set(cols.Status.Set(), req.Status).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).

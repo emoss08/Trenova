@@ -4,7 +4,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"net/http"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -48,6 +47,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/assistant")
 	resource := permission.ResourceAssistant.String()
 
+	// Anyone who may use the assistant may see which models they can pick; the
+	// response is a projection, so this does not widen access to the provider
+	// records themselves.
+	api.GET("/providers/", h.pm.RequirePermission(resource, permission.OpRead), h.listProviders)
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
 	api.POST("/threads/", h.pm.RequirePermission(resource, permission.OpCreate), h.startThread)
 	api.GET("/threads/:threadID/", h.pm.RequirePermission(resource, permission.OpRead), h.getThread)
@@ -254,6 +257,11 @@ type pageContextRequest struct {
 type sendMessageRequest struct {
 	Content string              `json:"content"`
 	Context *pageContextRequest `json:"context"`
+	// ProviderID is the model the person picked in the composer. Empty leaves
+	// the choice to the organization's priority order. It is resolved against
+	// the providers this organization has assigned to the assistant before it
+	// is used or stored, so an unknown id is dropped rather than trusted.
+	ProviderID pulid.ID `json:"providerId"`
 }
 
 func (r *sendMessageRequest) page() *agent.PageContext {
@@ -286,10 +294,11 @@ func (h *Handler) sendMessage(c *gin.Context) {
 
 	actor := requestActorFromAuthContext(authCtx)
 	result, err := h.service.SendMessage(c.Request.Context(), &serviceports.SendMessageRequest{
-		ThreadID:   threadID,
-		Content:    body.Content,
-		Page:       body.page(),
-		TenantInfo: tenantFromAuthContext(authCtx),
+		ThreadID:            threadID,
+		Content:             body.Content,
+		Page:                body.page(),
+		TenantInfo:          tenantFromAuthContext(authCtx),
+		PreferredProviderID: body.ProviderID,
 	}, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -321,35 +330,22 @@ func (h *Handler) sendMessageStream(c *gin.Context) {
 		return
 	}
 
-	flusher, ok := c.Writer.(http.Flusher)
-	if !ok {
+	stream, err := helpers.OpenEventStream(c, helpers.EventStreamOptions{})
+	if err != nil {
 		h.eh.HandleError(c, errortypes.NewBusinessError("Streaming is not supported"))
 		return
 	}
+	defer stream.Close()
 
-	c.Writer.Header().Set("Content-Type", "text/event-stream")
-	c.Writer.Header().Set("Cache-Control", "no-cache")
-	c.Writer.Header().Set("Connection", "keep-alive")
-	c.Writer.Header().Set("X-Accel-Buffering", "no")
-	c.Writer.WriteHeader(http.StatusOK)
-	flusher.Flush()
-
-	emit := func(event serviceports.StreamEvent) {
-		data, marshalErr := sonic.Marshal(event.Data)
-		if marshalErr != nil {
-			return
-		}
-		_, _ = c.Writer.WriteString("event: " + event.Event + "\n")
-		_, _ = c.Writer.WriteString("data: " + string(data) + "\n\n")
-		flusher.Flush()
-	}
+	emit := func(event serviceports.StreamEvent) { stream.Emit(event.Event, event.Data) }
 
 	actor := requestActorFromAuthContext(authCtx)
 	result, err := h.service.SendMessageStream(c.Request.Context(), &serviceports.SendMessageRequest{
-		ThreadID:   threadID,
-		Content:    body.Content,
-		Page:       body.page(),
-		TenantInfo: tenantFromAuthContext(authCtx),
+		ThreadID:            threadID,
+		Content:             body.Content,
+		Page:                body.page(),
+		TenantInfo:          tenantFromAuthContext(authCtx),
+		PreferredProviderID: body.ProviderID,
 	}, &actor, emit)
 	if err != nil {
 		emit(serviceports.StreamEvent{
@@ -373,4 +369,17 @@ func (h *Handler) streamErrorMessage(err error) string {
 	h.logger.Error("assistant stream failed", zap.Error(err))
 
 	return "The assistant could not finish this reply. Try again in a moment."
+}
+
+func (h *Handler) listProviders(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	actor := requestActorFromAuthContext(authCtx)
+
+	options, err := h.service.SelectableProviders(c.Request.Context(), actor)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": options})
 }

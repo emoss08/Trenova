@@ -39,6 +39,7 @@ const TOOL_TITLES: Record<string, string> = {
   list_accessorial_charges: "List accessorial charges",
   list_document_types: "List document types",
   list_location_categories: "List location categories",
+  ask_user: "Ask you to choose",
   find_tools: "Look for a tool",
   list_reports: "Browse reports",
   run_report: "Start report",
@@ -194,7 +195,12 @@ export type ParsedToolResult =
 
 const FENCE_OPEN = "<untrusted_data>";
 const FENCE_CLOSE = "</untrusted_data>";
-const TRUNCATION_MARK = "…(truncated)";
+// What the server appends when it cuts a result short (agentruntime/fence.go).
+// Matched on its opening rather than in full: the notice is a paragraph of
+// instruction to the model and will be reworded, while the bracketed opening is
+// what identifies it. The older "…(truncated)" marker is still recognised so a
+// thread saved before the notice changed still reads correctly.
+const TRUNCATION_MARKS = ["[This result was cut off here:", "…(truncated)"];
 const FAILURE_PREFIX = /^Tool "[^"]*" failed: /u;
 
 /**
@@ -205,6 +211,18 @@ const FAILURE_PREFIX = /^Tool "[^"]*" failed: /u;
  * when they are not seeing all of it; JSON that was cut short is shown as text
  * rather than failing to parse.
  */
+/** Where the truncation notice begins, or -1 when the result is whole. */
+function truncationStart(body: string): number {
+  for (const mark of TRUNCATION_MARKS) {
+    const at = body.lastIndexOf(mark);
+    if (at !== -1) {
+      return at;
+    }
+  }
+
+  return -1;
+}
+
 export function parseToolResult(content: string): ParsedToolResult {
   const failure = FAILURE_PREFIX.exec(content);
   if (failure) {
@@ -218,9 +236,10 @@ export function parseToolResult(content: string): ParsedToolResult {
   }
 
   let body = content.slice(open + FENCE_OPEN.length, close).trim();
-  const truncated = body.endsWith(TRUNCATION_MARK);
+  const cut = truncationStart(body);
+  const truncated = cut !== -1;
   if (truncated) {
-    body = body.slice(0, -TRUNCATION_MARK.length).trim();
+    body = body.slice(0, cut).trim();
   }
 
   if (!truncated) {

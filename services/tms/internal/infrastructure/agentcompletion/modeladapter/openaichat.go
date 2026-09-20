@@ -120,7 +120,7 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 		return nil, err
 	}
 
-	text, toolCalls, refused := firstChatResult(&envelope)
+	text, toolCalls, refused, truncated := firstChatResult(&envelope)
 
 	return &Response{
 		Text:            text,
@@ -129,6 +129,7 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 		InputTokens:     envelope.Usage.PromptTokens,
 		OutputTokens:    envelope.Usage.CompletionTokens,
 		Refused:         refused,
+		Truncated:       truncated,
 	}, nil
 }
 
@@ -177,7 +178,7 @@ func (a openAIChatAdapter) Stream(
 
 	stream, err := postStream(
 		ctx,
-		call.Client,
+		call,
 		call.Provider.ResolvedBaseURL()+"/chat/completions",
 		map[string]string{"Authorization": bearer(call.APIKey)},
 		body,
@@ -188,12 +189,19 @@ func (a openAIChatAdapter) Stream(
 	defer func() { _ = stream.Close() }()
 
 	var (
-		text    strings.Builder
-		model   string
-		usage   chatUsage
-		refused bool
-		buffers = map[int]*chatToolCallBuffer{}
-		order   []int
+		text      strings.Builder
+		model     string
+		usage     chatUsage
+		refused   bool
+		truncated bool
+		// Buffers are keyed by index, which is the protocol's own key for a
+		// call's fragments — but a fragment carrying a different id at an
+		// index already in use is a new call, not a continuation. Some
+		// providers put every call at index 0 and tell them apart by id alone,
+		// and keyed on index alone they merged into one mangled buffer.
+		buffers = map[string]*chatToolCallBuffer{}
+		active  = map[int]string{}
+		order   []string
 	)
 
 	err = readSSE(stream, func(_, data string) error {
@@ -213,20 +221,25 @@ func (a openAIChatAdapter) Stream(
 
 		for idx := range chunk.Choices {
 			choice := &chunk.Choices[idx]
-			if choice.FinishReason == "content_filter" {
+			switch choice.FinishReason {
+			case "content_filter":
 				refused = true
+			case "length":
+				truncated = true
 			}
 			if choice.Delta.Content != "" {
 				text.WriteString(choice.Delta.Content)
 				sink(choice.Delta.Content)
 			}
 			for _, fragment := range choice.Delta.ToolCalls {
-				buffer, ok := buffers[fragment.Index]
-				if !ok {
-					buffer = &chatToolCallBuffer{}
-					buffers[fragment.Index] = buffer
-					order = append(order, fragment.Index)
+				key, ok := active[fragment.Index]
+				if !ok || (fragment.ID != "" && buffers[key].id != "" && buffers[key].id != fragment.ID) {
+					key = fmt.Sprintf("%d/%s", fragment.Index, fragment.ID)
+					active[fragment.Index] = key
+					buffers[key] = &chatToolCallBuffer{}
+					order = append(order, key)
 				}
+				buffer := buffers[key]
 				buffer.id = stringutils.FirstNonEmpty(buffer.id, fragment.ID)
 				buffer.name = stringutils.FirstNonEmpty(buffer.name, fragment.Function.Name)
 				buffer.arguments.WriteString(fragment.Function.Arguments)
@@ -240,12 +253,14 @@ func (a openAIChatAdapter) Stream(
 	}
 
 	toolCalls := make([]ToolCall, 0, len(order))
-	for _, index := range order {
-		buffer := buffers[index]
+	for position, key := range order {
+		buffer := buffers[key]
+		arguments, argumentsErr := decodeArguments(buffer.arguments.String())
 		toolCalls = append(toolCalls, ToolCall{
-			ID:        stringutils.FirstNonEmpty(buffer.id, fmt.Sprintf("call_%d", index)),
-			Name:      buffer.name,
-			Arguments: decodeArguments(buffer.arguments.String()),
+			ID:             stringutils.FirstNonEmpty(buffer.id, fmt.Sprintf("call_%d", position)),
+			Name:           buffer.name,
+			Arguments:      arguments,
+			ArgumentsError: argumentsErr,
 		})
 	}
 	if len(toolCalls) == 0 {
@@ -259,6 +274,7 @@ func (a openAIChatAdapter) Stream(
 		InputTokens:     usage.PromptTokens,
 		OutputTokens:    usage.CompletionTokens,
 		Refused:         refused,
+		Truncated:       truncated,
 	}, nil
 }
 
@@ -364,20 +380,22 @@ func chatResponseFormatFor(call *Call) *chatResponseFormat {
 	}
 }
 
-func firstChatResult(resp *chatResponse) (string, []ToolCall, bool) {
+// firstChatResult picks the first usable choice: its text, its tool calls,
+// whether it was refused, and whether it was cut off by the output limit.
+func firstChatResult(resp *chatResponse) (string, []ToolCall, bool, bool) {
 	for idx := range resp.Choices {
 		choice := &resp.Choices[idx]
 		if choice.FinishReason == "content_filter" {
-			return "", nil, true
+			return "", nil, true, false
 		}
 
 		toolCalls := fromChatToolCalls(choice.Message.ToolCalls)
 		if len(toolCalls) > 0 || strings.TrimSpace(choice.Message.Content) != "" {
-			return choice.Message.Content, toolCalls, false
+			return choice.Message.Content, toolCalls, false, choice.FinishReason == "length"
 		}
 	}
 
-	return "", nil, false
+	return "", nil, false, false
 }
 
 func fromChatToolCalls(calls []chatToolCall) []ToolCall {
@@ -387,17 +405,12 @@ func fromChatToolCalls(calls []chatToolCall) []ToolCall {
 
 	out := make([]ToolCall, 0, len(calls))
 	for _, call := range calls {
-		args := map[string]any{}
-		// A small model sometimes emits arguments that do not parse. An empty
-		// argument map lets the tool report a clear validation error, which the
-		// model can recover from, rather than failing the whole turn here.
-		if trimmed := strings.TrimSpace(call.Function.Arguments); trimmed != "" {
-			_ = sonic.Unmarshal([]byte(trimmed), &args)
-		}
+		args, argsErr := decodeArguments(call.Function.Arguments)
 		out = append(out, ToolCall{
-			ID:        call.ID,
-			Name:      call.Function.Name,
-			Arguments: args,
+			ID:             call.ID,
+			Name:           call.Function.Name,
+			Arguments:      args,
+			ArgumentsError: argsErr,
 		})
 	}
 

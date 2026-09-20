@@ -1,13 +1,13 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AssistantThread } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
-import type { AssistantThread } from "@/types/assistant";
 import { MessageSquareIcon, PlusIcon, SearchIcon, Trash2Icon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { groupThreadsByRecency } from "./thread-grouping";
@@ -65,6 +65,7 @@ export function ThreadSidebar({
           this surface where a filled button means something. */}
       <div className="border-border flex items-center gap-1 border-b p-2">
         <Input
+          inputContainerClassName="w-full"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("Search")}

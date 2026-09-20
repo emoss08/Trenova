@@ -53,6 +53,27 @@ export function MessageThread({
   // Proposals are fetched rather than taken from the send response: they outlive
   // the turn that raised them, so reopening a thread has to show what is still
   // waiting on a decision.
+  const providersQuery = useQuery(queries.assistant.providers());
+  const providers = useMemo(() => providersQuery.data ?? [], [providersQuery.data]);
+
+  // The thread carries the choice, so a reload reopens on the same model, and a
+  // local copy makes picking one immediate rather than waiting for the turn
+  // that saves it. The pick is tagged with the thread it was made in: opening
+  // another conversation falls back to that thread's own stored choice without
+  // an effect resetting it a render later.
+  // null means nothing picked in this session yet — not "picked Auto". Auto is
+  // an empty provider id and a real choice, so the two have to stay distinct or
+  // clearing a model would silently restore the stored one.
+  const [picked, setPicked] = useState<{ threadId: string; providerId: string } | null>(null);
+  const providerId =
+    picked && picked.threadId === thread.id
+      ? picked.providerId
+      : (thread.preferredProviderId ?? "");
+  const setProviderId = useCallback(
+    (next: string) => setPicked({ threadId: thread.id, providerId: next }),
+    [thread.id],
+  );
+
   const proposalsQuery = useQuery(queries.assistant.proposals(thread.id));
   const { byMessage: proposalsByMessage, orphans: looseProposals } = groupProposalsByMessage(
     proposalsQuery.data?.results ?? [],
@@ -60,6 +81,21 @@ export function MessageThread({
   );
 
   const entries = useMemo(() => groupThread(messages), [messages]);
+
+  // A question the assistant asked is settled by whatever the person said next,
+  // whether they clicked one of its options or typed something else entirely.
+  // Comparing positions rather than tracking which button was pressed is what
+  // makes a reopened thread render the same as a live one.
+  const latestUserSequence = useMemo(
+    () =>
+      messages.reduce(
+        (latest, message) =>
+          message.role === "User" ? Math.max(latest, message.sequence) : latest,
+        -1,
+      ),
+    [messages],
+  );
+
   const getPageContext = usePageContext();
   const [contextIncluded, setContextIncluded] = useState(true);
   const pageContext = getPageContext();
@@ -72,6 +108,14 @@ export function MessageThread({
   const { turn, isActive, send, stop, dismiss, retry } = useAssistantTurn(
     thread.id,
     getTurnContext,
+  );
+
+  // An answer to the assistant's question is an ordinary message. Sending it
+  // that way is what keeps a clicked answer and a typed one the same thing:
+  // nothing new is stored, and the thread reads identically either way.
+  const answer = useCallback(
+    (value: string) => void send(value, undefined, providerId),
+    [send, providerId],
   );
 
   // The composer floats over the bottom of the thread, so the last message has
@@ -143,6 +187,8 @@ export function MessageThread({
                           entry={entry}
                           proposals={proposalsByMessage.get(entry.message.id) ?? []}
                           threadId={thread.id}
+                          latestUserSequence={latestUserSequence}
+                          onAnswer={answer}
                         />
                       )}
                     </MessageScrollerItem>
@@ -161,7 +207,12 @@ export function MessageThread({
                 {turn && (
                   <MessageScrollerItem messageId="turn-in-progress" scrollAnchor>
                     <div className="flex flex-col gap-4">
-                      <StreamingTurn turn={turn} onRetry={retry} onDismiss={dismiss} />
+                      <StreamingTurn
+                        turn={turn}
+                        onRetry={retry}
+                        onDismiss={dismiss}
+                        onAnswer={answer}
+                      />
                     </div>
                   </MessageScrollerItem>
                 )}
@@ -173,7 +224,7 @@ export function MessageThread({
 
         <Composer
           ref={composerRef}
-          onSend={(content) => void send(content)}
+          onSend={(content) => void send(content, undefined, providerId)}
           onStop={stop}
           active={isActive}
           disabled={agentUnavailable}
@@ -188,6 +239,9 @@ export function MessageThread({
           pageContext={pageContext}
           contextIncluded={contextIncluded}
           onToggleContext={() => setContextIncluded((value) => !value)}
+          providers={providers}
+          providerId={providerId}
+          onPickProvider={setProviderId}
           suggestions={suggestions}
           onDismissSuggestion={dismissSuggestion}
           compact={!expanded}

@@ -160,3 +160,24 @@ func TestRank_FindsTheTimeOffToolInTheWordsPeopleUse(t *testing.T) {
 		assert.Equal(t, "list_time_off", names(catalog.Rank(nil, question, 3))[0], question)
 	}
 }
+
+// Rank fills its slots whatever the wording, because a turn needs a toolbox.
+// Find must not: answering a nonsense query with six arbitrary tools and the
+// words "these tools are now callable" tells the model it found what it wanted.
+func TestFind_ReturnsNothingWhenNothingMatched(t *testing.T) {
+	t.Parallel()
+
+	catalog := testCatalog()
+
+	assert.Empty(t, catalog.Find(nil, "zzzz no such thing zzzz", 6))
+	assert.NotEmpty(t, catalog.Rank(nil, "zzzz no such thing zzzz", 6),
+		"pre-selection still fills the turn")
+}
+
+func TestFind_StillReturnsARealMatch(t *testing.T) {
+	t.Parallel()
+
+	found := testCatalog().Find(nil, "shipment", 6)
+
+	assert.NotEmpty(t, found)
+}

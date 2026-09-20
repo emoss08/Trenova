@@ -150,8 +150,13 @@ func TestListTool_BoundsARelativeWindowAtBothEnds(t *testing.T) {
 	upper := capture.opts.FieldFilters[1]
 	assert.Equal(t, dbtype.OpGreaterThanOrEqual, lower.Operator)
 	assert.Equal(t, dbtype.OpLessThanOrEqual, upper.Operator)
-	assert.GreaterOrEqual(t, lower.Value.(int64), before)
-	assert.Equal(t, lower.Value.(int64)+30*secondsPerDay, upper.Value.(int64))
+	// The floor is the start of today, not this instant: a credential that
+	// expired at nine this morning is still one expiring in the next 30 days.
+	floor := lower.Value.(int64)
+	assert.LessOrEqual(t, floor, before)
+	assert.Greater(t, floor, before-secondsPerDay)
+	assert.Zero(t, floor%secondsPerDay)
+	assert.Equal(t, floor+31*secondsPerDay-1, upper.Value.(int64), "through the end of day 30")
 }
 
 func TestListTool_BoundsALookBackAtBothEnds(t *testing.T) {
@@ -168,7 +173,10 @@ func TestListTool_BoundsALookBackAtBothEnds(t *testing.T) {
 
 	lower := capture.opts.FieldFilters[0].Value.(int64)
 	upper := capture.opts.FieldFilters[1].Value.(int64)
-	assert.Equal(t, int64(7)*secondsPerDay, upper-lower)
+	// Seven whole days back from the start of today, up to this instant.
+	assert.Zero(t, lower%secondsPerDay)
+	assert.GreaterOrEqual(t, upper-lower, int64(7)*secondsPerDay)
+	assert.Less(t, upper-lower, int64(8)*secondsPerDay)
 }
 
 // A model asked "before March" should not have to invent a Unix timestamp; a
@@ -400,4 +408,119 @@ func TestListTool_RefusesAFieldTheEntityNoLongerCarries(t *testing.T) {
 	)))
 	require.Error(t, err)
 	assert.Nil(t, capture.opts)
+}
+
+/*
+"today" is the obvious thing to send, and refusing it cost a round trip.
+
+Asked which drivers hold a current hazmat endorsement, the model filtered
+hazmatExpiry with "today". The tool refused, naming what would work; the model
+read the correction and asked again, and the second attempt answered correctly.
+That is the refusal doing its job — but the question was answered on the second
+call, billed twice, and on a flakier model the extra turn is where the
+conversation dies.
+
+The server has a clock. It can resolve the word.
+*/
+func TestCoerceDateValue_AcceptsTheWordsPeopleUseForDates(t *testing.T) {
+	t.Parallel()
+
+	for _, word := range []string{"today", "Today", " today ", "now"} {
+		_, err := coerceDateValue("profile.hazmatExpiry", word)
+		assert.NoError(t, err, "%q should resolve rather than be refused", word)
+	}
+}
+
+func TestCoerceDateValue_ResolvesNamedDaysAgainstTheServerClock(t *testing.T) {
+	t.Parallel()
+
+	const now int64 = 1789776000 // 2026-09-19 00:00 UTC
+	const day int64 = 86400
+
+	today, ok := namedDay("today", now)
+	require.True(t, ok)
+	assert.Equal(t, now, today)
+
+	tomorrow, ok := namedDay("tomorrow", now)
+	require.True(t, ok)
+	assert.Equal(t, now+day, tomorrow)
+
+	yesterday, ok := namedDay("yesterday", now)
+	require.True(t, ok)
+	assert.Equal(t, now-day, yesterday)
+}
+
+// A named day resolves to midnight, so "expiring on or after today" includes
+// something that expires later today rather than starting from this instant.
+func TestNamedDay_ResolvesToTheStartOfTheDay(t *testing.T) {
+	t.Parallel()
+
+	midMorning := int64(1789815600) // 2026-09-19 11:00 UTC
+	resolved, ok := namedDay("today", midMorning)
+
+	require.True(t, ok)
+	assert.Equal(t, int64(1789776000), resolved)
+}
+
+// Anything that is not a date is still refused, and the refusal still names
+// every form that would have worked.
+func TestCoerceDateValue_StillRefusesWhatIsNotADate(t *testing.T) {
+	t.Parallel()
+
+	_, err := coerceDateValue("profile.hazmatExpiry", "soon")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "YYYY-MM-DD")
+	assert.Contains(t, err.Error(), "today")
+}
+
+// "Delivered but not yet handed to billing" is a question about an enum column
+// being null, and it is one of the most ordinary things asked of one. Refusing
+// isnull here sent a model round the houses reconstructing the same answer from
+// a status filter and a date window, and then telling the person what "not
+// billed" had been taken to mean.
+func TestListTool_FiltersAnEnumOnBeingUnset(t *testing.T) {
+	t.Parallel()
+
+	capture := &capturedList{}
+	tool := newListTool(probeSpec(capture))
+
+	_, err := tool.Query(t.Context(), testParams(filterParams(
+		map[string]any{"field": "status", "operator": "isnull"},
+	)))
+	require.NoError(t, err)
+	require.NotNil(t, capture.opts)
+
+	require.Len(t, capture.opts.FieldFilters, 1)
+	assert.Equal(t, "status", capture.opts.FieldFilters[0].Field)
+	assert.Equal(t, dbtype.OpIsNull, capture.opts.FieldFilters[0].Operator)
+}
+
+func TestListTool_FiltersAnEnumOnBeingSet(t *testing.T) {
+	t.Parallel()
+
+	capture := &capturedList{}
+	tool := newListTool(probeSpec(capture))
+
+	_, err := tool.Query(t.Context(), testParams(filterParams(
+		map[string]any{"field": "status", "operator": "isnotnull"},
+	)))
+	require.NoError(t, err)
+	require.Len(t, capture.opts.FieldFilters, 1)
+	assert.Equal(t, dbtype.OpIsNotNull, capture.opts.FieldFilters[0].Operator)
+}
+
+// The refusal used to read "which is a enum field".
+func TestListTool_NamesTheFieldKindWithoutManglingTheArticle(t *testing.T) {
+	t.Parallel()
+
+	capture := &capturedList{}
+	tool := newListTool(probeSpec(capture))
+
+	_, err := tool.Query(t.Context(), testParams(filterParams(
+		map[string]any{"field": "status", "operator": "contains", "value": "Act"},
+	)))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `is not an operator for the enum field "status"`)
+	assert.NotContains(t, err.Error(), "a enum")
 }

@@ -2,6 +2,7 @@ package assistantservice
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -18,6 +19,8 @@ type TurnRequest struct {
 	History    []conversation.Message
 	Input      string
 	Page       *agentdefinition.PageContext
+	// PreferredProviderID is the reader's chosen model for this conversation.
+	PreferredProviderID pulid.ID
 }
 
 type TurnResult struct {
@@ -42,7 +45,11 @@ func (s *Service) RunObserved(
 		emit = func(serviceports.StreamEvent) {}
 	}
 
-	decision := s.guard.Evaluate(ctx, req.Actor.TenantInfo(), req.Input)
+	decision := s.guard.Evaluate(ctx, agentguard.EvaluateRequest{
+		TenantInfo: req.Actor.TenantInfo(),
+		Input:      req.Input,
+		Recent:     recentTurns(req.History),
+	})
 	if !decision.Allowed {
 		emit(refusedEvent(decision))
 
@@ -68,15 +75,16 @@ func (s *Service) RunObserved(
 	runtimeContext := s.buildContext(ctx, req)
 
 	run, err := s.runtime.Run(ctx, &serviceports.RunRequest{
-		Definition: req.Definition,
-		Actor:      req.Actor,
-		Context:    runtimeContext,
-		History:    req.History,
-		Input:      req.Input,
-		Emit:       emit,
+		Definition:          req.Definition,
+		Actor:               req.Actor,
+		Context:             runtimeContext,
+		History:             req.History,
+		Input:               req.Input,
+		Emit:                emit,
+		PreferredProviderID: req.PreferredProviderID,
 	})
 	if err != nil {
-		return nil, err
+		return interruptedTurn(req, decision, run, err), err
 	}
 
 	result := &TurnResult{
@@ -120,6 +128,59 @@ func (s *Service) buildContext(
 	}
 
 	return runtimeContext
+}
+
+// interruptedNotice closes a turn the model did not finish. It is written into
+// the thread rather than left to an error banner because the thread is what is
+// read back tomorrow, and a lookup followed by silence reads as an answer that
+// was never given rather than one that was cut off.
+const interruptedNotice = "_This reply was interrupted before it finished. " +
+	"What is shown above is what had happened by then. Ask again to continue._"
+
+// stoppedNotice is the same, for a turn the person ended themselves.
+const stoppedNotice = "_Stopped here. What is shown above is what had happened by then._"
+
+// interruptedTurn is what a failed run leaves behind: everything that ran,
+// closed with a note. Nil when nothing ran at all, since a turn with no user
+// message in it is not a turn.
+//
+// Keeping it is not optional. A tool that executed before the failure changed
+// something, and the thread is the only place a person can see that it did;
+// discarding the turn erased the write from the record while leaving it in the
+// database.
+func interruptedTurn(
+	req *TurnRequest,
+	decision agentguard.Decision,
+	run *serviceports.RunResult,
+	err error,
+) *TurnResult {
+	if run == nil || len(run.Messages) == 0 {
+		return nil
+	}
+
+	notice := interruptedNotice
+	if errors.Is(err, context.Canceled) {
+		notice = stoppedNotice
+	}
+
+	messages := make([]conversation.Message, 0, len(run.Messages)+1)
+	messages = append(messages, run.Messages...)
+	messages[0] = scopedMessage(conversation.RoleUser, req.Input, decision, false)
+	messages = append(messages, conversation.Message{
+		Role:       conversation.RoleAssistant,
+		Content:    notice,
+		Model:      run.Model,
+		ProviderID: run.ProviderID,
+	})
+
+	return &TurnResult{
+		Reply:    notice,
+		Decision: decision,
+		Messages: messages,
+		Actions:  run.Actions,
+		Model:    run.Model,
+		Provider: run.ProviderID,
+	}
 }
 
 func scopedMessage(
@@ -168,4 +229,25 @@ func refusedEvent(decision agentguard.Decision) serviceports.StreamEvent {
 			Reason:   string(decision.Reason),
 		},
 	}
+}
+
+// recentTurns renders the thread's prose for the scope guard.
+//
+// Only what was said: a tool call and its result are a payload and a machine
+// answer, and whatever they established about the subject is already in the
+// reply the assistant wrote from them. Including them would spend the
+// classifier's context on JSON and tell it less.
+func recentTurns(history []conversation.Message) []agentguard.Turn {
+	turns := make([]agentguard.Turn, 0, len(history))
+	for _, message := range history {
+		switch message.Role {
+		case conversation.RoleUser:
+			turns = append(turns, agentguard.Turn{Role: "user", Content: message.Content})
+		case conversation.RoleAssistant:
+			turns = append(turns, agentguard.Turn{Role: "assistant", Content: message.Content})
+		case conversation.RoleTool:
+		}
+	}
+
+	return turns
 }

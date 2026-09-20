@@ -110,7 +110,15 @@ var operatorsByKind = map[filterKind][]dbtype.Operator{
 		dbtype.OpEqual, dbtype.OpNotEqual, dbtype.OpContains, dbtype.OpStartsWith,
 		dbtype.OpEndsWith, dbtype.OpIn, dbtype.OpNotIn, dbtype.OpIsNull, dbtype.OpIsNotNull,
 	},
-	filterEnum: {dbtype.OpEqual, dbtype.OpNotEqual, dbtype.OpIn, dbtype.OpNotIn},
+	// isnull and isnotnull belong here for the same reason they belong on text,
+	// date and number: an enum column is nullable too, and "has no billing
+	// transfer state yet" is one of the most ordinary questions asked of one.
+	// Leaving them off sent a model round the houses building the same answer
+	// out of a status filter and a date window.
+	filterEnum: {
+		dbtype.OpEqual, dbtype.OpNotEqual, dbtype.OpIn, dbtype.OpNotIn,
+		dbtype.OpIsNull, dbtype.OpIsNotNull,
+	},
 	filterDate: {
 		dbtype.OpGreaterThan, dbtype.OpGreaterThanOrEqual, dbtype.OpLessThan,
 		dbtype.OpLessThanOrEqual, dbtype.OpLastNDays, dbtype.OpNextNDays, dbtype.OpToday,
@@ -353,8 +361,8 @@ func (t *listTool) buildFilter(
 	operator := dbtype.Operator(strings.ToLower(optionalString(condition, "operator")))
 	if !operatorAllowed(field.Kind, operator) {
 		return nil, fmt.Errorf(
-			"%q is not an operator for %q, which is a %s field; use one of: %s",
-			operator, field.Name, field.Kind, joinOperators(operatorsByKind[field.Kind]),
+			"%q is not an operator for the %s field %q; use one of: %s",
+			operator, field.Kind, field.Name, joinOperators(operatorsByKind[field.Kind]),
 		)
 	}
 
@@ -419,10 +427,21 @@ func (t *listTool) buildWindow(
 	now := timeutils.NowUnix()
 	span := int64(days) * secondsPerDay
 
-	lower, upper := now, now+span
+	// Windows are whole days, not offsets from this instant. "Expiring in the
+	// next 30 days" starting at the current second excluded a medical card
+	// that expired at nine this morning — the one question this tool was
+	// built to answer. The day boundary is UTC until the organization's
+	// timezone reaches the tools; the error is then at most the offset, where
+	// before it was up to a whole day of today.
+	dayStart, err := timeutils.DayStartUnix(now, "UTC")
+	if err != nil {
+		dayStart = now - now%secondsPerDay
+	}
+
+	lower, upper := dayStart, dayStart+span+secondsPerDay-1
 	phrase := fmt.Sprintf("within the next %d days", days)
 	if operator == dbtype.OpLastNDays {
-		lower, upper = now-span, now
+		lower, upper = dayStart-span, now
 		phrase = fmt.Sprintf("within the last %d days", days)
 	}
 
@@ -567,6 +586,10 @@ func coerceDateValue(name, raw string) (int64, error) {
 		return seconds, nil
 	}
 
+	if seconds, ok := namedDay(raw, timeutils.NowUnix()); ok {
+		return seconds, nil
+	}
+
 	for _, layout := range []string{time.DateOnly, time.RFC3339} {
 		if parsed, err := time.Parse(layout, raw); err == nil {
 			return parsed.UTC().Unix(), nil
@@ -574,9 +597,42 @@ func coerceDateValue(name, raw string) (int64, error) {
 	}
 
 	return 0, fmt.Errorf(
-		"%q on %q is not a date; use YYYY-MM-DD, or nextndays/lastndays with a day count",
+		"%q on %q is not a date; use YYYY-MM-DD, today, tomorrow or yesterday, "+
+			"or nextndays/lastndays with a day count",
 		raw, name,
 	)
+}
+
+// namedDay resolves the words a person uses for a date.
+//
+// "today" is the obvious thing to send for "expiring from now on", and refusing
+// it cost a whole round trip: the model sent it, read the correction, and asked
+// again with the same question. That worked, but only because the refusal names
+// what would have worked — on a weaker model the extra turn is where the
+// conversation falls apart, and the retry is billed either way.
+//
+// Resolving it here rather than in the prompt also keeps the clock on the
+// server. A model computing today's date is the arithmetic that put a medical
+// card three months out of place.
+func namedDay(raw string, now int64) (int64, bool) {
+	const day = 86400
+
+	midnight := func(seconds int64) int64 {
+		t := time.Unix(seconds, 0).UTC()
+
+		return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC).Unix()
+	}
+
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "today", "now":
+		return midnight(now), true
+	case "tomorrow":
+		return midnight(now + day), true
+	case "yesterday":
+		return midnight(now - day), true
+	default:
+		return 0, false
+	}
 }
 
 func operatorAllowed(kind filterKind, operator dbtype.Operator) bool {

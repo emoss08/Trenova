@@ -96,7 +96,7 @@ func (a ollamaAdapter) Stream(
 
 	stream, err := postStream(
 		ctx,
-		call.Client,
+		call,
 		call.Provider.ResolvedBaseURL()+"/api/chat",
 		map[string]string{"Authorization": bearer(call.APIKey)},
 		body,
@@ -132,6 +132,7 @@ func (a ollamaAdapter) Stream(
 		if chunk.Done {
 			final.PromptEvalCount = chunk.PromptEvalCount
 			final.EvalCount = chunk.EvalCount
+			final.DoneReason = chunk.DoneReason
 		}
 
 		return nil
@@ -147,6 +148,7 @@ func (a ollamaAdapter) Stream(
 		InputTokens:     final.PromptEvalCount,
 		OutputTokens:    final.EvalCount,
 		Refused:         false,
+		Truncated:       final.DoneReason == "length",
 	}, nil
 }
 
@@ -193,7 +195,8 @@ func (a ollamaAdapter) Complete(ctx context.Context, call *Call) (*Response, err
 		OutputTokens:    envelope.EvalCount,
 		// Ollama has no refusal signal; an empty body with a load failure surfaces
 		// as a transport error instead.
-		Refused: false,
+		Refused:   false,
+		Truncated: envelope.DoneReason == "length",
 	}, nil
 }
 

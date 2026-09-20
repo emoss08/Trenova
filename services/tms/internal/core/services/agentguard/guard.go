@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -21,6 +20,10 @@ type Service struct {
 	logger     *zap.Logger
 	completion serviceports.CompletionService
 
+	// verdicts remembers classifications already made, so the same question
+	// asked twice costs one call rather than two.
+	verdicts *verdictCache
+
 	// RefuseWhenUnavailable restores the old posture: a classifier that cannot
 	// be reached refuses the request rather than falling back to the
 	// deterministic verdict. Off by default, because the deterministic layer is
@@ -33,6 +36,7 @@ func New(p Params) *Service {
 	return &Service{
 		logger:     p.Logger.Named("service.agent-guard"),
 		completion: p.Completion,
+		verdicts:   newVerdictCache(),
 	}
 }
 
@@ -41,6 +45,14 @@ func New(p Params) *Service {
 // The deterministic layer runs first because it is free and catches the blatant
 // cases. Anything it does not recognise goes to the classifier, whose verdict
 // decides.
+//
+// The classifier is shown the tail of the conversation, because scope is not a
+// property of a sentence on its own. "Can you give me a link to download it?"
+// carries no subject at all: read alone it is unclassifiable, and the classifier
+// duly refused it one turn after running the report it was asking about. The
+// referent lives in the previous turns, so those go with it. Only the latest
+// message is judged — earlier turns are background, never instruction, and
+// never the thing being classified.
 //
 // A classifier that cannot produce a verdict — for any reason — leaves the
 // request on the deterministic verdict alone, recorded as StageUnavailable so
@@ -62,12 +74,8 @@ func New(p Params) *Service {
 // layer filters scope, and failing it closed denies service rather than
 // protecting anything. An operator who wants the stricter posture can set
 // RefuseWhenUnavailable.
-func (s *Service) Evaluate(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	input string,
-) Decision {
-	if decision := EvaluateDeterministic(input); !decision.Allowed {
+func (s *Service) Evaluate(ctx context.Context, req EvaluateRequest) Decision {
+	if decision := EvaluateDeterministic(req.Input); !decision.Allowed {
 		s.logger.Info("request refused by deterministic scope rule",
 			zap.String("rule", decision.MatchedRule),
 			zap.String("reason", string(decision.Reason)),
@@ -76,7 +84,7 @@ func (s *Service) Evaluate(
 		return decision
 	}
 
-	result, err := s.Classify(ctx, tenantInfo, input)
+	result, err := s.Classify(ctx, req)
 	if err != nil {
 		if errors.Is(err, serviceports.ErrNoProviderConfigured) {
 			s.logger.Debug("no scope classifier configured; deterministic rules only")

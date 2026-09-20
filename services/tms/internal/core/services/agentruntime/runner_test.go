@@ -136,7 +136,13 @@ func TestRun_RefusesAToolNotEnabledEvenWhenRegistered(t *testing.T) {
 	assert.Zero(t, tool.Calls)
 	assert.True(t, result.Messages[2].ToolFailed)
 	assert.Contains(t, result.Messages[2].Content, "not available to this agent")
-	assert.Len(t, completion.LastReq.Tools, 0, "an unenabled tool is not even offered")
+	offered := make([]string, 0, len(completion.LastReq.Tools))
+	for _, spec := range completion.LastReq.Tools {
+		offered = append(offered, spec.Name)
+	}
+	// ask_user is the runtime's own and rides every turn; it reads nothing, so
+	// it does not widen the agent. Nothing from the registry is offered.
+	assert.Equal(t, []string{askUserName}, offered, "an unenabled tool is not even offered")
 }
 
 // The agent runs as the person talking to it. Every tool call is checked against
@@ -491,4 +497,111 @@ func TestToolSummaries_DescribeOnlyEnabledRegisteredTools(t *testing.T) {
 	assert.True(t, summaries[0].Query)
 	assert.Equal(t, "assign_move", summaries[1].Name)
 	assert.Equal(t, agent.TierActWithApproval, summaries[1].Tier)
+}
+
+// A model that dies after a tool has run used to take the whole turn with it:
+// the runner returned nil and the caller had nothing to save, so the person's
+// question, the lookups that answered it, and any write a tool had already
+// made all vanished from the thread. What ran is returned alongside the error.
+func TestRun_ReturnsWhatRanWhenTheModelFailsMidTurn(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("get_shipment", map[string]any{"proNumber": "S1"}, nil)
+	completion := &scriptedCompletion{
+		Turns:  []*serviceports.ChatCompletionResult{toolTurn("get_shipment", map[string]any{"id": "S1"})},
+		Errors: map[int]error{1: errors.New("every configured chat provider failed")},
+	}
+	rt := newRuntime(completion, &stubQueryRegistry{
+		Tools: []serviceports.AgentQueryTool{tool},
+	}, &stubActionRegistry{}, nil)
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("get_shipment"),
+		Actor:      testActor(),
+		Input:      "Where is S1?",
+	})
+
+	require.Error(t, err)
+	require.NotNil(t, result, "the partial turn travels with the error")
+	require.Len(t, result.Messages, 3, "user, the tool call, and its result")
+	assert.Equal(t, conversation.RoleUser, result.Messages[0].Role)
+	assert.Equal(t, conversation.RoleAssistant, result.Messages[1].Role)
+	assert.Equal(t, conversation.RoleTool, result.Messages[2].Role)
+	assert.Equal(t, 1, tool.Calls)
+}
+
+// Arguments the adapter could not parse used to arrive as an empty map, and the
+// tool ran on it. For a list tool that is an unfiltered page reported back as
+// the filtered answer. The call is refused instead, and the refusal says why.
+func TestRun_RefusesACallWhoseArgumentsWereCutOff(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("list_shipments", map[string]any{"results": []any{}}, nil)
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		{
+			ToolCalls: []serviceports.ToolCall{{
+				ID:             "call_1",
+				Name:           "list_shipments",
+				Arguments:      map[string]any{},
+				ArgumentsError: "unexpected end of JSON input",
+			}},
+			ModelIdentifier: "test-model",
+		},
+		textTurn("I could not run that."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{
+		Tools: []serviceports.AgentQueryTool{tool},
+	}, &stubActionRegistry{}, nil)
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("list_shipments"),
+		Actor:      testActor(),
+		Input:      "unbilled shipments",
+	})
+	require.NoError(t, err)
+
+	assert.Zero(t, tool.Calls, "a tool is never run on arguments that did not parse")
+	require.True(t, result.Messages[2].ToolFailed)
+	assert.Contains(t, result.Messages[2].Content, "not valid JSON")
+}
+
+// Every call in a completion used to execute whatever the remaining budget was,
+// so an agent allowed one call could make ten in a single batch.
+func TestRun_HoldsTheToolBudgetWithinABatch(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("get_worker", map[string]any{"name": "x"}, nil)
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		{
+			ToolCalls: []serviceports.ToolCall{
+				{ID: "c1", Name: "get_worker", Arguments: map[string]any{"id": "w1"}},
+				{ID: "c2", Name: "get_worker", Arguments: map[string]any{"id": "w2"}},
+				{ID: "c3", Name: "get_worker", Arguments: map[string]any{"id": "w3"}},
+			},
+			ModelIdentifier: "test-model",
+		},
+		textTurn("done"),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{
+		Tools: []serviceports.AgentQueryTool{tool},
+	}, &stubActionRegistry{}, nil)
+	definition := testDefinition("get_worker")
+	definition.MaxToolCalls = 2
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "three drivers",
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, 2, tool.Calls)
+	var refused int
+	for _, message := range result.Messages {
+		if message.Role == conversation.RoleTool && message.ToolFailed {
+			refused++
+			assert.Contains(t, message.Content, "budget")
+		}
+	}
+	assert.Equal(t, 1, refused, "the third call is answered with a refusal, not silence")
 }

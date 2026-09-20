@@ -14567,6 +14567,15 @@
       "routes/fuel-management"
     ]
   },
+  "Answer in your own words": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Answer questions and drive the tool loop in the assistant.": {
     "sites": 1,
     "scope": [
@@ -19063,11 +19072,12 @@
     ]
   },
   "Auto": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "routes/carrier-invoice-matching",
       "routes/profile.tsx",
@@ -25116,6 +25126,15 @@
       "packages/shared/components"
     ]
   },
+  "Canceled before it finished.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Canceled by is required when status is Canceled": {
     "sites": 1,
     "scope": [
@@ -29710,6 +29729,15 @@
     ],
     "areas": [
       "routes/dispatch-control"
+    ]
+  },
+  "Choose which model answers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Choose which organizations this user can access in the current business unit.": {
@@ -49927,7 +49955,7 @@
     ]
   },
   "Download": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -53066,6 +53094,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Earlier in this conversation, for reference only": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentguard"
     ]
   },
   "Earlier of arrival or appointment": {
@@ -63070,6 +63107,15 @@
       "routes/invoice"
     ]
   },
+  "Failed: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Failing": {
     "sites": 2,
     "scope": [
@@ -64597,6 +64643,33 @@
     "areas": [
       "routes/agent-control",
       "routes/time-attendance"
+    ]
+  },
+  "Finished with no matching rows.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Finished with {0} rows, capped — this is not the full set.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Finished with {0} rows.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Finishing": {
@@ -81237,6 +81310,15 @@
       "apps/dash/_components"
     ]
   },
+  "Let this organization's provider order decide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Lets a request go below zero down to the floor set here.": {
     "sites": 1,
     "scope": [
@@ -95350,6 +95432,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "No models match.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "No monthly cap": {
@@ -118182,6 +118273,15 @@
       "routes/edi"
     ]
   },
+  "Queued — waiting to start.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Queueing retries...": {
     "sites": 1,
     "scope": [
@@ -126059,12 +126159,13 @@
     ]
   },
   "Report": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "domain/homelayout",
       "routes/agent-control",
       "routes/home",
@@ -132420,6 +132521,15 @@
       "apps/web/components"
     ]
   },
+  "Running — this is not finished yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Running...": {
     "sites": 4,
     "scope": [
@@ -135506,6 +135616,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Search models...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Search operations…": {
@@ -138963,6 +139082,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Send this answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Send this template to a reviewer for approval before it can be activated.": {
@@ -157853,6 +157981,15 @@
       "go/other"
     ]
   },
+  "The report failed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The report gallery is empty on this deployment.": {
     "sites": 1,
     "scope": [
@@ -157977,6 +158114,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "The result expired — run it again to get a fresh copy.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The result rows. Required: this is the report.": {
@@ -180297,6 +180443,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Your own answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Your own price bands, each with its own per-mile rate. Bands can be irregular — use this for customer-supplied fuel tables.": {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -86,12 +87,27 @@ func (s *Service) runChat(
 
 		// Once a provider has started answering, the reader has seen its words.
 		// Handing the same question to the next provider would splice a second
-		// answer onto the first, so the failure is reported instead.
-		if emitted {
-			return nil, fmt.Errorf(
-				"chat provider %s failed after it started replying: %w",
-				provider.Name, attemptErr,
+		// answer onto the first, so this turn ends here.
+		//
+		// It ends with what arrived rather than with an error. The reader
+		// watched a reply appear; discarding it leaves them with nothing and no
+		// way to tell whether the half they read was right. The result says it
+		// was cut off, and everything downstream treats it as a finished turn
+		// with a truncated answer.
+		if emitted != "" {
+			s.logger.Warn("chat provider stopped partway through a reply",
+				zap.String("provider", provider.Name),
+				zap.Int("characters", len(emitted)),
+				zap.Error(attemptErr),
 			)
+
+			return &serviceports.ChatCompletionResult{
+				Text:            emitted,
+				ModelIdentifier: provider.Model,
+				ProviderID:      provider.ID,
+				ProviderKind:    provider.Kind,
+				Truncated:       true,
+			}, nil
 		}
 
 		lastErr = attemptErr
@@ -111,15 +127,15 @@ func (s *Service) attemptChat(
 	provider *aiprovider.Provider,
 	req *serviceports.ChatCompletionRequest,
 	sink serviceports.ChatStreamSink,
-) (*serviceports.ChatCompletionResult, bool, error) {
+) (*serviceports.ChatCompletionResult, string, error) {
 	adapter, err := s.adapters.Get(provider.Kind)
 	if err != nil {
-		return nil, false, err
+		return nil, "", err
 	}
 
 	apiKey, err := s.resolveAPIKey(provider)
 	if err != nil {
-		return nil, false, err
+		return nil, "", err
 	}
 
 	maxTokens := req.MaxTokens
@@ -128,9 +144,11 @@ func (s *Service) attemptChat(
 	}
 
 	call := &modeladapter.Call{
-		Provider: provider,
-		APIKey:   apiKey,
-		Client:   s.clientFor(provider),
+		Provider:     provider,
+		APIKey:       apiKey,
+		Client:       s.clientFor(provider),
+		StreamClient: s.streamClientFor(provider),
+		StreamIdle:   s.cfg.GetAIStreamIdleTimeout(),
 		Request: &modeladapter.Request{
 			System:    req.System,
 			Messages:  req.Messages,
@@ -141,7 +159,7 @@ func (s *Service) attemptChat(
 
 	var (
 		resp    *modeladapter.Response
-		emitted bool
+		emitted string
 	)
 	if streamer, ok := adapter.(modeladapter.Streamer); ok && sink != nil {
 		resp, emitted, err = s.executeStreamWithRetry(ctx, streamer, call, sink)
@@ -149,7 +167,7 @@ func (s *Service) attemptChat(
 		resp, err = s.executeWithRetry(ctx, adapter, call)
 		if err == nil && sink != nil && resp.Text != "" {
 			sink(resp.Text)
-			emitted = true
+			emitted = resp.Text
 		}
 	}
 	if err != nil {
@@ -174,6 +192,7 @@ func (s *Service) attemptChat(
 		OutputTokens:    resp.OutputTokens,
 		ProviderID:      provider.ID,
 		ProviderKind:    provider.Kind,
+		Truncated:       resp.Truncated,
 	}, emitted, nil
 }
 
@@ -184,28 +203,32 @@ func (s *Service) executeStreamWithRetry(
 	streamer modeladapter.Streamer,
 	call *modeladapter.Call,
 	sink serviceports.ChatStreamSink,
-) (*modeladapter.Response, bool, error) {
+) (*modeladapter.Response, string, error) {
 	attempts := s.cfg.GetAIMaxRetries()
 	if attempts < 1 {
 		attempts = 1
 	}
 
-	emitted := false
+	// The text is kept as well as the fact of it. A stream that dies partway
+	// leaves the reader watching an answer that then vanishes, and the words
+	// that did arrive are the ones we can still give them.
+	var partial strings.Builder
 	tracked := func(delta string) {
-		emitted = true
+		partial.WriteString(delta)
 		sink(delta)
 	}
+	emittedText := func() string { return partial.String() }
 
 	var lastErr error
 	for attempt := range attempts {
 		resp, err := streamer.Stream(ctx, call, tracked)
 		if err == nil {
-			return resp, emitted, nil
+			return resp, emittedText(), nil
 		}
 
 		lastErr = err
-		if emitted || !modeladapter.IsRetryable(err) || ctx.Err() != nil {
-			return nil, emitted, err
+		if emittedText() != "" || !modeladapter.IsRetryable(err) || ctx.Err() != nil {
+			return nil, emittedText(), err
 		}
 
 		s.logger.Debug("retrying provider stream",
@@ -213,9 +236,12 @@ func (s *Service) executeStreamWithRetry(
 			zap.Int("attempt", attempt+1),
 			zap.Error(err),
 		)
+		if waitErr := waitBeforeRetry(ctx, attempt); waitErr != nil {
+			return nil, emittedText(), waitErr
+		}
 	}
 
-	return nil, emitted, lastErr
+	return nil, emittedText(), lastErr
 }
 
 func preferFirst(providers []*aiprovider.Provider, preferred pulid.ID) []*aiprovider.Provider {
