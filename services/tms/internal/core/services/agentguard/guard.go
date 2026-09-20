@@ -21,6 +21,10 @@ type Service struct {
 	logger     *zap.Logger
 	completion serviceports.CompletionService
 
+	// verdicts remembers classifications already made, so the same question
+	// asked twice costs one call rather than two.
+	verdicts *verdictCache
+
 	// RefuseWhenUnavailable restores the old posture: a classifier that cannot
 	// be reached refuses the request rather than falling back to the
 	// deterministic verdict. Off by default, because the deterministic layer is
@@ -33,6 +37,7 @@ func New(p Params) *Service {
 	return &Service{
 		logger:     p.Logger.Named("service.agent-guard"),
 		completion: p.Completion,
+		verdicts:   newVerdictCache(),
 	}
 }
 

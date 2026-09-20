@@ -22,9 +22,11 @@ func NewAnthropicAdapter() Adapter { return anthropicAdapter{} }
 func (anthropicAdapter) Kind() aiprovider.Kind { return aiprovider.KindAnthropicMessages }
 
 type anthropicRequest struct {
-	Model        string                 `json:"model"`
-	MaxTokens    int                    `json:"max_tokens"`
-	System       string                 `json:"system,omitempty"`
+	Model     string `json:"model"`
+	MaxTokens int    `json:"max_tokens"`
+	// System is sent as blocks rather than a string so the last one can carry a
+	// cache breakpoint. Anthropic accepts either shape.
+	System       []anthropicBlock       `json:"system,omitempty"`
 	Messages     []anthropicMessage     `json:"messages"`
 	Tools        []anthropicTool        `json:"tools,omitempty"`
 	OutputConfig *anthropicOutputConfig `json:"output_config,omitempty"`
@@ -39,8 +41,9 @@ type anthropicMessage struct {
 }
 
 type anthropicBlock struct {
-	Type string `json:"type"`
-	Text string `json:"text,omitempty"`
+	Type         string                 `json:"type"`
+	Text         string                 `json:"text,omitempty"`
+	CacheControl *anthropicCacheControl `json:"cache_control,omitempty"`
 
 	// tool_use
 	ID    string         `json:"id,omitempty"`
@@ -54,9 +57,21 @@ type anthropicBlock struct {
 }
 
 type anthropicTool struct {
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	InputSchema map[string]any `json:"input_schema"`
+	Name         string                 `json:"name"`
+	Description  string                 `json:"description"`
+	InputSchema  map[string]any         `json:"input_schema"`
+	CacheControl *anthropicCacheControl `json:"cache_control,omitempty"`
+}
+
+// anthropicCacheControl marks the end of a prefix worth keeping. Everything
+// before the mark is cached; a later request whose bytes match up to that point
+// reads it back instead of paying for it again.
+type anthropicCacheControl struct {
+	Type string `json:"type"`
+}
+
+func ephemeralCache() *anthropicCacheControl {
+	return &anthropicCacheControl{Type: "ephemeral"}
 }
 
 type anthropicOutputConfig struct {
@@ -84,9 +99,9 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 	body := anthropicRequest{
 		Model:     call.Provider.Model,
 		MaxTokens: call.Request.MaxTokens,
-		System:    call.Request.System,
+		System:    cachedSystem(call.Request.System),
 		Messages:  toAnthropicMessages(call.Request.Messages),
-		Tools:     toAnthropicTools(call.Request.Tools),
+		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
 	}
 
 	if schema := call.Request.OutputSchema; schema != nil &&
@@ -166,9 +181,9 @@ func (a anthropicAdapter) Stream(
 	body := anthropicRequest{
 		Model:     call.Provider.Model,
 		MaxTokens: call.Request.MaxTokens,
-		System:    call.Request.System,
+		System:    cachedSystem(call.Request.System),
 		Messages:  toAnthropicMessages(call.Request.Messages),
-		Tools:     toAnthropicTools(call.Request.Tools),
+		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
 		Stream:    true,
 	}
 
@@ -365,4 +380,44 @@ func splitAnthropicContent(blocks []anthropicBlock) (string, []ToolCall) {
 	}
 
 	return text, toolCalls
+}
+
+/*
+Where the prefix is worth keeping.
+
+Anthropic matches a cached prefix byte for byte and allows a handful of marks,
+so they go at the two boundaries that are both large and unchanging: the end of
+the tool schemas and the end of the system prompt. Those two are most of what a
+turn sends and every iteration of a tool loop resends them verbatim — the
+second call in a two-tool turn re-read the whole prompt and every schema before
+this.
+
+The marks go at the end of each block rather than the start, because what is
+cached is everything up to the mark. Nothing marks the conversation itself: it
+grows every turn, so a mark there caches a prefix that the next request has
+already moved past.
+
+An empty tool list or system prompt gets no mark. A breakpoint on nothing still
+costs a write.
+*/
+func cachedTools(tools []anthropicTool) []anthropicTool {
+	if len(tools) == 0 {
+		return tools
+	}
+
+	tools[len(tools)-1].CacheControl = ephemeralCache()
+
+	return tools
+}
+
+func cachedSystem(system string) []anthropicBlock {
+	if system == "" {
+		return nil
+	}
+
+	return []anthropicBlock{{
+		Type:         "text",
+		Text:         system,
+		CacheControl: ephemeralCache(),
+	}}
 }

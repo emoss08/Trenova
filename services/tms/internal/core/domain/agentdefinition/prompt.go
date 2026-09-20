@@ -150,7 +150,7 @@ func (d *Definition) buildContextSection(rc RuntimeContext) string {
 	}
 
 	if d.HasContextProvider(ContextClock) && rc.Now > 0 {
-		lines = append(lines, "- Current time: "+formatClock(rc.Now, rc.Timezone))
+		lines = append(lines, "- Today is: "+formatClock(rc.Now, rc.Timezone))
 	}
 
 	if rc.Trigger != "" {
@@ -187,6 +187,20 @@ func (d *Definition) buildContextSection(rc RuntimeContext) string {
 	return builder.String()
 }
 
+// formatClock renders the day, deliberately without the minute.
+//
+// This line sits in the system prompt, which is the front of the cached prefix
+// on every provider that caches. At minute resolution it changed between one
+// message and the next, so the prefix never matched and nothing after it could
+// be reused — the whole prompt and every tool schema were re-read on each turn.
+// A date changes once a day, so the same prefix serves a whole day of
+// conversation.
+//
+// Losing the clock time costs less than it used to. Every date a tool returns
+// is written out with how far away it is ("2026-10-10 (in 20 days)"), so
+// nothing here has to do date arithmetic; what remains is knowing which day it
+// is. A question that genuinely turns on the hour is better served by a tool
+// that can read the clock than by a number frozen into the prompt.
 func formatClock(now int64, timezone string) string {
 	loc := time.UTC
 	name := "UTC"
@@ -197,7 +211,7 @@ func formatClock(now int64, timezone string) string {
 		}
 	}
 
-	return time.Unix(now, 0).In(loc).Format("2006-01-02 15:04 Monday") + " (" + name + ")"
+	return time.Unix(now, 0).In(loc).Format("2006-01-02 Monday") + " (" + name + ")"
 }
 
 func describeTrigger(trigger agent.RunTrigger) string {

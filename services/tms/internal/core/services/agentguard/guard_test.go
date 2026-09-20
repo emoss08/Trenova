@@ -291,3 +291,92 @@ func (s *stubCompletion) PollBackground(
 ) (*serviceports.BackgroundOutcome, error) {
 	return nil, errors.New("this completion runs inline and issues no handle to poll")
 }
+
+/*
+The same question twice costs one classification.
+
+Every message pays a round trip and roughly nine hundred tokens of classifier
+prompt before the real turn starts. Classification is a pure function of the
+text, and in operations the same question is asked constantly — the transcripts
+behind this change show one question asked three times in a few minutes, each
+paying full price.
+*/
+func TestEvaluate_ClassifiesTheSameQuestionOnce(t *testing.T) {
+	t.Parallel()
+
+	stub := &stubCompletion{category: string(agentguard.CategoryTransportationOperations)}
+	guard := newGuard(t, stub)
+	tenantInfo := tenant()
+
+	first := guard.Evaluate(t.Context(), tenantInfo, "Which drivers hold a hazmat endorsement?")
+	second := guard.Evaluate(t.Context(), tenantInfo, "Which drivers hold a hazmat endorsement?")
+
+	require.True(t, first.Allowed)
+	require.True(t, second.Allowed)
+	assert.Equal(t, 1, stub.calls, "the second ask reuses the first verdict")
+	assert.Equal(t, first.Category, second.Category)
+}
+
+// Wording a question the same way with different capitals or spacing is the
+// same question.
+func TestEvaluate_TreatsCaseAndSpacingAsTheSameQuestion(t *testing.T) {
+	t.Parallel()
+
+	stub := &stubCompletion{category: string(agentguard.CategoryTransportationOperations)}
+	guard := newGuard(t, stub)
+	tenantInfo := tenant()
+
+	guard.Evaluate(t.Context(), tenantInfo, "Which driver is on load 1?")
+	guard.Evaluate(t.Context(), tenantInfo, "  which driver is on load 1?  ")
+
+	assert.Equal(t, 1, stub.calls)
+}
+
+// A refusal is a verdict too, and re-refusing costs nothing.
+func TestEvaluate_RemembersARefusal(t *testing.T) {
+	t.Parallel()
+
+	stub := &stubCompletion{category: string(agentguard.CategoryCodeGeneration)}
+	guard := newGuard(t, stub)
+	tenantInfo := tenant()
+
+	first := guard.Evaluate(t.Context(), tenantInfo, "Explain how this query planner works")
+	second := guard.Evaluate(t.Context(), tenantInfo, "Explain how this query planner works")
+
+	require.False(t, first.Allowed)
+	require.False(t, second.Allowed)
+	assert.Equal(t, 1, stub.calls)
+}
+
+/*
+A failure is never remembered.
+
+Falling back to the deterministic rules is a degraded state. Caching it would
+keep a request degraded long after the classifier recovered, turning a blip
+into an outage that outlives its cause.
+*/
+func TestEvaluate_DoesNotRememberAFailure(t *testing.T) {
+	t.Parallel()
+
+	stub := &stubCompletion{err: errors.New("upstream timeout")}
+	guard := newGuard(t, stub)
+	tenantInfo := tenant()
+
+	guard.Evaluate(t.Context(), tenantInfo, "Which driver is on load 1?")
+	guard.Evaluate(t.Context(), tenantInfo, "Which driver is on load 1?")
+
+	assert.Equal(t, 2, stub.calls, "a classifier that failed is asked again, not written off")
+}
+
+// One organization's verdicts are not another's.
+func TestEvaluate_KeepsVerdictsPerOrganization(t *testing.T) {
+	t.Parallel()
+
+	stub := &stubCompletion{category: string(agentguard.CategoryTransportationOperations)}
+	guard := newGuard(t, stub)
+
+	guard.Evaluate(t.Context(), tenant(), "Which driver is on load 1?")
+	guard.Evaluate(t.Context(), tenant(), "Which driver is on load 1?")
+
+	assert.Equal(t, 2, stub.calls, "a different tenant does not read the first one's verdict")
+}

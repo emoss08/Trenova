@@ -73,6 +73,12 @@ func (s *Service) Classify(
 	tenantInfo pagination.TenantInfo,
 	input string,
 ) (*ClassifierResult, error) {
+	// A verdict already given for this exact text is the same verdict, so the
+	// round trip and the classifier prompt that goes with it are skipped.
+	if cached, ok := s.verdicts.get(tenantInfo.OrgID, input); ok {
+		return &cached, nil
+	}
+
 	result, err := s.completion.CompleteStructured(
 		ctx,
 		&serviceports.StructuredCompletionRequest{
@@ -101,6 +107,11 @@ func (s *Service) Classify(
 	if strings.TrimSpace(payload.Category) == "" {
 		return nil, fmt.Errorf("scope classification returned no category")
 	}
+
+	// Only a verdict the classifier produced is remembered. Every path that
+	// returns early above is an error, and caching one of those would outlive
+	// the outage that caused it.
+	s.verdicts.put(tenantInfo.OrgID, input, payload)
 
 	return &payload, nil
 }
