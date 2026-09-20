@@ -10,7 +10,10 @@ import (
 )
 
 type ScriptedCompletion struct {
-	Turns          []*serviceports.ChatCompletionResult
+	Turns []*serviceports.ChatCompletionResult
+	// Errors fails the completion at that call index instead of answering, so
+	// a test can make the model die after a tool has already run.
+	Errors         map[int]error
 	CallCount      int
 	LastReq        *serviceports.ChatCompletionRequest
 	Classification string
@@ -24,6 +27,9 @@ func (s *ScriptedCompletion) CompleteChat(
 	s.LastReq = req
 	idx := s.CallCount
 	s.CallCount++
+	if err, failed := s.Errors[idx]; failed {
+		return nil, err
+	}
 	if len(s.Turns) == 0 {
 		return nil, errors.New("no scripted turns")
 	}

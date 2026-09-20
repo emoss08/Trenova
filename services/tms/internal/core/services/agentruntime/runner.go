@@ -101,7 +101,11 @@ func (s *Service) Run(
 			PreferredProviderID: preferredProvider(req, definition),
 		}, sink)
 		if err != nil {
-			return nil, err
+			// What ran travels with the error. The caller decides whether to
+			// keep it, but it cannot keep what it was never handed: a model that
+			// died after a tool wrote something used to take the record of that
+			// write with it.
+			return result, err
 		}
 
 		result.Model = completion.ModelIdentifier

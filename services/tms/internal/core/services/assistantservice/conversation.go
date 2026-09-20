@@ -178,7 +178,7 @@ func (s *Service) SendMessageStream(
 		}
 	}
 
-	turn, err := s.RunObserved(ctx, &TurnRequest{
+	turn, runErr := s.RunObserved(ctx, &TurnRequest{
 		Definition:          definition,
 		Actor:               actor,
 		History:             history,
@@ -186,13 +186,34 @@ func (s *Service) SendMessageStream(
 		Page:                page,
 		PreferredProviderID: thread.PreferredProviderID,
 	}, emit)
-	if err != nil {
-		return nil, err
+
+	// The save does not ride the request context. The two ways a turn is most
+	// often lost — the person pressing Stop, or closing the tab — both cancel
+	// that context, and a save that honoured the cancellation would be the one
+	// act the cancellation defeated. Nothing here waits on the reader.
+	keep := context.WithoutCancel(ctx)
+
+	if runErr != nil {
+		if turn != nil {
+			attachPageContext(turn.Messages, page)
+			if _, saveErr := s.conversations.AppendTurn(keep, repositories.AppendTurnRequest{
+				ThreadID:   thread.ID,
+				TenantInfo: req.TenantInfo,
+				Messages:   turn.Messages,
+			}); saveErr != nil {
+				s.logger.Error("could not keep an interrupted turn",
+					zap.String("thread", thread.ID.String()),
+					zap.Error(saveErr),
+				)
+			}
+		}
+
+		return nil, runErr
 	}
 
 	attachPageContext(turn.Messages, page)
 
-	saved, err := s.conversations.AppendTurn(ctx, repositories.AppendTurnRequest{
+	saved, err := s.conversations.AppendTurn(keep, repositories.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: req.TenantInfo,
 		Messages:   turn.Messages,
@@ -201,9 +222,9 @@ func (s *Service) SendMessageStream(
 		return nil, err
 	}
 
-	s.titleIfUnnamed(ctx, thread, content)
+	s.titleIfUnnamed(keep, thread, content)
 
-	proposals, err := s.persistProposals(ctx, persistProposalsParams{
+	proposals, err := s.persistProposals(keep, persistProposalsParams{
 		Definition: definition,
 		Thread:     thread,
 		Actor:      actor,

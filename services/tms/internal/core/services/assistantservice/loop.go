@@ -2,6 +2,7 @@ package assistantservice
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -83,7 +84,7 @@ func (s *Service) RunObserved(
 		PreferredProviderID: req.PreferredProviderID,
 	})
 	if err != nil {
-		return nil, err
+		return interruptedTurn(req, decision, run, err), err
 	}
 
 	result := &TurnResult{
@@ -127,6 +128,59 @@ func (s *Service) buildContext(
 	}
 
 	return runtimeContext
+}
+
+// interruptedNotice closes a turn the model did not finish. It is written into
+// the thread rather than left to an error banner because the thread is what is
+// read back tomorrow, and a lookup followed by silence reads as an answer that
+// was never given rather than one that was cut off.
+const interruptedNotice = "_This reply was interrupted before it finished. " +
+	"What is shown above is what had happened by then. Ask again to continue._"
+
+// stoppedNotice is the same, for a turn the person ended themselves.
+const stoppedNotice = "_Stopped here. What is shown above is what had happened by then._"
+
+// interruptedTurn is what a failed run leaves behind: everything that ran,
+// closed with a note. Nil when nothing ran at all, since a turn with no user
+// message in it is not a turn.
+//
+// Keeping it is not optional. A tool that executed before the failure changed
+// something, and the thread is the only place a person can see that it did;
+// discarding the turn erased the write from the record while leaving it in the
+// database.
+func interruptedTurn(
+	req *TurnRequest,
+	decision agentguard.Decision,
+	run *serviceports.RunResult,
+	err error,
+) *TurnResult {
+	if run == nil || len(run.Messages) == 0 {
+		return nil
+	}
+
+	notice := interruptedNotice
+	if errors.Is(err, context.Canceled) {
+		notice = stoppedNotice
+	}
+
+	messages := make([]conversation.Message, 0, len(run.Messages)+1)
+	messages = append(messages, run.Messages...)
+	messages[0] = scopedMessage(conversation.RoleUser, req.Input, decision, false)
+	messages = append(messages, conversation.Message{
+		Role:       conversation.RoleAssistant,
+		Content:    notice,
+		Model:      run.Model,
+		ProviderID: run.ProviderID,
+	})
+
+	return &TurnResult{
+		Reply:    notice,
+		Decision: decision,
+		Messages: messages,
+		Actions:  run.Actions,
+		Model:    run.Model,
+		Provider: run.ProviderID,
+	}
 }
 
 func scopedMessage(

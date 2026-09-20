@@ -20,6 +20,10 @@ type stubConversations struct {
 
 	thread   *conversation.Thread
 	appended []conversation.Message
+	// appendCtxErr is the state of the context AppendTurn was given, so a test
+	// can prove the save survives the request being cancelled.
+	appendCtxErr error
+	appendCalls  int
 }
 
 func (s *stubConversations) GetThread(
@@ -37,10 +41,12 @@ func (s *stubConversations) ListMessages(
 }
 
 func (s *stubConversations) AppendTurn(
-	_ context.Context,
+	ctx context.Context,
 	req repositories.AppendTurnRequest,
 ) ([]conversation.Message, error) {
 	s.appended = req.Messages
+	s.appendCtxErr = ctx.Err()
+	s.appendCalls++
 	return req.Messages, nil
 }
 

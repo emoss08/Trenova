@@ -498,3 +498,34 @@ func TestToolSummaries_DescribeOnlyEnabledRegisteredTools(t *testing.T) {
 	assert.Equal(t, "assign_move", summaries[1].Name)
 	assert.Equal(t, agent.TierActWithApproval, summaries[1].Tier)
 }
+
+// A model that dies after a tool has run used to take the whole turn with it:
+// the runner returned nil and the caller had nothing to save, so the person's
+// question, the lookups that answered it, and any write a tool had already
+// made all vanished from the thread. What ran is returned alongside the error.
+func TestRun_ReturnsWhatRanWhenTheModelFailsMidTurn(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("get_shipment", map[string]any{"proNumber": "S1"}, nil)
+	completion := &scriptedCompletion{
+		Turns:  []*serviceports.ChatCompletionResult{toolTurn("get_shipment", map[string]any{"id": "S1"})},
+		Errors: map[int]error{1: errors.New("every configured chat provider failed")},
+	}
+	rt := newRuntime(completion, &stubQueryRegistry{
+		Tools: []serviceports.AgentQueryTool{tool},
+	}, &stubActionRegistry{}, nil)
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("get_shipment"),
+		Actor:      testActor(),
+		Input:      "Where is S1?",
+	})
+
+	require.Error(t, err)
+	require.NotNil(t, result, "the partial turn travels with the error")
+	require.Len(t, result.Messages, 3, "user, the tool call, and its result")
+	assert.Equal(t, conversation.RoleUser, result.Messages[0].Role)
+	assert.Equal(t, conversation.RoleAssistant, result.Messages[1].Role)
+	assert.Equal(t, conversation.RoleTool, result.Messages[2].Role)
+	assert.Equal(t, 1, tool.Calls)
+}
