@@ -29,10 +29,21 @@ type searchOutcome struct {
 type searchCriteria struct {
 	entityPlural string
 	terms        []string
+	// clock is the frame the search's dates were read in. It rides with the
+	// criteria because every filter builder already receives them, and a
+	// window built on the wrong day is a criterion nobody stated.
+	clock clock
 }
 
 func newSearchCriteria(entityPlural string) *searchCriteria {
 	return &searchCriteria{entityPlural: entityPlural, terms: make([]string, 0, 4)}
+}
+
+// at sets the frame the search reads dates in.
+func (c *searchCriteria) at(clk clock) *searchCriteria {
+	c.clock = clk
+
+	return c
 }
 
 // text records a free-text term. An empty value records nothing, which is how

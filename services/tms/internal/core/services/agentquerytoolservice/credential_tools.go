@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 const (
@@ -135,7 +134,7 @@ func (t *listExpiringCredentialsTool) Query(
 		codes = []string{strings.ToUpper(code)}
 	}
 
-	criteria := newSearchCriteria("credentials")
+	criteria := newSearchCriteria("credentials").at(clockFor(params))
 	criteria.field("expiring within", fmt.Sprintf("%d days", horizon))
 	if len(codes) > 0 {
 		criteria.field("credential type", codes[0])
@@ -159,6 +158,7 @@ func (t *listExpiringCredentialsTool) Query(
 		},
 		HorizonDays:         horizon,
 		GraceDays:           grace,
+		AsOf:                criteria.clock.today(),
 		RequiredOnly:        requiredOnly,
 		CredentialTypeCodes: codes,
 		Limit:               limit,
@@ -167,16 +167,15 @@ func (t *listExpiringCredentialsTool) Query(
 		return nil, err
 	}
 
-	now := timeutils.NowUnix()
 	rows := make([]expiringCredentialRow, 0, len(credentials))
 	for _, credential := range credentials {
-		rows = append(rows, toExpiringRow(credential, now))
+		rows = append(rows, toExpiringRow(credential, criteria.clock))
 	}
 
 	return criteria.result(rows, len(rows)), nil
 }
 
-func toExpiringRow(credential *worker.WorkerCredential, now int64) expiringCredentialRow {
+func toExpiringRow(credential *worker.WorkerCredential, clk clock) expiringCredentialRow {
 	row := expiringCredentialRow{
 		WorkerID: credential.WorkerID.String(),
 		Number:   credential.Number,
@@ -184,8 +183,10 @@ func toExpiringRow(credential *worker.WorkerCredential, now int64) expiringCrede
 
 	row.ExpiresAt = pointerDate(credential.ExpiresAt)
 	if credential.ExpiresAt != nil {
-		row.DaysUntilExpiry = (*credential.ExpiresAt - now) / secondsPerDay
-		row.Expired = *credential.ExpiresAt < now
+		// Calendar days in the organization's zone, so a card expiring at
+		// 00:30 tomorrow is one day out at any hour tonight — not zero.
+		row.DaysUntilExpiry = clk.daysBetween(clk.instant(), *credential.ExpiresAt)
+		row.Expired = *credential.ExpiresAt < clk.instant()
 	}
 
 	if credential.CredentialType != nil {

@@ -37,21 +37,21 @@ var dateKeySuffixes = []string{"at", "date", "expiry", "expires", "time"}
 // integer: the model cannot compute with it, and the date filters already
 // accept the YYYY-MM-DD form this produces, so a value read out of one result
 // can be passed straight back into the next call.
-func humanizeDates(value any, now int64) any {
+func humanizeDates(value any, now int64, timezone string) any {
 	switch typed := value.(type) {
 	case map[string]any:
 		for key, nested := range typed {
-			if replacement, ok := describeInstant(key, nested, now); ok {
+			if replacement, ok := describeInstant(key, nested, now, timezone); ok {
 				typed[key] = replacement
 				continue
 			}
-			typed[key] = humanizeDates(nested, now)
+			typed[key] = humanizeDates(nested, now, timezone)
 		}
 
 		return typed
 	case []any:
 		for i, nested := range typed {
-			typed[i] = humanizeDates(nested, now)
+			typed[i] = humanizeDates(nested, now, timezone)
 		}
 
 		return typed
@@ -60,7 +60,11 @@ func humanizeDates(value any, now int64) any {
 	}
 }
 
-func describeInstant(key string, value any, now int64) (string, bool) {
+// describeInstant renders one instant as the date it falls on in the
+// organization's zone. The zone matters at the edges, which are exactly where
+// compliance questions live: a card expiring at 00:30 local time is tomorrow's
+// problem to the person asking, whatever a UTC clock says.
+func describeInstant(key string, value any, now int64, timezone string) (string, bool) {
 	if !isDateKey(key) {
 		return "", false
 	}
@@ -77,7 +81,7 @@ func describeInstant(key string, value any, now int64) (string, bool) {
 		return "", false
 	}
 
-	return timeutils.DescribeUnixDate(seconds, now), true
+	return timeutils.DescribeUnixDateIn(seconds, now, timezone), true
 }
 
 func isDateKey(key string) bool {
@@ -118,7 +122,7 @@ func wholeNumber(value any) (int64, bool) {
 // case of the get_ family, so there is no single struct to annotate. Doing it
 // here means a tool added later inherits readable dates without knowing this
 // exists, which is the only version of this that stays true.
-func encodeToolResult(data any, now int64) (string, error) {
+func encodeToolResult(data any, now int64, timezone string) (string, error) {
 	encoded, err := sonic.Marshal(data)
 	if err != nil {
 		return "", err
@@ -129,7 +133,7 @@ func encodeToolResult(data any, now int64) (string, error) {
 		return "", err
 	}
 
-	humanized, err := sonic.Marshal(humanizeDates(document, now))
+	humanized, err := sonic.Marshal(humanizeDates(document, now, timezone))
 	if err != nil {
 		return "", err
 	}

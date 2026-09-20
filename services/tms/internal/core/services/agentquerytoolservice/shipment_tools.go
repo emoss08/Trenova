@@ -150,7 +150,7 @@ func (t *searchShipmentsTool) Query(
 		return nil, err
 	}
 
-	criteria := newSearchCriteria("shipments")
+	criteria := newSearchCriteria("shipments").at(clockFor(params))
 	criteria.text(query)
 	criteria.field("status", status)
 

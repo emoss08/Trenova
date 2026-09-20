@@ -127,7 +127,7 @@ func (t *searchWorkerTool) Query(
 		limit = defaultSearchLimit
 	}
 
-	criteria := newSearchCriteria("workers")
+	criteria := newSearchCriteria("workers").at(clockFor(params))
 	criteria.text(query)
 
 	result, err := t.repo.List(ctx, &repositories.ListWorkersRequest{

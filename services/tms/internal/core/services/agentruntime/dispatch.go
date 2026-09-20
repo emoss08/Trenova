@@ -139,13 +139,14 @@ func (s *Service) runQueryTool(
 		OrganizationID: req.Actor.OrganizationID,
 		BusinessUnitID: req.Actor.BusinessUnitID,
 		Actor:          req.Actor,
+		Timezone:       req.Context.Timezone,
 		Params:         call.Arguments,
 	})
 	if err != nil {
 		return failedOutcome("Tool %q failed: %s", call.Name, err.Error())
 	}
 
-	encoded, err := encodeToolResult(data, timeutils.NowUnix())
+	encoded, err := encodeToolResult(data, timeutils.NowUnix(), req.Context.Timezone)
 	if err != nil {
 		return failedOutcome("Tool %q returned data that could not be encoded.", call.Name)
 	}

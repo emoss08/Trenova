@@ -682,3 +682,28 @@ func TestRun_ProposesUnpinnedWhenNoVersionReaderIsWired(t *testing.T) {
 	require.Len(t, result.Actions, 1)
 	assert.Nil(t, result.Actions[0].Target)
 }
+
+// Every tool that reasons about a day needs to know whose day. The
+// organization's zone travels from the runtime context into every query call.
+func TestRun_HandsQueryToolsTheOrganizationsTimezone(t *testing.T) {
+	t.Parallel()
+
+	tool := &agentruntimetest.StubQueryTool{ToolName: "get_shipment", Result: map[string]any{}}
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("get_shipment", map[string]any{"id": "S1"}),
+		textTurn("done"),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{
+		Tools: []serviceports.AgentQueryTool{tool},
+	}, &stubActionRegistry{}, nil)
+
+	_, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("get_shipment"),
+		Actor:      testActor(),
+		Context:    agentdefinition.RuntimeContext{Timezone: "America/Chicago"},
+		Input:      "where is S1",
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, "America/Chicago", tool.LastParams.Timezone)
+}

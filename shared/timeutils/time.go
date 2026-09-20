@@ -127,12 +127,22 @@ func TimeZoneAwareNow(location string) int64 {
 // form the date filters accept, so a value read out of one result can be passed
 // straight back into the next call.
 func DescribeUnixDate(ts, now int64) string {
-	date := time.Unix(ts, 0).UTC().Format(time.DateOnly)
+	return DescribeUnixDateIn(ts, now, "UTC")
+}
+
+// DescribeUnixDateIn is DescribeUnixDate with the day boundary drawn in the
+// given zone. Which day an instant falls on is a question about a place: a
+// card expiring at 00:30 New York time is "tomorrow" to the dispatcher there
+// at 23:30, and "today" only to a clock in Greenwich. An empty or unknown zone
+// is UTC.
+func DescribeUnixDateIn(ts, now int64, timezone string) string {
+	loc := LoadLocation(timezone)
+	date := time.Unix(ts, 0).In(loc).Format(time.DateOnly)
 
 	startOfDay := func(seconds int64) time.Time {
-		t := time.Unix(seconds, 0).UTC()
+		t := time.Unix(seconds, 0).In(loc)
 
-		return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+		return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
 	}
 
 	// Whole days apart, not seconds apart. "Tomorrow" has to read as one day

@@ -547,6 +547,10 @@ func (r *repository) ListExpiring(
 	now := timeutils.NowUnix()
 	horizon := now + int64(req.HorizonDays)*secondsPerDay
 	grace := now - int64(req.GraceDays)*secondsPerDay
+	if req.AsOf > 0 {
+		horizon = req.AsOf + int64(req.HorizonDays+1)*secondsPerDay - 1
+		grace = req.AsOf - int64(req.GraceDays)*secondsPerDay
+	}
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultExpiringPageSize

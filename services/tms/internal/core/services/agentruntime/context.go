@@ -51,20 +51,26 @@ func (b *ContextBuilder) Build(
 
 	tenant := req.Actor.TenantInfo()
 
-	if definition.HasContextProvider(agentdefinition.ContextOrganization) ||
-		definition.HasContextProvider(agentdefinition.ContextClock) {
-		org, err := b.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
-			TenantInfo: tenant,
-			IncludeBU:  true,
-		})
-		if err != nil {
-			b.logger.Warn("agent context: organization lookup failed",
-				zap.String("organization", tenant.OrgID.String()),
-				zap.Error(err),
-			)
-		} else {
+	// The organization is read on every build, not only when the prompt wants
+	// its name. Its timezone is what every tool means by "today", and a tool
+	// draws the day boundary in UTC unless it is told otherwise — so an agent
+	// whose prompt providers happened not to include the organization got a
+	// clock a few hours off in every date filter it ran.
+	describe := definition.HasContextProvider(agentdefinition.ContextOrganization) ||
+		definition.HasContextProvider(agentdefinition.ContextClock)
+	org, err := b.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+		TenantInfo: tenant,
+		IncludeBU:  describe,
+	})
+	if err != nil {
+		b.logger.Warn("agent context: organization lookup failed",
+			zap.String("organization", tenant.OrgID.String()),
+			zap.Error(err),
+		)
+	} else {
+		rc.Timezone = org.Timezone
+		if describe {
 			rc.OrganizationName = org.Name
-			rc.Timezone = org.Timezone
 			if org.BusinessUnit != nil {
 				rc.BusinessUnitName = org.BusinessUnit.Name
 			}

@@ -154,7 +154,7 @@ func (t *listTimeOffTool) Query(
 		IncludeWorker: true,
 	}
 
-	criteria := newSearchCriteria("time-off requests")
+	criteria := newSearchCriteria("time-off requests").at(clockFor(params))
 
 	status, err := timeOffEnum(params.Params, "status", worker.PTOStatusFromString)
 	if err != nil {
@@ -211,10 +211,10 @@ func applyTimeOffWindow(
 		request.StartDateFrom = from
 		request.StartDateTo = before
 		if from > 0 {
-			criteria.field("starting on or after", timeutils.FormatUnixDate(from))
+			criteria.field("starting on or after", timeutils.FormatUnixDateIn(from, criteria.clock.timezone))
 		}
 		if before > 0 {
-			criteria.field("starting on or before", timeutils.FormatUnixDate(before))
+			criteria.field("starting on or before", timeutils.FormatUnixDateIn(before, criteria.clock.timezone))
 		}
 
 		return
@@ -225,9 +225,12 @@ func applyTimeOffWindow(
 		horizon = defaultTimeOffWindowDays
 	}
 
-	now := timeutils.NowUnix()
-	request.StartDateFrom = now
-	request.StartDateTo = now + int64(horizon)*secondsPerDay
+	// Whole days in the organization's zone: from the start of today through
+	// the end of the horizon's last day. Leave that started this morning is
+	// still leave that is on now.
+	today := criteria.clock.today()
+	request.StartDateFrom = today
+	request.StartDateTo = today + int64(horizon+1)*secondsPerDay - 1
 	criteria.field("starting within", fmt.Sprintf("%d days", horizon))
 }
 
