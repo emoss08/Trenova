@@ -25117,6 +25117,15 @@
       "packages/shared/components"
     ]
   },
+  "Canceled before it finished.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Canceled by is required when status is Canceled": {
     "sites": 1,
     "scope": [
@@ -49937,7 +49946,7 @@
     ]
   },
   "Download": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -53076,6 +53085,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Earlier in this conversation, for reference only": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentguard"
     ]
   },
   "Earlier of arrival or appointment": {
@@ -63080,6 +63098,15 @@
       "routes/invoice"
     ]
   },
+  "Failed: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Failing": {
     "sites": 2,
     "scope": [
@@ -64607,6 +64634,33 @@
     "areas": [
       "routes/agent-control",
       "routes/time-attendance"
+    ]
+  },
+  "Finished with no matching rows.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Finished with {0} rows, capped — this is not the full set.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Finished with {0} rows.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Finishing": {
@@ -118210,6 +118264,15 @@
       "routes/edi"
     ]
   },
+  "Queued — waiting to start.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Queueing retries...": {
     "sites": 1,
     "scope": [
@@ -126087,12 +126150,13 @@
     ]
   },
   "Report": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "domain/homelayout",
       "routes/agent-control",
       "routes/home",
@@ -132440,6 +132504,15 @@
     ]
   },
   "Running v{0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Running — this is not finished yet.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -157890,6 +157963,15 @@
       "go/other"
     ]
   },
+  "The report failed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The report gallery is empty on this deployment.": {
     "sites": 1,
     "scope": [
@@ -158014,6 +158096,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "The result expired — run it again to get a fresh copy.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The result rows. Required: this is the report.": {

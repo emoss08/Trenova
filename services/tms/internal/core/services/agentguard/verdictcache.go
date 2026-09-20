@@ -44,28 +44,40 @@ func newVerdictCache() *verdictCache {
 	return &verdictCache{entries: entries}
 }
 
-func (c *verdictCache) get(orgID pulid.ID, input string) (ClassifierResult, bool) {
+func (c *verdictCache) get(
+	orgID pulid.ID,
+	conversation, input string,
+) (ClassifierResult, bool) {
 	if c == nil || c.entries == nil {
 		return ClassifierResult{}, false
 	}
 
-	return c.entries.Get(verdictKey(orgID, input))
+	return c.entries.Get(verdictKey(orgID, conversation, input))
 }
 
-func (c *verdictCache) put(orgID pulid.ID, input string, result ClassifierResult) {
+func (c *verdictCache) put(
+	orgID pulid.ID,
+	conversation, input string,
+	result ClassifierResult,
+) {
 	if c == nil || c.entries == nil {
 		return
 	}
 
-	c.entries.Add(verdictKey(orgID, input), result)
+	c.entries.Add(verdictKey(orgID, conversation, input), result)
 }
 
 // verdictKey hashes the message rather than keying on it directly, so a bounded
 // cache cannot be filled with the text of what people asked. Case and
 // surrounding whitespace are normalised because they change nothing about what
 // a request is asking for.
-func verdictKey(orgID pulid.ID, input string) string {
-	sum := sha256.Sum256([]byte(strings.ToLower(strings.TrimSpace(input))))
+func verdictKey(orgID pulid.ID, conversation, input string) string {
+	// The conversation is hashed with the message rather than beside it: what
+	// was classified is the pair, and a key that ignored half of it would hand
+	// a follow-up the verdict from a different thread.
+	normalized := strings.ToLower(strings.TrimSpace(conversation)) +
+		"\x00" + strings.ToLower(strings.TrimSpace(input))
+	sum := sha256.Sum256([]byte(normalized))
 
 	return orgID.String() + ":" + hex.EncodeToString(sum[:])
 }

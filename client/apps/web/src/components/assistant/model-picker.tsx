@@ -7,11 +7,7 @@ import {
   CommandItem,
   CommandList,
 } from "@trenova/shared/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@trenova/shared/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AssistantProviderOption } from "@/types/assistant";
 import { CheckIcon, ChevronDownIcon, SparklesIcon } from "lucide-react";
@@ -70,7 +66,7 @@ export function ModelPicker({ options, value, onChange, disabled = false }: Mode
       <PopoverTrigger
         disabled={disabled}
         className={cn(
-          "ui-focus-ring inline-flex max-w-[14rem] items-center gap-1.5 rounded-control",
+          "ui-focus-ring inline-flex max-w-[14rem] items-center gap-1.5 rounded-md",
           "border border-border bg-background px-2 py-1 text-xs text-muted-foreground",
           "transition-colors hover:text-foreground disabled:opacity-50",
         )}

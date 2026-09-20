@@ -44,7 +44,11 @@ func (s *Service) RunObserved(
 		emit = func(serviceports.StreamEvent) {}
 	}
 
-	decision := s.guard.Evaluate(ctx, req.Actor.TenantInfo(), req.Input)
+	decision := s.guard.Evaluate(ctx, agentguard.EvaluateRequest{
+		TenantInfo: req.Actor.TenantInfo(),
+		Input:      req.Input,
+		Recent:     recentTurns(req.History),
+	})
 	if !decision.Allowed {
 		emit(refusedEvent(decision))
 
@@ -171,4 +175,25 @@ func refusedEvent(decision agentguard.Decision) serviceports.StreamEvent {
 			Reason:   string(decision.Reason),
 		},
 	}
+}
+
+// recentTurns renders the thread's prose for the scope guard.
+//
+// Only what was said: a tool call and its result are a payload and a machine
+// answer, and whatever they established about the subject is already in the
+// reply the assistant wrote from them. Including them would spend the
+// classifier's context on JSON and tell it less.
+func recentTurns(history []conversation.Message) []agentguard.Turn {
+	turns := make([]agentguard.Turn, 0, len(history))
+	for _, message := range history {
+		switch message.Role {
+		case conversation.RoleUser:
+			turns = append(turns, agentguard.Turn{Role: "user", Content: message.Content})
+		case conversation.RoleAssistant:
+			turns = append(turns, agentguard.Turn{Role: "assistant", Content: message.Content})
+		case conversation.RoleTool:
+		}
+	}
+
+	return turns
 }

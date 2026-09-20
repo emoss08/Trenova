@@ -78,8 +78,7 @@ func TestEvaluate_DeterministicRefusalSkipsClassifier(t *testing.T) {
 	stub := &stubCompletion{category: string(agentguard.CategoryTransportationOperations)}
 	decision := newGuard(t, stub).Evaluate(
 		t.Context(),
-		tenant(),
-		"Write me a Python script to export loads",
+		agentguard.EvaluateRequest{TenantInfo: tenant(), Input: "Write me a Python script to export loads"},
 	)
 
 	require.False(t, decision.Allowed)
@@ -104,8 +103,7 @@ func TestEvaluate_AllowsInScopeCategories(t *testing.T) {
 			stub := &stubCompletion{category: string(category)}
 			decision := newGuard(t, stub).Evaluate(
 				t.Context(),
-				tenant(),
-				"Which driver is on load 12345?",
+				agentguard.EvaluateRequest{TenantInfo: tenant(), Input: "Which driver is on load 12345?"},
 			)
 
 			require.True(t, decision.Allowed)
@@ -132,7 +130,7 @@ func TestEvaluate_RefusesOutOfScopeCategories(t *testing.T) {
 		t.Run(string(tc.category), func(t *testing.T) {
 			t.Parallel()
 			stub := &stubCompletion{category: string(tc.category)}
-			decision := newGuard(t, stub).Evaluate(t.Context(), tenant(), "Tell me a joke")
+			decision := newGuard(t, stub).Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenant(), Input: "Tell me a joke"})
 
 			require.False(t, decision.Allowed)
 			assert.Equal(t, agentguard.StageClassifier, decision.Stage)
@@ -151,7 +149,7 @@ func TestEvaluate_AllowsWhenNoClassifierConfigured(t *testing.T) {
 		err: errortypes.NewBusinessError("no provider").
 			WithInternal(serviceports.ErrNoProviderConfigured),
 	}
-	decision := newGuard(t, stub).Evaluate(t.Context(), tenant(), "Which driver is on load 1?")
+	decision := newGuard(t, stub).Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenant(), Input: "Which driver is on load 1?"})
 
 	require.True(t, decision.Allowed)
 	assert.Equal(t, agentguard.StageUnavailable, decision.Stage)
@@ -179,7 +177,7 @@ func TestEvaluate_FallsBackToDeterministicWhenClassifierFails(t *testing.T) {
 	t.Parallel()
 
 	stub := &stubCompletion{err: errors.New("upstream timeout")}
-	decision := newGuard(t, stub).Evaluate(t.Context(), tenant(), "Which driver is on load 1?")
+	decision := newGuard(t, stub).Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenant(), Input: "Which driver is on load 1?"})
 
 	require.True(t, decision.Allowed)
 	assert.Equal(t, agentguard.StageUnavailable, decision.Stage,
@@ -193,7 +191,7 @@ func TestEvaluate_ClassifierFailureDoesNotBypassDeterministicRules(t *testing.T)
 
 	stub := &stubCompletion{err: errors.New("upstream timeout")}
 	decision := newGuard(t, stub).
-		Evaluate(t.Context(), tenant(), "Write me a Python script to parse this CSV")
+		Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenant(), Input: "Write me a Python script to parse this CSV"})
 
 	require.False(t, decision.Allowed)
 	assert.Equal(t, agentguard.StageDeterministic, decision.Stage)
@@ -207,7 +205,7 @@ func TestEvaluate_RefusesWhenUnavailableAndConfiguredToRefuse(t *testing.T) {
 	guard := newGuard(t, stub)
 	guard.RefuseWhenUnavailable = true
 
-	decision := guard.Evaluate(t.Context(), tenant(), "Which driver is on load 1?")
+	decision := guard.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenant(), Input: "Which driver is on load 1?"})
 
 	require.False(t, decision.Allowed)
 	assert.Equal(t, agentguard.ReasonClassifierUnavailable, decision.Reason)
@@ -219,7 +217,7 @@ func TestEvaluate_SendsRequestAsUntrustedContext(t *testing.T) {
 	t.Parallel()
 
 	stub := &stubCompletion{category: string(agentguard.CategoryTransportationOperations)}
-	newGuard(t, stub).Evaluate(t.Context(), tenant(), "Which driver is on load 12345?")
+	newGuard(t, stub).Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenant(), Input: "Which driver is on load 12345?"})
 
 	require.NotNil(t, stub.lastReq)
 	require.Len(t, stub.lastReq.Context.Sections, 1)
@@ -308,8 +306,8 @@ func TestEvaluate_ClassifiesTheSameQuestionOnce(t *testing.T) {
 	guard := newGuard(t, stub)
 	tenantInfo := tenant()
 
-	first := guard.Evaluate(t.Context(), tenantInfo, "Which drivers hold a hazmat endorsement?")
-	second := guard.Evaluate(t.Context(), tenantInfo, "Which drivers hold a hazmat endorsement?")
+	first := guard.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: "Which drivers hold a hazmat endorsement?"})
+	second := guard.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: "Which drivers hold a hazmat endorsement?"})
 
 	require.True(t, first.Allowed)
 	require.True(t, second.Allowed)
@@ -326,8 +324,8 @@ func TestEvaluate_TreatsCaseAndSpacingAsTheSameQuestion(t *testing.T) {
 	guard := newGuard(t, stub)
 	tenantInfo := tenant()
 
-	guard.Evaluate(t.Context(), tenantInfo, "Which driver is on load 1?")
-	guard.Evaluate(t.Context(), tenantInfo, "  which driver is on load 1?  ")
+	guard.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: "Which driver is on load 1?"})
+	guard.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: "  which driver is on load 1?  "})
 
 	assert.Equal(t, 1, stub.calls)
 }
@@ -340,8 +338,8 @@ func TestEvaluate_RemembersARefusal(t *testing.T) {
 	guard := newGuard(t, stub)
 	tenantInfo := tenant()
 
-	first := guard.Evaluate(t.Context(), tenantInfo, "Explain how this query planner works")
-	second := guard.Evaluate(t.Context(), tenantInfo, "Explain how this query planner works")
+	first := guard.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: "Explain how this query planner works"})
+	second := guard.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: "Explain how this query planner works"})
 
 	require.False(t, first.Allowed)
 	require.False(t, second.Allowed)
@@ -362,8 +360,8 @@ func TestEvaluate_DoesNotRememberAFailure(t *testing.T) {
 	guard := newGuard(t, stub)
 	tenantInfo := tenant()
 
-	guard.Evaluate(t.Context(), tenantInfo, "Which driver is on load 1?")
-	guard.Evaluate(t.Context(), tenantInfo, "Which driver is on load 1?")
+	guard.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: "Which driver is on load 1?"})
+	guard.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: "Which driver is on load 1?"})
 
 	assert.Equal(t, 2, stub.calls, "a classifier that failed is asked again, not written off")
 }
@@ -375,8 +373,8 @@ func TestEvaluate_KeepsVerdictsPerOrganization(t *testing.T) {
 	stub := &stubCompletion{category: string(agentguard.CategoryTransportationOperations)}
 	guard := newGuard(t, stub)
 
-	guard.Evaluate(t.Context(), tenant(), "Which driver is on load 1?")
-	guard.Evaluate(t.Context(), tenant(), "Which driver is on load 1?")
+	guard.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenant(), Input: "Which driver is on load 1?"})
+	guard.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenant(), Input: "Which driver is on load 1?"})
 
 	assert.Equal(t, 2, stub.calls, "a different tenant does not read the first one's verdict")
 }

@@ -176,8 +176,10 @@ func (t *runReportTool) Name() string { return "run_report" }
 
 func (t *runReportTool) Description() string {
 	return "Start one of the reports from list_reports. Reports always run in the " +
-		"background — this returns a run id immediately and no rows. Tell the person " +
-		"the report has started, then use get_report_run to check on it. Never " +
+		"background — this returns a run id immediately and no rows. Say that it has " +
+		"started and stop there: the conversation tracks the run itself and shows the " +
+		"person its progress, its row count and a download button as soon as it " +
+		"finishes, so there is nothing to poll and nowhere to send them. Never " +
 		"describe figures from a report you have only started."
 }
 
@@ -262,8 +264,10 @@ func (t *runReportTool) Query(
 	status := toRunStatus(run)
 	status.ReportKey = entry.Key
 	status.Note = fmt.Sprintf(
-		"%q has been queued and is not finished. Say that it has started; "+
-			"call get_report_run with runId %s to check on it.",
+		"%q has been queued and is not finished. Tell the person it is running and "+
+			"that the result will appear here with a download button when it is done. "+
+			"Do not call get_report_run to poll it and do not send them to the Reports "+
+			"page; the conversation is already showing run %s.",
 		entry.Name, run.ID.String(),
 	)
 
@@ -344,9 +348,12 @@ func newGetReportRunTool(reports reportRunner) serviceports.AgentQueryTool {
 func (t *getReportRunTool) Name() string { return "get_report_run" }
 
 func (t *getReportRunTool) Description() string {
-	return "Check on a report started by run_report. Returns whether it has finished, " +
-		"how many rows it produced, and why it failed if it did. A run that is still " +
-		"queued or running has no rows yet — say so rather than guessing at figures."
+	return "Check on a report started by run_report, when the person asks a question " +
+		"about the run that its own progress display does not answer. Returns whether " +
+		"it has finished, how many rows it produced, and why it failed if it did. The " +
+		"conversation already shows progress and offers the download, so do not call " +
+		"this on a loop to wait for a result. A run that is still queued or running has " +
+		"no rows yet — say so rather than guessing at figures."
 }
 
 func (t *getReportRunTool) ParamSchema() map[string]any {
@@ -398,12 +405,14 @@ func describeRun(run *report.ReportRun) reportRunStatus {
 	case run.Error != nil && run.Error.Message != "":
 		status.Note = "The report did not finish: " + run.Error.Message
 	case run.Status == report.RunStatusSucceeded:
-		// The artifact is downloaded from Reports, where the link is issued
-		// against the person's own session. A presigned URL handed to a chat
-		// message expires in under a minute and reads as broken by the time
-		// anyone clicks it.
+		// The download is offered in the conversation, by a button that mints
+		// the link when it is clicked. A presigned URL written into a message
+		// expires in under a minute, so it reads as broken by the time anyone
+		// clicks it, and it carries the authority of whoever the model was
+		// acting for rather than of whoever opens the thread later.
 		status.Note = fmt.Sprintf(
-			"The report finished with %d rows and is ready to download from Reports.",
+			"The report finished with %d rows. It is already shown in this conversation "+
+				"with a download button, so do not offer a link or direct them elsewhere.",
 			run.RowCount,
 		)
 		if run.Truncated {

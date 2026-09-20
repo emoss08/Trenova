@@ -13,6 +13,7 @@ function thread(id: string, lastMessageAt: number): AssistantThread {
     organizationId: "org",
     userId: "u",
     agentDefinitionId: "agdef_1",
+    preferredProviderId: "",
     title: id,
     status: "Active",
     lastMessageAt,

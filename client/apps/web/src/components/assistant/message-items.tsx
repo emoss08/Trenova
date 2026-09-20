@@ -18,6 +18,8 @@ import type { AssistantMessage, AssistantPageContext, AssistantProposal } from "
 import { CheckIcon, CopyIcon, MapPinIcon, ShieldAlertIcon } from "lucide-react";
 import { useCallback, useState, type ReactNode } from "react";
 import { ProposalCard } from "./proposal-card";
+import { ReportRunCard } from "./report-run-card";
+import { reportRunsFrom } from "./report-runs";
 import type { ThreadEntry } from "./thread-view";
 import { ToolTimeline, type ToolStep } from "./tool-activity";
 
@@ -195,6 +197,10 @@ export function AssistantEntry({
   const t = useT();
   const { message, tools } = entry;
 
+  // A report run outlives the turn that started it, so the thread follows it
+  // rather than leaving the reader to ask again for the outcome.
+  const reportRuns = reportRunsFrom(tools);
+
   const steps: ToolStep[] = tools.map((exchange) => ({
     id: exchange.call.id,
     name: exchange.call.name,
@@ -236,6 +242,9 @@ export function AssistantEntry({
     >
       {steps.length > 0 && <ToolTimeline steps={steps} />}
       {message.content !== "" && <AssistantProse content={message.content} />}
+      {reportRuns.map((run) => (
+        <ReportRunCard key={run.runId} run={run} />
+      ))}
       {proposals.map((proposal) => (
         <ProposalCard key={proposal.id} proposal={proposal} threadId={threadId} />
       ))}
