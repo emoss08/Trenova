@@ -64,14 +64,22 @@ export class AssistantService {
    * A refused turn comes back as a normal result with `refused` set, not as an
    * error: the turn was processed, recorded, and explained.
    */
+  /** The models this organization has made available to the assistant. */
+  public async listProviders() {
+    const response = await api.get("/assistant/providers/");
+    return safeParse(assistantProviderListSchema, response, "Assistant Providers").results;
+  }
+
   public async sendMessage(
     threadId: AssistantThread["id"],
     content: string,
     context: AssistantPageContext | null = null,
+    providerId = "",
   ) {
     const response = await api.post(`/assistant/threads/${threadId}/messages/`, {
       content,
       context,
+      providerId,
     });
     return safeParse(sendMessageResultSchema, response, "Assistant Reply");
   }
@@ -87,6 +95,7 @@ export class AssistantService {
     onEvent: (event: AssistantStreamEvent) => void,
     signal?: AbortSignal,
     context: AssistantPageContext | null = null,
+    providerId = "",
   ): Promise<void> {
     const path = `/assistant/threads/${threadId}/messages/stream/`;
     const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -96,7 +105,7 @@ export class AssistantService {
         { "Content-Type": "application/json", Accept: "text/event-stream" },
         path,
       ),
-      body: JSON.stringify({ content, context }),
+      body: JSON.stringify({ content, context, providerId }),
       credentials: "include",
       signal,
     });

@@ -54,7 +54,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
   );
 
   const send = useCallback(
-    async (content: string, context?: AssistantPageContext | null) => {
+    async (content: string, context?: AssistantPageContext | null, providerId = "") => {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
@@ -83,6 +83,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           onEvent,
           controller.signal,
           pageContext,
+          providerId,
         );
       } catch (error) {
         if (controller.signal.aborted) {

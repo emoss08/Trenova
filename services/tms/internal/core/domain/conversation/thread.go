@@ -37,6 +37,16 @@ type Thread struct {
 	// LastMessageAt orders a user's thread list without a join onto messages.
 	LastMessageAt int64 `json:"lastMessageAt" bun:"last_message_at,notnull,default:0"`
 
+	// PreferredProviderID is the model the person chose for this conversation.
+	// Empty means the organization's priority order decides, which is the
+	// default and what every thread did before the picker existed.
+	//
+	// It is a preference, not a pin: the router tries it first and falls through
+	// to the rest if it fails, so a rate-limited free endpoint degrades into a
+	// slower answer rather than no answer. Each message records the provider
+	// that actually served it, which is how the reader sees the difference.
+	PreferredProviderID pulid.ID `json:"preferredProviderId" bun:"preferred_provider_id,type:VARCHAR(100),nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

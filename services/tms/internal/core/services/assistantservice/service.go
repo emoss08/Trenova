@@ -20,6 +20,7 @@ type Params struct {
 	Definitions   repositories.AgentDefinitionRepository
 	Recorder      *proposalrecorder.Service
 	Proposals     repositories.AgentProposalRepository
+	AIProviders   repositories.AIProviderRepository
 }
 
 type Service struct {
@@ -31,6 +32,7 @@ type Service struct {
 	definitions   repositories.AgentDefinitionRepository
 	recorder      *proposalrecorder.Service
 	proposals     chatProposalStore
+	providers     repositories.AIProviderRepository
 }
 
 func New(p Params) serviceports.AssistantService {
@@ -41,6 +43,7 @@ func New(p Params) serviceports.AssistantService {
 		contexts:      p.Contexts,
 		conversations: p.Conversations,
 		definitions:   p.Definitions,
+		providers:     p.AIProviders,
 		recorder:      p.Recorder,
 		proposals:     p.Proposals,
 	}

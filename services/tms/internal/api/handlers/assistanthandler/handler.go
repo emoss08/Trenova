@@ -48,6 +48,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/assistant")
 	resource := permission.ResourceAssistant.String()
 
+	// Anyone who may use the assistant may see which models they can pick; the
+	// response is a projection, so this does not widen access to the provider
+	// records themselves.
+	api.GET("/providers/", h.pm.RequirePermission(resource, permission.OpRead), h.listProviders)
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
 	api.POST("/threads/", h.pm.RequirePermission(resource, permission.OpCreate), h.startThread)
 	api.GET("/threads/:threadID/", h.pm.RequirePermission(resource, permission.OpRead), h.getThread)
@@ -254,6 +258,11 @@ type pageContextRequest struct {
 type sendMessageRequest struct {
 	Content string              `json:"content"`
 	Context *pageContextRequest `json:"context"`
+	// ProviderID is the model the person picked in the composer. Empty leaves
+	// the choice to the organization's priority order. It is resolved against
+	// the providers this organization has assigned to the assistant before it
+	// is used or stored, so an unknown id is dropped rather than trusted.
+	ProviderID pulid.ID `json:"providerId"`
 }
 
 func (r *sendMessageRequest) page() *agent.PageContext {
@@ -286,10 +295,11 @@ func (h *Handler) sendMessage(c *gin.Context) {
 
 	actor := requestActorFromAuthContext(authCtx)
 	result, err := h.service.SendMessage(c.Request.Context(), &serviceports.SendMessageRequest{
-		ThreadID:   threadID,
-		Content:    body.Content,
-		Page:       body.page(),
-		TenantInfo: tenantFromAuthContext(authCtx),
+		ThreadID:            threadID,
+		Content:             body.Content,
+		Page:                body.page(),
+		TenantInfo:          tenantFromAuthContext(authCtx),
+		PreferredProviderID: body.ProviderID,
 	}, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -346,10 +356,11 @@ func (h *Handler) sendMessageStream(c *gin.Context) {
 
 	actor := requestActorFromAuthContext(authCtx)
 	result, err := h.service.SendMessageStream(c.Request.Context(), &serviceports.SendMessageRequest{
-		ThreadID:   threadID,
-		Content:    body.Content,
-		Page:       body.page(),
-		TenantInfo: tenantFromAuthContext(authCtx),
+		ThreadID:            threadID,
+		Content:             body.Content,
+		Page:                body.page(),
+		TenantInfo:          tenantFromAuthContext(authCtx),
+		PreferredProviderID: body.ProviderID,
 	}, &actor, emit)
 	if err != nil {
 		emit(serviceports.StreamEvent{
@@ -373,4 +384,17 @@ func (h *Handler) streamErrorMessage(err error) string {
 	h.logger.Error("assistant stream failed", zap.Error(err))
 
 	return "The assistant could not finish this reply. Try again in a moment."
+}
+
+func (h *Handler) listProviders(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	actor := requestActorFromAuthContext(authCtx)
+
+	options, err := h.service.SelectableProviders(c.Request.Context(), actor)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": options})
 }

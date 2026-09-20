@@ -8,6 +8,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -96,7 +97,7 @@ func (s *Service) Run(
 			System:              system,
 			Messages:            messages,
 			Tools:               tools.specs,
-			PreferredProviderID: definition.PreferredProviderID,
+			PreferredProviderID: preferredProvider(req, definition),
 		}, sink)
 		if err != nil {
 			return nil, err
@@ -299,4 +300,23 @@ func (s *Service) ToolSummaries(
 	}
 
 	return summaries
+}
+
+// preferredProvider resolves whose choice of model wins.
+//
+// The reader's beats the administrator's default: the definition pins a
+// provider for everyone using that agent, while a person picking in the
+// composer is choosing for their own conversation. Neither can reach a provider
+// the organization has not enabled for this task — the router filters its
+// candidates before any preference is applied — so this decides ordering, never
+// access.
+func preferredProvider(
+	req *serviceports.RunRequest,
+	definition *agentdefinition.Definition,
+) pulid.ID {
+	if !req.PreferredProviderID.IsNil() {
+		return req.PreferredProviderID
+	}
+
+	return definition.PreferredProviderID
 }

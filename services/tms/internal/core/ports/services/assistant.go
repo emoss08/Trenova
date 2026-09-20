@@ -25,6 +25,13 @@ type SendMessageRequest struct {
 	// sent it. It is validated and stored with the user turn.
 	Page       *agent.PageContext
 	TenantInfo pagination.TenantInfo
+	// PreferredProviderID is the model the person picked in the composer. It is
+	// validated against the providers this organization has assigned to the
+	// assistant before it is stored, so a stale or foreign id is dropped rather
+	// than carried; the router would ignore it anyway, but silently keeping an
+	// unusable preference on the thread would show the wrong model in the
+	// picker forever.
+	PreferredProviderID pulid.ID
 }
 
 // SendMessageResult is what the turn produced and saved.
@@ -153,6 +160,12 @@ type AssistantService interface {
 		ctx context.Context,
 		req repositories.GetThreadRequest,
 	) ([]AssistantProposal, error)
+	// SelectableProviders lists the models a person may pick for the assistant,
+	// projected so no credential leaves the provider record.
+	SelectableProviders(
+		ctx context.Context,
+		actor RequestActor,
+	) ([]AssistantProviderOption, error)
 	ListMessages(
 		ctx context.Context,
 		req repositories.GetThreadRequest,
@@ -172,4 +185,20 @@ type AssistantService interface {
 		actor *RequestActor,
 		emit AssistantStreamEmitter,
 	) (*SendMessageResult, error)
+}
+
+// AssistantProviderOption is one entry in the model picker: enough to render a
+// choice, and none of the provider's credentials.
+type AssistantProviderOption struct {
+	ID pulid.ID `json:"id"`
+	// Name is what the administrator called this endpoint.
+	Name string `json:"name"`
+	// Kind is the vendor, which the client renders as a mark.
+	Kind string `json:"kind"`
+	// Model is the identifier this endpoint is pinned to, and the label a
+	// person actually recognises.
+	Model string `json:"model"`
+	// Trusted is shown because it decides whether this choice can serve work
+	// that reaches financial records.
+	Trusted bool `json:"trusted"`
 }

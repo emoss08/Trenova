@@ -33,6 +33,12 @@ type RunRequest struct {
 	History []conversation.Message
 	Input   string
 	Emit    AssistantStreamEmitter
+	// PreferredProviderID is the reader's own choice for this turn, which wins
+	// over the definition's. An administrator pins a default for everyone on
+	// the agent; a person picking a model in the composer is overriding that
+	// default for their own conversation, so the more specific choice applies.
+	// Empty falls back to the definition, and then to priority order.
+	PreferredProviderID pulid.ID
 }
 
 type RunResult struct {

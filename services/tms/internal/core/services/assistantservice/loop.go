@@ -18,6 +18,8 @@ type TurnRequest struct {
 	History    []conversation.Message
 	Input      string
 	Page       *agentdefinition.PageContext
+	// PreferredProviderID is the reader's chosen model for this conversation.
+	PreferredProviderID pulid.ID
 }
 
 type TurnResult struct {
@@ -68,12 +70,13 @@ func (s *Service) RunObserved(
 	runtimeContext := s.buildContext(ctx, req)
 
 	run, err := s.runtime.Run(ctx, &serviceports.RunRequest{
-		Definition: req.Definition,
-		Actor:      req.Actor,
-		Context:    runtimeContext,
-		History:    req.History,
-		Input:      req.Input,
-		Emit:       emit,
+		Definition:          req.Definition,
+		Actor:               req.Actor,
+		Context:             runtimeContext,
+		History:             req.History,
+		Input:               req.Input,
+		Emit:                emit,
+		PreferredProviderID: req.PreferredProviderID,
 	})
 	if err != nil {
 		return nil, err

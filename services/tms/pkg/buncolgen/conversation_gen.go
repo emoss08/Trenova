@@ -322,29 +322,31 @@ var ThreadTable = TableInfo{
 //	q.Where(ThreadColumns.ID.Eq(), id)           // WHERE athr.id = ?
 //	q.Order(ThreadColumns.CreatedAt.OrderDesc())  // ORDER BY athr.created_at DESC
 var ThreadColumns = struct {
-	ID                Column // "id" → qualified: "athr.id"
-	BusinessUnitID    Column // "business_unit_id" → qualified: "athr.business_unit_id"
-	OrganizationID    Column // "organization_id" → qualified: "athr.organization_id"
-	UserID            Column // "user_id" → qualified: "athr.user_id"
-	AgentDefinitionID Column // "agent_definition_id" → qualified: "athr.agent_definition_id"
-	Title             Column // "title" → qualified: "athr.title"
-	Status            Column // "status" → qualified: "athr.status"
-	LastMessageAt     Column // "last_message_at" → qualified: "athr.last_message_at"
-	Version           Column // "version" → qualified: "athr.version"
-	CreatedAt         Column // "created_at" → qualified: "athr.created_at"
-	UpdatedAt         Column // "updated_at" → qualified: "athr.updated_at"
+	ID                  Column // "id" → qualified: "athr.id"
+	BusinessUnitID      Column // "business_unit_id" → qualified: "athr.business_unit_id"
+	OrganizationID      Column // "organization_id" → qualified: "athr.organization_id"
+	UserID              Column // "user_id" → qualified: "athr.user_id"
+	AgentDefinitionID   Column // "agent_definition_id" → qualified: "athr.agent_definition_id"
+	Title               Column // "title" → qualified: "athr.title"
+	Status              Column // "status" → qualified: "athr.status"
+	LastMessageAt       Column // "last_message_at" → qualified: "athr.last_message_at"
+	PreferredProviderID Column // "preferred_provider_id" → qualified: "athr.preferred_provider_id"
+	Version             Column // "version" → qualified: "athr.version"
+	CreatedAt           Column // "created_at" → qualified: "athr.created_at"
+	UpdatedAt           Column // "updated_at" → qualified: "athr.updated_at"
 }{
-	ID:                NewColumn("id", "athr"),
-	BusinessUnitID:    NewColumn("business_unit_id", "athr"),
-	OrganizationID:    NewColumn("organization_id", "athr"),
-	UserID:            NewColumn("user_id", "athr"),
-	AgentDefinitionID: NewColumn("agent_definition_id", "athr"),
-	Title:             NewColumn("title", "athr"),
-	Status:            NewColumn("status", "athr"),
-	LastMessageAt:     NewColumn("last_message_at", "athr"),
-	Version:           NewColumn("version", "athr"),
-	CreatedAt:         NewColumn("created_at", "athr"),
-	UpdatedAt:         NewColumn("updated_at", "athr"),
+	ID:                  NewColumn("id", "athr"),
+	BusinessUnitID:      NewColumn("business_unit_id", "athr"),
+	OrganizationID:      NewColumn("organization_id", "athr"),
+	UserID:              NewColumn("user_id", "athr"),
+	AgentDefinitionID:   NewColumn("agent_definition_id", "athr"),
+	Title:               NewColumn("title", "athr"),
+	Status:              NewColumn("status", "athr"),
+	LastMessageAt:       NewColumn("last_message_at", "athr"),
+	PreferredProviderID: NewColumn("preferred_provider_id", "athr"),
+	Version:             NewColumn("version", "athr"),
+	CreatedAt:           NewColumn("created_at", "athr"),
+	UpdatedAt:           NewColumn("updated_at", "athr"),
 }
 
 // ThreadFieldMap maps JSON API field names to database column names.
@@ -352,17 +354,18 @@ var ThreadColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Thread.GetStaticFieldMap().
 var ThreadFieldMap = map[string]string{
-	"id":                "id",
-	"businessUnitId":    "business_unit_id",
-	"organizationId":    "organization_id",
-	"userId":            "user_id",
-	"agentDefinitionId": "agent_definition_id",
-	"title":             "title",
-	"status":            "status",
-	"lastMessageAt":     "last_message_at",
-	"version":           "version",
-	"createdAt":         "created_at",
-	"updatedAt":         "updated_at",
+	"id":                  "id",
+	"businessUnitId":      "business_unit_id",
+	"organizationId":      "organization_id",
+	"userId":              "user_id",
+	"agentDefinitionId":   "agent_definition_id",
+	"title":               "title",
+	"status":              "status",
+	"lastMessageAt":       "last_message_at",
+	"preferredProviderId": "preferred_provider_id",
+	"version":             "version",
+	"createdAt":           "created_at",
+	"updatedAt":           "updated_at",
 }
 
 // ThreadInsertableColumns lists column names suitable for INSERT statements on the "assistant_threads" table.
@@ -376,6 +379,7 @@ var ThreadInsertableColumns = []string{
 	"title",
 	"status",
 	"last_message_at",
+	"preferred_provider_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -446,17 +450,18 @@ func ThreadApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.Sel
 //	ThreadFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var ThreadFilter = struct {
-	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	UserID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
-	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
-	Title             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "title" → DB: "title"
-	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	LastMessageAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastMessageAt" → DB: "last_message_at"
-	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	UserID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	AgentDefinitionID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	Title               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "title" → DB: "title"
+	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	LastMessageAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastMessageAt" → DB: "last_message_at"
+	PreferredProviderID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preferredProviderId" → DB: "preferred_provider_id"
+	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -481,6 +486,9 @@ var ThreadFilter = struct {
 	},
 	LastMessageAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("lastMessageAt", op, value)
+	},
+	PreferredProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("preferredProviderId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
