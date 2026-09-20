@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/document"
@@ -1420,29 +1419,17 @@ func (h *Handler) importAssistantChatStream(c *gin.Context) {
 	}
 	body.DocumentID = documentID.String()
 
-	c.Writer.Header().Set("Content-Type", "text/event-stream")
-	c.Writer.Header().Set("Cache-Control", "no-cache")
-	c.Writer.Header().Set("Connection", "keep-alive")
-	c.Writer.Header().Set("X-Accel-Buffering", "no")
-
-	flusher, ok := c.Writer.(http.Flusher)
-	if !ok {
+	stream, err := helpers.OpenEventStream(c, helpers.EventStreamOptions{})
+	if err != nil {
 		h.eh.HandleError(c, errortypes.NewBusinessError("Streaming not supported"))
 		return
 	}
+	defer stream.Close()
 
-	emit := func(event serviceports.StreamEvent) {
-		data, _ := sonic.Marshal(event.Data)
-		_, _ = c.Writer.WriteString("event: " + event.Event + "\n")
-		_, _ = c.Writer.WriteString("data: " + string(data) + "\n\n")
-		flusher.Flush()
-	}
+	emit := func(event serviceports.StreamEvent) { stream.Emit(event.Event, event.Data) }
 
 	if err = h.importAssistant.ChatStream(c.Request.Context(), &body, emit); err != nil {
-		errData, _ := sonic.Marshal(map[string]string{"message": err.Error()})
-		_, _ = c.Writer.WriteString("event: error\n")
-		_, _ = c.Writer.WriteString("data: " + string(errData) + "\n\n")
-		flusher.Flush()
+		stream.Emit("error", map[string]string{"message": err.Error()})
 	}
 }
 

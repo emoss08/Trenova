@@ -723,7 +723,7 @@ func (c *DocumentIntelligenceConfig) GetAICompletionTimeout() time.Duration {
 // fault.
 func (c *DocumentIntelligenceConfig) GetAIStreamIdleTimeout() time.Duration {
 	if c.AIStreamIdleTimeout <= 0 {
-		return 90 * time.Second
+		return 5 * time.Minute
 	}
 
 	return c.AIStreamIdleTimeout

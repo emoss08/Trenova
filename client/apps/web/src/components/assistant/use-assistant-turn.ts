@@ -117,11 +117,17 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       if (done !== null) {
         await settle(done);
       } else {
-        // A refusal is complete in itself and has been saved; a server error
-        // stays on screen until the person retries or dismisses it.
+        // A refusal is complete in itself and has been saved. A server error
+        // stays on screen until the person retries or dismisses it — but the
+        // thread is refreshed underneath it, because the server now keeps what
+        // ran before the failure (the question, the lookups, any write a tool
+        // made) and that record belongs in view rather than behind a banner
+        // implying nothing happened.
         setTurn((state) => {
           if (state?.status === "refused") {
             void settle(null);
+          } else if (state?.status === "error") {
+            void refreshThread();
           }
           return state;
         });
@@ -137,7 +143,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         ? {
             ...state,
             status: "error",
-            error: t("Stopped. The assistant may still finish and save its reply."),
+            error: t("Stopped. What was said so far has been kept in the thread."),
           }
         : state,
     );

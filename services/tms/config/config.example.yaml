@@ -164,7 +164,7 @@ documentIntelligence:
   enableAI: false # Let document intelligence classify and extract with a model
   aiTimeout: 20s # Hard timeout for reachability probes against a provider
   aiCompletionTimeout: 5m # Hard timeout for one blocking call to a model
-  aiStreamIdleTimeout: 90s # How long a streaming reply may go silent before it is abandoned
+  aiStreamIdleTimeout: 5m # How long a streaming reply may go silent before it is abandoned; reasoning models can think for minutes before their first token
   aiMaxInputChars: 24000 # Max extracted text sent to AI
   aiMaxRetries: 2 # Retry count for transient AI failures
   enableOCRPreprocessing: true # Preprocess scanned images before OCR

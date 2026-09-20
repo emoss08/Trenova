@@ -406,7 +406,12 @@ func (s *Service) streamClientFor(provider *aiprovider.Provider) *http.Client {
 		s.streamClients = make(map[bool]*http.Client, 2)
 	}
 
-	client := httpsafe.NewStreamingClientWithPolicy(s.egressPolicy(allowPrivate))
+	// A stream's time-to-headers is bounded by the same silence budget as its
+	// body, not by the probe timeout: an endpoint that holds the headers until
+	// it has something to say is slow, not down.
+	policy := s.egressPolicy(allowPrivate)
+	policy.ResponseHeaderTimeout = s.cfg.GetAIStreamIdleTimeout()
+	client := httpsafe.NewStreamingClientWithPolicy(policy)
 	s.streamClients[allowPrivate] = client
 
 	return client

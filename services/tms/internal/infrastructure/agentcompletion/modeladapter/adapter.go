@@ -76,9 +76,15 @@ type Call struct {
 }
 
 // defaultStreamIdle is the silence a stream is allowed when nothing configures
-// one. It is generous because the gap before the first token of a long answer,
-// or between tool rounds on a loaded endpoint, is ordinary rather than a fault.
-const defaultStreamIdle = 90 * time.Second
+// one.
+//
+// Five minutes, not ninety seconds. A model that streams its reasoning resets
+// this on every thinking delta, but one that reasons out of sight sends nothing
+// at all until its first answer token, and a hard question on a heavy model can
+// hold that silence for minutes. This is a dead-connection check, nothing more:
+// waiting five minutes on a socket that has actually died is a far smaller cost
+// than severing a live answer that was about to arrive.
+const defaultStreamIdle = 5 * time.Minute
 
 // streamHTTPClient is the client a streaming call should use.
 func (c *Call) streamHTTPClient() *http.Client {
