@@ -2,6 +2,11 @@ version: "2"
 run:
   go: "1.26"
   tests: false
+  # Must match GO_TAGS in services/tms/Taskfile.yml. Linting under a different
+  # tag set type-checks a different build of almost every package and discards
+  # the build cache the other commands share.
+  build-tags:
+    - nomsgpack
 linters:
   default: none
   enable:

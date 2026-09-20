@@ -40,6 +40,11 @@ permissions:
   contents: read
 
 env:
+  # Must match GO_TAGS in services/tms/Taskfile.yml. 769 of 832 packages depend
+  # on gin, so a job that builds under a different tag set shares no build cache
+  # with the others. Steps passing -tags on the command line override this
+  # rather than merging, so they spell nomsgpack out themselves.
+  GOFLAGS: -tags=nomsgpack
   # Both test harnesses reuse this server, so the migrated template database is
   # built once for the whole run instead of once per package.
   TRENOVA_TEST_POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/trenova_test?sslmode=disable
@@ -131,7 +136,7 @@ jobs:
           printf 'integration packages: %d\n' "${#packages[@]}"
           # Cap package parallelism: every process creates databases on the one
           # shared server, and the runner only has two cores anyway.
-          go test -p 4 -tags=integration -coverprofile=coverage-integration.out \
+          go test -p 4 -tags=integration,nomsgpack -coverprofile=coverage-integration.out \
             -covermode=atomic "${packages[@]}"
 
       - name: Upload integration coverage artifact
@@ -344,4 +349,4 @@ jobs:
 
       - name: Run TMS race tests
         working-directory: ./services/tms
-        run: go test -p 4 -race -tags=integration ./...
+        run: go test -p 4 -race -tags=integration,nomsgpack ./...
