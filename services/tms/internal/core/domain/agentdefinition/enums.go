@@ -146,11 +146,14 @@ func (t Template) StarterTools() []string {
 			"list_tractors",
 			"list_trailers",
 			"list_expiring_credentials",
+			"list_time_off",
 			"list_hold_reasons",
 			"assign_move",
 			"add_shipment_comment",
 			"place_shipment_hold",
 			"release_shipment_hold",
+			"update_tractor_status",
+			"update_trailer_status",
 		}
 	case TemplateBillingAssistant:
 		return []string{
@@ -173,6 +176,7 @@ func (t Template) StarterTools() []string {
 			"search_worker",
 			"list_workers",
 			"list_expiring_credentials",
+			"list_time_off",
 			"list_tractors",
 			"list_trailers",
 			"list_reports",

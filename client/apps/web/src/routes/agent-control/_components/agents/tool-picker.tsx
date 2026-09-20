@@ -29,8 +29,18 @@ const TIER_LABEL: Record<AutonomyTier, string> = {
   AutoExecute: "Automatic",
 };
 
+/**
+ * Resources whose title-cased name reads wrong. Title case turns an
+ * abbreviation into a word — worker_pto becomes "Worker Pto" — and this is the
+ * label an administrator reads while deciding what an agent may touch.
+ */
+const RESOURCE_LABELS: Record<string, string> = {
+  worker_pto: "Worker time off",
+  hazardous_material: "Hazardous materials",
+};
+
 function resourceLabel(resource: string): string {
-  return toTitleCase(resource.replace(/[_-]+/g, " "));
+  return RESOURCE_LABELS[resource] ?? toTitleCase(resource.replace(/[_-]+/g, " "));
 }
 
 /**

@@ -75,6 +75,18 @@ var vocabulary = map[string][]string{
 	"lapsed":      {"expiring", "credential"},
 	"assign":      {"assign", "move"},
 	"dispatch":    {"assign", "move"},
+	"pto":         {"time", "off"},
+	"vacation":    {"time", "off"},
+	"leave":       {"time", "off"},
+	"holiday":     {"time", "off"},
+	"sick":        {"time", "off"},
+	"absent":      {"time", "off"},
+	"away":        {"time", "off"},
+	"oos":         {"status", "service"},
+	"down":        {"status", "service"},
+	"shop":        {"status", "maintenance"},
+	"maintenance": {"status", "maintenance"},
+	"breakdown":   {"status", "service"},
 }
 
 // stopWords are the words a question is built from rather than about. They are

@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -94,11 +93,7 @@ func (t *assignMoveTool) Execute(
 	}
 
 	req := &repositories.AssignShipmentMoveRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  params.OrganizationID,
-			BuID:   params.BusinessUnitID,
-			UserID: params.Actor.UserID,
-		},
+		TenantInfo: tenantFrom(params),
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: workerID,
 		TractorID:       tractorID,

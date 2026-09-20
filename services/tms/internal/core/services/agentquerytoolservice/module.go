@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/core/services/workerptoservice"
 	"go.uber.org/fx"
 )
 
@@ -36,6 +37,7 @@ var Module = fx.Module("agent-query-tool-service",
 		fx.Annotate(newGetTractorTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newGetTrailerTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newGetInvoiceTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideListTimeOffTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideListReportsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideRunReportTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideGetReportRunTool, fx.ResultTags(`group:"agent_query_tools"`)),
@@ -60,4 +62,8 @@ func provideRunReportTool(
 
 func provideGetReportRunTool(reports *reporting.Service) services.AgentQueryTool {
 	return newGetReportRunTool(reports)
+}
+
+func provideListTimeOffTool(pto *workerptoservice.Service) services.AgentQueryTool {
+	return newListTimeOffTool(pto)
 }

@@ -25,6 +25,8 @@ func testCatalog() *Catalog {
 		descriptor("list_expiring_credentials", "Worker credentials falling due: medical cards, licences, hazmat endorsements."),
 		descriptor("run_report", "Start one of the reports from list_reports."),
 		descriptor("assign_move", "Assign a driver and tractor to a shipment move."),
+		descriptor("list_time_off", "List worker time-off requests: who is out, who is asking to be."),
+		descriptor("update_tractor_status", "Change the status of one or more tractors."),
 	})
 }
 
@@ -134,4 +136,27 @@ func TestDescriptor_LooksUpByExactName(t *testing.T) {
 
 	_, missing := testCatalog().Descriptor("no_such_tool")
 	assert.False(t, missing)
+}
+
+/*
+Time off is asked about in six words and none of them is "PTO".
+
+A dispatcher covering a board says vacation, leave, sick, or just "who is away
+next week". The schema calls all of it time off, and a model handed no synonym
+for it falls back to the worker roster, which cannot answer the question by
+date.
+*/
+func TestRank_FindsTheTimeOffToolInTheWordsPeopleUse(t *testing.T) {
+	t.Parallel()
+
+	catalog := testCatalog()
+
+	for _, question := range []string{
+		"who is on vacation next week",
+		"which drivers have PTO booked",
+		"is anyone away on Thursday",
+		"show me the sick leave requests",
+	} {
+		assert.Equal(t, "list_time_off", names(catalog.Rank(nil, question, 3))[0], question)
+	}
 }

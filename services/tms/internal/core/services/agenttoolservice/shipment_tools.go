@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -263,11 +262,7 @@ func (t *placeShipmentHoldTool) Execute(
 	// from the hold reason, which is policy the organization already decided.
 	// An agent choosing them would be quietly overriding that.
 	_, err = t.holds.Create(ctx, &repositories.CreateShipmentHoldRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  params.OrganizationID,
-			BuID:   params.BusinessUnitID,
-			UserID: params.Actor.UserID,
-		},
+		TenantInfo: tenantFrom(params),
 		ShipmentID:   shipmentID,
 		HoldReasonID: reasonID,
 		Notes:        optionalString(params.Params, "notes"),
@@ -350,11 +345,7 @@ func (t *releaseShipmentHoldTool) Execute(
 	}
 
 	_, err = t.holds.Release(ctx, &repositories.ReleaseShipmentHoldRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  params.OrganizationID,
-			BuID:   params.BusinessUnitID,
-			UserID: params.Actor.UserID,
-		},
+		TenantInfo: tenantFrom(params),
 		ShipmentID: shipmentID,
 		HoldID:     holdID,
 	}, params.Actor)
@@ -440,11 +431,7 @@ func (t *cancelShipmentTool) Execute(
 	}
 
 	_, err = t.shipments.Cancel(ctx, &repositories.CancelShipmentRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  params.OrganizationID,
-			BuID:   params.BusinessUnitID,
-			UserID: params.Actor.UserID,
-		},
+		TenantInfo: tenantFrom(params),
 		ShipmentID:   shipmentID,
 		CanceledByID: params.Actor.UserID,
 		CanceledAt:   timeutils.NowUnix(),

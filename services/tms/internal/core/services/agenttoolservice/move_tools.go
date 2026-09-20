@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 type recordStopActualTool struct {
@@ -100,11 +99,7 @@ func (t *recordStopActualTool) Execute(
 	}
 
 	request := &repositories.RecordStopActualRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  params.OrganizationID,
-			BuID:   params.BusinessUnitID,
-			UserID: params.Actor.UserID,
-		},
+		TenantInfo: tenantFrom(params),
 		MoveID: moveID,
 		StopID: stopID,
 		Action: action,

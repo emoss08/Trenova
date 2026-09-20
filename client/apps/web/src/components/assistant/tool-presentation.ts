@@ -47,6 +47,12 @@ const TOOL_TITLES: Record<string, string> = {
   request_missing_docs: "Request missing documents",
   attach_document_to_bqi: "Attach document to billing item",
   reassign_move: "Reassign move",
+  list_time_off: "List time off",
+  update_tractor_status: "Change tractor status",
+  update_trailer_status: "Change trailer status",
+  approve_worker_pto: "Approve time off",
+  reject_worker_pto: "Decline time off",
+  cancel_worker_pto: "Cancel time off",
 };
 
 /** Argument keys that name the record a tool was about, most specific first. */
@@ -62,6 +68,7 @@ const SUBJECT_KEYS = [
   "reportKey",
   "runId",
   "workerNumber",
+  "ptoId",
   "query",
   "search",
   "shipmentId",
