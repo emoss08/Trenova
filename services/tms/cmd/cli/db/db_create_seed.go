@@ -14,7 +14,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
-	"golang.org/x/tools/imports"
 )
 
 var (
@@ -74,13 +73,8 @@ func runCreateSeed(cmd *cobra.Command, args []string) error {
 
 	formatted, err := format.Source([]byte(content))
 	if err != nil {
-		formatted, err = imports.Process(filepath, []byte(content), nil)
-		if err != nil {
-			color.Yellow("⚠ Could not format seed file: %v", err)
-			formatted = []byte(content)
-		}
-	} else {
-		formatted, _ = imports.Process(filepath, formatted, nil)
+		color.Yellow("⚠ Could not format seed file: %v", err)
+		formatted = []byte(content)
 	}
 
 	if err := os.WriteFile(filepath, formatted, 0o644); err != nil {

@@ -261,14 +261,14 @@ tasks:
   docs-generate:
     desc: Generate Swagger docs for the TMS API
     cmds:
-      - go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency
+      - go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency --outputTypes json,yaml
       - go run ./cmd/openapi-postprocess
 
   docs-generate-check:
     desc: Check the generated OpenAPI spec is up to date
     cmds:
       - |
-        go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency
+        go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency --outputTypes json,yaml
         go run ./cmd/openapi-postprocess
         if git diff --quiet -- docs; then
           echo "OpenAPI spec is up to date"
