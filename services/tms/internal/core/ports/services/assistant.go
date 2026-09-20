@@ -72,6 +72,9 @@ type AssistantProposal struct {
 	// accepted proposal with neither set was approved but has not run yet.
 	ExecutedAt     *int64 `json:"executedAt"`
 	ExecutionError string `json:"executionError"`
+	// ExpiresAt is when a pending proposal stops being decidable. Zero means
+	// it was made before expiry existed.
+	ExpiresAt int64 `json:"expiresAt"`
 }
 
 // Names of the events a streamed turn emits, in the order a client should

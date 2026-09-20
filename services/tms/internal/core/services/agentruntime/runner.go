@@ -25,6 +25,10 @@ type Params struct {
 	ActionTools serviceports.AgentToolRegistry
 	Permissions serviceports.PermissionEngine
 	Catalog     *agenttoolcatalog.Catalog
+	// Versions is optional. Without it proposals are still made, just without
+	// the record pinned; with it the executor can refuse a change to a record
+	// that moved on since the proposal.
+	Versions serviceports.RecordVersionReader `optional:"true"`
 }
 
 type Service struct {
@@ -34,6 +38,7 @@ type Service struct {
 	actionTools serviceports.AgentToolRegistry
 	permissions serviceports.PermissionEngine
 	catalog     *agenttoolcatalog.Catalog
+	versions    serviceports.RecordVersionReader
 }
 
 func New(p Params) serviceports.AgentRuntime {
@@ -44,6 +49,7 @@ func New(p Params) serviceports.AgentRuntime {
 		actionTools: p.ActionTools,
 		permissions: p.Permissions,
 		catalog:     p.Catalog,
+		versions:    p.Versions,
 	}
 }
 

@@ -150,6 +150,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratesimulationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratezonerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rbacrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recordversionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recurringshipmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/reportrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleassignmentrepository"
@@ -285,6 +286,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	accessorialchargerepository.New,
 	agentrunrepository.New,
 	agentproposalrepository.New,
+	recordversionrepository.New,
 	insightrepository.New,
 	insightrepository.NewMetrics,
 	agentexceptionrepository.New,

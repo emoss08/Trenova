@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -48,6 +49,19 @@ type AgentProposal struct {
 	ExecutionError  string   `json:"executionError"  bun:"execution_error,type:TEXT,nullzero"`
 	SourceMessageID pulid.ID `json:"sourceMessageId" bun:"source_message_id,type:VARCHAR(100),nullzero"`
 
+	// ExpiresAt is when a pending proposal stops being decidable. A proposal
+	// is a judgement about the world as it was; past this point that world is
+	// gone and the judgement with it.
+	ExpiresAt int64 `json:"expiresAt" bun:"expires_at,type:BIGINT,nullzero"`
+
+	// TargetResource, TargetID and TargetVersion pin the record the proposal
+	// would change, as it was when proposed. The executor refuses to run
+	// against a different version: a hold proposed on a shipment that has
+	// since been delivered is not the change anyone approved.
+	TargetResource string   `json:"targetResource" bun:"target_resource,type:VARCHAR(100),nullzero"`
+	TargetID       pulid.ID `json:"targetId"       bun:"target_id,type:VARCHAR(100),nullzero"`
+	TargetVersion  int64    `json:"targetVersion"  bun:"target_version,type:BIGINT,nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -55,6 +69,17 @@ type AgentProposal struct {
 	Run          *AgentRun            `bun:"rel:belongs-to,join:run_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" json:"-"`
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id"                                                                   json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"                                                                    json:"-"`
+}
+
+// DefaultProposalTTL is how long a proposal waits for a decision before it
+// expires on its own. A week is long enough to survive a weekend and a holiday
+// and short enough that the record it refers to is usually still the record
+// it described.
+const DefaultProposalTTL = 7 * 24 * time.Hour
+
+// Expired reports whether a proposal's window has closed as of now.
+func (p *AgentProposal) Expired(now int64) bool {
+	return p.ExpiresAt > 0 && p.ExpiresAt <= now
 }
 
 func (p *AgentProposal) Validate(multiErr *errortypes.MultiError) {
@@ -126,6 +151,9 @@ func (p *AgentProposal) BeforeAppendModel(_ context.Context, query bun.Query) er
 			p.ID = pulid.MustNew("ap_")
 		}
 		p.CreatedAt = now
+		if p.ExpiresAt == 0 {
+			p.ExpiresAt = now + int64(DefaultProposalTTL.Seconds())
+		}
 	case *bun.UpdateQuery:
 		p.UpdatedAt = now
 	}

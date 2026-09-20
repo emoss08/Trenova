@@ -311,3 +311,36 @@ func (r *repository) ExpirePendingByRun(
 
 	return int(affected), nil
 }
+
+// ExpirePending closes the decision window on every pending proposal whose
+// expiry has passed, across all tenants. It is the sweeper's query and the
+// only unscoped write in this repository; the partial index on pending expiry
+// is what keeps it cheap at any size.
+func (r *repository) ExpirePending(
+	ctx context.Context,
+	req repositories.ExpireAgentProposalsRequest,
+) (int, error) {
+	log := r.l.With(zap.String("operation", "ExpirePending"), zap.Int64("before", req.Before))
+
+	cols := buncolgen.AgentProposalColumns
+	results, err := r.db.DB().
+		NewUpdate().
+		Model((*agent.AgentProposal)(nil)).
+		Where(cols.Status.Eq(), agent.ProposalStatusPending).
+		Where(cols.ExpiresAt.IsNotNull()).
+		Where(cols.ExpiresAt.Lte(), req.Before).
+		Set(cols.Status.Set(), agent.ProposalStatusExpired).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to expire pending agent proposals", zap.Error(err))
+		return 0, err
+	}
+
+	affected, err := results.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(affected), nil
+}

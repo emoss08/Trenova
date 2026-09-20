@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -20,6 +21,19 @@ type PendingAction struct {
 	// action is still recorded so the failure is visible next to the decision it
 	// would otherwise have needed.
 	ExecutionError string `json:"executionError"`
+	// Target is the record this action would change and its version as of the
+	// proposal, when the tool names one. Nil means the tool has no single
+	// target, or its version could not be read; either way the proposal is
+	// still made, just without the staleness check.
+	Target *ProposalTarget `json:"target,omitempty"`
+}
+
+// ProposalTarget is a record and its version at the moment a change to it was
+// proposed. The executor compares it against the record before running.
+type ProposalTarget struct {
+	Resource permission.Resource `json:"resource"`
+	ID       pulid.ID            `json:"id"`
+	Version  int64               `json:"version"`
 }
 
 type RunRequest struct {

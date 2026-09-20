@@ -168,3 +168,21 @@ func requirePulidSlice(params map[string]any, key string, limit int) ([]pulid.ID
 
 	return ids, nil
 }
+
+// targetOf names the record a call acts on, from the argument that carries its
+// id. A missing or malformed id yields no target, and the call is still made:
+// the tool's own Execute reports the bad argument in its own words, and a
+// proposal without a target simply skips the staleness check.
+func targetOf(
+	params map[string]any,
+	key string,
+	resource permission.Resource,
+) (serviceports.ToolTarget, bool) {
+	raw, _ := params[key].(string)
+	id, err := pulid.Parse(raw)
+	if err != nil || id.IsNil() {
+		return serviceports.ToolTarget{}, false
+	}
+
+	return serviceports.ToolTarget{Resource: resource, ID: id}, true
+}

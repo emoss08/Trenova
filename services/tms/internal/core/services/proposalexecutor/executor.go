@@ -58,6 +58,8 @@ type Params struct {
 	ProposalRepo repositories.AgentProposalRepository
 	Permissions  services.PermissionEngine
 	AuditService services.AuditService
+	// Versions is optional; without it a pinned proposal executes unchecked.
+	Versions services.RecordVersionReader `optional:"true"`
 }
 
 type Service struct {
@@ -65,6 +67,7 @@ type Service struct {
 	tools        services.AgentToolRegistry
 	proposalRepo proposalOutcomeRecorder
 	permissions  permissionChecker
+	versions     services.RecordVersionReader
 	audit        actionLogger
 }
 
@@ -74,6 +77,7 @@ func New(p Params) *Service {
 		tools:        p.Tools,
 		proposalRepo: p.ProposalRepo,
 		permissions:  p.Permissions,
+		versions:     p.Versions,
 		audit:        p.AuditService,
 	}
 }
@@ -111,6 +115,12 @@ func (s *Service) Execute(
 		return err
 	}
 
+	if err := s.assertTargetUnchanged(ctx, proposal); err != nil {
+		s.recordFailure(ctx, proposal, err)
+
+		return err
+	}
+
 	params := mergeParams(proposal.ToolParams, modifications)
 
 	// The proposal id is the idempotency key. It is stable across retries of the
@@ -136,6 +146,42 @@ func (s *Service) Execute(
 	}
 
 	s.recordSuccess(ctx, proposal, actor, params)
+
+	return nil
+}
+
+// ErrTargetChanged reports a record that moved on since the change to it was
+// proposed. It is a business outcome, not a transport failure: the approval
+// was for the record as described, and that record no longer exists in that
+// form.
+var ErrTargetChanged = errors.New("the record changed since this was proposed")
+
+// assertTargetUnchanged compares the pinned version with the record's current
+// one. A proposal without a pin — an older one, or a tool with no single
+// target — passes; only a pin that no longer matches refuses.
+func (s *Service) assertTargetUnchanged(ctx context.Context, proposal *agent.AgentProposal) error {
+	if proposal.TargetID.IsNil() || s.versions == nil {
+		return nil
+	}
+
+	current, err := s.versions.Version(ctx, pagination.TenantInfo{
+		OrgID: proposal.OrganizationID,
+		BuID:  proposal.BusinessUnitID,
+	}, services.ToolTarget{
+		Resource: permission.Resource(proposal.TargetResource),
+		ID:       proposal.TargetID,
+	})
+	if err != nil {
+		return fmt.Errorf("%w: the %s could not be read (%w)", ErrTargetChanged, proposal.TargetResource, err)
+	}
+
+	if current != proposal.TargetVersion {
+		return fmt.Errorf(
+			"%w: the %s is at version %d and was at %d when this was proposed. "+
+				"Review the current record and ask again",
+			ErrTargetChanged, proposal.TargetResource, current, proposal.TargetVersion,
+		)
+	}
 
 	return nil
 }

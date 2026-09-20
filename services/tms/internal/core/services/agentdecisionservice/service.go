@@ -2,6 +2,7 @@ package agentdecisionservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -164,14 +165,24 @@ func (s *Service) Decide(
 // write twice. The status is the one fact that says whether there is still a
 // decision to make.
 func decidable(proposal *agent.AgentProposal) error {
-	if proposal.Status == agent.ProposalStatusPending {
-		return nil
+	if proposal.Status != agent.ProposalStatusPending {
+		return errortypes.NewBusinessError(
+			"This proposal has already been decided: it is {0}",
+			strings.ToLower(string(proposal.Status)),
+		)
 	}
 
-	return errortypes.NewBusinessError(
-		"This proposal has already been decided: it is {0}",
-		strings.ToLower(string(proposal.Status)),
-	)
+	// The sweeper marks these Expired every quarter hour; between sweeps the
+	// clock is the authority, so a proposal is never approved in the minutes
+	// after its window closed just because the row had not caught up.
+	if proposal.Expired(timeutils.NowUnix()) {
+		return errortypes.NewBusinessError(
+			"This proposal expired on {0} without a decision. Ask the agent again for a current one",
+			timeutils.DescribeUnixDate(proposal.ExpiresAt, timeutils.NowUnix()),
+		)
+	}
+
+	return nil
 }
 
 // executeIfApproved runs the tool behind an accepted or modified proposal.

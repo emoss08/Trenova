@@ -93,7 +93,7 @@ func (t *assignMoveTool) Execute(
 	}
 
 	req := &repositories.AssignShipmentMoveRequest{
-		TenantInfo: tenantFrom(params),
+		TenantInfo:      tenantFrom(params),
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: workerID,
 		TractorID:       tractorID,
@@ -127,4 +127,10 @@ func optionalPulid(params map[string]any, key string) (pulid.ID, bool, error) {
 	}
 
 	return id, true, nil
+}
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *assignMoveTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
 }

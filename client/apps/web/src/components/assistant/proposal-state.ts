@@ -31,9 +31,23 @@ export type ProposalPresentation =
  * An approval that has not produced either outcome yet is `running` rather than
  * `done`, because the honest answer at that moment is "not yet".
  */
-export function classifyProposal(proposal: AssistantProposal): ProposalPresentation {
+export function classifyProposal(
+  proposal: AssistantProposal,
+  now: number = Date.now() / 1000,
+): ProposalPresentation {
   if (proposal.executionError !== "") {
     return "failed";
+  }
+
+  // The server sweeps expired proposals every quarter hour; between sweeps
+  // the clock decides. A card offering buttons for a proposal the server will
+  // refuse is a promise the click breaks.
+  if (
+    proposal.status === "Pending" &&
+    (proposal.expiresAt ?? 0) > 0 &&
+    proposal.expiresAt! <= now
+  ) {
+    return "closed";
   }
 
   if (proposal.status === "ExecutionFailed") {

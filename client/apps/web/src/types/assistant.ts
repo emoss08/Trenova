@@ -280,6 +280,8 @@ export const assistantProposalSchema = z.object({
   executedAt: z.number().nullish(),
   /** Why an approved proposal failed to run, shown instead of a success state. */
   executionError: z.string().optional().default(""),
+  /** When a pending proposal stops being decidable; 0 for one made before expiry existed. */
+  expiresAt: z.number().nullish().default(0),
 });
 
 export const assistantProposalListSchema = z.object({

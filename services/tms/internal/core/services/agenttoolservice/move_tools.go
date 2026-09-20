@@ -100,9 +100,9 @@ func (t *recordStopActualTool) Execute(
 
 	request := &repositories.RecordStopActualRequest{
 		TenantInfo: tenantFrom(params),
-		MoveID: moveID,
-		StopID: stopID,
-		Action: action,
+		MoveID:     moveID,
+		StopID:     stopID,
+		Action:     action,
 	}
 
 	// Only sent when the caller supplied one. A model inventing a timestamp for
@@ -130,4 +130,10 @@ func stopActualAction(raw string) (repositories.StopActualAction, error) {
 			"parameter %q must be exactly \"Arrive\" or \"Depart\", not %q", "action", raw,
 		)
 	}
+}
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *recordStopActualTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, "moveId", permission.ResourceShipmentMove)
 }

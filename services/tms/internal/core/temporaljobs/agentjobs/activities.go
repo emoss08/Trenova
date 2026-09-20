@@ -455,3 +455,26 @@ func hashSubject(definition *agentdefinition.Definition, subject *agentdefinitio
 	sum := sha256.Sum256(encoded)
 	return hex.EncodeToString(sum[:])
 }
+
+// ExpireStaleProposalsActivity marks every pending proposal past its expiry,
+// in every tenant. Distinct from ExpireProposalsActivity, which closes the
+// proposals of one finished run.
+func (a *Activities) ExpireStaleProposalsActivity(
+	ctx context.Context,
+	input *ExpireStaleProposalsInput,
+) (*ExpireStaleProposalsResult, error) {
+	expired, err := a.proposalRepo.ExpirePending(ctx, repositories.ExpireAgentProposalsRequest{
+		Before: input.Now,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("expire pending proposals: %w", err)
+	}
+
+	if expired > 0 {
+		a.logger.Info("expired agent proposals past their decision window",
+			zap.Int("expired", expired),
+		)
+	}
+
+	return &ExpireStaleProposalsResult{Expired: expired}, nil
+}

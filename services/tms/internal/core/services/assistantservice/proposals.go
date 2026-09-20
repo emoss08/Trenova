@@ -216,5 +216,6 @@ func toAssistantProposal(proposal *agent.AgentProposal) services.AssistantPropos
 		Confidence:      proposal.Confidence.InexactFloat64(),
 		ExecutedAt:      proposal.ExecutedAt,
 		ExecutionError:  proposal.ExecutionError,
+		ExpiresAt:       proposal.ExpiresAt,
 	}
 }
