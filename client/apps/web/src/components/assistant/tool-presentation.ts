@@ -17,6 +17,18 @@ const TOOL_TITLES: Record<string, string> = {
   list_trailers: "List trailers",
   list_customers: "List customers",
   list_locations: "List locations",
+  list_invoices: "List invoices",
+  list_carriers: "List carriers",
+  list_equipment_types: "List equipment types",
+  list_fleet_codes: "List fleet codes",
+  list_service_types: "List service types",
+  list_shipment_types: "List shipment types",
+  list_commodities: "List commodities",
+  list_hazardous_materials: "List hazardous materials",
+  list_accessorial_charges: "List accessorial charges",
+  list_document_types: "List document types",
+  list_location_categories: "List location categories",
+  find_tools: "Look for a tool",
   list_reports: "Browse reports",
   run_report: "Start report",
   get_report_run: "Check report run",
@@ -28,6 +40,7 @@ const TOOL_TITLES: Record<string, string> = {
 
 /** Argument keys that name the record a tool was about, most specific first. */
 const SUBJECT_KEYS = [
+  "need",
   "proNumber",
   "reportKey",
   "runId",

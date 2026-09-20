@@ -29,6 +29,17 @@ const (
 	findToolsName = "find_tools"
 )
 
+// findToolsDescription is a constant rather than a literal in the spec below
+// because the i18n extractor harvests any Description: field it finds
+// (shared/cmd/i18n-extract). This text is addressed to a model; translating it
+// would change what the assistant is told based on the operator's locale.
+const findToolsDescription = "Load more tools. You start a turn with the tools that " +
+	"best fit the request, not all of them. When nothing you can see does the job, " +
+	"describe what you need in plain words — \"driver medical card expiry\", " +
+	"\"unbilled shipments\" — and the matching tools become callable. Do this instead " +
+	"of answering from a tool that only nearly fits, and instead of telling the person " +
+	"it cannot be done."
+
 // findToolsSpec is the one tool a disclosed turn always carries.
 //
 // It is answered by the runtime rather than a registry, because its effect is on
@@ -36,13 +47,8 @@ const (
 // tool cannot do that — it returns data and the tool list stays as it was.
 func findToolsSpec() serviceports.ToolSpec {
 	return serviceports.ToolSpec{
-		Name: findToolsName,
-		Description: "Load more tools. You start a turn with the tools that best fit the " +
-			"request, not all of them. When nothing you can see does the job, describe " +
-			"what you need in plain words — \"driver medical card expiry\", \"unbilled " +
-			"shipments\" — and the matching tools become callable. Do this instead of " +
-			"answering from a tool that only nearly fits, and instead of telling the " +
-			"person it cannot be done.",
+		Name:        findToolsName,
+		Description: findToolsDescription,
 		Parameters: map[string]any{
 			"type": "object",
 			"properties": map[string]any{

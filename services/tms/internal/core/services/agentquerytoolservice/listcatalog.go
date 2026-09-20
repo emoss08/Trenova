@@ -35,8 +35,21 @@ var (
 		"ReadyForReview", "InReview", "OnHold", "Exception",
 		"SentBackToOps", "Approved", "Posted", "Canceled",
 	}
-	freightTerms = []string{"Prepaid", "Collect", "ThirdParty"}
+	freightTerms     = []string{"Prepaid", "Collect", "ThirdParty"}
+	endorsementCodes = []string{"O", "N", "H", "X", "P", "T"}
+	complianceStates = []string{"Compliant", "NonCompliant", "Pending"}
+	cdlClasses       = []string{"A", "B", "C"}
 )
+
+// endorsementNote spells the codes out.
+//
+// The column stores a single letter, and X is the one that matters: it means
+// tanker AND hazmat, so a hazmat question answered with endorsement = 'H' alone
+// undercounts the fleet. No model infers that, and one that guesses "Hazmat"
+// gets an empty page it will report as nobody holding one.
+const endorsementNote = "single letter: O none, N tanker, H hazmat, " +
+	"X tanker and hazmat, P passenger, T doubles/triples. " +
+	"For hazmat match both H and X"
 
 type workerRow struct {
 	ID                string `json:"id"`
@@ -48,16 +61,28 @@ type workerRow struct {
 	FleetCode         string `json:"fleetCode,omitempty"`
 	CanBeAssigned     bool   `json:"canBeAssigned"`
 	AssignmentBlocked string `json:"assignmentBlocked,omitempty"`
+	// The compliance fields travel with the row because they are the reason
+	// the row was asked for. A roster filtered on an endorsement that then
+	// comes back without it leaves the reader to trust the filter blindly.
+	Endorsement       string `json:"endorsement,omitempty"`
+	CDLClass          string `json:"cdlClass,omitempty"`
+	ComplianceStatus  string `json:"complianceStatus,omitempty"`
+	Qualified         *bool  `json:"qualified,omitempty"`
+	HazmatExpiry      int64  `json:"hazmatExpiry,omitempty"`
+	LicenseExpiry     int64  `json:"licenseExpiry,omitempty"`
+	MedicalCardExpiry int64  `json:"medicalCardExpiry,omitempty"`
 }
 
 func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_workers",
 		entityPlural: "workers",
-		summary: "List workers (drivers) narrowed by their own columns — status, " +
-			"employment type, driver type, city or fleet. Use search_worker when you " +
-			"have a name to match, and list_expiring_credentials for licence and " +
-			"medical card dates, which do not live on the worker record.",
+		summary: "List workers (drivers) narrowed by status, employment type, driver " +
+			"type, city or fleet, and by their qualification profile — endorsement, " +
+			"CDL class, compliance status, and licence, medical card or hazmat expiry. " +
+			"This answers who holds an endorsement and who is qualified to drive. Use " +
+			"search_worker when you have a name, and list_expiring_credentials for the " +
+			"separately tracked credential documents.",
 		resource: permission.ResourceWorker,
 		config:   querybuilder.GetFieldConfiguration((*worker.Worker)(nil)),
 		fields: []listField{
@@ -69,6 +94,34 @@ func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQu
 			{Name: "firstName", Kind: filterText},
 			{Name: "canBeAssigned", Kind: filterBool, Note: "false means dispatch is blocked"},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
+			{
+				Name:   "profile.endorsement",
+				Kind:   filterEnum,
+				Values: endorsementCodes,
+				Note:   endorsementNote,
+			},
+			{Name: "profile.cdlClass", Kind: filterEnum, Values: cdlClasses},
+			{
+				Name:   "profile.complianceStatus",
+				Kind:   filterEnum,
+				Values: complianceStates,
+			},
+			{
+				Name: "profile.isQualified",
+				Kind: filterBool,
+				Note: "the roll-up: false means something is lapsed or missing",
+			},
+			{
+				Name:     "profile.hazmatExpiry",
+				Kind:     filterDate,
+				Sortable: true,
+				Note:     "a current endorsement is one whose expiry is still ahead",
+			},
+			{Name: "profile.licenseExpiry", Kind: filterDate, Sortable: true},
+			{Name: "profile.medicalCardExpiry", Kind: filterDate, Sortable: true},
+			{Name: "profile.twicExpiry", Kind: filterDate, Sortable: true},
+			{Name: "profile.hireDate", Kind: filterDate, Sortable: true},
+			{Name: "profile.terminationDate", Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
 			result, err := repo.List(ctx, &repositories.ListWorkersRequest{Filter: opts})
@@ -90,6 +143,7 @@ func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQu
 				if item.FleetCode != nil {
 					row.FleetCode = item.FleetCode.Code
 				}
+				applyProfile(&row, item.Profile)
 
 				return row
 			}), nil
@@ -409,9 +463,42 @@ func listCatalogSpecs() []listSpec {
 		specOf(newListTrailersTool(nil)),
 		specOf(newListCustomersTool(nil)),
 		specOf(newListLocationsTool(nil)),
+		specOf(newListInvoicesTool(nil)),
+		specOf(newListCarriersTool(nil)),
+		specOf(newListEquipmentTypesTool(nil)),
+		specOf(newListFleetCodesTool(nil)),
+		specOf(newListServiceTypesTool(nil)),
+		specOf(newListShipmentTypesTool(nil)),
+		specOf(newListCommoditiesTool(nil)),
+		specOf(newListHazardousMaterialsTool(nil)),
+		specOf(newListAccessorialChargesTool(nil)),
+		specOf(newListDocumentTypesTool(nil)),
+		specOf(newListLocationCategoriesTool(nil)),
 	}
 }
 
 func specOf(tool serviceports.AgentQueryTool) listSpec {
 	return tool.(*listTool).spec //nolint:errcheck,forcetypeassert // constructed above
+}
+
+// applyProfile copies the qualification roll-up onto the row. A worker without a
+// profile is a record mid-onboarding, not an error: the fields stay empty rather
+// than reporting a lapsed licence nobody has yet entered.
+func applyProfile(row *workerRow, profile *worker.WorkerProfile) {
+	if profile == nil {
+		return
+	}
+
+	row.Endorsement = string(profile.Endorsement)
+	row.CDLClass = string(profile.CDLClass)
+	row.ComplianceStatus = string(profile.ComplianceStatus)
+	row.Qualified = &profile.IsQualified
+
+	if profile.HazmatExpiry != nil {
+		row.HazmatExpiry = *profile.HazmatExpiry
+	}
+	row.LicenseExpiry = profile.LicenseExpiry
+	if profile.MedicalCardExpiry != nil {
+		row.MedicalCardExpiry = *profile.MedicalCardExpiry
+	}
 }
