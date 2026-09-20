@@ -136,7 +136,13 @@ func TestRun_RefusesAToolNotEnabledEvenWhenRegistered(t *testing.T) {
 	assert.Zero(t, tool.Calls)
 	assert.True(t, result.Messages[2].ToolFailed)
 	assert.Contains(t, result.Messages[2].Content, "not available to this agent")
-	assert.Len(t, completion.LastReq.Tools, 0, "an unenabled tool is not even offered")
+	offered := make([]string, 0, len(completion.LastReq.Tools))
+	for _, spec := range completion.LastReq.Tools {
+		offered = append(offered, spec.Name)
+	}
+	// ask_user is the runtime's own and rides every turn; it reads nothing, so
+	// it does not widen the agent. Nothing from the registry is offered.
+	assert.Equal(t, []string{askUserName}, offered, "an unenabled tool is not even offered")
 }
 
 // The agent runs as the person talking to it. Every tool call is checked against

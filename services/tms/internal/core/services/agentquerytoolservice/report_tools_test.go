@@ -356,3 +356,51 @@ func TestReportTools_AuthorizeAgainstTheReportResource(t *testing.T) {
 			"%s belongs to the report resource", name)
 	}
 }
+
+// A model told only that a parameter is missing invents the choices: the
+// transcript behind this has it offering "7, 14, or 30" for a window nothing
+// constrained. The answer now carries what the parameter actually accepts, and
+// says to put those to the person rather than to guess or to pick one.
+func TestRequireReportParameters_NamesTheChoicesAndSaysToAsk(t *testing.T) {
+	t.Parallel()
+
+	entry := &canned.Entry{
+		Name: "Driver Productivity",
+		Definition: &report.Definition{
+			Parameters: []report.ParameterDef{
+				{Name: "windowDays", Label: "Window in days", Required: true},
+				{
+					Name:          "fleet",
+					Label:         "Fleet",
+					Required:      true,
+					AllowedValues: []string{"Regional", "OTR", "Local"},
+				},
+			},
+		},
+	}
+
+	err := requireReportParameters(entry, map[string]any{})
+
+	require.Error(t, err)
+	message := err.Error()
+	assert.Contains(t, message, "windowDays (Window in days), which takes any value")
+	assert.Contains(t, message, "fleet (Fleet), one of: Regional, OTR, Local")
+	assert.Contains(t, message, "call ask_user")
+	assert.Contains(t, message, "do not invent choices")
+}
+
+func TestRequireReportParameters_SaysNothingWhenEveryValueIsSupplied(t *testing.T) {
+	t.Parallel()
+
+	entry := &canned.Entry{
+		Name: "Driver Productivity",
+		Definition: &report.Definition{
+			Parameters: []report.ParameterDef{
+				{Name: "windowDays", Required: true},
+				{Name: "fleet", Required: false},
+			},
+		},
+	}
+
+	assert.NoError(t, requireReportParameters(entry, map[string]any{"windowDays": 30}))
+}

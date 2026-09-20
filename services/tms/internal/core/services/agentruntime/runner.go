@@ -151,6 +151,13 @@ func (s *Service) Run(
 				continue
 			}
 
+			if call.Name == askUserName {
+				outcome := toolOutcome{content: resolveAsk(call.Arguments)}
+				result.ToolCallsUsed++
+				s.recordToolResult(result, &messages, call, outcome, emit)
+				continue
+			}
+
 			outcome := s.dispatch(ctx, req, call, completion.Text)
 			result.ToolCallsUsed++
 			s.recordToolResult(result, &messages, call, outcome, emit)

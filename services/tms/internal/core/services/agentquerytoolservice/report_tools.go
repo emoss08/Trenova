@@ -175,12 +175,15 @@ func newRunReportTool(
 func (t *runReportTool) Name() string { return "run_report" }
 
 func (t *runReportTool) Description() string {
-	return "Start one of the reports from list_reports. Reports always run in the " +
-		"background — this returns a run id immediately and no rows. Say that it has " +
-		"started and stop there: the conversation tracks the run itself and shows the " +
-		"person its progress, its row count and a download button as soon as it " +
-		"finishes, so there is nothing to poll and nowhere to send them. Never " +
-		"describe figures from a report you have only started."
+	return "Start one of the reports from list_reports. Take every parameter you can " +
+		"from what the person already said — a request naming a window, a date range " +
+		"or a customer has supplied it — and ask_user for the rest, offering the " +
+		"allowed values list_reports gave rather than choices you made up. Reports " +
+		"always run in the background — this returns a run id immediately and no " +
+		"rows. Say that it has started and stop there: the conversation tracks the " +
+		"run itself and shows the person its progress, its row count and a download " +
+		"button as soon as it finishes, so there is nothing to poll and nowhere to " +
+		"send them. Never describe figures from a report you have only started."
 }
 
 func (t *runReportTool) ParamSchema() map[string]any {
@@ -308,6 +311,12 @@ func (t *runReportTool) authorizeExport(
 // requireReportParameters answers a missing parameter in the report's own words.
 // The compiler would reject the run anyway, but it would do it in terms of the
 // definition, and a model cannot act on "parameter binding failed".
+//
+// The answer carries each missing parameter's allowed values and says to put
+// them to the person, because the alternative is what shipped: a model inventing
+// "common choices are 7, 14 or 30" from nothing, and a reader retyping one of
+// them. Where the values are constrained these are the real ones, so the
+// question cannot offer a choice the report would then reject.
 func requireReportParameters(entry *canned.Entry, values map[string]any) error {
 	if entry.Definition == nil {
 		return nil
@@ -324,7 +333,7 @@ func requireReportParameters(entry *canned.Entry, values map[string]any) error {
 		if parameter.Default != nil {
 			continue
 		}
-		missing = append(missing, parameter.Name)
+		missing = append(missing, describeMissingParameter(parameter))
 	}
 
 	if len(missing) == 0 {
@@ -332,8 +341,28 @@ func requireReportParameters(entry *canned.Entry, values map[string]any) error {
 	}
 
 	return fmt.Errorf(
-		"%q needs these parameters before it can run: %s",
-		entry.Name, strings.Join(missing, ", "),
+		"%q cannot run yet. It still needs: %s. If the person's request already "+
+			"says what to use, use that. Otherwise call ask_user with the values "+
+			"above as the options — do not invent choices, and do not pick one "+
+			"yourself",
+		entry.Name, strings.Join(missing, "; "),
+	)
+}
+
+// describeMissingParameter names one parameter and what it will accept.
+func describeMissingParameter(parameter report.ParameterDef) string {
+	label := parameter.Label
+	if label == "" {
+		label = parameter.Name
+	}
+
+	if len(parameter.AllowedValues) == 0 {
+		return fmt.Sprintf("%s (%s), which takes any value", parameter.Name, label)
+	}
+
+	return fmt.Sprintf(
+		"%s (%s), one of: %s",
+		parameter.Name, label, strings.Join(parameter.AllowedValues, ", "),
 	)
 }
 

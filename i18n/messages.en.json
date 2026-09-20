@@ -14567,6 +14567,15 @@
       "routes/fuel-management"
     ]
   },
+  "Answer in your own words": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Answer questions and drive the tool loop in the assistant.": {
     "sites": 1,
     "scope": [
@@ -139075,6 +139084,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Send this answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Send this template to a reviewer for approval before it can be activated.": {
     "sites": 1,
     "scope": [
@@ -180425,6 +180443,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Your own answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Your own price bands, each with its own per-mile rate. Bands can be irregular — use this for customer-supplied fuel tables.": {

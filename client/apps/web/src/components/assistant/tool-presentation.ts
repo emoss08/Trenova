@@ -39,6 +39,7 @@ const TOOL_TITLES: Record<string, string> = {
   list_accessorial_charges: "List accessorial charges",
   list_document_types: "List document types",
   list_location_categories: "List location categories",
+  ask_user: "Ask you to choose",
   find_tools: "Look for a tool",
   list_reports: "Browse reports",
   run_report: "Start report",

@@ -81,6 +81,21 @@ export function MessageThread({
   );
 
   const entries = useMemo(() => groupThread(messages), [messages]);
+
+  // A question the assistant asked is settled by whatever the person said next,
+  // whether they clicked one of its options or typed something else entirely.
+  // Comparing positions rather than tracking which button was pressed is what
+  // makes a reopened thread render the same as a live one.
+  const latestUserSequence = useMemo(
+    () =>
+      messages.reduce(
+        (latest, message) =>
+          message.role === "User" ? Math.max(latest, message.sequence) : latest,
+        -1,
+      ),
+    [messages],
+  );
+
   const getPageContext = usePageContext();
   const [contextIncluded, setContextIncluded] = useState(true);
   const pageContext = getPageContext();
@@ -93,6 +108,14 @@ export function MessageThread({
   const { turn, isActive, send, stop, dismiss, retry } = useAssistantTurn(
     thread.id,
     getTurnContext,
+  );
+
+  // An answer to the assistant's question is an ordinary message. Sending it
+  // that way is what keeps a clicked answer and a typed one the same thing:
+  // nothing new is stored, and the thread reads identically either way.
+  const answer = useCallback(
+    (value: string) => void send(value, undefined, providerId),
+    [send, providerId],
   );
 
   // The composer floats over the bottom of the thread, so the last message has
@@ -164,6 +187,8 @@ export function MessageThread({
                           entry={entry}
                           proposals={proposalsByMessage.get(entry.message.id) ?? []}
                           threadId={thread.id}
+                          latestUserSequence={latestUserSequence}
+                          onAnswer={answer}
                         />
                       )}
                     </MessageScrollerItem>

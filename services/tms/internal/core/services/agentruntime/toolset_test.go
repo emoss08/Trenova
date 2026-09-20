@@ -87,8 +87,10 @@ func TestNewToolSet_SendsEverythingForASmallAgent(t *testing.T) {
 	set := service.newToolSet(definition, "which drivers are available")
 
 	assert.False(t, set.disclosed)
-	assert.Len(t, set.specs, 4)
+	assert.Len(t, set.specs, 5, "the agent's four tools plus ask_user")
 	assert.NotContains(t, specNames(set.specs), findToolsName)
+	assert.Contains(t, specNames(set.specs), askUserName,
+		"asking for a missing value is not a capability an agent has to be granted")
 }
 
 func TestNewToolSet_NarrowsAndOffersFindToolsForALargeAgent(t *testing.T) {
@@ -100,8 +102,9 @@ func TestNewToolSet_NarrowsAndOffersFindToolsForALargeAgent(t *testing.T) {
 	set := service.newToolSet(definition, "which drivers are available")
 
 	require.True(t, set.disclosed)
-	assert.Len(t, set.specs, preselectedTools+1, "the preselected tools plus find_tools")
+	assert.Len(t, set.specs, preselectedTools+2, "the preselected tools, find_tools and ask_user")
 	assert.Contains(t, specNames(set.specs), findToolsName)
+	assert.Contains(t, specNames(set.specs), askUserName)
 	assert.Less(t, len(set.specs), len(names),
 		"the point is to send fewer schemas than the agent holds")
 }
@@ -165,7 +168,13 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 
 	assert.NotContains(t, specNames(set.specs), "list_expiring_credentials")
 	for _, name := range specNames(set.specs) {
-		assert.Contains(t, []string{"list_customers", "list_locations", findToolsName}, name)
+		// The two the agent holds, plus the two the runtime answers itself.
+		// Neither built-in reads anything, so neither widens the agent.
+		assert.Contains(
+			t,
+			[]string{"list_customers", "list_locations", findToolsName, askUserName},
+			name,
+		)
 	}
 }
 

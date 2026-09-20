@@ -88,6 +88,7 @@ func (s *Service) newToolSet(
 		for _, spec := range configured {
 			set.loaded[spec.Name] = struct{}{}
 		}
+		set.add(askUserSpec())
 
 		return set
 	}
@@ -97,6 +98,7 @@ func (s *Service) newToolSet(
 		set.add(toSpec(descriptor))
 	}
 	set.specs = append(set.specs, findToolsSpec())
+	set.add(askUserSpec())
 
 	return set
 }
