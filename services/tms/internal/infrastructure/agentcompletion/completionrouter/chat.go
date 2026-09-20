@@ -144,9 +144,11 @@ func (s *Service) attemptChat(
 	}
 
 	call := &modeladapter.Call{
-		Provider: provider,
-		APIKey:   apiKey,
-		Client:   s.clientFor(provider),
+		Provider:     provider,
+		APIKey:       apiKey,
+		Client:       s.clientFor(provider),
+		StreamClient: s.streamClientFor(provider),
+		StreamIdle:   s.cfg.GetAIStreamIdleTimeout(),
 		Request: &modeladapter.Request{
 			System:    req.System,
 			Messages:  req.Messages,

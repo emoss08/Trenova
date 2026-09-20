@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 )
@@ -62,7 +63,39 @@ type Call struct {
 	Provider *aiprovider.Provider
 	APIKey   string
 	Client   *http.Client
-	Request  *Request
+	// StreamClient serves streaming calls, which need no whole-request
+	// deadline: http.Client.Timeout spans reading the body, so a client that
+	// carries one severs a healthy stream partway through a long answer. A
+	// stalled stream is caught by an idle guard instead. Falls back to Client
+	// when unset.
+	StreamClient *http.Client
+	// StreamIdle is how long a stream may go silent before it is abandoned.
+	// Measured between reads, so a slow model is not a stalled one.
+	StreamIdle time.Duration
+	Request    *Request
+}
+
+// defaultStreamIdle is the silence a stream is allowed when nothing configures
+// one. It is generous because the gap before the first token of a long answer,
+// or between tool rounds on a loaded endpoint, is ordinary rather than a fault.
+const defaultStreamIdle = 90 * time.Second
+
+// streamHTTPClient is the client a streaming call should use.
+func (c *Call) streamHTTPClient() *http.Client {
+	if c.StreamClient != nil {
+		return c.StreamClient
+	}
+
+	return c.Client
+}
+
+// streamIdleTimeout is the silence this call tolerates.
+func (c *Call) streamIdleTimeout() time.Duration {
+	if c.StreamIdle > 0 {
+		return c.StreamIdle
+	}
+
+	return defaultStreamIdle
 }
 
 // Registry resolves an adapter for a provider's protocol.

@@ -189,7 +189,7 @@ func (a anthropicAdapter) Stream(
 
 	stream, err := postStream(
 		ctx,
-		call.Client,
+		call,
 		call.Provider.ResolvedBaseURL()+"/v1/messages",
 		map[string]string{
 			"x-api-key":         call.APIKey,

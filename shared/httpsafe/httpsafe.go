@@ -173,3 +173,22 @@ func NewClientWithPolicy(timeout time.Duration, p Policy) *http.Client {
 		},
 	}
 }
+
+// NewStreamingClientWithPolicy builds a client for responses read incrementally.
+//
+// It is NewClientWithPolicy without the whole-request timeout, and that absence
+// is the point. http.Client.Timeout covers reading the response body, so on a
+// streamed reply it is a deadline for the entire exchange: a server-sent-event
+// stream that is delivering perfectly well is cut off the moment it elapses,
+// mid-token, with an error that reads like a network fault. Streams are kept
+// honest by bounding silence between reads instead, which is the caller's job
+// because only the caller knows what a reasonable gap is.
+//
+// The egress guard, the header timeout and the redirect policy are unchanged:
+// nothing about streaming loosens where a request may go.
+func NewStreamingClientWithPolicy(p Policy) *http.Client {
+	client := NewClientWithPolicy(0, p)
+	client.Timeout = 0
+
+	return client
+}

@@ -177,7 +177,7 @@ func (a openAIChatAdapter) Stream(
 
 	stream, err := postStream(
 		ctx,
-		call.Client,
+		call,
 		call.Provider.ResolvedBaseURL()+"/chat/completions",
 		map[string]string{"Authorization": bearer(call.APIKey)},
 		body,

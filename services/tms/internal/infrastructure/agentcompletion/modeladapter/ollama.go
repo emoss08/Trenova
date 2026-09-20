@@ -96,7 +96,7 @@ func (a ollamaAdapter) Stream(
 
 	stream, err := postStream(
 		ctx,
-		call.Client,
+		call,
 		call.Provider.ResolvedBaseURL()+"/api/chat",
 		map[string]string{"Authorization": bearer(call.APIKey)},
 		body,

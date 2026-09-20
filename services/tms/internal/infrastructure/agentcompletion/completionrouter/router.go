@@ -51,17 +51,22 @@ type Service struct {
 	// provider allowed onto a private network cannot lend that reach to another.
 	clientsMu sync.Mutex
 	clients   map[bool]*http.Client
+	// streamClients are the same, minus the whole-request deadline. Kept apart
+	// rather than shared because a blocking call wants that deadline and a
+	// stream is killed by it.
+	streamClients map[bool]*http.Client
 }
 
 func New(p Params) serviceports.CompletionService {
 	return &Service{
-		logger:     p.Logger.Named("service.completion-router"),
-		ai:         p.Config.GetAIConfig(),
-		cfg:        p.Config.GetDocumentIntelligenceConfig(),
-		repo:       p.Repo,
-		encryption: p.Encryption,
-		adapters:   modeladapter.NewRegistry(),
-		clients:    make(map[bool]*http.Client, 2),
+		logger:        p.Logger.Named("service.completion-router"),
+		ai:            p.Config.GetAIConfig(),
+		cfg:           p.Config.GetDocumentIntelligenceConfig(),
+		repo:          p.Repo,
+		encryption:    p.Encryption,
+		adapters:      modeladapter.NewRegistry(),
+		clients:       make(map[bool]*http.Client, 2),
+		streamClients: make(map[bool]*http.Client, 2),
 	}
 }
 
@@ -354,6 +359,10 @@ func (s *Service) resolveAPIKey(provider *aiprovider.Provider) (string, error) {
 }
 
 // clientFor returns the shared client matching the provider's egress policy.
+//
+// Its deadline is the completion budget, not the probe budget: this client
+// carries generations, and a model writing a long answer routinely outlasts the
+// time a reachability check is allowed.
 func (s *Service) clientFor(provider *aiprovider.Provider) *http.Client {
 	s.clientsMu.Lock()
 	defer s.clientsMu.Unlock()
@@ -362,18 +371,56 @@ func (s *Service) clientFor(provider *aiprovider.Provider) *http.Client {
 	if client, ok := s.clients[allowPrivate]; ok {
 		return client
 	}
+	if s.clients == nil {
+		s.clients = make(map[bool]*http.Client, 2)
+	}
 
-	policy := httpsafe.Policy{
+	client := httpsafe.NewClientWithPolicy(
+		s.cfg.GetAICompletionTimeout(),
+		s.egressPolicy(allowPrivate),
+	)
+	s.clients[allowPrivate] = client
+
+	return client
+}
+
+// streamClientFor returns the client streaming calls use.
+//
+// It differs from clientFor in one way that matters: no whole-request timeout.
+// http.Client.Timeout spans reading the response body, so on a streamed reply
+// it is a wall-clock budget for the entire answer — the connection is severed
+// mid-sentence however healthy it is and however fast the tokens are arriving.
+// That is what made long answers stop partway through and be reported as cut
+// off. Liveness is enforced between bytes instead, by the idle guard the
+// adapters wrap the body in, so a slow answer is allowed and a silent one is
+// not.
+func (s *Service) streamClientFor(provider *aiprovider.Provider) *http.Client {
+	s.clientsMu.Lock()
+	defer s.clientsMu.Unlock()
+
+	allowPrivate := provider.AllowPrivateNetwork
+	if client, ok := s.streamClients[allowPrivate]; ok {
+		return client
+	}
+	if s.streamClients == nil {
+		s.streamClients = make(map[bool]*http.Client, 2)
+	}
+
+	client := httpsafe.NewStreamingClientWithPolicy(s.egressPolicy(allowPrivate))
+	s.streamClients[allowPrivate] = client
+
+	return client
+}
+
+// egressPolicy is the network guard both clients share.
+func (s *Service) egressPolicy(allowPrivate bool) httpsafe.Policy {
+	return httpsafe.Policy{
 		AllowPrivateNetworks: allowPrivate,
 		// A self-hosted model holds the connection open while it generates and
 		// sends nothing until the first token, which on a loaded GPU outlasts the
 		// transport default.
 		ResponseHeaderTimeout: s.cfg.GetAITimeout(),
 	}
-	client := httpsafe.NewClientWithPolicy(s.cfg.GetAITimeout(), policy)
-	s.clients[allowPrivate] = client
-
-	return client
 }
 
 // aiDisabledMessage names the key rather than the symptom.

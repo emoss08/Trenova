@@ -282,7 +282,7 @@ func (a openAIResponsesAdapter) Stream(
 
 	stream, err := postStream(
 		ctx,
-		call.Client,
+		call,
 		call.Provider.ResolvedBaseURL()+"/v1/responses",
 		map[string]string{"Authorization": bearer(call.APIKey)},
 		body,
