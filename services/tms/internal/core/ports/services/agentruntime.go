@@ -53,6 +53,9 @@ type RunResult struct {
 	ProviderID    pulid.ID
 	ToolCallsUsed int
 	Exhausted     bool
+	// Truncated reports that the provider stopped partway through the reply.
+	// The turn still counts as finished and Reply holds what arrived.
+	Truncated bool
 }
 
 type AgentRuntime interface {

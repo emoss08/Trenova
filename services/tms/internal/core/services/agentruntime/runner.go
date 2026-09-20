@@ -259,10 +259,20 @@ func (s *Service) finish(
 		return result
 	}
 
-	result.Reply = completion.Text
+	reply := completion.Text
+	if completion.Truncated {
+		// Said in the reply rather than left to an error banner, because this
+		// is saved and read back later: somebody opening the thread tomorrow
+		// has to be able to tell a finished answer from one that stopped in the
+		// middle of a sentence.
+		reply += truncationNotice
+		result.Truncated = true
+	}
+
+	result.Reply = reply
 	result.Messages = append(result.Messages, conversation.Message{
 		Role:         conversation.RoleAssistant,
-		Content:      completion.Text,
+		Content:      reply,
 		Model:        completion.ModelIdentifier,
 		ProviderID:   completion.ProviderID,
 		InputTokens:  completion.InputTokens,
@@ -271,6 +281,16 @@ func (s *Service) finish(
 
 	return result
 }
+
+// truncationNotice marks a reply the provider stopped partway through.
+//
+// A model that dies mid-sentence used to take its whole answer with it: the
+// reader watched a correct list of drivers appear and then be replaced by "the
+// assistant could not finish this reply". Keeping the text is most of the fix;
+// saying where it stopped is the rest, because an answer that ends mid-clause
+// is one somebody could otherwise act on as though it were complete.
+const truncationNotice = "\n\n_This reply was cut off before it finished. " +
+	"Ask again to get the rest._"
 
 func (s *Service) ToolSummaries(
 	definition *agentdefinition.Definition,

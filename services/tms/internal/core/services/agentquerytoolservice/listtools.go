@@ -567,6 +567,10 @@ func coerceDateValue(name, raw string) (int64, error) {
 		return seconds, nil
 	}
 
+	if seconds, ok := namedDay(raw, timeutils.NowUnix()); ok {
+		return seconds, nil
+	}
+
 	for _, layout := range []string{time.DateOnly, time.RFC3339} {
 		if parsed, err := time.Parse(layout, raw); err == nil {
 			return parsed.UTC().Unix(), nil
@@ -574,9 +578,42 @@ func coerceDateValue(name, raw string) (int64, error) {
 	}
 
 	return 0, fmt.Errorf(
-		"%q on %q is not a date; use YYYY-MM-DD, or nextndays/lastndays with a day count",
+		"%q on %q is not a date; use YYYY-MM-DD, today, tomorrow or yesterday, "+
+			"or nextndays/lastndays with a day count",
 		raw, name,
 	)
+}
+
+// namedDay resolves the words a person uses for a date.
+//
+// "today" is the obvious thing to send for "expiring from now on", and refusing
+// it cost a whole round trip: the model sent it, read the correction, and asked
+// again with the same question. That worked, but only because the refusal names
+// what would have worked — on a weaker model the extra turn is where the
+// conversation falls apart, and the retry is billed either way.
+//
+// Resolving it here rather than in the prompt also keeps the clock on the
+// server. A model computing today's date is the arithmetic that put a medical
+// card three months out of place.
+func namedDay(raw string, now int64) (int64, bool) {
+	const day = 86400
+
+	midnight := func(seconds int64) int64 {
+		t := time.Unix(seconds, 0).UTC()
+
+		return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC).Unix()
+	}
+
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "today", "now":
+		return midnight(now), true
+	case "tomorrow":
+		return midnight(now + day), true
+	case "yesterday":
+		return midnight(now - day), true
+	default:
+		return 0, false
+	}
 }
 
 func operatorAllowed(kind filterKind, operator dbtype.Operator) bool {

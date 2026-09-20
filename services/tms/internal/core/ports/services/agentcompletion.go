@@ -79,6 +79,11 @@ type ChatCompletionResult struct {
 	OutputTokens    int
 	ProviderID      pulid.ID
 	ProviderKind    aiprovider.Kind
+	// Truncated reports that the provider stopped partway through the reply.
+	// Text holds what arrived, which is worth keeping: a reader who watched
+	// half an answer appear should not be left with nothing, and the half that
+	// arrived is usually the part that answered the question.
+	Truncated bool
 }
 
 // ChatStreamSink receives reply text as the model produces it. It is a preview
