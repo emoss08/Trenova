@@ -92,7 +92,14 @@ func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQu
 		resource: permission.ResourceWorker,
 		config:   querybuilder.GetFieldConfiguration((*worker.Worker)(nil)),
 		fields: []listField{
-			{Name: "status", Kind: filterEnum, Values: statusValues},
+			{
+				Name:   "status",
+				Kind:   filterEnum,
+				Values: statusValues,
+				Note: "employment state, not availability. A driver who left is " +
+					"Inactive — there is no Terminated. For who can be dispatched " +
+					"today use canBeAssigned, and for who is off use list_time_off",
+			},
 			{Name: "type", Kind: filterEnum, Values: workerTypes, Note: "employee or contractor"},
 			{Name: "driverType", Kind: filterEnum, Values: driverTypes},
 			{Name: "city", Kind: filterText, Sortable: true},
@@ -136,22 +143,7 @@ func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQu
 			}
 
 			return listRows(result.Items, func(item *worker.Worker) any {
-				row := workerRow{
-					ID:                item.ID.String(),
-					Name:              workerName(item),
-					Status:            string(item.Status),
-					Type:              string(item.Type),
-					DriverType:        string(item.DriverType),
-					City:              item.City,
-					CanBeAssigned:     item.CanBeAssigned,
-					AssignmentBlocked: item.AssignmentBlocked,
-				}
-				if item.FleetCode != nil {
-					row.FleetCode = item.FleetCode.Code
-				}
-				applyProfile(&row, item.Profile)
-
-				return row
+				return toWorkerRow(item)
 			}), nil
 		},
 	})
@@ -180,7 +172,15 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 		resource: permission.ResourceShipment,
 		config:   querybuilder.GetFieldConfiguration((*shipment.Shipment)(nil)),
 		fields: []listField{
-			{Name: "status", Kind: filterEnum, Values: shipmentStatuses},
+			{
+				Name:   "status",
+				Kind:   filterEnum,
+				Values: shipmentStatuses,
+				Note: "there is no Delivered: a delivered load is Completed, and " +
+					"ReadyToInvoice and Invoiced are further along, not earlier. " +
+					"For a question about when something delivered, filter on " +
+					"actualDeliveryDate rather than on status",
+			},
 			{
 				Name:   "billingTransferStatus",
 				Kind:   filterEnum,
@@ -208,28 +208,32 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 			}
 
 			return listRows(result.Items, func(item *shipment.Shipment) any {
-				row := shipmentRow{
-					ID:            item.ID.String(),
-					ProNumber:     item.ProNumber,
-					BOL:           item.BOL,
-					Status:        string(item.Status),
-					BillingStatus: string(item.BillingTransferStatus),
-				}
-				if item.TotalChargeAmount.Valid {
-					row.TotalCharge = item.TotalChargeAmount.Decimal.String()
-				}
-				row.ActualShipDate = expectedDate(
-					derefInt64(item.ActualShipDate), "not shipped yet")
-				row.ActualDeliveryDate = expectedDate(
-					derefInt64(item.ActualDeliveryDate), "not delivered yet")
-				if item.Customer != nil {
-					row.Customer = item.Customer.Name
-				}
-
-				return row
+				return toShipmentRow(item)
 			}), nil
 		},
 	})
+}
+
+// toShipmentRow is the one shipment projection, for the same reasons.
+func toShipmentRow(item *shipment.Shipment) shipmentRow {
+	row := shipmentRow{
+		ID:            item.ID.String(),
+		ProNumber:     item.ProNumber,
+		BOL:           item.BOL,
+		Status:        string(item.Status),
+		BillingStatus: string(item.BillingTransferStatus),
+	}
+	if item.TotalChargeAmount.Valid {
+		row.TotalCharge = item.TotalChargeAmount.Decimal.String()
+	}
+	row.ActualShipDate = expectedDate(derefInt64(item.ActualShipDate), "not shipped yet")
+	row.ActualDeliveryDate = expectedDate(
+		derefInt64(item.ActualDeliveryDate), "not delivered yet")
+	if item.Customer != nil {
+		row.Customer = item.Customer.Name
+	}
+
+	return row
 }
 
 type equipmentRow struct {
@@ -248,7 +252,14 @@ type equipmentRow struct {
 
 func equipmentFields() []listField {
 	return []listField{
-		{Name: "status", Kind: filterEnum, Values: equipmentStatuses},
+		{
+			Name:   "status",
+			Kind:   filterEnum,
+			Values: equipmentStatuses,
+			Note: "Available means it can be dispatched, OutOfService means it " +
+				"cannot, AtMaintenance means it is in the shop, and Sold means it " +
+				"has left the fleet",
+		},
 		{Name: "ownershipType", Kind: filterEnum, Values: ownershipTypes},
 		{Name: "code", Kind: filterText, Sortable: true},
 		{Name: "make", Kind: filterText},
@@ -483,6 +494,30 @@ func specOf(tool serviceports.AgentQueryTool) listSpec {
 // applyProfile copies the qualification roll-up onto the row. A worker without a
 // profile is a record mid-onboarding, not an error: the fields stay empty rather
 // than reporting a lapsed licence nobody has yet entered.
+// toWorkerRow is the one worker projection. search_worker used to return the
+// stored entity instead, which cost six times the bytes for the same answer —
+// eight drivers overran the tool-result cap and were truncated mid-record — and
+// reported an unrecorded credential as a bare null, which is the reading that
+// caused the incident these rows exist to prevent.
+func toWorkerRow(item *worker.Worker) workerRow {
+	row := workerRow{
+		ID:                item.ID.String(),
+		Name:              workerName(item),
+		Status:            string(item.Status),
+		Type:              string(item.Type),
+		DriverType:        string(item.DriverType),
+		City:              item.City,
+		CanBeAssigned:     item.CanBeAssigned,
+		AssignmentBlocked: item.AssignmentBlocked,
+	}
+	if item.FleetCode != nil {
+		row.FleetCode = item.FleetCode.Code
+	}
+	applyProfile(&row, item.Profile)
+
+	return row
+}
+
 func applyProfile(row *workerRow, profile *worker.WorkerProfile) {
 	if profile == nil {
 		return

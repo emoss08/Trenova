@@ -2,6 +2,8 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -100,8 +102,10 @@ func (t *searchShipmentsTool) ParamSchema() map[string]any {
 				"description": "Optional text to match. Omit to list shipments unfiltered.",
 			},
 			"status": map[string]any{
-				"type":        "string",
-				"description": "Optional status filter, such as New, Assigned, InTransit, Delivered, or Canceled",
+				"type": "string",
+				"enum": shipmentStatuses,
+				"description": "Optional status filter. There is no Delivered: a " +
+					"delivered load is Completed. Omit to include every status.",
 			},
 			"limit": map[string]any{
 				"type":        "integer",
@@ -136,7 +140,15 @@ func (t *searchShipmentsTool) Query(
 		limit = defaultSearchLimit
 	}
 
-	status := optionalString(params.Params, "status")
+	// Unvalidated, this passed whatever the model sent straight to the
+	// repository, which matched nothing and returned an empty page the model
+	// reported as "there are no shipments in that state". The schema used to
+	// name "Delivered" here, which is not one of the statuses, so the tool was
+	// instructing its caller to produce exactly that.
+	status, err := shipmentStatusFilter(params.Params)
+	if err != nil {
+		return nil, err
+	}
 
 	criteria := newSearchCriteria("shipments")
 	criteria.text(query)
@@ -161,5 +173,32 @@ func (t *searchShipmentsTool) Query(
 		return nil, err
 	}
 
-	return criteria.result(result.Items, len(result.Items)), nil
+	rows := make([]shipmentRow, 0, len(result.Items))
+	for _, item := range result.Items {
+		rows = append(rows, toShipmentRow(item))
+	}
+
+	return criteria.result(rows, len(rows)), nil
+}
+
+// shipmentStatusFilter refuses a status outside the set and names the set.
+//
+// A refusal that lists the alternatives is a correction the model can act on;
+// an empty result is one it reports as fact.
+func shipmentStatusFilter(params map[string]any) (string, error) {
+	status := optionalString(params, "status")
+	if status == "" {
+		return "", nil
+	}
+
+	for _, candidate := range shipmentStatuses {
+		if candidate == status {
+			return status, nil
+		}
+	}
+
+	return "", fmt.Errorf(
+		"parameter %q does not accept %q; a delivered load is Completed. Use one of: %s",
+		"status", status, strings.Join(shipmentStatuses, ", "),
+	)
 }

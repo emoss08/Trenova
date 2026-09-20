@@ -145,7 +145,15 @@ func (t *searchWorkerTool) Query(
 		return nil, err
 	}
 
-	return criteria.result(result.Items, len(result.Items)), nil
+	// The same projection the list tools use, rather than the stored entity.
+	// Returning the entity cost six times the bytes for the same answer and
+	// reported an unrecorded credential as a bare null.
+	rows := make([]workerRow, 0, len(result.Items))
+	for _, item := range result.Items {
+		rows = append(rows, toWorkerRow(item))
+	}
+
+	return criteria.result(rows, len(rows)), nil
 }
 
 // workerName is how a person names a driver. Every tool that returns a worker

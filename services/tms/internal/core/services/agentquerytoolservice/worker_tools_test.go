@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -164,4 +165,71 @@ func TestRegistry_DoesNotAdvertiseTheLegacyName(t *testing.T) {
 		assert.NotEqual(t, "search_workers", descriptor.Name,
 			"the alias is for reading old definitions, not for the model to call")
 	}
+}
+
+/*
+Search returns the same curated row the list tools return, not the stored
+entity.
+
+It used to return the entity. For a nearly empty worker that was 1,398 bytes
+against 231 for the row — six times the context for the same answer, most of
+it nulls nobody asked about: businessUnitId, stateId, profilePicUrl,
+addressLine2, externalId, gender. Eight drivers overran the 12,000-character
+tool-result cap, the result was cut mid-record, and the model announced it
+would "see the remaining two workers from the truncated data" and invented
+them.
+
+The entity also reported an unrecorded credential as a bare null, which is the
+reading that produced a wrong compliance answer.
+*/
+func TestSearchWorker_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
+	t.Parallel()
+
+	expiry := int64(1791591001)
+	repo := &fakeWorkerRepo{items: []*worker.Worker{{
+		ID:        pulid.MustNew("wrk_"),
+		FirstName: "Mike",
+		LastName:  "Johnson",
+		Profile:   &worker.WorkerProfile{MedicalCardExpiry: &expiry},
+	}}}
+
+	result, err := newSearchWorkerTool(repo).Query(t.Context(), testParams(map[string]any{}))
+	require.NoError(t, err)
+
+	outcome, ok := result.(searchOutcome)
+	require.True(t, ok)
+	rows, ok := outcome.Items.([]workerRow)
+	require.True(t, ok, "search must return the curated row, not the entity")
+	require.Len(t, rows, 1)
+
+	assert.Equal(t, "Mike Johnson", rows[0].Name)
+
+	encoded, err := sonic.Marshal(rows)
+	require.NoError(t, err)
+	for _, noise := range []string{"profilePicUrl", "addressLine2", "externalId", "gender"} {
+		assert.NotContains(t, string(encoded), noise,
+			"the entity's %s costs context and answers nothing", noise)
+	}
+}
+
+// The absence semantics the rows carry have to reach search too, or the path
+// the incident actually used is still the one that reports a missing
+// certificate as nothing at all.
+func TestSearchWorker_SaysWhenACredentialIsNotOnFile(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeWorkerRepo{items: []*worker.Worker{{
+		ID: pulid.MustNew("wrk_"), FirstName: "David", LastName: "Park",
+		Profile: &worker.WorkerProfile{},
+	}}}
+
+	result, err := newSearchWorkerTool(repo).Query(t.Context(), testParams(map[string]any{}))
+	require.NoError(t, err)
+
+	outcome, _ := result.(searchOutcome)
+	encoded, err := sonic.Marshal(outcome.Items)
+	require.NoError(t, err)
+
+	assert.Contains(t, string(encoded), "none on file")
+	assert.NotContains(t, string(encoded), "null")
 }
