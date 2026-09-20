@@ -363,3 +363,52 @@ func TestTemplates_DescribeEveryStarter(t *testing.T) {
 	assert.Contains(t, agentdefinition.TemplateBillingException.StarterEvents(), agent.EventBillingQueueItemException)
 	assert.Empty(t, agentdefinition.TemplateGeneralAssistant.StarterTools())
 }
+
+/*
+A template's starter tools have to be able to answer the question the template
+exists for.
+
+The seeded "Compliance desk" — described as answering "what is expiring", with
+instructions saying medical cards are the thing most often missed — shipped
+holding get_worker and search_worker and nothing else. Asked which drivers had
+a medical card expiring within thirty days, it correctly reported that it could
+not filter on dates, said out loud "I don't see list_expiring_credentials in my
+available tools", and then answered anyway from arithmetic it cannot do. It got
+the answer backwards.
+
+The seeds now derive from these lists rather than carrying their own copy, so
+this test is what keeps the lists honest as the catalog grows.
+*/
+func TestTemplates_CarryTheToolsTheirPurposeRequires(t *testing.T) {
+	t.Parallel()
+
+	assert.Contains(t, agentdefinition.TemplateComplianceAssistant.StarterTools(),
+		"list_expiring_credentials",
+		"a compliance agent that cannot filter credentials by date cannot do its job")
+
+	assert.Contains(t, agentdefinition.TemplateDispatchAssistant.StarterTools(),
+		"list_expiring_credentials",
+		"dispatch decides who is legal to send")
+	assert.Contains(t, agentdefinition.TemplateDispatchAssistant.StarterTools(),
+		"list_time_off",
+		"dispatch decides who is available")
+
+	assert.Contains(t, agentdefinition.TemplateBillingAssistant.StarterTools(),
+		"list_shipments")
+}
+
+// A duplicate name is silently dropped by the registry, and an empty one fails
+// validation, so a starter list carrying either is a definition nobody can save.
+func TestTemplates_StarterToolsAreWellFormed(t *testing.T) {
+	t.Parallel()
+
+	for _, template := range agentdefinition.AllTemplates() {
+		seen := make(map[string]struct{})
+		for _, tool := range template.StarterTools() {
+			assert.NotEmpty(t, tool, template.Label())
+			_, duplicate := seen[tool]
+			assert.False(t, duplicate, "%s lists %q twice", template.Label(), tool)
+			seen[tool] = struct{}{}
+		}
+	}
+}

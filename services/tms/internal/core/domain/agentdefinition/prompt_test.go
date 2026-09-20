@@ -216,3 +216,49 @@ func TestSystemPrompt_TellsTheAgentToActOnARejectedArgument(t *testing.T) {
 
 	assert.Contains(t, prompt, "names the ones that work")
 }
+
+/*
+The rules that stop the answer we got backwards.
+
+Handed a raw epoch for a medical card, the agent estimated "56 years × 365.25
+days", placed an October date in July, and told a dispatcher nobody was
+expiring when a card lapsed in twenty-one days. It had already said out loud
+that it lacked the tool for the question, and answered anyway.
+
+Tool results now carry written-out dates, so the arithmetic is gone. These two
+rules cover what remains: do not compute, and do not answer a question you have
+no tool for.
+*/
+func TestSystemPrompt_TellsTheAgentNotToCalculate(t *testing.T) {
+	t.Parallel()
+
+	prompt := definitionWithInstructions("Help.").
+		BuildSystemPrompt(agentdefinition.RuntimeContext{})
+
+	assert.Contains(t, prompt, "Do not calculate")
+	assert.Contains(t, prompt, "how far away they are",
+		"the reason it need not calculate is that the tool already did")
+}
+
+func TestSystemPrompt_TellsTheAgentToStopWhenItLacksTheTool(t *testing.T) {
+	t.Parallel()
+
+	prompt := definitionWithInstructions("Help.").
+		BuildSystemPrompt(agentdefinition.RuntimeContext{})
+
+	assert.Contains(t, prompt, "say so and stop")
+	assert.Contains(t, prompt, "Name the tool you would need")
+}
+
+// The reader is a dispatcher between calls, not someone following a
+// derivation. Pages of "let me think: if it is September..." is the failure the
+// user reported, separately from the answer being wrong.
+func TestOutputSection_KeepsTheWorkingOffThePage(t *testing.T) {
+	t.Parallel()
+
+	prompt := definitionWithInstructions("Help.").
+		BuildSystemPrompt(agentdefinition.RuntimeContext{})
+
+	assert.Contains(t, prompt, "Keep your working to yourself")
+	assert.Contains(t, prompt, "the answer, not the process")
+}

@@ -104,7 +104,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 				"We run mostly reefer freight out of the Los Angeles terminal. When a driver is " +
 				"asked about, check hours of service before anything else.",
 			Guardrails:      []string{"Promise a delivery time to a customer", "Change a rate"},
-			ToolNames:       []string{"get_shipment", "search_shipments", "get_worker", "search_worker"},
+			ToolNames:       agentdefinition.TemplateDispatchAssistant.StarterTools(),
 			AutonomyCeiling: agent.TierActWithApproval,
 			TriggerMode:     agentdefinition.TriggerChat,
 			Enabled:         true,
@@ -120,12 +120,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Instructions: agentdefinition.TemplateBillingAssistant.StarterInstructions() + "\n\n" +
 				"Never propose a rate change. If a rate looks wrong, flag it for a person and say " +
 				"which document you would want to see.",
-			ToolNames: []string{
-				"get_shipment",
-				"search_shipments",
-				"flag_for_manual_review",
-				"request_missing_docs",
-			},
+			ToolNames:       agentdefinition.TemplateBillingAssistant.StarterTools(),
 			AutonomyCeiling: agent.TierPropose,
 			TriggerMode:     agentdefinition.TriggerChat,
 			Enabled:         true,
@@ -140,7 +135,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Template:       agentdefinition.TemplateComplianceAssistant,
 			Instructions: agentdefinition.TemplateComplianceAssistant.StarterInstructions() + "\n\n" +
 				"Medical cards and hazmat endorsements are the two we most often miss.",
-			ToolNames:       []string{"get_worker", "search_worker"},
+			ToolNames:       agentdefinition.TemplateComplianceAssistant.StarterTools(),
 			AutonomyCeiling: agent.TierPropose,
 			TriggerMode:     agentdefinition.TriggerChat,
 			Enabled:         true,
@@ -154,7 +149,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Description:     "Shipment status for the customer-facing team. Off until reviewed.",
 			Template:        agentdefinition.TemplateCustomerAssistant,
 			Instructions:    agentdefinition.TemplateCustomerAssistant.StarterInstructions(),
-			ToolNames:       []string{"get_shipment", "search_shipments"},
+			ToolNames:       agentdefinition.TemplateCustomerAssistant.StarterTools(),
 			AutonomyCeiling: agent.TierPropose,
 			TriggerMode:     agentdefinition.TriggerChat,
 			Enabled:         false,
@@ -182,7 +177,16 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Instructions: "Each weekday morning, review shipments that are late, moves without a driver, " +
 				"and billing items that are blocked. Write a short digest grouped by urgency with the " +
 				"pro numbers and names a dispatcher needs to act.",
-			ToolNames:       []string{"search_shipments", "search_worker"},
+			// No template, so this one names its own tools — and has to be read
+			// whenever the catalog grows, which is exactly the maintenance the
+			// templated definitions above no longer need.
+			ToolNames: []string{
+				"list_shipments",
+				"search_shipments",
+				"list_workers",
+				"list_time_off",
+				"list_expiring_credentials",
+			},
 			AutonomyCeiling: agent.TierPropose,
 			TriggerMode:     agentdefinition.TriggerScheduled,
 			CronExpression:  "0 6 * * 1-5",

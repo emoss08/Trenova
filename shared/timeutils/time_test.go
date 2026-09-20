@@ -195,3 +195,45 @@ func TestDayBoundariesUnix(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+// DescribeUnixDate exists because a model cannot read an epoch. The ISO prefix
+// is the form the agent date filters accept, so a value read out of a result
+// can be passed straight back into the next call.
+func TestDescribeUnixDate(t *testing.T) {
+	t.Parallel()
+
+	// 2026-09-19, the day the wrong compliance answer was given.
+	const now int64 = 1789776000
+	const day int64 = 86400
+
+	for _, tc := range []struct {
+		name     string
+		ts       int64
+		expected string
+	}{
+		{"today", now, "2026-09-19 (today)"},
+		{"tomorrow", now + day, "2026-09-20 (tomorrow)"},
+		{"yesterday", now - day, "2026-09-18 (yesterday)"},
+		{"ahead", 1791591001, "2026-10-10 (in 21 days)"},
+		{"far ahead", 1824423001, "2027-10-25 (in 401 days)"},
+		{"behind", now - 42*day, "2026-08-08 (42 days ago)"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tc.expected, timeutils.DescribeUnixDate(tc.ts, now))
+		})
+	}
+}
+
+// Whole days apart, not seconds apart: a card expiring late tonight and one
+// expiring early tomorrow are one day apart however few hours separate them.
+func TestDescribeUnixDate_CountsCalendarDaysNotElapsedHours(t *testing.T) {
+	t.Parallel()
+
+	lateTonight := int64(1789858740)   // 2026-09-19 22:59 UTC
+	earlyTomorrow := int64(1789862400) // 2026-09-20 00:00 UTC
+
+	assert.Contains(t, timeutils.DescribeUnixDate(lateTonight, 1789776000), "(today)")
+	assert.Contains(t, timeutils.DescribeUnixDate(earlyTomorrow, 1789776000), "(tomorrow)")
+}

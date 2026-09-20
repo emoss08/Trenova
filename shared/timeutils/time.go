@@ -114,3 +114,42 @@ func TimeZoneAwareNow(location string) int64 {
 	now := time.Now().In(loc)
 	return now.Unix()
 }
+
+// DescribeUnixDate renders an instant as a calendar date and how far away it is.
+//
+// It exists because a bare epoch integer is unreadable to anything that cannot
+// do arithmetic, and a language model cannot. Asked which medical cards expired
+// within thirty days, one was handed 1791591001, estimated "56 years × 365.25
+// days", called it July 2026 when it was October 2026, and told a dispatcher
+// that nobody was expiring when somebody was expiring in three weeks.
+//
+// The ISO prefix is deliberate: it is unambiguous, it sorts, and it is the same
+// form the date filters accept, so a value read out of one result can be passed
+// straight back into the next call.
+func DescribeUnixDate(ts, now int64) string {
+	date := time.Unix(ts, 0).UTC().Format(time.DateOnly)
+
+	startOfDay := func(seconds int64) time.Time {
+		t := time.Unix(seconds, 0).UTC()
+
+		return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+	}
+
+	// Whole days apart, not seconds apart. "Tomorrow" has to read as one day
+	// away at any hour, or a card expiring tonight and one expiring tomorrow
+	// morning differ by a rounding decision nobody can see.
+	days := int64(startOfDay(ts).Sub(startOfDay(now)).Hours() / 24)
+
+	switch {
+	case days == 0:
+		return date + " (today)"
+	case days == 1:
+		return date + " (tomorrow)"
+	case days == -1:
+		return date + " (yesterday)"
+	case days > 1:
+		return fmt.Sprintf("%s (in %d days)", date, days)
+	default:
+		return fmt.Sprintf("%s (%d days ago)", date, -days)
+	}
+}

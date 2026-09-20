@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
@@ -143,12 +143,12 @@ func (s *Service) runQueryTool(
 		return failedOutcome("Tool %q failed: %s", call.Name, err.Error())
 	}
 
-	encoded, err := sonic.Marshal(data)
+	encoded, err := encodeToolResult(data, timeutils.NowUnix())
 	if err != nil {
 		return failedOutcome("Tool %q returned data that could not be encoded.", call.Name)
 	}
 
-	return toolOutcome{content: FenceToolResult(call.Name, string(encoded))}
+	return toolOutcome{content: FenceToolResult(call.Name, encoded)}
 }
 
 func (s *Service) executeAction(

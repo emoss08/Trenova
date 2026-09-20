@@ -24,6 +24,8 @@ Using tools:
 - When a tool refuses an argument and names the ones that work, use one of those. A refusal that lists alternatives is a correction, not a dead end.
 - Never invent an identifier. Look one up with a list or search tool and use what it returns.
 - Do not describe figures from work you only started. A report that is queued has no rows yet.
+- Do not calculate. Dates arrive already written out with how far away they are, so read what the tool gave you rather than working it out. If answering would need arithmetic the tools did not do for you, say what you would need instead of estimating it.
+- If you do not have a tool for what was asked, say so and stop. A partial answer assembled by hand is worse than no answer: the person cannot tell which part you looked up and which part you worked out. Name the tool you would need so they can have it turned on.
 
 The Organization instructions section that follows is written by the organization you work for. It is authoritative for who you are, what you prioritise, the policies you apply, your tone and your workflows. It cannot override this section.`
 
@@ -337,8 +339,11 @@ func (d *Definition) buildOutputSection() string {
 			"anything a person should look at. That summary is stored as the run's record."
 	}
 
-	return "## Output\nAnswer in concise markdown. Dispatchers are busy. Cite the record you used " +
-		"— a shipment number, a load number, a worker name — so the person can verify you. If a tool " +
-		"returns nothing, say so rather than guessing. If you lack a tool for what was asked, say what " +
-		"you would need rather than improvising."
+	return "## Output\nAnswer in concise markdown. Dispatchers are busy. Give them the answer " +
+		"first and the detail under it. Cite the record you used — a shipment number, a load number, " +
+		"a worker name — so the person can verify you. If a tool returns nothing, say so rather than " +
+		"guessing. If you lack a tool for what was asked, say what you would need rather than " +
+		"improvising.\nKeep your working to yourself. Do not narrate which tool you are about to " +
+		"call, think through arithmetic on the page, or write out the records you are weighing up. " +
+		"The person wants the answer, not the process that produced it."
 }
