@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds/base"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -59,7 +60,13 @@ func (s *AgentDefinitionSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return fmt.Errorf("count existing agents: %w", err)
 			}
 			if count > 0 {
-				return nil
+				// Already seeded. Rather than doing nothing, bring the
+				// templated agents up to their template's current tool list:
+				// the catalog grows, and an agent seeded before a tool existed
+				// otherwise stays unable to answer what it was created for. The
+				// compliance agent shipped holding get_worker and search_worker
+				// and could not look up an expiring medical card.
+				return s.reconcileToolNames(ctx, tx, org.ID, org.BusinessUnitID)
 			}
 
 			if err = s.enableSystemAgents(ctx, tx, org.ID, org.BusinessUnitID); err != nil {
@@ -88,6 +95,73 @@ func (s *AgentDefinitionSeed) Run(ctx context.Context, tx bun.Tx) error {
 			return nil
 		},
 	)
+}
+
+// reconcileToolNames adds any tool a definition's template has gained.
+//
+// Strictly additive: a tool already present keeps its position, and one a
+// developer removed by hand comes back, which is the accepted cost of a seeder
+// whose job is to reflect the current templates. It never removes, so a tool
+// picked by hand survives, and it runs only here — in the development seeds —
+// so no organization's configured agent is touched by it.
+func (s *AgentDefinitionSeed) reconcileToolNames(
+	ctx context.Context,
+	tx bun.Tx,
+	orgID, buID pulid.ID,
+) error {
+	cols := buncolgen.DefinitionColumns
+
+	var existing []*agentdefinition.Definition
+	if err := tx.NewSelect().
+		Model(&existing).
+		Where(cols.OrganizationID.Eq(), orgID).
+		Where(cols.BusinessUnitID.Eq(), buID).
+		Where(cols.Template.IsNotNull()).
+		Scan(ctx); err != nil {
+		return fmt.Errorf("load agents to reconcile: %w", err)
+	}
+
+	for _, definition := range existing {
+		merged, changed := mergeToolNames(definition.ToolNames, definition.Template.StarterTools())
+		if !changed {
+			continue
+		}
+
+		if _, err := tx.NewUpdate().
+			Model((*agentdefinition.Definition)(nil)).
+			Set(cols.ToolNames.Set(), dbhelper.TextArray(merged)).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Where(cols.ID.Eq(), definition.ID).
+			Where(cols.OrganizationID.Eq(), orgID).
+			Where(cols.BusinessUnitID.Eq(), buID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("reconcile agent %s: %w", definition.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// mergeToolNames appends the starters a definition is missing, preserving the
+// order it already had so a developer's arrangement is not reshuffled.
+func mergeToolNames(current, starters []string) ([]string, bool) {
+	held := make(map[string]struct{}, len(current))
+	for _, tool := range current {
+		held[tool] = struct{}{}
+	}
+
+	merged := current
+	changed := false
+	for _, tool := range starters {
+		if _, ok := held[tool]; ok {
+			continue
+		}
+		merged = append(merged, tool)
+		held[tool] = struct{}{}
+		changed = true
+	}
+
+	return merged, changed
 }
 
 func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefinition.Definition {

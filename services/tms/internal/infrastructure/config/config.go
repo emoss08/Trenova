@@ -611,6 +611,36 @@ func (c *SearchConfig) GetDefaultLimit() int {
 	return c.DefaultLimit
 }
 
+// AIConfig is the master switch for model-backed features: the assistant,
+// agents, insight narration, the formula assistant and document intelligence
+// all run through the completion router, and this is what the router asks.
+//
+// It exists because that gate used to be documentIntelligence.enableAI, which
+// ships false. Configuring a provider in the UI then produced "AI features are
+// disabled" from a key named after a different feature, with nothing in the
+// message to say which one.
+type AIConfig struct {
+	// Enabled is a pointer so an absent key means enabled rather than
+	// disabled. Leaving it out is the common case and must not turn the
+	// assistant off; the real gate is per-organization anyway, since the
+	// router can only reach a provider row somebody configured and enabled.
+	// This switch is here for an operator who wants to stop all of it at once.
+	Enabled *bool `mapstructure:"enabled"`
+}
+
+// AIEnabledKey names the configuration key in error messages, so a disabled
+// install says which switch to look at rather than leaving it to be guessed.
+const AIEnabledKey = "ai.enabled"
+
+// AIEnabled is nil-safe on the receiver as well as the field. A service built
+// without this section — which a test does, and which a future caller that
+// forgets to wire it would — must fall to the same "available" default as an
+// absent key, rather than panicking inside a gate whose whole job is to answer
+// a yes-or-no question.
+func (c *AIConfig) AIEnabled() bool {
+	return c == nil || c.Enabled == nil || *c.Enabled
+}
+
 type DocumentIntelligenceConfig struct {
 	Enabled                 bool          `mapstructure:"enabled"`
 	OCRCommand              string        `mapstructure:"ocrCommand"`
@@ -620,8 +650,6 @@ type DocumentIntelligenceConfig struct {
 	AITimeout               time.Duration `mapstructure:"aiTimeout"`
 	AIMaxInputChars         int           `mapstructure:"aiMaxInputChars"         validate:"omitempty,min=1000,max=500000"`
 	AIExtractionMaxTokens   int           `mapstructure:"aiExtractionMaxTokens"   validate:"omitempty,min=256,max=32768"`
-	AIClassificationModel   string        `mapstructure:"aiClassificationModel"`
-	AIExtractionModel       string        `mapstructure:"aiExtractionModel"`
 	AIMaxRetries            int           `mapstructure:"aiMaxRetries"            validate:"omitempty,min=0,max=10"`
 	EnableOCRPreprocessing  bool          `mapstructure:"enableOCRPreprocessing"`
 	OCRPreprocessingMode    string        `mapstructure:"ocrPreprocessingMode"`
@@ -682,22 +710,6 @@ func (c *DocumentIntelligenceConfig) GetAIExtractionMaxTokens() int {
 	}
 
 	return c.AIExtractionMaxTokens
-}
-
-func (c *DocumentIntelligenceConfig) GetAIClassificationModel() string {
-	if c.AIClassificationModel == "" {
-		return "gpt-5-nano-2025-08-07"
-	}
-
-	return c.AIClassificationModel
-}
-
-func (c *DocumentIntelligenceConfig) GetAIExtractionModel() string {
-	if c.AIExtractionModel == "" {
-		return "gpt-5-mini-2025-08-07"
-	}
-
-	return c.AIExtractionModel
 }
 
 func (c *DocumentIntelligenceConfig) GetAIMaxRetries() int {
@@ -1534,6 +1546,7 @@ type Config struct {
 	System               SystemConfig               `mapstructure:"system"               validate:"required"`
 	Foony                FoonyConfig                `mapstructure:"foony"                validate:"required"`
 	Search               SearchConfig               `mapstructure:"search"`
+	AI                   AIConfig                   `mapstructure:"ai"`
 	DocumentIntelligence DocumentIntelligenceConfig `mapstructure:"documentIntelligence"`
 	Audit                AuditConfig                `mapstructure:"audit"`
 	Update               UpdateConfig               `mapstructure:"update"`
@@ -1617,6 +1630,8 @@ func (c *Config) GetSearchConfig() *SearchConfig { return &c.Search }
 func (c *Config) GetDocumentIntelligenceConfig() *DocumentIntelligenceConfig {
 	return &c.DocumentIntelligence
 }
+
+func (c *Config) GetAIConfig() *AIConfig { return &c.AI }
 
 func (c *Config) GetTemporalConfig() *TemporalConfig { return &c.Temporal }
 

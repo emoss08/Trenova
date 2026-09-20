@@ -647,7 +647,6 @@
   "AI Outcome": "Resultado de la IA",
   "AI Provider": "Proveedor de IA",
   "AI document intelligence is disabled": "La inteligencia documental con IA está deshabilitada",
-  "AI features are disabled": "Las funciones de IA están desactivadas",
   "AI provider removed": "Proveedor de IA eliminado",
   "AI provider {0} cannot report on background calls": "El proveedor de IA {0} no puede informar sobre llamadas en segundo plano",
   "AI provider {0} has no API key configured": "El proveedor de IA {0} no tiene ninguna clave de API configurada",

@@ -242,15 +242,43 @@ func TestCompleteStructured_EmptyContentIsAFailure(t *testing.T) {
 	assert.Equal(t, int32(1), healthyCalls.Load())
 }
 
+/*
+The global off switch, and what it is called.
+
+This used to read documentIntelligence.enableAI — a key that ships false and is
+named after one feature while gating all of them. Somebody who configured a
+provider under AI Control was told "AI features are disabled" with no way to
+know which switch meant it, or that the switch belonged to a feature they were
+not using. The gate is now ai.enabled, and the refusal says so.
+*/
 func TestCompleteStructured_DisabledGlobally(t *testing.T) {
+	t.Parallel()
+
+	off := false
+	svc := newTestService(t)
+	svc.ai = &config.AIConfig{Enabled: &off}
+
+	_, err := svc.CompleteStructured(t.Context(), generalRequest())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "disabled")
+	assert.Contains(t, err.Error(), config.AIEnabledKey,
+		"a refusal that does not name the key leaves the operator searching")
+}
+
+// Document intelligence keeps its own switch for its own extraction and
+// classification, and turning that off must not take the assistant with it.
+func TestCompleteStructured_IsNotGatedByDocumentIntelligence(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(t)
 	svc.cfg = &config.DocumentIntelligenceConfig{EnableAI: false}
 
 	_, err := svc.CompleteStructured(t.Context(), generalRequest())
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "disabled")
+
+	if err != nil {
+		assert.NotContains(t, err.Error(), config.AIEnabledKey,
+			"the document-intelligence switch must not report the AI gate")
+	}
 }
 
 func TestCompleteStructured_FallsThroughOnUnparseableOutput(t *testing.T) {

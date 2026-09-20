@@ -647,7 +647,6 @@
   "AI Outcome": "AI 结果",
   "AI Provider": "AI 提供商",
   "AI document intelligence is disabled": "AI 文档智能功能已停用",
-  "AI features are disabled": "AI 功能已停用",
   "AI provider removed": "已移除 AI 提供方",
   "AI provider {0} cannot report on background calls": "AI 提供方 {0} 无法报告后台调用的状态",
   "AI provider {0} has no API key configured": "AI 提供方 {0} 尚未配置 API 密钥",

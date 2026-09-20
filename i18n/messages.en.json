@@ -5907,15 +5907,6 @@
       "service/aidocumentservice"
     ]
   },
-  "AI features are disabled": {
-    "sites": 4,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "AI provider removed": {
     "sites": 1,
     "scope": [

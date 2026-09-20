@@ -148,16 +148,22 @@ storage:
   maxFileSize: 52428800 # Maximum size per uploaded file in bytes
   maxFilesPerUpload: 10 # Maximum files accepted by a bulk upload request
 
+# Master switch for every model-backed feature: the assistant, agents, insight
+# narration, the formula assistant and document intelligence all run through the
+# completion router. Omit it to leave AI available; which models actually run is
+# decided per organization by the providers configured under AI Control, so
+# nothing reaches a vendor until somebody adds one.
+ai:
+  enabled: true # Set false to stop all AI at once
+
 documentIntelligence:
   enabled: true # Enable async extraction/classification
   ocrCommand: tesseract # OCR binary path
   ocrLanguage: eng # OCR language pack
   ocrTimeout: 45s # Hard timeout per OCR process
-  enableAI: false # Enable OpenAI-assisted document intelligence
+  enableAI: false # Let document intelligence classify and extract with a model
   aiTimeout: 20s # Hard timeout per AI request
   aiMaxInputChars: 24000 # Max extracted text sent to AI
-  aiClassificationModel: gpt-5-nano-2025-08-07 # Pinned AI routing model
-  aiExtractionModel: gpt-5-mini-2025-08-07 # Pinned AI extraction model
   aiMaxRetries: 2 # Retry count for transient AI failures
   enableOCRPreprocessing: true # Preprocess scanned images before OCR
   ocrPreprocessingMode: standard # standard preprocessing pipeline

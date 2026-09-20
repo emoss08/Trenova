@@ -35,7 +35,12 @@ type Params struct {
 }
 
 type Service struct {
-	logger     *zap.Logger
+	logger *zap.Logger
+	// ai gates every model-backed feature. cfg keeps the document-intelligence
+	// timeouts and retry budget the router still reads; the two were one field
+	// until the switch named after document intelligence was found to be
+	// turning off the assistant.
+	ai         *config.AIConfig
 	cfg        *config.DocumentIntelligenceConfig
 	repo       repositories.AIProviderRepository
 	encryption *encryptionservice.Service
@@ -51,6 +56,7 @@ type Service struct {
 func New(p Params) serviceports.CompletionService {
 	return &Service{
 		logger:     p.Logger.Named("service.completion-router"),
+		ai:         p.Config.GetAIConfig(),
 		cfg:        p.Config.GetDocumentIntelligenceConfig(),
 		repo:       p.Repo,
 		encryption: p.Encryption,
@@ -63,8 +69,8 @@ func (s *Service) CompleteStructured(
 	ctx context.Context,
 	req *serviceports.StructuredCompletionRequest,
 ) (*serviceports.StructuredCompletionResult, error) {
-	if !s.cfg.AIEnabled() {
-		return nil, errortypes.NewBusinessError("AI features are disabled")
+	if !s.ai.AIEnabled() {
+		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
 
 	task := req.Task
@@ -369,3 +375,12 @@ func (s *Service) clientFor(provider *aiprovider.Provider) *http.Client {
 
 	return client
 }
+
+// aiDisabledMessage names the key rather than the symptom.
+//
+// The old text was "AI features are disabled" from a gate on
+// documentIntelligence.enableAI, which ships false. Somebody who had just
+// configured a provider had no way to know which switch was refusing them, or
+// that it was named after a feature they were not using.
+var aiDisabledMessage = "AI features are disabled. Set " + config.AIEnabledKey +
+	" to true in the server configuration."

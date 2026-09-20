@@ -26,8 +26,8 @@ func (s *Service) SubmitBackground(
 	ctx context.Context,
 	req *serviceports.StructuredCompletionRequest,
 ) (*serviceports.BackgroundSubmission, error) {
-	if !s.cfg.AIEnabled() {
-		return nil, errortypes.NewBusinessError("AI features are disabled")
+	if !s.ai.AIEnabled() {
+		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
 
 	task := req.Task
@@ -121,8 +121,8 @@ func (s *Service) PollBackground(
 	ctx context.Context,
 	req *serviceports.BackgroundPollRequest,
 ) (*serviceports.BackgroundOutcome, error) {
-	if !s.cfg.AIEnabled() {
-		return nil, errortypes.NewBusinessError("AI features are disabled")
+	if !s.ai.AIEnabled() {
+		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
 
 	handle := strings.TrimSpace(req.Handle)

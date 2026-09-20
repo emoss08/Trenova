@@ -41,8 +41,8 @@ func (s *Service) runChat(
 	req *serviceports.ChatCompletionRequest,
 	sink serviceports.ChatStreamSink,
 ) (*serviceports.ChatCompletionResult, error) {
-	if !s.cfg.AIEnabled() {
-		return nil, errortypes.NewBusinessError("AI features are disabled")
+	if !s.ai.AIEnabled() {
+		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
 
 	candidates, err := s.repo.ListForTask(ctx, repositories.ListAIProvidersForTaskRequest{
