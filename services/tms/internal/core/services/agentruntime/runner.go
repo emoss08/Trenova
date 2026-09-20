@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -22,6 +23,7 @@ type Params struct {
 	QueryTools  serviceports.AgentQueryToolRegistry
 	ActionTools serviceports.AgentToolRegistry
 	Permissions serviceports.PermissionEngine
+	Catalog     *agenttoolcatalog.Catalog
 }
 
 type Service struct {
@@ -30,6 +32,7 @@ type Service struct {
 	queryTools  serviceports.AgentQueryToolRegistry
 	actionTools serviceports.AgentToolRegistry
 	permissions serviceports.PermissionEngine
+	catalog     *agenttoolcatalog.Catalog
 }
 
 func New(p Params) serviceports.AgentRuntime {
@@ -39,6 +42,7 @@ func New(p Params) serviceports.AgentRuntime {
 		queryTools:  p.QueryTools,
 		actionTools: p.ActionTools,
 		permissions: p.Permissions,
+		catalog:     p.Catalog,
 	}
 }
 
@@ -69,8 +73,10 @@ func (s *Service) Run(
 		}},
 	}
 
+	tools := s.newToolSet(definition, req.Input)
+	runtimeContext.ToolsDisclosed = tools.disclosed
+
 	system := definition.BuildSystemPrompt(runtimeContext)
-	tools := s.toolSpecsFor(definition)
 	messages := toAdapterMessages(req.History)
 	messages = append(messages, serviceports.Message{
 		Role:    serviceports.RoleUser,
@@ -89,7 +95,7 @@ func (s *Service) Run(
 			TenantInfo:          req.Actor.TenantInfo(),
 			System:              system,
 			Messages:            messages,
-			Tools:               tools,
+			Tools:               tools.specs,
 			PreferredProviderID: definition.PreferredProviderID,
 		}, sink)
 		if err != nil {
@@ -137,37 +143,16 @@ func (s *Service) Run(
 				},
 			})
 
-			outcome := s.dispatch(ctx, req, call, completion.Text)
-			result.ToolCallsUsed++
-			if outcome.action != nil {
-				result.Actions = append(result.Actions, *outcome.action)
+			if call.Name == findToolsName {
+				outcome := toolOutcome{content: s.resolveFind(tools, call.Arguments)}
+				result.ToolCallsUsed++
+				s.recordToolResult(result, &messages, call, outcome, emit)
+				continue
 			}
 
-			emit(serviceports.StreamEvent{
-				Event: serviceports.AssistantEventToolFinished,
-				Data: serviceports.AssistantToolFinishedEvent{
-					CallID:   call.ID,
-					Name:     call.Name,
-					Failed:   outcome.failed,
-					Proposed: outcome.action != nil && !outcome.action.Executed,
-					Content:  outcome.content,
-				},
-			})
-
-			result.Messages = append(result.Messages, conversation.Message{
-				Role:       conversation.RoleTool,
-				Content:    outcome.content,
-				ToolCallID: call.ID,
-				ToolName:   call.Name,
-				ToolFailed: outcome.failed,
-			})
-			messages = append(messages, serviceports.Message{
-				Role:       serviceports.RoleTool,
-				Content:    outcome.content,
-				ToolCallID: call.ID,
-				ToolName:   call.Name,
-				IsError:    outcome.failed,
-			})
+			outcome := s.dispatch(ctx, req, call, completion.Text)
+			result.ToolCallsUsed++
+			s.recordToolResult(result, &messages, call, outcome, emit)
 		}
 
 		s.logger.Debug("agent tool iteration",
@@ -189,6 +174,48 @@ func (s *Service) Run(
 	})
 
 	return result, nil
+}
+
+// recordToolResult files one tool's outcome into the run, the adapter history
+// and the stream. find_tools and a dispatched tool both come through here so a
+// loaded-tools answer is recorded exactly like any other tool result — it is one
+// to the model, and a transcript that hid it would not explain the turn.
+func (s *Service) recordToolResult(
+	result *serviceports.RunResult,
+	messages *[]serviceports.Message,
+	call serviceports.ToolCall,
+	outcome toolOutcome,
+	emit serviceports.AssistantStreamEmitter,
+) {
+	if outcome.action != nil {
+		result.Actions = append(result.Actions, *outcome.action)
+	}
+
+	emit(serviceports.StreamEvent{
+		Event: serviceports.AssistantEventToolFinished,
+		Data: serviceports.AssistantToolFinishedEvent{
+			CallID:   call.ID,
+			Name:     call.Name,
+			Failed:   outcome.failed,
+			Proposed: outcome.action != nil && !outcome.action.Executed,
+			Content:  outcome.content,
+		},
+	})
+
+	result.Messages = append(result.Messages, conversation.Message{
+		Role:       conversation.RoleTool,
+		Content:    outcome.content,
+		ToolCallID: call.ID,
+		ToolName:   call.Name,
+		ToolFailed: outcome.failed,
+	})
+	*messages = append(*messages, serviceports.Message{
+		Role:       serviceports.RoleTool,
+		Content:    outcome.content,
+		ToolCallID: call.ID,
+		ToolName:   call.Name,
+		IsError:    outcome.failed,
+	})
 }
 
 func (s *Service) finish(
@@ -242,38 +269,6 @@ func (s *Service) finish(
 	})
 
 	return result
-}
-
-func (s *Service) toolSpecsFor(definition *agentdefinition.Definition) []serviceports.ToolSpec {
-	specs := make([]serviceports.ToolSpec, 0, len(definition.ToolNames))
-
-	for _, name := range definition.ToolNames {
-		if tool, ok := s.queryTools.Get(name); ok {
-			specs = append(specs, serviceports.ToolSpec{
-				Name:        tool.Name(),
-				Description: tool.Description(),
-				Parameters:  tool.ParamSchema(),
-			})
-			continue
-		}
-
-		tool, ok := s.actionTools.Get(name)
-		if !ok {
-			s.logger.Warn("configured tool is not in the registry",
-				zap.String("tool", name),
-				zap.String("agent", definition.Name),
-			)
-			continue
-		}
-
-		specs = append(specs, serviceports.ToolSpec{
-			Name:        tool.Name(),
-			Description: tool.Description(),
-			Parameters:  tool.ParamSchema(),
-		})
-	}
-
-	return specs
 }
 
 func (s *Service) ToolSummaries(

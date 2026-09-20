@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
@@ -122,6 +123,7 @@ func Options() fx.Option {
 		agentjobs.Module,
 		agenttoolservice.Module,
 		agentquerytoolservice.Module,
+		agenttoolcatalog.Module,
 		agentguard.Module,
 		agentruntime.Module,
 		proposalrecorder.Module,

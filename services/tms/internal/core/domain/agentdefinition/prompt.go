@@ -62,6 +62,11 @@ type RuntimeContext struct {
 	Subject          *RuntimeSubject
 	Page             *PageContext
 	Tools            []ToolSummary
+	// ToolsDisclosed reports that the turn opened with a subset of the agent's
+	// tools and can load the rest on demand. The prompt has to say so, because
+	// the alternative is a model that reads a short tool list as the limit of
+	// what the system can do and tells the person it is not possible.
+	ToolsDisclosed bool
 }
 
 func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
@@ -87,7 +92,7 @@ func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
 	}
 
 	if d.HasContextProvider(ContextTools) {
-		if section := buildToolSection(rc.Tools); section != "" {
+		if section := buildToolSection(rc.Tools, rc.ToolsDisclosed); section != "" {
 			builder.WriteString("\n\n")
 			builder.WriteString(section)
 		}
@@ -264,13 +269,33 @@ func describePage(page *PageContext) string {
 	return builder.String()
 }
 
-func buildToolSection(tools []ToolSummary) string {
+func buildToolSection(tools []ToolSummary, disclosed bool) string {
 	if len(tools) == 0 {
 		return ""
 	}
 
 	var builder strings.Builder
 	builder.WriteString("## Tools\n")
+
+	if disclosed {
+		// Only the names, and only as a map of what exists. The schemas are
+		// already on the request; repeating every description here would spend
+		// the context twice over, which is the cost this section exists to
+		// avoid.
+		builder.WriteString(
+			"You hold the tools below. The ones that fit this request are loaded and " +
+				"callable now; the rest become callable when you ask find_tools for them. " +
+				"A tool you cannot see yet is not a tool you do not have — never tell " +
+				"the person something is impossible without searching for it first.",
+		)
+		for _, tool := range tools {
+			builder.WriteString("\n- ")
+			builder.WriteString(tool.Name)
+		}
+
+		return builder.String()
+	}
+
 	builder.WriteString("You may use only these tools. Each line says what happens when you call it.")
 	for _, tool := range tools {
 		builder.WriteString("\n- ")

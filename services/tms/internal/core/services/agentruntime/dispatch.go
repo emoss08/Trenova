@@ -27,9 +27,14 @@ func (s *Service) dispatch(
 	call serviceports.ToolCall,
 	completionText string,
 ) toolOutcome {
+	// A tool the agent holds but has not been sent this turn still resolves
+	// from the registry below: the configured list is the grant, and disclosure
+	// only decides what the model was shown. One it does not hold is refused,
+	// and told where to look rather than left to guess again.
 	if !req.Definition.AllowsTool(call.Name) {
 		return failedOutcome(
-			"Tool %q is not available to this agent. Use one of the tools you were given.",
+			"Tool %q is not available to this agent. Call find_tools to see what is, "+
+				"or use one of the tools already loaded.",
 			call.Name,
 		)
 	}

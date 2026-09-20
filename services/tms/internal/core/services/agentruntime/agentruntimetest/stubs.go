@@ -93,7 +93,10 @@ func (s *ScriptedCompletion) PollBackground(
 }
 
 type StubQueryTool struct {
-	ToolName   string
+	ToolName string
+	// Desc lets a test give a tool a description worth ranking against;
+	// everything that does not care keeps the generic one.
+	Desc       string
 	Result     any
 	Err        error
 	Calls      int
@@ -101,8 +104,15 @@ type StubQueryTool struct {
 	Resource   permission.Resource
 }
 
-func (t *StubQueryTool) Name() string                { return t.ToolName }
-func (t *StubQueryTool) Description() string         { return "stub query tool" }
+func (t *StubQueryTool) Name() string { return t.ToolName }
+func (t *StubQueryTool) Description() string {
+	if t.Desc != "" {
+		return t.Desc
+	}
+
+	return "stub query tool"
+}
+
 func (t *StubQueryTool) ParamSchema() map[string]any { return map[string]any{"type": "object"} }
 func (t *StubQueryTool) PermissionResource() permission.Resource {
 	if t.Resource == "" {
