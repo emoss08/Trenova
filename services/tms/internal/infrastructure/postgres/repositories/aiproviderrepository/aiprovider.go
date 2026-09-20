@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -166,24 +167,40 @@ func (r *repository) ListForTask(
 	ctx context.Context,
 	req repositories.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
-	cols := buncolgen.ProviderColumns
-
 	entities := make([]*aiprovider.Provider, 0, defaultTaskCandidates)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ProviderScopeTenant(sq, req.TenantInfo).
-				Where(cols.Enabled.IsTrue()).
-				Where(cols.Tasks.Expr("{} @> ?::text[]"), []string{string(req.Task)})
-		}).
-		Order(cols.Priority.OrderAsc(), cols.CreatedAt.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
+
+	if err := buildProvidersForTaskQuery(
+		r.db.DBForContext(ctx), &entities, req,
+	).Scan(ctx); err != nil {
 		return nil, fmt.Errorf("list ai providers for task %q: %w", req.Task, err)
 	}
 
 	return entities, nil
+}
+
+// buildProvidersForTaskQuery is split out so the rendered SQL can be asserted
+// without a live database. The task argument has to reach PostgreSQL as an
+// array literal, and a Go slice and a pgdialect.Array are indistinguishable to
+// the compiler — the difference only shows up in the statement.
+func buildProvidersForTaskQuery(
+	db bun.IDB,
+	entities *[]*aiprovider.Provider,
+	req repositories.ListAIProvidersForTaskRequest,
+) *bun.SelectQuery {
+	cols := buncolgen.ProviderColumns
+
+	return db.
+		NewSelect().
+		Model(entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ProviderScopeTenant(sq, req.TenantInfo).
+				Where(cols.Enabled.IsTrue()).
+				Where(
+					cols.Tasks.Expr("{} @> ?::text[]"),
+					pgdialect.Array([]string{string(req.Task)}),
+				)
+		}).
+		Order(cols.Priority.OrderAsc(), cols.CreatedAt.OrderAsc())
 }
 
 func (r *repository) Create(
