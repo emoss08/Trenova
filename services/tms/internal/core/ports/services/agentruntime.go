@@ -29,6 +29,10 @@ type RunRequest struct {
 	// RunID is set for a background run so auto-executing tools can tie what
 	// they do to it. A chat turn has no run until proposals are recorded.
 	RunID pulid.ID
+	// Unattended says nobody is reading as this runs — an event-driven or
+	// scheduled agent. Tools that put a question to a person are withheld,
+	// since a question nobody will answer only ends the run on it.
+	Unattended bool
 	// History is the conversation so far, oldest first, excluding Input.
 	History []conversation.Message
 	Input   string

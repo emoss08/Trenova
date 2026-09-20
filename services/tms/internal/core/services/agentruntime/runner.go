@@ -74,7 +74,7 @@ func (s *Service) Run(
 		}},
 	}
 
-	tools := s.newToolSet(definition, req.Input)
+	tools := s.newToolSet(definition, req.Input, req.Unattended)
 	runtimeContext.ToolsDisclosed = tools.disclosed
 	repeats := newRepeatGuard()
 

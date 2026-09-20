@@ -84,7 +84,7 @@ func TestNewToolSet_SendsEverythingForASmallAgent(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names[:4]...)
 
-	set := service.newToolSet(definition, "which drivers are available")
+	set := service.newToolSet(definition, "which drivers are available", false)
 
 	assert.False(t, set.disclosed)
 	assert.Len(t, set.specs, 5, "the agent's four tools plus ask_user")
@@ -99,7 +99,7 @@ func TestNewToolSet_NarrowsAndOffersFindToolsForALargeAgent(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
 
-	set := service.newToolSet(definition, "which drivers are available")
+	set := service.newToolSet(definition, "which drivers are available", false)
 
 	require.True(t, set.disclosed)
 	assert.Len(t, set.specs, preselectedTools+2, "the preselected tools, find_tools and ask_user")
@@ -120,13 +120,13 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
 
-	drivers := specNames(service.newToolSet(definition, "which drivers are on the roster").specs)
+	drivers := specNames(service.newToolSet(definition, "which drivers are on the roster", false).specs)
 	assert.Contains(t, drivers, "list_workers")
 
-	trucks := specNames(service.newToolSet(definition, "which trucks are out of service").specs)
+	trucks := specNames(service.newToolSet(definition, "which trucks are out of service", false).specs)
 	assert.Contains(t, trucks, "list_tractors")
 
-	billing := specNames(service.newToolSet(definition, "unpaid invoices for this customer").specs)
+	billing := specNames(service.newToolSet(definition, "unpaid invoices for this customer", false).specs)
 	assert.Contains(t, billing, "list_invoices")
 }
 
@@ -138,7 +138,7 @@ func TestResolveFind_MakesTheMissingToolCallable(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
 
-	set := service.newToolSet(definition, "say hello")
+	set := service.newToolSet(definition, "say hello", false)
 	require.NotContains(t, specNames(set.specs), "list_trailers",
 		"the fixture depends on this one not being preselected")
 
@@ -161,7 +161,7 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 	service, _ := wideRuntime(t)
 	definition := testDefinition("list_customers", "list_locations")
 
-	set := service.newToolSet(definition, "anything")
+	set := service.newToolSet(definition, "anything", false)
 	set.disclosed = true
 
 	service.resolveFind(set, map[string]any{"need": "driver medical card expiry"})
@@ -186,7 +186,7 @@ func TestResolveFind_DoesNotReloadWhatIsAlreadyThere(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
 
-	set := service.newToolSet(definition, "driver medical card expiry")
+	set := service.newToolSet(definition, "driver medical card expiry", false)
 	before := len(set.specs)
 
 	answer := service.resolveFind(set, map[string]any{"need": "driver medical card expiry"})
@@ -199,7 +199,7 @@ func TestResolveFind_AsksForWordsWhenGivenNone(t *testing.T) {
 	t.Parallel()
 
 	service, names := wideRuntime(t)
-	set := service.newToolSet(testDefinition(names...), "hello")
+	set := service.newToolSet(testDefinition(names...), "hello", false)
 
 	assert.Contains(t, service.resolveFind(set, map[string]any{}), "what you need")
 }
@@ -258,7 +258,7 @@ func TestResolveFind_SaysAToolExistsButIsNotEnabled(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition("list_customers", "list_locations")
 
-	set := service.newToolSet(definition, "anything")
+	set := service.newToolSet(definition, "anything", false)
 	set.disclosed = true
 
 	answer := service.resolveFind(set, map[string]any{"need": "driver medical card expiry"})
@@ -278,11 +278,26 @@ func TestResolveFind_DoesNotClaimTheSystemLacksSomethingItDidNotSearchFor(t *tes
 	t.Parallel()
 
 	service, _ := wideRuntime(t)
-	set := service.newToolSet(testDefinition("list_customers"), "anything")
+	set := service.newToolSet(testDefinition("list_customers"), "anything", false)
 	set.disclosed = true
 
 	answer := service.resolveFind(set, map[string]any{"need": "zzzz no such thing zzzz"})
 
 	assert.Contains(t, answer, "only about the data, not about tools you cannot see")
 	assert.NotContains(t, answer, "not enabled for this agent")
+}
+
+// An event-driven run has nobody to ask. Offered the question tool anyway, an
+// agent ended its run on a question no one would see, recorded as complete.
+func TestNewToolSet_WithholdsAskUserFromAnUnattendedRun(t *testing.T) {
+	t.Parallel()
+
+	service, names := wideRuntime(t)
+
+	small := service.newToolSet(testDefinition(names[:4]...), "anything", true)
+	assert.NotContains(t, specNames(small.specs), askUserName)
+
+	large := service.newToolSet(testDefinition(names...), "anything", true)
+	assert.NotContains(t, specNames(large.specs), askUserName)
+	assert.Contains(t, specNames(large.specs), findToolsName, "finding tools needs no person")
 }

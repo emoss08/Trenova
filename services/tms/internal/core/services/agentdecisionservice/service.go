@@ -2,6 +2,7 @@ package agentdecisionservice
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -79,6 +80,10 @@ func (s *Service) Decide(
 		return nil, err
 	}
 
+	if err = decidable(proposal); err != nil {
+		return nil, err
+	}
+
 	shadow, err := s.shadow.ForRun(ctx, req.TenantInfo, proposal.RunID)
 	if err != nil {
 		return nil, err
@@ -110,9 +115,14 @@ func (s *Service) Decide(
 		return nil, err
 	}
 
+	// Conditional on the proposal still being pending. The check above reads a
+	// snapshot; two decisions racing each other both pass it, and without this
+	// guard both would execute the tool. The loser now fails on the update
+	// instead, with a conflict rather than a second write.
 	if _, err = s.proposalRepo.UpdateStatus(ctx, repositories.UpdateAgentProposalStatusRequest{
 		ID:         proposal.ID,
 		Status:     proposalStatusFor(req.Decision),
+		FromStatus: agent.ProposalStatusPending,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
 		return nil, err
@@ -144,6 +154,24 @@ func (s *Service) Decide(
 	}
 
 	return created, nil
+}
+
+// decidable refuses a proposal that is no longer waiting on anyone.
+//
+// A decision used to be recorded against whatever state the proposal was in:
+// a second click, a retry, another tab, or an API client could accept a
+// proposal already rejected, or approve an approved one again and execute its
+// write twice. The status is the one fact that says whether there is still a
+// decision to make.
+func decidable(proposal *agent.AgentProposal) error {
+	if proposal.Status == agent.ProposalStatusPending {
+		return nil
+	}
+
+	return errortypes.NewBusinessError(
+		"This proposal has already been decided: it is {0}",
+		strings.ToLower(string(proposal.Status)),
+	)
 }
 
 // executeIfApproved runs the tool behind an accepted or modified proposal.

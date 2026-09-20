@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -331,6 +332,9 @@ func (s *Service) executeWithRetry(
 			zap.Int("attempt", attempt+1),
 			zap.Error(err),
 		)
+		if waitErr := waitBeforeRetry(ctx, attempt); waitErr != nil {
+			return nil, waitErr
+		}
 	}
 
 	return nil, lastErr
@@ -356,6 +360,39 @@ func (s *Service) resolveAPIKey(provider *aiprovider.Provider) (string, error) {
 	}
 
 	return decrypted, nil
+}
+
+// retryDelay is how long to wait before attempt n+1. It doubles from half a
+// second and stops at five, because the errors worth retrying — a 429, a 5xx
+// — are the ones an immediate retry makes worse. Retrying a rate limit at once
+// just spends the next request on the same limit.
+func retryDelay(attempt int) time.Duration {
+	const (
+		base = 500 * time.Millisecond
+		cap  = 5 * time.Second
+	)
+
+	delay := base << attempt
+	if delay > cap || delay <= 0 {
+		return cap
+	}
+
+	return delay
+}
+
+// waitBeforeRetry sleeps out the delay, or returns the context's error the
+// moment it is cancelled: a person who stopped a reply is not kept waiting
+// for a backoff to elapse.
+func waitBeforeRetry(ctx context.Context, attempt int) error {
+	timer := time.NewTimer(retryDelay(attempt))
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
 }
 
 // clientFor returns the shared client matching the provider's egress policy.

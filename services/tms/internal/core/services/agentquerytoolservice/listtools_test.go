@@ -150,8 +150,13 @@ func TestListTool_BoundsARelativeWindowAtBothEnds(t *testing.T) {
 	upper := capture.opts.FieldFilters[1]
 	assert.Equal(t, dbtype.OpGreaterThanOrEqual, lower.Operator)
 	assert.Equal(t, dbtype.OpLessThanOrEqual, upper.Operator)
-	assert.GreaterOrEqual(t, lower.Value.(int64), before)
-	assert.Equal(t, lower.Value.(int64)+30*secondsPerDay, upper.Value.(int64))
+	// The floor is the start of today, not this instant: a credential that
+	// expired at nine this morning is still one expiring in the next 30 days.
+	floor := lower.Value.(int64)
+	assert.LessOrEqual(t, floor, before)
+	assert.Greater(t, floor, before-secondsPerDay)
+	assert.Zero(t, floor%secondsPerDay)
+	assert.Equal(t, floor+31*secondsPerDay-1, upper.Value.(int64), "through the end of day 30")
 }
 
 func TestListTool_BoundsALookBackAtBothEnds(t *testing.T) {
@@ -168,7 +173,10 @@ func TestListTool_BoundsALookBackAtBothEnds(t *testing.T) {
 
 	lower := capture.opts.FieldFilters[0].Value.(int64)
 	upper := capture.opts.FieldFilters[1].Value.(int64)
-	assert.Equal(t, int64(7)*secondsPerDay, upper-lower)
+	// Seven whole days back from the start of today, up to this instant.
+	assert.Zero(t, lower%secondsPerDay)
+	assert.GreaterOrEqual(t, upper-lower, int64(7)*secondsPerDay)
+	assert.Less(t, upper-lower, int64(8)*secondsPerDay)
 }
 
 // A model asked "before March" should not have to invent a Unix timestamp; a

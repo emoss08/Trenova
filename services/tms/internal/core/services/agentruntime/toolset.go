@@ -76,6 +76,7 @@ type toolSet struct {
 func (s *Service) newToolSet(
 	definition *agentdefinition.Definition,
 	input string,
+	unattended bool,
 ) *toolSet {
 	configured := s.configuredSpecs(definition)
 
@@ -89,7 +90,9 @@ func (s *Service) newToolSet(
 		for _, spec := range configured {
 			set.loaded[spec.Name] = struct{}{}
 		}
-		set.add(askUserSpec())
+		if !unattended {
+			set.add(askUserSpec())
+		}
 
 		return set
 	}
@@ -99,7 +102,12 @@ func (s *Service) newToolSet(
 		set.add(toSpec(descriptor))
 	}
 	set.specs = append(set.specs, findToolsSpec())
-	set.add(askUserSpec())
+	// A background run has nobody to ask. Offering the question tool anyway
+	// let an event-driven agent end its run on a question no one would see,
+	// recorded as complete.
+	if !unattended {
+		set.add(askUserSpec())
+	}
 
 	return set
 }

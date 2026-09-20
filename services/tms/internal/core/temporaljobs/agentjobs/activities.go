@@ -159,6 +159,7 @@ func (a *Activities) RunAgentActivity(
 		Context:    runtimeContext,
 		Input:      backgroundInput(payload, input.Subject),
 		RunID:      payload.RunID,
+		Unattended: true,
 		Emit: func(serviceports.StreamEvent) {
 			activity.RecordHeartbeat(ctx, "working")
 		},

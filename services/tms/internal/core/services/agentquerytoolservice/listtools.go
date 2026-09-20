@@ -427,10 +427,21 @@ func (t *listTool) buildWindow(
 	now := timeutils.NowUnix()
 	span := int64(days) * secondsPerDay
 
-	lower, upper := now, now+span
+	// Windows are whole days, not offsets from this instant. "Expiring in the
+	// next 30 days" starting at the current second excluded a medical card
+	// that expired at nine this morning — the one question this tool was
+	// built to answer. The day boundary is UTC until the organization's
+	// timezone reaches the tools; the error is then at most the offset, where
+	// before it was up to a whole day of today.
+	dayStart, err := timeutils.DayStartUnix(now, "UTC")
+	if err != nil {
+		dayStart = now - now%secondsPerDay
+	}
+
+	lower, upper := dayStart, dayStart+span+secondsPerDay-1
 	phrase := fmt.Sprintf("within the next %d days", days)
 	if operator == dbtype.OpLastNDays {
-		lower, upper = now-span, now
+		lower, upper = dayStart-span, now
 		phrase = fmt.Sprintf("within the last %d days", days)
 	}
 

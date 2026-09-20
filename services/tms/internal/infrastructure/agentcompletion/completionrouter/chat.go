@@ -236,6 +236,9 @@ func (s *Service) executeStreamWithRetry(
 			zap.Int("attempt", attempt+1),
 			zap.Error(err),
 		)
+		if waitErr := waitBeforeRetry(ctx, attempt); waitErr != nil {
+			return nil, emittedText(), waitErr
+		}
 	}
 
 	return nil, emittedText(), lastErr
