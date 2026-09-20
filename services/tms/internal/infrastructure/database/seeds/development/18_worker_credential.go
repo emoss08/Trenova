@@ -83,6 +83,18 @@ func (s *WorkerCredentialSeed) Run(ctx context.Context, tx bun.Tx) error {
 				}
 			}
 
+			// Compliance is derived, never asserted. The worker seed sets every
+			// profile Compliant before any credential exists, which produced
+			// drivers reading "no medical card on file" and "Compliant" in the
+			// same row — a contradiction the assistant resolved in favour of
+			// the friendlier half, and which would hide exactly the driver a
+			// compliance question is asked to surface.
+			for _, wrk := range workers {
+				if err = s.deriveCompliance(ctx, tx, refs, wrk); err != nil {
+					return fmt.Errorf("derive compliance for worker %s: %w", wrk.ID, err)
+				}
+			}
+
 			return nil
 		},
 	)
@@ -304,6 +316,54 @@ func (s *WorkerCredentialSeed) seedWorker(
 		}
 	}
 	return nil
+}
+
+// deriveCompliance replaces the seeded assumption with the domain's own answer.
+//
+// BuildCredentialSummary is the same roll-up the application runs: a required
+// slot with no active credential is Missing, Missing and Expired both block,
+// and a worker with no required types is compliant by construction. Calling it
+// here rather than reimplementing the rule is the point — seed data that
+// disagrees with the domain is worse than no seed data, because it looks real.
+//
+// Only compliance_status is touched. is_qualified is a separate determination
+// with no derivation anywhere in the domain — somebody decides it — so deriving
+// it from credentials here would invent a rule the application does not have.
+func (s *WorkerCredentialSeed) deriveCompliance(
+	ctx context.Context,
+	tx bun.Tx,
+	refs *credentialSeedRefs,
+	wrk *worker.Worker,
+) error {
+	var credentials []*worker.WorkerCredential
+	credCols := buncolgen.WorkerCredentialColumns
+	if err := tx.NewSelect().
+		Model(&credentials).
+		Where(credCols.WorkerID.Eq(), wrk.ID).
+		Where(credCols.OrganizationID.Eq(), refs.orgID).
+		Where(credCols.BusinessUnitID.Eq(), refs.buID).
+		Scan(ctx); err != nil {
+		return fmt.Errorf("load credentials: %w", err)
+	}
+
+	types := make([]*worker.WorkerCredentialType, 0, len(refs.types))
+	for _, typ := range refs.types {
+		types = append(types, typ)
+	}
+
+	summary := worker.BuildCredentialSummary(wrk, types, credentials, refs.now)
+
+	cols := buncolgen.WorkerProfileColumns
+	_, err := tx.NewUpdate().
+		Model((*worker.WorkerProfile)(nil)).
+		Set(cols.ComplianceStatus.Set(), summary.ComplianceStatus).
+		Set(cols.UpdatedAt.Set(), refs.now).
+		Where(cols.WorkerID.Eq(), wrk.ID).
+		Where(cols.OrganizationID.Eq(), refs.orgID).
+		Where(cols.BusinessUnitID.Eq(), refs.buID).
+		Exec(ctx)
+
+	return err
 }
 
 func (s *WorkerCredentialSeed) mirror(

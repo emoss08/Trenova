@@ -233,3 +233,66 @@ func TestSearchWorker_SaysWhenACredentialIsNotOnFile(t *testing.T) {
 	assert.Contains(t, string(encoded), "none on file")
 	assert.NotContains(t, string(encoded), "null")
 }
+
+/*
+A NonCompliant driver is not dispatchable, and the row has to say so.
+
+workers.can_be_assigned means "no employment-level block" — no termination, no
+leave, no manual hold. The domain's own dispatch decision (worker.Standing)
+additionally refuses a worker whose credentials are NonCompliant. The row
+reported the column verbatim, so a driver whose medical card had lapsed four
+days earlier came back as canBeAssigned: true, alongside
+complianceStatus: NonCompliant. Both were in the same object, contradicting
+each other, and the reader believed the friendlier one.
+*/
+func TestWorkerRow_DoesNotCallANonCompliantDriverAssignable(t *testing.T) {
+	t.Parallel()
+
+	lapsed := int64(1789516800)
+	row := toWorkerRow(&worker.Worker{
+		ID:            pulid.MustNew("wrk_"),
+		FirstName:     "John",
+		LastName:      "Smith",
+		CanBeAssigned: true,
+		Profile: &worker.WorkerProfile{
+			ComplianceStatus:  worker.ComplianceStatusNonCompliant,
+			MedicalCardExpiry: &lapsed,
+		},
+	})
+
+	assert.False(t, row.CanBeAssigned,
+		"the stored flag does not know about credentials; the domain does")
+	assert.NotEmpty(t, row.AssignmentBlocked, "and it has to say why")
+}
+
+// A compliant driver keeps whatever the employment flag said, in both
+// directions — this narrows the answer, it never widens it.
+func TestWorkerRow_LeavesACompliantDriverAlone(t *testing.T) {
+	t.Parallel()
+
+	assignable := toWorkerRow(&worker.Worker{
+		ID: pulid.MustNew("wrk_"), CanBeAssigned: true,
+		Profile: &worker.WorkerProfile{ComplianceStatus: worker.ComplianceStatusCompliant},
+	})
+	assert.True(t, assignable.CanBeAssigned)
+
+	held := toWorkerRow(&worker.Worker{
+		ID: pulid.MustNew("wrk_"), CanBeAssigned: false,
+		Profile: &worker.WorkerProfile{ComplianceStatus: worker.ComplianceStatusCompliant},
+	})
+	assert.False(t, held.CanBeAssigned)
+}
+
+// An existing employment reason is more specific than the compliance one and
+// must not be overwritten by it.
+func TestWorkerRow_KeepsAMoreSpecificBlockReason(t *testing.T) {
+	t.Parallel()
+
+	row := toWorkerRow(&worker.Worker{
+		ID: pulid.MustNew("wrk_"), CanBeAssigned: false,
+		AssignmentBlocked: "On unpaid leave",
+		Profile:           &worker.WorkerProfile{ComplianceStatus: worker.ComplianceStatusNonCompliant},
+	})
+
+	assert.Equal(t, "On unpaid leave", row.AssignmentBlocked)
+}

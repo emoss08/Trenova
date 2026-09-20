@@ -20,6 +20,13 @@ type Params struct {
 type Service struct {
 	logger     *zap.Logger
 	completion serviceports.CompletionService
+
+	// RefuseWhenUnavailable restores the old posture: a classifier that cannot
+	// be reached refuses the request rather than falling back to the
+	// deterministic verdict. Off by default, because the deterministic layer is
+	// what this would be falling back to and an install with no classifier
+	// configured runs on exactly that, permanently and by design.
+	RefuseWhenUnavailable bool
 }
 
 func New(p Params) *Service {
@@ -33,12 +40,28 @@ func New(p Params) *Service {
 //
 // The deterministic layer runs first because it is free and catches the blatant
 // cases. Anything it does not recognise goes to the classifier, whose verdict
-// decides. If no classifier provider is configured the request proceeds on the
-// deterministic verdict alone — the assistant still refuses in its own system
-// prompt, and breaking chat entirely because an optional provider is unset would
-// be a worse outcome than a weaker filter. If a classifier *is* configured and
-// the call fails, the request is refused, because a configured control that
-// silently stops working is how guardrails rot.
+// decides.
+//
+// A classifier that cannot produce a verdict — for any reason — leaves the
+// request on the deterministic verdict alone, recorded as StageUnavailable so
+// the degradation is visible in the thread rather than inferred.
+//
+// This used to distinguish "no provider configured" (proceed) from "the
+// configured provider failed" (refuse), on the reasoning that a control which
+// silently stops working is how guardrails rot. The distinction does not
+// survive contact with what the two states actually are. In both, the control
+// is not operating; the only difference is whether a row exists. Treating one
+// as fine and the other as fatal made the product less reliable the more of it
+// you configured, and it showed: on a single flaky provider, "which drivers
+// have a medical card expiring in the next 360 days" was refused outright
+// twenty-six seconds after the same question had been answered.
+//
+// Nothing about tenant safety rests here. The deterministic rules have already
+// run and passed, the system prompt still refuses off-domain and software work,
+// and every tool call is authorized against the acting user independently. This
+// layer filters scope, and failing it closed denies service rather than
+// protecting anything. An operator who wants the stricter posture can set
+// RefuseWhenUnavailable.
 func (s *Service) Evaluate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -61,14 +84,24 @@ func (s *Service) Evaluate(
 			return allowed(StageUnavailable, CategoryOther)
 		}
 
-		s.logger.Warn("scope classifier failed; refusing request", zap.Error(err))
+		if s.RefuseWhenUnavailable {
+			s.logger.Warn("scope classifier failed; refusing request", zap.Error(err))
 
-		return refused(
-			StageUnavailable,
-			ReasonClassifierUnavailable,
-			CategoryOther,
-			"classifier_error",
+			return refused(
+				StageUnavailable,
+				ReasonClassifierUnavailable,
+				CategoryOther,
+				"classifier_error",
+			)
+		}
+
+		// Warn, not Debug: an operator who configured a classifier should be
+		// able to see that it is not running, even though the request proceeds.
+		s.logger.Warn("scope classifier unavailable; falling back to deterministic rules",
+			zap.Error(err),
 		)
+
+		return allowed(StageUnavailable, CategoryOther)
 	}
 
 	category := Category(result.Category)
