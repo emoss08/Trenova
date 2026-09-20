@@ -323,8 +323,8 @@ func (r *repository) Update(
 		Set(cols.Description.Set(), entity.Description).
 		Set(cols.Template.Set(), entity.Template).
 		Set(cols.Instructions.Set(), entity.Instructions).
-		Set(cols.Guardrails.Set(), entity.Guardrails).
-		Set(cols.ToolNames.Set(), entity.ToolNames).
+		Set(cols.Guardrails.Set(), dbhelper.TextArray(entity.Guardrails)).
+		Set(cols.ToolNames.Set(), dbhelper.TextArray(entity.ToolNames)).
 		Set(cols.ToolTiers.Set(), entity.ToolTiers).
 		Set(cols.AutonomyCeiling.Set(), entity.AutonomyCeiling).
 		Set(cols.Enabled.Set(), entity.Enabled).
@@ -333,7 +333,7 @@ func (r *repository) Update(
 		Set(cols.TriggerMode.Set(), entity.TriggerMode).
 		Set(cols.CronExpression.Set(), entity.CronExpression).
 		Set(cols.CronTimezone.Set(), entity.CronTimezone).
-		Set(cols.EventKinds.Set(), entity.EventKinds).
+		Set(cols.EventKinds.Set(), dbhelper.TextArray(entity.EventKinds)).
 		Set(cols.IntervalSeconds.Set(), entity.IntervalSeconds).
 		Set(cols.EndsAt.Set(), entity.EndsAt).
 		Set(cols.MaxConcurrentRuns.Set(), entity.MaxConcurrentRuns).
@@ -341,7 +341,7 @@ func (r *repository) Update(
 		Set(cols.MaxToolCalls.Set(), entity.MaxToolCalls).
 		Set(cols.Icon.Set(), entity.Icon).
 		Set(cols.Accent.Set(), entity.Accent).
-		Set(cols.ContextProviders.Set(), entity.ContextProviders).
+		Set(cols.ContextProviders.Set(), dbhelper.TextArray(entity.ContextProviders)).
 		Set(cols.OutputMode.Set(), entity.OutputMode).
 		Set(cols.PreferredProviderID.Set(), entity.PreferredProviderID).
 		Set(cols.NextRunAt.Set(), entity.NextRunAt).

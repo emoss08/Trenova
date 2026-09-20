@@ -268,7 +268,7 @@ func (r *repository) Update(
 		Set(cols.AllowPrivateNetwork.Set(), entity.AllowPrivateNetwork).
 		Set(cols.StructuredOutputMode.Set(), entity.StructuredOutputMode).
 		Set(cols.MaxTokens.Set(), entity.MaxTokens).
-		Set(cols.Tasks.Set(), taskStrings(entity.Tasks)).
+		Set(cols.Tasks.Set(), dbhelper.TextArray(entity.Tasks)).
 		Set(cols.Priority.Set(), entity.Priority).
 		Set(cols.Trusted.Set(), entity.Trusted).
 		Set(cols.Enabled.Set(), entity.Enabled).
@@ -306,15 +306,6 @@ func (r *repository) Delete(
 	}
 
 	return dberror.CheckRowsAffected(res, "AIProvider", req.ID.String())
-}
-
-func taskStrings(tasks []aiprovider.Task) []string {
-	out := make([]string, 0, len(tasks))
-	for _, task := range tasks {
-		out = append(out, string(task))
-	}
-
-	return out
 }
 
 const defaultTaskCandidates = 4

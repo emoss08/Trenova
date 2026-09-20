@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -133,7 +133,7 @@ func (r *definitionRepository) UpdateStatus(
 		NewUpdate().
 		Model((*report.ReportDefinition)(nil)).
 		Set(cols.Status.Set(), status).
-		Set(cols.Diagnostics.Set(), pgArray(diagnostics)).
+		Set(cols.Diagnostics.Set(), dbhelper.TextArray(diagnostics)).
 		Set(cols.Version.Inc(1)).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return buncolgen.ReportDefinitionScopeTenantUpdate(uq, req.TenantInfo).
@@ -265,11 +265,4 @@ func (r *definitionRepository) ListRevisions(
 	}
 
 	return entities, nil
-}
-
-func pgArray(values []string) any {
-	if len(values) == 0 {
-		return nil
-	}
-	return pgdialect.Array(values)
 }
