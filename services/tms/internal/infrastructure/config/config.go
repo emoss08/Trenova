@@ -665,6 +665,7 @@ type DocumentIntelligenceConfig struct {
 	OCRTimeout              time.Duration `mapstructure:"ocrTimeout"`
 	EnableAI                bool          `mapstructure:"enableAI"`
 	AITimeout               time.Duration `mapstructure:"aiTimeout"`
+	AIProbeTimeout          time.Duration `mapstructure:"aiProbeTimeout"`
 	AIStreamIdleTimeout     time.Duration `mapstructure:"aiStreamIdleTimeout"`
 	AICompletionTimeout     time.Duration `mapstructure:"aiCompletionTimeout"`
 	AIMaxInputChars         int           `mapstructure:"aiMaxInputChars"         validate:"omitempty,min=1000,max=500000"`
@@ -713,6 +714,24 @@ func (c *DocumentIntelligenceConfig) GetAITimeout() time.Duration {
 	}
 
 	return c.AITimeout
+}
+
+// GetAIProbeTimeout bounds the Test Connection call against a provider.
+//
+// A probe is not a reachability check: it asks the model to emit a two-field
+// JSON object, because what the test is really for is finding out whether the
+// endpoint honours a schema. So it has to wait for a real generation, and on
+// a queued free tier — NVIDIA NIM, a shared router, a cold self-hosted model —
+// the first response header can be thirty seconds away. Twenty seconds failed
+// those providers with "could not reach the endpoint" when the endpoint was
+// fine and merely busy. The ceiling is kept under the server's own request
+// timeout so a slow probe returns a verdict rather than a 504.
+func (c *DocumentIntelligenceConfig) GetAIProbeTimeout() time.Duration {
+	if c.AIProbeTimeout <= 0 {
+		return 45 * time.Second
+	}
+
+	return c.AIProbeTimeout
 }
 
 // GetAICompletionTimeout bounds one blocking call to a model.

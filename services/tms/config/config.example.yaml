@@ -164,6 +164,7 @@ documentIntelligence:
   ocrTimeout: 45s # Hard timeout per OCR process
   enableAI: false # Let document intelligence classify and extract with a model
   aiTimeout: 20s # Hard timeout for reachability probes against a provider
+  aiProbeTimeout: 45s # Hard timeout for a Test Connection probe, which waits on a real generation
   aiCompletionTimeout: 5m # Hard timeout for one blocking call to a model
   aiStreamIdleTimeout: 5m # How long a streaming reply may go silent before it is abandoned; reasoning models can think for minutes before their first token
   aiMaxInputChars: 24000 # Max extracted text sent to AI

@@ -529,10 +529,15 @@ func (s *Service) clientFor(provider *aiprovider.Provider) *http.Client {
 		s.clients = make(map[bool]*http.Client, 2)
 	}
 
-	client := httpsafe.NewClientWithPolicy(
-		s.cfg.GetAICompletionTimeout(),
-		s.egressPolicy(allowPrivate),
-	)
+	// A blocking call sends nothing until the model has finished, so its
+	// time-to-headers is the same budget as the call itself. Bounding the
+	// headers by the probe timeout instead made every request to a queued
+	// free tier — NVIDIA's NIM endpoints, a shared router, a cold
+	// self-hosted model — fail at twenty seconds with a transport error,
+	// which reads as an outage rather than as a busy endpoint.
+	policy := s.egressPolicy(allowPrivate)
+	policy.ResponseHeaderTimeout = s.cfg.GetAICompletionTimeout()
+	client := httpsafe.NewClientWithPolicy(s.cfg.GetAICompletionTimeout(), policy)
 	s.clients[allowPrivate] = client
 
 	return client
@@ -571,14 +576,17 @@ func (s *Service) streamClientFor(provider *aiprovider.Provider) *http.Client {
 	return client
 }
 
-// egressPolicy is the network guard both clients share.
+// egressPolicy is the network guard both clients share. Each caller sets
+// its own ResponseHeaderTimeout on top, because what counts as too long
+// before the first byte is entirely different for a blocking call and a
+// streamed one.
 func (s *Service) egressPolicy(allowPrivate bool) httpsafe.Policy {
 	return httpsafe.Policy{
 		AllowPrivateNetworks: allowPrivate,
 		// A self-hosted model holds the connection open while it generates and
 		// sends nothing until the first token, which on a loaded GPU outlasts the
 		// transport default.
-		ResponseHeaderTimeout: s.cfg.GetAITimeout(),
+		ResponseHeaderTimeout: s.cfg.GetAICompletionTimeout(),
 	}
 }
 

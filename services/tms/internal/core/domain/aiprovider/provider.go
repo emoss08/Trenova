@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/shopspring/decimal"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -16,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -246,6 +246,8 @@ func (p *Provider) CanServeTask(t Task) (bool, string) {
 }
 
 func (p *Provider) Validate(multiErr *errortypes.MultiError) {
+	p.applyDefaults()
+
 	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.OrganizationID,
 			validation.Required.Error("Organization is required"),
@@ -292,6 +294,21 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 
 	p.validateTasks(multiErr)
 	p.validateEndpoint(multiErr)
+}
+
+// applyDefaults fills the fields whose absence means "the ordinary thing"
+// rather than a mistake. Reasoning effort is the case that mattered: the
+// column defaults to Off and most providers never set it, but validation
+// required it, so anything building a provider without naming it — a
+// seed, an import, a form that hides the field — was refused for omitting
+// the default.
+func (p *Provider) applyDefaults() {
+	if p.ReasoningEffort == "" {
+		p.ReasoningEffort = ReasoningOff
+	}
+	if p.StructuredOutputMode == "" {
+		p.StructuredOutputMode = StructuredOutputPrompted
+	}
 }
 
 func (p *Provider) validateTasks(multiErr *errortypes.MultiError) {
