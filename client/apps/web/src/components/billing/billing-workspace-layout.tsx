@@ -20,11 +20,11 @@ export function BillingWorkspaceLayout({
   className,
 }: BillingWorkspaceLayoutProps) {
   return (
-    <PageLayout pageHeaderProps={pageHeaderProps} className={className}>
+    <PageLayout fill pageHeaderProps={pageHeaderProps} className={className}>
       {toolbar}
       <div
         className={cn(
-          "border-border bg-card grid h-[calc(100vh-220px)] min-h-96 gap-0 overflow-hidden rounded-lg border",
+          "border-border bg-card grid min-h-0 flex-1 gap-0 overflow-hidden rounded-lg border",
           preview ? "grid-cols-[300px_1fr_1fr]" : "grid-cols-[320px_1fr]",
         )}
       >

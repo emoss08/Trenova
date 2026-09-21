@@ -50,8 +50,8 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { CalculationReceipt } from "./calculation-receipt";
-import { DeskMetric } from "./desk-metric";
 import { useInvalidateDetention, useSendDetentionNotice } from "./use-detention-actions";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 
 const METER_TRANSITION = { type: "spring", stiffness: 160, damping: 28, mass: 0.7 } as const;
 
@@ -106,32 +106,26 @@ function MoneySummary({ occurrence }: { occurrence: DetentionOccurrence }) {
   const marginNegative = occurrence.netMargin < 0;
 
   return (
-    <dl className="divide-border grid grid-cols-3 divide-x">
-      <DeskMetric
-        size="md"
+    <KpiStrip minItemWidth="8rem">
+      <KpiStripItem
         label={t("Billable")}
         value={formatCurrency(occurrence.billableAmount, occurrence.currency)}
         sub={`${formatDetentionMinutes(occurrence.roundedMinutes)} of ${formatDetentionMinutes(
           occurrence.rawDwellMinutes,
         )}`}
-        className="pr-4"
       />
-      <DeskMetric
-        size="md"
+      <KpiStripItem
         label={t("Driver pay")}
         value={formatCurrency(occurrence.driverPayAmount, occurrence.currency)}
         sub={`${formatDetentionMinutes(occurrence.driverPayMinutes)} payable`}
-        className="px-4"
       />
-      <DeskMetric
-        size="md"
+      <KpiStripItem
         label={t("Net margin")}
         value={formatCurrency(occurrence.netMargin, occurrence.currency)}
         sub={marginNegative ? "You pay more than you bill" : "After driver pay"}
-        valueClassName={cn(marginNegative && "text-danger-foreground")}
-        className="pl-4"
+        tone={marginNegative ? "danger" : undefined}
       />
-    </dl>
+    </KpiStrip>
   );
 }
 

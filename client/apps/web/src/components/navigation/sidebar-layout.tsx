@@ -115,26 +115,34 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   );
 }
 
-const PAGE_BLEED = "has-[>[data-slot=data-table]:only-child]";
-
 type PageLayoutProps = {
   pageHeaderProps: PageHeaderProps;
   children: React.ReactNode;
   className?: string;
+  fill?: boolean;
 };
 
-export function PageLayout({ pageHeaderProps, children, className }: PageLayoutProps) {
+export function PageLayout({
+  pageHeaderProps,
+  children,
+  className,
+  fill = false,
+}: PageLayoutProps) {
   return (
     <div
       data-slot="page"
-      className="flex min-h-full flex-col has-[>[data-slot=page-body]>[data-slot=data-table]:only-child]:h-full"
+      className={cn(
+        "flex min-h-full flex-col has-[>[data-slot=page-body]>[data-slot=data-table]:only-child]:h-full",
+        fill && "h-full",
+      )}
     >
       <PageHeader {...pageHeaderProps} />
       <div
         data-slot="page-body"
         className={cn(
           "flex min-w-0 flex-1 flex-col gap-y-4 p-4",
-          `${PAGE_BLEED}:min-h-0 ${PAGE_BLEED}:gap-y-0 ${PAGE_BLEED}:p-0`,
+          "has-[>[data-slot=data-table]:only-child]:min-h-0 has-[>[data-slot=data-table]:only-child]:gap-y-0 has-[>[data-slot=data-table]:only-child]:p-0",
+          fill && "min-h-0 overflow-hidden",
           className,
         )}
       >

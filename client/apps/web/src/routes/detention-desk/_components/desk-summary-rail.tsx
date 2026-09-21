@@ -5,8 +5,7 @@ import {
   type DeskSummary,
 } from "@trenova/shared/lib/detention";
 import { pluralize } from "@trenova/shared/lib/utils";
-import { KpiStrip } from "@/components/kpi/kpi-strip";
-import { DeskMetric } from "./desk-metric";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { DeskMoney } from "./desk-money";
 
 type DeskSummaryRailProps = {
@@ -24,7 +23,7 @@ export function DeskSummaryRail({ summary, floor }: DeskSummaryRailProps) {
 
   return (
     <KpiStrip>
-      <DeskMetric
+      <KpiStripItem
         label={t("Collectable now")}
         value={<DeskMoney value={summary.amountAtRisk} />}
         sub={
@@ -35,19 +34,19 @@ export function DeskSummaryRail({ summary, floor }: DeskSummaryRailProps) {
               )} on site`
         }
       />
-      <DeskMetric
+      <KpiStripItem
         label={t("Notice window")}
         value={summary.noticesDue}
         sub={
           summary.noticesDue > 0 ? "Must go out before the deadline" : "The notice queue is clear"
         }
       />
-      <DeskMetric
+      <KpiStripItem
         label={t("Uncollectable")}
         value={<DeskMoney value={summary.amountLost} precise={false} />}
         sub={`${summary.lost} ${pluralize("stop", summary.lost)} past the notice deadline`}
       />
-      <DeskMetric
+      <KpiStripItem
         label={t("Longest wait")}
         value={formatDetentionMinutes(floor.longestOnSiteMinutes)}
         sub={floor.longestLocationName || "Nothing on a dock"}
