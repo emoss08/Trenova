@@ -64,6 +64,10 @@ const (
 	// KindAgentRequestMissingDocsEmail wraps agent-written prose in the
 	// organization's own letterhead and signature.
 	KindAgentRequestMissingDocsEmail Kind = "agent.request_missing_docs.email"
+	// KindAgentCustomerUpdateEmail wraps a status update an agent composed for a
+	// customer, such as a late delivery or a revised arrival, in the
+	// organization's letterhead.
+	KindAgentCustomerUpdateEmail Kind = "agent.customer_update.email"
 
 	// Notifications.
 	//
@@ -92,6 +96,9 @@ const (
 	KindNotificationDisciplinaryIssued Kind = "notification.dash.disciplinary_issued"
 	// KindNotificationHOSAlert wraps an hours-of-service warning.
 	KindNotificationHOSAlert Kind = "notification.dash.hos_alert"
+	// KindNotificationDispatchMessage carries a message the office, or an agent
+	// acting for it, sends a driver about a load in progress.
+	KindNotificationDispatchMessage Kind = "notification.dash.dispatch_message"
 	// KindNotificationObligationsDigest bundles everything a driver owes into one notice.
 	KindNotificationObligationsDigest Kind = "notification.dash.obligations_digest"
 
@@ -152,6 +159,7 @@ func AllKinds() []Kind {
 		KindDriverPortalInvitationEmail,
 		KindPasswordResetEmail,
 		KindAgentRequestMissingDocsEmail,
+		KindAgentCustomerUpdateEmail,
 		KindNotificationLoadAssigned,
 		KindNotificationLoadUnassigned,
 		KindNotificationPTOReviewed,
@@ -162,6 +170,7 @@ func AllKinds() []Kind {
 		KindNotificationRecognition,
 		KindNotificationDisciplinaryIssued,
 		KindNotificationHOSAlert,
+		KindNotificationDispatchMessage,
 		KindNotificationObligationsDigest,
 		KindNotificationSettlementPosted,
 		KindNotificationSettlementPaid,

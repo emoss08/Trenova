@@ -657,6 +657,11 @@ var driverNotificationKinds = []notificationKind{
 		description: "Wraps an hours-of-service warning. The rule composes the text; this decides how it is presented.",
 	},
 	{
+		kind:        KindNotificationDispatchMessage,
+		displayName: "Dispatch Message",
+		description: "A message from the office about a load in progress. AlertTitle is the subject and AlertMessage the text; this decides how they are presented.",
+	},
+	{
 		kind:        KindNotificationObligationsDigest,
 		displayName: "Obligations Digest",
 		description: "Everything a driver owes, in one notice. Range over Digest: each entry carries What, DueAt and DueInDays, and Overdue is set on the ones already past. DigestPeriod says whether this is the daily or the weekly round-up.",

@@ -195,19 +195,31 @@ func (t *requestMissingDocsTool) agentEmailContext(
 }
 
 // applyBranding names the sender and inlines their logo.
-//
-// Branding is decoration: an organization that cannot be read still gets its
-// document request sent, unsigned, rather than not at all.
 func (t *requestMissingDocsTool) applyBranding(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	out *documenttemplate.AgentEmailContext,
 ) {
-	if t.orgRepo == nil {
+	brandAgentEmail(ctx, t.orgRepo, t.inliner, tenantInfo, out)
+}
+
+// brandAgentEmail names the sender and inlines their logo on any email an
+// agent composes.
+//
+// Branding is decoration: an organization that cannot be read still gets its
+// message sent, unsigned, rather than not at all.
+func brandAgentEmail(
+	ctx context.Context,
+	orgRepo repositories.OrganizationRepository,
+	inliner serviceports.AssetInliner,
+	tenantInfo pagination.TenantInfo,
+	out *documenttemplate.AgentEmailContext,
+) {
+	if orgRepo == nil {
 		return
 	}
 
-	org, err := t.orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil || org == nil {
@@ -216,9 +228,7 @@ func (t *requestMissingDocsTool) applyBranding(
 
 	out.CompanyName = org.Name
 
-	if dataURI, logoErr := serviceports.ResolveLogoDataURI(
-		ctx, t.inliner, org.LogoURL,
-	); logoErr == nil {
+	if dataURI, logoErr := serviceports.ResolveLogoDataURI(ctx, inliner, org.LogoURL); logoErr == nil {
 		out.LogoDataURI = dataURI
 	}
 }

@@ -4899,6 +4899,33 @@
       "domain/customer"
     ]
   },
+  "A stop was reached late, or missed, and a service failure was opened on the shipment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "A stop's arrival was recorded, by the driver, by a geofence, or by a dispatcher.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "A stop's departure was recorded, which is when detention and lateness settle.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "A structured record; use Show raw to read it.": {
     "sites": 1,
     "scope": [
@@ -28446,6 +28473,15 @@
       "routes/shipment-control"
     ]
   },
+  "Check for service failures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Check number / ACH trace (optional)": {
     "sites": 1,
     "scope": [
@@ -31143,6 +31179,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Close this service failure with the reason and note below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Close vehicle info": {
@@ -47610,6 +47655,15 @@
       "domain/agentdefinition"
     ]
   },
+  "Dispatch has an update for you. Open Dash for the details.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.dispatch_message"
+    ]
+  },
   "Dispatch has been notified. If plans changed, call your dispatcher.": {
     "sites": 1,
     "scope": [
@@ -54065,7 +54119,7 @@
     ]
   },
   "Email the customer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -69840,22 +69894,24 @@
     ]
   },
   "Hello {0},": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go"
     ],
     "areas": [
+      "template/agent.customer_update.email",
       "template/agent.request_missing_docs.email",
       "template/invoice.email",
       "template/tender.offer.email"
     ]
   },
   "Hello,": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go"
     ],
     "areas": [
+      "template/agent.customer_update.email",
       "template/agent.request_missing_docs.email",
       "template/invoice.email",
       "template/tender.offer.email"
@@ -82141,6 +82197,15 @@
       "routes/dash-control"
     ]
   },
+  "Load monitor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Load more": {
     "sites": 9,
     "scope": [
@@ -87412,6 +87477,15 @@
       "apps/dash/_components"
     ]
   },
+  "Message from dispatch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.dispatch_message"
+    ]
+  },
   "Message is queued for delivery to the trading partner.": {
     "sites": 1,
     "scope": [
@@ -87443,6 +87517,15 @@
     ]
   },
   "Message the assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Message the driver": {
     "sites": 1,
     "scope": [
       "ts"
@@ -104497,6 +104580,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Optional points to list under the update, such as documents still needed. Usually empty.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
     ]
   },
   "Optional reason for cancellation...": {
@@ -125462,6 +125554,15 @@
       "template/invoice.email"
     ]
   },
+  "Reply to this message if you have any questions.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.customer_update.email"
+    ]
+  },
   "Reply to this message with the documents attached.": {
     "sites": 2,
     "scope": [
@@ -127369,6 +127470,15 @@
       "routes/carrier-monitoring",
       "routes/invoice",
       "routes/service-failure"
+    ]
+  },
+  "Resolve a service failure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Resolve agent exceptions": {
@@ -137900,6 +138010,15 @@
       "go/other"
     ]
   },
+  "Send a detention notice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Send a rate agreement back for revision": {
     "sites": 1,
     "scope": [
@@ -138197,6 +138316,15 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "Send the customer the detention notice for this occurrence.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Send the daily carrier intelligence change digest": {
@@ -139079,6 +139207,15 @@
     "areas": [
       "go/other",
       "service/ediservice"
+    ]
+  },
+  "Service failure detected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Service failure evaluation": {
@@ -140779,13 +140916,14 @@
     ]
   },
   "Shipment": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "go/other",
       "routes/admin",
       "routes/edi",
       "routes/invoice",
@@ -142082,11 +142220,12 @@
     ]
   },
   "Shipment {0}": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go"
     ],
     "areas": [
+      "template/agent.customer_update.email",
       "template/agent.request_missing_docs.email",
       "template/invoice.email"
     ]
@@ -158184,6 +158323,15 @@
       "api/graphql"
     ]
   },
+  "The subject the agent composed. Required on the subject channel.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
+    ]
+  },
   "The subject the agent composed. Required on the subject channel: replacing it entirely defeats the point of letting the agent describe what it needs.": {
     "sites": 1,
     "scope": [
@@ -158624,6 +158772,15 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "The update the agent composed. Required: this is the substance of the message.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
     ]
   },
   "The upload must complete before extraction can start.": {
@@ -165645,6 +165802,24 @@
     "areas": [
       "routes/agent-control",
       "routes/load-detail.tsx"
+    ]
+  },
+  "Truck arrived at a stop": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Truck departed a stop": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Truck stop": {
@@ -172990,6 +173165,15 @@
       "routes/worker"
     ]
   },
+  "Waive detention": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Waive requirement": {
     "sites": 2,
     "scope": [
@@ -178105,6 +178289,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Wraps a status update an agent composed for a customer — a delay, a revised arrival, a delivery confirmation — in your own letterhead and signature.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
     ]
   },
   "Wraps an agent-composed request in your own letterhead and signature, so prose written automatically still goes out looking like your organization.": {

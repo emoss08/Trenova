@@ -71,6 +71,10 @@ type listSpec struct {
 	// is checked here and refused loudly instead.
 	config *domaintypes.FieldConfiguration
 	fetch  func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error)
+	// fetchIn is fetch with the caller's clock, for a row that renders a
+	// time of day and needs the organization's zone to do it. One of the
+	// two is set.
+	fetchIn func(ctx context.Context, opts *pagination.QueryOptions, clk clock) ([]any, error)
 }
 
 type operatorArity uint8
@@ -288,7 +292,7 @@ func (t *listTool) Query(
 		limit = maxListLimit
 	}
 
-	rows, err := t.spec.fetch(ctx, &pagination.QueryOptions{
+	opts := &pagination.QueryOptions{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,
 			BuID:   params.BusinessUnitID,
@@ -298,7 +302,14 @@ func (t *listTool) Query(
 		Query:        query,
 		FieldFilters: filters,
 		Sort:         sorting,
-	})
+	}
+
+	var rows []any
+	if t.spec.fetchIn != nil {
+		rows, err = t.spec.fetchIn(ctx, opts, criteria.clock)
+	} else {
+		rows, err = t.spec.fetch(ctx, opts)
+	}
 	if err != nil {
 		return nil, err
 	}

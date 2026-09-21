@@ -2,6 +2,7 @@ package servicefailureservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
@@ -54,6 +55,11 @@ func (s *service) afterServiceFailureCreate(
 		actor:   actor,
 		action:  "created",
 		payload: entity,
+	})
+	services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+		Kind:       agent.EventServiceFailureDetected,
+		SubjectID:  entity.ShipmentID,
+		TenantInfo: serviceFailureTenantInfo(entity),
 	})
 }
 

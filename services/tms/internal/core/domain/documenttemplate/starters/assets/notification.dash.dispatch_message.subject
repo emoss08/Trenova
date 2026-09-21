@@ -1,0 +1,1 @@
+{{ if .AlertTitle }}{{ .AlertTitle }}{{ else }}{{ t "Message from dispatch" }}{{ end }}

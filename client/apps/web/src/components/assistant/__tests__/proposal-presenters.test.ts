@@ -346,6 +346,108 @@ describe("presentProposal for report tools", () => {
   });
 });
 
+/**
+ * The monitoring writes reach an approver as what would happen to whom: a
+ * message to a driver, an email to a customer, a charge waived. The ids the
+ * tool needs stay out of the sentence.
+ */
+describe("presentProposal for monitoring tools", () => {
+  it("describes a driver message with its urgency", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "notify_driver",
+        arguments: {
+          workerId: "wrk_01M3034Q2N7JD99RA1D8DGH1ZF",
+          title: "Delivery moved to 3 PM",
+          message: "Houston DC moved your appointment to 3 PM. No need to rush.",
+          priority: "high",
+        },
+      }),
+    );
+
+    expect(view.title).toBe("Message the driver");
+    expect(view.summary).toBe("Send driver …DGH1ZF “Delivery moved to 3 PM” in Dash.");
+    expect(view.severity).toEqual({ label: "High", tone: "warning" });
+    expect(view.highlights).toEqual([
+      { label: "Message", value: "Houston DC moved your appointment to 3 PM. No need to rush." },
+    ]);
+    expect(view.reversible).toBe(false);
+  });
+
+  it("describes a customer email by its subject and body", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "email_customer",
+        arguments: {
+          shipmentId: "shp_01M3034Q2N7JD99RA1D8DGH1ZF",
+          profileId: "emp_01M3034Q2N7JD99RA1D8DGH1ZF",
+          subject: "S12345 running about an hour late",
+          body: "The truck is held in traffic near Huntsville; we now expect 3:30 PM.",
+        },
+      }),
+    );
+
+    expect(view.title).toBe("Email the customer");
+    expect(view.summary).toBe(
+      "Send this shipment's customer “S12345 running about an hour late” from the organization's letterhead.",
+    );
+    expect(view.highlights).toEqual([
+      {
+        label: "Message",
+        value: "The truck is held in traffic near Huntsville; we now expect 3:30 PM.",
+      },
+    ]);
+  });
+
+  it("describes a waiver by its coded reason", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "waive_detention",
+        arguments: {
+          occurrenceId: "dto_01M3034Q2N7JD99RA1D8DGH1ZF",
+          reason: "CarrierFault",
+          note: "Our truck arrived two hours late.",
+        },
+      }),
+    );
+
+    expect(view.title).toBe("Waive detention");
+    expect(view.summary).toBe("Waive this detention charge as carrier fault.");
+    expect(view.highlights).toEqual([
+      { label: "Note", value: "Our truck arrived two hours late." },
+    ]);
+  });
+
+  it("describes a failure resolution and a failure check", () => {
+    const resolve = presentProposal(
+      proposal({
+        toolName: "resolve_service_failure",
+        arguments: {
+          serviceFailureId: "sf_01M3034Q2N7JD99RA1D8DGH1ZF",
+          reasonCodeId: "sfrc_01M3034Q2N7JD99RA1D8DGH1ZF",
+          notes: "Shipper closed early; driver waited until opening.",
+        },
+      }),
+    );
+    expect(resolve.title).toBe("Resolve a service failure");
+    expect(resolve.highlights).toEqual([
+      { label: "Reason code", value: "…DGH1ZF" },
+      { label: "Note", value: "Shipper closed early; driver waited until opening." },
+    ]);
+
+    const check = presentProposal(
+      proposal({
+        toolName: "evaluate_service_failures",
+        arguments: { shipmentId: "shp_01M3034Q2N7JD99RA1D8DGH1ZF", force: true },
+      }),
+    );
+    expect(check.summary).toBe(
+      "Run the late-stop check on this shipment, re-checking stops already evaluated.",
+    );
+    expect(check.highlights).toEqual([]);
+  });
+});
+
 describe("shortRef", () => {
   it("shortens a PULID and leaves a human reference alone", () => {
     expect(shortRef("shp_01M2PRNXAMQNKK9HK9V5B817QE")).toBe("…B817QE");

@@ -1,0 +1,8 @@
+{{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}
+
+{{ .AgentBody }}
+{{ if .ShipmentProNumber }}
+{{ t "Shipment {0}" .ShipmentProNumber }}
+{{ end }}
+{{ t "Reply to this message if you have any questions." }}
+{{ .CompanyName }}

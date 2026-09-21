@@ -64,6 +64,14 @@ func optionalString(params map[string]any, key string) string {
 	return ""
 }
 
+// optionalBool reads a flag the caller may leave out. Only a literal true
+// counts; a model that sends the string "true" gets the safe default.
+func optionalBool(params map[string]any, key string) bool {
+	value, _ := params[key].(bool)
+
+	return value
+}
+
 func optionalInt64(params map[string]any, key string) int64 {
 	raw, ok := params[key]
 	if !ok {

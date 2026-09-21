@@ -24,6 +24,7 @@ type Params struct {
 	AuditService    services.AuditService
 	Realtime        services.RealtimeService
 	OrderDerivation services.OrderDerivationService `optional:"true"`
+	Publisher       services.AgentEventPublisher    `optional:"true"`
 }
 
 type EDIServiceSetter interface {
@@ -41,6 +42,7 @@ type service struct {
 	realtime       services.RealtimeService
 	ediService     services.EDIService
 	delayedMarker  delayedShipmentMarker
+	publisher      services.AgentEventPublisher
 }
 
 func New(p Params) *service {
@@ -53,6 +55,7 @@ func New(p Params) *service {
 		commentService: p.CommentService,
 		auditService:   p.AuditService,
 		realtime:       p.Realtime,
+		publisher:      p.Publisher,
 	}
 	s.delayedMarker = newDelayedShipmentMarker(delayedShipmentMarkerParams{
 		logger:          s.l,

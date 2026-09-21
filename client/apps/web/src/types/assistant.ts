@@ -10,6 +10,7 @@ export const agentTemplateKindSchema = z.enum([
   "BillingException",
   "DispatchAssignment",
   "ImportAssistant",
+  "LoadMonitor",
 ]);
 
 export const autonomyTierSchema = z.enum(["Propose", "ActWithApproval", "AutoExecute"]);

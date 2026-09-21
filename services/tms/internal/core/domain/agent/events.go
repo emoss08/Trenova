@@ -8,6 +8,9 @@ const (
 	EventShipmentMoveUnassigned    = EventKind("shipment_move.unassigned")
 	EventShipmentCreated           = EventKind("shipment.created")
 	EventDocumentExtracted         = EventKind("document.extracted")
+	EventServiceFailureDetected    = EventKind("service_failure.detected")
+	EventShipmentMoveArrived       = EventKind("shipment_move.arrived")
+	EventShipmentMoveDeparted      = EventKind("shipment_move.departed")
 )
 
 type EventDescriptor struct {
@@ -47,6 +50,24 @@ var knownEvents = []EventDescriptor{
 		SubjectType: SubjectDocument,
 		Label:       "Document read",
 		Description: "Document intelligence finished extracting a document's contents.",
+	},
+	{
+		Kind:        EventServiceFailureDetected,
+		SubjectType: SubjectShipment,
+		Label:       "Service failure detected",
+		Description: "A stop was reached late, or missed, and a service failure was opened on the shipment.",
+	},
+	{
+		Kind:        EventShipmentMoveArrived,
+		SubjectType: SubjectShipmentMove,
+		Label:       "Truck arrived at a stop",
+		Description: "A stop's arrival was recorded, by the driver, by a geofence, or by a dispatcher.",
+	},
+	{
+		Kind:        EventShipmentMoveDeparted,
+		SubjectType: SubjectShipmentMove,
+		Label:       "Truck departed a stop",
+		Description: "A stop's departure was recorded, which is when detention and lateness settle.",
 	},
 }
 

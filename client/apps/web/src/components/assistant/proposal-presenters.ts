@@ -271,6 +271,67 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
+  evaluate_service_failures: (args) => ({
+    title: "Check for service failures",
+    summary: `Run the late-stop check on this shipment${
+      args.force === true ? ", re-checking stops already evaluated" : ""
+    }.`,
+    highlights: [],
+    covered: ["shipmentId", "force"],
+    reversible: true,
+  }),
+
+  resolve_service_failure: (args) => ({
+    title: "Resolve a service failure",
+    summary: "Close this service failure with the reason and note below.",
+    highlights: facts(
+      fact("Reason code", shortRef(text(args.reasonCodeId))),
+      fact("Note", text(args.notes)),
+    ),
+    covered: ["serviceFailureId", "reasonCodeId", "notes"],
+    reversible: false,
+  }),
+
+  notify_driver: (args) => {
+    const priority = text(args.priority);
+
+    return {
+      title: "Message the driver",
+      summary: `Send driver ${shortRef(text(args.workerId)) || "?"} “${text(args.title)}” in Dash.`,
+      severity:
+        priority === "critical" || priority === "high"
+          ? { label: humanizeEnum(priority[0].toUpperCase() + priority.slice(1)), tone: "warning" }
+          : null,
+      highlights: facts(fact("Message", text(args.message))),
+      covered: ["workerId", "title", "message", "priority", "shipmentId"],
+      reversible: false,
+    };
+  },
+
+  email_customer: (args) => ({
+    title: "Email the customer",
+    summary: `Send this shipment's customer “${text(args.subject)}” from the organization's letterhead.`,
+    highlights: facts(fact("Message", text(args.body))),
+    covered: ["shipmentId", "profileId", "subject", "body"],
+    reversible: false,
+  }),
+
+  send_detention_notice: () => ({
+    title: "Send a detention notice",
+    summary: "Send the customer the detention notice for this occurrence.",
+    highlights: [],
+    covered: ["occurrenceId"],
+    reversible: false,
+  }),
+
+  waive_detention: (args) => ({
+    title: "Waive detention",
+    summary: `Waive this detention charge as ${midSentence(humanizeEnum(text(args.reason)))}.`,
+    highlights: facts(fact("Note", text(args.note))),
+    covered: ["occurrenceId", "reason", "note"],
+    reversible: false,
+  }),
+
   fork_report: (args) => {
     const key = text(args.reportKey);
     const name = text(args.name);

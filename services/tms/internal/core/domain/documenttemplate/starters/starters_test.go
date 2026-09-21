@@ -537,6 +537,7 @@ func TestNotificationKindsAreKeyedByEventType(t *testing.T) {
 		"dash.recognition",
 		"dash.disciplinary_issued",
 		"dash.hos_alert",
+		"dash.dispatch_message",
 		"dash.settlement_posted",
 		"dash.settlement_paid",
 		"dash.pay_held",

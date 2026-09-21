@@ -41,6 +41,7 @@ type Params struct {
 	Notifications   *notificationservice.Service         `optional:"true"`
 	DashControlRepo repositories.DashControlRepository   `optional:"true"`
 	MoveObservers   []portservices.MoveStatusObserver    `                group:"move_status_observers"`
+	Publisher       portservices.AgentEventPublisher     `optional:"true"`
 }
 
 type service struct {
@@ -60,6 +61,7 @@ type service struct {
 	notifications   *notificationservice.Service
 	dashControlRepo repositories.DashControlRepository
 	moveObservers   []portservices.MoveStatusObserver
+	publisher       portservices.AgentEventPublisher
 }
 
 //nolint:gocritic // service constructor
@@ -81,6 +83,7 @@ func New(p Params) portservices.ShipmentMoveService {
 		notifications:   p.Notifications,
 		dashControlRepo: p.DashControlRepo,
 		moveObservers:   p.MoveObservers,
+		publisher:       p.Publisher,
 	}
 }
 

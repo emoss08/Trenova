@@ -111,6 +111,39 @@ func (r *Registry) registerPortalKinds() {
 
 func (r *Registry) registerAgentKinds() {
 	_ = r.Register(&KindDefinition{
+		Kind:        KindAgentCustomerUpdateEmail,
+		DisplayName: "Customer Update",
+		Description: "Wraps a status update an agent composed for a customer — a delay, a " +
+			"revised arrival, a delivery confirmation — in your own letterhead and signature.",
+		Category:       "Agent",
+		Channels:       []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
+		CustomerScoped: true,
+		sampleFactory:  newAgentEmailSampleContext,
+		Variables: []VariableDefinition{
+			{
+				Path:        "AgentSubject",
+				Type:        VariableString,
+				Required:    true,
+				Description: "The subject the agent composed. Required on the subject channel.",
+			},
+			{
+				Path:        "AgentBody",
+				Type:        VariableString,
+				Required:    true,
+				Description: "The update the agent composed. Required: this is the substance of the message.",
+			},
+			companyNameVariable(),
+			customerNameVariable(false, "Who the update is for."),
+			proNumberVariable(false, "The shipment the update is about."),
+			{
+				Path:        "RequestedDocuments",
+				Type:        VariableStringList,
+				Description: "Optional points to list under the update, such as documents still needed. Usually empty.",
+			},
+			logoVariable(),
+		},
+	})
+	_ = r.Register(&KindDefinition{
 		Kind:        KindAgentRequestMissingDocsEmail,
 		DisplayName: "Missing Documents Request",
 		Description: "Wraps an agent-composed request in your own letterhead and signature, " +

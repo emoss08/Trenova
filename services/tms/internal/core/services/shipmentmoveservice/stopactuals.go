@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -92,6 +94,7 @@ func (s *service) RecordStopActual(
 	if req.Action == repositories.StopActualActionDepart && updatedMove != nil {
 		s.flagDetentionCandidate(ctx, req, updatedMove)
 	}
+	s.publishStopActualEvent(ctx, req)
 
 	return updatedMove, nil
 }
@@ -329,4 +332,23 @@ func deriveMoveStatusFromStops(move *shipment.ShipmentMove) shipment.MoveStatus 
 	default:
 		return move.Status
 	}
+}
+
+// publishStopActualEvent wakes the agents that watch arrivals and departures.
+// The publisher is optional and the event carries only ids: an agent that
+// wants the stop reads it back, so nothing here can go stale in transit.
+func (s *service) publishStopActualEvent(
+	ctx context.Context,
+	req *repositories.RecordStopActualRequest,
+) {
+	kind := agent.EventShipmentMoveArrived
+	if req.Action == repositories.StopActualActionDepart {
+		kind = agent.EventShipmentMoveDeparted
+	}
+
+	portservices.PublishAgentEvent(ctx, s.publisher, portservices.AgentEvent{
+		Kind:       kind,
+		SubjectID:  req.MoveID,
+		TenantInfo: req.TenantInfo,
+	})
 }

@@ -12,6 +12,7 @@ import {
   ShieldCheckIcon,
   TruckIcon,
   WalletCardsIcon,
+  RadarIcon,
 } from "lucide-react";
 import { useMemo } from "react";
 import type { Control } from "react-hook-form";
@@ -26,6 +27,7 @@ export const TEMPLATE_ICONS: Record<AgentTemplateKind, LucideIcon> = {
   BillingException: WalletCardsIcon,
   DispatchAssignment: RouteIcon,
   ImportAssistant: FileInputIcon,
+  LoadMonitor: RadarIcon,
 };
 
 type TemplatePickerProps = {

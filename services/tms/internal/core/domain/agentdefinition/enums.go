@@ -13,6 +13,7 @@ const (
 	TemplateBillingException    = Template("BillingException")
 	TemplateDispatchAssignment  = Template("DispatchAssignment")
 	TemplateImportAssistant     = Template("ImportAssistant")
+	TemplateLoadMonitor         = Template("LoadMonitor")
 )
 
 func (t Template) IsValid() bool {
@@ -24,7 +25,8 @@ func (t Template) IsValid() bool {
 		TemplateGeneralAssistant,
 		TemplateBillingException,
 		TemplateDispatchAssignment,
-		TemplateImportAssistant:
+		TemplateImportAssistant,
+		TemplateLoadMonitor:
 		return true
 	default:
 		return false
@@ -41,6 +43,7 @@ func AllTemplates() []Template {
 		TemplateBillingException,
 		TemplateDispatchAssignment,
 		TemplateImportAssistant,
+		TemplateLoadMonitor,
 	}
 }
 
@@ -62,6 +65,8 @@ func (t Template) Label() string {
 		return "Dispatch coverage agent"
 	case TemplateImportAssistant:
 		return "Shipment import assistant"
+	case TemplateLoadMonitor:
+		return "Load monitor"
 	default:
 		return string(t)
 	}
@@ -85,6 +90,9 @@ func (t Template) Description() string {
 		return "Reviews uncovered moves on a schedule and proposes driver assignments."
 	case TemplateImportAssistant:
 		return "Turns a customer's shipment document into a reviewed, ready-to-save shipment."
+	case TemplateLoadMonitor:
+		return "Watches the board every quarter hour for late, stalled and uncovered loads, " +
+			"and proposes what to do about each."
 	default:
 		return ""
 	}
@@ -128,6 +136,19 @@ func (t Template) StarterInstructions() string {
 			"extracted field against the records you can look up, accept what matches with high " +
 			"confidence, and ask about what does not. Never save a shipment without the person's " +
 			"confirmation."
+	case TemplateLoadMonitor:
+		return "You watch loads in progress so the desk does not have to. Each run, read the " +
+			"dispatch board and work through what is Late or Now: for each, read the shipment's " +
+			"tracking, decide from the stops, the position and the driver's hours whether the " +
+			"next stop will be made, and act. A stop already late with no failure on record " +
+			"gets evaluate_service_failures. A delivery that will miss its window gets the " +
+			"customer told with email_customer and the driver told with notify_driver, each " +
+			"with the new expected time and nothing internal. A detention notice that is due " +
+			"gets sent. Anything you cannot resolve — an uncovered move, a truck with no " +
+			"position for hours, a weather alert on the route — gets flag_for_manual_review " +
+			"with the evidence. Never estimate an arrival as a promise; say it is an estimate. " +
+			"Do not repeat an action the shipment's comments show was taken in the last hour. " +
+			"Finish with a short report: what is at risk, what you did, what needs a person."
 	default:
 		return ""
 	}
@@ -166,6 +187,7 @@ func (t Template) StarterTools() []string {
 			"preview_report",
 			"run_report",
 			"get_report_run",
+			"list_email_profiles",
 			"request_missing_docs",
 			"flag_for_manual_review",
 			"transition_item_to_in_review",
@@ -197,6 +219,26 @@ func (t Template) StarterTools() []string {
 			"list_invoices",
 			"add_shipment_comment",
 		}
+	case TemplateLoadMonitor:
+		return []string{
+			"get_dispatch_board",
+			"get_shipment_tracking",
+			"get_shipment",
+			"list_vehicle_positions",
+			"get_worker_hos",
+			"list_service_failures",
+			"list_service_failure_reason_codes",
+			"list_detention_desk",
+			"list_weather_alerts",
+			"evaluate_service_failures",
+			"resolve_service_failure",
+			"add_shipment_comment",
+			"notify_driver",
+			"list_email_profiles",
+			"email_customer",
+			"send_detention_notice",
+			"flag_for_manual_review",
+		}
 	case TemplateGeneralAssistant:
 		return nil
 	case TemplateBillingException:
@@ -223,7 +265,7 @@ func (t Template) StarterTrigger() TriggerMode {
 	switch t {
 	case TemplateBillingException:
 		return TriggerEvent
-	case TemplateDispatchAssignment:
+	case TemplateDispatchAssignment, TemplateLoadMonitor:
 		return TriggerScheduled
 	default:
 		return TriggerChat
@@ -240,11 +282,14 @@ func (t Template) StarterEvents() []agent.EventKind {
 }
 
 func (t Template) StarterCron() string {
-	if t == TemplateDispatchAssignment {
+	switch t {
+	case TemplateDispatchAssignment:
 		return "*/30 * * * *"
+	case TemplateLoadMonitor:
+		return "*/15 * * * *"
+	default:
+		return ""
 	}
-
-	return ""
 }
 
 func (t Template) StarterCeiling() agent.AutonomyTier {

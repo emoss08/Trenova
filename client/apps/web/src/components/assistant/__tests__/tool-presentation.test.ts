@@ -105,6 +105,23 @@ describe("describeToolCall", () => {
    * object, which no scalar argument names, so the dataset it is built on is
    * the subject rather than nothing.
    */
+  it("names a tracked shipment, a failure and a detention occurrence", () => {
+    expect(describeToolCall("get_shipment_tracking", { proNumber: "S12345" })).toEqual({
+      title: "Track shipment",
+      subject: "S12345",
+    });
+    expect(
+      describeToolCall("resolve_service_failure", {
+        serviceFailureId: "sf_1",
+        notes: "Shipper closed early.",
+      }),
+    ).toEqual({ title: "Resolve service failure", subject: "sf_1" });
+    expect(describeToolCall("send_detention_notice", { occurrenceId: "dto_1" })).toEqual({
+      title: "Send detention notice",
+      subject: "dto_1",
+    });
+  });
+
   it("names the dataset a definition is built on", () => {
     expect(
       describeToolCall("preview_report", {

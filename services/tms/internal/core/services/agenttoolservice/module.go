@@ -2,6 +2,8 @@ package agenttoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
@@ -30,6 +32,12 @@ var Module = fx.Module("agent-tool-service",
 		fx.Annotate(provideCreateReportTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideUpdateReportTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideForkReportTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideEvaluateServiceFailuresTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideResolveServiceFailureTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideNotifyDriverTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(newEmailCustomerTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideSendDetentionNoticeTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideWaiveDetentionTool, fx.ResultTags(`group:"agent_tools"`)),
 		NewRegistry,
 	),
 )
@@ -74,4 +82,26 @@ func provideUpdateReportTool(reports *reporting.Service) services.AgentTool {
 
 func provideForkReportTool(reports *reporting.Service) services.AgentTool {
 	return newForkReportTool(reports)
+}
+
+func provideEvaluateServiceFailuresTool(
+	failures services.ServiceFailureService,
+) services.AgentTool {
+	return newEvaluateServiceFailuresTool(failures)
+}
+
+func provideResolveServiceFailureTool(failures services.ServiceFailureService) services.AgentTool {
+	return newResolveServiceFailureTool(failures)
+}
+
+func provideNotifyDriverTool(drivers *drivernotificationservice.Service) services.AgentTool {
+	return newNotifyDriverTool(drivers)
+}
+
+func provideSendDetentionNoticeTool(detention *detentionservice.Service) services.AgentTool {
+	return newSendDetentionNoticeTool(detention)
+}
+
+func provideWaiveDetentionTool(detention *detentionservice.Service) services.AgentTool {
+	return newWaiveDetentionTool(detention)
 }
