@@ -44,6 +44,8 @@ var Module = fx.Module("agent-tool-service",
 		fx.Annotate(provideUpdateShipmentTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideTenderToRoutingGuideTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideTenderToCarriersTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(newRememberTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(newForgetMemoryTool, fx.ResultTags(`group:"agent_tools"`)),
 		NewRegistry,
 	),
 )

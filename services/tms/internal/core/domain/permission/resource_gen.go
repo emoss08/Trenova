@@ -126,6 +126,7 @@ const (
 	ResourceAgentControl    Resource = "agent_control"
 	ResourceAIProvider      Resource = "ai_provider"
 	ResourceAgentDefinition Resource = "agent_definition"
+	ResourceAgentMemory     Resource = "agent_memory"
 	ResourceAssistant       Resource = "assistant"
 	ResourceInsight         Resource = "insight"
 

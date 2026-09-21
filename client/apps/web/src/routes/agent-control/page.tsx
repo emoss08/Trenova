@@ -19,6 +19,7 @@ import { useAIControlStats } from "./_components/overview/use-ai-control-stats";
 const OverviewTab = lazy(() => import("./_components/overview/overview-tab"));
 const AgentsTab = lazy(() => import("./_components/agents/agents-tab"));
 const ProvidersTab = lazy(() => import("./_components/providers/providers-tab"));
+const MemoryTab = lazy(() => import("./_components/memory/memory-tab"));
 const ActivityTab = lazy(() => import("./_components/activity/activity-tab"));
 
 /**
@@ -37,6 +38,7 @@ export function AgentControlPage() {
   const { allowed: canReadRuns } = usePermission(Resource.AgentRun, Operation.Read);
   const { allowed: canReadProposals } = usePermission(Resource.AgentProposal, Operation.Read);
   const { allowed: canReadExceptions } = usePermission(Resource.AgentException, Operation.Read);
+  const { allowed: canReadMemory } = usePermission(Resource.AgentMemory, Operation.Read);
 
   const stats = useAIControlStats();
   const items = useMemo(
@@ -51,6 +53,7 @@ export function AgentControlPage() {
               agentsTotal: stats.counts?.agentsTotal ?? 0,
               pendingProposals: stats.counts?.pendingProposals ?? 0,
               runsLast24h: stats.counts?.runsLast24h ?? 0,
+              memoriesActive: stats.counts?.memoriesActive ?? 0,
             },
         {
           agents: canReadAgents,
@@ -58,12 +61,14 @@ export function AgentControlPage() {
           runs: canReadRuns,
           proposals: canReadProposals,
           exceptions: canReadExceptions,
+          memory: canReadMemory,
         },
         t,
       ),
     [
       canReadAgents,
       canReadExceptions,
+      canReadMemory,
       canReadProposals,
       canReadProviders,
       canReadRuns,
@@ -122,6 +127,7 @@ export function AgentControlPage() {
             )}
             {activeTab === "agents" && <AgentsTab />}
             {activeTab === "providers" && <ProvidersTab />}
+            {activeTab === "memory" && <MemoryTab />}
             {activeTab === "activity" && <ActivityTab view={activeView} />}
           </DataTableLazyComponent>
         </div>

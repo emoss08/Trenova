@@ -552,6 +552,11 @@ export function AgentForm({ mode, agentId = "", systemKey = "" }: AgentFormProps
                   label: t("Its own tools"),
                   description: t("A summary of what each tool does and needs"),
                 },
+                {
+                  value: "Memory",
+                  label: t("What the organization recorded"),
+                  description: t("Standing instructions, facts and corrections from AI Control"),
+                },
               ]}
             />
           </FormControl>

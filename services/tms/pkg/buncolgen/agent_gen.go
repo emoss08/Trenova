@@ -1279,6 +1279,297 @@ var AgentRunFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// Memory — table "agent_memories", alias "amem"
+// ---------------------------------------------------------------------------
+
+// MemoryTable holds the table name, alias, and primary key columns
+// for the "agent_memories" table. The alias "amem" is used in all generated
+// SQL fragments (e.g. "amem.id = ?").
+var MemoryTable = TableInfo{
+	Name:       "agent_memories",
+	Alias:      "amem",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// MemoryColumns provides type-safe column references for the "agent_memories" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(MemoryColumns.ID.String())
+//	// SELECT amem.id FROM agent_memories AS amem
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(MemoryColumns.ID.Eq(), id)           // WHERE amem.id = ?
+//	q.Order(MemoryColumns.CreatedAt.OrderDesc())  // ORDER BY amem.created_at DESC
+var MemoryColumns = struct {
+	ID                Column // "id" → qualified: "amem.id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "amem.business_unit_id"
+	OrganizationID    Column // "organization_id" → qualified: "amem.organization_id"
+	Kind              Column // "kind" → qualified: "amem.kind"
+	Source            Column // "source" → qualified: "amem.source"
+	Status            Column // "status" → qualified: "amem.status"
+	SubjectType       Column // "subject_type" → qualified: "amem.subject_type"
+	SubjectID         Column // "subject_id" → qualified: "amem.subject_id"
+	SubjectLabel      Column // "subject_label" → qualified: "amem.subject_label"
+	ToolName          Column // "tool_name" → qualified: "amem.tool_name"
+	Content           Column // "content" → qualified: "amem.content"
+	AgentDefinitionID Column // "agent_definition_id" → qualified: "amem.agent_definition_id"
+	SourceRunID       Column // "source_run_id" → qualified: "amem.source_run_id"
+	SourceProposalID  Column // "source_proposal_id" → qualified: "amem.source_proposal_id"
+	CreatedByUserID   Column // "created_by_user_id" → qualified: "amem.created_by_user_id"
+	RetiredByUserID   Column // "retired_by_user_id" → qualified: "amem.retired_by_user_id"
+	RetiredAt         Column // "retired_at" → qualified: "amem.retired_at"
+	ExpiresAt         Column // "expires_at" → qualified: "amem.expires_at"
+	UseCount          Column // "use_count" → qualified: "amem.use_count"
+	LastUsedAt        Column // "last_used_at" → qualified: "amem.last_used_at"
+	Version           Column // "version" → qualified: "amem.version"
+	CreatedAt         Column // "created_at" → qualified: "amem.created_at"
+	UpdatedAt         Column // "updated_at" → qualified: "amem.updated_at"
+}{
+	ID:                NewColumn("id", "amem"),
+	BusinessUnitID:    NewColumn("business_unit_id", "amem"),
+	OrganizationID:    NewColumn("organization_id", "amem"),
+	Kind:              NewColumn("kind", "amem"),
+	Source:            NewColumn("source", "amem"),
+	Status:            NewColumn("status", "amem"),
+	SubjectType:       NewColumn("subject_type", "amem"),
+	SubjectID:         NewColumn("subject_id", "amem"),
+	SubjectLabel:      NewColumn("subject_label", "amem"),
+	ToolName:          NewColumn("tool_name", "amem"),
+	Content:           NewColumn("content", "amem"),
+	AgentDefinitionID: NewColumn("agent_definition_id", "amem"),
+	SourceRunID:       NewColumn("source_run_id", "amem"),
+	SourceProposalID:  NewColumn("source_proposal_id", "amem"),
+	CreatedByUserID:   NewColumn("created_by_user_id", "amem"),
+	RetiredByUserID:   NewColumn("retired_by_user_id", "amem"),
+	RetiredAt:         NewColumn("retired_at", "amem"),
+	ExpiresAt:         NewColumn("expires_at", "amem"),
+	UseCount:          NewColumn("use_count", "amem"),
+	LastUsedAt:        NewColumn("last_used_at", "amem"),
+	Version:           NewColumn("version", "amem"),
+	CreatedAt:         NewColumn("created_at", "amem"),
+	UpdatedAt:         NewColumn("updated_at", "amem"),
+}
+
+// MemoryFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Memory.GetStaticFieldMap().
+var MemoryFieldMap = map[string]string{
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"kind":              "kind",
+	"source":            "source",
+	"status":            "status",
+	"subjectType":       "subject_type",
+	"subjectId":         "subject_id",
+	"subjectLabel":      "subject_label",
+	"toolName":          "tool_name",
+	"content":           "content",
+	"agentDefinitionId": "agent_definition_id",
+	"sourceRunId":       "source_run_id",
+	"sourceProposalId":  "source_proposal_id",
+	"createdByUserId":   "created_by_user_id",
+	"retiredByUserId":   "retired_by_user_id",
+	"retiredAt":         "retired_at",
+	"expiresAt":         "expires_at",
+	"useCount":          "use_count",
+	"lastUsedAt":        "last_used_at",
+	"version":           "version",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
+}
+
+// MemoryInsertableColumns lists column names suitable for INSERT statements on the "agent_memories" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var MemoryInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"kind",
+	"source",
+	"status",
+	"subject_type",
+	"subject_id",
+	"subject_label",
+	"tool_name",
+	"content",
+	"agent_definition_id",
+	"source_run_id",
+	"source_proposal_id",
+	"created_by_user_id",
+	"retired_by_user_id",
+	"retired_at",
+	"expires_at",
+	"use_count",
+	"last_used_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// MemoryRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(MemoryRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var MemoryRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// MemoryScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE amem.organization_id = ? AND amem.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.MemoryScopeTenant(sq, ti).
+//		Where(buncolgen.MemoryColumns.ID.Eq(), id)
+func MemoryScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, MemoryColumns.OrganizationID, MemoryColumns.BusinessUnitID, ti)
+}
+
+// MemoryScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.MemoryScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.MemoryColumns.ID.In(), bun.List(ids))
+//	})
+func MemoryScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, MemoryColumns.OrganizationID, MemoryColumns.BusinessUnitID, ti)
+}
+
+// MemoryScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.MemoryScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.MemoryColumns.ID.Eq(), id)
+//	})
+func MemoryScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, MemoryColumns.OrganizationID, MemoryColumns.BusinessUnitID, ti)
+}
+
+// MemoryApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.MemoryApplyTenant(tenantInfo))
+func MemoryApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(MemoryColumns.OrganizationID, MemoryColumns.BusinessUnitID, ti)
+}
+
+// MemoryFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_memories" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	MemoryFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var MemoryFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Kind              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
+	Source            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
+	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	SubjectType       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
+	SubjectID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
+	SubjectLabel      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectLabel" → DB: "subject_label"
+	ToolName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
+	Content           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "content" → DB: "content"
+	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	SourceRunID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceRunId" → DB: "source_run_id"
+	SourceProposalID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceProposalId" → DB: "source_proposal_id"
+	CreatedByUserID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdByUserId" → DB: "created_by_user_id"
+	RetiredByUserID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "retiredByUserId" → DB: "retired_by_user_id"
+	RetiredAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "retiredAt" → DB: "retired_at"
+	ExpiresAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	UseCount          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "useCount" → DB: "use_count"
+	LastUsedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastUsedAt" → DB: "last_used_at"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	Kind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("kind", op, value)
+	},
+	Source: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("source", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	SubjectType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("subjectType", op, value)
+	},
+	SubjectID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("subjectId", op, value)
+	},
+	SubjectLabel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("subjectLabel", op, value)
+	},
+	ToolName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("toolName", op, value)
+	},
+	Content: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("content", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentDefinitionId", op, value)
+	},
+	SourceRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceRunId", op, value)
+	},
+	SourceProposalID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceProposalId", op, value)
+	},
+	CreatedByUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdByUserId", op, value)
+	},
+	RetiredByUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("retiredByUserId", op, value)
+	},
+	RetiredAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("retiredAt", op, value)
+	},
+	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("expiresAt", op, value)
+	},
+	UseCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("useCount", op, value)
+	},
+	LastUsedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastUsedAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // ToolTrust — table "agent_tool_trust", alias "att"
 // ---------------------------------------------------------------------------
 

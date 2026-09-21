@@ -1,0 +1,63 @@
+fragment AgentMemoryTableRowFields on AgentMemory {
+  id
+  organizationId
+  businessUnitId
+  kind
+  source
+  status
+  subjectType
+  subjectId
+  subjectLabel
+  toolName
+  content
+  agentDefinitionId
+  sourceRunId
+  sourceProposalId
+  createdByUserId
+  retiredByUserId
+  retiredAt
+  expiresAt
+  useCount
+  lastUsedAt
+  version
+  createdAt
+  updatedAt
+}
+
+query AgentMemoryTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  agentMemories(input: $input) {
+    edges {
+      node {
+        ...AgentMemoryTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentMemoryCount($input: DataTableConnectionInput!) {
+  agentMemories(input: $input) {
+    totalCount
+  }
+}
+
+mutation CreateAgentMemory($input: AgentMemoryInput!) {
+  createAgentMemory(input: $input) {
+    ...AgentMemoryTableRowFields
+  }
+}
+
+mutation UpdateAgentMemory($id: ID!, $input: AgentMemoryInput!) {
+  updateAgentMemory(id: $id, input: $input) {
+    ...AgentMemoryTableRowFields
+  }
+}
+
+mutation SetAgentMemoryStatus($id: ID!, $status: AgentMemoryStatus!) {
+  setAgentMemoryStatus(id: $id, status: $status) {
+    ...AgentMemoryTableRowFields
+  }
+}

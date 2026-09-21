@@ -73,6 +73,9 @@ type RuntimeContext struct {
 	Subject          *RuntimeSubject
 	Page             *PageContext
 	Tools            []ToolSummary
+	// Memories is what the organization has recorded for its agents: the
+	// organization-wide ones and any about this agent's tools.
+	Memories []*agent.Memory
 	// ToolsDisclosed reports that the turn opened with a subset of the agent's
 	// tools and can load the rest on demand. The prompt has to say so, because
 	// the alternative is a model that reads a short tool list as the limit of
@@ -100,6 +103,13 @@ func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
 	if section := d.buildContextSection(rc); section != "" {
 		builder.WriteString("\n\n")
 		builder.WriteString(section)
+	}
+
+	if d.HasContextProvider(ContextMemory) {
+		if section := buildMemorySection(rc.Memories); section != "" {
+			builder.WriteString("\n\n")
+			builder.WriteString(section)
+		}
 	}
 
 	if d.HasContextProvider(ContextTools) {
@@ -245,6 +255,50 @@ func describeUser(user *RuntimeUser) []string {
 	}
 
 	return lines
+}
+
+const (
+	memoryOpenTag  = "<organization_memory>"
+	memoryCloseTag = "</organization_memory>"
+)
+
+// buildMemorySection writes what the organization has recorded for its
+// agents, instructions first.
+//
+// The block is fenced like the subject and the page, because most of it was
+// typed by a person or recorded by a model and none of it is the system
+// speaking. The line after the fence says how to read each kind: an
+// instruction is followed, a correction is a mistake not to repeat, and a
+// fact is weighed. Without that line a model treats a fact about last month
+// as an order for today.
+func buildMemorySection(memories []*agent.Memory) string {
+	if len(memories) == 0 {
+		return ""
+	}
+
+	var builder strings.Builder
+	builder.WriteString("## What this organization has recorded for its agents\n")
+	builder.WriteString(memoryOpenTag)
+	for _, memory := range memories {
+		if memory == nil || strings.TrimSpace(memory.Content) == "" {
+			continue
+		}
+		builder.WriteString("\n- [")
+		builder.WriteString(string(memory.Kind))
+		builder.WriteString("] ")
+		if scope := memory.Scope(); scope != "" {
+			builder.WriteString(stringutils.NeutralizeCloseTag(scope, memoryCloseTag))
+			builder.WriteString(": ")
+		}
+		builder.WriteString(stringutils.NeutralizeCloseTag(strings.TrimSpace(memory.Content), memoryCloseTag))
+	}
+	builder.WriteString("\n")
+	builder.WriteString(memoryCloseTag)
+	builder.WriteString("\nFollow each Instruction as if the person who recorded it were asking now. " +
+		"A Correction is a mistake a person already fixed once; do not repeat it. " +
+		"A Fact is context to weigh, not an order, and may be out of date.")
+
+	return builder.String()
 }
 
 func describeSubject(subject *RuntimeSubject) string {

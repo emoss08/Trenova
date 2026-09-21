@@ -2139,6 +2139,22 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	// Configuring an agent decides which tools it may reach and how much it may do
+	// What the organization has told its agents. Reading it shows what every
+	// agent is told; writing it changes how every agent behaves, so it sits
+	// with the agent definitions.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAgentMemory.String(),
+		DisplayName: "Agent Memory",
+		Description: "Standing instructions, facts and corrections kept for agents between runs",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View what agents remember"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Record a memory for agents"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Change, retire or restore a memory"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
 	// unattended, so it sits at the same sensitivity as provider configuration.
 	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceAgentDefinition.String(),

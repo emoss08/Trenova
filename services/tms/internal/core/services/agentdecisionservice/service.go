@@ -33,6 +33,7 @@ type Params struct {
 	Executor     *proposalexecutor.Service
 	AuditService services.AuditService
 	Trust        services.AgentTrustService
+	Memories     services.AgentMemoryService `optional:"true"`
 }
 
 type Service struct {
@@ -46,6 +47,7 @@ type Service struct {
 	executor     *proposalexecutor.Service
 	audit        services.AuditService
 	trust        services.AgentTrustService
+	memories     services.AgentMemoryService
 }
 
 func New(p Params) services.AgentDecisionService {
@@ -60,6 +62,7 @@ func New(p Params) services.AgentDecisionService {
 		executor:     p.Executor,
 		audit:        p.AuditService,
 		trust:        p.Trust,
+		memories:     p.Memories,
 	}
 }
 
@@ -159,6 +162,10 @@ func (s *Service) DecideWithOutcome(
 	// The ledger learns from the outcome, not the intent: an approval whose
 	// write failed is a setback for the tool, whatever the person decided.
 	s.recordTrust(ctx, proposal, created, execErr)
+
+	// A change or a refusal with a reason is the best correction an agent
+	// can get, and the memory keeps it for the next run to read.
+	s.recordCorrection(ctx, proposal, created)
 
 	auditActor := actor.AuditActor()
 	if err = s.audit.LogAction(&services.LogActionParams{
@@ -289,6 +296,24 @@ func (s *Service) recordTrust(
 	}
 	if err != nil {
 		s.l.Error("failed to record decision in the trust ledger",
+			zap.String("proposal", proposal.ID.String()),
+			zap.String("tool", proposal.ToolName),
+			zap.Error(err),
+		)
+	}
+}
+
+func (s *Service) recordCorrection(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+	decision *agent.AgentDecision,
+) {
+	if s.memories == nil {
+		return
+	}
+
+	if _, err := s.memories.RecordCorrection(ctx, proposal, decision); err != nil {
+		s.l.Error("failed to record a correction from the decision",
 			zap.String("proposal", proposal.ID.String()),
 			zap.String("tool", proposal.ToolName),
 			zap.Error(err),

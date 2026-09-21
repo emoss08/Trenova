@@ -259,6 +259,88 @@ type AgentPlanConnection {
   totalCount: Int
 }
 
+enum AgentMemoryKind {
+  Instruction
+  Fact
+  Correction
+}
+
+enum AgentMemorySource {
+  User
+  Agent
+  Decision
+}
+
+enum AgentMemoryStatus {
+  Active
+  Retired
+}
+
+enum AgentMemorySubjectType {
+  Customer
+  Location
+  Worker
+  Carrier
+}
+
+"""
+Something the organization keeps for its agents between runs: a standing
+instruction, a fact an agent was told, or a correction learned from a
+decision on a proposal. Read into the prompt of every agent that asks for
+memory.
+"""
+type AgentMemory {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  kind: AgentMemoryKind!
+  source: AgentMemorySource!
+  status: AgentMemoryStatus!
+  subjectType: AgentMemorySubjectType
+  subjectId: ID
+  "The subject's name at the time it was recorded."
+  subjectLabel: String!
+  "Set when the memory is about one tool, such as a correction to how it was proposed."
+  toolName: String!
+  content: String!
+  agentDefinitionId: ID
+  sourceRunId: ID
+  sourceProposalId: ID
+  createdByUserId: ID
+  retiredByUserId: ID
+  retiredAt: Timestamp
+  expiresAt: Timestamp
+  "How many prompts have carried this memory."
+  useCount: Int!
+  lastUsedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AgentMemoryEdge {
+  node: AgentMemory!
+  cursor: String!
+}
+
+type AgentMemoryConnection {
+  edges: [AgentMemoryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input AgentMemoryInput {
+  kind: AgentMemoryKind!
+  content: String!
+  "With subjectId, the record the memory is about; both or neither."
+  subjectType: AgentMemorySubjectType
+  subjectId: ID
+  toolName: String
+  expiresAt: Timestamp
+  "Required on an update; ignored on a create."
+  version: Int
+}
+
 type AgentExceptionEdge {
   node: AgentException!
   cursor: String!
@@ -306,6 +388,8 @@ extend type Query {
   agentProposal(id: ID!): AgentProposal
   agentPlans(input: DataTableConnectionInput!): AgentPlanConnection!
   agentPlan(id: ID!): AgentPlan
+  agentMemories(input: DataTableConnectionInput!): AgentMemoryConnection!
+  agentMemory(id: ID!): AgentMemory
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentException(id: ID!): AgentException
   agentControl: AgentControl!
@@ -314,6 +398,10 @@ extend type Query {
 extend type Mutation {
   decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
   decideAgentPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
+  createAgentMemory(input: AgentMemoryInput!): AgentMemory!
+  updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
+  "Retires or restores a memory; a retired one is kept and no longer read."
+  setAgentMemoryStatus(id: ID!, status: AgentMemoryStatus!): AgentMemory!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
   updateAgentControl(input: AgentControlInput!): AgentControl!
 }

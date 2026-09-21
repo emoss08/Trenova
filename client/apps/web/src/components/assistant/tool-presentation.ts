@@ -6,6 +6,9 @@ import { humanizeToolName } from "./proposal-state";
  * warmly than a known one.
  */
 const TOOL_TITLES: Record<string, string> = {
+  recall_memory: "Recall what was recorded",
+  remember: "Record for later",
+  forget_memory: "Retire a memory",
   get_shipment: "Look up shipment",
   search_shipments: "Search shipments",
   get_worker: "Look up driver",

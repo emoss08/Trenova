@@ -209,6 +209,29 @@ type AgentExceptionResolveInput struct {
 	ResolutionNotes *string               `json:"resolutionNotes,omitempty"`
 }
 
+type AgentMemoryConnection struct {
+	Edges      []*AgentMemoryEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount *int               `json:"totalCount,omitempty"`
+}
+
+type AgentMemoryEdge struct {
+	Node   *agent.Memory `json:"node"`
+	Cursor string        `json:"cursor"`
+}
+
+type AgentMemoryInput struct {
+	Kind    agent.MemoryKind `json:"kind"`
+	Content string           `json:"content"`
+	// With subjectId, the record the memory is about; both or neither.
+	SubjectType *agent.MemorySubjectType `json:"subjectType,omitempty"`
+	SubjectID   *string                  `json:"subjectId,omitempty"`
+	ToolName    *string                  `json:"toolName,omitempty"`
+	ExpiresAt   *int                     `json:"expiresAt,omitempty"`
+	// Required on an update; ignored on a create.
+	Version *int `json:"version,omitempty"`
+}
+
 type AgentPlanConnection struct {
 	Edges      []*AgentPlanEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`

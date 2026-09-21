@@ -18,6 +18,8 @@ var AgentDefinitionSpec TypeSpec
 
 var AgentExceptionSpec TypeSpec
 
+var AgentMemorySpec TypeSpec
+
 var AgentPlanSpec TypeSpec
 
 var AgentProposalSpec TypeSpec
@@ -1089,6 +1091,109 @@ func init() {
 			{
 				Name:        "resolutionNotes",
 				FieldMapKey: "resolutionNotes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentMemorySpec = TypeSpec{
+		TypeName: "AgentMemory",
+		FieldMap: buncolgen.MemoryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "subjectType",
+				FieldMapKey: "subjectType",
+			},
+			{
+				Name:        "subjectId",
+				FieldMapKey: "subjectId",
+			},
+			{
+				Name:        "subjectLabel",
+				FieldMapKey: "subjectLabel",
+			},
+			{
+				Name:        "toolName",
+				FieldMapKey: "toolName",
+			},
+			{
+				Name:        "content",
+				FieldMapKey: "content",
+			},
+			{
+				Name:        "agentDefinitionId",
+				FieldMapKey: "agentDefinitionId",
+			},
+			{
+				Name:        "sourceRunId",
+				FieldMapKey: "sourceRunId",
+			},
+			{
+				Name:        "sourceProposalId",
+				FieldMapKey: "sourceProposalId",
+			},
+			{
+				Name:        "createdByUserId",
+				FieldMapKey: "createdByUserId",
+			},
+			{
+				Name:        "retiredByUserId",
+				FieldMapKey: "retiredByUserId",
+			},
+			{
+				Name:        "retiredAt",
+				FieldMapKey: "retiredAt",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "useCount",
+				FieldMapKey: "useCount",
+			},
+			{
+				Name:        "lastUsedAt",
+				FieldMapKey: "lastUsedAt",
 			},
 			{
 				Name:        "version",

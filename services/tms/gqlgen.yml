@@ -1886,6 +1886,21 @@ models:
   AgentPlan:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentPlan
+  AgentMemoryKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.MemoryKind
+  AgentMemorySource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.MemorySource
+  AgentMemoryStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.MemoryStatus
+  AgentMemorySubjectType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.MemorySubjectType
+  AgentMemory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.Memory
   AgentAutonomyTier:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyTier

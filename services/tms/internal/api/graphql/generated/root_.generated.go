@@ -10,6 +10,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
@@ -653,6 +654,43 @@ type ComplexityRoot struct {
 	}
 
 	AgentExceptionEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AgentMemory struct {
+		AgentDefinitionID func(childComplexity int) int
+		BusinessUnitID    func(childComplexity int) int
+		Content           func(childComplexity int) int
+		CreatedAt         func(childComplexity int) int
+		CreatedByUserID   func(childComplexity int) int
+		ExpiresAt         func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Kind              func(childComplexity int) int
+		LastUsedAt        func(childComplexity int) int
+		OrganizationID    func(childComplexity int) int
+		RetiredAt         func(childComplexity int) int
+		RetiredByUserID   func(childComplexity int) int
+		Source            func(childComplexity int) int
+		SourceProposalID  func(childComplexity int) int
+		SourceRunID       func(childComplexity int) int
+		Status            func(childComplexity int) int
+		SubjectID         func(childComplexity int) int
+		SubjectLabel      func(childComplexity int) int
+		SubjectType       func(childComplexity int) int
+		ToolName          func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+		UseCount          func(childComplexity int) int
+		Version           func(childComplexity int) int
+	}
+
+	AgentMemoryConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AgentMemoryEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
@@ -6010,6 +6048,7 @@ type ComplexityRoot struct {
 		CompleteClearinghouseQuery            func(childComplexity int, input gqlmodel.CompleteClearinghouseQueryInput) int
 		CompleteWorkerChecklistItem           func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
 		CompleteWorkerTraining                func(childComplexity int, input gqlmodel.CompleteWorkerTrainingInput) int
+		CreateAgentMemory                     func(childComplexity int, input gqlmodel.AgentMemoryInput) int
 		CreateBenefitPlan                     func(childComplexity int, input gqlmodel.BenefitPlanInput) int
 		CreateCarrierInvoiceMatch             func(childComplexity int, input gqlmodel.CreateCarrierInvoiceMatchInput) int
 		CreateDOTRandomPool                   func(childComplexity int, input gqlmodel.DOTRandomPoolInput) int
@@ -6226,6 +6265,7 @@ type ComplexityRoot struct {
 		SendDetentionNotice                   func(childComplexity int, occurrenceID string) int
 		SendInvoiceEDI                        func(childComplexity int, invoiceID string, force *bool) int
 		SendTestMessageTemplate               func(childComplexity int, input gqlmodel.SendTestMessageTemplateInput) int
+		SetAgentMemoryStatus                  func(childComplexity int, id string, status agent.MemoryStatus) int
 		SetCarrierMonitoring                  func(childComplexity int, carrierIds []string, enabled bool) int
 		SetDefaultTableConfiguration          func(childComplexity int, id string) int
 		SetMyAvailability                     func(childComplexity int, input gqlmodel.SetMyAvailabilityInput) int
@@ -6256,6 +6296,7 @@ type ComplexityRoot struct {
 		UnpinShipmentComment                  func(childComplexity int, shipmentID string, commentID string) int
 		UnresolveShipmentComment              func(childComplexity int, shipmentID string, commentID string) int
 		UpdateAgentControl                    func(childComplexity int, input gqlmodel.AgentControlInput) int
+		UpdateAgentMemory                     func(childComplexity int, id string, input gqlmodel.AgentMemoryInput) int
 		UpdateBenefitPlan                     func(childComplexity int, input gqlmodel.UpdateBenefitPlanInput) int
 		UpdateBillingQueueStatus              func(childComplexity int, id string, input gqlmodel.BillingQueueUpdateStatusInput) int
 		UpdateCarrierIntelControl             func(childComplexity int, input gqlmodel.CarrierIntelControlPatchInput) int
@@ -7186,6 +7227,8 @@ type ComplexityRoot struct {
 		AgentDefinitions                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentException                      func(childComplexity int, id string) int
 		AgentExceptions                     func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AgentMemories                       func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AgentMemory                         func(childComplexity int, id string) int
 		AgentPlan                           func(childComplexity int, id string) int
 		AgentPlans                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentProposal                       func(childComplexity int, id string) int
@@ -13421,6 +13464,177 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentExceptionEdge.Node(childComplexity), true
+
+	case "AgentMemory.agentDefinitionId":
+		if e.ComplexityRoot.AgentMemory.AgentDefinitionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.AgentDefinitionID(childComplexity), true
+	case "AgentMemory.businessUnitId":
+		if e.ComplexityRoot.AgentMemory.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.BusinessUnitID(childComplexity), true
+	case "AgentMemory.content":
+		if e.ComplexityRoot.AgentMemory.Content == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.Content(childComplexity), true
+	case "AgentMemory.createdAt":
+		if e.ComplexityRoot.AgentMemory.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.CreatedAt(childComplexity), true
+	case "AgentMemory.createdByUserId":
+		if e.ComplexityRoot.AgentMemory.CreatedByUserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.CreatedByUserID(childComplexity), true
+	case "AgentMemory.expiresAt":
+		if e.ComplexityRoot.AgentMemory.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.ExpiresAt(childComplexity), true
+	case "AgentMemory.id":
+		if e.ComplexityRoot.AgentMemory.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.ID(childComplexity), true
+	case "AgentMemory.kind":
+		if e.ComplexityRoot.AgentMemory.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.Kind(childComplexity), true
+	case "AgentMemory.lastUsedAt":
+		if e.ComplexityRoot.AgentMemory.LastUsedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.LastUsedAt(childComplexity), true
+	case "AgentMemory.organizationId":
+		if e.ComplexityRoot.AgentMemory.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.OrganizationID(childComplexity), true
+	case "AgentMemory.retiredAt":
+		if e.ComplexityRoot.AgentMemory.RetiredAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.RetiredAt(childComplexity), true
+	case "AgentMemory.retiredByUserId":
+		if e.ComplexityRoot.AgentMemory.RetiredByUserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.RetiredByUserID(childComplexity), true
+	case "AgentMemory.source":
+		if e.ComplexityRoot.AgentMemory.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.Source(childComplexity), true
+	case "AgentMemory.sourceProposalId":
+		if e.ComplexityRoot.AgentMemory.SourceProposalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.SourceProposalID(childComplexity), true
+	case "AgentMemory.sourceRunId":
+		if e.ComplexityRoot.AgentMemory.SourceRunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.SourceRunID(childComplexity), true
+	case "AgentMemory.status":
+		if e.ComplexityRoot.AgentMemory.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.Status(childComplexity), true
+	case "AgentMemory.subjectId":
+		if e.ComplexityRoot.AgentMemory.SubjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.SubjectID(childComplexity), true
+	case "AgentMemory.subjectLabel":
+		if e.ComplexityRoot.AgentMemory.SubjectLabel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.SubjectLabel(childComplexity), true
+	case "AgentMemory.subjectType":
+		if e.ComplexityRoot.AgentMemory.SubjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.SubjectType(childComplexity), true
+	case "AgentMemory.toolName":
+		if e.ComplexityRoot.AgentMemory.ToolName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.ToolName(childComplexity), true
+	case "AgentMemory.updatedAt":
+		if e.ComplexityRoot.AgentMemory.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.UpdatedAt(childComplexity), true
+	case "AgentMemory.useCount":
+		if e.ComplexityRoot.AgentMemory.UseCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.UseCount(childComplexity), true
+	case "AgentMemory.version":
+		if e.ComplexityRoot.AgentMemory.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.Version(childComplexity), true
+
+	case "AgentMemoryConnection.edges":
+		if e.ComplexityRoot.AgentMemoryConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryConnection.Edges(childComplexity), true
+	case "AgentMemoryConnection.pageInfo":
+		if e.ComplexityRoot.AgentMemoryConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryConnection.PageInfo(childComplexity), true
+	case "AgentMemoryConnection.totalCount":
+		if e.ComplexityRoot.AgentMemoryConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryConnection.TotalCount(childComplexity), true
+
+	case "AgentMemoryEdge.cursor":
+		if e.ComplexityRoot.AgentMemoryEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryEdge.Cursor(childComplexity), true
+	case "AgentMemoryEdge.node":
+		if e.ComplexityRoot.AgentMemoryEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryEdge.Node(childComplexity), true
 
 	case "AgentPlan.businessUnitId":
 		if e.ComplexityRoot.AgentPlan.BusinessUnitID == nil {
@@ -38943,6 +39157,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CompleteWorkerTraining(childComplexity, args["input"].(gqlmodel.CompleteWorkerTrainingInput)), true
+	case "Mutation.createAgentMemory":
+		if e.ComplexityRoot.Mutation.CreateAgentMemory == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createAgentMemory_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateAgentMemory(childComplexity, args["input"].(gqlmodel.AgentMemoryInput)), true
 	case "Mutation.createBenefitPlan":
 		if e.ComplexityRoot.Mutation.CreateBenefitPlan == nil {
 			break
@@ -41299,6 +41524,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SendTestMessageTemplate(childComplexity, args["input"].(gqlmodel.SendTestMessageTemplateInput)), true
+	case "Mutation.setAgentMemoryStatus":
+		if e.ComplexityRoot.Mutation.SetAgentMemoryStatus == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setAgentMemoryStatus_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetAgentMemoryStatus(childComplexity, args["id"].(string), args["status"].(agent.MemoryStatus)), true
 	case "Mutation.setCarrierMonitoring":
 		if e.ComplexityRoot.Mutation.SetCarrierMonitoring == nil {
 			break
@@ -41629,6 +41865,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateAgentControl(childComplexity, args["input"].(gqlmodel.AgentControlInput)), true
+	case "Mutation.updateAgentMemory":
+		if e.ComplexityRoot.Mutation.UpdateAgentMemory == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateAgentMemory_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateAgentMemory(childComplexity, args["id"].(string), args["input"].(gqlmodel.AgentMemoryInput)), true
 	case "Mutation.updateBenefitPlan":
 		if e.ComplexityRoot.Mutation.UpdateBenefitPlan == nil {
 			break
@@ -46420,6 +46667,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentExceptions(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentMemories":
+		if e.ComplexityRoot.Query.AgentMemories == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentMemories_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentMemories(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentMemory":
+		if e.ComplexityRoot.Query.AgentMemory == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentMemory_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentMemory(childComplexity, args["id"].(string)), true
 	case "Query.agentPlan":
 		if e.ComplexityRoot.Query.AgentPlan == nil {
 			break
@@ -68481,6 +68750,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAdjustWorkerPTOBalanceInput,
 		ec.unmarshalInputAgentControlInput,
 		ec.unmarshalInputAgentExceptionResolveInput,
+		ec.unmarshalInputAgentMemoryInput,
 		ec.unmarshalInputAgentPlanDecisionInput,
 		ec.unmarshalInputAgentProposalDecisionInput,
 		ec.unmarshalInputAmendWorkerEmploymentEventInput,
@@ -69463,6 +69733,88 @@ type AgentPlanConnection {
   totalCount: Int
 }
 
+enum AgentMemoryKind {
+  Instruction
+  Fact
+  Correction
+}
+
+enum AgentMemorySource {
+  User
+  Agent
+  Decision
+}
+
+enum AgentMemoryStatus {
+  Active
+  Retired
+}
+
+enum AgentMemorySubjectType {
+  Customer
+  Location
+  Worker
+  Carrier
+}
+
+"""
+Something the organization keeps for its agents between runs: a standing
+instruction, a fact an agent was told, or a correction learned from a
+decision on a proposal. Read into the prompt of every agent that asks for
+memory.
+"""
+type AgentMemory {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  kind: AgentMemoryKind!
+  source: AgentMemorySource!
+  status: AgentMemoryStatus!
+  subjectType: AgentMemorySubjectType
+  subjectId: ID
+  "The subject's name at the time it was recorded."
+  subjectLabel: String!
+  "Set when the memory is about one tool, such as a correction to how it was proposed."
+  toolName: String!
+  content: String!
+  agentDefinitionId: ID
+  sourceRunId: ID
+  sourceProposalId: ID
+  createdByUserId: ID
+  retiredByUserId: ID
+  retiredAt: Timestamp
+  expiresAt: Timestamp
+  "How many prompts have carried this memory."
+  useCount: Int!
+  lastUsedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AgentMemoryEdge {
+  node: AgentMemory!
+  cursor: String!
+}
+
+type AgentMemoryConnection {
+  edges: [AgentMemoryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input AgentMemoryInput {
+  kind: AgentMemoryKind!
+  content: String!
+  "With subjectId, the record the memory is about; both or neither."
+  subjectType: AgentMemorySubjectType
+  subjectId: ID
+  toolName: String
+  expiresAt: Timestamp
+  "Required on an update; ignored on a create."
+  version: Int
+}
+
 type AgentExceptionEdge {
   node: AgentException!
   cursor: String!
@@ -69510,6 +69862,8 @@ extend type Query {
   agentProposal(id: ID!): AgentProposal
   agentPlans(input: DataTableConnectionInput!): AgentPlanConnection!
   agentPlan(id: ID!): AgentPlan
+  agentMemories(input: DataTableConnectionInput!): AgentMemoryConnection!
+  agentMemory(id: ID!): AgentMemory
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentException(id: ID!): AgentException
   agentControl: AgentControl!
@@ -69518,6 +69872,10 @@ extend type Query {
 extend type Mutation {
   decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
   decideAgentPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
+  createAgentMemory(input: AgentMemoryInput!): AgentMemory!
+  updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
+  "Retires or restores a memory; a retired one is kept and no longer read."
+  setAgentMemoryStatus(id: ID!, status: AgentMemoryStatus!): AgentMemory!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
   updateAgentControl(input: AgentControlInput!): AgentControl!
 }
@@ -69551,6 +69909,7 @@ enum AgentContextProvider {
   User
   Page
   Tools
+  Memory
 }
 
 """
@@ -90173,6 +90532,80 @@ func (ec *executionContext) childFields_AgentExceptionEdge(ctx context.Context, 
 		return ec.fieldContext_AgentExceptionEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentExceptionEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentMemory(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AgentMemory_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_AgentMemory_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_AgentMemory_businessUnitId(ctx, field)
+	case "kind":
+		return ec.fieldContext_AgentMemory_kind(ctx, field)
+	case "source":
+		return ec.fieldContext_AgentMemory_source(ctx, field)
+	case "status":
+		return ec.fieldContext_AgentMemory_status(ctx, field)
+	case "subjectType":
+		return ec.fieldContext_AgentMemory_subjectType(ctx, field)
+	case "subjectId":
+		return ec.fieldContext_AgentMemory_subjectId(ctx, field)
+	case "subjectLabel":
+		return ec.fieldContext_AgentMemory_subjectLabel(ctx, field)
+	case "toolName":
+		return ec.fieldContext_AgentMemory_toolName(ctx, field)
+	case "content":
+		return ec.fieldContext_AgentMemory_content(ctx, field)
+	case "agentDefinitionId":
+		return ec.fieldContext_AgentMemory_agentDefinitionId(ctx, field)
+	case "sourceRunId":
+		return ec.fieldContext_AgentMemory_sourceRunId(ctx, field)
+	case "sourceProposalId":
+		return ec.fieldContext_AgentMemory_sourceProposalId(ctx, field)
+	case "createdByUserId":
+		return ec.fieldContext_AgentMemory_createdByUserId(ctx, field)
+	case "retiredByUserId":
+		return ec.fieldContext_AgentMemory_retiredByUserId(ctx, field)
+	case "retiredAt":
+		return ec.fieldContext_AgentMemory_retiredAt(ctx, field)
+	case "expiresAt":
+		return ec.fieldContext_AgentMemory_expiresAt(ctx, field)
+	case "useCount":
+		return ec.fieldContext_AgentMemory_useCount(ctx, field)
+	case "lastUsedAt":
+		return ec.fieldContext_AgentMemory_lastUsedAt(ctx, field)
+	case "version":
+		return ec.fieldContext_AgentMemory_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_AgentMemory_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AgentMemory_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentMemory", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentMemoryConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AgentMemoryConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AgentMemoryConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AgentMemoryConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentMemoryConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentMemoryEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AgentMemoryEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AgentMemoryEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentMemoryEdge", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentPlan(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -59,6 +60,83 @@ func (r *mutationResolver) DecideAgentPlan(ctx context.Context, id string, input
 		Decision:   input.Decision,
 		ReasonCode: input.ReasonCode,
 		TenantInfo: tenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *mutationResolver) CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agent.Memory, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentMemory, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	subjectType, subjectID, err := agentMemorySubject(input)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.agentMemoryService.Remember(ctx, &services.RememberRequest{
+		TenantInfo:  tenantInfo(authCtx),
+		Kind:        input.Kind,
+		Content:     input.Content,
+		SubjectType: subjectType,
+		SubjectID:   subjectID,
+		ToolName:    derefString(input.ToolName),
+		ExpiresAt:   optionalInt64(input.ExpiresAt),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *mutationResolver) UpdateAgentMemory(ctx context.Context, id string, input gqlmodel.AgentMemoryInput) (*agent.Memory, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentMemory, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	memoryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if input.Version == nil {
+		return nil, errortypes.NewValidationError(
+			"version",
+			errortypes.ErrRequired,
+			"Version is required to update a memory",
+		)
+	}
+
+	subjectType, subjectID, err := agentMemorySubject(input)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.agentMemoryService.Update(ctx, &services.UpdateAgentMemoryRequest{
+		ID:          memoryID,
+		TenantInfo:  tenantInfo(authCtx),
+		Kind:        input.Kind,
+		Content:     input.Content,
+		SubjectType: subjectType,
+		SubjectID:   subjectID,
+		ToolName:    derefString(input.ToolName),
+		ExpiresAt:   optionalInt64(input.ExpiresAt),
+		Version:     int64(*input.Version),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *mutationResolver) SetAgentMemoryStatus(ctx context.Context, id string, status agent.MemoryStatus) (*agent.Memory, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentMemory, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	memoryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.agentMemoryService.SetStatus(ctx, services.SetAgentMemoryStatusRequest{
+		ID:         memoryID,
+		TenantInfo: tenantInfo(authCtx),
+		Status:     status,
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -240,6 +318,49 @@ func (r *queryResolver) AgentPlan(ctx context.Context, id string) (*agent.AgentP
 
 	return r.agentPlanService.GetByID(ctx, repositories.GetAgentPlanByIDRequest{
 		ID:         planID,
+		TenantInfo: tenantInfo(authCtx),
+	})
+}
+
+func (r *queryResolver) AgentMemories(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentMemoryConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentMemory, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	tableInput, err := dataTableConnectionFromGraphQL(ctx, &input, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.agentMemoryService.ListConnection(
+		ctx,
+		&repositories.ListAgentMemoryConnectionRequest{
+			Filter:  tableInput.Filter,
+			Cursor:  tableInput.Cursor,
+			Columns: agentMemoryColumns(ctx, "edges.node"),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return agentMemoryConnectionToModel(result)
+}
+
+func (r *queryResolver) AgentMemory(ctx context.Context, id string) (*agent.Memory, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentMemory, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	memoryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.agentMemoryService.GetByID(ctx, repositories.GetAgentMemoryByIDRequest{
+		ID:         memoryID,
 		TenantInfo: tenantInfo(authCtx),
 	})
 }

@@ -1,0 +1,89 @@
+package repositories
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+// MemorySubjectRef names one record a memory can be about.
+type MemorySubjectRef struct {
+	Type agent.MemorySubjectType
+	ID   pulid.ID
+}
+
+type GetAgentMemoryByIDRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
+type ListAgentMemoryConnectionRequest struct {
+	Filter  *pagination.QueryOptions `json:"filter"`
+	Cursor  pagination.CursorInfo    `json:"-"`
+	Columns []string                 `json:"-"`
+}
+
+// ListActiveAgentMemoriesRequest reads what a prompt should carry: the
+// organization-wide memories, plus any about the subjects and tools named.
+// Instructions come before corrections before facts, newest first within
+// each, and the limit cuts from the end of that order.
+type ListActiveAgentMemoriesRequest struct {
+	TenantInfo       pagination.TenantInfo
+	Now              int64
+	OrganizationWide bool
+	Subjects         []MemorySubjectRef
+	ToolNames        []string
+	Limit            int
+}
+
+// SearchAgentMemoriesRequest is the recall tool's read: text over the
+// content and subject label, narrowed to a subject or a tool when given.
+type SearchAgentMemoriesRequest struct {
+	TenantInfo pagination.TenantInfo
+	Now        int64
+	Query      string
+	Kind       agent.MemoryKind
+	Subject    *MemorySubjectRef
+	ToolName   string
+	Limit      int
+}
+
+// FindActiveAgentMemoryRequest looks for a memory that already says this,
+// so recording the same thing twice keeps one row.
+type FindActiveAgentMemoryRequest struct {
+	TenantInfo pagination.TenantInfo
+	Content    string
+	Subject    *MemorySubjectRef
+	ToolName   string
+}
+
+type SetAgentMemoryStatusRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+	Status     agent.MemoryStatus
+	ByUserID   pulid.ID
+	At         int64
+}
+
+type MarkAgentMemoriesUsedRequest struct {
+	TenantInfo pagination.TenantInfo
+	IDs        []pulid.ID
+	At         int64
+}
+
+type AgentMemoryRepository interface {
+	Create(ctx context.Context, entity *agent.Memory) (*agent.Memory, error)
+	Update(ctx context.Context, entity *agent.Memory) (*agent.Memory, error)
+	GetByID(ctx context.Context, req GetAgentMemoryByIDRequest) (*agent.Memory, error)
+	ListConnection(
+		ctx context.Context,
+		req *ListAgentMemoryConnectionRequest,
+	) (*pagination.CursorListResult[*agent.Memory], error)
+	ListActive(ctx context.Context, req ListActiveAgentMemoriesRequest) ([]*agent.Memory, error)
+	Search(ctx context.Context, req SearchAgentMemoriesRequest) ([]*agent.Memory, error)
+	FindActive(ctx context.Context, req FindActiveAgentMemoryRequest) (*agent.Memory, error)
+	SetStatus(ctx context.Context, req SetAgentMemoryStatusRequest) (*agent.Memory, error)
+	MarkUsed(ctx context.Context, req MarkAgentMemoriesUsedRequest) error
+}

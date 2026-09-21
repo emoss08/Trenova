@@ -19,6 +19,7 @@ export type RailCounts = {
   agentsTotal: number;
   pendingProposals: number;
   runsLast24h: number;
+  memoriesActive: number;
 };
 
 export type RailPermissions = {
@@ -27,6 +28,7 @@ export type RailPermissions = {
   runs: boolean;
   proposals: boolean;
   exceptions: boolean;
+  memory: boolean;
 };
 
 type Translate = (text: string, ...args: (string | number)[]) => string;
@@ -62,6 +64,19 @@ export function buildRailItems(
           : t("{0} of {1} on", counts.providersEnabled, counts.providersTotal)
         : "",
       attention: counts !== undefined && counts.providersEnabled === 0,
+      children: [],
+    });
+  }
+
+  if (permissions.memory) {
+    items.push({
+      tab: "memory",
+      status: counts
+        ? counts.memoriesActive === 0
+          ? t("Nothing recorded")
+          : t("{0, plural, one {# active} other {# active}}", counts.memoriesActive)
+        : "",
+      attention: false,
       children: [],
     });
   }

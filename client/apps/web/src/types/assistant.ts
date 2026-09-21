@@ -20,7 +20,14 @@ export const triggerModeSchema = z.enum(["Chat", "Scheduled", "Event", "Continuo
 
 export const outputModeSchema = z.enum(["Conversational", "Report"]);
 
-export const contextProviderSchema = z.enum(["Organization", "Clock", "User", "Page", "Tools"]);
+export const contextProviderSchema = z.enum([
+  "Organization",
+  "Clock",
+  "User",
+  "Page",
+  "Tools",
+  "Memory",
+]);
 
 export const messageRoleSchema = z.enum(["User", "Assistant", "Tool"]);
 

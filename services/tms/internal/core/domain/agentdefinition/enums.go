@@ -199,6 +199,8 @@ func (t Template) StarterTools() []string {
 			"release_shipment_hold",
 			"update_tractor_status",
 			"update_trailer_status",
+			"recall_memory",
+			"remember",
 		}
 	case TemplateBillingAssistant:
 		return []string{
@@ -217,6 +219,8 @@ func (t Template) StarterTools() []string {
 			"transition_item_to_in_review",
 			"list_accessorial_charges",
 			"add_shipment_comment",
+			"recall_memory",
+			"remember",
 		}
 	case TemplateComplianceAssistant:
 		return []string{
@@ -233,6 +237,8 @@ func (t Template) StarterTools() []string {
 			"run_report",
 			"get_report_run",
 			"flag_for_manual_review",
+			"recall_memory",
+			"remember",
 		}
 	case TemplateCustomerAssistant:
 		return []string{
@@ -242,6 +248,8 @@ func (t Template) StarterTools() []string {
 			"list_customers",
 			"list_invoices",
 			"add_shipment_comment",
+			"recall_memory",
+			"remember",
 		}
 	case TemplateLoadMonitor:
 		return []string{
@@ -419,11 +427,12 @@ const (
 	ContextUser         = ContextProvider("User")
 	ContextPage         = ContextProvider("Page")
 	ContextTools        = ContextProvider("Tools")
+	ContextMemory       = ContextProvider("Memory")
 )
 
 func (p ContextProvider) IsValid() bool {
 	switch p {
-	case ContextOrganization, ContextClock, ContextUser, ContextPage, ContextTools:
+	case ContextOrganization, ContextClock, ContextUser, ContextPage, ContextTools, ContextMemory:
 		return true
 	default:
 		return false
@@ -431,5 +440,12 @@ func (p ContextProvider) IsValid() bool {
 }
 
 func AllContextProviders() []ContextProvider {
-	return []ContextProvider{ContextOrganization, ContextClock, ContextUser, ContextPage, ContextTools}
+	return []ContextProvider{
+		ContextOrganization,
+		ContextClock,
+		ContextUser,
+		ContextPage,
+		ContextTools,
+		ContextMemory,
+	}
 }

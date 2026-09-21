@@ -94,6 +94,7 @@ export type AgentAutonomyTier =
 
 export type AgentContextProvider =
   | 'Clock'
+  | 'Memory'
   | 'Organization'
   | 'Page'
   | 'Tools'
@@ -139,6 +140,38 @@ export type AgentExceptionResolveInput = {
   resolutionNotes?: string | null | undefined;
   resolutionState: AgentResolutionState;
 };
+
+export type AgentMemoryInput = {
+  content: string;
+  expiresAt?: number | null | undefined;
+  kind: AgentMemoryKind;
+  subjectId?: string | number | null | undefined;
+  /** With subjectId, the record the memory is about; both or neither. */
+  subjectType?: AgentMemorySubjectType | null | undefined;
+  toolName?: string | null | undefined;
+  /** Required on an update; ignored on a create. */
+  version?: number | null | undefined;
+};
+
+export type AgentMemoryKind =
+  | 'Correction'
+  | 'Fact'
+  | 'Instruction';
+
+export type AgentMemorySource =
+  | 'Agent'
+  | 'Decision'
+  | 'User';
+
+export type AgentMemoryStatus =
+  | 'Active'
+  | 'Retired';
+
+export type AgentMemorySubjectType =
+  | 'Carrier'
+  | 'Customer'
+  | 'Location'
+  | 'Worker';
 
 export type AgentOutputMode =
   | 'Conversational'
@@ -5924,6 +5957,46 @@ export type ResolveAgentExceptionMutationVariables = Exact<{
 
 
 export type ResolveAgentExceptionMutation = { resolveAgentException: { id: string, resolutionState: AgentResolutionState, resolutionNotes: string, version: number, updatedAt: number } };
+
+export type AgentMemoryTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, kind: AgentMemoryKind, source: AgentMemorySource, status: AgentMemoryStatus, subjectType: AgentMemorySubjectType | null, subjectId: string | null, subjectLabel: string, toolName: string, content: string, agentDefinitionId: string | null, sourceRunId: string | null, sourceProposalId: string | null, createdByUserId: string | null, retiredByUserId: string | null, retiredAt: number | null, expiresAt: number | null, useCount: number, lastUsedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentMemoryTableRowFieldsFragment' };
+
+export type AgentMemoryTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AgentMemoryTableQuery = { agentMemories: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentMemoryTableRowFieldsFragment': AgentMemoryTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AgentMemoryCountQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type AgentMemoryCountQuery = { agentMemories: { totalCount: number | null } };
+
+export type CreateAgentMemoryMutationVariables = Exact<{
+  input: AgentMemoryInput;
+}>;
+
+
+export type CreateAgentMemoryMutation = { createAgentMemory: { ' $fragmentRefs'?: { 'AgentMemoryTableRowFieldsFragment': AgentMemoryTableRowFieldsFragment } } };
+
+export type UpdateAgentMemoryMutationVariables = Exact<{
+  id: string | number;
+  input: AgentMemoryInput;
+}>;
+
+
+export type UpdateAgentMemoryMutation = { updateAgentMemory: { ' $fragmentRefs'?: { 'AgentMemoryTableRowFieldsFragment': AgentMemoryTableRowFieldsFragment } } };
+
+export type SetAgentMemoryStatusMutationVariables = Exact<{
+  id: string | number;
+  status: AgentMemoryStatus;
+}>;
+
+
+export type SetAgentMemoryStatusMutation = { setAgentMemoryStatus: { ' $fragmentRefs'?: { 'AgentMemoryTableRowFieldsFragment': AgentMemoryTableRowFieldsFragment } } };
 
 export type AgentPlanTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, title: string, summary: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, expiresAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentPlanTableRowFieldsFragment' };
 
@@ -11907,6 +11980,33 @@ fragment AgentEvidenceRefFields on AgentEvidenceRef {
   id
   note
 }`, {"fragmentName":"AgentExceptionDetailFields"}) as unknown as TypedDocumentString<AgentExceptionDetailFieldsFragment, unknown>;
+export const AgentMemoryTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentMemoryTableRowFields on AgentMemory {
+  id
+  organizationId
+  businessUnitId
+  kind
+  source
+  status
+  subjectType
+  subjectId
+  subjectLabel
+  toolName
+  content
+  agentDefinitionId
+  sourceRunId
+  sourceProposalId
+  createdByUserId
+  retiredByUserId
+  retiredAt
+  expiresAt
+  useCount
+  lastUsedAt
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"AgentMemoryTableRowFields"}) as unknown as TypedDocumentString<AgentMemoryTableRowFieldsFragment, unknown>;
 export const AgentPlanTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentPlanTableRowFields on AgentPlan {
   id
@@ -18404,6 +18504,11 @@ export const AgentProposalCountDocument = {"__meta__":{"kind":"query","name":"Ag
 export const AgentExceptionTableDocument = {"__meta__":{"kind":"query","name":"AgentExceptionTable","hash":"sha256:25ab7e258b1999dd80da81ecf0ad0c5b956991f6fc73cf33a2cd45def0a97b41"}} as unknown as TypedDocumentString<AgentExceptionTableQuery, AgentExceptionTableQueryVariables>;
 export const AgentExceptionDetailDocument = {"__meta__":{"kind":"query","name":"AgentExceptionDetail","hash":"sha256:a5f862a28f545ff7151df8c5e238d4c4ea80f137f9c237f2de408fa670227069"}} as unknown as TypedDocumentString<AgentExceptionDetailQuery, AgentExceptionDetailQueryVariables>;
 export const ResolveAgentExceptionDocument = {"__meta__":{"kind":"mutation","name":"ResolveAgentException","hash":"sha256:7560a022b9583caf64b19551a5703e3d4717a7ee8297e5359121c469f4357010"}} as unknown as TypedDocumentString<ResolveAgentExceptionMutation, ResolveAgentExceptionMutationVariables>;
+export const AgentMemoryTableDocument = {"__meta__":{"kind":"query","name":"AgentMemoryTable","hash":"sha256:2de699796ae97e218c05a0221fa5b51b3174e20451ad0142d57bfb71f2374e28"}} as unknown as TypedDocumentString<AgentMemoryTableQuery, AgentMemoryTableQueryVariables>;
+export const AgentMemoryCountDocument = {"__meta__":{"kind":"query","name":"AgentMemoryCount","hash":"sha256:f469da4636039efd1d8bd70aee025ce753109b239d117112aac3f252d4ce968c"}} as unknown as TypedDocumentString<AgentMemoryCountQuery, AgentMemoryCountQueryVariables>;
+export const CreateAgentMemoryDocument = {"__meta__":{"kind":"mutation","name":"CreateAgentMemory","hash":"sha256:7d67d0ac3cce5989826837f41e3a44c9d109962bed881313e03bbbf3b996c45a"}} as unknown as TypedDocumentString<CreateAgentMemoryMutation, CreateAgentMemoryMutationVariables>;
+export const UpdateAgentMemoryDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentMemory","hash":"sha256:ba7e14c6d4458b4175312df32e93cdab318958dabfe298bd8dcb7ca6c441ab7d"}} as unknown as TypedDocumentString<UpdateAgentMemoryMutation, UpdateAgentMemoryMutationVariables>;
+export const SetAgentMemoryStatusDocument = {"__meta__":{"kind":"mutation","name":"SetAgentMemoryStatus","hash":"sha256:f8e8211545bd948906958154e42165569a3e447e79a6b2cf3570a7420634778f"}} as unknown as TypedDocumentString<SetAgentMemoryStatusMutation, SetAgentMemoryStatusMutationVariables>;
 export const AgentPlanTableDocument = {"__meta__":{"kind":"query","name":"AgentPlanTable","hash":"sha256:5255cd6f89e45711f75b6a9c0bab65c62fd49fb78028a756fa2ad1645c479b3b"}} as unknown as TypedDocumentString<AgentPlanTableQuery, AgentPlanTableQueryVariables>;
 export const AgentPlanDetailDocument = {"__meta__":{"kind":"query","name":"AgentPlanDetail","hash":"sha256:3affbeb0bac2f8967290c76d3dce18119fce77b53b295399e5764897a1a475ef"}} as unknown as TypedDocumentString<AgentPlanDetailQuery, AgentPlanDetailQueryVariables>;
 export const DecideAgentPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentPlan","hash":"sha256:b2f23a83f557ca02504d0a017043627ff687ebcebb5ac117779eb4d5611ff57c"}} as unknown as TypedDocumentString<DecideAgentPlanMutation, DecideAgentPlanMutationVariables>;

@@ -39,6 +39,13 @@ func (e *AgentRun) GetStaticFieldMap() map[string]string {
 	return buncolgen.AgentRunFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Memory].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.MemoryFieldMap] instead of parsing struct tags via reflection.
+func (e *Memory) GetStaticFieldMap() map[string]string {
+	return buncolgen.MemoryFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ToolTrust].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.ToolTrustFieldMap] instead of parsing struct tags via reflection.

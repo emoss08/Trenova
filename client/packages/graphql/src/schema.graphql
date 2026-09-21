@@ -472,6 +472,7 @@ enum AgentAutonomyTier {
 
 enum AgentContextProvider {
   Clock
+  Memory
   Organization
   Page
   Tools
@@ -662,6 +663,90 @@ type AgentExceptionEdge {
 input AgentExceptionResolveInput {
   resolutionNotes: String
   resolutionState: AgentResolutionState!
+}
+
+"""
+Something the organization keeps for its agents between runs: a standing
+instruction, a fact an agent was told, or a correction learned from a
+decision on a proposal. Read into the prompt of every agent that asks for
+memory.
+"""
+type AgentMemory {
+  agentDefinitionId: ID
+  businessUnitId: ID!
+  content: String!
+  createdAt: Timestamp!
+  createdByUserId: ID
+  expiresAt: Timestamp
+  id: ID!
+  kind: AgentMemoryKind!
+  lastUsedAt: Timestamp
+  organizationId: ID!
+  retiredAt: Timestamp
+  retiredByUserId: ID
+  source: AgentMemorySource!
+  sourceProposalId: ID
+  sourceRunId: ID
+  status: AgentMemoryStatus!
+  subjectId: ID
+  """The subject's name at the time it was recorded."""
+  subjectLabel: String!
+  subjectType: AgentMemorySubjectType
+  """
+  Set when the memory is about one tool, such as a correction to how it was proposed.
+  """
+  toolName: String!
+  updatedAt: Timestamp!
+  """How many prompts have carried this memory."""
+  useCount: Int!
+  version: Int!
+}
+
+type AgentMemoryConnection {
+  edges: [AgentMemoryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AgentMemoryEdge {
+  cursor: String!
+  node: AgentMemory!
+}
+
+input AgentMemoryInput {
+  content: String!
+  expiresAt: Timestamp
+  kind: AgentMemoryKind!
+  subjectId: ID
+  """With subjectId, the record the memory is about; both or neither."""
+  subjectType: AgentMemorySubjectType
+  toolName: String
+  """Required on an update; ignored on a create."""
+  version: Int
+}
+
+enum AgentMemoryKind {
+  Correction
+  Fact
+  Instruction
+}
+
+enum AgentMemorySource {
+  Agent
+  Decision
+  User
+}
+
+enum AgentMemoryStatus {
+  Active
+  Retired
+}
+
+enum AgentMemorySubjectType {
+  Carrier
+  Customer
+  Location
+  Worker
 }
 
 enum AgentOutputMode {
@@ -10153,6 +10238,7 @@ type Mutation {
   completeClearinghouseQuery(input: CompleteClearinghouseQueryInput!): WorkerClearinghouseQuery!
   completeWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   completeWorkerTraining(input: CompleteWorkerTrainingInput!): WorkerTrainingRecord!
+  createAgentMemory(input: AgentMemoryInput!): AgentMemory!
   createBenefitPlan(input: BenefitPlanInput!): BenefitPlan!
   createCarrierInvoiceMatch(input: CreateCarrierInvoiceMatchInput!): CarrierInvoiceMatch!
   createDetentionPolicy(input: DetentionPolicyInput!): DetentionPolicy!
@@ -10476,6 +10562,10 @@ type Mutation {
   """
   sendInvoiceEdi(force: Boolean, invoiceId: ID!): InvoiceEDISendResult!
   sendTestMessageTemplate(input: SendTestMessageTemplateInput!): Boolean!
+  """
+  Retires or restores a memory; a retired one is kept and no longer read.
+  """
+  setAgentMemoryStatus(id: ID!, status: AgentMemoryStatus!): AgentMemory!
   setCarrierMonitoring(carrierIds: [ID!]!, enabled: Boolean!): Int!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   """
@@ -10524,6 +10614,7 @@ type Mutation {
   unpinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   updateAgentControl(input: AgentControlInput!): AgentControl!
+  updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
   updateBenefitPlan(input: UpdateBenefitPlanInput!): BenefitPlan!
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   updateCarrierIntelControl(input: CarrierIntelControlPatchInput!): CarrierIntelControl!
@@ -12211,6 +12302,8 @@ type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
   agentException(id: ID!): AgentException
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
+  agentMemories(input: DataTableConnectionInput!): AgentMemoryConnection!
+  agentMemory(id: ID!): AgentMemory
   agentPlan(id: ID!): AgentPlan
   agentPlans(input: DataTableConnectionInput!): AgentPlanConnection!
   agentProposal(id: ID!): AgentProposal

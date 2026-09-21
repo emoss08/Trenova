@@ -4953,6 +4953,33 @@
       "apps/web/components"
     ]
   },
+  "A subject id needs its type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "A subject type and id go together; give both or neither": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
+  "A subject type needs the record it names": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "A submission date is required": {
     "sites": 1,
     "scope": [
@@ -6441,6 +6468,15 @@
       "domain/usstate"
     ]
   },
+  "About": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "About \"{0}\" — your carrier will review it and follow up.": {
     "sites": 1,
     "scope": [
@@ -7731,6 +7767,15 @@
       "service/ediservice"
     ]
   },
+  "Acme Freight needs the signed POD within one day of delivery.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Acme national DOE program": {
     "sites": 1,
     "scope": [
@@ -7944,7 +7989,7 @@
     ]
   },
   "Active": {
-    "sites": 49,
+    "sites": 50,
     "scope": [
       "go",
       "ts"
@@ -7956,6 +8001,7 @@
       "domain/ifta",
       "packages/shared/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/benefits",
       "routes/carrier",
       "routes/cost-control",
@@ -11040,6 +11086,15 @@
       "template/tender.offer.email"
     ]
   },
+  "After this day agents stop reading it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "After: months of service before the tier applies. Amount: replaces the base accrual from then on. Max balance: overrides the rule's cap; leave empty to inherit it.": {
     "sites": 1,
     "scope": [
@@ -13248,6 +13303,15 @@
       "service/rateagreementservice"
     ]
   },
+  "An actor is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentmemoryservice"
+    ]
+  },
   "An adjustment invoice must belong to a correction chain": {
     "sites": 1,
     "scope": [
@@ -13970,6 +14034,15 @@
     ],
     "areas": [
       "domain/insight"
+    ]
+  },
+  "An instruction is followed; a fact is weighed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "An instruction is required": {
@@ -23966,7 +24039,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 107,
+    "sites": 108,
     "scope": [
       "go"
     ],
@@ -25982,7 +26055,7 @@
     ]
   },
   "Carrier": {
-    "sites": 29,
+    "sites": 31,
     "scope": [
       "go",
       "ts"
@@ -25990,6 +26063,7 @@
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "routes/agent-control",
       "routes/benefits",
       "routes/carrier",
       "routes/carrier-cost-event",
@@ -27821,6 +27895,15 @@
       "routes/billing-queue"
     ]
   },
+  "Change, retire or restore a memory": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Changed": {
     "sites": 2,
     "scope": [
@@ -28955,6 +29038,15 @@
     ],
     "areas": [
       "routes/holiday"
+    ]
+  },
+  "Choose a kind of record first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Choose a latitude and a longitude column.": {
@@ -34999,6 +35091,15 @@
       "domain/documenttemplate"
     ]
   },
+  "Content is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Content matching": {
     "sites": 1,
     "scope": [
@@ -35006,6 +35107,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Content must be at most 2000 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Content status": {
@@ -36447,6 +36557,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Correction": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Correction group": {
@@ -40411,7 +40530,7 @@
     ]
   },
   "Customer": {
-    "sites": 37,
+    "sites": 39,
     "scope": [
       "go",
       "ts"
@@ -40421,6 +40540,7 @@
       "apps/web/lib",
       "packages/shared/lib",
       "packages/shared/types",
+      "routes/agent-control",
       "routes/ar-aging",
       "routes/ar-open-items",
       "routes/billing-queue",
@@ -50374,7 +50494,7 @@
     ]
   },
   "Driver": {
-    "sites": 32,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -50384,6 +50504,7 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
+      "routes/agent-control",
       "routes/auth",
       "routes/driver-expense",
       "routes/driver-pay-event",
@@ -57600,7 +57721,25 @@
       "routes/rate-agreement"
     ]
   },
+  "Every agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Every agent in this organization is paused. Runs finish and their proposals are stored for review later, but none appear for a decision. Turn this off to let agents surface their work.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Every agent that asks for memory reads this on its next run.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -59912,6 +60051,15 @@
       "domain/invoice"
     ]
   },
+  "Expiry must be a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Expiry must be a valid date": {
     "sites": 1,
     "scope": [
@@ -61387,6 +61535,15 @@
     ],
     "areas": [
       "routes/location-category"
+    ]
+  },
+  "Fact": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Fail": {
@@ -74595,6 +74752,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Instruction": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Instruction cannot exceed {0} characters": {
     "sites": 1,
     "scope": [
@@ -79084,11 +79250,12 @@
     ]
   },
   "Kind": {
-    "sites": 7,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/holiday",
       "routes/invoice",
       "routes/reports",
@@ -79097,11 +79264,12 @@
     ]
   },
   "Kind is required": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agent",
       "domain/aiprovider",
       "domain/edi",
       "domain/invoiceadjustment",
@@ -79117,6 +79285,15 @@
     ],
     "areas": [
       "domain/report"
+    ]
+  },
+  "Kind of record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Known Host Key": {
@@ -79897,6 +80074,15 @@
       "routes/agent-control"
     ]
   },
+  "Last read": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Last revocation": {
     "sites": 1,
     "scope": [
@@ -80667,6 +80853,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Leave both empty for something every agent should know.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Leave cannot be recorded against a {0} case": {
@@ -83612,7 +83807,7 @@
     ]
   },
   "Location": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -83620,6 +83815,7 @@
       "apps/web/components",
       "apps/web/lib",
       "routes/admin",
+      "routes/agent-control",
       "routes/location",
       "routes/rate-zone",
       "routes/reports",
@@ -87598,6 +87794,33 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Memory": {
+    "sites": 5,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Memory restored": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Memory retired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Memos": {
@@ -94413,6 +94636,15 @@
       "routes/worker"
     ]
   },
+  "No end": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No end date": {
     "sites": 2,
     "scope": [
@@ -98985,6 +99217,15 @@
       "routes/rate-matrix"
     ]
   },
+  "Nothing recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nothing recorded yet": {
     "sites": 1,
     "scope": [
@@ -101252,6 +101493,15 @@
       "api/graphql"
     ]
   },
+  "One or two plain sentences a reader with no other context understands.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "One outcome the worker can be measured against.": {
     "sites": 1,
     "scope": [
@@ -101712,6 +101962,15 @@
     ],
     "areas": [
       "domain/ratematrix"
+    ]
+  },
+  "Only a person can change what an agent remembers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentmemoryservice"
     ]
   },
   "Only a policy in force can be signed; a retired one is kept so old signatures still point at something.": {
@@ -105013,6 +105272,15 @@
       "routes/worker"
     ]
   },
+  "Optional. Only agents holding this tool read it, such as a correction to how it was proposed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Optional. Specify a record ID to only watch a single record.": {
     "sites": 1,
     "scope": [
@@ -105555,7 +105823,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 106,
+    "sites": 107,
     "scope": [
       "go"
     ],
@@ -111702,6 +111970,15 @@
       "routes/invoice-adjustment-batch"
     ]
   },
+  "Pick a carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Pick a carrier invoice from the list to link it to a carrier and create a match.": {
     "sites": 1,
     "scope": [
@@ -111730,11 +112007,12 @@
     ]
   },
   "Pick a customer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/customer-ledger"
     ]
   },
@@ -111764,6 +112042,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Pick a driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Pick a gender": {
@@ -111800,6 +112087,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Pick a location": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Pick a match from the list to compare the invoice against the negotiated buy rate.": {
@@ -112105,6 +112401,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Pick the record this is about": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Pick the treatment": {
@@ -120175,7 +120480,7 @@
     ]
   },
   "Read": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -120183,6 +120488,7 @@
       "apps/dash/_components",
       "apps/web/lib",
       "packages/shared/lib",
+      "routes/agent-control",
       "routes/fuel-feed-run"
     ]
   },
@@ -122067,11 +122373,12 @@
     ]
   },
   "Record": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/escrow-account",
       "routes/time-attendance",
       "routes/worker"
@@ -122158,6 +122465,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Record a memory for agents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Record a mileage entry": {
@@ -122885,11 +123201,12 @@
     ]
   },
   "Recorded": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/customer-payments"
     ]
   },
@@ -122909,6 +123226,15 @@
     ],
     "areas": [
       "domain/telematics"
+    ]
+  },
+  "Recorded by": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Recorded by {0}": {
@@ -128485,13 +128811,14 @@
     ]
   },
   "Restore": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "routes/agent-control",
       "routes/insights",
       "routes/pto-policy",
       "routes/review-template",
@@ -128804,6 +129131,15 @@
       "routes/organization"
     ]
   },
+  "Retire": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Retire a template version": {
     "sites": 1,
     "scope": [
@@ -128814,11 +129150,12 @@
     ]
   },
   "Retired": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/policies",
       "routes/scheduling"
     ]
@@ -134040,6 +134377,15 @@
     "areas": [
       "domain/worker",
       "packages/shared/types"
+    ]
+  },
+  "Say what kind of record this is about": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Say what needs to change before sending it back": {
@@ -145081,11 +145427,12 @@
     ]
   },
   "Source is required": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agent",
       "domain/carrierintel",
       "domain/distancecalculation",
       "domain/edi",
@@ -146039,6 +146386,24 @@
       "routes/worker"
     ]
   },
+  "Standing instructions, facts and corrections from AI Control": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Standing instructions, facts and corrections kept for agents between runs": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Standing per-settlement deductions: insurance, lease payments, escrow contributions, and loan repayments with caps.": {
     "sites": 1,
     "scope": [
@@ -146907,7 +147272,7 @@
     ]
   },
   "Status": {
-    "sites": 226,
+    "sites": 228,
     "scope": [
       "go",
       "ts"
@@ -147062,7 +147427,7 @@
     ]
   },
   "Status is required": {
-    "sites": 119,
+    "sites": 120,
     "scope": [
       "go"
     ],
@@ -159445,6 +159810,15 @@
       "service/formula"
     ]
   },
+  "The whole organization": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The wording drivers read and sign; short policies fit here, longer ones are better attached as a document.": {
     "sites": 1,
     "scope": [
@@ -164133,6 +164507,15 @@
     ],
     "areas": [
       "api/middleware"
+    ]
+  },
+  "Tool": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Tool calls per run": {
@@ -168855,11 +169238,12 @@
     ]
   },
   "Until": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/org-structure",
       "routes/rate-agreement"
     ]
@@ -171504,6 +171888,15 @@
       "go/other"
     ]
   },
+  "Version is required to update a memory": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Version is required to update an order": {
     "sites": 1,
     "scope": [
@@ -172898,6 +173291,15 @@
     ]
   },
   "View user accounts": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "View what agents remember": {
     "sites": 1,
     "scope": [
       "go"
@@ -175062,6 +175464,15 @@
       "routes/policies"
     ]
   },
+  "What it is about": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What it may look up and what it may change. Reads run as soon as the agent asks; a change waits at its own tier, never above the ceiling below.": {
     "sites": 1,
     "scope": [
@@ -175305,6 +175716,15 @@
       "routes/rate-matrix"
     ]
   },
+  "What the organization recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What the rate is per, so the figure reads correctly later.": {
     "sites": 1,
     "scope": [
@@ -175528,6 +175948,15 @@
     ],
     "areas": [
       "routes/rate-matrix"
+    ]
+  },
+  "What to remember": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "What was bought and what it cost. The total follows quantity × price until you change it.": {
@@ -185082,6 +185511,15 @@
       "routes/dispatch-console"
     ]
   },
+  "tool {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "total open": {
     "sites": 1,
     "scope": [
@@ -185562,6 +186000,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "{0, plural, one {# active} other {# active}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {# advisory} other {# advisories}}": {
@@ -186450,6 +186897,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "{0, plural, one {# time} other {# times}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {# tool the catalog no longer offers is kept on the agent and ignored.} other {# tools the catalog no longer offers are kept on the agent and ignored.}}": {

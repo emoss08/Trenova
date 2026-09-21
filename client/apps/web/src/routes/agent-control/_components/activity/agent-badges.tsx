@@ -2,6 +2,9 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type {
   AgentAutonomyTier,
+  AgentMemoryKind,
+  AgentMemorySource,
+  AgentMemoryStatus,
   AgentPlanStatus,
   AgentProposalStatus,
   AgentResolutionState,
@@ -43,6 +46,23 @@ const PLAN_STATUS: Record<AgentPlanStatus, { label: string; variant: Variant }> 
   Failed: { label: "Stopped", variant: "danger" },
   Rejected: { label: "Rejected", variant: "danger" },
   Expired: { label: "Expired", variant: "neutral" },
+};
+
+const MEMORY_KIND: Record<AgentMemoryKind, { label: string; variant: Variant }> = {
+  Instruction: { label: "Instruction", variant: "brand" },
+  Fact: { label: "Fact", variant: "accent-teal" },
+  Correction: { label: "Correction", variant: "accent-amber" },
+};
+
+const MEMORY_SOURCE: Record<AgentMemorySource, string> = {
+  User: "A person",
+  Agent: "An agent",
+  Decision: "A decision",
+};
+
+const MEMORY_STATUS: Record<AgentMemoryStatus, { label: string; variant: Variant }> = {
+  Active: { label: "Active", variant: "success" },
+  Retired: { label: "Retired", variant: "neutral" },
 };
 
 const TIER: Record<AgentAutonomyTier, { label: string; variant: Variant }> = {
@@ -106,6 +126,15 @@ export const ProposalStatusBadge = ({
 export const PlanStatusBadge = ({ value, t }: { value: AgentPlanStatus; t: TranslateFn }) => (
   <Labelled entry={PLAN_STATUS[value]} t={t} />
 );
+export const MemoryKindBadge = ({ value, t }: { value: AgentMemoryKind; t: TranslateFn }) => (
+  <Labelled entry={MEMORY_KIND[value]} t={t} />
+);
+export const MemoryStatusBadge = ({ value, t }: { value: AgentMemoryStatus; t: TranslateFn }) => (
+  <Labelled entry={MEMORY_STATUS[value]} t={t} />
+);
+export function memorySourceLabel(value: AgentMemorySource, t: TranslateFn): string {
+  return t(MEMORY_SOURCE[value] ?? value);
+}
 export const TierBadge = ({ value, t }: { value: AgentAutonomyTier; t: TranslateFn }) => (
   <Labelled entry={TIER[value]} t={t} />
 );
@@ -134,6 +163,18 @@ export const proposalStatusChoices = Object.entries(PROPOSAL_STATUS).map(([value
 export const planStatusChoices = Object.entries(PLAN_STATUS).map(([value, entry]) => ({
   value,
   label: entry.label,
+}));
+export const memoryKindChoices = Object.entries(MEMORY_KIND).map(([value, entry]) => ({
+  value,
+  label: entry.label,
+}));
+export const memoryStatusChoices = Object.entries(MEMORY_STATUS).map(([value, entry]) => ({
+  value,
+  label: entry.label,
+}));
+export const memorySourceChoices = Object.entries(MEMORY_SOURCE).map(([value, label]) => ({
+  value,
+  label,
 }));
 export const triggerChoices = Object.entries(TRIGGER).map(([value, entry]) => ({
   value,

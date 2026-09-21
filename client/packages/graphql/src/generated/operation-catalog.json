@@ -1,6 +1,6 @@
 {
-  "operationCount": 768,
-  "fragmentCount": 195,
+  "operationCount": 773,
+  "fragmentCount": 196,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -543,6 +543,54 @@
       ],
       "usages": [],
       "sdl": "query AgentExceptionTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentExceptions(input: $input) {\n    edges {\n      node {\n        ...AgentExceptionTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentExceptionTableRowFields on AgentException {\n  id\n  organizationId\n  businessUnitId\n  runId\n  category\n  severity\n  subjectType\n  subjectId\n  attemptSummary\n  blastRadius\n  resolutionState\n  resolutionNotes\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AgentMemoryCount",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/memories.graphql",
+      "hash": "sha256:f469da4636039efd1d8bd70aee025ce753109b239d117112aac3f252d4ce968c",
+      "rootFields": [
+        "agentMemories"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query AgentMemoryCount($input: DataTableConnectionInput!) {\n  agentMemories(input: $input) {\n    totalCount\n  }\n}"
+    },
+    {
+      "name": "AgentMemoryTable",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/memories.graphql",
+      "hash": "sha256:2de699796ae97e218c05a0221fa5b51b3174e20451ad0142d57bfb71f2374e28",
+      "rootFields": [
+        "agentMemories"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "AgentMemoryTableRowFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentMemoryTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentMemories(input: $input) {\n    edges {\n      node {\n        ...AgentMemoryTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentPlanDetail",
@@ -3621,6 +3669,28 @@
       "fragments": [],
       "usages": [],
       "sdl": "query CostingControlPage {\n  costingControl {\n    id\n    businessUnitId\n    organizationId\n    fuelIndexId\n    fuelIndex {\n      id\n      name\n      code\n      source\n      fuelType\n      isActive\n    }\n    useLiveFuelPrice\n    milesPerGallon\n    includeDeadheadMiles\n    glActualsEnabled\n    glRollingMonths\n    plannedMonthlyMiles\n    targetMarginPercent\n    version\n    createdAt\n    updatedAt\n    categories {\n      id\n      category\n      name\n      costBehavior\n      rateSource\n      benchmarkRatePerMile\n      overrideRatePerMile\n      isActive\n      sortOrder\n      version\n      glAccounts {\n        id\n        glAccountId\n        accountCode\n        accountName\n      }\n    }\n  }\n}"
+    },
+    {
+      "name": "CreateAgentMemory",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/memories.graphql",
+      "hash": "sha256:7d67d0ac3cce5989826837f41e3a44c9d109962bed881313e03bbbf3b996c45a",
+      "rootFields": [
+        "createAgentMemory"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "AgentMemoryInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentMemoryTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateAgentMemory($input: AgentMemoryInput!) {\n  createAgentMemory(input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "CreateBenefitPlan",
@@ -12953,6 +13023,33 @@
       "sdl": "query ServiceTypeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  serviceTypes(input: $input) {\n    edges {\n      node {\n        ...ServiceTypeTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ServiceTypeTableRowFields on ServiceType {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  description\n  color\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "SetAgentMemoryStatus",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/memories.graphql",
+      "hash": "sha256:f8e8211545bd948906958154e42165569a3e447e79a6b2cf3570a7420634778f",
+      "rootFields": [
+        "setAgentMemoryStatus"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "AgentMemoryStatus!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentMemoryTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SetAgentMemoryStatus($id: ID!, $status: AgentMemoryStatus!) {\n  setAgentMemoryStatus(id: $id, status: $status) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "SetCarrierMonitoring",
       "kind": "mutation",
       "domain": "carrier-intelligence",
@@ -14794,6 +14891,33 @@
       ],
       "usages": [],
       "sdl": "mutation UpdateAgentControl($input: AgentControlInput!) {\n  updateAgentControl(input: $input) {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  earnedAutonomy\n  promotionThreshold\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "UpdateAgentMemory",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/memories.graphql",
+      "hash": "sha256:ba7e14c6d4458b4175312df32e93cdab318958dabfe298bd8dcb7ca6c441ab7d",
+      "rootFields": [
+        "updateAgentMemory"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "AgentMemoryInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentMemoryTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateAgentMemory($id: ID!, $input: AgentMemoryInput!) {\n  updateAgentMemory(id: $id, input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "UpdateBenefitPlan",
@@ -17695,6 +17819,21 @@
       "sdl": "fragment AgentExceptionTableRowFields on AgentException {\n  id\n  organizationId\n  businessUnitId\n  runId\n  category\n  severity\n  subjectType\n  subjectId\n  attemptSummary\n  blastRadius\n  resolutionState\n  resolutionNotes\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentMemoryTableRowFields",
+      "typeCondition": "AgentMemory",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/memories.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentMemoryTable",
+        "CreateAgentMemory",
+        "SetAgentMemoryStatus",
+        "UpdateAgentMemory"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "AgentPlanTableRowFields",
       "typeCondition": "AgentPlan",
       "domain": "agent",
@@ -18206,6 +18345,7 @@
         "AccountTypeTable",
         "AgentDefinitionCards",
         "AgentExceptionTable",
+        "AgentMemoryTable",
         "AgentPlanTable",
         "AgentProposalTable",
         "AgentRunTable",
@@ -20771,6 +20911,55 @@
         }
       ],
       "sdl": "input AgentExceptionResolveInput {\n  resolutionNotes: String\n  resolutionState: AgentResolutionState!\n}"
+    },
+    "AgentMemoryInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "content",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "expiresAt",
+          "type": "Timestamp",
+          "defaultValue": null
+        },
+        {
+          "name": "kind",
+          "type": "AgentMemoryKind!",
+          "defaultValue": null
+        },
+        {
+          "name": "subjectId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "subjectType",
+          "type": "AgentMemorySubjectType",
+          "defaultValue": null
+        },
+        {
+          "name": "toolName",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AgentMemoryInput {\n  content: String!\n  expiresAt: Timestamp\n  kind: AgentMemoryKind!\n  subjectId: ID\n  \"\"\"With subjectId, the record the memory is about; both or neither.\"\"\"\n  subjectType: AgentMemorySubjectType\n  toolName: String\n  \"\"\"Required on an update; ignored on a create.\"\"\"\n  version: Int\n}"
+    },
+    "AgentMemoryStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Retired"
+      ],
+      "sdl": "enum AgentMemoryStatus {\n  Active\n  Retired\n}"
     },
     "AgentPlanDecisionInput": {
       "kind": "input",
@@ -31341,6 +31530,25 @@
         "Resolved"
       ],
       "sdl": "enum AgentResolutionState {\n  Dismissed\n  InReview\n  Open\n  Resolved\n}"
+    },
+    "AgentMemoryKind": {
+      "kind": "enum",
+      "values": [
+        "Correction",
+        "Fact",
+        "Instruction"
+      ],
+      "sdl": "enum AgentMemoryKind {\n  Correction\n  Fact\n  Instruction\n}"
+    },
+    "AgentMemorySubjectType": {
+      "kind": "enum",
+      "values": [
+        "Carrier",
+        "Customer",
+        "Location",
+        "Worker"
+      ],
+      "sdl": "enum AgentMemorySubjectType {\n  Carrier\n  Customer\n  Location\n  Worker\n}"
     },
     "AgentDecisionType": {
       "kind": "enum",

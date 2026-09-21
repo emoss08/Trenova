@@ -18,6 +18,7 @@ type ContextBuilderParams struct {
 	Organizations repositories.OrganizationRepository
 	Users         repositories.UserRepository
 	Runtime       serviceports.AgentRuntime
+	Memories      serviceports.AgentMemoryService `optional:"true"`
 }
 
 type ContextBuilder struct {
@@ -25,6 +26,7 @@ type ContextBuilder struct {
 	organizations repositories.OrganizationRepository
 	users         repositories.UserRepository
 	runtime       serviceports.AgentRuntime
+	memories      serviceports.AgentMemoryService
 }
 
 func NewContextBuilder(p ContextBuilderParams) serviceports.RuntimeContextBuilder {
@@ -33,6 +35,7 @@ func NewContextBuilder(p ContextBuilderParams) serviceports.RuntimeContextBuilde
 		organizations: p.Organizations,
 		users:         p.Users,
 		runtime:       p.Runtime,
+		memories:      p.Memories,
 	}
 }
 
@@ -102,6 +105,24 @@ func (b *ContextBuilder) Build(
 			if rc.Timezone == "" {
 				rc.Timezone = user.Timezone
 			}
+		}
+	}
+
+	// Memory is read for every agent that asks for it, scoped to the
+	// organization and to the agent's own tools: a correction to assign_move
+	// belongs in the prompt of an agent that can assign, and nowhere else.
+	if definition.HasContextProvider(agentdefinition.ContextMemory) && b.memories != nil {
+		memories, err := b.memories.ForContext(ctx, serviceports.MemoryContextRequest{
+			TenantInfo: tenant,
+			ToolNames:  definition.ToolNames,
+		})
+		if err != nil {
+			b.logger.Warn("agent context: memory lookup failed",
+				zap.String("organization", tenant.OrgID.String()),
+				zap.Error(err),
+			)
+		} else {
+			rc.Memories = memories
 		}
 	}
 
