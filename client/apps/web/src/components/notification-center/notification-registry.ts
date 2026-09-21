@@ -28,6 +28,8 @@ import {
   ReceiptTextIcon,
   Share2Icon,
   ShieldAlertIcon,
+  TrendingDownIcon,
+  TrendingUpIcon,
   TriangleAlertIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -133,7 +135,24 @@ function workerCredentialsLink(notification: Pick<Notification, "data">): string
     : "/hr/workers";
 }
 
+const aiControlLink = (notification: Notification) =>
+  notificationDataString(notification, "link") ?? "/admin/agent-control";
+
 const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
+  "agent.tool_promoted": {
+    category: "AI Control",
+    icon: TrendingUpIcon,
+    iconClass: "text-success",
+    tileClass: "bg-success-subtle",
+    getLink: aiControlLink,
+  },
+  "agent.tool_demoted": {
+    category: "AI Control",
+    icon: TrendingDownIcon,
+    iconClass: "text-warning",
+    tileClass: "bg-warning-subtle",
+    getLink: aiControlLink,
+  },
   "dash.pto_requested": {
     category: "Workers",
     icon: CalendarClockIcon,

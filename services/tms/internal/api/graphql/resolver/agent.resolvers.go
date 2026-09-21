@@ -70,6 +70,8 @@ func (r *mutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 
 	return r.agentControlService.Update(ctx, &services.UpdateAgentControlRequest{
 		ShadowMode:             input.ShadowMode,
+		EarnedAutonomy:         input.EarnedAutonomy,
+		PromotionThreshold:     input.PromotionThreshold,
 		BillingAgentEnabled:    input.BillingAgentEnabled,
 		DecisionTimeoutSeconds: input.DecisionTimeoutSeconds,
 		TenantInfo:             tenantInfo(authCtx),

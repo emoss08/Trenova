@@ -141,7 +141,7 @@ func proposalRationale(in rationaleInput) string {
 	}
 
 	if trimmed := strings.TrimSpace(in.Input); trimmed != "" {
-		prefix := fmt.Sprintf("Asked to %s in reply to: \u201c", humanizeToolName(in.ToolName))
+		prefix := fmt.Sprintf("Asked to %s in reply to: \u201c", stringutils.HumanizeSnakeCase(in.ToolName))
 		room := maxRationaleChars - len([]rune(prefix)) - 1
 
 		return prefix + stringutils.Ellipsize(trimmed, room) + "\u201d"
@@ -151,12 +151,4 @@ func proposalRationale(in rationaleInput) string {
 		"The agent asked to run %s without explaining why.",
 		in.ToolName,
 	)
-}
-
-// humanizeToolName reads a tool's snake_case name as words: reassign_move
-// becomes "reassign move".
-func humanizeToolName(toolName string) string {
-	return strings.Join(strings.FieldsFunc(toolName, func(r rune) bool {
-		return r == '_' || r == '-' || r == '.'
-	}), " ")
 }

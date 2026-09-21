@@ -36,9 +36,12 @@ import { PromptPreviewSheet } from "./prompt-preview-sheet";
 import { applyTemplateStarter } from "./template-fill";
 import { TemplatePicker } from "./template-picker";
 import { ToolSummary } from "./tool-summary";
+import { TrackRecordSection } from "./track-record";
 
 type AgentFormProps = {
   mode: "create" | "edit";
+  /** The saved agent being edited; its ledger is read by this id. */
+  agentId?: string;
   /** Set for the agents the platform itself fires; they cannot be deleted or re-triggered. */
   systemKey?: string;
 };
@@ -56,7 +59,7 @@ const DECISION_TIMEOUTS = [
   { label: "7 days", value: 604800, tone: "danger" },
 ] as const;
 
-export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
+export function AgentForm({ mode, agentId = "", systemKey = "" }: AgentFormProps) {
   const t = useT();
   const { control, setValue, getValues } = useFormContext<AgentFormValues>();
 
@@ -338,6 +341,22 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
           </Alert>
         )}
       </FormSection>
+
+      {mode === "edit" && agentId !== "" && (
+        <FormSection
+          title={t("Track record")}
+          description={t(
+            "How people have decided on each tool's proposals. With earned autonomy on for the organization, a streak of clean approvals moves a tool up one tier; a rejection or a failed run takes an earned tier back.",
+          )}
+        >
+          <TrackRecordSection
+            agentId={agentId}
+            tools={catalogQuery.data?.tools ?? []}
+            tiers={toolTiers}
+            ceiling={ceiling}
+          />
+        </FormSection>
+      )}
 
       <FormSection
         title={t("When it runs")}

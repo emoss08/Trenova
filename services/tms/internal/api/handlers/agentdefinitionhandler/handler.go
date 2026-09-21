@@ -21,12 +21,14 @@ type Params struct {
 	fx.In
 
 	Service              serviceports.AgentDefinitionService
+	Trust                serviceports.AgentTrustService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
 	service serviceports.AgentDefinitionService
+	trust   serviceports.AgentTrustService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -34,6 +36,7 @@ type Handler struct {
 func New(p Params) *Handler {
 	return &Handler{
 		service: p.Service,
+		trust:   p.Trust,
 		eh:      p.ErrorHandler,
 		pm:      p.PermissionMiddleware,
 	}
@@ -50,6 +53,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("/preview-prompt/", h.pm.RequirePermission(resource, permission.OpRead), h.previewPrompt)
 	api.GET("/system/:systemKey/", h.pm.RequirePermission(resource, permission.OpRead), h.getBySystemKey)
 	api.GET("/:agentID/", h.pm.RequirePermission(resource, permission.OpRead), h.get)
+	api.GET("/:agentID/trust/", h.pm.RequirePermission(resource, permission.OpRead), h.trustLedger)
 	api.POST("/", h.pm.RequirePermission(resource, permission.OpCreate), h.create)
 	api.PUT("/:agentID/", h.pm.RequirePermission(resource, permission.OpUpdate), h.update)
 	api.DELETE("/:agentID/", h.pm.RequirePermission(resource, permission.OpDelete), h.remove)
@@ -129,6 +133,30 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, definition)
+}
+
+// trustLedger answers how each of the agent's tools has been decided on: the
+// streak, the totals and any tier the ledger granted. Rows exist only for
+// tools that have had a decision, so a tool with none is simply absent.
+func (h *Handler) trustLedger(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	agentID, err := pulid.Parse(c.Param("agentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	rows, err := h.trust.ListForDefinition(c.Request.Context(), repositories.ListToolTrustRequest{
+		TenantInfo:        tenantFromAuthContext(authCtx),
+		AgentDefinitionID: agentID,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": rows})
 }
 
 func (h *Handler) getBySystemKey(c *gin.Context) {

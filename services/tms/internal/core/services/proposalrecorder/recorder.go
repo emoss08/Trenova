@@ -28,16 +28,23 @@ type Params struct {
 	Logger    *zap.Logger
 	Runs      repositories.AgentRunRepository
 	Proposals repositories.AgentProposalRepository
+	// Trust learns from a tool that ran on its own and failed. Optional, so
+	// the recorder still stores proposals where no ledger is wired.
+	Trust serviceports.AgentTrustService `optional:"true"`
 }
 
 type Service struct {
 	logger    *zap.Logger
 	runs      RunOpener
 	proposals ProposalStore
+	trust     serviceports.AgentTrustService
 }
 
 func New(p Params) *Service {
-	return NewWithStores(p.Logger, p.Runs, p.Proposals)
+	svc := NewWithStores(p.Logger, p.Runs, p.Proposals)
+	svc.trust = p.Trust
+
+	return svc
 }
 
 func NewWithStores(logger *zap.Logger, runs RunOpener, proposals ProposalStore) *Service {
@@ -134,6 +141,7 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 			return nil, err
 		}
 
+		s.recordAutomaticFailure(ctx, created)
 		proposals = append(proposals, created)
 	}
 
@@ -214,4 +222,21 @@ func nonNilParams(params map[string]any) map[string]any {
 	}
 
 	return params
+}
+
+// recordAutomaticFailure tells the ledger about a tool that ran without asking
+// and did not go through. A person never decided on it, so nothing else would
+// count the failure against the tier that let it run unasked.
+func (s *Service) recordAutomaticFailure(ctx context.Context, proposal *agent.AgentProposal) {
+	if s.trust == nil || proposal.Status != agent.ProposalStatusExecutionFailed {
+		return
+	}
+
+	if err := s.trust.RecordExecutionFailure(ctx, proposal); err != nil {
+		s.logger.Error("failed to record automatic execution failure in the trust ledger",
+			zap.String("proposal", proposal.ID.String()),
+			zap.String("tool", proposal.ToolName),
+			zap.Error(err),
+		)
+	}
 }

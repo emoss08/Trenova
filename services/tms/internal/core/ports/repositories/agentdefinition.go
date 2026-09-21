@@ -56,6 +56,16 @@ type MarkAgentDefinitionRunRequest struct {
 	ExpectedNextRunAt *int64
 }
 
+// SetAgentDefinitionToolTierRequest changes one tool's tier on an agent
+// without rewriting the rest of the definition, so it cannot lose a change a
+// person is saving at the same moment.
+type SetAgentDefinitionToolTierRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+	ToolName   string
+	Tier       agent.AutonomyTier
+}
+
 type DeleteAgentDefinitionRequest struct {
 	ID         pulid.ID
 	TenantInfo pagination.TenantInfo
@@ -106,6 +116,7 @@ type AgentDefinitionRepository interface {
 		entity *agentdefinition.Definition,
 	) (*agentdefinition.Definition, error)
 	MarkRun(ctx context.Context, req MarkAgentDefinitionRunRequest) (bool, error)
+	SetToolTier(ctx context.Context, req SetAgentDefinitionToolTierRequest) error
 	Delete(ctx context.Context, req DeleteAgentDefinitionRequest) error
 	StatsByIDs(
 		ctx context.Context,

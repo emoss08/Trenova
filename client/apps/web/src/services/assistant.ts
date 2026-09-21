@@ -9,6 +9,7 @@ import {
   agentTemplateListSchema,
   previewPromptResponseSchema,
   toolCatalogSchema,
+  toolTrustListSchema,
   assistantMessagePageSchema,
   assistantProposalListSchema,
   assistantProviderListSchema,
@@ -238,6 +239,11 @@ export class AgentDefinitionService {
   public async get(id: AgentDefinition["id"]) {
     const response = await api.get(`/agent-definitions/${id}/`);
     return safeParse(agentDefinitionSchema, response, "Agent");
+  }
+
+  public async trust(id: AgentDefinition["id"], options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/agent-definitions/${id}/trust/`, { signal: options?.signal });
+    return safeParse(toolTrustListSchema, response, "Agent Track Record");
   }
 
   public async templates() {

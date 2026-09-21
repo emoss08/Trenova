@@ -1008,3 +1008,246 @@ var AgentRunFilter = struct {
 		return NewFieldFilter("updatedAt", op, value)
 	},
 }
+
+// ---------------------------------------------------------------------------
+// ToolTrust — table "agent_tool_trust", alias "att"
+// ---------------------------------------------------------------------------
+
+// ToolTrustTable holds the table name, alias, and primary key columns
+// for the "agent_tool_trust" table. The alias "att" is used in all generated
+// SQL fragments (e.g. "att.id = ?").
+var ToolTrustTable = TableInfo{
+	Name:       "agent_tool_trust",
+	Alias:      "att",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// ToolTrustColumns provides type-safe column references for the "agent_tool_trust" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ToolTrustColumns.ID.String())
+//	// SELECT att.id FROM agent_tool_trust AS att
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ToolTrustColumns.ID.Eq(), id)           // WHERE att.id = ?
+//	q.Order(ToolTrustColumns.CreatedAt.OrderDesc())  // ORDER BY att.created_at DESC
+var ToolTrustColumns = struct {
+	ID                Column // "id" → qualified: "att.id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "att.business_unit_id"
+	OrganizationID    Column // "organization_id" → qualified: "att.organization_id"
+	AgentDefinitionID Column // "agent_definition_id" → qualified: "att.agent_definition_id"
+	ToolName          Column // "tool_name" → qualified: "att.tool_name"
+	Streak            Column // "streak" → qualified: "att.streak"
+	Approvals         Column // "approvals" → qualified: "att.approvals"
+	Modifications     Column // "modifications" → qualified: "att.modifications"
+	Rejections        Column // "rejections" → qualified: "att.rejections"
+	ExecutionFailures Column // "execution_failures" → qualified: "att.execution_failures"
+	EarnedTier        Column // "earned_tier" → qualified: "att.earned_tier"
+	LastDecisionAt    Column // "last_decision_at" → qualified: "att.last_decision_at"
+	PromotedAt        Column // "promoted_at" → qualified: "att.promoted_at"
+	DemotedAt         Column // "demoted_at" → qualified: "att.demoted_at"
+	Version           Column // "version" → qualified: "att.version"
+	CreatedAt         Column // "created_at" → qualified: "att.created_at"
+	UpdatedAt         Column // "updated_at" → qualified: "att.updated_at"
+}{
+	ID:                NewColumn("id", "att"),
+	BusinessUnitID:    NewColumn("business_unit_id", "att"),
+	OrganizationID:    NewColumn("organization_id", "att"),
+	AgentDefinitionID: NewColumn("agent_definition_id", "att"),
+	ToolName:          NewColumn("tool_name", "att"),
+	Streak:            NewColumn("streak", "att"),
+	Approvals:         NewColumn("approvals", "att"),
+	Modifications:     NewColumn("modifications", "att"),
+	Rejections:        NewColumn("rejections", "att"),
+	ExecutionFailures: NewColumn("execution_failures", "att"),
+	EarnedTier:        NewColumn("earned_tier", "att"),
+	LastDecisionAt:    NewColumn("last_decision_at", "att"),
+	PromotedAt:        NewColumn("promoted_at", "att"),
+	DemotedAt:         NewColumn("demoted_at", "att"),
+	Version:           NewColumn("version", "att"),
+	CreatedAt:         NewColumn("created_at", "att"),
+	UpdatedAt:         NewColumn("updated_at", "att"),
+}
+
+// ToolTrustFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by ToolTrust.GetStaticFieldMap().
+var ToolTrustFieldMap = map[string]string{
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"agentDefinitionId": "agent_definition_id",
+	"toolName":          "tool_name",
+	"streak":            "streak",
+	"approvals":         "approvals",
+	"modifications":     "modifications",
+	"rejections":        "rejections",
+	"executionFailures": "execution_failures",
+	"earnedTier":        "earned_tier",
+	"lastDecisionAt":    "last_decision_at",
+	"promotedAt":        "promoted_at",
+	"demotedAt":         "demoted_at",
+	"version":           "version",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
+}
+
+// ToolTrustInsertableColumns lists column names suitable for INSERT statements on the "agent_tool_trust" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ToolTrustInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"agent_definition_id",
+	"tool_name",
+	"streak",
+	"approvals",
+	"modifications",
+	"rejections",
+	"execution_failures",
+	"earned_tier",
+	"last_decision_at",
+	"promoted_at",
+	"demoted_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// ToolTrustRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(ToolTrustRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var ToolTrustRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// ToolTrustScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE att.organization_id = ? AND att.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.ToolTrustScopeTenant(sq, ti).
+//		Where(buncolgen.ToolTrustColumns.ID.Eq(), id)
+func ToolTrustScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, ToolTrustColumns.OrganizationID, ToolTrustColumns.BusinessUnitID, ti)
+}
+
+// ToolTrustScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.ToolTrustScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.ToolTrustColumns.ID.In(), bun.List(ids))
+//	})
+func ToolTrustScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, ToolTrustColumns.OrganizationID, ToolTrustColumns.BusinessUnitID, ti)
+}
+
+// ToolTrustScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.ToolTrustScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.ToolTrustColumns.ID.Eq(), id)
+//	})
+func ToolTrustScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, ToolTrustColumns.OrganizationID, ToolTrustColumns.BusinessUnitID, ti)
+}
+
+// ToolTrustApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.ToolTrustApplyTenant(tenantInfo))
+func ToolTrustApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(ToolTrustColumns.OrganizationID, ToolTrustColumns.BusinessUnitID, ti)
+}
+
+// ToolTrustFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_tool_trust" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ToolTrustFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var ToolTrustFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	ToolName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
+	Streak            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "streak" → DB: "streak"
+	Approvals         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvals" → DB: "approvals"
+	Modifications     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modifications" → DB: "modifications"
+	Rejections        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rejections" → DB: "rejections"
+	ExecutionFailures func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executionFailures" → DB: "execution_failures"
+	EarnedTier        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "earnedTier" → DB: "earned_tier"
+	LastDecisionAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastDecisionAt" → DB: "last_decision_at"
+	PromotedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "promotedAt" → DB: "promoted_at"
+	DemotedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "demotedAt" → DB: "demoted_at"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentDefinitionId", op, value)
+	},
+	ToolName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("toolName", op, value)
+	},
+	Streak: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("streak", op, value)
+	},
+	Approvals: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("approvals", op, value)
+	},
+	Modifications: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("modifications", op, value)
+	},
+	Rejections: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rejections", op, value)
+	},
+	ExecutionFailures: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("executionFailures", op, value)
+	},
+	EarnedTier: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("earnedTier", op, value)
+	},
+	LastDecisionAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastDecisionAt", op, value)
+	},
+	PromotedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("promotedAt", op, value)
+	},
+	DemotedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("demotedAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}

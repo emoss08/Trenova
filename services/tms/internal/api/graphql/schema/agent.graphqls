@@ -175,6 +175,10 @@ type AgentControl {
   organizationId: ID!
   businessUnitId: ID!
   shadowMode: Boolean!
+  "Whether a streak of clean approvals may move a tool up one tier on an agent."
+  earnedAutonomy: Boolean!
+  "Consecutive approvals without a change needed before a tool moves up a tier."
+  promotionThreshold: Int!
   billingAgentEnabled: Boolean!
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int!
@@ -230,6 +234,10 @@ input AgentExceptionResolveInput {
 
 input AgentControlInput {
   shadowMode: Boolean!
+  "Absent leaves the organization's earned autonomy switch as it is."
+  earnedAutonomy: Boolean
+  "Absent leaves the promotion threshold as it is; 1 to 1000 approvals."
+  promotionThreshold: Int
   billingAgentEnabled: Boolean
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int

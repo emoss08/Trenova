@@ -86,3 +86,13 @@ func ConvertCamelToSnake(s string) string {
 
 	return result.String()
 }
+
+// HumanizeSnakeCase reads a snake_case identifier as words: reassign_move
+// becomes "reassign move". Dots and dashes split words too, so a dotted tool
+// or event name reads the same way. Case is left alone; the caller decides
+// whether the phrase starts a sentence.
+func HumanizeSnakeCase(s string) string {
+	return strings.Join(strings.FieldsFunc(s, func(r rune) bool {
+		return r == '_' || r == '-' || r == '.'
+	}), " ")
+}

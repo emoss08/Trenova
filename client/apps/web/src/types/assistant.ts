@@ -45,6 +45,35 @@ const toolTiersSchema = z.preprocess(
   z.record(z.string(), autonomyTierSchema),
 );
 
+/**
+ * One row of the earned-autonomy ledger: how decisions on an agent's
+ * proposals for one tool have gone. Rows exist only for tools that have had a
+ * decision.
+ */
+export const toolTrustSchema = z.object({
+  id: z.string(),
+  organizationId: z.string(),
+  businessUnitId: z.string(),
+  agentDefinitionId: z.string(),
+  toolName: z.string(),
+  streak: z.number().default(0),
+  approvals: z.number().default(0),
+  modifications: z.number().default(0),
+  rejections: z.number().default(0),
+  executionFailures: z.number().default(0),
+  earnedTier: nullableEnum(autonomyTierSchema),
+  lastDecisionAt: z.number().nullish(),
+  promotedAt: z.number().nullish(),
+  demotedAt: z.number().nullish(),
+  version: z.number().default(0),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+
+export const toolTrustListSchema = z.object({
+  results: z.array(toolTrustSchema),
+});
+
 export const agentDefinitionSchema = z.object({
   id: z.string(),
   businessUnitId: z.string(),
@@ -436,6 +465,7 @@ export type ContextProvider = z.infer<typeof contextProviderSchema>;
 export type AgentDefinition = z.infer<typeof agentDefinitionSchema>;
 export type AgentTemplate = z.infer<typeof agentTemplateSchema>;
 export type ToolCatalogEntry = z.infer<typeof toolCatalogEntrySchema>;
+export type ToolTrust = z.infer<typeof toolTrustSchema>;
 export type AgentEventDescriptor = z.infer<typeof agentEventDescriptorSchema>;
 export type SaveAgentDefinitionRequest = z.infer<typeof saveAgentDefinitionRequestSchema>;
 export type AssistantThread = z.infer<typeof assistantThreadSchema>;

@@ -31,3 +31,10 @@ func (e *AgentProposal) GetStaticFieldMap() map[string]string {
 func (e *AgentRun) GetStaticFieldMap() map[string]string {
 	return buncolgen.AgentRunFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ToolTrust].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ToolTrustFieldMap] instead of parsing struct tags via reflection.
+func (e *ToolTrust) GetStaticFieldMap() map[string]string {
+	return buncolgen.ToolTrustFieldMap
+}

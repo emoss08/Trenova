@@ -216,3 +216,23 @@ describe("notification registry — carrier intelligence notifications", () => {
     );
   });
 });
+
+describe("notification registry — earned autonomy", () => {
+  it("files a tier change under AI Control and opens the agents tab it names", () => {
+    for (const eventType of ["agent.tool_promoted", "agent.tool_demoted"]) {
+      const descriptor = getNotificationDescriptor(eventType);
+      expect(descriptor.category).toBe("AI Control");
+      expect(
+        getNotificationLink(
+          notification({ eventType, data: { link: "/admin/agent-control?tab=agents" } }),
+        ),
+      ).toBe("/admin/agent-control?tab=agents");
+    }
+  });
+
+  it("falls back to the AI Control page when the notice carries no link", () => {
+    expect(getNotificationLink(notification({ eventType: "agent.tool_demoted" }))).toBe(
+      "/admin/agent-control",
+    );
+  });
+});

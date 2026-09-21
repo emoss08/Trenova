@@ -483,8 +483,16 @@ type AgentControl {
   businessUnitId: ID!
   createdAt: Timestamp!
   decisionTimeoutSeconds: Int! @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
+  """
+  Whether a streak of clean approvals may move a tool up one tier on an agent.
+  """
+  earnedAutonomy: Boolean!
   id: ID!
   organizationId: ID!
+  """
+  Consecutive approvals without a change needed before a tool moves up a tier.
+  """
+  promotionThreshold: Int!
   shadowMode: Boolean!
   updatedAt: Timestamp!
   version: Int!
@@ -493,6 +501,10 @@ type AgentControl {
 input AgentControlInput {
   billingAgentEnabled: Boolean @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
+  """Absent leaves the organization's earned autonomy switch as it is."""
+  earnedAutonomy: Boolean
+  """Absent leaves the promotion threshold as it is; 1 to 1000 approvals."""
+  promotionThreshold: Int
   shadowMode: Boolean!
 }
 

@@ -153,6 +153,46 @@ func (t AutonomyTier) IsValid() bool {
 	}
 }
 
+// Rank orders the tiers by how much the agent may do on its own. An unknown
+// tier ranks with Propose, the least an agent can be trusted with.
+func (t AutonomyTier) Rank() int {
+	switch t {
+	case TierActWithApproval:
+		return 1
+	case TierAutoExecute:
+		return 2
+	default:
+		return 0
+	}
+}
+
+// Above reports whether t lets an agent do more on its own than other.
+func (t AutonomyTier) Above(other AutonomyTier) bool { return t.Rank() > other.Rank() }
+
+// Next is the tier one step up, and false from the top.
+func (t AutonomyTier) Next() (AutonomyTier, bool) {
+	switch t {
+	case TierPropose:
+		return TierActWithApproval, true
+	case TierActWithApproval:
+		return TierAutoExecute, true
+	default:
+		return "", false
+	}
+}
+
+// Previous is the tier one step down, and false from the bottom.
+func (t AutonomyTier) Previous() (AutonomyTier, bool) {
+	switch t {
+	case TierAutoExecute:
+		return TierActWithApproval, true
+	case TierActWithApproval:
+		return TierPropose, true
+	default:
+		return "", false
+	}
+}
+
 type Severity string
 
 const (

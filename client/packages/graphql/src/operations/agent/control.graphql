@@ -3,6 +3,8 @@ fragment AgentControlFields on AgentControl {
   organizationId
   businessUnitId
   shadowMode
+  earnedAutonomy
+  promotionThreshold
   version
   createdAt
   updatedAt

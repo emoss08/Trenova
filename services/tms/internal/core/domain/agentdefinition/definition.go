@@ -166,24 +166,16 @@ func (d *Definition) EffectiveTier(tool string, toolTier agent.AutonomyTier) age
 		requested = agent.TierPropose
 	}
 
-	if tierRank(d.AutonomyCeiling) < tierRank(requested) {
+	if requested.Above(d.AutonomyCeiling) {
 		return d.AutonomyCeiling
 	}
 
 	return requested
 }
 
-func tierRank(tier agent.AutonomyTier) int {
-	switch tier {
-	case agent.TierPropose:
-		return 0
-	case agent.TierActWithApproval:
-		return 1
-	case agent.TierAutoExecute:
-		return 2
-	default:
-		return 0
-	}
+// WithinCeiling reports whether an agent may hold a tool at the tier.
+func (d *Definition) WithinCeiling(tier agent.AutonomyTier) bool {
+	return !tier.Above(d.AutonomyCeiling)
 }
 
 func (d *Definition) AllowsTool(name string) bool {

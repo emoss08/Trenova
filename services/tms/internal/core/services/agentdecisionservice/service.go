@@ -32,6 +32,7 @@ type Params struct {
 	Workflows    services.WorkflowStarter
 	Executor     *proposalexecutor.Service
 	AuditService services.AuditService
+	Trust        services.AgentTrustService
 }
 
 type Service struct {
@@ -44,6 +45,7 @@ type Service struct {
 	workflows    services.WorkflowStarter
 	executor     *proposalexecutor.Service
 	audit        services.AuditService
+	trust        services.AgentTrustService
 }
 
 func New(p Params) services.AgentDecisionService {
@@ -57,6 +59,7 @@ func New(p Params) services.AgentDecisionService {
 		workflows:    p.Workflows,
 		executor:     p.Executor,
 		audit:        p.AuditService,
+		trust:        p.Trust,
 	}
 }
 
@@ -133,7 +136,11 @@ func (s *Service) Decide(
 
 	// An approval that does not act is worse than no approval: the audit trail
 	// would say a person authorized something that never happened.
-	s.executeIfApproved(ctx, proposal, req, actor)
+	execErr := s.executeIfApproved(ctx, proposal, req, actor)
+
+	// The ledger learns from the outcome, not the intent: an approval whose
+	// write failed is a setback for the tool, whatever the person decided.
+	s.recordTrust(ctx, proposal, created, execErr)
 
 	auditActor := actor.AuditActor()
 	if err = s.audit.LogAction(&services.LogActionParams{
@@ -216,13 +223,43 @@ func (s *Service) executeIfApproved(
 	proposal *agent.AgentProposal,
 	req *services.DecideAgentProposalRequest,
 	actor *services.RequestActor,
-) {
+) error {
 	if req.Decision != agent.DecisionAccepted && req.Decision != agent.DecisionModified {
+		return nil
+	}
+
+	err := s.executor.Execute(ctx, proposal, req.Modifications, actor)
+	if err != nil {
+		s.l.Error("approved proposal did not execute",
+			zap.String("proposal", proposal.ID.String()),
+			zap.String("tool", proposal.ToolName),
+			zap.Error(err),
+		)
+	}
+
+	return err
+}
+
+// recordTrust is best effort: the decision is the durable fact, and a ledger
+// that could not be written is logged rather than allowed to fail it.
+func (s *Service) recordTrust(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+	decision *agent.AgentDecision,
+	execErr error,
+) {
+	if s.trust == nil {
 		return
 	}
 
-	if err := s.executor.Execute(ctx, proposal, req.Modifications, actor); err != nil {
-		s.l.Error("approved proposal did not execute",
+	var err error
+	if execErr != nil {
+		err = s.trust.RecordExecutionFailure(ctx, proposal)
+	} else {
+		err = s.trust.RecordDecision(ctx, proposal, decision)
+	}
+	if err != nil {
+		s.l.Error("failed to record decision in the trust ledger",
 			zap.String("proposal", proposal.ID.String()),
 			zap.String("tool", proposal.ToolName),
 			zap.Error(err),

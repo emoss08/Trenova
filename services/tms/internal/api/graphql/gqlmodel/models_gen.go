@@ -173,7 +173,11 @@ type AdjustWorkerPTOBalanceInput struct {
 }
 
 type AgentControlInput struct {
-	ShadowMode             bool  `json:"shadowMode"`
+	ShadowMode bool `json:"shadowMode"`
+	// Absent leaves the organization's earned autonomy switch as it is.
+	EarnedAutonomy *bool `json:"earnedAutonomy,omitempty"`
+	// Absent leaves the promotion threshold as it is; 1 to 1000 approvals.
+	PromotionThreshold     *int  `json:"promotionThreshold,omitempty"`
 	BillingAgentEnabled    *bool `json:"billingAgentEnabled,omitempty"`
 	DecisionTimeoutSeconds *int  `json:"decisionTimeoutSeconds,omitempty"`
 }

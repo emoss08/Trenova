@@ -123,6 +123,52 @@ func (ec *executionContext) fieldContext_AgentControl_shadowMode(_ context.Conte
 	return graphql.NewScalarFieldContext("AgentControl", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _AgentControl_earnedAutonomy(ctx context.Context, field graphql.CollectedField, obj *tenant.AgentControl) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentControl_earnedAutonomy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EarnedAutonomy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentControl_earnedAutonomy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentControl", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _AgentControl_promotionThreshold(ctx context.Context, field graphql.CollectedField, obj *tenant.AgentControl) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentControl_promotionThreshold(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PromotionThreshold, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentControl_promotionThreshold(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentControl", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _AgentControl_billingAgentEnabled(ctx context.Context, field graphql.CollectedField, obj *tenant.AgentControl) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2192,7 +2238,7 @@ func (ec *executionContext) unmarshalInputAgentControlInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"shadowMode", "billingAgentEnabled", "decisionTimeoutSeconds"}
+	fieldsInOrder := [...]string{"shadowMode", "earnedAutonomy", "promotionThreshold", "billingAgentEnabled", "decisionTimeoutSeconds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2206,6 +2252,20 @@ func (ec *executionContext) unmarshalInputAgentControlInput(ctx context.Context,
 				return it, err
 			}
 			it.ShadowMode = data
+		case "earnedAutonomy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("earnedAutonomy"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EarnedAutonomy = data
+		case "promotionThreshold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("promotionThreshold"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PromotionThreshold = data
 		case "billingAgentEnabled":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingAgentEnabled"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -2343,6 +2403,16 @@ func (ec *executionContext) _AgentControl(ctx context.Context, sel ast.Selection
 			}
 		case "shadowMode":
 			out.Values[i] = ec._AgentControl_shadowMode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "earnedAutonomy":
+			out.Values[i] = ec._AgentControl_earnedAutonomy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "promotionThreshold":
+			out.Values[i] = ec._AgentControl_promotionThreshold(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

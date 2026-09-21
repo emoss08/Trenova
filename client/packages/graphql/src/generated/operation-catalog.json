@@ -433,7 +433,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/control.graphql",
-      "hash": "sha256:01a79457d60f7388e3157449d24e4e3621ae53bcfb08d00b5e9516013ff874f0",
+      "hash": "sha256:a44ebbd4e0c314668190068941ad623cefb3b405b0fb345a4dfe58072465cf70",
       "rootFields": [
         "agentControl"
       ],
@@ -442,7 +442,7 @@
         "AgentControlFields"
       ],
       "usages": [],
-      "sdl": "query AgentControlSettings {\n  agentControl {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query AgentControlSettings {\n  agentControl {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  earnedAutonomy\n  promotionThreshold\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentDefinitionCards",
@@ -14701,7 +14701,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/control.graphql",
-      "hash": "sha256:bb8bb9870a2aeed63569f8027288488f394c5ced12f541a2d86a4abad6bf9dda",
+      "hash": "sha256:5f38f15ae16abb622bccc80b578ce30e1743ab4b89440782ac1b96232f48a2c3",
       "rootFields": [
         "updateAgentControl"
       ],
@@ -14716,7 +14716,7 @@
         "AgentControlFields"
       ],
       "usages": [],
-      "sdl": "mutation UpdateAgentControl($input: AgentControlInput!) {\n  updateAgentControl(input: $input) {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation UpdateAgentControl($input: AgentControlInput!) {\n  updateAgentControl(input: $input) {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  earnedAutonomy\n  promotionThreshold\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "UpdateBenefitPlan",
@@ -17562,7 +17562,7 @@
         "UpdateAgentControl"
       ],
       "usages": [],
-      "sdl": "fragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  earnedAutonomy\n  promotionThreshold\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentDefinitionCardFields",
@@ -20647,12 +20647,22 @@
           "defaultValue": null
         },
         {
+          "name": "earnedAutonomy",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "promotionThreshold",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
           "name": "shadowMode",
           "type": "Boolean!",
           "defaultValue": null
         }
       ],
-      "sdl": "input AgentControlInput {\n  billingAgentEnabled: Boolean @deprecated(reason: \"Enable or disable the billing exception agent definition instead\")\n  decisionTimeoutSeconds: Int @deprecated(reason: \"Set decisionTimeoutSeconds on the agent definition instead\")\n  shadowMode: Boolean!\n}"
+      "sdl": "input AgentControlInput {\n  billingAgentEnabled: Boolean @deprecated(reason: \"Enable or disable the billing exception agent definition instead\")\n  decisionTimeoutSeconds: Int @deprecated(reason: \"Set decisionTimeoutSeconds on the agent definition instead\")\n  \"\"\"Absent leaves the organization's earned autonomy switch as it is.\"\"\"\n  earnedAutonomy: Boolean\n  \"\"\"Absent leaves the promotion threshold as it is; 1 to 1000 approvals.\"\"\"\n  promotionThreshold: Int\n  shadowMode: Boolean!\n}"
     },
     "AgentExceptionResolveInput": {
       "kind": "input",

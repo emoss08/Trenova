@@ -397,6 +397,41 @@ func (r *repository) MarkRun(
 	return affected > 0, nil
 }
 
+// SetToolTier merges one tool's tier into tool_tiers in place. Update writes
+// the whole row from a definition a person loaded, so a tier the ledger set
+// between their load and their save would be silently undone; a JSONB merge
+// touches only the one key. The tool must be one the agent holds, since a
+// tier for a tool the agent cannot call is a validation error on the next
+// save.
+func (r *repository) SetToolTier(
+	ctx context.Context,
+	req repositories.SetAgentDefinitionToolTierRequest,
+) error {
+	cols := buncolgen.DefinitionColumns
+
+	res, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*agentdefinition.Definition)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID).
+				Where("? = ANY("+cols.ToolNames.Qualified()+")", req.ToolName)
+		}).
+		Set(
+			cols.ToolTiers.SetExpr("COALESCE({}, '{}'::jsonb) || jsonb_build_object(?::text, ?::text)"),
+			req.ToolName,
+			string(req.Tier),
+		).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Set(cols.Version.Inc(1)).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("set agent definition tool tier: %w", err)
+	}
+
+	return dberror.CheckRowsAffected(res, "AgentDefinition", req.ID.String())
+}
+
 func (r *repository) Delete(
 	ctx context.Context,
 	req repositories.DeleteAgentDefinitionRequest,

@@ -50,9 +50,10 @@ func (r *repository) GetOrCreate(
 	}
 
 	control := &tenant.AgentControl{
-		BusinessUnitID: tenantInfo.BuID,
-		OrganizationID: tenantInfo.OrgID,
-		ShadowMode:     true,
+		BusinessUnitID:     tenantInfo.BuID,
+		OrganizationID:     tenantInfo.OrgID,
+		ShadowMode:         true,
+		PromotionThreshold: tenant.DefaultPromotionThreshold,
 	}
 	if _, err = r.db.DBForContext(ctx).
 		NewInsert().
@@ -106,6 +107,8 @@ func (r *repository) Update(
 				Where(cols.Version.Eq(), entity.Version)
 		}).
 		Set(cols.ShadowMode.Set(), entity.ShadowMode).
+		Set(cols.EarnedAutonomy.Set(), entity.EarnedAutonomy).
+		Set(cols.PromotionThreshold.Set(), entity.PromotionThreshold).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 		Set(cols.Version.Inc(1)).
 		Exec(ctx)

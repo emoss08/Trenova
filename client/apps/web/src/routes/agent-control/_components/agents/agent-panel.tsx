@@ -37,7 +37,9 @@ export function AgentPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
         title={t("Agent")}
         fieldKey="name"
         size="lg"
-        formComponent={<AgentForm mode="edit" systemKey={row?.systemKey ?? ""} />}
+        formComponent={
+          <AgentForm mode="edit" agentId={row?.id ?? ""} systemKey={row?.systemKey ?? ""} />
+        }
         mutationFn={(values, current) =>
           apiService.agentDefinitionService.update(current.id, toSaveRequest(values))
         }

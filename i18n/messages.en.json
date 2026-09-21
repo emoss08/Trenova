@@ -11086,11 +11086,12 @@
     ]
   },
   "Agent is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agent",
       "domain/conversation"
     ]
   },
@@ -18312,6 +18313,15 @@
       "routes/worker"
     ]
   },
+  "At the agent's ceiling; raise it to let this tool earn more.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "At the last draw, {0}": {
     "sites": 1,
     "scope": [
@@ -23865,11 +23875,12 @@
     ]
   },
   "Business unit is required": {
-    "sites": 105,
+    "sites": 106,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agent",
       "domain/agentdefinition",
       "domain/ailog",
       "domain/aiprovider",
@@ -30418,6 +30429,24 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Clean approvals for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Clean approvals in a row before a tool moves up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Clean settlements can auto-approve based on your settlement control policy; anything with exceptions stays in review.": {
@@ -52919,12 +52948,49 @@
     ]
   },
   "Earned": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
+      "routes/driver-pay-event"
+    ]
+  },
+  "Earned autonomy": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Earned autonomy is off for the organization; the streak is counted but changes nothing.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/driver-pay-event"
+      "routes/agent-control"
+    ]
+  },
+  "Earned autonomy off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Earned autonomy on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Earned but not yet on a settlement — waiting in the unsettled pool.": {
@@ -71475,6 +71541,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "How people have decided on each tool's proposals. With earned autonomy on for the organization, a streak of clean approvals moves a tool up one tier; a rejection or a failed run takes an earned tier back.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "How raw minutes collapse onto the billing increment. Rounding errors are a leading cause of rejected detention invoices.": {
@@ -93854,6 +93929,15 @@
       "routes/edi"
     ]
   },
+  "No decisions yet. The ledger starts with the first proposal someone decides on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No defects": {
     "sites": 1,
     "scope": [
@@ -94841,6 +94925,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "No longer offered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No longer recommended": {
@@ -105259,11 +105352,12 @@
     ]
   },
   "Organization is required": {
-    "sites": 104,
+    "sites": 105,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agent",
       "domain/agentdefinition",
       "domain/ailog",
       "domain/aiprovider",
@@ -115921,6 +116015,33 @@
     ]
   },
   "Promise a delivery time to a customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Promotion threshold": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Promotion threshold must be between 1 and 1000 approvals": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/tenant"
+    ]
+  },
+  "Promotion threshold saved": {
     "sites": 1,
     "scope": [
       "ts"
@@ -163652,7 +163773,7 @@
     ]
   },
   "Tool name is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -164375,6 +164496,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Track record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Track report generation, download artifacts, and cancel active runs": {
@@ -175102,6 +175232,15 @@
       "domain/hazmatsegregationrule"
     ]
   },
+  "When a tool's proposals are approved unchanged this many times in a row, the tool moves up one tier on that agent, never above the agent's ceiling. A rejection or a failed run takes an earned tier back. Each change is audited and announced.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "When an oversize load may legally move in this state": {
     "sites": 1,
     "scope": [
@@ -183257,6 +183396,15 @@
       "routes/shipment"
     ]
   },
+  "last {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "last {0} months": {
     "sites": 1,
     "scope": [
@@ -186284,6 +186432,15 @@
       "routes/invoice"
     ]
   },
+  "{0} approved · {1} changed · {2} rejected · {3} failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} at risk": {
     "sites": 1,
     "scope": [
@@ -187754,6 +187911,15 @@
     "areas": [
       "apps/web/components",
       "routes/shipment"
+    ]
+  },
+  "{0} more clean approvals to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} more still waiting on a colleague": {

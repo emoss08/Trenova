@@ -508,21 +508,25 @@ var AgentControlTable = TableInfo{
 //	q.Where(AgentControlColumns.ID.Eq(), id)           // WHERE agc.id = ?
 //	q.Order(AgentControlColumns.CreatedAt.OrderDesc())  // ORDER BY agc.created_at DESC
 var AgentControlColumns = struct {
-	ID             Column // "id" → qualified: "agc.id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "agc.business_unit_id"
-	OrganizationID Column // "organization_id" → qualified: "agc.organization_id"
-	ShadowMode     Column // "shadow_mode" → qualified: "agc.shadow_mode"
-	Version        Column // "version" → qualified: "agc.version"
-	CreatedAt      Column // "created_at" → qualified: "agc.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "agc.updated_at"
+	ID                 Column // "id" → qualified: "agc.id"
+	BusinessUnitID     Column // "business_unit_id" → qualified: "agc.business_unit_id"
+	OrganizationID     Column // "organization_id" → qualified: "agc.organization_id"
+	ShadowMode         Column // "shadow_mode" → qualified: "agc.shadow_mode"
+	EarnedAutonomy     Column // "earned_autonomy" → qualified: "agc.earned_autonomy"
+	PromotionThreshold Column // "promotion_threshold" → qualified: "agc.promotion_threshold"
+	Version            Column // "version" → qualified: "agc.version"
+	CreatedAt          Column // "created_at" → qualified: "agc.created_at"
+	UpdatedAt          Column // "updated_at" → qualified: "agc.updated_at"
 }{
-	ID:             NewColumn("id", "agc"),
-	BusinessUnitID: NewColumn("business_unit_id", "agc"),
-	OrganizationID: NewColumn("organization_id", "agc"),
-	ShadowMode:     NewColumn("shadow_mode", "agc"),
-	Version:        NewColumn("version", "agc"),
-	CreatedAt:      NewColumn("created_at", "agc"),
-	UpdatedAt:      NewColumn("updated_at", "agc"),
+	ID:                 NewColumn("id", "agc"),
+	BusinessUnitID:     NewColumn("business_unit_id", "agc"),
+	OrganizationID:     NewColumn("organization_id", "agc"),
+	ShadowMode:         NewColumn("shadow_mode", "agc"),
+	EarnedAutonomy:     NewColumn("earned_autonomy", "agc"),
+	PromotionThreshold: NewColumn("promotion_threshold", "agc"),
+	Version:            NewColumn("version", "agc"),
+	CreatedAt:          NewColumn("created_at", "agc"),
+	UpdatedAt:          NewColumn("updated_at", "agc"),
 }
 
 // AgentControlFieldMap maps JSON API field names to database column names.
@@ -530,13 +534,15 @@ var AgentControlColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by AgentControl.GetStaticFieldMap().
 var AgentControlFieldMap = map[string]string{
-	"id":             "id",
-	"businessUnitId": "business_unit_id",
-	"organizationId": "organization_id",
-	"shadowMode":     "shadow_mode",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":                 "id",
+	"businessUnitId":     "business_unit_id",
+	"organizationId":     "organization_id",
+	"shadowMode":         "shadow_mode",
+	"earnedAutonomy":     "earned_autonomy",
+	"promotionThreshold": "promotion_threshold",
+	"version":            "version",
+	"createdAt":          "created_at",
+	"updatedAt":          "updated_at",
 }
 
 // AgentControlInsertableColumns lists column names suitable for INSERT statements on the "agent_controls" table.
@@ -546,6 +552,8 @@ var AgentControlInsertableColumns = []string{
 	"business_unit_id",
 	"organization_id",
 	"shadow_mode",
+	"earned_autonomy",
+	"promotion_threshold",
 	"version",
 	"created_at",
 	"updated_at",
@@ -614,13 +622,15 @@ func AgentControlApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *b
 //	AgentControlFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var AgentControlFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	ShadowMode     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shadowMode" → DB: "shadow_mode"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ShadowMode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shadowMode" → DB: "shadow_mode"
+	EarnedAutonomy     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "earnedAutonomy" → DB: "earned_autonomy"
+	PromotionThreshold func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "promotionThreshold" → DB: "promotion_threshold"
+	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -633,6 +643,12 @@ var AgentControlFilter = struct {
 	},
 	ShadowMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("shadowMode", op, value)
+	},
+	EarnedAutonomy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("earnedAutonomy", op, value)
+	},
+	PromotionThreshold: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("promotionThreshold", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

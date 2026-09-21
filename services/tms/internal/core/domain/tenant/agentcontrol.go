@@ -24,6 +24,13 @@ type AgentControl struct {
 
 	ShadowMode bool `json:"shadowMode" bun:"shadow_mode,type:BOOLEAN,notnull"`
 
+	// EarnedAutonomy lets a streak of clean approvals move a tool up one tier
+	// on an agent, and PromotionThreshold is how long that streak must be.
+	// Off by default: an agent widening its own reach is something an
+	// organization opts into.
+	EarnedAutonomy     bool `json:"earnedAutonomy"     bun:"earned_autonomy,type:BOOLEAN,notnull"`
+	PromotionThreshold int  `json:"promotionThreshold" bun:"promotion_threshold,type:INTEGER,notnull"`
+
 	BillingAgentEnabled    bool `json:"billingAgentEnabled"    bun:"-"`
 	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds" bun:"-"`
 
@@ -35,7 +42,21 @@ type AgentControl struct {
 	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
-func (ac *AgentControl) Validate(_ *errortypes.MultiError) {}
+const (
+	DefaultPromotionThreshold = 10
+	minPromotionThreshold     = 1
+	maxPromotionThreshold     = 1000
+)
+
+func (ac *AgentControl) Validate(multiErr *errortypes.MultiError) {
+	if ac.PromotionThreshold < minPromotionThreshold || ac.PromotionThreshold > maxPromotionThreshold {
+		multiErr.Add(
+			"promotionThreshold",
+			errortypes.ErrInvalid,
+			"Promotion threshold must be between 1 and 1000 approvals",
+		)
+	}
+}
 
 func (ac *AgentControl) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()

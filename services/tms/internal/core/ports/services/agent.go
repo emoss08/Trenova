@@ -130,6 +130,17 @@ type DecideAgentProposalRequest struct {
 	TenantInfo    pagination.TenantInfo
 }
 
+// AgentTrustService keeps the earned-autonomy ledger. Every decision on a
+// proposal and every failed execution is an outcome for the agent and tool
+// concerned; a long enough streak of clean approvals moves the tool up one
+// tier on the agent when the organization allows it, and a setback takes an
+// earned tier back.
+type AgentTrustService interface {
+	RecordDecision(ctx context.Context, proposal *agent.AgentProposal, decision *agent.AgentDecision) error
+	RecordExecutionFailure(ctx context.Context, proposal *agent.AgentProposal) error
+	ListForDefinition(ctx context.Context, req repositories.ListToolTrustRequest) ([]*agent.ToolTrust, error)
+}
+
 type AgentDecisionService interface {
 	Decide(
 		ctx context.Context,
@@ -139,7 +150,11 @@ type AgentDecisionService interface {
 }
 
 type UpdateAgentControlRequest struct {
-	ShadowMode             bool
+	ShadowMode bool
+	// EarnedAutonomy and PromotionThreshold are optional so a client that
+	// only knows the pause switch leaves them as they are.
+	EarnedAutonomy         *bool
+	PromotionThreshold     *int
 	BillingAgentEnabled    *bool
 	DecisionTimeoutSeconds *int
 	TenantInfo             pagination.TenantInfo

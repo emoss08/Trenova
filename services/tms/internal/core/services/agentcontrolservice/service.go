@@ -73,6 +73,12 @@ func (s *Service) Update(
 
 	previous := *control
 	control.ShadowMode = req.ShadowMode
+	if req.EarnedAutonomy != nil {
+		control.EarnedAutonomy = *req.EarnedAutonomy
+	}
+	if req.PromotionThreshold != nil {
+		control.PromotionThreshold = *req.PromotionThreshold
+	}
 
 	me := errortypes.NewMultiError()
 	control.Validate(me)

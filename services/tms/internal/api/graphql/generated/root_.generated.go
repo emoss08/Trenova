@@ -547,8 +547,10 @@ type ComplexityRoot struct {
 		BusinessUnitID         func(childComplexity int) int
 		CreatedAt              func(childComplexity int) int
 		DecisionTimeoutSeconds func(childComplexity int) int
+		EarnedAutonomy         func(childComplexity int) int
 		ID                     func(childComplexity int) int
 		OrganizationID         func(childComplexity int) int
+		PromotionThreshold     func(childComplexity int) int
 		ShadowMode             func(childComplexity int) int
 		UpdatedAt              func(childComplexity int) int
 		Version                func(childComplexity int) int
@@ -12871,6 +12873,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentControl.DecisionTimeoutSeconds(childComplexity), true
+	case "AgentControl.earnedAutonomy":
+		if e.ComplexityRoot.AgentControl.EarnedAutonomy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentControl.EarnedAutonomy(childComplexity), true
 	case "AgentControl.id":
 		if e.ComplexityRoot.AgentControl.ID == nil {
 			break
@@ -12883,6 +12891,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentControl.OrganizationID(childComplexity), true
+	case "AgentControl.promotionThreshold":
+		if e.ComplexityRoot.AgentControl.PromotionThreshold == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentControl.PromotionThreshold(childComplexity), true
 	case "AgentControl.shadowMode":
 		if e.ComplexityRoot.AgentControl.ShadowMode == nil {
 			break
@@ -69148,6 +69162,10 @@ type AgentControl {
   organizationId: ID!
   businessUnitId: ID!
   shadowMode: Boolean!
+  "Whether a streak of clean approvals may move a tool up one tier on an agent."
+  earnedAutonomy: Boolean!
+  "Consecutive approvals without a change needed before a tool moves up a tier."
+  promotionThreshold: Int!
   billingAgentEnabled: Boolean!
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int!
@@ -69203,6 +69221,10 @@ input AgentExceptionResolveInput {
 
 input AgentControlInput {
   shadowMode: Boolean!
+  "Absent leaves the organization's earned autonomy switch as it is."
+  earnedAutonomy: Boolean
+  "Absent leaves the promotion threshold as it is; 1 to 1000 approvals."
+  promotionThreshold: Int
   billingAgentEnabled: Boolean
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int
@@ -89658,6 +89680,10 @@ func (ec *executionContext) childFields_AgentControl(ctx context.Context, field 
 		return ec.fieldContext_AgentControl_businessUnitId(ctx, field)
 	case "shadowMode":
 		return ec.fieldContext_AgentControl_shadowMode(ctx, field)
+	case "earnedAutonomy":
+		return ec.fieldContext_AgentControl_earnedAutonomy(ctx, field)
+	case "promotionThreshold":
+		return ec.fieldContext_AgentControl_promotionThreshold(ctx, field)
 	case "billingAgentEnabled":
 		return ec.fieldContext_AgentControl_billingAgentEnabled(ctx, field)
 	case "decisionTimeoutSeconds":
