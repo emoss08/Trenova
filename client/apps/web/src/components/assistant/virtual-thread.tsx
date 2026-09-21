@@ -91,6 +91,23 @@ export function VirtualThread({
     setAtEnd(virtualizer.isAtEnd(END_THRESHOLD));
   }, [rows.length, virtualizer]);
 
+  // The virtualizer follows an appended row only when the last key changes,
+  // and while a turn is live the last row is always the same one. A proposal
+  // card landing inside an entry, a message arriving above the live turn, or
+  // the reply itself growing all change the height and not the key. While
+  // the reader was at the end, growth keeps them there.
+  const atEndRef = useRef(true);
+  atEndRef.current = atEnd;
+  const totalSize = virtualizer.getTotalSize();
+  const lastSizeRef = useRef(totalSize);
+  useEffect(() => {
+    const grew = totalSize > lastSizeRef.current;
+    lastSizeRef.current = totalSize;
+    if (grew && atEndRef.current) {
+      virtualizer.scrollToEnd({ behavior: "auto" });
+    }
+  }, [totalSize, rows.length, virtualizer]);
+
   const jumpToLatest = useCallback(() => {
     virtualizer.scrollToEnd({ behavior: reduceMotion ? "auto" : "smooth" });
   }, [reduceMotion, virtualizer]);

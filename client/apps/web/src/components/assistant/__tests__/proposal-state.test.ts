@@ -6,6 +6,7 @@ import {
   groupProposalsByMessage,
   humanizeToolName,
   isDecidable,
+  pollIntervalFor,
 } from "../proposal-state";
 
 function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal {
@@ -240,5 +241,34 @@ describe("classifyProposal expiry", () => {
     expect(classifyProposal(proposal({ status: "Pending", expiresAt: 0 }), 1_800_000_000)).toBe(
       "awaiting",
     );
+  });
+});
+
+/**
+ * An approved proposal runs after the resolve call returns, so the card
+ * that read "waiting for it to run" stayed there until a remount. While any
+ * proposal or plan is between approval and its outcome, the lists are
+ * polled; otherwise they are not.
+ */
+describe("pollIntervalFor", () => {
+  it("polls only while something approved has not reported back", () => {
+    expect(pollIntervalFor([proposal({ status: "Pending" })], [])).toBe(false);
+    expect(pollIntervalFor([proposal({ status: "Accepted" })], [])).toBe(2000);
+    expect(pollIntervalFor([proposal({ status: "Accepted", executedAt: 1 })], [])).toBe(false);
+    expect(pollIntervalFor([proposal({ status: "Executed", executedAt: 1 })], [])).toBe(false);
+    const plan = (overrides: Record<string, unknown>) =>
+      ({
+        status: "Approved",
+        stepCount: 2,
+        completedSteps: 0,
+        failedStep: null,
+        ...overrides,
+      }) as never;
+    expect(pollIntervalFor([], [plan({})])).toBe(2000);
+    expect(pollIntervalFor([], [plan({ completedSteps: 1 })])).toBe(2000);
+    expect(pollIntervalFor([], [plan({ completedSteps: 2 })])).toBe(false);
+    expect(pollIntervalFor([], [plan({ failedStep: 1 })])).toBe(false);
+    expect(pollIntervalFor([], [plan({ status: "Completed", completedSteps: 2 })])).toBe(false);
+    expect(pollIntervalFor([], [plan({ status: "Pending" })])).toBe(false);
   });
 });

@@ -148445,6 +148445,15 @@
       "routes/agent-control"
     ]
   },
+  "Stopped before a reply started.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Stopped. What was said so far has been kept in the thread.": {
     "sites": 1,
     "scope": [
@@ -149852,6 +149861,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Switching to automatic model choice. The next model will read the whole conversation again before answering, which can take longer and cost more.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Switching to {0}. It will read the whole conversation again before answering, which can take longer and cost more.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Switching...": {
@@ -156993,6 +157020,24 @@
       "go/other"
     ]
   },
+  "The model stopped partway. Starting over on {0}…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The model stopped partway. Starting over…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The moment free time runs out.": {
     "sites": 1,
     "scope": [
@@ -158535,7 +158580,7 @@
       "routes/agent-control"
     ]
   },
-  "The reply ended before it was finished.": {
+  "The reply was cut off before it finished. What arrived has been kept.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -162744,6 +162789,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "This reply failed before it started.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This report artifact has expired — run the report again": {

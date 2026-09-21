@@ -137,6 +137,16 @@ function StatusLine({ turn }: { turn: TurnState }) {
     return null;
   }
 
+  if (turn.retrying) {
+    return (
+      <TextShimmer as="span" className="text-muted-foreground text-xs">
+        {turn.retrying.provider !== ""
+          ? t("The model stopped partway. Starting over on {0}…", turn.retrying.provider)
+          : t("The model stopped partway. Starting over…")}
+      </TextShimmer>
+    );
+  }
+
   const running = turn.segments.find(
     (segment) => segment.kind === "tool" && segment.status === "running",
   );

@@ -61,6 +61,8 @@ export type TurnState = {
   segments: TurnSegment[];
   error: string | null;
   result: SendMessageResult | null;
+  /** Set while the reply is starting over after a model died partway. */
+  retrying: { attempt: number; provider: string } | null;
 };
 
 export function initialTurnState(
@@ -75,6 +77,7 @@ export function initialTurnState(
     segments: [],
     error: null,
     result: null,
+    retrying: null,
   };
 }
 
@@ -111,6 +114,7 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
       return {
         ...state,
         status: "streaming",
+        retrying: null,
         segments: [...state.segments, { kind: "reasoning", text: event.data.text, closed: false }],
       };
     }
@@ -121,11 +125,12 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
       if (last && last.kind === "text" && !last.closed) {
         const rest = segments.slice(0, -1);
         rest.push({ ...last, text: last.text + event.data.text });
-        return { ...state, status: "streaming", segments: rest };
+        return { ...state, status: "streaming", retrying: null, segments: rest };
       }
       return {
         ...state,
         status: "streaming",
+        retrying: null,
         segments: [...segments, { kind: "text", text: event.data.text, closed: false }],
       };
     }
@@ -176,7 +181,23 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
       return { ...state, status: "working", segments };
     }
 
+    case "retrying":
+      // The reply is starting over. The words that arrived are withdrawn so
+      // the reader is not left holding half of one answer under another;
+      // the tools that ran are kept, because they did run.
+      return {
+        ...state,
+        status: "working",
+        retrying: { attempt: event.data.attempt, provider: event.data.provider },
+        segments: state.segments.filter((segment) => segment.kind === "tool"),
+      };
+
     case "done":
+      // A refusal is complete in itself; done after it only says the turn
+      // was saved, and must not turn the refusal back into a reply.
+      if (state.status === "refused") {
+        return { ...state, result: event.data };
+      }
       return { ...state, status: "done", result: event.data };
 
     case "error":
@@ -185,6 +206,28 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
     default:
       return state;
   }
+}
+
+/** Why a turn stopped, from the reader's side. */
+export type TurnFailureCause = "stopped" | "failed" | "ended";
+
+/**
+ * What the reader lost, which is what the failure copy has to say. A turn
+ * with nothing on screen lost nothing but the answer; one with words or a
+ * lookup on screen was cut off, and what is shown is what had happened.
+ */
+export type TurnFailureKind =
+  | "stopped-before-start"
+  | "stopped"
+  | "failed-before-start"
+  | "cut-off";
+
+export function describeTurnFailure(state: TurnState, cause: TurnFailureCause): TurnFailureKind {
+  const underway = state.segments.length > 0;
+  if (cause === "stopped") {
+    return underway ? "stopped" : "stopped-before-start";
+  }
+  return underway ? "cut-off" : "failed-before-start";
 }
 
 /** Whether the turn is still in flight, for disabling the composer. */

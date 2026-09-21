@@ -89,12 +89,17 @@ export function appendToHistory(
     return history;
   }
 
+  // The rows are placed by sequence rather than trusted as they came: the
+  // done payload is assembled in the runtime, and the page has to read in
+  // the order the server numbered it.
+  const results = [...newest.results, ...fresh].sort((a, b) => a.sequence - b.sequence);
+
   return {
     ...history,
     pages: [
       {
         ...newest,
-        results: [...newest.results, ...fresh],
+        results,
         total: newest.total + fresh.length,
       },
       ...older,

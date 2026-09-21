@@ -525,6 +525,17 @@ export const assistantToolFinishedEventSchema = z.object({
 
 export const assistantErrorEventSchema = z.object({ message: z.string() });
 
+/**
+ * The model died partway through its reply and the turn is starting over,
+ * on another model when one is configured. Whatever streamed before it is
+ * withdrawn; what follows is the whole reply.
+ */
+export const assistantRetryingEventSchema = z.object({
+  attempt: z.number().int().nonnegative(),
+  provider: z.string().optional().default(""),
+  reason: z.string().optional().default(""),
+});
+
 export type AssistantStreamEvent =
   | { event: "accepted"; data: z.infer<typeof assistantAcceptedEventSchema> }
   | { event: "refused"; data: z.infer<typeof assistantRefusedEventSchema> }
@@ -533,6 +544,7 @@ export type AssistantStreamEvent =
   | { event: "message"; data: z.infer<typeof assistantMessageEventSchema> }
   | { event: "tool_started"; data: z.infer<typeof assistantToolStartedEventSchema> }
   | { event: "tool_finished"; data: z.infer<typeof assistantToolFinishedEventSchema> }
+  | { event: "retrying"; data: z.infer<typeof assistantRetryingEventSchema> }
   | { event: "done"; data: SendMessageResult }
   | { event: "error"; data: z.infer<typeof assistantErrorEventSchema> };
 
@@ -559,6 +571,8 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
       return { event, data: assistantToolStartedEventSchema.parse(data) };
     case "tool_finished":
       return { event, data: assistantToolFinishedEventSchema.parse(data) };
+    case "retrying":
+      return { event, data: assistantRetryingEventSchema.parse(data) };
     case "done":
       return { event, data: sendMessageResultSchema.parse(data) };
     case "error":

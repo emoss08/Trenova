@@ -4,7 +4,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { toneVar } from "@/components/kpi/tone";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { apiService } from "@/services/api";
 import type { AssistantPlan, AssistantProposal, PlanDecision } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
@@ -55,18 +55,7 @@ export function PlanCard({
   const decideMutation = useApiMutation({
     mutationFn: (decision: PlanDecision) =>
       apiService.assistantService.decidePlan(plan.id, decision),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.assistant.plans(threadId).queryKey }),
-        queryClient.invalidateQueries({
-          queryKey: queries.assistant.proposals(threadId).queryKey,
-        }),
-        queryClient.invalidateQueries({
-          queryKey: queries.assistant.messages(threadId).queryKey,
-        }),
-        queryClient.invalidateQueries({ queryKey: ["assistant", "pending-proposals"] }),
-      ]);
-    },
+    onSuccess: () => invalidateProposalViews(queryClient, threadId),
     resourceName: "Plan",
   });
 

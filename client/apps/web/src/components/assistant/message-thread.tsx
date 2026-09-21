@@ -5,10 +5,15 @@ import { cn } from "@trenova/shared/lib/utils";
 import { queries } from "@/lib/queries";
 import { useAssistantStore } from "@/stores/assistant-store";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
-import type { AssistantPageContext, AssistantThread } from "@/types/assistant";
-import { useQuery } from "@tanstack/react-query";
+import type {
+  AssistantPageContext,
+  AssistantPlan,
+  AssistantProposal,
+  AssistantThread,
+} from "@/types/assistant";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { ArrowRightIcon, XIcon } from "lucide-react";
+import { ArrowRightIcon, InfoIcon, XIcon } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AssistantAgentProvider } from "@/components/agent-identity/agent-context";
@@ -25,7 +30,11 @@ import {
 import { PlanCard } from "./plan-card";
 import { groupPlans } from "./plan-state";
 import { ProposalCard } from "./proposal-card";
-import { groupProposalsByMessage } from "./proposal-state";
+import { groupProposalsByMessage, pollIntervalFor } from "./proposal-state";
+import {
+  modelSwitchNotice,
+  type ModelSwitchNotice as ModelSwitchNoticeValue,
+} from "./model-switch";
 import { StreamingTurn } from "./streaming-turn";
 import { suggestionsFor, type Suggestion } from "./suggestions";
 import { arrivedSince, highestSequence, withDayMarkers } from "./thread-rows";
@@ -71,6 +80,7 @@ export function MessageThread({
     [setDraft, thread.id],
   );
 
+  const queryClient = useQueryClient();
   const history = useThreadHistory(thread.id);
   const { messages } = history;
 
@@ -113,8 +123,39 @@ export function MessageThread({
     [thread.id],
   );
 
-  const proposalsQuery = useQuery(queries.assistant.proposals(thread.id));
-  const plansQuery = useQuery(queries.assistant.plans(thread.id));
+  // While an approval is being carried out the lists are polled, so the
+  // card moves from "waiting for it to run" to its outcome without a
+  // remount; the moment nothing is running, they are not.
+  const proposalsQuery = useQuery({
+    ...queries.assistant.proposals(thread.id),
+    refetchInterval: (query) =>
+      pollIntervalFor(
+        query.state.data?.results ?? [],
+        queryClient.getQueryData<{ results: AssistantPlan[] }>(
+          queries.assistant.plans(thread.id).queryKey,
+        )?.results ?? [],
+      ),
+  });
+  const plansQuery = useQuery({
+    ...queries.assistant.plans(thread.id),
+    refetchInterval: (query) =>
+      pollIntervalFor(
+        queryClient.getQueryData<{ results: AssistantProposal[] }>(
+          queries.assistant.proposals(thread.id).queryKey,
+        )?.results ?? [],
+        query.state.data?.results ?? [],
+      ),
+  });
+
+  // Switching models mid-conversation means the new model reads the whole
+  // thread again before it answers; the reader is told at the moment they
+  // switch rather than by a slower, costlier reply.
+  const switchNotice = modelSwitchNotice({
+    pickedId: providerId,
+    savedId: thread.preferredProviderId ?? "",
+    hasReplies: messages.some((message) => message.role === "Assistant"),
+    providers,
+  });
   // A plan's steps are shown inside the plan and nowhere else; only the
   // proposals outside any plan are grouped under their turns on their own.
   const {
@@ -346,6 +387,8 @@ export function MessageThread({
                 limit={history.limit}
                 onStartNew={onStartNew}
               />
+            ) : switchNotice ? (
+              <ModelSwitchNotice notice={switchNotice} />
             ) : null
           }
           placeholder={
@@ -450,6 +493,31 @@ function EmptyThread({
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+/**
+ * Said at the moment a person picks a different model for a conversation
+ * that already has replies: the new model starts from nothing and reads the
+ * whole thread before it answers.
+ */
+function ModelSwitchNotice({ notice }: { notice: ModelSwitchNoticeValue }) {
+  const t = useT();
+
+  return (
+    <div className="text-muted-foreground flex items-center gap-2 px-1 text-xs">
+      <InfoIcon className="text-info size-3.5 shrink-0" />
+      <span>
+        {notice.to
+          ? t(
+              "Switching to {0}. It will read the whole conversation again before answering, which can take longer and cost more.",
+              notice.to,
+            )
+          : t(
+              "Switching to automatic model choice. The next model will read the whole conversation again before answering, which can take longer and cost more.",
+            )}
+      </span>
     </div>
   );
 }

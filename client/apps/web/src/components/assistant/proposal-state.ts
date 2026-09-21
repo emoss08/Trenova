@@ -1,4 +1,4 @@
-import type { AssistantMessage, AssistantProposal } from "@/types/assistant";
+import type { AssistantMessage, AssistantPlan, AssistantProposal } from "@/types/assistant";
 
 /**
  * What a proposal card should show.
@@ -180,4 +180,37 @@ function stringifyArgument(value: unknown): string {
   }
 
   return JSON.stringify(value);
+}
+
+/** How often the lists are re-read while an approval is being carried out. */
+export const RUNNING_POLL_INTERVAL_MS = 2000;
+
+/**
+ * Whether anything approved has not reported back yet.
+ *
+ * Execution happens after the resolve call returns, so a card that was
+ * refetched once read "waiting for it to run" until the thread was
+ * remounted. While a proposal or a plan is between approval and its
+ * outcome the lists are polled; the moment nothing is, they are not.
+ */
+export function pollIntervalFor(
+  proposals: readonly AssistantProposal[],
+  plans: readonly AssistantPlan[],
+): number | false {
+  const running =
+    proposals.some(
+      (proposal) =>
+        (proposal.status === "Accepted" || proposal.status === "Modified") &&
+        !proposal.executedAt &&
+        !proposal.simulatedAt &&
+        proposal.executionError === "",
+    ) ||
+    plans.some(
+      (plan) =>
+        plan.status === "Approved" &&
+        plan.completedSteps < plan.stepCount &&
+        (plan.failedStep ?? 0) === 0,
+    );
+
+  return running ? RUNNING_POLL_INTERVAL_MS : false;
 }

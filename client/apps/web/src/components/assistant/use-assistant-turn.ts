@@ -11,7 +11,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { appendToHistory, continuesHistory, type ThreadHistory } from "./thread-history";
-import { initialTurnState, isTurnActive, reduceTurn, type TurnState } from "./turn-stream";
+import {
+  describeTurnFailure,
+  initialTurnState,
+  isTurnActive,
+  reduceTurn,
+  type TurnFailureCause,
+  type TurnFailureKind,
+  type TurnState,
+} from "./turn-stream";
 
 /**
  * Drives one turn at a time for a thread: opens the stream, folds its events
@@ -28,6 +36,42 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
   const [turn, setTurn] = useState<TurnState | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const lastContextRef = useRef<AssistantPageContext | null>(null);
+  // The model the last send asked for, so a retry asks the same one rather
+  // than silently falling back to automatic.
+  const lastProviderRef = useRef("");
+
+  const failureMessage = useCallback(
+    (kind: TurnFailureKind) => {
+      switch (kind) {
+        case "stopped-before-start":
+          return t("Stopped before a reply started.");
+        case "stopped":
+          return t("Stopped. What was said so far has been kept in the thread.");
+        case "failed-before-start":
+          return t("This reply failed before it started.");
+        default:
+          return t("The reply was cut off before it finished. What arrived has been kept.");
+      }
+    },
+    [t],
+  );
+
+  const fail = useCallback(
+    (cause: TurnFailureCause, detail?: string) => {
+      setTurn((state) => {
+        if (!state || !isTurnActive(state)) {
+          return state;
+        }
+        const message = failureMessage(describeTurnFailure(state, cause));
+        return {
+          ...state,
+          status: "error",
+          error: detail && detail !== "" ? `${message} ${detail}` : message,
+        };
+      });
+    },
+    [failureMessage],
+  );
 
   useEffect(() => {
     return () => abortRef.current?.abort();
@@ -37,9 +81,32 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: queries.assistant.messages(threadId).queryKey }),
       queryClient.invalidateQueries({ queryKey: queries.assistant.proposals(threadId).queryKey }),
+      queryClient.invalidateQueries({ queryKey: queries.assistant.plans(threadId).queryKey }),
       queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
     ]);
   }, [queryClient, threadId]);
+
+  // The proposals a finished turn raised are put in the cache before the
+  // refetch, so their cards appear with the reply rather than a round-trip
+  // later. The refetch then brings the hold state and anything else.
+  const seedProposals = useCallback(
+    (result: SendMessageResult) => {
+      const proposals = result.proposals ?? [];
+      if (proposals.length === 0) {
+        return;
+      }
+      const key = queries.assistant.proposals(threadId).queryKey;
+      queryClient.setQueryData<{ results: SendMessageResult["proposals"] & object }>(
+        key,
+        (cached) => {
+          const known = new Set((cached?.results ?? []).map((proposal) => proposal.id));
+          const fresh = proposals.filter((proposal) => !known.has(proposal.id));
+          return { results: [...(cached?.results ?? []), ...fresh] };
+        },
+      );
+    },
+    [queryClient, threadId],
+  );
 
   // A finished turn is appended to the history the thread already holds
   // rather than refetched: the result carries the rows the server wrote, and a
@@ -52,6 +119,9 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
     async (result: SendMessageResult | null) => {
       const key = queries.assistant.messages(threadId).queryKey;
       const cached = queryClient.getQueryData<ThreadHistory>(key);
+      if (result) {
+        seedProposals(result);
+      }
       if (result && continuesHistory(cached, result.messages)) {
         queryClient.setQueryData<ThreadHistory>(key, (history) =>
           appendToHistory(history, result.messages),
@@ -60,6 +130,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           queryClient.invalidateQueries({
             queryKey: queries.assistant.proposals(threadId).queryKey,
           }),
+          queryClient.invalidateQueries({ queryKey: queries.assistant.plans(threadId).queryKey }),
           queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
         ]);
         return;
@@ -67,7 +138,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
 
       await refreshThread();
     },
-    [queryClient, refreshThread, threadId],
+    [queryClient, refreshThread, seedProposals, threadId],
   );
 
   const settle = useCallback(
@@ -88,6 +159,9 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       // Sending over a reply still arriving cuts it off. The server keeps
       // what had run by then, so the thread is refetched to show it rather
       // than the cut-off turn vanishing under the new question.
+      // Only a stream still open is interrupted. A finished turn used to
+      // leave its controller behind, so every send after the first looked
+      // like an interruption and refetched the whole thread under itself.
       const interrupted = abortRef.current !== null && !abortRef.current.signal.aborted;
       abortRef.current?.abort();
       if (interrupted) {
@@ -95,9 +169,15 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       }
       const controller = new AbortController();
       abortRef.current = controller;
+      const release = () => {
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+        }
+      };
 
       const pageContext = context === undefined ? (getContext?.() ?? null) : context;
       lastContextRef.current = pageContext;
+      lastProviderRef.current = providerId;
 
       let terminal = false;
       let done: SendMessageResult | null = null;
@@ -126,28 +206,27 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         if (controller.signal.aborted) {
           return;
         }
-        const message =
+        release();
+        const detail =
           error instanceof AssistantStreamError
             ? error.message
             : t("The connection to the assistant was lost.");
-        setTurn((state) => (state ? { ...state, status: "error", error: message } : state));
+        fail("failed", detail);
+        void refreshThread();
         return;
       }
 
       if (controller.signal.aborted) {
         return;
       }
+      release();
 
       if (!terminal) {
         // The stream closed without saying how it ended, which a proxy that
         // buffers or cuts long responses can cause. The turn may still have
         // been saved, so the thread is refreshed rather than the reply lost.
         await refreshThread();
-        setTurn((state) =>
-          state && state.status !== "done"
-            ? { ...state, status: "error", error: t("The reply ended before it was finished.") }
-            : state,
-        );
+        fail("ended");
         return;
       }
 
@@ -170,24 +249,17 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         });
       }
     },
-    [getContext, refreshThread, settle, t, threadId],
+    [fail, getContext, refreshThread, settle, t, threadId],
   );
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
+    abortRef.current = null;
     // The server saves what had run when the stream was cut; the refetch
     // shows it under the notice rather than leaving it to the next turn.
     void refreshThread();
-    setTurn((state) =>
-      state && isTurnActive(state)
-        ? {
-            ...state,
-            status: "error",
-            error: t("Stopped. What was said so far has been kept in the thread."),
-          }
-        : state,
-    );
-  }, [refreshThread, t]);
+    fail("stopped");
+  }, [fail, refreshThread]);
 
   const dismiss = useCallback(async () => {
     await refreshThread();
@@ -200,6 +272,8 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
     send,
     stop,
     dismiss,
-    retry: turn ? () => send(turn.userContent, lastContextRef.current) : undefined,
+    retry: turn
+      ? () => send(turn.userContent, lastContextRef.current, lastProviderRef.current)
+      : undefined,
   };
 }

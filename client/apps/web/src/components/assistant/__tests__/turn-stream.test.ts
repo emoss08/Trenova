@@ -1,6 +1,6 @@
-import type { AssistantStreamEvent } from "@/types/assistant";
+import { parseAssistantStreamEvent, type AssistantStreamEvent } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
-import { initialTurnState, reduceTurn, type TurnState } from "../turn-stream";
+import { describeTurnFailure, initialTurnState, reduceTurn, type TurnState } from "../turn-stream";
 
 function run(events: AssistantStreamEvent[], from: TurnState = initialTurnState("Where is S1?")) {
   return events.reduce(reduceTurn, from);
@@ -228,5 +228,90 @@ describe("reduceTurn reasoning", () => {
     const thoughts = state.segments.filter((segment) => segment.kind === "reasoning");
     expect(thoughts).toHaveLength(2);
     expect(thoughts[1]).toEqual({ kind: "reasoning", text: "Second.", closed: false });
+  });
+});
+
+/**
+ * Contract: services/tms/internal/core/ports/services/assistant.go. A
+ * `retrying` event says the model died partway and the reply is starting
+ * over, so the text the reader watched is withdrawn while the tools that
+ * already ran stay, and `done` after a refusal does not undo the refusal.
+ */
+describe("reduceTurn restarts and refusals", () => {
+  it("withdraws the partial reply on retrying and keeps the tools that ran", () => {
+    const state = run([
+      accepted,
+      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+      {
+        event: "tool_finished",
+        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+      },
+      { event: "reasoning", data: { text: "Let me think." } },
+      { event: "delta", data: { text: "S1 is in " } },
+      { event: "retrying", data: { attempt: 1, provider: "Backup", reason: "stream died" } },
+    ]);
+
+    expect(state.status).toBe("working");
+    expect(state.segments.map((segment) => segment.kind)).toEqual(["tool"]);
+    expect(state.retrying).toEqual({ attempt: 1, provider: "Backup" });
+
+    const resumed = reduceTurn(state, { event: "delta", data: { text: "S1 is in Dallas." } });
+    expect(resumed.retrying).toBeNull();
+    expect(resumed.segments.at(-1)).toMatchObject({ kind: "text", text: "S1 is in Dallas." });
+  });
+
+  it("parses the retrying event from the wire", () => {
+    expect(parseAssistantStreamEvent("retrying", '{"attempt":2,"provider":"Backup"}')).toEqual({
+      event: "retrying",
+      data: { attempt: 2, provider: "Backup", reason: "" },
+    });
+  });
+
+  it("keeps a refusal when done follows it", () => {
+    const state = run([
+      accepted,
+      {
+        event: "refused",
+        data: { message: "Not here.", stage: "Output", category: "x", reason: "r" },
+      },
+      {
+        event: "done",
+        data: {
+          thread: {
+            id: "thr_1",
+            agentDefinitionId: "agdef_1",
+            title: "t",
+            createdAt: 1,
+            updatedAt: 1,
+          } as never,
+          messages: [],
+          reply: "",
+          refused: true,
+          proposals: null,
+          proposalsUnrecorded: false,
+        },
+      },
+    ]);
+
+    expect(state.status).toBe("refused");
+  });
+});
+
+/**
+ * The failure copy says what the reader actually lost: nothing had arrived,
+ * or a reply was underway. "What was said so far has been kept" under an
+ * empty frame read as a reply that had vanished.
+ */
+describe("describeTurnFailure", () => {
+  it("distinguishes nothing-yet from cut-off for each cause", () => {
+    const empty = run([accepted]);
+    const underway = run([accepted, { event: "delta", data: { text: "S1 is" } }]);
+
+    expect(describeTurnFailure(empty, "stopped")).toBe("stopped-before-start");
+    expect(describeTurnFailure(underway, "stopped")).toBe("stopped");
+    expect(describeTurnFailure(empty, "failed")).toBe("failed-before-start");
+    expect(describeTurnFailure(underway, "failed")).toBe("cut-off");
+    expect(describeTurnFailure(empty, "ended")).toBe("failed-before-start");
+    expect(describeTurnFailure(underway, "ended")).toBe("cut-off");
   });
 });

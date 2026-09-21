@@ -9,6 +9,7 @@ import { decideAgentPlan } from "@/lib/graphql/agent-decisions";
 import { aiControlStatsQueryKey } from "../overview/use-ai-control-stats";
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
+import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, XIcon } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -31,9 +32,7 @@ export default function AgentPlanTable() {
   const afterDecision = async (message: string) => {
     toast.success(message);
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["agent-plan-list"] }),
-      queryClient.invalidateQueries({ queryKey: ["agent-proposal-list"] }),
-      queryClient.invalidateQueries({ queryKey: ["agent-run-list"] }),
+      invalidateProposalViews(queryClient),
       queryClient.invalidateQueries({ queryKey: aiControlStatsQueryKey }),
     ]);
   };

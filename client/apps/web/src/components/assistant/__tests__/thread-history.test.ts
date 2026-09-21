@@ -148,3 +148,18 @@ describe("threadLength", () => {
     expect(threadLength(9999, 0).state).toBe("open");
   });
 });
+
+// The done payload is assembled in the runtime, not read back in order, so
+// the appended rows are placed by sequence rather than trusted as they came.
+describe("appendToHistory ordering", () => {
+  it("places appended rows by sequence whatever order they arrived in", () => {
+    const history = {
+      pages: [{ results: [message(0), message(1)], total: 2, limit: 50, hasMore: false }],
+      pageParams: [undefined],
+    };
+
+    const appended = appendToHistory(history, [message(4), message(2), message(3)]);
+
+    expect(appended?.pages[0].results.map((row) => row.sequence)).toEqual([0, 1, 2, 3, 4]);
+  });
+});

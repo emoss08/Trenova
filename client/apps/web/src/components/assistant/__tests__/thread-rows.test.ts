@@ -91,3 +91,23 @@ describe("arrivedSince", () => {
     expect(highestSequence([])).toBe(-1);
   });
 });
+
+// A backfilled or clock-skewed row can put a day out of order. Two markers
+// for the same day must still be two rows with two keys, or the window
+// measures one of them against the other.
+describe("withDayMarkers keys", () => {
+  it("keeps marker keys unique when a day recurs out of order", () => {
+    const entries = [
+      { kind: "user", message: message(0, NOON - DAY) },
+      { kind: "user", message: message(1, NOON) },
+      { kind: "user", message: message(2, NOON - DAY) },
+    ] as unknown as ThreadEntry[];
+
+    const keys = withDayMarkers(entries, NOON, "UTC")
+      .filter((row) => row.kind === "day")
+      .map((row) => row.key);
+
+    expect(keys).toHaveLength(3);
+    expect(new Set(keys).size).toBe(3);
+  });
+});

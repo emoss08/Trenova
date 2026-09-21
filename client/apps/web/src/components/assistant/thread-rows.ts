@@ -24,15 +24,21 @@ export function withDayMarkers(
 ): ThreadRowItem[] {
   const rows: ThreadRowItem[] = [];
   let currentDay: number | null = null;
+  // A day can recur when a row's clock is out of step with its neighbours.
+  // Each marker still needs a key of its own, or the window measures one
+  // against the other.
+  const seen = new Map<number, number>();
 
   for (const entry of entries) {
     const at = entry.message.createdAt;
     const day = at > 0 ? calendarDayOf(at, timezone) : null;
     if (day !== null && day !== currentDay) {
       currentDay = day;
+      const repeat = seen.get(day) ?? 0;
+      seen.set(day, repeat + 1);
       rows.push({
         kind: "day",
-        key: `day-${day}`,
+        key: repeat === 0 ? `day-${day}` : `day-${day}-${repeat}`,
         at,
         daysAgo: calendarDaysAgo(at, now, timezone),
       });
