@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +35,8 @@ type Params struct {
 	Executor     *proposalexecutor.Service
 	AuditService services.AuditService
 	Trust        services.AgentTrustService
-	Memories     services.AgentMemoryService `optional:"true"`
+	Memories     services.AgentMemoryService     `optional:"true"`
+	Activity     services.AgentActivityPublisher `optional:"true"`
 }
 
 type Service struct {
@@ -49,6 +51,7 @@ type Service struct {
 	audit        services.AuditService
 	trust        services.AgentTrustService
 	memories     services.AgentMemoryService
+	activity     services.AgentActivityPublisher
 }
 
 func New(p Params) services.AgentDecisionService {
@@ -64,6 +67,7 @@ func New(p Params) services.AgentDecisionService {
 		audit:        p.AuditService,
 		trust:        p.Trust,
 		memories:     p.Memories,
+		activity:     p.Activity,
 	}
 }
 
@@ -196,6 +200,8 @@ func (s *Service) DecideWithOutcome(
 	}, auditservice.WithComment("Human decision recorded for agent proposal")); err != nil {
 		s.l.Error("failed to log agent decision audit", zap.Error(err))
 	}
+
+	s.announce(ctx, proposal, req.TenantInfo, auditActor)
 
 	return &services.DecisionOutcome{Decision: created, ExecutionError: execErr}, nil
 }
@@ -426,4 +432,30 @@ func proposalStatusFor(decision agent.DecisionType) agent.ProposalStatus {
 	default:
 		return agent.ProposalStatusRejected
 	}
+}
+
+// announce publishes the proposal as it now is, after the decision and any
+// execution, so a queue drops it and a pane shows the outcome. The record
+// is re-read because execution moved its status past the decision.
+func (s *Service) announce(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+	tenant pagination.TenantInfo,
+	actor services.AuditActor,
+) {
+	if s.activity == nil {
+		return
+	}
+
+	current, err := s.proposalRepo.GetByID(ctx, repositories.GetAgentProposalByIDRequest{
+		ID:         proposal.ID,
+		TenantInfo: &tenant,
+	})
+	if err != nil {
+		s.l.Warn("decided proposal could not be re-read for its announcement",
+			zap.String("proposal", proposal.ID.String()), zap.Error(err))
+		current = proposal
+	}
+
+	s.activity.ProposalChanged(ctx, current, actor, services.ActivityUpdated)
 }

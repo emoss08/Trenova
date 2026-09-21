@@ -145,6 +145,10 @@ describe("reduceTurn", () => {
             userId: "u",
             agentDefinitionId: "agdef",
             preferredProviderId: "",
+            origin: "Desk",
+            pinned: false,
+            subjectType: "",
+            subjectId: "",
             title: "t",
             status: "Active",
             lastMessageAt: 0,
@@ -348,5 +352,60 @@ describe("describeTurnFailure", () => {
     expect(describeTurnFailure(underway, "failed")).toBe("cut-off");
     expect(describeTurnFailure(empty, "ended")).toBe("failed-before-start");
     expect(describeTurnFailure(underway, "ended")).toBe("cut-off");
+  });
+});
+
+/**
+ * An artifact arrives while the reply is still streaming, so the pane can open
+ * it at once. The same artifact announced twice (a retried tool call) replaces
+ * the first rather than stacking.
+ */
+describe("reduceTurn artifacts", () => {
+  const artifactEvent = (id: string, status: "Pending" | "Ready"): AssistantStreamEvent => ({
+    event: "artifact",
+    data: {
+      id,
+      kind: "report_preview",
+      status,
+      title: "Revenue by customer",
+      sourceToolCallId: "call_1",
+    },
+  });
+
+  it("collects artifacts as they are announced", () => {
+    const state = run([accepted, artifactEvent("art_1", "Pending")]);
+    expect(state.artifacts).toEqual([
+      {
+        id: "art_1",
+        kind: "report_preview",
+        status: "Pending",
+        title: "Revenue by customer",
+        sourceToolCallId: "call_1",
+      },
+    ]);
+    expect(state.status).toBe("working");
+  });
+
+  it("replaces an artifact announced again", () => {
+    const state = run([
+      accepted,
+      artifactEvent("art_1", "Pending"),
+      artifactEvent("art_1", "Ready"),
+    ]);
+    expect(state.artifacts).toHaveLength(1);
+    expect(state.artifacts[0].status).toBe("Ready");
+  });
+
+  it("parses the artifact frame", () => {
+    const parsed = parseAssistantStreamEvent(
+      "artifact",
+      JSON.stringify({
+        id: "art_1",
+        kind: "entity_card",
+        status: "Ready",
+        title: "Shipment PRO-1",
+      }),
+    );
+    expect(parsed?.event).toBe("artifact");
   });
 });

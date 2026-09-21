@@ -856,6 +856,8 @@ type AgentPlan {
   failureError: String!
   id: ID!
   organizationId: ID!
+  """The run that raised this plan, for the agent behind it."""
+  run: AgentRun
   runId: ID!
   status: AgentPlanStatus!
   stepCount: Int!
@@ -914,6 +916,8 @@ type AgentProposal {
   """Position in the plan, from one; zero outside a plan."""
   planStep: Int!
   rationale: String!
+  """The run that raised this proposal, for the agent behind it."""
+  run: AgentRun
   runId: ID!
   """
   When the write was previewed instead of made, for an agent in simulation.
@@ -941,6 +945,18 @@ input AgentProposalDecisionInput {
   decision: AgentDecisionType!
   modifications: JSON
   reasonCode: String!
+}
+
+"""What became of one proposal in a batch decision."""
+type AgentProposalDecisionResult {
+  decision: AgentDecision
+  """
+  Why this one could not be decided or its write failed, written for the person; absent when it went through.
+  """
+  error: String
+  """The approved write ran."""
+  executed: Boolean!
+  proposalId: ID!
 }
 
 type AgentProposalEdge {
@@ -1012,6 +1028,10 @@ type AgentRun {
   businessUnitId: ID!
   completedAt: Timestamp
   createdAt: Timestamp!
+  """
+  The agent definition behind the run; absent for runs of the retired built-in agents.
+  """
+  definition: AgentDefinition
   errorMessage: String!
   id: ID!
   inputContextHash: String!
@@ -1304,6 +1324,8 @@ input AttachWorkerTrainingDocumentInput {
 }
 
 type AttentionSummary {
+  """Proposals and plans waiting on a person, for whoever may decide them."""
+  agentDecisions: Int
   billingQueue: Int
   ediAttention: Int
   pendingApprovals: Int
@@ -4446,6 +4468,14 @@ input DataTableConnectionInput {
   first: Int = 20
   query: String
   sort: [SortFieldInput!]
+}
+
+input DecideAgentProposalsInput {
+  """
+  Accepted or Rejected. A change applies to one proposal, from its own card.
+  """
+  decision: AgentDecisionType!
+  reasonCode: String
 }
 
 input DecideLeaveCaseInput {
@@ -10449,6 +10479,13 @@ type Mutation {
   createWorkerSafetyEvent(input: WorkerSafetyEventInput!): WorkerSafetyEvent!
   decideAgentPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
   decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
+  """
+  Decides several proposals of one tool the same way, each as proposed. The
+  batch is refused before anything runs when it mixes tools or includes a
+  plan's step; once it starts, every proposal is decided in turn and each
+  outcome is reported.
+  """
+  decideAgentProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
   decideLeaveCase(input: DecideLeaveCaseInput!): WorkerLeaveCase!
   decideProfileChange(input: DecideProfileChangeInput!): WorkerProfileChangeRequest!
   delegateApproval(input: DelegateApprovalInput!): ApprovalDelegation!
@@ -11831,6 +11868,54 @@ enum PayrollExportStatus {
   Voided
 }
 
+"""
+One thing waiting on a person: a proposal that stands on its own, or a plan
+decided as a whole. A plan's steps never appear on their own.
+"""
+union PendingDecision = AgentPlan | AgentProposal
+
+type PendingDecisionAgentCount {
+  agentDefinitionId: ID!
+  agentName: String!
+  count: Int!
+}
+
+type PendingDecisionConnection {
+  edges: [PendingDecisionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type PendingDecisionEdge {
+  cursor: String!
+  node: PendingDecision!
+}
+
+"""
+The queue in numbers: how much is waiting, from whom, of what, and for how long.
+"""
+type PendingDecisionSummary {
+  byAgent: [PendingDecisionAgentCount!]!
+  byTool: [PendingDecisionToolCount!]!
+  oldestAt: Timestamp
+  total: Int!
+}
+
+type PendingDecisionToolCount {
+  count: Int!
+  """A plan counts under the tool name plan."""
+  toolName: String!
+}
+
+input PendingDecisionsInput {
+  after: String
+  """Only this agent's work."""
+  agentDefinitionId: ID
+  first: Int = 25
+  """Only proposals of this tool; a plan matches when any step uses it."""
+  toolName: String
+}
+
 type PerformanceReview {
   acknowledgedAt: Timestamp
   businessUnitId: ID!
@@ -12862,6 +12947,11 @@ type Query {
   payrollExport(id: ID!): PayrollExport!
   payrollExportRows(id: ID!): [PayrollExportRow!]!
   payrollExports(limit: Int): [PayrollExport!]!
+  pendingDecisionSummary: PendingDecisionSummary!
+  """
+  What is waiting on a person, newest first: proposals on their own and plans as one unit.
+  """
+  pendingDecisions(input: PendingDecisionsInput!): PendingDecisionConnection!
   pendingDriverExpenseCount: Int!
   performanceReview(id: ID!): PerformanceReview!
   performanceReviewTemplate(id: ID!): PerformanceReviewTemplate!

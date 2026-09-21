@@ -40,6 +40,7 @@ function step(planStep: number, overrides: Partial<AssistantProposal> = {}): Ass
     expiresAt: 0,
     planId: "apl_1",
     planStep,
+    fields: [],
     ...overrides,
   };
 }

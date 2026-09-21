@@ -212,12 +212,9 @@ func TestNotifyPending_TellsEveryDeciderOnce(t *testing.T) {
 	require.True(t, ok)
 	parsed, err := url.Parse(link)
 	require.NoError(t, err)
-	assert.Equal(t, "/admin/agent-control", parsed.Path)
-	assert.Equal(t, "proposals", parsed.Query().Get("activity"))
-	assert.JSONEq(t,
-		`[{"field":"runId","operator":"eq","value":"`+h.run.ID.String()+`"}]`,
-		parsed.Query().Get("fieldFilters"),
-		"the link lands on the proposals filtered to this run",
+	assert.Equal(t, "/desk/decisions", parsed.Path)
+	assert.Equal(t, h.run.ID.String(), parsed.Query().Get("run"),
+		"the link lands on the decisions queue filtered to this run",
 	)
 
 	assert.Empty(t, h.mailer.sent, "the first notice is in-app only")

@@ -1,8 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
-import { fetchPendingProposalCount } from "@/lib/graphql/agent-activity";
+import { useAttentionSummary } from "@/hooks/use-attention";
 import { useAssistantStore } from "@/stores/assistant-store";
-import { useQuery } from "@tanstack/react-query";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -64,12 +63,11 @@ export function AssistantWidget() {
     enabled: allowed && open,
   });
 
-  const pendingQuery = useQuery({
-    queryKey: ["assistant", "pending-proposals"],
-    queryFn: ({ signal }) => fetchPendingProposalCount({ signal }),
-    enabled: allowed && canSeeProposals,
-    refetchInterval: 60_000,
-  });
+  // The launcher is a signal: it moves only for a decision waiting on
+  // someone. The count is the same one the sidebar and the Desk show, read
+  // once through the attention summary rather than polled on its own.
+  const { data: attention } = useAttentionSummary();
+  const pendingCount = allowed && canSeeProposals ? (attention?.agentDecisions ?? 0) : 0;
 
   if (!allowed) {
     return null;
@@ -127,11 +125,7 @@ export function AssistantWidget() {
           </m.section>
         </Fragment>
       ) : (
-        <AssistantLauncher
-          key="launcher"
-          pendingCount={pendingQuery.data ?? 0}
-          onClick={openWidget}
-        />
+        <AssistantLauncher key="launcher" pendingCount={pendingCount} onClick={openWidget} />
       )}
     </AnimatePresence>
   );

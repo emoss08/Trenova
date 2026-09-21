@@ -141,6 +141,30 @@ func (r *repository) ListConnection(
 	return result, nil
 }
 
+func (r *repository) ListByIDs(
+	ctx context.Context,
+	req repositories.ListAgentDefinitionsByIDsRequest,
+) ([]*agentdefinition.Definition, error) {
+	if len(req.IDs) == 0 {
+		return []*agentdefinition.Definition{}, nil
+	}
+
+	definitions := make([]*agentdefinition.Definition, 0, len(req.IDs))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&definitions).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.DefinitionScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.DefinitionColumns.ID.In(), bun.In(req.IDs))
+		}).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list agent definitions by ids: %w", err)
+	}
+
+	return definitions, nil
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetAgentDefinitionByIDRequest,

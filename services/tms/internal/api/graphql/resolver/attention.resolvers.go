@@ -69,6 +69,15 @@ func (r *queryResolver) AttentionSummary(ctx context.Context) (*gqlmodel.Attenti
 		return nil
 	})
 
+	run(permission.ResourceAgentProposal, "agent decision count", func(ctx context.Context) error {
+		count, sErr := r.agentDecisionQueueService.Count(ctx, tenantInfo(authCtx))
+		if sErr != nil {
+			return sErr
+		}
+		summary.AgentDecisions = &count
+		return nil
+	})
+
 	wg.Wait()
 
 	return summary, nil

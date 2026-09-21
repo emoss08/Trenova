@@ -4,6 +4,8 @@ type AttentionSummary {
   reconciliationExceptions: Int
   serviceFailures: Int
   ediAttention: Int
+  "Proposals and plans waiting on a person, for whoever may decide them."
+  agentDecisions: Int
 }
 
 extend type Query {

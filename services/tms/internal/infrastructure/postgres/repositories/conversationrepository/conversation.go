@@ -18,6 +18,26 @@ import (
 
 const defaultThreadLimit = 50
 
+// unlistedOrigins are the origins the rail hides: a quick question from the
+// palette is not a conversation until the person keeps it.
+func unlistedOrigins() []conversation.ThreadOrigin {
+	all := []conversation.ThreadOrigin{
+		conversation.ThreadOriginPanel,
+		conversation.ThreadOriginDesk,
+		conversation.ThreadOriginAsk,
+		conversation.ThreadOriginWatchtower,
+		conversation.ThreadOriginBriefing,
+	}
+	out := make([]conversation.ThreadOrigin, 0, len(all))
+	for _, o := range all {
+		if !o.Listed() {
+			out = append(out, o)
+		}
+	}
+
+	return out
+}
+
 type Params struct {
 	fx.In
 
@@ -94,10 +114,15 @@ func (r *repository) ListThreads(
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ThreadScopeTenant(sq, req.TenantInfo).
+			sq = buncolgen.ThreadScopeTenant(sq, req.TenantInfo).
 				Where(cols.UserID.Eq(), req.UserID)
+			if !req.IncludeUnlisted {
+				sq = sq.Where(cols.Origin.NotIn(), bun.In(unlistedOrigins()))
+			}
+
+			return sq
 		}).
-		Order(cols.LastMessageAt.OrderDesc(), cols.CreatedAt.OrderDesc()).
+		Order(cols.Pinned.OrderDesc(), cols.LastMessageAt.OrderDesc(), cols.CreatedAt.OrderDesc()).
 		Limit(limit).
 		Offset(req.Offset).
 		ScanAndCount(ctx)
@@ -131,6 +156,10 @@ func (r *repository) UpdateThread(
 		Set(cols.Title.Set(), thread.Title).
 		Set(cols.Status.Set(), thread.Status).
 		Set(cols.PreferredProviderID.Set(), thread.PreferredProviderID).
+		Set(cols.Origin.Set(), thread.Origin).
+		Set(cols.Pinned.Set(), thread.Pinned).
+		Set(cols.SubjectType.Set(), thread.SubjectType).
+		Set(cols.SubjectID.Set(), thread.SubjectID).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 		Set(cols.Version.Set(), thread.Version).
 		Exec(ctx)

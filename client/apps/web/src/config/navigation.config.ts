@@ -9,6 +9,7 @@ import {
   FuelIcon,
   HandshakeIcon,
   HomeIcon,
+  MessagesSquareIcon,
   Package,
   ReceiptTextIcon,
   RouteIcon,
@@ -35,6 +36,19 @@ const homeModule: NavModule = {
   hideSecondarySidebar: true,
   navigation: [],
 };
+const deskModule: NavModule = {
+  id: "desk",
+  label: "Desk",
+  icon: MessagesSquareIcon,
+  description:
+    "Your conversations with the agents, what they produced, and what they ask you to decide",
+  basePath: "/desk",
+  routePrefixes: ["/desk"],
+  hideSecondarySidebar: true,
+  resource: Resource.Assistant,
+  navigation: [],
+};
+
 const adminModule: NavModule = {
   id: "admin",
   label: "Organization settings",
@@ -976,6 +990,7 @@ const reportsModule: NavModule = {
 export const navigationConfig: NavigationConfig = {
   modules: [
     homeModule,
+    deskModule,
     shipmentManagementModule,
     dispatchModule,
     humanResourcesModule,
@@ -1401,7 +1416,7 @@ export const appModuleGroups: AppModuleGroup[] = [
   {
     id: "core",
     label: "Core",
-    moduleIds: ["home"],
+    moduleIds: ["home", "desk"],
   },
   {
     id: "operations",

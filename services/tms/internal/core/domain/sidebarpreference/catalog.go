@@ -64,6 +64,11 @@ func AttentionMetricCatalog() []AttentionMetricDefinition {
 			Resource: permission.ResourceServiceFailure,
 		},
 		{Key: "ediAttention", Label: "EDI Needs Attention", Resource: permission.ResourceEDI},
+		{
+			Key:      "agentDecisions",
+			Label:    "Decisions Waiting",
+			Resource: permission.ResourceAgentProposal,
+		},
 	}
 }
 

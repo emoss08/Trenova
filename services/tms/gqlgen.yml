@@ -1886,6 +1886,9 @@ models:
   AgentPlan:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentPlan
+    fields:
+      run:
+        resolver: true
   AgentMemoryKind:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.MemoryKind
@@ -1977,6 +1980,8 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentProposal
     fields:
       confidence:
+        resolver: true
+      run:
         resolver: true
   AgentProposalField:
     model:

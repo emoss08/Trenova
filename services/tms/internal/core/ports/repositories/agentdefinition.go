@@ -78,7 +78,16 @@ type AgentDefinitionStats struct {
 	LastRunAt        *int64   `bun:"last_run_at"`
 }
 
+type ListAgentDefinitionsByIDsRequest struct {
+	IDs        []pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type AgentDefinitionRepository interface {
+	ListByIDs(
+		ctx context.Context,
+		req ListAgentDefinitionsByIDsRequest,
+	) ([]*agentdefinition.Definition, error)
 	List(
 		ctx context.Context,
 		req *ListAgentDefinitionRequest,

@@ -62,6 +62,7 @@ type Params struct {
 	Decisions    services.AgentDecisionService
 	Shadow       *agentshadow.Resolver
 	AuditService services.AuditService
+	Activity     services.AgentActivityPublisher `optional:"true"`
 }
 
 type Service struct {
@@ -71,6 +72,7 @@ type Service struct {
 	decisions stepDecider
 	shadow    shadowReader
 	audit     actionLogger
+	activity  services.AgentActivityPublisher
 }
 
 func New(p Params) services.AgentPlanService {
@@ -83,6 +85,7 @@ func New(p Params) services.AgentPlanService {
 		decisions: decider,
 		shadow:    p.Shadow,
 		audit:     p.AuditService,
+		activity:  p.Activity,
 	}
 }
 
@@ -198,14 +201,26 @@ func (s *Service) Decide(
 	if req.Decision == agent.DecisionRejected {
 		s.rejectSteps(ctx, req, steps, actor)
 		s.logDecision(plan, actor, "Agent plan rejected")
+		s.announce(ctx, plan, actor)
 
 		return plan, nil
 	}
 
 	plan = s.runSteps(ctx, req, plan, steps, actor)
 	s.logDecision(plan, actor, "Agent plan approved and executed")
+	s.announce(ctx, plan, actor)
 
 	return plan, nil
+}
+
+// announce tells connected clients the plan moved, so the queue drops it
+// and the pane shows its steps ticking or where it stopped.
+func (s *Service) announce(ctx context.Context, plan *agent.AgentPlan, actor *services.RequestActor) {
+	if s.activity == nil || plan == nil {
+		return
+	}
+
+	s.activity.PlanChanged(ctx, plan, actor.AuditActorOrSystem(), services.ActivityUpdated)
 }
 
 // runSteps decides each pending step in order and stops at the first whose

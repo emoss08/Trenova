@@ -1,0 +1,92 @@
+"""
+One thing waiting on a person: a proposal that stands on its own, or a plan
+decided as a whole. A plan's steps never appear on their own.
+"""
+union PendingDecision = AgentProposal | AgentPlan
+
+type PendingDecisionEdge {
+  node: PendingDecision!
+  cursor: String!
+}
+
+type PendingDecisionConnection {
+  edges: [PendingDecisionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input PendingDecisionsInput {
+  first: Int = 25
+  after: String
+  "Only this agent's work."
+  agentDefinitionId: ID
+  "Only proposals of this tool; a plan matches when any step uses it."
+  toolName: String
+}
+
+type PendingDecisionAgentCount {
+  agentDefinitionId: ID!
+  agentName: String!
+  count: Int!
+}
+
+type PendingDecisionToolCount {
+  "A plan counts under the tool name plan."
+  toolName: String!
+  count: Int!
+}
+
+"The queue in numbers: how much is waiting, from whom, of what, and for how long."
+type PendingDecisionSummary {
+  total: Int!
+  byAgent: [PendingDecisionAgentCount!]!
+  byTool: [PendingDecisionToolCount!]!
+  oldestAt: Timestamp
+}
+
+input DecideAgentProposalsInput {
+  "Accepted or Rejected. A change applies to one proposal, from its own card."
+  decision: AgentDecisionType!
+  reasonCode: String
+}
+
+"What became of one proposal in a batch decision."
+type AgentProposalDecisionResult {
+  proposalId: ID!
+  decision: AgentDecision
+  "Why this one could not be decided or its write failed, written for the person; absent when it went through."
+  error: String
+  "The approved write ran."
+  executed: Boolean!
+}
+
+extend type AgentProposal {
+  "The run that raised this proposal, for the agent behind it."
+  run: AgentRun
+}
+
+extend type AgentPlan {
+  "The run that raised this plan, for the agent behind it."
+  run: AgentRun
+}
+
+extend type AgentRun {
+  "The agent definition behind the run; absent for runs of the retired built-in agents."
+  definition: AgentDefinition
+}
+
+extend type Query {
+  "What is waiting on a person, newest first: proposals on their own and plans as one unit."
+  pendingDecisions(input: PendingDecisionsInput!): PendingDecisionConnection!
+  pendingDecisionSummary: PendingDecisionSummary!
+}
+
+extend type Mutation {
+  """
+  Decides several proposals of one tool the same way, each as proposed. The
+  batch is refused before anything runs when it mixes tools or includes a
+  plan's step; once it starts, every proposal is decided in turn and each
+  outcome is reported.
+  """
+  decideAgentProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
+}

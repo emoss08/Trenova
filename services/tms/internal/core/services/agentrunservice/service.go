@@ -41,7 +41,8 @@ type Params struct {
 	Workflows    services.WorkflowStarter
 	Validator    *Validator
 	AuditService services.AuditService
-	Budgets      services.AgentBudgetService `optional:"true"`
+	Budgets      services.AgentBudgetService     `optional:"true"`
+	Activity     services.AgentActivityPublisher `optional:"true"`
 }
 
 type Service struct {
@@ -52,6 +53,7 @@ type Service struct {
 	workflows   services.WorkflowStarter
 	audit       services.AuditService
 	budgets     services.AgentBudgetService
+	activity    services.AgentActivityPublisher
 }
 
 func New(p Params) services.AgentRunService {
@@ -63,6 +65,7 @@ func New(p Params) services.AgentRunService {
 		workflows:   p.Workflows,
 		audit:       p.AuditService,
 		budgets:     p.Budgets,
+		activity:    p.Activity,
 	}
 }
 func (s *Service) StartForDefinition(
@@ -157,6 +160,9 @@ func (s *Service) StartForDefinition(
 	}
 
 	s.logStart(updated, actor, fmt.Sprintf("Run of agent %s started (%s)", definition.Name, trigger))
+	if s.activity != nil {
+		s.activity.RunChanged(ctx, updated, actor.AuditActorOrSystem(), services.ActivityCreated)
+	}
 
 	return updated, nil
 }

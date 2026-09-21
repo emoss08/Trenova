@@ -1035,6 +1035,42 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/desk",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Assistant, Operation.Read),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/desk/page"))),
+            ),
+            async lazy() {
+              const { DeskPage } = await import("@/routes/desk/page");
+              return { Component: DeskPage };
+            },
+            children: [
+              {
+                index: true,
+                async lazy() {
+                  const { DeskHomePage } = await import("@/routes/desk/home-page");
+                  return { Component: DeskHomePage };
+                },
+              },
+              {
+                path: "t/:threadId",
+                async lazy() {
+                  const { DeskConversationPage } = await import("@/routes/desk/conversation-page");
+                  return { Component: DeskConversationPage };
+                },
+              },
+              {
+                path: "decisions",
+                loader: createPermissionLoader(Resource.AgentProposal, Operation.Read),
+                async lazy() {
+                  const { DeskDecisionsPage } = await import("@/routes/desk/decisions-page");
+                  return { Component: DeskDecisionsPage };
+                },
+              },
+            ],
+          },
+          {
             path: "/reports",
             loader: combineLoaders(
               protectedLoader,

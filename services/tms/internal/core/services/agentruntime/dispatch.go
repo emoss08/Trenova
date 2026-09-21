@@ -16,6 +16,9 @@ type toolOutcome struct {
 	content string
 	failed  bool
 	action  *serviceports.PendingAction
+	// data is what a query tool returned, before it was encoded for the
+	// model. The caller may turn it into something a person sees.
+	data any
 }
 
 func failedOutcome(format string, args ...any) toolOutcome {
@@ -254,7 +257,7 @@ func (s *Service) runQueryTool(
 		return failedOutcome("Tool %q returned data that could not be encoded.", call.Name)
 	}
 
-	return toolOutcome{content: FenceToolResult(call.Name, encoded)}
+	return toolOutcome{content: FenceToolResult(call.Name, encoded), data: data}
 }
 
 func (s *Service) executeAction(

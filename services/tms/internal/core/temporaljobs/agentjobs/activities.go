@@ -41,15 +41,10 @@ type ActivitiesParams struct {
 	Runtime       serviceports.AgentRuntime
 	Contexts      serviceports.RuntimeContextBuilder
 	Recorder      *proposalrecorder.Service
-	BillingQueue  serviceports.BillingQueueService
-	Shipment      serviceports.ShipmentService
-	Console       repositories.DispatchConsoleRepository     `optional:"true"`
-	Notifier      serviceports.AgentProposalNotifier         `optional:"true"`
-	Content       serviceports.DocumentContentService        `optional:"true"`
-	Plans         repositories.AgentPlanRepository           `optional:"true"`
-	Insights      repositories.InsightRepository             `optional:"true"`
-	BankReceipts  serviceports.BankReceiptService            `optional:"true"`
-	WorkItems     repositories.BankReceiptWorkItemRepository `optional:"true"`
+	Subjects      serviceports.AgentSubjectDescriber
+	Activity      serviceports.AgentActivityPublisher `optional:"true"`
+	Notifier      serviceports.AgentProposalNotifier  `optional:"true"`
+	Plans         repositories.AgentPlanRepository    `optional:"true"`
 	Evaluations   repositories.AgentEvaluationRepository
 	Decisions     repositories.AgentDecisionRepository
 	Conversations repositories.ConversationRepository `optional:"true"`
@@ -70,7 +65,8 @@ type Activities struct {
 	evaluations   repositories.AgentEvaluationRepository
 	decisions     repositories.AgentDecisionRepository
 	conversations repositories.ConversationRepository
-	subjects      *SubjectContext
+	subjects      serviceports.AgentSubjectDescriber
+	activity      serviceports.AgentActivityPublisher
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -91,16 +87,8 @@ func NewActivities(p ActivitiesParams) *Activities {
 		evaluations:   p.Evaluations,
 		decisions:     p.Decisions,
 		conversations: p.Conversations,
-		subjects: &SubjectContext{
-			content:      p.Content,
-			billingQueue: p.BillingQueue,
-			shipments:    p.Shipment,
-			console:      p.Console,
-			insights:     p.Insights,
-			receipts:     p.BankReceipts,
-			workItems:    p.WorkItems,
-			logger:       logger,
-		},
+		subjects:      p.Subjects,
+		activity:      p.Activity,
 	}
 }
 
@@ -226,6 +214,7 @@ func (a *Activities) RunAgentActivity(
 	if _, err = a.runRepo.Update(ctx, run); err != nil {
 		return nil, fmt.Errorf("update agent run: %w", err)
 	}
+	a.announceRun(ctx, run)
 
 	return &RunAgentResult{
 		Reply:            outcome.Reply,
@@ -398,8 +387,19 @@ func (a *Activities) updateRun(
 	if _, err = a.runRepo.Update(ctx, run); err != nil {
 		return fmt.Errorf("update agent run: %w", err)
 	}
+	a.announceRun(ctx, run)
 
 	return nil
+}
+
+// announceRun tells connected clients the run moved. The worker announces
+// as the system, since no person is acting.
+func (a *Activities) announceRun(ctx context.Context, run *agent.AgentRun) {
+	if a.activity == nil {
+		return
+	}
+
+	a.activity.RunChanged(ctx, run, serviceports.SystemAuditActor(), serviceports.ActivityUpdated)
 }
 
 func agentActor(tenant pagination.TenantInfo) *serviceports.RequestActor {

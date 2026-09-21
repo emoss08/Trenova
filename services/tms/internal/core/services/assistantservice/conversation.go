@@ -54,6 +54,11 @@ func (s *Service) StartThread(
 		)
 	}
 
+	origin := req.Origin
+	if origin == "" {
+		origin = conversation.ThreadOriginPanel
+	}
+
 	thread := &conversation.Thread{
 		OrganizationID:    req.TenantInfo.OrgID,
 		BusinessUnitID:    req.TenantInfo.BuID,
@@ -61,6 +66,9 @@ func (s *Service) StartThread(
 		AgentDefinitionID: definition.ID,
 		Title:             strings.TrimSpace(req.Title),
 		Status:            conversation.ThreadStatusActive,
+		Origin:            origin,
+		SubjectType:       req.SubjectType,
+		SubjectID:         req.SubjectID,
 	}
 
 	multiErr := errortypes.NewMultiError()
@@ -191,6 +199,42 @@ func (s *Service) assertRoom(
 	)
 }
 
+// UpdateThread changes what a person may change about their own
+// conversation. The thread is read under their user id, so someone else's
+// is not found rather than renamed.
+func (s *Service) UpdateThread(
+	ctx context.Context,
+	req *services.UpdateThreadRequest,
+	actor *services.RequestActor,
+) (*conversation.Thread, error) {
+	thread, err := s.conversations.GetThread(ctx, repositories.GetThreadRequest{
+		ID:         req.ThreadID,
+		UserID:     actor.UserID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Title != nil {
+		thread.Title = strings.TrimSpace(*req.Title)
+	}
+	if req.Pinned != nil {
+		thread.Pinned = *req.Pinned
+	}
+	if req.Keep && !thread.Origin.Listed() {
+		thread.Origin = conversation.ThreadOriginDesk
+	}
+
+	multiErr := errortypes.NewMultiError()
+	thread.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	return s.conversations.UpdateThread(ctx, thread)
+}
+
 func (s *Service) DeleteThread(
 	ctx context.Context,
 	req repositories.GetThreadRequest,
@@ -291,6 +335,14 @@ func (s *Service) SendMessageStream(
 		}
 	}
 
+	// The save does not ride the request context. The two ways a turn is most
+	// often lost — the person pressing Stop, or closing the tab — both cancel
+	// that context, and a save that honoured the cancellation would be the one
+	// act the cancellation defeated. Nothing here waits on the reader.
+	keep := context.WithoutCancel(ctx)
+
+	artifacts := s.newArtifactRecorder(keep, thread, req.TenantInfo, actor, emit)
+
 	turn, runErr := s.RunObserved(ctx, &TurnRequest{
 		Definition:          definition,
 		Actor:               actor,
@@ -300,26 +352,25 @@ func (s *Service) SendMessageStream(
 		PreferredProviderID: thread.PreferredProviderID,
 		ThreadID:            thread.ID,
 		Proposals:           s.proposalOutcomes(ctx, thread, req.TenantInfo),
+		Subject:             s.describeSubject(ctx, thread, req.TenantInfo),
+		ToolObserver:        artifacts.observer(),
 	}, emit)
-
-	// The save does not ride the request context. The two ways a turn is most
-	// often lost — the person pressing Stop, or closing the tab — both cancel
-	// that context, and a save that honoured the cancellation would be the one
-	// act the cancellation defeated. Nothing here waits on the reader.
-	keep := context.WithoutCancel(ctx)
 
 	if runErr != nil {
 		if turn != nil {
 			attachPageContext(turn.Messages, page)
-			if _, saveErr := s.conversations.AppendTurn(keep, repositories.AppendTurnRequest{
+			saved, saveErr := s.conversations.AppendTurn(keep, repositories.AppendTurnRequest{
 				ThreadID:   thread.ID,
 				TenantInfo: req.TenantInfo,
 				Messages:   turn.Messages,
-			}); saveErr != nil {
+			})
+			if saveErr != nil {
 				s.logger.Error("could not keep an interrupted turn",
 					zap.String("thread", thread.ID.String()),
 					zap.Error(saveErr),
 				)
+			} else {
+				artifacts.attachMessages(sourceMessageIndex(saved))
 			}
 		}
 
@@ -338,6 +389,7 @@ func (s *Service) SendMessageStream(
 	}
 
 	s.titleIfUnnamed(keep, thread, content)
+	artifacts.attachMessages(sourceMessageIndex(saved))
 
 	proposals, err := s.persistProposals(keep, persistProposalsParams{
 		Definition: definition,
@@ -347,6 +399,7 @@ func (s *Service) SendMessageStream(
 		Actions:    turn.Actions,
 		Model:      turn.Model,
 		Input:      content,
+		Artifacts:  artifacts,
 	})
 	if err != nil {
 		s.logProposalPersistFailure(thread, err)
@@ -359,6 +412,7 @@ func (s *Service) SendMessageStream(
 		Refused:             !turn.Decision.Allowed,
 		Proposals:           proposals,
 		ProposalsUnrecorded: err != nil,
+		Artifacts:           artifacts.artifacts(),
 	}, nil
 }
 

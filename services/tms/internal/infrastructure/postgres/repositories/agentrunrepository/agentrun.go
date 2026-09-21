@@ -159,6 +159,33 @@ func (r *repository) ListConnection(
 	return result, nil
 }
 
+func (r *repository) ListByIDs(
+	ctx context.Context,
+	req repositories.ListAgentRunsByIDsRequest,
+) ([]*agent.AgentRun, error) {
+	if len(req.IDs) == 0 {
+		return []*agent.AgentRun{}, nil
+	}
+
+	cols := buncolgen.AgentRunColumns
+	runs := make([]*agent.AgentRun, 0, len(req.IDs))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&runs).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.AgentRunScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.In(), bun.In(req.IDs))
+		}).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list agent runs by ids", zap.Error(err))
+
+		return nil, fmt.Errorf("list agent runs by ids: %w", err)
+	}
+
+	return runs, nil
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetAgentRunByIDRequest,

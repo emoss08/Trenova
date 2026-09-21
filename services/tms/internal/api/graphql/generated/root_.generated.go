@@ -37,7 +37,9 @@ type ResolverRoot interface {
 	AccessorialCharge() AccessorialChargeResolver
 	AgentDefinition() AgentDefinitionResolver
 	AgentEvaluation() AgentEvaluationResolver
+	AgentPlan() AgentPlanResolver
 	AgentProposal() AgentProposalResolver
+	AgentRun() AgentRunResolver
 	ApiKey() ApiKeyResolver
 	ApprovalDelegation() ApprovalDelegationResolver
 	AuditEntry() AuditEntryResolver
@@ -762,6 +764,7 @@ type ComplexityRoot struct {
 		FailureError    func(childComplexity int) int
 		ID              func(childComplexity int) int
 		OrganizationID  func(childComplexity int) int
+		Run             func(childComplexity int) int
 		RunID           func(childComplexity int) int
 		Status          func(childComplexity int) int
 		StepCount       func(childComplexity int) int
@@ -795,6 +798,7 @@ type ComplexityRoot struct {
 		PlanID          func(childComplexity int) int
 		PlanStep        func(childComplexity int) int
 		Rationale       func(childComplexity int) int
+		Run             func(childComplexity int) int
 		RunID           func(childComplexity int) int
 		SimulatedAt     func(childComplexity int) int
 		Simulation      func(childComplexity int) int
@@ -809,6 +813,13 @@ type ComplexityRoot struct {
 		Edges      func(childComplexity int) int
 		PageInfo   func(childComplexity int) int
 		TotalCount func(childComplexity int) int
+	}
+
+	AgentProposalDecisionResult struct {
+		Decision   func(childComplexity int) int
+		Error      func(childComplexity int) int
+		Executed   func(childComplexity int) int
+		ProposalID func(childComplexity int) int
 	}
 
 	AgentProposalEdge struct {
@@ -834,6 +845,7 @@ type ComplexityRoot struct {
 		BusinessUnitID    func(childComplexity int) int
 		CompletedAt       func(childComplexity int) int
 		CreatedAt         func(childComplexity int) int
+		Definition        func(childComplexity int) int
 		ErrorMessage      func(childComplexity int) int
 		ID                func(childComplexity int) int
 		InputContextHash  func(childComplexity int) int
@@ -924,6 +936,7 @@ type ComplexityRoot struct {
 	}
 
 	AttentionSummary struct {
+		AgentDecisions           func(childComplexity int) int
 		BillingQueue             func(childComplexity int) int
 		EDIAttention             func(childComplexity int) int
 		PendingApprovals         func(childComplexity int) int
@@ -6172,6 +6185,7 @@ type ComplexityRoot struct {
 		CreateWorkerSafetyEvent               func(childComplexity int, input gqlmodel.WorkerSafetyEventInput) int
 		DecideAgentPlan                       func(childComplexity int, id string, input gqlmodel.AgentPlanDecisionInput) int
 		DecideAgentProposal                   func(childComplexity int, id string, input gqlmodel.AgentProposalDecisionInput) int
+		DecideAgentProposals                  func(childComplexity int, ids []string, input gqlmodel.DecideAgentProposalsInput) int
 		DecideLeaveCase                       func(childComplexity int, input gqlmodel.DecideLeaveCaseInput) int
 		DecideProfileChange                   func(childComplexity int, input gqlmodel.DecideProfileChangeInput) int
 		DelegateApproval                      func(childComplexity int, input gqlmodel.DelegateApprovalInput) int
@@ -6932,6 +6946,35 @@ type ComplexityRoot struct {
 		WorkerName       func(childComplexity int) int
 	}
 
+	PendingDecisionAgentCount struct {
+		AgentDefinitionID func(childComplexity int) int
+		AgentName         func(childComplexity int) int
+		Count             func(childComplexity int) int
+	}
+
+	PendingDecisionConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	PendingDecisionEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	PendingDecisionSummary struct {
+		ByAgent  func(childComplexity int) int
+		ByTool   func(childComplexity int) int
+		OldestAt func(childComplexity int) int
+		Total    func(childComplexity int) int
+	}
+
+	PendingDecisionToolCount struct {
+		Count    func(childComplexity int) int
+		ToolName func(childComplexity int) int
+	}
+
 	PerformanceReview struct {
 		AcknowledgedAt func(childComplexity int) int
 		BusinessUnitID func(childComplexity int) int
@@ -7587,6 +7630,8 @@ type ComplexityRoot struct {
 		PayrollExport                       func(childComplexity int, id string) int
 		PayrollExportRows                   func(childComplexity int, id string) int
 		PayrollExports                      func(childComplexity int, limit *int) int
+		PendingDecisionSummary              func(childComplexity int) int
+		PendingDecisions                    func(childComplexity int, input gqlmodel.PendingDecisionsInput) int
 		PendingDriverExpenseCount           func(childComplexity int) int
 		PerformanceReview                   func(childComplexity int, id string) int
 		PerformanceReviewTemplate           func(childComplexity int, id string) int
@@ -14033,6 +14078,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentPlan.OrganizationID(childComplexity), true
+	case "AgentPlan.run":
+		if e.ComplexityRoot.AgentPlan.Run == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.Run(childComplexity), true
 	case "AgentPlan.runId":
 		if e.ComplexityRoot.AgentPlan.RunID == nil {
 			break
@@ -14180,6 +14231,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposal.Rationale(childComplexity), true
+	case "AgentProposal.run":
+		if e.ComplexityRoot.AgentProposal.Run == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposal.Run(childComplexity), true
 	case "AgentProposal.runId":
 		if e.ComplexityRoot.AgentProposal.RunID == nil {
 			break
@@ -14247,6 +14304,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposalConnection.TotalCount(childComplexity), true
+
+	case "AgentProposalDecisionResult.decision":
+		if e.ComplexityRoot.AgentProposalDecisionResult.Decision == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalDecisionResult.Decision(childComplexity), true
+	case "AgentProposalDecisionResult.error":
+		if e.ComplexityRoot.AgentProposalDecisionResult.Error == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalDecisionResult.Error(childComplexity), true
+	case "AgentProposalDecisionResult.executed":
+		if e.ComplexityRoot.AgentProposalDecisionResult.Executed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalDecisionResult.Executed(childComplexity), true
+	case "AgentProposalDecisionResult.proposalId":
+		if e.ComplexityRoot.AgentProposalDecisionResult.ProposalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalDecisionResult.ProposalID(childComplexity), true
 
 	case "AgentProposalEdge.cursor":
 		if e.ComplexityRoot.AgentProposalEdge.Cursor == nil {
@@ -14346,6 +14428,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentRun.CreatedAt(childComplexity), true
+	case "AgentRun.definition":
+		if e.ComplexityRoot.AgentRun.Definition == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRun.Definition(childComplexity), true
 	case "AgentRun.errorMessage":
 		if e.ComplexityRoot.AgentRun.ErrorMessage == nil {
 			break
@@ -14733,6 +14821,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AssignWorkerPTOPolicyPayload.Failures(childComplexity), true
 
+	case "AttentionSummary.agentDecisions":
+		if e.ComplexityRoot.AttentionSummary.AgentDecisions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AttentionSummary.AgentDecisions(childComplexity), true
 	case "AttentionSummary.billingQueue":
 		if e.ComplexityRoot.AttentionSummary.BillingQueue == nil {
 			break
@@ -40145,6 +40239,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DecideAgentProposal(childComplexity, args["id"].(string), args["input"].(gqlmodel.AgentProposalDecisionInput)), true
+	case "Mutation.decideAgentProposals":
+		if e.ComplexityRoot.Mutation.DecideAgentProposals == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_decideAgentProposals_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DecideAgentProposals(childComplexity, args["ids"].([]string), args["input"].(gqlmodel.DecideAgentProposalsInput)), true
 	case "Mutation.decideLeaveCase":
 		if e.ComplexityRoot.Mutation.DecideLeaveCase == nil {
 			break
@@ -45318,6 +45423,95 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.PayrollExportRow.WorkerName(childComplexity), true
 
+	case "PendingDecisionAgentCount.agentDefinitionId":
+		if e.ComplexityRoot.PendingDecisionAgentCount.AgentDefinitionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionAgentCount.AgentDefinitionID(childComplexity), true
+	case "PendingDecisionAgentCount.agentName":
+		if e.ComplexityRoot.PendingDecisionAgentCount.AgentName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionAgentCount.AgentName(childComplexity), true
+	case "PendingDecisionAgentCount.count":
+		if e.ComplexityRoot.PendingDecisionAgentCount.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionAgentCount.Count(childComplexity), true
+
+	case "PendingDecisionConnection.edges":
+		if e.ComplexityRoot.PendingDecisionConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionConnection.Edges(childComplexity), true
+	case "PendingDecisionConnection.pageInfo":
+		if e.ComplexityRoot.PendingDecisionConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionConnection.PageInfo(childComplexity), true
+	case "PendingDecisionConnection.totalCount":
+		if e.ComplexityRoot.PendingDecisionConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionConnection.TotalCount(childComplexity), true
+
+	case "PendingDecisionEdge.cursor":
+		if e.ComplexityRoot.PendingDecisionEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionEdge.Cursor(childComplexity), true
+	case "PendingDecisionEdge.node":
+		if e.ComplexityRoot.PendingDecisionEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionEdge.Node(childComplexity), true
+
+	case "PendingDecisionSummary.byAgent":
+		if e.ComplexityRoot.PendingDecisionSummary.ByAgent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionSummary.ByAgent(childComplexity), true
+	case "PendingDecisionSummary.byTool":
+		if e.ComplexityRoot.PendingDecisionSummary.ByTool == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionSummary.ByTool(childComplexity), true
+	case "PendingDecisionSummary.oldestAt":
+		if e.ComplexityRoot.PendingDecisionSummary.OldestAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionSummary.OldestAt(childComplexity), true
+	case "PendingDecisionSummary.total":
+		if e.ComplexityRoot.PendingDecisionSummary.Total == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionSummary.Total(childComplexity), true
+
+	case "PendingDecisionToolCount.count":
+		if e.ComplexityRoot.PendingDecisionToolCount.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionToolCount.Count(childComplexity), true
+	case "PendingDecisionToolCount.toolName":
+		if e.ComplexityRoot.PendingDecisionToolCount.ToolName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PendingDecisionToolCount.ToolName(childComplexity), true
+
 	case "PerformanceReview.acknowledgedAt":
 		if e.ComplexityRoot.PerformanceReview.AcknowledgedAt == nil {
 			break
@@ -49967,6 +50161,23 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.PayrollExports(childComplexity, args["limit"].(*int)), true
+	case "Query.pendingDecisionSummary":
+		if e.ComplexityRoot.Query.PendingDecisionSummary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.PendingDecisionSummary(childComplexity), true
+	case "Query.pendingDecisions":
+		if e.ComplexityRoot.Query.PendingDecisions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_pendingDecisions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.PendingDecisions(childComplexity, args["input"].(gqlmodel.PendingDecisionsInput)), true
 	case "Query.pendingDriverExpenseCount":
 		if e.ComplexityRoot.Query.PendingDriverExpenseCount == nil {
 			break
@@ -69265,6 +69476,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDOTRandomPoolInput,
 		ec.unmarshalInputDOTRandomPoolsInput,
 		ec.unmarshalInputDataTableConnectionInput,
+		ec.unmarshalInputDecideAgentProposalsInput,
 		ec.unmarshalInputDecideLeaveCaseInput,
 		ec.unmarshalInputDecideProfileChangeInput,
 		ec.unmarshalInputDelegateApprovalInput,
@@ -69360,6 +69572,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputPayProfileComponentInput,
 		ec.unmarshalInputPayRateOverrideInput,
 		ec.unmarshalInputPayWorkerNowInput,
+		ec.unmarshalInputPendingDecisionsInput,
 		ec.unmarshalInputPerformanceReviewStatusInput,
 		ec.unmarshalInputPerformanceReviewTemplateInput,
 		ec.unmarshalInputPerformanceReviewTemplatesInput,
@@ -70733,6 +70946,8 @@ extend type Query {
   reconciliationExceptions: Int
   serviceFailures: Int
   ediAttention: Int
+  "Proposals and plans waiting on a person, for whoever may decide them."
+  agentDecisions: Int
 }
 
 extend type Query {
@@ -73592,6 +73807,99 @@ extend type Mutation {
   applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]!
   "Takes one credit memo application back."
   unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication!
+}
+`, BuiltIn: false},
+	{Name: "../schema/decisions.graphqls", Input: `"""
+One thing waiting on a person: a proposal that stands on its own, or a plan
+decided as a whole. A plan's steps never appear on their own.
+"""
+union PendingDecision = AgentProposal | AgentPlan
+
+type PendingDecisionEdge {
+  node: PendingDecision!
+  cursor: String!
+}
+
+type PendingDecisionConnection {
+  edges: [PendingDecisionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input PendingDecisionsInput {
+  first: Int = 25
+  after: String
+  "Only this agent's work."
+  agentDefinitionId: ID
+  "Only proposals of this tool; a plan matches when any step uses it."
+  toolName: String
+}
+
+type PendingDecisionAgentCount {
+  agentDefinitionId: ID!
+  agentName: String!
+  count: Int!
+}
+
+type PendingDecisionToolCount {
+  "A plan counts under the tool name plan."
+  toolName: String!
+  count: Int!
+}
+
+"The queue in numbers: how much is waiting, from whom, of what, and for how long."
+type PendingDecisionSummary {
+  total: Int!
+  byAgent: [PendingDecisionAgentCount!]!
+  byTool: [PendingDecisionToolCount!]!
+  oldestAt: Timestamp
+}
+
+input DecideAgentProposalsInput {
+  "Accepted or Rejected. A change applies to one proposal, from its own card."
+  decision: AgentDecisionType!
+  reasonCode: String
+}
+
+"What became of one proposal in a batch decision."
+type AgentProposalDecisionResult {
+  proposalId: ID!
+  decision: AgentDecision
+  "Why this one could not be decided or its write failed, written for the person; absent when it went through."
+  error: String
+  "The approved write ran."
+  executed: Boolean!
+}
+
+extend type AgentProposal {
+  "The run that raised this proposal, for the agent behind it."
+  run: AgentRun
+}
+
+extend type AgentPlan {
+  "The run that raised this plan, for the agent behind it."
+  run: AgentRun
+}
+
+extend type AgentRun {
+  "The agent definition behind the run; absent for runs of the retired built-in agents."
+  definition: AgentDefinition
+}
+
+extend type Query {
+  "What is waiting on a person, newest first: proposals on their own and plans as one unit."
+  pendingDecisions(input: PendingDecisionsInput!): PendingDecisionConnection!
+  pendingDecisionSummary: PendingDecisionSummary!
+}
+
+extend type Mutation {
+  """
+  Decides several proposals of one tool the same way, each as proposed. The
+  batch is refused before anything runs when it mixes tools or includes a
+  plan's step; once it starts, every proposal is decided in turn and each
+  outcome is reported.
+  """
+  decideAgentProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/detention.graphqls", Input: `enum DetentionPolicyStatus {
@@ -91329,6 +91637,8 @@ func (ec *executionContext) childFields_AgentPlan(ctx context.Context, field gra
 		return ec.fieldContext_AgentPlan_createdAt(ctx, field)
 	case "updatedAt":
 		return ec.fieldContext_AgentPlan_updatedAt(ctx, field)
+	case "run":
+		return ec.fieldContext_AgentPlan_run(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentPlan", field.Name)
 }
@@ -91397,6 +91707,8 @@ func (ec *executionContext) childFields_AgentProposal(ctx context.Context, field
 		return ec.fieldContext_AgentProposal_createdAt(ctx, field)
 	case "updatedAt":
 		return ec.fieldContext_AgentProposal_updatedAt(ctx, field)
+	case "run":
+		return ec.fieldContext_AgentProposal_run(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentProposal", field.Name)
 }
@@ -91411,6 +91723,20 @@ func (ec *executionContext) childFields_AgentProposalConnection(ctx context.Cont
 		return ec.fieldContext_AgentProposalConnection_totalCount(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentProposalConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentProposalDecisionResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "proposalId":
+		return ec.fieldContext_AgentProposalDecisionResult_proposalId(ctx, field)
+	case "decision":
+		return ec.fieldContext_AgentProposalDecisionResult_decision(ctx, field)
+	case "error":
+		return ec.fieldContext_AgentProposalDecisionResult_error(ctx, field)
+	case "executed":
+		return ec.fieldContext_AgentProposalDecisionResult_executed(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentProposalDecisionResult", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentProposalEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -91489,6 +91815,8 @@ func (ec *executionContext) childFields_AgentRun(ctx context.Context, field grap
 		return ec.fieldContext_AgentRun_createdAt(ctx, field)
 	case "updatedAt":
 		return ec.fieldContext_AgentRun_updatedAt(ctx, field)
+	case "definition":
+		return ec.fieldContext_AgentRun_definition(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentRun", field.Name)
 }
@@ -91649,6 +91977,8 @@ func (ec *executionContext) childFields_AttentionSummary(ctx context.Context, fi
 		return ec.fieldContext_AttentionSummary_serviceFailures(ctx, field)
 	case "ediAttention":
 		return ec.fieldContext_AttentionSummary_ediAttention(ctx, field)
+	case "agentDecisions":
+		return ec.fieldContext_AttentionSummary_agentDecisions(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AttentionSummary", field.Name)
 }
@@ -102823,6 +103153,64 @@ func (ec *executionContext) childFields_PayrollExportRow(ctx context.Context, fi
 		return ec.fieldContext_PayrollExportRow_paidLeaveMinutes(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type PayrollExportRow", field.Name)
+}
+
+func (ec *executionContext) childFields_PendingDecisionAgentCount(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "agentDefinitionId":
+		return ec.fieldContext_PendingDecisionAgentCount_agentDefinitionId(ctx, field)
+	case "agentName":
+		return ec.fieldContext_PendingDecisionAgentCount_agentName(ctx, field)
+	case "count":
+		return ec.fieldContext_PendingDecisionAgentCount_count(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type PendingDecisionAgentCount", field.Name)
+}
+
+func (ec *executionContext) childFields_PendingDecisionConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_PendingDecisionConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_PendingDecisionConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_PendingDecisionConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type PendingDecisionConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_PendingDecisionEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_PendingDecisionEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_PendingDecisionEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type PendingDecisionEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_PendingDecisionSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "total":
+		return ec.fieldContext_PendingDecisionSummary_total(ctx, field)
+	case "byAgent":
+		return ec.fieldContext_PendingDecisionSummary_byAgent(ctx, field)
+	case "byTool":
+		return ec.fieldContext_PendingDecisionSummary_byTool(ctx, field)
+	case "oldestAt":
+		return ec.fieldContext_PendingDecisionSummary_oldestAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type PendingDecisionSummary", field.Name)
+}
+
+func (ec *executionContext) childFields_PendingDecisionToolCount(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "toolName":
+		return ec.fieldContext_PendingDecisionToolCount_toolName(ctx, field)
+	case "count":
+		return ec.fieldContext_PendingDecisionToolCount_count(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type PendingDecisionToolCount", field.Name)
 }
 
 func (ec *executionContext) childFields_PerformanceReview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

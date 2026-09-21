@@ -56,7 +56,13 @@ type ExpireAgentPlansRequest struct {
 	Before int64
 }
 
+type ListAgentPlansByIDsRequest struct {
+	IDs        []pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type AgentPlanRepository interface {
+	ListByIDs(ctx context.Context, req ListAgentPlansByIDsRequest) ([]*agent.AgentPlan, error)
 	Create(ctx context.Context, entity *agent.AgentPlan) (*agent.AgentPlan, error)
 	GetByID(ctx context.Context, req GetAgentPlanByIDRequest) (*agent.AgentPlan, error)
 	ListByThread(ctx context.Context, req ListAgentPlansByThreadRequest) ([]*agent.AgentPlan, error)

@@ -1393,6 +1393,12 @@ export type DataTableConnectionInput = {
   sort?: Array<SortFieldInput> | null | undefined;
 };
 
+export type DecideAgentProposalsInput = {
+  /** Accepted or Rejected. A change applies to one proposal, from its own card. */
+  decision: AgentDecisionType;
+  reasonCode?: string | null | undefined;
+};
+
 export type DecideLeaveCaseInput = {
   approve: boolean;
   caseId: string | number;
@@ -3364,6 +3370,15 @@ export type PayrollExportStatus =
   | 'Draft'
   | 'Generated'
   | 'Voided';
+
+export type PendingDecisionsInput = {
+  after?: string | null | undefined;
+  /** Only this agent's work. */
+  agentDefinitionId?: string | number | null | undefined;
+  first?: number | null | undefined;
+  /** Only proposals of this tool; a plan matches when any step uses it. */
+  toolName?: string | null | undefined;
+};
 
 export type PerformanceReviewStatus =
   | 'Acknowledged'
@@ -5921,6 +5936,47 @@ export type UpdateAgentControlMutationVariables = Exact<{
 
 export type UpdateAgentControlMutation = { updateAgentControl: { ' $fragmentRefs'?: { 'AgentControlFieldsFragment': AgentControlFieldsFragment } } };
 
+export type PendingProposalFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, planId: string | null, planStep: number, simulatedAt: number | null, simulation: unknown, modifications: unknown, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null }>, evidence: Array<{ type: string, id: string, note: string }>, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingProposalFieldsFragment' };
+
+export type PendingPlanFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, title: string, summary: string, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, expiresAt: number | null, version: number, createdAt: number, updatedAt: number, planStatus: AgentPlanStatus, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingPlanFieldsFragment' };
+
+export type PendingDecisionsQueryVariables = Exact<{
+  input: PendingDecisionsInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type PendingDecisionsQuery = { pendingDecisions: { totalCount?: number | null, edges: Array<{ cursor: string, node:
+        | (
+          { __typename: 'AgentPlan' }
+          & { ' $fragmentRefs'?: { 'PendingPlanFieldsFragment': PendingPlanFieldsFragment } }
+        )
+        | (
+          { __typename: 'AgentProposal' }
+          & { ' $fragmentRefs'?: { 'PendingProposalFieldsFragment': PendingProposalFieldsFragment } }
+        )
+       }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type PendingDecisionSummaryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type PendingDecisionSummaryQuery = { pendingDecisionSummary: { total: number, oldestAt: number | null, byAgent: Array<{ agentDefinitionId: string, agentName: string, count: number }>, byTool: Array<{ toolName: string, count: number }> } };
+
+export type PlanStepsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type PlanStepsQuery = { agentProposals: { edges: Array<{ node: { ' $fragmentRefs'?: { 'PendingProposalFieldsFragment': PendingProposalFieldsFragment } } }> } };
+
+export type DecideAgentProposalsMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+  input: DecideAgentProposalsInput;
+}>;
+
+
+export type DecideAgentProposalsMutation = { decideAgentProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, createdAt: number } | null }> };
+
 export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
 
 export type AgentDefinitionCardsQueryVariables = Exact<{
@@ -6159,7 +6215,7 @@ export type ApiKeyTableQuery = { apiKeys: { totalCount?: number | null, edges: A
 export type AttentionSummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type AttentionSummaryQuery = { attentionSummary: { billingQueue: number | null, pendingApprovals: number | null, reconciliationExceptions: number | null, serviceFailures: number | null, ediAttention: number | null } };
+export type AttentionSummaryQuery = { attentionSummary: { billingQueue: number | null, pendingApprovals: number | null, reconciliationExceptions: number | null, serviceFailures: number | null, ediAttention: number | null, agentDecisions: number | null } };
 
 export type RecentActivityQueryVariables = Exact<{
   first: number;
@@ -11933,6 +11989,95 @@ export const AgentControlFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AgentControlFields"}) as unknown as TypedDocumentString<AgentControlFieldsFragment, unknown>;
+export const PendingProposalFieldsFragmentDoc = new TypedDocumentString(`
+    fragment PendingProposalFields on AgentProposal {
+  id
+  organizationId
+  businessUnitId
+  runId
+  toolName
+  toolParams
+  confidence
+  rationale
+  autonomyTier
+  status
+  planId
+  planStep
+  simulatedAt
+  simulation
+  parameterFields {
+    name
+    label
+    description
+    kind
+    required
+    options
+    minimum
+    maximum
+    maxLength
+  }
+  modifications
+  evidence {
+    type
+    id
+    note
+  }
+  version
+  createdAt
+  updatedAt
+  run {
+    id
+    agentDefinitionId
+    trigger
+    subjectType
+    subjectId
+    summary
+    definition {
+      id
+      name
+      template
+      icon
+      accent
+    }
+  }
+}
+    `, {"fragmentName":"PendingProposalFields"}) as unknown as TypedDocumentString<PendingProposalFieldsFragment, unknown>;
+export const PendingPlanFieldsFragmentDoc = new TypedDocumentString(`
+    fragment PendingPlanFields on AgentPlan {
+  id
+  organizationId
+  businessUnitId
+  runId
+  title
+  summary
+  planStatus: status
+  stepCount
+  completedSteps
+  failedStep
+  failureError
+  decidedByUserId
+  decidedAt
+  expiresAt
+  version
+  createdAt
+  updatedAt
+  run {
+    id
+    agentDefinitionId
+    trigger
+    subjectType
+    subjectId
+    summary
+    definition {
+      id
+      name
+      template
+      icon
+      accent
+    }
+  }
+}
+    `, {"fragmentName":"PendingPlanFields"}) as unknown as TypedDocumentString<PendingPlanFieldsFragment, unknown>;
 export const AgentDefinitionCardFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentDefinitionCardFields on AgentDefinition {
   id
@@ -18598,6 +18743,10 @@ export const ArPaymentStatsDocument = {"__meta__":{"kind":"query","name":"ArPaym
 export const ArCustomerProfileDocument = {"__meta__":{"kind":"query","name":"ArCustomerProfile","hash":"sha256:b82086fc8a84f2dcc1c322b26634a1465bf4d240b6a5ff5f9bfd36300fbe7b37"}} as unknown as TypedDocumentString<ArCustomerProfileQuery, ArCustomerProfileQueryVariables>;
 export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:a44ebbd4e0c314668190068941ad623cefb3b405b0fb345a4dfe58072465cf70"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
 export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:5f38f15ae16abb622bccc80b578ce30e1743ab4b89440782ac1b96232f48a2c3"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
+export const PendingDecisionsDocument = {"__meta__":{"kind":"query","name":"PendingDecisions","hash":"sha256:830984fb64f11f16fc179642cec7259c4e9c4274405f3cf81a86367a8bc77a91"}} as unknown as TypedDocumentString<PendingDecisionsQuery, PendingDecisionsQueryVariables>;
+export const PendingDecisionSummaryDocument = {"__meta__":{"kind":"query","name":"PendingDecisionSummary","hash":"sha256:4da8f1517d5269e2a6a982d9b22085d0fc060aad3115dfe942ffbbb4318f0aa6"}} as unknown as TypedDocumentString<PendingDecisionSummaryQuery, PendingDecisionSummaryQueryVariables>;
+export const PlanStepsDocument = {"__meta__":{"kind":"query","name":"PlanSteps","hash":"sha256:8e998d8ca99ecb3ec7ccb8444e779245bf0b12661400fe1e4ddee2e86cd22472"}} as unknown as TypedDocumentString<PlanStepsQuery, PlanStepsQueryVariables>;
+export const DecideAgentProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposals","hash":"sha256:59304c594ac96561580ae98bff8ecf6ac041a40f45487c9319485de537cef971"}} as unknown as TypedDocumentString<DecideAgentProposalsMutation, DecideAgentProposalsMutationVariables>;
 export const AgentDefinitionCardsDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCards","hash":"sha256:08ba6a60cbf9b307dba848db43ab05c79979d87a5e80033fb1cc8e7f1a5fb407"}} as unknown as TypedDocumentString<AgentDefinitionCardsQuery, AgentDefinitionCardsQueryVariables>;
 export const AgentDefinitionCountDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCount","hash":"sha256:daacf568820fcf8bddb93d6841d154a39ae37f4f40aab47e3e127efda1270831"}} as unknown as TypedDocumentString<AgentDefinitionCountQuery, AgentDefinitionCountQueryVariables>;
 export const AgentRunCountDocument = {"__meta__":{"kind":"query","name":"AgentRunCount","hash":"sha256:e5f44d80150fa3a53684e90b45779a0d12a9c75150f2ed16c1b816d22edb905e"}} as unknown as TypedDocumentString<AgentRunCountQuery, AgentRunCountQueryVariables>;
@@ -18625,7 +18774,7 @@ export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIPro
 export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:e159282908d0dffe6494bd300561a6c4c6d53adf19a1ba4a8766452a98491fff"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
 export const AiUsageSummaryDocument = {"__meta__":{"kind":"query","name":"AIUsageSummary","hash":"sha256:5e9599fa59c13dde1fbde8f32c7942aa7e5ba4359259c6ab67136f9799ce0059"}} as unknown as TypedDocumentString<AiUsageSummaryQuery, AiUsageSummaryQueryVariables>;
 export const ApiKeyTableDocument = {"__meta__":{"kind":"query","name":"ApiKeyTable","hash":"sha256:aeacf34d9ae14863db97c29a2ea928d83c46bba47f49ecd6a05ccdf7d4a33951"}} as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;
-export const AttentionSummaryDocument = {"__meta__":{"kind":"query","name":"AttentionSummary","hash":"sha256:f60e116af6655582ac87c443bb9a03a7990af7fdd7671aa37452ea7bc48074b9"}} as unknown as TypedDocumentString<AttentionSummaryQuery, AttentionSummaryQueryVariables>;
+export const AttentionSummaryDocument = {"__meta__":{"kind":"query","name":"AttentionSummary","hash":"sha256:f5497f5bda3b38c5a3875db4677a9a034d1bcc1c4866b6c698351fc2198b1322"}} as unknown as TypedDocumentString<AttentionSummaryQuery, AttentionSummaryQueryVariables>;
 export const RecentActivityDocument = {"__meta__":{"kind":"query","name":"RecentActivity","hash":"sha256:3fe2bf53bf715a8f3c32bf9ed4a7f61e822b4d79f54f0564b6b647cf54b13407"}} as unknown as TypedDocumentString<RecentActivityQuery, RecentActivityQueryVariables>;
 export const AuditLogTableDocument = {"__meta__":{"kind":"query","name":"AuditLogTable","hash":"sha256:25bcb0e024c30d7999751de7b49eaab0773e668bf4ae7c845b79d54c634acd55"}} as unknown as TypedDocumentString<AuditLogTableQuery, AuditLogTableQueryVariables>;
 export const BenefitPlansDocument = {"__meta__":{"kind":"query","name":"BenefitPlans","hash":"sha256:2567ccf7c3576f87385f4b57db408918a0a5b33b31eb1018cd5405f4e4e76c2a"}} as unknown as TypedDocumentString<BenefitPlansQuery, BenefitPlansQueryVariables>;

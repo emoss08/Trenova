@@ -1,6 +1,22 @@
 export const RESOURCE_EVENT_NAME = "resource.invalidation";
 
 export const RESOURCE_QUERY_KEY_MAP: Record<string, string[]> = {
+  agent_proposal: [
+    "assistant-proposals",
+    "agent-proposal-list",
+    "pending-decisions",
+    "pending-decision-summary",
+    "attention",
+  ],
+  agent_plan: [
+    "assistant-plans",
+    "agent-plan-list",
+    "pending-decisions",
+    "pending-decision-summary",
+    "attention",
+  ],
+  agent_run: ["agent-run-list", "agent-definitions"],
+  assistant_artifact: ["assistant-artifacts"],
   shipments: [
     "shipment-list",
     "dispatch-board",

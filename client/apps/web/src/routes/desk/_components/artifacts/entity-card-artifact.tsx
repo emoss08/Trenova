@@ -1,0 +1,70 @@
+import { JsonViewer } from "@/components/elements/json-viewer";
+import { humanizeToolName } from "@/components/assistant/proposal-state";
+import { Button } from "@trenova/shared/components/ui/button";
+import {
+  DescriptionItem,
+  DescriptionList,
+} from "@trenova/shared/components/ui/description-list";
+import { useT } from "@trenova/shared/i18n/use-t";
+import type { AssistantArtifact } from "@/types/assistant";
+import { CodeIcon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { entityCardFrom } from "./artifact-payloads";
+
+/** The most a card lists before the rest is behind the raw view. */
+const FACT_LIMIT = 16;
+
+/**
+ * One record the assistant looked up, as a person reads one: labelled
+ * values first, the whole record a click away. The labels are the record's
+ * own field names read as words; the card does not know every entity.
+ */
+export function EntityCardArtifact({ artifact }: { artifact: AssistantArtifact }) {
+  const t = useT();
+  const card = useMemo(() => entityCardFrom(artifact), [artifact]);
+  const [raw, setRaw] = useState(false);
+  const shown = card.facts.slice(0, FACT_LIMIT);
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+      <div className="flex items-center gap-2">
+        <span className="text-muted-foreground text-xs">
+          {humanizeToolName(card.entity)}
+          {card.id !== "" ? ` · ${card.id}` : ""}
+        </span>
+        <Button
+          size="xs"
+          variant="ghost"
+          className="text-muted-foreground ml-auto h-6 px-1.5 text-2xs"
+          onClick={() => setRaw((value) => !value)}
+        >
+          <CodeIcon className="size-3" />
+          {raw ? t("Show fields") : t("Show raw")}
+        </Button>
+      </div>
+
+      {raw ? (
+        <div className="bg-sunken scrollbar-overlay max-h-[60vh] overflow-auto rounded-md p-2">
+          <JsonViewer data={card.record as never} collapsed={2} />
+        </div>
+      ) : shown.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          {t("A structured record; use Show raw to read it.")}
+        </p>
+      ) : (
+        <DescriptionList layout="inline">
+          {shown.map((fact) => (
+            <DescriptionItem key={fact.key} label={humanizeToolName(fact.key)}>
+              <span className="break-words">{fact.value}</span>
+            </DescriptionItem>
+          ))}
+        </DescriptionList>
+      )}
+      {!raw && card.facts.length > FACT_LIMIT && (
+        <p className="text-muted-foreground text-xs">
+          {t("{0} more fields in the raw view.", card.facts.length - FACT_LIMIT)}
+        </p>
+      )}
+    </div>
+  );
+}

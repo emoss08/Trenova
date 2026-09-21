@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
 )
 
@@ -27,6 +29,12 @@ type TurnRequest struct {
 	ThreadID pulid.ID
 	// Proposals is what became of the writes earlier turns proposed.
 	Proposals []serviceports.ProposalOutcome
+	// Subject is the record the conversation is about, when it was opened
+	// from one.
+	Subject *agentdefinition.RuntimeSubject
+	// ToolObserver sees each tool result as it lands, for the artifacts the
+	// turn produces.
+	ToolObserver serviceports.ToolObserver
 }
 
 type TurnResult struct {
@@ -92,9 +100,10 @@ func (s *Service) RunObserved(
 		PreferredProviderID: req.PreferredProviderID,
 		// A model the person picked is the model they get; an administrator's
 		// default on the agent is only where the order starts.
-		PinProvider: !req.PreferredProviderID.IsNil(),
-		ThreadID:    req.ThreadID,
-		Proposals:   req.Proposals,
+		PinProvider:  !req.PreferredProviderID.IsNil(),
+		ThreadID:     req.ThreadID,
+		Proposals:    req.Proposals,
+		ToolObserver: req.ToolObserver,
 	})
 	if err != nil {
 		return interruptedTurn(req, decision, run, err), err
@@ -125,22 +134,70 @@ func (s *Service) buildContext(
 	req *TurnRequest,
 ) agentdefinition.RuntimeContext {
 	if s.contexts == nil {
-		return agentdefinition.RuntimeContext{Trigger: agent.RunTriggerChat, Page: req.Page}
+		return agentdefinition.RuntimeContext{
+			Trigger: agent.RunTriggerChat,
+			Page:    req.Page,
+			Subject: req.Subject,
+		}
 	}
 
 	runtimeContext, err := s.contexts.Build(ctx, &serviceports.RuntimeContextRequest{
 		Definition: req.Definition,
 		Actor:      req.Actor,
 		Trigger:    agent.RunTriggerChat,
+		Subject:    req.Subject,
 		Page:       req.Page,
 	})
 	if err != nil {
 		s.logger.Warn("assistant context could not be built", zap.Error(err))
 
-		return agentdefinition.RuntimeContext{Trigger: agent.RunTriggerChat, Page: req.Page}
+		return agentdefinition.RuntimeContext{
+			Trigger: agent.RunTriggerChat,
+			Page:    req.Page,
+			Subject: req.Subject,
+		}
 	}
 
 	return runtimeContext
+}
+
+// describeSubject reads the record a thread was opened from, so the model
+// starts with it in front of it. A subject that cannot be read is named by
+// its type and id rather than failing the turn: the conversation is still
+// worth having.
+func (s *Service) describeSubject(
+	ctx context.Context,
+	thread *conversation.Thread,
+	tenant pagination.TenantInfo,
+) *agentdefinition.RuntimeSubject {
+	if !thread.HasSubject() {
+		return nil
+	}
+
+	bare := &agentdefinition.RuntimeSubject{
+		Type:  thread.SubjectType,
+		ID:    thread.SubjectID.String(),
+		Label: stringutils.HumanizeSnakeCase(string(thread.SubjectType)),
+	}
+	if s.subjects == nil {
+		return bare
+	}
+
+	subject, err := s.subjects.Describe(ctx, tenant, thread.SubjectType, thread.SubjectID)
+	if err != nil {
+		s.logger.Warn("thread subject could not be described",
+			zap.String("thread", thread.ID.String()),
+			zap.String("subjectType", string(thread.SubjectType)),
+			zap.Error(err),
+		)
+
+		return bare
+	}
+	if subject == nil {
+		return bare
+	}
+
+	return subject
 }
 
 // interruptedNotice closes a turn the model did not finish. It is written into

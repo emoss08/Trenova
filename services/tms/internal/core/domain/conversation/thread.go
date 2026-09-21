@@ -3,6 +3,7 @@ package conversation
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -47,6 +48,15 @@ type Thread struct {
 	// that actually served it, which is how the reader sees the difference.
 	PreferredProviderID pulid.ID `json:"preferredProviderId" bun:"preferred_provider_id,type:VARCHAR(100),nullzero"`
 
+	// Origin is where the conversation began; Pinned keeps it at the top of
+	// the Desk's rail. SubjectType and SubjectID name the record the
+	// conversation is about when it was opened from one, so every turn
+	// carries that record's context without the person restating it.
+	Origin      ThreadOrigin      `json:"origin"      bun:"origin,type:VARCHAR(20),notnull,default:'Panel'"`
+	Pinned      bool              `json:"pinned"      bun:"pinned,type:BOOLEAN,notnull,default:false"`
+	SubjectType agent.SubjectType `json:"subjectType" bun:"subject_type,type:VARCHAR(50),nullzero"`
+	SubjectID   pulid.ID          `json:"subjectId"   bun:"subject_id,type:VARCHAR(100),nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -66,6 +76,9 @@ func (t *Thread) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		}
 		if t.Status == "" {
 			t.Status = ThreadStatusActive
+		}
+		if t.Origin == "" {
+			t.Origin = ThreadOriginPanel
 		}
 		t.CreatedAt = now
 		t.UpdatedAt = now
@@ -111,5 +124,24 @@ func (t *Thread) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[ThreadStatus]("Status is invalid"),
 		),
+		validation.Field(&t.Origin,
+			validation.Required.Error("Origin is required"),
+			domainvalidation.ValidEnum[ThreadOrigin]("Origin is invalid"),
+		),
 	))
+
+	if t.SubjectType != "" && !t.SubjectType.IsValid() {
+		multiErr.Add("subjectType", errortypes.ErrInvalid, "Subject type is invalid")
+	}
+	if t.SubjectID.IsNotNil() && t.SubjectType == "" {
+		multiErr.Add("subjectType", errortypes.ErrRequired, "A subject needs a type")
+	}
+	if t.SubjectType != "" && t.SubjectID.IsNil() {
+		multiErr.Add("subjectId", errortypes.ErrRequired, "A subject type needs an id")
+	}
+}
+
+// HasSubject reports whether the conversation is about one record.
+func (t *Thread) HasSubject() bool {
+	return t.SubjectType != "" && t.SubjectID.IsNotNil()
 }

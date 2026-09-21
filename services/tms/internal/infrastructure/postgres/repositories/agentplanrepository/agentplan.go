@@ -47,6 +47,31 @@ func (r *repository) Create(ctx context.Context, entity *agent.AgentPlan) (*agen
 	return entity, nil
 }
 
+func (r *repository) ListByIDs(
+	ctx context.Context,
+	req repositories.ListAgentPlansByIDsRequest,
+) ([]*agent.AgentPlan, error) {
+	if len(req.IDs) == 0 {
+		return []*agent.AgentPlan{}, nil
+	}
+
+	cols := buncolgen.AgentPlanColumns
+	plans := make([]*agent.AgentPlan, 0, len(req.IDs))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&plans).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.AgentPlanScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.In(), bun.In(req.IDs))
+		}).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list agent plans by ids: %w", err)
+	}
+
+	return plans, nil
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetAgentPlanByIDRequest,

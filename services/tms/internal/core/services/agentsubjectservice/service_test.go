@@ -1,4 +1,4 @@
-package agentjobs
+package agentsubjectservice
 
 import (
 	"context"
@@ -39,7 +39,7 @@ func (f *fakeContent) GetShipmentDraft(
 
 // A run woken by document.extracted starts with the draft in front of it,
 // the way a run woken by a service failure starts with the shipment.
-func TestSubjectContext_DescribesADocumentByItsDraft(t *testing.T) {
+func TestService_DescribesADocumentByItsDraft(t *testing.T) {
 	t.Parallel()
 
 	attached := pulid.MustNew("shp_")
@@ -52,7 +52,7 @@ func TestSubjectContext_DescribesADocumentByItsDraft(t *testing.T) {
 			"fields": map[string]any{"bol": map[string]any{"value": "BOL-778", "confidence": 0.97}},
 		},
 	}}
-	subjects := &SubjectContext{content: content, logger: zap.NewNop()}
+	subjects := &Service{content: content, logger: zap.NewNop()}
 
 	docID := pulid.MustNew("doc_")
 	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectDocument, docID)
@@ -65,10 +65,10 @@ func TestSubjectContext_DescribesADocumentByItsDraft(t *testing.T) {
 	assert.Contains(t, subject.Notes, "do not create another")
 }
 
-func TestSubjectContext_DocumentWithoutContentServiceStillHasAnID(t *testing.T) {
+func TestService_DocumentWithoutContentServiceStillHasAnID(t *testing.T) {
 	t.Parallel()
 
-	subjects := &SubjectContext{logger: zap.NewNop()}
+	subjects := &Service{logger: zap.NewNop()}
 	docID := pulid.MustNew("doc_")
 
 	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectDocument, docID)
@@ -96,7 +96,7 @@ func (f *fakeInsightRepo) GetByID(
 
 // A run woken by insight.detected starts with the finding in front of it:
 // what was measured, about whom, and what the detector suggests.
-func TestSubjectContext_DescribesAnInsightByItsFinding(t *testing.T) {
+func TestService_DescribesAnInsightByItsFinding(t *testing.T) {
 	t.Parallel()
 
 	found := &insight.Insight{
@@ -110,7 +110,7 @@ func TestSubjectContext_DescribesAnInsightByItsFinding(t *testing.T) {
 		Metrics:        []insight.Metric{{Key: "unbilled", Label: "Unbilled", Value: decimal.NewFromInt(48200)}},
 	}
 	repo := &fakeInsightRepo{found: found}
-	subjects := &SubjectContext{insights: repo, logger: zap.NewNop()}
+	subjects := &Service{insights: repo, logger: zap.NewNop()}
 
 	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectInsight, found.ID)
 	require.NoError(t, err)
@@ -123,7 +123,7 @@ func TestSubjectContext_DescribesAnInsightByItsFinding(t *testing.T) {
 	assert.NotContains(t, subject.Notes, "no longer active")
 }
 
-func TestSubjectContext_WarnsWhenTheInsightIsNoLongerActive(t *testing.T) {
+func TestService_WarnsWhenTheInsightIsNoLongerActive(t *testing.T) {
 	t.Parallel()
 
 	found := &insight.Insight{
@@ -131,17 +131,17 @@ func TestSubjectContext_WarnsWhenTheInsightIsNoLongerActive(t *testing.T) {
 		Status:   insight.StatusResolved,
 		Headline: "Detention at Acme Foods dock 4 has stopped",
 	}
-	subjects := &SubjectContext{insights: &fakeInsightRepo{found: found}, logger: zap.NewNop()}
+	subjects := &Service{insights: &fakeInsightRepo{found: found}, logger: zap.NewNop()}
 
 	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectInsight, found.ID)
 	require.NoError(t, err)
 	assert.Contains(t, subject.Notes, "no longer active")
 }
 
-func TestSubjectContext_InsightWithoutRepositoryStillHasAnID(t *testing.T) {
+func TestService_InsightWithoutRepositoryStillHasAnID(t *testing.T) {
 	t.Parallel()
 
-	subjects := &SubjectContext{logger: zap.NewNop()}
+	subjects := &Service{logger: zap.NewNop()}
 	id := pulid.MustNew("inst_")
 
 	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectInsight, id)
@@ -191,7 +191,7 @@ func (f *fakeWorkItemRepo) GetActiveByReceiptID(
 
 // A run woken by bank_receipt.exception starts with the receipt, the scored
 // candidates and the queue entry in front of it, with the amount in money.
-func TestSubjectContext_DescribesABankReceiptWithItsCandidates(t *testing.T) {
+func TestService_DescribesABankReceiptWithItsCandidates(t *testing.T) {
 	t.Parallel()
 
 	receipt := &bankreceipt.BankReceipt{
@@ -204,7 +204,7 @@ func TestSubjectContext_DescribesABankReceiptWithItsCandidates(t *testing.T) {
 	}
 	paymentID := pulid.MustNew("cpay_")
 	item := &bankreceiptworkitem.WorkItem{ID: pulid.MustNew("brwi_"), BankReceiptID: receipt.ID, Status: bankreceiptworkitem.StatusOpen}
-	subjects := &SubjectContext{
+	subjects := &Service{
 		receipts: &fakeReceiptService{receipt: receipt, suggestions: []*serviceports.BankReceiptMatchSuggestion{{
 			CustomerPaymentID: paymentID, AmountMinor: 125_000, Score: 60, Reason: "Reference matches",
 		}}},
@@ -222,11 +222,11 @@ func TestSubjectContext_DescribesABankReceiptWithItsCandidates(t *testing.T) {
 	assert.NotContains(t, subject.Notes, "already matched")
 }
 
-func TestSubjectContext_WarnsWhenTheReceiptIsAlreadyMatched(t *testing.T) {
+func TestService_WarnsWhenTheReceiptIsAlreadyMatched(t *testing.T) {
 	t.Parallel()
 
 	receipt := &bankreceipt.BankReceipt{ID: pulid.MustNew("brcpt_"), AmountMinor: 5_000, Status: bankreceipt.StatusMatched}
-	subjects := &SubjectContext{
+	subjects := &Service{
 		receipts:  &fakeReceiptService{receipt: receipt},
 		workItems: &fakeWorkItemRepo{},
 		logger:    zap.NewNop(),
@@ -238,11 +238,11 @@ func TestSubjectContext_WarnsWhenTheReceiptIsAlreadyMatched(t *testing.T) {
 	assert.NotContains(t, subject.Notes, "workItem")
 }
 
-func TestSubjectContext_BankReceiptWithoutServiceStillHasAnID(t *testing.T) {
+func TestService_BankReceiptWithoutServiceStillHasAnID(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("brcpt_")
-	subject, err := (&SubjectContext{logger: zap.NewNop()}).
+	subject, err := (&Service{logger: zap.NewNop()}).
 		Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectBankReceipt, id)
 	require.NoError(t, err)
 	assert.Equal(t, id.String(), subject.ID)

@@ -1,4 +1,5 @@
 import type {
+  AssistantArtifactEvent,
   AssistantPageContext,
   AssistantStreamEvent,
   SendMessageResult,
@@ -64,6 +65,8 @@ export type TurnState = {
   result: SendMessageResult | null;
   /** Set while the reply is starting over after a model died partway. */
   retrying: { attempt: number; provider: string; kind: RetryKind; waitSeconds: number } | null;
+  /** What the turn has produced so far, as announced, so the pane can open it early. */
+  artifacts: AssistantArtifactEvent[];
 };
 
 export function initialTurnState(
@@ -79,6 +82,7 @@ export function initialTurnState(
     error: null,
     result: null,
     retrying: null,
+    artifacts: [],
   };
 }
 
@@ -201,6 +205,15 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
             ? state.segments
             : state.segments.filter((segment) => segment.kind === "tool"),
       };
+
+    case "artifact": {
+      const known = state.artifacts.findIndex((artifact) => artifact.id === event.data.id);
+      const artifacts =
+        known === -1
+          ? [...state.artifacts, event.data]
+          : state.artifacts.map((artifact, index) => (index === known ? event.data : artifact));
+      return { ...state, artifacts };
+    }
 
     case "done":
       // A refusal is complete in itself; done after it only says the turn

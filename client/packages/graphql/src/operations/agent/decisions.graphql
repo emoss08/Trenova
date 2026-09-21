@@ -1,0 +1,148 @@
+fragment PendingProposalFields on AgentProposal {
+  id
+  organizationId
+  businessUnitId
+  runId
+  toolName
+  toolParams
+  confidence
+  rationale
+  autonomyTier
+  status
+  planId
+  planStep
+  simulatedAt
+  simulation
+  parameterFields {
+    name
+    label
+    description
+    kind
+    required
+    options
+    minimum
+    maximum
+    maxLength
+  }
+  modifications
+  evidence {
+    type
+    id
+    note
+  }
+  version
+  createdAt
+  updatedAt
+  run {
+    id
+    agentDefinitionId
+    trigger
+    subjectType
+    subjectId
+    summary
+    definition {
+      id
+      name
+      template
+      icon
+      accent
+    }
+  }
+}
+
+fragment PendingPlanFields on AgentPlan {
+  id
+  organizationId
+  businessUnitId
+  runId
+  title
+  summary
+  planStatus: status
+  stepCount
+  completedSteps
+  failedStep
+  failureError
+  decidedByUserId
+  decidedAt
+  expiresAt
+  version
+  createdAt
+  updatedAt
+  run {
+    id
+    agentDefinitionId
+    trigger
+    subjectType
+    subjectId
+    summary
+    definition {
+      id
+      name
+      template
+      icon
+      accent
+    }
+  }
+}
+
+query PendingDecisions($input: PendingDecisionsInput!, $includeTotalCount: Boolean = true) {
+  pendingDecisions(input: $input) {
+    edges {
+      cursor
+      node {
+        __typename
+        ... on AgentProposal {
+          ...PendingProposalFields
+        }
+        ... on AgentPlan {
+          ...PendingPlanFields
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query PendingDecisionSummary {
+  pendingDecisionSummary {
+    total
+    byAgent {
+      agentDefinitionId
+      agentName
+      count
+    }
+    byTool {
+      toolName
+      count
+    }
+    oldestAt
+  }
+}
+
+query PlanSteps($input: DataTableConnectionInput!) {
+  agentProposals(input: $input) {
+    edges {
+      node {
+        ...PendingProposalFields
+      }
+    }
+  }
+}
+
+mutation DecideAgentProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) {
+  decideAgentProposals(ids: $ids, input: $input) {
+    proposalId
+    executed
+    error
+    decision {
+      id
+      decision
+      reasonCode
+      createdAt
+    }
+  }
+}

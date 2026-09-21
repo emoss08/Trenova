@@ -77,6 +77,12 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
+// One thing waiting on a person: a proposal that stands on its own, or a plan
+// decided as a whole. A plan's steps never appear on their own.
+type PendingDecision interface {
+	IsPendingDecision()
+}
+
 // One entry on a shipment's activity timeline. Every entry exposes the shared
 // envelope below; the concrete type carries the typed payload for its category.
 type ShipmentEvent interface {
@@ -272,6 +278,16 @@ type AgentProposalDecisionInput struct {
 	ReasonCode    string             `json:"reasonCode"`
 }
 
+// What became of one proposal in a batch decision.
+type AgentProposalDecisionResult struct {
+	ProposalID string               `json:"proposalId"`
+	Decision   *agent.AgentDecision `json:"decision,omitempty"`
+	// Why this one could not be decided or its write failed, written for the person; absent when it went through.
+	Error *string `json:"error,omitempty"`
+	// The approved write ran.
+	Executed bool `json:"executed"`
+}
+
 type AgentProposalEdge struct {
 	Node   *agent.AgentProposal `json:"node"`
 	Cursor string               `json:"cursor"`
@@ -406,6 +422,8 @@ type AttentionSummary struct {
 	ReconciliationExceptions *int `json:"reconciliationExceptions,omitempty"`
 	ServiceFailures          *int `json:"serviceFailures,omitempty"`
 	EDIAttention             *int `json:"ediAttention,omitempty"`
+	// Proposals and plans waiting on a person, for whoever may decide them.
+	AgentDecisions *int `json:"agentDecisions,omitempty"`
 }
 
 type AuditEntryConnection struct {
@@ -1266,6 +1284,12 @@ type DataTableConnectionInput struct {
 	FieldFilters []*FieldFilterInput `json:"fieldFilters,omitempty"`
 	FilterGroups []*FilterGroupInput `json:"filterGroups,omitempty"`
 	Sort         []*SortFieldInput   `json:"sort,omitempty"`
+}
+
+type DecideAgentProposalsInput struct {
+	// Accepted or Rejected. A change applies to one proposal, from its own card.
+	Decision   agent.DecisionType `json:"decision"`
+	ReasonCode *string            `json:"reasonCode,omitempty"`
 }
 
 type DecideLeaveCaseInput struct {
@@ -3912,6 +3936,46 @@ type PayWorkerNowInput struct {
 	ApplyRecurring   *bool   `json:"applyRecurring,omitempty"`
 	PaymentMethod    string  `json:"paymentMethod"`
 	PaymentReference *string `json:"paymentReference,omitempty"`
+}
+
+type PendingDecisionAgentCount struct {
+	AgentDefinitionID string `json:"agentDefinitionId"`
+	AgentName         string `json:"agentName"`
+	Count             int    `json:"count"`
+}
+
+type PendingDecisionConnection struct {
+	Edges      []*PendingDecisionEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+}
+
+type PendingDecisionEdge struct {
+	Node   PendingDecision `json:"node"`
+	Cursor string          `json:"cursor"`
+}
+
+// The queue in numbers: how much is waiting, from whom, of what, and for how long.
+type PendingDecisionSummary struct {
+	Total    int                          `json:"total"`
+	ByAgent  []*PendingDecisionAgentCount `json:"byAgent"`
+	ByTool   []*PendingDecisionToolCount  `json:"byTool"`
+	OldestAt *int                         `json:"oldestAt,omitempty"`
+}
+
+type PendingDecisionToolCount struct {
+	// A plan counts under the tool name plan.
+	ToolName string `json:"toolName"`
+	Count    int    `json:"count"`
+}
+
+type PendingDecisionsInput struct {
+	First *int    `json:"first,omitempty"`
+	After *string `json:"after,omitempty"`
+	// Only this agent's work.
+	AgentDefinitionID *string `json:"agentDefinitionId,omitempty"`
+	// Only proposals of this tool; a plan matches when any step uses it.
+	ToolName *string `json:"toolName,omitempty"`
 }
 
 type PerformanceReviewStatusInput struct {

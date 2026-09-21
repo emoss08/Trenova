@@ -16,7 +16,13 @@ import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useAssistantAgent } from "@/components/agent-identity/agent-context";
 import { AgentTile, type AgentTileSize } from "@/components/agent-identity/agent-tile";
-import type { AssistantMessage, AssistantPageContext, AssistantProposal } from "@/types/assistant";
+import type {
+  AssistantArtifact,
+  AssistantMessage,
+  AssistantPageContext,
+  AssistantProposal,
+} from "@/types/assistant";
+import { ArtifactKindIcon, ARTIFACT_KINDS } from "./voice/artifact-chrome";
 import {
   CheckIcon,
   ChevronRightIcon,
@@ -355,17 +361,22 @@ export function AssistantEntry({
   entry,
   proposals,
   plans = [],
+  artifacts = [],
   threadId,
   latestUserSequence,
   onAnswer,
+  onOpenArtifact,
 }: {
   entry: Extract<ThreadEntry, { kind: "assistant" }>;
   proposals: AssistantProposal[];
   /** Several writes this turn asked for as one; each is shown once, as a plan. */
   plans?: PlanGroup[];
+  /** What this turn produced besides words, when the surface has a pane to open it in. */
+  artifacts?: AssistantArtifact[];
   /** Where the newest user turn sits, so a settled question stops asking. */
   latestUserSequence: number;
   onAnswer: (value: string) => void;
+  onOpenArtifact?: (id: string) => void;
   threadId: string;
 }) {
   const t = useT();
@@ -402,6 +413,9 @@ export function AssistantEntry({
     >
       {message.reasoning?.text ? <ReasoningDisclosure text={message.reasoning.text} /> : null}
       {steps.length > 0 && <ToolTimeline steps={steps} />}
+      {artifacts.length > 0 && onOpenArtifact && (
+        <ArtifactChips artifacts={artifacts} onOpen={onOpenArtifact} />
+      )}
       {message.content !== "" && <AssistantProse content={message.content} />}
       {reportRuns.map((run) => (
         <ReportRunCard key={run.runId} run={run} />
@@ -421,6 +435,45 @@ export function AssistantEntry({
         <ProposalCard key={proposal.id} proposal={proposal} threadId={threadId} />
       ))}
     </AssistantTurn>
+  );
+}
+
+/**
+ * What a turn produced, as references the pane opens. The transcript points
+ * at a table or a draft; it does not carry a second copy of it. Only the
+ * kinds the pane can render are offered.
+ */
+export function ArtifactChips({
+  artifacts,
+  onOpen,
+}: {
+  artifacts: AssistantArtifact[];
+  onOpen: (id: string) => void;
+}) {
+  const t = useT();
+
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {artifacts.map((artifact) => (
+        <li key={artifact.id}>
+          <button
+            type="button"
+            onClick={() => onOpen(artifact.id)}
+            className="ui-focus-ring border-border hover:bg-surface-hover flex h-7 max-w-64 items-center gap-1.5 rounded-full border px-2.5 text-xs transition-colors"
+            aria-label={t("Open {0}", artifact.title)}
+          >
+            <ArtifactKindIcon
+              kind={artifact.kind}
+              className="text-muted-foreground size-3 shrink-0"
+            />
+            <span className="text-muted-foreground shrink-0">
+              {t(ARTIFACT_KINDS[artifact.kind].label)}
+            </span>
+            <span className="truncate">{artifact.title}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 

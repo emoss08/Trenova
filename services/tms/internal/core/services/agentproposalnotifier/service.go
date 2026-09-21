@@ -18,7 +18,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
@@ -43,7 +42,7 @@ const (
 	EventProposalsReminder = "agent.proposals_reminder"
 
 	notificationSource = "agentproposalnotifier"
-	proposalsPath      = "/admin/agent-control"
+	proposalsPath      = "/desk/decisions"
 	maxListedTools     = 3
 	secondsPerHour     = 3600
 )
@@ -474,20 +473,11 @@ func (s *Service) brand(
 	}
 }
 
-// reviewPath opens AI Control on the proposals list filtered to the run, so
-// the person lands on exactly the rows they were told about.
+// reviewPath opens the Desk's decisions queue on the run, so the person
+// lands on exactly the rows they were told about.
 func reviewPath(runID string) string {
-	filter, err := sonic.Marshal([]map[string]any{
-		{"field": "runId", "operator": "eq", "value": runID},
-	})
-	if err != nil {
-		return proposalsPath + "?tab=activity&activity=proposals"
-	}
-
 	query := url.Values{}
-	query.Set("tab", "activity")
-	query.Set("activity", "proposals")
-	query.Set("fieldFilters", string(filter))
+	query.Set("run", runID)
 
 	return proposalsPath + "?" + query.Encode()
 }

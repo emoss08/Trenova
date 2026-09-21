@@ -1,6 +1,6 @@
 {
-  "operationCount": 776,
-  "fragmentCount": 197,
+  "operationCount": 780,
+  "fragmentCount": 199,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -1922,14 +1922,14 @@
       "kind": "query",
       "domain": "attention",
       "sourceFile": "src/operations/attention/summary.graphql",
-      "hash": "sha256:f60e116af6655582ac87c443bb9a03a7990af7fdd7671aa37452ea7bc48074b9",
+      "hash": "sha256:f5497f5bda3b38c5a3875db4677a9a034d1bcc1c4866b6c698351fc2198b1322",
       "rootFields": [
         "attentionSummary"
       ],
       "variables": [],
       "fragments": [],
       "usages": [],
-      "sdl": "query AttentionSummary {\n  attentionSummary {\n    billingQueue\n    pendingApprovals\n    reconciliationExceptions\n    serviceFailures\n    ediAttention\n  }\n}"
+      "sdl": "query AttentionSummary {\n  attentionSummary {\n    billingQueue\n    pendingApprovals\n    reconciliationExceptions\n    serviceFailures\n    ediAttention\n    agentDecisions\n  }\n}"
     },
     {
       "name": "AuditLogTable",
@@ -4920,6 +4920,31 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation DecideAgentProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideAgentProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    version\n    createdAt\n  }\n}"
+    },
+    {
+      "name": "DecideAgentProposals",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/decisions.graphql",
+      "hash": "sha256:59304c594ac96561580ae98bff8ecf6ac041a40f45487c9319485de537cef971",
+      "rootFields": [
+        "decideAgentProposals"
+      ],
+      "variables": [
+        {
+          "name": "ids",
+          "type": "[ID!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "DecideAgentProposalsInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DecideAgentProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) {\n  decideAgentProposals(ids: $ids, input: $input) {\n    proposalId\n    executed\n    error\n    decision {\n      id\n      decision\n      reasonCode\n      createdAt\n    }\n  }\n}"
     },
     {
       "name": "DecideLeaveCase",
@@ -10518,6 +10543,48 @@
       "sdl": "mutation PayWorkerNow($input: PayWorkerNowInput!) {\n  payWorkerNow(input: $input) {\n    id\n    settlementNumber\n    status\n    netPayMinor\n    currencyCode\n    paidAt\n    paymentMethod\n    paymentReference\n  }\n}"
     },
     {
+      "name": "PendingDecisions",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/decisions.graphql",
+      "hash": "sha256:830984fb64f11f16fc179642cec7259c4e9c4274405f3cf81a86367a8bc77a91",
+      "rootFields": [
+        "pendingDecisions"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "PendingDecisionsInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "PendingPlanFields",
+        "PendingProposalFields"
+      ],
+      "usages": [],
+      "sdl": "query PendingDecisions($input: PendingDecisionsInput!, $includeTotalCount: Boolean = true) {\n  pendingDecisions(input: $input) {\n    edges {\n      cursor\n      node {\n        __typename\n        ... on AgentProposal {\n          ...PendingProposalFields\n        }\n        ... on AgentPlan {\n          ...PendingPlanFields\n        }\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment PendingPlanFields on AgentPlan {\n  id\n  organizationId\n  businessUnitId\n  runId\n  title\n  summary\n  planStatus: status\n  stepCount\n  completedSteps\n  failedStep\n  failureError\n  decidedByUserId\n  decidedAt\n  expiresAt\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}\n\nfragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
+    },
+    {
+      "name": "PendingDecisionSummary",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/decisions.graphql",
+      "hash": "sha256:4da8f1517d5269e2a6a982d9b22085d0fc060aad3115dfe942ffbbb4318f0aa6",
+      "rootFields": [
+        "pendingDecisionSummary"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query PendingDecisionSummary {\n  pendingDecisionSummary {\n    total\n    byAgent {\n      agentDefinitionId\n      agentName\n      count\n    }\n    byTool {\n      toolName\n      count\n    }\n    oldestAt\n  }\n}"
+    },
+    {
       "name": "PendingDriverExpenseCount",
       "kind": "query",
       "domain": "driver-portal",
@@ -10588,6 +10655,28 @@
       ],
       "usages": [],
       "sdl": "mutation PinShipmentComment($shipmentId: ID!, $commentId: ID!) {\n  pinShipmentComment(shipmentId: $shipmentId, commentId: $commentId) {\n    ...ShipmentCommentFields\n  }\n}\n\nfragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {\n  id\n  commentId\n  userId\n  acknowledgedAt\n  user {\n    ...ShipmentUserFields\n  }\n}\n\nfragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {\n  documentId\n  fileName\n  originalName\n  fileSize\n  mimeType\n  previewUrl\n  downloadUrl\n  createdAt\n}\n\nfragment ShipmentCommentFields on ShipmentComment {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  userId\n  parentCommentId\n  replyCount\n  comment\n  body\n  type\n  visibility\n  priority\n  source\n  metadata\n  editedAt\n  pinnedAt\n  pinnedById\n  resolvedAt\n  resolvedById\n  requiresAcknowledgment\n  deletedAt\n  version\n  createdAt\n  updatedAt\n  mentionedUserIds\n  user {\n    ...ShipmentUserFields\n  }\n  pinnedBy {\n    ...ShipmentUserFields\n  }\n  resolvedBy {\n    ...ShipmentUserFields\n  }\n  mentionedUsers {\n    ...ShipmentCommentMentionFields\n  }\n  acknowledgments {\n    ...ShipmentCommentAcknowledgmentFields\n  }\n  attachments {\n    ...ShipmentCommentAttachmentFields\n  }\n}\n\nfragment ShipmentCommentMentionFields on ShipmentCommentMention {\n  id\n  commentId\n  mentionedUserId\n  organizationId\n  businessUnitId\n  shipmentId\n  createdAt\n  mentionedUser {\n    ...ShipmentUserFields\n  }\n}\n\nfragment ShipmentUserFields on User {\n  id\n  name\n  username\n  emailAddress\n  timezone\n  status\n  profilePicUrl\n  thumbnailUrl\n}"
+    },
+    {
+      "name": "PlanSteps",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/decisions.graphql",
+      "hash": "sha256:8e998d8ca99ecb3ec7ccb8444e779245bf0b12661400fe1e4ddee2e86cd22472",
+      "rootFields": [
+        "agentProposals"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "PendingProposalFields"
+      ],
+      "usages": [],
+      "sdl": "query PlanSteps($input: DataTableConnectionInput!) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...PendingProposalFields\n      }\n    }\n  }\n}\n\nfragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
     },
     {
       "name": "PostAndApplyCustomerPayment",
@@ -19496,6 +19585,31 @@
       "sdl": "fragment OrgHolidayFields on OrgHoliday {\n  id\n  businessUnitId\n  organizationId\n  name\n  holidayDate\n  kind\n  recursAnnually\n  description\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "PendingPlanFields",
+      "typeCondition": "AgentPlan",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/decisions.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "PendingDecisions"
+      ],
+      "usages": [],
+      "sdl": "fragment PendingPlanFields on AgentPlan {\n  id\n  organizationId\n  businessUnitId\n  runId\n  title\n  summary\n  planStatus: status\n  stepCount\n  completedSteps\n  failedStep\n  failureError\n  decidedByUserId\n  decidedAt\n  expiresAt\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
+    },
+    {
+      "name": "PendingProposalFields",
+      "typeCondition": "AgentProposal",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/decisions.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "PendingDecisions",
+        "PlanSteps"
+      ],
+      "usages": [],
+      "sdl": "fragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
+    },
+    {
       "name": "PerformanceReviewFields",
       "typeCondition": "PerformanceReview",
       "domain": "performance-review",
@@ -22901,6 +23015,22 @@
       ],
       "sdl": "input DataTableConnectionInput {\n  after: String\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  query: String\n  sort: [SortFieldInput!]\n}"
     },
+    "DecideAgentProposalsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "decision",
+          "type": "AgentDecisionType!",
+          "defaultValue": null
+        },
+        {
+          "name": "reasonCode",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DecideAgentProposalsInput {\n  \"\"\"\n  Accepted or Rejected. A change applies to one proposal, from its own card.\n  \"\"\"\n  decision: AgentDecisionType!\n  reasonCode: String\n}"
+    },
     "DecideLeaveCaseInput": {
       "kind": "input",
       "fields": [
@@ -25842,6 +25972,33 @@
         }
       ],
       "sdl": "input PayWorkerNowInput {\n  \"\"\"\n  Also apply recurring deductions, escrow, advance recovery, and carry-forward.\n  Off by default so the instant payout doesn't double-dip items the regular\n  period settlement will take.\n  \"\"\"\n  applyRecurring: Boolean\n  \"\"\"\n  Specific accrued events to pay; omit to pay everything accrued and unheld.\n  \"\"\"\n  payEventIds: [ID!]\n  paymentMethod: String!\n  paymentReference: String\n  workerId: ID!\n}"
+    },
+    "PendingDecisionsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "agentDefinitionId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "25",
+          "defaultJson": 25
+        },
+        {
+          "name": "toolName",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input PendingDecisionsInput {\n  after: String\n  \"\"\"Only this agent's work.\"\"\"\n  agentDefinitionId: ID\n  first: Int = 25\n  \"\"\"Only proposals of this tool; a plan matches when any step uses it.\"\"\"\n  toolName: String\n}"
     },
     "PerformanceReviewStatusInput": {
       "kind": "input",

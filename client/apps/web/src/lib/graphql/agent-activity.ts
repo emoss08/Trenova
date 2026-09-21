@@ -71,17 +71,3 @@ export async function fetchAgentActivityCounts(
 
   return { agentsTotal, agentsEnabled, pendingProposals, runsLast24h, memoriesActive };
 }
-
-/** How many proposals still wait on a person, for the assistant launcher's badge. */
-export async function fetchPendingProposalCount(options?: RequestOptions): Promise<number> {
-  const data = await requestGraphQL({
-    document: AgentProposalCountDocument,
-    operationName: "AgentProposalCount",
-    variables: {
-      input: { first: 1, fieldFilters: [{ field: "status", operator: "eq", value: "Pending" }] },
-    },
-    signal: options?.signal,
-  });
-
-  return data.agentProposals.totalCount ?? 0;
-}

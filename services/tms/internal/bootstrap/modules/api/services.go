@@ -12,8 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/agentactivityservice"
 	"github.com/emoss08/trenova/internal/core/services/agentbudgetservice"
 	"github.com/emoss08/trenova/internal/core/services/agentcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/agentdecisionqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdefinitionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentevaluationservice"
@@ -25,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentproposalservice"
 	"github.com/emoss08/trenova/internal/core/services/agentrunservice"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
+	"github.com/emoss08/trenova/internal/core/services/agentsubjectservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttrustservice"
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/aiproviderservice"
@@ -281,6 +284,9 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	aiproviderservice.New,
 	aiusageservice.New,
 	agentrunservice.New,
+	agentsubjectservice.New,
+	agentactivityservice.New,
+	agentdecisionqueueservice.New,
 	agentshadow.New,
 	agentevents.New,
 	agentproposalservice.New,

@@ -21,6 +21,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Trash2Icon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { AssistantHeader } from "./assistant-header";
 import { AssistantHome } from "./assistant-home";
@@ -40,6 +41,7 @@ type AssistantPanelProps = {
 export function AssistantPanel({ expanded, onToggleExpanded, onClose }: AssistantPanelProps) {
   const t = useT();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const activeThreadId = useAssistantStore((state) => state.activeThreadId);
   const setActiveThreadId = useAssistantStore((state) => state.setActiveThreadId);
@@ -99,6 +101,10 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
         onSelectThread={setActiveThreadId}
         onDeleteThread={setDeleting}
         onDownloadTranscript={(thread) => downloadAssistantTranscript(thread.id)}
+        onOpenInDesk={(thread) => {
+          onClose();
+          void navigate(`/desk/t/${thread.id}`);
+        }}
         onToggleExpanded={onToggleExpanded}
         onClose={onClose}
       />

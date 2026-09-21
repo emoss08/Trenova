@@ -209,7 +209,7 @@ func (s *Service) Run(
 						"the call. Send it again with complete arguments.",
 					call.Name, call.ArgumentsError,
 				)
-				s.recordToolResult(result, &messages, call, outcome, emit)
+				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
 				continue
 			}
 
@@ -223,28 +223,28 @@ func (s *Service) Run(
 						"Answer with what you have.",
 					call.Name, budget,
 				)
-				s.recordToolResult(result, &messages, call, outcome, emit)
+				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
 				continue
 			}
 
 			if call.Name == findToolsName {
 				outcome := toolOutcome{content: s.resolveFind(tools, call.Arguments)}
 				result.ToolCallsUsed++
-				s.recordToolResult(result, &messages, call, outcome, emit)
+				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
 				continue
 			}
 
 			if call.Name == askUserName {
 				outcome := toolOutcome{content: resolveAsk(call.Arguments)}
 				result.ToolCallsUsed++
-				s.recordToolResult(result, &messages, call, outcome, emit)
+				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
 				continue
 			}
 
 			if previous, repeated := repeats.seen(call); repeated {
 				outcome := failedOutcome("%s", repeatRefusal(call.Name, previous))
 				result.ToolCallsUsed++
-				s.recordToolResult(result, &messages, call, outcome, emit)
+				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
 				continue
 			}
 
@@ -253,7 +253,7 @@ func (s *Service) Run(
 				repeats.record(call, outcome.content)
 			}
 			result.ToolCallsUsed++
-			s.recordToolResult(result, &messages, call, outcome, emit)
+			s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
 		}
 
 		s.logger.Debug("agent tool iteration",
@@ -287,9 +287,18 @@ func (s *Service) recordToolResult(
 	call serviceports.ToolCall,
 	outcome toolOutcome,
 	emit serviceports.AssistantStreamEmitter,
+	observe serviceports.ToolObserver,
 ) {
 	if outcome.action != nil {
 		result.Actions = append(result.Actions, *outcome.action)
+	}
+	if observe != nil {
+		observe(serviceports.ToolObservation{
+			Call:   call,
+			Data:   outcome.data,
+			Failed: outcome.failed,
+			Action: outcome.action,
+		})
 	}
 
 	emit(serviceports.StreamEvent{

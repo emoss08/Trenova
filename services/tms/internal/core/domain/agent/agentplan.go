@@ -127,3 +127,5 @@ func (p *AgentPlan) BeforeAppendModel(_ context.Context, query bun.Query) error 
 
 	return nil
 }
+
+func (*AgentPlan) IsPendingDecision() {}

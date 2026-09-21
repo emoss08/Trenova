@@ -149,7 +149,9 @@ describe("buildModuleView", () => {
 
 describe("groupModulesByDomain", () => {
   it("keeps the configured domain order and drops domains with nothing to show", () => {
-    const domains = groupModulesByDomain(modules.filter((module) => module.id !== "home"));
+    const domains = groupModulesByDomain(
+      modules.filter((module) => module.id !== "home" && module.id !== "desk"),
+    );
     expect(domains.map((domain) => domain.id)).toEqual([
       "operations",
       "people",

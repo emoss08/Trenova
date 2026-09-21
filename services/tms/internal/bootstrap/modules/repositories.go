@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountsreceivablerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accounttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentcontrolrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentdecisionqueuerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentdecisionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentdefinitionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentevaluationrepository"
@@ -22,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiusagerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/apikeyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assignmentrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assistantartifactrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditdlqrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/bankreceiptbatchrepository"
@@ -293,6 +295,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	agentproposalrepository.New,
 	agentplanrepository.New,
 	agentmemoryrepository.New,
+	agentdecisionqueuerepository.New,
+	assistantartifactrepository.New,
 	agentevaluationrepository.New,
 	recordversionrepository.New,
 	aiusagerepository.New,

@@ -13,6 +13,7 @@ import {
   ChevronDownIcon,
   DownloadIcon,
   HistoryIcon,
+  LayoutPanelLeftIcon,
   Maximize2Icon,
   Minimize2Icon,
   PlusIcon,
@@ -35,6 +36,8 @@ type AssistantHeaderProps = {
   onDeleteThread: (thread: AssistantThread) => void;
   /** Saves the open conversation as a file. Offered only while one is open. */
   onDownloadTranscript: (thread: AssistantThread) => void;
+  /** Continues the open conversation at the Desk, with room for what it produced. */
+  onOpenInDesk?: (thread: AssistantThread) => void;
   onToggleExpanded: () => void;
   onClose: () => void;
 };
@@ -61,6 +64,7 @@ export function AssistantHeader({
   onSelectThread,
   onDeleteThread,
   onDownloadTranscript,
+  onOpenInDesk,
   onToggleExpanded,
   onClose,
 }: AssistantHeaderProps) {
@@ -192,6 +196,25 @@ export function AssistantHeader({
               </ScrollArea>
             </PopoverContent>
           </Popover>
+        )}
+
+        {activeThread && onOpenInDesk && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t("Open in Desk")}
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => onOpenInDesk(activeThread)}
+                />
+              }
+            >
+              <LayoutPanelLeftIcon className="size-4" />
+            </TooltipTrigger>
+            <TooltipContent>{t("Open in Desk")}</TooltipContent>
+          </Tooltip>
         )}
 
         {activeThread && (

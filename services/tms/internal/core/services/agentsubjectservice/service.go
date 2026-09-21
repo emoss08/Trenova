@@ -1,4 +1,4 @@
-package agentjobs
+package agentsubjectservice
 
 import (
 	"context"
@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -27,7 +28,23 @@ const (
 	maxInsightLabelChars = 120
 )
 
-type SubjectContext struct {
+type Params struct {
+	fx.In
+
+	Logger       *zap.Logger
+	BillingQueue serviceports.BillingQueueService
+	Shipments    serviceports.ShipmentService
+	Console      repositories.DispatchConsoleRepository     `optional:"true"`
+	Content      serviceports.DocumentContentService        `optional:"true"`
+	Insights     repositories.InsightRepository             `optional:"true"`
+	BankReceipts serviceports.BankReceiptService            `optional:"true"`
+	WorkItems    repositories.BankReceiptWorkItemRepository `optional:"true"`
+}
+
+// Service describes the record an agent run or a conversation is about, so
+// a run woken by an event and a thread opened from a page both start with
+// the same picture of their subject in front of the model.
+type Service struct {
 	content      serviceports.DocumentContentService
 	billingQueue serviceports.BillingQueueService
 	shipments    serviceports.ShipmentService
@@ -38,7 +55,20 @@ type SubjectContext struct {
 	logger       *zap.Logger
 }
 
-func (s *SubjectContext) Describe(
+func New(p Params) serviceports.AgentSubjectDescriber {
+	return &Service{
+		content:      p.Content,
+		billingQueue: p.BillingQueue,
+		shipments:    p.Shipments,
+		console:      p.Console,
+		insights:     p.Insights,
+		receipts:     p.BankReceipts,
+		workItems:    p.WorkItems,
+		logger:       p.Logger.Named("service.agentsubject"),
+	}
+}
+
+func (s *Service) Describe(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	subjectType agent.SubjectType,
@@ -68,7 +98,7 @@ func (s *SubjectContext) Describe(
 	}
 }
 
-func (s *SubjectContext) billingQueueItem(
+func (s *Service) billingQueueItem(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	itemID pulid.ID,
@@ -116,7 +146,7 @@ func (s *SubjectContext) billingQueueItem(
 	}, nil
 }
 
-func (s *SubjectContext) shipmentMove(
+func (s *Service) shipmentMove(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	moveID pulid.ID,
@@ -168,7 +198,7 @@ func marshalNotes(value any) string {
 // with their windows and lateness, and who is on each move. A run woken by a
 // service failure or a new shipment starts with that in front of it rather
 // than a bare id.
-func (s *SubjectContext) shipment(
+func (s *Service) shipment(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
@@ -237,7 +267,7 @@ func (s *SubjectContext) shipment(
 // the stops and what is missing. A run woken by document.extracted starts
 // with the whole draft in front of it, and get_shipment_draft is there for
 // a second look after a tool call has moved the conversation on.
-func (s *SubjectContext) document(
+func (s *Service) document(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	documentID pulid.ID,
@@ -280,7 +310,7 @@ func (s *SubjectContext) document(
 // suggests, so a run woken by insight.detected starts with the numbers, the
 // records behind them and the recommendation, and get_insight is there for
 // the trend when the run wants it.
-func (s *SubjectContext) insight(
+func (s *Service) insight(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	insightID pulid.ID,
@@ -331,7 +361,7 @@ func (s *SubjectContext) insight(
 // bank_receipt.exception starts with all of that in front of it, and
 // get_bank_receipt is there for a second look once a tool call has moved
 // the conversation on.
-func (s *SubjectContext) bankReceipt(
+func (s *Service) bankReceipt(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	receiptID pulid.ID,

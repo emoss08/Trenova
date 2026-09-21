@@ -21,6 +21,9 @@ type ListThreadsRequest struct {
 	TenantInfo pagination.TenantInfo
 	Limit      int
 	Offset     int
+	// IncludeUnlisted also returns conversations whose origin keeps them out
+	// of the rail, such as quick questions that were not kept.
+	IncludeUnlisted bool
 }
 
 type ListMessagesRequest struct {

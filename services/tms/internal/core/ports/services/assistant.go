@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,6 +17,24 @@ type StartThreadRequest struct {
 	AgentDefinitionID pulid.ID
 	Title             string
 	TenantInfo        pagination.TenantInfo
+	// Origin is where the conversation begins; empty means the panel.
+	Origin conversation.ThreadOrigin
+	// SubjectType and SubjectID name the record the conversation is about
+	// when it was opened from one.
+	SubjectType agent.SubjectType
+	SubjectID   pulid.ID
+}
+
+// UpdateThreadRequest changes what a person may change about their own
+// conversation: its title, whether it is pinned, and whether a quick
+// question is kept as a listed conversation.
+type UpdateThreadRequest struct {
+	ThreadID   pulid.ID
+	TenantInfo pagination.TenantInfo
+	Title      *string
+	Pinned     *bool
+	// Keep promotes an Ask thread to the Desk so it is listed.
+	Keep bool
 }
 
 // SendMessageRequest is one turn from a person.
@@ -52,6 +71,9 @@ type SendMessageResult struct {
 	// Proposals are writes the agent asked for. Nothing here has run: each one is
 	// a pending record waiting on a person's decision.
 	Proposals []AssistantProposal `json:"proposals"`
+	// Artifacts is what the turn produced besides words, in the order it
+	// produced them.
+	Artifacts []AssistantArtifact `json:"artifacts"`
 	// ProposalsUnrecorded says the turn proposed a write that could not be saved
 	// for approval. The write still has not run, but there is nothing to approve,
 	// so the client must not offer an approval the server cannot honor.
@@ -119,6 +141,37 @@ type AssistantPlan struct {
 	CreatedAt      int64            `json:"createdAt"`
 }
 
+// AssistantArtifact is what a turn produced besides words, as the Desk shows
+// it beside the conversation.
+type AssistantArtifact struct {
+	ID         pulid.ID                 `json:"id"`
+	ThreadID   pulid.ID                 `json:"threadId"`
+	MessageID  pulid.ID                 `json:"messageId"`
+	RunID      pulid.ID                 `json:"runId"`
+	ProposalID pulid.ID                 `json:"proposalId"`
+	PlanID     pulid.ID                 `json:"planId"`
+	Kind       assistantartifact.Kind   `json:"kind"`
+	Status     assistantartifact.Status `json:"status"`
+	Title      string                   `json:"title"`
+	Payload    map[string]any           `json:"payload"`
+	// SourceToolCallID ties the artifact to the tool call that produced it,
+	// so the transcript can point at it.
+	SourceToolCallID string `json:"sourceToolCallId"`
+	Pinned           bool   `json:"pinned"`
+	CreatedAt        int64  `json:"createdAt"`
+	UpdatedAt        int64  `json:"updatedAt"`
+}
+
+// AssistantArtifactEvent announces an artifact as a turn produces it, so the
+// pane can open it while the reply is still arriving.
+type AssistantArtifactEvent struct {
+	ID               pulid.ID                 `json:"id"`
+	Kind             assistantartifact.Kind   `json:"kind"`
+	Status           assistantartifact.Status `json:"status"`
+	Title            string                   `json:"title"`
+	SourceToolCallID string                   `json:"sourceToolCallId,omitempty"`
+}
+
 // ProposalHold names the switch holding a proposal and, when it is an agent's
 // own, which agent.
 type ProposalHold struct {
@@ -139,6 +192,7 @@ const (
 	AssistantEventToolStarted  = "tool_started"
 	AssistantEventToolFinished = "tool_finished"
 	AssistantEventRetrying     = "retrying"
+	AssistantEventArtifact     = "artifact"
 	AssistantEventDone         = "done"
 )
 
@@ -270,6 +324,21 @@ type AssistantService interface {
 		ctx context.Context,
 		req repositories.GetThreadRequest,
 	) ([]AssistantPlan, error)
+	ListThreadArtifacts(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+	) ([]AssistantArtifact, error)
+	PinArtifact(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
+		pinned bool,
+	) (*AssistantArtifact, error)
+	UpdateThread(
+		ctx context.Context,
+		req *UpdateThreadRequest,
+		actor *RequestActor,
+	) (*conversation.Thread, error)
 	// SelectableProviders lists the models a person may pick for the assistant,
 	// projected so no credential leaves the provider record.
 	SelectableProviders(

@@ -2,11 +2,12 @@ package services
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -54,6 +55,11 @@ type RunRequest struct {
 	// ThreadID is the conversation a chat turn belongs to, for attributing
 	// what the turn cost. Empty for a background run.
 	ThreadID pulid.ID
+	// ToolObserver, when set, sees each tool call's outcome with the data the
+	// tool returned, before it is encoded for the model. The assistant turns
+	// what a person would want to see — a report's rows, a record — into
+	// artifacts beside the conversation.
+	ToolObserver ToolObserver
 	// History is the conversation so far, oldest first, excluding Input.
 	History []conversation.Message
 	Input   string
@@ -93,6 +99,20 @@ func (o ProposalOutcome) Pending() bool {
 	return o.Status == agent.ProposalStatusPending
 }
 
+// ToolObservation is one tool call as it finished.
+type ToolObservation struct {
+	Call ToolCall
+	// Data is what a query tool returned; nil for a write, a refusal or a
+	// failure.
+	Data   any
+	Failed bool
+	// Action is the write the call proposed or made, when it was a write.
+	Action *PendingAction
+}
+
+// ToolObserver is told about each tool call as it finishes.
+type ToolObserver func(observation ToolObservation)
+
 type RunResult struct {
 	Reply    string
 	Messages []conversation.Message
@@ -116,6 +136,19 @@ type AgentRuntime interface {
 	// prompt lists them. A configured tool that is no longer registered is
 	// omitted rather than described.
 	ToolSummaries(definition *agentdefinition.Definition) []agentdefinition.ToolSummary
+}
+
+// AgentSubjectDescriber renders the record a run or a conversation is about
+// as the model should first see it: a label and the notes that matter, read
+// from the services that own the record. Nil, nil means there is nothing to
+// describe, as for an organization-wide run.
+type AgentSubjectDescriber interface {
+	Describe(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		subjectType agent.SubjectType,
+		subjectID pulid.ID,
+	) (*agentdefinition.RuntimeSubject, error)
 }
 
 type RuntimeContextBuilder interface {

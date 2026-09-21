@@ -566,9 +566,15 @@ func (r *Resolver) AgentEvaluation() generated.AgentEvaluationResolver {
 	return &agentEvaluationResolver{r}
 }
 
+func (r *Resolver) AgentPlan() generated.AgentPlanResolver { return &agentPlanResolver{r} }
+
 func (r *Resolver) AgentProposal() generated.AgentProposalResolver { return &agentProposalResolver{r} }
+
+func (r *Resolver) AgentRun() generated.AgentRunResolver { return &agentRunResolver{r} }
 
 type (
 	agentEvaluationResolver struct{ *Resolver }
+	agentPlanResolver       struct{ *Resolver }
 	agentProposalResolver   struct{ *Resolver }
+	agentRunResolver        struct{ *Resolver }
 )

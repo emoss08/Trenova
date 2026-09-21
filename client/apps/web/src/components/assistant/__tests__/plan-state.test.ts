@@ -36,6 +36,7 @@ function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal
     expiresAt: 0,
     planId: "",
     planStep: 0,
+    fields: [],
     ...overrides,
   };
 }

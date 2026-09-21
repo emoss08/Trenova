@@ -416,6 +416,33 @@ func (r *repository) MarkReminded(
 }
 
 // ListByPlan reads a plan's steps in the order they are meant to run.
+func (r *repository) ListByIDs(
+	ctx context.Context,
+	req repositories.ListAgentProposalsByIDsRequest,
+) ([]*agent.AgentProposal, error) {
+	if len(req.IDs) == 0 {
+		return []*agent.AgentProposal{}, nil
+	}
+
+	cols := buncolgen.AgentProposalColumns
+	proposals := make([]*agent.AgentProposal, 0, len(req.IDs))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&proposals).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.In(), bun.In(req.IDs))
+		}).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list agent proposals by ids", zap.Error(err))
+
+		return nil, fmt.Errorf("list agent proposals by ids: %w", err)
+	}
+
+	return proposals, nil
+}
+
 func (r *repository) ListByPlan(
 	ctx context.Context,
 	req repositories.ListAgentProposalsByPlanRequest,

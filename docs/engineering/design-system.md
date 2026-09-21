@@ -566,6 +566,43 @@ reason: the token already themes itself, so the pair cannot drift apart.
 Put `design-tokens-ignore: <reason>` in a comment on or just above the line. It
 is deliberately visible in review; a silent exception is how the last set eroded.
 
+## Assistant surfaces
+
+The assistant is not a chat widget with cards in it. It has a voice inside the
+system, and four things carry it.
+
+**The gutter is the agent's spine.** In the Desk, a two pixel hairline runs down the
+avatar gutter in the agent's own accent (`AgentGutter` in
+`components/assistant/voice/agent-gutter.tsx`, reading `--agent-*` through
+`resolveAgentIdentity`). Tool receipts, artifacts and proposals hang off it, so a thread
+reads as one agent's work rather than a stack of cards, and two desks tell apart at a
+glance. The line is drawn from the accent token; nothing in the thread picks a colour.
+
+**Artifacts are the product of a turn.** A report answer is a table, an email is a
+draft, a plan is a checklist, a record is a card. They render in the pane beside the
+conversation and the transcript only refers to them, as chips. Every artifact sits in
+`ArtifactChrome` (`components/assistant/voice/artifact-chrome.tsx`): `--radius-surface`,
+`border-border`, a 40px header with the kind, the title, a status badge only when the
+status is not Ready, and the pin. No shadow, no fill of its own. The kind's name and icon
+come from `ARTIFACT_KINDS`, once, for every surface that names one. Status is a tone
+(Pending is `info`, Sent is `success`, Failed is `danger`); the kind is never coloured.
+
+**Decisions are a queue with keys.** A row says who proposed what in one sentence; the
+detail beside it says why and what it would change. `j`/`k` walk the rows, `x` marks one
+for the batch, `a`/`r`/`m` act on the focused row, `Shift+A` approves the batch. The batch
+bar is a floating, inverted surface (it is a popover in all but name), and a batch decides
+one tool at a time because an approver reads the tool once. The keys are shown as `Kbd`
+next to the buttons they mirror, not explained in prose.
+
+**The launcher is a signal.** The corner mark moves for exactly one thing: a decision
+waiting on someone. Its count is the attention summary's `agentDecisions`, the same number
+the sidebar and the Desk show, never a second query. The border beam is spent only on
+that; nothing else on the mark loops.
+
+The Desk page itself takes `fill` and `p-0` because it manages its own panes: the rail is
+`bg-sunken`, the middle is `bg-canvas`, the pane is `bg-sunken`. Panes are separated by
+the resizable handle's hairline, never a shadow.
+
 ## Checking your work
 
 ```bash

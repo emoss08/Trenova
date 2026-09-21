@@ -82,6 +82,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       queryClient.invalidateQueries({ queryKey: queries.assistant.messages(threadId).queryKey }),
       queryClient.invalidateQueries({ queryKey: queries.assistant.proposals(threadId).queryKey }),
       queryClient.invalidateQueries({ queryKey: queries.assistant.plans(threadId).queryKey }),
+      queryClient.invalidateQueries({ queryKey: queries.assistant.artifacts(threadId).queryKey }),
       queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
     ]);
   }, [queryClient, threadId]);
@@ -131,6 +132,9 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
             queryKey: queries.assistant.proposals(threadId).queryKey,
           }),
           queryClient.invalidateQueries({ queryKey: queries.assistant.plans(threadId).queryKey }),
+          queryClient.invalidateQueries({
+            queryKey: queries.assistant.artifacts(threadId).queryKey,
+          }),
           queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
         ]);
         return;

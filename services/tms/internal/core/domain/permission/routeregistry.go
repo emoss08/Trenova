@@ -270,6 +270,7 @@ func (rr *RouteRegistry) registerAll() {
 	rr.registerHoldReasonRoutes()
 	rr.registerAccountingRoutes()
 	rr.registerReportingRoutes()
+	rr.registerDeskRoutes()
 }
 
 func (rr *RouteRegistry) registerEDIRoutes() {
@@ -1190,6 +1191,43 @@ func (rr *RouteRegistry) registerHoldReasonRoutes() {
 		DisplayName: "Document Template Detail",
 		Category:    "Organization",
 		ParentRoute: "/admin/document-templates",
+	})
+}
+
+// The Desk is where a person works with the assistant. Its conversations
+// need the assistant; its decisions queue needs to read proposals, which
+// is what AI Control asks for the same rows.
+func (rr *RouteRegistry) registerDeskRoutes() {
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/desk",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceAssistant, Operation: OpRead},
+		},
+		DisplayName: "Desk",
+		Category:    "Desk",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/desk/t/:id",
+		MatchType: RouteMatchPattern,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceAssistant, Operation: OpRead},
+		},
+		DisplayName: "Desk conversation",
+		Category:    "Desk",
+		ParentRoute: "/desk",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/desk/decisions",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceAgentProposal, Operation: OpRead},
+		},
+		DisplayName: "Decisions",
+		Category:    "Desk",
+		ParentRoute: "/desk",
 	})
 }
 

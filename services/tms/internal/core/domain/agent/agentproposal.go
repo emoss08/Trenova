@@ -175,3 +175,5 @@ func (p *AgentProposal) BeforeAppendModel(_ context.Context, query bun.Query) er
 
 	return nil
 }
+
+func (*AgentProposal) IsPendingDecision() {}

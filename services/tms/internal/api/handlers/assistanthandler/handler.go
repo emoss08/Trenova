@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
@@ -56,6 +57,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
 	api.POST("/threads/", h.pm.RequirePermission(resource, permission.OpCreate), h.startThread)
 	api.GET("/threads/:threadID/", h.pm.RequirePermission(resource, permission.OpRead), h.getThread)
+	api.PATCH(
+		"/threads/:threadID/",
+		h.pm.RequirePermission(resource, permission.OpUpdate),
+		h.updateThread,
+	)
 	api.DELETE(
 		"/threads/:threadID/",
 		h.pm.RequirePermission(resource, permission.OpDelete),
@@ -94,6 +100,18 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/threads/:threadID/plans/",
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.listThreadPlans,
+	)
+	// Artifacts are part of what the conversation produced, read with it;
+	// pinning one is the reader arranging their own pane.
+	api.GET(
+		"/threads/:threadID/artifacts/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.listThreadArtifacts,
+	)
+	api.POST(
+		"/threads/:threadID/artifacts/:artifactID/pin/",
+		h.pm.RequirePermission(resource, permission.OpUpdate),
+		h.pinArtifact,
 	)
 }
 
@@ -165,6 +183,20 @@ func (h *Handler) listThreads(c *gin.Context) {
 type startThreadRequest struct {
 	AgentDefinitionID string `json:"agentDefinitionId"`
 	Title             string `json:"title"`
+	// Origin is where the conversation begins; empty means the panel.
+	Origin conversation.ThreadOrigin `json:"origin"`
+	// SubjectType and SubjectID name the record the conversation is about,
+	// when it was opened from one.
+	SubjectType agent.SubjectType `json:"subjectType"`
+	SubjectID   *pulid.ID         `json:"subjectId"`
+}
+
+func (r *startThreadRequest) subjectID() pulid.ID {
+	if r.SubjectID == nil {
+		return pulid.Nil
+	}
+
+	return *r.SubjectID
 }
 
 func (h *Handler) startThread(c *gin.Context) {
@@ -187,6 +219,9 @@ func (h *Handler) startThread(c *gin.Context) {
 		AgentDefinitionID: agentID,
 		Title:             body.Title,
 		TenantInfo:        tenantFromAuthContext(authCtx),
+		Origin:            body.Origin,
+		SubjectType:       body.SubjectType,
+		SubjectID:         body.subjectID(),
 	}, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -210,6 +245,90 @@ func (h *Handler) getThread(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, thread)
+}
+
+type updateThreadRequest struct {
+	Title  *string `json:"title"`
+	Pinned *bool   `json:"pinned"`
+	// Keep lists a quick question as a conversation.
+	Keep bool `json:"keep"`
+}
+
+func (h *Handler) updateThread(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var body updateThreadRequest
+	if err = c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	actor := requestActorFromAuthContext(authctx.GetAuthContext(c))
+	thread, err := h.service.UpdateThread(c.Request.Context(), &serviceports.UpdateThreadRequest{
+		ThreadID:   req.ID,
+		TenantInfo: req.TenantInfo,
+		Title:      body.Title,
+		Pinned:     body.Pinned,
+		Keep:       body.Keep,
+	}, &actor)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, thread)
+}
+
+func (h *Handler) listThreadArtifacts(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	artifacts, err := h.service.ListThreadArtifacts(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": artifacts})
+}
+
+type pinArtifactRequest struct {
+	Pinned bool `json:"pinned"`
+}
+
+func (h *Handler) pinArtifact(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	artifactID, err := pulid.Parse(c.Param("artifactID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var body pinArtifactRequest
+	if err = c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	artifact, err := h.service.PinArtifact(c.Request.Context(), req, artifactID, body.Pinned)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, artifact)
 }
 
 func (h *Handler) deleteThread(c *gin.Context) {

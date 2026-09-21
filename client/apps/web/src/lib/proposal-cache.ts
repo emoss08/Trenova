@@ -14,15 +14,19 @@ export async function invalidateProposalViews(queryClient: QueryClient, threadId
     ["agent-proposal-list"],
     ["agent-plan-list"],
     ["agent-run-list"],
+    ["pending-decisions"],
+    ["pending-decision-summary"],
+    ["attention"],
   ];
   if (threadId) {
     keys.push(
       ["assistant-proposals", threadId],
       ["assistant-plans", threadId],
       ["assistant-messages", threadId],
+      ["assistant-artifacts", threadId],
     );
   } else {
-    keys.push(["assistant-proposals"], ["assistant-plans"]);
+    keys.push(["assistant-proposals"], ["assistant-plans"], ["assistant-artifacts"]);
   }
 
   await Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));

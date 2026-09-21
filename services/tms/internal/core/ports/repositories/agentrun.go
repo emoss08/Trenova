@@ -37,7 +37,15 @@ type CountAgentRunsSinceRequest struct {
 	Since        int64
 }
 
+// ListAgentRunsByIDsRequest reads several runs at once, for a loader that
+// resolves the run behind a page of proposals or plans.
+type ListAgentRunsByIDsRequest struct {
+	IDs        []pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type AgentRunRepository interface {
+	ListByIDs(ctx context.Context, req ListAgentRunsByIDsRequest) ([]*agent.AgentRun, error)
 	List(
 		ctx context.Context,
 		req *ListAgentRunRequest,

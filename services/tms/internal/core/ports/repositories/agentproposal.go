@@ -68,6 +68,11 @@ type CountExecutedToolRequest struct {
 // ListAgentProposalsByThreadRequest fetches every proposal raised during one
 // assistant conversation, so reopening a thread shows what is still waiting on a
 // decision rather than only what the last turn returned.
+type ListAgentProposalsByIDsRequest struct {
+	IDs        []pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type ListAgentProposalsByThreadRequest struct {
 	ThreadID   pulid.ID              `json:"threadId"`
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -133,6 +138,7 @@ type AgentProposalRepository interface {
 		ctx context.Context,
 		req ListAgentProposalsByThreadRequest,
 	) ([]*agent.AgentProposal, error)
+	ListByIDs(ctx context.Context, req ListAgentProposalsByIDsRequest) ([]*agent.AgentProposal, error)
 	UpdateStatus(
 		ctx context.Context,
 		req UpdateAgentProposalStatusRequest,

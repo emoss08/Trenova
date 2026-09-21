@@ -73,6 +73,12 @@ virtuals:
   AgentControl:
     - billingAgentEnabled
     - decisionTimeoutSeconds
+  AgentProposal:
+    - run
+  AgentPlan:
+    - run
+  AgentRun:
+    - definition
   AgentDefinition:
     - pendingProposals
     - openRuns

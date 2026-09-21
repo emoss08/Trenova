@@ -11,6 +11,8 @@ import {
   toolCatalogSchema,
   toolTrustListSchema,
   assistantMessagePageSchema,
+  assistantArtifactListSchema,
+  assistantArtifactSchema,
   agentBudgetStatusSchema,
   assistantPlanListSchema,
   assistantProposalListSchema,
@@ -21,7 +23,9 @@ import {
   saveAgentDefinitionRequestSchema,
   sendMessageResultSchema,
   type AgentDefinition,
+  type AssistantArtifact,
   type AssistantPageContext,
+  type ThreadOrigin,
   type AssistantPlan,
   type AssistantProposal,
   type AssistantStreamEvent,
@@ -55,15 +59,69 @@ export class AssistantStreamError extends Error {
   }
 }
 
+/** Where a conversation begins and, when it was opened from a record, which. */
+export type StartThreadOptions = {
+  title?: string;
+  origin?: ThreadOrigin;
+  subjectType?: string;
+  subjectId?: string;
+};
+
+/** What a person may change about their own conversation. */
+export type UpdateThreadOptions = {
+  title?: string;
+  pinned?: boolean;
+  /** Lists a quick question as a conversation. */
+  keep?: boolean;
+};
+
 export class AssistantService {
   public async listThreads(limit = 50, offset = 0) {
     const response = await api.get(`/assistant/threads/?limit=${limit}&offset=${offset}`);
     return safeParse(assistantThreadListSchema, response, "Assistant Thread");
   }
 
-  public async startThread(agentDefinitionId: string, title = "") {
-    const response = await api.post("/assistant/threads/", { agentDefinitionId, title });
+  public async startThread(agentDefinitionId: string, options: StartThreadOptions = {}) {
+    const response = await api.post("/assistant/threads/", {
+      agentDefinitionId,
+      title: options.title ?? "",
+      origin: options.origin ?? "Panel",
+      subjectType: options.subjectType ?? "",
+      subjectId: options.subjectId || null,
+    });
     return safeParse(assistantThreadSchema, response, "Assistant Thread");
+  }
+
+  public async updateThread(id: AssistantThread["id"], options: UpdateThreadOptions) {
+    const response = await api.patch(`/assistant/threads/${id}/`, {
+      title: options.title ?? null,
+      pinned: options.pinned ?? null,
+      keep: options.keep ?? false,
+    });
+    return safeParse(assistantThreadSchema, response, "Assistant Thread");
+  }
+
+  /**
+   * What a conversation produced besides words. Read with the thread rather
+   * than taken from the send response: an artifact outlives the turn, and a
+   * draft's status follows the decision made on it anywhere.
+   */
+  public async listArtifacts(threadId: AssistantThread["id"], options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/assistant/threads/${threadId}/artifacts/`, {
+      signal: options?.signal,
+    });
+    return safeParse(assistantArtifactListSchema, response, "Assistant Artifact");
+  }
+
+  public async pinArtifact(
+    threadId: AssistantThread["id"],
+    artifactId: AssistantArtifact["id"],
+    pinned: boolean,
+  ) {
+    const response = await api.post(`/assistant/threads/${threadId}/artifacts/${artifactId}/pin/`, {
+      pinned,
+    });
+    return safeParse(assistantArtifactSchema, response, "Assistant Artifact");
   }
 
   public async getThread(id: AssistantThread["id"]) {

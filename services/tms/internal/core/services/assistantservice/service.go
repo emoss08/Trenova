@@ -29,6 +29,11 @@ type Params struct {
 	// person may edit before approving; Decisions carries what they changed.
 	Tools     serviceports.AgentToolRegistry       `optional:"true"`
 	Decisions repositories.AgentDecisionRepository `optional:"true"`
+	// Artifacts keeps what a turn produced besides words; Subjects describes
+	// the record a conversation was opened from.
+	Artifacts repositories.AssistantArtifactRepository `optional:"true"`
+	Subjects  serviceports.AgentSubjectDescriber       `optional:"true"`
+	Activity  serviceports.AgentActivityPublisher      `optional:"true"`
 }
 
 type Service struct {
@@ -46,6 +51,9 @@ type Service struct {
 	budgets       serviceports.AgentBudgetService
 	tools         serviceports.AgentToolRegistry
 	decisions     repositories.AgentDecisionRepository
+	artifacts     repositories.AssistantArtifactRepository
+	subjects      serviceports.AgentSubjectDescriber
+	activity      serviceports.AgentActivityPublisher
 }
 
 func New(p Params) serviceports.AssistantService {
@@ -64,5 +72,8 @@ func New(p Params) serviceports.AssistantService {
 		budgets:       p.Budgets,
 		tools:         p.Tools,
 		decisions:     p.Decisions,
+		artifacts:     p.Artifacts,
+		subjects:      p.Subjects,
+		activity:      p.Activity,
 	}
 }

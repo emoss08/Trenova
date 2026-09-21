@@ -50,6 +50,9 @@ type persistProposalsParams struct {
 	Actions []services.PendingAction
 	Model   string
 	Input   string
+	// Artifacts, when set, views each outbound message as a draft and the
+	// plan as a checklist beside the conversation.
+	Artifacts *artifactRecorder
 }
 
 // persistProposals records the turn's proposed writes so they can be approved.
@@ -100,6 +103,8 @@ func (s *Service) persistProposals(
 		return nil, err
 	}
 	hold := holdFor(verdict)
+
+	params.Artifacts.fromProposals(recorded.Proposals, recorded.Plan)
 
 	persisted := make([]services.AssistantProposal, 0, len(recorded.Proposals))
 	for _, proposal := range recorded.Proposals {

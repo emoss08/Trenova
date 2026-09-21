@@ -139,6 +139,29 @@ func (ec *executionContext) fieldContext_AttentionSummary_ediAttention(_ context
 	return graphql.NewScalarFieldContext("AttentionSummary", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _AttentionSummary_agentDecisions(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AttentionSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AttentionSummary_agentDecisions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AgentDecisions, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AttentionSummary_agentDecisions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AttentionSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 // endregion **************************** field.gotpl *****************************
 
 // region    **************************** input.gotpl *****************************
@@ -185,6 +208,11 @@ func (ec *executionContext) _AttentionSummary(ctx context.Context, sel ast.Selec
 			}
 		case "ediAttention":
 			out.Values[i] = ec._AttentionSummary_ediAttention(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "agentDecisions":
+			out.Values[i] = ec._AttentionSummary_agentDecisions(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}

@@ -53,6 +53,13 @@ export const ATTENTION_ROWS: AttentionRowConfig[] = [
     path: "/edi/overview",
     tone: "warning",
   },
+  {
+    key: "agentDecisions",
+    label: "Decisions waiting",
+    module: "desk",
+    path: "/desk/decisions",
+    tone: "warning",
+  },
 ];
 
 export const ATTENTION_ROWS_BY_KEY = new Map(ATTENTION_ROWS.map((row) => [row.key as string, row]));

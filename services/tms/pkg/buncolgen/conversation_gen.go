@@ -355,6 +355,10 @@ var ThreadColumns = struct {
 	Status              Column // "status" → qualified: "athr.status"
 	LastMessageAt       Column // "last_message_at" → qualified: "athr.last_message_at"
 	PreferredProviderID Column // "preferred_provider_id" → qualified: "athr.preferred_provider_id"
+	Origin              Column // "origin" → qualified: "athr.origin"
+	Pinned              Column // "pinned" → qualified: "athr.pinned"
+	SubjectType         Column // "subject_type" → qualified: "athr.subject_type"
+	SubjectID           Column // "subject_id" → qualified: "athr.subject_id"
 	Version             Column // "version" → qualified: "athr.version"
 	CreatedAt           Column // "created_at" → qualified: "athr.created_at"
 	UpdatedAt           Column // "updated_at" → qualified: "athr.updated_at"
@@ -368,6 +372,10 @@ var ThreadColumns = struct {
 	Status:              NewColumn("status", "athr"),
 	LastMessageAt:       NewColumn("last_message_at", "athr"),
 	PreferredProviderID: NewColumn("preferred_provider_id", "athr"),
+	Origin:              NewColumn("origin", "athr"),
+	Pinned:              NewColumn("pinned", "athr"),
+	SubjectType:         NewColumn("subject_type", "athr"),
+	SubjectID:           NewColumn("subject_id", "athr"),
 	Version:             NewColumn("version", "athr"),
 	CreatedAt:           NewColumn("created_at", "athr"),
 	UpdatedAt:           NewColumn("updated_at", "athr"),
@@ -387,6 +395,10 @@ var ThreadFieldMap = map[string]string{
 	"status":              "status",
 	"lastMessageAt":       "last_message_at",
 	"preferredProviderId": "preferred_provider_id",
+	"origin":              "origin",
+	"pinned":              "pinned",
+	"subjectType":         "subject_type",
+	"subjectId":           "subject_id",
 	"version":             "version",
 	"createdAt":           "created_at",
 	"updatedAt":           "updated_at",
@@ -404,6 +416,10 @@ var ThreadInsertableColumns = []string{
 	"status",
 	"last_message_at",
 	"preferred_provider_id",
+	"origin",
+	"pinned",
+	"subject_type",
+	"subject_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -483,6 +499,10 @@ var ThreadFilter = struct {
 	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	LastMessageAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastMessageAt" → DB: "last_message_at"
 	PreferredProviderID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preferredProviderId" → DB: "preferred_provider_id"
+	Origin              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "origin" → DB: "origin"
+	Pinned              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinned" → DB: "pinned"
+	SubjectType         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
+	SubjectID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
 	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -513,6 +533,18 @@ var ThreadFilter = struct {
 	},
 	PreferredProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("preferredProviderId", op, value)
+	},
+	Origin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("origin", op, value)
+	},
+	Pinned: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pinned", op, value)
+	},
+	SubjectType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("subjectType", op, value)
+	},
+	SubjectID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("subjectId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

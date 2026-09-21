@@ -42,6 +42,8 @@ type Params struct {
 	// Plans groups a run's pending proposals into one decision. Without it
 	// every proposal stands on its own, which is how things worked before.
 	Plans PlanStore `optional:"true"`
+	// Activity tells connected clients a proposal or plan is waiting.
+	Activity serviceports.AgentActivityPublisher `optional:"true"`
 }
 
 // PlanStore is the one write the recorder makes on plans.
@@ -56,6 +58,7 @@ type Service struct {
 	plans     PlanStore
 	trust     serviceports.AgentTrustService
 	notifier  serviceports.AgentProposalNotifier
+	activity  serviceports.AgentActivityPublisher
 }
 
 func New(p Params) *Service {
@@ -63,6 +66,7 @@ func New(p Params) *Service {
 	svc.trust = p.Trust
 	svc.notifier = p.Notifier
 	svc.plans = p.Plans
+	svc.activity = p.Activity
 
 	return svc
 }
@@ -188,6 +192,7 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 	}
 
 	s.notifyPending(ctx, req.Definition, run, proposals)
+	s.announce(ctx, req.Actor, proposals, plan)
 
 	return &RecordResult{Run: run, Proposals: proposals, Plan: plan}, nil
 }
@@ -381,5 +386,27 @@ func (s *Service) recordAutomaticFailure(ctx context.Context, proposal *agent.Ag
 			zap.String("tool", proposal.ToolName),
 			zap.Error(err),
 		)
+	}
+}
+
+// announce tells connected clients what the run left waiting. A proposal
+// that ran on its own is announced too: the ledger it landed in is on the
+// same screens.
+func (s *Service) announce(
+	ctx context.Context,
+	actor *serviceports.RequestActor,
+	proposals []*agent.AgentProposal,
+	plan *agent.AgentPlan,
+) {
+	if s.activity == nil {
+		return
+	}
+
+	auditActor := actor.AuditActorOrSystem()
+	for _, proposal := range proposals {
+		s.activity.ProposalChanged(ctx, proposal, auditActor, serviceports.ActivityCreated)
+	}
+	if plan != nil {
+		s.activity.PlanChanged(ctx, plan, auditActor, serviceports.ActivityCreated)
 	}
 }

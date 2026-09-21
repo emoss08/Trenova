@@ -6,11 +6,13 @@ import { queries } from "@/lib/queries";
 import { useAssistantStore } from "@/stores/assistant-store";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type {
+  AssistantArtifact,
   AssistantPageContext,
   AssistantPlan,
   AssistantProposal,
   AssistantThread,
 } from "@/types/assistant";
+import { AgentGutter } from "./voice/agent-gutter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { ArrowRightIcon, InfoIcon, XIcon } from "lucide-react";
@@ -60,6 +62,10 @@ export function MessageThread({
   expanded,
   onPickAgent,
   onStartNew,
+  artifacts = [],
+  onOpenArtifact,
+  onLiveArtifact,
+  spine = false,
 }: {
   thread: AssistantThread;
   agent: AgentDefinitionRow | null;
@@ -69,6 +75,13 @@ export function MessageThread({
   onPickAgent?: () => void;
   /** Starts a fresh conversation with the same agent; offered when this one is full. */
   onStartNew?: () => void;
+  /** What the conversation produced, when the surface has a pane to open it in. */
+  artifacts?: AssistantArtifact[];
+  onOpenArtifact?: (id: string) => void;
+  /** Told each artifact a streaming turn announces, as it lands. */
+  onLiveArtifact?: (id: string) => void;
+  /** Draws the agent's accent down the gutter, so the thread reads as its work. */
+  spine?: boolean;
 }) {
   const t = useT();
   const dismissed = useAssistantStore((state) => state.dismissedSuggestions);
@@ -199,6 +212,39 @@ export function MessageThread({
     getTurnContext,
   );
 
+  // An artifact announced mid-turn is handed to the pane at once, so the
+  // table opens while the sentence about it is still arriving.
+  const liveArtifactId = turn?.artifacts.at(-1)?.id ?? null;
+  useEffect(() => {
+    if (liveArtifactId !== null) {
+      onLiveArtifact?.(liveArtifactId);
+    }
+  }, [liveArtifactId, onLiveArtifact]);
+
+  // Each turn's artifacts, by the message that produced them or, before the
+  // message id was tied on, by the tool call that did.
+  const artifactsByMessage = useMemo(() => {
+    const byMessage = new Map<string, AssistantArtifact[]>();
+    const byCall = new Map<string, AssistantArtifact>();
+    for (const artifact of artifacts) {
+      if (artifact.messageId) {
+        byMessage.set(artifact.messageId, [...(byMessage.get(artifact.messageId) ?? []), artifact]);
+      } else if (artifact.sourceToolCallId !== "") {
+        byCall.set(artifact.sourceToolCallId, artifact);
+      }
+    }
+    for (const entry of entries) {
+      if (entry.kind !== "assistant") continue;
+      for (const exchange of entry.tools) {
+        const artifact = byCall.get(exchange.call.id);
+        if (artifact) {
+          byMessage.set(entry.message.id, [...(byMessage.get(entry.message.id) ?? []), artifact]);
+        }
+      }
+    }
+    return byMessage;
+  }, [artifacts, entries]);
+
   // An answer to the assistant's question is an ordinary message. Sending it
   // that way is what keeps a clicked answer and a typed one the same thing:
   // nothing new is stored, and the thread reads identically either way.
@@ -276,9 +322,11 @@ export function MessageThread({
                 entry={entry}
                 proposals={proposalsByMessage.get(entry.message.id) ?? []}
                 plans={plansByMessage.get(entry.message.id) ?? []}
+                artifacts={artifactsByMessage.get(entry.message.id) ?? []}
                 threadId={thread.id}
                 latestUserSequence={latestUserSequence}
                 onAnswer={answer}
+                onOpenArtifact={onOpenArtifact}
               />
             )}
           </div>
@@ -317,12 +365,14 @@ export function MessageThread({
   }, [
     answer,
     arrivals,
+    artifactsByMessage,
     dismiss,
     entries,
     latestUserSequence,
     loosePlans,
     looseProposals,
     now,
+    onOpenArtifact,
     plansByMessage,
     proposalsByMessage,
     providerId,
@@ -333,84 +383,88 @@ export function MessageThread({
     turn,
   ]);
 
+  const body = (
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      {history.isLoading ? (
+        <div className={cn("flex flex-1 flex-col gap-4", expanded ? "px-4 py-5" : "px-3 py-4")}>
+          <Skeleton className="ml-auto h-10 w-2/5" />
+          <Skeleton className="h-20 w-3/5" />
+          <Skeleton className="ml-auto h-10 w-1/3" />
+        </div>
+      ) : isEmpty ? (
+        <div className="flex min-h-0 flex-1 flex-col" style={{ paddingBottom: composerHeight }}>
+          <EmptyThread
+            agent={agent}
+            suggestions={suggestions}
+            pageContext={contextIncluded ? pageContext : null}
+            onPick={(prompt) => void send(prompt, undefined, providerId)}
+            onDismiss={dismissSuggestion}
+          />
+        </div>
+      ) : (
+        <VirtualThread
+          rows={rows}
+          hasOlder={history.hasOlder}
+          isLoadingOlder={history.isLoadingOlder}
+          onLoadOlder={history.loadOlder}
+          paddingBottom={composerHeight + COMPOSER_CLEARANCE}
+          className={expanded ? "px-4" : "px-3"}
+          contentClassName={expanded ? "max-w-3xl pt-5" : "pt-4"}
+          rowClassName={expanded ? "pb-5" : "pb-4"}
+        />
+      )}
+
+      <Composer
+        ref={composerRef}
+        onSend={(content) => void send(content, undefined, providerId)}
+        onStop={stop}
+        active={isActive}
+        disabled={block !== null}
+        disabledReason={
+          block === "full"
+            ? t("This conversation is full. Start a new one to continue.")
+            : block === "agents-unavailable"
+              ? t(
+                  "The agents could not be loaded, so nothing can be sent yet. Refresh to try again.",
+                )
+              : t("This agent has been disabled, so the conversation cannot continue.")
+        }
+        notice={
+          history.length.state !== "open" ? (
+            <ThreadLengthNotice
+              state={history.length.state}
+              total={history.total}
+              limit={history.limit}
+              onStartNew={onStartNew}
+            />
+          ) : switchNotice ? (
+            <ModelSwitchNotice notice={switchNotice} />
+          ) : null
+        }
+        placeholder={
+          agent
+            ? t("Message {0}…", agent.name)
+            : t("Ask about a shipment, a driver, or how to do something…")
+        }
+        agent={agent}
+        onPickAgent={onPickAgent}
+        pageContext={pageContext}
+        contextIncluded={contextIncluded}
+        onToggleContext={() => setContextIncluded((value) => !value)}
+        providers={providers}
+        providerId={providerId}
+        onPickProvider={setProviderId}
+        suggestions={suggestions}
+        draft={draft}
+        onDraftChange={onDraftChange}
+        compact={!expanded}
+      />
+    </div>
+  );
+
   return (
     <AssistantAgentProvider agent={agent}>
-      <div className="relative flex min-h-0 flex-1 flex-col">
-        {history.isLoading ? (
-          <div className={cn("flex flex-1 flex-col gap-4", expanded ? "px-4 py-5" : "px-3 py-4")}>
-            <Skeleton className="ml-auto h-10 w-2/5" />
-            <Skeleton className="h-20 w-3/5" />
-            <Skeleton className="ml-auto h-10 w-1/3" />
-          </div>
-        ) : isEmpty ? (
-          <div className="flex min-h-0 flex-1 flex-col" style={{ paddingBottom: composerHeight }}>
-            <EmptyThread
-              agent={agent}
-              suggestions={suggestions}
-              pageContext={contextIncluded ? pageContext : null}
-              onPick={(prompt) => void send(prompt, undefined, providerId)}
-              onDismiss={dismissSuggestion}
-            />
-          </div>
-        ) : (
-          <VirtualThread
-            rows={rows}
-            hasOlder={history.hasOlder}
-            isLoadingOlder={history.isLoadingOlder}
-            onLoadOlder={history.loadOlder}
-            paddingBottom={composerHeight + COMPOSER_CLEARANCE}
-            className={expanded ? "px-4" : "px-3"}
-            contentClassName={expanded ? "max-w-3xl pt-5" : "pt-4"}
-            rowClassName={expanded ? "pb-5" : "pb-4"}
-          />
-        )}
-
-        <Composer
-          ref={composerRef}
-          onSend={(content) => void send(content, undefined, providerId)}
-          onStop={stop}
-          active={isActive}
-          disabled={block !== null}
-          disabledReason={
-            block === "full"
-              ? t("This conversation is full. Start a new one to continue.")
-              : block === "agents-unavailable"
-                ? t(
-                    "The agents could not be loaded, so nothing can be sent yet. Refresh to try again.",
-                  )
-                : t("This agent has been disabled, so the conversation cannot continue.")
-          }
-          notice={
-            history.length.state !== "open" ? (
-              <ThreadLengthNotice
-                state={history.length.state}
-                total={history.total}
-                limit={history.limit}
-                onStartNew={onStartNew}
-              />
-            ) : switchNotice ? (
-              <ModelSwitchNotice notice={switchNotice} />
-            ) : null
-          }
-          placeholder={
-            agent
-              ? t("Message {0}…", agent.name)
-              : t("Ask about a shipment, a driver, or how to do something…")
-          }
-          agent={agent}
-          onPickAgent={onPickAgent}
-          pageContext={pageContext}
-          contextIncluded={contextIncluded}
-          onToggleContext={() => setContextIncluded((value) => !value)}
-          providers={providers}
-          providerId={providerId}
-          onPickProvider={setProviderId}
-          suggestions={suggestions}
-          draft={draft}
-          onDraftChange={onDraftChange}
-          compact={!expanded}
-        />
-      </div>
+      {spine ? <AgentGutter agent={agent}>{body}</AgentGutter> : body}
     </AssistantAgentProvider>
   );
 }

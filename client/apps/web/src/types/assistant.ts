@@ -34,6 +34,29 @@ export const messageRoleSchema = z.enum(["User", "Assistant", "Tool"]);
 
 export const threadStatusSchema = z.enum(["Active", "Archived"]);
 
+/**
+ * Where a conversation began. A quick question from the palette (Ask) is
+ * not listed until the person keeps it; every other origin is a
+ * conversation from the start.
+ */
+export const threadOriginSchema = z.enum(["Panel", "Desk", "Ask", "Watchtower", "Briefing"]);
+
+/** What an artifact is, which decides how the Desk renders it. */
+export const artifactKindSchema = z.enum([
+  "report_preview",
+  "report_run",
+  "email_draft",
+  "plan",
+  "entity_card",
+  "table_view",
+  "rate_explanation",
+  "dashboard_ref",
+  "briefing",
+  "inbound_message",
+]);
+
+export const artifactStatusSchema = z.enum(["Pending", "Ready", "Failed", "Sent"]);
+
 /** Server-side `nullzero` arrays arrive as null when empty; every list here reads as []. */
 const nullableList = <T extends z.ZodType>(item: T) =>
   z.preprocess((value) => value ?? [], z.array(item));
@@ -308,9 +331,52 @@ export const assistantThreadSchema = z.object({
   lastMessageAt: z.number().default(0),
   /** The model this conversation is set to. Empty means the org's own order. */
   preferredProviderId: optionalIdSchema,
+  origin: threadOriginSchema.default("Panel"),
+  pinned: z.boolean().default(false),
+  /** The record the conversation was opened from, when it was. */
+  subjectType: z.string().optional().default(""),
+  subjectId: optionalIdSchema,
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
+});
+
+/**
+ * What a turn produced besides words: the rows a preview returned, a run to
+ * download, the email an agent wants to send, the plan it wants to carry
+ * out, the record it looked up. The payload is kind-specific and read by the
+ * renderer for that kind. A draft or a plan is a view over the proposal or
+ * plan that carries the decision.
+ */
+export const assistantArtifactSchema = z.object({
+  id: z.string(),
+  threadId: z.string(),
+  messageId: optionalIdSchema,
+  runId: optionalIdSchema,
+  proposalId: optionalIdSchema,
+  planId: optionalIdSchema,
+  kind: artifactKindSchema,
+  status: artifactStatusSchema,
+  title: z.string(),
+  payload: z.preprocess((value) => value ?? {}, z.record(z.string(), z.unknown())),
+  /** The tool call that produced it, so the transcript can point at it. */
+  sourceToolCallId: z.string().optional().default(""),
+  pinned: z.boolean().default(false),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+
+export const assistantArtifactListSchema = z.object({
+  results: z.array(assistantArtifactSchema),
+});
+
+/** An artifact as a streamed turn announces it, before the pane reads it whole. */
+export const assistantArtifactEventSchema = z.object({
+  id: z.string(),
+  kind: artifactKindSchema,
+  status: artifactStatusSchema,
+  title: z.string(),
+  sourceToolCallId: z.string().optional().default(""),
 });
 
 /**
@@ -513,6 +579,8 @@ export const sendMessageResultSchema = z.object({
    * offer a decision the server cannot honor.
    */
   proposalsUnrecorded: z.boolean().default(false),
+  /** What the turn produced besides words, in the order it produced them. */
+  artifacts: z.array(assistantArtifactSchema).nullish(),
 });
 
 /**
@@ -588,6 +656,7 @@ export type AssistantStreamEvent =
   | { event: "tool_started"; data: z.infer<typeof assistantToolStartedEventSchema> }
   | { event: "tool_finished"; data: z.infer<typeof assistantToolFinishedEventSchema> }
   | { event: "retrying"; data: z.infer<typeof assistantRetryingEventSchema> }
+  | { event: "artifact"; data: z.infer<typeof assistantArtifactEventSchema> }
   | { event: "done"; data: SendMessageResult }
   | { event: "error"; data: z.infer<typeof assistantErrorEventSchema> };
 
@@ -616,6 +685,8 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
       return { event, data: assistantToolFinishedEventSchema.parse(data) };
     case "retrying":
       return { event, data: assistantRetryingEventSchema.parse(data) };
+    case "artifact":
+      return { event, data: assistantArtifactEventSchema.parse(data) };
     case "done":
       return { event, data: sendMessageResultSchema.parse(data) };
     case "error":
@@ -639,6 +710,11 @@ export type ToolSimulation = z.infer<typeof toolSimulationSchema>;
 export type AgentEventDescriptor = z.infer<typeof agentEventDescriptorSchema>;
 export type SaveAgentDefinitionRequest = z.infer<typeof saveAgentDefinitionRequestSchema>;
 export type AssistantThread = z.infer<typeof assistantThreadSchema>;
+export type ThreadOrigin = z.infer<typeof threadOriginSchema>;
+export type AssistantArtifact = z.infer<typeof assistantArtifactSchema>;
+export type ArtifactKind = z.infer<typeof artifactKindSchema>;
+export type ArtifactStatus = z.infer<typeof artifactStatusSchema>;
+export type AssistantArtifactEvent = z.infer<typeof assistantArtifactEventSchema>;
 export type AssistantProviderOption = z.infer<typeof assistantProviderOptionSchema>;
 export type AssistantMessage = z.infer<typeof assistantMessageSchema>;
 export type AssistantMessagePage = z.infer<typeof assistantMessagePageSchema>;

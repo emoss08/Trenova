@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -309,4 +310,84 @@ type AgentBudgetService interface {
 		toolName string,
 	) (BudgetRefusal, error)
 	Status(ctx context.Context, definition *agentdefinition.Definition) (*AgentBudgetStatus, error)
+}
+
+// AgentActivityPublisher tells connected clients that an agent record
+// changed, so a queue or a pane refreshes without polling. Every method is
+// best effort: a lost invalidation costs a refresh, never the write.
+type AgentActivityPublisher interface {
+	ProposalChanged(ctx context.Context, proposal *agent.AgentProposal, actor AuditActor, action string)
+	PlanChanged(ctx context.Context, plan *agent.AgentPlan, actor AuditActor, action string)
+	RunChanged(ctx context.Context, run *agent.AgentRun, actor AuditActor, action string)
+	ArtifactChanged(
+		ctx context.Context,
+		artifact *assistantartifact.Artifact,
+		actor AuditActor,
+		action string,
+	)
+}
+
+// The actions an activity publisher announces.
+const (
+	ActivityCreated = "created"
+	ActivityUpdated = "updated"
+)
+
+// PendingDecision is one thing waiting on a person: a proposal that stands
+// on its own, or a plan decided as a whole. Exactly one of the two is set.
+type PendingDecision struct {
+	Proposal  *agent.AgentProposal
+	Plan      *agent.AgentPlan
+	CreatedAt int64
+	// Cursor is where a page continues from after this entry.
+	Cursor string
+}
+
+type ListPendingDecisionsRequest struct {
+	TenantInfo pagination.TenantInfo
+	First      int
+	After      string
+	// AgentDefinitionID narrows the queue to one agent's work; ToolName to
+	// one kind of write (a plan matches when any step uses it).
+	AgentDefinitionID pulid.ID
+	ToolName          string
+	IncludeTotalCount bool
+}
+
+type PendingDecisionsPage struct {
+	Items       []PendingDecision
+	HasNextPage bool
+	TotalCount  *int
+}
+
+// DecideAgentProposalsRequest decides several proposals of the same tool
+// at once, each as proposed. A change to one proposal is a decision on
+// that proposal alone.
+type DecideAgentProposalsRequest struct {
+	ProposalIDs []pulid.ID
+	Decision    agent.DecisionType
+	ReasonCode  string
+	TenantInfo  pagination.TenantInfo
+}
+
+// AgentProposalDecisionResult is what became of one proposal in a batch.
+// Error is written for the person; Executed says the approved write went
+// through.
+type AgentProposalDecisionResult struct {
+	ProposalID pulid.ID
+	Decision   *agent.AgentDecision
+	Error      string
+	Executed   bool
+}
+
+type AgentDecisionQueueService interface {
+	ListPending(ctx context.Context, req ListPendingDecisionsRequest) (*PendingDecisionsPage, error)
+	// Count is the size of the queue, for a badge.
+	Count(ctx context.Context, tenant pagination.TenantInfo) (int, error)
+	Summary(ctx context.Context, tenant pagination.TenantInfo) (*repositories.PendingDecisionSummary, error)
+	DecideMany(
+		ctx context.Context,
+		req *DecideAgentProposalsRequest,
+		actor *RequestActor,
+	) ([]AgentProposalDecisionResult, error)
 }
