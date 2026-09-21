@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"github.com/bytedance/sonic"
 	"strings"
 	"testing"
 
@@ -145,6 +146,38 @@ func TestListReports_NamesTheCatalogAndItsParameters(t *testing.T) {
 	assert.Equal(t, "Accounting", rows[0].Category)
 	require.Len(t, rows[0].Parameters, 2)
 	assert.True(t, rows[0].Parameters[0].Required)
+}
+
+// The catalog named the report's key "key" and run_report took it as
+// "reportKey". A model that read the one and called the other with what it
+// saw was refused for a missing parameter it had, in fact, supplied.
+func TestListReports_NamesTheKeyTheWayRunReportTakesIt(t *testing.T) {
+	t.Parallel()
+
+	_, _, tools := reportingTools(t)
+
+	result, err := tools["list_reports"].Query(t.Context(), testParams(map[string]any{}))
+	require.NoError(t, err)
+
+	encoded, err := sonic.Marshal(result)
+	require.NoError(t, err)
+	assert.Contains(t, string(encoded), `"reportKey":"ar_aging_by_customer"`)
+	assert.NotContains(t, string(encoded), `"key":"ar_aging_by_customer"`)
+}
+
+func TestRunReport_AcceptsKeyAsTheReportKey(t *testing.T) {
+	t.Parallel()
+
+	service, _, tools := reportingTools(t)
+
+	_, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+		"key":        "ar_aging_by_customer",
+		"parameters": map[string]any{"asOf": "2026-03-01"},
+	}))
+	require.NoError(t, err)
+
+	require.NotNil(t, service.submitted)
+	assert.Equal(t, "ar_aging_by_customer", service.submitted.CannedKey)
 }
 
 func TestListReports_NarrowsByCategory(t *testing.T) {

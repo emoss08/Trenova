@@ -38,8 +38,12 @@ type reportParameterRow struct {
 	AllowedValues []string `json:"allowedValues,omitempty"`
 }
 
+// reportCatalogRow names the key the way run_report takes it. The catalog
+// used to call it "key" while run_report asked for "reportKey", and a model
+// that read the one and wrote the other was refused for a parameter it had
+// supplied.
 type reportCatalogRow struct {
-	Key         string               `json:"key"`
+	Key         string               `json:"reportKey"`
 	Name        string               `json:"name"`
 	Description string               `json:"description,omitempty"`
 	Category    string               `json:"category,omitempty"`
@@ -166,6 +170,21 @@ type reportRunStatus struct {
 	Note      string `json:"note"`
 }
 
+// reportKeyOf reads the report's key under the name the schema declares, or
+// under the plain "key" a model reaches for after reading a catalog row. The
+// alias costs nothing and the refusal it prevents cost a whole turn.
+func reportKeyOf(params map[string]any) (string, error) {
+	key, err := requireString(params, "reportKey")
+	if err == nil {
+		return key, nil
+	}
+	if alias, aliasErr := requireString(params, "key"); aliasErr == nil {
+		return alias, nil
+	}
+
+	return "", err
+}
+
 type runReportTool struct {
 	reports     reportRunner
 	permissions serviceports.PermissionEngine
@@ -198,7 +217,7 @@ func (t *runReportTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"reportKey": map[string]any{
 				"type":        "string",
-				"description": "The key of a report from list_reports.",
+				"description": "The reportKey of a report from list_reports.",
 			},
 			"parameters": map[string]any{
 				"type": "object",
@@ -231,7 +250,7 @@ func (t *runReportTool) Query(
 		return nil, err
 	}
 
-	key, err := requireString(params.Params, "reportKey")
+	key, err := reportKeyOf(params.Params)
 	if err != nil {
 		return nil, err
 	}
