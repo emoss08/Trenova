@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/agentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentdefinitionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentexceptionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/agentplanhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentproposalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentrunhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/aiproviderhandler"
@@ -161,6 +162,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	documenttemplatehandler.New,
 	accessorialchargehandler.New,
 	agentproposalhandler.New,
+	agentplanhandler.New,
 	agentexceptionhandler.New,
 	agentcontrolhandler.New,
 	agentdefinitionhandler.New,

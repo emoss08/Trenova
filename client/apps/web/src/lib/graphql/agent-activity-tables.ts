@@ -1,5 +1,6 @@
 import {
   AgentExceptionTableDocument,
+  AgentPlanTableDocument,
   AgentProposalTableDocument,
   AgentRunTableDocument,
 } from "@trenova/graphql/generated/graphql";
@@ -21,6 +22,14 @@ export const agentProposalTableGraphQLConfig = defineDataTableGraphQLConfig({
 });
 
 export type AgentProposalRow = DataTableConfigRow<typeof agentProposalTableGraphQLConfig>;
+
+export const agentPlanTableGraphQLConfig = defineDataTableGraphQLConfig({
+  document: AgentPlanTableDocument,
+  operationName: "AgentPlanTable",
+  connectionKey: "agentPlans",
+});
+
+export type AgentPlanRow = DataTableConfigRow<typeof agentPlanTableGraphQLConfig>;
 
 export const agentExceptionTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: AgentExceptionTableDocument,

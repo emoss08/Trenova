@@ -2,6 +2,8 @@ package proposalrecorder
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -9,10 +11,13 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const maxPlanTitleChars = 200
 
 type RunOpener interface {
 	Create(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
@@ -34,12 +39,21 @@ type Params struct {
 	// Notifier tells the people who can decide that a background run left
 	// something waiting. Optional for the same reason.
 	Notifier serviceports.AgentProposalNotifier `optional:"true"`
+	// Plans groups a run's pending proposals into one decision. Without it
+	// every proposal stands on its own, which is how things worked before.
+	Plans PlanStore `optional:"true"`
+}
+
+// PlanStore is the one write the recorder makes on plans.
+type PlanStore interface {
+	Create(ctx context.Context, entity *agent.AgentPlan) (*agent.AgentPlan, error)
 }
 
 type Service struct {
 	logger    *zap.Logger
 	runs      RunOpener
 	proposals ProposalStore
+	plans     PlanStore
 	trust     serviceports.AgentTrustService
 	notifier  serviceports.AgentProposalNotifier
 }
@@ -48,8 +62,16 @@ func New(p Params) *Service {
 	svc := NewWithStores(p.Logger, p.Runs, p.Proposals)
 	svc.trust = p.Trust
 	svc.notifier = p.Notifier
+	svc.plans = p.Plans
 
 	return svc
+}
+
+// WithPlans gives a recorder built with NewWithStores a plan store.
+func (s *Service) WithPlans(plans PlanStore) *Service {
+	s.plans = plans
+
+	return s
 }
 
 func NewWithStores(logger *zap.Logger, runs RunOpener, proposals ProposalStore) *Service {
@@ -92,6 +114,8 @@ type RecordRequest struct {
 type RecordResult struct {
 	Run       *agent.AgentRun
 	Proposals []*agent.AgentProposal
+	// Plan is set when the run's pending proposals were grouped into one.
+	Plan *agent.AgentPlan
 }
 
 func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult, error) {
@@ -111,6 +135,12 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 	now := timeutils.NowUnix()
 	proposals := make([]*agent.AgentProposal, 0, len(req.Actions))
 
+	plan, err := s.openPlan(ctx, req, run, now)
+	if err != nil {
+		return nil, err
+	}
+
+	step := 0
 	for _, action := range req.Actions {
 		sourceMessageID := req.SourceMessageIDs[action.ToolCallID]
 
@@ -134,6 +164,13 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 			proposal.TargetVersion = action.Target.Version
 		}
 		applyExecution(proposal, action, now)
+		if plan != nil && proposal.Status == agent.ProposalStatusPending {
+			step++
+			planID := plan.ID
+			proposal.PlanID = &planID
+			proposal.PlanStep = step
+			proposal.ExpiresAt = plan.ExpiresAt
+		}
 
 		multiErr := errortypes.NewMultiError()
 		proposal.Validate(multiErr)
@@ -152,7 +189,73 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 
 	s.notifyPending(ctx, req.Definition, run, proposals)
 
-	return &RecordResult{Run: run, Proposals: proposals}, nil
+	return &RecordResult{Run: run, Proposals: proposals, Plan: plan}, nil
+}
+
+// openPlan groups a run's pending actions into one decision when there are
+// at least two of them. One pending action is a proposal, as before; two or
+// more in one run are the agent asking for a sequence, and the order it asked
+// in is the order the plan will run them.
+func (s *Service) openPlan(
+	ctx context.Context,
+	req *RecordRequest,
+	run *agent.AgentRun,
+	now int64,
+) (*agent.AgentPlan, error) {
+	if s.plans == nil {
+		return nil, nil
+	}
+
+	pending := 0
+	rationale := ""
+	for _, action := range req.Actions {
+		if action.Executed {
+			continue
+		}
+		pending++
+		if rationale == "" {
+			rationale = strings.TrimSpace(action.Rationale)
+		}
+	}
+	if pending < 2 {
+		return nil, nil
+	}
+
+	plan := &agent.AgentPlan{
+		OrganizationID: req.Actor.OrganizationID,
+		BusinessUnitID: req.Actor.BusinessUnitID,
+		RunID:          run.ID,
+		Title:          planTitle(req.Definition, pending),
+		Summary:        planSummary(run, rationale),
+		Status:         agent.PlanStatusPending,
+		StepCount:      pending,
+		ExpiresAt:      now + int64(agent.DefaultProposalTTL.Seconds()),
+	}
+
+	multiErr := errortypes.NewMultiError()
+	plan.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	return s.plans.Create(ctx, plan)
+}
+
+func planTitle(definition *agentdefinition.Definition, steps int) string {
+	title := fmt.Sprintf("%d changes", steps)
+	if definition != nil && strings.TrimSpace(definition.Name) != "" {
+		title = definition.Name + ": " + title
+	}
+
+	return stringutils.Ellipsize(title, maxPlanTitleChars)
+}
+
+func planSummary(run *agent.AgentRun, rationale string) string {
+	if run != nil && strings.TrimSpace(run.Summary) != "" {
+		return run.Summary
+	}
+
+	return rationale
 }
 
 // notifyPending is best effort. The proposals are stored; a notice that could

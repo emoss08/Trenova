@@ -144,6 +144,20 @@ export type AgentOutputMode =
   | 'Conversational'
   | 'Report';
 
+export type AgentPlanDecisionInput = {
+  /** Accepted runs every step in order; Rejected rejects them all. */
+  decision: AgentDecisionType;
+  reasonCode: string;
+};
+
+export type AgentPlanStatus =
+  | 'Approved'
+  | 'Completed'
+  | 'Expired'
+  | 'Failed'
+  | 'Pending'
+  | 'Rejected';
+
 export type AgentProposalDecisionInput = {
   decision: AgentDecisionType;
   modifications?: unknown;
@@ -152,10 +166,13 @@ export type AgentProposalDecisionInput = {
 
 export type AgentProposalStatus =
   | 'Accepted'
+  | 'Executed'
+  | 'ExecutionFailed'
   | 'Expired'
   | 'Modified'
   | 'Pending'
   | 'Rejected'
+  | 'Skipped'
   | 'Superseded';
 
 export type AgentResolutionState =
@@ -5907,6 +5924,31 @@ export type ResolveAgentExceptionMutationVariables = Exact<{
 
 
 export type ResolveAgentExceptionMutation = { resolveAgentException: { id: string, resolutionState: AgentResolutionState, resolutionNotes: string, version: number, updatedAt: number } };
+
+export type AgentPlanTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, title: string, summary: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, expiresAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentPlanTableRowFieldsFragment' };
+
+export type AgentPlanTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AgentPlanTableQuery = { agentPlans: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentPlanTableRowFieldsFragment': AgentPlanTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AgentPlanDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentPlanDetailQuery = { agentPlan: { ' $fragmentRefs'?: { 'AgentPlanTableRowFieldsFragment': AgentPlanTableRowFieldsFragment } } | null };
+
+export type DecideAgentPlanMutationVariables = Exact<{
+  id: string | number;
+  input: AgentPlanDecisionInput;
+}>;
+
+
+export type DecideAgentPlanMutation = { decideAgentPlan: { ' $fragmentRefs'?: { 'AgentPlanTableRowFieldsFragment': AgentPlanTableRowFieldsFragment } } };
 
 export type AgentEvidenceRefFieldsFragment = { type: string, id: string, note: string } & { ' $fragmentName'?: 'AgentEvidenceRefFieldsFragment' };
 
@@ -11865,6 +11907,27 @@ fragment AgentEvidenceRefFields on AgentEvidenceRef {
   id
   note
 }`, {"fragmentName":"AgentExceptionDetailFields"}) as unknown as TypedDocumentString<AgentExceptionDetailFieldsFragment, unknown>;
+export const AgentPlanTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentPlanTableRowFields on AgentPlan {
+  id
+  organizationId
+  businessUnitId
+  runId
+  title
+  summary
+  status
+  stepCount
+  completedSteps
+  failedStep
+  failureError
+  decidedByUserId
+  decidedAt
+  expiresAt
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"AgentPlanTableRowFields"}) as unknown as TypedDocumentString<AgentPlanTableRowFieldsFragment, unknown>;
 export const AgentProposalTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentProposalTableRowFields on AgentProposal {
   id
@@ -18341,6 +18404,9 @@ export const AgentProposalCountDocument = {"__meta__":{"kind":"query","name":"Ag
 export const AgentExceptionTableDocument = {"__meta__":{"kind":"query","name":"AgentExceptionTable","hash":"sha256:25ab7e258b1999dd80da81ecf0ad0c5b956991f6fc73cf33a2cd45def0a97b41"}} as unknown as TypedDocumentString<AgentExceptionTableQuery, AgentExceptionTableQueryVariables>;
 export const AgentExceptionDetailDocument = {"__meta__":{"kind":"query","name":"AgentExceptionDetail","hash":"sha256:a5f862a28f545ff7151df8c5e238d4c4ea80f137f9c237f2de408fa670227069"}} as unknown as TypedDocumentString<AgentExceptionDetailQuery, AgentExceptionDetailQueryVariables>;
 export const ResolveAgentExceptionDocument = {"__meta__":{"kind":"mutation","name":"ResolveAgentException","hash":"sha256:7560a022b9583caf64b19551a5703e3d4717a7ee8297e5359121c469f4357010"}} as unknown as TypedDocumentString<ResolveAgentExceptionMutation, ResolveAgentExceptionMutationVariables>;
+export const AgentPlanTableDocument = {"__meta__":{"kind":"query","name":"AgentPlanTable","hash":"sha256:5255cd6f89e45711f75b6a9c0bab65c62fd49fb78028a756fa2ad1645c479b3b"}} as unknown as TypedDocumentString<AgentPlanTableQuery, AgentPlanTableQueryVariables>;
+export const AgentPlanDetailDocument = {"__meta__":{"kind":"query","name":"AgentPlanDetail","hash":"sha256:3affbeb0bac2f8967290c76d3dce18119fce77b53b295399e5764897a1a475ef"}} as unknown as TypedDocumentString<AgentPlanDetailQuery, AgentPlanDetailQueryVariables>;
+export const DecideAgentPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentPlan","hash":"sha256:b2f23a83f557ca02504d0a017043627ff687ebcebb5ac117779eb4d5611ff57c"}} as unknown as TypedDocumentString<DecideAgentPlanMutation, DecideAgentPlanMutationVariables>;
 export const AgentProposalTableDocument = {"__meta__":{"kind":"query","name":"AgentProposalTable","hash":"sha256:c9ac832fcd7d24834e9d2a255e3ce6871dc33a5f265d399c94cd7dc0104b11f6"}} as unknown as TypedDocumentString<AgentProposalTableQuery, AgentProposalTableQueryVariables>;
 export const AgentProposalDetailDocument = {"__meta__":{"kind":"query","name":"AgentProposalDetail","hash":"sha256:04b976a90448c11f4bcd6c48fa4cbb4395bbcd84206f529aa13c6fb8d02408ca"}} as unknown as TypedDocumentString<AgentProposalDetailQuery, AgentProposalDetailQueryVariables>;
 export const DecideAgentProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposal","hash":"sha256:ba06fd0f5bb9168980d5d967514bf0bcbd80382200e836955aa5704c4c9f1836"}} as unknown as TypedDocumentString<DecideAgentProposalMutation, DecideAgentProposalMutationVariables>;

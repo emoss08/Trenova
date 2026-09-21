@@ -79,6 +79,28 @@ type AssistantProposal struct {
 	// so the client can say so instead of offering an approval the server
 	// will refuse. Nil means it can be decided.
 	Hold *ProposalHold `json:"hold"`
+	// PlanID and PlanStep are set when the proposal is one step of a plan
+	// decided as a whole; the client groups such proposals under the plan.
+	PlanID   pulid.ID `json:"planId"`
+	PlanStep int      `json:"planStep"`
+}
+
+// AssistantPlan is several of a turn's proposals as one decision, as the
+// client shows it: approve or reject all of them, in order.
+type AssistantPlan struct {
+	ID             pulid.ID         `json:"id"`
+	RunID          pulid.ID         `json:"runId"`
+	Title          string           `json:"title"`
+	Summary        string           `json:"summary"`
+	Status         agent.PlanStatus `json:"status"`
+	StepCount      int              `json:"stepCount"`
+	CompletedSteps int              `json:"completedSteps"`
+	FailedStep     *int             `json:"failedStep"`
+	FailureError   string           `json:"failureError"`
+	DecidedAt      *int64           `json:"decidedAt"`
+	ExpiresAt      int64            `json:"expiresAt"`
+	Hold           *ProposalHold    `json:"hold"`
+	CreatedAt      int64            `json:"createdAt"`
 }
 
 // ProposalHold names the switch holding a proposal and, when it is an agent's
@@ -213,6 +235,10 @@ type AssistantService interface {
 		ctx context.Context,
 		req repositories.GetThreadRequest,
 	) ([]AssistantProposal, error)
+	ListThreadPlans(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+	) ([]AssistantPlan, error)
 	// SelectableProviders lists the models a person may pick for the assistant,
 	// projected so no credential leaves the provider record.
 	SelectableProviders(

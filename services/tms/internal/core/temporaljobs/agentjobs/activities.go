@@ -46,6 +46,7 @@ type ActivitiesParams struct {
 	Console      repositories.DispatchConsoleRepository `optional:"true"`
 	Notifier     serviceports.AgentProposalNotifier     `optional:"true"`
 	Content      serviceports.DocumentContentService    `optional:"true"`
+	Plans        repositories.AgentPlanRepository       `optional:"true"`
 }
 
 type Activities struct {
@@ -59,6 +60,7 @@ type Activities struct {
 	contexts     serviceports.RuntimeContextBuilder
 	recorder     *proposalrecorder.Service
 	notifier     serviceports.AgentProposalNotifier
+	plans        repositories.AgentPlanRepository
 	subjects     *SubjectContext
 }
 
@@ -76,6 +78,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		contexts:     p.Contexts,
 		recorder:     p.Recorder,
 		notifier:     p.Notifier,
+		plans:        p.Plans,
 		subjects: &SubjectContext{
 			content:      p.Content,
 			billingQueue: p.BillingQueue,
@@ -480,6 +483,21 @@ func (a *Activities) ExpireStaleProposalsActivity(
 		a.logger.Info("expired agent proposals past their decision window",
 			zap.Int("expired", expired),
 		)
+	}
+
+	// A plan outlives none of its steps: once they have expired, so has it.
+	if a.plans != nil {
+		expiredPlans, planErr := a.plans.ExpirePending(ctx, repositories.ExpireAgentPlansRequest{
+			Before: input.Now,
+		})
+		if planErr != nil {
+			return nil, fmt.Errorf("expire pending plans: %w", planErr)
+		}
+		if expiredPlans > 0 {
+			a.logger.Info("expired agent plans past their decision window",
+				zap.Int("expired", expiredPlans),
+			)
+		}
 	}
 
 	return &ExpireStaleProposalsResult{Expired: expired}, nil

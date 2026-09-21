@@ -79,6 +79,18 @@ type MarkProposalsRemindedRequest struct {
 	At  int64      `json:"at"`
 }
 
+type ListAgentProposalsByPlanRequest struct {
+	PlanID     pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
+// SkipPendingByPlanRequest marks every still-pending step of a plan as
+// skipped, once an earlier step has failed.
+type SkipPendingByPlanRequest struct {
+	PlanID     pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type AgentProposalRepository interface {
 	List(
 		ctx context.Context,
@@ -105,6 +117,8 @@ type AgentProposalRepository interface {
 		req ListPendingProposalsForReminderRequest,
 	) ([]*agent.AgentProposal, error)
 	MarkReminded(ctx context.Context, req MarkProposalsRemindedRequest) (int, error)
+	ListByPlan(ctx context.Context, req ListAgentProposalsByPlanRequest) ([]*agent.AgentProposal, error)
+	SkipPendingByPlan(ctx context.Context, req SkipPendingByPlanRequest) (int, error)
 	RecordExecution(
 		ctx context.Context,
 		req RecordAgentProposalExecutionRequest,

@@ -1,6 +1,6 @@
 {
-  "operationCount": 765,
-  "fragmentCount": 194,
+  "operationCount": 768,
+  "fragmentCount": 195,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -543,6 +543,56 @@
       ],
       "usages": [],
       "sdl": "query AgentExceptionTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentExceptions(input: $input) {\n    edges {\n      node {\n        ...AgentExceptionTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentExceptionTableRowFields on AgentException {\n  id\n  organizationId\n  businessUnitId\n  runId\n  category\n  severity\n  subjectType\n  subjectId\n  attemptSummary\n  blastRadius\n  resolutionState\n  resolutionNotes\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AgentPlanDetail",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/plans.graphql",
+      "hash": "sha256:3affbeb0bac2f8967290c76d3dce18119fce77b53b295399e5764897a1a475ef",
+      "rootFields": [
+        "agentPlan"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentPlanTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentPlanDetail($id: ID!) {\n  agentPlan(id: $id) {\n    ...AgentPlanTableRowFields\n  }\n}\n\nfragment AgentPlanTableRowFields on AgentPlan {\n  id\n  organizationId\n  businessUnitId\n  runId\n  title\n  summary\n  status\n  stepCount\n  completedSteps\n  failedStep\n  failureError\n  decidedByUserId\n  decidedAt\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentPlanTable",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/plans.graphql",
+      "hash": "sha256:5255cd6f89e45711f75b6a9c0bab65c62fd49fb78028a756fa2ad1645c479b3b",
+      "rootFields": [
+        "agentPlans"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "AgentPlanTableRowFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentPlanTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentPlans(input: $input) {\n    edges {\n      node {\n        ...AgentPlanTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentPlanTableRowFields on AgentPlan {\n  id\n  organizationId\n  businessUnitId\n  runId\n  title\n  summary\n  status\n  stepCount\n  completedSteps\n  failedStep\n  failureError\n  decidedByUserId\n  decidedAt\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentProposalCount",
@@ -4700,6 +4750,33 @@
       "fragments": [],
       "usages": [],
       "sdl": "query DashControl {\n  dashControl {\n    id\n    requireLoadAcknowledgment\n    allowLoadRefusals\n    allowStopActions\n    allowLoadDocumentUpload\n    allowLoadComments\n    showLoadPay\n    showPayEstimates\n    allowExpenseSubmission\n    requireExpenseReceipt\n    allowSettlementDisputes\n    allowProfileDocumentUpload\n    allowContactInfoEdit\n    allowPtoRequests\n    sendCredentialReminders\n    requireContactChangeApproval\n    driverDigestCadence\n    driverDigestWeekday\n    enableDetentionAlerts\n    detentionAlertThresholdMinutes\n    version\n  }\n}"
+    },
+    {
+      "name": "DecideAgentPlan",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/plans.graphql",
+      "hash": "sha256:b2f23a83f557ca02504d0a017043627ff687ebcebb5ac117779eb4d5611ff57c",
+      "rootFields": [
+        "decideAgentPlan"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "AgentPlanDecisionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentPlanTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "mutation DecideAgentPlan($id: ID!, $input: AgentPlanDecisionInput!) {\n  decideAgentPlan(id: $id, input: $input) {\n    ...AgentPlanTableRowFields\n  }\n}\n\nfragment AgentPlanTableRowFields on AgentPlan {\n  id\n  organizationId\n  businessUnitId\n  runId\n  title\n  summary\n  status\n  stepCount\n  completedSteps\n  failedStep\n  failureError\n  decidedByUserId\n  decidedAt\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "DecideAgentProposal",
@@ -17618,6 +17695,20 @@
       "sdl": "fragment AgentExceptionTableRowFields on AgentException {\n  id\n  organizationId\n  businessUnitId\n  runId\n  category\n  severity\n  subjectType\n  subjectId\n  attemptSummary\n  blastRadius\n  resolutionState\n  resolutionNotes\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentPlanTableRowFields",
+      "typeCondition": "AgentPlan",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/plans.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentPlanDetail",
+        "AgentPlanTable",
+        "DecideAgentPlan"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentPlanTableRowFields on AgentPlan {\n  id\n  organizationId\n  businessUnitId\n  runId\n  title\n  summary\n  status\n  stepCount\n  completedSteps\n  failedStep\n  failureError\n  decidedByUserId\n  decidedAt\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "AgentProposalDetailFields",
       "typeCondition": "AgentProposal",
       "domain": "agent",
@@ -18115,6 +18206,7 @@
         "AccountTypeTable",
         "AgentDefinitionCards",
         "AgentExceptionTable",
+        "AgentPlanTable",
         "AgentProposalTable",
         "AgentRunTable",
         "AIProviderCards",
@@ -20679,6 +20771,22 @@
         }
       ],
       "sdl": "input AgentExceptionResolveInput {\n  resolutionNotes: String\n  resolutionState: AgentResolutionState!\n}"
+    },
+    "AgentPlanDecisionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "decision",
+          "type": "AgentDecisionType!",
+          "defaultValue": null
+        },
+        {
+          "name": "reasonCode",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AgentPlanDecisionInput {\n  \"\"\"Accepted runs every step in order; Rejected rejects them all.\"\"\"\n  decision: AgentDecisionType!\n  reasonCode: String!\n}"
     },
     "AgentProposalDecisionInput": {
       "kind": "input",

@@ -177,7 +177,7 @@ export function ProposalCard({
  * sent people to turn it off on the agent, where it already was, and back to
  * the same refusal.
  */
-function HoldLine({ hold }: { hold: AssistantProposal["hold"] }) {
+export function HoldLine({ hold }: { hold: AssistantProposal["hold"] }) {
   const t = useT();
   if (!hold) {
     return null;
@@ -220,7 +220,7 @@ function HighlightRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function OutcomeIcon({ state }: { state: ProposalPresentation }) {
+export function OutcomeIcon({ state }: { state: ProposalPresentation }) {
   const className = "mt-px size-3.5 shrink-0";
 
   switch (state) {

@@ -2,6 +2,7 @@ package agentproposalrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -403,6 +404,66 @@ func (r *repository) MarkReminded(
 		Exec(ctx)
 	if err != nil {
 		r.l.Error("failed to mark agent proposals reminded", zap.Error(err))
+		return 0, err
+	}
+
+	affected, err := results.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(affected), nil
+}
+
+// ListByPlan reads a plan's steps in the order they are meant to run.
+func (r *repository) ListByPlan(
+	ctx context.Context,
+	req repositories.ListAgentProposalsByPlanRequest,
+) ([]*agent.AgentProposal, error) {
+	cols := buncolgen.AgentProposalColumns
+	proposals := make([]*agent.AgentProposal, 0)
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&proposals).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo).
+				Where(cols.PlanID.Eq(), req.PlanID)
+		}).
+		OrderExpr(cols.PlanStep.OrderAsc()).
+		OrderExpr(cols.CreatedAt.OrderAsc()).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list agent proposals by plan", zap.Error(err))
+
+		return nil, fmt.Errorf("list agent proposals by plan: %w", err)
+	}
+
+	return proposals, nil
+}
+
+// SkipPendingByPlan closes every step of a plan that is still pending once an
+// earlier step has failed: they were never decided against and did not
+// expire, and the record should say so.
+func (r *repository) SkipPendingByPlan(
+	ctx context.Context,
+	req repositories.SkipPendingByPlanRequest,
+) (int, error) {
+	cols := buncolgen.AgentProposalColumns
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*agent.AgentProposal)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.PlanID.Eq(), req.PlanID).
+				Where(cols.Status.Eq(), agent.ProposalStatusPending)
+		}).
+		Set(cols.Status.Set(), agent.ProposalStatusSkipped).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to skip agent proposals by plan", zap.Error(err))
+
 		return 0, err
 	}
 

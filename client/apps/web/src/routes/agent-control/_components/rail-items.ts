@@ -1,6 +1,6 @@
 import type { AIControlTab } from "../ai-control-tabs";
 
-export type ActivityView = "runs" | "proposals" | "exceptions";
+export type ActivityView = "runs" | "proposals" | "plans" | "exceptions";
 
 export type RailItem = {
   tab: AIControlTab;
@@ -71,6 +71,7 @@ export function buildRailItems(
     const children: RailItem["children"] = [{ view: "runs", label: t("Runs") }];
     if (permissions.proposals) {
       children.push({ view: "proposals", label: t("Proposals") });
+      children.push({ view: "plans", label: t("Plans") });
     }
     if (permissions.exceptions) {
       children.push({ view: "exceptions", label: t("Exceptions") });

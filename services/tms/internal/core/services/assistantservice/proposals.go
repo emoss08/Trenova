@@ -249,11 +249,87 @@ func (s *Service) ListThreadProposals(
 	return proposals, nil
 }
 
+type chatPlanStore interface {
+	ListByThread(
+		ctx context.Context,
+		req repositories.ListAgentPlansByThreadRequest,
+	) ([]*agent.AgentPlan, error)
+}
+
+// planStoreOrNil keeps a typed nil out of the interface, so the absence of a
+// plan store reads as nil rather than as a store that panics.
+func planStoreOrNil(plans repositories.AgentPlanRepository) chatPlanStore {
+	if plans == nil {
+		return nil
+	}
+
+	return plans
+}
+
+// ListThreadPlans reads the plans raised in a conversation, with the same
+// hold a pending proposal carries when a shadow switch keeps it from being
+// decided.
+func (s *Service) ListThreadPlans(
+	ctx context.Context,
+	req repositories.GetThreadRequest,
+) ([]services.AssistantPlan, error) {
+	if _, err := s.conversations.GetThread(ctx, req); err != nil {
+		return nil, err
+	}
+	if s.plans == nil {
+		return []services.AssistantPlan{}, nil
+	}
+
+	stored, err := s.plans.ListByThread(ctx, repositories.ListAgentPlansByThreadRequest{
+		ThreadID:   req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	runIDs := make([]pulid.ID, 0, len(stored))
+	for _, plan := range stored {
+		if plan.Status.Decidable() {
+			runIDs = append(runIDs, plan.RunID)
+		}
+	}
+	verdicts, err := s.shadow.ForRuns(ctx, req.TenantInfo, runIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	plans := make([]services.AssistantPlan, 0, len(stored))
+	for _, plan := range stored {
+		plans = append(plans, toAssistantPlan(plan, holdFor(verdicts[plan.RunID])))
+	}
+
+	return plans, nil
+}
+
+func toAssistantPlan(plan *agent.AgentPlan, hold *services.ProposalHold) services.AssistantPlan {
+	return services.AssistantPlan{
+		ID:             plan.ID,
+		RunID:          plan.RunID,
+		Title:          plan.Title,
+		Summary:        plan.Summary,
+		Status:         plan.Status,
+		StepCount:      plan.StepCount,
+		CompletedSteps: plan.CompletedSteps,
+		FailedStep:     plan.FailedStep,
+		FailureError:   plan.FailureError,
+		DecidedAt:      plan.DecidedAt,
+		ExpiresAt:      plan.ExpiresAt,
+		Hold:           hold,
+		CreatedAt:      plan.CreatedAt,
+	}
+}
+
 func toAssistantProposal(
 	proposal *agent.AgentProposal,
 	hold *services.ProposalHold,
 ) services.AssistantProposal {
-	return services.AssistantProposal{
+	out := services.AssistantProposal{
 		ID:              proposal.ID,
 		RunID:           proposal.RunID,
 		ToolName:        proposal.ToolName,
@@ -267,5 +343,11 @@ func toAssistantProposal(
 		ExecutionError:  proposal.ExecutionError,
 		ExpiresAt:       proposal.ExpiresAt,
 		Hold:            hold,
+		PlanStep:        proposal.PlanStep,
 	}
+	if proposal.PlanID != nil {
+		out.PlanID = *proposal.PlanID
+	}
+
+	return out
 }

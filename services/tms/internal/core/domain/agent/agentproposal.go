@@ -54,6 +54,11 @@ type AgentProposal struct {
 	// gone and the judgement with it.
 	ExpiresAt int64 `json:"expiresAt" bun:"expires_at,type:BIGINT,nullzero"`
 
+	// PlanID and PlanStep tie a proposal to the plan it is a step of and say
+	// where in the order it sits. A proposal decided on its own has neither.
+	PlanID   *pulid.ID `json:"planId"   bun:"plan_id,type:VARCHAR(100),nullzero"`
+	PlanStep int       `json:"planStep" bun:"plan_step,type:INTEGER,notnull"`
+
 	// RemindedAt is when the people who could decide this proposal were told,
 	// a second time, that it was still waiting. Null until they are.
 	RemindedAt *int64 `json:"remindedAt" bun:"reminded_at,type:BIGINT,nullzero"`

@@ -90,6 +90,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.listThreadProposals,
 	)
+	api.GET(
+		"/threads/:threadID/plans/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.listThreadPlans,
+	)
 }
 
 func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
@@ -220,6 +225,22 @@ func (h *Handler) deleteThread(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) listThreadPlans(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	plans, err := h.service.ListThreadPlans(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": plans})
 }
 
 func (h *Handler) listThreadProposals(c *gin.Context) {

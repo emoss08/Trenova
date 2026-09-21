@@ -669,6 +669,56 @@ enum AgentOutputMode {
   Report
 }
 
+"""Several proposals from one run, decided once and run in order."""
+type AgentPlan {
+  businessUnitId: ID!
+  completedSteps: Int!
+  createdAt: Timestamp!
+  decidedAt: Timestamp
+  decidedByUserId: ID
+  expiresAt: Timestamp
+  """
+  The step whose write failed and stopped the plan; absent while none has.
+  """
+  failedStep: Int
+  failureError: String!
+  id: ID!
+  organizationId: ID!
+  runId: ID!
+  status: AgentPlanStatus!
+  stepCount: Int!
+  summary: String!
+  title: String!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type AgentPlanConnection {
+  edges: [AgentPlanEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input AgentPlanDecisionInput {
+  """Accepted runs every step in order; Rejected rejects them all."""
+  decision: AgentDecisionType!
+  reasonCode: String!
+}
+
+type AgentPlanEdge {
+  cursor: String!
+  node: AgentPlan!
+}
+
+enum AgentPlanStatus {
+  Approved
+  Completed
+  Expired
+  Failed
+  Pending
+  Rejected
+}
+
 type AgentProposal {
   autonomyTier: AgentAutonomyTier!
   businessUnitId: ID!
@@ -677,6 +727,12 @@ type AgentProposal {
   evidence: [AgentEvidenceRef!]!
   id: ID!
   organizationId: ID!
+  """
+  The plan this proposal is a step of, when it is one; absent for a proposal decided on its own.
+  """
+  planId: ID
+  """Position in the plan, from one; zero outside a plan."""
+  planStep: Int!
   rationale: String!
   runId: ID!
   status: AgentProposalStatus!
@@ -708,10 +764,13 @@ type AgentProposalEdge {
 
 enum AgentProposalStatus {
   Accepted
+  Executed
+  ExecutionFailed
   Expired
   Modified
   Pending
   Rejected
+  Skipped
   Superseded
 }
 
@@ -10160,6 +10219,7 @@ type Mutation {
   createWorkerPTO(input: CreateWorkerPTOInput!): WorkerPTO!
   createWorkerPolicy(input: WorkerPolicyInput!): WorkerPolicy!
   createWorkerSafetyEvent(input: WorkerSafetyEventInput!): WorkerSafetyEvent!
+  decideAgentPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
   decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
   decideLeaveCase(input: DecideLeaveCaseInput!): WorkerLeaveCase!
   decideProfileChange(input: DecideProfileChangeInput!): WorkerProfileChangeRequest!
@@ -12151,6 +12211,8 @@ type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
   agentException(id: ID!): AgentException
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
+  agentPlan(id: ID!): AgentPlan
+  agentPlans(input: DataTableConnectionInput!): AgentPlanConnection!
   agentProposal(id: ID!): AgentProposal
   agentProposals(input: DataTableConnectionInput!): AgentProposalConnection!
   agentRun(id: ID!): AgentRun

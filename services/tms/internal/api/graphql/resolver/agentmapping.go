@@ -34,6 +34,39 @@ func agentProposalColumns(ctx context.Context, nodePathPrefix string) []string {
 	return selection.Columns
 }
 
+func agentPlanColumns(ctx context.Context, nodePathPrefix string) []string {
+	selection := projection.Select(
+		projection.AgentPlanSpec,
+		func(path string) bool {
+			return graphql.FieldRequested(ctx, path)
+		},
+		projection.SelectOptions{PathPrefix: nodePathPrefix},
+	)
+
+	return selection.Columns
+}
+
+func agentPlanConnectionToModel(
+	result *pagination.CursorListResult[*agent.AgentPlan],
+) (*gqlmodel.AgentPlanConnection, error) {
+	page, err := entityCursorConnection(
+		result,
+		func(node *agent.AgentPlan, cursor string) *gqlmodel.AgentPlanEdge {
+			return &gqlmodel.AgentPlanEdge{Node: node, Cursor: cursor}
+		},
+		func(edge *gqlmodel.AgentPlanEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.AgentPlanConnection{
+		Edges:      page.Edges,
+		PageInfo:   page.PageInfo,
+		TotalCount: page.TotalCount,
+	}, nil
+}
+
 func agentExceptionColumns(ctx context.Context, nodePathPrefix string) []string {
 	selection := projection.Select(
 		projection.AgentExceptionSpec,

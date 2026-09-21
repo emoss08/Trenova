@@ -68,6 +68,19 @@ func (s *Service) Decide(
 	req *services.DecideAgentProposalRequest,
 	actor *services.RequestActor,
 ) (*agent.AgentDecision, error) {
+	outcome, err := s.DecideWithOutcome(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	return outcome.Decision, nil
+}
+
+func (s *Service) DecideWithOutcome(
+	ctx context.Context,
+	req *services.DecideAgentProposalRequest,
+	actor *services.RequestActor,
+) (*services.DecisionOutcome, error) {
 	if !actor.IsUser() {
 		return nil, errortypes.NewValidationError(
 			"actor",
@@ -130,8 +143,13 @@ func (s *Service) Decide(
 		return nil, err
 	}
 
-	if err = s.signalWorkflow(ctx, proposal.RunID, req, created); err != nil {
-		s.l.Error("failed to signal agent workflow", zap.Error(err))
+	// A plan signals its run's workflow once, for all its steps; a step
+	// signalling on its own would reach a workflow the first step already
+	// released.
+	if !req.WithinPlan {
+		if err = s.signalWorkflow(ctx, proposal.RunID, req, created); err != nil {
+			s.l.Error("failed to signal agent workflow", zap.Error(err))
+		}
 	}
 
 	// An approval that does not act is worse than no approval: the audit trail
@@ -159,7 +177,18 @@ func (s *Service) Decide(
 		s.l.Error("failed to log agent decision audit", zap.Error(err))
 	}
 
-	return created, nil
+	return &services.DecisionOutcome{Decision: created, ExecutionError: execErr}, nil
+}
+
+// SignalRun tells a run's workflow that its proposals were decided. The
+// plan service calls it once after deciding every step.
+func (s *Service) SignalRun(
+	ctx context.Context,
+	req *services.DecideAgentProposalRequest,
+	decision *agent.AgentDecision,
+	runID pulid.ID,
+) error {
+	return s.signalWorkflow(ctx, runID, req, decision)
 }
 
 // shadowRefusal names the switch that is on and where it lives.

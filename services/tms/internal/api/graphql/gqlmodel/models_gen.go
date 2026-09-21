@@ -209,6 +209,23 @@ type AgentExceptionResolveInput struct {
 	ResolutionNotes *string               `json:"resolutionNotes,omitempty"`
 }
 
+type AgentPlanConnection struct {
+	Edges      []*AgentPlanEdge `json:"edges"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount *int             `json:"totalCount,omitempty"`
+}
+
+type AgentPlanDecisionInput struct {
+	// Accepted runs every step in order; Rejected rejects them all.
+	Decision   agent.DecisionType `json:"decision"`
+	ReasonCode string             `json:"reasonCode"`
+}
+
+type AgentPlanEdge struct {
+	Node   *agent.AgentPlan `json:"node"`
+	Cursor string           `json:"cursor"`
+}
+
 type AgentProposalConnection struct {
 	Edges      []*AgentProposalEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`

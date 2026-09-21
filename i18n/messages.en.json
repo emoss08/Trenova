@@ -3555,6 +3555,24 @@
       "packages/shared/types"
     ]
   },
+  "A plan is accepted or rejected as a whole; change a step by deciding it on its own": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
+    ]
+  },
+  "A plan needs at least two steps": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "A policy is required to backtest": {
     "sites": 1,
     "scope": [
@@ -11095,6 +11113,15 @@
       "domain/conversation"
     ]
   },
+  "Agent plan not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
+    ]
+  },
   "Agent principals cannot reassign billing charges": {
     "sites": 1,
     "scope": [
@@ -12122,6 +12149,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "All {0} done.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "All {0} done. Approved {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "All-in pricing: fuel is baked into the negotiated rates, so no separate surcharge is billed.": {
@@ -15875,6 +15920,25 @@
       "routes/rate-agreement"
     ]
   },
+  "Approve all": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/agent-control"
+    ]
+  },
+  "Approve all {0} changes?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Approve an inbound EDI load tender transfer": {
     "sites": 1,
     "scope": [
@@ -15903,7 +15967,7 @@
     ]
   },
   "Approve and run": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -16157,6 +16221,15 @@
       "apps/dash/_components"
     ]
   },
+  "Approved, but it did not finish.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Approved, but it did not run. Nothing was changed.": {
     "sites": 1,
     "scope": [
@@ -16175,6 +16248,15 @@
       "apps/web/components"
     ]
   },
+  "Approved, but step {0} of {1} did not run and the rest were skipped.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Approved, not paid": {
     "sites": 3,
     "scope": [
@@ -16185,6 +16267,15 @@
     ]
   },
   "Approved. Waiting for it to run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Approved. {0} of {1} done so far.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -20123,7 +20214,7 @@
     ]
   },
   "Awaiting decision": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -23875,7 +23966,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 106,
+    "sites": 107,
     "scope": [
       "go"
     ],
@@ -42768,6 +42859,15 @@
       "api/handlers"
     ]
   },
+  "Decided": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Decides how many invoices a period produces. Choose nothing for a single statement.": {
     "sites": 1,
     "scope": [
@@ -46937,6 +47037,15 @@
       "routes/edi"
     ]
   },
+  "Did not run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Diesel": {
     "sites": 2,
     "scope": [
@@ -49754,7 +49863,7 @@
     ]
   },
   "Done": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -59634,7 +59743,7 @@
     ]
   },
   "Expired": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -59649,7 +59758,7 @@
     ]
   },
   "Expired without a decision.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -97414,6 +97523,15 @@
       "routes/edi"
     ]
   },
+  "None of the steps in {0} will run and the agent's run is closed. Say why so the next person and the agent's owner can learn from it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "None of these rows are carriers": {
     "sites": 1,
     "scope": [
@@ -101569,6 +101687,15 @@
       "domain/ifta"
     ]
   },
+  "Only a human user can decide on agent plans": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
+    ]
+  },
   "Only a human user can decide on agent proposals": {
     "sites": 1,
     "scope": [
@@ -105428,7 +105555,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 105,
+    "sites": 106,
     "scope": [
       "go"
     ],
@@ -111140,7 +111267,7 @@
     ]
   },
   "Permanent": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -112568,14 +112695,24 @@
     ]
   },
   "Plan": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control",
       "routes/benefits",
       "routes/worker"
+    ]
+  },
+  "Plan approved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Plan is invalid": {
@@ -112594,6 +112731,15 @@
     ],
     "areas": [
       "domain/driverpay"
+    ]
+  },
+  "Plan rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Plan type is required": {
@@ -112712,6 +112858,42 @@
     ],
     "areas": [
       "domain/dispatchcontrol"
+    ]
+  },
+  "Plans": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Plans cannot be actioned while all agents are paused. Turn off \"Pause all agents\" on the AI Control overview, then decide again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
+    ]
+  },
+  "Plans cannot be decided: no decision service is wired": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
+    ]
+  },
+  "Plans from {0} cannot be actioned while it is in shadow mode. Turn off shadow mode on that agent in AI Control, then decide again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
     ]
   },
   "Plans in the year still open to enrolment. Archived plans keep their enrolments but are not counted.": {
@@ -116262,7 +116444,7 @@
     ]
   },
   "Proposed": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -120481,7 +120663,7 @@
     ]
   },
   "Reason": {
-    "sites": 48,
+    "sites": 49,
     "scope": [
       "ts"
     ],
@@ -123927,7 +124109,7 @@
     ]
   },
   "Reject": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "ts"
     ],
@@ -123984,6 +124166,25 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Reject all": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/agent-control"
+    ]
+  },
+  "Reject all {0} changes?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Reject carrier invoice matches": {
@@ -124159,7 +124360,7 @@
     ]
   },
   "Rejected": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -124194,7 +124395,7 @@
     ]
   },
   "Rejected. Nothing was changed.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -131649,7 +131850,7 @@
     ]
   },
   "Run": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -131833,6 +132034,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Run is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Run key is required": {
@@ -132080,12 +132290,13 @@
     ]
   },
   "Running": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/invoice-adjustment-batch",
       "routes/time-attendance"
     ]
@@ -143922,7 +144133,7 @@
     ]
   },
   "Skipped": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -143930,6 +144141,7 @@
     "areas": [
       "domain/fuelpurchase",
       "packages/shared/components",
+      "routes/agent-control",
       "routes/shipment"
     ]
   },
@@ -146695,7 +146907,7 @@
     ]
   },
   "Status": {
-    "sites": 224,
+    "sites": 226,
     "scope": [
       "go",
       "ts"
@@ -146850,7 +147062,7 @@
     ]
   },
   "Status is required": {
-    "sites": 118,
+    "sites": 119,
     "scope": [
       "go"
     ],
@@ -147119,6 +147331,15 @@
     ],
     "areas": [
       "domain/fuelsurcharge"
+    ]
+  },
+  "Steps": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Still inside the granted free time": {
@@ -147417,6 +147638,24 @@
       "routes/admin",
       "routes/edi",
       "routes/shipment"
+    ]
+  },
+  "Stopped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Stopped at {0} of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Stopped. What was said so far has been kept in the thread.": {
@@ -161490,6 +161729,24 @@
       "routes/admin"
     ]
   },
+  "This plan expired on {0} without a decision. Ask the agent again for a current one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
+    ]
+  },
+  "This plan has already been decided: it is {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
+    ]
+  },
   "This pool has already been drawn for that period": {
     "sites": 1,
     "scope": [
@@ -163331,11 +163588,12 @@
     ]
   },
   "Title cannot be longer than 200 characters": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agent",
       "domain/conversation"
     ]
   },
@@ -163388,11 +163646,12 @@
     ]
   },
   "Title is required": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agent",
       "domain/notification",
       "domain/worker",
       "go/other"
@@ -177150,7 +177409,7 @@
     ]
   },
   "Why": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -185415,6 +185674,15 @@
       "routes/carrier"
     ]
   },
+  "{0, plural, one {# change, in order} other {# changes, in order}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {# change} other {# changes}}": {
     "sites": 3,
     "scope": [
@@ -188376,6 +188644,15 @@
       "apps/web/components"
     ]
   },
+  "{0} of {1} done": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} of {1} lose money on detention": {
     "sites": 1,
     "scope": [
@@ -189481,6 +189758,15 @@
     ]
   },
   "{0} will not run and the agent's run is closed. Say why so the next person and the agent's owner can learn from it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} will run step by step in the order the agent asked, stopping at the first that fails. Give a short reason so the audit trail explains the approval.": {
     "sites": 1,
     "scope": [
       "ts"

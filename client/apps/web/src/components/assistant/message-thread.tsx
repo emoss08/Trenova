@@ -22,6 +22,8 @@ import {
   RefusalNotice,
   UserTurn,
 } from "./message-items";
+import { PlanCard } from "./plan-card";
+import { groupPlans } from "./plan-state";
 import { ProposalCard } from "./proposal-card";
 import { groupProposalsByMessage } from "./proposal-state";
 import { StreamingTurn } from "./streaming-turn";
@@ -108,8 +110,16 @@ export function MessageThread({
   );
 
   const proposalsQuery = useQuery(queries.assistant.proposals(thread.id));
+  const plansQuery = useQuery(queries.assistant.plans(thread.id));
+  // A plan's steps are shown inside the plan and nowhere else; only the
+  // proposals outside any plan are grouped under their turns on their own.
+  const {
+    byMessage: plansByMessage,
+    orphans: loosePlans,
+    standalone,
+  } = groupPlans(plansQuery.data?.results ?? [], proposalsQuery.data?.results ?? [], messages);
   const { byMessage: proposalsByMessage, orphans: looseProposals } = groupProposalsByMessage(
-    proposalsQuery.data?.results ?? [],
+    standalone,
     messages,
   );
 
@@ -219,6 +229,7 @@ export function MessageThread({
               <AssistantEntry
                 entry={entry}
                 proposals={proposalsByMessage.get(entry.message.id) ?? []}
+                plans={plansByMessage.get(entry.message.id) ?? []}
                 threadId={thread.id}
                 latestUserSequence={latestUserSequence}
                 onAnswer={answer}
@@ -232,6 +243,12 @@ export function MessageThread({
     // A proposal whose turn is no longer in the visible thread is shown here
     // rather than dropped: a pending change nobody can see is worse than one
     // shown out of position.
+    for (const group of loosePlans) {
+      list.push({
+        key: `plan-${group.plan.id}`,
+        render: () => <PlanCard plan={group.plan} steps={group.steps} threadId={thread.id} />,
+      });
+    }
     for (const proposal of looseProposals) {
       list.push({
         key: `proposal-${proposal.id}`,
@@ -257,8 +274,10 @@ export function MessageThread({
     dismiss,
     entries,
     latestUserSequence,
+    loosePlans,
     looseProposals,
     now,
+    plansByMessage,
     proposalsByMessage,
     providerId,
     retry,

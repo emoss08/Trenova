@@ -2,6 +2,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type {
   AgentAutonomyTier,
+  AgentPlanStatus,
   AgentProposalStatus,
   AgentResolutionState,
   AgentRunStatus,
@@ -30,6 +31,18 @@ const PROPOSAL_STATUS: Record<AgentProposalStatus, { label: string; variant: Var
   Rejected: { label: "Rejected", variant: "danger" },
   Expired: { label: "Expired", variant: "neutral" },
   Superseded: { label: "Superseded", variant: "neutral" },
+  Executed: { label: "Done", variant: "success" },
+  ExecutionFailed: { label: "Did not run", variant: "danger" },
+  Skipped: { label: "Skipped", variant: "neutral" },
+};
+
+const PLAN_STATUS: Record<AgentPlanStatus, { label: string; variant: Variant }> = {
+  Pending: { label: "Awaiting decision", variant: "warning" },
+  Approved: { label: "Running", variant: "info" },
+  Completed: { label: "Done", variant: "success" },
+  Failed: { label: "Stopped", variant: "danger" },
+  Rejected: { label: "Rejected", variant: "danger" },
+  Expired: { label: "Expired", variant: "neutral" },
 };
 
 const TIER: Record<AgentAutonomyTier, { label: string; variant: Variant }> = {
@@ -90,6 +103,9 @@ export const ProposalStatusBadge = ({
   value: AgentProposalStatus;
   t: TranslateFn;
 }) => <Labelled entry={PROPOSAL_STATUS[value]} t={t} />;
+export const PlanStatusBadge = ({ value, t }: { value: AgentPlanStatus; t: TranslateFn }) => (
+  <Labelled entry={PLAN_STATUS[value]} t={t} />
+);
 export const TierBadge = ({ value, t }: { value: AgentAutonomyTier; t: TranslateFn }) => (
   <Labelled entry={TIER[value]} t={t} />
 );
@@ -112,6 +128,10 @@ export const runStatusChoices = Object.entries(RUN_STATUS).map(([value, entry]) 
   label: entry.label,
 }));
 export const proposalStatusChoices = Object.entries(PROPOSAL_STATUS).map(([value, entry]) => ({
+  value,
+  label: entry.label,
+}));
+export const planStatusChoices = Object.entries(PLAN_STATUS).map(([value, entry]) => ({
   value,
   label: entry.label,
 }));

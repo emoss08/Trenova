@@ -43,6 +43,25 @@ func (r *mutationResolver) DecideAgentProposal(ctx context.Context, id string, i
 	}, actorutil.FromAuthContext(authCtx))
 }
 
+func (r *mutationResolver) DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentProposal, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	planID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.agentPlanService.Decide(ctx, &services.DecideAgentPlanRequest{
+		PlanID:     planID,
+		Decision:   input.Decision,
+		ReasonCode: input.ReasonCode,
+		TenantInfo: tenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
 func (r *mutationResolver) ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agent.AgentException, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentException, permission.OpUpdate)
 	if err != nil {
@@ -171,6 +190,57 @@ func (r *queryResolver) AgentProposal(ctx context.Context, id string) (*agent.Ag
 	return r.agentProposalService.GetByID(ctx, repositories.GetAgentProposalByIDRequest{
 		ID:         proposalID,
 		TenantInfo: &ti,
+	})
+}
+
+func (r *queryResolver) AgentPlans(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentPlanConnection, error) {
+	authCtx, err := r.requirePermission(
+		ctx,
+		permission.ResourceAgentProposal,
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	tableInput, err := dataTableConnectionFromGraphQL(ctx, &input, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.agentPlanService.ListConnection(
+		ctx,
+		&repositories.ListAgentPlanConnectionRequest{
+			Filter:  tableInput.Filter,
+			Cursor:  tableInput.Cursor,
+			Columns: agentPlanColumns(ctx, "edges.node"),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return agentPlanConnectionToModel(result)
+}
+
+func (r *queryResolver) AgentPlan(ctx context.Context, id string) (*agent.AgentPlan, error) {
+	authCtx, err := r.requirePermission(
+		ctx,
+		permission.ResourceAgentProposal,
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	planID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.agentPlanService.GetByID(ctx, repositories.GetAgentPlanByIDRequest{
+		ID:         planID,
+		TenantInfo: tenantInfo(authCtx),
 	})
 }
 

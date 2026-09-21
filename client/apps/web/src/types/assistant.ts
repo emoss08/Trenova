@@ -308,9 +308,22 @@ export const proposalStatusSchema = z.enum([
   "Superseded",
   "Executed",
   "ExecutionFailed",
+  "Skipped",
 ]);
 
 export const proposalDecisionSchema = z.enum(["Accepted", "Rejected", "Modified"]);
+
+/** A plan is decided whole: there is no accepting it with changes. */
+export const planDecisionSchema = z.enum(["Accepted", "Rejected"]);
+
+export const planStatusSchema = z.enum([
+  "Pending",
+  "Approved",
+  "Completed",
+  "Failed",
+  "Rejected",
+  "Expired",
+]);
 
 /**
  * Which switch is holding a proposal: the organization-wide pause on the AI
@@ -351,10 +364,40 @@ export const assistantProposalSchema = z.object({
    * buttons. `agentName` is set when the switch is the agent's own.
    */
   hold: proposalHoldSchema.nullish(),
+  /** Set when the proposal is one step of a plan; the plan is decided, not the step. */
+  planId: optionalIdSchema,
+  /** The step's position in its plan, from 1; 0 for a proposal outside any plan. */
+  planStep: z.number().int().nonnegative().default(0),
 });
 
 export const assistantProposalListSchema = z.object({
   results: z.array(assistantProposalSchema),
+});
+
+/**
+ * Several writes one run asked for, decided together and run in the order the
+ * agent asked. Its steps are the proposals that carry its id.
+ */
+export const assistantPlanSchema = z.object({
+  id: z.string(),
+  runId: z.string().optional().default(""),
+  title: z.string(),
+  summary: z.string().optional().default(""),
+  status: planStatusSchema,
+  stepCount: z.number().int().nonnegative(),
+  completedSteps: z.number().int().nonnegative().default(0),
+  /** The step whose write failed and stopped the plan, from 1. */
+  failedStep: z.number().int().nullish(),
+  failureError: z.string().optional().default(""),
+  decidedAt: z.number().nullish(),
+  /** When a pending plan stops being decidable. */
+  expiresAt: z.number().nullish().default(0),
+  hold: proposalHoldSchema.nullish(),
+  createdAt: z.number(),
+});
+
+export const assistantPlanListSchema = z.object({
+  results: z.array(assistantPlanSchema),
 });
 
 export const sendMessageResultSchema = z.object({
@@ -479,3 +522,6 @@ export type AssistantProposal = z.infer<typeof assistantProposalSchema>;
 export type ProposalStatus = z.infer<typeof proposalStatusSchema>;
 export type ProposalDecision = z.infer<typeof proposalDecisionSchema>;
 export type ProposalHold = z.infer<typeof proposalHoldSchema>;
+export type AssistantPlan = z.infer<typeof assistantPlanSchema>;
+export type PlanStatus = z.infer<typeof planStatusSchema>;
+export type PlanDecision = z.infer<typeof planDecisionSchema>;

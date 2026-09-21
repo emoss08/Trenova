@@ -39,6 +39,18 @@ enum AgentProposalStatus {
   Rejected
   Expired
   Superseded
+  Executed
+  ExecutionFailed
+  Skipped
+}
+
+enum AgentPlanStatus {
+  Pending
+  Approved
+  Completed
+  Failed
+  Rejected
+  Expired
 }
 
 enum AgentAutonomyTier {
@@ -130,6 +142,32 @@ type AgentProposal {
   evidence: [AgentEvidenceRef!]!
   autonomyTier: AgentAutonomyTier!
   status: AgentProposalStatus!
+  "The plan this proposal is a step of, when it is one; absent for a proposal decided on its own."
+  planId: ID
+  "Position in the plan, from one; zero outside a plan."
+  planStep: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"Several proposals from one run, decided once and run in order."
+type AgentPlan {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  runId: ID!
+  title: String!
+  summary: String!
+  status: AgentPlanStatus!
+  stepCount: Int!
+  completedSteps: Int!
+  "The step whose write failed and stopped the plan; absent while none has."
+  failedStep: Int
+  failureError: String!
+  decidedByUserId: ID
+  decidedAt: Timestamp
+  expiresAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -210,6 +248,17 @@ type AgentProposalConnection {
   totalCount: Int
 }
 
+type AgentPlanEdge {
+  node: AgentPlan!
+  cursor: String!
+}
+
+type AgentPlanConnection {
+  edges: [AgentPlanEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
 type AgentExceptionEdge {
   node: AgentException!
   cursor: String!
@@ -224,6 +273,12 @@ type AgentExceptionConnection {
 input AgentProposalDecisionInput {
   decision: AgentDecisionType!
   modifications: JSON
+  reasonCode: String!
+}
+
+input AgentPlanDecisionInput {
+  "Accepted runs every step in order; Rejected rejects them all."
+  decision: AgentDecisionType!
   reasonCode: String!
 }
 
@@ -249,6 +304,8 @@ extend type Query {
   agentRun(id: ID!): AgentRun
   agentProposals(input: DataTableConnectionInput!): AgentProposalConnection!
   agentProposal(id: ID!): AgentProposal
+  agentPlans(input: DataTableConnectionInput!): AgentPlanConnection!
+  agentPlan(id: ID!): AgentPlan
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentException(id: ID!): AgentException
   agentControl: AgentControl!
@@ -256,6 +313,7 @@ extend type Query {
 
 extend type Mutation {
   decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
+  decideAgentPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
   updateAgentControl(input: AgentControlInput!): AgentControl!
 }

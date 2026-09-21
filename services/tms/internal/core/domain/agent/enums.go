@@ -118,6 +118,9 @@ const (
 	// ambiguity that let accepted proposals go unexecuted unnoticed.
 	ProposalStatusExecuted        = ProposalStatus("Executed")
 	ProposalStatusExecutionFailed = ProposalStatus("ExecutionFailed")
+	// ProposalStatusSkipped is a plan step that never ran because a step
+	// before it failed. Nobody decided against it and it did not expire.
+	ProposalStatusSkipped = ProposalStatus("Skipped")
 )
 
 func (s ProposalStatus) IsValid() bool {
@@ -129,12 +132,41 @@ func (s ProposalStatus) IsValid() bool {
 		ProposalStatusExpired,
 		ProposalStatusSuperseded,
 		ProposalStatusExecuted,
-		ProposalStatusExecutionFailed:
+		ProposalStatusExecutionFailed,
+		ProposalStatusSkipped:
 		return true
 	default:
 		return false
 	}
 }
+
+type PlanStatus string
+
+const (
+	PlanStatusPending   = PlanStatus("Pending")
+	PlanStatusApproved  = PlanStatus("Approved")
+	PlanStatusCompleted = PlanStatus("Completed")
+	PlanStatusFailed    = PlanStatus("Failed")
+	PlanStatusRejected  = PlanStatus("Rejected")
+	PlanStatusExpired   = PlanStatus("Expired")
+)
+
+func (s PlanStatus) IsValid() bool {
+	switch s {
+	case PlanStatusPending,
+		PlanStatusApproved,
+		PlanStatusCompleted,
+		PlanStatusFailed,
+		PlanStatusRejected,
+		PlanStatusExpired:
+		return true
+	default:
+		return false
+	}
+}
+
+// Decidable reports whether a plan is still waiting on a person.
+func (s PlanStatus) Decidable() bool { return s == PlanStatusPending }
 
 type AutonomyTier string
 

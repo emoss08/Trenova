@@ -14,14 +14,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/agentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionservice"
-	"github.com/emoss08/trenova/internal/core/services/agentproposalnotifier"
-	"github.com/emoss08/trenova/internal/core/services/agenttrustservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdefinitionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentevents"
 	"github.com/emoss08/trenova/internal/core/services/agentexceptionservice"
+	"github.com/emoss08/trenova/internal/core/services/agentplanservice"
+	"github.com/emoss08/trenova/internal/core/services/agentproposalnotifier"
 	"github.com/emoss08/trenova/internal/core/services/agentproposalservice"
 	"github.com/emoss08/trenova/internal/core/services/agentrunservice"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
+	"github.com/emoss08/trenova/internal/core/services/agenttrustservice"
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/aiproviderservice"
 	"github.com/emoss08/trenova/internal/core/services/aiusageservice"
@@ -288,6 +289,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agenttrustservice.New,
 	agentproposalnotifier.New,
 	agentdecisionservice.New,
+	agentplanservice.New,
 	assignmentservice.New,
 	fx.Annotate(
 		dispatchautoassignservice.New,

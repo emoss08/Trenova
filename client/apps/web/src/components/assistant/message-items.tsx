@@ -28,6 +28,8 @@ import {
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { askRequestsFrom } from "./ask-requests";
 import { ChoicePrompt } from "./choice-prompt";
+import { PlanCard } from "./plan-card";
+import type { PlanGroup } from "./plan-state";
 import { ProposalCard } from "./proposal-card";
 import { ReportRunCard } from "./report-run-card";
 import { reportRunsFrom } from "./report-runs";
@@ -352,12 +354,15 @@ export function ReasoningDisclosure({
 export function AssistantEntry({
   entry,
   proposals,
+  plans = [],
   threadId,
   latestUserSequence,
   onAnswer,
 }: {
   entry: Extract<ThreadEntry, { kind: "assistant" }>;
   proposals: AssistantProposal[];
+  /** Several writes this turn asked for as one; each is shown once, as a plan. */
+  plans?: PlanGroup[];
   /** Where the newest user turn sits, so a settled question stops asking. */
   latestUserSequence: number;
   onAnswer: (value: string) => void;
@@ -408,6 +413,9 @@ export function AssistantEntry({
           answered={latestUserSequence > ask.sequence}
           onAnswer={onAnswer}
         />
+      ))}
+      {plans.map((group) => (
+        <PlanCard key={group.plan.id} plan={group.plan} steps={group.steps} threadId={threadId} />
       ))}
       {proposals.map((proposal) => (
         <ProposalCard key={proposal.id} proposal={proposal} threadId={threadId} />

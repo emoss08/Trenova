@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/agentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentdefinitionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentexceptionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/agentplanhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentproposalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentrunhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/aiproviderhandler"
@@ -185,6 +186,7 @@ type RouterParams struct {
 	DocumentOperationsHandler       *documentoperationshandler.Handler
 	AccessorialChargeHandler        *accessorialchargehandler.Handler
 	AgentProposalHandler            *agentproposalhandler.Handler
+	AgentPlanHandler                *agentplanhandler.Handler
 	AgentExceptionHandler           *agentexceptionhandler.Handler
 	AgentControlHandler             *agentcontrolhandler.Handler
 	AIProviderHandler               *aiproviderhandler.Handler
@@ -328,6 +330,7 @@ type Router struct {
 	documentOperationsHandler       *documentoperationshandler.Handler
 	accessorialChargeHandler        *accessorialchargehandler.Handler
 	agentProposalHandler            *agentproposalhandler.Handler
+	agentPlanHandler                *agentplanhandler.Handler
 	agentExceptionHandler           *agentexceptionhandler.Handler
 	agentControlHandler             *agentcontrolhandler.Handler
 	aiProviderHandler               *aiproviderhandler.Handler
@@ -462,6 +465,7 @@ func NewRouter(p RouterParams) *Router {
 		documentOperationsHandler:       p.DocumentOperationsHandler,
 		accessorialChargeHandler:        p.AccessorialChargeHandler,
 		agentProposalHandler:            p.AgentProposalHandler,
+		agentPlanHandler:                p.AgentPlanHandler,
 		agentExceptionHandler:           p.AgentExceptionHandler,
 		agentControlHandler:             p.AgentControlHandler,
 		aiProviderHandler:               p.AIProviderHandler,
@@ -659,6 +663,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.documentOperationsHandler.RegisterRoutes(protected)
 	r.accessorialChargeHandler.RegisterRoutes(protected)
 	r.agentProposalHandler.RegisterRoutes(protected)
+	r.agentPlanHandler.RegisterRoutes(protected)
 	r.agentExceptionHandler.RegisterRoutes(protected)
 	r.agentControlHandler.RegisterRoutes(protected)
 	r.aiProviderHandler.RegisterRoutes(protected)

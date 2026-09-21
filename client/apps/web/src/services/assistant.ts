@@ -11,6 +11,7 @@ import {
   toolCatalogSchema,
   toolTrustListSchema,
   assistantMessagePageSchema,
+  assistantPlanListSchema,
   assistantProposalListSchema,
   assistantProviderListSchema,
   assistantThreadListSchema,
@@ -20,9 +21,11 @@ import {
   sendMessageResultSchema,
   type AgentDefinition,
   type AssistantPageContext,
+  type AssistantPlan,
   type AssistantProposal,
   type AssistantStreamEvent,
   type AssistantThread,
+  type PlanDecision,
   type ProposalDecision,
   type SaveAgentDefinitionRequest,
 } from "@/types/assistant";
@@ -178,6 +181,25 @@ export class AssistantService {
    * way. Accepting runs the tool as the approver, so this can fail on their own
    * permissions even though the message was theirs.
    */
+  /**
+   * The plans a thread's runs formed: several writes decided as one. Steps are
+   * the proposals carrying the plan's id, so both lists are read together.
+   */
+  public async listPlans(threadId: AssistantThread["id"]) {
+    const response = await api.get(`/assistant/threads/${threadId}/plans/`);
+    return safeParse(assistantPlanListSchema, response, "Assistant Plan");
+  }
+
+  /**
+   * Approving a plan runs every step in the order the agent asked, stopping at
+   * the first that fails; rejecting it rejects them all. Like a single proposal
+   * it is checked and audited as the approver, so it can fail on their
+   * permissions rather than the asker's.
+   */
+  public async decidePlan(planId: AssistantPlan["id"], decision: PlanDecision) {
+    await api.post(`/agent-plans/${planId}/resolve/`, { decision, reasonCode: "" });
+  }
+
   public async decideProposal(
     proposalId: AssistantProposal["id"],
     decision: ProposalDecision,

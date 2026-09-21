@@ -18,6 +18,8 @@ var AgentDefinitionSpec TypeSpec
 
 var AgentExceptionSpec TypeSpec
 
+var AgentPlanSpec TypeSpec
+
 var AgentProposalSpec TypeSpec
 
 var AgentRunSpec TypeSpec
@@ -559,6 +561,18 @@ func init() {
 				FieldMapKey: "structuredOutputMode",
 			},
 			{
+				Name:        "reasoningEffort",
+				FieldMapKey: "reasoningEffort",
+			},
+			{
+				Name:        "inputCostPerMillion",
+				FieldMapKey: "inputCostPerMillion",
+			},
+			{
+				Name:        "outputCostPerMillion",
+				FieldMapKey: "outputCostPerMillion",
+			},
+			{
 				Name:        "maxTokens",
 				FieldMapKey: "maxTokens",
 			},
@@ -770,6 +784,14 @@ func init() {
 			{
 				Name:        "shadowMode",
 				FieldMapKey: "shadowMode",
+			},
+			{
+				Name:        "earnedAutonomy",
+				FieldMapKey: "earnedAutonomy",
+			},
+			{
+				Name:        "promotionThreshold",
+				FieldMapKey: "promotionThreshold",
 			},
 			{
 				Name:    "billingAgentEnabled",
@@ -1083,6 +1105,85 @@ func init() {
 		},
 	}
 
+	AgentPlanSpec = TypeSpec{
+		TypeName: "AgentPlan",
+		FieldMap: buncolgen.AgentPlanFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "runId",
+				FieldMapKey: "runId",
+			},
+			{
+				Name:        "title",
+				FieldMapKey: "title",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "stepCount",
+				FieldMapKey: "stepCount",
+			},
+			{
+				Name:        "completedSteps",
+				FieldMapKey: "completedSteps",
+			},
+			{
+				Name:        "failedStep",
+				FieldMapKey: "failedStep",
+			},
+			{
+				Name:        "failureError",
+				FieldMapKey: "failureError",
+			},
+			{
+				Name:        "decidedByUserId",
+				FieldMapKey: "decidedByUserId",
+			},
+			{
+				Name:        "decidedAt",
+				FieldMapKey: "decidedAt",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	AgentProposalSpec = TypeSpec{
 		TypeName: "AgentProposal",
 		FieldMap: buncolgen.AgentProposalFieldMap,
@@ -1134,6 +1235,14 @@ func init() {
 			{
 				Name:        "status",
 				FieldMapKey: "status",
+			},
+			{
+				Name:        "planId",
+				FieldMapKey: "planId",
+			},
+			{
+				Name:        "planStep",
+				FieldMapKey: "planStep",
 			},
 			{
 				Name:        "version",

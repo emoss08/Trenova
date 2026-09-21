@@ -21,6 +21,7 @@ type Params struct {
 	Definitions   repositories.AgentDefinitionRepository
 	Recorder      *proposalrecorder.Service
 	Proposals     repositories.AgentProposalRepository
+	Plans         repositories.AgentPlanRepository `optional:"true"`
 	AIProviders   repositories.AIProviderRepository
 	Shadow        *agentshadow.Resolver
 }
@@ -34,6 +35,7 @@ type Service struct {
 	definitions   repositories.AgentDefinitionRepository
 	recorder      *proposalrecorder.Service
 	proposals     chatProposalStore
+	plans         chatPlanStore
 	providers     repositories.AIProviderRepository
 	shadow        *agentshadow.Resolver
 }
@@ -49,6 +51,7 @@ func New(p Params) serviceports.AssistantService {
 		providers:     p.AIProviders,
 		recorder:      p.Recorder,
 		proposals:     p.Proposals,
+		plans:         planStoreOrNil(p.Plans),
 		shadow:        p.Shadow,
 	}
 }

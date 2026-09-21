@@ -21,6 +21,8 @@ function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal
     executedAt: null,
     executionError: "",
     expiresAt: 0,
+    planId: "",
+    planStep: 0,
     ...overrides,
   };
 }

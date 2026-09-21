@@ -1880,6 +1880,12 @@ models:
   AgentProposalStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.ProposalStatus
+  AgentPlanStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.PlanStatus
+  AgentPlan:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.AgentPlan
   AgentAutonomyTier:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyTier

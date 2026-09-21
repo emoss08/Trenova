@@ -18,6 +18,13 @@ func (e *AgentException) GetStaticFieldMap() map[string]string {
 	return buncolgen.AgentExceptionFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AgentPlan].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.AgentPlanFieldMap] instead of parsing struct tags via reflection.
+func (e *AgentPlan) GetStaticFieldMap() map[string]string {
+	return buncolgen.AgentPlanFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AgentProposal].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.AgentProposalFieldMap] instead of parsing struct tags via reflection.

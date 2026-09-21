@@ -130,6 +130,32 @@ type DecideAgentProposalRequest struct {
 	Modifications map[string]any
 	ReasonCode    string
 	TenantInfo    pagination.TenantInfo
+	// WithinPlan says the decision is one step of a plan being decided as a
+	// whole. The run's workflow is signalled once by the plan, not once per
+	// step, and a step's execution failure is reported to the caller so the
+	// plan can stop rather than logged and swallowed.
+	WithinPlan bool
+}
+
+// DecideAgentPlanRequest decides every pending step of a plan at once.
+type DecideAgentPlanRequest struct {
+	PlanID     pulid.ID
+	Decision   agent.DecisionType
+	ReasonCode string
+	TenantInfo pagination.TenantInfo
+}
+
+type AgentPlanService interface {
+	Decide(
+		ctx context.Context,
+		req *DecideAgentPlanRequest,
+		actor *RequestActor,
+	) (*agent.AgentPlan, error)
+	GetByID(ctx context.Context, req repositories.GetAgentPlanByIDRequest) (*agent.AgentPlan, error)
+	ListConnection(
+		ctx context.Context,
+		req *repositories.ListAgentPlanConnectionRequest,
+	) (*pagination.CursorListResult[*agent.AgentPlan], error)
 }
 
 // PendingProposalsNotice is what the recorder hands the notifier once a run's
@@ -167,12 +193,27 @@ type AgentTrustService interface {
 	ListForDefinition(ctx context.Context, req repositories.ListToolTrustRequest) ([]*agent.ToolTrust, error)
 }
 
+// DecisionOutcome is a recorded decision plus what happened when it ran.
+// The decision is the durable fact and is recorded whatever the tool did;
+// ExecutionError is set when an approval's write did not go through.
+type DecisionOutcome struct {
+	Decision       *agent.AgentDecision
+	ExecutionError error
+}
+
 type AgentDecisionService interface {
 	Decide(
 		ctx context.Context,
 		req *DecideAgentProposalRequest,
 		actor *RequestActor,
 	) (*agent.AgentDecision, error)
+	// DecideWithOutcome is Decide for a caller that must know whether the
+	// approved write went through, such as a plan deciding where to stop.
+	DecideWithOutcome(
+		ctx context.Context,
+		req *DecideAgentProposalRequest,
+		actor *RequestActor,
+	) (*DecisionOutcome, error)
 }
 
 type UpdateAgentControlRequest struct {

@@ -1,0 +1,45 @@
+fragment AgentPlanTableRowFields on AgentPlan {
+  id
+  organizationId
+  businessUnitId
+  runId
+  title
+  summary
+  status
+  stepCount
+  completedSteps
+  failedStep
+  failureError
+  decidedByUserId
+  decidedAt
+  expiresAt
+  version
+  createdAt
+  updatedAt
+}
+
+query AgentPlanTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  agentPlans(input: $input) {
+    edges {
+      node {
+        ...AgentPlanTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentPlanDetail($id: ID!) {
+  agentPlan(id: $id) {
+    ...AgentPlanTableRowFields
+  }
+}
+
+mutation DecideAgentPlan($id: ID!, $input: AgentPlanDecisionInput!) {
+  decideAgentPlan(id: $id, input: $input) {
+    ...AgentPlanTableRowFields
+  }
+}

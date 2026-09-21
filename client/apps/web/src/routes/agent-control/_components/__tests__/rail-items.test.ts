@@ -38,6 +38,7 @@ describe("buildRailItems", () => {
     expect(items[3].children.map((child) => child.view)).toEqual([
       "runs",
       "proposals",
+      "plans",
       "exceptions",
     ]);
   });
@@ -64,7 +65,15 @@ describe("buildRailItems", () => {
     const items = buildRailItems(counts, { ...all, providers: false, exceptions: false }, t);
 
     expect(items.map((item) => item.tab)).toEqual(["overview", "agents", "activity"]);
-    expect(items[2].children.map((child) => child.view)).toEqual(["runs", "proposals"]);
+    expect(items[2].children.map((child) => child.view)).toEqual(["runs", "proposals", "plans"]);
+  });
+
+  // A plan is decided under the same right as the proposals it groups, so
+  // the two views come and go together.
+  it("lists plans only where proposals may be read", () => {
+    const items = buildRailItems(counts, { ...all, proposals: false }, t);
+
+    expect(items[3].children.map((child) => child.view)).toEqual(["runs", "exceptions"]);
   });
 
   it("shows nothing under a label until the counts arrive", () => {

@@ -657,6 +657,37 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	AgentPlan struct {
+		BusinessUnitID  func(childComplexity int) int
+		CompletedSteps  func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		DecidedAt       func(childComplexity int) int
+		DecidedByUserID func(childComplexity int) int
+		ExpiresAt       func(childComplexity int) int
+		FailedStep      func(childComplexity int) int
+		FailureError    func(childComplexity int) int
+		ID              func(childComplexity int) int
+		OrganizationID  func(childComplexity int) int
+		RunID           func(childComplexity int) int
+		Status          func(childComplexity int) int
+		StepCount       func(childComplexity int) int
+		Summary         func(childComplexity int) int
+		Title           func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
+		Version         func(childComplexity int) int
+	}
+
+	AgentPlanConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AgentPlanEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	AgentProposal struct {
 		AutonomyTier   func(childComplexity int) int
 		BusinessUnitID func(childComplexity int) int
@@ -665,6 +696,8 @@ type ComplexityRoot struct {
 		Evidence       func(childComplexity int) int
 		ID             func(childComplexity int) int
 		OrganizationID func(childComplexity int) int
+		PlanID         func(childComplexity int) int
+		PlanStep       func(childComplexity int) int
 		Rationale      func(childComplexity int) int
 		RunID          func(childComplexity int) int
 		Status         func(childComplexity int) int
@@ -6026,6 +6059,7 @@ type ComplexityRoot struct {
 		CreateWorkerPTO                       func(childComplexity int, input gqlmodel.CreateWorkerPTOInput) int
 		CreateWorkerPolicy                    func(childComplexity int, input gqlmodel.WorkerPolicyInput) int
 		CreateWorkerSafetyEvent               func(childComplexity int, input gqlmodel.WorkerSafetyEventInput) int
+		DecideAgentPlan                       func(childComplexity int, id string, input gqlmodel.AgentPlanDecisionInput) int
 		DecideAgentProposal                   func(childComplexity int, id string, input gqlmodel.AgentProposalDecisionInput) int
 		DecideLeaveCase                       func(childComplexity int, input gqlmodel.DecideLeaveCaseInput) int
 		DecideProfileChange                   func(childComplexity int, input gqlmodel.DecideProfileChangeInput) int
@@ -7152,6 +7186,8 @@ type ComplexityRoot struct {
 		AgentDefinitions                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentException                      func(childComplexity int, id string) int
 		AgentExceptions                     func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AgentPlan                           func(childComplexity int, id string) int
+		AgentPlans                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentProposal                       func(childComplexity int, id string) int
 		AgentProposals                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentRun                            func(childComplexity int, id string) int
@@ -13386,6 +13422,141 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentExceptionEdge.Node(childComplexity), true
 
+	case "AgentPlan.businessUnitId":
+		if e.ComplexityRoot.AgentPlan.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.BusinessUnitID(childComplexity), true
+	case "AgentPlan.completedSteps":
+		if e.ComplexityRoot.AgentPlan.CompletedSteps == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.CompletedSteps(childComplexity), true
+	case "AgentPlan.createdAt":
+		if e.ComplexityRoot.AgentPlan.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.CreatedAt(childComplexity), true
+	case "AgentPlan.decidedAt":
+		if e.ComplexityRoot.AgentPlan.DecidedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.DecidedAt(childComplexity), true
+	case "AgentPlan.decidedByUserId":
+		if e.ComplexityRoot.AgentPlan.DecidedByUserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.DecidedByUserID(childComplexity), true
+	case "AgentPlan.expiresAt":
+		if e.ComplexityRoot.AgentPlan.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.ExpiresAt(childComplexity), true
+	case "AgentPlan.failedStep":
+		if e.ComplexityRoot.AgentPlan.FailedStep == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.FailedStep(childComplexity), true
+	case "AgentPlan.failureError":
+		if e.ComplexityRoot.AgentPlan.FailureError == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.FailureError(childComplexity), true
+	case "AgentPlan.id":
+		if e.ComplexityRoot.AgentPlan.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.ID(childComplexity), true
+	case "AgentPlan.organizationId":
+		if e.ComplexityRoot.AgentPlan.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.OrganizationID(childComplexity), true
+	case "AgentPlan.runId":
+		if e.ComplexityRoot.AgentPlan.RunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.RunID(childComplexity), true
+	case "AgentPlan.status":
+		if e.ComplexityRoot.AgentPlan.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.Status(childComplexity), true
+	case "AgentPlan.stepCount":
+		if e.ComplexityRoot.AgentPlan.StepCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.StepCount(childComplexity), true
+	case "AgentPlan.summary":
+		if e.ComplexityRoot.AgentPlan.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.Summary(childComplexity), true
+	case "AgentPlan.title":
+		if e.ComplexityRoot.AgentPlan.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.Title(childComplexity), true
+	case "AgentPlan.updatedAt":
+		if e.ComplexityRoot.AgentPlan.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.UpdatedAt(childComplexity), true
+	case "AgentPlan.version":
+		if e.ComplexityRoot.AgentPlan.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlan.Version(childComplexity), true
+
+	case "AgentPlanConnection.edges":
+		if e.ComplexityRoot.AgentPlanConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanConnection.Edges(childComplexity), true
+	case "AgentPlanConnection.pageInfo":
+		if e.ComplexityRoot.AgentPlanConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanConnection.PageInfo(childComplexity), true
+	case "AgentPlanConnection.totalCount":
+		if e.ComplexityRoot.AgentPlanConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanConnection.TotalCount(childComplexity), true
+
+	case "AgentPlanEdge.cursor":
+		if e.ComplexityRoot.AgentPlanEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanEdge.Cursor(childComplexity), true
+	case "AgentPlanEdge.node":
+		if e.ComplexityRoot.AgentPlanEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanEdge.Node(childComplexity), true
+
 	case "AgentProposal.autonomyTier":
 		if e.ComplexityRoot.AgentProposal.AutonomyTier == nil {
 			break
@@ -13428,6 +13599,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposal.OrganizationID(childComplexity), true
+	case "AgentProposal.planId":
+		if e.ComplexityRoot.AgentProposal.PlanID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposal.PlanID(childComplexity), true
+	case "AgentProposal.planStep":
+		if e.ComplexityRoot.AgentProposal.PlanStep == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposal.PlanStep(childComplexity), true
 	case "AgentProposal.rationale":
 		if e.ComplexityRoot.AgentProposal.Rationale == nil {
 			break
@@ -39299,6 +39482,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateWorkerSafetyEvent(childComplexity, args["input"].(gqlmodel.WorkerSafetyEventInput)), true
+	case "Mutation.decideAgentPlan":
+		if e.ComplexityRoot.Mutation.DecideAgentPlan == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_decideAgentPlan_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DecideAgentPlan(childComplexity, args["id"].(string), args["input"].(gqlmodel.AgentPlanDecisionInput)), true
 	case "Mutation.decideAgentProposal":
 		if e.ComplexityRoot.Mutation.DecideAgentProposal == nil {
 			break
@@ -46226,6 +46420,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentExceptions(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentPlan":
+		if e.ComplexityRoot.Query.AgentPlan == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentPlan_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentPlan(childComplexity, args["id"].(string)), true
+	case "Query.agentPlans":
+		if e.ComplexityRoot.Query.AgentPlans == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentPlans_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentPlans(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.agentProposal":
 		if e.ComplexityRoot.Query.AgentProposal == nil {
 			break
@@ -68265,6 +68481,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAdjustWorkerPTOBalanceInput,
 		ec.unmarshalInputAgentControlInput,
 		ec.unmarshalInputAgentExceptionResolveInput,
+		ec.unmarshalInputAgentPlanDecisionInput,
 		ec.unmarshalInputAgentProposalDecisionInput,
 		ec.unmarshalInputAmendWorkerEmploymentEventInput,
 		ec.unmarshalInputApplyCarrierIntelSuggestionsInput,
@@ -69026,6 +69243,18 @@ enum AgentProposalStatus {
   Rejected
   Expired
   Superseded
+  Executed
+  ExecutionFailed
+  Skipped
+}
+
+enum AgentPlanStatus {
+  Pending
+  Approved
+  Completed
+  Failed
+  Rejected
+  Expired
 }
 
 enum AgentAutonomyTier {
@@ -69117,6 +69346,32 @@ type AgentProposal {
   evidence: [AgentEvidenceRef!]!
   autonomyTier: AgentAutonomyTier!
   status: AgentProposalStatus!
+  "The plan this proposal is a step of, when it is one; absent for a proposal decided on its own."
+  planId: ID
+  "Position in the plan, from one; zero outside a plan."
+  planStep: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"Several proposals from one run, decided once and run in order."
+type AgentPlan {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  runId: ID!
+  title: String!
+  summary: String!
+  status: AgentPlanStatus!
+  stepCount: Int!
+  completedSteps: Int!
+  "The step whose write failed and stopped the plan; absent while none has."
+  failedStep: Int
+  failureError: String!
+  decidedByUserId: ID
+  decidedAt: Timestamp
+  expiresAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -69197,6 +69452,17 @@ type AgentProposalConnection {
   totalCount: Int
 }
 
+type AgentPlanEdge {
+  node: AgentPlan!
+  cursor: String!
+}
+
+type AgentPlanConnection {
+  edges: [AgentPlanEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
 type AgentExceptionEdge {
   node: AgentException!
   cursor: String!
@@ -69211,6 +69477,12 @@ type AgentExceptionConnection {
 input AgentProposalDecisionInput {
   decision: AgentDecisionType!
   modifications: JSON
+  reasonCode: String!
+}
+
+input AgentPlanDecisionInput {
+  "Accepted runs every step in order; Rejected rejects them all."
+  decision: AgentDecisionType!
   reasonCode: String!
 }
 
@@ -69236,6 +69508,8 @@ extend type Query {
   agentRun(id: ID!): AgentRun
   agentProposals(input: DataTableConnectionInput!): AgentProposalConnection!
   agentProposal(id: ID!): AgentProposal
+  agentPlans(input: DataTableConnectionInput!): AgentPlanConnection!
+  agentPlan(id: ID!): AgentPlan
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentException(id: ID!): AgentException
   agentControl: AgentControl!
@@ -69243,6 +69517,7 @@ extend type Query {
 
 extend type Mutation {
   decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
+  decideAgentPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
   updateAgentControl(input: AgentControlInput!): AgentControl!
 }
@@ -89900,6 +90175,68 @@ func (ec *executionContext) childFields_AgentExceptionEdge(ctx context.Context, 
 	return nil, fmt.Errorf("no field named %q was found under type AgentExceptionEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentPlan(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AgentPlan_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_AgentPlan_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_AgentPlan_businessUnitId(ctx, field)
+	case "runId":
+		return ec.fieldContext_AgentPlan_runId(ctx, field)
+	case "title":
+		return ec.fieldContext_AgentPlan_title(ctx, field)
+	case "summary":
+		return ec.fieldContext_AgentPlan_summary(ctx, field)
+	case "status":
+		return ec.fieldContext_AgentPlan_status(ctx, field)
+	case "stepCount":
+		return ec.fieldContext_AgentPlan_stepCount(ctx, field)
+	case "completedSteps":
+		return ec.fieldContext_AgentPlan_completedSteps(ctx, field)
+	case "failedStep":
+		return ec.fieldContext_AgentPlan_failedStep(ctx, field)
+	case "failureError":
+		return ec.fieldContext_AgentPlan_failureError(ctx, field)
+	case "decidedByUserId":
+		return ec.fieldContext_AgentPlan_decidedByUserId(ctx, field)
+	case "decidedAt":
+		return ec.fieldContext_AgentPlan_decidedAt(ctx, field)
+	case "expiresAt":
+		return ec.fieldContext_AgentPlan_expiresAt(ctx, field)
+	case "version":
+		return ec.fieldContext_AgentPlan_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_AgentPlan_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AgentPlan_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPlan", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentPlanConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AgentPlanConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AgentPlanConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AgentPlanConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPlanConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentPlanEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AgentPlanEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AgentPlanEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPlanEdge", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentProposal(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -89924,6 +90261,10 @@ func (ec *executionContext) childFields_AgentProposal(ctx context.Context, field
 		return ec.fieldContext_AgentProposal_autonomyTier(ctx, field)
 	case "status":
 		return ec.fieldContext_AgentProposal_status(ctx, field)
+	case "planId":
+		return ec.fieldContext_AgentProposal_planId(ctx, field)
+	case "planStep":
+		return ec.fieldContext_AgentProposal_planStep(ctx, field)
 	case "version":
 		return ec.fieldContext_AgentProposal_version(ctx, field)
 	case "createdAt":

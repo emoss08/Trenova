@@ -466,6 +466,251 @@ var AgentExceptionFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// AgentPlan — table "agent_plans", alias "apl"
+// ---------------------------------------------------------------------------
+
+// AgentPlanTable holds the table name, alias, and primary key columns
+// for the "agent_plans" table. The alias "apl" is used in all generated
+// SQL fragments (e.g. "apl.id = ?").
+var AgentPlanTable = TableInfo{
+	Name:       "agent_plans",
+	Alias:      "apl",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AgentPlanColumns provides type-safe column references for the "agent_plans" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AgentPlanColumns.ID.String())
+//	// SELECT apl.id FROM agent_plans AS apl
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AgentPlanColumns.ID.Eq(), id)           // WHERE apl.id = ?
+//	q.Order(AgentPlanColumns.CreatedAt.OrderDesc())  // ORDER BY apl.created_at DESC
+var AgentPlanColumns = struct {
+	ID              Column // "id" → qualified: "apl.id"
+	BusinessUnitID  Column // "business_unit_id" → qualified: "apl.business_unit_id"
+	OrganizationID  Column // "organization_id" → qualified: "apl.organization_id"
+	RunID           Column // "run_id" → qualified: "apl.run_id"
+	Title           Column // "title" → qualified: "apl.title"
+	Summary         Column // "summary" → qualified: "apl.summary"
+	Status          Column // "status" → qualified: "apl.status"
+	StepCount       Column // "step_count" → qualified: "apl.step_count"
+	CompletedSteps  Column // "completed_steps" → qualified: "apl.completed_steps"
+	FailedStep      Column // "failed_step" → qualified: "apl.failed_step"
+	FailureError    Column // "failure_error" → qualified: "apl.failure_error"
+	DecidedByUserID Column // "decided_by_user_id" → qualified: "apl.decided_by_user_id"
+	DecidedAt       Column // "decided_at" → qualified: "apl.decided_at"
+	ExpiresAt       Column // "expires_at" → qualified: "apl.expires_at"
+	Version         Column // "version" → qualified: "apl.version"
+	CreatedAt       Column // "created_at" → qualified: "apl.created_at"
+	UpdatedAt       Column // "updated_at" → qualified: "apl.updated_at"
+}{
+	ID:              NewColumn("id", "apl"),
+	BusinessUnitID:  NewColumn("business_unit_id", "apl"),
+	OrganizationID:  NewColumn("organization_id", "apl"),
+	RunID:           NewColumn("run_id", "apl"),
+	Title:           NewColumn("title", "apl"),
+	Summary:         NewColumn("summary", "apl"),
+	Status:          NewColumn("status", "apl"),
+	StepCount:       NewColumn("step_count", "apl"),
+	CompletedSteps:  NewColumn("completed_steps", "apl"),
+	FailedStep:      NewColumn("failed_step", "apl"),
+	FailureError:    NewColumn("failure_error", "apl"),
+	DecidedByUserID: NewColumn("decided_by_user_id", "apl"),
+	DecidedAt:       NewColumn("decided_at", "apl"),
+	ExpiresAt:       NewColumn("expires_at", "apl"),
+	Version:         NewColumn("version", "apl"),
+	CreatedAt:       NewColumn("created_at", "apl"),
+	UpdatedAt:       NewColumn("updated_at", "apl"),
+}
+
+// AgentPlanFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AgentPlan.GetStaticFieldMap().
+var AgentPlanFieldMap = map[string]string{
+	"id":              "id",
+	"businessUnitId":  "business_unit_id",
+	"organizationId":  "organization_id",
+	"runId":           "run_id",
+	"title":           "title",
+	"summary":         "summary",
+	"status":          "status",
+	"stepCount":       "step_count",
+	"completedSteps":  "completed_steps",
+	"failedStep":      "failed_step",
+	"failureError":    "failure_error",
+	"decidedByUserId": "decided_by_user_id",
+	"decidedAt":       "decided_at",
+	"expiresAt":       "expires_at",
+	"version":         "version",
+	"createdAt":       "created_at",
+	"updatedAt":       "updated_at",
+}
+
+// AgentPlanInsertableColumns lists column names suitable for INSERT statements on the "agent_plans" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AgentPlanInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"run_id",
+	"title",
+	"summary",
+	"status",
+	"step_count",
+	"completed_steps",
+	"failed_step",
+	"failure_error",
+	"decided_by_user_id",
+	"decided_at",
+	"expires_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// AgentPlanRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(AgentPlanRelations.Run)
+//	// Bun eager-loads the Run association via a separate query
+var AgentPlanRelations = struct {
+	Run          string
+	BusinessUnit string
+	Organization string
+}{
+	Run:          "Run",
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// AgentPlanScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE apl.organization_id = ? AND apl.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.AgentPlanScopeTenant(sq, ti).
+//		Where(buncolgen.AgentPlanColumns.ID.Eq(), id)
+func AgentPlanScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, AgentPlanColumns.OrganizationID, AgentPlanColumns.BusinessUnitID, ti)
+}
+
+// AgentPlanScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.AgentPlanColumns.ID.In(), bun.List(ids))
+//	})
+func AgentPlanScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, AgentPlanColumns.OrganizationID, AgentPlanColumns.BusinessUnitID, ti)
+}
+
+// AgentPlanScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.AgentPlanScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.AgentPlanColumns.ID.Eq(), id)
+//	})
+func AgentPlanScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, AgentPlanColumns.OrganizationID, AgentPlanColumns.BusinessUnitID, ti)
+}
+
+// AgentPlanApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.AgentPlanApplyTenant(tenantInfo))
+func AgentPlanApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(AgentPlanColumns.OrganizationID, AgentPlanColumns.BusinessUnitID, ti)
+}
+
+// AgentPlanFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_plans" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AgentPlanFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AgentPlanFilter = struct {
+	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	RunID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
+	Title           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "title" → DB: "title"
+	Summary         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summary" → DB: "summary"
+	Status          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	StepCount       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stepCount" → DB: "step_count"
+	CompletedSteps  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "completedSteps" → DB: "completed_steps"
+	FailedStep      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failedStep" → DB: "failed_step"
+	FailureError    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureError" → DB: "failure_error"
+	DecidedByUserID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decidedByUserId" → DB: "decided_by_user_id"
+	DecidedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decidedAt" → DB: "decided_at"
+	ExpiresAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	RunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("runId", op, value)
+	},
+	Title: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("title", op, value)
+	},
+	Summary: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("summary", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	StepCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("stepCount", op, value)
+	},
+	CompletedSteps: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("completedSteps", op, value)
+	},
+	FailedStep: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("failedStep", op, value)
+	},
+	FailureError: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("failureError", op, value)
+	},
+	DecidedByUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("decidedByUserId", op, value)
+	},
+	DecidedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("decidedAt", op, value)
+	},
+	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("expiresAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // AgentProposal — table "agent_proposals", alias "ap"
 // ---------------------------------------------------------------------------
 
@@ -506,6 +751,8 @@ var AgentProposalColumns = struct {
 	ExecutionError  Column // "execution_error" → qualified: "ap.execution_error"
 	SourceMessageID Column // "source_message_id" → qualified: "ap.source_message_id"
 	ExpiresAt       Column // "expires_at" → qualified: "ap.expires_at"
+	PlanID          Column // "plan_id" → qualified: "ap.plan_id"
+	PlanStep        Column // "plan_step" → qualified: "ap.plan_step"
 	RemindedAt      Column // "reminded_at" → qualified: "ap.reminded_at"
 	TargetResource  Column // "target_resource" → qualified: "ap.target_resource"
 	TargetID        Column // "target_id" → qualified: "ap.target_id"
@@ -529,6 +776,8 @@ var AgentProposalColumns = struct {
 	ExecutionError:  NewColumn("execution_error", "ap"),
 	SourceMessageID: NewColumn("source_message_id", "ap"),
 	ExpiresAt:       NewColumn("expires_at", "ap"),
+	PlanID:          NewColumn("plan_id", "ap"),
+	PlanStep:        NewColumn("plan_step", "ap"),
 	RemindedAt:      NewColumn("reminded_at", "ap"),
 	TargetResource:  NewColumn("target_resource", "ap"),
 	TargetID:        NewColumn("target_id", "ap"),
@@ -558,6 +807,8 @@ var AgentProposalFieldMap = map[string]string{
 	"executionError":  "execution_error",
 	"sourceMessageId": "source_message_id",
 	"expiresAt":       "expires_at",
+	"planId":          "plan_id",
+	"planStep":        "plan_step",
 	"remindedAt":      "reminded_at",
 	"targetResource":  "target_resource",
 	"targetId":        "target_id",
@@ -585,6 +836,8 @@ var AgentProposalInsertableColumns = []string{
 	"execution_error",
 	"source_message_id",
 	"expires_at",
+	"plan_id",
+	"plan_step",
 	"reminded_at",
 	"target_resource",
 	"target_id",
@@ -674,6 +927,8 @@ var AgentProposalFilter = struct {
 	ExecutionError  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executionError" → DB: "execution_error"
 	SourceMessageID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceMessageId" → DB: "source_message_id"
 	ExpiresAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	PlanID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "planId" → DB: "plan_id"
+	PlanStep        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "planStep" → DB: "plan_step"
 	RemindedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remindedAt" → DB: "reminded_at"
 	TargetResource  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetResource" → DB: "target_resource"
 	TargetID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetId" → DB: "target_id"
@@ -726,6 +981,12 @@ var AgentProposalFilter = struct {
 	},
 	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("expiresAt", op, value)
+	},
+	PlanID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("planId", op, value)
+	},
+	PlanStep: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("planStep", op, value)
 	},
 	RemindedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("remindedAt", op, value)
