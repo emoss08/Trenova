@@ -8,6 +8,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { InfoIcon } from "lucide-react";
+import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
 
 type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   label: string;
@@ -53,9 +54,9 @@ export function SwitchField<T extends FieldValues>({
           className={cn(
             "group relative flex w-full items-start gap-2 rounded-md border border-transparent p-2.5 transition-all duration-300 ease-in-out",
             outlined &&
-              "border-input bg-muted transition-[border-color,box-shadow,background-color] duration-200 ease-in-out has-data-checked:border-info has-data-checked:bg-info/10 has-data-checked:text-info-foreground has-data-checked:ring-4 has-data-checked:ring-info/20 dark:has-data-checked:text-info-foreground",
+              "border-input bg-field transition-[border-color,box-shadow,background-color] duration-200 ease-in-out has-data-checked:border-info has-data-checked:bg-info/10 has-data-checked:text-info-foreground has-data-checked:ring-4 has-data-checked:ring-info/20 dark:has-data-checked:text-info-foreground",
             fieldState.error &&
-"ui-focus-ring [--ring:var(--ring-danger)] border-danger bg-danger/20 ring-0 ring-danger placeholder:text-danger-foreground focus:outline-hidden",
+fieldInvalidClass,
             warning?.show &&
 "ui-focus-ring border-warning bg-warning/10 ring-0 ring-warning placeholder:text-warning-foreground focus:outline-hidden",
             className,

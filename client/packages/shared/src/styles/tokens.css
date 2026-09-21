@@ -120,9 +120,8 @@
 
   /* The ground a form control sits on. A field is filled: it never shares a
      value with the canvas or the card, so an empty form still reads as a set
-     of slots to type into rather than as lines on a page. In dark, and inside
-     the inverted popovers, the fill sits above the surface instead of below
-     it, because there is no room left beneath. One token so an input, a
+     of slots to type into rather than as lines on a page. It sits below the
+     surface in both themes: a well, not a plate. One token so an input, a
      select and a number field cannot each pick their own. */
   --field: oklch(0.955 0.008 var(--hue-neutral));
 
@@ -389,7 +388,7 @@
   --raised: oklch(0.228 0.012 var(--hue-neutral));
   --overlay: oklch(0.228 0.012 var(--hue-neutral));
 
-  --field: oklch(0.255 0.013 var(--hue-neutral));
+  --field: oklch(0.145 0.007 var(--hue-neutral));
 
   --surface-hover: oklch(0.255 0.013 var(--hue-neutral));
   --surface-active: oklch(0.295 0.016 var(--hue-neutral));

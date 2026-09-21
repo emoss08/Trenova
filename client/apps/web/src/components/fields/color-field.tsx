@@ -14,6 +14,7 @@ import {
 } from "react-hook-form";
 import { Input } from "@trenova/shared/components/ui/input";
 import { FieldWrapper } from "./field-components";
+import { fieldInvalidClass, fieldTriggerClass } from "@trenova/shared/lib/variants/field";
 
 export type ColorFieldProps<TFieldValues extends FieldValues> = {
   hideHeader?: boolean;
@@ -129,12 +130,11 @@ function ColorFieldInput<T extends FieldValues>({
             variant="outline"
             type="button"
             className={cn(
-              "border-input bg-muted w-full items-center justify-start gap-2 rounded px-1.5 text-left font-normal [&_svg]:size-3 [&_svg]:shrink-0",
-              "data-pressed:border-brand data-pressed:ring-brand/20 data-pressed:ring-4 data-pressed:outline-hidden",
-              "transition-[border-color,box-shadow] duration-200 ease-in-out",
+              fieldTriggerClass,
+        "w-full items-center justify-start gap-2 px-1.5 text-left font-normal [&_svg]:size-3 [&_svg]:shrink-0",
               disabled && "cursor-not-allowed opacity-50",
               fieldState.invalid &&
-"ui-focus-ring [--ring:var(--ring-danger)] border-destructive bg-destructive/20 text-destructive ring-destructive hover:border-destructive hover:bg-destructive/20 data-pressed:border-destructive data-pressed:bg-destructive/20 data-pressed:ring-destructive/20 ring-0 focus:outline-hidden",
+fieldInvalidClass,
               !value && "text-muted-foreground",
               className,
             )}

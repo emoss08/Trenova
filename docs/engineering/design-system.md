@@ -272,12 +272,23 @@ wrong here even before dark mode is considered.
 
 ## Controls
 
-`ui-field` draws the resting box of every form control — ground, hairline,
-hover, disabled. The ground is `--field`, a filled tint that never shares a value
-with the canvas or the card, so an empty form reads as slots to type into. It sits
-below the surface in light and above it in dark and inside inverted popovers. `Input`, `Textarea`, `SelectTrigger` and `NumberField` all spend
-it, which is what makes them one family; before, they were three treatments. A
-new control takes `ui-field` plus one of the focus utilities and nothing else.
+`ui-field` owns every state of a form control's box, so all of them behave alike:
+
+| State | Treatment |
+|---|---|
+| rest | `--field` fill, `--input` hairline. The fill never shares a value with the canvas or the card; it sits below the surface in both themes |
+| hover | hairline steps to `--border-strong`; the fill does not change |
+| focus | the one focus ring (`ui-focus-ring`, or `ui-container-focus-ring` when a child takes focus) |
+| open | a trigger whose popup is open holds that same ring (`data-pressed`, `data-popup-open`, `aria-expanded`) |
+| invalid | `fieldInvalidClass`: danger hairline, 10% danger fill, and `--ring` repointed so focus and open turn red |
+| disabled | `--sunken` fill, 60% opacity |
+
+`Input`, `Textarea`, `SelectTrigger` and `NumberField` spend it, and so does every
+app field — select, autocomplete, multi-select, date, colour, money, number, chips,
+phone. A trigger built on `Button` takes `fieldTriggerClass` from
+`@trenova/shared/lib/variants/field`, which adds the overrides that stop the
+button's own hover and pressed fills from showing through. Do not write
+`border-input bg-muted` on a control, and do not assemble a `data-pressed:ring-*`.
 
 `ui-press` gives a filled control its pressed state (a 2.5% give). `Button`
 carries it; a hand-built clickable tile that should feel like a button takes it

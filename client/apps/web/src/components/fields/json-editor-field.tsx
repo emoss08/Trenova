@@ -9,6 +9,7 @@ import { EditorView } from "@codemirror/view";
 import CodeMirror, { type ReactCodeMirrorProps } from "@uiw/react-codemirror";
 import { useMemo } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
+import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
 
 type JsonEditorFieldProps<T extends FieldValues> = FormControlProps<T> &
   Omit<ReactCodeMirrorProps, "value" | "onChange" | "theme" | "extensions"> & {
@@ -54,7 +55,7 @@ export function JsonEditorField<T extends FieldValues>({
               "border-input overflow-hidden rounded-md border transition-all duration-200",
 "ui-container-focus-ring",
               fieldState.invalid &&
-"ui-container-focus-ring [--ring:var(--ring-danger)] border-destructive",
+fieldInvalidClass,
               disabled && "opacity-70",
               editorClassName,
             )}

@@ -14,7 +14,7 @@ export const lightTheme = EditorView.theme(
       "--expr-unknown": "var(--warning-foreground)",
     },
     "&.cm-editor": {
-      backgroundColor: "var(--muted)",
+      backgroundColor: "var(--field)",
       color: "var(--foreground)",
       borderRadius: "var(--radius)",
       borderStyle: "solid",
@@ -174,7 +174,7 @@ export const darkTheme = EditorView.theme(
       "--expr-unknown": "var(--warning-foreground)",
     },
     "&.cm-editor": {
-      backgroundColor: "var(--muted)",
+      backgroundColor: "var(--field)",
       color: "var(--foreground)",
       borderRadius: "var(--radius)",
       borderStyle: "solid",

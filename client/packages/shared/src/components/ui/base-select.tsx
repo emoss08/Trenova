@@ -111,10 +111,10 @@ function SelectClear({ className, children, onClick, ...props }: React.Component
 // Define size variants for SelectTrigger
 const selectTriggerVariants = cva(
   `
-		group relative flex w-fit items-center justify-between gap-2 rounded-md border whitespace-nowrap
-		transition-[color,box-shadow,border-color] outline-none select-none
+		ui-field group relative flex w-fit items-center justify-between gap-2 whitespace-nowrap
+		outline-none select-none
 		ui-focus-ring
-		aria-invalid:border-destructive aria-invalid:ring-destructive/50
+		aria-invalid:border-danger aria-invalid:bg-danger/10 aria-invalid:[--ring:var(--ring-danger)]
 		data-[disabled]:pointer-events-none data-[disabled]:opacity-60
 		*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2
 		[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='text-'])]:text-muted-foreground

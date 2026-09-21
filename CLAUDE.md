@@ -237,7 +237,11 @@ names the token to use instead.
 - Everything that floats from a trigger (menus, selects, popovers, hover cards, tooltips) is
   inverted — dark in light mode. The primitives set `dark` on the positioner; never write it
   by hand, and build popover content from tokens only. Dialogs and sheets follow the theme.
-- Form controls are filled: `--field` never matches the canvas or the card.
+- Form controls are filled: `--field` never matches the canvas or the card. Every control
+  spends `ui-field` (rest, hover, open and disabled in one place); a `Button`-built trigger
+  takes `fieldTriggerClass` and an invalid one `fieldInvalidClass`, both from
+  `@trenova/shared/lib/variants/field`. Never hand-write `border-input bg-muted` or a
+  `data-pressed:ring-*` on a field.
 - Two radii: `--radius-control` (6px) for controls, `--radius-surface` (8px) for containers.
   The whole `rounded-*` scale points at them; a badge is `rounded-full`.
 - Weight means something: 400 body, 500 label, 600 heading. A value in a cell takes no

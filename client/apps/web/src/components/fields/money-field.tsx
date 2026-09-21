@@ -3,6 +3,7 @@ import type { FormControlProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { FieldWrapper } from "./field-components";
+import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
 
 type BaseMoneyFieldProps = {
   label?: string;
@@ -72,15 +73,14 @@ export function MoneyField<T extends FieldValues>({
             aria-label={props["aria-label"] || label}
             aria-describedby={cn(description && descriptionId, fieldState.error && errorId)}
             className={cn(
-              "border-input bg-muted flex h-7 w-full min-w-0 rounded-md border px-2 py-0.5 text-left tabular-nums outline-none md:text-xs",
+              "ui-field flex h-7 w-full min-w-0 px-2 py-0.5 text-left tabular-nums outline-none md:text-xs",
               "placeholder:text-muted-foreground",
               "disabled:cursor-not-allowed disabled:opacity-50",
               "read-only:text-muted-foreground read-only:cursor-default",
 "ui-focus-ring",
-              "transition-[border-color,box-shadow] duration-200 ease-in-out",
               props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
               fieldState.invalid &&
-"ui-focus-ring [--ring:var(--ring-danger)] border-danger bg-danger/20 ring-0 ring-danger placeholder:text-danger-foreground focus:outline-hidden",
+fieldInvalidClass,
               className,
             )}
           />

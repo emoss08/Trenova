@@ -42,6 +42,7 @@ import {
 } from "react-hook-form";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { FieldWrapper } from "./field-components";
+import { fieldInvalidClass, fieldTriggerClass } from "@trenova/shared/lib/variants/field";
 
 export interface BaseMultiSelectAutocompleteFieldProps<TOption> {
   link: string;
@@ -565,14 +566,13 @@ export function MultiSelectAutocomplete<T>({
               aria-controls={listboxId}
               aria-readonly={readOnly || undefined}
               className={cn(
-                "border-muted-foreground/20 bg-muted h-auto min-h-7 w-full cursor-auto gap-2 rounded-md px-2 py-1 font-normal",
-                "data-pressed:border-brand data-pressed:ring-brand/20 data-pressed:ring-4 data-pressed:outline-hidden",
-                "hover:bg-muted-foreground/20 cursor-pointer justify-between [&_svg]:size-3 [&_svg]:shrink-0",
-                "transition-all duration-200 ease-in-out",
+                fieldTriggerClass,
+        "h-auto min-h-7 w-full cursor-auto gap-2 px-2 py-1 font-normal",
+                "cursor-pointer justify-between [&_svg]:size-3 [&_svg]:shrink-0",
                 "cursor-default whitespace-nowrap",
                 isLocked && "cursor-not-allowed opacity-50",
                 isInvalid &&
-"ui-focus-ring [--ring:var(--ring-danger)] border-danger bg-danger/20 ring-0 ring-danger placeholder:text-danger-foreground hover:border-danger hover:bg-danger/20 focus:outline-hidden data-[state=open]:border-danger data-[state=open]:bg-danger/20 data-[state=open]:ring-danger/20",
+fieldInvalidClass,
                 triggerClassName,
               )}
               disabled={isLocked}

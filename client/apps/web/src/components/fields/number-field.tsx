@@ -11,6 +11,7 @@ import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { Controller, type FieldPathValue, type FieldValues, type Path } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { FieldWrapper } from "./field-components";
+import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
 
 type BaseNumberFieldProps = {
   label?: React.ReactNode;
@@ -177,16 +178,15 @@ function NumberFieldImpl<T extends FieldValues>({
                   props["aria-describedby"],
                 )}
                 className={cn(
-                  "border-input bg-muted flex h-7 w-full min-w-0 rounded-md border px-2 py-0.5 outline-none md:text-xs",
+                  "ui-field flex h-7 w-full min-w-0 px-2 py-0.5 outline-none md:text-xs",
                   "file:border-0 file:bg-transparent file:text-sm file:font-medium",
                   "placeholder:text-muted-foreground",
                   "disabled:cursor-not-allowed disabled:opacity-50",
                   "read-only:text-muted-foreground read-only:cursor-default",
 "ui-focus-ring",
-                  "transition-[border-color,box-shadow] duration-200 ease-in-out",
                   props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
                   fieldState.invalid &&
-"ui-focus-ring [--ring:var(--ring-danger)] border-danger bg-danger/20 ring-0 ring-danger placeholder:text-danger-foreground focus:outline-hidden",
+fieldInvalidClass,
                   sideText ? "pr-16" : "pr-12",
                   className,
                 )}

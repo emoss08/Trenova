@@ -130,8 +130,21 @@
   transition-duration: 140ms;
   transition-timing-function: var(--ease-swift);
 
-  &:hover:not(:focus-visible, :focus-within, :disabled, [data-disabled], [aria-invalid="true"]) {
+  /* Both state rules are wrapped in :where so they weigh the same as a plain
+     utility. A field marked invalid with `border-danger` then keeps its red
+     hairline on hover and while open, instead of losing to this rule on
+     specificity. */
+  &:where(:hover:not(:focus-visible, :focus-within, :disabled, [data-disabled], [aria-invalid="true"])) {
     border-color: var(--border-strong);
+  }
+
+  /* A trigger whose popup is open keeps the ring it had when it was focused,
+     so a select, a date field and a colour field all say "this one is open"
+     the same way instead of each assembling a ring of its own. */
+  &:where([data-pressed], [data-popup-open], [data-state="open"], [aria-expanded="true"]) {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 var(--ring-width)
+      color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
   }
 
   &:disabled,

@@ -58,7 +58,7 @@ export function MultiCheckboxField<T extends FieldValues, TValue extends string>
                   <div
                     key={option.value}
                     className={cn(
-                      "border-muted-foreground/20 bg-muted flex items-center gap-2 rounded-md border px-2.5 py-2",
+                      "border-input bg-field flex items-center gap-2 rounded-md border px-2.5 py-2",
                       "transition-[border-color,box-shadow] duration-200 ease-in-out",
                       checked && "border-foreground ring-foreground/10 ring-2",
                     )}
