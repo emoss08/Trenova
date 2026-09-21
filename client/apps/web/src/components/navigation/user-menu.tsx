@@ -173,7 +173,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
                   profilePicUrl={user?.profilePicUrl}
                   thumbnailUrl={user?.thumbnailUrl}
                   className="size-8"
-                  fallbackClassName="rounded-lg bg-gradient-to-br from-sidebar-accent to-sidebar-accent/80 text-xs font-semibold text-sidebar-accent-foreground"
+                  fallbackClassName="rounded-lg bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground"
                 />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="text-foreground truncate font-semibold">{user?.name}</span>

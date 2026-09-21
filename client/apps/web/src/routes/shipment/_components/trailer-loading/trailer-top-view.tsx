@@ -149,7 +149,7 @@ export function TrailerTopView({
                         y={innerH / 2 - 10}
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        className={`${palette.text} text-xs font-bold`}
+                        className={`${palette.text} text-xs font-semibold`}
                       >
                         {p.commodityName.length > Math.floor(bw / 8)
                           ? p.commodityName.slice(0, Math.floor(bw / 8)) + "\u2026"

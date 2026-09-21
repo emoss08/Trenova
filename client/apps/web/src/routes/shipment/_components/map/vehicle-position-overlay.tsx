@@ -213,7 +213,7 @@ function VehicleDetailCard({
                 <TruckIcon className="text-muted-foreground size-3.5 shrink-0" />
                 {position.tractorCode}
                 {stale && (
-                  <span className="bg-warning/15 text-warning rounded px-1 py-px text-2xs font-bold">
+                  <span className="bg-warning/15 text-warning rounded px-1 py-px text-2xs font-semibold">
                     {t("Stale")}
                   </span>
                 )}

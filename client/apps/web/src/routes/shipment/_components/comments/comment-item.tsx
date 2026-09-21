@@ -166,7 +166,7 @@ export function CommentItem({
         {PRIORITY_INDICATOR[comment.priority] && (
           <span
             className={cn(
-              "absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full border text-2xs leading-none font-bold",
+              "absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full border text-2xs leading-none font-semibold",
               PRIORITY_INDICATOR[comment.priority]!.className,
             )}
           >

@@ -300,7 +300,7 @@ function ReceiptDetail({
           <h2 className="text-lg font-semibold">{receipt.referenceNumber}</h2>
           <p className="text-muted-foreground text-sm">{formatReceiptDate(receipt.receiptDate)}</p>
         </div>
-        <AmountDisplay value={receipt.amountMinor} className="text-2xl font-bold" />
+        <AmountDisplay value={receipt.amountMinor} className="text-2xl font-semibold" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

@@ -94,14 +94,6 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className="border-border bg-card relative overflow-hidden rounded-lg border"
     >
-      <span
-        aria-hidden
-        className="via-foreground/20 pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent"
-      />
-      <span
-        aria-hidden
-        className="bg-brand/10 pointer-events-none absolute -top-28 -right-20 size-64 rounded-full blur-3xl"
-      />
 
       <div className="relative flex flex-col gap-5 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">

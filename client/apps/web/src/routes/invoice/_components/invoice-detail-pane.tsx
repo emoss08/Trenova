@@ -180,7 +180,7 @@ export default function InvoiceDetailPane({
         {isVoided ? <VoidedNotice invoice={invoice} /> : null}
 
         <div className="flex items-baseline gap-3">
-          <span className="text-2xl font-bold tabular-nums">
+          <span className="text-2xl font-semibold tabular-nums">
             {formatCurrency(totalAmount, invoice.currencyCode)}
           </span>
           <span className="text-muted-foreground text-sm">{customerName}</span>

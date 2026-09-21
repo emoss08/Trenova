@@ -545,14 +545,14 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       {share ? (
         <div className="bg-muted/50 flex items-center justify-between rounded-md px-3 py-2.5">
           <span className="text-sm font-semibold">{t("Total")}</span>
-          <span className="text-base font-bold tabular-nums" data-testid="payer-bill-total">
+          <span className="text-base font-semibold tabular-nums" data-testid="payer-bill-total">
             {formatCurrency(Number(share.totalAmount ?? 0))}
           </span>
         </div>
       ) : (
         <div className="bg-muted/50 flex items-center justify-between rounded-md px-3 py-2.5">
           <span className="text-sm font-semibold">{t("Total")}</span>
-          <span className="text-base font-bold tabular-nums">{formatCurrency(totalCharge)}</span>
+          <span className="text-base font-semibold tabular-nums">{formatCurrency(totalCharge)}</span>
         </div>
       )}
 

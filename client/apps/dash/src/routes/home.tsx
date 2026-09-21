@@ -101,14 +101,6 @@ export function DashHomePage() {
         transition={{ duration: 0.25, ease: "easeOut", delay: 0.04 }}
         className="relative overflow-hidden rounded-2xl border border-border bg-sunken p-5 text-foreground-subtle"
       >
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-24 -right-16 size-56 rounded-full bg-accent-teal/20 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-28 -left-10 size-56 rounded-full bg-accent-indigo/15 blur-3xl"
-        />
         <p className="text-xs font-medium text-foreground-subtle">
           {t("Earned this period")}
         </p>

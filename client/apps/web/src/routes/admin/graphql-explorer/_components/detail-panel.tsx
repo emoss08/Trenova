@@ -23,13 +23,6 @@ const KIND_TEXT: Record<BadgeKind, string> = {
   fragment: "text-accent-violet-on-subtle",
 };
 
-const KIND_TINT: Record<BadgeKind, string> = {
-  query: "bg-accent-sky/10",
-  mutation: "bg-warning/10",
-  subscription: "bg-success/10",
-  fragment: "bg-accent-violet/10",
-};
-
 function HashChip({ hash }: { hash: string }) {
   const t = useT();
 
@@ -71,12 +64,6 @@ function DocumentHeader({
       className="bg-card relative overflow-hidden rounded-lg border"
     >
       <div className="text-border pointer-events-none absolute inset-0 [background-image:radial-gradient(currentColor_1px,transparent_1px)] [mask-image:linear-gradient(to_bottom,black,transparent)] [background-size:12px_12px]" />
-      <div
-        className={cn(
-          "pointer-events-none absolute -top-20 -right-10 size-56 rounded-full blur-3xl",
-          KIND_TINT[kind],
-        )}
-      />
       <div className="relative flex flex-col gap-2 px-4 py-3">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className={cn("font-mono text-sm font-medium", KIND_TEXT[kind])}>{kind}</span>

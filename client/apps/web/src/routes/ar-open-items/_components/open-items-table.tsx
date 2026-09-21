@@ -275,7 +275,7 @@ export function OpenItemsTable({
                 <AmountDisplay value={totals.applied} className="text-xs font-semibold" />
               </TableCell>
               <TableCell className="py-2 text-right">
-                <AmountDisplay value={totals.open} className="text-xs font-bold" />
+                <AmountDisplay value={totals.open} className="text-xs font-semibold" />
               </TableCell>
             </TableRow>
           </TableFooter>

@@ -447,7 +447,7 @@ export function CustomerStatementPage() {
                     <td className="px-4 py-2.5 text-right">
                       <AmountDisplay
                         value={statement.openItems.reduce((s, i) => s + i.openAmountMinor, 0)}
-                        className="text-xs font-bold"
+                        className="text-xs font-semibold"
                       />
                     </td>
                   </tr>

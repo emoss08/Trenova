@@ -107,7 +107,7 @@ export default function BillingQueueDetailPane({
         </div>
 
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className="text-2xl font-bold tabular-nums">
+          <span className="text-2xl font-semibold tabular-nums">
             {formatCurrency(isPartial && allocated != null ? allocated : totalCharge)}
           </span>
           {isPartial ? (

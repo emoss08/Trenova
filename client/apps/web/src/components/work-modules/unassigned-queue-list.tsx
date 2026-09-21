@@ -163,7 +163,7 @@ export function UnassignedQueueList({
               </div>
               <span
                 className={cn(
-                  "shrink-0 rounded px-1 py-px text-2xs font-bold",
+                  "shrink-0 rounded px-1 py-px text-2xs font-semibold",
                   PILL_TONE[priority.tone],
                 )}
               >

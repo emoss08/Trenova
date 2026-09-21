@@ -53,7 +53,7 @@ export function IncomeStatementPage() {
               <AmountDisplay
                 value={data.grossProfitMinor}
                 variant="auto"
-                className="text-lg font-bold"
+                className="text-lg font-semibold"
               />
             </div>
 
@@ -62,11 +62,11 @@ export function IncomeStatementPage() {
             <Separator />
 
             <div className="bg-primary/5 flex items-center justify-between rounded-md border px-4 py-4">
-              <span className="text-base font-bold">{t("Net Income")}</span>
+              <span className="text-base font-semibold">{t("Net Income")}</span>
               <AmountDisplay
                 value={data.netIncomeMinor}
                 variant="auto"
-                className="text-2xl font-bold"
+                className="text-2xl font-semibold"
               />
             </div>
           </div>

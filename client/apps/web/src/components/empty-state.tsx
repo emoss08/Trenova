@@ -22,42 +22,25 @@ export function EmptyState({ title, description, icons = [], action, className }
   return (
     <div
       className={cn(
-        "border-border bg-background hover:border-border/80 text-center",
-        "w-full max-w-155 rounded-xl border-2 border-dashed p-14",
-        "group hover:bg-muted/50 transition duration-500 hover:duration-200",
+        "border-border bg-card w-full max-w-155 rounded-lg border border-dashed px-10 py-12 text-center",
         className,
       )}
     >
-      <div className="isolate flex justify-center">
-        {icons.length === 3 ? (
-          <>
-            <div className="bg-background ring-border relative top-1.5 left-2.5 grid size-12 -rotate-6 place-items-center rounded-xl shadow-lg ring-1 transition duration-500 group-hover:-translate-x-5 group-hover:-translate-y-0.5 group-hover:-rotate-12 group-hover:duration-200">
-              {React.createElement(icons[0], {
-                className: "w-6 h-6 text-muted-foreground",
-              })}
-            </div>
-            <div className="bg-background ring-border relative z-10 grid size-12 place-items-center rounded-xl shadow-lg ring-1 transition duration-500 group-hover:-translate-y-0.5 group-hover:duration-200">
-              {React.createElement(icons[1], {
-                className: "w-6 h-6 text-muted-foreground",
-              })}
-            </div>
-            <div className="bg-background ring-border relative top-1.5 right-2.5 grid size-12 rotate-6 place-items-center rounded-xl shadow-lg ring-1 transition duration-500 group-hover:translate-x-5 group-hover:-translate-y-0.5 group-hover:rotate-12 group-hover:duration-200">
-              {React.createElement(icons[2], {
-                className: "w-6 h-6 text-muted-foreground",
-              })}
-            </div>
-          </>
-        ) : (
-          <div className="bg-background ring-border grid size-12 place-items-center rounded-xl shadow-lg ring-1 transition duration-500 group-hover:-translate-y-0.5 group-hover:duration-200">
-            {icons[0] &&
-              React.createElement(icons[0], {
-                className: "w-6 h-6 text-muted-foreground",
-              })}
+      {icons.length > 0 && (
+        <div className="flex justify-center">
+          <div className="border-border bg-sunken divide-border text-foreground-subtle inline-flex divide-x overflow-hidden rounded-md border">
+            {icons.map((icon, index) => (
+              <span key={index} className="grid size-9 place-items-center">
+                {React.createElement(icon, { className: "size-4", strokeWidth: 1.75 })}
+              </span>
+            ))}
           </div>
-        )}
-      </div>
-      <h2 className="text-foreground mt-6 font-medium">{title}</h2>
-      <p className="text-muted-foreground mt-1 text-sm whitespace-pre-line">{description}</p>
+        </div>
+      )}
+      <h2 className="text-foreground mt-4 text-base font-semibold text-balance">{title}</h2>
+      <p className="text-foreground-muted mx-auto mt-1 max-w-[52ch] text-sm text-pretty whitespace-pre-line">
+        {description}
+      </p>
       {action && (
         <Button onClick={action.onClick} variant="outline" size="sm" className="mt-4">
           {action.icon && React.createElement(action.icon, { className: "size-4" })}

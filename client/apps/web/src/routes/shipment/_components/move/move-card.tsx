@@ -611,7 +611,7 @@ function StopTimelineItem({
             <TooltipTrigger
               render={
                 <div className="bg-destructive absolute -top-1 -right-1 flex size-3 cursor-help items-center justify-center rounded-full">
-                  <span className="text-3xs font-bold text-danger-foreground">!</span>
+                  <span className="text-3xs font-semibold text-danger-foreground">!</span>
                 </div>
               }
             />
