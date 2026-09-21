@@ -12,6 +12,7 @@ const (
 	EventShipmentMoveArrived       = EventKind("shipment_move.arrived")
 	EventShipmentMoveDeparted      = EventKind("shipment_move.departed")
 	EventInsightDetected           = EventKind("insight.detected")
+	EventBankReceiptException      = EventKind("bank_receipt.exception")
 )
 
 type EventDescriptor struct {
@@ -75,6 +76,12 @@ var knownEvents = []EventDescriptor{
 		SubjectType: SubjectInsight,
 		Label:       "Insight found",
 		Description: "A detector found something new: a finding that was not on the insights page before this refresh.",
+	},
+	{
+		Kind:        EventBankReceiptException,
+		SubjectType: SubjectBankReceipt,
+		Label:       "Bank receipt needs matching",
+		Description: "An imported bank receipt could not be matched to a customer payment on its own and is waiting in the reconciliation queue.",
 	},
 }
 

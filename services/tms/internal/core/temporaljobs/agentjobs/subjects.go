@@ -8,11 +8,14 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -30,6 +33,8 @@ type SubjectContext struct {
 	shipments    serviceports.ShipmentService
 	console      repositories.DispatchConsoleRepository
 	insights     repositories.InsightRepository
+	receipts     serviceports.BankReceiptService
+	workItems    repositories.BankReceiptWorkItemRepository
 	logger       *zap.Logger
 }
 
@@ -50,6 +55,8 @@ func (s *SubjectContext) Describe(
 		return s.document(ctx, tenant, subjectID)
 	case agent.SubjectInsight:
 		return s.insight(ctx, tenant, subjectID)
+	case agent.SubjectBankReceipt:
+		return s.bankReceipt(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
 		return nil, nil
 	default:
@@ -312,6 +319,89 @@ func (s *SubjectContext) insight(
 	}
 	if found.Status != insight.StatusActive {
 		notes["warning"] = "This finding is no longer active; do not act on it as if it were."
+	}
+	subject.Notes = marshalNotes(notes)
+
+	return subject, nil
+}
+
+// bankReceipt describes a receipt the way the reconciliation page does: the
+// money, the bank's reference and memo, why it was not matched, the scored
+// candidate payments and the queue entry. A run woken by
+// bank_receipt.exception starts with all of that in front of it, and
+// get_bank_receipt is there for a second look once a tool call has moved
+// the conversation on.
+func (s *SubjectContext) bankReceipt(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	receiptID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectBankReceipt,
+		ID:    receiptID.String(),
+		Label: "Bank receipt",
+	}
+	if s.receipts == nil {
+		return subject, nil
+	}
+
+	req := &serviceports.GetBankReceiptRequest{ReceiptID: receiptID, TenantInfo: tenant}
+	receipt, err := s.receipts.Get(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("load bank receipt: %w", err)
+	}
+
+	amount := money.DecimalFromMinor(receipt.AmountMinor).StringFixed(2)
+	subject.Label = "Bank receipt " + amount
+	if receipt.ReferenceNumber != "" {
+		subject.Label += " ref " + receipt.ReferenceNumber
+	}
+
+	notes := map[string]any{
+		"status":          receipt.Status,
+		"amount":          amount,
+		"receiptDate":     receipt.ReceiptDate,
+		"referenceNumber": receipt.ReferenceNumber,
+		"memo":            receipt.Memo,
+		"exceptionReason": receipt.ExceptionReason,
+	}
+	if receipt.Status == bankreceipt.StatusMatched {
+		notes["warning"] = "This receipt is already matched; do not match or post a payment for it again."
+	} else {
+		suggestions, sErr := s.receipts.SuggestMatches(ctx, req)
+		if sErr != nil {
+			s.logger.Warn("bank receipt subject: suggestions unavailable", zap.Error(sErr))
+		} else {
+			candidates := make([]map[string]any, 0, len(suggestions))
+			for _, suggestion := range suggestions {
+				if suggestion == nil {
+					continue
+				}
+				candidates = append(candidates, map[string]any{
+					"customerPaymentId": suggestion.CustomerPaymentID.String(),
+					"customerId":        suggestion.CustomerID.String(),
+					"referenceNumber":   suggestion.ReferenceNumber,
+					"amount":            money.DecimalFromMinor(suggestion.AmountMinor).StringFixed(2),
+					"score":             suggestion.Score,
+					"reason":            suggestion.Reason,
+				})
+			}
+			notes["candidatePayments"] = candidates
+		}
+	}
+
+	if s.workItems != nil {
+		item, iErr := s.workItems.GetActiveByReceiptID(ctx, tenant, receiptID)
+		switch {
+		case iErr != nil && !errortypes.IsNotFoundError(iErr):
+			s.logger.Warn("bank receipt subject: work item unavailable", zap.Error(iErr))
+		case item != nil:
+			notes["workItem"] = map[string]any{
+				"id":               item.ID.String(),
+				"status":           item.Status,
+				"assignedToUserId": item.AssignedToUserID.String(),
+			}
+		}
 	}
 	subject.Notes = marshalNotes(notes)
 

@@ -67,3 +67,15 @@ describe("resolveAgentIdentity", () => {
     }
   });
 });
+
+describe("template icons", () => {
+  it("gives every starter the server knows an icon of its own", async () => {
+    const { agentTemplateKindSchema } = await import("@/types/assistant");
+    const { TEMPLATE_ICON } = await import("@/components/agent-identity/agent-identity");
+
+    for (const kind of agentTemplateKindSchema.options) {
+      expect(TEMPLATE_ICON[kind], kind).toBeDefined();
+    }
+    expect(agentTemplateKindSchema.options).toContain("CashApplication");
+  });
+});

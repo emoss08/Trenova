@@ -27,6 +27,7 @@ func TestKnownEvents_EveryKindIsValidAndCarriesASubject(t *testing.T) {
 	assert.False(t, agent.EventKind("shipment.teleported").IsValid())
 	assert.Equal(t, agent.SubjectBillingQueueItem, agent.EventBillingQueueItemException.SubjectType())
 	assert.Equal(t, agent.SubjectInsight, agent.EventInsightDetected.SubjectType())
+	assert.Equal(t, agent.SubjectBankReceipt, agent.EventBankReceiptException.SubjectType())
 }
 
 func TestRunTrigger_IsValid(t *testing.T) {

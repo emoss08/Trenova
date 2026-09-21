@@ -5,10 +5,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
+	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -145,4 +148,103 @@ func TestSubjectContext_InsightWithoutRepositoryStillHasAnID(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, id.String(), subject.ID)
 	assert.Equal(t, "Insight", subject.Label)
+}
+
+type fakeReceiptService struct {
+	serviceports.BankReceiptService
+
+	receipt     *bankreceipt.BankReceipt
+	suggestions []*serviceports.BankReceiptMatchSuggestion
+}
+
+func (f *fakeReceiptService) Get(
+	_ context.Context,
+	_ *serviceports.GetBankReceiptRequest,
+) (*bankreceipt.BankReceipt, error) {
+	return f.receipt, nil
+}
+
+func (f *fakeReceiptService) SuggestMatches(
+	_ context.Context,
+	_ *serviceports.GetBankReceiptRequest,
+) ([]*serviceports.BankReceiptMatchSuggestion, error) {
+	return f.suggestions, nil
+}
+
+type fakeWorkItemRepo struct {
+	repositories.BankReceiptWorkItemRepository
+
+	item *bankreceiptworkitem.WorkItem
+}
+
+func (f *fakeWorkItemRepo) GetActiveByReceiptID(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	_ pulid.ID,
+) (*bankreceiptworkitem.WorkItem, error) {
+	if f.item == nil {
+		return nil, errortypes.NewNotFoundError("bank receipt work item not found")
+	}
+
+	return f.item, nil
+}
+
+// A run woken by bank_receipt.exception starts with the receipt, the scored
+// candidates and the queue entry in front of it, with the amount in money.
+func TestSubjectContext_DescribesABankReceiptWithItsCandidates(t *testing.T) {
+	t.Parallel()
+
+	receipt := &bankreceipt.BankReceipt{
+		ID:              pulid.MustNew("brcpt_"),
+		AmountMinor:     125_000,
+		ReferenceNumber: "ACH 4471",
+		Memo:            "ACME FOODS INC",
+		Status:          bankreceipt.StatusException,
+		ExceptionReason: "No unique customer payment match found for bank receipt",
+	}
+	paymentID := pulid.MustNew("cpay_")
+	item := &bankreceiptworkitem.WorkItem{ID: pulid.MustNew("brwi_"), BankReceiptID: receipt.ID, Status: bankreceiptworkitem.StatusOpen}
+	subjects := &SubjectContext{
+		receipts: &fakeReceiptService{receipt: receipt, suggestions: []*serviceports.BankReceiptMatchSuggestion{{
+			CustomerPaymentID: paymentID, AmountMinor: 125_000, Score: 60, Reason: "Reference matches",
+		}}},
+		workItems: &fakeWorkItemRepo{item: item},
+		logger:    zap.NewNop(),
+	}
+
+	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectBankReceipt, receipt.ID)
+	require.NoError(t, err)
+
+	assert.Equal(t, "Bank receipt 1250.00 ref ACH 4471", subject.Label)
+	assert.Contains(t, subject.Notes, "ACME FOODS INC")
+	assert.Contains(t, subject.Notes, paymentID.String())
+	assert.Contains(t, subject.Notes, item.ID.String())
+	assert.NotContains(t, subject.Notes, "already matched")
+}
+
+func TestSubjectContext_WarnsWhenTheReceiptIsAlreadyMatched(t *testing.T) {
+	t.Parallel()
+
+	receipt := &bankreceipt.BankReceipt{ID: pulid.MustNew("brcpt_"), AmountMinor: 5_000, Status: bankreceipt.StatusMatched}
+	subjects := &SubjectContext{
+		receipts:  &fakeReceiptService{receipt: receipt},
+		workItems: &fakeWorkItemRepo{},
+		logger:    zap.NewNop(),
+	}
+
+	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectBankReceipt, receipt.ID)
+	require.NoError(t, err)
+	assert.Contains(t, subject.Notes, "already matched")
+	assert.NotContains(t, subject.Notes, "workItem")
+}
+
+func TestSubjectContext_BankReceiptWithoutServiceStillHasAnID(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.MustNew("brcpt_")
+	subject, err := (&SubjectContext{logger: zap.NewNop()}).
+		Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectBankReceipt, id)
+	require.NoError(t, err)
+	assert.Equal(t, id.String(), subject.ID)
+	assert.Equal(t, "Bank receipt", subject.Label)
 }

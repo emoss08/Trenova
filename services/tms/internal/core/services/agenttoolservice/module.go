@@ -2,6 +2,8 @@ package agenttoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
+	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
@@ -48,6 +50,9 @@ var Module = fx.Module("agent-tool-service",
 		fx.Annotate(newRememberTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(newForgetMemoryTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideDismissInsightTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideMatchBankReceiptTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(providePostCustomerPaymentTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideResolveBankReceiptWorkItemTool, fx.ResultTags(`group:"agent_tools"`)),
 		NewRegistry,
 	),
 )
@@ -150,4 +155,23 @@ func provideTenderToCarriersTool(tenders *tenderservice.Service) services.AgentT
 
 func provideDismissInsightTool(insights *insightservice.Service) services.AgentTool {
 	return newDismissInsightTool(insights)
+}
+
+func provideMatchBankReceiptTool(
+	receipts *bankreceiptservice.Service,
+	payments services.CustomerPaymentService,
+) services.AgentTool {
+	return newMatchBankReceiptTool(receipts, payments)
+}
+
+func providePostCustomerPaymentTool(
+	payments services.CustomerPaymentService,
+	receipts *bankreceiptservice.Service,
+	permissions services.PermissionEngine,
+) services.AgentTool {
+	return newPostCustomerPaymentTool(payments, receipts, permissions)
+}
+
+func provideResolveBankReceiptWorkItemTool(items *bankreceiptworkitemservice.Service) services.AgentTool {
+	return newResolveBankReceiptWorkItemTool(items)
 }

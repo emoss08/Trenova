@@ -52,6 +52,21 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead:   {},
 		OpUpdate: {},
 	},
+	ResourceInvoice: {
+		OpRead: {},
+	},
+	ResourceCustomerPayment: {
+		OpRead:   {},
+		OpCreate: {},
+	},
+	ResourceBankReceipt: {
+		OpRead:   {},
+		OpUpdate: {},
+	},
+	ResourceBankReceiptWorkItem: {
+		OpRead:   {},
+		OpUpdate: {},
+	},
 }
 
 func IsAgentAllowed(resource Resource, operation Operation) bool {

@@ -14073,6 +14073,15 @@
       "domain/edi"
     ]
   },
+  "An imported bank receipt could not be matched to a customer payment on its own and is waiting in the reconciliation queue.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "An imported purchase must reference the import it came from": {
     "sites": 1,
     "scope": [
@@ -21039,6 +21048,15 @@
       "routes/fuel-management"
     ]
   },
+  "Bank receipt": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Bank receipt amount must match customer payment amount": {
     "sites": 1,
     "scope": [
@@ -21091,6 +21109,15 @@
     ],
     "areas": [
       "service/bankreceiptservice"
+    ]
+  },
+  "Bank receipt needs matching": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Bank receipt reconciliation": {
@@ -27330,6 +27357,15 @@
     ],
     "areas": [
       "routes/pay-advance"
+    ]
+  },
+  "Cash application agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Cash handed to the driver directly.": {

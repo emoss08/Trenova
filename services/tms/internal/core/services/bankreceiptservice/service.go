@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
@@ -36,6 +37,10 @@ type Params struct {
 	AccountingRepo      repositoryports.AccountingControlRepository
 	NotificationService *notificationservice.Service
 	AuditService        serviceports.AuditService
+	// Events is told about each receipt that could not be matched on its
+	// own, so an agent subscribed to bank_receipt.exception can work it. It
+	// is optional because an import is worth running with nobody listening.
+	Events serviceports.AgentEventPublisher `optional:"true"`
 }
 
 type Service struct {
@@ -46,6 +51,7 @@ type Service struct {
 	accountingRepo      repositoryports.AccountingControlRepository
 	notificationService *notificationservice.Service
 	auditService        serviceports.AuditService
+	events              serviceports.AgentEventPublisher
 }
 
 //nolint:gocritic // dependency injection
@@ -58,6 +64,7 @@ func New(p Params) *Service {
 		accountingRepo:      p.AccountingRepo,
 		notificationService: p.NotificationService,
 		auditService:        p.AuditService,
+		events:              p.Events,
 	}
 }
 
@@ -222,12 +229,7 @@ func (s *Service) Match(
 		return nil, err
 	}
 	if s.workItemRepo != nil {
-		if item, itemErr := s.workItemRepo.GetActiveByReceiptID(
-			ctx,
-			req.TenantInfo,
-			receipt.ID,
-		); itemErr == nil &&
-			item != nil {
+		if item := s.activeWorkItem(ctx, req.TenantInfo, receipt.ID); item != nil {
 			resolvedAt := timeutils.NowUnix()
 			item.Status = bankreceiptworkitem.StatusResolved
 			item.ResolutionType = bankreceiptworkitem.ResolutionMatchedToPayment
@@ -329,26 +331,24 @@ func (s *Service) markException(
 	if err != nil {
 		return nil, err
 	}
-	if s.workItemRepo != nil {
-		if item, itemErr := s.workItemRepo.GetActiveByReceiptID(
+	tenantInfo := pagination.TenantInfo{
+		OrgID: receipt.OrganizationID,
+		BuID:  receipt.BusinessUnitID,
+	}
+	if s.workItemRepo != nil && s.activeWorkItem(ctx, tenantInfo, receipt.ID) == nil {
+		if _, createErr := s.workItemRepo.Create(
 			ctx,
-			pagination.TenantInfo{
-				OrgID: receipt.OrganizationID,
-				BuID:  receipt.BusinessUnitID,
+			&bankreceiptworkitem.WorkItem{
+				OrganizationID: receipt.OrganizationID,
+				BusinessUnitID: receipt.BusinessUnitID,
+				BankReceiptID:  receipt.ID,
+				Status:         bankreceiptworkitem.StatusOpen,
+				CreatedByID:    actor.UserID,
+				UpdatedByID:    actor.UserID,
 			},
-			receipt.ID); itemErr == nil &&
-			item == nil {
-			_, _ = s.workItemRepo.Create(
-				ctx,
-				&bankreceiptworkitem.WorkItem{
-					OrganizationID: receipt.OrganizationID,
-					BusinessUnitID: receipt.BusinessUnitID,
-					BankReceiptID:  receipt.ID,
-					Status:         bankreceiptworkitem.StatusOpen,
-					CreatedByID:    actor.UserID,
-					UpdatedByID:    actor.UserID,
-				},
-			)
+		); createErr != nil {
+			s.l.Error("failed to open bank receipt work item",
+				zap.String("receiptId", receipt.ID.String()), zap.Error(createErr))
 		}
 	}
 	if !skipAudit {
@@ -383,7 +383,33 @@ func (s *Service) markException(
 			)
 		}
 	}
+	serviceports.PublishAgentEvent(ctx, s.events, serviceports.AgentEvent{
+		Kind:       agent.EventBankReceiptException,
+		SubjectID:  updated.ID,
+		TenantInfo: tenantInfo,
+	})
 	return updated, nil
+}
+
+// activeWorkItem reads the open queue entry for a receipt, and reads "none"
+// as none: the repository reports the absence as a not-found, which is the
+// ordinary state of a receipt that was never an exception.
+func (s *Service) activeWorkItem(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	receiptID pulid.ID,
+) *bankreceiptworkitem.WorkItem {
+	item, err := s.workItemRepo.GetActiveByReceiptID(ctx, tenantInfo, receiptID)
+	if err != nil {
+		if !errortypes.IsNotFoundError(err) {
+			s.l.Warn("failed to read bank receipt work item",
+				zap.String("receiptId", receiptID.String()), zap.Error(err))
+		}
+
+		return nil
+	}
+
+	return item
 }
 
 func (s *Service) logAudit(

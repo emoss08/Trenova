@@ -45,6 +45,33 @@ describe("describeToolCall", () => {
     });
   });
 
+  it("names the cash application tools and the record they were about", () => {
+    expect(describeToolCall("get_bank_receipt", { bankReceiptId: "brcpt_1" })).toEqual({
+      title: "Look up bank receipt",
+      subject: "brcpt_1",
+    });
+    expect(
+      describeToolCall("match_bank_receipt", {
+        bankReceiptId: "brcpt_1",
+        customerPaymentId: "cpay_1",
+      }),
+    ).toEqual({ title: "Match bank receipt", subject: "brcpt_1" });
+    expect(
+      describeToolCall("post_customer_payment", { customerId: "cus_1", amount: "1250.00" }),
+    ).toEqual({ title: "Record customer payment", subject: "cus_1" });
+    expect(
+      describeToolCall("resolve_bank_receipt_work_item", { workItemId: "brwi_1", note: "x" }),
+    ).toEqual({ title: "Close reconciliation item", subject: "brwi_1" });
+    expect(describeToolCall("list_bank_receipt_exceptions", {})).toEqual({
+      title: "List unmatched receipts",
+      subject: "",
+    });
+    expect(describeToolCall("list_customer_payments", { query: "ACH 4471" })).toEqual({
+      title: "List customer payments",
+      subject: "“ACH 4471”",
+    });
+  });
+
   it("leaves the subject empty when there is nothing to name", () => {
     expect(describeToolCall("list_terminals", {})).toEqual({
       title: "List terminals",

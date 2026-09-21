@@ -7,6 +7,9 @@ enum AgentTemplate {
   BillingException
   DispatchAssignment
   ImportAssistant
+  LoadMonitor
+  ShipmentIntake
+  CashApplication
 }
 
 enum AgentTriggerMode {

@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/emailservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
@@ -67,6 +68,9 @@ var Module = fx.Module("agent-query-tool-service",
 		fx.Annotate(providePlanDispatchTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideListInsightsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideGetInsightTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideListBankReceiptExceptionsTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideGetBankReceiptTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideListCustomerPaymentsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		NewRegistry,
 	),
 )
@@ -191,4 +195,22 @@ func provideListInsightsTool(insights *insightservice.Service) services.AgentQue
 
 func provideGetInsightTool(insights *insightservice.Service) services.AgentQueryTool {
 	return newGetInsightTool(insights)
+}
+
+func provideListBankReceiptExceptionsTool(
+	receipts *bankreceiptservice.Service,
+	items repositories.BankReceiptWorkItemRepository,
+) services.AgentQueryTool {
+	return newListBankReceiptExceptionsTool(receipts, items)
+}
+
+func provideGetBankReceiptTool(
+	receipts *bankreceiptservice.Service,
+	items repositories.BankReceiptWorkItemRepository,
+) services.AgentQueryTool {
+	return newGetBankReceiptTool(receipts, items)
+}
+
+func provideListCustomerPaymentsTool(payments services.CustomerPaymentService) services.AgentQueryTool {
+	return newListCustomerPaymentsTool(payments)
 }

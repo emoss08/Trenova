@@ -246,6 +246,7 @@ export type AgentSeverity =
 
 export type AgentSubjectType =
   | 'AssistantThread'
+  | 'BankReceipt'
   | 'BillingQueueItem'
   | 'Document'
   | 'Insight'
@@ -256,12 +257,15 @@ export type AgentSubjectType =
 export type AgentTemplate =
   | 'BillingAssistant'
   | 'BillingException'
+  | 'CashApplication'
   | 'ComplianceAssistant'
   | 'CustomerAssistant'
   | 'DispatchAssignment'
   | 'DispatchAssistant'
   | 'GeneralAssistant'
-  | 'ImportAssistant';
+  | 'ImportAssistant'
+  | 'LoadMonitor'
+  | 'ShipmentIntake';
 
 export type AgentTriggerMode =
   | 'Chat'

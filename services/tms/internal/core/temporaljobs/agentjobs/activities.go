@@ -43,11 +43,13 @@ type ActivitiesParams struct {
 	Recorder      *proposalrecorder.Service
 	BillingQueue  serviceports.BillingQueueService
 	Shipment      serviceports.ShipmentService
-	Console       repositories.DispatchConsoleRepository `optional:"true"`
-	Notifier      serviceports.AgentProposalNotifier     `optional:"true"`
-	Content       serviceports.DocumentContentService    `optional:"true"`
-	Plans         repositories.AgentPlanRepository       `optional:"true"`
-	Insights      repositories.InsightRepository         `optional:"true"`
+	Console       repositories.DispatchConsoleRepository     `optional:"true"`
+	Notifier      serviceports.AgentProposalNotifier         `optional:"true"`
+	Content       serviceports.DocumentContentService        `optional:"true"`
+	Plans         repositories.AgentPlanRepository           `optional:"true"`
+	Insights      repositories.InsightRepository             `optional:"true"`
+	BankReceipts  serviceports.BankReceiptService            `optional:"true"`
+	WorkItems     repositories.BankReceiptWorkItemRepository `optional:"true"`
 	Evaluations   repositories.AgentEvaluationRepository
 	Decisions     repositories.AgentDecisionRepository
 	Conversations repositories.ConversationRepository `optional:"true"`
@@ -95,6 +97,8 @@ func NewActivities(p ActivitiesParams) *Activities {
 			shipments:    p.Shipment,
 			console:      p.Console,
 			insights:     p.Insights,
+			receipts:     p.BankReceipts,
+			workItems:    p.WorkItems,
 			logger:       logger,
 		},
 	}

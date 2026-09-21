@@ -69795,6 +69795,7 @@ enum AgentSubjectType {
   Document
   Organization
   Insight
+  BankReceipt
 }
 
 enum AgentRunTrigger {
@@ -70264,6 +70265,9 @@ extend type Mutation {
   BillingException
   DispatchAssignment
   ImportAssistant
+  LoadMonitor
+  ShipmentIntake
+  CashApplication
 }
 
 enum AgentTriggerMode {

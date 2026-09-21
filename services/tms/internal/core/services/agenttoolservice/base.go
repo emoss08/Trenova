@@ -4,12 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 var (
@@ -188,4 +191,70 @@ func targetOf(
 	}
 
 	return serviceports.ToolTarget{Resource: resource, ID: id}, true
+}
+
+// requireMoney reads an amount the model wrote as a decimal string or a
+// number, in major units, and returns it in minor units. It must be
+// positive: a zero or negative amount is never what a payment means.
+func requireMoney(params map[string]any, key string) (int64, error) {
+	minor, present, err := optionalMoney(params, key)
+	if err != nil {
+		return 0, err
+	}
+	if !present {
+		return 0, fmt.Errorf("parameter %q is required", key)
+	}
+
+	return minor, nil
+}
+
+func optionalMoney(params map[string]any, key string) (int64, bool, error) {
+	raw, ok := params[key]
+	if !ok || raw == nil {
+		return 0, false, nil
+	}
+
+	var value decimal.Decimal
+	switch typed := raw.(type) {
+	case string:
+		trimmed := strings.TrimSpace(typed)
+		if trimmed == "" {
+			return 0, false, nil
+		}
+		parsed, err := decimal.NewFromString(trimmed)
+		if err != nil {
+			return 0, false, fmt.Errorf("parameter %q must be a decimal amount such as 1250.00", key)
+		}
+		value = parsed
+	case float64:
+		value = decimal.NewFromFloat(typed)
+	case int:
+		value = decimal.NewFromInt(int64(typed))
+	case int64:
+		value = decimal.NewFromInt(typed)
+	default:
+		return 0, false, fmt.Errorf("parameter %q must be a decimal amount such as 1250.00", key)
+	}
+
+	if !value.IsPositive() {
+		return 0, false, fmt.Errorf("parameter %q must be greater than zero", key)
+	}
+
+	return money.MinorUnits(value), true, nil
+}
+
+// requireDay reads a YYYY-MM-DD as the start of that day in UTC, which is
+// how a date-only value is stored on a payment.
+func requireDay(params map[string]any, key string) (int64, error) {
+	raw, err := requireString(params, key)
+	if err != nil {
+		return 0, err
+	}
+
+	day, err := time.Parse("2006-01-02", strings.TrimSpace(raw))
+	if err != nil {
+		return 0, fmt.Errorf("parameter %q must be YYYY-MM-DD, got %q", key, raw)
+	}
+
+	return day.Unix(), nil
 }

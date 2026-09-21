@@ -15,6 +15,7 @@ const (
 	TemplateImportAssistant     = Template("ImportAssistant")
 	TemplateLoadMonitor         = Template("LoadMonitor")
 	TemplateShipmentIntake      = Template("ShipmentIntake")
+	TemplateCashApplication     = Template("CashApplication")
 )
 
 func (t Template) IsValid() bool {
@@ -28,7 +29,8 @@ func (t Template) IsValid() bool {
 		TemplateDispatchAssignment,
 		TemplateImportAssistant,
 		TemplateLoadMonitor,
-		TemplateShipmentIntake:
+		TemplateShipmentIntake,
+		TemplateCashApplication:
 		return true
 	default:
 		return false
@@ -47,6 +49,7 @@ func AllTemplates() []Template {
 		TemplateImportAssistant,
 		TemplateLoadMonitor,
 		TemplateShipmentIntake,
+		TemplateCashApplication,
 	}
 }
 
@@ -72,6 +75,8 @@ func (t Template) Label() string {
 		return "Load monitor"
 	case TemplateShipmentIntake:
 		return "Shipment intake agent"
+	case TemplateCashApplication:
+		return "Cash application agent"
 	default:
 		return string(t)
 	}
@@ -101,6 +106,10 @@ func (t Template) Description() string {
 	case TemplateShipmentIntake:
 		return "Turns each document as it is read into a quoted, ready-to-enter shipment, " +
 			"and asks a person only about what it could not resolve."
+	case TemplateCashApplication:
+		return "Works each bank receipt that could not be matched on its own: finds the payment " +
+			"or the invoices it pays and proposes the match, so the morning's reconciliation " +
+			"is a review rather than a search."
 	default:
 		return ""
 	}
@@ -171,6 +180,23 @@ func (t Template) StarterInstructions() string {
 			"if the document's rate and the quote disagree by more than a little, raise an " +
 			"exception with what you found instead of creating the shipment. Never create " +
 			"a shipment twice for one document."
+	case TemplateCashApplication:
+		return "You apply cash. A run starts when an imported bank receipt could not be matched " +
+			"to a customer payment automatically; read it with get_bank_receipt first, which " +
+			"gives you the receipt, the scored candidate payments and the work item. Take the " +
+			"top candidate when its reference and amount both agree; when the candidates " +
+			"disagree or are absent, search list_customer_payments by the reference, the " +
+			"memo and the amount, and identify the customer from the reference, the memo or " +
+			"the amount against their open invoices with list_invoices. Propose " +
+			"match_bank_receipt when a posted payment of the same amount is the one; propose " +
+			"post_customer_payment with bankReceiptId when no payment has been recorded yet " +
+			"and you can name the customer and the invoices the money pays, applying the " +
+			"receipt's full amount and leaving any remainder unapplied rather than " +
+			"short-paying. Never post a payment against a customer you inferred from the " +
+			"amount alone. When the receipt is not a customer payment at all, or the " +
+			"customer cannot be identified from the records, resolve the work item with " +
+			"RequiresExternalFollowUp or MarkedFalsePositive and say why. Report what you " +
+			"matched, what you posted and what you left for a person."
 	default:
 		return ""
 	}
@@ -281,6 +307,21 @@ func (t Template) StarterTools() []string {
 		}
 	case TemplateGeneralAssistant:
 		return nil
+	case TemplateCashApplication:
+		return []string{
+			"get_bank_receipt",
+			"list_bank_receipt_exceptions",
+			"list_customer_payments",
+			"list_customers",
+			"get_customer",
+			"list_invoices",
+			"get_invoice",
+			"match_bank_receipt",
+			"post_customer_payment",
+			"resolve_bank_receipt_work_item",
+			"recall_memory",
+			"remember",
+		}
 	case TemplateBillingException:
 		return []string{
 			"get_shipment",
@@ -340,7 +381,7 @@ func (t Template) StarterTools() []string {
 
 func (t Template) StarterTrigger() TriggerMode {
 	switch t {
-	case TemplateBillingException, TemplateShipmentIntake:
+	case TemplateBillingException, TemplateShipmentIntake, TemplateCashApplication:
 		return TriggerEvent
 	case TemplateDispatchAssignment, TemplateLoadMonitor:
 		return TriggerScheduled
@@ -355,6 +396,8 @@ func (t Template) StarterEvents() []agent.EventKind {
 		return []agent.EventKind{agent.EventBillingQueueItemException}
 	case TemplateShipmentIntake:
 		return []agent.EventKind{agent.EventDocumentExtracted}
+	case TemplateCashApplication:
+		return []agent.EventKind{agent.EventBankReceiptException}
 	default:
 		return nil
 	}
