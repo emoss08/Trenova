@@ -30,7 +30,7 @@ describe("derivePageContext", () => {
 
   it("sends the kind without an id when no record is open", () => {
     expect(
-      derivePageContext({ pathname: "/billing/queue", search: "", title: "Billing Queue" }),
+      derivePageContext({ pathname: "/billing/queue", search: "", title: "Billing queue" }),
     ).toEqual({
       path: "/billing/queue",
       entityType: "billing_queue_item",
