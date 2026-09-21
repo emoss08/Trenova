@@ -383,7 +383,7 @@ differently depending on the theme.
 4. Run `pnpm lint:design`. It reads the oklch values straight out of `tokens.css`
    and fails on a pair below AA, a value outside sRGB (the browser would show it
    somewhere other than where you placed it), a hairline that is invisible
-   against the surface it divides, or the warm hues drifting back together.
+   against the surface it divides, or either hue arc closing up.
 5. Note it here if it introduces a new concept rather than a rung on an existing
    ladder.
 

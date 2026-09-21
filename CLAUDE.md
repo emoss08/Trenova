@@ -240,8 +240,8 @@ names the token to use instead.
   reaching for the palette. An incomplete set is what caused the drift in the first place.
 - Genuine exceptions take `design-tokens-ignore: <reason>` in a comment on or above the line.
 - `pnpm lint:design` also reads the oklch values out of `tokens.css` and fails on a contrast
-  pair below AA, a value outside sRGB, a hairline invisible against its surface, or the warm
-  hues closing up. `--foreground-on-solid` is near-white in light and near-**black** in dark,
+  pair below AA, a value outside sRGB, a hairline invisible against its surface, or either
+  hue arc closing up. `--foreground-on-solid` is near-white in light and near-**black** in dark,
   because a dark theme's tone fills are the light end of their ramp. Text on a solid
   warning is `text-warning-on-solid` in both themes, because the solid is a true amber.
 - Editing `tokens.css`: never let a comment-terminator sequence appear inside a comment body.
