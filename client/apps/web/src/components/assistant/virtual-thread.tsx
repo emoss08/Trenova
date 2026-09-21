@@ -119,10 +119,10 @@ export function VirtualThread({
             </div>
           )}
           {children}
-          <div
-            className="relative w-full"
-            style={{ height: virtualizer.getTotalSize(), paddingBottom }}
-          >
+          {/* The room under the last row is a block of its own. Padding on
+              the sized box counted inside its height, so the rows overran it
+              and the last one sat under the composer's fade. */}
+          <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
             {items.map((item) => (
               <div
                 key={item.key}
@@ -135,6 +135,7 @@ export function VirtualThread({
               </div>
             ))}
           </div>
+          <div aria-hidden style={{ height: paddingBottom }} />
         </div>
       </div>
 

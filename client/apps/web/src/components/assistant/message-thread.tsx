@@ -33,6 +33,13 @@ import { usePageContext } from "./use-page-context";
 import { useThreadHistory } from "./use-thread-history";
 import { VirtualThread, type VirtualThreadRow } from "./virtual-thread";
 
+/**
+ * Space between the last message and the composer's fade, beyond the
+ * composer's own height: the fade is a band, and a line of text inside it
+ * reads as cut off.
+ */
+const COMPOSER_CLEARANCE = 16;
+
 export function MessageThread({
   thread,
   agent,
@@ -286,7 +293,7 @@ export function MessageThread({
             hasOlder={history.hasOlder}
             isLoadingOlder={history.isLoadingOlder}
             onLoadOlder={history.loadOlder}
-            paddingBottom={composerHeight}
+            paddingBottom={composerHeight + COMPOSER_CLEARANCE}
             className={expanded ? "px-4" : "px-3"}
             contentClassName={expanded ? "max-w-3xl pt-5" : "pt-4"}
             rowClassName={expanded ? "pb-5" : "pb-4"}
