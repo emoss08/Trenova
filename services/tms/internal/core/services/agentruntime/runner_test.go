@@ -176,8 +176,10 @@ func TestRun_ChecksPermissionForEveryToolCallAsTheActor(t *testing.T) {
 	assert.True(t, result.Messages[2].ToolFailed)
 	assert.Contains(t, result.Messages[2].Content, "not permitted")
 
-	require.Len(t, permissions.Requests, 1)
-	checked := permissions.Requests[0]
+	// Two checks: one when the turn's tool set is narrowed to what the actor
+	// may use, one when the model called the tool anyway.
+	require.Len(t, permissions.Requests, 2)
+	checked := permissions.Requests[1]
 	assert.Equal(t, actor.PrincipalType, checked.PrincipalType)
 	assert.Equal(t, actor.UserID, checked.UserID)
 	assert.Equal(t, actor.OrganizationID, checked.OrganizationID)
@@ -376,9 +378,11 @@ func TestRun_AutoExecuteToolsRunImmediatelyAndAreRecorded(t *testing.T) {
 	assert.Equal(t, agent.TierAutoExecute, result.Actions[0].Tier)
 	assert.False(t, result.Messages[2].ToolFailed)
 
-	require.Len(t, permissions.Requests, 1)
-	assert.Equal(t, "shipment_move", permissions.Requests[0].Resource)
-	assert.Equal(t, permission.OpUpdate, permissions.Requests[0].Operation)
+	require.Len(t, permissions.Requests, 2, "offered, then called")
+	for _, request := range permissions.Requests {
+		assert.Equal(t, "shipment_move", request.Resource)
+		assert.Equal(t, permission.OpUpdate, request.Operation)
+	}
 }
 
 func TestRun_ReportsAFailedAutoExecuteAndKeepsTheRecord(t *testing.T) {

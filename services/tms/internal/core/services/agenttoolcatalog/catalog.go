@@ -255,8 +255,11 @@ func (c *Catalog) Names() []string {
 	return out
 }
 
+// allowedSet reads nil as the whole catalog and an empty list as nothing.
+// The two used to read the same, so a person permitted no tools at all was
+// offered every tool in the catalog.
 func (c *Catalog) allowedSet(allowed []string) map[string]struct{} {
-	if len(allowed) == 0 {
+	if allowed == nil {
 		return nil
 	}
 

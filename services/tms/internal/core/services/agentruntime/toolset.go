@@ -1,8 +1,11 @@
 package agentruntime
 
 import (
+	"context"
 	"fmt"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"go.uber.org/zap"
 	"slices"
 	"strings"
 
@@ -72,18 +75,32 @@ type toolSet struct {
 	loaded    map[string]struct{}
 	allowed   []string
 	disclosed bool
+	// usable answers whether the person may use a tool at all, for naming
+	// what exists beyond the agent's configuration.
+	usable func(name string) bool
 }
 
 func (s *Service) newToolSet(
+	ctx context.Context,
 	definition *agentdefinition.Definition,
+	actor *serviceports.RequestActor,
 	input string,
 	unattended bool,
 ) *toolSet {
-	configured := s.configuredSpecs(definition)
+	// The set a turn may call is the agent's configuration narrowed to what
+	// the person driving it may do. A tool they cannot use was still shown,
+	// ranked and offered, and denied only when called, which taught the
+	// model that the system refuses rather than that this person lacks the
+	// right; the denial also named the resource they lacked.
+	allowed := s.permittedTools(ctx, actor, definition.ToolNames)
+	configured := s.configuredSpecs(allowed)
 
 	set := &toolSet{
 		loaded:  make(map[string]struct{}, len(configured)),
-		allowed: definition.ToolNames,
+		allowed: allowed,
+		usable: func(name string) bool {
+			return len(s.permittedTools(ctx, actor, []string{name})) == 1
+		},
 	}
 
 	if len(configured) <= disclosureThreshold || s.catalog == nil {
@@ -99,7 +116,7 @@ func (s *Service) newToolSet(
 	}
 
 	set.disclosed = true
-	for _, descriptor := range s.catalog.Rank(definition.ToolNames, input, preselectedTools) {
+	for _, descriptor := range s.catalog.Rank(allowed, input, preselectedTools) {
 		set.add(toSpec(descriptor))
 	}
 	set.specs = append(set.specs, findToolsSpec())
@@ -179,6 +196,11 @@ func (s *Service) nothingLoaded(set *toolSet, need string) string {
 		if slices.Contains(set.allowed, descriptor.Name) {
 			continue
 		}
+		// A tool the person may not use is not worth naming: an
+		// administrator adding it to the agent would change nothing for them.
+		if set.usable != nil && !set.usable(descriptor.Name) {
+			continue
+		}
 		elsewhere = append(elsewhere, descriptor)
 	}
 
@@ -204,12 +226,71 @@ func (s *Service) nothingLoaded(set *toolSet, need string) string {
 	return b.String()
 }
 
-func (s *Service) configuredSpecs(
-	definition *agentdefinition.Definition,
-) []serviceports.ToolSpec {
-	specs := make([]serviceports.ToolSpec, 0, len(definition.ToolNames))
+// permittedTools keeps the names whose tool the actor may use: read for a
+// query tool, the tool's own operation for a write. One check per distinct
+// resource and operation, since many tools share both.
+func (s *Service) permittedTools(
+	ctx context.Context,
+	actor *serviceports.RequestActor,
+	names []string,
+) []string {
+	// Never nil: the catalog reads nil as "everything", and a person who may
+	// use nothing must be offered nothing.
+	permitted := make([]string, 0, len(names))
+	if s.permissions == nil || actor == nil {
+		return permitted
+	}
 
-	for _, name := range definition.ToolNames {
+	verdicts := make(map[string]bool, len(names))
+	for _, name := range names {
+		resource, operation, ok := s.toolGate(name)
+		if !ok {
+			continue
+		}
+		key := resource.String() + ":" + string(operation)
+		allowed, checked := verdicts[key]
+		if !checked {
+			result, err := s.permissions.Check(ctx, &serviceports.PermissionCheckRequest{
+				PrincipalType:  actor.PrincipalType,
+				PrincipalID:    actor.PrincipalID,
+				UserID:         actor.UserID,
+				APIKeyID:       actor.APIKeyID,
+				BusinessUnitID: actor.BusinessUnitID,
+				OrganizationID: actor.OrganizationID,
+				Resource:       resource.String(),
+				Operation:      operation,
+			})
+			allowed = err == nil && result != nil && result.Allowed
+			if err != nil {
+				s.logger.Warn("could not check whether a tool may be offered; withholding it",
+					zap.String("tool", name), zap.Error(err))
+			}
+			verdicts[key] = allowed
+		}
+		if allowed {
+			permitted = append(permitted, name)
+		}
+	}
+
+	return permitted
+}
+
+// toolGate is the permission a tool is used under.
+func (s *Service) toolGate(name string) (permission.Resource, permission.Operation, bool) {
+	if tool, ok := s.queryTools.Get(name); ok {
+		return tool.PermissionResource(), permission.OpRead, true
+	}
+	if tool, ok := s.actionTools.Get(name); ok {
+		return tool.PermissionResource(), tool.PermissionOperation(), true
+	}
+
+	return "", "", false
+}
+
+func (s *Service) configuredSpecs(names []string) []serviceports.ToolSpec {
+	specs := make([]serviceports.ToolSpec, 0, len(names))
+
+	for _, name := range names {
 		if tool, ok := s.queryTools.Get(name); ok {
 			specs = append(specs, serviceports.ToolSpec{
 				Name:        tool.Name(),

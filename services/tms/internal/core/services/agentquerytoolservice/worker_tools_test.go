@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"strings"
 	"testing"
 
@@ -295,4 +296,139 @@ func TestWorkerRow_KeepsAMoreSpecificBlockReason(t *testing.T) {
 	})
 
 	assert.Equal(t, "On unpaid leave", row.AssignmentBlocked)
+}
+
+func (f *fakeWorkerRepo) GetByID(
+	_ context.Context,
+	_ repositories.GetWorkerByIDRequest,
+) (*worker.Worker, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+
+	return f.items[0], nil
+}
+
+func sensitiveWorker() *worker.Worker {
+	termination := int64(1_790_000_000)
+	return &worker.Worker{
+		ID:                    pulid.MustNew("wrk_"),
+		FirstName:             "Sarah",
+		LastName:              "Williams",
+		Status:                "Active",
+		City:                  "Dallas",
+		PostalCode:            "75201",
+		Email:                 "sarah@example.com",
+		PhoneNumber:           "214-555-0100",
+		EmergencyContactName:  "Tom Williams",
+		EmergencyContactPhone: "214-555-0101",
+		Profile: &worker.WorkerProfile{
+			DOB:                    500_000_000,
+			LicenseNumber:          "TX-9981",
+			TWICCardNumber:         "TWIC-1",
+			MedicalExaminerNPI:     "1234567890",
+			DrugAlcoholStatus:      "Prohibited",
+			LastDrugTest:           1_780_000_000,
+			HireDate:               1_600_000_000,
+			TerminationDate:        &termination,
+			LicenseExpiry:          1_800_000_000,
+			ComplianceStatus:       worker.ComplianceStatusCompliant,
+			IsQualified:            true,
+			DisqualificationReason: "",
+		},
+	}
+}
+
+/*
+Contract: internal/core/domain/permission/registry.go, ResourceWorker.
+get_worker used to hand the model the stored entity whole — date of birth,
+licence and TWIC numbers, drug and alcohol status, home address, emergency
+contacts — under a plain worker:read grant. Confidential fields never reach
+a model, whatever the role; Restricted ones follow the person's ceiling and
+are named as withheld when it does not reach them, so their absence reads as
+withheld rather than as not on file.
+*/
+func TestGetWorker_WithholdsConfidentialFieldsFromEveryone(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeWorkerRepo{items: []*worker.Worker{sensitiveWorker()}}
+	tool := newGetWorkerTool(repo, &fakePermissions{})
+	params := testParams(map[string]any{"workerId": repo.items[0].ID.String()})
+	params.Actor.PrincipalType = serviceports.PrincipalTypeUser
+
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+
+	encoded, err := sonic.Marshal(result)
+	require.NoError(t, err)
+	text := string(encoded)
+
+	for _, secret := range []string{"TX-9981", "TWIC-1", "1234567890", "Prohibited", "500000000", "1780000000", "dob", "licenseNumber", "drugAlcohol"} {
+		assert.NotContains(t, text, secret, "confidential data must never reach a model")
+	}
+	// A role that reaches Confidential is capped at Restricted: the address,
+	// phone, email and dates are shown, the confidential fields still are not.
+	assert.Contains(t, text, "sarah@example.com")
+	assert.Contains(t, text, "Tom Williams")
+	assert.Contains(t, text, "Dallas")
+	assert.NotContains(t, text, "withheldByAccess")
+}
+
+func TestGetWorker_WithholdsRestrictedFieldsBelowTheRoleCeilingAndSaysSo(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeWorkerRepo{items: []*worker.Worker{sensitiveWorker()}}
+	perms := &fakePermissions{readable: map[string]*serviceports.ResourcePermissionDetail{
+		"worker": {
+			Resource:       "worker",
+			Operations:     []permission.Operation{permission.OpRead},
+			MaxSensitivity: permission.SensitivityInternal,
+		},
+	}}
+	tool := newGetWorkerTool(repo, perms)
+	params := testParams(map[string]any{"workerId": repo.items[0].ID.String()})
+	params.Actor.PrincipalType = serviceports.PrincipalTypeUser
+
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+
+	row, ok := result.(workerDetailRow)
+	require.True(t, ok)
+	assert.Equal(t, "Sarah Williams", row.Name)
+	assert.Empty(t, row.Email)
+	assert.Empty(t, row.PhoneNumber)
+	assert.Empty(t, row.Emergency)
+	assert.Empty(t, row.City, "the city is Restricted too")
+	assert.Contains(t, row.Withheld, "email")
+	assert.Contains(t, row.Withheld, "hireDate")
+	assert.NotContains(t, row.Withheld, "dob", "confidential fields are not even named")
+	assert.Equal(t, "Compliant", row.ComplianceStatus, "internal fields still come through")
+}
+
+// An agent acting on its own, with no person's role behind it, reads at
+// the Internal tier.
+func TestGetWorker_AnAgentPrincipalReadsInternalOnly(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeWorkerRepo{items: []*worker.Worker{sensitiveWorker()}}
+	tool := newGetWorkerTool(repo, &fakePermissions{})
+	params := testParams(map[string]any{"workerId": repo.items[0].ID.String()})
+	params.Actor.PrincipalType = serviceports.PrincipalTypeAgent
+	params.Actor.UserID = pulid.Nil
+
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+	row := result.(workerDetailRow)
+	assert.Empty(t, row.Email)
+	assert.Contains(t, row.Withheld, "email")
+}
+
+// A credential's number is the licence or card number itself. Who needs a
+// new medical card is answered without it.
+func TestExpiringCredentialRow_CarriesNoCredentialNumber(t *testing.T) {
+	t.Parallel()
+
+	encoded, err := sonic.Marshal(expiringCredentialRow{WorkerID: "wrk_1", CredentialCode: "MED"})
+	require.NoError(t, err)
+	assert.NotContains(t, string(encoded), "number")
 }

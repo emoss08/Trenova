@@ -139,8 +139,6 @@ func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQu
 			{Name: "profile.licenseExpiry", Kind: filterDate, Sortable: true},
 			{Name: "profile.medicalCardExpiry", Kind: filterDate, Sortable: true},
 			{Name: "profile.twicExpiry", Kind: filterDate, Sortable: true},
-			{Name: "profile.hireDate", Kind: filterDate, Sortable: true},
-			{Name: "profile.terminationDate", Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
 			result, err := repo.List(ctx, &repositories.ListWorkersRequest{Filter: opts})

@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"fmt"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"strings"
 	"testing"
 
@@ -85,7 +86,7 @@ func TestNewToolSet_SendsEverythingForASmallAgent(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names[:4]...)
 
-	set := service.newToolSet(definition, "which drivers are available", false)
+	set := service.newToolSet(t.Context(), definition, testActor(), "which drivers are available", false)
 
 	assert.False(t, set.disclosed)
 	assert.Len(t, set.specs, 5, "the agent's four tools plus ask_user")
@@ -100,7 +101,7 @@ func TestNewToolSet_NarrowsAndOffersFindToolsForALargeAgent(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
 
-	set := service.newToolSet(definition, "which drivers are available", false)
+	set := service.newToolSet(t.Context(), definition, testActor(), "which drivers are available", false)
 
 	require.True(t, set.disclosed)
 	assert.Len(t, set.specs, preselectedTools+2, "the preselected tools, find_tools and ask_user")
@@ -121,13 +122,13 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
 
-	drivers := specNames(service.newToolSet(definition, "which drivers are on the roster", false).specs)
+	drivers := specNames(service.newToolSet(t.Context(), definition, testActor(), "which drivers are on the roster", false).specs)
 	assert.Contains(t, drivers, "list_workers")
 
-	trucks := specNames(service.newToolSet(definition, "which trucks are out of service", false).specs)
+	trucks := specNames(service.newToolSet(t.Context(), definition, testActor(), "which trucks are out of service", false).specs)
 	assert.Contains(t, trucks, "list_tractors")
 
-	billing := specNames(service.newToolSet(definition, "unpaid invoices for this customer", false).specs)
+	billing := specNames(service.newToolSet(t.Context(), definition, testActor(), "unpaid invoices for this customer", false).specs)
 	assert.Contains(t, billing, "list_invoices")
 }
 
@@ -139,7 +140,7 @@ func TestResolveFind_MakesTheMissingToolCallable(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
 
-	set := service.newToolSet(definition, "say hello", false)
+	set := service.newToolSet(t.Context(), definition, testActor(), "say hello", false)
 	require.NotContains(t, specNames(set.specs), "list_trailers",
 		"the fixture depends on this one not being preselected")
 
@@ -162,7 +163,7 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 	service, _ := wideRuntime(t)
 	definition := testDefinition("list_customers", "list_locations")
 
-	set := service.newToolSet(definition, "anything", false)
+	set := service.newToolSet(t.Context(), definition, testActor(), "anything", false)
 	set.disclosed = true
 
 	service.resolveFind(set, map[string]any{"need": "driver medical card expiry"})
@@ -187,7 +188,7 @@ func TestResolveFind_DoesNotReloadWhatIsAlreadyThere(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
 
-	set := service.newToolSet(definition, "driver medical card expiry", false)
+	set := service.newToolSet(t.Context(), definition, testActor(), "driver medical card expiry", false)
 	before := len(set.specs)
 
 	answer := service.resolveFind(set, map[string]any{"need": "driver medical card expiry"})
@@ -200,7 +201,7 @@ func TestResolveFind_AsksForWordsWhenGivenNone(t *testing.T) {
 	t.Parallel()
 
 	service, names := wideRuntime(t)
-	set := service.newToolSet(testDefinition(names...), "hello", false)
+	set := service.newToolSet(t.Context(), testDefinition(names...), testActor(), "hello", false)
 
 	assert.Contains(t, service.resolveFind(set, map[string]any{}), "what you need")
 }
@@ -259,7 +260,7 @@ func TestResolveFind_SaysAToolExistsButIsNotEnabled(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition("list_customers", "list_locations")
 
-	set := service.newToolSet(definition, "anything", false)
+	set := service.newToolSet(t.Context(), definition, testActor(), "anything", false)
 	set.disclosed = true
 
 	answer := service.resolveFind(set, map[string]any{"need": "driver medical card expiry"})
@@ -279,7 +280,7 @@ func TestResolveFind_DoesNotClaimTheSystemLacksSomethingItDidNotSearchFor(t *tes
 	t.Parallel()
 
 	service, _ := wideRuntime(t)
-	set := service.newToolSet(testDefinition("list_customers"), "anything", false)
+	set := service.newToolSet(t.Context(), testDefinition("list_customers"), testActor(), "anything", false)
 	set.disclosed = true
 
 	answer := service.resolveFind(set, map[string]any{"need": "zzzz no such thing zzzz"})
@@ -295,10 +296,10 @@ func TestNewToolSet_WithholdsAskUserFromAnUnattendedRun(t *testing.T) {
 
 	service, names := wideRuntime(t)
 
-	small := service.newToolSet(testDefinition(names[:4]...), "anything", true)
+	small := service.newToolSet(t.Context(), testDefinition(names[:4]...), testActor(), "anything", true)
 	assert.NotContains(t, specNames(small.specs), askUserName)
 
-	large := service.newToolSet(testDefinition(names...), "anything", true)
+	large := service.newToolSet(t.Context(), testDefinition(names...), testActor(), "anything", true)
 	assert.NotContains(t, specNames(large.specs), askUserName)
 	assert.Contains(t, specNames(large.specs), findToolsName, "finding tools needs no person")
 }
@@ -337,4 +338,46 @@ func TestRun_TellsThePromptWhichToolsAreLoaded(t *testing.T) {
 			assert.Contains(t, after[1], "- "+name, "%s is not loaded and must be findable", name)
 		}
 	}
+}
+
+// The set a turn may call is narrowed to what the person may use. A tool
+// they lacked the right for was shown, ranked and offered, then refused when
+// called, and the refusal named the resource they lacked; now it is not
+// offered, not ranked, not found, and not named among what exists.
+func TestNewToolSet_OffersOnlyWhatThePersonMayUse(t *testing.T) {
+	t.Parallel()
+
+	service, names := wideRuntime(t)
+	service.permissions = &stubPermissions{Denied: map[string]bool{"shipment:read": true}}
+	// The stub tools all read shipments unless told otherwise; the worker
+	// tools are moved to the worker resource so the denial has something
+	// to leave standing.
+	for _, tool := range service.queryTools.(*stubQueryRegistry).Tools {
+		stub := tool.(*agentruntimetest.StubQueryTool)
+		if strings.Contains(stub.ToolName, "worker") || strings.Contains(stub.ToolName, "credential") {
+			stub.Resource = permission.ResourceWorker
+		}
+	}
+	definition := testDefinition(names...)
+
+	set := service.newToolSet(t.Context(), definition, testActor(), "which shipments are late", false)
+
+	offered := specNames(set.specs)
+	assert.NotContains(t, offered, "list_shipments")
+	assert.NotContains(t, offered, "get_shipment")
+	assert.NotContains(t, set.allowed, "search_shipments")
+	assert.Contains(t, set.allowed, "list_workers")
+
+	answer := service.resolveFind(set, map[string]any{"need": "search shipments by pro number"})
+	assert.NotContains(t, answer, "search_shipments", "find_tools cannot reach a tool the person may not use")
+}
+
+func TestNewToolSet_OffersNothingWithoutAnActor(t *testing.T) {
+	t.Parallel()
+
+	service, names := wideRuntime(t)
+	set := service.newToolSet(t.Context(), testDefinition(names...), nil, "anything", false)
+
+	assert.Empty(t, set.allowed)
+	assert.Equal(t, []string{askUserName}, specNames(set.specs), "only the question tool, which reads nothing")
 }

@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"context"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -85,12 +86,12 @@ func (s *Service) Run(
 		}},
 	}
 
-	tools := s.newToolSet(definition, req.Input, req.Unattended)
+	tools := s.newToolSet(ctx, definition, req.Actor, req.Input, req.Unattended)
 	runtimeContext.ToolsDisclosed = tools.disclosed
-	for idx := range runtimeContext.Tools {
-		_, loaded := tools.loaded[runtimeContext.Tools[idx].Name]
-		runtimeContext.Tools[idx].Loaded = loaded
-	}
+	// The prompt describes the set the person may use, not the agent's whole
+	// configuration: a tool named there and refused when called reads as
+	// the system refusing rather than the person lacking the right.
+	runtimeContext.Tools = usableSummaries(runtimeContext.Tools, tools)
 	repeats := newRepeatGuard()
 
 	system := definition.BuildSystemPrompt(runtimeContext)
@@ -446,4 +447,23 @@ func tagReasoning(completion *serviceports.ChatCompletionResult) {
 	if completion.Reasoning != nil && completion.Reasoning.ProviderKind == "" {
 		completion.Reasoning.ProviderKind = string(completion.ProviderKind)
 	}
+}
+
+// usableSummaries keeps the summaries of the tools the turn may call and
+// marks which are loaded, so the prompt and the request agree.
+func usableSummaries(
+	summaries []agentdefinition.ToolSummary,
+	tools *toolSet,
+) []agentdefinition.ToolSummary {
+	kept := make([]agentdefinition.ToolSummary, 0, len(summaries))
+	for _, summary := range summaries {
+		if !slices.Contains(tools.allowed, summary.Name) {
+			continue
+		}
+		_, loaded := tools.loaded[summary.Name]
+		summary.Loaded = loaded
+		kept = append(kept, summary)
+	}
+
+	return kept
 }

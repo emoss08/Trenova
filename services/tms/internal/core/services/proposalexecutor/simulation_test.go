@@ -53,13 +53,13 @@ func (f *fakeBudgets) Status(
 	return nil, nil
 }
 
-func approver() *services.RequestActor {
+func approver(proposal *agent.AgentProposal) *services.RequestActor {
 	return &services.RequestActor{
 		PrincipalType:  services.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
+		OrganizationID: proposal.OrganizationID,
+		BusinessUnitID: proposal.BusinessUnitID,
 	}
 }
 
@@ -74,7 +74,7 @@ func TestExecute_SimulatesInsteadOfRunningForAnAgentInSimulation(t *testing.T) {
 	svc.definitions = fixedDefinition{definition: &agentdefinition.Definition{Name: "Night desk", SimulationMode: true}}
 
 	proposal := testProposal("cancel_shipment", map[string]any{"shipmentId": "shp_1", "cancelReason": "Dead load"})
-	require.NoError(t, svc.Execute(t.Context(), proposal, nil, approver()))
+	require.NoError(t, svc.Execute(t.Context(), proposal, nil, approver(proposal)))
 
 	assert.Zero(t, tool.calls, "the write must not happen")
 	assert.Empty(t, repo.recorded, "no execution is recorded, only a simulation")
@@ -96,7 +96,8 @@ func TestExecute_RefusesAWritePastTheToolsDailyCap(t *testing.T) {
 	}}
 	svc.budgets = budgets
 
-	err := svc.Execute(t.Context(), testProposal("assign_move", map[string]any{}), nil, approver())
+	proposal := testProposal("assign_move", map[string]any{})
+	err := svc.Execute(t.Context(), proposal, nil, approver(proposal))
 
 	require.ErrorIs(t, err, ErrBudgetSpent)
 	assert.Contains(t, err.Error(), "daily limit of 5")
@@ -115,7 +116,8 @@ func TestExecute_RunsWhenThereIsNoCapAndNoSimulation(t *testing.T) {
 	svc.definitions = fixedDefinition{definition: &agentdefinition.Definition{Name: "Night desk"}}
 	svc.budgets = &fakeBudgets{}
 
-	require.NoError(t, svc.Execute(t.Context(), testProposal("assign_move", map[string]any{}), nil, approver()))
+	proposal := testProposal("assign_move", map[string]any{})
+	require.NoError(t, svc.Execute(t.Context(), proposal, nil, approver(proposal)))
 
 	assert.Equal(t, 1, tool.calls)
 	assert.Empty(t, repo.simulated)

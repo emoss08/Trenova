@@ -341,3 +341,27 @@ func (r *fakeProposalRepo) RecordSimulation(
 
 	return &agent.AgentProposal{ID: req.ID, Status: agent.ProposalStatusSimulated}, nil
 }
+
+// The write runs in the proposal's tenant as the approver's principal. The
+// two are asserted to agree where they meet, so the invariant no longer
+// depends on every caller having scoped the proposal read the same way.
+func TestExecute_RefusesAnApproverFromAnotherOrganization(t *testing.T) {
+	t.Parallel()
+
+	tool := &recordingTool{name: "reassign_move", resource: permission.ResourceShipmentMove, operation: permission.OpUpdate}
+	repo := &fakeProposalRepo{}
+	perms := &fakePermissions{allowed: true}
+	proposal := testProposal("reassign_move", map[string]any{})
+
+	err := newExecutor(tool, repo, perms).Execute(
+		t.Context(),
+		proposal,
+		nil,
+		testActor(pulid.MustNew("org_"), proposal.BusinessUnitID),
+	)
+	require.ErrorIs(t, err, ErrTenantMismatch)
+
+	assert.Zero(t, tool.calls)
+	assert.Nil(t, perms.lastReq, "nothing is even checked in the wrong tenant")
+	assert.Empty(t, repo.recorded, "the proposal is left untouched")
+}

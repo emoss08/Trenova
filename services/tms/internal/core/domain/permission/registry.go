@@ -900,11 +900,13 @@ func (r *Registry) registerWorkerResources() {
 			"terminationDate":        SensitivityRestricted,
 			"disqualificationReason": SensitivityRestricted,
 			"medicalExaminerName":    SensitivityRestricted,
-			"lastDrugTest":           SensitivityRestricted,
 			"dob":                    SensitivityConfidential,
 			"licenseNumber":          SensitivityConfidential,
 			"twicCardNumber":         SensitivityConfidential,
 			"medicalExaminerNpi":     SensitivityConfidential,
+			"lastDrugTest":           SensitivityConfidential,
+			"drugAlcoholStatus":      SensitivityConfidential,
+			"returnToDutyStatus":     SensitivityConfidential,
 		},
 	})
 

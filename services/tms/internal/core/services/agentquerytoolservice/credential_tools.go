@@ -33,7 +33,6 @@ type expiringCredentialRow struct {
 	WorkerName      string       `json:"workerName"`
 	CredentialType  string       `json:"credentialType"`
 	CredentialCode  string       `json:"credentialCode"`
-	Number          string       `json:"number,omitempty"`
 	ExpiresAt       optionalDate `json:"expiresAt"`
 	DaysUntilExpiry int64        `json:"daysUntilExpiry"`
 	// Expired is stated rather than left to be derived from a negative day
@@ -176,10 +175,10 @@ func (t *listExpiringCredentialsTool) Query(
 }
 
 func toExpiringRow(credential *worker.WorkerCredential, clk clock) expiringCredentialRow {
-	row := expiringCredentialRow{
-		WorkerID: credential.WorkerID.String(),
-		Number:   credential.Number,
-	}
+	// The credential's number is not on the row. Who needs a new medical
+	// card is answered without it, and a licence or TWIC number in a chat
+	// transcript is a leak with nobody to blame.
+	row := expiringCredentialRow{WorkerID: credential.WorkerID.String()}
 
 	row.ExpiresAt = pointerDate(credential.ExpiresAt)
 	if credential.ExpiresAt != nil {

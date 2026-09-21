@@ -91,6 +91,13 @@ func (s *Service) DecideWithOutcome(
 			"Only a human user can decide on agent proposals",
 		)
 	}
+	if req.TenantInfo.OrgID != actor.OrganizationID || req.TenantInfo.BuID != actor.BusinessUnitID {
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrForbidden,
+			"A proposal can only be decided within the decider's own organization",
+		)
+	}
 
 	proposal, err := s.proposalRepo.GetByID(ctx, repositories.GetAgentProposalByIDRequest{
 		ID:         req.ProposalID,

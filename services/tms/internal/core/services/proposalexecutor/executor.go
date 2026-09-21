@@ -151,6 +151,9 @@ func (r runDefinitions) ForRun(
 // ErrToolMissing reports a proposal naming a tool the registry no longer has.
 var ErrToolMissing = errors.New("proposal names a tool this system does not provide")
 
+// ErrTenantMismatch is a proposal decided by someone outside its tenant.
+var ErrTenantMismatch = errors.New("proposal does not belong to the approver's organization")
+
 // Execute runs an approved proposal's tool.
 //
 // The approver is the actor, not the agent. Everything the tool does is
@@ -167,6 +170,14 @@ func (s *Service) Execute(
 	modifications map[string]any,
 	actor *services.RequestActor,
 ) error {
+	// The tenant the write runs in is the proposal's and the principal is
+	// the approver's. The two are asserted to agree here, where they meet,
+	// rather than trusted to have been scoped alike by every caller.
+	if actor == nil || proposal.OrganizationID != actor.OrganizationID ||
+		proposal.BusinessUnitID != actor.BusinessUnitID {
+		return ErrTenantMismatch
+	}
+
 	tool, ok := s.tools.Get(proposal.ToolName)
 	if !ok {
 		err := fmt.Errorf("%w: %s", ErrToolMissing, proposal.ToolName)

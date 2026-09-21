@@ -181,3 +181,15 @@ func TestFind_StillReturnsARealMatch(t *testing.T) {
 
 	assert.NotEmpty(t, found)
 }
+
+// nil means the whole catalog; an empty list means nothing. A person who may
+// use no tools was offered every tool because the two read the same.
+func TestRank_AnEmptyAllowListYieldsNothing(t *testing.T) {
+	t.Parallel()
+
+	catalog := testCatalog()
+
+	assert.Empty(t, catalog.Rank([]string{}, "drivers", 8))
+	assert.Empty(t, catalog.Find([]string{}, "drivers", 8))
+	assert.NotEmpty(t, catalog.Rank(nil, "drivers", 8))
+}

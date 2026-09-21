@@ -17,7 +17,7 @@ var Module = fx.Module("agent-query-tool-service",
 	fx.Provide(
 		fx.Annotate(newGetShipmentTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newSearchShipmentsTool, fx.ResultTags(`group:"agent_query_tools"`)),
-		fx.Annotate(newGetWorkerTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideGetWorkerTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newSearchWorkerTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newListExpiringCredentialsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newRecallMemoryTool, fx.ResultTags(`group:"agent_query_tools"`)),
@@ -213,4 +213,11 @@ func provideGetBankReceiptTool(
 
 func provideListCustomerPaymentsTool(payments services.CustomerPaymentService) services.AgentQueryTool {
 	return newListCustomerPaymentsTool(payments)
+}
+
+func provideGetWorkerTool(
+	repo repositories.WorkerRepository,
+	permissions services.PermissionEngine,
+) services.AgentQueryTool {
+	return newGetWorkerTool(repo, permissions)
 }

@@ -12,11 +12,15 @@ import (
 )
 
 type getWorkerTool struct {
-	repo repositories.WorkerRepository
+	repo   repositories.WorkerRepository
+	access fieldAccess
 }
 
-func newGetWorkerTool(repo repositories.WorkerRepository) serviceports.AgentQueryTool {
-	return &getWorkerTool{repo: repo}
+func newGetWorkerTool(
+	repo repositories.WorkerRepository,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
+	return &getWorkerTool{repo: repo, access: newFieldAccess(permissions)}
 }
 
 func (t *getWorkerTool) Name() string { return "get_worker" }
@@ -57,7 +61,7 @@ func (t *getWorkerTool) Query(
 		return nil, err
 	}
 
-	return t.repo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	entity, err := t.repo.GetByID(ctx, repositories.GetWorkerByIDRequest{
 		ID: workerID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,
@@ -67,6 +71,115 @@ func (t *getWorkerTool) Query(
 		IncludeProfile: true,
 		IncludeState:   true,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	ceiling := t.access.ceiling(ctx, params, permission.ResourceWorker)
+
+	return workerDetailFrom(entity, t.access, ceiling), nil
+}
+
+// workerDetailRow is one worker as a model may see them: the roster row, the
+// qualification dates, and the personal fields the person's role reaches.
+// The stored entity used to go back whole — date of birth, licence and TWIC
+// numbers, drug and alcohol status, home address, emergency contacts — under
+// a plain worker:read grant.
+type workerDetailRow struct {
+	workerRow
+
+	ExternalID   string       `json:"externalId,omitempty"`
+	State        string       `json:"state,omitempty"`
+	PostalCode   string       `json:"postalCode,omitempty"`
+	Email        string       `json:"email,omitempty"`
+	PhoneNumber  string       `json:"phoneNumber,omitempty"`
+	Emergency    string       `json:"emergencyContact,omitempty"`
+	HireDate     optionalDate `json:"hireDate"`
+	Termination  optionalDate `json:"terminationDate"`
+	CDLRestrict  string       `json:"cdlRestrictions,omitempty"`
+	TWICExpiry   optionalDate `json:"twicExpiry"`
+	PhysicalDue  optionalDate `json:"physicalDueDate"`
+	MVRDue       optionalDate `json:"mvrDueDate"`
+	LastMVRCheck optionalDate `json:"lastMvrCheck"`
+	TrainingDue  optionalDate `json:"nextTrainingDue"`
+	SafetyRating string       `json:"safetyRating,omitempty"`
+	Disqualified string       `json:"disqualificationReason,omitempty"`
+	ELDExempt    bool         `json:"eldExempt"`
+	ShortHaul    bool         `json:"shortHaulExempt"`
+	AvailableNow bool         `json:"availableForDispatch"`
+	LeaveType    string       `json:"leaveType,omitempty"`
+	// Withheld names the fields this person's access does not reach, so a
+	// model reads their absence as withheld rather than as not on file.
+	Withheld []string `json:"withheldByAccess,omitempty"`
+}
+
+// workerDetailFrom projects a worker for the model under a sensitivity
+// ceiling. Fields the ceiling does not reach are left out and named in
+// Withheld; Confidential fields are never included and never named.
+func workerDetailFrom(
+	entity *worker.Worker,
+	access fieldAccess,
+	ceiling permission.FieldSensitivity,
+) workerDetailRow {
+	row := workerDetailRow{workerRow: toWorkerRow(entity)}
+	row.ExternalID = entity.ExternalID
+	row.AvailableNow = entity.AvailableForDispatch
+	row.LeaveType = string(entity.LeaveType)
+
+	show := func(field string) bool {
+		if access.visible(permission.ResourceWorker, field, ceiling) {
+			return true
+		}
+		if access.registry.GetFieldSensitivity(permission.ResourceWorker.String(), field) != permission.SensitivityConfidential {
+			row.Withheld = append(row.Withheld, field)
+		}
+
+		return false
+	}
+
+	if !show("city") {
+		row.City = ""
+	}
+	if show("postalCode") {
+		row.PostalCode = entity.PostalCode
+	}
+	if entity.State != nil && show("stateId") {
+		row.State = entity.State.Abbreviation
+	}
+	if show("email") {
+		row.Email = entity.Email
+	}
+	if show("phoneNumber") {
+		row.PhoneNumber = entity.PhoneNumber
+	}
+	if show("emergencyContactName") && show("emergencyContactPhone") {
+		row.Emergency = strings.TrimSpace(entity.EmergencyContactName + " " + entity.EmergencyContactPhone)
+	}
+
+	profile := entity.Profile
+	if profile == nil {
+		return row
+	}
+	if show("hireDate") {
+		row.HireDate = recordedDate(profile.HireDate)
+	}
+	if show("terminationDate") {
+		row.Termination = expectedDate(pointerSeconds(profile.TerminationDate), "still employed")
+	}
+	if show("disqualificationReason") {
+		row.Disqualified = profile.DisqualificationReason
+	}
+	row.CDLRestrict = profile.CDLRestrictions
+	row.TWICExpiry = pointerDate(profile.TWICExpiry)
+	row.PhysicalDue = pointerDate(profile.PhysicalDueDate)
+	row.MVRDue = pointerDate(profile.MVRDueDate)
+	row.LastMVRCheck = recordedDate(profile.LastMVRCheck)
+	row.TrainingDue = pointerDate(profile.NextTrainingDue)
+	row.SafetyRating = string(profile.SafetyRating)
+	row.ELDExempt = profile.ELDExempt
+	row.ShortHaul = profile.ShortHaulExempt
+
+	return row
 }
 
 type searchWorkerTool struct {
