@@ -30,11 +30,12 @@ import {
 import { useCallback, useMemo } from "react";
 import { useController, useFormContext, useWatch } from "react-hook-form";
 import { providerBrandDomain } from "../providers/provider-brand";
-import { type AgentFormValues } from "./agent-form-schema";
+import { toSaveRequest, type AgentFormValues } from "./agent-form-schema";
 import { IdentityPicker } from "./identity-picker";
+import { PromptPreviewSheet } from "./prompt-preview-sheet";
 import { applyTemplateStarter } from "./template-fill";
 import { TemplatePicker } from "./template-picker";
-import { ToolPicker } from "./tool-picker";
+import { ToolSummary } from "./tool-summary";
 
 type AgentFormProps = {
   mode: "create" | "edit";
@@ -134,7 +135,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
   return (
     <div className="flex flex-col gap-7">
       {isSystem && (
-        <Alert variant="info">
+        <Alert variant="info" size="sm">
           <LockIcon className="size-4" />
           <AlertTitle>{t("A system agent")}</AlertTitle>
           <AlertDescription>
@@ -205,7 +206,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
         description={t(
           "Who this agent is, what it prioritises, the policies it follows and how it should talk. These are authoritative; Trenova only adds its tenant and safety boundary in front of them.",
         )}
-        // action={<PromptPreviewSheet getRequest={() => toSaveRequest(getValues())} />}
+        action={<PromptPreviewSheet getRequest={() => toSaveRequest(getValues())} />}
       >
         <FormGroup cols={1}>
           <FormControl cols="full">
@@ -241,10 +242,10 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
         title={t("Tools")}
         titleCount={toolNames.length}
         description={t(
-          "Everything the system offers is here. Reads run as soon as the agent asks; a change carries its own autonomy, never above the ceiling below.",
+          "What it may look up and what it may change. Reads run as soon as the agent asks; a change waits at its own tier, never above the ceiling below.",
         )}
       >
-        <ToolPicker
+        <ToolSummary
           tools={catalogQuery.data?.tools ?? []}
           isLoading={catalogQuery.isLoading}
           selected={toolNames}
@@ -297,7 +298,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
           />
         </FieldWrapper>
         <FormGroup cols={2}>
-          <FormControl cols="full">
+          <FormControl>
             <SelectField
               name="decisionTimeoutSeconds"
               control={control}
@@ -312,7 +313,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
               )}
             />
           </FormControl>
-          <FormControl cols="full">
+          <FormControl>
             <SwitchField
               name="shadowMode"
               control={control}
@@ -326,7 +327,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
           </FormControl>
         </FormGroup>
         {ceiling === "AutoExecute" && !shadowMode && (
-          <Alert variant="warning">
+          <Alert variant="warning" size="sm">
             <ShieldAlertIcon className="size-4" />
             <AlertTitle>{t("This agent can change records without asking")}</AlertTitle>
             <AlertDescription>
@@ -445,10 +446,40 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
       </FormSection>
 
       <FormSection
-        title={t("Limits")}
-        description={t("What one run may spend before it is stopped, however it was started.")}
+        title={t("Model and limits")}
+        description={t(
+          "Which provider answers, what the agent is told about its surroundings, and what one run may spend.",
+        )}
       >
         <FormGroup cols={2}>
+          <FormControl>
+            <SelectField
+              name="preferredProviderId"
+              control={control}
+              label={t("Preferred provider")}
+              options={providerOptions}
+              placeholder={t("Automatic")}
+              isClearable
+              description={t("Tried first. Automatic follows the routing on the Providers tab.")}
+            />
+          </FormControl>
+          <FormControl>
+            <FieldWrapper
+              label={t("Replies as")}
+              description={t("A conversation answers in prose; a report in sections.")}
+            >
+              <SegmentedControl<OutputMode>
+                fullWidth
+                value={outputField.value}
+                onValueChange={outputField.onChange}
+                aria-label={t("Output")}
+                items={[
+                  { value: "Conversational", label: t("Conversation"), icon: MessageSquareIcon },
+                  { value: "Report", label: t("Report"), icon: FileTextIcon },
+                ]}
+              />
+            </FieldWrapper>
+          </FormControl>
           <FormControl>
             <NumberField
               name="runTimeoutSeconds"
@@ -469,46 +500,6 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
               max={64}
               description={t("The budget one run may spend looking things up and acting.")}
             />
-          </FormControl>
-        </FormGroup>
-      </FormSection>
-
-      <FormSection
-        title={t("Model and context")}
-        description={t(
-          "Which provider answers, and what the agent is told about its surroundings.",
-        )}
-      >
-        <FormGroup cols={2}>
-          <FormControl cols="full">
-            <SelectField
-              name="preferredProviderId"
-              control={control}
-              label={t("Preferred provider")}
-              options={providerOptions}
-              placeholder={t("Automatic")}
-              isClearable
-              description={t(
-                "Tried first for this agent. Leave on automatic to follow the routing on the Providers tab.",
-              )}
-            />
-          </FormControl>
-          <FormControl cols="full">
-            <FieldWrapper
-              label={t("Replies as")}
-              description={t("A conversation answers in prose; a report answers in sections.")}
-            >
-              <SegmentedControl<OutputMode>
-                fullWidth
-                value={outputField.value}
-                onValueChange={outputField.onChange}
-                aria-label={t("Output")}
-                items={[
-                  { value: "Conversational", label: t("Conversation"), icon: MessageSquareIcon },
-                  { value: "Report", label: t("Report"), icon: FileTextIcon },
-                ]}
-              />
-            </FieldWrapper>
           </FormControl>
           <FormControl cols="full">
             <MultiCheckboxField

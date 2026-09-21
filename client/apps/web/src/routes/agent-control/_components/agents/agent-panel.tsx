@@ -36,7 +36,7 @@ export function AgentPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
         queryKey={AGENT_QUERY_SCOPE}
         title={t("Agent")}
         fieldKey="name"
-        // size="lg"
+        size="xl"
         formComponent={<AgentForm mode="edit" systemKey={row?.systemKey ?? ""} />}
         mutationFn={(values, current) =>
           apiService.agentDefinitionService.update(current.id, toSaveRequest(values))
@@ -56,7 +56,7 @@ export function AgentPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
       description={t(
         "Write what the agent is for, choose the tools it may call and how much it may do on its own, and decide when it runs.",
       )}
-      // size="xl"
+      size="xl"
       formComponent={<AgentForm mode="create" />}
       mutationFn={(values) => apiService.agentDefinitionService.create(toSaveRequest(values))}
       useDock
