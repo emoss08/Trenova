@@ -26,7 +26,7 @@ export function StatusTile({
   tone: "active" | "warning" | "info" | "muted";
 }) {
   return (
-    <div className="bg-background rounded-lg border p-3 shadow-xs">
+    <div className="bg-background rounded-lg border p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <div className="text-muted-foreground text-xs font-medium">{label}</div>

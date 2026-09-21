@@ -43,7 +43,7 @@ function TabsList({
           "absolute bottom-0 left-0 h-(--active-tab-height) w-(--active-tab-width) translate-x-(--active-tab-left) -translate-y-(--active-tab-bottom) transition-[width,translate] duration-250 ease-settle",
           variant === "underline"
             ? "z-10 rounded-full bg-brand data-[orientation=horizontal]:h-0.5 data-[orientation=horizontal]:translate-y-px data-[orientation=vertical]:w-0.5 data-[orientation=vertical]:-translate-x-px"
-            : "-z-1 rounded-md bg-card shadow-raised ring-1 ring-border/70 dark:bg-surface-active dark:ring-0",
+            : "-z-1 rounded-md bg-card ring-1 ring-border dark:bg-surface-active dark:ring-0",
         )}
         data-slot="tab-indicator"
       />

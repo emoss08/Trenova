@@ -45,7 +45,7 @@ export function CommentAttachments({ attachments }: { attachments: ShipmentComme
             <button
               key={image.documentId}
               type="button"
-              className="group/attachment border-border bg-muted relative size-24 overflow-hidden rounded-lg border transition-shadow hover:shadow-md"
+              className="group/attachment border-border bg-muted relative size-24 overflow-hidden rounded-lg border transition-shadow"
               onClick={() => setLightboxIndex(index)}
               aria-label={`Open ${image.originalName ?? image.fileName}`}
             >

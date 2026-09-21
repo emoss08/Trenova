@@ -484,7 +484,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
                     className={cn(
                       "text-2xs rounded-sm px-1.5 py-0.5 font-medium capitalize transition-colors",
                       responseView === view
-                        ? "bg-background text-foreground shadow-sm"
+                        ? "bg-background text-foreground"
                         : "text-muted-foreground hover:text-foreground",
                     )}
                   >

@@ -211,10 +211,11 @@ Tokens live in `client/packages/shared/src/styles/tokens.css`; components consum
 define no colour, size or elevation of their own. **Read
 [docs/engineering/design-system.md](docs/engineering/design-system.md) before writing styles.**
 
-`pnpm lint:design` runs in CI and fails on the five ways the old set was bypassed: raw
+`pnpm lint:design` runs in CI and fails on the six ways the old set was bypassed: raw
 Tailwind palette classes (`bg-red-500`), arbitrary font sizes (`text-[11px]` — `text-xs` *is*
 11px and brings a line-height), hex colours in `className`/`style`, hand-rolled focus rings
-(`focus-visible:ring-*` — use `ui-focus-ring`), and retired Badge variants. Each message
+(`focus-visible:ring-*` — use `ui-focus-ring`), any `shadow-*` that draws a shadow, and
+retired Badge variants. Each message
 names the token to use instead.
 
 - Colour is a **tone** (`neutral`/`brand`/`info`/`success`/`warning`/`danger`) when the set has
@@ -230,6 +231,13 @@ names the token to use instead.
 - Labels are sentence case; no `uppercase tracking-wider` on section labels, column heads
   or badges. Form controls spend `ui-field`, filled controls `ui-press`, skeletons
   `ui-shimmer`. Motion answers an action — nothing loops on a working screen.
+- **No shadows, anywhere.** The `--elevation-*` tokens are all flat and must stay that way;
+  separate surfaces with a border or `ring-1 ring-foreground/10`. Zero-blur outlines
+  (`shadow-[0_0_0_1px_var(--brand)]`) and the focus ring are lines, not shadows, and are fine.
+- Everything that floats from a trigger (menus, selects, popovers, hover cards, tooltips) is
+  inverted — dark in light mode. The primitives set `dark` on the positioner; never write it
+  by hand, and build popover content from tokens only. Dialogs and sheets follow the theme.
+- Form controls are filled: `--field` never matches the canvas or the card.
 - Two radii: `--radius-control` (6px) for controls, `--radius-surface` (8px) for containers.
   The whole `rounded-*` scale points at them; a badge is `rounded-full`.
 - Weight means something: 400 body, 500 label, 600 heading. A value in a cell takes no

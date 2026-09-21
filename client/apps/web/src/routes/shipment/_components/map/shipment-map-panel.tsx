@@ -239,7 +239,7 @@ function LiveMapSyncOverlay({
 
   return (
     <div className="pointer-events-none absolute top-3 left-3 z-10 flex items-center gap-1.5">
-      <span className="border-border bg-background text-foreground inline-flex items-center gap-1 rounded-md border px-2 py-1 font-mono text-2xs font-medium shadow-sm backdrop-blur-sm">
+      <span className="border-border bg-background text-foreground inline-flex items-center gap-1 rounded-md border px-2 py-1 font-mono text-2xs font-medium backdrop-blur-sm">
         <span
           aria-hidden
           className={cn(
@@ -249,7 +249,7 @@ function LiveMapSyncOverlay({
         />
         {t("{0} · {1} units", live ? "LIVE" : "OFFLINE", unitCount)}
       </span>
-      <span className="border-border bg-background text-muted-foreground rounded-md border px-2 py-1 font-mono text-2xs font-medium shadow-sm backdrop-blur-sm">
+      <span className="border-border bg-background text-muted-foreground rounded-md border px-2 py-1 font-mono text-2xs font-medium backdrop-blur-sm">
         {t("synced {0}", formatElapsedTime(syncedAt, now))}
       </span>
     </div>

@@ -84,7 +84,7 @@ export function ProposalCard({
       layout
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card ring-foreground/10 flex flex-col overflow-hidden rounded-xl shadow-sm ring-1"
+      className="bg-card ring-foreground/10 flex flex-col overflow-hidden rounded-xl ring-1"
     >
       <div className="flex flex-col gap-2 px-3.5 pt-3 pb-2.5">
         <div className="flex items-center gap-2">

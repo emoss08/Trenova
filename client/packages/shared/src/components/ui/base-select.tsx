@@ -111,7 +111,7 @@ function SelectClear({ className, children, onClick, ...props }: React.Component
 // Define size variants for SelectTrigger
 const selectTriggerVariants = cva(
   `
-		group relative flex w-fit items-center justify-between gap-2 rounded-md border whitespace-nowrap shadow-xs
+		group relative flex w-fit items-center justify-between gap-2 rounded-md border whitespace-nowrap
 		transition-[color,box-shadow,border-color] outline-none select-none
 		ui-focus-ring
 		aria-invalid:border-destructive aria-invalid:ring-destructive/50
@@ -198,6 +198,7 @@ function SelectContent({
   return (
     <SelectPortal>
       <SelectPositioner
+        className="dark"
         sideOffset={sideOffset}
         alignItemWithTrigger={position === "item-aligned"}
         side={side}
@@ -212,7 +213,7 @@ function SelectContent({
 							relative z-50 max-h-(--available-height) min-w-(--anchor-width) origin-[var(--transform-origin)] overflow-x-hidden
 							overflow-y-auto rounded-md
 							border bg-popover p-1 text-popover-foreground							
-							shadow-md
+							
 							data-[closed]:animate-out data-[closed]:fade-out-0
 							data-[closed]:zoom-out-95 data-[open]:animate-in
 							data-[open]:fade-in-0 data-[open]:zoom-in-95

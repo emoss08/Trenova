@@ -238,7 +238,7 @@ export function ToolPicker({
                                 className={cn(
                                   "rounded px-2 py-0.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-40",
                                   tier === option
-                                    ? "bg-background text-foreground shadow-xs"
+                                    ? "bg-background text-foreground"
                                     : "text-muted-foreground hover:text-foreground",
                                 )}
                               >

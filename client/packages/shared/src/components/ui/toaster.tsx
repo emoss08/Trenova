@@ -20,7 +20,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       toastOptions={{
         classNames: {
-          toast: "!font-sans !shadow-overlay !text-sm",
+          toast: "!font-sans !shadow-none !text-sm",
           title: "!font-medium",
           description: "!text-foreground-muted",
           actionButton: "!rounded-md !bg-ink !text-ink-foreground !font-medium",

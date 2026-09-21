@@ -284,7 +284,7 @@ function SortableColumnRow({
       }}
       className={cn(
         "border-border bg-background flex flex-col gap-2 rounded-md border p-2",
-        sortable.isDragging && "z-10 opacity-80 shadow-md",
+        sortable.isDragging && "z-10 opacity-80",
       )}
     >
       <div className="flex items-center gap-1.5">

@@ -113,7 +113,7 @@ export function DataTableDock<TData extends RowData>({
           transition={{ duration: 0.2, ease: "easeOut" }}
           className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2"
         >
-          <div className="border-background/20 bg-foreground flex items-center gap-1 rounded-lg border px-2 py-1.5 shadow-lg">
+          <div className="border-background/20 bg-foreground flex items-center gap-1 rounded-lg border px-2 py-1.5">
             <Tooltip>
               <TooltipTrigger
                 render={
@@ -167,7 +167,7 @@ export function DataTableDock<TData extends RowData>({
                         }
                       />
                       <PopoverContent
-                        className="dark border-input w-[180px] p-0"
+                        className="border-input w-[180px] p-0"
                         align="start"
                         sideOffset={10}
                       >

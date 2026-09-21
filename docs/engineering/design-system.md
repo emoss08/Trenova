@@ -241,21 +241,41 @@ tables on the same screen line up. A denser table repoints the token —
 
 ## Elevation
 
-Four steps, defined in both themes. Enterprise surfaces are flat: a card is a
-border, not a shadow. Reserve shadow for things that genuinely float.
+There is none. Trenova draws no shadows, anywhere. A surface is told from the one
+beneath it by a hairline and a step in lightness; a floating surface by its
+`ring-1 ring-foreground/10` and by being inverted (below). A shadow is a blur, and
+a blur is the one thing on a dense screen that cannot be aligned to anything.
 
-`shadow-flat`, `shadow-raised` (cards), `shadow-overlay` (popovers, menus),
-`shadow-modal` (dialogs, sheets).
+The four `--elevation-*` tokens still exist and are all `0 0 #0000`, and the whole
+Tailwind `shadow-*` scale points at them, so a stray `shadow-md` lands on nothing
+rather than on Tailwind's default. Do not give them a value. `pnpm lint:design`
+fails on any `shadow-sm|md|lg|…` or coloured `shadow-black/15`.
 
-Shadows are ink, not black: each carries the neutral hue and stacks a tight
-contact shadow under a wide ambient one. Two more are for controls, not
-surfaces: `shadow-key` is the lit top edge on a filled button, and `shadow-field`
-is the resting shadow of a form control.
+Two things are box-shadows in CSS and lines on screen, and are fine: the focus
+ring, and a zero-blur outline such as `shadow-[0_0_0_1px_var(--brand)]` on a
+selected card or the inset hairline on a pinned column.
+
+## Floating surfaces are inverted
+
+Everything that floats from a trigger is dark in light mode: dropdown and context
+menus, selects, popovers, hover cards, tooltips. Dialogs and sheets are not — they
+replace the page rather than float over it, and follow the theme.
+
+The primitives do this themselves by putting the `dark` class on the positioner,
+so the popup and everything in it resolves the dark token set. Never write `dark`
+on a `PopoverContent` by hand. A popover that genuinely must follow the theme
+takes `inverted={false}`; expect to be asked why.
+
+Because the content is in a dark scope in both themes, anything inside a popover
+must be built from tokens. A hard-coded light value that "works" in light mode is
+wrong here even before dark mode is considered.
 
 ## Controls
 
 `ui-field` draws the resting box of every form control — ground, hairline,
-hover, disabled. `Input`, `Textarea`, `SelectTrigger` and `NumberField` all spend
+hover, disabled. The ground is `--field`, a filled tint that never shares a value
+with the canvas or the card, so an empty form reads as slots to type into. It sits
+below the surface in light and above it in dark and inside inverted popovers. `Input`, `Textarea`, `SelectTrigger` and `NumberField` all spend
 it, which is what makes them one family; before, they were three treatments. A
 new control takes `ui-field` plus one of the focus utilities and nothing else.
 
@@ -432,7 +452,7 @@ is deliberately visible in review; a silent exception is how the last set eroded
 ## Checking your work
 
 ```bash
-pnpm lint:design      # the four rules, with the token to use instead
+pnpm lint:design      # the six rules, with the token to use instead
 pnpm lint             # oxlint
 pnpm typecheck        # Badge variants and status phases are typed
 ```

@@ -124,7 +124,7 @@ function DotHazmatNameField({ onSelect }: { onSelect: (option: DotHazmatReferenc
               }}
             />
             {showDropdown && (
-              <div className="bg-popover ring-foreground/10 absolute top-full left-0 z-50 mt-1 w-full overflow-hidden rounded-md shadow-md ring-1">
+              <div className="bg-popover ring-foreground/10 absolute top-full left-0 z-50 mt-1 w-full overflow-hidden rounded-md ring-1">
                 <div className="max-h-[250px] overflow-y-auto p-1">
                   {results.map((option) => (
                     <button
@@ -150,7 +150,7 @@ function DotHazmatNameField({ onSelect }: { onSelect: (option: DotHazmatReferenc
               </div>
             )}
             {enabled && isLoading && (
-              <div className="bg-popover ring-foreground/10 absolute top-full left-0 z-50 mt-1 flex w-full justify-center rounded-md p-3 shadow-md ring-1">
+              <div className="bg-popover ring-foreground/10 absolute top-full left-0 z-50 mt-1 flex w-full justify-center rounded-md p-3 ring-1">
                 <Spinner className="size-4" />
               </div>
             )}

@@ -9,7 +9,7 @@ export function CommandPaletteSkeleton() {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
       <div className="fixed inset-0 bg-scrim" />
-      <div className="border-border bg-popover relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-lg border shadow-lg">
+      <div className="border-border bg-popover relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-lg border">
         <div className="border-border flex h-11 items-center gap-2 border-b px-3">
           <Skeleton className="size-4 shrink-0 rounded" />
           <Skeleton className="h-3.5 w-48 rounded" />

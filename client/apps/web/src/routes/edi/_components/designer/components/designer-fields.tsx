@@ -331,7 +331,7 @@ function PathPicker<TOption>({
           />
         }
       />
-      <PopoverContent sideOffset={7} className="dark w-(--anchor-width) rounded-md p-0">
+      <PopoverContent sideOffset={7} className="w-(--anchor-width) rounded-md p-0">
         <AutocompleteCommandContent<TOption>
           open={open}
           link={link}

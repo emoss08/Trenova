@@ -144,7 +144,7 @@ export function NotificationItem({
 
       <div
         className={cn(
-          "border-border bg-background absolute top-2 right-3 flex items-center gap-0.5 rounded-md border p-0.5 shadow-sm",
+          "border-border bg-background absolute top-2 right-3 flex items-center gap-0.5 rounded-md border p-0.5",
           "opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100",
         )}
       >

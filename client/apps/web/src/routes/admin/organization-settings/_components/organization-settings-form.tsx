@@ -329,7 +329,7 @@ function LogoForm({
                 type="button"
                 onClick={handleRemoveLogo}
                 disabled={isRemovingLogo}
-                className="bg-background/95 text-foreground hover:bg-muted absolute top-0 right-0 z-10 inline-flex size-6 translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full shadow-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                className="bg-background/95 text-foreground hover:bg-muted absolute top-0 right-0 z-10 inline-flex size-6 translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label={t("Remove logo")}
                 title={t("Remove logo")}
               >

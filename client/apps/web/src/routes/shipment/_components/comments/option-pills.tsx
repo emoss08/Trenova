@@ -44,7 +44,7 @@ export function CommentOptionPill<T extends string>({
           {label}: {selected?.label ?? value}
         </TooltipContent>
       </Tooltip>
-      <PopoverContent align="start" className="dark max-h-60 w-44 gap-1 overflow-y-auto p-1">
+      <PopoverContent align="start" className="max-h-60 w-44 gap-1 overflow-y-auto p-1">
         <div className="text-2xs text-muted-foreground px-2 py-1 font-medium">{label}</div>
         {options.map((option) => (
           <button

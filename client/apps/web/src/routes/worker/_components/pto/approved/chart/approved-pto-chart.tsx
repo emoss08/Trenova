@@ -13,7 +13,7 @@ const CustomTooltip = ({ data, id, value }: any) => {
   const workers = data.workers?.[id] || [];
 
   return (
-    <div className="border-border bg-popover text-popover-foreground min-w-37.5 rounded-lg border p-3 shadow-xl">
+    <div className="border-border bg-popover text-popover-foreground min-w-37.5 rounded-lg border p-3">
       <div className="mb-2 flex items-center gap-2">
         <div className="text-sm font-semibold">{id}</div>
         <div className="text-sm opacity-70">({value})</div>

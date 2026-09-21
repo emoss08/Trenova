@@ -103,7 +103,7 @@ export default function DataTableConfigManager({
           </Button>
         }
       />
-      <PopoverContent align="end" className="dark w-72 gap-1 p-0">
+      <PopoverContent align="end" className="w-72 gap-1 p-0">
         {hasViews ? (
           <ScrollArea className="flex max-h-[calc(100vh-15rem)] flex-1 flex-col">
             {myViews.length > 0 && (

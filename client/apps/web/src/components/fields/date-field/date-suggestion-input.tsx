@@ -299,7 +299,7 @@ export function DateSuggestionInput({
         createPortal(
           <div
             ref={dropdownRef}
-            className="animate-in bg-popover fade-in-0 fixed z-[9999] rounded-md border p-0 shadow-md"
+            className="animate-in bg-popover fade-in-0 fixed z-[9999] rounded-md border p-0"
             tabIndex={-1}
           >
             {suggestions.length > 0 ? (

@@ -45,7 +45,7 @@ export function DataTableViewOptions<TData extends RowData>({
           </Button>
         }
       />
-      <PopoverContent className="dark w-48 p-0" align="end">
+      <PopoverContent className="w-48 p-0" align="end">
         <Command>
           <CommandInput className="h-7" placeholder={t("Search columns...")} />
           <CommandList>

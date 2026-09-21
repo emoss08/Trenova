@@ -378,7 +378,7 @@ function DialogShell({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="grid h-[80vh] max-h-200 w-[90vw] grid-cols-1 gap-0 overflow-hidden p-0 shadow-lg sm:max-w-275 lg:grid-cols-[minmax(0,440px)_1fr]"
+        className="grid h-[80vh] max-h-200 w-[90vw] grid-cols-1 gap-0 overflow-hidden p-0 sm:max-w-275 lg:grid-cols-[minmax(0,440px)_1fr]"
       >
         <FormProvider {...form}>
           <Form

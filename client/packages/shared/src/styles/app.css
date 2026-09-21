@@ -126,7 +126,6 @@
   background-color: var(--field);
   border: 1px solid var(--input);
   border-radius: var(--radius-control);
-  box-shadow: var(--elevation-field);
   transition-property: border-color, box-shadow, background-color;
   transition-duration: 140ms;
   transition-timing-function: var(--ease-swift);
@@ -138,7 +137,6 @@
   &:disabled,
   &[data-disabled] {
     background-color: var(--sunken);
-    box-shadow: none;
   }
 }
 

@@ -58,7 +58,7 @@ export function MapOptionsPopover({
           render={
             <PopoverTrigger
               render={
-                <Button variant="outline" size="icon" className="bg-background size-7 shadow-sm" />
+                <Button variant="outline" size="icon" className="bg-background size-7" />
               }
             />
           }

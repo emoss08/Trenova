@@ -125,7 +125,7 @@ function AITextarea({ className, isInvalid, onChange, ...props }: TextareaProps)
                     onClick={handleSubmit}
                     className={cn(
                       "inline-flex items-center gap-1.5",
-                      "rounded-md border px-2 py-0.5 text-xs font-medium shadow-xs",
+                      "rounded-md border px-2 py-0.5 text-xs font-medium",
                       "animate-fadeIn transition-colors duration-200 hover:bg-surface-hover",
                       currentItem.colors.bg,
                       currentItem.colors.border,

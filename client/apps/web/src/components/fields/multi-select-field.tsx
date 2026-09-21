@@ -681,7 +681,7 @@ export function MultiSelectAutocomplete<T>({
         />
         <PopoverContent
           sideOffset={7}
-          className={cn("dark w-(--anchor-width) rounded-md p-0", className)}
+          className={cn("w-(--anchor-width) rounded-md p-0", className)}
         >
           <Command shouldFilter={false} className="overflow-hidden">
             <CommandInput

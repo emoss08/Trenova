@@ -118,11 +118,13 @@
   --raised: oklch(0.996 0.001 var(--hue-neutral));
   --overlay: oklch(0.996 0.001 var(--hue-neutral));
 
-  /* The ground a form control sits on. Near-white in light, where a field is
-     a lit slot in the panel; a step below the card in dark, where it is a well
-     cut into it. One token so an input, a select and a number field cannot
-     each pick their own. */
-  --field: oklch(0.996 0.001 var(--hue-neutral));
+  /* The ground a form control sits on. A field is filled: it never shares a
+     value with the canvas or the card, so an empty form still reads as a set
+     of slots to type into rather than as lines on a page. In dark, and inside
+     the inverted popovers, the fill sits above the surface instead of below
+     it, because there is no room left beneath. One token so an input, a
+     select and a number field cannot each pick their own. */
+  --field: oklch(0.955 0.008 var(--hue-neutral));
 
   --surface-hover: oklch(0.955 0.007 var(--hue-neutral));
   --surface-active: oklch(0.928 0.01 var(--hue-neutral));
@@ -251,32 +253,20 @@
   --ring-danger: oklch(0.545 0.205 25);
 
   /* Elevation ------------------------------------------------------------
-     Four steps, and defined in BOTH themes — light mode previously had no
-     --shadow-* at all and silently fell through to Tailwind's defaults while
-     dark mode used custom values, so elevation did not match across themes.
+     There is none. Trenova draws no shadows: a surface is told from the one
+     beneath it by a hairline and a step in lightness, and a floating surface
+     by its ring and by being inverted. A shadow is a blur, and a blur is the
+     one thing on a dense screen that cannot be aligned to anything.
 
-     Enterprise surfaces are flat: a card is a border, not a shadow. Shadow is
-     reserved for things that genuinely float above the page.
-
-     The shadows are ink, not black. A black shadow on a cool ground reads as
-     a grey smudge; one that carries the neutral hue reads as depth. Each step
-     stacks a tight contact shadow under a wide ambient one, because a single
-     blur is what makes a popover look pasted on. */
+     The four names stay, and every `shadow-*` utility in the mapping block
+     still points at them, so an existing `shadow-md` lands on nothing rather
+     than on Tailwind's default. Do not give these a value. The focus ring and
+     a zero-blur selection outline are box-shadows in CSS but lines on screen,
+     and are not what this is about. */
   --elevation-flat: 0 0 #0000;
-  --elevation-raised:
-    0 1px 1px oklch(0.205 0.03 260 / 0.04), 0 1px 3px oklch(0.205 0.03 260 / 0.06);
-  --elevation-overlay:
-    0 1px 1px oklch(0.205 0.03 260 / 0.05), 0 4px 8px -2px oklch(0.205 0.03 260 / 0.08),
-    0 12px 28px -8px oklch(0.205 0.03 260 / 0.14);
-  --elevation-modal:
-    0 1px 2px oklch(0.205 0.03 260 / 0.06), 0 8px 16px -4px oklch(0.205 0.03 260 / 0.1),
-    0 32px 64px -16px oklch(0.205 0.03 260 / 0.26);
-
-  /* The lit edge on a filled control: a hairline of light along the top and a
-     contact shadow below, so a button reads as a key rather than a rectangle. */
-  --elevation-key:
-    inset 0 1px 0 oklch(1 0 0 / 0.14), 0 1px 2px oklch(0.205 0.03 260 / 0.18);
-  --elevation-field: 0 1px 1px oklch(0.205 0.03 260 / 0.04);
+  --elevation-raised: 0 0 #0000;
+  --elevation-overlay: 0 0 #0000;
+  --elevation-modal: 0 0 #0000;
 
   /* Charts ---------------------------------------------------------------
      Eight series on the categorical hue family. Light and dark differ only in
@@ -399,7 +389,7 @@
   --raised: oklch(0.228 0.012 var(--hue-neutral));
   --overlay: oklch(0.228 0.012 var(--hue-neutral));
 
-  --field: oklch(0.175 0.009 var(--hue-neutral));
+  --field: oklch(0.255 0.013 var(--hue-neutral));
 
   --surface-hover: oklch(0.255 0.013 var(--hue-neutral));
   --surface-active: oklch(0.295 0.016 var(--hue-neutral));
@@ -410,7 +400,7 @@
 
   --foreground: oklch(0.955 0.006 var(--hue-neutral));
   --foreground-muted: oklch(0.76 0.014 var(--hue-neutral));
-  --foreground-subtle: oklch(0.63 0.018 var(--hue-neutral));
+  --foreground-subtle: oklch(0.645 0.018 var(--hue-neutral));
 
   /* Dark tone fills are the LIGHT end of their ramp — success sits at 0.72 —
      so the near-white this held before drew 2.5:1 on a solid badge. The ink
@@ -473,19 +463,6 @@
   --ring: oklch(0.69 0.155 var(--hue-brand));
   --ring-opacity: 0.42;
   --ring-danger: oklch(0.65 0.2 25);
-
-  /* Heavier than light mode: on a dark ground a shadow has to carry more of
-     the separation, because the lightness gap between surfaces is smaller. */
-  --elevation-raised: 0 1px 1px oklch(0 0 0 / 0.4), 0 1px 3px oklch(0 0 0 / 0.45);
-  --elevation-overlay:
-    0 1px 1px oklch(0 0 0 / 0.45), 0 4px 8px -2px oklch(0 0 0 / 0.5),
-    0 12px 28px -8px oklch(0 0 0 / 0.6);
-  --elevation-modal:
-    0 1px 2px oklch(0 0 0 / 0.55), 0 8px 16px -4px oklch(0 0 0 / 0.55),
-    0 32px 64px -16px oklch(0 0 0 / 0.8);
-  --elevation-key:
-    inset 0 1px 0 oklch(1 0 0 / 0.3), 0 1px 2px oklch(0 0 0 / 0.5);
-  --elevation-field: inset 0 1px 1px oklch(0 0 0 / 0.25);
 
   --chart-1: var(--brand);
   --chart-2: var(--accent-amber);
@@ -866,8 +843,6 @@
   --shadow-raised: var(--elevation-raised);
   --shadow-overlay: var(--elevation-overlay);
   --shadow-modal: var(--elevation-modal);
-  --shadow-key: var(--elevation-key);
-  --shadow-field: var(--elevation-field);
 
   /* Tailwind's own shadow scale, pointed at the four steps so an existing
      `shadow-sm` lands on a defined value in both themes rather than falling

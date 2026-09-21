@@ -111,7 +111,7 @@ export function TimelineBarItem({
 "ui-focus-ring group/bar absolute flex cursor-pointer items-center overflow-hidden rounded border px-1.5 text-left transition-[background-color,box-shadow,opacity] outline-none",
           BAR_TONE_CLASS[bar.tone],
           bar.isCanceled && "border-dashed opacity-60",
-          isHighlighted && "ring-foreground/25 shadow-md ring-1",
+          isHighlighted && "ring-foreground/25 ring-1",
           dimmed && "opacity-25",
           isDragging && "opacity-40",
           draggable && "cursor-grab active:cursor-grabbing",

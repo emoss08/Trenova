@@ -465,7 +465,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
         />
         <PopoverContent
           sideOffset={7}
-          className={cn("dark w-(--anchor-width) rounded-md p-0", className)}
+          className={cn("w-(--anchor-width) rounded-md p-0", className)}
         >
           <AutocompleteCommandContent
             open={open}

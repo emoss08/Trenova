@@ -581,7 +581,7 @@ function EldGraph({
           </svg>
           {hover && hovered && hoveredMeta ? (
             <div
-              className="bg-foreground text-background pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md px-3 py-1.5 text-xs shadow-md"
+              className="bg-foreground text-background pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md px-3 py-1.5 text-xs"
               style={{ left: hover.x, top: hover.y - 8 }}
             >
               <p className="font-medium">{t(hoveredMeta.label)}</p>

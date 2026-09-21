@@ -110,7 +110,7 @@ export function DocumentGridCard({
           <LazyImage
             src={previewUrl ?? ""}
             alt={document.originalName}
-            className="size-[250px] shadow-md"
+            className="size-[250px]"
             onError={() => setImageError(true)}
           />
         ) : isGeneratingThumbnail ? (
@@ -183,7 +183,7 @@ export function DocumentGridCard({
       )}
 
       {hasActions && (
-        <div className="bg-background/80 absolute top-1.5 right-1.5 rounded-md border p-0.5 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">
+        <div className="bg-background/80 absolute top-1.5 right-1.5 rounded-md border p-0.5 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
           <DropdownMenu>
             <DropdownMenuTrigger
               render={

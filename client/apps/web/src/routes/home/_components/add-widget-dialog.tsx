@@ -475,7 +475,7 @@ function WidgetCard({
 "ui-focus-ring",
               disabled
                 ? "cursor-not-allowed opacity-45"
-                : "hover:border-brand/45 hover:bg-accent/30 hover:shadow-sm",
+                : "hover:border-brand/45 hover:bg-accent/30",
               added && "border-success/60 bg-success/5",
             )}
           />
@@ -540,7 +540,7 @@ function AddAffordance({ added, hidden }: { added: boolean; hidden: boolean }) {
     <span
       aria-hidden
       className={cn(
-        "absolute top-1 right-1 flex size-5 items-center justify-center rounded-full shadow-sm transition-all duration-150",
+        "absolute top-1 right-1 flex size-5 items-center justify-center rounded-full transition-all duration-150",
         added
           ? "bg-success text-background scale-100 opacity-100"
           : "bg-brand text-brand-foreground scale-90 opacity-0 group-hover/widget-card:scale-100 group-hover/widget-card:opacity-100 group-focus-visible/widget-card:scale-100 group-focus-visible/widget-card:opacity-100",

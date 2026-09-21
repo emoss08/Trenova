@@ -6,11 +6,11 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-ink text-ink-foreground shadow-key hover:bg-ink-hover active:bg-ink-active",
+          "bg-ink text-ink-foreground hover:bg-ink-hover active:bg-ink-active",
         destructive:
-          "bg-danger text-foreground-on-solid shadow-key hover:bg-danger-hover [--ring:var(--ring-danger)]",
+          "bg-danger text-foreground-on-solid hover:bg-danger-hover [--ring:var(--ring-danger)]",
         outline:
-          "border border-input bg-card shadow-raised hover:border-border-strong hover:bg-surface-hover active:bg-surface-active",
+          "border border-input bg-card hover:border-border-strong hover:bg-surface-hover active:bg-surface-active",
         secondary:
           "bg-surface-active/70 text-secondary-foreground hover:bg-surface-active active:bg-border",
         ghost: "hover:bg-surface-hover hover:text-accent-foreground active:bg-surface-active",

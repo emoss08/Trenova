@@ -23,7 +23,7 @@ export function DataTableRefreshPill({ visible, onRefresh, onDismiss }: DataTabl
           transition={{ duration: 0.15, ease: "easeOut" }}
           className="absolute top-2 left-1/2 z-30 -translate-x-1/2"
         >
-          <div className="border-border bg-popover flex items-center gap-0.5 rounded-full border py-0.5 pr-0.5 pl-1 shadow-md">
+          <div className="border-border bg-popover flex items-center gap-0.5 rounded-full border py-0.5 pr-0.5 pl-1">
             <Button
               type="button"
               variant="ghost"

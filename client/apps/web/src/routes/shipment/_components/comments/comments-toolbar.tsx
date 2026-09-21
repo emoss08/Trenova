@@ -171,7 +171,7 @@ export function CommentsToolbar({
               </Button>
             }
           />
-          <PopoverContent align="end" className="dark max-h-80 w-52 gap-1 overflow-y-auto p-1">
+          <PopoverContent align="end" className="max-h-80 w-52 gap-1 overflow-y-auto p-1">
             <div className="text-2xs text-muted-foreground px-2 py-1 font-medium">
               {t("Quick filters")}
             </div>

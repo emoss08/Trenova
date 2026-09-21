@@ -119,6 +119,8 @@ function auditTheme(theme, p) {
   pair("foreground-subtle", "card", 4.5, "tertiary text on a panel");
   pair("foreground-subtle", "canvas", 4.5, "tertiary text on the page ground");
   pair("foreground-subtle", "sunken", 4.5, "column headers");
+  pair("foreground", "field", 7, "typed text in a field");
+  pair("foreground-subtle", "field", 4.5, "a placeholder");
 
   for (const t of [...TONES, "brand"]) {
     pair(`${t}-subtle-foreground`, `${t}-subtle`, 4.5, `the ${t} soft badge`);
