@@ -5,6 +5,7 @@ import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
+import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -87,8 +88,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const t = useT();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const setLastAgentId = useDeskStore((state) => state.setLastAgentId);
-  const setOpeningQuestion = useDeskStore((state) => state.setOpeningQuestion);
+  const setLastAgentId = useAssistantStore((state) => state.setLastAgentId);
+  const setOpeningQuestion = useAssistantStore((state) => state.setOpeningQuestion);
   const pane = useDeskStore((state) => state.pane);
   const setPane = useDeskStore((state) => state.setPane);
   const togglePane = useDeskStore((state) => state.togglePane);

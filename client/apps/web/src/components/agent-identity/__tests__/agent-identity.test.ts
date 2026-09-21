@@ -2,6 +2,8 @@ import {
   AGENT_ACCENT_ORDER,
   AGENT_ACCENTS,
   AGENT_ICONS,
+  agentMonogram,
+  agentSigil,
   resolveAgentIdentity,
 } from "@/components/agent-identity/agent-identity";
 import { describe, expect, it } from "vitest";
@@ -15,7 +17,7 @@ describe("resolveAgentIdentity", () => {
       template: "BillingAssistant",
     });
 
-    expect(identity).toEqual({ icon: "gauge", accent: "rose" });
+    expect(identity).toMatchObject({ icon: "gauge", accent: "rose", iconChosen: true });
   });
 
   it("falls back to the starter for the icon and the id for the accent", () => {
@@ -77,5 +79,67 @@ describe("template icons", () => {
       expect(TEMPLATE_ICON[kind], kind).toBeDefined();
     }
     expect(agentTemplateKindSchema.options).toContain("CashApplication");
+  });
+});
+
+describe("agentMonogram", () => {
+  it("takes the initials of the first two words", () => {
+    expect(agentMonogram("Billing exceptions")).toBe("BE");
+    expect(agentMonogram("Night dispatch desk")).toBe("ND");
+  });
+
+  it("takes two letters from a single word", () => {
+    expect(agentMonogram("Dispatch")).toBe("DI");
+  });
+
+  it("has nothing to show for an unnamed agent", () => {
+    expect(agentMonogram("")).toBe("");
+    expect(agentMonogram("   ")).toBe("");
+    expect(agentMonogram(null)).toBe("");
+  });
+});
+
+describe("agentSigil", () => {
+  it("is the same every time for the same agent", () => {
+    expect(agentSigil("agdef_01JABC")).toEqual(agentSigil("agdef_01JABC"));
+  });
+
+  it("stays on the declared vocabulary", () => {
+    for (let index = 0; index < 200; index++) {
+      const sigil = agentSigil(`agdef_${index}`);
+      expect([0, 45, 90, 135, 180, 225, 270, 315]).toContain(sigil.rotation);
+      expect([14, 22, 30]).toContain(sigil.length);
+    }
+  });
+
+  // The reason the sigil exists. With eight accents and a fallback icon,
+  // unconfigured agents collide on both constantly; the arc is what is left
+  // to tell them apart, so it has to actually spread.
+  it("spreads agents across its variants", () => {
+    const seen = new Set<string>();
+    for (let index = 0; index < 200; index++) {
+      const sigil = agentSigil(`agdef_${index}`);
+      seen.add(`${sigil.rotation}:${sigil.length}`);
+    }
+    expect(seen.size).toBeGreaterThan(18);
+  });
+});
+
+describe("resolveAgentIdentity icon provenance", () => {
+  it("knows an icon the agent chose", () => {
+    expect(resolveAgentIdentity({ id: "agdef_1", icon: "truck" }).iconChosen).toBe(true);
+  });
+
+  it("knows an icon its starter implies", () => {
+    expect(
+      resolveAgentIdentity({ id: "agdef_1", template: "ComplianceAssistant" }).iconChosen,
+    ).toBe(true);
+  });
+
+  // The fallback is the same robot for every unconfigured agent, so the mark
+  // has to know it is a fallback and draw initials instead.
+  it("knows when it is only the fallback", () => {
+    expect(resolveAgentIdentity({ id: "agdef_1", name: "Night dispatch" }).iconChosen).toBe(false);
+    expect(resolveAgentIdentity({ id: "agdef_1", icon: "skull" }).iconChosen).toBe(false);
   });
 });

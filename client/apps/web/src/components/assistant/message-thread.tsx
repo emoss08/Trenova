@@ -69,7 +69,7 @@ export function MessageThread({
   onWorkingChange,
   openingQuestion,
   onOpeningQuestionSent,
-  spine = false,
+  agentAccent = false,
 }: {
   thread: AssistantThread;
   agent: AgentDefinitionRow | null;
@@ -89,8 +89,8 @@ export function MessageThread({
   /** A question asked before this thread existed; sent once, as its first message. */
   openingQuestion?: string;
   onOpeningQuestionSent?: () => void;
-  /** Draws the agent's accent down the gutter, so the thread reads as its work. */
-  spine?: boolean;
+  /** Washes the thread in the agent's accent, so it reads as that agent's work. */
+  agentAccent?: boolean;
 }) {
   const t = useT();
   const dismissed = useAssistantStore((state) => state.dismissedSuggestions);
@@ -529,7 +529,13 @@ export function MessageThread({
 
   return (
     <AssistantAgentProvider agent={agent}>
-      {spine ? <AgentGutter agent={agent}>{body}</AgentGutter> : body}
+      {agentAccent ? (
+        <AgentGutter agent={agent} working={isActive}>
+          {body}
+        </AgentGutter>
+      ) : (
+        body
+      )}
     </AssistantAgentProvider>
   );
 }

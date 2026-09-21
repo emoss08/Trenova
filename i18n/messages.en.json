@@ -11469,12 +11469,11 @@
     ]
   },
   "Agents": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -14879,7 +14878,7 @@
     ]
   },
   "Answers only": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -17379,8 +17378,8 @@
       "ts"
     ],
     "areas": [
-      "routes/admin",
-      "routes/desk"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Ask PC*Miler for the state-by-state mileage report on every move route. Needed for IFTA returns.": {
@@ -17488,7 +17487,7 @@
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "apps/web/components"
     ]
   },
   "Ask: {0}": {
@@ -179281,15 +179280,6 @@
       "apps/web/components"
     ]
   },
-  "Where a shipment is, who is free, what is holding an invoice, how to do something.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Where and when": {
     "sites": 1,
     "scope": [
@@ -189760,7 +189750,7 @@
     ]
   },
   "{0, plural, one {# tool} other {# tools}}": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],

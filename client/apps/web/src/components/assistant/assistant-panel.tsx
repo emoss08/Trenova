@@ -27,6 +27,7 @@ import { AssistantHeader } from "./assistant-header";
 import { AssistantHome } from "./assistant-home";
 import { MessageThread } from "./message-thread";
 import { ThreadSidebar } from "./thread-sidebar";
+import { useOpeningQuestion } from "./use-opening-question";
 
 type AssistantPanelProps = {
   expanded: boolean;
@@ -45,6 +46,8 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
 
   const activeThreadId = useAssistantStore((state) => state.activeThreadId);
   const setActiveThreadId = useAssistantStore((state) => state.setActiveThreadId);
+  const setLastAgentId = useAssistantStore((state) => state.setLastAgentId);
+  const setOpeningQuestion = useAssistantStore((state) => state.setOpeningQuestion);
   const [deleting, setDeleting] = useState<AssistantThread | null>(null);
 
   const threadsQuery = useQuery(queries.assistant.threads());
@@ -60,13 +63,25 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
     ? (agentsById.get(activeThread.agentDefinitionId) ?? null)
     : null;
 
+  // Keyed on the active thread, and harmlessly inert when there is none:
+  // an empty id matches no stored question.
+  const opening = useOpeningQuestion(activeThreadId ?? "");
+
   const refreshThreads = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey });
   }, [queryClient]);
 
   const startMutation = useApiMutation({
-    mutationFn: (agentId: string) => apiService.assistantService.startThread(agentId),
-    onSuccess: async (thread) => {
+    mutationFn: ({ agentId }: { agentId: string; question?: string }) =>
+      apiService.assistantService.startThread(agentId),
+    onSuccess: async (thread, { agentId, question }) => {
+      setLastAgentId(agentId);
+      // Handed to the thread rather than sent from here, on the same rule
+      // the Desk uses: only the conversation knows it is empty and that its
+      // history has loaded.
+      if (question !== undefined && question !== "") {
+        setOpeningQuestion({ threadId: thread.id, text: question });
+      }
       setActiveThreadId(thread.id);
       await refreshThreads();
     },
@@ -97,7 +112,7 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
         threads={threads}
         expanded={expanded}
         isStarting={startMutation.isPending}
-        onStart={(agentId) => startMutation.mutate(agentId)}
+        onStart={(agentId) => startMutation.mutate({ agentId })}
         onSelectThread={setActiveThreadId}
         onDeleteThread={setDeleting}
         onDownloadTranscript={(thread) => downloadAssistantTranscript(thread.id)}
@@ -120,9 +135,9 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
             onSelect={setActiveThreadId}
             onStart={() => {
               if (activeAgent) {
-                startMutation.mutate(activeAgent.id);
+                startMutation.mutate({ agentId: activeAgent.id });
               } else if (agents.length > 0) {
-                startMutation.mutate(agents[0].id);
+                startMutation.mutate({ agentId: agents[0].id });
               }
             }}
             onDelete={setDeleting}
@@ -140,9 +155,12 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
               expanded={expanded}
               onStartNew={
                 activeAgent && !startMutation.isPending
-                  ? () => startMutation.mutate(activeAgent.id)
+                  ? () => startMutation.mutate({ agentId: activeAgent.id })
                   : undefined
               }
+              openingQuestion={opening.openingQuestion}
+              onOpeningQuestionSent={opening.onOpeningQuestionSent}
+              agentAccent
             />
           ) : (
             <AssistantHome
@@ -151,7 +169,7 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
               isLoading={isLoading}
               isStarting={startMutation.isPending}
               canManageAgents={canManageAgents}
-              onStart={(agentId) => startMutation.mutate(agentId)}
+              onAsk={(agentId, question) => startMutation.mutate({ agentId, question })}
               onSelectThread={setActiveThreadId}
             />
           )}

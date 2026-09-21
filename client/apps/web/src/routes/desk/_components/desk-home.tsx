@@ -1,10 +1,9 @@
-import { AGENT_ACCENTS, resolveAgentIdentity } from "@/components/agent-identity/agent-identity";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
-import { suggestionsFor } from "@/components/assistant/suggestions";
+import { AskBox } from "@/components/assistant/ask-box";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
-import { useDeskStore } from "@/stores/desk-store";
+import { useAssistantStore } from "@/stores/assistant-store";
 import type { AssistantThread } from "@/types/assistant";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -14,14 +13,13 @@ import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ArrowRightIcon, ArrowUpIcon, BotIcon, InboxIcon, PlugZapIcon } from "lucide-react";
-import { useMemo, useState, type CSSProperties, type FormEvent } from "react";
+import { ArrowRightIcon, BotIcon, InboxIcon, PlugZapIcon } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { usePendingDecisionSummary } from "./decisions/use-pending-decisions";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 const RECENT_LIMIT = 5;
-const MAX_SUGGESTIONS = 3;
 
 export type DeskHomeProps = {
   agents: AgentDefinitionRow[];
@@ -48,6 +46,7 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   const t = useT();
   const [now] = useState(nowInSeconds);
   const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
+  const lastAgentId = useAssistantStore((state) => state.lastAgentId);
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { data: attention } = useAttentionSummary();
@@ -87,7 +86,14 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
         </p>
       </header>
 
-      {agents.length > 0 && <AskBar agents={agents} isStarting={isStarting} onStart={onStart} />}
+      {agents.length > 0 && (
+        <AskBox
+          agents={agents}
+          defaultAgentId={lastAgentId}
+          disabled={isStarting}
+          onAsk={(agentId, question) => onStart(agentId, question)}
+        />
+      )}
 
       {canDecide && waiting > 0 && (
         <Link
@@ -167,125 +173,6 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <h2 className="text-muted-foreground text-xs font-medium">{children}</h2>;
-}
-
-/**
- * The front door: a question, and who it goes to.
- *
- * Asking here opens a conversation and sends the question into it, so the
- * Desk answers the first thing typed at it rather than depositing a person
- * in an empty thread with their sentence still in the box. The agent it goes
- * to is the last one talked to, which is right far more often than any
- * cleverer rule, and is one click to change.
- */
-function AskBar({
-  agents,
-  isStarting,
-  onStart,
-}: {
-  agents: AgentDefinitionRow[];
-  isStarting: boolean;
-  onStart: (agentId: string, question?: string) => void;
-}) {
-  const t = useT();
-  const lastAgentId = useDeskStore((state) => state.lastAgentId);
-  const preferred = agents.find((agent) => agent.id === lastAgentId) ?? agents[0];
-  const [agentId, setAgentId] = useState(preferred.id);
-  const [question, setQuestion] = useState("");
-
-  const agent = agents.find((candidate) => candidate.id === agentId) ?? preferred;
-  const accent = AGENT_ACCENTS[resolveAgentIdentity(agent).accent];
-  const suggestions = useMemo(
-    () => suggestionsFor(agent.template).slice(0, MAX_SUGGESTIONS),
-    [agent.template],
-  );
-
-  const ask = (text: string) => {
-    const trimmed = text.trim();
-    if (trimmed === "" || isStarting) {
-      return;
-    }
-    onStart(agent.id, trimmed);
-  };
-
-  const onSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    ask(question);
-  };
-
-  return (
-    <div className="flex flex-col gap-3" style={{ "--agent-accent": accent } as CSSProperties}>
-      <form
-        onSubmit={onSubmit}
-        className={cn(
-          "bg-desk-column rounded-surface ui-lift flex flex-col gap-2 p-2.5",
-          "focus-within:shadow-[0_0_0_1px_var(--agent-accent)] transition-shadow",
-        )}
-      >
-        <textarea
-          value={question}
-          onChange={(event) => setQuestion(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              ask(question);
-            }
-          }}
-          rows={2}
-          placeholder={t("Ask {0} anything about your operation", agent.name)}
-          aria-label={t("Ask {0} anything about your operation", agent.name)}
-          className="placeholder:text-muted-foreground max-h-48 min-h-14 w-full resize-none bg-transparent px-1.5 py-1 text-sm outline-none"
-        />
-
-        <div className="flex items-center gap-1.5">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
-            {agents.map((candidate) => (
-              <button
-                key={candidate.id}
-                type="button"
-                aria-pressed={candidate.id === agent.id}
-                onClick={() => setAgentId(candidate.id)}
-                className={cn(
-                  "ui-focus-ring flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1 text-xs transition-colors",
-                  candidate.id === agent.id
-                    ? "bg-surface-selected text-foreground"
-                    : "text-muted-foreground hover:bg-surface-hover",
-                )}
-              >
-                <AgentTile agent={candidate} size="xs" />
-                <span className="max-w-32 truncate">{candidate.name}</span>
-              </button>
-            ))}
-          </div>
-
-          <Button
-            type="submit"
-            size="icon-sm"
-            disabled={isStarting || question.trim() === ""}
-            aria-label={t("Ask")}
-            className="shrink-0"
-          >
-            <ArrowUpIcon className="size-4" />
-          </Button>
-        </div>
-      </form>
-
-      <ul className="flex flex-wrap gap-1.5">
-        {suggestions.map((suggestion) => (
-          <li key={suggestion.prompt}>
-            <button
-              type="button"
-              disabled={isStarting}
-              onClick={() => ask(suggestion.prompt)}
-              className="ui-focus-ring text-muted-foreground hover:text-foreground hover:bg-surface-hover ring-foreground/10 rounded-full px-2.5 py-1 text-xs ring-1 transition-colors disabled:opacity-50"
-            >
-              {t(suggestion.label)}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
 }
 
 function AgentCard({

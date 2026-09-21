@@ -1151,7 +1151,7 @@
     z-index: -1;
     pointer-events: none;
     background: radial-gradient(
-      120% 60% at 50% 0%,
+      120% var(--agent-glow-extent, 60%) at 50% 0%,
       color-mix(
           in oklch,
           var(--agent-accent, var(--brand)) calc(var(--desk-glow-opacity) * 100%),
@@ -1160,7 +1160,10 @@
         0%,
       transparent 70%
     );
-    opacity: 0;
+    /* At rest the wash says who; working, it says who and that they are
+       going. A surface that only wants the second leaves the rest at zero,
+       which is the default. */
+    opacity: var(--agent-glow-rest, 0);
     transition: opacity 600ms var(--ease-settle);
   }
 
