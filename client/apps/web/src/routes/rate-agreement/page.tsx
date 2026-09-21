@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
 
@@ -10,18 +9,17 @@ export function RateAgreementPage() {
   const t = useT();
 
   return (
-    <AdminPageLayout>
-      <PageHeader
-        title={t("Rate Agreements")}
-        description={t(
+    <PageLayout
+      pageHeaderProps={{
+        title: t("Rate Agreements"),
+        description: t(
           "The contracts that decide what a shipment costs, and the lanes each one prices",
-        )}
-      />
-      <div className="p-4">
-        <DataTableLazyComponent>
-          <Table />
-        </DataTableLazyComponent>
-      </div>
-    </AdminPageLayout>
+        ),
+      }}
+    >
+      <DataTableLazyComponent>
+        <Table />
+      </DataTableLazyComponent>
+    </PageLayout>
   );
 }

@@ -1,6 +1,7 @@
 import { cn } from "@trenova/shared/lib/utils";
 import type React from "react";
-import { type DeltaTone, toneVar } from "./tone";
+import { KPI_STRIP_CELL_CLASS, KpiDelta, useInKpiStrip } from "./kpi-strip";
+import type { DeltaTone } from "./tone";
 
 type Density = "default" | "compact";
 
@@ -12,10 +13,18 @@ type KpiCardProps = {
 };
 
 export function KpiCard({ span, density = "default", className, children }: KpiCardProps) {
+  const inStrip = useInKpiStrip();
+
+  if (inStrip) {
+    return (
+      <div className={cn(KPI_STRIP_CELL_CLASS, "flex flex-col gap-1.5", className)}>{children}</div>
+    );
+  }
+
   return (
     <div
       className={cn(
-        "border-border/80 bg-card hover:border-border flex flex-col gap-2 rounded-md border p-3 transition-colors",
+        "border-border bg-card flex flex-col gap-2 rounded-lg border p-3",
         density === "compact" ? "h-[var(--kpi-h-sm)]" : "h-[var(--kpi-h)]",
         span === 3 ? "col-span-3" : "col-span-2",
         className,
@@ -53,21 +62,9 @@ type DeltaProps = {
 };
 
 export function Delta({ delta, deltaLabel, deltaTone }: DeltaProps) {
-  if (delta === undefined || delta === null) return null;
-  const positive = delta >= 0;
-  const color = deltaTone ? toneVar(deltaTone) : positive ? toneVar("success") : toneVar("danger");
-
   return (
-    <span
-      className="inline-flex items-center gap-0.5 rounded-sm px-1.5 py-px font-mono text-2xs tabular-nums"
-      style={{
-        color,
-        background: `color-mix(in oklch, ${color} 12%, transparent)`,
-      }}
-    >
-      {positive ? "▲" : "▼"}
-      {Math.abs(delta)}
-      {deltaLabel ?? ""}
+    <span className="text-xs">
+      <KpiDelta delta={delta} label={deltaLabel} tone={deltaTone} />
     </span>
   );
 }
@@ -77,7 +74,5 @@ type KpiSubProps = {
 };
 
 export function KpiSub({ children }: KpiSubProps) {
-  return (
-    <div className="text-muted-foreground/80 mt-auto text-2xs leading-snug">{children}</div>
-  );
+  return <div className="text-foreground-muted mt-auto text-xs leading-snug">{children}</div>;
 }

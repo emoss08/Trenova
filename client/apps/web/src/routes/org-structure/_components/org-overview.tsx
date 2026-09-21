@@ -13,7 +13,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { BriefcaseIcon, Building2Icon, HandshakeIcon, UsersIcon } from "lucide-react";
 import { useMemo } from "react";
 
-const VALUE_CLASS = "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums";
+const VALUE_CLASS = "text-2xl leading-none font-semibold tabular-nums";
 
 type OrgOverviewProps = {
   headcount: HeadcountSummary | undefined;

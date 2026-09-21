@@ -17,7 +17,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { AlertTriangleIcon, CalendarCheckIcon, RepeatIcon, UsersIcon } from "lucide-react";
 import { useMemo } from "react";
 
-const VALUE_CLASS = "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums";
+const VALUE_CLASS = "text-2xl leading-none font-semibold tabular-nums";
 
 type SchedulingOverviewProps = {
   rota: RotaBoard | undefined;

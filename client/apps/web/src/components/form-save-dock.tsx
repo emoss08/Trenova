@@ -99,7 +99,7 @@ function SaveDockContent<T extends string = string>({
           disabled={isSubmitting}
           form={formId}
         >
-          {isSubmitting ? <Spinner /> : (saveButtonContent ?? t("Save"))}
+          {isSubmitting ? <Spinner /> : (saveButtonContent ?? t("Save changes"))}
         </Button>
       )}
     </ActionDock>
@@ -107,7 +107,7 @@ function SaveDockContent<T extends string = string>({
 }
 
 export function FormSaveDock<T extends string = string>({
-  saveButtonContent = "Save",
+  saveButtonContent,
   unsavedText = "Unsaved changes",
   position = "center",
   width = "350px",

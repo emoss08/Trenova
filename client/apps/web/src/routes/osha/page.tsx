@@ -31,11 +31,9 @@ export function OshaLogPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <DataTableLazyComponent fallback={<OshaLogSkeleton />}>
-          <OshaLogConsole />
-        </DataTableLazyComponent>
-      </div>
+      <DataTableLazyComponent fallback={<OshaLogSkeleton />}>
+        <OshaLogConsole />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

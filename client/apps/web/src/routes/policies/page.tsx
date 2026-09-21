@@ -18,11 +18,9 @@ export function PoliciesPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <DataTableLazyComponent fallback={<PoliciesSkeleton />}>
-          <PoliciesConsole />
-        </DataTableLazyComponent>
-      </div>
+      <DataTableLazyComponent fallback={<PoliciesSkeleton />}>
+        <PoliciesConsole />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

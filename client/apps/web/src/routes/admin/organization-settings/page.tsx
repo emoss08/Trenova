@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { queries } from "@/lib/queries";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -19,16 +18,17 @@ export function OrganizationSettingsPage() {
   const t = useT();
 
   return (
-    <AdminPageLayout>
-      <PageHeader
-        title={t("Organization Settings")}
-        description={t("Manage your organization profile, compliance, and security settings")}
-      />
+    <PageLayout
+      pageHeaderProps={{
+        title: t("Organization Settings"),
+        description: t("Manage your organization profile, compliance, and security settings"),
+      }}
+    >
       <Suspense
         fallback={<div className="text-muted-foreground px-1 py-8 text-sm">{t("Loading...")}</div>}
       >
         <OrganizationSettingsForm />
       </Suspense>
-    </AdminPageLayout>
+    </PageLayout>
   );
 }

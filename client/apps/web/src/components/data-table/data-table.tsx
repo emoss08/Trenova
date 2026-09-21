@@ -19,7 +19,7 @@ import {
 import { stableStringify } from "@/lib/stable-stringify";
 import { fetchAllRows } from "@/lib/data-table-export";
 import { queries } from "@/lib/queries";
-import { cn } from "@trenova/shared/lib/utils";
+import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
 import type {
   DataTableProps,
   FilterItem,
@@ -141,8 +141,8 @@ export function DataTable<TData extends Record<string, any>>({
     if (defaultOnClick && !actions.some((action) => action.id === "default-create")) {
       actions.unshift({
         id: "default-create",
-        label: `Add ${name}`,
-        description: `Create a new ${name.toLowerCase()} from scratch.`,
+        label: `New ${toSentenceFragment(name)}`,
+        description: `Create a new ${toSentenceFragment(name)} from scratch.`,
         onClick: defaultOnClick,
       });
     }
@@ -673,7 +673,7 @@ export function DataTable<TData extends Record<string, any>>({
     >
       <DataTablePanelWrapper>
         <DataTablePanelContent>
-          <div className="flex size-full min-w-0 flex-col gap-2">
+          <div className="bleed:gap-0 flex size-full min-w-0 flex-col gap-2">
             <DataTableToolbar
               table={table}
               columns={columns}
@@ -720,7 +720,7 @@ export function DataTable<TData extends Record<string, any>>({
               />
             )}
             {isEmpty ? (
-              <div className="border-border rounded-md border">
+              <div className="border-border bleed:rounded-none bleed:border-0 rounded-lg border">
                 {renderEmptyState ? (
                   renderEmptyState({ hasActiveFilters, onClearFilters: handleClearFilters })
                 ) : (
@@ -734,7 +734,7 @@ export function DataTable<TData extends Record<string, any>>({
                 )}
               </div>
             ) : (
-              <div className="relative min-w-0">
+              <div className="bleed:min-h-0 bleed:flex-1 relative min-w-0">
                 <DataTableRefreshPill
                   visible={liveRefresh.hasPendingUpdate}
                   onRefresh={liveRefresh.applyStaged}
@@ -753,13 +753,12 @@ export function DataTable<TData extends Record<string, any>>({
                       // Density repoints the row-height token; the cells read it,
                       // so the two densities stay the same table at two sizes
                       // rather than one table with padding patched over it.
-                      density === "compact" &&
-                        "[--row-h:var(--row-h-compact)] [&_td]:py-0.5 [&_td]:text-xs",
+                      density === "compact" && "[--row-h:var(--row-h-compact)] [&_td]:py-0.5",
                     )}
-                    containerClassName="max-h-[calc(65vh_-_var(--top-bar-height))] rounded-lg border border-border"
+                    containerClassName="bleed:h-full bleed:max-h-none bleed:rounded-none bleed:border-0 max-h-[calc(65vh_-_var(--top-bar-height))] rounded-lg border border-border"
                     style={{ ...columnSizeVars, minWidth: `${totalSize}px` }}
                   >
-                    <TableHeader className="bg-muted sticky top-0 z-20 backdrop-blur-sm">
+                    <TableHeader className="sticky top-0 z-20">
                       {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id} className="hover:bg-transparent">
                           <SortableContext

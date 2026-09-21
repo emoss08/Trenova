@@ -1,6 +1,7 @@
-import { cn } from "@trenova/shared/lib/utils";
-import { Metadata } from "./metadata";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { cn } from "@trenova/shared/lib/utils";
+import { InfoPopover } from "./info-popover";
+import { Metadata } from "./metadata";
 
 export type PageHeaderProps = {
   title: string;
@@ -9,9 +10,9 @@ export type PageHeaderProps = {
   actions?: React.ReactNode;
   includeMetadata?: boolean;
   className?: string;
-  // Simple flag to include inner padding for the title and description (Mainly used for admin pages)
-  includeInnerPadding?: boolean;
 };
+
+export const PAGE_HEADER_HEIGHT_CLASS = "min-h-11";
 
 export function PageHeader({
   title,
@@ -19,28 +20,23 @@ export function PageHeader({
   context,
   actions,
   includeMetadata = true,
-  includeInnerPadding = false,
   className,
 }: PageHeaderProps) {
   return (
-    <div className={cn("border-border border-b p-4", className)}>
-      <div
-        className={cn(
-          "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
-          includeInnerPadding ? "px-4" : "",
-        )}
-      >
-        <div className="flex min-w-0 flex-col items-start gap-0.5">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold text-balance">{title}</h1>
-            {context}
-          </div>
-          <p className="text-foreground-muted text-sm text-pretty">{description}</p>
-        </div>
-        {actions ? (
-          <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
-        ) : null}
+    <div
+      data-slot="page-header"
+      className={cn(
+        "border-border bg-background flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-b px-4 py-1.5",
+        PAGE_HEADER_HEIGHT_CLASS,
+        className,
+      )}
+    >
+      <div className="flex min-w-0 items-center gap-1.5">
+        <h1 className="truncate text-lg font-semibold">{title}</h1>
+        {description ? <InfoPopover title={title}>{description}</InfoPopover> : null}
+        {context ? <div className="ml-1 flex min-w-0 items-center gap-2">{context}</div> : null}
       </div>
+      {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
       {includeMetadata && <Metadata title={title} description={description} />}
     </div>
   );
@@ -48,9 +44,13 @@ export function PageHeader({
 
 export function PageHeaderSkeleton() {
   return (
-    <div className="flex flex-col items-start gap-2 leading-none">
-      <Skeleton className="h-10 w-62.5" />
-      <Skeleton className="h-4 w-md" />
+    <div
+      className={cn(
+        "border-border flex shrink-0 items-center border-b px-4 py-1.5",
+        PAGE_HEADER_HEIGHT_CLASS,
+      )}
+    >
+      <Skeleton className="h-5 w-40" />
     </div>
   );
 }

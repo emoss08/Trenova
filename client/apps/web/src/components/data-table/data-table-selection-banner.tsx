@@ -29,7 +29,7 @@ export function DataTableSelectionBanner({
   const target = Math.min(totalCount, maxSelectable);
 
   return (
-    <div className="border-border bg-muted/40 flex items-center justify-center gap-2 rounded-md border px-3 py-1 text-xs">
+    <div className="border-border bg-muted/40 bleed:rounded-none bleed:border-x-0 bleed:border-t-0 flex items-center justify-center gap-2 rounded-md border px-3 py-1 text-xs">
       <span className="text-muted-foreground">
         {t("All")} <span className="text-foreground font-medium">{selectedCount}</span>{" "}
         {t("rows on this page are selected.")}

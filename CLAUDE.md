@@ -242,6 +242,12 @@ names the token to use instead.
   takes `fieldTriggerClass` and an invalid one `fieldInvalidClass`, both from
   `@trenova/shared/lib/variants/field`. Never hand-write `border-input bg-muted` or a
   `data-pressed:ring-*` on a field.
+- Pages: always `PageLayout` with `pageHeaderProps` (never mount `PageHeader` by hand, never
+  `p-0` plus re-added `mx-4`). A list page is `PageLayout` > `DataTableLazyComponent` > table
+  with no wrapper `div`, so the table bleeds edge to edge. Create buttons read "New {thing}".
+  Figures are `KpiStrip`/`KpiStripItem`, titled blocks are `SectionPanel`, read-only
+  label/value is `DescriptionList`, inline callouts are `<Alert size="sm">`, and dialogs take
+  `size` rather than an arbitrary max-width. See "Page anatomy" in the design-system doc.
 - Machine suggestions are marked with `AssistMark` from `@trenova/shared/components/ui/assist-mark`
   (a real `LucideIcon`). Never import `Sparkles`, `WandSparkles` or `Wand2`.
 - Two radii: `--radius-control` (6px) for controls, `--radius-surface` (8px) for containers.

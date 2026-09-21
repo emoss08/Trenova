@@ -48,7 +48,7 @@ export function KpiStat({
         info={info}
         right={<Delta delta={delta} deltaLabel={deltaLabel} deltaTone={deltaTone} />}
       />
-      <span className="font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums">
+      <span className="text-2xl leading-none font-semibold tabular-nums">
         {value}
       </span>
       <KpiSub>{sub}</KpiSub>

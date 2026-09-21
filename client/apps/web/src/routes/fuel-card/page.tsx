@@ -17,11 +17,9 @@ export function UnassignedFuelCardsPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <DataTableLazyComponent>
-          <Table unassignedOnly />
-        </DataTableLazyComponent>
-      </div>
+      <DataTableLazyComponent>
+        <Table unassignedOnly />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }
@@ -38,11 +36,9 @@ export function FuelCardsPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <DataTableLazyComponent>
-          <Table />
-        </DataTableLazyComponent>
-      </div>
+      <DataTableLazyComponent>
+        <Table />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

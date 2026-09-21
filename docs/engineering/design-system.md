@@ -342,6 +342,85 @@ build, a test or a type check. This happened once. `pnpm lint:design` now
 compiles the real file and asserts every declared `@utility` reaches the output,
 so it cannot happen quietly again.
 
+## Page anatomy
+
+Every page is `PageLayout` from `components/navigation/sidebar-layout.tsx`. There
+is no second layout; a page that builds its own top bar is a bug.
+
+**The title bar** is one 44px row: the title at `text-lg` semibold, the
+description behind an info icon, actions on the right. The workspace bar above it
+already shows where you are, so the page does not spend two more lines saying it
+again. Pass `title`, `description`, `actions` and `context` through
+`pageHeaderProps`; never mount `PageHeader` by hand.
+
+**A list page bleeds.** When the page body's only child is a data table, the body
+drops its padding and the table runs edge to edge: no outer box, no page gutter,
+only row hairlines, with the toolbar and the pagination as bars above and below.
+Nothing opts in — the body detects it, and the `bleed:` variant lets the table's
+chrome answer. A table that shares the page with anything else keeps its frame.
+So a list page is exactly this, with no wrapper `div` around the table:
+
+```tsx
+<PageLayout pageHeaderProps={{ title: t("Commodities"), description: t("…") }}>
+  <DataTableLazyComponent>
+    <Table />
+  </DataTableLazyComponent>
+</PageLayout>
+```
+
+**Everything else gets `p-4` and `gap-y-4`** from the body. Do not pass
+`className="p-0"` and then re-add `mx-4 mt-3 mb-4` to each child; that idiom put
+three different gutters on sibling pages. `p-0` is for a genuine split-pane
+workspace that manages its own panes.
+
+**Create is "New …".** The button, the menu item, the empty state and the panel
+title all say `New {thing}` in sentence case, and the button is the ink default.
+`toSentenceFragment` from `@trenova/shared/lib/utils` lowers a name without
+breaking an acronym ("EDI Partner" → "EDI partner").
+
+### Figures: `KpiStrip`
+
+A row of figures is one joined strip divided by hairlines, not a row of floating
+cards: `KpiStrip` with `KpiStripItem` (`components/kpi/kpi-strip.tsx`). Label over
+number, no decorative icon, the delta as small toned text with an arrow. A `tone`
+puts a status dot beside the label; `onClick` makes the cell a filter and `active`
+fills it with the selection colour.
+
+The number is `text-xl` semibold, proportional with `tabular-nums` — `size="lg"`
+(`text-2xl`) for the one strip that leads a dashboard. There were fifteen tile
+implementations and six number sizes; there is one and two. `KpiCard`, `KpiStat`
+and both `StatTile`s render as strip cells when placed inside a `KpiStrip`.
+
+### Panels: `SectionPanel`
+
+A titled block on a dashboard or workspace is `SectionPanel`
+(`components/section-panel.tsx`): `rounded-lg border bg-card`, a 36px header with
+the title at `text-sm` semibold, an optional `help` note, a `count`, and `action`
+on the right. Do not hand-write `<header className="… border-b px-3 py-2">`.
+
+### Label and value: `DescriptionList`
+
+Read-only detail is `DescriptionList` + `DescriptionItem`
+(`@trenova/shared/components/ui/description-list`). Three layouts: `stacked`
+(label over value, in `columns`), `inline` (label left, value right, aligned in a
+grid) and `split` (label and value at opposite ends of a ruled row, for totals).
+The label is `text-xs` medium in `--foreground-subtle`; the value is `text-sm` at
+weight 400, because a value in a cell takes no weight. `numeric` adds
+`tabular-nums`. An absent value is `<DescriptionEmpty />`, an em dash — never a
+hyphen.
+
+### Forms, dialogs and sheets
+
+- `FormSection` titles are `text-base` semibold sans. Separate sections with the
+  parent's gap, not with per-section `border-t pt-4`.
+- A settings page is stacked `Card`s and a `FormSaveDock`; the dock's label is
+  "Save changes" and is not overridden.
+- A dialog, a sheet and a table panel all close the same way: footer right-aligned,
+  Cancel (`outline`) then the primary (ink, or `destructive`). `DialogContent` takes
+  `size` (`xs`…`2xl`) instead of an arbitrary `sm:max-w-[520px]`.
+- An inline callout is `<Alert variant size="sm">`, not a hand-tinted box.
+  `bg-warning/10 rounded-md p-3` was written sixty times at fifteen opacities.
+
 ## The assist mark
 
 Anything the system suggests, drafts or fills in on its own is marked with

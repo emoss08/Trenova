@@ -115,29 +115,31 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   );
 }
 
-export function PageLayout({
-  pageHeaderProps,
-  children,
-  className,
-}: {
+const PAGE_BLEED = "has-[>[data-slot=data-table]:only-child]";
+
+type PageLayoutProps = {
   pageHeaderProps: PageHeaderProps;
   children: React.ReactNode;
   className?: string;
-}) {
-  return (
-    <>
-      <PageHeader {...pageHeaderProps} />
-      <div className={cn("flex flex-col gap-y-4 p-4", className)}>{children}</div>
-    </>
-  );
-}
+};
 
-export function AdminPageLayout({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return <div className={cn("flex flex-col", className)}>{children}</div>;
+export function PageLayout({ pageHeaderProps, children, className }: PageLayoutProps) {
+  return (
+    <div
+      data-slot="page"
+      className="flex min-h-full flex-col has-[>[data-slot=page-body]>[data-slot=data-table]:only-child]:h-full"
+    >
+      <PageHeader {...pageHeaderProps} />
+      <div
+        data-slot="page-body"
+        className={cn(
+          "flex min-w-0 flex-1 flex-col gap-y-4 p-4",
+          `${PAGE_BLEED}:min-h-0 ${PAGE_BLEED}:gap-y-0 ${PAGE_BLEED}:p-0`,
+          className,
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
 }

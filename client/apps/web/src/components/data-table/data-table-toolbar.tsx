@@ -31,6 +31,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { DataTableSaveConfigDialog } from "./data-table-save-config-dialog";
+import { toSentenceFragment } from "@trenova/shared/lib/utils";
 
 const DataTableSearch = lazy(() => import("@/components/data-table/data-table-search"));
 
@@ -128,7 +129,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
 
   return (
     <>
-      <div className="flex items-center justify-between gap-2">
+      <div className="bleed:border-border bleed:border-b bleed:px-3 bleed:py-2 flex items-center justify-between gap-2">
         <div className="flex flex-1 items-center gap-2">
           <Suspense fallback={<SearchSkeleton />}>
             <DataTableSearch value={query} onChange={onSearchChange} />
@@ -194,14 +195,14 @@ export function DataTableToolbar<TData extends Record<string, any>>({
           {hasSingleAddRecordAction ? (
             <Button variant="default" size="sm" onClick={addRecordActions[0]?.onClick}>
               <PlusIcon className="size-3.5" />
-              {t("Add Record")}
+              {resource ? t("New {0}", toSentenceFragment(resource)) : t("New record")}
             </Button>
           ) : null}
           {hasAddRecordActions && !hasSingleAddRecordAction ? (
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="default" size="sm" />}>
                 <PlusIcon className="size-3.5" />
-                {t("Add Record")}
+                {resource ? t("New {0}", toSentenceFragment(resource)) : t("New record")}
                 <ChevronDownIcon className="size-3.5" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-72">

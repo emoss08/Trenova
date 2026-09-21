@@ -80,7 +80,7 @@ export default function DataTableFilterChips({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="bleed:border-border bleed:border-b bleed:px-3 bleed:py-1.5 flex flex-wrap items-center gap-1.5">
       {hasQuery && (
         <FilterChip
           label={

@@ -4,32 +4,32 @@ import { cn } from "@trenova/shared/lib/utils";
 
 const alertVariants = cva(
   [
-    "relative grid w-full grid-cols-[0_1fr] items-center gap-y-0.5 border text-sm has-[>svg]:grid-cols-[calc(var(--spacing)*3)_1fr] [&>svg:not([class*=size-])]:size-4",
+    "relative grid w-full grid-cols-[0_1fr] items-center gap-y-0.5 border has-[>svg]:grid-cols-[calc(var(--spacing)*3)_1fr] [&>svg:not([class*=size-])]:size-4",
     "has-[>[data-slot=alert-title]+[data-slot=alert-description]]:[&_[data-slot=alert-action]]:sm:row-end-3",
     "has-[>[data-slot=alert-title]+[data-slot=alert-description]]:items-start",
     "has-[>[data-slot=alert-title]+[data-slot=alert-description]]:[&_svg]:translate-y-0.5",
     "rounded-lg",
-    "px-3",
-    "py-2.5",
     "has-[>svg]:gap-x-2.5",
   ],
   {
     variants: {
       variant: {
         default: "bg-card text-card-foreground",
-        destructive:
-          "border-destructive/50 bg-destructive/20 text-destructive-foreground dark:text-destructive [&>svg]:text-destructive-foreground",
-        info: "border-info/50 bg-info/20 text-info-foreground dark:text-info [&>svg]:text-info-foreground",
-        success:
-          "border-success/50 bg-success/20 text-success-foreground dark:text-success [&>svg]:text-success-foreground",
-        warning:
-          "border-warning/50 bg-warning/20 text-warning-foreground dark:text-warning [&>svg]:text-warning-foreground",
+        destructive: "border-danger-border bg-danger-subtle text-danger-subtle-foreground",
+        info: "border-info-border bg-info-subtle text-info-subtle-foreground",
+        success: "border-success-border bg-success-subtle text-success-subtle-foreground",
+        warning: "border-warning-border bg-warning-subtle text-warning-subtle-foreground",
         invert:
           "border-invert bg-invert text-invert-foreground [&_[data-slot=alert-description]]:text-invert-foreground/70",
+      },
+      size: {
+        default: "px-3 py-2.5 text-sm",
+        sm: "px-2.5 py-1.5 text-xs [&>svg:not([class*=size-])]:size-3.5 [&_[data-slot=alert-description]]:text-xs",
       },
     },
     defaultVariants: {
       variant: "default",
+      size: "default",
     },
   },
 );
@@ -37,13 +37,14 @@ const alertVariants = cva(
 function Alert({
   className,
   variant,
+  size,
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof alertVariants>) {
   return (
     <div
       data-slot="alert"
       role="alert"
-      className={cn(alertVariants({ variant }), className)}
+      className={cn(alertVariants({ variant, size }), className)}
       {...props}
     />
   );

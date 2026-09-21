@@ -1,7 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { QueryLazyComponent } from "@trenova/shared/components/error-boundary";
-import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { queries } from "@/lib/queries";
 import { TriangleAlertIcon } from "lucide-react";
 import { lazy } from "react";
@@ -12,18 +11,17 @@ export function BillingControlPage() {
   const t = useT();
 
   return (
-    <AdminPageLayout>
-      <PageHeader
-        title={t("Billing Control")}
-        description={t("Configure and manage your billing control settings")}
-      />
-      <div className="p-4">
-        <BillingControlAlert />
-        <QueryLazyComponent queryKey={queries.billingControl.get._def}>
-          <BillingControlForm />
-        </QueryLazyComponent>
-      </div>
-    </AdminPageLayout>
+    <PageLayout
+      pageHeaderProps={{
+        title: t("Billing Control"),
+        description: t("Configure and manage your billing control settings"),
+      }}
+    >
+      <BillingControlAlert />
+      <QueryLazyComponent queryKey={queries.billingControl.get._def}>
+        <BillingControlForm />
+      </QueryLazyComponent>
+    </PageLayout>
   );
 }
 

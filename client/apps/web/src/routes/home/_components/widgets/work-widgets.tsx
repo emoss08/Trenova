@@ -261,7 +261,7 @@ function CountWidget({
         <div className="flex flex-1 flex-col items-start justify-center gap-1">
           <span
             className={cn(
-              "font-mono text-4xl leading-none font-semibold tracking-tight tabular-nums",
+              "text-3xl leading-none font-semibold tabular-nums",
               tone === "danger" && "text-destructive",
               tone === "warning" && "text-warning",
             )}

@@ -49,7 +49,7 @@ export function KpiHero({
         right={<Delta delta={delta} deltaLabel={deltaLabel} deltaTone={deltaTone} />}
       />
       <div className="flex items-baseline gap-1">
-        <span className="font-mono text-4xl leading-none font-semibold tracking-tight tabular-nums">
+        <span className="text-3xl leading-none font-semibold tabular-nums">
           {value}
         </span>
         {unit && <span className="text-muted-foreground font-mono text-xs">{unit}</span>}

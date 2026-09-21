@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptyTable, type EmptyTableColumn } from "@trenova/shared/components/ui/empty-table";
-import { pluralize } from "@trenova/shared/lib/utils";
+import { pluralize, toSentenceFragment } from "@trenova/shared/lib/utils";
 import { PlusIcon } from "lucide-react";
 
 type DataTableEmptyStateProps = {
@@ -29,25 +29,25 @@ export function DataTableEmptyState({
 }: DataTableEmptyStateProps) {
   const t = useT();
 
-  const records = pluralize(name.toLowerCase(), 2);
+  const records = pluralize(toSentenceFragment(name), 2);
   return (
     <EmptyTable
       className="py-10"
       title={hasActiveFilters ? "Nothing matches" : `No ${records} yet`}
       description={
         hasActiveFilters
-          ? `No ${name.toLowerCase()} fits the search and filters. Widen them, or clear them to see every one.`
+          ? `No ${toSentenceFragment(name)} fits the search and filters. Widen them, or clear them to see every one.`
           : onAddRecord
-            ? `Nothing has been recorded here yet. Add the first ${name.toLowerCase()} and it appears here.`
-            : `Nothing has been recorded here yet. The first ${name.toLowerCase()} appears here as soon as it exists.`
+            ? `Nothing has been recorded here yet. Add the first ${toSentenceFragment(name)} and it appears here.`
+            : `Nothing has been recorded here yet. The first ${toSentenceFragment(name)} appears here as soon as it exists.`
       }
       columns={columns}
       onClearFilters={hasActiveFilters ? onClearFilters : undefined}
       action={
         onAddRecord ? (
-          <Button variant="outline" size="sm" onClick={onAddRecord}>
+          <Button size="sm" onClick={onAddRecord}>
             <PlusIcon className="size-3.5" />
-            {t("Add {0}", name)}
+            {t("New {0}", toSentenceFragment(name))}
           </Button>
         ) : null
       }

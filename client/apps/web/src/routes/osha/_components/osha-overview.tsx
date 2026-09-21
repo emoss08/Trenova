@@ -9,7 +9,7 @@ import { formatRate } from "@trenova/shared/lib/injury";
 import { ActivityIcon, BedIcon, ClipboardListIcon, GaugeIcon } from "lucide-react";
 import { useMemo } from "react";
 
-const VALUE_CLASS = "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums";
+const VALUE_CLASS = "text-2xl leading-none font-semibold tabular-nums";
 
 type OshaOverviewProps = {
   log: OshaLog;

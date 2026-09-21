@@ -52,11 +52,9 @@ export function IftaReturnsPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <DataTableLazyComponent fallback={<IftaReturnSkeleton />}>
-          <IftaReturnWorkspace period={period} onPeriodChange={onPeriodChange} />
-        </DataTableLazyComponent>
-      </div>
+      <DataTableLazyComponent fallback={<IftaReturnSkeleton />}>
+        <IftaReturnWorkspace period={period} onPeriodChange={onPeriodChange} />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

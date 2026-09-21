@@ -170,10 +170,7 @@ export const FormSection = React.memo(
           <div className="space-y-1">
             {title && (
               <span className="flex items-center gap-1">
-                <h3
-                  id={`section-${title}`}
-                  className="font-table text-base leading-none tracking-tight"
-                >
+                <h3 id={`section-${title}`} className="text-base leading-none font-semibold">
                   {title}
                 </h3>
                 {titleCount && titleCount > 0 ? (
@@ -181,7 +178,9 @@ export const FormSection = React.memo(
                 ) : null}
               </span>
             )}
-            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+            {description && (
+              <p className="text-foreground-muted text-sm text-pretty">{description}</p>
+            )}
           </div>
           {action && <div className="shrink-0">{action}</div>}
         </div>

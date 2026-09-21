@@ -1,5 +1,4 @@
-import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
@@ -30,13 +29,14 @@ export function AgentControlPage() {
   const openProviders = useCallback(() => void setTab("providers"), [setTab]);
 
   return (
-    <AdminPageLayout>
-      <PageHeader
-        title={t("AI Control")}
-        description={t(
+    <PageLayout
+      pageHeaderProps={{
+        title: t("AI Control"),
+        description: t(
           "Providers say where AI work goes, agents say what it may do, and activity shows what it did.",
-        )}
-      />
+        ),
+      }}
+    >
       <div className="flex flex-col gap-4 px-4">
         <Tabs
           value={tab}
@@ -96,6 +96,6 @@ export function AgentControlPage() {
           )}
         </Tabs>
       </div>
-    </AdminPageLayout>
+    </PageLayout>
   );
 }

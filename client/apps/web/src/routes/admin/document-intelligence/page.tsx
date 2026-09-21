@@ -1,7 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SuspenseLoader } from "@trenova/shared/components/component-loader";
-import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
 
 const DocumentIntelligenceForm = lazy(() => import("./_components/document-intelligence-form"));
@@ -10,16 +9,15 @@ export function DocumentIntelligencePage() {
   const t = useT();
 
   return (
-    <AdminPageLayout>
-      <PageHeader
-        title={t("Document Intelligence")}
-        description={t("Configure OCR, classification, extraction, and shipment draft behavior")}
-      />
-      <div className="p-4">
-        <SuspenseLoader>
-          <DocumentIntelligenceForm />
-        </SuspenseLoader>
-      </div>
-    </AdminPageLayout>
+    <PageLayout
+      pageHeaderProps={{
+        title: t("Document Intelligence"),
+        description: t("Configure OCR, classification, extraction, and shipment draft behavior"),
+      }}
+    >
+      <SuspenseLoader>
+        <DocumentIntelligenceForm />
+      </SuspenseLoader>
+    </PageLayout>
   );
 }

@@ -35,11 +35,9 @@ export function BenefitsPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <DataTableLazyComponent fallback={<BenefitsSkeleton />}>
-          <BenefitsConsole />
-        </DataTableLazyComponent>
-      </div>
+      <DataTableLazyComponent fallback={<BenefitsSkeleton />}>
+        <BenefitsConsole />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

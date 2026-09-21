@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy, Suspense } from "react";
 import { PageSkeleton } from "./skeleton";
 
@@ -10,16 +9,17 @@ export function AccountingControlPage() {
   const t = useT();
 
   return (
-    <AdminPageLayout>
-      <PageHeader
-        title={t("Accounting Control")}
-        description={t("Configure and manage your accounting control settings")}
-      />
+    <PageLayout
+      pageHeaderProps={{
+        title: t("Accounting Control"),
+        description: t("Configure and manage your accounting control settings"),
+      }}
+    >
       <Suspense fallback={<PageSkeleton />}>
         <div className="p-4">
           <AccountingControlForm />
         </div>
       </Suspense>
-    </AdminPageLayout>
+    </PageLayout>
   );
 }

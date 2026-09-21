@@ -8,7 +8,7 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { CalendarCheckIcon, CalendarClockIcon, FlaskConicalIcon, UsersIcon } from "lucide-react";
 
-const VALUE_CLASS = "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums";
+const VALUE_CLASS = "text-2xl leading-none font-semibold tabular-nums";
 
 type RandomTestingOverviewProps = {
   overview: ProgrammeOverview;

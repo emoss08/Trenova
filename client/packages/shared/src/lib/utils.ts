@@ -25,6 +25,17 @@ const LOWERCASE_WORDS = new Set([
   "of",
 ]);
 
+/**
+ * Lowers a Title Case name for use mid-sentence, leaving acronyms alone:
+ * "Hold Reason" -> "hold reason", "EDI Partner" -> "EDI partner".
+ */
+export function toSentenceFragment(str: string): string {
+  return str
+    .split(" ")
+    .map((word) => (/^[A-Z][a-z]/.test(word) ? word.charAt(0).toLowerCase() + word.slice(1) : word))
+    .join(" ");
+}
+
 export function toTitleCase(str: string): string {
   // First, handle technical terms and special cases
   const technicalTerms: Record<string, string> = {

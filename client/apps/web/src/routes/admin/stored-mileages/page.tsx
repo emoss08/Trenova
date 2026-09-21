@@ -1,7 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
-import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
 
 const Table = lazy(() => import("./_components/stored-mileage-table"));
@@ -10,16 +9,15 @@ export function StoredMileagesPage() {
   const t = useT();
 
   return (
-    <AdminPageLayout>
-      <PageHeader
-        title={t("Stored Mileages")}
-        description={t("Review reusable mileage records captured from PC*Miler calculations")}
-      />
-      <div className="p-4">
-        <DataTableLazyComponent>
-          <Table />
-        </DataTableLazyComponent>
-      </div>
-    </AdminPageLayout>
+    <PageLayout
+      pageHeaderProps={{
+        title: t("Stored Mileages"),
+        description: t("Review reusable mileage records captured from PC*Miler calculations"),
+      }}
+    >
+      <DataTableLazyComponent>
+        <Table />
+      </DataTableLazyComponent>
+    </PageLayout>
   );
 }

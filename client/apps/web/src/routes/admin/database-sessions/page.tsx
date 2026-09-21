@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -328,32 +327,31 @@ export function DatabaseSessionsPage() {
   const rows = useMemo(() => query.data?.items ?? [], [query.data?.items]);
 
   return (
-    <AdminPageLayout>
-      <PageHeader
-        title={t("Database Sessions")}
-        description={t("Inspect lock contention and manually terminate blocking database sessions")}
+    <PageLayout
+      pageHeaderProps={{
+        title: t("Database Sessions"),
+        description: t("Inspect lock contention and manually terminate blocking database sessions"),
+      }}
+    >
+      <StatusBar
+        count={rows.length}
+        isFetching={query.isFetching}
+        onRefresh={() => query.refetch()}
       />
-      <div className="p-4">
-        <StatusBar
-          count={rows.length}
-          isFetching={query.isFetching}
-          onRefresh={() => query.refetch()}
-        />
-        {query.isLoading ? (
-          <div className="flex flex-col gap-3">
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-        ) : rows.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <div className="flex flex-col gap-3">
-            {rows.map((row) => (
-              <SessionCard key={`${row.blockedPid}-${row.blockingPid}`} row={row} />
-            ))}
-          </div>
-        )}
-      </div>
-    </AdminPageLayout>
+      {query.isLoading ? (
+        <div className="flex flex-col gap-3">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      ) : rows.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {rows.map((row) => (
+            <SessionCard key={`${row.blockedPid}-${row.blockingPid}`} row={row} />
+          ))}
+        </div>
+      )}
+    </PageLayout>
   );
 }

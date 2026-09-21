@@ -48,11 +48,9 @@ export function SchedulingPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <DataTableLazyComponent fallback={<SchedulingSkeleton />}>
-          <SchedulingConsole />
-        </DataTableLazyComponent>
-      </div>
+      <DataTableLazyComponent fallback={<SchedulingSkeleton />}>
+        <SchedulingConsole />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

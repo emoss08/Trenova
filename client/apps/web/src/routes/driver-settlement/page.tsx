@@ -18,12 +18,10 @@ export function DriverSettlementsPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <PayFlowExplainer />
-        <DataTableLazyComponent>
-          <Table />
-        </DataTableLazyComponent>
-      </div>
+      <PayFlowExplainer />
+      <DataTableLazyComponent>
+        <Table />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

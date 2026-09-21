@@ -101,7 +101,7 @@ function SearchSyntaxHelper() {
       <PopoverContent className="w-80" align="end">
         <div className="space-y-3">
           <div>
-            <h4 className="font-medium">{t("Search Syntax")}</h4>
+            <h4 className="font-medium">{t("Search syntax")}</h4>
             <p className="text-muted-foreground text-sm">
               {t("Use these patterns to refine your search results.")}
             </p>

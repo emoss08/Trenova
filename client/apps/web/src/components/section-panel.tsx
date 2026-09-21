@@ -37,12 +37,12 @@ export function SectionPanel({
       aria-label={title}
       className={cn("bg-card flex flex-col overflow-hidden rounded-lg border", className)}
     >
-      <header className="flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
+      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
         <div className="flex min-w-0 items-center gap-2">
           {icon ? (
             <span className="text-muted-foreground shrink-0 [&>svg]:size-3.5">{icon}</span>
           ) : null}
-          <h3 className="truncate text-sm font-medium">{title}</h3>
+          <h3 className="truncate text-sm font-semibold">{title}</h3>
           {help ? <InfoPopover title={title}>{help}</InfoPopover> : null}
           {count !== undefined && count > 0 ? (
             <span className="text-muted-foreground text-xs tabular-nums">{count}</span>

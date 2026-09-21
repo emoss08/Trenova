@@ -21,11 +21,9 @@ export function HolidayCalendarPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <DataTableLazyComponent>
-          <Calendar />
-        </DataTableLazyComponent>
-      </div>
+      <DataTableLazyComponent>
+        <Calendar />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

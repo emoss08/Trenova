@@ -14,6 +14,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* A list page is a table and nothing else, so the table runs edge to edge under
+   the title bar: no page padding, no outer box, only row hairlines. The page body
+   decides this on its own — it bleeds when its only child is a data table — and
+   `bleed:` lets the table's chrome answer without any page having to say so. A
+   table that shares the page with anything else keeps its frame. */
+@custom-variant bleed (&:where([data-slot="page-body"]:has(> [data-slot="data-table"]:only-child) *));
+
 @layer base {
   * {
     @apply border-border;

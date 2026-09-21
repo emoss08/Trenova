@@ -18,6 +18,7 @@ import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-f
 import { toast } from "sonner";
 import { DataTablePanelContainer, type PanelSize } from "./data-table/data-table-panel";
 import { FormSaveDock } from "./form-save-dock";
+import { toSentenceFragment } from "@trenova/shared/lib/utils";
 
 type FormCreatePanelProps<
   TFieldValues extends FieldValues,
@@ -177,8 +178,10 @@ export function FormCreatePanel<
     <DataTablePanelContainer
       open={open}
       onOpenChange={handlePanelOpenChange}
-      title={`Add New ${title}`}
-      description={description ?? `Fill out the form below to create a new ${title}.`}
+      title={`New ${toSentenceFragment(title)}`}
+      description={
+        description ?? `Fill out the form below to create a new ${toSentenceFragment(title)}.`
+      }
       size={size}
       footer={
         useDock ? undefined : (

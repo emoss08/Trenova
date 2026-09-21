@@ -56,7 +56,7 @@ export function DataTablePanelContainer({
           <div className="border-border flex items-center justify-between border-b px-4 py-3">
             {titleComponent ?? (
               <div className="flex flex-col gap-0.5">
-                <Dialog.Title className="text-sm leading-none font-medium">{title}</Dialog.Title>
+                <Dialog.Title className="text-base leading-none font-medium">{title}</Dialog.Title>
                 {description && (
                   <Dialog.Description className="text-muted-foreground text-xs">
                     {description}
@@ -84,7 +84,7 @@ export function DataTablePanelContainer({
             <div className="p-4">{children}</div>
           </ScrollArea>
           {footer && (
-            <div className="border-border bg-muted/30 flex items-center justify-between gap-2 border-t px-4 py-3">
+            <div className="border-border bg-muted/50 flex items-center justify-end gap-2 border-t px-4 py-3">
               {footer}
             </div>
           )}
@@ -100,7 +100,11 @@ type DataTablePanelWrapperProps = {
 };
 
 export function DataTablePanelWrapper({ children, className }: DataTablePanelWrapperProps) {
-  return <div className={cn("flex h-full", className)}>{children}</div>;
+  return (
+    <div data-slot="data-table" className={cn("flex h-full min-w-0", className)}>
+      {children}
+    </div>
+  );
 }
 
 type DataTablePanelContentProps = {
@@ -110,9 +114,7 @@ type DataTablePanelContentProps = {
 
 export function DataTablePanelContent({ className, children }: DataTablePanelContentProps) {
   return (
-    <div
-      className={cn("flex min-w-0 flex-1 flex-col gap-2 transition-all duration-200", className)}
-    >
+    <div className={cn("bleed:gap-0 flex min-w-0 flex-1 flex-col gap-2", className)}>
       {children}
     </div>
   );

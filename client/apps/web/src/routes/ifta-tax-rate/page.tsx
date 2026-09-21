@@ -19,20 +19,18 @@ export function IftaTaxRatesPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <Alert variant="info">
-          <GlobeIcon className="size-4" />
-          <AlertTitle>{t("Rates are global")}</AlertTitle>
-          <AlertDescription>
-            {t(
-              "Every organization is taxed at the rate published here, so a change or deletion moves the figures on every return for that quarter, not only yours. Enter rates as the matrix prints them, in USD per US gallon, and note the source.",
-            )}
-          </AlertDescription>
-        </Alert>
-        <DataTableLazyComponent>
-          <Table />
-        </DataTableLazyComponent>
-      </div>
+      <Alert variant="info">
+        <GlobeIcon className="size-4" />
+        <AlertTitle>{t("Rates are global")}</AlertTitle>
+        <AlertDescription>
+          {t(
+            "Every organization is taxed at the rate published here, so a change or deletion moves the figures on every return for that quarter, not only yours. Enter rates as the matrix prints them, in USD per US gallon, and note the source.",
+          )}
+        </AlertDescription>
+      </Alert>
+      <DataTableLazyComponent>
+        <Table />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

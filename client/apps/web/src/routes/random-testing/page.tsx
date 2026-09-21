@@ -24,11 +24,9 @@ export function RandomTestingPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <DataTableLazyComponent fallback={<RandomTestingSkeleton />}>
-          <RandomTestingConsole />
-        </DataTableLazyComponent>
-      </div>
+      <DataTableLazyComponent fallback={<RandomTestingSkeleton />}>
+        <RandomTestingConsole />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

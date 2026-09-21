@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,9 +56,7 @@ function relativeTime(ts: number): string {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-function statusVariant(
-  status: string,
-): "neutral" | "success" | "danger" | "warning" | "info" {
+function statusVariant(status: string): "neutral" | "success" | "danger" | "warning" | "info" {
   switch (status) {
     case "Active":
     case "Completed":
@@ -175,9 +172,7 @@ function SectionHeader({
 function MetadataCell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="rounded-lg border p-3">
-      <div className="text-muted-foreground text-xs font-medium">
-        {label}
-      </div>
+      <div className="text-muted-foreground text-xs font-medium">{label}</div>
       <div className="mt-1.5 text-sm">{children}</div>
     </div>
   );
@@ -318,9 +313,7 @@ function StatusPipeline({ doc }: { doc: Document }) {
               render={<div className="flex items-center gap-1.5 rounded-full border px-2 py-1" />}
             >
               <span className={`size-1.5 rounded-full ${statusDotColor(stage.status)}`} />
-              <span className="text-xs font-medium">
-                {t(stage.label)}
-              </span>
+              <span className="text-xs font-medium">{t(stage.label)}</span>
             </TooltipTrigger>
             <TooltipContent>
               {t(stage.label)}: {stage.status}
@@ -365,7 +358,9 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
       <div className="grid gap-2.5 md:grid-cols-4">
         <MetadataCell label={t("Resource")}>
           <div className="flex items-center gap-1.5">
-            <Badge variant="neutral" appearance="outline">{doc.resourceType}</Badge>
+            <Badge variant="neutral" appearance="outline">
+              {doc.resourceType}
+            </Badge>
             <CopyableId value={doc.resourceId} />
           </div>
         </MetadataCell>
@@ -732,11 +727,12 @@ export function DocumentOperationsPage() {
   });
 
   return (
-    <AdminPageLayout>
-      <PageHeader
-        title={t("Document Operations")}
-        description={t("Inspect document lifecycle state and trigger recovery actions")}
-      />
+    <PageLayout
+      pageHeaderProps={{
+        title: t("Document Operations"),
+        description: t("Inspect document lifecycle state and trigger recovery actions"),
+      }}
+    >
       <div className="p-4">
         <DocumentSearch
           onSearch={(id) => setDocumentId(id)}
@@ -783,6 +779,6 @@ export function DocumentOperationsPage() {
       )}
 
       {diagnosticsQuery.data && <DiagnosticsView data={diagnosticsQuery.data} />}
-    </AdminPageLayout>
+    </PageLayout>
   );
 }

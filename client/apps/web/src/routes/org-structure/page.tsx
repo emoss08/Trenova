@@ -43,11 +43,9 @@ export function OrgStructurePage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <DataTableLazyComponent fallback={<OrgStructureSkeleton />}>
-          <OrgStructureConsole />
-        </DataTableLazyComponent>
-      </div>
+      <DataTableLazyComponent fallback={<OrgStructureSkeleton />}>
+        <OrgStructureConsole />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

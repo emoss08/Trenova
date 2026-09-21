@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -30,24 +29,24 @@ export function GraphQLExplorerPage() {
   const { data: index, isError, error, isFetching, refetch } = useCatalogQuery();
 
   return (
-    <AdminPageLayout className="flex h-[calc(100vh-3rem)] flex-col">
-      <PageHeader
-        title={t("GraphQL Explorer")}
-        description={t("Browse, search, and run every persisted GraphQL operation in the client")}
-        actions={
-          index ? (
-            <Badge variant="neutral" className="font-normal">
-              {t(
-                "{0} operations · {1} fragments",
-                index.catalog.operationCount,
-                index.catalog.fragmentCount,
-              )}
-            </Badge>
-          ) : (
-            <Skeleton className="h-5 w-44 rounded-md" />
-          )
-        }
-      />
+    <PageLayout
+      className="flex h-[calc(100vh-3rem)] flex-col"
+      pageHeaderProps={{
+        title: t("GraphQL Explorer"),
+        description: t("Browse, search, and run every persisted GraphQL operation in the client"),
+        actions: index ? (
+          <Badge variant="neutral" className="font-normal">
+            {t(
+              "{0} operations · {1} fragments",
+              index.catalog.operationCount,
+              index.catalog.fragmentCount,
+            )}
+          </Badge>
+        ) : (
+          <Skeleton className="h-5 w-44 rounded-md" />
+        ),
+      }}
+    >
       <div className="min-h-0 flex-1 p-0">
         {isError ? (
           <CatalogLoadError
@@ -61,7 +60,7 @@ export function GraphQLExplorerPage() {
           <ExplorerSkeleton />
         )}
       </div>
-    </AdminPageLayout>
+    </PageLayout>
   );
 }
 

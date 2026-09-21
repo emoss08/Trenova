@@ -38,11 +38,9 @@ export function MyTeamPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <DataTableLazyComponent fallback={<MyTeamSkeleton />}>
-          <MyTeamConsole />
-        </DataTableLazyComponent>
-      </div>
+      <DataTableLazyComponent fallback={<MyTeamSkeleton />}>
+        <MyTeamConsole />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

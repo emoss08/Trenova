@@ -67,8 +67,12 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
   } = props;
 
   return (
-    <div className={cn("w-full space-y-0.5 overflow-auto", className)} {...skeletonProps}>
-      <div className="flex w-full items-center justify-between space-x-2 overflow-auto p-1">
+    <div
+      data-slot="data-table"
+      className={cn("bleed:gap-0 flex w-full flex-col gap-2 overflow-auto", className)}
+      {...skeletonProps}
+    >
+      <div className="bleed:border-b bleed:px-3 bleed:py-2 flex w-full items-center justify-between space-x-2 overflow-auto">
         <div className="flex flex-1 items-center space-x-2">
           <Skeleton className="h-7 w-40 lg:w-56" />
           <Skeleton className="h-7 w-18 border-dashed" />
@@ -81,7 +85,7 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
           </>
         ) : null}
       </div>
-      <div className="rounded-md border">
+      <div className="bleed:rounded-none bleed:border-0 rounded-lg border">
         <Table>
           <TableHeader>
             {Array.from({ length: 1 }).map((_, i) => (
@@ -120,7 +124,7 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
         </Table>
       </div>
       {withPagination ? (
-        <div className="flex w-full items-center justify-between gap-4 overflow-auto p-1 sm:gap-8">
+        <div className="bleed:border-t bleed:px-3 bleed:py-1.5 flex w-full items-center justify-between gap-4 overflow-auto px-2 sm:gap-8">
           <Skeleton className="h-7 w-44 shrink-0" />
           <div className="flex items-center gap-4 sm:gap-6 lg:gap-8">
             <div className="flex items-center space-x-2">

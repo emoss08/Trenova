@@ -17,11 +17,9 @@ export function WorkerCredentialTypesPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <DataTableLazyComponent>
-          <Table />
-        </DataTableLazyComponent>
-      </div>
+      <DataTableLazyComponent>
+        <Table />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

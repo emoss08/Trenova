@@ -16,7 +16,7 @@ type TeamSummaryStripProps = {
   now: number;
 };
 
-const VALUE_CLASS = "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums";
+const VALUE_CLASS = "text-2xl leading-none font-semibold tabular-nums";
 
 export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
   const t = useT();

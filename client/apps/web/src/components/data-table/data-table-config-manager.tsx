@@ -80,11 +80,7 @@ export default function DataTableConfigManager({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="group data-popup-open:bg-secondary flex flex-row gap-1"
-          >
+          <Button variant="outline" size="sm" className="group flex flex-row gap-1">
             <BookmarkIcon
               className={cn(
                 "text-muted-foreground group-hover:text-foreground group-data-popup-open:text-foreground mb-0.5 size-3.5",
@@ -110,7 +106,7 @@ export default function DataTableConfigManager({
               <div className="flex flex-col px-1 pb-1">
                 <h3 className="text-muted-foreground flex items-center gap-1.5 px-1 py-1.5 text-xs font-medium">
                   <BookmarkIcon className="size-3" />
-                  {t("My Views")}
+                  {t("My views")}
                 </h3>
                 {myViews.map((config) => renderItem(config, true))}
               </div>
@@ -124,7 +120,7 @@ export default function DataTableConfigManager({
               >
                 <h3 className="text-muted-foreground flex items-center gap-1.5 px-1 py-1.5 text-xs font-medium">
                   <UsersIcon className="size-3" />
-                  {t("Team Views")}
+                  {t("Team views")}
                 </h3>
                 {teamViews.map((config) => renderItem(config, false))}
               </div>
@@ -149,7 +145,7 @@ export default function DataTableConfigManager({
           }}
         >
           <PlusIcon className="size-4" />
-          {t("Save Current View")}
+          {t("Save current view")}
         </Button>
       </PopoverContent>
     </Popover>

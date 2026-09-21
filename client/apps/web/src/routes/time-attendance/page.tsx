@@ -43,11 +43,9 @@ export function TimeAttendancePage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <DataTableLazyComponent>
-          <TimeAttendanceConsole />
-        </DataTableLazyComponent>
-      </div>
+      <DataTableLazyComponent>
+        <TimeAttendanceConsole />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

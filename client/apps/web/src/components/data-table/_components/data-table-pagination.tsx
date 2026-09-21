@@ -65,7 +65,7 @@ export function DataTablePagination<TData extends RowData>({
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 px-2">
+    <div className="bleed:border-border bleed:min-h-10 bleed:shrink-0 bleed:border-t bleed:px-3 bleed:py-1.5 flex items-center justify-between gap-4 px-2 tabular-nums">
       <div className="text-muted-foreground text-sm">
         {visibleRowCount < 1 ? (
           <>{t("No results on this page")}</>
