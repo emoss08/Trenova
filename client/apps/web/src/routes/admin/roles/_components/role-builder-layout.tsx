@@ -1,12 +1,11 @@
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { cn } from "@trenova/shared/lib/utils";
-import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
-import { Link } from "react-router";
 
 type RolePageLayoutProps = {
   title: string;
+  description: string;
   isSubmitting: boolean;
   submitLabel: string;
   onSubmit: () => void;
@@ -18,6 +17,7 @@ type RolePageLayoutProps = {
 
 export function RolePageLayout({
   title,
+  description,
   isSubmitting,
   submitLabel,
   onSubmit,
@@ -29,65 +29,38 @@ export function RolePageLayout({
   const t = useT();
 
   return (
-    <div className="border-border bg-background flex flex-col overflow-hidden rounded-md border">
-      <header className="bg-card/95 sticky top-0 z-10 shrink-0 border-b px-6 py-3 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/roles"
-              className="bg-background text-muted-foreground hover:bg-muted hover:text-foreground flex size-8 items-center justify-center rounded-lg border transition-colors"
-            >
-              <ArrowLeftIcon className="size-4" />
-            </Link>
-            <h1 className="text-lg font-semibold">{title}</h1>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {permissionCount !== undefined && permissionCount > 0 && (
-              <Badge variant="neutral" appearance="outline" className="text-xs font-normal">
-                {t("{0, plural, one {# resource} other {# resources}} configured", permissionCount)}
-              </Badge>
-            )}
+    <PageLayout
+      pageHeaderProps={{
+        title,
+        description,
+        context:
+          permissionCount !== undefined && permissionCount > 0 ? (
+            <Badge variant="neutral" appearance="outline">
+              {t("{0, plural, one {# resource} other {# resources}} configured", permissionCount)}
+            </Badge>
+          ) : undefined,
+        actions: (
+          <>
             <Button type="button" variant="outline" size="sm" onClick={onCancel}>
               {t("Cancel")}
             </Button>
-            <Button type="button" size="sm" onClick={onSubmit} disabled={isSubmitting}>
-              {isSubmitting && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+            <Button
+              type="button"
+              size="sm"
+              onClick={onSubmit}
+              isLoading={isSubmitting}
+              loadingText={submitLabel}
+            >
               {submitLabel}
             </Button>
-          </div>
-        </div>
-      </header>
-
-      {banner}
-
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-5xl space-y-6 px-6 py-8">{children}</div>
+          </>
+        ),
+      }}
+    >
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+        {banner}
+        {children}
       </div>
-    </div>
-  );
-}
-
-type RoleBuilderSectionProps = {
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-  className?: string;
-};
-
-export function RoleBuilderSection({
-  title,
-  description,
-  children,
-  className,
-}: RoleBuilderSectionProps) {
-  return (
-    <section className={cn("flex flex-col", className)}>
-      <div className="mb-4">
-        <h2 className="text-sm font-medium">{title}</h2>
-        {description && <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>}
-      </div>
-      <div className="flex-1">{children}</div>
-    </section>
+    </PageLayout>
   );
 }

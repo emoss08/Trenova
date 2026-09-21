@@ -58,7 +58,6 @@ export function DetentionIntelligence({
       )}
 
       <FacilityProfiles
-        index={1}
         rows={facilities.data ?? []}
         isLoading={facilities.isLoading}
         isError={facilities.isError}
@@ -67,14 +66,12 @@ export function DetentionIntelligence({
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-2">
         <CustomerMargin
-          index={2}
           rows={customers.data ?? []}
           isLoading={customers.isLoading}
           isError={customers.isError}
           onRetry={() => void customers.refetch()}
         />
         <WaiverLeakage
-          index={3}
           rows={waivers.data ?? []}
           isLoading={waivers.isLoading}
           isError={waivers.isError}

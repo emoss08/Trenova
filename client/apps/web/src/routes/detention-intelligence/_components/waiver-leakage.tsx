@@ -4,7 +4,6 @@ import { detentionWaiverReasonChoices, findChoice } from "@/lib/choices";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { WaiverLeakageStat } from "@trenova/shared/types/detention";
 import { HandCoinsIcon } from "lucide-react";
-import { m } from "motion/react";
 import { useMemo } from "react";
 import { Panel, PanelEmpty, PanelError, PanelRowsSkeleton } from "./intelligence-panel";
 
@@ -48,10 +47,7 @@ function LeakageRow({
   const description = reasonDescription(row.reason);
 
   return (
-    <m.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.26, delay: Math.min(index, 10) * 0.04, ease: "easeOut" }}
+    <div
       className="hover:bg-muted/40 px-3 py-2.5 transition-colors"
     >
       <div className="flex items-center gap-3">
@@ -82,7 +78,6 @@ function LeakageRow({
           value={share}
           className="min-w-0 flex-1"
           barClassName={LEAKAGE_TONES[index % LEAKAGE_TONES.length]}
-          delay={Math.min(index, 10) * 0.04}
         />
         <p className="text-2xs text-muted-foreground shrink-0 tabular-nums">
           {t(
@@ -95,7 +90,7 @@ function LeakageRow({
           )}
         </p>
       </div>
-    </m.div>
+    </div>
   );
 }
 
@@ -104,13 +99,11 @@ export function WaiverLeakage({
   isLoading,
   isError,
   onRetry,
-  index,
 }: {
   rows: WaiverLeakageStat[];
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
-  index: number;
 }) {
   const t = useT();
 
@@ -136,7 +129,6 @@ export function WaiverLeakage({
 
   return (
     <Panel
-      index={index}
       icon={HandCoinsIcon}
       title={t("Waiver leakage")}
       description={t(

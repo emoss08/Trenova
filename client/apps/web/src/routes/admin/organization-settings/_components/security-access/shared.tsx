@@ -2,6 +2,7 @@ import { FieldWrapper } from "@/components/fields/field-components";
 import { EntraLogo } from "@/components/logos/entra";
 import { OktaLogo } from "@/components/logos/okta";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import { FormSection } from "@trenova/shared/components/ui/form";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
@@ -11,43 +12,6 @@ import { AlertTriangleIcon, KeyRoundIcon, SearchIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Controller, type Control } from "react-hook-form";
 import { riskVariant } from "./utils";
-
-export function StatusTile({
-  icon,
-  label,
-  value,
-  detail,
-  tone,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  detail: string;
-  tone: "active" | "warning" | "info" | "muted";
-}) {
-  return (
-    <div className="bg-background rounded-lg border p-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <div className="text-muted-foreground text-xs font-medium">{label}</div>
-          <div className="truncate text-lg font-semibold tracking-tight">{value}</div>
-          <div className="text-muted-foreground truncate text-xs">{detail}</div>
-        </div>
-        <span
-          className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-md border [&_svg]:size-4",
-            tone === "active" && "border-success/30 bg-success/10 text-success-foreground",
-            tone === "warning" && "border-warning/30 bg-warning/10 text-warning-foreground",
-            tone === "info" && "border-info/30 bg-info/10 text-info-foreground",
-            tone === "muted" && "bg-muted text-muted-foreground",
-          )}
-        >
-          {icon}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 export function ConsoleToolbar({
   title,
@@ -65,12 +29,11 @@ export function ConsoleToolbar({
   action?: ReactNode;
 }) {
   return (
-    <div className="bg-sidebar rounded-lg border p-3">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div>
-          <h3 className="text-base font-semibold tracking-tight">{title}</h3>
-          <p className="text-muted-foreground text-sm">{description}</p>
-        </div>
+    <FormSection
+      className="bg-card rounded-lg border p-3"
+      title={title}
+      description={description}
+      action={
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative min-w-0 sm:w-80">
             <Input
@@ -82,8 +45,8 @@ export function ConsoleToolbar({
           </div>
           {action}
         </div>
-      </div>
-    </div>
+      }
+    />
   );
 }
 
@@ -101,11 +64,9 @@ export function PanelHeader({
   return (
     <div className="flex flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2">
-        <span className="bg-muted/40 text-muted-foreground flex size-8 items-center justify-center rounded-md border [&_svg]:size-4">
-          {icon}
-        </span>
+        <span className="text-muted-foreground shrink-0 [&_svg]:size-4">{icon}</span>
         <div>
-          <div className="text-sm font-medium">{title}</div>
+          <h3 className="text-sm font-semibold">{title}</h3>
           <div className="text-muted-foreground text-xs">{description}</div>
         </div>
       </div>

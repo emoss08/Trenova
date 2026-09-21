@@ -52,7 +52,7 @@ export function BillingQueueCancelDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent className="sm:max-w-100">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Cancel billing queue item")}</DialogTitle>
           <DialogDescription>

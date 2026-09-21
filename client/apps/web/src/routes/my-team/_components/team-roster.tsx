@@ -20,8 +20,7 @@ import { approvalScopeLabel } from "@trenova/shared/lib/org-structure";
 import { formatTenure } from "@trenova/shared/lib/tenure";
 import { cn } from "@trenova/shared/lib/utils";
 import { AlertTriangleIcon, ChevronRightIcon, SearchIcon } from "lucide-react";
-import { m, useReducedMotion } from "motion/react";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { HealthTrio, MemberIdentity, memberHref } from "./member-identity";
 
@@ -36,7 +35,6 @@ type TeamRosterProps = {
 
 const PATH_ORDER: TeamPath[] = ["direct", "terminal", "covering"];
 
-const STAGGER_LIMIT = 12;
 
 export function TeamRoster({
   rows,
@@ -233,27 +231,15 @@ function RosterGroup({
 }
 
 function MemberList({ rows, now }: { rows: ClassifiedMember[]; now: number }) {
-  const reduceMotion = useReducedMotion();
-  const [settled, setSettled] = useState(false);
-
-  // The stagger belongs to the first paint only. Filtering re-keys nothing, so
-  // a row that survives a filter change must not replay its entrance.
-  useEffect(() => {
-    const timer = window.setTimeout(() => setSettled(true), 600);
-    return () => window.clearTimeout(timer);
-  }, []);
 
   return (
     <ul className="bg-card divide-y overflow-hidden rounded-lg border">
-      {rows.map((row, index) => (
-        <m.li
+      {rows.map((row) => (
+        <li
           key={row.member.workerId}
-          initial={settled || reduceMotion ? false : { opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: Math.min(index, STAGGER_LIMIT) * 0.03 }}
         >
           <MemberRow row={row} now={now} />
-        </m.li>
+        </li>
       ))}
     </ul>
   );

@@ -37,13 +37,11 @@ import {
   Trash2Icon,
   UserRoundIcon,
 } from "lucide-react";
-import { m, useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { OshaEmptyLog } from "./osha-empty-log";
 import { FormMark } from "./osha-form-marks";
 
-const STAGGER_LIMIT = 12;
 
 type OshaCaseTableProps = {
   year: number;
@@ -80,8 +78,6 @@ export function OshaCaseTable({
   const t = useT();
 
   const navigate = useNavigate();
-  const reduceMotion = useReducedMotion();
-  const [settled, setSettled] = useState(false);
   const counts = useMemo(() => caseFilterCounts(cases), [cases]);
   const rows = useMemo(() => filterCases(cases, filter, query), [cases, filter, query]);
   const filterItems = useMemo(
@@ -93,11 +89,6 @@ export function OshaCaseTable({
       })),
     [counts],
   );
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setSettled(true), 700);
-    return () => window.clearTimeout(timer);
-  }, []);
 
   return (
     <section aria-label={t("Form 300")} className="flex min-w-0 flex-col gap-3">
@@ -188,7 +179,7 @@ export function OshaCaseTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((entry, index) => {
+              {rows.map((entry) => {
                 const column = logColumn(entry.classification);
                 const typeNumber = illnessTypeNumber(entry.illnessType);
                 const label = caseLabel(entry);
@@ -224,14 +215,11 @@ export function OshaCaseTable({
                   });
                 }
                 return (
-                  <m.tr
+                  <tr
                     key={entry.id}
                     data-slot="table-row"
                     data-recordable={entry.recordable}
                     aria-label={`Case ${label}`}
-                    initial={settled || reduceMotion ? false : { opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.22, delay: Math.min(index, STAGGER_LIMIT) * 0.03 }}
                     onClick={() => onOpen(entry)}
                     className={cn(
                       "hover:bg-muted/50 cursor-pointer border-b text-xs transition-colors last:border-0",
@@ -349,7 +337,7 @@ export function OshaCaseTable({
                     >
                       <RowActionsMenu label={`Actions for case ${label}`} actions={actions} />
                     </td>
-                  </m.tr>
+                  </tr>
                 );
               })}
             </TableBody>

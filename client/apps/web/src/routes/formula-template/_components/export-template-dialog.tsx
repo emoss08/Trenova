@@ -72,7 +72,7 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DownloadIcon className="size-4" />

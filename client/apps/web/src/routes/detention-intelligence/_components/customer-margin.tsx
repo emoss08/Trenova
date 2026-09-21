@@ -6,7 +6,6 @@ import { deltaToneClass, formatSignedCurrency } from "@trenova/shared/lib/detent
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { CustomerDetentionStat } from "@trenova/shared/types/detention";
 import { UsersIcon } from "lucide-react";
-import { m } from "motion/react";
 import { useMemo, useState } from "react";
 import {
   Panel,
@@ -33,24 +32,13 @@ function sortCustomers(rows: CustomerDetentionStat[], sort: CustomerSort): Custo
     : sorted.sort((a, b) => a.netMargin - b.netMargin);
 }
 
-function CustomerRow({
-  row,
-  index,
-  scale,
-}: {
-  row: CustomerDetentionStat;
-  index: number;
-  scale: number;
-}) {
+function CustomerRow({ row, scale }: { row: CustomerDetentionStat; scale: number }) {
   const t = useT();
 
   const losing = row.netMargin < 0;
 
   return (
-    <m.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.26, delay: Math.min(index, 10) * 0.03, ease: "easeOut" }}
+    <div
       className="hover:bg-muted/40 flex items-center gap-3 px-3 py-2.5 transition-colors"
     >
       <div className="min-w-0 flex-1">
@@ -84,7 +72,6 @@ function CustomerRow({
         value={row.netMargin}
         scale={scale}
         className="hidden sm:block"
-        delay={Math.min(index, 10) * 0.03}
       />
 
       <span
@@ -95,7 +82,7 @@ function CustomerRow({
       >
         {formatSignedCurrency(row.netMargin)}
       </span>
-    </m.div>
+    </div>
   );
 }
 
@@ -104,13 +91,11 @@ export function CustomerMargin({
   isLoading,
   isError,
   onRetry,
-  index,
 }: {
   rows: CustomerDetentionStat[];
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
-  index: number;
 }) {
   const t = useT();
 
@@ -129,7 +114,6 @@ export function CustomerMargin({
 
   return (
     <Panel
-      index={index}
       icon={UsersIcon}
       title={t("Customer margin")}
       description={t(
@@ -176,8 +160,8 @@ export function CustomerMargin({
         />
       ) : (
         <div key={sort} className="divide-border divide-y">
-          {visible.map((row, rowIndex) => (
-            <CustomerRow key={row.customerId} row={row} index={rowIndex} scale={scale} />
+          {visible.map((row) => (
+            <CustomerRow key={row.customerId} row={row} scale={scale} />
           ))}
         </div>
       )}

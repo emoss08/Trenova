@@ -188,7 +188,9 @@ describe("WorkerOverviewTab", () => {
   it("opens the matching tab from a summary card", async () => {
     const onOpenTab = renderTab();
 
-    fireEvent.click(await screen.findByTestId("overview-card-safety"));
+    fireEvent.click(
+      within(await screen.findByTestId("overview-card-safety")).getByRole("button"),
+    );
     await waitFor(() => expect(onOpenTab).toHaveBeenCalledWith("safety"));
   });
 

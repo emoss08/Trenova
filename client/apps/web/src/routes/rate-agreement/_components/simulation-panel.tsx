@@ -363,17 +363,17 @@ function SimulationReading({ simulation }: { readonly simulation: RateSimulation
             <StatTile
               label={t("Increased")}
               value={String(summary.increasedCount)}
-              tone="text-success-foreground"
+              tone="success"
             />
             <StatTile
               label={t("Decreased")}
               value={String(summary.decreasedCount)}
-              tone="text-danger-foreground"
+              tone="danger"
             />
             <StatTile
               label={t("Errors")}
               value={String(summary.errorCount)}
-              tone={summary.errorCount > 0 ? "text-destructive" : undefined}
+              tone={summary.errorCount > 0 ? "danger" : undefined}
             />
           </KpiStrip>
 

@@ -1,12 +1,13 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { queries } from "@/lib/queries";
+import { InfoPopover } from "@/components/info-popover";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import {
   CAPABILITIES,
   getProfile,
@@ -39,13 +40,8 @@ import type {
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import {
-  CalendarClockIcon,
-  CircleDollarSignIcon,
-  ClockIcon,
-  InfoIcon,
   RulerIcon,
   ShieldQuestionIcon,
-  TruckIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -148,6 +144,11 @@ function EnvelopeBody({
   const unverified = unverifiedJurisdictions(assessment);
   const pickupTooSoon = pickupIsTooSoon(assessment, scheduledPickupAt);
   const openCount = requirements.filter((requirement) => requirement.status === "Open").length;
+  const hasSummary =
+    escorts.length > 0 ||
+    restrictions.length > 0 ||
+    assessment.maxLeadTimeDays > 0 ||
+    (assessment.totalEstimatedFee ?? 0) > 0;
 
   const [recording, setRecording] = useState<PermitRequirement | null>(null);
   const [waiving, setWaiving] = useState<PermitRequirement | null>(null);
@@ -219,86 +220,105 @@ function EnvelopeBody({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {escorts.length > 0 && (
-          <SummaryCard
-            icon={<TruckIcon className="size-3.5" />}
-            label={t("Escort vehicles")}
-            value={`${assessment.totalEscorts} for the trip`}
-            hint={t("Counted once per role across the route, not once per state.")}
-          >
-            <ul className="space-y-0.5">
-              {escorts.map((escort) => (
-                <li key={escort.role} className="text-muted-foreground text-xs">
-                  <span className="text-foreground">{t(escort.label)}</span>
-                  {escort.stateCodes.length > 0 &&
-                    ` ${t("— required by {0}", escort.stateCodes.join(", "))}`}
-                </li>
-              ))}
-            </ul>
-          </SummaryCard>
-        )}
+      {hasSummary && (
+        <KpiStrip minItemWidth="16rem">
+          {escorts.length > 0 && (
+            <KpiStripItem
+              label={t("Escort vehicles")}
+              value={`${assessment.totalEscorts} for the trip`}
+              info={
+                <InfoPopover title={t("Escort vehicles")}>
+                  {t("Counted once per role across the route, not once per state.")}
+                </InfoPopover>
+              }
+              sub={
+                <span className="flex flex-col gap-0.5 whitespace-normal">
+                  {escorts.map((escort) => (
+                    <span key={escort.role}>
+                      <span className="text-foreground">{t(escort.label)}</span>
+                      {escort.stateCodes.length > 0 &&
+                        ` ${t("— required by {0}", escort.stateCodes.join(", "))}`}
+                    </span>
+                  ))}
+                </span>
+              }
+            />
+          )}
 
-        {restrictions.length > 0 && (
-          <SummaryCard
-            icon={<ClockIcon className="size-3.5" />}
-            label={t("Movement restrictions")}
-            hint={t(
-              "Restrictions published by the permitting jurisdictions on this route. Trenova does not yet evaluate them against your appointment times.",
-            )}
-          >
-            <ul className="space-y-0.5">
-              {restrictions.map((restriction) => (
-                <li key={restriction.kind} className="text-muted-foreground text-xs">
-                  <span className="text-foreground">{t(restriction.label)}</span> —{" "}
-                  {restriction.stateCodes.join(", ")}
-                </li>
-              ))}
-            </ul>
-          </SummaryCard>
-        )}
+          {restrictions.length > 0 && (
+            <KpiStripItem
+              label={t("Movement restrictions")}
+              value={restrictions.length}
+              info={
+                <InfoPopover title={t("Movement restrictions")}>
+                  {t(
+                    "Restrictions published by the permitting jurisdictions on this route. Trenova does not yet evaluate them against your appointment times.",
+                  )}
+                </InfoPopover>
+              }
+              sub={
+                <span className="flex flex-col gap-0.5 whitespace-normal">
+                  {restrictions.map((restriction) => (
+                    <span key={restriction.kind}>
+                      <span className="text-foreground">{t(restriction.label)}</span> —{" "}
+                      {restriction.stateCodes.join(", ")}
+                    </span>
+                  ))}
+                </span>
+              }
+            />
+          )}
 
-        {assessment.maxLeadTimeDays > 0 && (
-          <SummaryCard
-            icon={<CalendarClockIcon className="size-3.5" />}
-            label={t("Earliest feasible pickup")}
-            value={formatToUserTimezone(assessment.earliestPickup, {
-              showTimeZone: false,
-              showSeconds: false,
-            })}
-            hint={t("Derived from the slowest jurisdiction's permit lead time.")}
-            tone={pickupTooSoon ? "warning" : undefined}
-          >
-            <p className="text-muted-foreground text-xs">
-              {t(
-                "{0, plural, one {# day} other {# days}} of permit lead time on this route.",
-                assessment.maxLeadTimeDays,
-              )}
-            </p>
-            {pickupTooSoon && (
-              <p className="mt-1 text-xs font-medium text-warning-foreground">
-                {t("The booked pickup falls inside that window and cannot be permitted in time.")}
-              </p>
-            )}
-          </SummaryCard>
-        )}
+          {assessment.maxLeadTimeDays > 0 && (
+            <KpiStripItem
+              label={t("Earliest feasible pickup")}
+              value={formatToUserTimezone(assessment.earliestPickup, {
+                showTimeZone: false,
+                showSeconds: false,
+              })}
+              tone={pickupTooSoon ? "warning" : undefined}
+              info={
+                <InfoPopover title={t("Earliest feasible pickup")}>
+                  {t("Derived from the slowest jurisdiction's permit lead time.")}
+                </InfoPopover>
+              }
+              sub={
+                <span className="flex flex-col gap-1 whitespace-normal">
+                  <span>
+                    {t(
+                      "{0, plural, one {# day} other {# days}} of permit lead time on this route.",
+                      assessment.maxLeadTimeDays,
+                    )}
+                  </span>
+                  {pickupTooSoon && (
+                    <span className="text-warning-foreground font-medium">
+                      {t(
+                        "The booked pickup falls inside that window and cannot be permitted in time.",
+                      )}
+                    </span>
+                  )}
+                </span>
+              }
+            />
+          )}
 
-        {(assessment.totalEstimatedFee ?? 0) > 0 && (
-          <SummaryCard
-            icon={<CircleDollarSignIcon className="size-3.5" />}
-            label={t("Estimated permit fees")}
-            value={`$${(assessment.totalEstimatedFee ?? 0).toLocaleString()}`}
-          >
-            {assessment.feeIsBaseOnly && (
-              <p className="text-muted-foreground text-xs">
-                {t(
-                  "Base fees only — per-mile charges are excluded because per-state mileage is not available for this route, so the real cost will be higher where a jurisdiction charges by distance.",
-                )}
-              </p>
-            )}
-          </SummaryCard>
-        )}
-      </div>
+          {(assessment.totalEstimatedFee ?? 0) > 0 && (
+            <KpiStripItem
+              label={t("Estimated permit fees")}
+              value={`$${(assessment.totalEstimatedFee ?? 0).toLocaleString()}`}
+              sub={
+                assessment.feeIsBaseOnly ? (
+                  <span className="block whitespace-normal">
+                    {t(
+                      "Base fees only — per-mile charges are excluded because per-state mileage is not available for this route, so the real cost will be higher where a jurisdiction charges by distance.",
+                    )}
+                  </span>
+                ) : undefined
+              }
+            />
+          )}
+        </KpiStrip>
+      )}
 
       {unverified.length > 0 && (
         <Alert variant="warning" size="sm">
@@ -572,56 +592,6 @@ function CardHeader({ title, meta }: { title: string; meta?: React.ReactNode }) 
     <div className="border-border flex items-center justify-between gap-2 border-b px-3 py-2">
       <span className="text-xs text-muted-foreground font-medium">{title}</span>
       {meta}
-    </div>
-  );
-}
-
-function SummaryCard({
-  icon,
-  label,
-  value,
-  hint,
-  tone,
-  children,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value?: string;
-  hint?: string;
-  tone?: "warning";
-  children?: React.ReactNode;
-}) {
-  return (
-    <div
-      className={cn(
-        "bg-muted/40 rounded-lg border px-3 py-2.5",
-        tone === "warning" && "border-warning-border bg-warning-subtle",
-      )}
-    >
-      <div className="flex items-center gap-1.5">
-        <span
-          className={cn("text-muted-foreground", tone === "warning" && "text-warning-foreground")}
-        >
-          {icon}
-        </span>
-        <span className="text-xs text-muted-foreground font-medium">{label}</span>
-        {hint && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <span className="text-muted-foreground cursor-help">
-                  <InfoIcon className="size-3" />
-                </span>
-              }
-            />
-            <TooltipContent side="top" sideOffset={8} className="max-w-xs">
-              {hint}
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-      {value && <p className="mt-1.5 text-sm font-medium tabular-nums">{value}</p>}
-      {children && <div className={value ? "mt-1" : "mt-1.5"}>{children}</div>}
     </div>
   );
 }

@@ -173,14 +173,13 @@ export function ApprovalActionDialog({
   const commentInvalid =
     showCommentError && COMMENT_REQUIRED_ACTIONS.has(action) && !comment.trim();
 
+  const compact = action === "reject" || action === "requestChanges";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={
-          action === "reject" || action === "requestChanges"
-            ? "sm:max-w-[420px]"
-            : "flex max-h-[85vh] flex-col overflow-y-auto sm:max-w-[600px]"
-        }
+        size={compact ? "sm" : "lg"}
+        className={compact ? undefined : "flex max-h-[85vh] flex-col overflow-y-auto"}
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -237,14 +236,12 @@ export function ApprovalActionDialog({
         <DialogFooter>
           <Button
             variant="outline"
-            size="sm"
             onClick={() => onOpenChange(false)}
             disabled={mutation.isPending}
           >
             {t("Cancel")}
           </Button>
           <Button
-            size="sm"
             variant={config.destructive ? "destructive" : "default"}
             onClick={handleConfirm}
             isLoading={mutation.isPending}

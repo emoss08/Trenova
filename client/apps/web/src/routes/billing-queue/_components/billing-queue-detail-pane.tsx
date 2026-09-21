@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import AuditTab from "@/components/audit-tab";
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { PlainBillingQueueStatusBadge } from "@trenova/shared/components/status-badge";
@@ -107,7 +108,7 @@ export default function BillingQueueDetailPane({
         </div>
 
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className="text-2xl font-semibold tabular-nums">
+          <span className={KPI_VALUE_LG_CLASS}>
             {formatCurrency(isPartial && allocated != null ? allocated : totalCharge)}
           </span>
           {isPartial ? (

@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
+import { SectionPanel } from "@/components/section-panel";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -23,7 +24,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixInUserTimezone, resolveUserTimezone } from "@trenova/shared/lib/date";
 import { startOfRotaWeek } from "@trenova/shared/lib/scheduling";
@@ -31,7 +32,7 @@ import { elapsedMinutes, formatHours, timesheetStatusTone } from "@trenova/share
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ClockIcon, PenLineIcon, PlayIcon, SquareIcon, Trash2Icon } from "lucide-react";
-import { m, useReducedMotion } from "motion/react";
+import { m } from "motion/react";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -197,33 +198,31 @@ export function TimeClockPanel({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-sm font-medium">{t("Clock")}</h3>
-          <p className="text-muted-foreground mt-0.5 text-xs">
-            {t(
-              "Pick a worker, or choose somebody from the board, to work their clock and see the last two weeks of punches.",
-            )}
-          </p>
-        </div>
-        <div className="w-full sm:w-72">
-          <FormProvider {...form}>
-            <Form onSubmit={(event) => event.preventDefault()}>
-              <FormGroup cols={1}>
-                <FormControl cols="full">
-                  <WorkerAutocompleteField<PickerValues>
-                    control={form.control}
-                    name="workerId"
-                    label={t("Worker")}
-                    placeholder={t("Who is on the clock")}
-                    clearable
-                  />
-                </FormControl>
-              </FormGroup>
-            </Form>
-          </FormProvider>
-        </div>
-      </div>
+      <FormSection
+        title={t("Clock")}
+        description={t(
+          "Pick a worker, or choose somebody from the board, to work their clock and see the last two weeks of punches.",
+        )}
+        action={
+          <div className="w-56 sm:w-72">
+            <FormProvider {...form}>
+              <Form onSubmit={(event) => event.preventDefault()}>
+                <FormGroup cols={1}>
+                  <FormControl cols="full">
+                    <WorkerAutocompleteField<PickerValues>
+                      control={form.control}
+                      name="workerId"
+                      label={t("Worker")}
+                      placeholder={t("Who is on the clock")}
+                      clearable
+                    />
+                  </FormControl>
+                </FormGroup>
+              </Form>
+            </FormProvider>
+          </div>
+        }
+      />
 
       <ClockBoard
         entries={openEntries}
@@ -365,22 +364,18 @@ export function TimeClockPanel({
             )}
           </div>
 
-          <section
-            aria-labelledby="punch-history-heading"
-            className="bg-card overflow-hidden rounded-lg border"
-          >
-            <header className="flex items-center justify-between gap-2 border-b px-3 py-2">
-              <h3 id="punch-history-heading" className="text-sm font-medium">
-                {t("Last two weeks")}
-              </h3>
-              <span className="text-muted-foreground text-xs tabular-nums">
+          <SectionPanel
+            title={t("Last two weeks")}
+            hint={
+              <span className="tabular-nums">
                 {t(
                   "{0, plural, one {# punch} other {# punches}} · {1}",
                   entries.length,
                   formatHours(entries.reduce((sum, row) => sum + row.paidMinutes, 0)),
                 )}
               </span>
-            </header>
+            }
+          >
             {recentEntries.isLoading ? (
               <div className="flex flex-col gap-2 p-3">
                 <Skeleton className="h-8 w-full" />
@@ -406,7 +401,7 @@ export function TimeClockPanel({
                 ))}
               </div>
             )}
-          </section>
+          </SectionPanel>
         </div>
       ) : null}
 
@@ -448,7 +443,6 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
     () => dayTrackSpans(day.entries, now, timezone),
     [day.entries, now, timezone],
   );
-  const reduceMotion = useReducedMotion();
   const trackName = day.entries
     .map((row) =>
       row.clockedOutAt
@@ -460,7 +454,7 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
   return (
     <section aria-label={heading} className="flex flex-col">
       <header className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-1">
-        <h4 className="text-xs font-medium">{heading}</h4>
+        <h4 className="text-sm font-semibold">{heading}</h4>
         <span className="text-xs tabular-nums" aria-label={t("Day total")}>
           <span className="font-mono font-medium">
             {day.running
@@ -486,15 +480,12 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
               style={{ left: `${(hour / 24) * 100}%` }}
             />
           ))}
-          {spans.map((span, index) => (
-            <m.span
+          {spans.map((span) => (
+            <span
               key={span.id}
               data-slot="punch-span"
-              initial={reduceMotion ? false : { scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 0.4, delay: index * 0.05, ease: "easeOut" }}
               className={cn(
-                "absolute inset-y-0 origin-left rounded-full",
+                "absolute inset-y-0 rounded-full",
                 span.running ? "bg-success/80" : "bg-brand/70",
               )}
               style={{

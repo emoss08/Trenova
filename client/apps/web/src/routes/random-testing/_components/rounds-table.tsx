@@ -13,10 +13,7 @@ import {
 } from "@trenova/shared/components/ui/table";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { m, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
 
-const STAGGER_LIMIT = 8;
 
 type RoundsTableProps = {
   rows: readonly RandomDrawListRow[];
@@ -42,14 +39,6 @@ export function RoundsTable({
 }: RoundsTableProps) {
   const t = useT();
 
-  const reduceMotion = useReducedMotion();
-  const [settled, setSettled] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setSettled(true), 600);
-    return () => window.clearTimeout(timer);
-  }, []);
-
   return (
     <Table aria-label={t("Rounds")} className="text-xs">
       <TableHeader>
@@ -67,16 +56,13 @@ export function RoundsTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.map((draw, index) => {
+        {rows.map((draw) => {
           const short = draw.status !== "Cancelled" && drawShortOfTarget(draw);
           const busy = busyId === draw.id;
           return (
-            <m.tr
+            <tr
               key={draw.id}
               className="hover:bg-muted/50 border-b transition-colors"
-              initial={settled || reduceMotion ? false : { opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: Math.min(index, STAGGER_LIMIT) * 0.03 }}
             >
               <TableCell className="px-3 py-2">
                 <button
@@ -162,7 +148,7 @@ export function RoundsTable({
                   ) : null}
                 </span>
               </TableCell>
-            </m.tr>
+            </tr>
           );
         })}
       </TableBody>

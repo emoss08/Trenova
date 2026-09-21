@@ -714,7 +714,7 @@ function VersionItem({
       </div>
 
       <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
-        <DialogContent className="sm:max-w-[380px]">
+        <DialogContent size="xs">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarClockIcon className="size-4" />
@@ -752,14 +752,12 @@ function VersionItem({
           <DialogFooter>
             <Button
               variant="outline"
-              size="sm"
               onClick={() => setScheduleDialogOpen(false)}
               disabled={updateEffectiveDateMutation.isPending}
             >
               {t("Cancel")}
             </Button>
             <Button
-              size="sm"
               onClick={handleSaveSchedule}
               disabled={!scheduleDate}
               isLoading={updateEffectiveDateMutation.isPending}
@@ -772,7 +770,7 @@ function VersionItem({
       </Dialog>
 
       <Dialog open={tagsDialogOpen} onOpenChange={setTagsDialogOpen}>
-        <DialogContent className="sm:max-w-[360px]">
+        <DialogContent size="xs">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <TagIcon className="size-4" />
@@ -813,10 +811,10 @@ function VersionItem({
             ))}
           </div>
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setTagsDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setTagsDialogOpen(false)}>
               {t("Cancel")}
             </Button>
-            <Button size="sm" onClick={handleSaveTags} disabled={updateTagsMutation.isPending}>
+            <Button onClick={handleSaveTags} disabled={updateTagsMutation.isPending}>
               {updateTagsMutation.isPending ? (
                 t("Saving...")
               ) : (

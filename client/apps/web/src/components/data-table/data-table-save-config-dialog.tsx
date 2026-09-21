@@ -140,7 +140,7 @@ export function DataTableSaveConfigDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Save view")}</DialogTitle>
           <DialogDescription>

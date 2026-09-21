@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { PageHeaderSkeleton } from "@/components/page-header";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -107,11 +108,9 @@ export function RoleEditPage() {
 
   if (isLoading) {
     return (
-      <div className="border-border bg-background flex flex-col overflow-hidden rounded-md border">
-        <header className="bg-card/95 shrink-0 border-b px-6 py-3">
-          <Skeleton className="h-8 w-48" />
-        </header>
-        <div className="mx-auto w-full max-w-5xl space-y-6 px-6 py-8">
+      <div className="flex min-h-full flex-col">
+        <PageHeaderSkeleton />
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4">
           <Skeleton className="h-48 w-full rounded-lg" />
           <Skeleton className="h-96 w-full rounded-lg" />
         </div>
@@ -128,14 +127,12 @@ export function RoleEditPage() {
   }
 
   const systemRoleBanner = role.isSystem ? (
-    <div className="mx-auto w-full max-w-5xl px-6 pt-8">
-      <Alert variant="warning" size="sm">
-        <AlertTriangleIcon />
-        <AlertDescription>
-          {t("This is a system role. Some properties may be restricted.")}
-        </AlertDescription>
-      </Alert>
-    </div>
+    <Alert variant="warning" size="sm">
+      <AlertTriangleIcon />
+      <AlertDescription>
+        {t("This is a system role. Some properties may be restricted.")}
+      </AlertDescription>
+    </Alert>
   ) : undefined;
 
   return (
@@ -143,6 +140,7 @@ export function RoleEditPage() {
       <Form onSubmit={onSubmit}>
         <RolePageLayout
           title={`Edit ${role.name}`}
+          description={t("Configure resource access and operations")}
           isSubmitting={isSubmitting}
           submitLabel={t("Save changes")}
           onSubmit={onSubmit}

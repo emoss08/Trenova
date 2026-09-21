@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import type { SafetyScorecard } from "@/lib/graphql/worker-safety";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -11,15 +12,7 @@ import {
   type DisciplinaryLevel,
   type SafetyRating,
 } from "@trenova/shared/types/worker-safety";
-import {
-  AwardIcon,
-  CalendarCheckIcon,
-  ClipboardCheckIcon,
-  GaugeIcon,
-  PlusIcon,
-  TargetIcon,
-  type LucideIcon,
-} from "lucide-react";
+import { AwardIcon, PlusIcon } from "lucide-react";
 
 type SafetyScorecardCardProps = {
   scorecard: SafetyScorecard;
@@ -82,49 +75,58 @@ export function SafetyScorecardCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Metric
+      <KpiStrip minItemWidth="14rem">
+        <KpiStripItem
           label={t("Score")}
-          icon={GaugeIcon}
-          value={String(scorecard.score)}
-          unit="of 100"
+          value={<MetricValue value={String(scorecard.score)} unit="of 100" />}
           sub={t("From the last two years of events")}
+          hint={t("From the last two years of events")}
         />
-        <Metric
+        <KpiStripItem
           label={t("Active points")}
-          icon={TargetIcon}
-          value={String(scorecard.activePoints)}
-          unit="pts"
-          sub={`of ${scorecard.pointsAtRiskThreshold} before at-risk`}
-        >
-          <ThresholdBar
-            value={scorecard.activePoints}
-            watch={scorecard.pointsWatchThreshold}
-            atRisk={scorecard.pointsAtRiskThreshold}
-          />
-        </Metric>
-        <Metric
-          label={t("Inspections")}
-          icon={ClipboardCheckIcon}
           value={
-            scorecard.inspections > 0
-              ? `${scorecard.inspectionsPassed}/${scorecard.inspections}`
-              : "—"
+            <span className="flex flex-col gap-1.5 pb-0.5">
+              <MetricValue value={String(scorecard.activePoints)} unit="pts" />
+              <ThresholdBar
+                value={scorecard.activePoints}
+                watch={scorecard.pointsWatchThreshold}
+                atRisk={scorecard.pointsAtRiskThreshold}
+              />
+            </span>
           }
-          unit={scorecard.inspections > 0 ? "clean" : undefined}
-          sub={summariseInspections(scorecard)}
+          sub={`of ${scorecard.pointsAtRiskThreshold} before at-risk`}
+          hint={`of ${scorecard.pointsAtRiskThreshold} before at-risk`}
         />
-        <Metric
+        <KpiStripItem
+          label={t("Inspections")}
+          value={
+            <MetricValue
+              value={
+                scorecard.inspections > 0
+                  ? `${scorecard.inspectionsPassed}/${scorecard.inspections}`
+                  : "—"
+              }
+              unit={scorecard.inspections > 0 ? "clean" : undefined}
+            />
+          }
+          sub={summariseInspections(scorecard)}
+          hint={summariseInspections(scorecard)}
+        />
+        <KpiStripItem
           label={t("Quiet for")}
-          icon={CalendarCheckIcon}
           value={quiet == null ? "—" : `${quiet} days`}
           sub={
             quiet == null
               ? "No accidents, incidents or citations on record"
               : "Since the last accident, incident or citation"
           }
+          hint={
+            quiet == null
+              ? "No accidents, incidents or citations on record"
+              : "Since the last accident, incident or citation"
+          }
         />
-      </div>
+      </KpiStrip>
 
       <DescriptionList className="flex flex-wrap gap-y-2 rounded-lg border px-4 py-3">
         <DescriptionItem label={t("Accidents")} numeric>
@@ -161,44 +163,14 @@ export function SafetyScorecardCard({
   );
 }
 
-/**
- * A metric tile sized for the panel: the dashboard KPI cards carry fixed
- * heights and a six-column rhythm that a 650px panel cannot honour.
- */
-function Metric({
-  label,
-  icon: Icon,
-  value,
-  unit,
-  sub,
-  children,
-}: {
-  label: string;
-  icon: LucideIcon;
-  value: string;
-  unit?: string;
-  sub: string;
-  children?: React.ReactNode;
-}) {
+function MetricValue({ value, unit }: { value: string; unit?: string }) {
   return (
-    <div className="border-border/80 flex min-w-0 flex-col gap-2 rounded-lg border p-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground truncate text-xs font-semibold">{label}</span>
-        <span className="bg-accent inline-flex size-6 shrink-0 items-center justify-center rounded-md">
-          <Icon className="size-3.5" />
-        </span>
-      </div>
-      <div className="flex min-w-0 items-baseline gap-1">
-        <span className="truncate text-2xl leading-none font-semibold tracking-tight tabular-nums">
-          {value}
-        </span>
-        {unit ? <span className="text-muted-foreground shrink-0 text-xs">{unit}</span> : null}
-      </div>
-      {children}
-      <p className="text-muted-foreground truncate text-xs" title={sub}>
-        {sub}
-      </p>
-    </div>
+    <span className="flex min-w-0 items-baseline gap-1">
+      <span className="truncate">{value}</span>
+      {unit ? (
+        <span className="text-muted-foreground shrink-0 text-xs font-normal">{unit}</span>
+      ) : null}
+    </span>
   );
 }
 
@@ -212,19 +184,19 @@ function ThresholdBar({ value, watch, atRisk }: { value: number; watch: number; 
   const fill = Math.min(100, (value / max) * 100);
   const watchAt = Math.min(100, (watch / max) * 100);
   return (
-    <div className="bg-muted relative h-1.5 rounded-sm" aria-hidden>
-      <div
+    <span className="bg-muted relative block h-1.5 rounded-sm" aria-hidden>
+      <span
         className={cn(
-          "absolute inset-y-0 left-0 rounded-sm",
+          "absolute inset-y-0 left-0 block rounded-sm",
           value >= atRisk ? "bg-destructive" : value >= watch ? "bg-warning" : "bg-primary/60",
         )}
         style={{ width: `${fill}%` }}
       />
-      <div
-        className="bg-foreground/50 absolute -top-0.5 -bottom-0.5 w-0.5 rounded-[1px]"
+      <span
+        className="bg-foreground/50 absolute -top-0.5 -bottom-0.5 block w-0.5 rounded-full"
         style={{ left: `calc(${watchAt}% - 1px)` }}
         title={`Watch at ${watch}`}
       />
-    </div>
+    </span>
   );
 }

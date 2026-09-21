@@ -230,7 +230,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Conditional formatting")}</DialogTitle>
           <DialogDescription>
@@ -339,13 +339,12 @@ export default function DataTableFormatBuilder<TData extends RowData>({
         <DialogFooter className="sm:justify-between">
           {rules.length > 0 ? (
             <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" onClick={addRule}>
+              <Button variant="outline" onClick={addRule}>
                 <PlusIcon className="size-3.5" />
                 {t("Add rule")}
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
                 className="text-muted-foreground"
                 onClick={() => onRulesChange([])}
               >
@@ -355,7 +354,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
           ) : (
             <span />
           )}
-          <Button size="sm" onClick={() => onOpenChange(false)}>
+          <Button onClick={() => onOpenChange(false)}>
             {t("Done")}
           </Button>
         </DialogFooter>

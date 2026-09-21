@@ -29,7 +29,6 @@ type RunDialogState = {
 
 function CannedReportCard({
   report,
-  index,
   canRun,
   canCustomize,
   onRun,
@@ -37,7 +36,6 @@ function CannedReportCard({
   customizing,
 }: {
   report: CannedReport;
-  index: number;
   canRun: boolean;
   canCustomize: boolean;
   onRun: () => void;
@@ -47,7 +45,7 @@ function CannedReportCard({
   const t = useT();
 
   return (
-    <ReportCard index={index}>
+    <ReportCard>
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
@@ -193,11 +191,10 @@ export function CannedGallery({
                 noun="report"
               />
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                {group.items.map((report, indexInGroup) => (
+                {group.items.map((report) => (
                   <CannedReportCard
                     key={report.key}
                     report={report}
-                    index={group.startIndex + indexInGroup}
                     canRun={canExport}
                     canCustomize={canCreate}
                     customizing={customizingKey === report.key}

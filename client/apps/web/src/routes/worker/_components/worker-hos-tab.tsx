@@ -1,4 +1,5 @@
 import { translate } from "@trenova/shared/i18n/runtime";
+import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
@@ -223,7 +224,7 @@ function HosClockCard({
         tone={clockTone(clamped, baseTone)}
         aria-label={`${label} time remaining`}
       >
-        <span className="text-2xl font-semibold tabular-nums">
+        <span className={KPI_VALUE_LG_CLASS}>
           {formatClockDurationMs(clamped)}
         </span>
       </RingGauge>

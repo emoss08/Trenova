@@ -15,7 +15,7 @@ import {
   PlusIcon,
   Trash2Icon,
 } from "lucide-react";
-import { AnimatePresence, m } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import { useMemo, useState } from "react";
 import { AddWidgetDialog } from "./add-widget-dialog";
 import { HomeEditDock } from "./edit-dock";
@@ -160,7 +160,7 @@ export function HomeCanvas({
         onReorder={onChange}
         className={editing ? "bg-muted/20 rounded-lg p-2" : undefined}
       >
-        {(widget, index) => (
+        {(widget) => (
           <SortableTile
             key={widget.id}
             id={widget.id}
@@ -170,10 +170,7 @@ export function HomeCanvas({
             className={editing ? "ring-border ring-1" : undefined}
           >
             {(drag) => (
-              <m.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: Math.min(index, 8) * 0.03, ease: "easeOut" }}
+              <div
                 className="flex min-h-0 flex-1 flex-col"
               >
                 {editing && (
@@ -198,7 +195,7 @@ export function HomeCanvas({
                 <div className="flex min-h-0 flex-1 flex-col" inert={editing || undefined}>
                   <WidgetBody widget={widget} data={data} />
                 </div>
-              </m.div>
+              </div>
             )}
           </SortableTile>
         )}

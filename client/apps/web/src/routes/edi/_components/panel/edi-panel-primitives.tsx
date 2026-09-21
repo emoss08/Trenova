@@ -1,3 +1,4 @@
+import { KpiStripItem } from "@/components/kpi/kpi-strip";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { cn } from "@trenova/shared/lib/utils";
 
@@ -64,30 +65,24 @@ export function InfoTile({
   label,
   value,
   hint,
-  size = "default",
+  to,
   emphasizeWhenPositive = false,
 }: {
   label: string;
   value: React.ReactNode;
   hint?: string;
-  size?: "default" | "kpi";
+  to?: string;
   emphasizeWhenPositive?: boolean;
 }) {
   const emphasized = emphasizeWhenPositive && typeof value === "number" && value > 0;
   return (
-    <div className="bg-background rounded-md border p-3">
-      <div className="text-muted-foreground text-xs">{label}</div>
-      <div
-        className={cn(
-          "mt-1 font-semibold",
-          size === "kpi" ? "text-2xl leading-none tracking-tight tabular-nums" : "text-sm",
-          emphasized && "text-danger-foreground",
-        )}
-      >
-        {value}
-      </div>
-      {hint && <div className="text-muted-foreground mt-0.5 text-2xs">{hint}</div>}
-    </div>
+    <KpiStripItem
+      label={label}
+      value={value}
+      sub={hint}
+      to={to}
+      tone={emphasized ? "danger" : undefined}
+    />
   );
 }
 

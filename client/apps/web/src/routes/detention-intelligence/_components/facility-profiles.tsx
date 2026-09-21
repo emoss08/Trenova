@@ -62,12 +62,10 @@ function breachToneClass(rate: number): string {
 function FacilityRow({
   row,
   rank,
-  index,
   dwellScale,
 }: {
   row: FacilityDetentionStat;
   rank: number;
-  index: number;
   dwellScale: number;
 }) {
   const t = useT();
@@ -78,10 +76,7 @@ function FacilityRow({
   const marginPerStop = row.stopCount > 0 ? row.netMargin / row.stopCount : 0;
 
   return (
-    <m.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.26, delay: Math.min(index, 10) * 0.03, ease: "easeOut" }}
+    <div
     >
       <button
         type="button"
@@ -113,7 +108,6 @@ function FacilityRow({
             median={row.medianDwellMinutes}
             p90={row.p90DwellMinutes}
             scale={dwellScale}
-            delay={Math.min(index, 10) * 0.03}
           />
           <p className="text-2xs text-muted-foreground mt-1.5 truncate tabular-nums">
             {t(
@@ -128,7 +122,6 @@ function FacilityRow({
           <Meter
             value={breachRate}
             barClassName={breachToneClass(breachRate)}
-            delay={Math.min(index, 10) * 0.03}
           />
           <p className="text-2xs text-muted-foreground mt-1.5 tabular-nums">
             {t("{0}% breach", Math.round(breachRate * 100))}
@@ -201,7 +194,7 @@ function FacilityRow({
           </m.div>
         ) : null}
       </AnimatePresence>
-    </m.div>
+    </div>
   );
 }
 
@@ -210,13 +203,11 @@ export function FacilityProfiles({
   isLoading,
   isError,
   onRetry,
-  index,
 }: {
   rows: FacilityDetentionStat[];
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
-  index: number;
 }) {
   const t = useT();
 
@@ -234,7 +225,6 @@ export function FacilityProfiles({
 
   return (
     <Panel
-      index={index}
       icon={WarehouseIcon}
       title={t("Facility profiles")}
       description={t(
@@ -295,7 +285,6 @@ export function FacilityProfiles({
               key={row.locationId}
               row={row}
               rank={rowIndex + 1}
-              index={rowIndex}
               dwellScale={dwellScale}
             />
           ))}

@@ -2,7 +2,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { DispatchScoreFactor } from "@/lib/graphql/dispatch-console";
 import { cn } from "@trenova/shared/lib/utils";
 import { ChevronDownIcon } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import { scoreTone } from "./dispatch-vocabulary";
 
@@ -24,7 +23,6 @@ export function ScoreBreakdown({
   const t = useT();
 
   const [showFlat, setShowFlat] = useState(false);
-  const reducedMotion = useReducedMotion();
 
   const maxContribution = factors.reduce((max, factor) => Math.max(max, factor.contribution), 0);
   const signal = factors.filter((factor) => factor.contribution > 0);
@@ -47,12 +45,7 @@ export function ScoreBreakdown({
           </span>
         </div>
         <div className="bg-muted h-1 w-full overflow-hidden rounded-full">
-          <motion.div
-            className="bg-brand h-full rounded-full"
-            initial={reducedMotion ? false : { width: 0 }}
-            animate={{ width: `${score}%` }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          />
+          <div className="bg-brand h-full rounded-full" style={{ width: `${score}%` }} />
         </div>
       </div>
 
@@ -63,13 +56,11 @@ export function ScoreBreakdown({
       ) : (
         <>
           <ul className="flex flex-col gap-2">
-            {signal.map((factor, index) => (
+            {signal.map((factor) => (
               <FactorRow
                 key={factor.key}
                 factor={factor}
                 maxContribution={maxContribution}
-                index={index}
-                reducedMotion={Boolean(reducedMotion)}
               />
             ))}
           </ul>
@@ -119,13 +110,9 @@ export function ScoreBreakdown({
 function FactorRow({
   factor,
   maxContribution,
-  index,
-  reducedMotion,
 }: {
   factor: DispatchScoreFactor;
   maxContribution: number;
-  index: number;
-  reducedMotion: boolean;
 }) {
   const t = useT();
 
@@ -140,12 +127,7 @@ function FactorRow({
         </span>
       </div>
       <div className="bg-muted h-1 w-full overflow-hidden rounded-full">
-        <motion.div
-          className="bg-brand/70 h-full rounded-full"
-          initial={reducedMotion ? false : { width: 0 }}
-          animate={{ width: `${share}%` }}
-          transition={{ duration: 0.4, delay: 0.05 * index, ease: [0.22, 1, 0.36, 1] }}
-        />
+        <div className="bg-brand/70 h-full rounded-full" style={{ width: `${share}%` }} />
       </div>
       <span className="text-muted-foreground text-2xs leading-snug">{factor.detail}</span>
     </li>

@@ -11,12 +11,10 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatShiftDate, rotaStateTone } from "@trenova/shared/lib/scheduling";
 import { AlertTriangleIcon, ChevronRightIcon, CircleCheckIcon, RepeatIcon } from "lucide-react";
-import { m, useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
 
 const SHOWN_LIMIT = 6;
-const STAGGER_LIMIT = 8;
 
 function workerHref(workerId: string): string {
   return `/hr/workers?entityId=${workerId}&modType=edit`;
@@ -90,15 +88,7 @@ function AttentionList({
   unrostered: UnrosteredWorker[];
 }) {
   const t = useT();
-
-  const reduceMotion = useReducedMotion();
-  const [settled, setSettled] = useState(false);
   const [expanded, setExpanded] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setSettled(true), 600);
-    return () => window.clearTimeout(timer);
-  }, []);
 
   const items = [
     ...conflicts.map((conflict) => ({
@@ -126,12 +116,9 @@ function AttentionList({
   return (
     <>
       <ul className="divide-y">
-        {shown.map((item, index) => (
-          <m.li
+        {shown.map((item) => (
+          <li
             key={item.key}
-            initial={settled || reduceMotion ? false : { opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: Math.min(index, STAGGER_LIMIT) * 0.03 }}
           >
             <Link
               to={workerHref(item.workerId)}
@@ -149,7 +136,7 @@ function AttentionList({
                 />
               </span>
             </Link>
-          </m.li>
+          </li>
         ))}
       </ul>
       {hidden > 0 || expanded ? (

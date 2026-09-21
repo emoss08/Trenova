@@ -7,6 +7,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
@@ -443,7 +444,7 @@ export function DocumentShipmentDraftReviewDialog({
           </FormProvider>
         </div>
       </div>
-      <div className="bg-muted/50 flex flex-col-reverse gap-2 border-t p-4 sm:flex-row sm:justify-end">
+      <DialogFooter className="m-0">
         <Button
           type="submit"
           form="document-shipment-draft-form"
@@ -452,7 +453,7 @@ export function DocumentShipmentDraftReviewDialog({
           {createShipment.isPending ? <LoaderCircleIcon className="size-4 animate-spin" /> : null}
           {isAttached ? t("Shipment attached") : t("Create shipment")}
         </Button>
-      </div>
+      </DialogFooter>
     </>
   );
 
@@ -462,7 +463,7 @@ export function DocumentShipmentDraftReviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-6xl" showCloseButton>
+      <DialogContent size="2xl" className="gap-0 overflow-hidden p-0" showCloseButton>
         <DialogHeader className="border-b px-6 pt-6 pb-4">
           <div className="flex flex-wrap items-center gap-2">
             <DialogTitle>{t("Create shipment from document")}</DialogTitle>

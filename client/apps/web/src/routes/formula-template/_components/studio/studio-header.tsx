@@ -200,7 +200,7 @@ export function StudioHeader({
     : null;
 
   return (
-    <div className="flex items-center justify-between gap-3 border-b px-4 py-2.5">
+    <div className="border-border bg-background flex min-h-11 items-center justify-between gap-3 border-b px-4 py-1.5">
       <div className="flex min-w-0 items-center gap-3">
         <Button
           type="button"
@@ -213,7 +213,7 @@ export function StudioHeader({
         </Button>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="truncate text-sm font-semibold">
+            <h1 className="truncate text-lg font-semibold">
               {mode === "create"
                 ? t("New formula template")
                 : templateName || t("Formula template")}

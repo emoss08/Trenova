@@ -14,10 +14,8 @@ import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { formatHours } from "@trenova/shared/lib/timesheet";
 import { cn, initials } from "@trenova/shared/lib/utils";
 import { AlertTriangleIcon, SquareIcon, TimerIcon, UsersIcon } from "lucide-react";
-import { m, useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
-const STAGGER_LIMIT = 10;
 /** The length of the meter: a working day, the point past which a punch reads as forgotten. */
 const METER_MINUTES = 12 * 60;
 
@@ -148,30 +146,17 @@ function BoardList({
 }: BoardListProps) {
   const t = useT();
 
-  const reduceMotion = useReducedMotion();
-  const [settled, setSettled] = useState(false);
-
-  // The entrance belongs to the first paint. The board refetches every minute
-  // and a row that is still there must not re-announce itself.
-  useEffect(() => {
-    const timer = window.setTimeout(() => setSettled(true), 600);
-    return () => window.clearTimeout(timer);
-  }, []);
-
   return (
     <ul className="divide-y">
-      {ranked.map(({ entry, runningMinutes }, index) => {
+      {ranked.map(({ entry, runningMinutes }) => {
         const name = entryWorkerName(entry);
         const selected = entry.workerId === selectedWorkerId;
         const fleet = entry.worker?.fleetCode ?? null;
         const overlong = isOverlong(runningMinutes);
         const share = Math.min(1, runningMinutes / METER_MINUTES);
         return (
-          <m.li
+          <li
             key={entry.id}
-            initial={settled || reduceMotion ? false : { opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: Math.min(index, STAGGER_LIMIT) * 0.03 }}
             className={cn(
               "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 transition-colors",
               selected && "bg-accent/60",
@@ -262,7 +247,7 @@ function BoardList({
                 </Button>
               ) : null}
             </span>
-          </m.li>
+          </li>
         );
       })}
     </ul>

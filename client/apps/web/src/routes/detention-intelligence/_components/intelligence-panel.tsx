@@ -3,17 +3,14 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
 import { RotateCwIcon, TriangleAlertIcon } from "lucide-react";
-import { m } from "motion/react";
 
 type IconComponent = React.ComponentType<{ className?: string }>;
 
 /**
- * The shared chrome for every panel on this page: hairline card, a titled
- * header with room for a control, and a staggered entrance so the page
- * assembles itself instead of appearing all at once.
+ * The shared chrome for every panel on this page: hairline card and a titled
+ * header with room for a control.
  */
 export function Panel({
-  index,
   icon: Icon,
   title,
   description,
@@ -22,7 +19,6 @@ export function Panel({
   className,
   children,
 }: {
-  index: number;
   icon: IconComponent;
   title: string;
   description: string;
@@ -32,10 +28,7 @@ export function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <m.section
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.32, delay: index * 0.07, ease: [0.22, 1, 0.36, 1] }}
+    <section
       className={cn(
         "border-border bg-card flex flex-col overflow-hidden rounded-lg border",
         className,
@@ -43,11 +36,9 @@ export function Panel({
     >
       <header className="border-border flex items-start justify-between gap-3 border-b px-3 py-2.5">
         <div className="flex min-w-0 gap-2.5">
-          <span className="bg-muted text-muted-foreground mt-px inline-flex size-6 shrink-0 items-center justify-center rounded-md">
-            <Icon className="size-3.5" />
-          </span>
+          <Icon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
           <div className="min-w-0">
-            <h3 className="text-sm leading-tight font-medium">{title}</h3>
+            <h3 className="text-sm leading-tight font-semibold">{title}</h3>
             <p className="text-2xs text-muted-foreground mt-1 leading-snug">{description}</p>
           </div>
         </div>
@@ -57,7 +48,7 @@ export function Panel({
       <div className="min-w-0 flex-1">{children}</div>
 
       {footer ? <footer className="border-border border-t px-3 py-2">{footer}</footer> : null}
-    </m.section>
+    </section>
   );
 }
 

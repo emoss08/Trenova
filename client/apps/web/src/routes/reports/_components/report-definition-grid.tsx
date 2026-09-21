@@ -96,14 +96,12 @@ function StatusDot({ status }: { status: string }) {
 
 function DefinitionCard({
   definition,
-  index,
   onRun,
   onSchedules,
   onDuplicate,
   onDelete,
 }: {
   definition: ReportDefinition;
-  index: number;
   onRun: () => void;
   onSchedules: () => void;
   onDuplicate: () => void;
@@ -116,7 +114,7 @@ function DefinitionCard({
   const { canCreate, canUpdate, canExport } = usePermissions(Resource.Report);
 
   return (
-    <ReportCard index={index} onClick={() => void navigate(`/reports/explore/${definition.id}`)}>
+    <ReportCard onClick={() => void navigate(`/reports/explore/${definition.id}`)}>
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
@@ -356,11 +354,10 @@ export function ReportDefinitionGrid({
                 noun="report"
               />
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                {group.items.map((definition, indexInGroup) => (
+                {group.items.map((definition) => (
                   <DefinitionCard
                     key={definition.id}
                     definition={definition}
-                    index={group.startIndex + indexInGroup}
                     onRun={() =>
                       setRunDialog({
                         target: { definitionId: definition.id },

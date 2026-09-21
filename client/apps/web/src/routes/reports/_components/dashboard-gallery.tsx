@@ -96,12 +96,11 @@ export function DashboardGallery({ search, sortBy, onClearFilters }: DashboardGa
             }
           />
         ) : (
-          visible.map((dashboard, index) => {
+          visible.map((dashboard) => {
             const layout = parseDashboardLayout(dashboard.layout);
             return (
               <ReportCard
                 key={dashboard.id}
-                index={index}
                 onClick={() => void navigate(`/reports/dashboards/${dashboard.id}`)}
               >
                 <div className="flex items-start gap-3">

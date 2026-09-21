@@ -1,6 +1,7 @@
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 import { KpiStripItem } from "./kpi/kpi-strip";
+import type { Tone } from "./kpi/tone";
 
 /**
  * The vocabulary result panels share: a labelled figure, and a money delta
@@ -36,6 +37,6 @@ export function DeltaValue({ delta, deltaPct }: { delta: number; deltaPct?: numb
   );
 }
 
-export function StatTile({ label, value, tone }: { label: string; value: string; tone?: string }) {
-  return <KpiStripItem label={label} value={<span className={tone}>{value}</span>} />;
+export function StatTile({ label, value, tone }: { label: string; value: string; tone?: Tone }) {
+  return <KpiStripItem label={label} value={value} tone={tone} />;
 }

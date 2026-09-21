@@ -92,7 +92,7 @@ export function OshaSummaryDialog({ open, onOpenChange, year, summary }: OshaSum
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{t("300A figures for {0}", year)}</DialogTitle>
           <DialogDescription>

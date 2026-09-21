@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import {
   Alert,
   AlertAction,
@@ -526,7 +527,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                     <div className="text-muted-foreground text-xs font-medium">
                       {t("Computed charge")}
                     </div>
-                    <span className="text-foreground font-mono text-3xl font-semibold tabular-nums">
+                    <span className={cn("text-foreground block", KPI_VALUE_LG_CLASS)}>
                       {typeof result.result === "number"
                         ? formatCurrency(result.result)
                         : String(result.result)}

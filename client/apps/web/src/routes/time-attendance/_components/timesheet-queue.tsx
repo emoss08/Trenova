@@ -45,8 +45,8 @@ import {
 import { cn, initials } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { CheckIcon, SendIcon, UndoIcon, UsersIcon } from "lucide-react";
-import { m, useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { m } from "motion/react";
+import { useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { activeQueueQuery, paidQueueQuery } from "./queries";
@@ -54,7 +54,6 @@ import { TimesheetsEmpty } from "./time-attendance-empty";
 
 type FilterValues = { workerId: string };
 
-const STAGGER_LIMIT = 10;
 
 const SEGMENT_LABELS: Record<QueueSegment, string> = {
   Submitted: "Awaiting approval",
@@ -260,25 +259,15 @@ function QueueList({
   onOpen,
   onDecide,
 }: QueueListProps) {
-  const reduceMotion = useReducedMotion();
-  const [settled, setSettled] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setSettled(true), 600);
-    return () => window.clearTimeout(timer);
-  }, []);
 
   return (
     <ul
       className="bg-card divide-y overflow-hidden rounded-lg border"
       aria-label={SEGMENT_LABELS[segment]}
     >
-      {rows.map((sheet, index) => (
-        <m.li
+      {rows.map((sheet) => (
+        <li
           key={sheet.id}
-          initial={settled || reduceMotion ? false : { opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22, delay: Math.min(index, STAGGER_LIMIT) * 0.03 }}
         >
           <QueueRow
             sheet={sheet}
@@ -289,7 +278,7 @@ function QueueList({
             onOpen={() => onOpen(sheet.id)}
             onDecide={(next) => onDecide(sheet.id, next)}
           />
-        </m.li>
+        </li>
       ))}
     </ul>
   );
@@ -552,11 +541,10 @@ function TimeCard({ sheet }: { sheet: TimesheetDetail }) {
     [sheet.entries, sheet.periodStart, sheet.periodEnd],
   );
   const peak = Math.max(1, ...days.map((day) => day.paidMinutes));
-  const reduceMotion = useReducedMotion();
 
   return (
     <div role="group" aria-label={t("Time card")} className="grid grid-cols-7 gap-1">
-      {days.map((day, index) => {
+      {days.map((day) => {
         const label = formatCardDay(day.startsAt);
         return (
           <div
@@ -570,12 +558,9 @@ function TimeCard({ sheet }: { sheet: TimesheetDetail }) {
           >
             <span className="text-muted-foreground text-2xs leading-none">{label.slice(0, 3)}</span>
             <span className="bg-muted relative h-12 w-2 overflow-hidden rounded-full">
-              <m.span
-                initial={reduceMotion ? false : { scaleY: 0 }}
-                animate={{ scaleY: 1 }}
-                transition={{ duration: 0.4, delay: index * 0.04, ease: "easeOut" }}
+              <span
                 className={cn(
-                  "absolute inset-x-0 bottom-0 origin-bottom rounded-full",
+                  "absolute inset-x-0 bottom-0 rounded-full",
                   day.running ? "bg-success/80" : "bg-brand/70",
                 )}
                 style={{ height: `${(day.paidMinutes / peak) * 100}%` }}

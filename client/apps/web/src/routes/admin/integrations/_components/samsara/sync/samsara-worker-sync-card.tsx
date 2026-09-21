@@ -697,7 +697,7 @@ export function SamsaraWorkerSyncCard({
       {embedded && (
         <div className="border-border flex flex-col border-b p-4 leading-tight">
           <div className="flex flex-row items-center gap-2">
-            <p className="text-2xl font-semibold">{t("Samsara worker sync")}</p>
+            <p className="text-lg font-semibold">{t("Samsara worker sync")}</p>
             <Badge variant={isTrackingWorkflow ? activeStatusVariant : "neutral"}>
               {currentStatusLabel}
             </Badge>

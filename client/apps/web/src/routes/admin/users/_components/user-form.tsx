@@ -5,7 +5,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
-import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { statusChoices, timezoneGroupedChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
@@ -212,13 +212,13 @@ function OrganizationMembershipSection({
 
   return (
     <FormControl>
-      <div className="border-border space-y-3 rounded-lg border p-4">
-        <div className="space-y-1">
-          <h4 className="text-sm font-medium">{t("Organization access")}</h4>
-          <p className="text-muted-foreground text-xs">
-            {t("Choose which organizations this user can access in the current business unit.")}
-          </p>
-        </div>
+      <FormSection
+        className="border-border gap-3 rounded-lg border p-4"
+        title={t("Organization access")}
+        description={t(
+          "Choose which organizations this user can access in the current business unit.",
+        )}
+      >
 
         {isLoading ? (
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
@@ -284,7 +284,7 @@ function OrganizationMembershipSection({
             {t("Save organization access")}
           </Button>
         </div>
-      </div>
+      </FormSection>
     </FormControl>
   );
 }

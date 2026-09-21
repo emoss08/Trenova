@@ -53,7 +53,7 @@ export function ShareBreakdown({
           trackClassName,
         )}
       >
-        {visible.map((segment, index) => (
+        {visible.map((segment) => (
           <m.div
             key={segment.key}
             className={cn(
@@ -61,9 +61,9 @@ export function ShareBreakdown({
               segment.className,
               active && active !== segment.key && "opacity-25",
             )}
-            initial={{ width: 0 }}
+            initial={false}
             animate={{ width: `${(segment.value / total) * 100}%` }}
-            transition={{ ...BAR_TRANSITION, delay: index * 0.06 }}
+            transition={BAR_TRANSITION}
           />
         ))}
       </div>
@@ -102,12 +102,10 @@ export function Meter({
   value,
   className,
   barClassName,
-  delay = 0,
 }: {
   value: number;
   className?: string;
   barClassName?: string;
-  delay?: number;
 }) {
   const clamped = Math.min(Math.max(value, 0), 1);
 
@@ -115,9 +113,9 @@ export function Meter({
     <div className={cn("bg-muted h-1 w-full overflow-hidden rounded-full", className)}>
       <m.div
         className={cn("bg-foreground h-full rounded-full", barClassName)}
-        initial={{ width: 0 }}
+        initial={false}
         animate={{ width: `${clamped * 100}%` }}
-        transition={{ ...BAR_TRANSITION, delay }}
+        transition={BAR_TRANSITION}
       />
     </div>
   );
@@ -131,12 +129,10 @@ export function DivergingBar({
   value,
   scale,
   className,
-  delay = 0,
 }: {
   value: number;
   scale: number;
   className?: string;
-  delay?: number;
 }) {
   const positive = value >= 0;
   const width = scale <= 0 ? 0 : (Math.abs(value) / scale) * 50;
@@ -151,9 +147,9 @@ export function DivergingBar({
             ? "left-1/2 bg-success"
             : "right-1/2 bg-danger",
         )}
-        initial={{ width: 0 }}
+        initial={false}
         animate={{ width: `${width}%` }}
-        transition={{ ...BAR_TRANSITION, delay }}
+        transition={BAR_TRANSITION}
       />
     </div>
   );
@@ -169,13 +165,11 @@ export function DwellSpreadRail({
   p90,
   scale,
   className,
-  delay = 0,
 }: {
   median: number;
   p90: number;
   scale: number;
   className?: string;
-  delay?: number;
 }) {
   const share = (value: number) => (scale <= 0 ? 0 : Math.min(Math.max(value / scale, 0), 1) * 100);
 
@@ -183,15 +177,15 @@ export function DwellSpreadRail({
     <div className={cn("bg-muted relative h-1.5 w-full overflow-hidden rounded-full", className)}>
       <m.span
         className="bg-foreground/25 absolute inset-y-0 left-0 rounded-full"
-        initial={{ width: 0 }}
+        initial={false}
         animate={{ width: `${share(p90)}%` }}
-        transition={{ ...BAR_TRANSITION, delay }}
+        transition={BAR_TRANSITION}
       />
       <m.span
         className="bg-foreground absolute inset-y-0 left-0 rounded-full"
-        initial={{ width: 0 }}
+        initial={false}
         animate={{ width: `${share(median)}%` }}
-        transition={{ ...BAR_TRANSITION, delay: delay + 0.06 }}
+        transition={BAR_TRANSITION}
       />
     </div>
   );

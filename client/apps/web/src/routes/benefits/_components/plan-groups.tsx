@@ -7,10 +7,8 @@ import { formatMinor } from "@trenova/shared/lib/benefits";
 import { headcountShare } from "@trenova/shared/lib/org-structure";
 import { cn } from "@trenova/shared/lib/utils";
 import { PencilLineIcon, UsersIcon } from "lucide-react";
-import { m, useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
-const STAGGER_LIMIT = 10;
 
 type PlanGroupsProps = {
   plans: readonly BenefitPlanRow[];
@@ -38,15 +36,7 @@ export function PlanGroups({
   const t = useT();
 
   const groups = useMemo(() => groupPlansByType(plans, costs), [plans, costs]);
-  const reduceMotion = useReducedMotion();
-  const [settled, setSettled] = useState(false);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => setSettled(true), 600);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  let index = 0;
   return (
     <div className="flex flex-col gap-4">
       {groups.map((group) => (
@@ -54,13 +44,9 @@ export function PlanGroups({
           <GroupHeading group={group} />
           <ul className="bg-card divide-y overflow-hidden rounded-lg border">
             {group.plans.map(({ plan, cost }) => {
-              const position = index++;
               return (
-                <m.li
+                <li
                   key={plan.id}
-                  initial={settled || reduceMotion ? false : { opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: Math.min(position, STAGGER_LIMIT) * 0.03 }}
                 >
                   <PlanRow
                     plan={plan}
@@ -70,7 +56,7 @@ export function PlanGroups({
                     onEdit={() => onEdit(plan)}
                     onOpenRoster={() => onOpenRoster(plan)}
                   />
-                </m.li>
+                </li>
               );
             })}
           </ul>

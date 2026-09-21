@@ -39,7 +39,7 @@ export function VersionCompareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[80vh] max-w-2xl">
+      <DialogContent size="lg" className="max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {t("Compare versions")}

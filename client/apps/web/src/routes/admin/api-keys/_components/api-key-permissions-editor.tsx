@@ -9,6 +9,7 @@ import {
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
+import { FormSection } from "@trenova/shared/components/ui/form";
 import { Input } from "@trenova/shared/components/ui/input";
 import {
   Select,
@@ -213,73 +214,66 @@ export function APIKeyPermissionsEditor() {
   }, []);
 
   return (
-    <section className="space-y-4">
-      <div className="border-border/70 flex flex-col gap-3 border-t pt-6">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-          <div className="space-y-1">
-            <h3 className="text-sm font-semibold">{t("Permissions")}</h3>
-            <p className="text-muted-foreground text-sm">
-              {t("Apply a global preset, then narrow access by resource where needed.")}
-            </p>
-          </div>
-          <div className="w-full xl:max-w-sm">
-            <div className="relative">
-              <SearchIcon className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
-              <Input
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder={t("Search resources...")}
-                className="h-9 pl-9"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2"
-                >
-                  <XIcon className="size-4" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {(["read", "write", "full"] as const).map((mode) => (
-            <Button
-              key={mode}
+    <FormSection
+      className="gap-4"
+      title={t("Permissions")}
+      description={t("Apply a global preset, then narrow access by resource where needed.")}
+      action={
+        <div className="relative w-48 sm:w-64">
+          <SearchIcon className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
+          <Input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder={t("Search resources...")}
+            className="h-9 pl-9"
+          />
+          {searchQuery && (
+            <button
               type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => applyBulkPreset(allResources, mode)}
+              onClick={() => setSearchQuery("")}
+              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2"
             >
-              {mode === "read"
-                ? t("All read")
-                : mode === "write"
-                  ? t("All write")
-                  : t("Full access")}
-            </Button>
-          ))}
+              <XIcon className="size-4" />
+            </button>
+          )}
+        </div>
+      }
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        {(["read", "write", "full"] as const).map((mode) => (
           <Button
+            key={mode}
             type="button"
-            variant="ghost"
+            variant="outline"
             size="sm"
-            onClick={() => applyBulkPreset(allResources, "clear")}
-            disabled={permissions.length === 0}
+            onClick={() => applyBulkPreset(allResources, mode)}
           >
-            {t("Clear all")}
+            {mode === "read"
+              ? t("All read")
+              : mode === "write"
+                ? t("All write")
+                : t("Full access")}
           </Button>
-          <div className="text-muted-foreground ml-auto flex flex-wrap items-center gap-2 text-xs">
-            <Badge variant="neutral">
-              {selectionSummary.selectedResources}{" "}
-              {pluralize("resource", selectionSummary.selectedResources)}
-            </Badge>
-            <Badge variant="neutral">
-              {selectionSummary.selectedOperations}{" "}
-              {pluralize("operation", selectionSummary.selectedOperations)}
-            </Badge>
-            <Badge variant="neutral" appearance="outline">{selectionSummary.modeLabel}</Badge>
-          </div>
+        ))}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => applyBulkPreset(allResources, "clear")}
+          disabled={permissions.length === 0}
+        >
+          {t("Clear all")}
+        </Button>
+        <div className="text-muted-foreground ml-auto flex flex-wrap items-center gap-2 text-xs">
+          <Badge variant="neutral">
+            {selectionSummary.selectedResources}{" "}
+            {pluralize("resource", selectionSummary.selectedResources)}
+          </Badge>
+          <Badge variant="neutral">
+            {selectionSummary.selectedOperations}{" "}
+            {pluralize("operation", selectionSummary.selectedOperations)}
+          </Badge>
+          <Badge variant="neutral" appearance="outline">{selectionSummary.modeLabel}</Badge>
         </div>
       </div>
 
@@ -311,7 +305,7 @@ export function APIKeyPermissionsEditor() {
           </Accordion>
         </div>
       )}
-    </section>
+    </FormSection>
   );
 }
 

@@ -7,6 +7,7 @@ import {
   AccordionTrigger,
 } from "@/components/animate-ui/primitives/base/accordion";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import { FormSection } from "@trenova/shared/components/ui/form";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -299,15 +300,17 @@ export function RolePermissionBuilder({
 
   return (
     <div className="space-y-5">
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium">{t("Start with a template")}</h3>
-          {grantedCount > 0 && (
+      <FormSection
+        className="gap-3"
+        title={t("Start with a template")}
+        action={
+          grantedCount > 0 ? (
             <Badge variant="neutral" className="text-xs">
               {t("{0, plural, one {# resource} other {# resources}} granted", grantedCount)}
             </Badge>
-          )}
-        </div>
+          ) : undefined
+        }
+      >
         <div className="grid grid-cols-4 gap-2">
           {ROLE_TEMPLATES.map((template) => (
             <button
@@ -315,19 +318,19 @@ export function RolePermissionBuilder({
               type="button"
               onClick={() => handleTemplateSelect(template.id)}
               className={cn(
-                "hover:border-primary/50 hover:bg-accent flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-all",
+                "hover:border-border-strong hover:bg-surface-hover flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-colors",
                 selectedTemplate === template.id &&
-                  "border-primary bg-primary/5 ring-primary/20 ring-1",
+                  "border-brand-border bg-surface-selected hover:bg-surface-selected",
               )}
             >
-              <div
+              <span
                 className={cn(
-                  "bg-muted flex size-8 items-center justify-center rounded-full",
-                  selectedTemplate === template.id && "bg-primary/10 text-primary",
+                  "text-muted-foreground",
+                  selectedTemplate === template.id && "text-brand",
                 )}
               >
                 {template.icon}
-              </div>
+              </span>
               <span className="text-xs font-medium">{template.name}</span>
               <span className="text-muted-foreground text-2xs leading-tight">
                 {t(template.description)}
@@ -335,7 +338,7 @@ export function RolePermissionBuilder({
             </button>
           ))}
         </div>
-      </div>
+      </FormSection>
 
       <div className="space-y-3">
         <div className="flex items-center gap-2">

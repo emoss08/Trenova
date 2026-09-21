@@ -780,7 +780,7 @@ export function DocumentIntelligenceDialog({
           }
         }}
       >
-        <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-4xl" showCloseButton>
+        <DialogContent size="xl" className="gap-0 overflow-hidden p-0" showCloseButton>
           {document ? (
             <>
               <DialogHeader className="border-b px-6 pt-6 pb-4">

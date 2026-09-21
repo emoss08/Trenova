@@ -71,7 +71,6 @@ export function reportCategoryLabel(category: string): string {
 export type ReportCategoryGroup<T> = {
   key: string;
   label: string;
-  startIndex: number;
   items: T[];
 };
 
@@ -86,21 +85,15 @@ export function groupByReportCategory<T extends { category: string }>(
       group.items.push(item);
       continue;
     }
-    groups.set(key, { key, label: reportCategoryLabel(key), startIndex: 0, items: [item] });
+    groups.set(key, { key, label: reportCategoryLabel(key), items: [item] });
   }
-  const ordered = Array.from(groups.values()).sort((left, right) => {
+  return Array.from(groups.values()).sort((left, right) => {
     const leftOrder = categoryOrder.get(left.key) ?? Number.MAX_SAFE_INTEGER;
     const rightOrder = categoryOrder.get(right.key) ?? Number.MAX_SAFE_INTEGER;
     return leftOrder === rightOrder
       ? left.label.localeCompare(right.label)
       : leftOrder - rightOrder;
   });
-  let index = 0;
-  for (const group of ordered) {
-    group.startIndex = index;
-    index += group.items.length;
-  }
-  return ordered;
 }
 
 export function compareReportsBySort<T extends { name: string; lastRunAt?: number | null }>(

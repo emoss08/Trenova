@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { api } from "@trenova/shared/lib/api";
@@ -85,9 +85,10 @@ export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorP
   const roleAssignments = assignments ?? [];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">{t("Assigned roles")}</h3>
+    <FormSection
+      className="gap-4"
+      title={t("Assigned roles")}
+      action={
         <Button
           type="button"
           size="sm"
@@ -98,7 +99,8 @@ export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorP
           <PlusIcon className="mr-1 size-3.5" />
           {t("Assign role")}
         </Button>
-      </div>
+      }
+    >
 
       {roleAssignments.length === 0 ? (
         <div className="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm">
@@ -124,7 +126,7 @@ export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorP
         existingRoleIds={roleAssignments.map((a) => a.roleId)}
         isDisabled={isDisabled}
       />
-    </div>
+    </FormSection>
   );
 }
 

@@ -156,7 +156,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
   return (
     <div className="space-y-4">
       <div className="border-border flex flex-col border-b p-4 leading-tight">
-        <p className="text-2xl font-semibold">{t("Samsara configuration")}</p>
+        <p className="text-lg font-semibold">{t("Samsara configuration")}</p>
         <span className="text-muted-foreground text-sm">
           {t("Configure your Samsara integration settings for this organization.")}
         </span>

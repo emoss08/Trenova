@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { FinancialReportEmpty } from "@/components/accounting/accounting-empty";
 import { FinancialReportSection } from "@/components/accounting/financial-report-section";
 import { FiscalPeriodSelector } from "@/components/accounting/fiscal-period-selector";
+import { KPI_VALUE_CLASS, KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
@@ -47,12 +48,12 @@ export function IncomeStatementPage() {
             <FinancialReportSection section={data.revenue} />
             <FinancialReportSection section={data.costOfRevenue} />
 
-            <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
+            <div className="bg-sunken flex items-center justify-between rounded-lg border px-4 py-3">
               <span className="text-sm font-semibold">{t("Gross profit")}</span>
               <AmountDisplay
                 value={data.grossProfitMinor}
                 variant="auto"
-                className="text-lg font-semibold"
+                className={KPI_VALUE_CLASS}
               />
             </div>
 
@@ -60,12 +61,12 @@ export function IncomeStatementPage() {
 
             <Separator />
 
-            <div className="bg-primary/5 flex items-center justify-between rounded-md border px-4 py-4">
+            <div className="bg-sunken flex items-center justify-between rounded-lg border px-4 py-3">
               <span className="text-base font-semibold">{t("Net Income")}</span>
               <AmountDisplay
                 value={data.netIncomeMinor}
                 variant="auto"
-                className="text-2xl font-semibold"
+                className={KPI_VALUE_LG_CLASS}
               />
             </div>
           </div>

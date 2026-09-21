@@ -328,8 +328,8 @@ export function VerifyEquipmentDialog({
             </FormProvider>
 
             {latest ? (
-              <section aria-label={t("Latest result")} className="flex flex-col border-t pt-3">
-                <h4 className="text-muted-foreground text-xs font-medium">{t("Result")}</h4>
+              <section aria-label={t("Latest result")} className="flex flex-col gap-2">
+                <h3 className="text-sm font-semibold">{t("Result")}</h3>
                 <EquipmentVerificationCard
                   verification={latest}
                   canApprove={canApprove}
@@ -340,10 +340,8 @@ export function VerifyEquipmentDialog({
             ) : null}
 
             {canRead ? (
-              <section className="flex flex-col border-t pt-3">
-                <h4 className="text-muted-foreground text-xs font-medium">
-                  {t("Verification history")}
-                </h4>
+              <section className="flex flex-col gap-2">
+                <h3 className="text-sm font-semibold">{t("Verification history")}</h3>
                 <VerificationHistory
                   carrierAssignmentId={carrierAssignmentId}
                   latestId={latest?.id ?? null}

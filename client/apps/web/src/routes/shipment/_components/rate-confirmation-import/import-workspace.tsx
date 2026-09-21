@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { SuspenseLoader } from "@trenova/shared/components/component-loader";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
@@ -343,31 +344,29 @@ export function ImportWorkspace() {
     [queryClient, t],
   );
 
+  const phaseDescription =
+    currentPhase === "upload"
+      ? t("Upload a rate confirmation to extract shipment details.")
+      : currentPhase === "processing"
+        ? t("Extracting shipment details from your document...")
+        : currentPhase === "reconciliation"
+          ? t("Review extracted fields, resolve issues, and create the shipment.")
+          : t("Import complete.");
+
   return (
-    <div className="flex h-full flex-col">
-      {/* Top bar */}
-      <div className="bg-background flex shrink-0 items-center justify-between border-b px-4 py-2.5">
-        <div className="flex items-center gap-3">
+    <PageLayout
+      fill
+      className="gap-y-0 p-0"
+      pageHeaderProps={{
+        title: t("Import from rate confirmation"),
+        description: phaseDescription,
+        actions: (
           <Button variant="ghost" size="icon-sm" onClick={handleBack}>
             <ArrowLeftIcon className="size-4" />
           </Button>
-          <div>
-            <h1 className="text-sm font-medium">{t("Import from rate confirmation")}</h1>
-            <p className="text-muted-foreground text-xs">
-              {currentPhase === "upload" &&
-                t("Upload a rate confirmation to extract shipment details.")}
-              {currentPhase === "processing" &&
-                t("Extracting shipment details from your document...")}
-              {currentPhase === "reconciliation" &&
-                t("Review extracted fields, resolve issues, and create the shipment.")}
-              {currentPhase === "success" && t("Import complete.")}
-            </p>
-          </div>
-        </div>
-        {/* Empty — create button is in the reconciliation workspace footer */}
-      </div>
-
-      {/* Content area — fills remaining height */}
+        ),
+      }}
+    >
       {currentPhase === "upload" && (
         <UploadPhase
           currentUpload={
@@ -438,6 +437,6 @@ export function ImportWorkspace() {
           onDone={handleBack}
         />
       )}
-    </div>
+    </PageLayout>
   );
 }

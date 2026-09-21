@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { InfoPopover } from "@/components/info-popover";
 import type { WorkerTrainingSummary } from "@/lib/graphql/worker-training";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -79,7 +80,7 @@ export function TrainingOverview({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl leading-none font-semibold tracking-tight tabular-nums">
+            <span className={KPI_VALUE_LG_CLASS}>
               {progress.satisfied}/{progress.required}
             </span>
             <span className="text-muted-foreground text-xs">{t("required current")}</span>

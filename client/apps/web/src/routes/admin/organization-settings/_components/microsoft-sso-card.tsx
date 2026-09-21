@@ -10,7 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@trenova/shared/components/ui/collapsible";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Separator } from "@trenova/shared/components/ui/separator";
@@ -67,15 +67,6 @@ function CopyableInput({ value, label }: { value: string; label: string }) {
           </button>
         }
       />
-    </div>
-  );
-}
-
-function SectionHeader({ title, description }: { title: string; description: string }) {
-  return (
-    <div>
-      <h4 className="text-sm font-medium">{title}</h4>
-      <p className="text-muted-foreground text-xs">{description}</p>
     </div>
   );
 }
@@ -196,7 +187,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
           <div className="px-5 py-5">
             <FormProvider {...form}>
               <Form onSubmit={handleSubmit((values) => mutation.mutate(values))}>
-                <div className="space-y-6">
+                <div className="flex flex-col gap-6">
                   {/* Setup Guide */}
                   <Alert variant="info">
                     <InfoIcon />
@@ -218,14 +209,12 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                     </AlertDescription>
                   </Alert>
 
-                  <Separator />
-
                   {/* Authentication Policy */}
-                  <div className="space-y-3">
-                    <SectionHeader
-                      title={t("Authentication policy")}
-                      description={t("Control how users authenticate to this tenant.")}
-                    />
+                  <FormSection
+                    className="gap-3"
+                    title={t("Authentication policy")}
+                    description={t("Control how users authenticate to this tenant.")}
+                  >
                     <FormGroup cols={1}>
                       <FormControl cols="full">
                         <SwitchField
@@ -267,18 +256,16 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                         </AlertDescription>
                       </Alert>
                     )}
-                  </div>
+                  </FormSection>
 
                   {enabled && (
                     <>
-                      <Separator />
-
                       {/* Service Provider */}
-                      <div className="space-y-3">
-                        <SectionHeader
-                          title={t("Service provider")}
-                          description={t("Copy this value into your Entra ID app registration.")}
-                        />
+                      <FormSection
+                        className="gap-3"
+                        title={t("Service provider")}
+                        description={t("Copy this value into your Entra ID app registration.")}
+                      >
                         <Alert variant="info">
                           <LinkIcon />
                           <AlertDescription>
@@ -291,18 +278,16 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                           value={redirectUrl}
                           label={t("Redirect URL (OAuth callback)")}
                         />
-                      </div>
-
-                      <Separator />
+                      </FormSection>
 
                       {/* Identity Provider */}
-                      <div className="space-y-3">
-                        <SectionHeader
-                          title={t("Identity provider")}
-                          description={t(
-                            "Paste these values from your Microsoft Entra ID app registration.",
-                          )}
-                        />
+                      <FormSection
+                        className="gap-3"
+                        title={t("Identity provider")}
+                        description={t(
+                          "Paste these values from your Microsoft Entra ID app registration.",
+                        )}
+                      >
                         <FormGroup cols={1}>
                           <FormControl cols="full">
                             <InputField
@@ -336,16 +321,14 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                             />
                           </FormControl>
                         </FormGroup>
-                      </div>
-
-                      <Separator />
+                      </FormSection>
 
                       {/* Domain Restrictions */}
-                      <div className="space-y-3">
-                        <SectionHeader
-                          title={t("Domain restrictions")}
-                          description={t("Limit which email domains can sign in with Entra ID.")}
-                        />
+                      <FormSection
+                        className="gap-3"
+                        title={t("Domain restrictions")}
+                        description={t("Limit which email domains can sign in with Entra ID.")}
+                      >
                         <FormGroup cols={1}>
                           <FormControl cols="full">
                             <InputField
@@ -359,18 +342,16 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                             />
                           </FormControl>
                         </FormGroup>
-                      </div>
-
-                      <Separator />
+                      </FormSection>
 
                       {/* Tenant Login URL */}
-                      <div className="space-y-3">
-                        <SectionHeader
-                          title={t("Tenant login URL")}
-                          description={t(
-                            "Share this URL with your users for Entra ID SSO sign-in.",
-                          )}
-                        />
+                      <FormSection
+                        className="gap-3"
+                        title={t("Tenant login URL")}
+                        description={t(
+                          "Share this URL with your users for Entra ID SSO sign-in.",
+                        )}
+                      >
                         <CopyableInput value={tenantLoginUrl} label={t("Login URL")} />
                         <p className="text-muted-foreground text-xs">
                           {t("Replace")}{" "}
@@ -379,7 +360,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                           </code>{" "}
                           {t("with your organization's login slug from General settings.")}
                         </p>
-                      </div>
+                      </FormSection>
                     </>
                   )}
                 </div>

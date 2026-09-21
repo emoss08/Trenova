@@ -1,16 +1,23 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AgingDistributionBar } from "@/components/accounting/aging-buckets";
-import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
+import type { Tone } from "@/components/kpi/tone";
+import { SectionPanel } from "@/components/section-panel";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
 } from "@trenova/shared/components/ui/chart";
+import {
+  DescriptionEmpty,
+  DescriptionItem,
+  DescriptionList,
+} from "@trenova/shared/components/ui/description-list";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { ARCustomerProfile } from "@/lib/graphql/accounts-receivable";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import { m } from "motion/react";
 import { useMemo } from "react";
 import { Bar, BarChart, XAxis } from "recharts";
 import { formatUnixDateMedium, formatUnixInUserTimezone } from "@trenova/shared/lib/date";
@@ -52,15 +59,11 @@ export function CustomerSnapshotHeader({
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="h-[92px] rounded-md" />
-          ))}
-        </div>
+      <div className="flex flex-col gap-3">
+        <KpiStripSkeleton count={4} size="lg" />
         <div className="grid gap-3 xl:grid-cols-2">
-          <Skeleton className="h-40 rounded-md" />
-          <Skeleton className="h-40 rounded-md" />
+          <Skeleton className="h-40 rounded-lg" />
+          <Skeleton className="h-40 rounded-lg" />
         </div>
       </div>
     );
@@ -72,88 +75,83 @@ export function CustomerSnapshotHeader({
   const utilization = profile.creditUtilization;
   const utilizationPct = Math.min(utilization * 100, 100);
   const utilizationBarClass =
-    utilization >= 1
-      ? "bg-danger"
-      : utilization >= 0.75
-        ? "bg-warning"
-        : "bg-success";
+    utilization >= 1 ? "bg-danger" : utilization >= 0.75 ? "bg-warning" : "bg-success";
+  const hasCreditLimit = snapshot.hasCreditLimit && snapshot.creditLimitMinor > 0;
 
   const score = profile.delinquencyScore;
-  const scoreClass =
-    score >= 60
-      ? "text-danger-foreground"
-      : score >= 30
-        ? "text-warning-foreground"
-        : "text-success-foreground";
+  const scoreTone: Tone = score >= 60 ? "danger" : score >= 30 ? "warning" : "success";
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
-        <SnapshotTile index={0} label={t("Open balance")}>
-          <p className="text-2xl font-semibold tracking-tight tabular-nums">
-            {formatCurrency(snapshot.totalOpenMinor / 100)}
-          </p>
-          <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">
-            {t(
-              "{0} overdue · {1} open",
-              formatCurrency(snapshot.overdueMinor / 100),
-              snapshot.openInvoiceCount,
-            )}
-          </p>
-        </SnapshotTile>
-        <SnapshotTile index={1} label={t("Credit utilization")}>
-          {snapshot.hasCreditLimit && snapshot.creditLimitMinor > 0 ? (
-            <>
-              <p className="text-2xl font-semibold tracking-tight tabular-nums">
-                {(utilization * 100).toFixed(0)}%
-              </p>
-              <div className="bg-muted mt-1.5 h-1 w-full overflow-hidden rounded-full">
-                <m.div
-                  className={cn("h-full rounded-full", utilizationBarClass)}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${utilizationPct}%` }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                />
-              </div>
-              <p className="text-muted-foreground mt-1 text-xs tabular-nums">
-                {t("of {0} limit", formatCurrency(snapshot.creditLimitMinor / 100))}
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-muted-foreground text-2xl font-semibold tracking-tight">—</p>
-              <p className="text-muted-foreground mt-0.5 text-xs">{t("no credit limit set")}</p>
-            </>
-          )}
-        </SnapshotTile>
-        <SnapshotTile index={2} label={t("DSO / days to pay")}>
-          <p className="text-2xl font-semibold tracking-tight tabular-nums">
-            {t("{0}d", profile.dsoDays.toFixed(0))}
-            <span className="text-muted-foreground ml-2 text-sm font-medium tabular-nums">
-              / {snapshot.avgDaysToPay.toFixed(0)}
-              {t("d avg")}
+    <div className="flex flex-col gap-3">
+      <KpiStrip>
+        <KpiStripItem
+          size="lg"
+          label={t("Open balance")}
+          value={formatCurrency(snapshot.totalOpenMinor / 100)}
+          sub={
+            <span className="tabular-nums">
+              {t(
+                "{0} overdue · {1} open",
+                formatCurrency(snapshot.overdueMinor / 100),
+                snapshot.openInvoiceCount,
+              )}
             </span>
-          </p>
-          <p className="text-muted-foreground mt-0.5 text-xs">trailing 91d / 12mo</p>
-        </SnapshotTile>
-        <SnapshotTile index={3} label={t("Delinquency score")}>
-          <p className={cn("text-2xl font-semibold tracking-tight tabular-nums", scoreClass)}>
-            {score.toFixed(0)}
-          </p>
-          <p className="text-muted-foreground mt-0.5 text-xs">
-            {t("0 low risk · 100 high risk")}
-          </p>
-        </SnapshotTile>
-      </div>
+          }
+        />
+        <KpiStripItem
+          size="lg"
+          label={t("Credit utilization")}
+          value={
+            hasCreditLimit ? (
+              <span className="flex flex-col gap-1.5">
+                <span>{(utilization * 100).toFixed(0)}%</span>
+                <span aria-hidden className="bg-muted block h-1 w-full overflow-hidden rounded-full">
+                  <span
+                    className={cn("block h-full rounded-full", utilizationBarClass)}
+                    style={{ width: `${utilizationPct}%` }}
+                  />
+                </span>
+              </span>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )
+          }
+          sub={
+            hasCreditLimit ? (
+              <span className="tabular-nums">
+                {t("of {0} limit", formatCurrency(snapshot.creditLimitMinor / 100))}
+              </span>
+            ) : (
+              t("no credit limit set")
+            )
+          }
+        />
+        <KpiStripItem
+          size="lg"
+          label={t("DSO / days to pay")}
+          value={
+            <>
+              {t("{0}d", profile.dsoDays.toFixed(0))}
+              <span className="text-muted-foreground ml-2 text-sm font-normal tabular-nums">
+                / {snapshot.avgDaysToPay.toFixed(0)}
+                {t("d avg")}
+              </span>
+            </>
+          }
+          sub="trailing 91d / 12mo"
+        />
+        <KpiStripItem
+          size="lg"
+          label={t("Delinquency score")}
+          tone={scoreTone}
+          value={score.toFixed(0)}
+          sub={t("0 low risk · 100 high risk")}
+        />
+      </KpiStrip>
 
       <div className="grid gap-3 xl:grid-cols-2">
-        <Card className="gap-0 p-0">
-          <CardHeader className="border-b px-4 py-2.5">
-            <CardTitle className="text-xs font-medium">
-              {t("Payments — trailing 12 months")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3">
+        <SectionPanel title={t("Payments — trailing 12 months")}>
+          <div className="p-3">
             {chartData.length === 0 ? (
               <div className="text-muted-foreground flex h-28 items-center justify-center text-xs">
                 {t("No payments received yet")}
@@ -173,82 +171,39 @@ export function CustomerSnapshotHeader({
                 </BarChart>
               </ChartContainer>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </SectionPanel>
 
-        <Card className="gap-0 p-0">
-          <CardHeader className="border-b px-4 py-2.5">
-            <CardTitle className="text-xs font-medium">{t("Account details")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 p-4">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
-              <DetailRow
-                label={t("Oldest open invoice")}
-                value={
-                  snapshot.oldestOpenInvoiceDate
-                    ? `${formatDateOrDash(snapshot.oldestOpenInvoiceDate)} · ${snapshot.oldestDaysPastDue}d past due`
-                    : "—"
-                }
-              />
-              <DetailRow
-                label={t("Last payment")}
-                value={
-                  snapshot.lastPaymentDate
-                    ? `${formatCurrency(snapshot.lastPaymentMinor / 100)} on ${formatDateOrDash(snapshot.lastPaymentDate)}`
-                    : "—"
-                }
-              />
-              <DetailRow
-                label={t("Unapplied cash")}
-                value={formatCurrency(snapshot.unappliedCashMinor / 100)}
-              />
-              <DetailRow
-                label={t("Billed trailing 91d")}
-                value={formatCurrency(snapshot.billedTrailing91Minor / 100)}
-              />
-            </div>
+        <SectionPanel title={t("Account details")}>
+          <div className="flex flex-col gap-3 p-3">
+            <DescriptionList columns={2}>
+              <DescriptionItem label={t("Oldest open invoice")} numeric>
+                {snapshot.oldestOpenInvoiceDate ? (
+                  `${formatDateOrDash(snapshot.oldestOpenInvoiceDate)} · ${snapshot.oldestDaysPastDue}d past due`
+                ) : (
+                  <DescriptionEmpty />
+                )}
+              </DescriptionItem>
+              <DescriptionItem label={t("Last payment")} numeric>
+                {snapshot.lastPaymentDate ? (
+                  `${formatCurrency(snapshot.lastPaymentMinor / 100)} on ${formatDateOrDash(snapshot.lastPaymentDate)}`
+                ) : (
+                  <DescriptionEmpty />
+                )}
+              </DescriptionItem>
+              <DescriptionItem label={t("Unapplied cash")} numeric>
+                {formatCurrency(snapshot.unappliedCashMinor / 100)}
+              </DescriptionItem>
+              <DescriptionItem label={t("Billed trailing 91d")} numeric>
+                {formatCurrency(snapshot.billedTrailing91Minor / 100)}
+              </DescriptionItem>
+            </DescriptionList>
             {snapshot.buckets.totalOpenMinor > 0 ? (
               <AgingDistributionBar totals={snapshot.buckets} />
             ) : null}
-          </CardContent>
-        </Card>
+          </div>
+        </SectionPanel>
       </div>
-    </div>
-  );
-}
-
-function SnapshotTile({
-  index,
-  label,
-  children,
-}: {
-  index: number;
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <m.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05, ease: "easeOut" }}
-    >
-      <Card className="h-full gap-0 rounded-md py-3">
-        <CardContent className="px-4">
-          <p className="text-muted-foreground text-xs font-semibold">
-            {label}
-          </p>
-          <div className="mt-1">{children}</div>
-        </CardContent>
-      </Card>
-    </m.div>
-  );
-}
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-muted-foreground">{label}</p>
-      <p className="mt-0.5 font-medium tabular-nums">{value}</p>
     </div>
   );
 }

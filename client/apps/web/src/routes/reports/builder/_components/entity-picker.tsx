@@ -3,17 +3,14 @@ import { Input } from "@trenova/shared/components/ui/input";
 import type { ReportCatalog, ReportCatalogEntity } from "@/lib/graphql/reports";
 import { cn } from "@trenova/shared/lib/utils";
 import { ChevronRightIcon, SearchIcon } from "lucide-react";
-import { m } from "motion/react";
 import { useMemo, useState } from "react";
 import { CategoryTile } from "../../_components/report-card-chrome";
 
 function EntityTile({
   entity,
-  index,
   onSelect,
 }: {
   entity: ReportCatalogEntity;
-  index: number;
   onSelect: () => void;
 }) {
   const t = useT();
@@ -21,11 +18,8 @@ function EntityTile({
   const accessibleFields = entity.fields.filter((field) => field.accessible).length;
 
   return (
-    <m.button
+    <button
       type="button"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2, delay: Math.min(index, 16) * 0.02, ease: "easeOut" }}
       onClick={onSelect}
       className={cn(
         "group border-border bg-card flex items-center gap-3 rounded-lg border p-3 text-left",
@@ -41,7 +35,7 @@ function EntityTile({
         </p>
       </div>
       <ChevronRightIcon className="text-muted-foreground/50 group-hover:text-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
-    </m.button>
+    </button>
   );
 }
 
@@ -78,11 +72,7 @@ export function EntityPicker({
   return (
     <div className="flex flex-1 justify-center overflow-y-auto">
       <div className="w-full max-w-3xl px-6 py-10">
-        <m.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
+        <div>
           <h2 className="text-lg font-semibold">{t("What is this report about?")}</h2>
           <p className="text-muted-foreground mt-1 text-sm">
             {t(
@@ -99,7 +89,7 @@ export function EntityPicker({
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
-        </m.div>
+        </div>
 
         <div className="mt-6 flex flex-col gap-6">
           {grouped.length === 0 && (
@@ -107,21 +97,17 @@ export function EntityPicker({
               {t('No entities match "{0}".', search)}
             </p>
           )}
-          {grouped.map(([category, entities], groupIndex) => {
-            const offset = grouped
-              .slice(0, groupIndex)
-              .reduce((total, [, groupEntities]) => total + groupEntities.length, 0);
+          {grouped.map(([category, entities]) => {
             return (
               <div key={category}>
                 <p className="text-xs text-muted-foreground mb-2 font-medium">
                   {category}
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {entities.map((entity, entityIndex) => (
+                  {entities.map((entity) => (
                     <EntityTile
                       key={entity.key}
                       entity={entity}
-                      index={offset + entityIndex}
                       onSelect={() => onSelect(entity.key)}
                     />
                   ))}

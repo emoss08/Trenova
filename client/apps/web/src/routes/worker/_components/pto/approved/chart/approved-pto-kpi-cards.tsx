@@ -1,8 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { MetricSkeleton } from "@/components/metric-skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
-import type { LucideIcon } from "lucide-react";
-import { CalendarCheck2, CalendarClock, TrendingUp, Users } from "lucide-react";
 import type { ApprovedPTOMetrics } from "./approved-pto-metrics";
 
 export function ApprovedPTOKPICards({
@@ -25,65 +23,34 @@ export function ApprovedPTOKPICards({
   }
 
   return (
-    <div className="mb-3 grid shrink-0 grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
-      <MetricCard
-        label={t("Approved PTO days")}
-        value={metrics.approvedPtoDays.toLocaleString()}
-        detail={t("Daily occupancy total")}
-        icon={CalendarCheck2}
-      />
-      <MetricCard
-        label={t("Requested PTO requests")}
-        value={requestedError ? "--" : requestedCount.toLocaleString()}
-        detail={t("Pending approvals in range")}
-        icon={CalendarClock}
-      />
-      <MetricCard
-        label={t("Workers with approved PTO")}
-        value={metrics.workersWithApprovedPTO.toLocaleString()}
-        detail={t("Unique workers in range")}
-        icon={Users}
-      />
-      <MetricCard
-        label={t("Peak day occupancy")}
-        value={metrics.peakDay.occupancy.toLocaleString()}
-        detail={metrics.peakDay.dateLabel ?? "No peak day"}
-        icon={TrendingUp}
-      />
+    <div className="mb-3 flex shrink-0 flex-col gap-2">
+      <KpiStrip>
+        <KpiStripItem
+          label={t("Approved PTO days")}
+          value={metrics.approvedPtoDays.toLocaleString()}
+          sub={t("Daily occupancy total")}
+        />
+        <KpiStripItem
+          label={t("Requested PTO requests")}
+          value={requestedError ? "--" : requestedCount.toLocaleString()}
+          sub={t("Pending approvals in range")}
+        />
+        <KpiStripItem
+          label={t("Workers with approved PTO")}
+          value={metrics.workersWithApprovedPTO.toLocaleString()}
+          sub={t("Unique workers in range")}
+        />
+        <KpiStripItem
+          label={t("Peak day occupancy")}
+          value={metrics.peakDay.occupancy.toLocaleString()}
+          sub={metrics.peakDay.dateLabel ?? "No peak day"}
+        />
+      </KpiStrip>
       {requestedError && !requestedLoading && (
-        <p className="border-border text-muted-foreground col-span-full rounded-md border border-dashed px-2.5 py-2 text-xs">
+        <p className="border-border text-muted-foreground rounded-md border border-dashed px-2.5 py-2 text-xs">
           {t("Requested PTO metric is temporarily unavailable.")}
         </p>
       )}
     </div>
-  );
-}
-
-function MetricCard({
-  label,
-  value,
-  detail,
-  icon: Icon,
-}: {
-  label: string;
-  value: string;
-  detail?: string;
-  icon: LucideIcon;
-}) {
-  return (
-    <Card className="group border-border/80 hover:border-border relative gap-0 overflow-hidden transition-colors">
-      <CardHeader className="relative flex flex-row items-start justify-between space-y-0 pb-2">
-        <CardTitle className="text-muted-foreground text-xs font-semibold">
-          {label}
-        </CardTitle>
-        <span className="bg-accent inline-flex size-7 shrink-0 items-center justify-center rounded-md">
-          <Icon className="size-4" />
-        </span>
-      </CardHeader>
-      <CardContent className="relative space-y-1 pt-0">
-        <p className="text-3xl leading-none font-semibold tracking-tight">{value}</p>
-        {detail ? <p className="text-muted-foreground text-xs">{detail}</p> : null}
-      </CardContent>
-    </Card>
   );
 }

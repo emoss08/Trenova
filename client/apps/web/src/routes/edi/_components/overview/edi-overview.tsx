@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
+import { KpiStrip } from "@/components/kpi/kpi-strip";
 import { ediWindowHasTraffic } from "@/lib/edi-summary";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -100,81 +101,65 @@ export function EDIOverview() {
         <>
           <section className="flex flex-col gap-3">
             <h2 className="text-sm font-semibold">{t("Needs attention")}</h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <Link to="/edi/messages">
-                <InfoTile
-                  label={t("Dead-lettered messages")}
-                  value={deadLettered}
-                  hint={t("Outbound deliveries that exhausted retries")}
-                  size="kpi"
-                  emphasizeWhenPositive
-                />
-              </Link>
-              <Link to="/edi/inbound-files">
-                <InfoTile
-                  label={t("Quarantined files")}
-                  value={quarantined}
-                  hint={t("Inbound files that failed processing")}
-                  size="kpi"
-                  emphasizeWhenPositive
-                />
-              </Link>
-              <Link to="/edi/transfers/inbound">
-                <InfoTile
-                  label={t("Stuck transfers")}
-                  value={mappingRequired}
-                  hint={t("Inbound tenders waiting on mappings")}
-                  size="kpi"
-                  emphasizeWhenPositive
-                />
-              </Link>
-              <Link to="/edi/messages">
-                <InfoTile
-                  label={t("Overdue acknowledgments")}
-                  value={summary.overdueAckCount}
-                  hint={t("Pending 997/999 past the expected window")}
-                  size="kpi"
-                  emphasizeWhenPositive
-                />
-              </Link>
-            </div>
+            <KpiStrip>
+              <InfoTile
+                label={t("Dead-lettered messages")}
+                value={deadLettered}
+                hint={t("Outbound deliveries that exhausted retries")}
+                emphasizeWhenPositive
+                to="/edi/messages"
+              />
+              <InfoTile
+                label={t("Quarantined files")}
+                value={quarantined}
+                hint={t("Inbound files that failed processing")}
+                emphasizeWhenPositive
+                to="/edi/inbound-files"
+              />
+              <InfoTile
+                label={t("Stuck transfers")}
+                value={mappingRequired}
+                hint={t("Inbound tenders waiting on mappings")}
+                emphasizeWhenPositive
+                to="/edi/transfers/inbound"
+              />
+              <InfoTile
+                label={t("Overdue acknowledgments")}
+                value={summary.overdueAckCount}
+                hint={t("Pending 997/999 past the expected window")}
+                emphasizeWhenPositive
+                to="/edi/messages"
+              />
+            </KpiStrip>
           </section>
           <section className="flex flex-col gap-3">
             <h2 className="text-sm font-semibold">{t("Pipeline state")}</h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <Link to="/edi/messages">
-                <InfoTile
-                  label={t("Failed deliveries")}
-                  value={failedDeliveries}
-                  hint={t("Retrying with backoff")}
-                  size="kpi"
-                />
-              </Link>
-              <Link to="/edi/inbound-files">
-                <InfoTile
-                  label={t("Partially processed files")}
-                  value={partiallyProcessed}
-                  hint={t("Processed with warnings or failures")}
-                  size="kpi"
-                />
-              </Link>
-              <Link to="/edi/transfers/inbound">
-                <InfoTile
-                  label={t("Pending approval")}
-                  value={pendingApproval}
-                  hint={t("Inbound tenders awaiting review")}
-                  size="kpi"
-                />
-              </Link>
-              <Link to="/edi/messages">
-                <InfoTile
-                  label={t("Rejected acknowledgments")}
-                  value={rejectedAcks}
-                  hint={t("Partners rejected our documents")}
-                  size="kpi"
-                />
-              </Link>
-            </div>
+            <KpiStrip>
+              <InfoTile
+                label={t("Failed deliveries")}
+                value={failedDeliveries}
+                hint={t("Retrying with backoff")}
+                to="/edi/messages"
+              />
+              <InfoTile
+                label={t("Partially processed files")}
+                value={partiallyProcessed}
+                hint={t("Processed with warnings or failures")}
+                to="/edi/inbound-files"
+              />
+              <InfoTile
+                label={t("Pending approval")}
+                value={pendingApproval}
+                hint={t("Inbound tenders awaiting review")}
+                to="/edi/transfers/inbound"
+              />
+              <InfoTile
+                label={t("Rejected acknowledgments")}
+                value={rejectedAcks}
+                hint={t("Partners rejected our documents")}
+                to="/edi/messages"
+              />
+            </KpiStrip>
           </section>
           <section className="flex flex-col gap-3">
             <h2 className="text-sm font-semibold">{t("Trends")}</h2>

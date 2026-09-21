@@ -87,22 +87,22 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
         <StatTile
           label={t("Increased")}
           value={String(summary.increasedCount)}
-          tone="text-success-foreground"
+          tone="success"
         />
         <StatTile
           label={t("Decreased")}
           value={String(summary.decreasedCount)}
-          tone="text-danger-foreground"
+          tone="danger"
         />
         <StatTile
           label={t("Clamped")}
           value={String(summary.guardrailCount)}
-          tone={summary.guardrailCount > 0 ? "text-info-foreground" : undefined}
+          tone={summary.guardrailCount > 0 ? "info" : undefined}
         />
         <StatTile
           label={t("Failed")}
           value={String(summary.errorCount)}
-          tone={summary.errorCount > 0 ? "text-destructive" : undefined}
+          tone={summary.errorCount > 0 ? "danger" : undefined}
         />
       </KpiStrip>
 

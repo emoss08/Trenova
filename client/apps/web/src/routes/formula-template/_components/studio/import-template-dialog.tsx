@@ -143,7 +143,7 @@ export function ImportTemplateDialog({
         if (!nextOpen) handleClose();
       }}
     >
-      <DialogContent className="sm:max-w-[440px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileUpIcon className="size-4" />
@@ -216,12 +216,11 @@ export function ImportTemplateDialog({
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" size="sm" onClick={handleClose}>
+          <Button type="button" variant="outline" onClick={handleClose}>
             {t("Cancel")}
           </Button>
           <Button
             type="button"
-            size="sm"
             onClick={handleImport}
             disabled={!parsed}
             isLoading={isPending}

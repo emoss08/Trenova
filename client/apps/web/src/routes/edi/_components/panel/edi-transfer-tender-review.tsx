@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import type { EDITransferRow } from "@/lib/graphql/edi-table";
 import { EDITransferStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -27,7 +28,7 @@ import {
   formatWindow,
   sourceValueLabel,
 } from "../edi-display-utils";
-import { EDIEmptyState, InfoTile } from "./edi-panel-primitives";
+import { EDIEmptyState } from "./edi-panel-primitives";
 
 type TenderReviewProps = {
   transfer: EDITransferRow;
@@ -72,40 +73,36 @@ export function TransferOverview({ transfer, mappingRows }: TenderReviewProps) {
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-4">
-          <InfoTile
-            label={t("Customer")}
-            value={sourceValueLabel(payload.customerLabel, payload.customerId)}
-          />
-          <InfoTile
-            label={t("Service")}
-            value={sourceValueLabel(payload.serviceTypeLabel, payload.serviceTypeId)}
-          />
-          <InfoTile
-            label={t("Shipment type")}
-            value={sourceValueLabel(payload.shipmentTypeLabel, payload.shipmentTypeId)}
-          />
-          <InfoTile
-            label={t("Rating template")}
-            value={sourceValueLabel(payload.formulaTemplateLabel, payload.formulaTemplateId)}
-          />
-          <InfoTile
-            label={t("Route")}
-            value={`${payload.moves.length} / ${stopsCount}`}
-            hint="moves / stops"
-          />
-          <InfoTile label={t("Pieces")} value={formatNumber(payload.pieces)} />
-          <InfoTile label={t("Weight")} value={formatWeight(payload.weight)} />
-          <InfoTile
-            label={t("Charges")}
-            value={
-              payload.additionalCharges?.length === undefined ||
-              payload.additionalCharges?.length === 0
-                ? "N/A"
-                : payload.additionalCharges?.length.toLocaleString()
-            }
-          />
-        </div>
+        <DescriptionList columns={4} className="bg-card rounded-lg border p-3">
+          <DescriptionItem label={t("Customer")}>
+            {sourceValueLabel(payload.customerLabel, payload.customerId)}
+          </DescriptionItem>
+          <DescriptionItem label={t("Service")}>
+            {sourceValueLabel(payload.serviceTypeLabel, payload.serviceTypeId)}
+          </DescriptionItem>
+          <DescriptionItem label={t("Shipment type")}>
+            {sourceValueLabel(payload.shipmentTypeLabel, payload.shipmentTypeId)}
+          </DescriptionItem>
+          <DescriptionItem label={t("Rating template")}>
+            {sourceValueLabel(payload.formulaTemplateLabel, payload.formulaTemplateId)}
+          </DescriptionItem>
+          <DescriptionItem label={t("Route")} numeric>
+            {`${payload.moves.length} / ${stopsCount}`}{" "}
+            <span className="text-foreground-subtle text-xs">moves / stops</span>
+          </DescriptionItem>
+          <DescriptionItem label={t("Pieces")} numeric>
+            {formatNumber(payload.pieces)}
+          </DescriptionItem>
+          <DescriptionItem label={t("Weight")} numeric>
+            {formatWeight(payload.weight)}
+          </DescriptionItem>
+          <DescriptionItem label={t("Charges")} numeric>
+            {payload.additionalCharges?.length === undefined ||
+            payload.additionalCharges?.length === 0
+              ? "N/A"
+              : payload.additionalCharges?.length.toLocaleString()}
+          </DescriptionItem>
+        </DescriptionList>
       </div>
     </div>
   );

@@ -27,7 +27,6 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
 import {
   formatMiles,
   formatMinutesSpan,
@@ -148,7 +147,6 @@ export function PreflightDialog({
   const t = useT();
 
   const { move, driver } = target;
-  const reducedMotion = useReducedMotion();
   const { data, isLoading } = useQuery(
     dispatchConsoleQueries.assignmentPreview({
       moveId: move.moveId,
@@ -168,15 +166,6 @@ export function PreflightDialog({
     data?.score.findings.filter(
       (finding) => `${finding.code}-${finding.field}` !== lead?.promotedFinding,
     ) ?? [];
-
-  const section = (index: number) =>
-    reducedMotion
-      ? {}
-      : {
-          initial: { opacity: 0, y: 4 },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.25, delay: 0.05 * index, ease: [0.22, 1, 0.36, 1] as const },
-        };
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
@@ -262,8 +251,7 @@ export function PreflightDialog({
           <ScrollArea className="max-h-[55vh]">
             <div className="flex flex-col gap-3.5 px-5 py-4">
               {banner && verdict && lead ? (
-                <motion.div
-                  {...section(0)}
+                <div
                   className={cn("flex items-start gap-2.5 rounded-md p-3", banner.panelClass)}
                 >
                   <banner.Icon
@@ -276,11 +264,10 @@ export function PreflightDialog({
                     </span>
                     <span className="text-foreground/80 text-xs leading-snug">{lead.message}</span>
                   </div>
-                </motion.div>
+                </div>
               ) : null}
 
-              <motion.div
-                {...section(1)}
+              <div
                 className="divide-border border-border grid grid-cols-3 divide-x rounded-md border"
               >
                 <Stat value={formatMiles(data.score.deadheadMiles)} label={t("Empty miles")} />
@@ -293,23 +280,23 @@ export function PreflightDialog({
                   label={slack < 0 ? "Late" : "Margin"}
                   tone={slack < 0 ? "late" : undefined}
                 />
-              </motion.div>
+              </div>
 
               {!tractorId ? (
-                <motion.p {...section(2)} className="text-xs text-danger-foreground">
+                <p className="text-xs text-danger-foreground">
                   {t("This driver has no tractor assigned; assign one before dispatching.")}
-                </motion.p>
+                </p>
               ) : null}
 
               {listedFindings.length > 0 ? (
-                <motion.div {...section(2)}>
+                <div>
                   <FindingList findings={listedFindings} />
-                </motion.div>
+                </div>
               ) : null}
 
-              <motion.div {...section(3)} className="border-border border-t pt-3.5">
+              <div className="border-border border-t pt-3.5">
                 <ScoreBreakdown score={data.score.score} factors={data.score.factors} />
-              </motion.div>
+              </div>
             </div>
           </ScrollArea>
         )}

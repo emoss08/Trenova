@@ -394,7 +394,7 @@ export function ShipmentRateConfirmationImportPanel({
         }
       }}
     >
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-6xl" showCloseButton={false}>
+      <DialogContent size="2xl" className="gap-0 overflow-hidden p-0" showCloseButton={false}>
         <DialogHeader className="border-b px-6 pt-6 pb-4">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">

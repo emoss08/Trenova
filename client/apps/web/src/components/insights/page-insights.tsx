@@ -10,7 +10,6 @@ import {
 } from "@/routes/home/_components/widgets/insight-presentation";
 import type { Insight, InsightSeverity, InsightSurface } from "@/types/insight";
 import { CheckCircle2Icon } from "lucide-react";
-import { m } from "motion/react";
 import { Link } from "react-router";
 import { PAGE_INSIGHTS_LIMIT, usePageInsights } from "./use-page-insights";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
@@ -102,15 +101,12 @@ export function PageInsightsCard({
 export function PageInsightRows({ insights }: { insights: readonly Insight[] }) {
   return (
     <div className="divide-y">
-      {insights.map((insight, index) => (
-        <m.div
+      {insights.map((insight) => (
+        <div
           key={insight.id}
-          initial={{ opacity: 0, x: -6 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.25, delay: index * 0.03, ease: "easeOut" }}
         >
           <InsightRow insight={insight} />
-        </m.div>
+        </div>
       ))}
     </div>
   );

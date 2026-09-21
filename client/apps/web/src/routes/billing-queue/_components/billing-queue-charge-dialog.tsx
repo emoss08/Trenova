@@ -104,7 +104,7 @@ export function BillingQueueChargeDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{isEditing ? t("Edit charge") : t("Add charge")}</DialogTitle>
           <DialogDescription>

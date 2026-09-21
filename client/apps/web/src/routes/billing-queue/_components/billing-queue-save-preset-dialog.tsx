@@ -84,7 +84,7 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Save filter preset")}</DialogTitle>
           <DialogDescription>
@@ -105,10 +105,10 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
             </FormGroup>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t("Cancel")}
             </Button>
-            <Button type="submit" size="sm" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? t("Saving...") : t("Save")}
             </Button>
           </DialogFooter>

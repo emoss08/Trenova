@@ -4,7 +4,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { m } from "motion/react";
 import { Link } from "react-router";
 
 export function TopOverdueCustomersCard() {
@@ -40,45 +39,37 @@ export function TopOverdueCustomersCard() {
         ) : (
           <div className="max-h-80 divide-y overflow-y-auto">
             {rows.map((row, index) => (
-              <m.div
+              <Link
                 key={row.customerId}
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.25, delay: index * 0.03, ease: "easeOut" }}
+                to={`/accounting/ar/customer-ledger?customerId=${row.customerId}`}
+                className="hover:bg-muted/50 flex items-center gap-3 rounded-md px-2 py-2 transition-colors"
               >
-                <Link
-                  to={`/accounting/ar/customer-ledger?customerId=${row.customerId}`}
-                  className="hover:bg-muted/50 flex items-center gap-3 rounded-md px-2 py-2 transition-colors"
-                >
-                  <span className="text-muted-foreground w-5 shrink-0 text-center text-xs font-medium tabular-nums">
-                    {index + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-xs font-medium">{row.customerName}</span>
-                      <span className="shrink-0 text-xs font-semibold text-danger-foreground tabular-nums dark:text-danger-foreground">
-                        {formatCurrency(row.overdueMinor / 100)}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex items-center gap-2">
-                      <div className="bg-muted h-1 flex-1 overflow-hidden rounded-full">
-                        <m.div
-                          className="h-full rounded-full bg-danger/70"
-                          initial={{ width: 0 }}
-                          animate={{
-                            width:
-                              maxOverdue > 0 ? `${(row.overdueMinor / maxOverdue) * 100}%` : "0%",
-                          }}
-                          transition={{ duration: 0.5, delay: index * 0.03, ease: "easeOut" }}
-                        />
-                      </div>
-                      <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
-                        {t("{0} inv · oldest {1}d", row.openInvoiceCount, row.oldestDaysPastDue)}
-                      </span>
-                    </div>
+                <span className="text-muted-foreground w-5 shrink-0 text-center text-xs font-medium tabular-nums">
+                  {index + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="truncate text-xs font-medium">{row.customerName}</span>
+                    <span className="shrink-0 text-xs font-semibold text-danger-foreground tabular-nums dark:text-danger-foreground">
+                      {formatCurrency(row.overdueMinor / 100)}
+                    </span>
                   </div>
-                </Link>
-              </m.div>
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="bg-muted h-1 flex-1 overflow-hidden rounded-full">
+                      <div
+                        className="h-full rounded-full bg-danger/70"
+                        style={{
+                          width:
+                            maxOverdue > 0 ? `${(row.overdueMinor / maxOverdue) * 100}%` : "0%",
+                        }}
+                      />
+                    </div>
+                    <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                      {t("{0} inv · oldest {1}d", row.openInvoiceCount, row.oldestDaysPastDue)}
+                    </span>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         )}

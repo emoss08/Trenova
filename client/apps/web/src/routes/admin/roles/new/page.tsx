@@ -84,6 +84,7 @@ export function RoleCreatePage() {
       <Form onSubmit={onSubmit}>
         <RolePageLayout
           title={t("Create role")}
+          description={t("Configure resource access and operations")}
           isSubmitting={isSubmitting}
           submitLabel={t("Create role")}
           onSubmit={onSubmit}

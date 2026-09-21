@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
 import { ChartContainer, type ChartConfig } from "@trenova/shared/components/ui/chart";
 import { Activity } from "lucide-react";
@@ -22,7 +23,7 @@ export function RequestsCard({ data }: Props) {
     <KpiCard span={2}>
       <KpiHeader icon={<Activity className="size-[11px]" />} label={t("Requests (30d)")} />
       <div className="relative px-4">
-        <p className="text-3xl leading-none font-semibold tracking-tight">
+        <p className={KPI_VALUE_LG_CLASS}>
           {total.toLocaleString()}
         </p>
       </div>

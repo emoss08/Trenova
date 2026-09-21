@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import {
   fetchWorkerOverview,
   WORKER_OVERVIEW_KEY,
@@ -30,15 +31,8 @@ import {
   workerStandingMeta,
 } from "@trenova/shared/lib/worker-standing";
 import {
-  CalendarRangeIcon,
   CheckIcon,
   ChevronRightIcon,
-  ClipboardCheckIcon,
-  ClipboardListIcon,
-  GraduationCapIcon,
-  IdCardIcon,
-  ShieldAlertIcon,
-  type LucideIcon,
 } from "lucide-react";
 
 type WorkerOverviewTabProps = {
@@ -253,7 +247,7 @@ function RecordSections({
   return (
     <section className="flex flex-col gap-2">
       <SectionHeading>{t("The record")}</SectionHeading>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{cards}</div>
+      <KpiStrip minItemWidth="12rem">{cards}</KpiStrip>
     </section>
   );
 }
@@ -279,7 +273,6 @@ type CardState = { variant: BadgeVariant; label: string } | null;
 function MetricCard({
   testId,
   title,
-  icon: Icon,
   value,
   unit,
   detail,
@@ -289,7 +282,6 @@ function MetricCard({
 }: {
   testId: string;
   title: string;
-  icon: LucideIcon;
   value: string;
   unit?: string;
   detail: string;
@@ -300,34 +292,31 @@ function MetricCard({
   const t = useT();
 
   return (
-    <button
-      type="button"
-      data-testid={testId}
-      onClick={onOpen}
-      className="border-border/80 hover:border-border hover:bg-muted/30 group flex flex-col gap-2 rounded-lg border p-3 text-left transition-colors"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground text-xs font-semibold">{title}</span>
-        <span className="bg-accent inline-flex size-6 shrink-0 items-center justify-center rounded-md">
-          <Icon className="size-3.5" />
-        </span>
-      </div>
-      <div className="flex items-baseline gap-1">
-        <span className="text-2xl leading-none font-semibold tracking-tight tabular-nums">
-          {value}
-        </span>{" "}
-        {unit ? <span className="text-muted-foreground text-xs">{unit}</span> : null}
-      </div>
-      {children}
-      <div className="mt-auto flex items-center justify-between gap-2">
-        <span className="text-muted-foreground truncate text-xs">{detail}</span>
-        {state ? (
-          <Badge variant={state.variant} className="shrink-0">
-            {t(state.label)}
-          </Badge>
-        ) : null}
-      </div>
-    </button>
+    <div data-testid={testId} className="contents">
+      <KpiStripItem
+        label={title}
+        info={
+          state ? (
+            <Badge variant={state.variant} className="ml-auto shrink-0">
+              {t(state.label)}
+            </Badge>
+          ) : null
+        }
+        value={
+          <div className="flex flex-col gap-1.5">
+            <div className="flex min-w-0 items-baseline gap-1">
+              <span>{value}</span>{" "}
+              {unit ? (
+                <span className="text-muted-foreground truncate text-xs font-normal">{unit}</span>
+              ) : null}
+            </div>
+            {children}
+          </div>
+        }
+        sub={detail}
+        onClick={onOpen}
+      />
+    </div>
   );
 }
 
@@ -352,7 +341,6 @@ function CredentialsCard({
     <MetricCard
       testId="overview-card-credentials"
       title={t("Credentials")}
-      icon={IdCardIcon}
       value={`${summary.validCount} of ${summary.requiredCount}`}
       unit="valid"
       detail={
@@ -384,7 +372,6 @@ function TrainingCard({ summary, onOpen }: { summary: OverviewTraining; onOpen: 
     <MetricCard
       testId="overview-card-training"
       title={t("Training")}
-      icon={GraduationCapIcon}
       value={`${summary.currentCount} of ${summary.requiredCount}`}
       unit="current"
       detail={
@@ -415,7 +402,6 @@ function SafetyCard({ card, onOpen }: { card: OverviewSafety; onOpen: () => void
     <MetricCard
       testId="overview-card-safety"
       title={t("Safety")}
-      icon={ShieldAlertIcon}
       value={String(card.score)}
       unit="score"
       detail={
@@ -450,7 +436,6 @@ function ChecklistCard({
     <MetricCard
       testId="overview-card-checklist"
       title={t("Checklist")}
-      icon={ClipboardListIcon}
       value={`${checklist.progress.percent}%`}
       unit={checklist.name}
       detail={`${checklist.progress.requiredDone} of ${checklist.progress.requiredTotal} required items settled`}
@@ -478,7 +463,6 @@ function PTOCard({
     <MetricCard
       testId="overview-card-pto"
       title={t("Time off")}
-      icon={CalendarRangeIcon}
       value={lead ? formatDays(lead.availableDays) : "—"}
       unit={lead ? `${lead.ptoType.toLowerCase()} days` : undefined}
       detail={
@@ -525,7 +509,6 @@ function ReviewsCard({
     <MetricCard
       testId="overview-card-reviews"
       title={t("Reviews")}
-      icon={ClipboardCheckIcon}
       value={value}
       unit={unit}
       detail={detail}

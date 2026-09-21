@@ -46,8 +46,8 @@ function ChoiceButton({
       className={cn(
         "flex flex-1 cursor-pointer flex-col items-start gap-0.5 rounded-md border px-3 py-2 text-left text-sm transition-colors",
         selected
-          ? "border-primary bg-primary/5"
-          : "border-border hover:border-muted-foreground/40 hover:bg-muted/40",
+          ? "border-brand-border bg-surface-selected"
+          : "border-border hover:border-border-strong hover:bg-surface-hover",
       )}
     >
       {children}
@@ -135,7 +135,7 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[420px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Export to CSV")}</DialogTitle>
           <DialogDescription>

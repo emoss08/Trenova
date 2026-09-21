@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import {
@@ -186,34 +187,47 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
           )}
         </span>
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <SummaryTile label={t("Gross earnings")}>
-          <AmountDisplay value={settlement.grossEarningsMinor} currency={settlement.currencyCode} />
-        </SummaryTile>
-        <SummaryTile label={t("Deductions")}>
-          <AmountDisplay
-            value={-settlement.deductionsMinor}
-            variant="negative"
-            currency={settlement.currencyCode}
-          />
-        </SummaryTile>
-        <SummaryTile label={t("Miles / loads")}>
-          <span className="tabular-nums">
-            {t(
-              "{0} mi · {1}",
-              Number(settlement.totalMiles).toLocaleString(),
-              settlement.shipmentCount,
-            )}
-          </span>
-        </SummaryTile>
-        <SummaryTile label={t("Net pay")} highlight>
-          <AmountDisplay
-            value={settlement.netPayMinor}
-            variant="positive"
-            currency={settlement.currencyCode}
-          />
-        </SummaryTile>
-      </div>
+      <KpiStrip minItemWidth="8rem">
+        <KpiStripItem
+          label={t("Gross earnings")}
+          value={
+              <AmountDisplay value={settlement.grossEarningsMinor} currency={settlement.currencyCode} />
+          }
+        />
+        <KpiStripItem
+          label={t("Deductions")}
+          value={
+              <AmountDisplay
+                value={-settlement.deductionsMinor}
+                variant="negative"
+                currency={settlement.currencyCode}
+              />
+          }
+        />
+        <KpiStripItem
+          label={t("Miles / loads")}
+          value={
+              <span className="tabular-nums">
+                {t(
+                  "{0} mi · {1}",
+                  Number(settlement.totalMiles).toLocaleString(),
+                  settlement.shipmentCount,
+                )}
+              </span>
+          }
+        />
+        <KpiStripItem
+          label={t("Net pay")}
+          tone="success"
+          value={
+              <AmountDisplay
+                value={settlement.netPayMinor}
+                variant="positive"
+                currency={settlement.currencyCode}
+              />
+          }
+        />
+      </KpiStrip>
       {settlement.carryForwardOutMinor < 0 && (
         <p className="text-xs text-danger-foreground">
           {t("Deductions exceeded earnings.")}{" "}
@@ -224,28 +238,6 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
           {t("will carry forward to the next settlement.")}
         </p>
       )}
-    </div>
-  );
-}
-
-function SummaryTile({
-  label,
-  highlight,
-  children,
-}: {
-  label: string;
-  highlight?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-lg border p-3",
-        highlight ? "border-success-border bg-success-subtle" : "bg-muted/30",
-      )}
-    >
-      <p className="text-muted-foreground text-xs font-medium">{label}</p>
-      <div className="mt-1 text-sm font-semibold">{children}</div>
     </div>
   );
 }

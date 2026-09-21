@@ -7,7 +7,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { csaBasicHint, csaBasicLabel } from "@trenova/shared/lib/csa";
 import { cn } from "@trenova/shared/lib/utils";
 import { InfoIcon, ShieldAlertIcon } from "lucide-react";
-import { m, useReducedMotion } from "motion/react";
 import { useMemo } from "react";
 
 type BasicsCardProps = {
@@ -25,7 +24,6 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
   const t = useT();
 
   const standings = useMemo(() => basicStandings(basics), [basics]);
-  const reduceMotion = useReducedMotion();
 
   return (
     <section aria-labelledby="basics-heading" className="bg-card overflow-hidden rounded-lg border">
@@ -64,7 +62,7 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
       ) : null}
 
       <ul className="divide-y">
-        {standings.map(({ basic, tone, share }, index) => (
+        {standings.map(({ basic, tone, share }) => (
           <li
             key={basic.basic}
             className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2"
@@ -100,7 +98,7 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
                 aria-label={`${csaBasicLabel(basic.basic)}: ${basic.weightedScore} weighted`}
                 className="bg-muted flex h-1.5 w-full max-w-md overflow-hidden rounded-full"
               >
-                <m.span
+                <span
                   aria-hidden
                   className={cn(
                     "h-full rounded-full",
@@ -110,9 +108,7 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
                         ? "bg-brand/60"
                         : "bg-brand/30",
                   )}
-                  initial={reduceMotion ? false : { width: 0 }}
-                  animate={{ width: `${share}%` }}
-                  transition={{ duration: 0.5, delay: index * 0.04, ease: "easeOut" }}
+                  style={{ width: `${share}%` }}
                 />
               </span>
             </div>

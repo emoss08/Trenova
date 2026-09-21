@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
+import { FormSection } from "@trenova/shared/components/ui/form";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -262,10 +263,7 @@ export function DashboardFiltersEditor({
   return (
     <div className="flex flex-col gap-4">
       {filters.length > 0 && (
-        <section className="flex flex-col gap-2">
-          <h3 className="text-xs text-muted-foreground font-medium">
-            {t("On this dashboard")}
-          </h3>
+        <FormSection title={t("On this dashboard")}>
           {filters.map((filter, filterIndex) => (
             <SelectedFilter
               key={filter.id}
@@ -277,18 +275,15 @@ export function DashboardFiltersEditor({
               onRemove={() => onChange(filters.filter((_, i) => i !== filterIndex))}
             />
           ))}
-        </section>
+        </FormSection>
       )}
 
-      <section className="flex flex-col gap-2">
-        <h3 className="text-xs text-muted-foreground font-medium">
-          {t("Add from your reports")}
-        </h3>
-        <p className="text-2xs text-muted-foreground">
-          {t(
-            "What each report filters on and breaks down by. Turning one on narrows every tile built on the same data.",
-          )}
-        </p>
+      <FormSection
+        title={t("Add from your reports")}
+        description={t(
+          "What each report filters on and breaks down by. Turning one on narrows every tile built on the same data.",
+        )}
+      >
 
         {groups.map((group) => (
           <div key={group.report} className="flex flex-col gap-0.5">
@@ -330,7 +325,7 @@ export function DashboardFiltersEditor({
             onChange([...filters, { id, entity, ref, operator }]);
           }}
         />
-      </section>
+      </FormSection>
     </div>
   );
 }

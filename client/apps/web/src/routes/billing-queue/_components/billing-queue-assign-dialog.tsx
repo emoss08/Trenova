@@ -80,7 +80,7 @@ export function BillingQueueAssignDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent className="sm:max-w-100">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Assign biller")}</DialogTitle>
           <DialogDescription>

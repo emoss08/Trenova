@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import AuditTab from "@/components/audit-tab";
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
@@ -182,7 +183,7 @@ export default function InvoiceDetailPane({
         {isVoided ? <VoidedNotice invoice={invoice} /> : null}
 
         <div className="flex items-baseline gap-3">
-          <span className="text-2xl font-semibold tabular-nums">
+          <span className={KPI_VALUE_LG_CLASS}>
             {formatCurrency(totalAmount, invoice.currencyCode)}
           </span>
           <span className="text-muted-foreground text-sm">{customerName}</span>

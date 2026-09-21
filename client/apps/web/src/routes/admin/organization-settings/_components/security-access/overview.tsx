@@ -1,13 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
-import {
-  ActivityIcon,
-  KeyRoundIcon,
-  LockKeyholeIcon,
-  ShieldCheckIcon,
-  UsersRoundIcon,
-} from "lucide-react";
-import { ActivityItem, EmptyState, OverviewSkeleton, StatusTile } from "./shared";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { ActivityIcon } from "lucide-react";
+import { ActivityItem, EmptyState, OverviewSkeleton } from "./shared";
 
 export type RecentActivity = {
   id: string;
@@ -40,38 +35,32 @@ export function SecurityOverview({
 
   return (
     <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatusTile
-          icon={<KeyRoundIcon />}
+      <KpiStrip className="self-start">
+        <KpiStripItem
           label={t("Providers")}
           value={String(providerCount)}
-          detail={providerCount === 1 ? "Enabled provider" : "Enabled providers"}
-          tone={providerCount > 0 ? "active" : "muted"}
+          sub={providerCount === 1 ? "Enabled provider" : "Enabled providers"}
+          tone={providerCount > 0 ? "success" : "muted"}
         />
-        <StatusTile
-          icon={<LockKeyholeIcon />}
+        <KpiStripItem
           label={t("SSO enforcement")}
           value={enforcedProviderName || "Optional"}
-          detail={
-            enforcedProviderName ? "Password fallback restricted" : "Password sign-in allowed"
-          }
+          sub={enforcedProviderName ? "Password fallback restricted" : "Password sign-in allowed"}
           tone={enforcedProviderName ? "warning" : "muted"}
         />
-        <StatusTile
-          icon={<UsersRoundIcon />}
+        <KpiStripItem
           label={t("SCIM directory")}
           value={directoryStatus || "Not connected"}
-          detail={directoryStatus ? "Provisioning enabled" : "Directory sync inactive"}
-          tone={directoryStatus ? "active" : "muted"}
+          sub={directoryStatus ? "Provisioning enabled" : "Directory sync inactive"}
+          tone={directoryStatus ? "success" : "muted"}
         />
-        <StatusTile
-          icon={<ShieldCheckIcon />}
+        <KpiStripItem
           label={t("Active policies")}
           value={String(activePolicyCount)}
-          detail={activePolicyCount === 1 ? "Policy evaluating" : "Policies evaluating"}
+          sub={activePolicyCount === 1 ? "Policy evaluating" : "Policies evaluating"}
           tone={activePolicyCount > 0 ? "info" : "muted"}
         />
-      </div>
+      </KpiStrip>
       <div className="bg-muted/20 rounded-lg border">
         <div className="flex items-center justify-between border-b px-3 py-2">
           <div>

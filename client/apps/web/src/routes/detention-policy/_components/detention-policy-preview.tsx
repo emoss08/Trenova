@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { pricingFingerprint } from "@/lib/detention-policy";
 import { CalculationReceipt } from "@/routes/detention-desk/_components/calculation-receipt";
@@ -235,7 +236,7 @@ function ScenarioResult({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
               className={cn(
-                "text-3xl leading-none font-semibold tracking-tight tabular-nums",
+                KPI_VALUE_LG_CLASS,
                 suppressed && "text-muted-foreground line-through decoration-1",
               )}
             >

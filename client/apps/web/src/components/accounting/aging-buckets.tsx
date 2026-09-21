@@ -2,7 +2,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { ChartConfig } from "@trenova/shared/components/ui/chart";
 import { cn } from "@trenova/shared/lib/utils";
-import { m } from "motion/react";
 
 export type AgingBucketKey =
   | "currentMinor"
@@ -87,16 +86,14 @@ export function AgingDistributionBar({
   return (
     <div className={className}>
       <div className="flex h-2.5 w-full gap-px overflow-hidden rounded-full">
-        {AGING_BUCKETS.map((bucket, index) => {
+        {AGING_BUCKETS.map((bucket) => {
           const share = (totals[bucket.key] / totalOpen) * 100;
           if (share <= 0) return null;
           return (
-            <m.div
+            <div
               key={bucket.key}
               className={cn("h-full", bucket.dotClass)}
-              initial={{ width: 0 }}
-              animate={{ width: `${share}%` }}
-              transition={{ duration: 0.5, delay: index * 0.05, ease: "easeOut" }}
+              style={{ width: `${share}%` }}
             />
           );
         })}

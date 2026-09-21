@@ -768,7 +768,6 @@ function DeliveryFacts({ schedule }: { schedule: ReportSchedule }) {
 
 function ScheduleRow({
   schedule,
-  index,
   onEdit,
   onDelete,
   onToggleEnabled,
@@ -776,7 +775,6 @@ function ScheduleRow({
   toggling,
 }: {
   schedule: ReportSchedule;
-  index: number;
   onEdit: () => void;
   onDelete: () => void;
   onToggleEnabled: (enabled: boolean) => void;
@@ -788,10 +786,7 @@ function ScheduleRow({
   const cadence = describeCron(schedule.cronExpression);
 
   return (
-    <m.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2, delay: Math.min(index, 8) * 0.03, ease: "easeOut" }}
+    <div
       className={cn(
         "group border-border bg-card flex items-center gap-3 rounded-lg border p-3",
         "hover:border-brand/60 transition-[border-color,box-shadow,opacity] duration-200",
@@ -862,7 +857,7 @@ function ScheduleRow({
           aria-label={schedule.enabled ? "Disable schedule" : "Enable schedule"}
         />
       </div>
-    </m.div>
+    </div>
   );
 }
 
@@ -993,7 +988,7 @@ export function ReportSchedulesDialog({
               </div>
             </div>
           )}
-          {(schedules ?? []).map((schedule, index) =>
+          {(schedules ?? []).map((schedule) =>
             editing !== "new" && editing?.id === schedule.id ? (
               <ScheduleForm
                 key={schedule.id}
@@ -1008,7 +1003,6 @@ export function ReportSchedulesDialog({
               <ScheduleRow
                 key={schedule.id}
                 schedule={schedule}
-                index={index}
                 deleting={deletingId === schedule.id}
                 toggling={togglingId === schedule.id}
                 onEdit={() => setEditing(schedule)}

@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
@@ -48,7 +49,6 @@ import type { SettlementStatus } from "@trenova/shared/types/invoice";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, CopyIcon, ExternalLinkIcon, HandCoinsIcon, Undo2Icon } from "lucide-react";
-import { m } from "motion/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
@@ -96,7 +96,7 @@ function PaymentDetailView({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-semibold tracking-tight tabular-nums">
+            <span className={KPI_VALUE_LG_CLASS}>
               {formatCurrency(payment.amountMinor / 100)}
             </span>
             <PlainCustomerPaymentStatusBadge status={payment.status as CustomerPaymentStatus} />
@@ -195,19 +195,15 @@ function CashAllocationBar({
     <div>
       <div className="bg-muted flex h-2.5 w-full gap-px overflow-hidden rounded-full">
         {appliedMinor > 0 ? (
-          <m.div
+          <div
             className="h-full bg-success"
-            initial={{ width: 0 }}
-            animate={{ width: `${appliedShare}%` }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
+            style={{ width: `${appliedShare}%` }}
           />
         ) : null}
         {unappliedMinor > 0 ? (
-          <m.div
+          <div
             className="h-full bg-accent-sky"
-            initial={{ width: 0 }}
-            animate={{ width: `${unappliedShare}%` }}
-            transition={{ duration: 0.5, delay: 0.05, ease: "easeOut" }}
+            style={{ width: `${unappliedShare}%` }}
           />
         ) : null}
       </div>

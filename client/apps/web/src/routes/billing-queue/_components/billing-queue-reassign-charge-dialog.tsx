@@ -138,7 +138,7 @@ export function BillingQueueReassignChargeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Change who pays for {0}", chargeName)}</DialogTitle>
           <DialogDescription>

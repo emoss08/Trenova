@@ -8,11 +8,9 @@ import { safetyRatingLabel, safetyRatingTone } from "@trenova/shared/lib/csa";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { AwardIcon, Building2Icon, ShieldAlertIcon } from "lucide-react";
-import { m, useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router";
 
-const STAGGER_LIMIT = 8;
 
 type TerminalsPanelProps = {
   terminals: readonly FleetSafetyTerminalRow[];
@@ -134,14 +132,6 @@ type RankListProps = {
 export function RankList({ title, kind, empty, rows }: RankListProps) {
   const t = useT();
 
-  const reduceMotion = useReducedMotion();
-  const [settled, setSettled] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setSettled(true), 600);
-    return () => window.clearTimeout(timer);
-  }, []);
-
   return (
     <SectionPanel
       title={title}
@@ -157,12 +147,9 @@ export function RankList({ title, kind, empty, rows }: RankListProps) {
         <SectionPanelQuiet>{empty}</SectionPanelQuiet>
       ) : (
         <ul className="divide-y">
-          {rows.map((row, index) => (
-            <m.li
+          {rows.map((row) => (
+            <li
               key={row.workerId}
-              initial={settled || reduceMotion ? false : { opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: Math.min(index, STAGGER_LIMIT) * 0.03 }}
             >
               <Link
                 to={`/hr/workers?entityId=${row.workerId}&modType=edit&tab=safety`}
@@ -210,7 +197,7 @@ export function RankList({ title, kind, empty, rows }: RankListProps) {
                   </Badge>
                 </span>
               </Link>
-            </m.li>
+            </li>
           ))}
         </ul>
       )}

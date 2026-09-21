@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { BAR_TRANSITION, DivergingBar } from "@/components/detention/detention-charts";
 import { pricingFingerprint } from "@/lib/detention-policy";
 import { apiService } from "@/services/api";
@@ -99,7 +100,7 @@ function RevenueComparison({ result }: { result: BacktestResult }) {
           <div className="bg-muted h-1.5 min-w-0 flex-1 overflow-hidden rounded-full">
             <m.div
               className={cn("h-full rounded-full", row.className)}
-              initial={{ width: 0 }}
+              initial={false}
               animate={{ width: `${(row.amount / scale) * 100}%` }}
               transition={BAR_TRANSITION}
             />
@@ -181,7 +182,8 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
               <p className="text-xs text-muted-foreground font-medium">{t("Revenue change")}</p>
               <p
                 className={cn(
-                  "mt-1 text-3xl leading-none font-semibold tracking-tight tabular-nums",
+                  "mt-1",
+                  KPI_VALUE_LG_CLASS,
                   deltaToneClass(result.revenueDelta),
                 )}
               >

@@ -100,7 +100,7 @@ export function ForkTemplateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">{t("Fork template")}</DialogTitle>
           <DialogDescription>

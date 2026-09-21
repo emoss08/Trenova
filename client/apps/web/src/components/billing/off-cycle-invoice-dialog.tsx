@@ -75,7 +75,7 @@ export function OffCycleInvoiceDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Invoice this outside the statement?")}</DialogTitle>
           <DialogDescription>{warning}</DialogDescription>

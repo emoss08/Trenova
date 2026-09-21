@@ -163,9 +163,7 @@ function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
           <Form id="api-key-create-form" onSubmit={form.handleSubmit(onSubmit)}>
             <fieldset className="space-y-6">
               <APIKeyForm />
-              <div className="border-border/70 border-t pt-6">
-                <APIKeyPermissionsEditor />
-              </div>
+              <APIKeyPermissionsEditor />
             </fieldset>
           </Form>
         </FormProvider>
@@ -391,9 +389,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
                 <Form id="api-key-edit-form" onSubmit={form.handleSubmit(onSubmit)}>
                   <fieldset disabled={isRevoked} className="space-y-6">
                     <APIKeyForm />
-                    <div className="border-border/70 border-t pt-6">
-                      <APIKeyPermissionsEditor />
-                    </div>
+                    <APIKeyPermissionsEditor />
                   </fieldset>
                 </Form>
               </FormProvider>
@@ -454,7 +450,7 @@ function TokenSuccessDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <KeyRoundIcon className="size-4" />

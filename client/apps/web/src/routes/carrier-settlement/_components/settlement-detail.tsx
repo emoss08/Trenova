@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
   CarrierInvoiceMatchStatusBadge,
@@ -171,54 +172,41 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
           )}
         </span>
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <SummaryTile label={t("Gross cost")}>
-          <AmountDisplay value={settlement.grossCostMinor} currency={settlement.currencyCode} />
-        </SummaryTile>
-        <SummaryTile label={t("Adjustments")}>
-          <AmountDisplay
-            value={settlement.adjustmentsMinor}
-            variant="auto"
-            currency={settlement.currencyCode}
-          />
-        </SummaryTile>
-        <SummaryTile label={t("Loads")}>
-          <span className="tabular-nums">{settlement.shipmentCount}</span>
-        </SummaryTile>
-        <SummaryTile label={t("Net payable")} highlight>
-          <AmountDisplay
-            value={settlement.netPayableMinor}
-            variant="positive"
-            currency={settlement.currencyCode}
-          />
-        </SummaryTile>
-      </div>
-    </div>
-  );
-}
-
-function SummaryTile({
-  label,
-  highlight,
-  children,
-}: {
-  label: string;
-  highlight?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-lg border p-3",
-        highlight
-          ? "border-success-border bg-success-subtle/50 dark:border-success-border dark:bg-success-subtle/30"
-          : "bg-muted/30",
-      )}
-    >
-      <p className="text-muted-foreground text-xs font-medium">
-        {label}
-      </p>
-      <div className="mt-1 text-sm font-semibold">{children}</div>
+      <KpiStrip minItemWidth="8rem">
+        <KpiStripItem
+          label={t("Gross cost")}
+          value={
+              <AmountDisplay value={settlement.grossCostMinor} currency={settlement.currencyCode} />
+          }
+        />
+        <KpiStripItem
+          label={t("Adjustments")}
+          value={
+              <AmountDisplay
+                value={settlement.adjustmentsMinor}
+                variant="auto"
+                currency={settlement.currencyCode}
+              />
+          }
+        />
+        <KpiStripItem
+          label={t("Loads")}
+          value={
+              <span className="tabular-nums">{settlement.shipmentCount}</span>
+          }
+        />
+        <KpiStripItem
+          label={t("Net payable")}
+          tone="success"
+          value={
+              <AmountDisplay
+                value={settlement.netPayableMinor}
+                variant="positive"
+                currency={settlement.currencyCode}
+              />
+          }
+        />
+      </KpiStrip>
     </div>
   );
 }

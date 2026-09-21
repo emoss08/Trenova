@@ -172,7 +172,7 @@ export function BulkBillingTransferDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-4xl">
+      <DialogContent size="xl" className="flex max-h-[90vh] flex-col">
         <DialogHeader>
           <DialogTitle>{t("Transfer to billing")}</DialogTitle>
           <DialogDescription>

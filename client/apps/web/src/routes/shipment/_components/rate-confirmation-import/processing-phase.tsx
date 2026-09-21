@@ -202,13 +202,7 @@ export function ProcessingPhase({
             <div className="flex flex-col items-center">
               <div className="inline-flex flex-col">
                 {steps.map((step, i) => (
-                  <m.div
-                    key={step.label}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1, duration: 0.25 }}
-                    className="flex gap-3"
-                  >
+                  <div key={step.label} className="flex gap-3">
                     {/* Left column: dot + connector */}
                     <div className="flex flex-col items-center">
                       <StepDot state={step.state} />
@@ -239,7 +233,7 @@ export function ProcessingPhase({
                         {t(step.label)}
                       </span>
                     </div>
-                  </m.div>
+                  </div>
                 ))}
               </div>
             </div>

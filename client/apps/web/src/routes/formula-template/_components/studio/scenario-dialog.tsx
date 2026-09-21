@@ -140,7 +140,7 @@ export function ScenarioDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FlaskConicalIcon className="size-4" />
@@ -248,12 +248,11 @@ export function ScenarioDialog({
         </ScrollArea>
 
         <DialogFooter>
-          <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t("Cancel")}
           </Button>
           <Button
             type="button"
-            size="sm"
             onClick={handleSave}
             isLoading={isSaving}
             loadingText={t("Saving...")}
