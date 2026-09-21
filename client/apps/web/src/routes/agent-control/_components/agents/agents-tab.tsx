@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
@@ -21,10 +22,11 @@ import { apiService } from "@/services/api";
 import type { PanelMode } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangleIcon, BotIcon, PlusIcon, WrenchIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { AlertTriangleIcon, BotIcon, PlusIcon, SearchIcon, WrenchIcon } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AgentCard } from "./agent-cards";
+import { filterAgents, groupAgentsByTrigger } from "./agent-roster";
+import { AgentShelves } from "./agent-rows";
 import { toAgentPanelRow, toSaveRequest, type AgentPanelRow } from "./agent-form-schema";
 import { AgentPanel } from "./agent-panel";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
@@ -45,8 +47,10 @@ export default function AgentsTab() {
 
   const [panel, setPanel] = useState<PanelState>({ open: false, mode: "create", row: null });
   const [deleting, setDeleting] = useState<AgentDefinitionRow | null>(null);
+  const [query, setQuery] = useState("");
 
-  const agents = listQuery.data ?? [];
+  const agents = useMemo(() => listQuery.data ?? [], [listQuery.data]);
+  const shelves = useMemo(() => groupAgentsByTrigger(filterAgents(agents, query)), [agents, query]);
   const templates = templatesQuery.data?.templates ?? [];
 
   const invalidate = useCallback(async () => {
@@ -97,34 +101,35 @@ export default function AgentsTab() {
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="flex items-center gap-2 text-base font-semibold">
-            {t("Agents")}
-            {agents.length > 0 && (
-              <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium tabular-nums">
-                {t("{0} of {1} enabled", enabledCount, agents.length)}
-              </span>
+      {agents.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Input
+            inputContainerClassName="w-full max-w-xs"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("Search agents")}
+            className="h-8"
+            leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+            aria-label={t("Search agents")}
+          />
+          <div className="flex items-center gap-3">
+            <span className="text-muted-foreground text-xs tabular-nums">
+              {t("{0} of {1} on", enabledCount, agents.length)}
+            </span>
+            {canCreate && (
+              <Button size="sm" onClick={openCreate}>
+                <PlusIcon className="size-3.5" />
+                {t("New agent")}
+              </Button>
             )}
-          </h2>
-          <p className="text-muted-foreground max-w-prose text-sm">
-            {t(
-              "Each agent carries its own instructions, the tools it may call and how much it may do on its own. Start from a template or write one from scratch.",
-            )}
-          </p>
+          </div>
         </div>
-        {canCreate && agents.length > 0 && (
-          <Button size="sm" onClick={openCreate}>
-            <PlusIcon className="size-3.5" />
-            {t("Add agent")}
-          </Button>
-        )}
-      </div>
+      )}
 
       {listQuery.isLoading ? (
-        <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className="h-44" />
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-14" />
           ))}
         </div>
       ) : agents.length === 0 ? (
@@ -136,33 +141,31 @@ export default function AgentsTab() {
               "An agent is a set of instructions, a choice of tools and a trigger. Build one from a template in a minute, or write exactly the agent your operation needs.",
             )}
             action={
-              canCreate
-                ? { icon: PlusIcon, label: t("Build your first agent"), onClick: openCreate }
-                : undefined
+              canCreate ? { icon: PlusIcon, label: t("New agent"), onClick: openCreate } : undefined
             }
           />
         </div>
+      ) : shelves.length === 0 ? (
+        <p className="text-muted-foreground px-1 py-6 text-center text-sm">
+          {t("No agents match that search.")}
+        </p>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
-          {agents.map((agent) => (
-            <AgentCard
-              key={agent.id}
-              agent={agent}
-              templates={templates}
-              canUpdate={canUpdate}
-              canDelete={canDelete}
-              canRun={canRun}
-              isToggling={
-                toggleMutation.isPending && toggleMutation.variables?.agent.id === agent.id
-              }
-              isRunning={runMutation.isPending && runMutation.variables?.id === agent.id}
-              onEdit={() => openEdit(agent)}
-              onToggleEnabled={(enabled) => toggleMutation.mutate({ agent, enabled })}
-              onRunNow={() => runMutation.mutate(agent)}
-              onDelete={() => setDeleting(agent)}
-            />
-          ))}
-        </div>
+        <AgentShelves
+          shelves={shelves}
+          templates={templates}
+          actions={{
+            canUpdate,
+            canDelete,
+            canRun,
+            isToggling: (agent) =>
+              toggleMutation.isPending && toggleMutation.variables?.agent.id === agent.id,
+            isRunning: (agent) => runMutation.isPending && runMutation.variables?.id === agent.id,
+            onEdit: openEdit,
+            onToggleEnabled: (agent, enabled) => toggleMutation.mutate({ agent, enabled }),
+            onRunNow: (agent) => runMutation.mutate(agent),
+            onDelete: setDeleting,
+          }}
+        />
       )}
 
       <AgentPanel

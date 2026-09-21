@@ -1,13 +1,20 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
-import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ActivityIcon, BotIcon, LayoutDashboardIcon, PlugZapIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
-import { lazy, useCallback } from "react";
-import { AI_CONTROL_TAB_PARAM, aiControlTabParser, type AIControlTab } from "./ai-control-tabs";
+import { lazy, useCallback, useMemo } from "react";
+import {
+  ACTIVITY_VIEW_PARAM,
+  AI_CONTROL_TAB_PARAM,
+  activityViewParser,
+  aiControlTabParser,
+  type AIControlTab,
+} from "./ai-control-tabs";
+import { ControlRail } from "./_components/control-rail";
+import { buildRailItems, type ActivityView } from "./_components/rail-items";
+import { useAIControlStats } from "./_components/overview/use-ai-control-stats";
 
 const OverviewTab = lazy(() => import("./_components/overview/overview-tab"));
 const AgentsTab = lazy(() => import("./_components/agents/agents-tab"));
@@ -16,17 +23,81 @@ const ActivityTab = lazy(() => import("./_components/activity/activity-tab"));
 
 /**
  * One place for everything AI in the organization: where work goes
- * (providers), what it may do (agents), and what it did (activity).
+ * (providers), what it may do (agents), and what it did (activity). The
+ * sections run down a rail that carries their counts, and the one open
+ * section takes the rest of the width.
  */
 export function AgentControlPage() {
   const t = useT();
   const [tab, setTab] = useQueryState(AI_CONTROL_TAB_PARAM, aiControlTabParser);
+  const [view, setView] = useQueryState(ACTIVITY_VIEW_PARAM, activityViewParser);
 
   const { allowed: canReadAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { allowed: canReadProviders } = usePermission(Resource.AIProvider, Operation.Read);
   const { allowed: canReadRuns } = usePermission(Resource.AgentRun, Operation.Read);
+  const { allowed: canReadProposals } = usePermission(Resource.AgentProposal, Operation.Read);
+  const { allowed: canReadExceptions } = usePermission(Resource.AgentException, Operation.Read);
 
-  const openProviders = useCallback(() => void setTab("providers"), [setTab]);
+  const stats = useAIControlStats();
+  const items = useMemo(
+    () =>
+      buildRailItems(
+        stats.isLoading
+          ? undefined
+          : {
+              providersEnabled: stats.providersEnabled,
+              providersTotal: stats.providersTotal,
+              agentsEnabled: stats.counts?.agentsEnabled ?? 0,
+              agentsTotal: stats.counts?.agentsTotal ?? 0,
+              pendingProposals: stats.counts?.pendingProposals ?? 0,
+              runsLast24h: stats.counts?.runsLast24h ?? 0,
+            },
+        {
+          agents: canReadAgents,
+          providers: canReadProviders,
+          runs: canReadRuns,
+          proposals: canReadProposals,
+          exceptions: canReadExceptions,
+        },
+        t,
+      ),
+    [
+      canReadAgents,
+      canReadExceptions,
+      canReadProposals,
+      canReadProviders,
+      canReadRuns,
+      stats.counts,
+      stats.isLoading,
+      stats.providersEnabled,
+      stats.providersTotal,
+      t,
+    ],
+  );
+
+  // A section the reader may not open falls back to the overview rather
+  // than rendering nothing under a selected rail row.
+  const activeTab: AIControlTab = items.some((item) => item.tab === tab) ? tab : "overview";
+  const activeView: ActivityView =
+    (items.find((item) => item.tab === "activity")?.children.some((c) => c.view === view) ?? false)
+      ? view
+      : "runs";
+
+  const select = useCallback(
+    (next: AIControlTab, nextView?: ActivityView) => {
+      void setTab(next);
+      if (nextView) {
+        void setView(nextView);
+      }
+    },
+    [setTab, setView],
+  );
+  const openProviders = useCallback(() => select("providers"), [select]);
+  const openAgents = useCallback(() => select("agents"), [select]);
+  const openActivity = useCallback(
+    (nextView: ActivityView) => select("activity", nextView),
+    [select],
+  );
 
   return (
     <PageLayout
@@ -37,64 +108,23 @@ export function AgentControlPage() {
         ),
       }}
     >
-      <div className="flex flex-col gap-4 px-4">
-        <Tabs
-          value={tab}
-          className="gap-4"
-          onValueChange={(value) => void setTab(value as AIControlTab)}
-        >
-          <TabsList variant="underline">
-            <TabsTab value="overview">
-              <LayoutDashboardIcon size={16} aria-hidden="true" />
-              {t("Overview")}
-            </TabsTab>
-            {canReadAgents && (
-              <TabsTab value="agents">
-                <BotIcon size={16} aria-hidden="true" />
-                {t("Agents")}
-              </TabsTab>
-            )}
-            {canReadProviders && (
-              <TabsTab value="providers">
-                <PlugZapIcon size={16} aria-hidden="true" />
-                {t("Providers")}
-              </TabsTab>
-            )}
-            {canReadRuns && (
-              <TabsTab value="activity">
-                <ActivityIcon size={16} aria-hidden="true" />
-                {t("Activity")}
-              </TabsTab>
-            )}
-          </TabsList>
+      <div className="grid min-w-0 gap-4 md:grid-cols-[13.5rem_minmax(0,1fr)] md:gap-6">
+        <ControlRail items={items} active={activeTab} activeView={activeView} onSelect={select} />
 
-          <TabsContent value="overview">
-            <DataTableLazyComponent>
-              <OverviewTab onOpenProviders={openProviders} />
-            </DataTableLazyComponent>
-          </TabsContent>
-          {canReadAgents && (
-            <TabsContent value="agents">
-              <DataTableLazyComponent>
-                <AgentsTab />
-              </DataTableLazyComponent>
-            </TabsContent>
-          )}
-          {canReadProviders && (
-            <TabsContent value="providers">
-              <DataTableLazyComponent>
-                <ProvidersTab />
-              </DataTableLazyComponent>
-            </TabsContent>
-          )}
-          {canReadRuns && (
-            <TabsContent value="activity">
-              <DataTableLazyComponent>
-                <ActivityTab />
-              </DataTableLazyComponent>
-            </TabsContent>
-          )}
-        </Tabs>
+        <div className="min-w-0">
+          <DataTableLazyComponent>
+            {activeTab === "overview" && (
+              <OverviewTab
+                onOpenProviders={openProviders}
+                onOpenAgents={openAgents}
+                onOpenActivity={openActivity}
+              />
+            )}
+            {activeTab === "agents" && <AgentsTab />}
+            {activeTab === "providers" && <ProvidersTab />}
+            {activeTab === "activity" && <ActivityTab view={activeView} />}
+          </DataTableLazyComponent>
+        </div>
       </div>
     </PageLayout>
   );

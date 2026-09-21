@@ -2,10 +2,10 @@ import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { AgentCard } from "../agent-cards";
+import { AgentRow } from "../agent-rows";
 
 /**
- * The card's controls are what an operator uses to run this thing, so the test
+ * The row's controls are what an operator uses to run this thing, so the test
  * asks for them the way a person does: by their accessible name.
  */
 function agentFixture(overrides: Partial<AgentDefinitionRow> = {}): AgentDefinitionRow {
@@ -50,36 +50,36 @@ function agentFixture(overrides: Partial<AgentDefinitionRow> = {}): AgentDefinit
   } as AgentDefinitionRow;
 }
 
-function renderCard(
-  overrides: Partial<AgentDefinitionRow> = {},
-  props: Record<string, unknown> = {},
-) {
+function renderRow(overrides: Partial<AgentDefinitionRow> = {}) {
   const onDelete = vi.fn();
   const onEdit = vi.fn();
   const onRunNow = vi.fn();
   const onToggleEnabled = vi.fn();
 
   render(
-    <AgentCard
-      agent={agentFixture(overrides)}
-      templates={[]}
-      canUpdate
-      canDelete
-      canRun
-      isToggling={false}
-      isRunning={false}
-      onEdit={onEdit}
-      onToggleEnabled={onToggleEnabled}
-      onRunNow={onRunNow}
-      onDelete={onDelete}
-      {...props}
-    />,
+    <ul>
+      <AgentRow
+        agent={agentFixture(overrides)}
+        templates={[]}
+        actions={{
+          canUpdate: true,
+          canDelete: true,
+          canRun: true,
+          isToggling: () => false,
+          isRunning: () => false,
+          onEdit,
+          onToggleEnabled,
+          onRunNow,
+          onDelete,
+        }}
+      />
+    </ul>,
   );
 
   return { onDelete, onEdit, onRunNow, onToggleEnabled };
 }
 
-describe("AgentCard", () => {
+describe("AgentRow", () => {
   /**
    * The control used to render as an empty square: the icon was passed as a
    * child of the tooltip trigger, which replaced the button's own children, so
@@ -87,7 +87,7 @@ describe("AgentCard", () => {
    * would not have caught that, because the button itself was always there.
    */
   it("offers a remove control that is visible and fires", async () => {
-    const { onDelete } = renderCard();
+    const { onDelete } = renderRow();
 
     const remove = screen.getByRole("button", { name: /remove agent/i });
     expect(remove.querySelector("svg"), "the remove control renders no icon").not.toBeNull();
@@ -98,7 +98,7 @@ describe("AgentCard", () => {
   });
 
   it("locks removal for an agent the platform owns", () => {
-    renderCard({ systemKey: "billing_exception" });
+    renderRow({ systemKey: "billing_exception" });
 
     expect(screen.getByRole("button", { name: /remove agent/i })).toBeDisabled();
   });

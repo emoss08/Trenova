@@ -1,171 +1,145 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SuspenseLoader } from "@trenova/shared/components/component-loader";
-import { ActivityIcon, BotIcon, CoinsIcon, InboxIcon, PlugZapIcon, TimerIcon } from "lucide-react";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { SectionPanel } from "@/components/section-panel";
 import { formatLatency, formatTokens, formatUsd } from "@/lib/ai-usage-format";
-import { useQueryState } from "nuqs";
 import { lazy } from "react";
-import { AI_CONTROL_TAB_PARAM, aiControlTabParser } from "../../ai-control-tabs";
+import type { ActivityView } from "../rail-items";
 import { AIReadinessBanner } from "../ai-readiness-banner";
-import { StatCard } from "./stat-card";
+import { AgentsGlance } from "./agents-glance";
 import { useAIControlStats } from "./use-ai-control-stats";
 
 const AgentControlForm = lazy(() => import("../agent-control-form"));
 
 type OverviewTabProps = {
   onOpenProviders: () => void;
+  onOpenAgents: () => void;
+  onOpenActivity: (view: ActivityView) => void;
 };
 
-export default function OverviewTab({ onOpenProviders }: OverviewTabProps) {
-  const t = useT();
-  const [, setTab] = useQueryState(AI_CONTROL_TAB_PARAM, aiControlTabParser);
-  const stats = useAIControlStats();
-
-  const counts = stats.counts;
-
-  return (
-    <div className="flex flex-col gap-6">
-      <AIReadinessBanner onOpenProviders={onOpenProviders} />
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          icon={PlugZapIcon}
-          label={t("Providers ready")}
-          value={`${stats.providersEnabled} / ${stats.providersTotal}`}
-          hint={
-            stats.providersTotal === 0
-              ? t("None connected yet")
-              : t("Enabled endpoints work can route to")
-          }
-          tone={stats.providersEnabled > 0 ? "success" : "warning"}
-          isLoading={stats.isLoading}
-          onClick={onOpenProviders}
-        />
-        <StatCard
-          icon={BotIcon}
-          label={t("Agents enabled")}
-          value={`${counts?.agentsEnabled ?? 0} / ${counts?.agentsTotal ?? 0}`}
-          hint={t("Chat, scheduled, event-driven and continuous agents")}
-          tone={counts && counts.agentsEnabled > 0 ? "success" : "default"}
-          isLoading={stats.isLoading}
-          onClick={() => void setTab("agents")}
-        />
-        <StatCard
-          icon={InboxIcon}
-          label={t("Awaiting a decision")}
-          value={counts?.pendingProposals ?? 0}
-          hint={t("Proposals a person still has to approve or reject")}
-          tone={counts && counts.pendingProposals > 0 ? "warning" : "default"}
-          isLoading={stats.isLoading}
-          onClick={() => void setTab("activity")}
-        />
-        <StatCard
-          icon={ActivityIcon}
-          label={t("Runs in the last 24 hours")}
-          value={counts?.runsLast24h ?? 0}
-          hint={t("Every agent run, whatever started it")}
-          isLoading={stats.isLoading}
-          onClick={() => void setTab("activity")}
-        />
-      </div>
-
-      <UsageTiles stats={stats} onOpenProviders={onOpenProviders} />
-
-      <section className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-base font-semibold">{t("Organization-wide controls")}</h2>
-          <p className="text-muted-foreground max-w-prose text-sm">
-            {t(
-              "Settings that apply to every agent in the organization, whatever its own configuration says.",
-            )}
-          </p>
-        </div>
-        <SuspenseLoader>
-          <AgentControlForm />
-        </SuspenseLoader>
-      </section>
-    </div>
-  );
-}
-
 /**
- * What the models did this week: calls, what they consumed, what it cost
- * where the price is known, and how long a person waited.
- *
- * Cost is labelled partial when some calls were unpriced. Summing them as
- * zero would understate spend by exactly the providers nobody got round to
- * pricing, which are the ones whose spend is a surprise.
+ * The state of AI in the organization on one screen: whether it can work at
+ * all, the figures for the week in one strip, then the switch that pauses
+ * everything and the agents at a glance.
  */
-function UsageTiles({
-  stats,
+export default function OverviewTab({
   onOpenProviders,
-}: {
-  stats: ReturnType<typeof useAIControlStats>;
-  onOpenProviders: () => void;
-}) {
+  onOpenAgents,
+  onOpenActivity,
+}: OverviewTabProps) {
   const t = useT();
+  const stats = useAIControlStats();
+  const counts = stats.counts;
   const usage = stats.usage;
   const days = stats.usageWindowDays;
 
-  const cost = formatUsd(usage?.costUsd);
   const unpriced = usage ? usage.calls - usage.pricedCalls : 0;
-  const costHint =
-    usage === undefined
-      ? ""
+  const spend = usage && usage.pricedCalls > 0 ? (formatUsd(usage.costUsd) ?? "—") : "—";
+  const spendSub =
+    usage === undefined || usage.calls === 0
+      ? undefined
       : usage.pricedCalls === 0
         ? t("No provider has a price yet")
         : unpriced > 0
-          ? t("Partial: {0} of {1} calls had no price", unpriced, usage.calls)
-          : t("Every call was priced");
+          ? t("Partial: {0} of {1} calls unpriced", unpriced, usage.calls)
+          : t("Every call priced");
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <StatCard
-        icon={ActivityIcon}
-        label={t("Model calls, last {0} days", days)}
-        value={usage?.calls ?? 0}
-        hint={
-          usage && usage.failed > 0
-            ? t("{0} failed", usage.failed)
-            : t("Every attempt, whichever provider answered")
-        }
-        tone={usage && usage.failed > 0 ? "warning" : "default"}
-        isLoading={stats.usageLoading}
-      />
-      <StatCard
-        icon={CoinsIcon}
-        label={t("Spend, last {0} days", days)}
-        value={usage && usage.pricedCalls > 0 ? (cost ?? "—") : "—"}
-        hint={costHint}
-        tone={usage && usage.calls > 0 && usage.pricedCalls < usage.calls ? "warning" : "default"}
-        isLoading={stats.usageLoading}
-        onClick={onOpenProviders}
-      />
-      <StatCard
-        icon={TimerIcon}
-        label={t("Median response")}
-        value={usage && usage.calls > 0 ? formatLatency(usage.latencyP50Ms) : "—"}
-        hint={
-          usage && usage.calls > 0
-            ? t("Slowest 5% took {0} or more", formatLatency(usage.latencyP95Ms))
-            : t("Over successful calls")
-        }
-        isLoading={stats.usageLoading}
-      />
-      <StatCard
-        icon={BotIcon}
-        label={t("Tokens, last {0} days", days)}
-        value={usage ? formatTokens(usage.inputTokens + usage.outputTokens) : "0"}
-        hint={
-          usage
-            ? t(
-                "{0} in, {1} out",
-                formatTokens(usage.inputTokens),
-                formatTokens(usage.outputTokens),
-              )
-            : ""
-        }
-        isLoading={stats.usageLoading}
-      />
+    <div className="flex flex-col gap-4">
+      <AIReadinessBanner onOpenProviders={onOpenProviders} />
+
+      <KpiStrip minItemWidth="9.5rem">
+        <KpiStripItem
+          label={t("Providers on")}
+          value={stats.isLoading ? "…" : `${stats.providersEnabled} / ${stats.providersTotal}`}
+          tone={stats.providersEnabled > 0 ? "success" : "warning"}
+          onClick={onOpenProviders}
+        />
+        <KpiStripItem
+          label={t("Agents on")}
+          value={
+            stats.isLoading ? "…" : `${counts?.agentsEnabled ?? 0} / ${counts?.agentsTotal ?? 0}`
+          }
+          tone={counts && counts.agentsEnabled > 0 ? "success" : "muted"}
+          onClick={onOpenAgents}
+        />
+        <KpiStripItem
+          label={t("Awaiting a decision")}
+          value={stats.isLoading ? "…" : (counts?.pendingProposals ?? 0)}
+          tone={counts && counts.pendingProposals > 0 ? "warning" : "muted"}
+          sub={t("Proposals a person has to decide")}
+          onClick={() => onOpenActivity("proposals")}
+        />
+        <KpiStripItem
+          label={t("Runs, last 24 hours")}
+          value={stats.isLoading ? "…" : (counts?.runsLast24h ?? 0)}
+          onClick={() => onOpenActivity("runs")}
+        />
+        <KpiStripItem
+          label={t("Model calls, {0} days", days)}
+          value={stats.usageLoading ? "…" : (usage?.calls ?? 0)}
+          tone={usage && usage.failed > 0 ? "warning" : undefined}
+          sub={usage && usage.failed > 0 ? t("{0} failed", usage.failed) : undefined}
+        />
+        <KpiStripItem
+          label={t("Spend, {0} days", days)}
+          value={stats.usageLoading ? "…" : spend}
+          tone={usage && usage.calls > 0 && usage.pricedCalls < usage.calls ? "warning" : undefined}
+          sub={spendSub}
+          onClick={onOpenProviders}
+        />
+        <KpiStripItem
+          label={t("Median response")}
+          value={
+            stats.usageLoading
+              ? "…"
+              : usage && usage.calls > 0
+                ? formatLatency(usage.latencyP50Ms)
+                : "—"
+          }
+          sub={
+            usage && usage.calls > 0
+              ? t("Slowest 5% took {0}+", formatLatency(usage.latencyP95Ms))
+              : undefined
+          }
+        />
+        <KpiStripItem
+          label={t("Tokens, {0} days", days)}
+          value={
+            stats.usageLoading
+              ? "…"
+              : usage
+                ? formatTokens(usage.inputTokens + usage.outputTokens)
+                : "0"
+          }
+          sub={
+            usage
+              ? t(
+                  "{0} in, {1} out",
+                  formatTokens(usage.inputTokens),
+                  formatTokens(usage.outputTokens),
+                )
+              : undefined
+          }
+        />
+      </KpiStrip>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+        <SectionPanel
+          title={t("Organization-wide")}
+          help={t(
+            "Applies to every agent in the organization, whatever its own configuration says.",
+          )}
+        >
+          <div className="p-3">
+            <SuspenseLoader>
+              <AgentControlForm />
+            </SuspenseLoader>
+          </div>
+        </SectionPanel>
+
+        <AgentsGlance onOpenAgents={onOpenAgents} onOpenActivity={onOpenActivity} />
+      </div>
     </div>
   );
 }

@@ -28,14 +28,14 @@ export function AIReadinessBanner({ onOpenProviders }: AIReadinessBannerProps) {
   const catalogQuery = useQuery(queries.aiProvider.catalog());
 
   if (providersQuery.isLoading || catalogQuery.isLoading) {
-    return <Skeleton className="h-20" />;
+    return <Skeleton className="h-12" />;
   }
 
   const readiness = assessReadiness(providersQuery.data ?? [], catalogQuery.data?.tasks ?? []);
 
   if (!readiness.hasProviders) {
     return (
-      <Alert variant="warning">
+      <Alert variant="warning" size="sm">
         <PlugZapIcon className="size-4" />
         <AlertTitle>{t("No AI provider is connected")}</AlertTitle>
         <AlertDescription className="flex flex-col gap-3">
@@ -57,7 +57,7 @@ export function AIReadinessBanner({ onOpenProviders }: AIReadinessBannerProps) {
 
   if (readiness.uncovered.length === 0) {
     return (
-      <Alert>
+      <Alert size="sm">
         <CheckCircle2Icon className="size-4 text-success-foreground" />
         <AlertTitle>{t("Every AI task has a provider")}</AlertTitle>
         <AlertDescription>
@@ -68,7 +68,7 @@ export function AIReadinessBanner({ onOpenProviders }: AIReadinessBannerProps) {
   }
 
   return (
-    <Alert variant={readiness.assistantReady ? "default" : "warning"}>
+    <Alert variant={readiness.assistantReady ? "default" : "warning"} size="sm">
       <TriangleAlertIcon className="size-4" />
       <AlertTitle>
         {readiness.assistantReady

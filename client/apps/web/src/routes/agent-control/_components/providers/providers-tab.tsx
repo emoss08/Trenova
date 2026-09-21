@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
@@ -21,11 +22,19 @@ import { apiService } from "@/services/api";
 import type { PanelMode } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangleIcon, CloudIcon, CpuIcon, PlugZapIcon, PlusIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import {
+  AlertTriangleIcon,
+  CloudIcon,
+  CpuIcon,
+  PlugZapIcon,
+  PlusIcon,
+  SearchIcon,
+} from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AIProviderPanel } from "./ai-provider-panel";
-import { ProviderCard } from "./provider-card";
+import { filterProviders, sortProvidersByRouting } from "./provider-roster";
+import { ProviderRows } from "./provider-rows";
 import { toProviderPanelRow, type ProviderPanelRow } from "./provider-form-schema";
 
 type PanelState = {
@@ -48,8 +57,13 @@ export default function ProvidersTab() {
 
   const [panel, setPanel] = useState<PanelState>({ open: false, mode: "create", row: null });
   const [deleting, setDeleting] = useState<AIProviderRow | null>(null);
+  const [query, setQuery] = useState("");
 
-  const providers = listQuery.data ?? [];
+  const providers = useMemo(() => listQuery.data ?? [], [listQuery.data]);
+  const visible = useMemo(
+    () => sortProvidersByRouting(filterProviders(providers, query)),
+    [providers, query],
+  );
 
   const invalidate = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: queries.aiProvider._def });
@@ -91,34 +105,43 @@ export default function ProvidersTab() {
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="flex items-center gap-2 text-base font-semibold">
-            {t("Providers")}
-            {providers.length > 0 && (
-              <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium tabular-nums">
-                {t("{0} of {1} enabled", enabledCount, providers.length)}
-              </span>
+      {providers.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Input
+            inputContainerClassName="w-full max-w-xs"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("Search providers")}
+            className="h-8"
+            leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+            aria-label={t("Search providers")}
+          />
+          <div className="flex items-center gap-3">
+            <span className="text-muted-foreground text-xs tabular-nums">
+              {t("{0} of {1} on", enabledCount, providers.length)}
+            </span>
+            {canCreate && (
+              <Button size="sm" onClick={openCreate}>
+                <PlusIcon className="size-3.5" />
+                {t("New provider")}
+              </Button>
             )}
-          </h2>
-          <p className="text-muted-foreground max-w-prose text-sm">
-            {t(
-              "Where AI work goes. Work is offered to providers in priority order, so a cheap model can take a task first and hand off when it cannot.",
-            )}
-          </p>
+          </div>
         </div>
-        {canCreate && providers.length > 0 && (
-          <Button size="sm" onClick={openCreate}>
-            <PlusIcon className="size-3.5" />
-            {t("Add provider")}
-          </Button>
-        )}
-      </div>
+      )}
+
+      {providers.length > 0 && (
+        <p className="text-muted-foreground px-1 text-xs">
+          {t(
+            "Work is offered in this order. A cheap model can take a task first and hand off when it cannot.",
+          )}
+        </p>
+      )}
 
       {listQuery.isLoading ? (
-        <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+        <div className="flex flex-col gap-2">
           {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className="h-44" />
+            <Skeleton key={index} className="h-16" />
           ))}
         </div>
       ) : providers.length === 0 ? (
@@ -131,28 +154,30 @@ export default function ProvidersTab() {
             )}
             action={
               canCreate
-                ? { icon: PlusIcon, label: t("Add your first provider"), onClick: openCreate }
+                ? { icon: PlusIcon, label: t("New provider"), onClick: openCreate }
                 : undefined
             }
           />
         </div>
+      ) : visible.length === 0 ? (
+        <p className="text-muted-foreground px-1 py-6 text-center text-sm">
+          {t("No providers match that search.")}
+        </p>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
-          {providers.map((provider) => (
-            <ProviderCard
-              key={provider.id}
-              provider={provider}
-              catalog={catalogQuery.data}
-              isTesting={testMutation.isPending && testMutation.variables === provider.id}
-              canManage={canManage}
-              canUpdate={canUpdate}
-              canDelete={canDelete}
-              onTest={() => testMutation.mutate(provider.id)}
-              onEdit={() => openEdit(provider)}
-              onDelete={() => setDeleting(provider)}
-            />
-          ))}
-        </div>
+        <ProviderRows
+          providers={visible}
+          catalog={catalogQuery.data}
+          actions={{
+            canManage,
+            canUpdate,
+            canDelete,
+            isTesting: (provider) =>
+              testMutation.isPending && testMutation.variables === provider.id,
+            onTest: (provider) => testMutation.mutate(provider.id),
+            onEdit: openEdit,
+            onDelete: setDeleting,
+          }}
+        />
       )}
 
       <AIProviderPanel
