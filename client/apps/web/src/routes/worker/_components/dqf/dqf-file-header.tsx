@@ -155,7 +155,7 @@ function SpineBar({
         <span className="bg-warning h-full" style={{ width: pct(section.warning) }} />
       ) : null}
       {section.blocking > 0 ? (
-        <span className="bg-destructive/70 h-full" style={{ width: pct(section.blocking) }} />
+        <span className="bg-danger h-full" style={{ width: pct(section.blocking) }} />
       ) : null}
     </div>
   );

@@ -40,8 +40,8 @@ function priorityFor(s: Shipment): {
 }
 
 const PILL_TONE: Record<"danger" | "warning" | "muted", string> = {
-  danger: "bg-destructive/12 text-destructive",
-  warning: "bg-warning/15 text-warning",
+  danger: "bg-danger-subtle text-destructive",
+  warning: "bg-warning-subtle text-warning",
   muted: "bg-muted text-muted-foreground",
 };
 

@@ -220,7 +220,7 @@ function PolicyDrawer({
           ) : null}
 
           {signed ? (
-            <div className="border-success/40 bg-success/10 text-success-foreground flex items-center gap-2 rounded-lg border px-3 py-2 text-xs">
+            <div className="border-success-border bg-success-subtle text-success-foreground flex items-center gap-2 rounded-lg border px-3 py-2 text-xs">
               <CheckIcon className="size-4 shrink-0" />
               {policy?.signatureName
                 ? t(
@@ -259,7 +259,7 @@ function PolicyDrawer({
                       value={signature}
                       onChange={(event) => setSignature(event.target.value)}
                       aria-invalid={Boolean(signature) && !nameOk}
-                      className={cn("h-11 pr-9", signature && nameOk && "border-success/60")}
+                      className={cn("h-11 pr-9", signature && nameOk && "border-success-border")}
                     />
                     {signature && nameOk ? (
                       <CheckIcon

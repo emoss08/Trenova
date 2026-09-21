@@ -182,9 +182,9 @@ export default function OshaLogConsole() {
           onReopen={() => uncertifyMutation.mutate()}
         />
         <aside className="bg-card flex min-w-0 flex-col rounded-lg border">
-          <header className="flex items-center gap-2 border-b px-3 py-2">
+          <header className="border-border flex min-h-9 items-center gap-2 border-b px-3 py-1.5">
             <MilestoneIcon className="text-muted-foreground size-3.5" />
-            <h2 className="text-sm font-medium">{t("Where {0} stands", log.year)}</h2>
+            <h2 className="text-sm font-semibold">{t("Where {0} stands", log.year)}</h2>
             <InfoPopover title={`Where ${log.year} stands`}>
               {t(
                 "The year on its way to a posted 300A. OSHA wants the summary certified by a company executive and posted where employees can see it from 1 February to 30 April of the following year (29 CFR 1904.32).",

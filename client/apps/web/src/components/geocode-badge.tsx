@@ -59,7 +59,7 @@ export function GeocodedBadge({ longitude, latitude, placeId }: GeocodeBadgeSche
           <div className="border-border h-32 w-full overflow-hidden rounded-md border">
             <Suspense
               fallback={
-                <div className="bg-muted text-muted-foreground flex h-full w-full animate-pulse items-center justify-center text-xs">
+                <div className="text-muted-foreground flex h-full w-full ui-shimmer items-center justify-center text-xs">
                   {t("Loading map...")}
                 </div>
               }

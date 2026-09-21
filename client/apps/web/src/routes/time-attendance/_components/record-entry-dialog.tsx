@@ -141,7 +141,7 @@ export function RecordEntryDialog({
         <div
           className={cn(
             "bg-muted/30 flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-2.5 transition-colors",
-            backwards && "border-destructive/40 bg-destructive/5",
+            backwards && "border-danger-border bg-danger-subtle",
           )}
           aria-live="polite"
         >

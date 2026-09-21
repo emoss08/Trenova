@@ -36,9 +36,9 @@ const MIN_SPAN_SECONDS = 1800;
 const NOW_TICK_MS = 60_000;
 
 const UNCOVERED_TONE: Record<UrgencyBucket, string> = {
-  Late: "bg-destructive/75 text-foreground-on-solid hover:bg-destructive/90",
+  Late: "bg-danger text-foreground-on-solid hover:bg-danger-hover",
   Now: "bg-warning text-warning-on-solid hover:bg-warning-hover",
-  Today: "bg-info/70 text-foreground-on-solid hover:bg-info/85",
+  Today: "bg-info text-foreground-on-solid hover:bg-info-hover",
   Tomorrow: "bg-accent-violet/65 text-foreground-on-solid hover:bg-accent-violet/80",
   Planned: "bg-muted-foreground/40 text-foreground-on-solid hover:bg-muted-foreground/55",
 };
@@ -183,7 +183,7 @@ function UncoveredBar({
       title={`${span.move.proNumber} · ${span.move.originCity} → ${span.move.destinationCity}`}
       onClick={() => onSelect(span.move.moveId)}
       className={cn(
-"ui-focus-ring absolute flex cursor-grab items-center overflow-hidden rounded-md px-1.5 transition-[opacity,box-shadow] outline-none active:cursor-grabbing",
+        "ui-focus-ring absolute flex cursor-grab items-center overflow-hidden rounded-md px-1.5 transition-[opacity,box-shadow] outline-none active:cursor-grabbing",
         tone,
         isDragging && "opacity-40",
         isSelected && "shadow-[0_0_0_2px_var(--brand)]",
@@ -224,7 +224,7 @@ function CommitmentBar({
       title={`${span.commitment.proNumber} → ${span.commitment.destinationCity}, ${span.commitment.destinationState}`}
       onClick={() => onSelect(span.commitment.moveId)}
       className={cn(
-"ui-focus-ring absolute flex cursor-pointer items-center overflow-hidden rounded-md px-1.5 transition-colors outline-none",
+        "ui-focus-ring absolute flex cursor-pointer items-center overflow-hidden rounded-md px-1.5 transition-colors outline-none",
         inTransit
           ? "bg-brand text-brand-foreground hover:bg-brand/85"
           : "bg-brand/60 text-brand-foreground hover:bg-brand/75",
@@ -380,7 +380,7 @@ function UnassignedLaneRow({
         className="border-border sticky left-0 z-30 flex shrink-0 items-center gap-1.5 border-r bg-[color-mix(in_oklch,var(--warning)_5%,var(--card))] px-2"
         style={{ width: RAIL_WIDTH_PX }}
       >
-        <span className="bg-warning/15 text-warning flex size-6 shrink-0 items-center justify-center rounded-full">
+        <span className="bg-warning-subtle text-warning flex size-6 shrink-0 items-center justify-center rounded-full">
           <InboxIcon className="size-3.5" />
         </span>
         <div className="flex min-w-0 flex-col">
@@ -522,9 +522,7 @@ export function DispatchTimeline({
                 )}
                 style={{ left: day.x, width: day.width, height: DAY_LABEL_HEIGHT_PX }}
               >
-                <span className="truncate text-xs font-semibold">
-                  {t(day.label)}
-                </span>
+                <span className="truncate text-xs font-semibold">{t(day.label)}</span>
               </div>
             ))}
             {hasHourRow &&

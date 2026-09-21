@@ -50,7 +50,7 @@ function UserSettingsDialogSkeleton({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Settings")}</DialogTitle>
           <DialogDescription>{t("Manage your preferences and security.")}</DialogDescription>

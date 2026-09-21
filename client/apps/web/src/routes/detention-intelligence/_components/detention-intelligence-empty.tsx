@@ -3,9 +3,9 @@ import { EmptySheet, GhostBar, GhostLine } from "@trenova/shared/components/ui/e
 import { cn } from "@trenova/shared/lib/utils";
 
 const LEDGER_SHARES = [
-  { width: "w-1/2", className: "bg-success/30" },
-  { width: "w-1/3", className: "bg-info/30" },
-  { width: "w-1/6", className: "bg-warning/30" },
+  { width: "w-1/2", className: "bg-success-subtle" },
+  { width: "w-1/3", className: "bg-info-subtle" },
+  { width: "w-1/6", className: "bg-warning-subtle" },
 ] as const;
 const LEDGER_STATS = 4;
 

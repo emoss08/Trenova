@@ -477,7 +477,7 @@ function WidgetCard({
               disabled
                 ? "cursor-not-allowed opacity-45"
                 : "hover:border-brand/45 hover:bg-accent/30",
-              added && "border-success/60 bg-success/5",
+              added && "border-success-border bg-success-subtle",
             )}
           />
         }

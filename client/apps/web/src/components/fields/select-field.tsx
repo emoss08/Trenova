@@ -150,7 +150,7 @@ export function SelectField<T extends FieldValues>({
                       fieldState.invalid && fieldInvalidClass,
                       isReadOnly && "pointer-events-none cursor-not-allowed opacity-60",
                       warning?.show &&
-"ui-focus-ring border-warning bg-warning/10 ring-0 ring-warning placeholder:text-warning-foreground focus:outline-hidden",
+                        "ui-focus-ring border-warning bg-warning-subtle ring-0 ring-warning placeholder:text-warning-foreground focus:outline-hidden",
                     )}
                   >
                     <div

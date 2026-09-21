@@ -172,7 +172,7 @@ function TrackSkeleton() {
 
   return (
     <aside className="bg-card flex min-w-0 flex-col rounded-lg border">
-      <header className="flex items-center gap-2 border-b px-3 py-2">
+      <header className="border-border flex min-h-9 items-center gap-2 border-b px-3 py-1.5">
         <Skeleton className="size-3.5 rounded-sm" />
         <Skeleton className="h-3.5 w-32" />
         <Skeleton className="size-3.5 rounded-full" />

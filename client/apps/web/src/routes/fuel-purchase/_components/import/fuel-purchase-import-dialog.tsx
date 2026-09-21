@@ -575,7 +575,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogMedia className="bg-destructive/10 text-destructive">
+            <AlertDialogMedia className="bg-danger-subtle text-destructive">
               <Trash2Icon />
             </AlertDialogMedia>
             <AlertDialogTitle>{batch ? discardImportNotice(batch).title : ""}</AlertDialogTitle>

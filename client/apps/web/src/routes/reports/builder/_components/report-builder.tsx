@@ -83,11 +83,7 @@ function definitionToMeta(definition: ReportDefinition): ReportMeta {
 }
 
 function SectionLabel({ children }: { children: string }) {
-  return (
-    <p className="text-xs text-muted-foreground px-0.5 pt-1 pb-2 font-medium">
-      {children}
-    </p>
-  );
+  return <p className="text-xs text-muted-foreground px-0.5 pt-1 pb-2 font-medium">{children}</p>;
 }
 
 export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
@@ -242,7 +238,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
       </header>
 
       {definition && definition.diagnostics.length > 0 && (
-        <div className="border-border flex items-start gap-2 border-b bg-warning/5 px-4 py-2 text-xs">
+        <div className="border-border flex items-start gap-2 border-b bg-warning-subtle px-4 py-2 text-xs">
           <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
           <div className="flex flex-col gap-0.5">
             <p className="font-medium">{t("This report needs attention")}</p>

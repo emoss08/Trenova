@@ -15,9 +15,9 @@ import { PAGE_INSIGHTS_LIMIT, usePageInsights } from "./use-page-insights";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const SEVERITY_STYLES: Record<InsightSeverity, string> = {
-  Critical: "bg-danger/15 text-danger-foreground",
-  Warning: "bg-warning/15 text-warning-foreground",
-  Info: "bg-info/15 text-info-foreground",
+  Critical: "bg-danger-subtle text-danger-foreground",
+  Warning: "bg-warning-subtle text-warning-foreground",
+  Info: "bg-info-subtle text-info-foreground",
 };
 
 const SEVERITY_DOT: Record<InsightSeverity, string> = {
@@ -102,9 +102,7 @@ export function PageInsightRows({ insights }: { insights: readonly Insight[] }) 
   return (
     <div className="divide-y">
       {insights.map((insight) => (
-        <div
-          key={insight.id}
-        >
+        <div key={insight.id}>
           <InsightRow insight={insight} />
         </div>
       ))}

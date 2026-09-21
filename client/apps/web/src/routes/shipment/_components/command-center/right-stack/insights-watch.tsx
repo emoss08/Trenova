@@ -94,7 +94,7 @@ export function InsightsWatch({ enabled = true }: { enabled?: boolean }) {
   } else if (insights.length === 0) {
     body = (
       <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-6 text-center">
-        <span className="bg-success/15 text-success inline-flex size-8 items-center justify-center rounded-full">
+        <span className="bg-success-subtle text-success inline-flex size-8 items-center justify-center rounded-full">
           <AssistMark className="size-4" />
         </span>
         <p className="text-xs font-medium">{t("Nothing needs attention right now")}</p>

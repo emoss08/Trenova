@@ -59,7 +59,7 @@ export function FinalizeReturnDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogMedia className="bg-info/10 text-info">
+          <AlertDialogMedia className="bg-info-subtle text-info">
             <LockIcon />
           </AlertDialogMedia>
           <AlertDialogTitle>{t("Finalize the {0} return?", quarterLabel(period))}</AlertDialogTitle>

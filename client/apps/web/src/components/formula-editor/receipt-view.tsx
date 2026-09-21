@@ -16,16 +16,16 @@ const SOURCE_LABELS: Record<FormulaValueSource, { label: string; className: stri
     label: "computed",
     className: "bg-accent-violet/15 text-accent-violet-on-subtle",
   },
-  input: { label: "input", className: "bg-success/15 text-success-foreground" },
+  input: { label: "input", className: "bg-success-subtle text-success-foreground" },
   override: {
     label: "override",
-    className: "bg-warning/15 text-warning-foreground",
+    className: "bg-warning-subtle text-warning-foreground",
   },
   default: { label: "default", className: "bg-muted text-muted-foreground" },
   sample: { label: "sample", className: "bg-muted text-muted-foreground" },
   provided: {
     label: "market data",
-    className: "bg-warning/15 text-warning-foreground",
+    className: "bg-warning-subtle text-warning-foreground",
   },
 };
 
@@ -170,7 +170,8 @@ export function ReceiptView({ receipt, onUseValues, className }: ReceiptViewProp
                   <span className="flex shrink-0 items-center gap-2">
                     <span className="font-mono tabular-nums">{formatValue(variable.value)}</span>
                     <Badge
-                      variant="neutral" appearance="outline"
+                      variant="neutral"
+                      appearance="outline"
                       className={cn("text-2xs border-transparent px-1 py-0", source.className)}
                     >
                       {source.label === "shipment" ? variable.source : source.label}

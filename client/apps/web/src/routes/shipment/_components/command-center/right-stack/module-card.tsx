@@ -20,10 +20,10 @@ type Props = {
 
 const COUNT_CLASS: Record<NonNullable<Props["countTone"]>, string> = {
   muted: "bg-muted text-muted-foreground",
-  danger: "bg-destructive/12 text-destructive",
-  warning: "bg-warning/15 text-warning",
+  danger: "bg-danger-subtle text-destructive",
+  warning: "bg-warning-subtle text-warning",
   brand: "bg-brand/15 text-brand",
-  success: "bg-success/15 text-success",
+  success: "bg-success-subtle text-success",
 };
 
 export function ModuleCard({ id, title, count, countTone = "muted", rightSlot, children }: Props) {
@@ -43,7 +43,7 @@ export function ModuleCard({ id, title, count, countTone = "muted", rightSlot, c
 
   return (
     <section ref={setNodeRef} style={style} className="cc-module-card flex min-h-0 flex-1 flex-col">
-      <header className="border-border flex items-center justify-between gap-2 border-b px-2 py-1">
+      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
         <div className="flex min-w-0 items-center gap-1">
           <button
             type="button"
@@ -54,7 +54,7 @@ export function ModuleCard({ id, title, count, countTone = "muted", rightSlot, c
           >
             <GripVerticalIcon className="size-3" />
           </button>
-          <h3 className="cc-label text-foreground truncate">{title}</h3>
+          <h3 className="text-sm font-semibold truncate">{title}</h3>
           {typeof count === "number" && (
             <span
               className={cn(

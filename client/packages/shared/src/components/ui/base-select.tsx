@@ -114,7 +114,7 @@ const selectTriggerVariants = cva(
 		ui-field group relative flex w-fit items-center justify-between gap-2 whitespace-nowrap
 		outline-none select-none
 		ui-focus-ring
-		aria-invalid:border-danger aria-invalid:bg-danger/10 aria-invalid:[--ring:var(--ring-danger)]
+		aria-invalid:border-danger aria-invalid:bg-danger-subtle aria-invalid:[--ring:var(--ring-danger)]
 		data-[disabled]:pointer-events-none data-[disabled]:opacity-60
 		*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2
 		[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='text-'])]:text-muted-foreground

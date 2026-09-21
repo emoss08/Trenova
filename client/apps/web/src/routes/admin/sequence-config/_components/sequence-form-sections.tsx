@@ -179,7 +179,7 @@ export function DateComponentsSection({ index }: SectionProps) {
                         className={cn(
                           "flex flex-col items-start gap-0.5 rounded-md border px-3 py-2 text-left text-sm transition-colors",
                           isActive
-                            ? "border-info/40 bg-info/15 text-info-foreground"
+                            ? "border-info-border bg-info-subtle text-info-foreground"
                             : "border-input bg-background text-foreground hover:bg-muted",
                         )}
                       >

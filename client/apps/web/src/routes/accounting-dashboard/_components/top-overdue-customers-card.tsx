@@ -57,7 +57,7 @@ export function TopOverdueCustomersCard() {
                   <div className="mt-1 flex items-center gap-2">
                     <div className="bg-muted h-1 flex-1 overflow-hidden rounded-full">
                       <div
-                        className="h-full rounded-full bg-danger/70"
+                        className="h-full rounded-full bg-danger"
                         style={{
                           width:
                             maxOverdue > 0 ? `${(row.overdueMinor / maxOverdue) * 100}%` : "0%",

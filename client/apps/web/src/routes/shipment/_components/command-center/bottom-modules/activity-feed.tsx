@@ -57,9 +57,9 @@ export function ActivityFeed({
 
   return (
     <section className="cc-module-card flex min-h-[260px] flex-col">
-      <header className="border-border flex items-center justify-between border-b px-3 py-2">
+      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
         <div className="flex items-center gap-2">
-          <h3 className="cc-label text-foreground">{t("Activity stream")}</h3>
+          <h3 className="text-sm font-semibold">{t("Activity stream")}</h3>
           <span aria-hidden className="bg-success size-1.5 rounded-full" />
           <span className="text-muted-foreground font-mono text-2xs">live</span>
         </div>
@@ -130,9 +130,7 @@ function ActivityFeedItem({ event }: { event: ShipmentEvent }) {
       <span className={cn("mt-1.5 size-1.5 shrink-0 rounded-full", SEVERITY_DOT[event.severity])} />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-foreground min-w-0 flex-1 text-xs leading-snug">
-            {rendered.headline}
-          </p>
+          <p className="text-foreground min-w-0 flex-1 text-xs leading-snug">{rendered.headline}</p>
           <time
             className="text-muted-foreground shrink-0 font-mono text-2xs tabular-nums"
             dateTime={new Date(event.occurredAt * 1000).toISOString()}

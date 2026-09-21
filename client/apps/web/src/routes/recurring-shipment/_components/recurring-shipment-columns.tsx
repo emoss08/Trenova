@@ -10,14 +10,18 @@ import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { ArrowRightIcon } from "lucide-react";
 
 const statusStyles: Record<RecurringShipmentStatus, string> = {
-  Active: "border-success/30 bg-success/10 text-success-foreground",
-  Paused: "border-warning/30 bg-warning/10 text-warning-foreground",
+  Active: "border-success-border bg-success-subtle text-success-foreground",
+  Paused: "border-warning-border bg-warning-subtle text-warning-foreground",
   Expired: "border-muted-foreground/30 bg-muted text-muted-foreground",
 };
 
 export function RecurringShipmentStatusBadge({ status }: { status: RecurringShipmentStatus }) {
   return (
-    <Badge variant="neutral" appearance="outline" className={cn("font-medium", statusStyles[status])}>
+    <Badge
+      variant="neutral"
+      appearance="outline"
+      className={cn("font-medium", statusStyles[status])}
+    >
       {status}
     </Badge>
   );

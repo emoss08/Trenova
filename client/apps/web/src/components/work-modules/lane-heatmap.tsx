@@ -18,9 +18,9 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
 
   return (
     <section className="cc-module-card flex min-h-65 flex-col">
-      <header className="border-border flex items-center justify-between border-b px-3 py-2">
+      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
         <div className="flex min-w-0 items-center gap-2">
-          <h3 className="cc-label text-foreground">{t("Lane heatmap")}</h3>
+          <h3 className="text-sm font-semibold">{t("Lane heatmap")}</h3>
           <span className="text-muted-foreground font-mono text-2xs">
             {t("origin → destination · {0} loads", total)}
           </span>
@@ -34,10 +34,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
         <div className="grid grid-cols-[60px_repeat(4,minmax(0,1fr))] gap-1">
           <span aria-hidden />
           {REGIONS.map((r) => (
-            <span
-              key={r}
-              className="text-muted-foreground text-center font-mono text-2xs"
-            >
+            <span key={r} className="text-muted-foreground text-center font-mono text-2xs">
               {r}
             </span>
           ))}

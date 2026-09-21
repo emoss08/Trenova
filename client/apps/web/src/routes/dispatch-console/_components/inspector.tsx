@@ -485,9 +485,7 @@ function DriverInspector({
 
         {driver.commitments.length > 0 && (
           <div className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-xs">
-              {t("Committed")}
-            </span>
+            <span className="text-muted-foreground text-xs">{t("Committed")}</span>
             {driver.commitments.map((commitment) => (
               <div
                 key={commitment.moveId}
@@ -563,7 +561,7 @@ export function Inspector({
 
   return (
     <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
-      <header className="flex items-center justify-between border-b px-2.5 py-1.5">
+      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
         <h2 className="text-muted-foreground text-xs font-semibold">
           {selectedMove
             ? canRankDrivers

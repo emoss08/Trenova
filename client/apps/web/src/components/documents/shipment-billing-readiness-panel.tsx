@@ -68,7 +68,7 @@ function RequirementRow({
       className={[
         "flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 transition-colors",
         done
-          ? "border-success/20 bg-success/[0.03]"
+          ? "border-success-border bg-success/[0.03]"
           : isNext
             ? "border-primary/25 bg-primary/[0.03]"
             : "border-transparent bg-muted/40",
@@ -76,7 +76,7 @@ function RequirementRow({
     >
       <div className="flex min-w-0 items-center gap-2.5">
         {done ? (
-          <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-success/15">
+          <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-success-subtle">
             <CheckCircle2Icon className="size-3 text-success-foreground" />
           </div>
         ) : (
@@ -176,7 +176,7 @@ export function ShipmentBillingReadinessPanel({
         )}
 
         {readiness.warnings.length > 0 && (
-          <Alert className="mb-3 border-warning/40 bg-warning/10">
+          <Alert className="mb-3 border-warning-border bg-warning-subtle">
             <AlertCircleIcon className="size-4 text-warning-foreground" />
             <AlertTitle>{t("Billing warnings")}</AlertTitle>
             <AlertDescription>

@@ -255,8 +255,8 @@ function EditPanel({
     >
       {detailQuery.isLoading ? (
         <div className="space-y-3 p-4">
-          <div className="bg-muted h-8 w-full animate-pulse rounded-md" />
-          <div className="bg-muted h-40 w-full animate-pulse rounded-md" />
+          <div className="h-8 w-full ui-shimmer rounded-md" />
+          <div className="h-40 w-full ui-shimmer rounded-md" />
         </div>
       ) : journal ? (
         <div className="flex flex-col gap-6">

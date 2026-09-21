@@ -81,7 +81,7 @@ export function EDIOverviewEmpty({
                     key={index}
                     className={cn(
                       "block flex-1 rounded-t-sm",
-                      index % 3 === 2 ? "bg-warning/30" : "bg-brand/25",
+                      index % 3 === 2 ? "bg-warning-subtle" : "bg-brand/25",
                     )}
                     style={{ height: `${height}%` }}
                   />

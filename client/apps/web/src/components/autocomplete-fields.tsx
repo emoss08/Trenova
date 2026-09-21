@@ -1753,7 +1753,7 @@ export function FiscalYearAutocompleteField<T extends FieldValues>({
             <span className="flex items-center gap-1.5">
               {t(option.label)}
               {selectOptionMetaBoolean(option, "isCurrent") && (
-                <span className="inline-flex items-center rounded-md border border-success/30 bg-success/20 px-1 py-px text-2xs font-medium text-success-foreground">
+                <span className="inline-flex items-center rounded-md border border-success-border bg-success-subtle px-1 py-px text-2xs font-medium text-success-foreground">
                   {t("Current")}
                 </span>
               )}

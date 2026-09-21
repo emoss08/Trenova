@@ -24,10 +24,10 @@ import { useLoadingOptimization } from "./use-loading-optimization";
 import { AxleWeightDisplay } from "./weight-distribution-bar";
 
 const gradeColors: Record<string, string> = {
-  Excellent: "bg-success/15 text-success-foreground",
+  Excellent: "bg-success-subtle text-success-foreground",
   Good: "bg-primary/15 text-primary",
-  Fair: "bg-warning/15 text-warning",
-  Poor: "bg-destructive/15 text-destructive",
+  Fair: "bg-warning-subtle text-warning",
+  Poor: "bg-danger-subtle text-destructive",
 };
 
 export default function LoadPlannerDialog({

@@ -152,7 +152,7 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
             </Tooltip>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogMedia className="bg-destructive/10">
+                <AlertDialogMedia className="bg-danger-subtle">
                   <TrashIcon className="text-destructive size-5" />
                 </AlertDialogMedia>
                 <AlertDialogTitle>{t("Delete rule set")}</AlertDialogTitle>
@@ -168,7 +168,7 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
                 <AlertDialogAction
                   onClick={() => deleteMutation.mutate()}
                   disabled={deleteMutation.isPending}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  className="bg-destructive text-destructive-foreground hover:bg-danger-hover"
                 >
                   {deleteMutation.isPending ? t("Deleting...") : t("Delete")}
                 </AlertDialogAction>

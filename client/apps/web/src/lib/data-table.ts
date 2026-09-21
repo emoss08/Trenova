@@ -462,13 +462,11 @@ export function isTableConfigEqual(a: TableConfig, b: TableConfig): boolean {
 }
 
 export const FORMAT_RULE_COLOR_CLASSES: Record<FormatRuleColor, string> = {
-  red: "bg-danger/10 hover:bg-danger/15 dark:hover:bg-danger/20",
-  amber: "bg-warning/10 hover:bg-warning/15 dark:hover:bg-warning/20",
-  green:
-    "bg-success/10 hover:bg-success/15 dark:hover:bg-success/20",
+  red: "bg-danger-subtle hover:bg-danger-subtle dark:hover:bg-danger-subtle",
+  amber: "bg-warning-subtle hover:bg-warning-subtle dark:hover:bg-warning-subtle",
+  green: "bg-success-subtle hover:bg-success-subtle dark:hover:bg-success-subtle",
   blue: "bg-accent-sky/10 hover:bg-accent-sky/15 dark:hover:bg-accent-sky/20",
-  purple:
-    "bg-accent-violet/10 hover:bg-accent-violet/15 dark:hover:bg-accent-violet/20",
+  purple: "bg-accent-violet/10 hover:bg-accent-violet/15 dark:hover:bg-accent-violet/20",
   gray: "bg-muted-foreground/10 hover:bg-muted-foreground/15",
 };
 

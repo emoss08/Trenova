@@ -114,7 +114,7 @@ function WizardField({
           "border-input bg-muted flex h-8 w-full rounded-md border px-2.5 text-sm tabular-nums outline-none",
           "transition-[border-color,box-shadow] duration-150 ease-in-out",
           "ui-focus-ring focus-visible:bg-background",
-          invalid && "border-danger/60 bg-danger/10",
+          invalid && "border-danger-border bg-danger-subtle",
         )}
       />
       <p className="text-muted-foreground text-xs leading-snug">{helper}</p>

@@ -10,9 +10,9 @@ import { CheckCircle2Icon } from "lucide-react";
 import { Link } from "react-router";
 
 const SEVERITY_STYLES: Record<string, string> = {
-  Critical: "bg-danger/15 text-danger-foreground",
-  Warning: "bg-warning/15 text-warning-foreground",
-  Watch: "bg-info/15 text-info-foreground",
+  Critical: "bg-danger-subtle text-danger-foreground",
+  Warning: "bg-warning-subtle text-warning-foreground",
+  Watch: "bg-info-subtle text-info-foreground",
 };
 
 export function CollectionsWorklistCard() {

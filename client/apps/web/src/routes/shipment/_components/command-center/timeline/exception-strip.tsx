@@ -30,12 +30,12 @@ const CHIP_CONFIG: readonly {
 
 const CHIP_TONE_CLASS: Record<ChipTone, { idle: string; active: string }> = {
   destructive: {
-    idle: "border-destructive/35 text-destructive hover:bg-destructive/10",
-    active: "border-destructive bg-destructive/15 text-destructive",
+    idle: "border-danger-border text-destructive hover:bg-danger-subtle",
+    active: "border-destructive bg-danger-subtle text-destructive",
   },
   warning: {
-    idle: "border-warning/40 text-warning hover:bg-warning/10",
-    active: "border-warning bg-warning/15 text-warning",
+    idle: "border-warning-border text-warning hover:bg-warning-subtle",
+    active: "border-warning bg-warning-subtle text-warning",
   },
 };
 
@@ -68,9 +68,7 @@ export function ExceptionStrip({
 
   return (
     <div className="border-border bg-muted/30 flex min-h-7 flex-wrap items-center gap-1.5 border-b px-3 py-1">
-      <span className="text-muted-foreground text-2xs font-semibold">
-        {t("Attention")}
-      </span>
+      <span className="text-muted-foreground text-2xs font-semibold">{t("Attention")}</span>
       {allClear ? (
         <span className="text-muted-foreground inline-flex items-center gap-1 text-2xs">
           <CircleCheckIcon className="text-success size-3" />

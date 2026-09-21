@@ -149,7 +149,7 @@ export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: Exc
       {visible.map((it, i) => {
         const Icon = KIND_ICON[it.kind];
         const sevTextClass = it.severity === "danger" ? "text-destructive" : "text-warning";
-        const sevBgClass = it.severity === "danger" ? "bg-destructive/12" : "bg-warning/15";
+        const sevBgClass = it.severity === "danger" ? "bg-danger-subtle" : "bg-warning-subtle";
         return (
           <div
             key={it.id}

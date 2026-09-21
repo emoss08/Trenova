@@ -728,6 +728,18 @@
   --color-neutral-subtle-foreground: var(--neutral-subtle-foreground);
   --color-neutral-border: var(--neutral-border);
 
+  /* A tone used as TEXT is its readable rung, not its fill. `bg-warning` is the
+     solid amber a dot or a bar is drawn in; `text-warning` on a panel has to
+     clear AA, and the solid does not - it is a fill, chosen to be seen at six
+     pixels, not read. The text-colour namespace repoints the utility, so the
+     fifty call sites that wrote `text-warning` for "warning-coloured text" say
+     what they meant without being edited. */
+  --text-color-warning: var(--warning-foreground);
+  --text-color-success: var(--success-foreground);
+  --text-color-info: var(--info-foreground);
+  --text-color-danger: var(--danger-foreground);
+  --text-color-destructive: var(--danger-foreground);
+
   /* Focus */
   --color-ring: var(--ring);
   --color-ring-danger: var(--ring-danger);

@@ -243,19 +243,19 @@ const ROTA_TONES: Record<string, RotaTone> = {
   },
   Scheduled: {
     variant: "info",
-    cell: "border-info/30 bg-info/10 text-info-foreground",
+    cell: "border-info-border bg-info-subtle text-info-foreground",
     dot: "bg-info",
     label: "Scheduled",
   },
   Assigned: {
     variant: "success",
-    cell: "border-success/30 bg-success/10 text-success-foreground",
+    cell: "border-success-border bg-success-subtle text-success-foreground",
     dot: "bg-success",
     label: "Assigned",
   },
   TimeOff: {
     variant: "warning",
-    cell: "border-warning/30 bg-warning/10 text-warning-foreground",
+    cell: "border-warning-border bg-warning-subtle text-warning-foreground",
     dot: "bg-warning",
     label: "Time off",
   },
@@ -267,7 +267,7 @@ const ROTA_TONES: Record<string, RotaTone> = {
   },
   Unavailable: {
     variant: "danger",
-    cell: "border-danger/30 bg-danger/10 text-danger-foreground",
+    cell: "border-danger-border bg-danger-subtle text-danger-foreground",
     dot: "bg-danger",
     label: "Unavailable",
   },

@@ -70,8 +70,9 @@ function BlackoutDateRow({ date, holidayName, isPast, onRemove }: BlackoutDateRo
       <span className={cn("text-sm tabular-nums", isPast && "text-muted-foreground")}>{label}</span>
       {holidayName && (
         <Badge
-          variant="neutral" appearance="outline"
-          className="text-2xs h-4 border-none bg-info/10 px-1.5 font-normal text-info-foreground"
+          variant="neutral"
+          appearance="outline"
+          className="text-2xs h-4 border-none bg-info-subtle px-1.5 font-normal text-info-foreground"
         >
           {holidayName}
         </Badge>

@@ -73,7 +73,7 @@ export function PreviewGrid({
   if (error) {
     return (
       <CenteredState>
-        <div className="bg-destructive/10 flex size-10 items-center justify-center rounded-lg">
+        <div className="bg-danger-subtle flex size-10 items-center justify-center rounded-lg">
           <CircleAlertIcon className="text-destructive size-5" strokeWidth={1.75} />
         </div>
         <div className="text-center">
@@ -128,7 +128,7 @@ export function PreviewGrid({
           {t("{0, plural, one {# row} other {# rows}}", rows.length)}
         </span>
         {preview.truncated && (
-          <span className="text-2xs rounded-sm bg-warning/10 px-1.5 py-px text-warning-foreground">
+          <span className="text-2xs rounded-sm bg-warning-subtle px-1.5 py-px text-warning-foreground">
             {t("first 100 shown")}
           </span>
         )}

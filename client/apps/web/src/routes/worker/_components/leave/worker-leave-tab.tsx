@@ -149,7 +149,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
       <section
         className={cn(
           "rounded-lg border p-4",
-          entitlement.exhausted && "border-warning/60 bg-warning/5",
+          entitlement.exhausted && "border-warning-border bg-warning-subtle",
         )}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">

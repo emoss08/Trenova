@@ -17,7 +17,7 @@ const SLOT_CLASS: Record<SlotState, string> = {
   final: "border-brand bg-brand/15 font-medium",
   draft: "border-brand/60 border-dashed bg-brand/5 font-medium",
   due: "border-foreground/40 border-dashed",
-  missed: "border-destructive/50 bg-destructive/10 text-destructive",
+  missed: "border-danger-border bg-danger-subtle text-destructive",
   upcoming: "text-muted-foreground",
 };
 
@@ -73,7 +73,11 @@ export function PoolRow({
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <span className="truncate text-sm font-medium">{pool.name}</span>
           <Badge variant="neutral">{pool.code}</Badge>
-          {pool.isDefault ? <Badge variant="neutral" appearance="outline">{t("Default")}</Badge> : null}
+          {pool.isDefault ? (
+            <Badge variant="neutral" appearance="outline">
+              {t("Default")}
+            </Badge>
+          ) : null}
           {pool.status !== "Active" ? <Badge variant="danger">{t("Inactive")}</Badge> : null}
           {pool.meetsDotMinimums ? null : (
             <Badge variant="warning">{t("Below the DOT minimum")}</Badge>

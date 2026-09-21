@@ -5,7 +5,7 @@ export function AuditAlert() {
   const t = useT();
 
   return (
-    <div className="flex w-full items-center justify-between rounded-md border border-danger/50 bg-danger/10 p-4">
+    <div className="flex w-full items-center justify-between rounded-md border border-danger-border bg-danger-subtle p-4">
       <div className="flex w-full items-center gap-3 text-danger-foreground">
         <TriangleAlert className="size-5 shrink-0" />
         <div className="flex flex-col">

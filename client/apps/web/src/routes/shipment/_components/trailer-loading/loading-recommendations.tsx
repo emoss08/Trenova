@@ -6,13 +6,13 @@ import { LightbulbIcon, ShieldAlertIcon, TrendingUpIcon } from "lucide-react";
 const priorityConfig = {
   critical: {
     icon: ShieldAlertIcon,
-    badge: "bg-destructive/15 text-destructive",
+    badge: "bg-danger-subtle text-destructive",
     iconColor: "text-destructive",
     label: "Critical",
   },
   suggested: {
     icon: LightbulbIcon,
-    badge: "bg-warning/15 text-warning",
+    badge: "bg-warning-subtle text-warning",
     iconColor: "text-warning",
     label: "Suggested",
   },

@@ -388,7 +388,7 @@ export function CredentialFormDialog({
                   ) : activeUpload ? (
                     <div className="border-border flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm">
                       <span className="flex min-w-0 items-center gap-2">
-                        <PaperclipIcon className="text-muted-foreground size-4 shrink-0 animate-pulse" />
+                        <PaperclipIcon className="text-muted-foreground size-4 shrink-0" />
                         <span className="truncate">
                           {t(
                             "Uploading {0}… {1}%",

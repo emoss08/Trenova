@@ -157,12 +157,10 @@ export function CertificationWatch({ enabled = true }: { enabled?: boolean }) {
   } else if (summaries.length === 0) {
     body = (
       <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-6 text-center">
-        <span className="bg-success/15 text-success inline-flex size-8 items-center justify-center rounded-full">
+        <span className="bg-success-subtle text-success inline-flex size-8 items-center justify-center rounded-full">
           <ShieldCheckIcon className="size-4" />
         </span>
-        <p className="text-xs font-medium">
-          {t("All drivers certified — no outstanding logs.")}
-        </p>
+        <p className="text-xs font-medium">{t("All drivers certified — no outstanding logs.")}</p>
         <p className="text-muted-foreground max-w-55 text-2xs leading-snug">
           {t(
             "Every driver has certified their ELD logs for the last {0} days.",

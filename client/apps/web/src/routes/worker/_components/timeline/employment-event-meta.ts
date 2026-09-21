@@ -32,7 +32,7 @@ const META: Record<EmploymentEventKind, EmploymentEventMeta> = {
   Hired: {
     label: EMPLOYMENT_EVENT_LABELS.Hired,
     icon: BriefcaseIcon,
-    toneClass: "bg-success/15 text-success-foreground ring-success/30",
+    toneClass: "bg-success-subtle text-success-foreground ring-success/30",
     hint: "Opens the timeline. Recorded automatically when a worker is created.",
   },
   ProbationEnded: {
@@ -56,37 +56,37 @@ const META: Record<EmploymentEventKind, EmploymentEventMeta> = {
   LeaveStarted: {
     label: EMPLOYMENT_EVENT_LABELS.LeaveStarted,
     icon: CalendarOffIcon,
-    toneClass: "bg-warning/15 text-warning-foreground ring-warning/30",
+    toneClass: "bg-warning-subtle text-warning-foreground ring-warning/30",
     hint: "Takes the worker off the dispatch board until the leave ends.",
   },
   LeaveEnded: {
     label: EMPLOYMENT_EVENT_LABELS.LeaveEnded,
     icon: CalendarCheckIcon,
-    toneClass: "bg-success/15 text-success-foreground ring-success/30",
+    toneClass: "bg-success-subtle text-success-foreground ring-success/30",
     hint: "Returns the worker to the dispatch board.",
   },
   Suspended: {
     label: EMPLOYMENT_EVENT_LABELS.Suspended,
     icon: BanIcon,
-    toneClass: "bg-warning/15 text-warning-foreground ring-warning/30",
+    toneClass: "bg-warning-subtle text-warning-foreground ring-warning/30",
     hint: "Blocks dispatch without ending employment.",
   },
   Reinstated: {
     label: EMPLOYMENT_EVENT_LABELS.Reinstated,
     icon: UserCheckIcon,
-    toneClass: "bg-success/15 text-success-foreground ring-success/30",
+    toneClass: "bg-success-subtle text-success-foreground ring-success/30",
     hint: "Lifts a suspension.",
   },
   Terminated: {
     label: EMPLOYMENT_EVENT_LABELS.Terminated,
     icon: DoorOpenIcon,
-    toneClass: "bg-danger/15 text-danger-foreground ring-danger/30",
+    toneClass: "bg-danger-subtle text-danger-foreground ring-danger/30",
     hint: "Ends employment: closes PTO and pay assignments and cancels upcoming time off.",
   },
   Rehired: {
     label: EMPLOYMENT_EVENT_LABELS.Rehired,
     icon: RotateCcwIcon,
-    toneClass: "bg-success/15 text-success-foreground ring-success/30",
+    toneClass: "bg-success-subtle text-success-foreground ring-success/30",
     hint: "Reopens employment and enrols the worker in the default PTO policy.",
   },
   RateChanged: {

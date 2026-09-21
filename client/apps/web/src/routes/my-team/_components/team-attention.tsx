@@ -40,14 +40,14 @@ export function TeamAttention({ rows }: TeamAttentionProps) {
       aria-labelledby="team-attention-heading"
       className="bg-card overflow-hidden rounded-lg border"
     >
-      <header className="flex items-center justify-between gap-2 border-b px-3 py-2">
+      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
         <div className="flex items-center gap-2">
           {flagged.length > 0 ? (
             <AlertTriangleIcon className="text-destructive size-3.5" aria-hidden />
           ) : (
             <CircleCheckIcon className="text-muted-foreground size-3.5" aria-hidden />
           )}
-          <h3 id="team-attention-heading" className="text-sm font-medium">
+          <h3 id="team-attention-heading" className="text-sm font-semibold">
             {t("Needs your attention")}
           </h3>
           {flagged.length > 0 ? (

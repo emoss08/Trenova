@@ -438,10 +438,10 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
   return (
     <div className="grid gap-2.5 sm:grid-cols-2">
       <div
-        className={`flex items-center gap-3 rounded-lg border p-3 ${hasContent ? "border-success/20 bg-success/5" : "border-dashed"}`}
+        className={`flex items-center gap-3 rounded-lg border p-3 ${hasContent ? "border-success-border bg-success-subtle" : "border-dashed"}`}
       >
         <span
-          className={`inline-flex size-8 shrink-0 items-center justify-center rounded-md ${hasContent ? "bg-success/10 text-success-foreground" : "bg-muted text-muted-foreground"}`}
+          className={`inline-flex size-8 shrink-0 items-center justify-center rounded-md ${hasContent ? "bg-success-subtle text-success-foreground" : "bg-muted text-muted-foreground"}`}
         >
           <FileSearchIcon className="size-4" />
         </span>
@@ -453,10 +453,10 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
         </div>
       </div>
       <div
-        className={`flex items-center gap-3 rounded-lg border p-3 ${hasDraft ? "border-success/20 bg-success/5" : "border-dashed"}`}
+        className={`flex items-center gap-3 rounded-lg border p-3 ${hasDraft ? "border-success-border bg-success-subtle" : "border-dashed"}`}
       >
         <span
-          className={`inline-flex size-8 shrink-0 items-center justify-center rounded-md ${hasDraft ? "bg-success/10 text-success-foreground" : "bg-muted text-muted-foreground"}`}
+          className={`inline-flex size-8 shrink-0 items-center justify-center rounded-md ${hasDraft ? "bg-success-subtle text-success-foreground" : "bg-muted text-muted-foreground"}`}
         >
           <LayersIcon className="size-4" />
         </span>
@@ -520,7 +520,7 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
           return (
             <div
               key={s.id}
-              className={`rounded-lg border p-3 ${hasFailure ? "border-destructive/20" : ""}`}
+              className={`rounded-lg border p-3 ${hasFailure ? "border-danger-border" : ""}`}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
@@ -557,7 +557,7 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
               </div>
 
               {hasFailure && (
-                <div className="border-destructive/20 bg-destructive/5 text-destructive mt-2 rounded-md border px-2.5 py-1.5 font-mono text-xs">
+                <div className="border-danger-border bg-danger-subtle text-destructive mt-2 rounded-md border px-2.5 py-1.5 font-mono text-xs">
                   {s.failureCode && <span className="font-semibold">{s.failureCode}: </span>}
                   {s.failureMessage}
                 </div>
@@ -608,7 +608,7 @@ function ErrorsBanner({ errors }: { errors: string[] }) {
   if (errors.length === 0) return null;
 
   return (
-    <div className="border-destructive/30 bg-destructive/5 rounded-lg border p-3">
+    <div className="border-danger-border bg-danger-subtle rounded-lg border p-3">
       <div className="text-destructive flex items-center gap-2 text-sm font-medium">
         <AlertTriangleIcon className="size-4" />
         {t("{0} {1} detected", errors.length, errors.length === 1 ? "error" : "errors")}
@@ -617,7 +617,7 @@ function ErrorsBanner({ errors }: { errors: string[] }) {
         {errors.map((err, i) => (
           <div
             key={i}
-            className="bg-destructive/10 text-destructive rounded-md px-2.5 py-1.5 font-mono text-xs"
+            className="bg-danger-subtle text-destructive rounded-md px-2.5 py-1.5 font-mono text-xs"
           >
             {err}
           </div>
@@ -737,7 +737,7 @@ export function DocumentOperationsPage() {
       {documentId && diagnosticsQuery.isError && (
         <Card className="border-border/80 gap-0 overflow-hidden">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="bg-destructive/10 flex size-12 items-center justify-center rounded-full">
+            <div className="bg-danger-subtle flex size-12 items-center justify-center rounded-full">
               <XCircleIcon className="text-destructive size-6" />
             </div>
             <h3 className="mt-3 text-sm font-medium">{t("Failed to load diagnostics")}</h3>

@@ -84,13 +84,18 @@ function UploadChip({
       transition={{ duration: 0.15, ease: "easeOut" }}
       className={cn(
         "border-border bg-card relative flex w-52 items-center gap-2 overflow-hidden rounded-md border px-2 py-1.5",
-        isError && "border-danger/50 bg-danger/5",
+        isError && "border-danger-border bg-danger-subtle",
       )}
     >
       <AttachmentThumbnail upload={upload} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-xs font-medium">{upload.file.name}</span>
-        <span className={cn("text-2xs block", isError ? "text-danger-foreground" : "text-muted-foreground")}>
+        <span
+          className={cn(
+            "text-2xs block",
+            isError ? "text-danger-foreground" : "text-muted-foreground",
+          )}
+        >
           {isError
             ? (upload.error ?? t("Upload failed"))
             : isActive

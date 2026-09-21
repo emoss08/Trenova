@@ -42,7 +42,7 @@ const RANK_NAME_WIDTHS = ["w-32", "w-28", "w-36", "w-24", "w-30"] as const;
 
 function CardHeaderSkeleton({ titleWidth, right }: { titleWidth: string; right?: string }) {
   return (
-    <header className="flex min-h-9 items-center justify-between gap-2 border-b px-3 py-2">
+    <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
       <div className="flex items-center gap-2">
         <Skeleton className="size-3.5 rounded-sm" />
         <Skeleton className={cn("h-3.5", titleWidth)} />

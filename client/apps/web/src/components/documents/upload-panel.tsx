@@ -144,7 +144,7 @@ function UploadItem({
         <div className="flex items-center gap-2">
           {status === "uploading" && (
             <>
-              <div className="h-1 flex-1 overflow-hidden rounded-full bg-info/20">
+              <div className="h-1 flex-1 overflow-hidden rounded-full bg-info-subtle">
                 <div
                   className="h-full bg-info transition-all duration-300"
                   style={{ width: `${progress}%` }}
@@ -191,13 +191,25 @@ function UploadItem({
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        {status === "uploading" && <Loader2Icon className="size-4 animate-spin text-info-foreground" />}
-        {status === "processing" && <Loader2Icon className="size-4 animate-spin text-info-foreground" />}
-        {status === "uploaded" && <Loader2Icon className="size-4 animate-spin text-info-foreground" />}
-        {status === "verifying" && <Loader2Icon className="size-4 animate-spin text-info-foreground" />}
+        {status === "uploading" && (
+          <Loader2Icon className="size-4 animate-spin text-info-foreground" />
+        )}
+        {status === "processing" && (
+          <Loader2Icon className="size-4 animate-spin text-info-foreground" />
+        )}
+        {status === "uploaded" && (
+          <Loader2Icon className="size-4 animate-spin text-info-foreground" />
+        )}
+        {status === "verifying" && (
+          <Loader2Icon className="size-4 animate-spin text-info-foreground" />
+        )}
         {status === "paused" && <AlertCircleIcon className="size-4 text-warning-foreground" />}
-        {status === "retrying" && <Loader2Icon className="size-4 animate-spin text-info-foreground" />}
-        {status === "completing" && <Loader2Icon className="size-4 animate-spin text-info-foreground" />}
+        {status === "retrying" && (
+          <Loader2Icon className="size-4 animate-spin text-info-foreground" />
+        )}
+        {status === "completing" && (
+          <Loader2Icon className="size-4 animate-spin text-info-foreground" />
+        )}
         {status === "success" && <CheckCircleIcon className="size-4 text-success-foreground" />}
         {(status === "error" || status === "paused" || status === "quarantined") && (
           <>

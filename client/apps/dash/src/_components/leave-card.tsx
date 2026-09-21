@@ -73,7 +73,7 @@ export function LeaveCard() {
       <Progress value={usedPercent} className="mt-2" />
 
       {owing.length > 0 ? (
-        <p className="border-warning/40 bg-warning/10 text-warning-foreground mt-3 rounded-lg border px-3 py-2 text-xs">
+        <p className="border-warning-border bg-warning-subtle text-warning-foreground mt-3 rounded-lg border px-3 py-2 text-xs">
           {owing.length === 1
             ? t("Your carrier is waiting on a medical certification.")
             : t("Your carrier is waiting on {0} medical certifications.", owing.length)}{" "}

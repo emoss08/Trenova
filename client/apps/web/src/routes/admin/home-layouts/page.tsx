@@ -100,7 +100,7 @@ export function HomeLayoutsPage() {
       <AlertDialog open={confirming != null} onOpenChange={(open) => !open && setConfirming(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogMedia className="bg-destructive/10 text-destructive">
+            <AlertDialogMedia className="bg-danger-subtle text-destructive">
               <TrashIcon />
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Delete home screen")}</AlertDialogTitle>

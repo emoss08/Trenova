@@ -247,7 +247,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
           <AlertDialogFooter>
             <AlertDialogCancel>{t("Keep access")}</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90 text-foreground-on-solid"
+              className="bg-destructive hover:bg-danger-hover text-foreground-on-solid"
               disabled={revoke.isPending}
               onClick={(event) => {
                 event.preventDefault();

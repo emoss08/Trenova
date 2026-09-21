@@ -276,7 +276,7 @@ export function HolidayCalendar() {
           <AlertDialogFooter>
             <AlertDialogCancel>{t("Keep")}</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-danger-hover"
               disabled={removeMutation.isPending}
               onClick={(event) => {
                 event.preventDefault();
@@ -360,7 +360,8 @@ function MonthCard({
                 "mx-auto flex size-6 items-center justify-center rounded-full text-xs tabular-nums transition-colors",
                 kind === "Holiday" &&
                   "bg-success font-semibold text-foreground-on-solid hover:bg-success",
-                kind === "Blackout" && "bg-danger font-semibold text-foreground-on-solid hover:bg-danger",
+                kind === "Blackout" &&
+                  "bg-danger font-semibold text-foreground-on-solid hover:bg-danger",
                 !kind && "text-foreground/80 hover:bg-muted",
                 todayKey === key && !kind && "ring-primary ring-1",
               )}
@@ -397,8 +398,8 @@ function EntryRow({
         className={cn(
           "flex size-9 shrink-0 flex-col items-center justify-center rounded-md text-2xs font-semibold uppercase",
           isBlackout
-            ? "bg-danger/10 text-danger-foreground"
-            : "bg-success/10 text-success-foreground",
+            ? "bg-danger-subtle text-danger-foreground"
+            : "bg-success-subtle text-success-foreground",
         )}
       >
         <span className="text-sm leading-none tabular-nums">{occurrence.day}</span>
@@ -419,12 +420,13 @@ function EntryRow({
           </Badge>
         ) : null}
         <Badge
-          variant="neutral" appearance="outline"
+          variant="neutral"
+          appearance="outline"
           className={cn(
             "px-1.5 py-0 text-2xs",
             isBlackout
-              ? "border-danger/40 text-danger-foreground"
-              : "border-success/40 text-success-foreground",
+              ? "border-danger-border text-danger-foreground"
+              : "border-success-border text-success-foreground",
           )}
         >
           {ORG_HOLIDAY_KIND_LABELS[entry.kind]}

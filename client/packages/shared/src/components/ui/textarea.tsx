@@ -18,7 +18,7 @@ function Textarea({ className, isInvalid, ...props }: TextareaProps) {
         "ui-focus-ring placeholder:text-muted-foreground",
         "disabled:cursor-not-allowed disabled:opacity-60 md:text-xs",
         isInvalid &&
-          "border-danger bg-danger/10 placeholder:text-danger-foreground [--ring:var(--ring-danger)]",
+          "border-danger bg-danger-subtle placeholder:text-danger-foreground [--ring:var(--ring-danger)]",
         className,
       )}
       {...props}
@@ -33,7 +33,7 @@ const ITEMS = [
     colors: {
       icon: "text-warning-foreground",
       border: "border-warning",
-      bg: "bg-warning/10",
+      bg: "bg-warning-subtle",
     },
   },
   {
@@ -42,7 +42,7 @@ const ITEMS = [
     colors: {
       icon: "text-success-foreground",
       border: "border-success",
-      bg: "bg-success/10",
+      bg: "bg-success-subtle",
     },
   },
   {
@@ -87,7 +87,7 @@ function AITextarea({ className, isInvalid, onChange, ...props }: TextareaProps)
             "ui-container-focus-ring",
             "transition-[border-color,box-shadow] duration-200 ease-in-out",
             isInvalid &&
-              "border-danger bg-danger/10 placeholder:text-danger-foreground [--ring:var(--ring-danger)]",
+              "border-danger bg-danger-subtle placeholder:text-danger-foreground [--ring:var(--ring-danger)]",
             className,
           )}
         >

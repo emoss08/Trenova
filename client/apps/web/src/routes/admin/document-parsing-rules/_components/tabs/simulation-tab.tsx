@@ -370,7 +370,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
       </Card>
 
       {isError && (
-        <Card className="border-destructive/50">
+        <Card className="border-danger-border">
           <CardContent className="flex items-start gap-3 pt-4">
             <AlertTriangleIcon className="text-destructive mt-0.5 size-4 shrink-0" />
             <div className="space-y-1">

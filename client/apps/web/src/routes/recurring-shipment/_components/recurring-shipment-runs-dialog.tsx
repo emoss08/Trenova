@@ -16,9 +16,9 @@ import type { RecurringShipmentRun, RecurringShipmentRunStatus } from "@/types/r
 import { useQuery } from "@tanstack/react-query";
 
 const runStatusStyles: Record<RecurringShipmentRunStatus, string> = {
-  Generated: "border-success/30 bg-success/10 text-success-foreground",
-  Skipped: "border-warning/30 bg-warning/10 text-warning-foreground",
-  Failed: "border-danger/30 bg-danger/10 text-danger-foreground",
+  Generated: "border-success-border bg-success-subtle text-success-foreground",
+  Skipped: "border-warning-border bg-warning-subtle text-warning-foreground",
+  Failed: "border-danger-border bg-danger-subtle text-danger-foreground",
 };
 
 function RunRow({ run }: { run: RecurringShipmentRun }) {

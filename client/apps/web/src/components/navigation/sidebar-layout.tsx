@@ -142,7 +142,7 @@ export function PageLayout({
         className={cn(
           "flex min-w-0 flex-1 flex-col gap-y-4 p-4",
           "has-[>[data-slot=data-table]:only-child]:min-h-0 has-[>[data-slot=data-table]:only-child]:gap-y-0 has-[>[data-slot=data-table]:only-child]:p-0",
-          fill && "min-h-0 overflow-hidden",
+          fill && "min-h-0 overflow-y-auto",
           className,
         )}
       >

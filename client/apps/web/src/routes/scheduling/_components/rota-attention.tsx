@@ -45,14 +45,14 @@ export function RotaAttention({ rows, swaps, onOpenSwaps }: RotaAttentionProps) 
       aria-labelledby="rota-attention-heading"
       className="bg-card overflow-hidden rounded-lg border"
     >
-      <header className="flex items-center justify-between gap-2 border-b px-3 py-2">
+      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
         <div className="flex items-center gap-2">
           {total > 0 ? (
             <AlertTriangleIcon className="text-destructive size-3.5" aria-hidden />
           ) : (
             <CircleCheckIcon className="text-muted-foreground size-3.5" aria-hidden />
           )}
-          <h3 id="rota-attention-heading" className="text-sm font-medium">
+          <h3 id="rota-attention-heading" className="text-sm font-semibold">
             {t("Needs a look")}
           </h3>
           {total > 0 ? (
@@ -117,9 +117,7 @@ function AttentionList({
     <>
       <ul className="divide-y">
         {shown.map((item) => (
-          <li
-            key={item.key}
-          >
+          <li key={item.key}>
             <Link
               to={workerHref(item.workerId)}
               className="group/row hover:bg-accent grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 transition-colors"

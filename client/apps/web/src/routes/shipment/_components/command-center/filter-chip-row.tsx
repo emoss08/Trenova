@@ -5,7 +5,7 @@ import { useCommandCenterUrl } from "./url-state";
 
 const CHIP_TONE: Record<ChipFilterId, { on: string; off: string }> = {
   "at-risk": {
-    on: "bg-destructive/12 text-destructive border-destructive/30",
+    on: "bg-danger-subtle text-destructive border-danger-border",
     off: "bg-muted text-muted-foreground border-transparent hover:text-foreground",
   },
   reefer: {

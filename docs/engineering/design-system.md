@@ -110,6 +110,13 @@ shipped for months as `oklch(0.75 0.16 70)` and drew near-white text on a solid
 badge at 2.1:1; every solid fill now clears AA against the ink that lands on it,
 and the check asserts it.
 
+A tone used as **text** is its readable rung. `text-warning`, `text-success`,
+`text-info`, `text-danger` and `text-destructive` resolve to `--x-foreground`
+through Tailwind's text-colour namespace, while `bg-warning` stays the solid fill:
+the solid is chosen to be seen at six pixels, not read. A tinted ground is
+`bg-x-subtle` with `border-x-border`, never `bg-x/10` with `border-x/30` — the
+opacity forms were written 362 times at a dozen strengths and none was audited.
+
 Pick a tone by what the operator should do, not by what the thing is called. An
 overdue invoice is `warning`. A shipment in transit is `info`, not `warning` —
 nothing is wrong with it.
@@ -373,6 +380,12 @@ So a list page is exactly this, with no wrapper `div` around the table:
 three different gutters on sibling pages. `p-0` is for a genuine split-pane
 workspace that manages its own panes.
 
+**A full-height workspace takes `fill`.** `<PageLayout fill>` makes the page exactly
+as tall as the viewport leaves it and lets the body scroll, so the workspace inside
+is `flex-1 min-h-0` (with a `min-h-*` floor if it needs one). Do not size a
+workspace with `h-[calc(100vh-9.5rem)]`: that number encodes the height of the
+chrome above it, and it was wrong the day the title bar changed.
+
 **Create is "New …".** The button, the menu item, the empty state and the panel
 title all say `New {thing}` in sentence case, and the button is the ink default.
 `toSentenceFragment` from `@trenova/shared/lib/utils` lowers a name without
@@ -557,6 +570,7 @@ is deliberately visible in review; a silent exception is how the last set eroded
 
 ```bash
 pnpm lint:design      # the six rules, with the token to use instead
+node scripts/tw-probe.mjs bleed:px-3 text-warning   # does this class emit, and as what?
 pnpm lint             # oxlint
 pnpm typecheck        # Badge variants and status phases are typed
 ```

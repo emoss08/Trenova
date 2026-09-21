@@ -250,12 +250,12 @@ export function TimeClockPanel({
                   <span
                     className={cn(
                       "relative grid size-11 shrink-0 place-items-center rounded-full border",
-                      entry && "border-success/40",
+                      entry && "border-success-border",
                     )}
                   >
                     {entry ? (
                       <>
-                        <span className="bg-success/20 absolute inset-0 animate-ping rounded-full motion-reduce:hidden" />
+                        <span className="bg-success-subtle absolute inset-0 animate-ping rounded-full motion-reduce:hidden" />
                         <span className="bg-success size-2.5 rounded-full" />
                       </>
                     ) : (
@@ -486,7 +486,7 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
               data-slot="punch-span"
               className={cn(
                 "absolute inset-y-0 rounded-full",
-                span.running ? "bg-success/80" : "bg-brand/70",
+                span.running ? "bg-success" : "bg-brand/70",
               )}
               style={{
                 left: `${span.start * 100}%`,

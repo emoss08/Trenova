@@ -54,11 +54,10 @@ export function SwitchField<T extends FieldValues>({
           className={cn(
             "group relative flex w-full items-start gap-2 rounded-md border border-transparent p-2.5 transition-all duration-300 ease-in-out",
             outlined &&
-              "border-input bg-field transition-[border-color,box-shadow,background-color] duration-200 ease-in-out has-data-checked:border-info has-data-checked:bg-info/10 has-data-checked:text-info-foreground has-data-checked:ring-4 has-data-checked:ring-info/20 dark:has-data-checked:text-info-foreground",
-            fieldState.error &&
-fieldInvalidClass,
+              "border-input bg-field transition-[border-color,box-shadow,background-color] duration-200 ease-in-out has-data-checked:border-info has-data-checked:bg-info-subtle has-data-checked:text-info-foreground has-data-checked:ring-4 has-data-checked:ring-info/20 dark:has-data-checked:text-info-foreground",
+            fieldState.error && fieldInvalidClass,
             warning?.show &&
-"ui-focus-ring border-warning bg-warning/10 ring-0 ring-warning placeholder:text-warning-foreground focus:outline-hidden",
+              "ui-focus-ring border-warning bg-warning-subtle ring-0 ring-warning placeholder:text-warning-foreground focus:outline-hidden",
             className,
           )}
         >
@@ -94,7 +93,7 @@ fieldInvalidClass,
                       <button
                         type="button"
                         aria-label={`About ${label}`}
- className="ui-focus-ring text-muted-foreground/70 hover:bg-muted hover:text-foreground inline-flex size-4 shrink-0 items-center justify-center rounded-sm transition-colors"
+                        className="ui-focus-ring text-muted-foreground/70 hover:bg-muted hover:text-foreground inline-flex size-4 shrink-0 items-center justify-center rounded-sm transition-colors"
                       >
                         <InfoIcon className="size-3" />
                       </button>

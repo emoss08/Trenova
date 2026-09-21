@@ -205,7 +205,7 @@ export function DispatchConsoleContent() {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex h-[calc(100vh-9.5rem)] min-h-135 flex-col gap-3">
+      <div className="flex min-h-135 flex-1 flex-col gap-3">
         <SummaryStrip
           summary={board?.summary}
           isLoading={isLoading}

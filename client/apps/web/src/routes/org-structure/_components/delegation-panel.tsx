@@ -110,10 +110,10 @@ export function DelegationPanel() {
       aria-labelledby="delegation-heading"
       className="bg-card overflow-hidden rounded-lg border"
     >
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
+      <header className="border-border flex min-h-9 flex-wrap items-center justify-between gap-2 border-b px-3 py-1.5">
         <div className="flex min-w-0 items-center gap-2">
           <HandshakeIcon className="text-muted-foreground size-3.5" aria-hidden />
-          <h3 id="delegation-heading" className="text-sm font-medium">
+          <h3 id="delegation-heading" className="text-sm font-semibold">
             {t("Approval cover")}
           </h3>
           <span className="text-muted-foreground hidden truncate text-xs md:inline">

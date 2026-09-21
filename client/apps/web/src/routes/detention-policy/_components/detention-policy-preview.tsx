@@ -130,7 +130,7 @@ function dwellSegments(result: PreviewResult, suppressed: boolean): Segment[] {
     {
       key: "rounding",
       minutes: uplift,
-      className: suppressed ? "bg-danger/30" : "bg-success/45",
+      className: suppressed ? "bg-danger-subtle" : "bg-success/45",
       legend: "Rounding",
     },
     {
@@ -203,8 +203,8 @@ function Signal({ tone, children }: { tone: "neutral" | "warn" | "bad"; children
       className={cn(
         "text-2xs inline-flex items-center rounded-md px-1.5 py-0.5 font-medium",
         tone === "neutral" && "bg-muted text-muted-foreground",
-        tone === "warn" && "bg-warning/15 text-warning-foreground",
-        tone === "bad" && "bg-danger/15 text-danger-foreground",
+        tone === "warn" && "bg-warning-subtle text-warning-foreground",
+        tone === "bad" && "bg-danger-subtle text-danger-foreground",
       )}
     >
       {children}

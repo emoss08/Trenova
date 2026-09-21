@@ -109,7 +109,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
       <section
         className={cn(
           "rounded-lg border p-4",
-          file.standing.status === "Prohibited" && "border-danger/60 bg-danger/5",
+          file.standing.status === "Prohibited" && "border-danger-border bg-danger-subtle",
         )}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -463,9 +463,7 @@ function Figure({ label, value, warn }: { label: string; value: string; warn?: b
   return (
     <div>
       <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd className={cn("font-medium tabular-nums", warn && "text-warning-foreground")}>
-        {value}
-      </dd>
+      <dd className={cn("font-medium tabular-nums", warn && "text-warning-foreground")}>{value}</dd>
     </div>
   );
 }

@@ -149,7 +149,7 @@ function FixtureForm({
                     <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => deleteMutation.mutate()}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      className="bg-destructive text-destructive-foreground hover:bg-danger-hover"
                     >
                       {t("Delete")}
                     </AlertDialogAction>

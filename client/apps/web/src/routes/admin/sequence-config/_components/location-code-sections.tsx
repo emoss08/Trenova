@@ -89,7 +89,7 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
                             className={cn(
                               "group flex items-center gap-3 rounded-md border px-3 py-2 text-left text-sm transition-colors",
                               isSelected
-                                ? "border-info/40 bg-info/15 text-info-foreground"
+                                ? "border-info-border bg-info-subtle text-info-foreground"
                                 : "border-input bg-background text-foreground hover:bg-muted",
                             )}
                           >
@@ -97,7 +97,7 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
                               className={cn(
                                 "flex size-7 shrink-0 items-center justify-center rounded-md border",
                                 isSelected
-                                  ? "border-info/30 bg-info/15 text-info-foreground"
+                                  ? "border-info-border bg-info-subtle text-info-foreground"
                                   : "border-border bg-muted/50 text-muted-foreground",
                               )}
                             >

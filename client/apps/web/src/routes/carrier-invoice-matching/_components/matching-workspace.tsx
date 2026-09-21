@@ -223,7 +223,7 @@ export default function MatchingWorkspace() {
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
       {settlementControl && (
         <p
           data-testid="carrier-match-automation-status"
@@ -256,7 +256,7 @@ export default function MatchingWorkspace() {
         <KpiStripItem label={t("Suggested matches")} value={String(suggestedCount)} />
         <KpiStripItem label={t("Resolved")} value={String(resolvedCount)} />
       </KpiStrip>
-      <div className="grid h-[calc(100vh-260px)] min-h-120 gap-0 overflow-hidden rounded-lg border md:grid-cols-[340px_1fr]">
+      <div className="border-border bg-card grid min-h-120 flex-1 gap-0 overflow-hidden rounded-lg border md:grid-cols-[340px_1fr]">
         <div className="flex h-full min-h-0 flex-col overflow-hidden border-r">
           <div className="flex flex-col gap-2 border-b p-2">
             <div className="flex gap-1">

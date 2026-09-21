@@ -123,9 +123,9 @@ export function CadenceToggleChip({
       className={cn(
         "inline-flex h-6 items-center gap-1 rounded-md border px-2 text-xs font-medium",
         "transition-[border-color,background-color,color] duration-150",
-"ui-focus-ring",
+        "ui-focus-ring",
         active
-          ? "border-info bg-info/10 text-info-foreground"
+          ? "border-info bg-info-subtle text-info-foreground"
           : "border-input text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground",
       )}
     >

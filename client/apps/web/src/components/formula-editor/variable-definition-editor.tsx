@@ -86,11 +86,8 @@ export function VariableDefinitionEditor({
     <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
         <div className="flex items-center gap-2">
-          <div className="bg-primary/10 flex size-8 items-center justify-center rounded-lg">
-            <Variable className="text-primary size-4" />
-          </div>
           <div>
-            <CardTitle className="text-sm font-medium">{t("Custom variables")}</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t("Custom variables")}</CardTitle>
             <p className="text-muted-foreground text-xs">
               {t("Define additional variables for your formula")}
             </p>
@@ -249,7 +246,7 @@ function VariableDefinitionRow({
           size="sm"
           onClick={onRemove}
           aria-label={t("Remove variable")}
-          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+          className="text-muted-foreground hover:bg-danger-subtle hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
         >
           <Trash2 className="size-4" />
         </Button>

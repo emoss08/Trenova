@@ -117,7 +117,7 @@ function StepDot({ state }: { state: StepState }) {
           state === "complete" && "border-success bg-success",
           state === "active" && "border-foreground/25",
           state === "pending" && "border-border",
-          state === "error" && "border-destructive/50 bg-destructive/10",
+          state === "error" && "border-danger-border bg-danger-subtle",
         )}
       >
         {state === "complete" && (

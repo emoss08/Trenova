@@ -207,9 +207,7 @@ function LaneRow({
         </div>
       </div>
 
-      {issue && (
-        <p className="bg-destructive/10 text-destructive rounded-sm p-2 text-xs">{issue}</p>
-      )}
+      {issue && <p className="bg-danger-subtle text-destructive rounded-sm p-2 text-xs">{issue}</p>}
 
       <FormGroup cols={2}>
         <FormControl>

@@ -81,7 +81,7 @@ export function CancelFuelCardDialog({
             }}
           >
             <AlertDialogHeader>
-              <AlertDialogMedia className="bg-destructive/10 text-destructive">
+              <AlertDialogMedia className="bg-danger-subtle text-destructive">
                 <BanIcon />
               </AlertDialogMedia>
               <AlertDialogTitle>

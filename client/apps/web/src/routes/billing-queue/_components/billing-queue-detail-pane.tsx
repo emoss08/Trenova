@@ -246,7 +246,7 @@ function AdjustmentOriginBanner({
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="mx-4 mt-2 shrink-0 overflow-hidden rounded-lg border border-info/20 bg-info/5">
+    <div className="mx-4 mt-2 shrink-0 overflow-hidden rounded-lg border border-info-border bg-info-subtle">
       <button
         type="button"
         className="flex w-full items-center gap-2.5 px-3 py-2 text-left"
@@ -258,12 +258,12 @@ function AdjustmentOriginBanner({
             {t("Adjustment-origin rebill")}
           </span>
           {rebillStrategy ? (
-            <span className="text-2xs rounded-md bg-info/10 px-1.5 py-0.5 font-medium text-info-foreground">
+            <span className="text-2xs rounded-md bg-info-subtle px-1.5 py-0.5 font-medium text-info-foreground">
               {rebillStrategy}
             </span>
           ) : null}
           {requiresReplacementReview ? (
-            <span className="text-2xs rounded-md bg-warning/10 px-1.5 py-0.5 font-medium text-warning-foreground">
+            <span className="text-2xs rounded-md bg-warning-subtle px-1.5 py-0.5 font-medium text-warning-foreground">
               {t("Review required")}
             </span>
           ) : null}
@@ -296,7 +296,7 @@ function AdjustmentOriginBanner({
         </div>
       </button>
       {expanded ? (
-        <div className="border-t border-info/10 px-3 py-2">
+        <div className="border-t border-info-border px-3 py-2">
           <div className="text-2xs flex flex-wrap gap-x-5 gap-y-1">
             {sourceInvoiceAdjustmentId ? (
               <span className="text-muted-foreground">

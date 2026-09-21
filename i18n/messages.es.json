@@ -3192,6 +3192,7 @@
   "Choose who it binds": "Elija a quién obliga",
   "Chosen for this agent": "Elegida para este agente",
   "Chosen on {0}.": "Elegido el {0}.",
+  "Chosen tools": "Herramientas elegidas",
   "Chosen tools run on their own": "Las herramientas elegidas se ejecutan por sí solas",
   "Circle": "Círculo",
   "Circular reference detected in account hierarchy": "Se detectó una referencia circular en la jerarquía de cuentas",

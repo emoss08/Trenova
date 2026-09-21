@@ -235,7 +235,7 @@ export default function AdditionalChargesSection() {
                     key={field.fieldId}
                     className={cn(
                       "grid grid-cols-10 items-center gap-2 px-4 py-2",
-                      hasErrors && "bg-destructive/10 ring-destructive ring-1 ring-inset",
+                      hasErrors && "bg-danger-subtle ring-destructive ring-1 ring-inset",
                     )}
                   >
                     <span className="col-span-4 flex items-center gap-1.5 truncate text-xs font-medium">
@@ -275,7 +275,7 @@ export default function AdditionalChargesSection() {
                               onClick={() =>
                                 setValue("fuelSurchargeLocked", false, { shouldDirty: true })
                               }
-                              className="text-2xs flex items-center gap-1 rounded-md bg-warning/10 px-1 py-0.5 text-warning-foreground"
+                              className="text-2xs flex items-center gap-1 rounded-md bg-warning-subtle px-1 py-0.5 text-warning-foreground"
                             >
                               <LockIcon className="size-2.5" />
                               {t("Locked")}

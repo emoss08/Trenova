@@ -334,7 +334,7 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
         }),
         Mention.configure({
           HTMLAttributes: {
-            class: "rounded-md bg-info/10 px-0.5 font-medium text-info-foreground",
+            class: "rounded-md bg-info-subtle px-0.5 font-medium text-info-foreground",
           },
           deleteTriggerWithBackspace: true,
           suggestion: {

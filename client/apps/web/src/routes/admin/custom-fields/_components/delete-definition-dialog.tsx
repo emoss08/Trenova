@@ -93,7 +93,7 @@ export function DeleteDefinitionDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia
-            className={hasExistingValues ? "bg-destructive/10 text-destructive" : ""}
+            className={hasExistingValues ? "bg-danger-subtle text-destructive" : ""}
           >
             {hasExistingValues ? <AlertTriangleIcon /> : <TrashIcon />}
           </AlertDialogMedia>

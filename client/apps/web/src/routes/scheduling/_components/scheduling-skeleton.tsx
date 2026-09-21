@@ -119,7 +119,7 @@ function AttentionSkeleton() {
 
   return (
     <section aria-label={t("Needs a look")} className="bg-card overflow-hidden rounded-lg border">
-      <header className="flex items-center justify-between gap-2 border-b px-3 py-2">
+      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
         <div className="flex items-center gap-2">
           <Skeleton className="size-3.5 rounded-sm" />
           <Skeleton className="h-3.5 w-24" />

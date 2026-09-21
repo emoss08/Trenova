@@ -101,7 +101,6 @@ export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorP
         </Button>
       }
     >
-
       {roleAssignments.length === 0 ? (
         <div className="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm">
           {t("No roles assigned to this user.")}
@@ -173,7 +172,7 @@ function RoleAssignmentRow({ assignment, isDisabled, onUnassign }: RoleAssignmen
           type="button"
           size="icon-sm"
           variant="ghost"
-          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          className="text-destructive hover:bg-danger-subtle hover:text-destructive"
           onClick={onUnassign}
           disabled={isDisabled}
         >

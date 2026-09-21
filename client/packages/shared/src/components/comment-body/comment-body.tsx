@@ -46,7 +46,7 @@ function attrString(node: BodyNode, key: string): string {
 
 function defaultMention(attrs: CommentBodyMentionAttrs, key: string): ReactNode {
   return (
-    <span key={key} className="rounded-md bg-info/10 px-0.5 font-medium text-info-foreground">
+    <span key={key} className="rounded-md bg-info-subtle px-0.5 font-medium text-info-foreground">
       @{translate(attrs.label)}
     </span>
   );

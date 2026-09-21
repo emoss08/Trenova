@@ -160,7 +160,7 @@ function ProgramCard({
               event.stopPropagation();
               onDelete();
             }}
-            className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-7 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+            className="text-muted-foreground hover:bg-danger-subtle hover:text-destructive size-7 p-0 opacity-0 transition-opacity group-hover:opacity-100"
           >
             <Trash2 className="size-3.5" />
           </Button>
@@ -248,7 +248,7 @@ function DeleteProgramDialog({
               event.preventDefault();
               if (target) remove(target.program.id);
             }}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="bg-destructive text-destructive-foreground hover:bg-danger-hover"
           >
             {isPending ? t("Deleting...") : t("Delete")}
           </AlertDialogAction>

@@ -43,7 +43,7 @@ function SelectTrigger({
       className={cn(
         "ui-field data-[placeholder]:text-muted-foreground",
         "ui-focus-ring aria-invalid:border-danger aria-invalid:[--ring:var(--ring-danger)]",
-        "gap-1.5 py-1 pr-2 pl-2 text-sm aria-invalid:border-destructive dark:aria-invalid:border-destructive/50",
+        "gap-1.5 py-1 pr-2 pl-2 text-sm aria-invalid:border-destructive dark:aria-invalid:border-danger-border",
         "select-none data-[size=default]:h-7 data-[size=sm]:h-6 ",
         "flex w-fit items-center justify-between whitespace-nowrap *:data-[slot=select-value]:flex *:data-[slot=select-value]:gap-1.5 [&_svg:not([class*='size-'])]:size-4",
         "outline-none disabled:cursor-not-allowed disabled:opacity-60 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center",

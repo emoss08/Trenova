@@ -247,7 +247,7 @@ export function ErrorState({ label, compact }: { label: string; compact?: boolea
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-lg border border-danger/30 bg-danger/10 text-sm text-danger-foreground",
+        "flex items-center gap-2 rounded-lg border border-danger-border bg-danger-subtle text-sm text-danger-foreground",
         compact ? "m-3 p-3" : "p-4",
       )}
     >

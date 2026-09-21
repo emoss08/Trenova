@@ -144,10 +144,10 @@ export const NOTIFICATION_STATUS_LABEL: Record<DetentionNotificationStatus, stri
 };
 
 export const SCORE_BAND_STYLES: Record<ScoreBand, string> = {
-  Strong: "bg-success/15 text-success-foreground",
+  Strong: "bg-success-subtle text-success-foreground",
   Adequate: "bg-accent-sky/15 text-accent-sky-on-subtle",
-  Weak: "bg-warning/15 text-warning-foreground",
-  AtRisk: "bg-danger/15 text-danger-foreground",
+  Weak: "bg-warning-subtle text-warning-foreground",
+  AtRisk: "bg-danger-subtle text-danger-foreground",
 };
 
 /** Maps a 0-100 collectability score onto its qualitative band. */
@@ -194,12 +194,12 @@ export const NOTICE_DELIVERY_DOT: Record<NoticeDeliveryStatus, string> = {
 };
 
 export const OCCURRENCE_STATUS_STYLES: Record<OccurrenceStatus, string> = {
-  Accruing: "bg-danger/15 text-danger-foreground",
-  Pending: "bg-warning/15 text-warning-foreground",
-  Approved: "bg-success/15 text-success-foreground",
+  Accruing: "bg-danger-subtle text-danger-foreground",
+  Pending: "bg-warning-subtle text-warning-foreground",
+  Approved: "bg-success-subtle text-success-foreground",
   Billed: "bg-accent-sky/15 text-accent-sky-on-subtle",
   Waived: "bg-muted text-muted-foreground",
-  Disputed: "bg-warning/15 text-warning-foreground",
+  Disputed: "bg-warning-subtle text-warning-foreground",
   NotBillable: "bg-muted text-muted-foreground",
 };
 

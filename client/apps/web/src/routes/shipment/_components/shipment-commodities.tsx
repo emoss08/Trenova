@@ -353,8 +353,10 @@ export default function CommoditiesSection() {
                     className={cn(
                       "grid items-center gap-2 px-4 py-2",
                       showDimensions ? "grid-cols-12" : "grid-cols-10",
-                      hasErrors && "bg-destructive/10 ring-destructive ring-1 ring-inset",
-                      !hasErrors && isDuplicate && "bg-warning/20 ring-warning ring-1 ring-inset",
+                      hasErrors && "bg-danger-subtle ring-destructive ring-1 ring-inset",
+                      !hasErrors &&
+                        isDuplicate &&
+                        "bg-warning-subtle ring-warning ring-1 ring-inset",
                     )}
                   >
                     <div

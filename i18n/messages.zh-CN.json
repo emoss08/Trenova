@@ -3192,6 +3192,7 @@
   "Choose who it binds": "选择其约束对象",
   "Chosen for this agent": "已为该代理选定",
   "Chosen on {0}.": "于 {0} 选定。",
+  "Chosen tools": "已选择的工具",
   "Chosen tools run on their own": "所选工具自主执行",
   "Circle": "圆形",
   "Circular reference detected in account hierarchy": "检测到科目层级中存在循环引用",

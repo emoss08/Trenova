@@ -79,11 +79,13 @@ const PRIORITY_INDICATOR: Record<CommentPriority, { icon: string; className: str
   Normal: null,
   High: {
     icon: "▲",
-    className: "border-warning bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
+    className:
+      "border-warning bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
   },
   Urgent: {
     icon: "!",
-    className: "border-danger bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
+    className:
+      "border-danger bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
   },
 };
 
@@ -147,7 +149,7 @@ export function CommentItem({
       className={cn(
         "group/comment hover:bg-muted/50 flex items-start gap-3 rounded-lg px-2 py-2.5 transition-colors",
         comment.pending && "opacity-60",
-        comment.failed && "bg-danger/5",
+        comment.failed && "bg-danger-subtle",
         highlighted && "animate-comment-highlight",
       )}
     >
@@ -193,7 +195,9 @@ export function CommentItem({
           )}
           {isPinned && (
             <Tooltip>
-              <TooltipTrigger render={<PinIcon className="size-3 shrink-0 text-warning-foreground" />} />
+              <TooltipTrigger
+                render={<PinIcon className="size-3 shrink-0 text-warning-foreground" />}
+              />
               <TooltipContent side="top">
                 {t(
                   "Pinned{0}",
@@ -237,7 +241,9 @@ export function CommentItem({
 
         {comment.failed && (
           <div className="mt-1.5 flex items-center gap-2">
-            <span className="text-2xs font-medium text-danger-foreground">{t("Failed to send")}</span>
+            <span className="text-2xs font-medium text-danger-foreground">
+              {t("Failed to send")}
+            </span>
             <Button
               type="button"
               variant="outline"

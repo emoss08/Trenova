@@ -36,7 +36,7 @@ const VACANT_ROW_COUNT = 2;
 
 function PanelHeaderSkeleton({ titleWidth, right }: { titleWidth: string; right?: string }) {
   return (
-    <header className="flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
+    <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
       <div className="flex items-center gap-2">
         <Skeleton className="size-3.5 rounded-sm" />
         <Skeleton className={cn("h-3.5", titleWidth)} />
@@ -126,7 +126,7 @@ function CoverSkeleton() {
 
   return (
     <section aria-label={t("Approval cover")} className="bg-card overflow-hidden rounded-lg border">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
+      <header className="border-border flex min-h-9 flex-wrap items-center justify-between gap-2 border-b px-3 py-1.5">
         <div className="flex items-center gap-2">
           <Skeleton className="size-3.5 rounded-sm" />
           <Skeleton className="h-3.5 w-24" />

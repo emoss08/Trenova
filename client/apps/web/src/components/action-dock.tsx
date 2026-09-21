@@ -80,9 +80,7 @@ export function ActionDockIndicator({
 }) {
   return (
     <div className="flex items-center gap-x-3">
-      {icon ?? (
-        <CircleAlert className="rounded-full bg-warning/10 text-warning-foreground" />
-      )}
+      {icon ?? <CircleAlert className="rounded-full bg-warning-subtle text-warning-foreground" />}
       <div className="flex flex-col">
         <span className="text-background text-sm font-medium">{title}</span>
         <span className="text-2xs text-background/80">{description}</span>

@@ -14,6 +14,7 @@ export function DispatchConsolePage() {
 
   return (
     <PageLayout
+      fill
       pageHeaderProps={{
         title: t("Console"),
         description: t("Cover open moves against available capacity without opening a shipment"),

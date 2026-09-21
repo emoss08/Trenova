@@ -58,8 +58,8 @@ function RiskChip({ tone, children }: { tone: "warn" | "bad" | "neutral"; childr
       className={cn(
         "text-2xs inline-flex items-center rounded-md px-1.5 py-0.5 font-medium",
         tone === "neutral" && "bg-muted text-muted-foreground",
-        tone === "warn" && "bg-warning/15 text-warning-foreground",
-        tone === "bad" && "bg-danger/15 text-danger-foreground",
+        tone === "warn" && "bg-warning-subtle text-warning-foreground",
+        tone === "bad" && "bg-danger-subtle text-danger-foreground",
       )}
     >
       {children}
@@ -180,13 +180,7 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground font-medium">{t("Revenue change")}</p>
-              <p
-                className={cn(
-                  "mt-1",
-                  KPI_VALUE_LG_CLASS,
-                  deltaToneClass(result.revenueDelta),
-                )}
-              >
+              <p className={cn("mt-1", KPI_VALUE_LG_CLASS, deltaToneClass(result.revenueDelta))}>
                 {formatSignedCurrency(result.revenueDelta)}
               </p>
             </div>
@@ -373,7 +367,7 @@ export function DetentionBacktest() {
         <button
           type="button"
           onClick={run}
-          className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-left transition-colors hover:bg-warning/15"
+          className="flex items-center gap-2 rounded-lg border border-warning-border bg-warning-subtle px-3 py-2 text-left transition-colors hover:bg-warning-subtle"
         >
           <TriangleAlertIcon className="size-3.5 shrink-0 text-warning-foreground" />
           <span className="text-xs">

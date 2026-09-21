@@ -100,7 +100,7 @@ export function ShipmentsPage() {
                   minute: "2-digit",
                   second: "2-digit",
                 })}`}
-                className="border-success/25 bg-success/10 font-table text-success inline-flex h-5 items-center gap-1 rounded-md border px-1.5 text-2xs tabular-nums"
+                className="border-success-border bg-success-subtle font-table text-success inline-flex h-5 items-center gap-1 rounded-md border px-1.5 text-2xs tabular-nums"
               >
                 <span className="bg-success size-1 rounded-full" />
                 {t("Live · {0}", formattedCount)}

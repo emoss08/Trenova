@@ -208,7 +208,7 @@ export function LocationGeofenceControls({ className }: { className?: string }) 
             className={cn(
               "flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors",
               isActive
-                ? "border-info/40 bg-info/15 text-info-foreground"
+                ? "border-info-border bg-info-subtle text-info-foreground"
                 : "border-border bg-background text-foreground hover:bg-muted",
             )}
           >
@@ -384,7 +384,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
       )}
 
       {errorMessages.length > 0 && (
-        <div className="pointer-events-none absolute top-3 left-3 max-w-sm rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger-foreground backdrop-blur">
+        <div className="pointer-events-none absolute top-3 left-3 max-w-sm rounded-md border border-danger-border bg-danger-subtle px-3 py-2 text-xs text-danger-foreground backdrop-blur">
           {errorMessages[0]}
         </div>
       )}

@@ -78,7 +78,7 @@ function ChatMessage({ comment }: { comment: PortalLoadComment }) {
             isMine
               ? "self-end rounded-br-md bg-primary text-primary-foreground"
               : "rounded-bl-md bg-muted",
-            urgent && !isMine && "border border-warning/40 bg-warning/10",
+            urgent && !isMine && "border border-warning-border bg-warning-subtle",
           )}
         >
           {comment.comment}

@@ -191,10 +191,10 @@ function BandCell({
             "placeholder:text-muted-foreground/50",
             "transition-[border-color,box-shadow,background-color] duration-150 ease-in-out",
             "hover:bg-muted/70",
-"ui-focus-ring focus-visible:bg-background",
+            "ui-focus-ring focus-visible:bg-background",
             "disabled:cursor-not-allowed disabled:opacity-50",
             fieldState.invalid &&
-"ui-focus-ring [--ring:var(--ring-danger)] border-danger/60 bg-danger/10",
+              "ui-focus-ring [--ring:var(--ring-danger)] border-danger-border bg-danger-subtle",
           )}
         />
       )}
@@ -298,7 +298,7 @@ const BandRow = memo(function BandRow({
             onClick={() => onRemove(index)}
             disabled={disabled}
             title={t("Delete this band")}
-            className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-7 p-0"
+            className="text-muted-foreground hover:bg-danger-subtle hover:text-destructive size-7 p-0"
           >
             <Trash2 className="size-3.5" />
           </Button>
@@ -347,7 +347,7 @@ function RowsErrorBanner({ control }: { control: Control<FuelSurchargeProgramFor
   if (!message) return null;
 
   return (
-    <p className="flex items-center gap-1.5 border-b bg-danger/5 px-4 py-2 text-xs text-danger-foreground">
+    <p className="flex items-center gap-1.5 border-b bg-danger-subtle px-4 py-2 text-xs text-danger-foreground">
       <CircleAlert className="size-3.5 shrink-0" />
       {message}
     </p>
@@ -384,8 +384,8 @@ function IssuesStrip({
             className={cn(
               "flex items-center justify-between gap-3 px-4 py-2 text-xs",
               issue.severity === "error"
-                ? "bg-danger/5 text-danger-foreground"
-                : "bg-warning/5 text-warning-foreground",
+                ? "bg-danger-subtle text-danger-foreground"
+                : "bg-warning-subtle text-warning-foreground",
             )}
           >
             <span className="flex items-center gap-1.5">
@@ -460,9 +460,7 @@ function FooterSummary({
           {t("This week's price:")}{" "}
           <span className="font-medium tabular-nums">{money(currentPrice, 3)}</span>
           {uncovered && (
-            <span className="ml-1 text-warning-foreground">
-              {t("— no band covers it")}
-            </span>
+            <span className="ml-1 text-warning-foreground">{t("— no band covers it")}</span>
           )}
         </span>
       )}
@@ -621,11 +619,8 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
     <Card className="gap-0 p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
         <div className="flex items-center gap-2">
-          <div className="bg-primary/10 flex size-8 items-center justify-center rounded-lg">
-            <Table2 className="text-primary size-4" />
-          </div>
           <div>
-            <CardTitle className="text-sm font-medium">{t("Price band table")}</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t("Price band table")}</CardTitle>
             <p className="text-muted-foreground text-xs">
               {t(
                 "Read each row as: when fuel costs at least “from” and less than “up to”, {0}.",

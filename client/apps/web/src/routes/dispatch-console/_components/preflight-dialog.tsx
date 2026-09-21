@@ -43,17 +43,17 @@ const VERDICT_BANNER: Record<
 > = {
   feasible: {
     Icon: CircleCheckIcon,
-    panelClass: "bg-success/10",
+    panelClass: "bg-success-subtle",
     iconClass: "text-success-foreground",
   },
   tight: {
     Icon: TriangleAlertIcon,
-    panelClass: "bg-warning/10",
+    panelClass: "bg-warning-subtle",
     iconClass: "text-warning-foreground",
   },
   infeasible: {
     Icon: OctagonXIcon,
-    panelClass: "bg-danger/10",
+    panelClass: "bg-danger-subtle",
     iconClass: "text-danger-foreground",
   },
   unknown: {
@@ -251,9 +251,7 @@ export function PreflightDialog({
           <ScrollArea className="max-h-[55vh]">
             <div className="flex flex-col gap-3.5 px-5 py-4">
               {banner && verdict && lead ? (
-                <div
-                  className={cn("flex items-start gap-2.5 rounded-md p-3", banner.panelClass)}
-                >
+                <div className={cn("flex items-start gap-2.5 rounded-md p-3", banner.panelClass)}>
                   <banner.Icon
                     className={cn("mt-px size-4 shrink-0", banner.iconClass)}
                     aria-hidden
@@ -267,9 +265,7 @@ export function PreflightDialog({
                 </div>
               ) : null}
 
-              <div
-                className="divide-border border-border grid grid-cols-3 divide-x rounded-md border"
-              >
+              <div className="divide-border border-border grid grid-cols-3 divide-x rounded-md border">
                 <Stat value={formatMiles(data.score.deadheadMiles)} label={t("Empty miles")} />
                 <Stat
                   value={formatClockDurationMs(data.score.driveRemainingMs)}

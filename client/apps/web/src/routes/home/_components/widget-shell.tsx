@@ -103,10 +103,10 @@ export function WidgetCount({
 
   const toneClass = {
     muted: "bg-muted text-muted-foreground",
-    danger: "bg-destructive/12 text-destructive",
-    warning: "bg-warning/15 text-warning",
+    danger: "bg-danger-subtle text-destructive",
+    warning: "bg-warning-subtle text-warning",
     brand: "bg-brand/15 text-brand",
-    success: "bg-success/15 text-success",
+    success: "bg-success-subtle text-success",
   }[tone];
 
   return (

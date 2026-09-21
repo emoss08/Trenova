@@ -140,7 +140,7 @@ export function PTOLiabilityDialog({
                             className={cn(
                               "px-1.5 py-0 text-2xs",
                               row.onTermination === "PayOut"
-                                ? "border-warning/40 text-warning-foreground"
+                                ? "border-warning-border text-warning-foreground"
                                 : "text-muted-foreground",
                             )}
                           >

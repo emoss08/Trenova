@@ -62,7 +62,9 @@ export function OshaSummaryCard({
             ) : summary ? (
               <Badge variant="neutral">{t("Draft")}</Badge>
             ) : (
-              <Badge variant="neutral" appearance="outline">{t("Not started")}</Badge>
+              <Badge variant="neutral" appearance="outline">
+                {t("Not started")}
+              </Badge>
             )}
           </div>
           <p className="text-muted-foreground mt-0.5 text-xs">
@@ -217,7 +219,7 @@ export function OshaSummaryCard({
               ) : null}
               {holdReason ? (
                 <p id="osha-certify-hold" className="flex items-center gap-1.5">
-                  <FormMark className="text-warning-foreground border-warning/40 bg-warning/15">
+                  <FormMark className="text-warning-foreground border-warning-border bg-warning-subtle">
                     {t("Held")}
                   </FormMark>
                   <span>{holdReason}</span>

@@ -298,7 +298,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
           />
         </FieldWrapper>
         <FormGroup cols={2}>
-          <FormControl>
+          <FormControl cols="full">
             <SelectField
               name="decisionTimeoutSeconds"
               control={control}
@@ -313,7 +313,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
               )}
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <SwitchField
               name="shadowMode"
               control={control}
@@ -452,7 +452,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
         )}
       >
         <FormGroup cols={2}>
-          <FormControl>
+          <FormControl cols="full">
             <SelectField
               name="preferredProviderId"
               control={control}
@@ -463,7 +463,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
               description={t("Tried first. Automatic follows the routing on the Providers tab.")}
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <FieldWrapper
               label={t("Replies as")}
               description={t("A conversation answers in prose; a report in sections.")}

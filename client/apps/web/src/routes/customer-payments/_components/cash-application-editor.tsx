@@ -95,7 +95,7 @@ export function CashApplicationEditor({
                     key={row.invoiceId}
                     className={cn(
                       "transition-colors",
-                      isOverApplied && "bg-danger/5",
+                      isOverApplied && "bg-danger-subtle",
                       !row.checked && "opacity-60",
                     )}
                   >
@@ -169,7 +169,7 @@ export function CashApplicationEditor({
       <div
         className={cn(
           "bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2",
-          totals.isOverBudget && "border-danger/50 bg-danger/5",
+          totals.isOverBudget && "border-danger-border bg-danger-subtle",
         )}
       >
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs">

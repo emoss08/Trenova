@@ -175,11 +175,7 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
           >
             <span
               aria-hidden
-              className={cn(
-                "size-1.5 rounded-full",
-                HEALTH_DOT_CLASS[health.tone],
-                health.tone === "success" && "animate-pulse",
-              )}
+              className={cn("size-1.5 rounded-full", HEALTH_DOT_CLASS[health.tone])}
             />
             {t(health.label)}
           </span>

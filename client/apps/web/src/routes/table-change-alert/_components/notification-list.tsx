@@ -125,7 +125,7 @@ export default function NotificationList() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-16">
-        <InboxIcon className="text-muted-foreground/40 size-6 animate-pulse" />
+        <InboxIcon className="text-muted-foreground/40 size-6" />
         <p className="text-muted-foreground text-sm">{t("Loading notifications...")}</p>
       </div>
     );

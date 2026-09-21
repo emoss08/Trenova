@@ -229,7 +229,7 @@ function Notice({
       role={tone === "danger" ? "alert" : "status"}
       className={cn(
         "flex gap-2 rounded-lg border px-3 py-2 text-xs",
-        tone === "danger" ? "border-destructive/40 bg-destructive/5" : "bg-muted/40",
+        tone === "danger" ? "border-danger-border bg-danger-subtle" : "bg-muted/40",
       )}
     >
       <Icon
@@ -298,11 +298,7 @@ function DocumentChips({ item }: { item: BillingTransferRunItem }) {
         <div className="flex flex-wrap items-center gap-1">
           <span className="text-muted-foreground text-xs">{t("Missing documents:")}</span>
           {item.missingRequirements.map((requirement) => (
-            <Badge
-              key={requirement.documentTypeId}
-              variant="outline"
-              className="max-h-5 text-2xs"
-            >
+            <Badge key={requirement.documentTypeId} variant="outline" className="max-h-5 text-2xs">
               {requirement.documentTypeName}
             </Badge>
           ))}

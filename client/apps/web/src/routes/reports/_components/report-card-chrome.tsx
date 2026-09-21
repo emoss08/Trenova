@@ -19,12 +19,12 @@ type CategoryChrome = {
 };
 
 const CATEGORY_CHROME: Record<string, CategoryChrome> = {
-  operations: { icon: TruckIcon, tile: "bg-info/10 text-info-foreground" },
+  operations: { icon: TruckIcon, tile: "bg-info-subtle text-info-foreground" },
   billing: {
     icon: ReceiptTextIcon,
-    tile: "bg-success/10 text-success-foreground",
+    tile: "bg-success-subtle text-success-foreground",
   },
-  compliance: { icon: ShieldCheckIcon, tile: "bg-warning/10 text-warning-foreground" },
+  compliance: { icon: ShieldCheckIcon, tile: "bg-warning-subtle text-warning-foreground" },
   fleet: { icon: WrenchIcon, tile: "bg-accent-violet/10 text-accent-violet-on-subtle" },
 };
 
@@ -66,9 +66,7 @@ export function CategoryGroupHeader({
 
   return (
     <div className="flex items-center gap-2">
-      <h2 className="text-muted-foreground text-xs font-semibold">
-        {label}
-      </h2>
+      <h2 className="text-muted-foreground text-xs font-semibold">{label}</h2>
       <span className="text-2xs text-muted-foreground/70 tabular-nums">
         {count} {count === 1 ? noun : t("{0}s", noun)}
       </span>
@@ -113,9 +111,7 @@ export function ReportGridEmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div
-      className="border-border col-span-full flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-16"
-    >
+    <div className="border-border col-span-full flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-16">
       <div className="bg-muted flex size-10 items-center justify-center rounded-lg">
         <Icon className="text-muted-foreground size-5" strokeWidth={1.75} />
       </div>

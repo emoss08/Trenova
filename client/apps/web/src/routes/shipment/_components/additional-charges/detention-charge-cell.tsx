@@ -32,7 +32,7 @@ function detentionRisk(occurrence: DetentionOccurrence): DetentionRisk | null {
       detail: translate(
         "No qualifying notice reached the customer inside the policy window — they have grounds to refuse this charge.",
       ),
-      className: "bg-danger/10 text-danger-foreground",
+      className: "bg-danger-subtle text-danger-foreground",
     };
   }
 
@@ -43,7 +43,7 @@ function detentionRisk(occurrence: DetentionOccurrence): DetentionRisk | null {
       detail: translate(
         "This charge is over the policy approval threshold and cannot be billed until cleared.",
       ),
-      className: "bg-warning/10 text-warning-foreground",
+      className: "bg-warning-subtle text-warning-foreground",
     };
   }
 
@@ -54,7 +54,7 @@ function detentionRisk(occurrence: DetentionOccurrence): DetentionRisk | null {
       detail: translate(
         "The customer has rejected this charge. Work the claim before it is invoiced.",
       ),
-      className: "bg-warning/10 text-warning-foreground",
+      className: "bg-warning-subtle text-warning-foreground",
     };
   }
 

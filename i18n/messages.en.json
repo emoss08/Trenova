@@ -29575,6 +29575,15 @@
       "routes/shipment"
     ]
   },
+  "Chosen tools": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Chosen tools run on their own": {
     "sites": 1,
     "scope": [
@@ -33768,7 +33777,7 @@
     ]
   },
   "Configure resource access and operations": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -52802,7 +52811,7 @@
     ]
   },
   "Earliest feasible pickup": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -56551,7 +56560,7 @@
     ]
   },
   "Escort vehicles": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -66374,7 +66383,7 @@
     ]
   },
   "From the last two years of events": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -89962,7 +89971,7 @@
     ]
   },
   "Movement restrictions": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -163504,7 +163513,7 @@
     ]
   },
   "Tools": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],

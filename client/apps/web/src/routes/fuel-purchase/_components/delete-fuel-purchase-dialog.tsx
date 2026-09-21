@@ -54,7 +54,7 @@ export function DeleteFuelPurchaseDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogMedia className="bg-destructive/10 text-destructive">
+          <AlertDialogMedia className="bg-danger-subtle text-destructive">
             <Trash2Icon />
           </AlertDialogMedia>
           <AlertDialogTitle>{t("Delete this fuel purchase?")}</AlertDialogTitle>

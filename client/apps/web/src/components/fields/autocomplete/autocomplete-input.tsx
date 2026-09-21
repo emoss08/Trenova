@@ -49,8 +49,7 @@ export function AutocompleteTrigger<TOption>({
         "h-7 w-full gap-2 px-1.5 text-xs font-normal",
         "cursor-default justify-between [&_svg]:size-3",
         disabled && "cursor-not-allowed opacity-50",
-        isInvalid &&
-fieldInvalidClass,
+        isInvalid && fieldInvalidClass,
         triggerClassName,
       )}
       disabled={disabled}
@@ -102,7 +101,7 @@ export function AutocompleteInputInner<TOption>({
   if (currentValue && isLoadingSelected) {
     return (
       <div className="truncate">
-        <span className="text-muted-foreground animate-pulse">{t("Loading...")}</span>
+        <span className="text-muted-foreground">{t("Loading...")}</span>
       </div>
     );
   }
@@ -117,7 +116,9 @@ export function AutocompleteInputInner<TOption>({
 
   return (
     <div className="truncate">
-      <p className={cn("text-muted-foreground", isInvalid && "text-danger-foreground")}>{placeholder}</p>
+      <p className={cn("text-muted-foreground", isInvalid && "text-danger-foreground")}>
+        {placeholder}
+      </p>
     </div>
   );
 }

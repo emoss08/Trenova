@@ -223,7 +223,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Settings")}</DialogTitle>
           <DialogDescription>{t("Manage your preferences and security.")}</DialogDescription>

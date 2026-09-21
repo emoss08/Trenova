@@ -33,9 +33,7 @@ export function AxleWeightDisplay({
   return (
     <div className="border-border rounded-lg border p-3">
       <div className="mb-2.5 flex items-center justify-between">
-        <span className="text-xs text-muted-foreground font-medium">
-          {t("Axle weights")}
-        </span>
+        <span className="text-xs text-muted-foreground font-medium">{t("Axle weights")}</span>
         <span
           className={cn("text-xs font-semibold tabular-nums", isOverweight && "text-destructive")}
         >
@@ -48,7 +46,7 @@ export function AxleWeightDisplay({
             key={axle.axle}
             className={cn(
               "rounded-md border px-2.5 py-2",
-              axle.compliant ? "border-border" : "border-destructive/40 bg-destructive/5",
+              axle.compliant ? "border-border" : "border-danger-border bg-danger-subtle",
             )}
           >
             <div className="mb-1.5 flex items-center justify-between">
@@ -56,7 +54,7 @@ export function AxleWeightDisplay({
                 {axleLabel(axle.axle)}
               </span>
               {!axle.compliant && (
-                <span className="bg-destructive/15 text-destructive rounded-full px-1.5 py-px text-3xs font-semibold">
+                <span className="bg-danger-subtle text-destructive rounded-full px-1.5 py-px text-3xs font-semibold">
                   OVER
                 </span>
               )}

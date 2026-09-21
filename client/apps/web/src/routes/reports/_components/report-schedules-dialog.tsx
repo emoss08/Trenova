@@ -237,7 +237,7 @@ function ToggleChip({
         "transition-[border-color,background-color,color] duration-150",
         "ui-focus-ring",
         active
-          ? "border-info bg-info/10 text-info-foreground"
+          ? "border-info bg-info-subtle text-info-foreground"
           : "border-input text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground",
       )}
     >
@@ -796,7 +796,9 @@ function ScheduleRow({
       <div
         className={cn(
           "flex size-8 shrink-0 items-center justify-center rounded-md",
-          schedule.enabled ? "bg-info/10 text-info-foreground" : "bg-muted text-muted-foreground",
+          schedule.enabled
+            ? "bg-info-subtle text-info-foreground"
+            : "bg-muted text-muted-foreground",
         )}
       >
         <CalendarClockIcon className="size-4" strokeWidth={1.75} />

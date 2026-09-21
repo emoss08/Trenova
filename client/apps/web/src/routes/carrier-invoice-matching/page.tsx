@@ -10,6 +10,7 @@ export function CarrierInvoiceMatchingPage() {
 
   return (
     <PageLayout
+      fill
       pageHeaderProps={{
         title: t("Carrier invoice matching"),
         description: t(

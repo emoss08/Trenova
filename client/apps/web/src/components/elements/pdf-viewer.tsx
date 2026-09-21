@@ -226,9 +226,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
                   <Page
                     pageNumber={index + 1}
                     width={pageWidth}
-                    loading={
-                      <div className="bg-background h-[800px] w-full animate-pulse rounded-md" />
-                    }
+                    loading={<div className="h-[800px] w-full ui-shimmer rounded-md" />}
                   />
                 </div>
               ))}
@@ -240,7 +238,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
               <Page
                 pageNumber={currentPage}
                 width={pageWidth}
-                loading={<div className="bg-background h-[800px] w-full animate-pulse rounded-md" />}
+                loading={<div className="h-[800px] w-full ui-shimmer rounded-md" />}
               />
             </div>
           )}
@@ -251,7 +249,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
                 <Page
                   pageNumber={currentPage}
                   width={pageWidth}
-                  loading={<div className="bg-background h-[800px] w-full animate-pulse rounded-md" />}
+                  loading={<div className="h-[800px] w-full ui-shimmer rounded-md" />}
                 />
               </div>
               {!showCoverAlone && bookSecondPage && bookSecondPage <= numPages && (
@@ -259,9 +257,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
                   <Page
                     pageNumber={bookSecondPage}
                     width={pageWidth}
-                    loading={
-                      <div className="bg-background h-[800px] w-full animate-pulse rounded-md" />
-                    }
+                    loading={<div className="h-[800px] w-full ui-shimmer rounded-md" />}
                   />
                 </div>
               )}

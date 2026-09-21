@@ -123,7 +123,7 @@ function PlanGroupsSkeleton() {
 function AsidePanelSkeleton({ label }: { label: string }) {
   return (
     <section aria-label={label} className="bg-card flex flex-col overflow-hidden rounded-lg border">
-      <header className="flex min-h-9 items-center gap-2 border-b px-3 py-1.5">
+      <header className="border-border flex min-h-9 items-center gap-2 border-b px-3 py-1.5">
         <Skeleton className="size-3.5 rounded-sm" />
         <Skeleton className="h-3.5 w-24" />
       </header>

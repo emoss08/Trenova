@@ -110,7 +110,7 @@ export function CoverageKanbanSkeleton() {
           key={bucket}
           className="bg-muted/30 flex min-h-0 w-60 shrink-0 flex-col rounded-md border xl:w-auto xl:flex-1"
         >
-          <header className="flex items-center gap-1.5 border-b px-2 py-1.5">
+          <header className="border-border flex min-h-9 items-center gap-2 border-b px-3 py-1.5">
             <Skeleton className="size-1.5 rounded-full" />
             <Skeleton className="h-2.5 w-20" />
             <Skeleton className="ml-auto h-2.5 w-4" />
@@ -187,7 +187,7 @@ export function DispatchTimelineSkeleton() {
 export function InspectorSkeleton() {
   return (
     <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
-      <header className="flex items-center justify-between border-b px-2.5 py-1.5">
+      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
         <Skeleton className="h-2.5 w-20" />
       </header>
 

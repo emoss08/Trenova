@@ -193,7 +193,11 @@ export function MoveCard({
           {move?.distance ? (
             <span className="text-muted-foreground text-xs">{t("{0} mi", move.distance)}</span>
           ) : null}
-          {move?.distanceSource ? <Badge variant="neutral" appearance="outline">{move.distanceSource}</Badge> : null}
+          {move?.distanceSource ? (
+            <Badge variant="neutral" appearance="outline">
+              {move.distanceSource}
+            </Badge>
+          ) : null}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -579,7 +583,7 @@ function StopTimelineItem({
     <div
       className={cn(
         "relative flex h-15 items-start gap-4 rounded-lg px-3 pt-2",
-        hasErrors ? "border-destructive bg-destructive/10 border" : "bg-muted",
+        hasErrors ? "border-destructive bg-danger-subtle border" : "bg-muted",
       )}
     >
       {showConnector && (

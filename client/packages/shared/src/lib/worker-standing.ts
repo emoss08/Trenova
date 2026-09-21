@@ -76,14 +76,14 @@ const SEVERITY_META: Record<ConcernSeverity, ConcernSeverityMeta> = {
   Critical: {
     label: "Needs action",
     textClass: "text-danger-foreground",
-    borderClass: "border-danger/40 bg-danger/5",
+    borderClass: "border-danger-border bg-danger-subtle",
     dotClass: "bg-destructive",
     rank: 0,
   },
   Warning: {
     label: "Coming due",
     textClass: "text-warning-foreground",
-    borderClass: "border-warning/40 bg-warning/5",
+    borderClass: "border-warning-border bg-warning-subtle",
     dotClass: "bg-warning",
     rank: 1,
   },

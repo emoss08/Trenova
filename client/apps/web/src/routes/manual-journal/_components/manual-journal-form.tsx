@@ -53,7 +53,7 @@ function BalanceSummary({ totalDebit, totalCredit }: { totalDebit: number; total
       <div
         className={cn(
           "flex flex-col gap-1 px-4 py-3",
-          hasAmounts && (isBalanced ? "bg-success/10" : "bg-danger/10"),
+          hasAmounts && (isBalanced ? "bg-success-subtle" : "bg-danger-subtle"),
         )}
       >
         <span

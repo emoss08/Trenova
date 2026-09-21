@@ -337,7 +337,7 @@ function LocationSearchError({ error }: { error: string }) {
 
   return (
     <div className="animate-in fade-in flex flex-col items-center gap-2.5 px-4 py-3 duration-300">
-      <div className="border-destructive/30 bg-destructive/5 text-destructive flex w-full max-w-md items-center gap-2 rounded-lg border p-3">
+      <div className="border-danger-border bg-danger-subtle text-destructive flex w-full max-w-md items-center gap-2 rounded-lg border p-3">
         <div className="flex flex-col space-y-0.5">
           <span className="text-sm font-medium">{t("API key error")}</span>
           <span className="text-destructive/80 text-xs">{error}</span>

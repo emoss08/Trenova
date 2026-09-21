@@ -10,6 +10,7 @@ export function SettlementWorkspacePage() {
 
   return (
     <PageLayout
+      fill
       pageHeaderProps={{
         title: t("Settlement workspace"),
         description: t(

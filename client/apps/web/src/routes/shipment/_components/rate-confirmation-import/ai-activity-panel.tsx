@@ -170,7 +170,7 @@ function SuggestionButton({
       <button
         type="button"
         onClick={() => onAction?.(suggestion.action!)}
-        className="text-2xs rounded-md border border-success/30 bg-success/10 px-2.5 py-1.5 text-left font-medium text-success-foreground transition-colors hover:bg-success/20 dark:text-success-foreground"
+        className="text-2xs rounded-md border border-success-border bg-success-subtle px-2.5 py-1.5 text-left font-medium text-success-foreground transition-colors hover:bg-success-subtle dark:text-success-foreground"
       >
         {t(suggestion.label)}
       </button>
@@ -350,7 +350,11 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
     }
 
     if (data.accepted)
-      return <span className="text-2xs text-success-foreground">{t("Accepted: {0}", data.accepted)}</span>;
+      return (
+        <span className="text-2xs text-success-foreground">
+          {t("Accepted: {0}", data.accepted)}
+        </span>
+      );
     if (data.set)
       return <span className="text-2xs">{t("Set {0} = {1}", data.set, data.value)}</span>;
     if (data.set_required) {
@@ -852,7 +856,7 @@ export default function AIActivityPanel({
             <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex items-center gap-2 rounded-md bg-success/10 px-2.5 py-1.5"
+              className="flex items-center gap-2 rounded-md bg-success-subtle px-2.5 py-1.5"
             >
               <CheckCircle2Icon className="size-3 text-success-foreground" />
               <span className="text-2xs text-success-foreground">
@@ -954,7 +958,7 @@ export default function AIActivityPanel({
 
       {/* Input */}
       <div className="shrink-0 border-t p-2">
- <div className="ui-container-focus-ring bg-background flex items-end gap-1.5 rounded-lg border px-3 py-1.5">
+        <div className="ui-container-focus-ring bg-background flex items-end gap-1.5 rounded-lg border px-3 py-1.5">
           <textarea
             ref={inputRef}
             value={inputValue}

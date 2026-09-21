@@ -268,7 +268,7 @@ function PermissionRow({
             type="button"
             size="icon-sm"
             variant="ghost"
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            className="text-destructive hover:bg-danger-subtle hover:text-destructive"
             onClick={onRemove}
           >
             <TrashIcon className="size-4" />
@@ -662,7 +662,7 @@ function CreatePermissionRow({
           type="button"
           size="icon-sm"
           variant="ghost"
-          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          className="text-destructive hover:bg-danger-subtle hover:text-destructive"
           onClick={onRemove}
         >
           <TrashIcon className="size-4" />

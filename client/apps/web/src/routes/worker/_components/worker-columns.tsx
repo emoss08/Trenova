@@ -140,8 +140,9 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
           <StatusBadge status={row.original.status} />
           {row.original.leaveType ? (
             <Badge
-              variant="neutral" appearance="outline"
-              className="border-warning/40 bg-warning/10 px-1.5 py-0 text-2xs text-warning-foreground"
+              variant="neutral"
+              appearance="outline"
+              className="border-warning-border bg-warning-subtle px-1.5 py-0 text-2xs text-warning-foreground"
               title={t("On leave")}
             >
               {t("{0} leave", WORKER_LEAVE_TYPE_LABELS[row.original.leaveType])}

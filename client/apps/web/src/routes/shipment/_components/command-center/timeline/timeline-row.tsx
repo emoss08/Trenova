@@ -25,9 +25,9 @@ import type { ShipmentEtaTone } from "@/lib/shipment-utils";
 
 const STRIP_TONE_CLASS: Record<ShipmentEtaTone, string> = {
   ontime: "bg-brand/50 hover:bg-brand/70",
-  watch: "bg-warning/60 hover:bg-warning/80",
-  late: "bg-destructive/60 hover:bg-destructive/80",
-  delivered: "bg-success/50 hover:bg-success/70",
+  watch: "bg-warning/60 hover:bg-warning-hover",
+  late: "bg-destructive/60 hover:bg-danger-hover",
+  delivered: "bg-success/50 hover:bg-success-hover",
   pending: "bg-muted-foreground/30 hover:bg-muted-foreground/50",
 };
 
@@ -127,7 +127,7 @@ export function TimelineRowItem({
         </button>
         {!collapsed &&
           (isUnassigned ? (
-            <span className="bg-warning/15 text-warning flex size-6 shrink-0 items-center justify-center rounded-full">
+            <span className="bg-warning-subtle text-warning flex size-6 shrink-0 items-center justify-center rounded-full">
               <InboxIcon className="size-3.5" />
             </span>
           ) : row.isCarrier ? (
@@ -139,16 +139,12 @@ export function TimelineRowItem({
               {row.workerProfilePicUrl && (
                 <AvatarImage src={row.workerProfilePicUrl} alt={row.workerName} />
               )}
-              <AvatarFallback className="text-3xs">
-                {workerInitials(row.workerName)}
-              </AvatarFallback>
+              <AvatarFallback className="text-3xs">{workerInitials(row.workerName)}</AvatarFallback>
             </Avatar>
           ))}
         <div className="flex min-w-0 flex-col">
           <span className="flex min-w-0 items-center gap-1.5">
-            <span
-              className={cn("truncate text-xs font-medium", isUnassigned && "text-warning")}
-            >
+            <span className={cn("truncate text-xs font-medium", isUnassigned && "text-warning")}>
               {isUnassigned ? t("Unassigned") : row.workerName}
             </span>
             {row.alert && (
@@ -156,7 +152,7 @@ export function TimelineRowItem({
                 title={alertTitle(row.stats)}
                 className={cn(
                   "size-1.5 shrink-0 rounded-full",
-                  row.alert === "late" ? "bg-destructive animate-pulse" : "bg-warning",
+                  row.alert === "late" ? "bg-destructive" : "bg-warning",
                 )}
               />
             )}
@@ -251,7 +247,7 @@ function CollapsedBarStrip({
       onMouseEnter={() => bar.shipment.id && onHoverChange(bar.shipment.id)}
       onMouseLeave={() => onHoverChange(null)}
       className={cn(
-"ui-focus-ring absolute cursor-pointer rounded-sm transition-[background-color,opacity] outline-none",
+        "ui-focus-ring absolute cursor-pointer rounded-sm transition-[background-color,opacity] outline-none",
         STRIP_TONE_CLASS[bar.tone],
         bar.isCanceled && "opacity-40",
         dimmed && "opacity-20",
@@ -268,7 +264,7 @@ function CollapsedBarStrip({
         <span
           aria-hidden
           className={cn(
-            "absolute -top-0.5 -right-0.5 size-1.5 animate-pulse rounded-full",
+            "absolute -top-0.5 -right-0.5 size-1.5 rounded-full",
             bar.dwell.severity === "critical" ? "bg-destructive" : "bg-warning",
           )}
         />

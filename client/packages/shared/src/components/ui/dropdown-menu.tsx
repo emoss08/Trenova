@@ -6,12 +6,12 @@ import { CheckIcon, ChevronRightIcon } from "lucide-react";
 
 const statusColors = {
   danger:
-    "text-danger-foreground focus:text-danger-foreground focus:bg-danger/10 hover:text-danger-foreground hover:bg-danger/10 dark:text-danger-foreground dark:focus:text-danger-foreground dark:focus:bg-danger/20 dark:hover:bg-danger/20 dark:hover:text-danger-foreground",
+    "text-danger-foreground focus:text-danger-foreground focus:bg-danger-subtle hover:text-danger-foreground hover:bg-danger-subtle dark:text-danger-foreground dark:focus:text-danger-foreground dark:focus:bg-danger-subtle dark:hover:bg-danger-subtle dark:hover:text-danger-foreground",
   warning:
-    "text-warning-foreground focus:text-warning-foreground focus:bg-warning/10 hover:text-warning-foreground hover:bg-warning/10 dark:text-warning-foreground dark:focus:text-warning-foreground dark:focus:bg-warning/20 dark:hover:bg-warning/20 dark:hover:text-warning-foreground",
-  info: "text-info-foreground focus:text-info-foreground focus:bg-info/10 hover:text-info-foreground hover:bg-info/20 dark:text-info-foreground dark:focus:text-info-foreground dark:focus:bg-info/20 dark:hover:bg-info/20 dark:hover:text-info-foreground",
+    "text-warning-foreground focus:text-warning-foreground focus:bg-warning-subtle hover:text-warning-foreground hover:bg-warning-subtle dark:text-warning-foreground dark:focus:text-warning-foreground dark:focus:bg-warning-subtle dark:hover:bg-warning-subtle dark:hover:text-warning-foreground",
+  info: "text-info-foreground focus:text-info-foreground focus:bg-info-subtle hover:text-info-foreground hover:bg-info-subtle dark:text-info-foreground dark:focus:text-info-foreground dark:focus:bg-info-subtle dark:hover:bg-info-subtle dark:hover:text-info-foreground",
   success:
-    "text-success-foreground focus:text-success-foreground focus:bg-success/10 hover:text-success-foreground hover:bg-success/10 dark:text-success-foreground dark:focus:text-success-foreground dark:focus:bg-success/20 dark:hover:bg-success/20 dark:hover:text-success-foreground",
+    "text-success-foreground focus:text-success-foreground focus:bg-success-subtle hover:text-success-foreground hover:bg-success-subtle dark:text-success-foreground dark:focus:text-success-foreground dark:focus:bg-success-subtle dark:hover:bg-success-subtle dark:hover:text-success-foreground",
 };
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
@@ -110,7 +110,7 @@ function DropdownMenuItem({
       data-inset={inset}
       data-color={color}
       className={cn(
-        "group/dropdown-menu-item relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent not-data-[variant=destructive]:focus:**:text-accent-foreground data-[inset]:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive",
+        "group/dropdown-menu-item relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent not-data-[variant=destructive]:focus:**:text-accent-foreground data-[inset]:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-danger-subtle data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-danger-subtle data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive",
         inset && "pl-8",
         color && statusColors[color],
         className,

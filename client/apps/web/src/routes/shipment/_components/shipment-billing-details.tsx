@@ -273,7 +273,7 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
         </div>
       )}
       {error && !isCalculating && (
-        <div className="bg-destructive/5 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-[2px]">
+        <div className="bg-danger-subtle absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-[2px]">
           <div className="text-destructive flex items-center gap-2">
             <AlertTriangleIcon className="size-4" />
             <span className="text-sm font-medium">{error}</span>

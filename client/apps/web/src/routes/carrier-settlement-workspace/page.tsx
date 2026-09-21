@@ -10,6 +10,7 @@ export function CarrierSettlementWorkspacePage() {
 
   return (
     <PageLayout
+      fill
       pageHeaderProps={{
         title: t("Carrier settlement workspace"),
         description: t(

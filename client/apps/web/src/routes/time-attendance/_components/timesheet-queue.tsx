@@ -54,7 +54,6 @@ import { TimesheetsEmpty } from "./time-attendance-empty";
 
 type FilterValues = { workerId: string };
 
-
 const SEGMENT_LABELS: Record<QueueSegment, string> = {
   Submitted: "Awaiting approval",
   Open: "Open",
@@ -259,16 +258,13 @@ function QueueList({
   onOpen,
   onDecide,
 }: QueueListProps) {
-
   return (
     <ul
       className="bg-card divide-y overflow-hidden rounded-lg border"
       aria-label={SEGMENT_LABELS[segment]}
     >
       {rows.map((sheet) => (
-        <li
-          key={sheet.id}
-        >
+        <li key={sheet.id}>
           <QueueRow
             sheet={sheet}
             now={now}
@@ -322,7 +318,7 @@ function QueueRow({
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-3 py-2.5 text-xs md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto]">
       <button
         type="button"
- className="ui-focus-ring flex min-w-0 items-center gap-3 rounded-md text-left outline-none"
+        className="ui-focus-ring flex min-w-0 items-center gap-3 rounded-md text-left outline-none"
         onClick={onOpen}
       >
         <Avatar size="sm">
@@ -561,7 +557,7 @@ function TimeCard({ sheet }: { sheet: TimesheetDetail }) {
               <span
                 className={cn(
                   "absolute inset-x-0 bottom-0 rounded-full",
-                  day.running ? "bg-success/80" : "bg-brand/70",
+                  day.running ? "bg-success" : "bg-brand/70",
                 )}
                 style={{ height: `${(day.paidMinutes / peak) * 100}%` }}
               />

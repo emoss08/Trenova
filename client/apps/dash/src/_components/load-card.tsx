@@ -181,7 +181,7 @@ export function StopTimeline({
               <span
                 className={cn(
                   "absolute top-4 left-[5px] h-full border-l border-border",
-                  isDone && "border-success/60",
+                  isDone && "border-success-border",
                 )}
               />
             ) : null}

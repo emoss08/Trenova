@@ -46,7 +46,7 @@ export function CustomerMix({ customerMix, tomorrowsPickups, enabled = true }: C
   return (
     <CustomerMixSection>
       <Tabs defaultValue="customers" className="flex min-h-0 flex-1 flex-col gap-0">
-        <header className="border-border flex items-center justify-between border-b px-2 py-1">
+        <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
           <TabsList
             variant="underline"
             className="h-6 bg-transparent p-0 hover:bg-transparent *:data-[slot=tabs-tab]:hover:bg-transparent"

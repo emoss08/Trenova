@@ -89,8 +89,8 @@ export function BarDetailPopover({
             className={cn(
               "border-border flex items-center gap-1.5 border-b px-3 py-1.5 text-2xs font-semibold",
               bar.dwell.severity === "critical"
-                ? "bg-destructive/10 text-destructive"
-                : "bg-warning/10 text-warning",
+                ? "bg-danger-subtle text-destructive"
+                : "bg-warning-subtle text-warning",
             )}
           >
             <TimerIcon className="size-3 shrink-0" />
@@ -125,7 +125,7 @@ export function BarDetailPopover({
                   {isDone ? (
                     <CircleCheckIcon className="text-success size-3 shrink-0" />
                   ) : isAtStop ? (
-                    <CircleDotIcon className="text-brand size-3 shrink-0 animate-pulse" />
+                    <CircleDotIcon className="text-brand size-3 shrink-0" />
                   ) : (
                     <CircleDashedIcon className="text-muted-foreground size-3 shrink-0" />
                   )}

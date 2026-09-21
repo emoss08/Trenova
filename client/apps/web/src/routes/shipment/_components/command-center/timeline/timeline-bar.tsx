@@ -16,9 +16,9 @@ import type { TimelineBar, TimelineStopMarker } from "./use-timeline-data";
 
 const BAR_TONE_CLASS: Record<ShipmentEtaTone, string> = {
   ontime: "border-brand/45 bg-brand/12 hover:bg-brand/20",
-  watch: "border-warning/55 bg-warning/15 hover:bg-warning/25",
-  late: "border-destructive/55 bg-destructive/12 hover:bg-destructive/20",
-  delivered: "border-success/45 bg-success/10 hover:bg-success/20",
+  watch: "border-warning-border bg-warning-subtle hover:bg-warning-subtle",
+  late: "border-danger-border bg-danger-subtle hover:bg-danger-subtle",
+  delivered: "border-success-border bg-success-subtle hover:bg-success-subtle",
   pending: "border-border bg-muted/70 hover:bg-muted",
 };
 
@@ -108,7 +108,7 @@ export function TimelineBarItem({
         onMouseLeave={() => onHoverChange(null)}
         aria-label={`Shipment ${shipment.proNumber ?? ""}, ${originCode} to ${destCode}`}
         className={cn(
-"ui-focus-ring group/bar absolute flex cursor-pointer items-center overflow-hidden rounded-md border px-1.5 text-left transition-[background-color,box-shadow,opacity] outline-none",
+          "ui-focus-ring group/bar absolute flex cursor-pointer items-center overflow-hidden rounded-md border px-1.5 text-left transition-[background-color,box-shadow,opacity] outline-none",
           BAR_TONE_CLASS[bar.tone],
           bar.isCanceled && "border-dashed opacity-60",
           isHighlighted && "ring-foreground/25 ring-1",
@@ -145,11 +145,11 @@ export function TimelineBarItem({
             className={cn(
               "font-table ml-auto flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-3xs font-semibold tabular-nums",
               bar.dwell.severity === "critical"
-                ? "bg-destructive/90 text-foreground-on-solid"
-                : "bg-warning/90 text-foreground-on-solid",
+                ? "bg-danger text-foreground-on-solid"
+                : "bg-warning text-foreground-on-solid",
             )}
           >
-            <TimerIcon className="size-2.5 animate-pulse" />
+            <TimerIcon className="size-2.5" />
             {geometry.width >= 96 && formatDurationFromSeconds(bar.dwell.seconds)}
           </span>
         )}
