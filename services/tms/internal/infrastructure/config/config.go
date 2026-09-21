@@ -626,6 +626,23 @@ type AIConfig struct {
 	// router can only reach a provider row somebody configured and enabled.
 	// This switch is here for an operator who wants to stop all of it at once.
 	Enabled *bool `mapstructure:"enabled"`
+	// VerdictCacheTTL is how long a scope verdict is shared between replicas.
+	// A verdict is a pure function of the question, so it can be long; it is
+	// bounded so a change to the classifier's prompt reaches every replica
+	// within a day rather than never.
+	VerdictCacheTTL time.Duration `mapstructure:"verdictCacheTtl" validate:"omitempty,min=0"`
+}
+
+const defaultVerdictCacheTTL = 24 * time.Hour
+
+// GetVerdictCacheTTL is nil-safe: a guard built without this section shares
+// verdicts for a day.
+func (c *AIConfig) GetVerdictCacheTTL() time.Duration {
+	if c == nil || c.VerdictCacheTTL <= 0 {
+		return defaultVerdictCacheTTL
+	}
+
+	return c.VerdictCacheTTL
 }
 
 // AIEnabledKey names the configuration key in error messages, so a disabled
