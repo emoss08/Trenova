@@ -91,9 +91,9 @@ func (a *Activities) BackfillActivity(
 	return result, nil
 }
 
-// RetentionActivity removes items resolved more than a month ago, a batch
+// WatchtowerRetentionActivity removes items resolved more than a month ago, a batch
 // at a time across every tenant.
-func (a *Activities) RetentionActivity(ctx context.Context) (*WatchtowerRetentionResult, error) {
+func (a *Activities) WatchtowerRetentionActivity(ctx context.Context) (*WatchtowerRetentionResult, error) {
 	before := timeutils.NowUnix() - retentionDays*24*60*60
 	result := &WatchtowerRetentionResult{}
 

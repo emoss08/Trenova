@@ -73,10 +73,15 @@ type WorkerManager struct {
 	workers      map[string]worker.Worker
 	queueWorkers map[string]worker.Worker
 	queueOptions map[string]worker.Options
-	registries   []WorkerRegistry
-	interceptors []interceptor.WorkerInterceptor
-	logger       *zap.Logger
-	mu           sync.RWMutex
+	// queueActivities is which worker already owns each activity name on a
+	// shared task queue. Temporal keys its activity registry by name across
+	// the whole queue, so two workers sharing one cannot both have a method
+	// called RetentionActivity.
+	queueActivities map[string]map[string]string
+	registries      []WorkerRegistry
+	interceptors    []interceptor.WorkerInterceptor
+	logger          *zap.Logger
+	mu              sync.RWMutex
 }
 
 func (m *WorkerManager) SetInterceptors(interceptors []interceptor.WorkerInterceptor) {
@@ -87,12 +92,13 @@ func (m *WorkerManager) SetInterceptors(interceptors []interceptor.WorkerInterce
 
 func NewWorkerManager(c client.Client, logger *zap.Logger) *WorkerManager {
 	return &WorkerManager{
-		client:       c,
-		workers:      make(map[string]worker.Worker),
-		queueWorkers: make(map[string]worker.Worker),
-		queueOptions: make(map[string]worker.Options),
-		registries:   make([]WorkerRegistry, 0),
-		logger:       logger.Named("worker-manager"),
+		client:          c,
+		workers:         make(map[string]worker.Worker),
+		queueWorkers:    make(map[string]worker.Worker),
+		queueOptions:    make(map[string]worker.Options),
+		queueActivities: make(map[string]map[string]string),
+		registries:      make([]WorkerRegistry, 0),
+		logger:          logger.Named("worker-manager"),
 	}
 }
 
@@ -106,6 +112,21 @@ func (m *WorkerManager) Register(registry WorkerRegistry) error {
 	}
 
 	taskQueue := registry.GetTaskQueue()
+	// Checked ahead of the client so a collision is reported the same way
+	// whether or not Temporal is configured, and before the SDK can panic
+	// over it.
+	if namer, ok := registry.(ActivityNamer); ok {
+		if conflicts := conflictingActivities(m.queueActivities[taskQueue], namer.ActivityNames()); len(conflicts) > 0 {
+			return fmt.Errorf(
+				"worker %s cannot share task queue %q: %s is already registered by %s",
+				name,
+				taskQueue,
+				conflicts[0].Activity,
+				conflicts[0].HeldBy,
+			)
+		}
+	}
+
 	if m.client == nil {
 		m.logger.Warn("cannot register worker: temporal client is not configured",
 			zap.String("name", name),
@@ -151,6 +172,17 @@ func (m *WorkerManager) Register(registry WorkerRegistry) error {
 		m.queueWorkers[taskQueue] = w
 		m.queueOptions[taskQueue] = opts
 	}
+	if namer, ok := registry.(ActivityNamer); ok {
+		owned := m.queueActivities[taskQueue]
+		if owned == nil {
+			owned = make(map[string]string)
+			m.queueActivities[taskQueue] = owned
+		}
+		for _, activity := range namer.ActivityNames() {
+			owned[activity] = name
+		}
+	}
+
 	m.workers[name] = w
 	m.registries = append(m.registries, registry)
 

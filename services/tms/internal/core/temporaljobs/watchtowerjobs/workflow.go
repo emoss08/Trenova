@@ -83,7 +83,7 @@ func WatchtowerRetentionWorkflow(ctx workflow.Context) (*WatchtowerRetentionResu
 
 	var a *Activities
 	result := new(WatchtowerRetentionResult)
-	if err := workflow.ExecuteActivity(ctx, a.RetentionActivity).Get(ctx, result); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.WatchtowerRetentionActivity).Get(ctx, result); err != nil {
 		workflow.GetLogger(ctx).Error("Watchtower retention workflow failed", "error", err)
 
 		return nil, err
