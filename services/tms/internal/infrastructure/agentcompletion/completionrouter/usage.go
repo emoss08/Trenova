@@ -45,7 +45,7 @@ func (s *Service) record(ctx context.Context, attempt usageAttempt) {
 		return
 	}
 
-	row := &aiusage.Record{
+	row := &aiusage.AIUsageRecord{
 		OrganizationID:    attempt.tenant.OrgID,
 		BusinessUnitID:    attempt.tenant.BuID,
 		ProviderID:        attempt.provider.ID,

@@ -45,6 +45,6 @@ type AIUsageSummary struct {
 }
 
 type AIUsageRepository interface {
-	Create(ctx context.Context, record *aiusage.Record) error
+	Create(ctx context.Context, record *aiusage.AIUsageRecord) error
 	Summary(ctx context.Context, req AIUsageSummaryRequest) (*AIUsageSummary, error)
 }

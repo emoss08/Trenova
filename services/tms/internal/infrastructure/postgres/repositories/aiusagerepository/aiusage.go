@@ -28,7 +28,7 @@ func New(p Params) repositories.AIUsageRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("repository.aiusage")}
 }
 
-func (r *repository) Create(ctx context.Context, record *aiusage.Record) error {
+func (r *repository) Create(ctx context.Context, record *aiusage.AIUsageRecord) error {
 	if _, err := r.db.DB().NewInsert().Model(record).Exec(ctx); err != nil {
 		r.l.Error("failed to record ai usage", zap.Error(err))
 		return fmt.Errorf("record ai usage: %w", err)
@@ -94,7 +94,7 @@ func (r *repository) Summary(
 
 	var total totalsRow
 	if err := db.NewSelect().
-		Model((*aiusage.Record)(nil)).
+		Model((*aiusage.AIUsageRecord)(nil)).
 		ColumnExpr(aggregateColumns).
 		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
 		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
@@ -105,7 +105,7 @@ func (r *repository) Summary(
 
 	var byProvider []totalsRow
 	if err := db.NewSelect().
-		Model((*aiusage.Record)(nil)).
+		Model((*aiusage.AIUsageRecord)(nil)).
 		ColumnExpr("COALESCE(aiu.provider_id, '') AS provider_id").
 		ColumnExpr("COALESCE(aiprv.name, '') AS provider_name").
 		ColumnExpr("aiu.model AS model").

@@ -21,11 +21,11 @@ import (
 
 type fakeUsage struct {
 	mu   sync.Mutex
-	rows []*aiusage.Record
+	rows []*aiusage.AIUsageRecord
 	err  error
 }
 
-func (f *fakeUsage) Create(_ context.Context, record *aiusage.Record) error {
+func (f *fakeUsage) Create(_ context.Context, record *aiusage.AIUsageRecord) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.rows = append(f.rows, record)
@@ -37,7 +37,7 @@ func (f *fakeUsage) Summary(context.Context, repositories.AIUsageSummaryRequest)
 	return &repositories.AIUsageSummary{}, nil
 }
 
-func (f *fakeUsage) recorded(t *testing.T, n int) []*aiusage.Record {
+func (f *fakeUsage) recorded(t *testing.T, n int) []*aiusage.AIUsageRecord {
 	t.Helper()
 	require.Eventually(t, func() bool {
 		f.mu.Lock()
@@ -49,7 +49,7 @@ func (f *fakeUsage) recorded(t *testing.T, n int) []*aiusage.Record {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	return append([]*aiusage.Record(nil), f.rows...)
+	return append([]*aiusage.AIUsageRecord(nil), f.rows...)
 }
 
 func priced(provider *aiprovider.Provider, in, out string) *aiprovider.Provider {

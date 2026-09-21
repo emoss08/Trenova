@@ -24,31 +24,31 @@ var (
 )
 
 // ---------------------------------------------------------------------------
-// Record — table "ai_usage_records", alias "aiu"
+// AIUsageRecord — table "ai_usage_records", alias "aiu"
 // ---------------------------------------------------------------------------
 
-// RecordTable holds the table name, alias, and primary key columns
+// AIUsageRecordTable holds the table name, alias, and primary key columns
 // for the "ai_usage_records" table. The alias "aiu" is used in all generated
 // SQL fragments (e.g. "aiu.id = ?").
-var RecordTable = TableInfo{
+var AIUsageRecordTable = TableInfo{
 	Name:       "ai_usage_records",
 	Alias:      "aiu",
 	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
 }
 
-// RecordColumns provides type-safe column references for the "ai_usage_records" table.
+// AIUsageRecordColumns provides type-safe column references for the "ai_usage_records" table.
 // Each field is a [Column] whose methods return pre-computed SQL fragments.
 //
 // Use String() when Bun manages the alias (model-aware queries):
 //
-//	q.Column(RecordColumns.ID.String())
+//	q.Column(AIUsageRecordColumns.ID.String())
 //	// SELECT aiu.id FROM ai_usage_records AS aiu
 //
 // Use expression helpers for raw WHERE/ORDER BY clauses:
 //
-//	q.Where(RecordColumns.ID.Eq(), id)           // WHERE aiu.id = ?
-//	q.Order(RecordColumns.CreatedAt.OrderDesc())  // ORDER BY aiu.created_at DESC
-var RecordColumns = struct {
+//	q.Where(AIUsageRecordColumns.ID.Eq(), id)           // WHERE aiu.id = ?
+//	q.Order(AIUsageRecordColumns.CreatedAt.OrderDesc())  // ORDER BY aiu.created_at DESC
+var AIUsageRecordColumns = struct {
 	ID                Column // "id" → qualified: "aiu.id"
 	BusinessUnitID    Column // "business_unit_id" → qualified: "aiu.business_unit_id"
 	OrganizationID    Column // "organization_id" → qualified: "aiu.organization_id"
@@ -94,11 +94,11 @@ var RecordColumns = struct {
 	CreatedAt:         NewColumn("created_at", "aiu"),
 }
 
-// RecordFieldMap maps JSON API field names to database column names.
+// AIUsageRecordFieldMap maps JSON API field names to database column names.
 // The QueryBuilder uses this to translate filter/sort requests from the frontend
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
-// This is returned by Record.GetStaticFieldMap().
-var RecordFieldMap = map[string]string{
+// This is returned by AIUsageRecord.GetStaticFieldMap().
+var AIUsageRecordFieldMap = map[string]string{
 	"id":                "id",
 	"businessUnitId":    "business_unit_id",
 	"organizationId":    "organization_id",
@@ -122,9 +122,9 @@ var RecordFieldMap = map[string]string{
 	"createdAt":         "created_at",
 }
 
-// RecordInsertableColumns lists column names suitable for INSERT statements on the "ai_usage_records" table.
+// AIUsageRecordInsertableColumns lists column names suitable for INSERT statements on the "ai_usage_records" table.
 // Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
-var RecordInsertableColumns = []string{
+var AIUsageRecordInsertableColumns = []string{
 	"id",
 	"business_unit_id",
 	"organization_id",
@@ -148,56 +148,56 @@ var RecordInsertableColumns = []string{
 	"created_at",
 }
 
-// RecordScopeTenant restricts a query to a single tenant by adding:
+// AIUsageRecordScopeTenant restricts a query to a single tenant by adding:
 //
 //	WHERE aiu.organization_id = ? AND aiu.business_unit_id = ?
 //
 // Returns the same *bun.SelectQuery so it can be chained fluently:
 //
-//	buncolgen.RecordScopeTenant(sq, ti).
-//		Where(buncolgen.RecordColumns.ID.Eq(), id)
-func RecordScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
-	return ScopeTenant(q, RecordColumns.OrganizationID, RecordColumns.BusinessUnitID, ti)
+//	buncolgen.AIUsageRecordScopeTenant(sq, ti).
+//		Where(buncolgen.AIUsageRecordColumns.ID.Eq(), id)
+func AIUsageRecordScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, AIUsageRecordColumns.OrganizationID, AIUsageRecordColumns.BusinessUnitID, ti)
 }
 
-// RecordScopeTenantUpdate restricts an update query to a single tenant.
+// AIUsageRecordScopeTenantUpdate restricts an update query to a single tenant.
 // Use this inside UpdateQuery.WhereGroup callbacks:
 //
 //	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-//		return buncolgen.RecordScopeTenantUpdate(uq, req.TenantInfo).
-//			Where(buncolgen.RecordColumns.ID.In(), bun.List(ids))
+//		return buncolgen.AIUsageRecordScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.AIUsageRecordColumns.ID.In(), bun.List(ids))
 //	})
-func RecordScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
-	return ScopeTenantUpdate(q, RecordColumns.OrganizationID, RecordColumns.BusinessUnitID, ti)
+func AIUsageRecordScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, AIUsageRecordColumns.OrganizationID, AIUsageRecordColumns.BusinessUnitID, ti)
 }
 
-// RecordScopeTenantDelete restricts a delete query to a single tenant.
+// AIUsageRecordScopeTenantDelete restricts a delete query to a single tenant.
 // Use this inside DeleteQuery.WhereGroup callbacks:
 //
 //	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-//		return buncolgen.RecordScopeTenantDelete(dq, req.TenantInfo).
-//			Where(buncolgen.RecordColumns.ID.Eq(), id)
+//		return buncolgen.AIUsageRecordScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.AIUsageRecordColumns.ID.Eq(), id)
 //	})
-func RecordScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
-	return ScopeTenantDelete(q, RecordColumns.OrganizationID, RecordColumns.BusinessUnitID, ti)
+func AIUsageRecordScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, AIUsageRecordColumns.OrganizationID, AIUsageRecordColumns.BusinessUnitID, ti)
 }
 
-// RecordApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// AIUsageRecordApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
 // Use this instead of wrapping ScopeTenant in an anonymous function:
 //
-//	q.Apply(buncolgen.RecordApplyTenant(tenantInfo))
-func RecordApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
-	return ApplyTenant(RecordColumns.OrganizationID, RecordColumns.BusinessUnitID, ti)
+//	q.Apply(buncolgen.AIUsageRecordApplyTenant(tenantInfo))
+func AIUsageRecordApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(AIUsageRecordColumns.OrganizationID, AIUsageRecordColumns.BusinessUnitID, ti)
 }
 
-// RecordFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// AIUsageRecordFilter builds [domaintypes.FieldFilter] values using the correct JSON
 // field names for the "ai_usage_records" table. Pass these to the QueryBuilder's ApplyFilters.
 //
 // The JSON field name is baked in — you only provide the operator and value:
 //
-//	RecordFilter.ID(dbtype.OpEq, value)
+//	AIUsageRecordFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
-var RecordFilter = struct {
+var AIUsageRecordFilter = struct {
 	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
 	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"

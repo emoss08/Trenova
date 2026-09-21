@@ -10,7 +10,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*Record)(nil)
+var _ bun.BeforeAppendModelHook = (*AIUsageRecord)(nil)
 
 // Surface is which part of the system made the call.
 type Surface string
@@ -21,11 +21,11 @@ const (
 	SurfaceBackground = Surface("Background")
 )
 
-// Record is one attempt to have a model answer: which provider, how long it
+// AIUsageRecord is one attempt to have a model answer: which provider, how long it
 // took, what it consumed and what that consumption cost. One row per attempt
 // rather than per turn, because a turn that fell through two providers before
 // a third answered was three calls, three latencies and three bills.
-type Record struct {
+type AIUsageRecord struct {
 	bun.BaseModel `bun:"table:ai_usage_records,alias:aiu" json:"-"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
@@ -59,7 +59,7 @@ type Record struct {
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
-func (r *Record) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (r *AIUsageRecord) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	if _, ok := query.(*bun.InsertQuery); ok {
 		if r.ID.IsNil() {
 			r.ID = pulid.MustNew("aiu_")
