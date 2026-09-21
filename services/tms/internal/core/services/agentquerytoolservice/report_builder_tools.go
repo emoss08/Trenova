@@ -187,6 +187,11 @@ type datasetEdgeRow struct {
 	Label       string `json:"label,omitempty"`
 	Target      string `json:"target"`
 	Cardinality string `json:"cardinality"`
+	// TargetFields are the keys on the dataset the edge leads to, given by
+	// describe_report_dataset so a report can reach one edge out without a
+	// second call. A model that had only the edge's name guessed the field
+	// on the far side, and guessed wrong.
+	TargetFields []string `json:"targetFields,omitempty"`
 }
 
 type datasetRow struct {
@@ -281,7 +286,7 @@ func (t *listReportDatasetsTool) Query(
 			Description: entity.Description,
 			Category:    entity.Category,
 			FieldCount:  len(entity.Fields),
-			Edges:       edgeRows(entity),
+			Edges:       edgeRows(entity, false),
 		})
 	}
 
@@ -295,19 +300,25 @@ func matchesDataset(entity *reportcatalog.Entity, needle string) bool {
 		strings.Contains(strings.ToLower(entity.Description), needle)
 }
 
-func edgeRows(entity *reportcatalog.Entity) []datasetEdgeRow {
+func edgeRows(entity *reportcatalog.Entity, withTargetFields bool) []datasetEdgeRow {
 	rows := make([]datasetEdgeRow, 0, len(entity.Edges))
 	for i := range entity.Edges {
 		edge := &entity.Edges[i]
 		if !edge.Traversable {
 			continue
 		}
-		rows = append(rows, datasetEdgeRow{
+		row := datasetEdgeRow{
 			Name:        edge.Name,
 			Label:       edge.Label,
 			Target:      edge.Target,
 			Cardinality: string(edge.Cardinality),
-		})
+		}
+		if withTargetFields {
+			if target, ok := reportcatalog.Default.Entity(edge.Target); ok {
+				row.TargetFields = fieldKeys(target)
+			}
+		}
+		rows = append(rows, row)
 	}
 
 	return rows
@@ -450,11 +461,13 @@ func (t *describeReportDatasetTool) Query(
 		Category:    entity.Category,
 		Fields:      fields,
 		FieldCount:  len(entity.Fields),
-		Edges:       edgeRows(entity),
+		Edges:       edgeRows(entity, true),
 		Note: "Refer to a field of this dataset as {\"field\": \"<key>\"} and to a field " +
-			"of a related dataset as {\"path\": [\"<edge>\"], \"field\": \"<key>\"}. A " +
-			"measure column needs an agg the field lists; a dimension column groups " +
-			"the rows. A field marked accessible: false cannot be used by this person.",
+			"of a related dataset as {\"path\": [\"<edge>\"], \"field\": \"<key>\"}, " +
+			"using only the keys each edge's targetFields lists; an edge two steps " +
+			"away needs describe_report_dataset on the first target. A measure " +
+			"column needs an agg the field lists; a dimension column groups the " +
+			"rows. A field marked accessible: false cannot be used by this person.",
 	}, nil
 }
 
@@ -796,7 +809,10 @@ func (t *previewReportTool) Query(
 		Params:     values,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("the report could not be previewed: %w", err)
+		return nil, fmt.Errorf(
+			"the report could not be previewed: %s",
+			compileErrorHint(&reportcatalog.Default, err.Error()),
+		)
 	}
 
 	return previewOf(source, result), nil
