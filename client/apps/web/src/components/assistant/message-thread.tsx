@@ -66,6 +66,7 @@ export function MessageThread({
   artifacts = [],
   onOpenArtifact,
   onLiveArtifact,
+  onWorkingChange,
   spine = false,
 }: {
   thread: AssistantThread;
@@ -81,6 +82,8 @@ export function MessageThread({
   onOpenArtifact?: (id: string) => void;
   /** Told each artifact a streaming turn announces, as it lands. */
   onLiveArtifact?: (id: string) => void;
+  /** Told while a turn is running, for surfaces that show it outside the thread. */
+  onWorkingChange?: (working: boolean) => void;
   /** Draws the agent's accent down the gutter, so the thread reads as its work. */
   spine?: boolean;
 }) {
@@ -212,6 +215,15 @@ export function MessageThread({
     thread.id,
     getTurnContext,
   );
+
+  // The Desk lights its whole header while an agent works, so the state has
+  // to leave the thread. Reported on the way down and cleared on unmount,
+  // because a light left on for a thread nobody is looking at is a lie about
+  // what the room is doing.
+  useEffect(() => {
+    onWorkingChange?.(isActive);
+  }, [isActive, onWorkingChange]);
+  useEffect(() => () => onWorkingChange?.(false), [onWorkingChange]);
 
   // An artifact announced mid-turn is handed to the pane at once, so the
   // table opens while the sentence about it is still arriving.

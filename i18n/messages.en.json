@@ -17464,6 +17464,15 @@
       "routes/desk"
     ]
   },
+  "Ask on the left and what comes back opens on this side, whole: a table you can sort and download, a message you can edit before it sends, a plan whose steps tick off as they run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Ask the assistant": {
     "sites": 1,
     "scope": [
@@ -20968,6 +20977,15 @@
       "routes/billing-queue",
       "routes/journal-entry",
       "routes/worker"
+    ]
+  },
+  "Back to Trenova": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Back to batches": {
@@ -36561,12 +36579,13 @@
     ]
   },
   "Conversations": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Conversations will work, but the tasks below have no enabled provider assigned and will fail when something needs them.": {
@@ -47042,7 +47061,7 @@
     ]
   },
   "Desk": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -71427,6 +71446,15 @@
       "routes/shipment"
     ]
   },
+  "Hide the workspace": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "High": {
     "sites": 8,
     "scope": [
@@ -71966,7 +71994,7 @@
     ]
   },
   "Home": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -71974,7 +72002,6 @@
       "apps/dash/_components",
       "apps/web/components",
       "apps/web/config",
-      "routes/desk",
       "routes/home"
     ]
   },
@@ -93454,13 +93481,12 @@
     ]
   },
   "New conversation": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/desk"
+      "apps/web/components"
     ]
   },
   "New credit memo": {
@@ -94614,6 +94640,15 @@
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk"
+    ]
+  },
+  "No agents are available to talk to yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/desk"
     ]
   },
@@ -145272,15 +145307,6 @@
       "routes/dash-control"
     ]
   },
-  "Show artifacts": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Show balance due on invoice": {
     "sites": 1,
     "scope": [
@@ -145470,6 +145496,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Show the workspace": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Show this keyboard shortcuts dialog": {
@@ -161961,6 +161996,15 @@
       "routes/policies"
     ]
   },
+  "The work lands here": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The worker becomes inactive, their PTO and pay assignments close on the effective date, and any time off starting after it is cancelled.": {
     "sites": 1,
     "scope": [
@@ -166409,7 +166453,7 @@
     ]
   },
   "Today": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -166421,6 +166465,7 @@
       "routes/ar-aging",
       "routes/ar-open-items",
       "routes/carrier-monitoring",
+      "routes/desk",
       "routes/dispatch-console",
       "routes/late-charges",
       "routes/scheduling",
@@ -183171,15 +183216,6 @@
     ],
     "areas": [
       "apps/dash/_components"
-    ]
-  },
-  "Your conversations with the agents, what they produced, and what they are asking you to decide.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Your conversations with the agents, what they produced, and what they ask you to decide": {

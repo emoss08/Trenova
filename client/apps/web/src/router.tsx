@@ -5,6 +5,7 @@ import {
 } from "@/lib/route-permission";
 import { createPrefetchLoader, lazyPrefetch } from "@/lib/route-prefetch";
 import { AppLayout } from "@/routes/app-layout";
+import { DeskShellLayout } from "@/routes/desk/shell-layout";
 import { RootLayout } from "@/routes/root-layout";
 import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
 import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
@@ -1035,42 +1036,6 @@ export const routes: RouteObject[] = [
             },
           },
           {
-            path: "/desk",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Assistant, Operation.Read),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/desk/page"))),
-            ),
-            async lazy() {
-              const { DeskPage } = await import("@/routes/desk/page");
-              return { Component: DeskPage };
-            },
-            children: [
-              {
-                index: true,
-                async lazy() {
-                  const { DeskHomePage } = await import("@/routes/desk/home-page");
-                  return { Component: DeskHomePage };
-                },
-              },
-              {
-                path: "t/:threadId",
-                async lazy() {
-                  const { DeskConversationPage } = await import("@/routes/desk/conversation-page");
-                  return { Component: DeskConversationPage };
-                },
-              },
-              {
-                path: "decisions",
-                loader: createPermissionLoader(Resource.AgentProposal, Operation.Read),
-                async lazy() {
-                  const { DeskDecisionsPage } = await import("@/routes/desk/decisions-page");
-                  return { Component: DeskDecisionsPage };
-                },
-              },
-            ],
-          },
-          {
             path: "/reports",
             loader: combineLoaders(
               protectedLoader,
@@ -1871,6 +1836,58 @@ export const routes: RouteObject[] = [
                   const { CustomFieldDefinitionsPage } =
                     await import("@/routes/admin/custom-fields/page");
                   return { Component: CustomFieldDefinitionsPage };
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        // The Desk runs outside the app chrome.
+        //
+        // It is a room rather than a page: a conversation on one side and
+        // the work it produces on the other, both of which want the whole
+        // window. Mounted under AppLayout it paid for a sidebar, a
+        // breadcrumb and a page header before a word of conversation —
+        // roughly 190px of furniture on a surface whose entire job is to
+        // give the work room. It keeps the protected loader, so it is no
+        // less guarded than anything inside; it simply wears none of the
+        // frame. The way back is in its own chrome.
+        element: <DeskShellLayout />,
+        loader: protectedLoader,
+        children: [
+          {
+            path: "/desk",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Assistant, Operation.Read),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/desk/page"))),
+            ),
+            async lazy() {
+              const { DeskPage } = await import("@/routes/desk/page");
+              return { Component: DeskPage };
+            },
+            children: [
+              {
+                index: true,
+                async lazy() {
+                  const { DeskHomePage } = await import("@/routes/desk/home-page");
+                  return { Component: DeskHomePage };
+                },
+              },
+              {
+                path: "t/:threadId",
+                async lazy() {
+                  const { DeskConversationPage } = await import("@/routes/desk/conversation-page");
+                  return { Component: DeskConversationPage };
+                },
+              },
+              {
+                path: "decisions",
+                loader: createPermissionLoader(Resource.AgentProposal, Operation.Read),
+                async lazy() {
+                  const { DeskDecisionsPage } = await import("@/routes/desk/decisions-page");
+                  return { Component: DeskDecisionsPage };
                 },
               },
             ],

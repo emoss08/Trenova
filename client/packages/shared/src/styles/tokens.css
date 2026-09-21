@@ -267,6 +267,44 @@
   --elevation-overlay: 0 0 #0000;
   --elevation-modal: 0 0 #0000;
 
+  /* Lift ------------------------------------------------------------------
+     The ladder above says a surface is told from the one beneath it by a
+     hairline. That is right for everything that sits IN the page: a table,
+     a field, a panel. It is wrong for the few things that sit ABOVE it and
+     are meant to be picked up — a composer floating over a conversation, an
+     artifact card in flight, a menu.
+
+     So the names are separated by where they are allowed rather than by how
+     big they are. Nothing that lives in the page may spend a lift; a table
+     row with a lift is still the defect the rule above was written against.
+
+     Each is a hairline ring plus a whisper of shadow at the neutral hue, so
+     the shadow reads as the surface occluding light rather than as grey
+     smudge. The blur is small and the offset is smaller: a lift should be
+     felt before it is seen. */
+  --lift-ring: 0 0 0 1px color-mix(in oklch, var(--foreground) 8%, transparent);
+  --lift-whisper: var(--lift-ring), 0 1px 2px -1px oklch(0.2 0.02 var(--hue-neutral) / 0.08);
+  --lift-card:
+    var(--lift-ring), 0 2px 4px -2px oklch(0.2 0.02 var(--hue-neutral) / 0.1),
+    0 6px 16px -8px oklch(0.2 0.02 var(--hue-neutral) / 0.12);
+  --lift-float:
+    var(--lift-ring), 0 4px 8px -4px oklch(0.2 0.02 var(--hue-neutral) / 0.12),
+    0 16px 40px -16px oklch(0.2 0.02 var(--hue-neutral) / 0.18);
+
+  /* Desk ------------------------------------------------------------------
+     The Desk is a room rather than a page, and it is the one surface allowed
+     its own light. --desk-canvas is a half-step below the app canvas so the
+     conversation column reads as lit from within; --desk-glow is the wash an
+     agent casts while it is working, and is the only place an accent becomes
+     an area rather than a line. Both are near-invisible by design: the point
+     is that the room has depth, not that it has colour. */
+  --desk-canvas: oklch(0.985 0.002 var(--hue-neutral));
+  --desk-rail: oklch(0.975 0.003 var(--hue-neutral));
+  --desk-column: oklch(1 0 0);
+  --desk-hairline: color-mix(in oklch, var(--foreground) 7%, transparent);
+  --desk-glow-opacity: 0.055;
+  --desk-spine: color-mix(in oklch, var(--foreground) 11%, transparent);
+
   /* Charts ---------------------------------------------------------------
      Eight series on the categorical hue family. Light and dark differ only in
      lightness, never in hue, so a series keeps its identity when the theme
@@ -584,6 +622,28 @@
 
   --invert: var(--foreground);
   --invert-foreground: var(--canvas);
+}
+
+/* The Desk in dark: the room inverts but keeps its order. The column is a
+   step ABOVE the canvas here rather than below it, because in dark a lit
+   surface comes forward and a sunken one recedes — the opposite of light,
+   and the reason a single set of values never works for both. The shadow
+   hue goes near-black so a lift reads as depth rather than as a grey halo
+   on an already dark surface. */
+.dark {
+  --desk-canvas: oklch(0.175 0.006 var(--hue-neutral));
+  --desk-rail: oklch(0.155 0.006 var(--hue-neutral));
+  --desk-column: oklch(0.205 0.007 var(--hue-neutral));
+  --desk-hairline: color-mix(in oklch, var(--foreground) 12%, transparent);
+  --desk-glow-opacity: 0.1;
+  --desk-spine: color-mix(in oklch, var(--foreground) 16%, transparent);
+
+  --lift-ring: 0 0 0 1px color-mix(in oklch, var(--foreground) 12%, transparent);
+  --lift-whisper: var(--lift-ring), 0 1px 2px -1px oklch(0 0 0 / 0.4);
+  --lift-card:
+    var(--lift-ring), 0 2px 4px -2px oklch(0 0 0 / 0.45), 0 6px 16px -8px oklch(0 0 0 / 0.5);
+  --lift-float:
+    var(--lift-ring), 0 4px 8px -4px oklch(0 0 0 / 0.5), 0 16px 40px -16px oklch(0 0 0 / 0.6);
 }
 
 /* ---------------------------------------------------------------------------
@@ -906,6 +966,89 @@
   --animate-rise: rise 180ms var(--ease-settle) both;
   --animate-confirm: confirm 320ms var(--ease-spring) both;
   --animate-shimmer: shimmer 1.6s linear infinite;
+
+  /* The Desk's motion vocabulary.
+
+     Four verbs, because the Desk has four things that move and each means
+     something different:
+
+       land        a step of an agent's work arrives in the ledger
+       materialise something the agent produced appears in the workspace
+       draw        the spine extends as a turn grows
+       breathe     an agent is working; the ONLY loop in the system, and it
+                   runs on a live indicator that stops when the work does
+
+     Everything else on a working screen still answers an action. */
+  --animate-land: land 200ms var(--ease-settle) both;
+  --animate-materialise: materialise 320ms var(--ease-settle) both;
+  --animate-draw: draw 280ms var(--ease-swift) both;
+  --animate-breathe: breathe 2.4s ease-in-out infinite;
+  --animate-caret: caret 1.1s steps(2, start) infinite;
+
+  --lift-whisper-shadow: var(--lift-whisper);
+  --lift-card-shadow: var(--lift-card);
+  --lift-float-shadow: var(--lift-float);
+
+  --color-desk-canvas: var(--desk-canvas);
+  --color-desk-rail: var(--desk-rail);
+  --color-desk-column: var(--desk-column);
+  --color-desk-hairline: var(--desk-hairline);
+  --color-desk-spine: var(--desk-spine);
+}
+
+@keyframes land {
+  from {
+    opacity: 0;
+    transform: translate3d(-4px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Produced work does not fade in; it arrives from the conversation that
+   made it, so the eye follows it from the spine into the workspace. */
+@keyframes materialise {
+  from {
+    opacity: 0;
+    transform: translate3d(-10px, 6px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes draw {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.82);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -964,5 +1107,113 @@
     outline: none;
     box-shadow: inset 0 0 0 var(--ring-width)
       color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The Desk's surfaces.
+
+   The Desk is the one place in Trenova that is a room rather than a page, so
+   it is the one place allowed light and depth. These utilities are the whole
+   permission: anything outside the Desk that wants a lift has to justify a
+   name of its own rather than borrowing one of these.
+   --------------------------------------------------------------------------- */
+
+/* Something that floats over the conversation and can be picked up: the
+   composer, a menu, a card in flight. */
+@utility ui-lift {
+  box-shadow: var(--lift-card);
+}
+
+@utility ui-lift-whisper {
+  box-shadow: var(--lift-whisper);
+}
+
+@utility ui-lift-float {
+  box-shadow: var(--lift-float);
+}
+
+/* The wash an agent casts while it is working.
+
+   An accent becomes an area here and nowhere else, and only for as long as
+   there is work to justify it: the element sets --agent-accent, and removing
+   the class removes the light. It is a radial rather than a linear gradient
+   because the light has a source — the agent's mark at the top of the
+   column — and a linear wash reads as a painted band instead. */
+@utility ui-agent-glow {
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      120% 60% at 50% 0%,
+      color-mix(
+          in oklch,
+          var(--agent-accent, var(--brand)) calc(var(--desk-glow-opacity) * 100%),
+          transparent
+        )
+        0%,
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 600ms var(--ease-settle);
+  }
+
+  &[data-working="true"]::before {
+    opacity: 1;
+  }
+}
+
+/* The line that runs down a turn's gutter, tying the agent's mark to its
+   work and to what the work produced. It is drawn rather than faded so a
+   growing turn reads as the line extending. */
+@utility ui-spine {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--agent-accent, var(--desk-spine)) 45%, transparent) 0%,
+    var(--desk-spine) 28%,
+    var(--desk-spine) 100%
+  );
+  transform-origin: top;
+}
+
+/* The caret that follows streaming text, so a reply that is still arriving
+   is told from one that has stopped. */
+@utility ui-stream-caret {
+  &::after {
+    content: "";
+    display: inline-block;
+    width: 0.5ch;
+    height: 1.05em;
+    margin-left: 0.12em;
+    vertical-align: -0.18em;
+    background: currentColor;
+    border-radius: 1px;
+    animation: var(--animate-caret);
+  }
+}
+
+/* Reduced motion takes the loops and the travel, and keeps the state
+   changes: a step still arrives, it just does not slide to get there. */
+@media (prefers-reduced-motion: reduce) {
+  .ui-agent-glow::before {
+    transition: none;
+  }
+
+  [class*="animate-land"],
+  [class*="animate-materialise"],
+  [class*="animate-draw"] {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+  }
+
+  [class*="animate-breathe"],
+  .ui-stream-caret::after {
+    animation: none !important;
   }
 }

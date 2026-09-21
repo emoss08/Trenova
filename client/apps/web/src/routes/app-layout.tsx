@@ -7,6 +7,7 @@ import { useUserDatePreferenceKey } from "@trenova/shared/hooks/use-user-date-pr
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { PermissionManifest } from "@trenova/shared/types/permission";
+import type { ReactNode } from "react";
 import { Outlet } from "react-router";
 import { AuthCard } from "./auth/_components/auth-card";
 import type { CredentialReceipt } from "./auth/_components/auth-panel";
@@ -93,7 +94,19 @@ function PasswordChangeGate() {
   );
 }
 
-export function AppLayout() {
+/**
+ * Everything a signed-in session owes before a page may render: the polling
+ * and realtime connection it keeps open, the two gates that can stand in
+ * front of it, and the remount key that repaints formatted timestamps when
+ * the clock preference moves.
+ *
+ * It takes the outlet as an argument rather than rendering it directly
+ * because the app has two frames now. Inside the sidebar, a page is
+ * surrounded by chrome; at the Desk there is no chrome at all. Both owe the
+ * session exactly the same things, and a session check that lived in only
+ * one of them would be a session check the other could be used to skip.
+ */
+export function AppSession({ children }: { children: (outlet: ReactNode) => ReactNode }) {
   usePermissionPolling();
   useRealtimeConnection();
   const manifest = usePermissionStore((state) => state.manifest);
@@ -113,9 +126,9 @@ export function AppLayout() {
     return <RoleActivationGate key={manifest.organizationId} manifest={manifest} />;
   }
 
-  return (
-    <SidebarLayout>
-      <Outlet key={datePreferenceKey} />
-    </SidebarLayout>
-  );
+  return children(<Outlet key={datePreferenceKey} />);
+}
+
+export function AppLayout() {
+  return <AppSession>{(outlet) => <SidebarLayout>{outlet}</SidebarLayout>}</AppSession>;
 }
