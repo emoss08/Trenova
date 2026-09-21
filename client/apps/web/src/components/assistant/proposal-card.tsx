@@ -4,7 +4,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { toneVar } from "@/components/kpi/tone";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { invalidateProposalViews } from "@/lib/proposal-cache";
+import { invalidateProposalViews, markProposalDecided } from "@/lib/proposal-cache";
 import { apiService } from "@/services/api";
 import type { AssistantProposal, ProposalDecision } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
@@ -51,7 +51,16 @@ export function ProposalCard({
   const decideMutation = useApiMutation({
     mutationFn: (decision: ProposalDecision) =>
       apiService.assistantService.decideProposal(proposal.id, decision),
-    onSuccess: () => invalidateProposalViews(queryClient, threadId),
+    onSuccess: (_result, decision) => {
+      markProposalDecided(queryClient, proposal.id, decision);
+
+      return invalidateProposalViews(queryClient, threadId);
+    },
+    // A decision the server refuses almost always means this card is showing
+    // a proposal somebody already resolved — in another tab, or by a click
+    // this one did not hear about. Refetching turns that into the card
+    // catching up rather than a dead end the reader has to reload out of.
+    onError: () => void invalidateProposalViews(queryClient, threadId),
     resourceName: "Proposal",
   });
   const [editor, setEditor] = useState<ProposalEditorRequest | null>(null);
@@ -69,6 +78,7 @@ export function ProposalCard({
       arguments: proposal.arguments,
       onConfirm: async (modifications) => {
         await apiService.assistantService.decideProposal(proposal.id, "Modified", modifications);
+        markProposalDecided(queryClient, proposal.id, "Modified");
         await invalidateProposalViews(queryClient, threadId);
       },
     });

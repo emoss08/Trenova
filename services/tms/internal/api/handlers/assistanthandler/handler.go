@@ -60,14 +60,24 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// one needs.
 	api.POST("/ask/", h.pm.RequirePermission(resource, permission.OpCreate), h.ask)
 	api.GET("/threads/:threadID/", h.pm.RequirePermission(resource, permission.OpRead), h.getThread)
+	// Renaming, pinning and deleting a conversation need no more than being
+	// allowed to use the assistant.
+	//
+	// Every route here is read under the caller's own user id, so someone
+	// else's conversation is not found rather than refused — ownership is the
+	// authorization, and it cannot be got around. Asking for assistant:update
+	// on top of that gated a person's own desk behind an organization-wide
+	// grant most people have no reason to hold, so they could hold a
+	// conversation and not name it. There is nothing here but their own
+	// workspace, and arranging it is not an act over other people's records.
 	api.PATCH(
 		"/threads/:threadID/",
-		h.pm.RequirePermission(resource, permission.OpUpdate),
+		h.pm.RequirePermission(resource, permission.OpRead),
 		h.updateThread,
 	)
 	api.DELETE(
 		"/threads/:threadID/",
-		h.pm.RequirePermission(resource, permission.OpDelete),
+		h.pm.RequirePermission(resource, permission.OpRead),
 		h.deleteThread,
 	)
 	api.GET(
@@ -105,7 +115,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.listThreadPlans,
 	)
 	// Artifacts are part of what the conversation produced, read with it;
-	// pinning one is the reader arranging their own pane.
+	// pinning one is the reader arranging their own pane, which is the same
+	// kind of act as naming the conversation and gated the same way.
 	api.GET(
 		"/threads/:threadID/artifacts/",
 		h.pm.RequirePermission(resource, permission.OpRead),
@@ -113,7 +124,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 	api.POST(
 		"/threads/:threadID/artifacts/:artifactID/pin/",
-		h.pm.RequirePermission(resource, permission.OpUpdate),
+		h.pm.RequirePermission(resource, permission.OpRead),
 		h.pinArtifact,
 	)
 }
