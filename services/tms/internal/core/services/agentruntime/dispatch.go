@@ -57,6 +57,7 @@ func (s *Service) dispatch(
 	}
 
 	tier := req.Definition.EffectiveTier(call.Name, tool.DefaultAutonomyTier())
+	call.Arguments = declaredArguments(tool.ParamSchema(), call.Arguments)
 	action := &serviceports.PendingAction{
 		ToolName:  call.Name,
 		Arguments: call.Arguments,

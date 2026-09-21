@@ -175,12 +175,20 @@ type StubActionTool struct {
 	Calls      int
 	LastParams serviceports.ToolExecuteParams
 	Resource   permission.Resource
+	// Schema stands in for the tool's declared parameters when set.
+	Schema map[string]any
 }
 
-func (t *StubActionTool) Name() string                { return t.ToolName }
-func (t *StubActionTool) Description() string         { return "stub action tool" }
-func (t *StubActionTool) ParamSchema() map[string]any { return map[string]any{"type": "object"} }
-func (t *StubActionTool) Reversible() bool            { return true }
+func (t *StubActionTool) Name() string        { return t.ToolName }
+func (t *StubActionTool) Description() string { return "stub action tool" }
+func (t *StubActionTool) ParamSchema() map[string]any {
+	if t.Schema != nil {
+		return t.Schema
+	}
+
+	return map[string]any{"type": "object"}
+}
+func (t *StubActionTool) Reversible() bool { return true }
 func (t *StubActionTool) PermissionResource() permission.Resource {
 	if t.Resource == "" {
 		return permission.ResourceShipmentMove

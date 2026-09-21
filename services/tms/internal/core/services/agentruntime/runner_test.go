@@ -307,6 +307,39 @@ func TestRun_TurnsAWriteIntoAProposalAtTheEffectiveTier(t *testing.T) {
 	assert.Contains(t, result.Messages[2].Content, "has not run")
 }
 
+// The proposal carries what the tool will read. An argument the model made
+// up, which the tool's closed schema never declared, is not part of the
+// request and does not reach the card.
+func TestRun_KeepsOnlyTheArgumentsTheToolDeclares(t *testing.T) {
+	t.Parallel()
+
+	action := actionTool("raise_exception", agent.TierPropose, nil)
+	action.Schema = map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"subjectId": map[string]any{"type": "string"},
+		},
+		"required":             []string{"subjectId"},
+		"additionalProperties": false,
+	}
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("raise_exception", map[string]any{"subjectId": "shp_1", "runId": "ar_made_up"}),
+		textTurn("Flagged it."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{},
+		&stubActionRegistry{Tools: []serviceports.AgentTool{action}}, nil)
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("raise_exception"),
+		Actor:      testActor(),
+		Input:      "Flag shp_1",
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Actions, 1)
+	assert.Equal(t, map[string]any{"subjectId": "shp_1"}, result.Actions[0].Arguments)
+}
+
 // An organization that raised a tool to auto-execute, under a ceiling that
 // allows it, gets exactly that: the tool runs as the actor, keyed by the call id,
 // and the action is still recorded so the ledger shows what happened.
