@@ -157176,6 +157176,15 @@
       "routes/shipment"
     ]
   },
+  "The model": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The model declined the test request": {
     "sites": 1,
     "scope": [
@@ -189197,6 +189206,24 @@
     ],
     "areas": [
       "service/invoiceservice"
+    ]
+  },
+  "{0} is busy. Trying again (attempt {1})…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} is busy. Trying again in {1}s (attempt {2})…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} is currently unavailable and no fallback provider could answer. Try again shortly": {

@@ -127,9 +127,11 @@ func (s *Service) Run(
 				emit(serviceports.StreamEvent{
 					Event: serviceports.AssistantEventRetrying,
 					Data: serviceports.AssistantRetryingEvent{
-						Attempt:  notice.Attempt,
-						Provider: notice.Provider,
-						Reason:   notice.Reason,
+						Attempt:     notice.Attempt,
+						Provider:    notice.Provider,
+						Reason:      notice.Reason,
+						Kind:        notice.Kind,
+						WaitSeconds: notice.WaitSeconds,
 					},
 				})
 			},

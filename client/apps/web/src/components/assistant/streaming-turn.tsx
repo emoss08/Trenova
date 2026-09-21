@@ -140,9 +140,7 @@ function StatusLine({ turn }: { turn: TurnState }) {
   if (turn.retrying) {
     return (
       <TextShimmer as="span" className="text-muted-foreground text-xs">
-        {turn.retrying.provider !== ""
-          ? t("The model stopped partway. Starting over on {0}…", turn.retrying.provider)
-          : t("The model stopped partway. Starting over…")}
+        {retryingLine(turn.retrying, t)}
       </TextShimmer>
     );
   }
@@ -203,4 +201,30 @@ function groupSegments(turn: TurnState): SegmentGroup[] {
   }
 
   return groups;
+}
+
+/**
+ * What a retry means to the reader. A restart withdrew the words they were
+ * reading; a busy provider is a wait, and the line says how long so the
+ * silence is not mistaken for a hang.
+ */
+export function retryingLine(
+  retrying: NonNullable<TurnState["retrying"]>,
+  t: (message: string, ...args: unknown[]) => string,
+): string {
+  if (retrying.kind === "busy") {
+    const who = retrying.provider !== "" ? retrying.provider : t("The model");
+    return retrying.waitSeconds > 0
+      ? t(
+          "{0} is busy. Trying again in {1}s (attempt {2})…",
+          who,
+          retrying.waitSeconds,
+          retrying.attempt + 1,
+        )
+      : t("{0} is busy. Trying again (attempt {1})…", who, retrying.attempt + 1);
+  }
+
+  return retrying.provider !== ""
+    ? t("The model stopped partway. Starting over on {0}…", retrying.provider)
+    : t("The model stopped partway. Starting over…");
 }

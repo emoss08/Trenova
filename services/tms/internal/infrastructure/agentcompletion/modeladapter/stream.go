@@ -83,12 +83,7 @@ func postStream(
 		_ = resp.Body.Close()
 		cancel()
 
-		return nil, &TransportError{
-			StatusCode: resp.StatusCode,
-			Retryable: resp.StatusCode == http.StatusTooManyRequests ||
-				resp.StatusCode >= http.StatusInternalServerError,
-			Message: parseErrorMessage(payload),
-		}
+		return nil, transportError(resp, payload)
 	}
 
 	return newIdleGuard(resp.Body, cancel, call.streamIdleTimeout()), nil

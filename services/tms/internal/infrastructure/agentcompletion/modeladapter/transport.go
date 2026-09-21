@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bytedance/sonic"
 )
@@ -18,6 +20,10 @@ type TransportError struct {
 	StatusCode int
 	Retryable  bool
 	Message    string
+	// RetryAfter is how long the provider asked to be left alone, from a
+	// Retry-After header or a Google RetryInfo detail. Zero when it said
+	// nothing; the caller's own backoff applies then.
+	RetryAfter time.Duration
 }
 
 func (e *TransportError) Error() string {
@@ -112,12 +118,7 @@ func postJSON(
 	}
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return &TransportError{
-			StatusCode: resp.StatusCode,
-			Retryable: resp.StatusCode == http.StatusTooManyRequests ||
-				resp.StatusCode >= http.StatusInternalServerError,
-			Message: parseErrorMessage(payload),
-		}
+		return transportError(resp, payload)
 	}
 
 	if err = sonic.Unmarshal(payload, out); err != nil {
@@ -157,12 +158,7 @@ func getJSON(
 	}
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return &TransportError{
-			StatusCode: resp.StatusCode,
-			Retryable: resp.StatusCode == http.StatusTooManyRequests ||
-				resp.StatusCode >= http.StatusInternalServerError,
-			Message: parseErrorMessage(payload),
-		}
+		return transportError(resp, payload)
 	}
 
 	if err = sonic.Unmarshal(payload, out); err != nil {
@@ -179,8 +175,58 @@ type errorEnvelope struct {
 	Error struct {
 		Type    string `json:"type"`
 		Message string `json:"message"`
+		// Details is where Google puts a RetryInfo with the delay it wants.
+		Details []struct {
+			Type       string `json:"@type"`
+			RetryDelay string `json:"retryDelay"`
+		} `json:"details"`
 	} `json:"error"`
 	Detail string `json:"detail"`
+}
+
+// transportError reads a non-2xx reply into a TransportError: the status,
+// whether it is worth another attempt, the provider's message, and how long
+// it asked to be left alone.
+func transportError(resp *http.Response, payload []byte) *TransportError {
+	return &TransportError{
+		StatusCode: resp.StatusCode,
+		Retryable: resp.StatusCode == http.StatusTooManyRequests ||
+			resp.StatusCode >= http.StatusInternalServerError,
+		Message:    parseErrorMessage(payload),
+		RetryAfter: retryAfterFrom(resp.Header, payload),
+	}
+}
+
+// retryAfterFrom reads how long the provider asked to be left alone: the
+// Retry-After header as seconds or as a date, or failing that Google's
+// RetryInfo detail in the body ("retryDelay": "34s"). A value it cannot
+// read is zero, and the caller's own backoff applies.
+func retryAfterFrom(header http.Header, payload []byte) time.Duration {
+	if raw := strings.TrimSpace(header.Get("Retry-After")); raw != "" {
+		if seconds, err := strconv.Atoi(raw); err == nil && seconds > 0 {
+			return time.Duration(seconds) * time.Second
+		}
+		if at, err := http.ParseTime(raw); err == nil {
+			if wait := time.Until(at); wait > 0 {
+				return wait
+			}
+		}
+	}
+
+	var envelope errorEnvelope
+	if err := sonic.Unmarshal(payload, &envelope); err != nil {
+		return 0
+	}
+	for _, detail := range envelope.Error.Details {
+		if !strings.HasSuffix(detail.Type, "RetryInfo") || detail.RetryDelay == "" {
+			continue
+		}
+		if wait, err := time.ParseDuration(detail.RetryDelay); err == nil && wait > 0 {
+			return wait
+		}
+	}
+
+	return 0
 }
 
 func parseErrorMessage(payload []byte) string {

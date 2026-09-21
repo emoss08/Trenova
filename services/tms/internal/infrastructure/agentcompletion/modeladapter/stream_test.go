@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
@@ -299,4 +300,39 @@ func TestOpenAIChatAdapter_StreamKeepsProviderDataOnTheCall(t *testing.T) {
 		map[string]any{"google": map[string]any{"thought_signature": "sig-9"}},
 		resp.ToolCalls[0].ProviderData,
 	)
+}
+
+// A provider that says how long to wait is listened to. Google puts the
+// delay in a RetryInfo detail of the body; most others use the header.
+func TestTransportError_CarriesHowLongTheProviderAskedToWait(t *testing.T) {
+	t.Parallel()
+
+	header := http.Header{}
+	header.Set("Retry-After", "7")
+	assert.Equal(t, 7*time.Second, retryAfterFrom(header, nil))
+
+	dated := http.Header{}
+	dated.Set("Retry-After", time.Now().Add(90*time.Second).UTC().Format(http.TimeFormat))
+	assert.InDelta(t, 90, retryAfterFrom(dated, nil).Seconds(), 2)
+
+	google := []byte(`{"error":{"code":429,"message":"You exceeded your current quota","status":"RESOURCE_EXHAUSTED",` +
+		`"details":[{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"34s"}]}}`)
+	assert.Equal(t, 34*time.Second, retryAfterFrom(http.Header{}, google))
+
+	assert.Equal(t, time.Duration(0), retryAfterFrom(http.Header{}, []byte(`{"error":{"message":"overloaded"}}`)))
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Retry-After", "3")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = w.Write([]byte(`{"error":{"message":"The model is overloaded. Please try again later."}}`))
+	}))
+	t.Cleanup(server.Close)
+
+	_, err := NewOpenAIChatAdapter().Complete(t.Context(), callFor(
+		aiprovider.KindOpenAIChat, server.URL, &Request{Messages: UserMessage("hi")},
+	))
+	var transport *TransportError
+	require.ErrorAs(t, err, &transport)
+	assert.Equal(t, 3*time.Second, transport.RetryAfter)
+	assert.True(t, transport.Retryable)
 }

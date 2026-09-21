@@ -248,22 +248,57 @@ describe("reduceTurn restarts and refusals", () => {
       },
       { event: "reasoning", data: { text: "Let me think." } },
       { event: "delta", data: { text: "S1 is in " } },
-      { event: "retrying", data: { attempt: 1, provider: "Backup", reason: "stream died" } },
+      {
+        event: "retrying",
+        data: {
+          attempt: 1,
+          provider: "Backup",
+          reason: "stream died",
+          kind: "restart",
+          waitSeconds: 0,
+        },
+      },
     ]);
 
     expect(state.status).toBe("working");
     expect(state.segments.map((segment) => segment.kind)).toEqual(["tool"]);
-    expect(state.retrying).toEqual({ attempt: 1, provider: "Backup" });
+    expect(state.retrying).toEqual({
+      attempt: 1,
+      provider: "Backup",
+      kind: "restart",
+      waitSeconds: 0,
+    });
 
     const resumed = reduceTurn(state, { event: "delta", data: { text: "S1 is in Dallas." } });
     expect(resumed.retrying).toBeNull();
     expect(resumed.segments.at(-1)).toMatchObject({ kind: "text", text: "S1 is in Dallas." });
   });
 
+  // A busy provider being asked again is not a reply starting over: nothing
+  // arrived, nothing is withdrawn, and the reader is told how long the wait
+  // is rather than that the model stopped partway.
+  it("keeps a busy retry apart from a restart and carries the wait", () => {
+    const state = run([
+      accepted,
+      {
+        event: "retrying",
+        data: { attempt: 2, provider: "Gemini", reason: "503", kind: "busy", waitSeconds: 4 },
+      },
+    ]);
+
+    expect(state.status).toBe("working");
+    expect(state.retrying).toEqual({
+      attempt: 2,
+      provider: "Gemini",
+      kind: "busy",
+      waitSeconds: 4,
+    });
+  });
+
   it("parses the retrying event from the wire", () => {
     expect(parseAssistantStreamEvent("retrying", '{"attempt":2,"provider":"Backup"}')).toEqual({
       event: "retrying",
-      data: { attempt: 2, provider: "Backup", reason: "" },
+      data: { attempt: 2, provider: "Backup", reason: "", kind: "restart", waitSeconds: 0 },
     });
   });
 

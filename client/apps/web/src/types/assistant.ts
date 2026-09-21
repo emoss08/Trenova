@@ -564,10 +564,19 @@ export const assistantErrorEventSchema = z.object({ message: z.string() });
  * on another model when one is configured. Whatever streamed before it is
  * withdrawn; what follows is the whole reply.
  */
+/**
+ * Why a turn is being retried: a reply that died partway starting over on
+ * another provider, or a busy provider being asked again after a wait.
+ */
+export const retryKindSchema = z.enum(["restart", "busy"]);
+
 export const assistantRetryingEventSchema = z.object({
   attempt: z.number().int().nonnegative(),
   provider: z.string().optional().default(""),
   reason: z.string().optional().default(""),
+  kind: retryKindSchema.optional().default("restart"),
+  /** How long the router is waiting before a busy retry, in seconds. */
+  waitSeconds: z.number().int().nonnegative().optional().default(0),
 });
 
 export type AssistantStreamEvent =
@@ -639,6 +648,7 @@ export type AssistantProposal = z.infer<typeof assistantProposalSchema>;
 export type ProposalStatus = z.infer<typeof proposalStatusSchema>;
 export type ProposalDecision = z.infer<typeof proposalDecisionSchema>;
 export type ProposalField = z.infer<typeof proposalFieldSchema>;
+export type RetryKind = z.infer<typeof retryKindSchema>;
 export type ProposalFieldKind = z.infer<typeof proposalFieldKindSchema>;
 export type ProposalHold = z.infer<typeof proposalHoldSchema>;
 export type AssistantPlan = z.infer<typeof assistantPlanSchema>;

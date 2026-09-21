@@ -2,6 +2,7 @@ import type {
   AssistantPageContext,
   AssistantStreamEvent,
   SendMessageResult,
+  RetryKind,
 } from "@/types/assistant";
 
 /**
@@ -62,7 +63,7 @@ export type TurnState = {
   error: string | null;
   result: SendMessageResult | null;
   /** Set while the reply is starting over after a model died partway. */
-  retrying: { attempt: number; provider: string } | null;
+  retrying: { attempt: number; provider: string; kind: RetryKind; waitSeconds: number } | null;
 };
 
 export function initialTurnState(
@@ -182,14 +183,23 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
     }
 
     case "retrying":
-      // The reply is starting over. The words that arrived are withdrawn so
-      // the reader is not left holding half of one answer under another;
-      // the tools that ran are kept, because they did run.
+      // A restart withdraws the words that arrived, so the reader is not
+      // left holding half of one answer under another; the tools that ran
+      // are kept, because they did run. A busy retry happened before any
+      // word arrived, so there is nothing to withdraw.
       return {
         ...state,
         status: "working",
-        retrying: { attempt: event.data.attempt, provider: event.data.provider },
-        segments: state.segments.filter((segment) => segment.kind === "tool"),
+        retrying: {
+          attempt: event.data.attempt,
+          provider: event.data.provider,
+          kind: event.data.kind,
+          waitSeconds: event.data.waitSeconds,
+        },
+        segments:
+          event.data.kind === "busy"
+            ? state.segments
+            : state.segments.filter((segment) => segment.kind === "tool"),
       };
 
     case "done":

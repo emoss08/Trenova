@@ -149,6 +149,11 @@ type AssistantRetryingEvent struct {
 	Attempt  int    `json:"attempt"`
 	Provider string `json:"provider,omitempty"`
 	Reason   string `json:"reason,omitempty"`
+	// Kind is "restart" for a reply starting over on another provider and
+	// "busy" for a provider being asked again after a wait; WaitSeconds is
+	// the wait, for the reader.
+	Kind        RetryKind `json:"kind,omitempty"`
+	WaitSeconds int       `json:"waitSeconds,omitempty"`
 }
 
 // AssistantAcceptedEvent says the question passed the scope guard and a model is

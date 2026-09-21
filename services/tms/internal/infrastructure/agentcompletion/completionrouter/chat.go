@@ -141,6 +141,7 @@ func (s *Service) runChat(
 							Attempt:  midReplyRetries,
 							Provider: queue[idx+1].Name,
 							Reason:   attemptErr.Error(),
+							Kind:     serviceports.RetryKindRestart,
 						})
 					}
 					lastErr = attemptErr
@@ -224,10 +225,25 @@ func (s *Service) attemptChat(
 		resp    *modeladapter.Response
 		emitted string
 	)
+	// A busy provider being asked again is told to the reader, who is
+	// otherwise watching nothing happen for the length of the wait.
+	busy := func(attempt int, wait time.Duration, cause error) {
+		if req.RetrySink == nil {
+			return
+		}
+		req.RetrySink(serviceports.ChatRetryNotice{
+			Attempt:     attempt,
+			Provider:    provider.Name,
+			Reason:      cause.Error(),
+			Kind:        serviceports.RetryKindBusy,
+			WaitSeconds: int(wait.Round(time.Second).Seconds()),
+		})
+	}
+
 	if streamer, ok := adapter.(modeladapter.Streamer); ok && sink != nil {
-		resp, emitted, err = s.executeStreamWithRetry(ctx, streamer, call, sink)
+		resp, emitted, err = s.executeStreamWithRetry(ctx, streamer, call, sink, busy)
 	} else {
-		resp, err = s.executeWithRetry(ctx, adapter, call)
+		resp, err = s.executeWithRetryNoticed(ctx, adapter, call, busy)
 		if err == nil && sink != nil && resp.Text != "" {
 			sink(resp.Text)
 			emitted = resp.Text
@@ -268,12 +284,8 @@ func (s *Service) executeStreamWithRetry(
 	streamer modeladapter.Streamer,
 	call *modeladapter.Call,
 	sink serviceports.ChatStreamSink,
+	busy busyNotice,
 ) (*modeladapter.Response, string, error) {
-	attempts := s.cfg.GetAIMaxRetries()
-	if attempts < 1 {
-		attempts = 1
-	}
-
 	// The text is kept as well as the fact of it. A stream that dies partway
 	// leaves the reader watching an answer that then vanishes, and the words
 	// that did arrive are the ones we can still give them.
@@ -284,29 +296,70 @@ func (s *Service) executeStreamWithRetry(
 	}
 	emittedText := func() string { return partial.String() }
 
-	var lastErr error
-	for attempt := range attempts {
+	var waited time.Duration
+	for attempt := 0; ; attempt++ {
 		resp, err := streamer.Stream(ctx, call, tracked)
 		if err == nil {
 			return resp, emittedText(), nil
 		}
+		if emittedText() != "" || ctx.Err() != nil {
+			return nil, emittedText(), err
+		}
 
-		lastErr = err
-		if emittedText() != "" || !modeladapter.IsRetryable(err) || ctx.Err() != nil {
+		wait, again := s.retryWait(err, attempt, waited)
+		if !again {
 			return nil, emittedText(), err
 		}
 
 		s.logger.Debug("retrying provider stream",
 			zap.String("provider", call.Provider.Name),
 			zap.Int("attempt", attempt+1),
+			zap.Duration("wait", wait),
 			zap.Error(err),
 		)
-		if waitErr := waitBeforeRetry(ctx, attempt); waitErr != nil {
+		if busy != nil && unavailability(err) {
+			busy(attempt+1, wait, err)
+		}
+		if waitErr := s.wait(ctx, wait); waitErr != nil {
 			return nil, emittedText(), waitErr
 		}
+		waited += wait
 	}
+}
 
-	return nil, emittedText(), lastErr
+// busyNotice tells the reader a busy provider is being asked again.
+type busyNotice func(attempt int, wait time.Duration, cause error)
+
+// executeWithRetryNoticed is executeWithRetry with the reader told about
+// each wait on a busy provider.
+func (s *Service) executeWithRetryNoticed(
+	ctx context.Context,
+	adapter modeladapter.Adapter,
+	call *modeladapter.Call,
+	busy busyNotice,
+) (*modeladapter.Response, error) {
+	var waited time.Duration
+	for attempt := 0; ; attempt++ {
+		resp, err := adapter.Complete(ctx, call)
+		if err == nil {
+			return resp, nil
+		}
+		if ctx.Err() != nil {
+			return nil, err
+		}
+
+		wait, again := s.retryWait(err, attempt, waited)
+		if !again {
+			return nil, err
+		}
+		if busy != nil && unavailability(err) {
+			busy(attempt+1, wait, err)
+		}
+		if waitErr := s.wait(ctx, wait); waitErr != nil {
+			return nil, waitErr
+		}
+		waited += wait
+	}
 }
 
 // maxMidReplyRetries bounds how many times a turn starts over after a

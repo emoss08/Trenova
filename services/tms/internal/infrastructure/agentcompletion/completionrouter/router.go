@@ -55,6 +55,9 @@ type Service struct {
 	// health rests a provider that keeps failing, so a turn does not pay for
 	// attempts on a provider that is down before reaching one that is up.
 	health *providerHealth
+	// pause waits out a backoff. It is a field so tests can count the waits
+	// instead of sitting through them.
+	pause func(ctx context.Context, wait time.Duration) error
 
 	// clients are cached per egress policy. Building one per call would discard
 	// connection reuse, and the policy must stay bound to the client so a
@@ -77,6 +80,7 @@ func New(p Params) serviceports.CompletionService {
 		usage:         p.Usage,
 		adapters:      modeladapter.NewRegistry(),
 		health:        newProviderHealth(nil),
+		pause:         pauseFor,
 		clients:       make(map[bool]*http.Client, 2),
 		streamClients: make(map[bool]*http.Client, 2),
 	}
@@ -385,34 +389,72 @@ func (s *Service) executeWithRetry(
 	adapter modeladapter.Adapter,
 	call *modeladapter.Call,
 ) (*modeladapter.Response, error) {
-	attempts := s.cfg.GetAIMaxRetries()
-	if attempts < 1 {
-		attempts = 1
+	return s.executeWithRetryNoticed(ctx, adapter, call, nil)
+}
+
+const (
+	// maxBusyAttempts is how many times a provider answering 429 or 5xx is
+	// asked in one call. A busy provider usually answers within a few
+	// seconds, and a person who picked that model has nowhere else to go.
+	maxBusyAttempts = 4
+	// busyWaitBudget bounds the total wait on one provider in one call, and
+	// maxRetryWait bounds any single wait, whatever the provider asked for.
+	busyWaitBudget = 20 * time.Second
+	maxRetryWait   = 15 * time.Second
+)
+
+// retryWait decides whether one more attempt on the same provider is worth
+// it after err, and how long to wait first.
+//
+// A request the provider refused is never retried. Any other retryable
+// failure gets the configured attempts with the usual backoff. A provider
+// that is busy — a 429, a 5xx, a timeout — gets more attempts, since asking
+// again in a few seconds is what such an answer means, and the wait honours
+// what the provider asked for, within a budget that keeps a person from
+// watching a spinner for a minute.
+func (s *Service) retryWait(err error, attempt int, waited time.Duration) (time.Duration, bool) {
+	if !modeladapter.IsRetryable(err) {
+		return 0, false
 	}
 
-	var lastErr error
-	for attempt := range attempts {
-		resp, err := adapter.Complete(ctx, call)
-		if err == nil {
-			return resp, nil
-		}
+	limit := max(1, s.cfg.GetAIMaxRetries())
+	busy := unavailability(err)
+	if busy {
+		limit = max(limit, maxBusyAttempts)
+	}
+	if attempt+1 >= limit {
+		return 0, false
+	}
 
-		lastErr = err
-		if !modeladapter.IsRetryable(err) || ctx.Err() != nil {
-			return nil, err
-		}
-
-		s.logger.Debug("retrying provider request",
-			zap.String("provider", call.Provider.Name),
-			zap.Int("attempt", attempt+1),
-			zap.Error(err),
-		)
-		if waitErr := waitBeforeRetry(ctx, attempt); waitErr != nil {
-			return nil, waitErr
+	wait := retryDelay(attempt)
+	if busy {
+		wait = max(wait, retryAfterOf(err))
+		wait = min(wait, maxRetryWait)
+		if waited+wait > busyWaitBudget {
+			return 0, false
 		}
 	}
 
-	return nil, lastErr
+	return wait, true
+}
+
+// retryAfterOf is how long the provider asked to be left alone, if it said.
+func retryAfterOf(err error) time.Duration {
+	var transport *modeladapter.TransportError
+	if errors.As(err, &transport) {
+		return transport.RetryAfter
+	}
+
+	return 0
+}
+
+// wait sits out a backoff through the pause hook.
+func (s *Service) wait(ctx context.Context, wait time.Duration) error {
+	if s.pause == nil {
+		return pauseFor(ctx, wait)
+	}
+
+	return s.pause(ctx, wait)
 }
 
 func (s *Service) resolveAPIKey(provider *aiprovider.Provider) (string, error) {
@@ -455,11 +497,11 @@ func retryDelay(attempt int) time.Duration {
 	return delay
 }
 
-// waitBeforeRetry sleeps out the delay, or returns the context's error the
-// moment it is cancelled: a person who stopped a reply is not kept waiting
-// for a backoff to elapse.
-func waitBeforeRetry(ctx context.Context, attempt int) error {
-	timer := time.NewTimer(retryDelay(attempt))
+// pauseFor sleeps out the wait, or returns the context's error the moment
+// it is cancelled: a person who stopped a reply is not kept waiting for a
+// backoff to elapse.
+func pauseFor(ctx context.Context, wait time.Duration) error {
+	timer := time.NewTimer(wait)
 	defer timer.Stop()
 
 	select {

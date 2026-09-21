@@ -89,23 +89,27 @@ func TestStreamChat_SkipsAProviderRestingAfterRepeatedFailures(t *testing.T) {
 	now := time.Unix(1_790_000_000, 0)
 	service := newTestService(t, down, up)
 	service.health = newProviderHealth(func() time.Time { return now })
+	recordingPauses(service)
 
+	// Each turn asks the busy provider maxBusyAttempts times before falling
+	// through; the breaker counts the turn, not the attempts.
+	perTurn := int32(maxBusyAttempts)
 	for range breakerThreshold {
 		result, err := service.CompleteChat(t.Context(), chatRequest(pulid.Nil))
 		require.NoError(t, err)
 		assert.Equal(t, "Answered.", result.Text)
 	}
-	assert.EqualValues(t, breakerThreshold, downCalls.Load())
+	assert.EqualValues(t, breakerThreshold*perTurn, downCalls.Load())
 
 	_, err := service.CompleteChat(t.Context(), chatRequest(pulid.Nil))
 	require.NoError(t, err)
-	assert.EqualValues(t, breakerThreshold, downCalls.Load(), "the resting provider is not asked")
+	assert.EqualValues(t, breakerThreshold*perTurn, downCalls.Load(), "the resting provider is not asked")
 	assert.EqualValues(t, breakerThreshold+1, upCalls.Load())
 
 	now = now.Add(breakerCooldown)
 	_, err = service.CompleteChat(t.Context(), chatRequest(pulid.Nil))
 	require.NoError(t, err)
-	assert.EqualValues(t, breakerThreshold+1, downCalls.Load(), "after the cooldown it is tried again")
+	assert.EqualValues(t, (breakerThreshold+1)*perTurn, downCalls.Load(), "after the cooldown it is tried again")
 }
 
 // When the only provider, or the one the person pinned, is resting, the turn
@@ -117,6 +121,7 @@ func TestStreamChat_SaysWhenThePinnedProviderIsResting(t *testing.T) {
 	down := chatProvider("down", downServer.URL, 1)
 	service := newTestService(t, down)
 	service.health = newProviderHealth(nil)
+	recordingPauses(service)
 
 	request := chatRequest(down.ID)
 	request.PinPreferred = true
@@ -130,5 +135,5 @@ func TestStreamChat_SaysWhenThePinnedProviderIsResting(t *testing.T) {
 	assert.True(t, errors.Is(err, serviceports.ErrProvidersResting), "%v", err)
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Contains(t, err.Error(), "down is paused")
-	assert.EqualValues(t, breakerThreshold, downCalls.Load())
+	assert.EqualValues(t, breakerThreshold*maxBusyAttempts, downCalls.Load())
 }

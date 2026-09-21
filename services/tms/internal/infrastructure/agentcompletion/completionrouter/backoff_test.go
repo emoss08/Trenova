@@ -22,14 +22,14 @@ func TestRetryDelay_DoublesFromHalfASecondAndStopsAtFive(t *testing.T) {
 }
 
 // A person who stopped a reply is not kept waiting for a backoff to elapse.
-func TestWaitBeforeRetry_ReturnsAtOnceWhenCancelled(t *testing.T) {
+func TestPauseFor_ReturnsAtOnceWhenCancelled(t *testing.T) {
 	t.Parallel()
 
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
 	started := time.Now()
-	err := waitBeforeRetry(ctx, 4)
+	err := pauseFor(ctx, 4*time.Second)
 
 	require.ErrorIs(t, err, context.Canceled)
 	assert.Less(t, time.Since(started), 100*time.Millisecond)

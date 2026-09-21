@@ -100,7 +100,21 @@ type ChatRetryNotice struct {
 	Attempt  int
 	Provider string
 	Reason   string
+	// Kind says what the retry is: a reply that died partway starting over
+	// on another provider, or a busy provider being asked again after a
+	// wait. The reader is told different things for each.
+	Kind RetryKind
+	// WaitSeconds is how long the router is waiting before a busy retry.
+	WaitSeconds int
 }
+
+// RetryKind names why a turn is being retried.
+type RetryKind string
+
+const (
+	RetryKindRestart RetryKind = "restart"
+	RetryKindBusy    RetryKind = "busy"
+)
 
 // ChatCompletionResult is a turn's reply, which may ask for tools, say
 // something, or both.
