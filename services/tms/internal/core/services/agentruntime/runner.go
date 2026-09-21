@@ -87,6 +87,10 @@ func (s *Service) Run(
 
 	tools := s.newToolSet(definition, req.Input, req.Unattended)
 	runtimeContext.ToolsDisclosed = tools.disclosed
+	for idx := range runtimeContext.Tools {
+		_, loaded := tools.loaded[runtimeContext.Tools[idx].Name]
+		runtimeContext.Tools[idx].Loaded = loaded
+	}
 	repeats := newRepeatGuard()
 
 	system := definition.BuildSystemPrompt(runtimeContext)

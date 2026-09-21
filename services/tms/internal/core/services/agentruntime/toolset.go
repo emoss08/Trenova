@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"fmt"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"slices"
 	"strings"
 
@@ -242,9 +243,5 @@ func toSpec(descriptor serviceports.AgentToolDescriptor) serviceports.ToolSpec {
 }
 
 func firstSentence(text string) string {
-	if index := strings.IndexByte(text, '.'); index > 0 {
-		return text[:index+1]
-	}
-
-	return text
+	return stringutils.FirstSentence(text)
 }

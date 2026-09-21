@@ -39,3 +39,11 @@ func TestTruncateRunes(t *testing.T) {
 		})
 	}
 }
+
+func TestFirstSentence(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "Look up one shipment.", FirstSentence("Look up one shipment. Returns stops."))
+	assert.Equal(t, "No stop here", FirstSentence("No stop here"))
+	assert.Equal(t, ".x", FirstSentence(".x"), "a leading stop is not a sentence and the text is returned whole")
+}

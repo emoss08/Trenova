@@ -61,6 +61,9 @@ type ToolSummary struct {
 	Description string
 	Tier        agent.AutonomyTier
 	Query       bool
+	// Loaded says the tool's schema is on this turn's request. Meaningful
+	// only when the turn disclosed a subset; the rest load through find_tools.
+	Loaded bool
 }
 
 type RuntimeContext struct {
@@ -122,7 +125,10 @@ func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
 		}
 	}
 
-	if d.HasContextProvider(ContextTools) {
+	// A disclosed turn always says so, whatever providers the agent carries:
+	// a model handed eight of forty tools and no word about find_tools reads
+	// the eight as the limit of what the system does.
+	if d.HasContextProvider(ContextTools) || rc.ToolsDisclosed {
 		if section := buildToolSection(rc.Tools, rc.ToolsDisclosed); section != "" {
 			builder.WriteString("\n\n")
 			builder.WriteString(section)
@@ -372,19 +378,38 @@ func buildToolSection(tools []ToolSummary, disclosed bool) string {
 	builder.WriteString("## Tools\n")
 
 	if disclosed {
-		// Only the names, and only as a map of what exists. The schemas are
-		// already on the request; repeating every description here would spend
-		// the context twice over, which is the cost this section exists to
-		// avoid.
+		// The loaded tools are named only: their schemas are already on the
+		// request, and repeating the descriptions would spend the context the
+		// narrowing saved. The rest get one sentence each, because a model
+		// that knows what exists asks find_tools for it, and one that sees
+		// only names tells the person the system cannot do it.
 		builder.WriteString(
-			"You hold the tools below. The ones that fit this request are loaded and " +
-				"callable now; the rest become callable when you ask find_tools for them. " +
-				"A tool you cannot see yet is not a tool you do not have — never tell " +
-				"the person something is impossible without searching for it first.",
+			"You hold more tools than are loaded on this turn. The loaded ones are " +
+				"callable now. Every other tool below becomes callable the moment you ask " +
+				"find_tools for it, in a few words describing what you need. Before you " +
+				"tell the person something cannot be done, cannot be found, or is not " +
+				"tracked, call find_tools first — a tool you cannot see yet is not a tool " +
+				"you do not have, and never tell the person something is impossible " +
+				"without searching for it first.",
 		)
+		builder.WriteString("\n\nLoaded now:")
 		for _, tool := range tools {
+			if tool.Loaded {
+				builder.WriteString("\n- ")
+				builder.WriteString(tool.Name)
+			}
+		}
+		builder.WriteString("\n\nCallable after find_tools:")
+		for _, tool := range tools {
+			if tool.Loaded {
+				continue
+			}
 			builder.WriteString("\n- ")
 			builder.WriteString(tool.Name)
+			if description := strings.TrimSpace(stringutils.FirstSentence(tool.Description)); description != "" {
+				builder.WriteString(" — ")
+				builder.WriteString(description)
+			}
 		}
 
 		return builder.String()

@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -300,4 +301,40 @@ func TestNewToolSet_WithholdsAskUserFromAnUnattendedRun(t *testing.T) {
 	large := service.newToolSet(testDefinition(names...), "anything", true)
 	assert.NotContains(t, specNames(large.specs), askUserName)
 	assert.Contains(t, specNames(large.specs), findToolsName, "finding tools needs no person")
+}
+
+// The prompt's account of what is loaded has to match the request: a tool
+// the ranking chose is named as loaded, one it left out as callable after
+// find_tools, so the model asks for exactly what it lacks.
+func TestRun_TellsThePromptWhichToolsAreLoaded(t *testing.T) {
+	t.Parallel()
+
+	service, names := wideRuntime(t)
+	definition := testDefinition(names...)
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{textTurn("ok")}}
+	service.completion = completion
+
+	_, err := service.Run(t.Context(), &serviceports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "which drivers have a medical card expiring soon",
+	})
+	require.NoError(t, err)
+
+	loaded := make(map[string]struct{}, len(completion.LastReq.Tools))
+	for _, spec := range completion.LastReq.Tools {
+		loaded[spec.Name] = struct{}{}
+	}
+	require.Less(t, len(loaded), len(names), "the wide agent is disclosed")
+
+	system := completion.LastReq.System
+	after := strings.SplitN(system, "Callable after find_tools:", 2)
+	require.Len(t, after, 2)
+	for _, name := range names {
+		if _, isLoaded := loaded[name]; isLoaded {
+			assert.NotContains(t, after[1], "- "+name+"\n", "%s is loaded, not offered through find_tools", name)
+		} else {
+			assert.Contains(t, after[1], "- "+name, "%s is not loaded and must be findable", name)
+		}
+	}
 }

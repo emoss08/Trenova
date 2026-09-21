@@ -37,3 +37,13 @@ func Ellipsize(value string, maxLength int) string {
 
 	return strings.TrimRight(truncated, " ") + "…"
 }
+
+// FirstSentence returns the text up to and including its first full stop,
+// or the whole text when it has none.
+func FirstSentence(text string) string {
+	if index := strings.IndexByte(text, '.'); index > 0 {
+		return text[:index+1]
+	}
+
+	return text
+}
