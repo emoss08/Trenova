@@ -237,3 +237,18 @@ func TestDescribeUnixDate_CountsCalendarDaysNotElapsedHours(t *testing.T) {
 	assert.Contains(t, timeutils.DescribeUnixDate(lateTonight, 1789776000), "(today)")
 	assert.Contains(t, timeutils.DescribeUnixDate(earlyTomorrow, 1789776000), "(tomorrow)")
 }
+
+// Which day an instant falls on is a question about a place. At 23:30 in New
+// York, a card expiring at 00:30 tomorrow New York time is tomorrow; the UTC
+// clock, already past midnight, called it today.
+func TestDescribeUnixDateIn_DrawsTheDayBoundaryInTheZone(t *testing.T) {
+	t.Parallel()
+
+	const now int64 = 1789875000 // 2026-09-20T03:30:00Z, 23:30 EDT on the 19th
+	ts := now + 3600             // 00:30 EDT on the 20th
+
+	assert.Equal(t, "2026-09-20 (today)", timeutils.DescribeUnixDateIn(ts, now, "UTC"))
+	assert.Equal(t, "2026-09-20 (tomorrow)", timeutils.DescribeUnixDateIn(ts, now, "America/New_York"))
+	assert.Equal(t, timeutils.DescribeUnixDate(ts, now), timeutils.DescribeUnixDateIn(ts, now, ""), "no zone is UTC")
+	assert.Equal(t, timeutils.DescribeUnixDate(ts, now), timeutils.DescribeUnixDateIn(ts, now, "Mars/Olympus"), "an unknown zone is UTC")
+}

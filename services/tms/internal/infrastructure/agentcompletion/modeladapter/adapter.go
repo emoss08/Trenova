@@ -54,6 +54,8 @@ type Response struct {
 	// incomplete response, done_reason "length" — and none of them used to be
 	// read, so a reply cut off by the limit looked exactly like a finished one.
 	Truncated bool
+	// Reasoning is what the model thought first, when the protocol carried it.
+	Reasoning *ReasoningTrace
 }
 
 // Adapter speaks one wire protocol.
@@ -79,6 +81,26 @@ type Call struct {
 	// Measured between reads, so a slow model is not a stalled one.
 	StreamIdle time.Duration
 	Request    *Request
+	// Reasoning receives the model's thinking as it streams, when the
+	// protocol carries it. Optional; a call without one still reads the
+	// thinking into the Response, it just does not show it as it happens.
+	Reasoning StreamSink
+}
+
+// think hands a piece of thinking to the reasoning sink, if there is one.
+func (c *Call) think(delta string) {
+	if c.Reasoning != nil && delta != "" {
+		c.Reasoning(delta)
+	}
+}
+
+// reasoning is how hard this call asks the model to think, from the provider.
+func (c *Call) reasoning() aiprovider.ReasoningEffort {
+	if c.Provider == nil {
+		return aiprovider.ReasoningOff
+	}
+
+	return c.Provider.ReasoningEffort
 }
 
 // defaultStreamIdle is the silence a stream is allowed when nothing configures

@@ -23,6 +23,7 @@ type SaveAIProviderRequest struct {
 	APIKey               *string
 	AllowPrivateNetwork  bool
 	StructuredOutputMode aiprovider.StructuredOutputMode
+	ReasoningEffort      aiprovider.ReasoningEffort
 	MaxTokens            int
 	Tasks                []aiprovider.Task
 	Priority             int

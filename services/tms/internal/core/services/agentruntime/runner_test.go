@@ -1,7 +1,9 @@
 package agentruntime
 
 import (
+	"context"
 	"errors"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -604,4 +606,158 @@ func TestRun_HoldsTheToolBudgetWithinABatch(t *testing.T) {
 		}
 	}
 	assert.Equal(t, 1, refused, "the third call is answered with a refusal, not silence")
+}
+
+type targetedStubTool struct {
+	*agentruntimetest.StubActionTool
+}
+
+func (t *targetedStubTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+	raw, _ := params["shipmentId"].(string)
+	id, err := pulid.Parse(raw)
+	if err != nil {
+		return serviceports.ToolTarget{}, false
+	}
+
+	return serviceports.ToolTarget{Resource: permission.ResourceShipment, ID: id}, true
+}
+
+type stubVersions struct{ version int64 }
+
+func (s stubVersions) Version(context.Context, pagination.TenantInfo, serviceports.ToolTarget) (int64, error) {
+	return s.version, nil
+}
+
+// A proposal is a promise to change something later. The record it would
+// change is pinned at its current version when the proposal is made, so the
+// executor can refuse to run against a different one.
+func TestRun_PinsTheRecordAProposalWouldChange(t *testing.T) {
+	t.Parallel()
+
+	shipmentID := pulid.MustNew("shp_")
+	tool := &targetedStubTool{actionTool("place_shipment_hold", agent.TierPropose, nil)}
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("place_shipment_hold", map[string]any{"shipmentId": shipmentID.String()}),
+		textTurn("I have proposed a hold."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
+		Tools: []serviceports.AgentTool{tool},
+	}, nil)
+	rt.versions = stubVersions{version: 7}
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("place_shipment_hold"),
+		Actor:      testActor(),
+		Input:      "hold it",
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Actions, 1)
+	require.NotNil(t, result.Actions[0].Target)
+	assert.Equal(t, permission.ResourceShipment, result.Actions[0].Target.Resource)
+	assert.Equal(t, shipmentID, result.Actions[0].Target.ID)
+	assert.Equal(t, int64(7), result.Actions[0].Target.Version)
+}
+
+// Without a reader the proposal is still made, just unpinned.
+func TestRun_ProposesUnpinnedWhenNoVersionReaderIsWired(t *testing.T) {
+	t.Parallel()
+
+	tool := &targetedStubTool{actionTool("place_shipment_hold", agent.TierPropose, nil)}
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("place_shipment_hold", map[string]any{"shipmentId": pulid.MustNew("shp_").String()}),
+		textTurn("proposed"),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
+		Tools: []serviceports.AgentTool{tool},
+	}, nil)
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("place_shipment_hold"),
+		Actor:      testActor(),
+		Input:      "hold it",
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Actions, 1)
+	assert.Nil(t, result.Actions[0].Target)
+}
+
+// Every tool that reasons about a day needs to know whose day. The
+// organization's zone travels from the runtime context into every query call.
+func TestRun_HandsQueryToolsTheOrganizationsTimezone(t *testing.T) {
+	t.Parallel()
+
+	tool := &agentruntimetest.StubQueryTool{ToolName: "get_shipment", Result: map[string]any{}}
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("get_shipment", map[string]any{"id": "S1"}),
+		textTurn("done"),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{
+		Tools: []serviceports.AgentQueryTool{tool},
+	}, &stubActionRegistry{}, nil)
+
+	_, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("get_shipment"),
+		Actor:      testActor(),
+		Context:    agentdefinition.RuntimeContext{Timezone: "America/Chicago"},
+		Input:      "where is S1",
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, "America/Chicago", tool.LastParams.Timezone)
+}
+
+// A heavy model's silence before its first token is where a person gives up.
+// What the model thinks is streamed as its own event, kept on the saved turn,
+// and handed back on the next call, since two of the four protocols refuse a
+// tool result whose reasoning is missing.
+func TestRun_StreamsKeepsAndReplaysReasoning(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("get_shipment", map[string]any{"proNumber": "S1"}, nil)
+	trace := &conversation.ReasoningTrace{Text: "I should look it up.", Signature: "sig_1"}
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		{
+			ToolCalls:       []serviceports.ToolCall{{ID: "c1", Name: "get_shipment", Arguments: map[string]any{"id": "S1"}}},
+			Reasoning:       trace,
+			ModelIdentifier: "test-model",
+		},
+		{Text: "It is in Dallas.", Reasoning: &conversation.ReasoningTrace{Text: "Dallas, then."}, ModelIdentifier: "test-model"},
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []serviceports.AgentQueryTool{tool}}, &stubActionRegistry{}, nil)
+
+	var thoughts []string
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("get_shipment"),
+		Actor:      testActor(),
+		Input:      "Where is S1?",
+		Emit: func(event serviceports.StreamEvent) {
+			if event.Event == serviceports.AssistantEventReasoning {
+				thoughts = append(thoughts, event.Data.(serviceports.AssistantReasoningEvent).Text)
+			}
+		},
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"I should look it up.", "Dallas, then."}, thoughts)
+
+	// user, assistant tool call, tool result, final answer
+	require.Len(t, result.Messages, 4)
+	require.NotNil(t, result.Messages[1].Reasoning)
+	assert.Equal(t, "sig_1", result.Messages[1].Reasoning.Signature)
+	require.NotNil(t, result.Messages[3].Reasoning)
+	assert.Equal(t, "Dallas, then.", result.Messages[3].Reasoning.Text)
+
+	// The second call saw the first turn's reasoning, so the provider can
+	// verify the tool result against it.
+	require.Equal(t, 2, completion.CallCount)
+	replayed := completion.LastReq.Messages
+	var found bool
+	for _, message := range replayed {
+		if message.Role == serviceports.RoleAssistant && message.Reasoning != nil {
+			found = message.Reasoning.Signature == "sig_1"
+		}
+	}
+	assert.True(t, found, "the signed reasoning travels with the tool calls it produced")
 }

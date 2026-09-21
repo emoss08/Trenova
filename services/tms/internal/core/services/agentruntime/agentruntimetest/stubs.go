@@ -49,6 +49,9 @@ func (s *ScriptedCompletion) StreamChat(
 	if err != nil {
 		return nil, err
 	}
+	if result.Reasoning != nil && result.Reasoning.Text != "" && req.ReasoningSink != nil {
+		req.ReasoningSink(result.Reasoning.Text)
+	}
 	if result.Text != "" && sink != nil {
 		half := len(result.Text) / 2
 		sink(result.Text[:half])

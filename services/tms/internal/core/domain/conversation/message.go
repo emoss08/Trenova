@@ -54,6 +54,12 @@ type Message struct {
 	// turn, kept so an answer can be reviewed against the page it was about.
 	PageContext *agent.PageContext `json:"pageContext" bun:"page_context,type:JSONB,nullzero"`
 
+	// Reasoning is what the model thought before it answered, as much as the
+	// provider lets through, plus whatever the provider needs handed back to
+	// continue the same line of thought on the next call. Nil when the model
+	// did not reason out loud or the provider was not asked to let it.
+	Reasoning *ReasoningTrace `json:"reasoning" bun:"reasoning,type:JSONB,nullzero"`
+
 	Model        string   `json:"model"        bun:"model,type:VARCHAR(200),nullzero"`
 	ProviderID   pulid.ID `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero"`
 	InputTokens  int      `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0"`
@@ -62,6 +68,31 @@ type Message struct {
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Thread *Thread `json:"thread,omitempty" bun:"rel:belongs-to,join:thread_id=id"`
+}
+
+// ReasoningTrace is a model's thinking, kept in two parts.
+//
+// Text is what a person can read: the full chain for a provider that streams
+// it, a summary for one that only summarises. The rest is opaque and belongs
+// to the provider: Anthropic signs each thinking block and refuses a tool
+// result that arrives without the signed block it followed; OpenAI's Responses
+// API ties a reasoning item to the function calls it produced and rejects the
+// calls replayed without it. Those are stored so the conversation can continue
+// where it left off, not so anyone can read them.
+type ReasoningTrace struct {
+	Text string `json:"text"`
+	// Signature is Anthropic's signature over the thinking block, or the
+	// Responses API's reasoning item id.
+	Signature string `json:"signature,omitempty"`
+	// Encrypted is the Responses API's encrypted reasoning content.
+	Encrypted string `json:"encrypted,omitempty"`
+	// Redacted holds Anthropic's redacted_thinking blocks, replayed verbatim.
+	Redacted []string `json:"redacted,omitempty"`
+}
+
+// Readable reports whether there is anything a person could be shown.
+func (r *ReasoningTrace) Readable() bool {
+	return r != nil && r.Text != ""
 }
 
 // ToolCallRecord is a persisted tool request.

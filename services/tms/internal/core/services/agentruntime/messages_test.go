@@ -76,3 +76,18 @@ func TestToAdapterMessages_KeepsAWholeHistoryThatAlreadyStartsRight(t *testing.T
 
 	assert.Len(t, toAdapterMessages(history), 4)
 }
+
+// History replay carries the reasoning, since a provider that signs its
+// thinking refuses a later tool result without it.
+func TestToAdapterMessages_CarriesReasoning(t *testing.T) {
+	t.Parallel()
+
+	messages := toAdapterMessages([]conversation.Message{
+		{Role: conversation.RoleUser, Content: "hold it"},
+		{Role: conversation.RoleAssistant, Content: "Done.", Reasoning: &conversation.ReasoningTrace{Text: "t", Signature: "s"}},
+	})
+
+	require.Len(t, messages, 2)
+	require.NotNil(t, messages[1].Reasoning)
+	assert.Equal(t, "s", messages[1].Reasoning.Signature)
+}

@@ -119,6 +119,7 @@ type saveProviderRequest struct {
 	APIKey               *string                         `json:"apiKey"`
 	AllowPrivateNetwork  bool                            `json:"allowPrivateNetwork"`
 	StructuredOutputMode aiprovider.StructuredOutputMode `json:"structuredOutputMode"`
+	ReasoningEffort      aiprovider.ReasoningEffort      `json:"reasoningEffort"`
 	MaxTokens            int                             `json:"maxTokens"`
 	Tasks                []aiprovider.Task               `json:"tasks"`
 	Priority             int                             `json:"priority"`
@@ -141,6 +142,7 @@ func (r *saveProviderRequest) toServiceRequest(
 		APIKey:               r.APIKey,
 		AllowPrivateNetwork:  r.AllowPrivateNetwork,
 		StructuredOutputMode: r.StructuredOutputMode,
+		ReasoningEffort:      r.ReasoningEffort,
 		MaxTokens:            r.MaxTokens,
 		Tasks:                r.Tasks,
 		Priority:             r.Priority,

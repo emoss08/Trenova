@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -67,6 +68,11 @@ type ChatCompletionRequest struct {
 	// only when that provider is enabled and serves the task; otherwise the usual
 	// priority order applies, so a deleted preference never strands an agent.
 	PreferredProviderID pulid.ID
+	// ReasoningSink receives the model's thinking as it streams, when the
+	// provider lets it through. Optional, and separate from the text sink
+	// because thinking is not the reply: it is shown differently and never
+	// becomes the message.
+	ReasoningSink ChatStreamSink
 }
 
 // ChatCompletionResult is a turn's reply, which may ask for tools, say
@@ -84,6 +90,8 @@ type ChatCompletionResult struct {
 	// half an answer appear should not be left with nothing, and the half that
 	// arrived is usually the part that answered the question.
 	Truncated bool
+	// Reasoning is the model's thinking, when the provider produced any.
+	Reasoning *conversation.ReasoningTrace
 }
 
 // ChatStreamSink receives reply text as the model produces it. It is a preview

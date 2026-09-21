@@ -62,6 +62,9 @@ type Provider struct {
 
 	StructuredOutputMode StructuredOutputMode `json:"structuredOutputMode" bun:"structured_output_mode,type:VARCHAR(50),notnull"`
 	MaxTokens            int                  `json:"maxTokens"            bun:"max_tokens,type:INTEGER,notnull"`
+	// ReasoningEffort asks a model that can think to do so before answering.
+	// Off is the default: the parameter is refused by models without it.
+	ReasoningEffort ReasoningEffort `json:"reasoningEffort" bun:"reasoning_effort,type:VARCHAR(50),notnull,nullzero,default:'Off'"`
 
 	// Tasks are the units of work this provider may serve. Priority orders the
 	// candidates for a task, lowest first, which gives fallback chains without a
@@ -231,6 +234,10 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 			domainvalidation.ValidEnum[StructuredOutputMode](
 				"Structured output mode is invalid",
 			),
+		),
+		validation.Field(&p.ReasoningEffort,
+			validation.Required.Error("Reasoning effort is required"),
+			domainvalidation.ValidEnum[ReasoningEffort]("Reasoning effort is invalid"),
 		),
 		validation.Field(&p.MaxTokens,
 			validation.Min(minMaxTokens).

@@ -9,10 +9,12 @@ import (
 )
 
 const (
-	AgentRunWorkflowName    = "AgentRunWorkflow"
-	AgentSweepWorkflowName  = "AgentSweepWorkflow"
-	AgentDecisionSignalName = "agent-decision"
-	SweepScheduleID         = "agent-definition-sweep"
+	AgentRunWorkflowName             = "AgentRunWorkflow"
+	AgentSweepWorkflowName           = "AgentSweepWorkflow"
+	ExpireStaleProposalsWorkflowName = "ExpireStaleAgentProposalsWorkflow"
+	ExpireStaleProposalsScheduleID   = "agent-proposal-expiry"
+	AgentDecisionSignalName          = "agent-decision"
+	SweepScheduleID                  = "agent-definition-sweep"
 )
 
 type AgentRunPayload struct {
@@ -102,4 +104,15 @@ type SweepResult struct {
 	Started int `json:"started"`
 	Skipped int `json:"skipped"`
 	Failed  int `json:"failed"`
+}
+
+// ExpireStaleProposalsResult is what one expiry sweep did.
+type ExpireStaleProposalsResult struct {
+	Expired int `json:"expired"`
+}
+
+// ExpireStaleProposalsInput carries the workflow's clock, so the activity is
+// deterministic with respect to the workflow that ran it.
+type ExpireStaleProposalsInput struct {
+	Now int64 `json:"now"`
 }

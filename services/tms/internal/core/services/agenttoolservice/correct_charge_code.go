@@ -88,3 +88,9 @@ func (t *correctChargeCodeTool) Execute(
 
 	return err
 }
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *correctChargeCodeTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, "billingQueueItemId", permission.ResourceBillingQueue)
+}

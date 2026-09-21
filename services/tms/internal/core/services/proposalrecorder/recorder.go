@@ -116,6 +116,11 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 		if req.Evidence != nil {
 			proposal.Evidence = req.Evidence(action, sourceMessageID)
 		}
+		if action.Target != nil {
+			proposal.TargetResource = string(action.Target.Resource)
+			proposal.TargetID = action.Target.ID
+			proposal.TargetVersion = action.Target.Version
+		}
 		applyExecution(proposal, action, now)
 
 		multiErr := errortypes.NewMultiError()

@@ -266,3 +266,21 @@ func ptoStatusRequest(
 		Reason:     optionalString(params.Params, "reason"),
 	}, nil
 }
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *approveWorkerPTOTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, "ptoId", permission.ResourceWorkerPTO)
+}
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *rejectWorkerPTOTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, "ptoId", permission.ResourceWorkerPTO)
+}
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *cancelWorkerPTOTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, "ptoId", permission.ResourceWorkerPTO)
+}

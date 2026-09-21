@@ -68,6 +68,7 @@ func toAdapterMessages(history []conversation.Message) []serviceports.Message {
 				Role:      serviceports.RoleAssistant,
 				Content:   msg.Content,
 				ToolCalls: fromToolCallRecords(msg.ToolCalls),
+				Reasoning: msg.Reasoning,
 			})
 		case conversation.RoleTool:
 			messages = append(messages, serviceports.Message{

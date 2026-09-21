@@ -30,7 +30,7 @@ func TestHumanizeDates_RendersTheDateThatWasMisread(t *testing.T) {
 
 	document := map[string]any{"medicalCardExpiry": float64(1791591001)}
 
-	humanized, ok := humanizeDates(document, transcriptNow).(map[string]any)
+	humanized, ok := humanizeDates(document, transcriptNow, "").(map[string]any)
 	require.True(t, ok)
 
 	assert.Equal(t, "2026-10-10 (in 21 days)", humanized["medicalCardExpiry"],
@@ -43,7 +43,7 @@ func TestHumanizeDates_RendersADistantDateThatWasAlsoMisread(t *testing.T) {
 	// Read as "March 22, 2027" in the transcript. It is October 2027.
 	document := map[string]any{"medicalCardExpiry": float64(1824423001)}
 
-	humanized, _ := humanizeDates(document, transcriptNow).(map[string]any)
+	humanized, _ := humanizeDates(document, transcriptNow, "").(map[string]any)
 	assert.Equal(t, "2027-10-25 (in 401 days)", humanized["medicalCardExpiry"])
 }
 
@@ -65,7 +65,7 @@ func TestHumanizeDates_NamesTheNearDaysRatherThanCountingThem(t *testing.T) {
 			t.Parallel()
 
 			humanized, _ := humanizeDates(
-				map[string]any{"expiresAt": float64(tc.ts)}, transcriptNow,
+				map[string]any{"expiresAt": float64(tc.ts)}, transcriptNow, "",
 			).(map[string]any)
 
 			assert.Equal(t, tc.expected, humanized["expiresAt"])
@@ -87,7 +87,7 @@ func TestHumanizeDates_LeavesACountAlone(t *testing.T) {
 	humanized, _ := humanizeDates(map[string]any{
 		"daysUntilExpiry": float64(21),
 		"expiresAt":       float64(1791591001),
-	}, transcriptNow).(map[string]any)
+	}, transcriptNow, "").(map[string]any)
 
 	assert.InDelta(t, 21.0, humanized["daysUntilExpiry"], 0)
 	assert.Equal(t, "2026-10-10 (in 21 days)", humanized["expiresAt"])
@@ -101,7 +101,7 @@ func TestHumanizeDates_LeavesAFigureInEpochRangeAlone(t *testing.T) {
 	humanized, _ := humanizeDates(map[string]any{
 		"totalAmount": float64(1791591001),
 		"dueDate":     float64(1791591001),
-	}, transcriptNow).(map[string]any)
+	}, transcriptNow, "").(map[string]any)
 
 	assert.InDelta(t, 1791591001.0, humanized["totalAmount"], 0)
 	assert.Equal(t, "2026-10-10 (in 21 days)", humanized["dueDate"])
@@ -114,7 +114,7 @@ func TestHumanizeDates_DoesNotMatchAWordThatMerelyEndsLikeOne(t *testing.T) {
 	humanized, _ := humanizeDates(map[string]any{
 		"reason": "Three drivers already off that week.",
 		"season": float64(1791591001),
-	}, transcriptNow).(map[string]any)
+	}, transcriptNow, "").(map[string]any)
 
 	assert.Equal(t, "Three drivers already off that week.", humanized["reason"])
 	assert.InDelta(t, 1791591001.0, humanized["season"], 0)
@@ -128,7 +128,7 @@ func TestHumanizeDates_LeavesAnUnsetDateAlone(t *testing.T) {
 	humanized, _ := humanizeDates(map[string]any{
 		"medicalCardExpiry": float64(0),
 		"terminationDate":   nil,
-	}, transcriptNow).(map[string]any)
+	}, transcriptNow, "").(map[string]any)
 
 	assert.InDelta(t, 0.0, humanized["medicalCardExpiry"], 0)
 	assert.Nil(t, humanized["terminationDate"])
@@ -147,7 +147,7 @@ func TestHumanizeDates_ReachesRowsNestedInAResult(t *testing.T) {
 				"profile":    map[string]any{"medicalCardExpiry": float64(1791591001)},
 			},
 		},
-	}, transcriptNow).(map[string]any)
+	}, transcriptNow, "").(map[string]any)
 
 	items, ok := humanized["items"].([]any)
 	require.True(t, ok)
@@ -170,7 +170,7 @@ func TestEncodeToolResult_HumanizesWhateverATypedToolReturned(t *testing.T) {
 	}
 
 	encoded, err := encodeToolResult([]row{{Name: "Mike Johnson", ExpiresAt: 1791591001}},
-		transcriptNow)
+		transcriptNow, "")
 	require.NoError(t, err)
 
 	assert.Contains(t, encoded, "2026-10-10 (in 21 days)")
@@ -184,11 +184,24 @@ func TestEncodeToolResult_ProducesADatePrefixTheFiltersAccept(t *testing.T) {
 	t.Parallel()
 
 	encoded, err := encodeToolResult(
-		map[string]any{"expiresAt": 1791591001}, transcriptNow)
+		map[string]any{"expiresAt": 1791591001}, transcriptNow, "")
 	require.NoError(t, err)
 
 	var decoded map[string]string
 	require.NoError(t, sonic.Unmarshal([]byte(encoded), &decoded))
 
 	assert.Equal(t, "2026-10-10", strings.SplitN(decoded["expiresAt"], " ", 2)[0])
+}
+
+// The day boundary is the organization's. At 23:30 in New York a card expiring
+// at 00:30 is tomorrow; rendered on a UTC clock it read as today, and a
+// dispatcher planning tomorrow's loads was told the driver was already fine.
+func TestHumanizeDates_DrawsTheDayInTheOrganizationsZone(t *testing.T) {
+	t.Parallel()
+
+	const now int64 = 1789875000 // 2026-09-20T03:30:00Z, 23:30 EDT on the 19th
+	document := map[string]any{"medicalCardExpiry": float64(now + 3600)}
+
+	humanized, _ := humanizeDates(document, now, "America/New_York").(map[string]any)
+	assert.Equal(t, "2026-09-20 (tomorrow)", humanized["medicalCardExpiry"])
 }

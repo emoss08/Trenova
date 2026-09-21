@@ -32,12 +32,15 @@ type ollamaRequest struct {
 	Format  map[string]any `json:"format,omitempty"`
 	Stream  bool           `json:"stream"`
 	Options *ollamaOptions `json:"options,omitempty"`
+	// Think asks a thinking model to reason first and report it separately.
+	Think bool `json:"think,omitempty"`
 }
 
 type ollamaMessage struct {
 	Role      string           `json:"role"`
 	Content   string           `json:"content"`
 	ToolCalls []ollamaToolCall `json:"tool_calls,omitempty"`
+	Thinking  string           `json:"thinking,omitempty"`
 	// ToolName identifies which tool a tool-role message answers, since this
 	// protocol carries no call id to pair on.
 	ToolName string `json:"tool_name,omitempty"`
@@ -89,6 +92,7 @@ func (a ollamaAdapter) Stream(
 		Messages: toOllamaMessages(call.Request.System, call.Request.Messages),
 		Tools:    toOllamaTools(call.Request.Tools),
 		Stream:   true,
+		Think:    call.reasoning().Enabled(),
 	}
 	if call.Request.MaxTokens > 0 {
 		body.Options = &ollamaOptions{NumPredict: call.Request.MaxTokens}
@@ -107,9 +111,10 @@ func (a ollamaAdapter) Stream(
 	defer func() { _ = stream.Close() }()
 
 	var (
-		text  strings.Builder
-		final ollamaResponse
-		calls []ollamaToolCall
+		text     strings.Builder
+		thinking strings.Builder
+		final    ollamaResponse
+		calls    []ollamaToolCall
 	)
 
 	err = readNDJSON(stream, func(line []byte) error {
@@ -121,6 +126,10 @@ func (a ollamaAdapter) Stream(
 			return streamError("server_error", chunk.Error)
 		}
 
+		if chunk.Message.Thinking != "" {
+			thinking.WriteString(chunk.Message.Thinking)
+			call.think(chunk.Message.Thinking)
+		}
 		if chunk.Message.Content != "" {
 			text.WriteString(chunk.Message.Content)
 			sink(chunk.Message.Content)
@@ -149,6 +158,7 @@ func (a ollamaAdapter) Stream(
 		OutputTokens:    final.EvalCount,
 		Refused:         false,
 		Truncated:       final.DoneReason == "length",
+		Reasoning:       textReasoning(thinking.String()),
 	}, nil
 }
 
@@ -160,6 +170,7 @@ func (a ollamaAdapter) Complete(ctx context.Context, call *Call) (*Response, err
 		// A streamed reply arrives as newline-delimited objects, which would not
 		// decode into a single response.
 		Stream: false,
+		Think:  call.reasoning().Enabled(),
 	}
 
 	if call.Request.MaxTokens > 0 {
@@ -197,6 +208,7 @@ func (a ollamaAdapter) Complete(ctx context.Context, call *Call) (*Response, err
 		// as a transport error instead.
 		Refused:   false,
 		Truncated: envelope.DoneReason == "length",
+		Reasoning: textReasoning(envelope.Message.Thinking),
 	}, nil
 }
 
@@ -215,11 +227,15 @@ func toOllamaMessages(system string, messages []Message) []ollamaMessage {
 				ToolName: msg.ToolName,
 			})
 		case RoleAssistant:
-			out = append(out, ollamaMessage{
+			message := ollamaMessage{
 				Role:      "assistant",
 				Content:   msg.Content,
 				ToolCalls: toOllamaToolCalls(msg.ToolCalls),
-			})
+			}
+			if msg.Reasoning != nil {
+				message.Thinking = msg.Reasoning.Text
+			}
+			out = append(out, message)
 		default:
 			out = append(out, ollamaMessage{Role: "user", Content: msg.Content})
 		}

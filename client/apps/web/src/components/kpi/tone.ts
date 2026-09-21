@@ -25,3 +25,21 @@ export function toneVar(tone: Tone | undefined): string {
       return "var(--muted-foreground)";
   }
 }
+
+/**
+ * A categorical accent, for a set with no severity ordering. Where a tone says
+ * how bad something is, an accent only says which one it is.
+ */
+export type Accent =
+  | "amber"
+  | "emerald"
+  | "indigo"
+  | "rose"
+  | "sky"
+  | "slate"
+  | "teal"
+  | "violet";
+
+export function accentVar(accent: Accent): string {
+  return `var(--accent-${accent})`;
+}

@@ -1,6 +1,9 @@
 package modeladapter
 
-import serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+import (
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+)
 
 // The conversation primitives live in the ports package because the port
 // interfaces are expressed in terms of them, and core must not import
@@ -11,6 +14,9 @@ type (
 	Message  = serviceports.Message
 	ToolSpec = serviceports.ToolSpec
 	ToolCall = serviceports.ToolCall
+	// ReasoningTrace is the conversation domain's, so what an adapter reads
+	// off the wire is what the message stores and what the next call replays.
+	ReasoningTrace = conversation.ReasoningTrace
 )
 
 const (

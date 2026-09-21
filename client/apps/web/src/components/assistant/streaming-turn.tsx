@@ -3,7 +3,13 @@ import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/
 import { Button } from "@trenova/shared/components/ui/button";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { CircleAlertIcon } from "lucide-react";
-import { AssistantFrame, AssistantProse, RefusalNotice, UserBubble } from "./message-items";
+import {
+  AssistantFrame,
+  AssistantProse,
+  ReasoningDisclosure,
+  RefusalNotice,
+  UserBubble,
+} from "./message-items";
 import { askRequestsFromSteps } from "./ask-requests";
 import { ChoicePrompt } from "./choice-prompt";
 import { ReportRunCard } from "./report-run-card";
@@ -55,17 +61,27 @@ export function StreamingTurn({
 
       {showFrame && turn.status !== "refused" && (
         <AssistantFrame>
-          {groupSegments(turn).map((group, index) =>
-            group.kind === "text" ? (
-              <AssistantProse
-                key={`text-${index}`}
-                content={group.text}
-                streaming={!group.closed && turn.status === "streaming"}
-              />
-            ) : (
-              <ToolTimeline key={`tools-${index}`} steps={group.steps} live />
-            ),
-          )}
+          {groupSegments(turn).map((group, index) => {
+            if (group.kind === "reasoning") {
+              return (
+                <ReasoningDisclosure
+                  key={`reasoning-${index}`}
+                  text={group.text}
+                  streaming={!group.closed && turn.status === "streaming"}
+                />
+              );
+            }
+            if (group.kind === "text") {
+              return (
+                <AssistantProse
+                  key={`text-${index}`}
+                  content={group.text}
+                  streaming={!group.closed && turn.status === "streaming"}
+                />
+              );
+            }
+            return <ToolTimeline key={`tools-${index}`} steps={group.steps} live />;
+          })}
           {reportRuns.map((run) => (
             <ReportRunCard key={run.runId} run={run} />
           ))}
@@ -146,6 +162,7 @@ function StatusLine({ turn }: { turn: TurnState }) {
 
 type SegmentGroup =
   | { kind: "text"; text: string; closed: boolean }
+  | { kind: "reasoning"; text: string; closed: boolean }
   | { kind: "tools"; steps: ToolStep[] };
 
 /** Consecutive tool calls share one timeline rather than a row each. */
@@ -154,6 +171,10 @@ function groupSegments(turn: TurnState): SegmentGroup[] {
   for (const segment of turn.segments) {
     if (segment.kind === "text") {
       groups.push({ kind: "text", text: segment.text, closed: segment.closed });
+      continue;
+    }
+    if (segment.kind === "reasoning") {
+      groups.push({ kind: "reasoning", text: segment.text, closed: segment.closed });
       continue;
     }
     const step: ToolStep = {

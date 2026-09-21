@@ -58,6 +58,13 @@ type ExpireAgentProposalsByRunRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
+// ExpireAgentProposalsRequest expires every pending proposal, in any tenant,
+// whose expiry has passed. It is deliberately unscoped: it is the sweeper's
+// request, and the sweeper runs for the whole system.
+type ExpireAgentProposalsRequest struct {
+	Before int64 `json:"before"`
+}
+
 type AgentProposalRepository interface {
 	List(
 		ctx context.Context,
@@ -78,6 +85,7 @@ type AgentProposalRepository interface {
 		req UpdateAgentProposalStatusRequest,
 	) (*agent.AgentProposal, error)
 	ExpirePendingByRun(ctx context.Context, req ExpireAgentProposalsByRunRequest) (int, error)
+	ExpirePending(ctx context.Context, req ExpireAgentProposalsRequest) (int, error)
 	RecordExecution(
 		ctx context.Context,
 		req RecordAgentProposalExecutionRequest,

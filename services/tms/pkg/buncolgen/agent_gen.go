@@ -505,6 +505,10 @@ var AgentProposalColumns = struct {
 	ExecutedAt      Column // "executed_at" → qualified: "ap.executed_at"
 	ExecutionError  Column // "execution_error" → qualified: "ap.execution_error"
 	SourceMessageID Column // "source_message_id" → qualified: "ap.source_message_id"
+	ExpiresAt       Column // "expires_at" → qualified: "ap.expires_at"
+	TargetResource  Column // "target_resource" → qualified: "ap.target_resource"
+	TargetID        Column // "target_id" → qualified: "ap.target_id"
+	TargetVersion   Column // "target_version" → qualified: "ap.target_version"
 	Version         Column // "version" → qualified: "ap.version"
 	CreatedAt       Column // "created_at" → qualified: "ap.created_at"
 	UpdatedAt       Column // "updated_at" → qualified: "ap.updated_at"
@@ -523,6 +527,10 @@ var AgentProposalColumns = struct {
 	ExecutedAt:      NewColumn("executed_at", "ap"),
 	ExecutionError:  NewColumn("execution_error", "ap"),
 	SourceMessageID: NewColumn("source_message_id", "ap"),
+	ExpiresAt:       NewColumn("expires_at", "ap"),
+	TargetResource:  NewColumn("target_resource", "ap"),
+	TargetID:        NewColumn("target_id", "ap"),
+	TargetVersion:   NewColumn("target_version", "ap"),
 	Version:         NewColumn("version", "ap"),
 	CreatedAt:       NewColumn("created_at", "ap"),
 	UpdatedAt:       NewColumn("updated_at", "ap"),
@@ -547,6 +555,10 @@ var AgentProposalFieldMap = map[string]string{
 	"executedAt":      "executed_at",
 	"executionError":  "execution_error",
 	"sourceMessageId": "source_message_id",
+	"expiresAt":       "expires_at",
+	"targetResource":  "target_resource",
+	"targetId":        "target_id",
+	"targetVersion":   "target_version",
 	"version":         "version",
 	"createdAt":       "created_at",
 	"updatedAt":       "updated_at",
@@ -569,6 +581,10 @@ var AgentProposalInsertableColumns = []string{
 	"executed_at",
 	"execution_error",
 	"source_message_id",
+	"expires_at",
+	"target_resource",
+	"target_id",
+	"target_version",
 	"version",
 	"created_at",
 	"updated_at",
@@ -653,6 +669,10 @@ var AgentProposalFilter = struct {
 	ExecutedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executedAt" → DB: "executed_at"
 	ExecutionError  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executionError" → DB: "execution_error"
 	SourceMessageID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceMessageId" → DB: "source_message_id"
+	ExpiresAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	TargetResource  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetResource" → DB: "target_resource"
+	TargetID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetId" → DB: "target_id"
+	TargetVersion   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetVersion" → DB: "target_version"
 	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -698,6 +718,18 @@ var AgentProposalFilter = struct {
 	},
 	SourceMessageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("sourceMessageId", op, value)
+	},
+	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("expiresAt", op, value)
+	},
+	TargetResource: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("targetResource", op, value)
+	},
+	TargetID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("targetId", op, value)
+	},
+	TargetVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("targetVersion", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

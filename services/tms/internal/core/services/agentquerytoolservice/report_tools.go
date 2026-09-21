@@ -97,7 +97,7 @@ func (t *listReportsTool) Query(
 	category := optionalString(params.Params, "category")
 	query := optionalString(params.Params, "query")
 
-	criteria := newSearchCriteria("reports")
+	criteria := newSearchCriteria("reports").at(clockFor(params))
 	criteria.text(query)
 	criteria.field("category", category)
 

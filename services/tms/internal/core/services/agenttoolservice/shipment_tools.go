@@ -262,7 +262,7 @@ func (t *placeShipmentHoldTool) Execute(
 	// from the hold reason, which is policy the organization already decided.
 	// An agent choosing them would be quietly overriding that.
 	_, err = t.holds.Create(ctx, &repositories.CreateShipmentHoldRequest{
-		TenantInfo: tenantFrom(params),
+		TenantInfo:   tenantFrom(params),
 		ShipmentID:   shipmentID,
 		HoldReasonID: reasonID,
 		Notes:        optionalString(params.Params, "notes"),
@@ -431,7 +431,7 @@ func (t *cancelShipmentTool) Execute(
 	}
 
 	_, err = t.shipments.Cancel(ctx, &repositories.CancelShipmentRequest{
-		TenantInfo: tenantFrom(params),
+		TenantInfo:   tenantFrom(params),
 		ShipmentID:   shipmentID,
 		CanceledByID: params.Actor.UserID,
 		CanceledAt:   timeutils.NowUnix(),
@@ -439,4 +439,28 @@ func (t *cancelShipmentTool) Execute(
 	}, params.Actor)
 
 	return err
+}
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *addShipmentCommentTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, "shipmentId", permission.ResourceShipment)
+}
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *placeShipmentHoldTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, "shipmentId", permission.ResourceShipment)
+}
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *releaseShipmentHoldTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, "shipmentId", permission.ResourceShipment)
+}
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *cancelShipmentTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, "shipmentId", permission.ResourceShipment)
 }

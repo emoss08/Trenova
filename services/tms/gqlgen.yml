@@ -1913,6 +1913,9 @@ models:
   AIStructuredOutputMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.StructuredOutputMode
+  AIReasoningEffort:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiprovider.ReasoningEffort
   AITask:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.Task

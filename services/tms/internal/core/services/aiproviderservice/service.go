@@ -264,6 +264,10 @@ func (s *Service) apply(
 	if provider.StructuredOutputMode == "" {
 		provider.StructuredOutputMode = req.Kind.DefaultStructuredOutputMode()
 	}
+	provider.ReasoningEffort = req.ReasoningEffort
+	if provider.ReasoningEffort == "" {
+		provider.ReasoningEffort = aiprovider.ReasoningOff
+	}
 
 	// A nil key means "leave what is stored alone", so an administrator can
 	// retask a provider without re-entering its secret.

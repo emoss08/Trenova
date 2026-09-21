@@ -66,6 +66,8 @@ func (s *Service) dispatch(
 	}
 
 	if tier != agent.TierAutoExecute {
+		action.Target = s.snapshotTarget(ctx, req, tool, call)
+
 		return toolOutcome{
 			content: fmt.Sprintf(
 				"Recorded a proposal to run %q. It is awaiting a person's review at the %s tier and has not run.",
@@ -137,13 +139,14 @@ func (s *Service) runQueryTool(
 		OrganizationID: req.Actor.OrganizationID,
 		BusinessUnitID: req.Actor.BusinessUnitID,
 		Actor:          req.Actor,
+		Timezone:       req.Context.Timezone,
 		Params:         call.Arguments,
 	})
 	if err != nil {
 		return failedOutcome("Tool %q failed: %s", call.Name, err.Error())
 	}
 
-	encoded, err := encodeToolResult(data, timeutils.NowUnix())
+	encoded, err := encodeToolResult(data, timeutils.NowUnix(), req.Context.Timezone)
 	if err != nil {
 		return failedOutcome("Tool %q returned data that could not be encoded.", call.Name)
 	}
@@ -182,4 +185,44 @@ func (s *Service) executeAction(
 		content: fmt.Sprintf("Tool %q ran successfully.", call.Name),
 		action:  action,
 	}
+}
+
+// snapshotTarget pins the record a proposal would change, at the version it
+// has now.
+//
+// A proposal is a promise to change something later, and "later" is the
+// problem: the shipment a hold is proposed on today may be delivered by the
+// time somebody approves. The version taken here is what the executor compares
+// against before running. A tool with no single target, or a version that
+// cannot be read, leaves the proposal unpinned rather than unmade — the person
+// still gets to decide, they just decide without the staleness check.
+func (s *Service) snapshotTarget(
+	ctx context.Context,
+	req *serviceports.RunRequest,
+	tool serviceports.AgentTool,
+	call serviceports.ToolCall,
+) *serviceports.ProposalTarget {
+	targeted, ok := tool.(serviceports.TargetedTool)
+	if !ok || s.versions == nil {
+		return nil
+	}
+
+	target, ok := targeted.Target(call.Arguments)
+	if !ok {
+		return nil
+	}
+
+	version, err := s.versions.Version(ctx, req.Actor.TenantInfo(), target)
+	if err != nil {
+		s.logger.Warn("could not pin the record a proposal would change",
+			zap.String("tool", call.Name),
+			zap.String("resource", string(target.Resource)),
+			zap.String("id", target.ID.String()),
+			zap.Error(err),
+		)
+
+		return nil
+	}
+
+	return &serviceports.ProposalTarget{Resource: target.Resource, ID: target.ID, Version: version}
 }

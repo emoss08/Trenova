@@ -280,3 +280,13 @@ func decodeArguments(raw string) (map[string]any, string) {
 
 	return args, ""
 }
+
+// textReasoning wraps readable thinking with nothing to replay. Nil for
+// nothing, so a reply without thinking carries no trace at all.
+func textReasoning(text string) *ReasoningTrace {
+	if strings.TrimSpace(text) == "" {
+		return nil
+	}
+
+	return &ReasoningTrace{Text: text}
+}

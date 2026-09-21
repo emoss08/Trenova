@@ -426,7 +426,7 @@ func TestCoerceDateValue_AcceptsTheWordsPeopleUseForDates(t *testing.T) {
 	t.Parallel()
 
 	for _, word := range []string{"today", "Today", " today ", "now"} {
-		_, err := coerceDateValue("profile.hazmatExpiry", word)
+		_, err := coerceDateValue("profile.hazmatExpiry", word, clock{})
 		assert.NoError(t, err, "%q should resolve rather than be refused", word)
 	}
 }
@@ -437,15 +437,15 @@ func TestCoerceDateValue_ResolvesNamedDaysAgainstTheServerClock(t *testing.T) {
 	const now int64 = 1789776000 // 2026-09-19 00:00 UTC
 	const day int64 = 86400
 
-	today, ok := namedDay("today", now)
+	today, ok := namedDay("today", clock{now: now})
 	require.True(t, ok)
 	assert.Equal(t, now, today)
 
-	tomorrow, ok := namedDay("tomorrow", now)
+	tomorrow, ok := namedDay("tomorrow", clock{now: now})
 	require.True(t, ok)
 	assert.Equal(t, now+day, tomorrow)
 
-	yesterday, ok := namedDay("yesterday", now)
+	yesterday, ok := namedDay("yesterday", clock{now: now})
 	require.True(t, ok)
 	assert.Equal(t, now-day, yesterday)
 }
@@ -456,7 +456,7 @@ func TestNamedDay_ResolvesToTheStartOfTheDay(t *testing.T) {
 	t.Parallel()
 
 	midMorning := int64(1789815600) // 2026-09-19 11:00 UTC
-	resolved, ok := namedDay("today", midMorning)
+	resolved, ok := namedDay("today", clock{now: midMorning})
 
 	require.True(t, ok)
 	assert.Equal(t, int64(1789776000), resolved)
@@ -467,7 +467,7 @@ func TestNamedDay_ResolvesToTheStartOfTheDay(t *testing.T) {
 func TestCoerceDateValue_StillRefusesWhatIsNotADate(t *testing.T) {
 	t.Parallel()
 
-	_, err := coerceDateValue("profile.hazmatExpiry", "soon")
+	_, err := coerceDateValue("profile.hazmatExpiry", "soon", clock{})
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "YYYY-MM-DD")

@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 const (
@@ -267,7 +265,7 @@ func (t *listTool) Query(
 		return nil, err
 	}
 
-	criteria := newSearchCriteria(t.spec.entityPlural)
+	criteria := newSearchCriteria(t.spec.entityPlural).at(clockFor(params))
 
 	query := optionalString(params.Params, "query")
 	criteria.text(query)
@@ -424,24 +422,19 @@ func (t *listTool) buildWindow(
 		)
 	}
 
-	now := timeutils.NowUnix()
 	span := int64(days) * secondsPerDay
 
-	// Windows are whole days, not offsets from this instant. "Expiring in the
-	// next 30 days" starting at the current second excluded a medical card
-	// that expired at nine this morning — the one question this tool was
-	// built to answer. The day boundary is UTC until the organization's
-	// timezone reaches the tools; the error is then at most the offset, where
-	// before it was up to a whole day of today.
-	dayStart, err := timeutils.DayStartUnix(now, "UTC")
-	if err != nil {
-		dayStart = now - now%secondsPerDay
-	}
+	// Windows are whole days in the organization's zone, not offsets from this
+	// instant. "Expiring in the next 30 days" starting at the current second
+	// excluded a medical card that expired at nine this morning — the one
+	// question this tool was built to answer.
+	clk := criteria.clock
+	dayStart := clk.today()
 
 	lower, upper := dayStart, dayStart+span+secondsPerDay-1
 	phrase := fmt.Sprintf("within the next %d days", days)
 	if operator == dbtype.OpLastNDays {
-		lower, upper = dayStart-span, now
+		lower, upper = dayStart-span, clk.instant()
 		phrase = fmt.Sprintf("within the last %d days", days)
 	}
 
@@ -474,7 +467,7 @@ func (t *listTool) buildListFilter(
 			return nil, fmt.Errorf("every entry in \"values\" for %q must be a string", field.Name)
 		}
 
-		value, err := coerceFilterValue(field, text)
+		value, err := coerceFilterValue(field, text, criteria.clock)
 		if err != nil {
 			return nil, err
 		}
@@ -500,7 +493,7 @@ func (t *listTool) buildValueFilter(
 		return nil, fmt.Errorf("%q on %q needs a \"value\"", operator, field.Name)
 	}
 
-	value, err := coerceFilterValue(field, raw)
+	value, err := coerceFilterValue(field, raw, criteria.clock)
 	if err != nil {
 		return nil, err
 	}
@@ -538,7 +531,7 @@ func (t *listTool) buildSort(params map[string]any) ([]domaintypes.SortField, er
 	return []domaintypes.SortField{{Field: field.Name, Direction: direction}}, nil
 }
 
-func coerceFilterValue(field listField, raw string) (any, error) {
+func coerceFilterValue(field listField, raw string, clk clock) (any, error) {
 	switch field.Kind {
 	case filterEnum:
 		for _, candidate := range field.Values {
@@ -552,7 +545,7 @@ func coerceFilterValue(field listField, raw string) (any, error) {
 			raw, field.Name, strings.Join(field.Values, ", "),
 		)
 	case filterDate:
-		return coerceDateValue(field.Name, raw)
+		return coerceDateValue(field.Name, raw, clk)
 	case filterNumber:
 		if whole, err := strconv.ParseInt(raw, 10, 64); err == nil {
 			return whole, nil
@@ -581,19 +574,17 @@ func coerceFilterValue(field listField, raw string) (any, error) {
 // epoch. A fabricated timestamp is indistinguishable from a real one once it is
 // in the SQL, and a model that has to do the arithmetic will sometimes get it
 // wrong by a year.
-func coerceDateValue(name, raw string) (int64, error) {
+func coerceDateValue(name, raw string, clk clock) (int64, error) {
 	if seconds, err := strconv.ParseInt(raw, 10, 64); err == nil {
 		return seconds, nil
 	}
 
-	if seconds, ok := namedDay(raw, timeutils.NowUnix()); ok {
+	if seconds, ok := namedDay(raw, clk); ok {
 		return seconds, nil
 	}
 
-	for _, layout := range []string{time.DateOnly, time.RFC3339} {
-		if parsed, err := time.Parse(layout, raw); err == nil {
-			return parsed.UTC().Unix(), nil
-		}
+	if seconds, ok := clk.parseDate(raw); ok {
+		return seconds, nil
 	}
 
 	return 0, fmt.Errorf(
@@ -614,14 +605,11 @@ func coerceDateValue(name, raw string) (int64, error) {
 // Resolving it here rather than in the prompt also keeps the clock on the
 // server. A model computing today's date is the arithmetic that put a medical
 // card three months out of place.
-func namedDay(raw string, now int64) (int64, bool) {
+func namedDay(raw string, clk clock) (int64, bool) {
 	const day = 86400
 
-	midnight := func(seconds int64) int64 {
-		t := time.Unix(seconds, 0).UTC()
-
-		return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC).Unix()
-	}
+	now := clk.instant()
+	midnight := clk.dayStart
 
 	switch strings.ToLower(strings.TrimSpace(raw)) {
 	case "today", "now":

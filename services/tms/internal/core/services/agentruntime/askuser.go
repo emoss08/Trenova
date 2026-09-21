@@ -139,7 +139,7 @@ func resolveAsk(arguments map[string]any) string {
 	}
 	request.Note = askNote(len(options), allowOther)
 
-	encoded, err := encodeToolResult(request, 0)
+	encoded, err := encodeToolResult(request, 0, "")
 	if err != nil {
 		return "The question could not be shown. Ask it in your reply instead."
 	}

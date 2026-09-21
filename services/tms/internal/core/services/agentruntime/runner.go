@@ -25,6 +25,10 @@ type Params struct {
 	ActionTools serviceports.AgentToolRegistry
 	Permissions serviceports.PermissionEngine
 	Catalog     *agenttoolcatalog.Catalog
+	// Versions is optional. Without it proposals are still made, just without
+	// the record pinned; with it the executor can refuse a change to a record
+	// that moved on since the proposal.
+	Versions serviceports.RecordVersionReader `optional:"true"`
 }
 
 type Service struct {
@@ -34,6 +38,7 @@ type Service struct {
 	actionTools serviceports.AgentToolRegistry
 	permissions serviceports.PermissionEngine
 	catalog     *agenttoolcatalog.Catalog
+	versions    serviceports.RecordVersionReader
 }
 
 func New(p Params) serviceports.AgentRuntime {
@@ -44,6 +49,7 @@ func New(p Params) serviceports.AgentRuntime {
 		actionTools: p.ActionTools,
 		permissions: p.Permissions,
 		catalog:     p.Catalog,
+		versions:    p.Versions,
 	}
 }
 
@@ -91,6 +97,12 @@ func (s *Service) Run(
 			Data:  serviceports.AssistantDeltaEvent{Text: delta},
 		})
 	}
+	reasoningSink := func(delta string) {
+		emit(serviceports.StreamEvent{
+			Event: serviceports.AssistantEventReasoning,
+			Data:  serviceports.AssistantReasoningEvent{Text: delta},
+		})
+	}
 
 	for result.ToolCallsUsed < budget {
 		completion, err := s.completion.StreamChat(ctx, &serviceports.ChatCompletionRequest{
@@ -99,6 +111,7 @@ func (s *Service) Run(
 			Messages:            messages,
 			Tools:               tools.specs,
 			PreferredProviderID: preferredProvider(req, definition),
+			ReasoningSink:       reasoningSink,
 		}, sink)
 		if err != nil {
 			// What ran travels with the error. The caller decides whether to
@@ -119,16 +132,20 @@ func (s *Service) Run(
 			Role:         conversation.RoleAssistant,
 			Content:      completion.Text,
 			ToolCalls:    toToolCallRecords(completion.ToolCalls),
+			Reasoning:    completion.Reasoning,
 			Model:        completion.ModelIdentifier,
 			ProviderID:   completion.ProviderID,
 			InputTokens:  completion.InputTokens,
 			OutputTokens: completion.OutputTokens,
 		}
 		result.Messages = append(result.Messages, assistantTurn)
+		// The thinking goes back with the calls it produced. Anthropic and the
+		// Responses API both refuse a tool result whose reasoning is missing.
 		messages = append(messages, serviceports.Message{
 			Role:      serviceports.RoleAssistant,
 			Content:   completion.Text,
 			ToolCalls: completion.ToolCalls,
+			Reasoning: completion.Reasoning,
 		})
 		emit(serviceports.StreamEvent{
 			Event: serviceports.AssistantEventMessage,
@@ -323,6 +340,7 @@ func (s *Service) finish(
 	result.Messages = append(result.Messages, conversation.Message{
 		Role:         conversation.RoleAssistant,
 		Content:      reply,
+		Reasoning:    completion.Reasoning,
 		Model:        completion.ModelIdentifier,
 		ProviderID:   completion.ProviderID,
 		InputTokens:  completion.InputTokens,

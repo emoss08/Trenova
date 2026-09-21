@@ -181,6 +181,15 @@ export const pageContextSchema = z.object({
   title: z.string().optional().default(""),
 });
 
+/**
+ * What the model thought before it answered. Only the readable part reaches
+ * the panel; the provider's signed or encrypted continuation state stays on
+ * the server's copy of the message.
+ */
+export const reasoningTraceSchema = z.object({
+  text: z.string().optional().default(""),
+});
+
 export const assistantMessageSchema = z.object({
   id: z.string(),
   threadId: z.string(),
@@ -200,6 +209,7 @@ export const assistantMessageSchema = z.object({
   model: z.string().optional().default(""),
   inputTokens: z.number().default(0),
   outputTokens: z.number().default(0),
+  reasoning: reasoningTraceSchema.nullish(),
   createdAt: z.number(),
 });
 
@@ -280,6 +290,8 @@ export const assistantProposalSchema = z.object({
   executedAt: z.number().nullish(),
   /** Why an approved proposal failed to run, shown instead of a success state. */
   executionError: z.string().optional().default(""),
+  /** When a pending proposal stops being decidable; 0 for one made before expiry existed. */
+  expiresAt: z.number().nullish().default(0),
 });
 
 export const assistantProposalListSchema = z.object({
@@ -320,6 +332,8 @@ export const assistantRefusedEventSchema = z.object({
 
 export const assistantDeltaEventSchema = z.object({ text: z.string() });
 
+export const assistantReasoningEventSchema = z.object({ text: z.string() });
+
 export const assistantMessageEventSchema = z.object({
   content: z.string().optional().default(""),
   toolCalls: z.array(toolCallRecordSchema).nullish(),
@@ -346,6 +360,7 @@ export type AssistantStreamEvent =
   | { event: "accepted"; data: z.infer<typeof assistantAcceptedEventSchema> }
   | { event: "refused"; data: z.infer<typeof assistantRefusedEventSchema> }
   | { event: "delta"; data: z.infer<typeof assistantDeltaEventSchema> }
+  | { event: "reasoning"; data: z.infer<typeof assistantReasoningEventSchema> }
   | { event: "message"; data: z.infer<typeof assistantMessageEventSchema> }
   | { event: "tool_started"; data: z.infer<typeof assistantToolStartedEventSchema> }
   | { event: "tool_finished"; data: z.infer<typeof assistantToolFinishedEventSchema> }
@@ -367,6 +382,8 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
       return { event, data: assistantRefusedEventSchema.parse(data) };
     case "delta":
       return { event, data: assistantDeltaEventSchema.parse(data) };
+    case "reasoning":
+      return { event, data: assistantReasoningEventSchema.parse(data) };
     case "message":
       return { event, data: assistantMessageEventSchema.parse(data) };
     case "tool_started":

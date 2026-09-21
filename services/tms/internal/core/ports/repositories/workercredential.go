@@ -75,8 +75,13 @@ type ListExpiringWorkerCredentialsRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
 	HorizonDays int                   `json:"horizonDays"`
 	GraceDays   int                   `json:"graceDays"`
-	AfterID     pulid.ID              `json:"afterId"`
-	Limit       int                   `json:"limit"`
+	// AsOf, when set, is the start of the caller's day, and the window is then
+	// whole days: from GraceDays before it through the end of the HorizonDays-th
+	// day after it. Unset, the window runs from this instant, which is what an
+	// interactive page wants and what a question about days does not.
+	AsOf    int64    `json:"asOf"`
+	AfterID pulid.ID `json:"afterId"`
+	Limit   int      `json:"limit"`
 	// RequiredOnly restricts the walk to credential types flagged required.
 	RequiredOnly bool `json:"requiredOnly"`
 	// CredentialTypeCodes narrows the walk to those credential types, by code.

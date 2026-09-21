@@ -10,6 +10,7 @@ fragment AIProviderCardFields on AIProvider {
   hasApiKey
   allowPrivateNetwork
   structuredOutputMode
+  reasoningEffort
   maxTokens
   tasks
   priority

@@ -14,7 +14,10 @@ type QueryToolParams struct {
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
 	Actor          *RequestActor
-	Params         map[string]any
+	// Timezone is the organization's, and it is what "today", "the next 30
+	// days" and a bare YYYY-MM-DD mean in a call. Empty is UTC.
+	Timezone string
+	Params   map[string]any
 }
 
 // AgentQueryTool reads data and returns it.

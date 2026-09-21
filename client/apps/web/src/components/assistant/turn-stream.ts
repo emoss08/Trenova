@@ -8,7 +8,7 @@ import type {
  * Where a turn is, from the reader's side of the wire.
  *
  * - guarding: sent, waiting to hear whether the question is in scope
- * - streaming: reply text is arriving
+ * - streaming: reply text, or the thinking before it, is arriving
  * - working: a tool is running, or the model is thinking between tools
  * - done / refused / error: the turn is over and the thread will be refetched
  */
@@ -30,7 +30,27 @@ export type ToolSegment = {
   content: string;
 };
 
-export type TurnSegment = TextSegment | ToolSegment;
+/**
+ * What the model thought before the text that follows. A heavy model can sit
+ * silent for a minute before its first word; this is what that minute shows.
+ */
+export type ReasoningSegment = {
+  kind: "reasoning";
+  text: string;
+  /** Closed once the reply or a tool call begins; the thought is then finished. */
+  closed: boolean;
+};
+
+export type TurnSegment = TextSegment | ToolSegment | ReasoningSegment;
+
+/** Closes an open reasoning segment, if the last one is open. */
+function closeReasoning(segments: TurnSegment[]): TurnSegment[] {
+  const last = segments.at(-1);
+  if (last && last.kind === "reasoning" && !last.closed) {
+    return [...segments.slice(0, -1), { ...last, closed: true }];
+  }
+  return segments;
+}
 
 export type TurnState = {
   status: TurnStatus;
@@ -81,9 +101,9 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
         segments: [],
       };
 
-    case "delta": {
+    case "reasoning": {
       const last = state.segments.at(-1);
-      if (last && last.kind === "text" && !last.closed) {
+      if (last && last.kind === "reasoning" && !last.closed) {
         const segments = state.segments.slice(0, -1);
         segments.push({ ...last, text: last.text + event.data.text });
         return { ...state, status: "streaming", segments };
@@ -91,13 +111,28 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
       return {
         ...state,
         status: "streaming",
-        segments: [...state.segments, { kind: "text", text: event.data.text, closed: false }],
+        segments: [...state.segments, { kind: "reasoning", text: event.data.text, closed: false }],
+      };
+    }
+
+    case "delta": {
+      const segments = closeReasoning(state.segments);
+      const last = segments.at(-1);
+      if (last && last.kind === "text" && !last.closed) {
+        const rest = segments.slice(0, -1);
+        rest.push({ ...last, text: last.text + event.data.text });
+        return { ...state, status: "streaming", segments: rest };
+      }
+      return {
+        ...state,
+        status: "streaming",
+        segments: [...segments, { kind: "text", text: event.data.text, closed: false }],
       };
     }
 
     case "message": {
-      const last = state.segments.at(-1);
-      const segments = [...state.segments];
+      const segments = closeReasoning(state.segments);
+      const last = segments.at(-1);
       if (last && last.kind === "text" && !last.closed) {
         segments[segments.length - 1] = {
           ...last,
@@ -115,7 +150,7 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
         ...state,
         status: "working",
         segments: [
-          ...state.segments,
+          ...closeReasoning(state.segments),
           {
             kind: "tool",
             callId: event.data.callId,

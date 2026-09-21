@@ -1,3 +1,10 @@
+import { cn } from "@trenova/shared/lib/utils";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@trenova/shared/components/ui/collapsible";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AiMarkdown } from "@/components/elements/ai-markdown";
 import { toneVar } from "@/components/kpi/tone";
@@ -15,8 +22,8 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useAssistantAgent } from "@/components/agent-identity/agent-context";
 import { AgentTile, type AgentTileSize } from "@/components/agent-identity/agent-tile";
 import type { AssistantMessage, AssistantPageContext, AssistantProposal } from "@/types/assistant";
-import { CheckIcon, CopyIcon, MapPinIcon, ShieldAlertIcon } from "lucide-react";
-import { useCallback, useState, type ReactNode } from "react";
+import { CheckIcon, CopyIcon, MapPinIcon, ShieldAlertIcon, ChevronRightIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { askRequestsFrom } from "./ask-requests";
 import { ChoicePrompt } from "./choice-prompt";
 import { ProposalCard } from "./proposal-card";
@@ -187,6 +194,69 @@ function CopyButton({ text }: { text: string }) {
 }
 
 /** A saved assistant turn: what it said, what it looked up, what it asked to do. */
+/**
+ * What the model thought, shown apart from what it said.
+ *
+ * Open while the thinking is still arriving, because that is the minute a
+ * heavy model would otherwise spend looking hung. Collapsed once the answer
+ * begins: the reasoning is there for whoever wants to check the answer
+ * against it, not in the way of reading the answer.
+ */
+export function ReasoningDisclosure({
+  text,
+  streaming = false,
+}: {
+  text: string;
+  streaming?: boolean;
+}) {
+  const t = useT();
+  const [open, setOpen] = useState(streaming);
+  const wasStreaming = useRef(streaming);
+
+  useEffect(() => {
+    if (wasStreaming.current && !streaming) {
+      setOpen(false);
+    }
+    wasStreaming.current = streaming;
+  }, [streaming]);
+
+  if (text === "" && !streaming) {
+    return null;
+  }
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="min-w-0">
+      <CollapsibleTrigger
+        className={cn(
+          "text-muted-foreground ui-focus-ring flex items-center gap-1.5 rounded-control text-xs",
+          "hover:text-foreground",
+        )}
+      >
+        <ChevronRightIcon
+          className={cn("size-3.5 transition-transform", open && "rotate-90")}
+          aria-hidden
+        />
+        {streaming ? (
+          <TextShimmer as="span">{t("Thinking…")}</TextShimmer>
+        ) : (
+          <span>{t("Thought it through")}</span>
+        )}
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="text-muted-foreground border-border mt-2 border-l-2 pl-3 text-xs whitespace-pre-wrap">
+          {text}
+          {streaming && (
+            <span
+              aria-hidden
+              className="assistant-caret bg-muted-foreground ml-0.5 inline-block h-[1em] w-[2px] rounded-full align-text-bottom"
+            />
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 export function AssistantEntry({
   entry,
   proposals,
@@ -248,6 +318,7 @@ export function AssistantEntry({
         </span>
       }
     >
+      {message.reasoning?.text ? <ReasoningDisclosure text={message.reasoning.text} /> : null}
       {steps.length > 0 && <ToolTimeline steps={steps} />}
       {message.content !== "" && <AssistantProse content={message.content} />}
       {reportRuns.map((run) => (

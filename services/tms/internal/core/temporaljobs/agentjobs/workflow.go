@@ -68,7 +68,33 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.TaskQueueAgent.String(),
 			Description: "Start every scheduled or continuous agent whose slot has come",
 		},
+		{
+			Name:        ExpireStaleProposalsWorkflowName,
+			Fn:          ExpireStaleProposalsWorkflow,
+			TaskQueue:   temporaltype.TaskQueueAgent.String(),
+			Description: "Mark pending agent proposals whose decision window has closed as expired",
+		},
 	}
+}
+
+// ExpireStaleProposalsWorkflow closes the window on proposals nobody decided.
+//
+// The decision service refuses an expired proposal on its own, so this is not
+// what keeps a stale proposal from running. It is what keeps the thread
+// honest: a card that still says "awaiting" a month later is a lie the sweeper
+// corrects.
+func ExpireStaleProposalsWorkflow(ctx workflow.Context) (*ExpireStaleProposalsResult, error) {
+	var a *Activities
+	result := &ExpireStaleProposalsResult{}
+
+	expireCtx := workflow.WithActivityOptions(ctx, sweepListOptions)
+	if err := workflow.ExecuteActivity(expireCtx, a.ExpireStaleProposalsActivity, &ExpireStaleProposalsInput{
+		Now: workflow.Now(ctx).Unix(),
+	}).Get(expireCtx, result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func AgentRunWorkflow(ctx workflow.Context, payload *AgentRunPayload) error {

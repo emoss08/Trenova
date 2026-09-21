@@ -15,6 +15,12 @@ export const aiProviderKindSchema = z.enum([
 
 export const structuredOutputModeSchema = z.enum(["JSONSchema", "JSONMode", "Prompted"]);
 
+/**
+ * How hard a model is asked to think before it answers. Off sends no
+ * reasoning parameter, which models without reasoning reject outright.
+ */
+export const reasoningEffortSchema = z.enum(["Off", "Low", "Medium", "High"]);
+
 export const aiTaskSchema = z.enum([
   "DocumentClassification",
   "DocumentExtraction",
@@ -49,6 +55,7 @@ export const aiProviderSchema = z.object({
   hasApiKey: z.boolean().default(false),
   allowPrivateNetwork: z.boolean().default(false),
   structuredOutputMode: structuredOutputModeSchema,
+  reasoningEffort: reasoningEffortSchema.default("Off"),
   maxTokens: z.number().default(8192),
   /** `[]Task` with nullzero on the server: a provider with no tasks arrives as null. */
   tasks: z.preprocess((value) => value ?? [], z.array(aiTaskSchema)),
@@ -74,6 +81,7 @@ export const saveAIProviderRequestSchema = z.object({
   apiKey: z.string().nullable().optional(),
   allowPrivateNetwork: z.boolean().default(false),
   structuredOutputMode: structuredOutputModeSchema,
+  reasoningEffort: reasoningEffortSchema.default("Off"),
   maxTokens: z.number().min(256).max(200000).default(8192),
   tasks: z.array(aiTaskSchema).default([]),
   priority: z.number().min(0).default(100),
@@ -136,6 +144,7 @@ export type AIProviderTestOutcome = z.infer<typeof aiProviderTestOutcomeSchema>;
 export type AIProviderKind = z.infer<typeof aiProviderKindSchema>;
 export type AITask = z.infer<typeof aiTaskSchema>;
 export type StructuredOutputMode = z.infer<typeof structuredOutputModeSchema>;
+export type ReasoningEffort = z.infer<typeof reasoningEffortSchema>;
 export type SaveAIProviderRequest = z.infer<typeof saveAIProviderRequestSchema>;
 export type TestAIProviderResult = z.infer<typeof testAIProviderResultSchema>;
 export type AIProviderCatalog = z.infer<typeof aiProviderCatalogSchema>;

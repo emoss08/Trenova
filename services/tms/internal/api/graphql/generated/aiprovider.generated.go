@@ -279,6 +279,29 @@ func (ec *executionContext) fieldContext_AIProvider_structuredOutputMode(_ conte
 	return graphql.NewScalarFieldContext("AIProvider", field, false, false, errors.New("field of type AIStructuredOutputMode does not have child fields"))
 }
 
+func (ec *executionContext) _AIProvider_reasoningEffort(ctx context.Context, field graphql.CollectedField, obj *aiprovider.Provider) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIProvider_reasoningEffort(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ReasoningEffort, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v aiprovider.ReasoningEffort) graphql.Marshaler {
+			return ec.marshalNAIReasoningEffort2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐReasoningEffort(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIProvider_reasoningEffort(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIProvider", field, false, false, errors.New("field of type AIReasoningEffort does not have child fields"))
+}
+
 func (ec *executionContext) _AIProvider_maxTokens(ctx context.Context, field graphql.CollectedField, obj *aiprovider.Provider) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -877,6 +900,11 @@ func (ec *executionContext) _AIProvider(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "reasoningEffort":
+			out.Values[i] = ec._AIProvider_reasoningEffort(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "maxTokens":
 			out.Values[i] = ec._AIProvider_maxTokens(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1159,6 +1187,23 @@ func (ec *executionContext) unmarshalNAIProviderKind2githubᚗcomᚋemoss08ᚋtr
 }
 
 func (ec *executionContext) marshalNAIProviderKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐKind(ctx context.Context, sel ast.SelectionSet, v aiprovider.Kind) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNAIReasoningEffort2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐReasoningEffort(ctx context.Context, v any) (aiprovider.ReasoningEffort, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := aiprovider.ReasoningEffort(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAIReasoningEffort2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐReasoningEffort(ctx context.Context, sel ast.SelectionSet, v aiprovider.ReasoningEffort) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {

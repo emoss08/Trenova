@@ -171,3 +171,62 @@ describe("reduceTurn", () => {
     expect(failed.error).toBe("No AI provider is configured");
   });
 });
+
+// A heavy model's silence before its first word is where a reader gives up.
+// Thinking arrives as its own segment, stays open while it streams, and
+// closes the moment the reply or a tool call begins.
+describe("reduceTurn reasoning", () => {
+  it("collects thinking into one open segment ahead of the reply", () => {
+    const state = run([
+      accepted,
+      { event: "reasoning", data: { text: "The card " } },
+      { event: "reasoning", data: { text: "expires soon." } },
+    ]);
+
+    expect(state.status).toBe("streaming");
+    expect(state.segments).toEqual([
+      { kind: "reasoning", text: "The card expires soon.", closed: false },
+    ]);
+  });
+
+  it("closes the thinking when the reply starts", () => {
+    const state = run([
+      accepted,
+      { event: "reasoning", data: { text: "Hmm." } },
+      { event: "delta", data: { text: "Friday." } },
+    ]);
+
+    expect(state.segments).toEqual([
+      { kind: "reasoning", text: "Hmm.", closed: true },
+      { kind: "text", text: "Friday.", closed: false },
+    ]);
+  });
+
+  it("closes the thinking when a tool call starts", () => {
+    const state = run([
+      accepted,
+      { event: "reasoning", data: { text: "Look it up." } },
+      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+    ]);
+
+    expect(state.segments[0]).toEqual({ kind: "reasoning", text: "Look it up.", closed: true });
+    expect(state.segments[1]?.kind).toBe("tool");
+  });
+
+  it("starts a new thought after a tool round", () => {
+    const state = run([
+      accepted,
+      { event: "reasoning", data: { text: "First." } },
+      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+      {
+        event: "tool_finished",
+        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+      },
+      { event: "reasoning", data: { text: "Second." } },
+    ]);
+
+    const thoughts = state.segments.filter((segment) => segment.kind === "reasoning");
+    expect(thoughts).toHaveLength(2);
+    expect(thoughts[1]).toEqual({ kind: "reasoning", text: "Second.", closed: false });
+  });
+});

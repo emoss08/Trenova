@@ -20,6 +20,7 @@ function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal
     sourceMessageId: "amsg_1",
     executedAt: null,
     executionError: "",
+    expiresAt: 0,
     ...overrides,
   };
 }
@@ -172,5 +173,29 @@ describe("argumentRows", () => {
     expect(argumentRows({})).toEqual([]);
     expect(argumentRows(null)).toEqual([]);
     expect(argumentRows(undefined)).toEqual([]);
+  });
+});
+
+// The server sweeps expired proposals every quarter hour; between sweeps a
+// card must not offer buttons for a proposal the server will refuse.
+describe("classifyProposal expiry", () => {
+  it("closes a pending proposal whose window has passed", () => {
+    const now = 1_800_000_000;
+    expect(classifyProposal(proposal({ status: "Pending", expiresAt: now - 60 }), now)).toBe(
+      "closed",
+    );
+  });
+
+  it("keeps a pending proposal open until its window passes", () => {
+    const now = 1_800_000_000;
+    expect(classifyProposal(proposal({ status: "Pending", expiresAt: now + 60 }), now)).toBe(
+      "awaiting",
+    );
+  });
+
+  it("never expires a proposal made before expiry existed", () => {
+    expect(classifyProposal(proposal({ status: "Pending", expiresAt: 0 }), 1_800_000_000)).toBe(
+      "awaiting",
+    );
   });
 });
