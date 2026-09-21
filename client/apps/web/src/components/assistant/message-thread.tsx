@@ -41,7 +41,7 @@ import {
 import { StreamingTurn } from "./streaming-turn";
 import { suggestionsFor, type Suggestion } from "./suggestions";
 import { arrivedSince, highestSequence, withDayMarkers } from "./thread-rows";
-import { composerBlock } from "./thread-guard";
+import { composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
 import { groupThread } from "./thread-view";
 import { useAssistantTurn } from "./use-assistant-turn";
 import { useComposerContext } from "./use-composer-context";
@@ -67,6 +67,8 @@ export function MessageThread({
   onOpenArtifact,
   onLiveArtifact,
   onWorkingChange,
+  openingQuestion,
+  onOpeningQuestionSent,
   spine = false,
 }: {
   thread: AssistantThread;
@@ -84,6 +86,9 @@ export function MessageThread({
   onLiveArtifact?: (id: string) => void;
   /** Told while a turn is running, for surfaces that show it outside the thread. */
   onWorkingChange?: (working: boolean) => void;
+  /** A question asked before this thread existed; sent once, as its first message. */
+  openingQuestion?: string;
+  onOpeningQuestionSent?: () => void;
   /** Draws the agent's accent down the gutter, so the thread reads as its work. */
   spine?: boolean;
 }) {
@@ -257,6 +262,35 @@ export function MessageThread({
     }
     return byMessage;
   }, [artifacts, entries]);
+
+  // A question typed at the Desk's front door arrives here, because the
+  // thread it opened did not exist when it was asked. It is sent once, only
+  // into a thread that is genuinely empty, and only once history has loaded —
+  // otherwise a reload with the question still in hand would ask it twice.
+  const openingSent = useRef(false);
+  const pendingQuestion = openingQuestion?.trim() ?? "";
+  useEffect(() => {
+    if (
+      !shouldSendOpeningQuestion({
+        question: pendingQuestion,
+        alreadySent: openingSent.current,
+        historyLoading: history.isLoading,
+        messageCount: messages.length,
+      })
+    ) {
+      return;
+    }
+    openingSent.current = true;
+    onOpeningQuestionSent?.();
+    void send(pendingQuestion, undefined, providerId);
+  }, [
+    history.isLoading,
+    messages.length,
+    onOpeningQuestionSent,
+    pendingQuestion,
+    providerId,
+    send,
+  ]);
 
   // An answer to the assistant's question is an ordinary message. Sending it
   // that way is what keeps a clicked answer and a typed one the same thing:

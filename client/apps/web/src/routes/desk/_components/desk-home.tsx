@@ -1,42 +1,53 @@
+import { AGENT_ACCENTS, resolveAgentIdentity } from "@/components/agent-identity/agent-identity";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
-import { AssistantMark } from "@/components/assistant/assistant-mark";
+import { suggestionsFor } from "@/components/assistant/suggestions";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantThread } from "@/types/assistant";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ArrowRightIcon, BotIcon, InboxIcon, PlugZapIcon } from "lucide-react";
-import { m, useReducedMotion } from "motion/react";
-import { useState } from "react";
+import { ArrowRightIcon, ArrowUpIcon, BotIcon, InboxIcon, PlugZapIcon } from "lucide-react";
+import { useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import { Link } from "react-router";
 import { usePendingDecisionSummary } from "./decisions/use-pending-decisions";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
-const RECENT_LIMIT = 6;
+const RECENT_LIMIT = 5;
+const MAX_SUGGESTIONS = 3;
 
 export type DeskHomeProps = {
   agents: AgentDefinitionRow[];
   threads: AssistantThread[];
   isLoading: boolean;
   isStarting: boolean;
-  onStart: (agentId: string) => void;
+  onStart: (agentId: string, question?: string) => void;
 };
 
 /**
- * Where a day at the Desk starts: what is waiting on a decision, who can be
- * asked, and what was asked recently. It reads top to bottom like a morning
- * paper; the watchtower and the briefing take their place above the fold
- * when they land.
+ * The Desk's front page.
+ *
+ * It is laid out like one: a dateline, a headline that says what the day
+ * looks like, and then the question. The question is the point — the Desk is
+ * a workspace you talk to, so the first thing on it is the thing you talk
+ * into, not a directory of places to go. Everything under it is there to be
+ * read at a glance and then left alone.
+ *
+ * The headline is composed from counts, never written by a model. A front
+ * page that opens with a sentence nobody can trace is a front page people
+ * stop reading, and the numbers here are cheap and exact.
  */
 export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: DeskHomeProps) {
   const t = useT();
-  const reduceMotion = useReducedMotion();
   const [now] = useState(nowInSeconds);
+  const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { data: attention } = useAttentionSummary();
@@ -44,142 +55,93 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   const waiting = summaryQuery.data?.total ?? attention?.agentDecisions ?? 0;
   const recent = threads.slice(0, RECENT_LIMIT);
 
-  return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-8">
-      <m.header
-        initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-        className="flex flex-col gap-2"
-      >
-        <AssistantMark className="text-foreground size-7" />
-        <h1 className="text-lg font-semibold">{t("Your desk")}</h1>
-        <p className="text-muted-foreground max-w-prose text-sm leading-relaxed">
-          {t(
-            "Ask any agent about the work in front of you, read what it produces beside the conversation, and decide what the agents have proposed.",
-          )}
-        </p>
-      </m.header>
+  const dateline = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        timeZone: timezone,
+      }).format(new Date(now * 1000)),
+    [now, timezone],
+  );
 
-      {canDecide && (
-        <section className="border-border flex flex-col gap-3 rounded-lg border p-4">
-          <div className="flex items-center gap-3">
-            <span className="bg-sunken flex size-9 shrink-0 items-center justify-center rounded-md">
-              <InboxIcon className="size-4" />
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="text-sm font-medium">
-                {waiting === 0
-                  ? t("Nothing is waiting on you")
-                  : t("{0, plural, one {# decision waiting} other {# decisions waiting}}", waiting)}
-              </span>
-              <span className="text-muted-foreground text-xs">
-                {waiting === 0
-                  ? t("Changes an agent proposes will queue here for your approval.")
-                  : t("Approve, change or reject what the agents proposed, one at a time or as a batch.")}
-              </span>
-            </div>
-            <Button
-              variant={waiting > 0 ? "default" : "outline"}
-              size="sm"
-              nativeButton={false}
-              render={<Link to="/desk/decisions" />}
-            >
-              {t("Open decisions")}
-              <ArrowRightIcon className="size-3.5" />
-            </Button>
-          </div>
-          {summaryQuery.data && summaryQuery.data.byAgent.length > 0 && (
-            <ul className="flex flex-wrap gap-1.5">
-              {summaryQuery.data.byAgent.map((row) => (
-                <li key={row.agentDefinitionId}>
-                  <Badge variant="neutral" className="h-5 gap-1 px-1.5 text-xs">
-                    <span className="truncate">{row.agentName || t("Retired agent")}</span>
-                    <span className="tabular-nums">{row.count}</span>
-                  </Badge>
-                </li>
-              ))}
-            </ul>
+  return (
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-6 py-10">
+      <header className="flex flex-col gap-1">
+        <p className="text-muted-foreground text-xs">{dateline}</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-balance">
+          {canDecide && waiting > 0
+            ? t(
+                "{0, plural, one {One decision is waiting on you.} other {# decisions are waiting on you.}}",
+                waiting,
+              )
+            : agents.length === 0
+              ? t("Nothing is running here yet.")
+              : t("Nothing is waiting on you.")}
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          {agents.length === 0
+            ? t("The Desk comes alive once an agent is enabled.")
+            : t("Ask an agent about the work in front of you. What it makes opens beside you.")}
+        </p>
+      </header>
+
+      {agents.length > 0 && <AskBar agents={agents} isStarting={isStarting} onStart={onStart} />}
+
+      {canDecide && waiting > 0 && (
+        <Link
+          to="/desk/decisions"
+          className={cn(
+            "ui-focus-ring group border-desk-hairline flex items-center gap-3 rounded-surface border px-4 py-3",
+            "hover:bg-surface-hover transition-colors",
           )}
-        </section>
+        >
+          <InboxIcon className="text-muted-foreground size-4 shrink-0" />
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+            <span className="text-sm">{t("Waiting on your decision")}</span>
+            {summaryQuery.data?.byAgent.map((row) => (
+              <Badge key={row.agentDefinitionId} variant="neutral" className="h-5 gap-1 px-1.5">
+                <span className="max-w-40 truncate">{row.agentName || t("Retired agent")}</span>
+                <span className="tabular-nums">{row.count}</span>
+              </Badge>
+            ))}
+          </div>
+          <ArrowRightIcon className="text-muted-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
+        </Link>
       )}
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-muted-foreground text-xs font-medium">{t("Agents")}</h2>
+      <section className="flex flex-col gap-3">
+        <SectionLabel>{t("Who you can ask")}</SectionLabel>
         {isLoading ? (
           <div className="grid gap-2 sm:grid-cols-2">
             <Skeleton className="h-16" />
             <Skeleton className="h-16" />
           </div>
         ) : agents.length === 0 ? (
-          <div className="border-border flex flex-col items-start gap-3 rounded-lg border p-4">
-            <span className="bg-sunken text-muted-foreground flex size-9 items-center justify-center rounded-md">
-              <BotIcon className="size-4" />
-            </span>
-            <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium">{t("No agents are available")}</p>
-              <p className="text-muted-foreground text-xs">
-                {canManageAgents
-                  ? t("Connect an AI provider and enable an agent in AI Control, then come back here.")
-                  : t("An administrator needs to connect an AI provider and enable an agent first.")}
-              </p>
-            </div>
-            {canManageAgents && (
-              <Button
-                size="sm"
-                variant="outline"
-                nativeButton={false}
-                render={<Link to="/admin/agent-control" />}
-              >
-                <PlugZapIcon className="size-3.5" />
-                {t("Open AI control")}
-              </Button>
-            )}
-          </div>
+          <NoAgents canManageAgents={canManageAgents} />
         ) : (
           <div className="grid gap-2 sm:grid-cols-2">
             {agents.map((agent, index) => (
-              <m.button
+              <AgentCard
                 key={agent.id}
-                type="button"
+                agent={agent}
+                index={index}
                 disabled={isStarting}
-                onClick={() => onStart(agent.id)}
-                initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: 0.03 * index }}
-                className="ui-focus-ring ui-press border-border hover:bg-surface-hover group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors outline-none disabled:opacity-60"
-              >
-                <AgentTile agent={agent} size="lg" />
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="flex items-center gap-1.5 text-sm font-medium">
-                    <span className="truncate">{agent.name}</span>
-                    <Badge variant="neutral" className="h-4 px-1 text-2xs">
-                      {agent.toolNames.length === 0
-                        ? t("Answers only")
-                        : t("{0, plural, one {# tool} other {# tools}}", agent.toolNames.length)}
-                    </Badge>
-                  </span>
-                  {agent.description && (
-                    <span className="text-muted-foreground line-clamp-1 text-xs">
-                      {agent.description}
-                    </span>
-                  )}
-                </span>
-                <ArrowRightIcon className="text-muted-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
-              </m.button>
+                onStart={() => onStart(agent.id)}
+              />
             ))}
           </div>
         )}
       </section>
 
       {recent.length > 0 && (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-muted-foreground text-xs font-medium">
-            {t("Pick up where you left off")}
-          </h2>
+        <section className="flex flex-col gap-3">
+          <SectionLabel>{t("Where you left off")}</SectionLabel>
           <ul className="flex flex-col">
             {recent.map((thread) => {
               const touched = thread.lastMessageAt > 0 ? thread.lastMessageAt : thread.createdAt;
+
               return (
                 <li key={thread.id}>
                   <Link
@@ -189,7 +151,7 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
                     <span className="min-w-0 flex-1 truncate text-sm">
                       {thread.title || t("Untitled conversation")}
                     </span>
-                    <span className="text-muted-foreground shrink-0 text-xs">
+                    <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
                       {formatSecondsAgo(now - touched)}
                     </span>
                   </Link>
@@ -198,6 +160,204 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
             })}
           </ul>
         </section>
+      )}
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <h2 className="text-muted-foreground text-xs font-medium">{children}</h2>;
+}
+
+/**
+ * The front door: a question, and who it goes to.
+ *
+ * Asking here opens a conversation and sends the question into it, so the
+ * Desk answers the first thing typed at it rather than depositing a person
+ * in an empty thread with their sentence still in the box. The agent it goes
+ * to is the last one talked to, which is right far more often than any
+ * cleverer rule, and is one click to change.
+ */
+function AskBar({
+  agents,
+  isStarting,
+  onStart,
+}: {
+  agents: AgentDefinitionRow[];
+  isStarting: boolean;
+  onStart: (agentId: string, question?: string) => void;
+}) {
+  const t = useT();
+  const lastAgentId = useDeskStore((state) => state.lastAgentId);
+  const preferred = agents.find((agent) => agent.id === lastAgentId) ?? agents[0];
+  const [agentId, setAgentId] = useState(preferred.id);
+  const [question, setQuestion] = useState("");
+
+  const agent = agents.find((candidate) => candidate.id === agentId) ?? preferred;
+  const accent = AGENT_ACCENTS[resolveAgentIdentity(agent).accent];
+  const suggestions = useMemo(
+    () => suggestionsFor(agent.template).slice(0, MAX_SUGGESTIONS),
+    [agent.template],
+  );
+
+  const ask = (text: string) => {
+    const trimmed = text.trim();
+    if (trimmed === "" || isStarting) {
+      return;
+    }
+    onStart(agent.id, trimmed);
+  };
+
+  const onSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    ask(question);
+  };
+
+  return (
+    <div className="flex flex-col gap-3" style={{ "--agent-accent": accent } as CSSProperties}>
+      <form
+        onSubmit={onSubmit}
+        className={cn(
+          "bg-desk-column rounded-surface ui-lift flex flex-col gap-2 p-2.5",
+          "focus-within:shadow-[0_0_0_1px_var(--agent-accent)] transition-shadow",
+        )}
+      >
+        <textarea
+          value={question}
+          onChange={(event) => setQuestion(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              ask(question);
+            }
+          }}
+          rows={2}
+          placeholder={t("Ask {0} anything about your operation", agent.name)}
+          aria-label={t("Ask {0} anything about your operation", agent.name)}
+          className="placeholder:text-muted-foreground max-h-48 min-h-14 w-full resize-none bg-transparent px-1.5 py-1 text-sm outline-none"
+        />
+
+        <div className="flex items-center gap-1.5">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+            {agents.map((candidate) => (
+              <button
+                key={candidate.id}
+                type="button"
+                aria-pressed={candidate.id === agent.id}
+                onClick={() => setAgentId(candidate.id)}
+                className={cn(
+                  "ui-focus-ring flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1 text-xs transition-colors",
+                  candidate.id === agent.id
+                    ? "bg-surface-selected text-foreground"
+                    : "text-muted-foreground hover:bg-surface-hover",
+                )}
+              >
+                <AgentTile agent={candidate} size="xs" />
+                <span className="max-w-32 truncate">{candidate.name}</span>
+              </button>
+            ))}
+          </div>
+
+          <Button
+            type="submit"
+            size="icon-sm"
+            disabled={isStarting || question.trim() === ""}
+            aria-label={t("Ask")}
+            className="shrink-0"
+          >
+            <ArrowUpIcon className="size-4" />
+          </Button>
+        </div>
+      </form>
+
+      <ul className="flex flex-wrap gap-1.5">
+        {suggestions.map((suggestion) => (
+          <li key={suggestion.prompt}>
+            <button
+              type="button"
+              disabled={isStarting}
+              onClick={() => ask(suggestion.prompt)}
+              className="ui-focus-ring text-muted-foreground hover:text-foreground hover:bg-surface-hover ring-foreground/10 rounded-full px-2.5 py-1 text-xs ring-1 transition-colors disabled:opacity-50"
+            >
+              {t(suggestion.label)}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function AgentCard({
+  agent,
+  index,
+  disabled,
+  onStart,
+}: {
+  agent: AgentDefinitionRow;
+  index: number;
+  disabled: boolean;
+  onStart: () => void;
+}) {
+  const t = useT();
+
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onStart}
+      style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
+      className={cn(
+        "animate-land ui-focus-ring ui-press border-desk-hairline group rounded-surface",
+        "hover:bg-surface-hover flex items-center gap-3 border px-3 py-2.5 text-left",
+        "transition-colors outline-none disabled:opacity-60",
+      )}
+    >
+      <AgentTile agent={agent} size="lg" />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="flex items-center gap-1.5 text-sm font-medium">
+          <span className="truncate">{agent.name}</span>
+          <Badge variant="neutral" className="text-2xs h-4 px-1">
+            {agent.toolNames.length === 0
+              ? t("Answers only")
+              : t("{0, plural, one {# tool} other {# tools}}", agent.toolNames.length)}
+          </Badge>
+        </span>
+        {agent.description && (
+          <span className="text-muted-foreground line-clamp-1 text-xs">{agent.description}</span>
+        )}
+      </span>
+      <ArrowRightIcon className="text-muted-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
+    </button>
+  );
+}
+
+function NoAgents({ canManageAgents }: { canManageAgents: boolean }) {
+  const t = useT();
+
+  return (
+    <div className="border-desk-hairline rounded-surface flex flex-col items-start gap-3 border p-4">
+      <span className="bg-sunken text-muted-foreground flex size-9 items-center justify-center rounded-md">
+        <BotIcon className="size-4" />
+      </span>
+      <div className="flex flex-col gap-1">
+        <p className="text-sm font-medium">{t("No agents are available")}</p>
+        <p className="text-muted-foreground text-xs">
+          {canManageAgents
+            ? t("Connect an AI provider and enable an agent in AI Control, then come back here.")
+            : t("An administrator needs to connect an AI provider and enable an agent first.")}
+        </p>
+      </div>
+      {canManageAgents && (
+        <Button
+          size="sm"
+          variant="outline"
+          nativeButton={false}
+          render={<Link to="/admin/agent-control" />}
+        >
+          <PlugZapIcon className="size-3.5" />
+          {t("Open AI control")}
+        </Button>
       )}
     </div>
   );
