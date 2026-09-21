@@ -163,6 +163,31 @@ type AssistantToolFinishedEvent struct {
 // returns.
 type AssistantStreamEmitter func(event StreamEvent)
 
+// ListThreadMessagesRequest reads one page of a thread, newest first from
+// the end or from just above BeforeSequence.
+type ListThreadMessagesRequest struct {
+	Thread repositories.GetThreadRequest
+	// Limit is the page size. Zero takes the default; more than the maximum
+	// is clamped, not refused.
+	Limit int
+	// BeforeSequence, when set, pages upward: the messages numbered below it.
+	BeforeSequence *int
+}
+
+// ThreadMessagesPage is one page of a thread in reading order, with what a
+// client needs to ask for the page above it and to say how long the
+// conversation has become.
+type ThreadMessagesPage struct {
+	Results []conversation.Message `json:"results"`
+	// HasMore says there are messages above the first one here.
+	HasMore bool `json:"hasMore"`
+	// Total is the thread's whole length, not the page's.
+	Total int `json:"total"`
+	// Limit is how many messages a thread may hold before it must be
+	// continued in a new one, so the client can say so before the wall.
+	Limit int `json:"limit"`
+}
+
 type AssistantService interface {
 	StartThread(
 		ctx context.Context,
@@ -189,8 +214,8 @@ type AssistantService interface {
 	) ([]AssistantProviderOption, error)
 	ListMessages(
 		ctx context.Context,
-		req repositories.GetThreadRequest,
-	) ([]conversation.Message, error)
+		req ListThreadMessagesRequest,
+	) (*ThreadMessagesPage, error)
 	DeleteThread(ctx context.Context, req repositories.GetThreadRequest) error
 	// SendMessage runs a guarded turn and persists it.
 	SendMessage(

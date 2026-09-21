@@ -28,6 +28,18 @@ type ListMessagesRequest struct {
 	TenantInfo pagination.TenantInfo
 	// Limit bounds how much history is replayed to the model. Zero means all.
 	Limit int
+	// BeforeSequence, when set, reads only messages numbered below it: the
+	// page above the one a reader already has. Sequence is the thread's own
+	// order, so a page cut here never repeats or skips a message however
+	// many turns land while the reader scrolls.
+	BeforeSequence *int
+}
+
+// CountMessagesRequest counts a thread's messages, which is how long the
+// conversation is.
+type CountMessagesRequest struct {
+	ThreadID   pulid.ID
+	TenantInfo pagination.TenantInfo
 }
 
 // AppendTurnRequest saves one exchange. The messages are written together and
@@ -49,6 +61,7 @@ type ConversationRepository interface {
 	UpdateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
 	DeleteThread(ctx context.Context, req GetThreadRequest) error
 	ListMessages(ctx context.Context, req ListMessagesRequest) ([]conversation.Message, error)
+	CountMessages(ctx context.Context, req CountMessagesRequest) (int, error)
 	// AppendTurn allocates sequence numbers and writes the messages atomically,
 	// returning them with their assigned identifiers.
 	AppendTurn(ctx context.Context, req AppendTurnRequest) ([]conversation.Message, error)

@@ -8,7 +8,7 @@ import {
   agentTemplateListSchema,
   previewPromptResponseSchema,
   toolCatalogSchema,
-  assistantMessageListSchema,
+  assistantMessagePageSchema,
   assistantProposalListSchema,
   assistantProviderListSchema,
   assistantThreadListSchema,
@@ -56,9 +56,24 @@ export class AssistantService {
     await api.delete(`/assistant/threads/${id}/`);
   }
 
-  public async listMessages(threadId: AssistantThread["id"]) {
-    const response = await api.get(`/assistant/threads/${threadId}/messages/`);
-    return safeParse(assistantMessageListSchema, response, "Assistant Message");
+  /**
+   * One page of a thread: the newest `limit` messages, or with `before` the
+   * page above the message carrying that sequence.
+   */
+  public async listMessages(
+    threadId: AssistantThread["id"],
+    { limit, before, signal }: { limit?: number; before?: number; signal?: AbortSignal } = {},
+  ) {
+    const params = new URLSearchParams();
+    if (limit !== undefined) {
+      params.set("limit", String(limit));
+    }
+    if (before !== undefined) {
+      params.set("before", String(before));
+    }
+    const query = params.size > 0 ? `?${params.toString()}` : "";
+    const response = await api.get(`/assistant/threads/${threadId}/messages/${query}`, { signal });
+    return safeParse(assistantMessagePageSchema, response, "Assistant Message");
   }
 
   /**

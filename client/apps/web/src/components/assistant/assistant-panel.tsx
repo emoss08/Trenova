@@ -129,6 +129,11 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
               thread={activeThread}
               agent={activeAgent}
               expanded={expanded}
+              onStartNew={
+                activeAgent && !startMutation.isPending
+                  ? () => startMutation.mutate(activeAgent.id)
+                  : undefined
+              }
             />
           ) : (
             <AssistantHome

@@ -231,6 +231,12 @@ func (h *Handler) listThreadProposals(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"results": proposals})
 }
 
+type listMessagesQuery struct {
+	Limit int `form:"limit"`
+	// Before is the sequence of the oldest message the client already has.
+	Before *int `form:"before"`
+}
+
 func (h *Handler) listMessages(c *gin.Context) {
 	req, err := threadRequest(c)
 	if err != nil {
@@ -238,13 +244,23 @@ func (h *Handler) listMessages(c *gin.Context) {
 		return
 	}
 
-	messages, err := h.service.ListMessages(c.Request.Context(), req)
+	var query listMessagesQuery
+	if err = c.ShouldBindQuery(&query); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	page, err := h.service.ListMessages(c.Request.Context(), serviceports.ListThreadMessagesRequest{
+		Thread:         req,
+		Limit:          query.Limit,
+		BeforeSequence: query.Before,
+	})
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": messages})
+	c.JSON(http.StatusOK, page)
 }
 
 type pageContextRequest struct {

@@ -19,6 +19,14 @@ const (
 	// thread would eventually exceed any context window, and the most recent
 	// turns are the ones that carry the thread of the question.
 	historyLimit = 40
+	// defaultPageLimit is how much of a thread the client reads at a time;
+	// maxPageLimit is the most it may ask for in one page.
+	defaultPageLimit = 50
+	maxPageLimit     = 200
+	// maxThreadMessages is where a conversation must be continued in a new
+	// one. Every message past the model's history window is history the
+	// client still has to render.
+	maxThreadMessages = 400
 	// maxTitleRunes bounds a title derived from the first message.
 	maxTitleRunes = 60
 )
@@ -76,18 +84,85 @@ func (s *Service) GetThread(
 
 func (s *Service) ListMessages(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
-) ([]conversation.Message, error) {
+	req services.ListThreadMessagesRequest,
+) (*services.ThreadMessagesPage, error) {
 	// Reading the thread first is the authorization check: it is scoped by user,
 	// so a thread belonging to someone else is not found rather than returned.
-	if _, err := s.conversations.GetThread(ctx, req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, req.Thread); err != nil {
 		return nil, err
 	}
 
-	return s.conversations.ListMessages(ctx, repositories.ListMessagesRequest{
-		ThreadID:   req.ID,
-		TenantInfo: req.TenantInfo,
+	limit := pageLimit(req.Limit)
+
+	// One more than the page says whether there is a page above it without
+	// a second query for the count of what is left.
+	messages, err := s.conversations.ListMessages(ctx, repositories.ListMessagesRequest{
+		ThreadID:       req.Thread.ID,
+		TenantInfo:     req.Thread.TenantInfo,
+		Limit:          limit + 1,
+		BeforeSequence: req.BeforeSequence,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	hasMore := len(messages) > limit
+	if hasMore {
+		messages = messages[len(messages)-limit:]
+	}
+
+	total, err := s.conversations.CountMessages(ctx, repositories.CountMessagesRequest{
+		ThreadID:   req.Thread.ID,
+		TenantInfo: req.Thread.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &services.ThreadMessagesPage{
+		Results: messages,
+		HasMore: hasMore,
+		Total:   total,
+		Limit:   maxThreadMessages,
+	}, nil
+}
+
+func pageLimit(requested int) int {
+	switch {
+	case requested <= 0:
+		return defaultPageLimit
+	case requested > maxPageLimit:
+		return maxPageLimit
+	default:
+		return requested
+	}
+}
+
+// assertRoom refuses a turn on a thread that has reached its length. The
+// thread is what the client renders and what every turn replays a slice of;
+// one that grows without end slows the page it lives on and buries the
+// question under its own history. The limit is generous for a conversation
+// and the refusal says what to do instead.
+func (s *Service) assertRoom(
+	ctx context.Context,
+	thread *conversation.Thread,
+	tenantInfo pagination.TenantInfo,
+) error {
+	count, err := s.conversations.CountMessages(ctx, repositories.CountMessagesRequest{
+		ThreadID:   thread.ID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	if count < maxThreadMessages {
+		return nil
+	}
+
+	return errortypes.NewBusinessError(
+		"This conversation has reached its limit of {0} messages. Start a new conversation to continue",
+		maxThreadMessages,
+	)
 }
 
 func (s *Service) DeleteThread(
@@ -153,6 +228,10 @@ func (s *Service) SendMessageStream(
 		return nil, errortypes.NewBusinessError(
 			"Agent {0} is disabled and cannot be used", definition.Name,
 		)
+	}
+
+	if err = s.assertRoom(ctx, thread, req.TenantInfo); err != nil {
+		return nil, err
 	}
 
 	history, err := s.conversations.ListMessages(ctx, repositories.ListMessagesRequest{

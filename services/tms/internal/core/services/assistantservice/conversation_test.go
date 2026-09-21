@@ -24,6 +24,18 @@ type stubConversations struct {
 	// can prove the save survives the request being cancelled.
 	appendCtxErr error
 	appendCalls  int
+	// messages is what ListMessages serves; lastList is what it was asked.
+	messages []conversation.Message
+	lastList repositories.ListMessagesRequest
+	// count is the thread's length as CountMessages reports it.
+	count int
+}
+
+func (s *stubConversations) CountMessages(
+	context.Context,
+	repositories.CountMessagesRequest,
+) (int, error) {
+	return s.count, nil
 }
 
 func (s *stubConversations) GetThread(
@@ -34,10 +46,12 @@ func (s *stubConversations) GetThread(
 }
 
 func (s *stubConversations) ListMessages(
-	context.Context,
-	repositories.ListMessagesRequest,
+	_ context.Context,
+	req repositories.ListMessagesRequest,
 ) ([]conversation.Message, error) {
-	return nil, nil
+	s.lastList = req
+
+	return s.messages, nil
 }
 
 func (s *stubConversations) AppendTurn(
@@ -162,4 +176,107 @@ func TestSendMessageStream_RejectsAPageContextItCouldNotTrust(t *testing.T) {
 	assert.True(t, fields["context.entityType"])
 	assert.Zero(t, completion.CallCount, "a rejected request never reaches the model")
 	assert.Empty(t, conversations.appended, "nothing is saved for a rejected request")
+}
+
+func numberedMessages(from, count int) []conversation.Message {
+	messages := make([]conversation.Message, 0, count)
+	for i := range count {
+		messages = append(messages, conversation.Message{
+			ID:       pulid.MustNew("amsg_"),
+			Sequence: from + i,
+			Role:     conversation.RoleUser,
+			Content:  "m",
+		})
+	}
+
+	return messages
+}
+
+// A page is the newest N of what lies below the cursor, and one row past it
+// says whether there is a page above without counting what is left.
+func TestListMessages_PagesFromTheEndAndSaysWhetherMoreExist(t *testing.T) {
+	t.Parallel()
+
+	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
+	conversations.messages = numberedMessages(10, 3)
+	conversations.count = 13
+	before := 13
+
+	page, err := svc.ListMessages(t.Context(), serviceports.ListThreadMessagesRequest{
+		Thread:         repositories.GetThreadRequest{ID: conversations.thread.ID},
+		Limit:          2,
+		BeforeSequence: &before,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, 3, conversations.lastList.Limit, "one more than the page")
+	require.NotNil(t, conversations.lastList.BeforeSequence)
+	assert.Equal(t, 13, *conversations.lastList.BeforeSequence)
+	assert.True(t, page.HasMore)
+	require.Len(t, page.Results, 2)
+	assert.Equal(t, 11, page.Results[0].Sequence, "the extra row is the oldest, and is dropped")
+	assert.Equal(t, 12, page.Results[1].Sequence)
+	assert.Equal(t, 13, page.Total)
+	assert.Equal(t, maxThreadMessages, page.Limit)
+}
+
+func TestListMessages_ReportsTheLastPageAsSuch(t *testing.T) {
+	t.Parallel()
+
+	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
+	conversations.messages = numberedMessages(0, 2)
+	conversations.count = 2
+
+	page, err := svc.ListMessages(t.Context(), serviceports.ListThreadMessagesRequest{
+		Thread: repositories.GetThreadRequest{ID: conversations.thread.ID},
+		Limit:  2,
+	})
+	require.NoError(t, err)
+
+	assert.False(t, page.HasMore)
+	assert.Len(t, page.Results, 2)
+	assert.Nil(t, conversations.lastList.BeforeSequence)
+}
+
+func TestListMessages_ClampsThePageSize(t *testing.T) {
+	t.Parallel()
+
+	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
+
+	_, err := svc.ListMessages(t.Context(), serviceports.ListThreadMessagesRequest{
+		Thread: repositories.GetThreadRequest{ID: conversations.thread.ID},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, defaultPageLimit+1, conversations.lastList.Limit)
+
+	_, err = svc.ListMessages(t.Context(), serviceports.ListThreadMessagesRequest{
+		Thread: repositories.GetThreadRequest{ID: conversations.thread.ID},
+		Limit:  100000,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, maxPageLimit+1, conversations.lastList.Limit)
+}
+
+// A conversation that has reached its length is continued in a new one. The
+// turn is refused before anything runs, and the refusal says what to do.
+func TestSendMessageStream_RefusesATurnOnAFullThread(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		textTurn("It is in Los Angeles."),
+	}}
+	svc, conversations := newConversationService(completion, testDefinition())
+	conversations.count = maxThreadMessages
+	actor := testActor()
+
+	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+		ThreadID:   conversations.thread.ID,
+		Content:    "Where is it?",
+		TenantInfo: actor.TenantInfo(),
+	}, actor, nil)
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsBusinessError(err))
+	assert.Contains(t, err.Error(), "new conversation")
+	assert.Zero(t, conversations.appendCalls, "nothing ran and nothing was saved")
 }

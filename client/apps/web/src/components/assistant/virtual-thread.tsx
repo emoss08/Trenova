@@ -1,0 +1,162 @@
+import { useT } from "@trenova/shared/i18n/use-t";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { cn } from "@trenova/shared/lib/utils";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { ArrowDownIcon } from "lucide-react";
+import { useReducedMotion } from "motion/react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+
+export type VirtualThreadRow = {
+  key: string;
+  render: () => ReactNode;
+};
+
+/** How far from the end still counts as reading the latest message. */
+const END_THRESHOLD = 96;
+/** How many rows from the top trigger the next page of history. */
+const LOAD_AHEAD_ROWS = 4;
+/** A guess at a row's height before it is measured; a short reply. */
+const ESTIMATED_ROW_HEIGHT = 88;
+
+type VirtualThreadProps = {
+  rows: readonly VirtualThreadRow[];
+  hasOlder: boolean;
+  isLoadingOlder: boolean;
+  onLoadOlder: () => void;
+  /** Space kept clear at the bottom for whatever floats over the thread. */
+  paddingBottom: number;
+  className?: string;
+  contentClassName?: string;
+  /** Applied to every row: the gap between messages lives here. */
+  rowClassName?: string;
+  children?: ReactNode;
+};
+
+/**
+ * The thread, windowed.
+ *
+ * Only the rows near the viewport are in the DOM, so a conversation of a few
+ * hundred lookups costs what a short one does. The list is anchored to its
+ * end: a page of older history arriving above keeps the reader's place, and a
+ * reply growing at the bottom follows only while they were already reading
+ * the latest one. Scrolling up never fights the stream; a small control
+ * offers the way back down instead.
+ */
+export function VirtualThread({
+  rows,
+  hasOlder,
+  isLoadingOlder,
+  onLoadOlder,
+  paddingBottom,
+  className,
+  contentClassName,
+  rowClassName,
+  children,
+}: VirtualThreadProps) {
+  const t = useT();
+  const reduceMotion = useReducedMotion();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [atEnd, setAtEnd] = useState(true);
+
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ESTIMATED_ROW_HEIGHT,
+    getItemKey: (index) => rows[index].key,
+    overscan: 8,
+    anchorTo: "end",
+    followOnAppend: reduceMotion ? true : "smooth",
+    scrollEndThreshold: END_THRESHOLD,
+  });
+
+  const items = virtualizer.getVirtualItems();
+  const firstIndex = items[0]?.index;
+
+  // The next page is asked for a few rows before the top is reached, so a
+  // steady scroll never lands on a blank.
+  useEffect(() => {
+    if (hasOlder && !isLoadingOlder && firstIndex !== undefined && firstIndex < LOAD_AHEAD_ROWS) {
+      onLoadOlder();
+    }
+  }, [firstIndex, hasOlder, isLoadingOlder, onLoadOlder]);
+
+  const onScroll = useCallback(() => {
+    setAtEnd(virtualizer.isAtEnd(END_THRESHOLD));
+  }, [virtualizer]);
+
+  // A new row while the reader is at the end keeps them there by the
+  // virtualizer's own following; the button only has to know when they left.
+  useEffect(() => {
+    setAtEnd(virtualizer.isAtEnd(END_THRESHOLD));
+  }, [rows.length, virtualizer]);
+
+  const jumpToLatest = useCallback(() => {
+    virtualizer.scrollToEnd({ behavior: reduceMotion ? "auto" : "smooth" });
+  }, [reduceMotion, virtualizer]);
+
+  return (
+    <div className={cn("relative min-h-0 flex-1", className)}>
+      <div
+        ref={scrollRef}
+        onScroll={onScroll}
+        className="scrollbar-overlay size-full min-h-0 overflow-y-auto overscroll-contain"
+      >
+        <div className={cn("mx-auto w-full", contentClassName)}>
+          {/* A fixed slot rather than a spinner that appears: a header that
+              changes height would move the rows below it under the pointer. */}
+          {hasOlder && (
+            <div
+              className="text-muted-foreground flex h-8 items-center justify-center text-xs"
+              aria-live="polite"
+            >
+              {isLoadingOlder && (
+                <span className="flex items-center gap-1.5">
+                  <Spinner className="size-3" />
+                  {t("Loading earlier messages…")}
+                </span>
+              )}
+            </div>
+          )}
+          {children}
+          <div
+            className="relative w-full"
+            style={{ height: virtualizer.getTotalSize(), paddingBottom }}
+          >
+            {items.map((item) => (
+              <div
+                key={item.key}
+                data-index={item.index}
+                ref={virtualizer.measureElement}
+                className={cn("absolute inset-x-0 top-0", rowClassName)}
+                style={{ transform: `translateY(${item.start}px)` }}
+              >
+                {rows[item.index].render()}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 flex justify-center transition-[opacity,translate] duration-200 ease-settle",
+          atEnd ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100",
+        )}
+        style={{ bottom: paddingBottom + 12 }}
+      >
+        <Button
+          variant="secondary"
+          size="sm"
+          className={cn("rounded-full", atEnd ? "pointer-events-none" : "pointer-events-auto")}
+          tabIndex={atEnd ? -1 : 0}
+          aria-hidden={atEnd}
+          onClick={jumpToLatest}
+        >
+          <ArrowDownIcon className="size-3.5" />
+          {t("Latest")}
+        </Button>
+      </div>
+    </div>
+  );
+}

@@ -1,13 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import {
-  MessageScroller,
-  MessageScrollerButton,
-  MessageScrollerContent,
-  MessageScrollerItem,
-  MessageScrollerProvider,
-  MessageScrollerViewport,
-} from "@trenova/shared/components/ui/message-scroller";
+import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { cn } from "@trenova/shared/lib/utils";
 import { queries } from "@/lib/queries";
 import { useAssistantStore } from "@/stores/assistant-store";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
@@ -30,25 +24,29 @@ import { suggestionsFor } from "./suggestions";
 import { groupThread } from "./thread-view";
 import { useAssistantTurn } from "./use-assistant-turn";
 import { usePageContext } from "./use-page-context";
+import { useThreadHistory } from "./use-thread-history";
+import { VirtualThread, type VirtualThreadRow } from "./virtual-thread";
 
 export function MessageThread({
   thread,
   agent,
   expanded,
   onPickAgent,
+  onStartNew,
 }: {
   thread: AssistantThread;
   agent: AgentDefinitionRow | null;
   expanded: boolean;
   onPickAgent?: () => void;
+  /** Starts a fresh conversation with the same agent; offered when this one is full. */
+  onStartNew?: () => void;
 }) {
   const t = useT();
   const dismissed = useAssistantStore((state) => state.dismissedSuggestions);
   const dismissSuggestion = useAssistantStore((state) => state.dismissSuggestion);
 
-  const messagesQuery = useQuery(queries.assistant.messages(thread.id));
-  const messageResults = messagesQuery.data?.results;
-  const messages = useMemo(() => messageResults ?? [], [messageResults]);
+  const history = useThreadHistory(thread.id);
+  const { messages } = history;
 
   // Proposals are fetched rather than taken from the send response: they outlive
   // the turn that raised them, so reopening a thread has to show what is still
@@ -139,7 +137,8 @@ export function MessageThread({
   }, []);
 
   const agentUnavailable = agent === null;
-  const isEmpty = !messagesQuery.isLoading && entries.length === 0 && turn === null;
+  const threadFull = history.length.state === "full";
+  const isEmpty = !history.isLoading && entries.length === 0 && turn === null;
   const suggestions = useMemo(
     () =>
       isEmpty && agent
@@ -148,87 +147,112 @@ export function MessageThread({
     [agent, dismissed, isEmpty],
   );
 
+  // Every row is a closure over its entry, keyed by the message it shows, so
+  // the window can measure and place it without knowing what it is.
+  const rows = useMemo<VirtualThreadRow[]>(() => {
+    const list: VirtualThreadRow[] = entries.map((entry) => ({
+      key: entry.message.id,
+      render: () =>
+        entry.kind === "user" ? (
+          <UserBubble
+            content={entry.message.content}
+            sentAt={entry.message.createdAt}
+            pageContext={entry.message.pageContext}
+          />
+        ) : entry.kind === "declined" ? (
+          <DeclinedBubble content={entry.message.content} sentAt={entry.message.createdAt} />
+        ) : entry.kind === "refusal" ? (
+          <RefusalNotice message={entry.message.content} />
+        ) : (
+          <AssistantEntry
+            entry={entry}
+            proposals={proposalsByMessage.get(entry.message.id) ?? []}
+            threadId={thread.id}
+            latestUserSequence={latestUserSequence}
+            onAnswer={answer}
+          />
+        ),
+    }));
+
+    // A proposal whose turn is no longer in the visible thread is shown here
+    // rather than dropped: a pending change nobody can see is worse than one
+    // shown out of position.
+    for (const proposal of looseProposals) {
+      list.push({
+        key: `proposal-${proposal.id}`,
+        render: () => <ProposalCard proposal={proposal} threadId={thread.id} />,
+      });
+    }
+
+    if (turn) {
+      list.push({
+        key: "turn-in-progress",
+        render: () => (
+          <StreamingTurn turn={turn} onRetry={retry} onDismiss={dismiss} onAnswer={answer} />
+        ),
+      });
+    }
+
+    return list;
+  }, [
+    answer,
+    dismiss,
+    entries,
+    latestUserSequence,
+    looseProposals,
+    proposalsByMessage,
+    retry,
+    thread.id,
+    turn,
+  ]);
+
   return (
     <AssistantAgentProvider agent={agent}>
       <div className="relative flex min-h-0 flex-1 flex-col">
-        <MessageScrollerProvider autoScroll defaultScrollPosition="end">
-          <MessageScroller className="flex-1">
-            <MessageScrollerViewport className={expanded ? "px-4" : "px-3"}>
-              <MessageScrollerContent
-                className={expanded ? "mx-auto w-full max-w-3xl gap-5 py-5" : "gap-4 py-4"}
-                style={{ paddingBottom: composerHeight }}
-              >
-                {messagesQuery.isLoading ? (
-                  <div className="flex flex-col gap-4">
-                    <Skeleton className="ml-auto h-10 w-2/5" />
-                    <Skeleton className="h-20 w-3/5" />
-                    <Skeleton className="ml-auto h-10 w-1/3" />
-                  </div>
-                ) : isEmpty ? (
-                  <EmptyThread agent={agent} />
-                ) : (
-                  entries.map((entry) => (
-                    <MessageScrollerItem key={entry.message.id} messageId={entry.message.id}>
-                      {entry.kind === "user" ? (
-                        <UserBubble
-                          content={entry.message.content}
-                          sentAt={entry.message.createdAt}
-                          pageContext={entry.message.pageContext}
-                        />
-                      ) : entry.kind === "declined" ? (
-                        <DeclinedBubble
-                          content={entry.message.content}
-                          sentAt={entry.message.createdAt}
-                        />
-                      ) : entry.kind === "refusal" ? (
-                        <RefusalNotice message={entry.message.content} />
-                      ) : (
-                        <AssistantEntry
-                          entry={entry}
-                          proposals={proposalsByMessage.get(entry.message.id) ?? []}
-                          threadId={thread.id}
-                          latestUserSequence={latestUserSequence}
-                          onAnswer={answer}
-                        />
-                      )}
-                    </MessageScrollerItem>
-                  ))
-                )}
-
-                {/* A proposal whose turn is no longer in the visible thread is shown
-                here rather than dropped: a pending change nobody can see is worse
-                than one shown out of position. */}
-                {looseProposals.map((proposal) => (
-                  <MessageScrollerItem key={proposal.id} messageId={proposal.id}>
-                    <ProposalCard proposal={proposal} threadId={thread.id} />
-                  </MessageScrollerItem>
-                ))}
-
-                {turn && (
-                  <MessageScrollerItem messageId="turn-in-progress" scrollAnchor>
-                    <div className="flex flex-col gap-4">
-                      <StreamingTurn
-                        turn={turn}
-                        onRetry={retry}
-                        onDismiss={dismiss}
-                        onAnswer={answer}
-                      />
-                    </div>
-                  </MessageScrollerItem>
-                )}
-              </MessageScrollerContent>
-            </MessageScrollerViewport>
-            <MessageScrollerButton style={{ bottom: composerHeight + 12 }} />
-          </MessageScroller>
-        </MessageScrollerProvider>
+        {history.isLoading ? (
+          <div className={cn("flex flex-1 flex-col gap-4", expanded ? "px-4 py-5" : "px-3 py-4")}>
+            <Skeleton className="ml-auto h-10 w-2/5" />
+            <Skeleton className="h-20 w-3/5" />
+            <Skeleton className="ml-auto h-10 w-1/3" />
+          </div>
+        ) : isEmpty ? (
+          <div className="flex min-h-0 flex-1 flex-col" style={{ paddingBottom: composerHeight }}>
+            <EmptyThread agent={agent} />
+          </div>
+        ) : (
+          <VirtualThread
+            rows={rows}
+            hasOlder={history.hasOlder}
+            isLoadingOlder={history.isLoadingOlder}
+            onLoadOlder={history.loadOlder}
+            paddingBottom={composerHeight}
+            className={expanded ? "px-4" : "px-3"}
+            contentClassName={expanded ? "max-w-3xl pt-5" : "pt-4"}
+            rowClassName={expanded ? "pb-5" : "pb-4"}
+          />
+        )}
 
         <Composer
           ref={composerRef}
           onSend={(content) => void send(content, undefined, providerId)}
           onStop={stop}
           active={isActive}
-          disabled={agentUnavailable}
-          disabledReason={t("This agent has been disabled, so the conversation cannot continue.")}
+          disabled={agentUnavailable || threadFull}
+          disabledReason={
+            threadFull
+              ? t("This conversation is full. Start a new one to continue.")
+              : t("This agent has been disabled, so the conversation cannot continue.")
+          }
+          notice={
+            history.length.state !== "open" ? (
+              <ThreadLengthNotice
+                state={history.length.state}
+                total={history.total}
+                limit={history.limit}
+                onStartNew={onStartNew}
+              />
+            ) : null
+          }
           placeholder={
             agent
               ? t("Message {0}…", agent.name)
@@ -272,6 +296,47 @@ function EmptyThread({ agent }: { agent: AgentDefinitionRow | null }) {
             )}
         </p>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Where a conversation stands against its length, said before the wall.
+ *
+ * The server refuses a turn once the thread holds its limit; a person who
+ * only learns that from the refusal has already typed the question. A long
+ * thread is also a slow one to open, which is the reason for the limit.
+ */
+function ThreadLengthNotice({
+  state,
+  total,
+  limit,
+  onStartNew,
+}: {
+  state: "long" | "full";
+  total: number;
+  limit: number;
+  onStartNew?: () => void;
+}) {
+  const t = useT();
+
+  return (
+    <div className="text-muted-foreground flex items-center justify-between gap-3 px-1 text-xs">
+      <span>
+        {state === "full"
+          ? t("This conversation has reached {0} messages and is now read-only.", limit)
+          : t("Long conversation: {0} of {1} messages. A new one will open faster.", total, limit)}
+      </span>
+      {onStartNew && (
+        <Button
+          variant={state === "full" ? "default" : "ghost"}
+          size="xs"
+          className="shrink-0"
+          onClick={onStartNew}
+        >
+          {t("Start a new conversation")}
+        </Button>
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import type {
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { appendToHistory, type ThreadHistory } from "./thread-history";
 import { initialTurnState, isTurnActive, reduceTurn, type TurnState } from "./turn-stream";
 
 /**
@@ -40,6 +41,32 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
     ]);
   }, [queryClient, threadId]);
 
+  // A finished turn is appended to the history the thread already holds
+  // rather than refetched: the result carries the rows the server wrote, and a
+  // thread with several pages loaded would otherwise fetch every one of them
+  // after each reply. Only when nothing is cached does the query fetch fresh.
+  const absorbTurn = useCallback(
+    async (result: SendMessageResult | null) => {
+      const key = queries.assistant.messages(threadId).queryKey;
+      const cached = queryClient.getQueryData<ThreadHistory>(key);
+      if (result && cached && cached.pages.length > 0) {
+        queryClient.setQueryData<ThreadHistory>(key, (history) =>
+          appendToHistory(history, result.messages),
+        );
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: queries.assistant.proposals(threadId).queryKey,
+          }),
+          queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
+        ]);
+        return;
+      }
+
+      await refreshThread();
+    },
+    [queryClient, refreshThread, threadId],
+  );
+
   const settle = useCallback(
     async (result: SendMessageResult | null) => {
       if (result?.proposalsUnrecorded) {
@@ -47,10 +74,10 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           description: t("Nothing was changed. Ask again if you still want to make the change."),
         });
       }
-      await refreshThread();
+      await absorbTurn(result);
       setTurn(null);
     },
-    [refreshThread, t],
+    [absorbTurn, t],
   );
 
   const send = useCallback(

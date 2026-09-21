@@ -199,6 +199,10 @@ func (r *repository) ListMessages(
 				Where(cols.ThreadID.Eq(), req.ThreadID)
 		})
 
+	if req.BeforeSequence != nil {
+		query = query.Where(cols.Sequence.Lt(), *req.BeforeSequence)
+	}
+
 	if req.Limit > 0 {
 		// Taking the newest N and reversing keeps the most recent context rather
 		// than the oldest, which is what a long conversation needs.
@@ -215,6 +219,27 @@ func (r *repository) ListMessages(
 	}
 
 	return messages, nil
+}
+
+func (r *repository) CountMessages(
+	ctx context.Context,
+	req repositories.CountMessagesRequest,
+) (int, error) {
+	cols := buncolgen.MessageColumns
+
+	count, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*conversation.Message)(nil)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.MessageScopeTenant(sq, req.TenantInfo).
+				Where(cols.ThreadID.Eq(), req.ThreadID)
+		}).
+		Count(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("count messages: %w", err)
+	}
+
+	return count, nil
 }
 
 func reverse(messages []conversation.Message) {

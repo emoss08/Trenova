@@ -36,6 +36,8 @@ export type ComposerProps = {
   suggestions?: Suggestion[];
   onDismissSuggestion?: (prompt: string) => void;
   compact?: boolean;
+  /** A line above the box: how long the conversation has grown, for one. */
+  notice?: React.ReactNode;
   /** Measured by the thread so the last message never hides behind the box. */
   ref?: React.Ref<HTMLDivElement>;
 };
@@ -67,6 +69,7 @@ export function Composer({
   suggestions = [],
   onDismissSuggestion,
   compact = false,
+  notice,
   ref,
 }: ComposerProps) {
   const t = useT();
@@ -110,6 +113,7 @@ export function Composer({
         )}
       >
         <div className={cn("mx-auto flex flex-col gap-1.5", !compact && "max-w-3xl")}>
+          {notice}
           <div className="relative">
             {/* The draft lifting out of the box as it is sent: the one moment the
               composer moves, so sending reads as the message leaving. */}
@@ -129,7 +133,7 @@ export function Composer({
 
             <div
               className={cn(
-"ui-container-focus-ring assistant-focus-ring border-input relative flex flex-col overflow-hidden rounded-2xl border transition-colors duration-150",
+                "ui-container-focus-ring assistant-focus-ring border-input relative flex flex-col overflow-hidden rounded-2xl border transition-colors duration-150",
                 "bg-muted/50 focus-within:bg-muted",
               )}
             >
@@ -166,7 +170,7 @@ export function Composer({
                 minRows={1}
                 maxRows={compact ? 5 : 8}
                 aria-label={t("Message the assistant")}
- className="ui-focus-ring resize-none border-0 bg-transparent px-3 py-2.5 text-sm shadow-none md:text-sm"
+                className="ui-focus-ring resize-none border-0 bg-transparent px-3 py-2.5 text-sm shadow-none md:text-sm"
               />
 
               <div className="flex items-end justify-between gap-2 px-2 pb-2">

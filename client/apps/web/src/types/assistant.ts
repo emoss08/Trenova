@@ -256,8 +256,16 @@ export const assistantThreadListSchema = z.object({
   total: z.number().default(0),
 });
 
-export const assistantMessageListSchema = z.object({
+/**
+ * One page of a thread in reading order. `hasMore` says a page exists above
+ * the first message here; `total` is the whole thread's length and `limit` is
+ * where the server stops accepting turns, so the client can say so first.
+ */
+export const assistantMessagePageSchema = z.object({
   results: z.array(assistantMessageSchema),
+  hasMore: z.boolean().default(false),
+  total: z.number().int().nonnegative().default(0),
+  limit: z.number().int().nonnegative().default(0),
 });
 
 export const proposalStatusSchema = z.enum([
@@ -432,6 +440,7 @@ export type SaveAgentDefinitionRequest = z.infer<typeof saveAgentDefinitionReque
 export type AssistantThread = z.infer<typeof assistantThreadSchema>;
 export type AssistantProviderOption = z.infer<typeof assistantProviderOptionSchema>;
 export type AssistantMessage = z.infer<typeof assistantMessageSchema>;
+export type AssistantMessagePage = z.infer<typeof assistantMessagePageSchema>;
 export type AssistantPageContext = z.infer<typeof pageContextSchema>;
 export type SendMessageResult = z.infer<typeof sendMessageResultSchema>;
 export type AssistantProposal = z.infer<typeof assistantProposalSchema>;

@@ -11,9 +11,16 @@ export const assistant = createQueryKeys("assistant", {
     queryKey: ["assistant-thread", id],
     queryFn: () => apiService.assistantService.getThread(id),
   }),
+  // Paged newest-first: the page param is the sequence to read above, and
+  // nothing for the newest page. useThreadHistory drives it as an infinite
+  // query; the key is here so the turn hook can append to the same cache.
   messages: (threadId: string) => ({
     queryKey: ["assistant-messages", threadId],
-    queryFn: () => apiService.assistantService.listMessages(threadId),
+    queryFn: ({ pageParam, signal }: { pageParam?: unknown; signal?: AbortSignal }) =>
+      apiService.assistantService.listMessages(threadId, {
+        before: typeof pageParam === "number" ? pageParam : undefined,
+        signal,
+      }),
   }),
   providers: () => ({
     queryKey: ["assistant-providers"],
