@@ -109,6 +109,11 @@ type ReplaceDetectorFindingsResult struct {
 	Superseded int
 	Resolved   int
 	Suppressed int
+	// Detected is the stored findings that were not active before this run.
+	// A superseded row is the same finding measured again and is not among
+	// them, so a subscriber hears about a finding once, when it first appears,
+	// rather than on every refresh that confirms it.
+	Detected []*insight.Insight
 }
 
 type InsightRepository interface {

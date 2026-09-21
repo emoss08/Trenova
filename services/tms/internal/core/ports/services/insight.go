@@ -14,6 +14,9 @@ import (
 type ListInsightsRequest struct {
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
+	// Actor, when set, is who the permission check is made for instead of
+	// UserID: an agent reading insights is checked as an agent.
+	Actor      *RequestActor
 	Categories []insight.Category
 	// Surface narrows to the detectors that belong on one working page. Empty
 	// means the home screen's view: everything the reader may see.
@@ -26,6 +29,7 @@ type ListInsightsRequest struct {
 type BrowseInsightsRequest struct {
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
+	Actor      *RequestActor
 	Categories []insight.Category
 	Severities []insight.Severity
 	Statuses   []insight.Status
@@ -37,6 +41,7 @@ type BrowseInsightsRequest struct {
 type GetInsightDetailRequest struct {
 	ID         pulid.ID
 	UserID     pulid.ID
+	Actor      *RequestActor
 	TenantInfo pagination.TenantInfo
 }
 

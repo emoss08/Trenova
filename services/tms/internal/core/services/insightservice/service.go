@@ -13,6 +13,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -46,6 +47,10 @@ type Params struct {
 	Detectors   *detector.Registry
 	Narrator    *narrator.Service
 	Permissions services.PermissionEngine
+	// Events is told about each finding the first time it appears, so an
+	// agent subscribed to insight.detected can act on it. It is optional
+	// because the refresh is worth running with no agent to hear about it.
+	Events services.AgentEventPublisher `optional:"true"`
 }
 
 // permissionChecker is the slice of PermissionEngine this service uses. It asks
@@ -63,6 +68,7 @@ type Service struct {
 	detectors   *detector.Registry
 	narrator    *narrator.Service
 	permissions permissionChecker
+	events      services.AgentEventPublisher
 }
 
 func New(p Params) *Service {
@@ -72,6 +78,7 @@ func New(p Params) *Service {
 		detectors:   p.Detectors,
 		narrator:    p.Narrator,
 		permissions: p.Permissions,
+		events:      p.Events,
 	}
 }
 
@@ -202,6 +209,33 @@ func (s *Service) refreshDetector(ctx context.Context, p refreshParams) {
 	p.result.Superseded += stored.Superseded
 	p.result.Resolved += stored.Resolved
 	p.result.Suppressed += stored.Suppressed
+
+	s.announce(ctx, p.params.TenantInfo, stored.Detected)
+}
+
+// announce publishes insight.detected for each finding that appeared in this
+// run. A finding seen again is not announced: the repository has already left
+// those out, so an agent woken by the event is woken once per finding.
+func (s *Service) announce(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	detected []*insight.Insight,
+) {
+	if s.events == nil {
+		return
+	}
+
+	for _, entity := range detected {
+		if entity == nil || entity.ID.IsNil() {
+			continue
+		}
+
+		services.PublishAgentEvent(ctx, s.events, services.AgentEvent{
+			Kind:       agent.EventInsightDetected,
+			SubjectID:  entity.ID,
+			TenantInfo: tenant,
+		})
+	}
 }
 
 func (s *Service) buildInsights(
@@ -319,6 +353,7 @@ func (s *Service) List(
 		AllowedDetectorKeys: s.allowedDetectorKeys(ctx, services.ListInsightsRequest{
 			TenantInfo: req.TenantInfo,
 			UserID:     req.UserID,
+			Actor:      req.Actor,
 		}),
 		Categories: req.Categories,
 		Severities: req.Severities,
@@ -368,7 +403,7 @@ func (s *Service) readerMaySee(
 	req services.ListInsightsRequest,
 	d detector.Detector,
 ) bool {
-	result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
+	check := &services.PermissionCheckRequest{
 		PrincipalType:  services.PrincipalTypeUser,
 		PrincipalID:    req.UserID,
 		UserID:         req.UserID,
@@ -376,7 +411,17 @@ func (s *Service) readerMaySee(
 		BusinessUnitID: req.TenantInfo.BuID,
 		Resource:       d.Resource().String(),
 		Operation:      d.Operation(),
-	})
+	}
+	// An agent reading on its own behalf is checked as the agent, against
+	// what agents are allowed, not as a person it is not.
+	if req.Actor != nil {
+		check.PrincipalType = req.Actor.PrincipalType
+		check.PrincipalID = req.Actor.PrincipalID
+		check.UserID = req.Actor.UserID
+		check.APIKeyID = req.Actor.APIKeyID
+	}
+
+	result, err := s.permissions.Check(ctx, check)
 	if err != nil {
 		// A permission service that cannot answer is not permission granted.
 		s.l.Error("failed to check insight permission",
@@ -424,6 +469,7 @@ func (s *Service) GetDetail(
 	visible := s.readerMaySee(ctx, services.ListInsightsRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,
+		Actor:      req.Actor,
 	}, d)
 	if !visible {
 		return nil, ErrInsightNotVisible

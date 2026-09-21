@@ -368,6 +368,7 @@ func (r *repository) ReplaceDetectorFindings(
 		result.Superseded = counts.Superseded
 		result.Resolved = counts.Resolved
 		result.Created = counts.Created
+		result.Detected = counts.Detected
 
 		return nil
 	})
@@ -431,7 +432,7 @@ func (r *repository) applyReplacement(
 	if err != nil {
 		return result, err
 	}
-	result.Superseded = superseded
+	result.Superseded = len(superseded)
 
 	resolved, err := r.closeActive(ctx, tx, closeParams{
 		req:    req,
@@ -442,7 +443,7 @@ func (r *repository) applyReplacement(
 	if err != nil {
 		return result, err
 	}
-	result.Resolved = resolved
+	result.Resolved = len(resolved)
 
 	if len(keep) == 0 {
 		return result, nil
@@ -452,8 +453,27 @@ func (r *repository) applyReplacement(
 		return result, fmt.Errorf("insert findings: %w", err)
 	}
 	result.Created = len(keep)
+	result.Detected = newlyDetected(keep, superseded)
 
 	return result, nil
+}
+
+// newlyDetected keeps the inserted findings whose dedupe key had no active
+// row before this run: the ones a person has not seen yet.
+func newlyDetected(inserted []*insight.Insight, superseded []string) []*insight.Insight {
+	seen := make(map[string]struct{}, len(superseded))
+	for _, key := range superseded {
+		seen[key] = struct{}{}
+	}
+
+	detected := make([]*insight.Insight, 0, len(inserted))
+	for _, entity := range inserted {
+		if _, known := seen[entity.DedupeKey]; !known {
+			detected = append(detected, entity)
+		}
+	}
+
+	return detected
 }
 
 type closeParams struct {
@@ -466,11 +486,14 @@ type closeParams struct {
 	within bool
 }
 
+// closeActive moves the matching active rows to the given status and returns
+// the dedupe keys it closed, which is how the caller tells a finding seen
+// again from one seen for the first time.
 func (r *repository) closeActive(
 	ctx context.Context,
 	tx bun.Tx,
 	params closeParams,
-) (int, error) {
+) ([]string, error) {
 	cols := buncolgen.InsightColumns
 	now := timeutils.NowUnix()
 
@@ -493,18 +516,13 @@ func (r *repository) closeActive(
 		// Nothing was found this run, so nothing is being superseded. Without
 		// this guard the empty key list would match every active row and mark it
 		// superseded as well as resolved.
-		return 0, nil
+		return nil, nil
 	}
 
-	results, err := query.Exec(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("close active findings as %s: %w", params.status, err)
+	closed := make([]string, 0)
+	if err := query.Returning(cols.DedupeKey.String()).Scan(ctx, &closed); err != nil {
+		return nil, fmt.Errorf("close active findings as %s: %w", params.status, err)
 	}
 
-	affected, err := results.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("count closed findings: %w", err)
-	}
-
-	return int(affected), nil
+	return closed, nil
 }

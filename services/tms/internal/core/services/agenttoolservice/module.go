@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/core/services/insightservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
@@ -46,6 +47,7 @@ var Module = fx.Module("agent-tool-service",
 		fx.Annotate(provideTenderToCarriersTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(newRememberTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(newForgetMemoryTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideDismissInsightTool, fx.ResultTags(`group:"agent_tools"`)),
 		NewRegistry,
 	),
 )
@@ -144,4 +146,8 @@ func provideTenderToRoutingGuideTool(tenders *tenderservice.Service) services.Ag
 
 func provideTenderToCarriersTool(tenders *tenderservice.Service) services.AgentTool {
 	return newTenderToCarriersTool(tenders)
+}
+
+func provideDismissInsightTool(insights *insightservice.Service) services.AgentTool {
+	return newDismissInsightTool(insights)
 }

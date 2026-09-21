@@ -30,6 +30,7 @@ const (
 	SubjectShipment         = SubjectType("Shipment")
 	SubjectDocument         = SubjectType("Document")
 	SubjectOrganization     = SubjectType("Organization")
+	SubjectInsight          = SubjectType("Insight")
 )
 
 type RunTrigger string
@@ -58,7 +59,8 @@ func (s SubjectType) IsValid() bool {
 		SubjectAssistantThread,
 		SubjectShipment,
 		SubjectDocument,
-		SubjectOrganization:
+		SubjectOrganization,
+		SubjectInsight:
 		return true
 	default:
 		return false
@@ -73,6 +75,7 @@ func AllSubjectTypes() []SubjectType {
 		SubjectShipment,
 		SubjectDocument,
 		SubjectOrganization,
+		SubjectInsight,
 	}
 }
 

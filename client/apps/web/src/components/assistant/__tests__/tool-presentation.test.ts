@@ -28,6 +28,23 @@ describe("describeToolCall", () => {
     });
   });
 
+  it("names the insight tools and the finding they were about", () => {
+    expect(describeToolCall("list_insights", { severity: "Critical" })).toEqual({
+      title: "Review insights",
+      subject: "Critical",
+    });
+    expect(describeToolCall("get_insight", { insightId: "inst_1" })).toEqual({
+      title: "Read insight",
+      subject: "inst_1",
+    });
+    expect(
+      describeToolCall("dismiss_insight", { insightId: "inst_1", reason: "Seasonal pattern." }),
+    ).toEqual({
+      title: "Dismiss insight",
+      subject: "inst_1",
+    });
+  });
+
   it("leaves the subject empty when there is nothing to name", () => {
     expect(describeToolCall("list_terminals", {})).toEqual({
       title: "List terminals",

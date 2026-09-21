@@ -2480,6 +2480,15 @@
       "routes/journal-reversal"
     ]
   },
+  "A detector found something new: a finding that was not on the insights page before this refresh.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "A detention policy with this code already exists in your organization": {
     "sites": 1,
     "scope": [
@@ -74655,12 +74664,22 @@
     ]
   },
   "Insight": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/homelayout",
+      "go/other"
+    ]
+  },
+  "Insight found": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/homelayout"
+      "domain/agent"
     ]
   },
   "Insight not found": {

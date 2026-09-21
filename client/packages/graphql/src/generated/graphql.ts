@@ -248,6 +248,7 @@ export type AgentSubjectType =
   | 'AssistantThread'
   | 'BillingQueueItem'
   | 'Document'
+  | 'Insight'
   | 'Organization'
   | 'Shipment'
   | 'ShipmentMove';

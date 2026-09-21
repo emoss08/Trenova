@@ -8,6 +8,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
@@ -18,13 +19,17 @@ import (
 	"go.uber.org/zap"
 )
 
-const maxSubjectNotesChars = 12000
+const (
+	maxSubjectNotesChars = 12000
+	maxInsightLabelChars = 120
+)
 
 type SubjectContext struct {
 	content      serviceports.DocumentContentService
 	billingQueue serviceports.BillingQueueService
 	shipments    serviceports.ShipmentService
 	console      repositories.DispatchConsoleRepository
+	insights     repositories.InsightRepository
 	logger       *zap.Logger
 }
 
@@ -43,6 +48,8 @@ func (s *SubjectContext) Describe(
 		return s.shipment(ctx, tenant, subjectID)
 	case agent.SubjectDocument:
 		return s.document(ctx, tenant, subjectID)
+	case agent.SubjectInsight:
+		return s.insight(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
 		return nil, nil
 	default:
@@ -256,6 +263,55 @@ func (s *SubjectContext) document(
 	}
 	if draft.FailureMessage != "" {
 		notes["failureMessage"] = draft.FailureMessage
+	}
+	subject.Notes = marshalNotes(notes)
+
+	return subject, nil
+}
+
+// insight describes a finding by what the detector measured and what it
+// suggests, so a run woken by insight.detected starts with the numbers, the
+// records behind them and the recommendation, and get_insight is there for
+// the trend when the run wants it.
+func (s *SubjectContext) insight(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	insightID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectInsight,
+		ID:    insightID.String(),
+		Label: "Insight",
+	}
+	if s.insights == nil {
+		return subject, nil
+	}
+
+	found, err := s.insights.GetByID(ctx, repositories.GetInsightByIDRequest{
+		ID:         insightID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load insight: %w", err)
+	}
+
+	subject.Label = "Insight: " + stringutils.TruncateRunes(found.Headline, maxInsightLabelChars)
+	notes := map[string]any{
+		"category":       found.Category,
+		"severity":       found.Severity,
+		"status":         found.Status,
+		"subject":        found.Subject,
+		"headline":       found.Headline,
+		"narrative":      found.Narrative,
+		"recommendation": found.Recommendation,
+		"metrics":        found.Metrics,
+		"links":          found.Links,
+		"windowStart":    found.WindowStart,
+		"windowEnd":      found.WindowEnd,
+		"detectedAt":     found.DetectedAt,
+	}
+	if found.Status != insight.StatusActive {
+		notes["warning"] = "This finding is no longer active; do not act on it as if it were."
 	}
 	subject.Notes = marshalNotes(notes)
 

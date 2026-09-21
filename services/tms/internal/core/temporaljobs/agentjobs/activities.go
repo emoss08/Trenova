@@ -47,6 +47,7 @@ type ActivitiesParams struct {
 	Notifier      serviceports.AgentProposalNotifier     `optional:"true"`
 	Content       serviceports.DocumentContentService    `optional:"true"`
 	Plans         repositories.AgentPlanRepository       `optional:"true"`
+	Insights      repositories.InsightRepository         `optional:"true"`
 	Evaluations   repositories.AgentEvaluationRepository
 	Decisions     repositories.AgentDecisionRepository
 	Conversations repositories.ConversationRepository `optional:"true"`
@@ -93,6 +94,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 			billingQueue: p.BillingQueue,
 			shipments:    p.Shipment,
 			console:      p.Console,
+			insights:     p.Insights,
 			logger:       logger,
 		},
 	}

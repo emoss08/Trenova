@@ -11,6 +11,7 @@ const (
 	EventServiceFailureDetected    = EventKind("service_failure.detected")
 	EventShipmentMoveArrived       = EventKind("shipment_move.arrived")
 	EventShipmentMoveDeparted      = EventKind("shipment_move.departed")
+	EventInsightDetected           = EventKind("insight.detected")
 )
 
 type EventDescriptor struct {
@@ -68,6 +69,12 @@ var knownEvents = []EventDescriptor{
 		SubjectType: SubjectShipmentMove,
 		Label:       "Truck departed a stop",
 		Description: "A stop's departure was recorded, which is when detention and lateness settle.",
+	},
+	{
+		Kind:        EventInsightDetected,
+		SubjectType: SubjectInsight,
+		Label:       "Insight found",
+		Description: "A detector found something new: a finding that was not on the insights page before this refresh.",
 	},
 }
 

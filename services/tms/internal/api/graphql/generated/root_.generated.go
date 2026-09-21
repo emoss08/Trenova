@@ -69794,6 +69794,7 @@ enum AgentSubjectType {
   Shipment
   Document
   Organization
+  Insight
 }
 
 enum AgentRunTrigger {

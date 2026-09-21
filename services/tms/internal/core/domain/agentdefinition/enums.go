@@ -201,6 +201,8 @@ func (t Template) StarterTools() []string {
 			"update_trailer_status",
 			"recall_memory",
 			"remember",
+			"list_insights",
+			"get_insight",
 		}
 	case TemplateBillingAssistant:
 		return []string{
@@ -221,6 +223,8 @@ func (t Template) StarterTools() []string {
 			"add_shipment_comment",
 			"recall_memory",
 			"remember",
+			"list_insights",
+			"get_insight",
 		}
 	case TemplateComplianceAssistant:
 		return []string{
@@ -239,6 +243,8 @@ func (t Template) StarterTools() []string {
 			"flag_for_manual_review",
 			"recall_memory",
 			"remember",
+			"list_insights",
+			"get_insight",
 		}
 	case TemplateCustomerAssistant:
 		return []string{
@@ -250,6 +256,8 @@ func (t Template) StarterTools() []string {
 			"add_shipment_comment",
 			"recall_memory",
 			"remember",
+			"list_insights",
+			"get_insight",
 		}
 	case TemplateLoadMonitor:
 		return []string{

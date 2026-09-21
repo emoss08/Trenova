@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/emailservice"
+	"github.com/emoss08/trenova/internal/core/services/insightservice"
 	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
@@ -64,6 +65,8 @@ var Module = fx.Module("agent-query-tool-service",
 		fx.Annotate(provideShopCarriersTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideRankMoveCandidatesTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(providePlanDispatchTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideListInsightsTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideGetInsightTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		NewRegistry,
 	),
 )
@@ -180,4 +183,12 @@ func provideRankMoveCandidatesTool(console services.DispatchConsoleService) serv
 
 func providePlanDispatchTool(planner services.DispatchAutoAssignService) services.AgentQueryTool {
 	return newPlanDispatchTool(planner)
+}
+
+func provideListInsightsTool(insights *insightservice.Service) services.AgentQueryTool {
+	return newListInsightsTool(insights)
+}
+
+func provideGetInsightTool(insights *insightservice.Service) services.AgentQueryTool {
+	return newGetInsightTool(insights)
 }
