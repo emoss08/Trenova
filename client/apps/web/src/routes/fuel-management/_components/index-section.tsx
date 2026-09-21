@@ -39,7 +39,7 @@ export default function IndexSection() {
         </p>
         <Button type="button" size="sm" onClick={openCreate} className="gap-1.5">
           <Plus className="size-3.5" />
-          {t("New Custom Index")}
+          {t("New custom index")}
         </Button>
       </div>
 
@@ -64,7 +64,7 @@ export default function IndexSection() {
                 <th className="px-4 py-2.5 font-medium">{t("Region")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("Fuel")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("Source")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("Latest Price")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("Latest price")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("Week")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("Status")}</th>
                 <th className="px-4 py-2.5" />

@@ -224,12 +224,12 @@ export const formulaTemplateStatusChoices = [
   { label: "Active", value: "Active", color: "var(--success)" },
   { label: "Inactive", value: "Inactive", color: "var(--danger)" },
   { label: "Draft", value: "Draft", color: "var(--foreground-subtle)" },
-  { label: "In Review", value: "InReview", color: "var(--warning)" },
+  { label: "In review", value: "InReview", color: "var(--warning)" },
 ] satisfies ReadonlyArray<GenericSelectOption<FormulaTemplateStatus>>;
 
 export const formulaTemplateTypeChoices = [
-  { label: "Freight Charge", value: "FreightCharge" },
-  { label: "Accessorial Charge", value: "AccessorialCharge" },
+  { label: "Freight charge", value: "FreightCharge" },
+  { label: "Accessorial charge", value: "AccessorialCharge" },
 ] satisfies ReadonlyArray<GenericSelectOption<FormulaTemplateType>>;
 
 export const fuelIndexSourceChoices = [
@@ -251,28 +251,28 @@ export const fuelSurchargeMethodChoices = [
       "The classic truckload formula — the rate rises a set amount for every price step above your base price. No table to maintain.",
   },
   {
-    label: "Per Mile (MPG Formula)",
+    label: "Per mile (MPG formula)",
     value: "PerMileMPG",
     color: "var(--accent-teal)",
     description:
       "Recovers actual fuel cost: (price − base price) ÷ fleet MPG. Common for owner-operators and cost-plus contracts.",
   },
   {
-    label: "Custom Table: $ per Mile",
+    label: "Custom table: $ per mile",
     value: "TablePerMile",
     color: "var(--accent-violet)",
     description:
       "Your own price bands, each with its own per-mile rate. Bands can be irregular — use this for customer-supplied fuel tables.",
   },
   {
-    label: "Custom Table: % of Charge",
+    label: "Custom table: % of charge",
     value: "TablePercent",
     color: "var(--accent-violet-on-subtle)",
     description:
       "Price bands map to a percentage of the freight charge — the standard LTL and brokerage style.",
   },
   {
-    label: "Custom Table: Flat Amount",
+    label: "Custom table: Flat amount",
     value: "TableFlat",
     color: "var(--warning)",
     description: "Price bands map to a fixed dollar amount per shipment.",
@@ -314,20 +314,20 @@ export const customerFuelSurchargeModeChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<CustomerFuelSurchargeMode>>;
 
 export const fuelSurchargeDateBasisChoices = [
-  { label: "Pickup Date", value: "PickupDate" },
-  { label: "Tender Date", value: "TenderDate" },
+  { label: "Pickup date", value: "PickupDate" },
+  { label: "Tender date", value: "TenderDate" },
 ] satisfies ReadonlyArray<GenericSelectOption<FuelSurchargeDateBasis>>;
 
 export const fuelSurchargeStepRoundingChoices = [
   { label: "Round Up (any partial step counts)", value: "Up" },
-  { label: "Round Down", value: "Down" },
-  { label: "Round Nearest", value: "Nearest" },
+  { label: "Round down", value: "Down" },
+  { label: "Round nearest", value: "Nearest" },
 ] satisfies ReadonlyArray<GenericSelectOption<FuelSurchargeStepRounding>>;
 
 export const fuelSurchargeRateRoundingChoices = [
-  { label: "Half Up", value: "HalfUp" },
-  { label: "Always Up", value: "Up" },
-  { label: "Always Down", value: "Down" },
+  { label: "Half up", value: "HalfUp" },
+  { label: "Always up", value: "Up" },
+  { label: "Always down", value: "Down" },
 ] satisfies ReadonlyArray<GenericSelectOption<FuelSurchargeRateRounding>>;
 
 export const fuelSurchargeFallbackChoices = [
@@ -358,7 +358,7 @@ export const statusChoices = [
 export const carrierStatusChoices = [
   { label: "Active", value: "Active", color: "var(--success)" },
   { label: "Inactive", value: "Inactive", color: "var(--danger)" },
-  { label: "Do Not Use", value: "DoNotUse", color: "var(--danger-foreground)" },
+  { label: "Do not use", value: "DoNotUse", color: "var(--danger-foreground)" },
 ] satisfies ReadonlyArray<GenericSelectOption<CarrierStatus>>;
 
 export const carrierTypeChoices = [
@@ -379,7 +379,7 @@ export const carrierSafetyRatingChoices = [
   { label: "Satisfactory", value: "Satisfactory", color: "var(--success)" },
   { label: "Conditional", value: "Conditional", color: "var(--warning)" },
   { label: "Unsatisfactory", value: "Unsatisfactory", color: "var(--danger)" },
-  { label: "Not Rated", value: "NotRated", color: "var(--foreground-subtle)" },
+  { label: "Not rated", value: "NotRated", color: "var(--foreground-subtle)" },
 ] satisfies ReadonlyArray<GenericSelectOption<CarrierSafetyRating>>;
 
 export const carrierIntelRiskLevelChoices = [
@@ -387,7 +387,7 @@ export const carrierIntelRiskLevelChoices = [
   { label: "Moderate", value: "Moderate", color: "var(--info)" },
   { label: "Elevated", value: "Elevated", color: "var(--warning)" },
   { label: "High", value: "High", color: "var(--warning-foreground)" },
-  { label: "Very High", value: "VeryHigh", color: "var(--danger)" },
+  { label: "Very high", value: "VeryHigh", color: "var(--danger)" },
   { label: "Unknown", value: "Unknown", color: "var(--foreground-subtle)" },
 ] satisfies ReadonlyArray<GenericSelectOption<CarrierIntelRiskLevel>>;
 
@@ -403,12 +403,12 @@ export const carrierTaxIdTypeChoices = [
 
 export const carrierPaymentMethodChoices = [
   { label: "Check", value: "Check", color: "var(--info)" },
-  { label: "ACH (Manual)", value: "ACHManual", color: "var(--accent-teal)" },
+  { label: "ACH (manual)", value: "ACHManual", color: "var(--accent-teal)" },
 ] satisfies ReadonlyArray<GenericSelectOption<CarrierPaymentMethod>>;
 
 export const carrierRateMethodChoices = [
   { label: "Flat", value: "Flat", color: "var(--info)" },
-  { label: "Per Mile", value: "PerMile", color: "var(--accent-teal)" },
+  { label: "Per mile", value: "PerMile", color: "var(--accent-teal)" },
 ] satisfies ReadonlyArray<GenericSelectOption<CarrierRateMethod>>;
 
 export const tenderChannelChoices = [
@@ -449,7 +449,7 @@ export const usStateAbbreviationChoices = [
   { label: "Colorado (CO)", value: "CO" },
   { label: "Connecticut (CT)", value: "CT" },
   { label: "Delaware (DE)", value: "DE" },
-  { label: "District of Columbia (DC)", value: "DC" },
+  { label: "District of columbia (DC)", value: "DC" },
   { label: "Florida (FL)", value: "FL" },
   { label: "Georgia (GA)", value: "GA" },
   { label: "Hawaii (HI)", value: "HI" },
@@ -470,26 +470,26 @@ export const usStateAbbreviationChoices = [
   { label: "Montana (MT)", value: "MT" },
   { label: "Nebraska (NE)", value: "NE" },
   { label: "Nevada (NV)", value: "NV" },
-  { label: "New Hampshire (NH)", value: "NH" },
-  { label: "New Jersey (NJ)", value: "NJ" },
+  { label: "New hampshire (NH)", value: "NH" },
+  { label: "New jersey (NJ)", value: "NJ" },
   { label: "New Mexico (NM)", value: "NM" },
-  { label: "New York (NY)", value: "NY" },
-  { label: "North Carolina (NC)", value: "NC" },
-  { label: "North Dakota (ND)", value: "ND" },
+  { label: "New york (NY)", value: "NY" },
+  { label: "North carolina (NC)", value: "NC" },
+  { label: "North dakota (ND)", value: "ND" },
   { label: "Ohio (OH)", value: "OH" },
   { label: "Oklahoma (OK)", value: "OK" },
   { label: "Oregon (OR)", value: "OR" },
   { label: "Pennsylvania (PA)", value: "PA" },
-  { label: "Rhode Island (RI)", value: "RI" },
-  { label: "South Carolina (SC)", value: "SC" },
-  { label: "South Dakota (SD)", value: "SD" },
+  { label: "Rhode island (RI)", value: "RI" },
+  { label: "South carolina (SC)", value: "SC" },
+  { label: "South dakota (SD)", value: "SD" },
   { label: "Tennessee (TN)", value: "TN" },
   { label: "Texas (TX)", value: "TX" },
   { label: "Utah (UT)", value: "UT" },
   { label: "Vermont (VT)", value: "VT" },
   { label: "Virginia (VA)", value: "VA" },
   { label: "Washington (WA)", value: "WA" },
-  { label: "West Virginia (WV)", value: "WV" },
+  { label: "West virginia (WV)", value: "WV" },
   { label: "Wisconsin (WI)", value: "WI" },
   { label: "Wyoming (WY)", value: "WY" },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
@@ -501,16 +501,16 @@ export const carrierAssignmentStatusChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<CarrierAssignmentStatus>>;
 
 export const carrierInsurancePolicyTypeChoices = [
-  { label: "Auto Liability", value: "AutoLiability", color: "var(--info)" },
-  { label: "Cargo Liability", value: "CargoLiability", color: "var(--accent-teal)" },
-  { label: "General Liability", value: "GeneralLiability", color: "var(--accent-violet)" },
-  { label: "Workers Comp", value: "WorkersComp", color: "var(--warning)" },
+  { label: "Auto liability", value: "AutoLiability", color: "var(--info)" },
+  { label: "Cargo liability", value: "CargoLiability", color: "var(--accent-teal)" },
+  { label: "General liability", value: "GeneralLiability", color: "var(--accent-violet)" },
+  { label: "Workers comp", value: "WorkersComp", color: "var(--warning)" },
   { label: "Umbrella", value: "Umbrella", color: "var(--foreground-subtle)" },
 ] satisfies ReadonlyArray<GenericSelectOption<CarrierInsurancePolicyType>>;
 
 export const carrierSettlementStatusChoices = [
   { label: "Draft", value: "Draft", color: "var(--foreground-subtle)" },
-  { label: "Pending Approval", value: "PendingApproval", color: "var(--warning)" },
+  { label: "Pending approval", value: "PendingApproval", color: "var(--warning)" },
   { label: "Approved", value: "Approved", color: "var(--info)" },
   { label: "Posted", value: "Posted", color: "var(--accent-violet)" },
   { label: "Paid", value: "Paid", color: "var(--success)" },
@@ -518,8 +518,8 @@ export const carrierSettlementStatusChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<CarrierSettlementStatus>>;
 
 export const carrierCostEventTypeChoices = [
-  { label: "Linehaul Cost", value: "LinehaulCost", color: "var(--info)" },
-  { label: "Fuel Surcharge", value: "FuelSurcharge", color: "var(--warning)" },
+  { label: "Linehaul cost", value: "LinehaulCost", color: "var(--info)" },
+  { label: "Fuel surcharge", value: "FuelSurcharge", color: "var(--warning)" },
   { label: "Accessorial", value: "Accessorial", color: "var(--accent-teal)" },
   { label: "Adjustment", value: "Adjustment", color: "var(--accent-violet)" },
 ] satisfies ReadonlyArray<GenericSelectOption<CarrierCostEventType>>;
@@ -561,7 +561,7 @@ export const rateConfirmationStatusChoices = [
 export const orderStatusChoices = [
   { label: "Draft", value: "Draft", color: "var(--foreground-subtle)" },
   { label: "Confirmed", value: "Confirmed", color: "var(--accent-violet)" },
-  { label: "In Progress", value: "InProgress", color: "var(--info)" },
+  { label: "In progress", value: "InProgress", color: "var(--info)" },
   { label: "Completed", value: "Completed", color: "var(--success)" },
   { label: "Billed", value: "Billed", color: "var(--accent-teal)" },
   { label: "Closed", value: "Closed", color: "var(--foreground-muted)" },
@@ -632,17 +632,17 @@ export const distanceProfileDistanceUnitChoices = [
 
 export const distanceProfileLocationGranularityChoices = [
   {
-    label: "Postal Code",
+    label: "Postal code",
     value: "PostalCode",
     description: "Use postal codes from stop locations for stable mileage lookups.",
   },
   {
-    label: "City / State",
+    label: "City / state",
     value: "CityState",
     description: "Use city and state when postal codes are unavailable or inconsistent.",
   },
   {
-    label: "Street Address",
+    label: "Street address",
     value: "StreetAddress",
     description: "Use street-level addresses for more precise routing.",
   },
@@ -652,7 +652,7 @@ export const distanceProfileLocationGranularityChoices = [
     description: "Use latitude and longitude from geocoded locations.",
   },
   {
-    label: "Trimble Place ID",
+    label: "Trimble place ID",
     value: "TrimblePlaceId",
     description: "Use Trimble place identifiers stored on locations.",
   },
@@ -667,17 +667,17 @@ export const locationGeofenceTypeChoices = [
 
 export const shipmentStatusChoices = [
   { label: "New", value: "New", color: "var(--info)" },
-  { label: "Partially Assigned", value: "PartiallyAssigned", color: "var(--accent-violet)" },
+  { label: "Partially assigned", value: "PartiallyAssigned", color: "var(--accent-violet)" },
   { label: "Assigned", value: "Assigned", color: "var(--success)" },
-  { label: "In Transit", value: "InTransit", color: "var(--accent-teal)" },
+  { label: "In transit", value: "InTransit", color: "var(--accent-teal)" },
   { label: "Delayed", value: "Delayed", color: "var(--danger)" },
-  { label: "Partially Completed", value: "PartiallyCompleted", color: "var(--warning)" },
+  { label: "Partially completed", value: "PartiallyCompleted", color: "var(--warning)" },
   {
     value: "Completed",
     label: "Completed",
     color: "var(--success)",
   },
-  { label: "Ready To Invoice", value: "ReadyToInvoice", color: "var(--accent-teal-on-subtle)" },
+  { label: "Ready to invoice", value: "ReadyToInvoice", color: "var(--accent-teal-on-subtle)" },
   { label: "Invoiced", value: "Invoiced", color: "var(--success-foreground)" },
   { label: "Canceled", value: "Canceled", color: "var(--danger-foreground)" },
 ] satisfies ReadonlyArray<GenericSelectOption<ShipmentStatus>>;
@@ -705,7 +705,7 @@ export const freightTermsChoices = [
   },
   {
     value: "ThirdParty",
-    label: "Third Party",
+    label: "Third party",
     color: "var(--accent-violet)",
     description: "A party other than shipper or consignee pays",
   },
@@ -718,16 +718,16 @@ export const allocationMethodChoices = [
 
 export const billTypeChoices = [
   { label: "Invoice", value: "Invoice", color: "var(--info)" },
-  { label: "Credit Memo", value: "CreditMemo", color: "var(--warning)" },
-  { label: "Debit Memo", value: "DebitMemo", color: "var(--danger)" },
+  { label: "Credit memo", value: "CreditMemo", color: "var(--warning)" },
+  { label: "Debit memo", value: "DebitMemo", color: "var(--danger)" },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
 
 export const billingQueueStatusChoices = [
-  { label: "Ready for Review", value: "ReadyForReview", color: "var(--info)" },
-  { label: "In Review", value: "InReview", color: "var(--accent-teal)" },
+  { label: "Ready for review", value: "ReadyForReview", color: "var(--info)" },
+  { label: "In review", value: "InReview", color: "var(--accent-teal)" },
   { label: "Approved", value: "Approved", color: "var(--success)" },
-  { label: "On Hold", value: "OnHold", color: "var(--warning)" },
-  { label: "Sent Back to Ops", value: "SentBackToOps", color: "var(--warning-foreground)" },
+  { label: "On hold", value: "OnHold", color: "var(--warning)" },
+  { label: "Sent back to ops", value: "SentBackToOps", color: "var(--warning-foreground)" },
   { label: "Exception", value: "Exception", color: "var(--danger)" },
   { label: "Canceled", value: "Canceled", color: "var(--danger-foreground)" },
 ] satisfies ReadonlyArray<GenericSelectOption<BillingQueueStatus>>;
@@ -742,14 +742,14 @@ export const shipmentBillingStatusChoices = [
 export const moveStatusChoices = [
   { label: "New", value: "New", color: "var(--info)" },
   { label: "Assigned", value: "Assigned", color: "var(--success)" },
-  { label: "In Transit", value: "InTransit", color: "var(--accent-teal)" },
+  { label: "In transit", value: "InTransit", color: "var(--accent-teal)" },
   { label: "Completed", value: "Completed", color: "var(--success-foreground)" },
   { label: "Canceled", value: "Canceled", color: "var(--danger)" },
 ] satisfies ReadonlyArray<GenericSelectOption<MoveStatus>>;
 
 export const stopStatusChoices = [
   { label: "New", value: "New", color: "var(--info)" },
-  { label: "In Transit", value: "InTransit", color: "var(--accent-teal)" },
+  { label: "In transit", value: "InTransit", color: "var(--accent-teal)" },
   { label: "Completed", value: "Completed", color: "var(--success)" },
   { label: "Canceled", value: "Canceled", color: "var(--danger)" },
 ] satisfies ReadonlyArray<GenericSelectOption<StopStatus>>;
@@ -757,8 +757,8 @@ export const stopStatusChoices = [
 export const stopTypeChoices = [
   { label: "Pickup", value: "Pickup" },
   { label: "Delivery", value: "Delivery" },
-  { label: "Split Delivery", value: "SplitDelivery" },
-  { label: "Split Pickup", value: "SplitPickup" },
+  { label: "Split delivery", value: "SplitDelivery" },
+  { label: "Split pickup", value: "SplitPickup" },
 ] satisfies ReadonlyArray<GenericSelectOption<StopType>>;
 
 export const stopScheduleTypeChoices = [
@@ -798,9 +798,9 @@ export const coreResponsibilityChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<CoreResponsibility>>;
 
 export const dataScopeChoices = [
-  { value: "own", label: "Own Data Only" },
+  { value: "own", label: "Own data only" },
   { value: "organization", label: "Organization" },
-  { value: "all", label: "All Data" },
+  { value: "all", label: "All data" },
 ] satisfies ReadonlyArray<GenericSelectOption<DataScope>>;
 
 export const operationChoices: SelectOption[] = [
@@ -834,15 +834,15 @@ export const timeFormatChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<TimeFormatType>>;
 
 export const timezoneChoices = [
-  { value: "America/New_York", label: "Eastern Time (US)" },
-  { value: "America/Chicago", label: "Central Time (US)" },
-  { value: "America/Denver", label: "Mountain Time (US)" },
-  { value: "America/Los_Angeles", label: "Pacific Time (US)" },
-  { value: "America/Phoenix", label: "Arizona Time (US)" },
-  { value: "America/Anchorage", label: "Alaska Time" },
-  { value: "Pacific/Honolulu", label: "Hawaii Time" },
-  { value: "America/Toronto", label: "Eastern Time (Canada)" },
-  { value: "America/Vancouver", label: "Pacific Time (Canada)" },
+  { value: "America/New_York", label: "Eastern time (US)" },
+  { value: "America/Chicago", label: "Central time (US)" },
+  { value: "America/Denver", label: "Mountain time (US)" },
+  { value: "America/Los_Angeles", label: "Pacific time (US)" },
+  { value: "America/Phoenix", label: "Arizona time (US)" },
+  { value: "America/Anchorage", label: "Alaska time" },
+  { value: "Pacific/Honolulu", label: "Hawaii time" },
+  { value: "America/Toronto", label: "Eastern time (Canada)" },
+  { value: "America/Vancouver", label: "Pacific time (Canada)" },
   { value: "Europe/London", label: "London (GMT)" },
   { value: "Europe/Paris", label: "Paris (CET)" },
   { value: "Europe/Berlin", label: "Berlin (CET)" },
@@ -856,15 +856,15 @@ export const timezoneGroupedChoices: SelectOptionGroup[] = [
   {
     label: "Americas",
     options: [
-      { value: "America/New_York", label: "Eastern Time (US)", description: "UTC-5" },
-      { value: "America/Chicago", label: "Central Time (US)", description: "UTC-6" },
-      { value: "America/Denver", label: "Mountain Time (US)", description: "UTC-7" },
-      { value: "America/Los_Angeles", label: "Pacific Time (US)", description: "UTC-8" },
-      { value: "America/Phoenix", label: "Arizona Time (US)", description: "UTC-7" },
-      { value: "America/Anchorage", label: "Alaska Time", description: "UTC-9" },
-      { value: "Pacific/Honolulu", label: "Hawaii Time", description: "UTC-10" },
-      { value: "America/Toronto", label: "Eastern Time (Canada)", description: "UTC-5" },
-      { value: "America/Vancouver", label: "Pacific Time (Canada)", description: "UTC-8" },
+      { value: "America/New_York", label: "Eastern time (US)", description: "UTC-5" },
+      { value: "America/Chicago", label: "Central time (US)", description: "UTC-6" },
+      { value: "America/Denver", label: "Mountain time (US)", description: "UTC-7" },
+      { value: "America/Los_Angeles", label: "Pacific time (US)", description: "UTC-8" },
+      { value: "America/Phoenix", label: "Arizona time (US)", description: "UTC-7" },
+      { value: "America/Anchorage", label: "Alaska time", description: "UTC-9" },
+      { value: "Pacific/Honolulu", label: "Hawaii time", description: "UTC-10" },
+      { value: "America/Toronto", label: "Eastern time (Canada)", description: "UTC-5" },
+      { value: "America/Vancouver", label: "Pacific time (Canada)", description: "UTC-8" },
     ],
   },
   {
@@ -898,7 +898,7 @@ export const equipmentStatusChoices = [
   },
   {
     value: "AtMaintenance",
-    label: "At Maintenance",
+    label: "At maintenance",
     color: "var(--accent-violet)",
   },
   { value: "Sold", label: "Sold", color: "var(--warning)" },
@@ -910,7 +910,7 @@ export const fieldTypeChoices = [
   { value: "date", label: "Date", color: "var(--accent-violet)" },
   { value: "boolean", label: "Boolean", color: "var(--warning)" },
   { value: "select", label: "Select", color: "var(--danger)" },
-  { value: "multiSelect", label: "Multi-Select", color: "var(--accent-rose)" },
+  { value: "multiSelect", label: "Multi-select", color: "var(--accent-rose)" },
 ] satisfies ReadonlyArray<GenericSelectOption<FieldType>>;
 
 export const accessorialChargeMethodChoices = [
@@ -922,7 +922,7 @@ export const accessorialChargeMethodChoices = [
   },
   {
     value: "PerUnit",
-    label: "Per Unit",
+    label: "Per unit",
     color: "var(--accent-violet)",
     description: "Rate multiplied by units",
   },
@@ -954,7 +954,7 @@ export const genderChoices = [
 export const driverTypeChoices = [
   { value: "Local", label: "Local", color: "var(--info)" },
   { value: "Regional", label: "Regional", color: "var(--success)" },
-  { value: "OTR", label: "OTR (Over the Road)", color: "var(--warning)" },
+  { value: "OTR", label: "OTR (over the road)", color: "var(--warning)" },
   { value: "Team", label: "Team", color: "var(--accent-violet)" },
 ] satisfies ReadonlyArray<GenericSelectOption<DriverType>>;
 
@@ -970,12 +970,12 @@ export const endorsementTypeChoices = [
   { value: "H", label: "Hazmat (H)" },
   { value: "X", label: "Tanker + Hazmat (X)" },
   { value: "P", label: "Passenger (P)" },
-  { value: "T", label: "Double/Triple (T)" },
+  { value: "T", label: "Double/triple (T)" },
 ] satisfies ReadonlyArray<GenericSelectOption<EndorsementType>>;
 
 export const complianceStatusChoices = [
   { value: "Compliant", label: "Compliant", color: "var(--success)" },
-  { value: "NonCompliant", label: "Non-Compliant", color: "var(--danger)" },
+  { value: "NonCompliant", label: "Non-compliant", color: "var(--danger)" },
   { value: "Pending", label: "Pending", color: "var(--warning)" },
 ] satisfies ReadonlyArray<GenericSelectOption<ComplianceStatus>>;
 
@@ -1094,78 +1094,78 @@ export const journalPostingModeChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<JournalPostingMode>>;
 
 export const journalSourceEventChoices = [
-  { value: "InvoicePosted", label: "Invoice Posted" },
-  { value: "CreditMemoPosted", label: "Credit Memo Posted" },
-  { value: "DebitMemoPosted", label: "Debit Memo Posted" },
-  { value: "CustomerPaymentPosted", label: "Customer Payment Posted" },
-  { value: "VendorBillPosted", label: "Vendor Bill Posted" },
-  { value: "VendorPaymentPosted", label: "Vendor Payment Posted" },
-  { value: "CarrierSettlementPosted", label: "Carrier Settlement Posted" },
-  { value: "CarrierSettlementVoided", label: "Carrier Settlement Voided" },
-  { value: "CarrierSettlementPaid", label: "Carrier Settlement Paid" },
+  { value: "InvoicePosted", label: "Invoice posted" },
+  { value: "CreditMemoPosted", label: "Credit memo posted" },
+  { value: "DebitMemoPosted", label: "Debit memo posted" },
+  { value: "CustomerPaymentPosted", label: "Customer payment posted" },
+  { value: "VendorBillPosted", label: "Vendor bill posted" },
+  { value: "VendorPaymentPosted", label: "Vendor payment posted" },
+  { value: "CarrierSettlementPosted", label: "Carrier settlement posted" },
+  { value: "CarrierSettlementVoided", label: "Carrier settlement voided" },
+  { value: "CarrierSettlementPaid", label: "Carrier settlement paid" },
 ] satisfies ReadonlyArray<GenericSelectOption<JournalSourceEvent>>;
 
 export const manualJournalEntryPolicyChoices = [
-  { value: "AllowAll", label: "Allow All" },
-  { value: "AdjustmentOnly", label: "Adjustment Only" },
+  { value: "AllowAll", label: "Allow all" },
+  { value: "AdjustmentOnly", label: "Adjustment only" },
   { value: "Disallow", label: "Disallow" },
 ] satisfies ReadonlyArray<GenericSelectOption<ManualJournalEntryPolicy>>;
 
 export const journalReversalPolicyChoices = [
   { value: "Disallow", label: "Disallow" },
-  { value: "NextOpenPeriod", label: "Next Open Period" },
+  { value: "NextOpenPeriod", label: "Next open period" },
 ] satisfies ReadonlyArray<GenericSelectOption<JournalReversalPolicy>>;
 
 export const revenueRecognitionPolicyChoices = [
-  { value: "OnInvoicePost", label: "On Invoice Post" },
-  { value: "OnCashReceipt", label: "On Cash Receipt" },
+  { value: "OnInvoicePost", label: "On invoice post" },
+  { value: "OnCashReceipt", label: "On cash receipt" },
 ] satisfies ReadonlyArray<GenericSelectOption<RevenueRecognitionPolicy>>;
 
 export const expenseRecognitionPolicyChoices = [
-  { value: "OnVendorBillPost", label: "On Vendor Bill Post" },
-  { value: "OnCashDisbursement", label: "On Cash Disbursement" },
+  { value: "OnVendorBillPost", label: "On vendor bill post" },
+  { value: "OnCashDisbursement", label: "On cash disbursement" },
 ] satisfies ReadonlyArray<GenericSelectOption<ExpenseRecognitionPolicy>>;
 
 export const periodCloseModeChoices = [
-  { value: "ManualOnly", label: "Manual Only" },
-  { value: "SystemScheduled", label: "System Scheduled" },
+  { value: "ManualOnly", label: "Manual only" },
+  { value: "SystemScheduled", label: "System scheduled" },
 ] satisfies ReadonlyArray<GenericSelectOption<PeriodCloseMode>>;
 
 export const lockedPeriodPostingPolicyChoices = [
-  { value: "BlockSubledgerAllowManualJe", label: "Block Subledger, Allow Manual JE" },
+  { value: "BlockSubledgerAllowManualJe", label: "Block subledger, allow manual JE" },
 ] satisfies ReadonlyArray<GenericSelectOption<LockedPeriodPostingPolicy>>;
 
 export const closedPeriodPostingPolicyChoices = [
-  { value: "RequireReopen", label: "Require Reopen" },
-  { value: "PostToNextOpen", label: "Post To Next Open" },
+  { value: "RequireReopen", label: "Require reopen" },
+  { value: "PostToNextOpen", label: "Post to next open" },
 ] satisfies ReadonlyArray<GenericSelectOption<ClosedPeriodPostingPolicy>>;
 
 export const reconciliationModeChoices = [
   { value: "Disabled", label: "Disabled", color: "var(--foreground-subtle)" },
-  { value: "WarnOnly", label: "Warn Only", color: "var(--warning)" },
-  { value: "BlockPosting", label: "Block Posting", color: "var(--danger)" },
+  { value: "WarnOnly", label: "Warn only", color: "var(--warning)" },
+  { value: "BlockPosting", label: "Block posting", color: "var(--danger)" },
 ] satisfies ReadonlyArray<GenericSelectOption<ReconciliationMode>>;
 
 export const currencyModeChoices = [
-  { value: "SingleCurrency", label: "Single Currency" },
-  { value: "MultiCurrency", label: "Multi Currency" },
+  { value: "SingleCurrency", label: "Single currency" },
+  { value: "MultiCurrency", label: "Multi currency" },
 ] satisfies ReadonlyArray<GenericSelectOption<CurrencyMode>>;
 
 export const exchangeRateDatePolicyChoices = [
-  { value: "DocumentDate", label: "Document Date" },
-  { value: "AccountingDate", label: "Accounting Date" },
+  { value: "DocumentDate", label: "Document date" },
+  { value: "AccountingDate", label: "Accounting date" },
 ] satisfies ReadonlyArray<GenericSelectOption<ExchangeRateDatePolicy>>;
 
 export const exchangeRateOverridePolicyChoices = [
   { value: "Allow", label: "Allow" },
-  { value: "RequireApproval", label: "Require Approval" },
+  { value: "RequireApproval", label: "Require approval" },
   { value: "Disallow", label: "Disallow" },
 ] satisfies ReadonlyArray<GenericSelectOption<ExchangeRateOverridePolicy>>;
 
 export const packingGroupChoices = [
-  { value: "I", label: "I - High Danger", color: "var(--danger)" },
-  { value: "II", label: "II - Medium Danger", color: "var(--warning)" },
-  { value: "III", label: "III - Low Danger", color: "var(--success)" },
+  { value: "I", label: "I - high danger", color: "var(--danger)" },
+  { value: "II", label: "II - medium danger", color: "var(--warning)" },
+  { value: "III", label: "III - low danger", color: "var(--success)" },
 ] satisfies ReadonlyArray<GenericSelectOption<PackingGroup>>;
 
 export const segregationTypeChoices = [
@@ -1186,7 +1186,7 @@ export const fiscalYearStatusChoices = [
   { value: "Draft", label: "Draft", color: "var(--accent-violet)" },
   { value: "Open", label: "Open", color: "var(--success)" },
   { value: "Closed", label: "Closed", color: "var(--danger)" },
-  { value: "PermanentlyClosed", label: "Permanently Closed", color: "var(--danger-foreground)" },
+  { value: "PermanentlyClosed", label: "Permanently closed", color: "var(--danger-foreground)" },
 ] satisfies ReadonlyArray<GenericSelectOption<FiscalYearStatus>>;
 
 export const fiscalPeriodStatusChoices = [
@@ -1194,7 +1194,7 @@ export const fiscalPeriodStatusChoices = [
   { value: "Open", label: "Open", color: "var(--success)" },
   { value: "Locked", label: "Locked", color: "var(--warning)" },
   { value: "Closed", label: "Closed", color: "var(--danger)" },
-  { value: "PermanentlyClosed", label: "Permanently Closed", color: "var(--danger-foreground)" },
+  { value: "PermanentlyClosed", label: "Permanently closed", color: "var(--danger-foreground)" },
 ] satisfies ReadonlyArray<GenericSelectOption<FiscalPeriodStatus>>;
 
 export const periodTypeChoices = [
@@ -1227,27 +1227,27 @@ export const locationCategoryTypeChoices = [
   { value: "Warehouse", label: "Warehouse", color: "var(--success)" },
   {
     value: "DistributionCenter",
-    label: "Distribution Center",
+    label: "Distribution center",
     color: "var(--accent-violet)",
   },
-  { value: "TruckStop", label: "Truck Stop", color: "var(--warning)" },
-  { value: "RestArea", label: "Rest Area", color: "var(--foreground-subtle)" },
-  { value: "CustomerLocation", label: "Customer Location", color: "var(--accent-rose)" },
+  { value: "TruckStop", label: "Truck stop", color: "var(--warning)" },
+  { value: "RestArea", label: "Rest area", color: "var(--foreground-subtle)" },
+  { value: "CustomerLocation", label: "Customer location", color: "var(--accent-rose)" },
   { value: "Port", label: "Port", color: "var(--info-foreground)" },
-  { value: "RailYard", label: "Rail Yard", color: "var(--accent-violet-on-subtle)" },
+  { value: "RailYard", label: "Rail yard", color: "var(--accent-violet-on-subtle)" },
   {
     value: "MaintenanceFacility",
-    label: "Maintenance Facility",
+    label: "Maintenance facility",
     color: "var(--danger)",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<LocationCategoryType>>;
 
 export const facilityTypeChoices = [
-  { value: "CrossDock", label: "Cross Dock" },
-  { value: "StorageWarehouse", label: "Storage Warehouse" },
-  { value: "ColdStorage", label: "Cold Storage" },
-  { value: "HazmatFacility", label: "Hazmat Facility" },
-  { value: "IntermodalFacility", label: "Intermodal Facility" },
+  { value: "CrossDock", label: "Cross dock" },
+  { value: "StorageWarehouse", label: "Storage warehouse" },
+  { value: "ColdStorage", label: "Cold storage" },
+  { value: "HazmatFacility", label: "Hazmat facility" },
+  { value: "IntermodalFacility", label: "Intermodal facility" },
 ] satisfies ReadonlyArray<GenericSelectOption<FacilityType>>;
 
 export const holdTypeChoices = [
@@ -1278,11 +1278,11 @@ export const serviceFailureSourceChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<ServiceFailureSource>>;
 
 export const serviceFailureTypeChoices = [
-  { value: "LatePickup", label: "Late Pickup", color: "var(--warning)" },
-  { value: "LateDelivery", label: "Late Delivery", color: "var(--danger)" },
-  { value: "MissedPickup", label: "Missed Pickup", color: "var(--warning-foreground)" },
-  { value: "MissedDelivery", label: "Missed Delivery", color: "var(--danger-foreground)" },
-  { value: "AppointmentMissed", label: "Appointment Missed", color: "var(--accent-violet)" },
+  { value: "LatePickup", label: "Late pickup", color: "var(--warning)" },
+  { value: "LateDelivery", label: "Late delivery", color: "var(--danger)" },
+  { value: "MissedPickup", label: "Missed pickup", color: "var(--warning-foreground)" },
+  { value: "MissedDelivery", label: "Missed delivery", color: "var(--danger-foreground)" },
+  { value: "AppointmentMissed", label: "Appointment missed", color: "var(--accent-violet)" },
   { value: "Other", label: "Other", color: "var(--foreground-subtle)" },
 ] satisfies ReadonlyArray<GenericSelectOption<ServiceFailureType>>;
 
@@ -1303,8 +1303,8 @@ export const serviceFailureReasonCategoryChoices = [
 export const serviceFailureReasonCodeAppliesToChoices = [
   { value: "Pickup", label: "Pickup" },
   { value: "Delivery", label: "Delivery" },
-  { value: "Both", label: "Pickup & Delivery" },
-  { value: "All", label: "All Stops" },
+  { value: "Both", label: "Pickup & delivery" },
+  { value: "All", label: "All stops" },
 ] satisfies ReadonlyArray<GenericSelectOption<ServiceFailureReasonCodeAppliesTo>>;
 
 export function findChoice<TValue extends string | boolean | number>(
@@ -1322,57 +1322,57 @@ export const transferScheduleChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<TransferSchedule>>;
 
 export const readyToBillAssignmentModeChoices = [
-  { value: "ManualOnly", label: "Manual Only" },
-  { value: "AutomaticWhenEligible", label: "Automatic When Eligible" },
+  { value: "ManualOnly", label: "Manual only" },
+  { value: "AutomaticWhenEligible", label: "Automatic when eligible" },
 ] satisfies ReadonlyArray<GenericSelectOption<ReadyToBillAssignmentMode>>;
 
 export const billingQueueTransferModeChoices = [
-  { value: "ManualOnly", label: "Manual Only" },
-  { value: "AutomaticWhenReady", label: "Automatic When Ready" },
+  { value: "ManualOnly", label: "Manual only" },
+  { value: "AutomaticWhenReady", label: "Automatic when ready" },
 ] satisfies ReadonlyArray<GenericSelectOption<BillingQueueTransferMode>>;
 
 export const invoiceDraftCreationModeChoices = [
-  { value: "ManualOnly", label: "Manual Only" },
-  { value: "AutomaticWhenTransferred", label: "Automatic When Transferred" },
+  { value: "ManualOnly", label: "Manual only" },
+  { value: "AutomaticWhenTransferred", label: "Automatic when transferred" },
 ] satisfies ReadonlyArray<GenericSelectOption<InvoiceDraftCreationMode>>;
 
 export const invoicePostingModeChoices = [
-  { value: "ManualReviewRequired", label: "Manual Review Required" },
+  { value: "ManualReviewRequired", label: "Manual review required" },
   {
     value: "AutomaticWhenNoBlockingExceptions",
-    label: "Automatic When No Blocking Exceptions",
+    label: "Automatic when no blocking exceptions",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<InvoicePostingMode>>;
 
 export const enforcementLevelChoices = [
   { value: "Ignore", label: "Ignore", color: "var(--foreground-subtle)" },
   { value: "Warn", label: "Warn", color: "var(--warning)" },
-  { value: "RequireReview", label: "Require Review", color: "var(--info)" },
+  { value: "RequireReview", label: "Require review", color: "var(--info)" },
   { value: "Block", label: "Block", color: "var(--danger)" },
 ] satisfies ReadonlyArray<GenericSelectOption<EnforcementLevel>>;
 
 export const billingExceptionDispositionChoices = [
-  { value: "RouteToBillingReview", label: "Route To Billing Review" },
-  { value: "ReturnToOperations", label: "Return To Operations" },
+  { value: "RouteToBillingReview", label: "Route to billing review" },
+  { value: "ReturnToOperations", label: "Return to operations" },
 ] satisfies ReadonlyArray<GenericSelectOption<BillingExceptionDisposition>>;
 
 export const rateVarianceAutoResolutionModeChoices = [
   { value: "Disabled", label: "Disabled" },
   {
     value: "BypassReviewWithinTolerance",
-    label: "Bypass Review Within Tolerance",
+    label: "Bypass review within tolerance",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<RateVarianceAutoResolutionMode>>;
 
 export const unratedShipmentDispositionChoices = [
-  { value: "FallbackFormulaTemplate", label: "Fall Back to Formula Template" },
-  { value: "ZeroAndFlag", label: "Zero the Rate and Flag for Review" },
-  { value: "Block", label: "Block the Save" },
+  { value: "FallbackFormulaTemplate", label: "Fall back to formula template" },
+  { value: "ZeroAndFlag", label: "Zero the rate and flag for review" },
+  { value: "Block", label: "Block the save" },
 ] satisfies ReadonlyArray<GenericSelectOption<UnratedShipmentDisposition>>;
 
 export const paymentTermChoices = [
   { value: "Net10", label: "Net 10", color: "var(--info)" },
-  { value: "DueOnReceipt", label: "Due on Receipt", color: "var(--success)" },
+  { value: "DueOnReceipt", label: "Due on receipt", color: "var(--success)" },
   { value: "Net15", label: "Net 15", color: "var(--info-foreground)" },
   { value: "Net30", label: "Net 30", color: "var(--accent-violet)" },
   { value: "Net45", label: "Net 45", color: "var(--warning)" },
@@ -1382,24 +1382,24 @@ export const paymentTermChoices = [
 
 export const adjustmentEligibilityPolicyChoices = [
   { value: "Disallow", label: "Disallow", color: "var(--danger)" },
-  { value: "AllowWithApproval", label: "Allow With Approval", color: "var(--info)" },
-  { value: "AllowWithoutApproval", label: "Allow Without Approval", color: "var(--warning)" },
+  { value: "AllowWithApproval", label: "Allow with approval", color: "var(--info)" },
+  { value: "AllowWithoutApproval", label: "Allow without approval", color: "var(--warning)" },
 ] satisfies ReadonlyArray<GenericSelectOption<AdjustmentEligibilityPolicy>>;
 
 export const adjustmentAccountingDatePolicyChoices = [
   {
     value: "UseOriginalIfOpenElseNextOpen",
-    label: "Use Original If Open Else Next Open",
+    label: "Use original if open else next open",
   },
-  { value: "AlwaysNextOpen", label: "Always Next Open" },
+  { value: "AlwaysNextOpen", label: "Always next open" },
 ] satisfies ReadonlyArray<GenericSelectOption<AdjustmentAccountingDatePolicy>>;
 
 export const closedPeriodAdjustmentPolicyChoices = [
   { value: "Disallow", label: "Disallow", color: "var(--danger)" },
-  { value: "RequireReopen", label: "Require Reopen", color: "var(--warning)" },
+  { value: "RequireReopen", label: "Require reopen", color: "var(--warning)" },
   {
     value: "PostInNextOpenPeriodWithApproval",
-    label: "Post In Next Open Period With Approval",
+    label: "Post in next open period with approval",
     color: "var(--info)",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<ClosedPeriodAdjustmentPolicy>>;
@@ -1412,47 +1412,47 @@ export const requirementPolicyChoices = [
 export const approvalPolicyChoices = [
   { value: "None", label: "None", color: "var(--foreground-subtle)" },
   { value: "Always", label: "Always", color: "var(--danger)" },
-  { value: "AmountThreshold", label: "Amount Threshold", color: "var(--info)" },
+  { value: "AmountThreshold", label: "Amount threshold", color: "var(--info)" },
 ] satisfies ReadonlyArray<GenericSelectOption<ApprovalPolicy>>;
 
 export const writeOffApprovalPolicyChoices = [
   { value: "Disallow", label: "Disallow", color: "var(--danger)" },
-  { value: "AlwaysRequireApproval", label: "Always Require Approval", color: "var(--info)" },
+  { value: "AlwaysRequireApproval", label: "Always require approval", color: "var(--info)" },
   {
     value: "RequireApprovalAboveThreshold",
-    label: "Require Approval Above Threshold",
+    label: "Require approval above threshold",
     color: "var(--warning)",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<WriteOffApprovalPolicy>>;
 
 export const replacementInvoiceReviewPolicyChoices = [
-  { value: "NoAdditionalReview", label: "No Additional Review", color: "var(--foreground-subtle)" },
+  { value: "NoAdditionalReview", label: "No additional review", color: "var(--foreground-subtle)" },
   {
     value: "RequireReviewWhenEconomicTermsChange",
-    label: "Require Review When Economic Terms Change",
+    label: "Require review when economic terms change",
     color: "var(--info)",
   },
-  { value: "AlwaysRequireReview", label: "Always Require Review", color: "var(--danger)" },
+  { value: "AlwaysRequireReview", label: "Always require review", color: "var(--danger)" },
 ] satisfies ReadonlyArray<GenericSelectOption<ReplacementInvoiceReviewPolicy>>;
 
 export const customerCreditBalancePolicyChoices = [
   { value: "Disallow", label: "Disallow", color: "var(--danger)" },
-  { value: "AllowUnappliedCredit", label: "Allow Unapplied Credit", color: "var(--info)" },
+  { value: "AllowUnappliedCredit", label: "Allow unapplied credit", color: "var(--info)" },
 ] satisfies ReadonlyArray<GenericSelectOption<CustomerCreditBalancePolicy>>;
 
 export const overCreditPolicyChoices = [
   { value: "Block", label: "Block", color: "var(--danger)" },
-  { value: "AllowWithApproval", label: "Allow With Approval", color: "var(--info)" },
+  { value: "AllowWithApproval", label: "Allow with approval", color: "var(--info)" },
 ] satisfies ReadonlyArray<GenericSelectOption<OverCreditPolicy>>;
 
 export const supersededInvoiceVisibilityPolicyChoices = [
   {
     value: "ShowCurrentOnlyExternally",
-    label: "Show Current Only Externally",
+    label: "Show current only externally",
   },
   {
     value: "ShowCurrentAndSupersededExternally",
-    label: "Show Current And Superseded Externally",
+    label: "Show current and superseded externally",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<SupersededInvoiceVisibilityPolicy>>;
 
@@ -1460,10 +1460,10 @@ export const serviceIncidentTypeChoices = [
   { value: "Never", label: "Never", color: "var(--success)" },
   { value: "Pickup", label: "Pickup", color: "var(--accent-violet)" },
   { value: "Delivery", label: "Delivery", color: "var(--warning)" },
-  { value: "PickupDelivery", label: "Pickup/Delivery", color: "var(--info)" },
+  { value: "PickupDelivery", label: "Pickup/delivery", color: "var(--info)" },
   {
     value: "AllExceptShipper",
-    label: "All Except Shipper",
+    label: "All except shipper",
     color: "var(--success-foreground)",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<ServiceIncidentType>>;
@@ -1471,7 +1471,7 @@ export const serviceIncidentTypeChoices = [
 export const autoAssignmentStrategyChoices = [
   { value: "Proximity", label: "Proximity", color: "var(--info)" },
   { value: "Availability", label: "Availability", color: "var(--success)" },
-  { value: "LoadBalancing", label: "Load Balancing", color: "var(--accent-rose)" },
+  { value: "LoadBalancing", label: "Load balancing", color: "var(--accent-rose)" },
   { value: "Performance", label: "Performance", color: "var(--accent-violet)" },
 ] satisfies ReadonlyArray<GenericSelectOption<AutoAssignmentStrategy>>;
 
@@ -1498,7 +1498,7 @@ export const billingCycleChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<BillingCycle>>;
 
 export const customerPaymentTermChoices = [
-  { value: "DueOnReceipt", label: "Due on Receipt", color: "var(--success)" },
+  { value: "DueOnReceipt", label: "Due on receipt", color: "var(--success)" },
   { value: "Net10", label: "Net 10", color: "var(--info)" },
   { value: "Net15", label: "Net 15", color: "var(--info-foreground)" },
   { value: "Net30", label: "Net 30", color: "var(--accent-violet)" },
@@ -1539,8 +1539,8 @@ export const invoiceDetailChoices = [
 
 export const invoiceNumberFormatChoices = [
   { value: "Default", label: "Default" },
-  { value: "CustomPrefix", label: "Custom Prefix" },
-  { value: "POBased", label: "PO Based" },
+  { value: "CustomPrefix", label: "Custom prefix" },
+  { value: "POBased", label: "PO based" },
 ] satisfies ReadonlyArray<GenericSelectOption<InvoiceNumberFormat>>;
 
 export {
@@ -1550,18 +1550,18 @@ export {
 } from "@trenova/shared/lib/comment-choices";
 
 export const currencyChoices = [
-  { value: "USD", label: "USD - US Dollar" },
-  { value: "CAD", label: "CAD - Canadian Dollar" },
-  { value: "MXN", label: "MXN - Mexican Peso" },
-  { value: "EUR", label: "EUR - Euro" },
-  { value: "GBP", label: "GBP - British Pound" },
+  { value: "USD", label: "USD - US dollar" },
+  { value: "CAD", label: "CAD - Canadian dollar" },
+  { value: "MXN", label: "MXN - Mexican peso" },
+  { value: "EUR", label: "EUR - euro" },
+  { value: "GBP", label: "GBP - british pound" },
 ] satisfies ReadonlyArray<SelectOption>;
 
 export const caseFormatChoices = [
-  { value: "AsEntered", label: "As Entered" },
+  { value: "AsEntered", label: "As entered" },
   { value: "Upper", label: "UPPER" },
   { value: "Lower", label: "lower" },
-  { value: "TitleCase", label: "Title Case" },
+  { value: "TitleCase", label: "Title case" },
 ] satisfies ReadonlyArray<GenericSelectOption<CaseFormat>>;
 export const resourceTypeChoices = [
   { value: "Shipment", label: "Shipment" },
@@ -1571,9 +1571,9 @@ export const resourceTypeChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<ResourceType>>;
 
 export const documentKindChoices = [
-  { value: "RateConfirmation", label: "Rate Confirmation" },
-  { value: "BillOfLading", label: "Bill of Lading" },
-  { value: "ProofOfDelivery", label: "Proof of Delivery" },
+  { value: "RateConfirmation", label: "Rate confirmation" },
+  { value: "BillOfLading", label: "Bill of lading" },
+  { value: "ProofOfDelivery", label: "Proof of delivery" },
   { value: "Invoice", label: "Invoice" },
 ] satisfies ReadonlyArray<GenericSelectOption<DocumentKind>>;
 
@@ -1597,8 +1597,8 @@ export const invoiceVoidDispositionChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<InvoiceVoidDisposition>>;
 
 export const memoBillTypeChoices = [
-  { value: "CreditMemo", label: "Credit Memo" },
-  { value: "DebitMemo", label: "Debit Memo" },
+  { value: "CreditMemo", label: "Credit memo" },
+  { value: "DebitMemo", label: "Debit memo" },
 ] satisfies ReadonlyArray<GenericSelectOption<"CreditMemo" | "DebitMemo">>;
 
 export const invoiceDisputeReasonCodeChoices = [
@@ -1637,7 +1637,7 @@ export const lateChargeAssessmentModeChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<LateChargeAssessmentMode>>;
 
 export const invoiceScopeChoices = [
-  { value: "Shipment", label: "Single Shipment" },
+  { value: "Shipment", label: "Single shipment" },
   { value: "Order", label: "Order" },
   { value: "Consolidated", label: "Consolidated" },
   { value: "Adjustment", label: "Adjustment" },
@@ -1659,7 +1659,7 @@ export const exceptionReasonLabels: Record<ExceptionReasonCode, string> = {
 
 export const manualJournalStatusChoices = [
   { label: "Draft", value: "Draft" },
-  { label: "Pending Approval", value: "PendingApproval" },
+  { label: "Pending approval", value: "PendingApproval" },
   { label: "Approved", value: "Approved" },
   { label: "Rejected", value: "Rejected" },
   { label: "Cancelled", value: "Cancelled" },
@@ -1668,7 +1668,7 @@ export const manualJournalStatusChoices = [
 
 export const journalReversalStatusChoices = [
   { label: "Requested", value: "Requested" },
-  { label: "Pending Approval", value: "PendingApproval" },
+  { label: "Pending approval", value: "PendingApproval" },
   { label: "Approved", value: "Approved" },
   { label: "Rejected", value: "Rejected" },
   { label: "Cancelled", value: "Cancelled" },
@@ -1689,7 +1689,7 @@ export const bankReceiptStatusChoices = [
 export const workItemStatusChoices = [
   { label: "Open", value: "Open" },
   { label: "Assigned", value: "Assigned" },
-  { label: "In Review", value: "InReview" },
+  { label: "In review", value: "InReview" },
   { label: "Resolved", value: "Resolved" },
   { label: "Dismissed", value: "Dismissed" },
 ] satisfies ReadonlyArray<GenericSelectOption<WorkItemStatus>>;
@@ -1704,16 +1704,16 @@ export const paymentMethodChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<PaymentMethod>>;
 
 export const resolutionTypeChoices = [
-  { label: "Matched to Payment", value: "MatchedToPayment" },
-  { label: "Marked False Positive", value: "MarkedFalsePositive" },
-  { label: "Requires External Follow-Up", value: "RequiresExternalFollowUp" },
+  { label: "Matched to payment", value: "MatchedToPayment" },
+  { label: "Marked false positive", value: "MarkedFalsePositive" },
+  { label: "Requires external follow-up", value: "RequiresExternalFollowUp" },
   { label: "Superseded", value: "Superseded" },
 ] satisfies ReadonlyArray<GenericSelectOption<ResolutionType>>;
 
 export const ediTransferStatusChoices = [
   { label: "Submitted", value: "Submitted" },
-  { label: "Mapping Required", value: "MappingRequired" },
-  { label: "Pending Approval", value: "PendingApproval" },
+  { label: "Mapping required", value: "MappingRequired" },
+  { label: "Pending approval", value: "PendingApproval" },
   { label: "Processing", value: "Processing" },
   { label: "Approved", value: "Approved" },
   { label: "Rejected", value: "Rejected" },
@@ -1727,11 +1727,11 @@ export const ediMessageDeliveryStatusChoices = [
   { label: "Sending", value: "Sending" },
   { label: "Sent", value: "Sent" },
   { label: "Failed", value: "Failed" },
-  { label: "Dead Lettered", value: "DeadLettered" },
+  { label: "Dead lettered", value: "DeadLettered" },
 ] satisfies ReadonlyArray<GenericSelectOption<EDIMessageDeliveryStatus>>;
 
 export const ediAckStatusChoices = [
-  { label: "Not Expected", value: "NotExpected" },
+  { label: "Not expected", value: "NotExpected" },
   { label: "Pending", value: "Pending" },
   { label: "Accepted", value: "Accepted" },
   { label: "Rejected", value: "Rejected" },
@@ -1742,7 +1742,7 @@ export const ediInboundFileStatusChoices = [
   { label: "Received", value: "Received" },
   { label: "Parsed", value: "Parsed" },
   { label: "Processed", value: "Processed" },
-  { label: "Partially Processed", value: "PartiallyProcessed" },
+  { label: "Partially processed", value: "PartiallyProcessed" },
   { label: "Quarantined", value: "Quarantined" },
   { label: "Duplicate", value: "Duplicate" },
 ] satisfies ReadonlyArray<GenericSelectOption<EDIInboundFileStatus>>;
@@ -1755,12 +1755,12 @@ export const ediConnectionMethodChoices = [
 ];
 
 export const ediTransactionSetChoices = [
-  { label: "204 Load Tender", value: "204" },
-  { label: "210 Freight Invoice", value: "210" },
-  { label: "214 Shipment Status", value: "214" },
-  { label: "990 Tender Response", value: "990" },
-  { label: "997 Functional Ack", value: "997" },
-  { label: "999 Implementation Ack", value: "999" },
+  { label: "204 Load tender", value: "204" },
+  { label: "210 Freight invoice", value: "210" },
+  { label: "214 Shipment status", value: "214" },
+  { label: "990 Tender response", value: "990" },
+  { label: "997 Functional ack", value: "997" },
+  { label: "999 Implementation ack", value: "999" },
 ];
 
 export const ediDocumentDirectionChoices = [
@@ -1770,13 +1770,13 @@ export const ediDocumentDirectionChoices = [
 
 export const payeeClassificationChoices = [
   {
-    label: "Company Driver",
+    label: "Company driver",
     value: "CompanyDriver",
     color: "var(--info)",
     description: "W-2 employee paid through driver pay expense.",
   },
   {
-    label: "Owner-Operator",
+    label: "Owner-operator",
     value: "OwnerOperator",
     color: "var(--accent-violet)",
     description: "1099 contractor paid through purchased transportation.",
@@ -1791,13 +1791,13 @@ export const payComponentKindChoices = [
     description: "Base haul pay — per-mile or percent-of-revenue.",
   },
   {
-    label: "Fuel Surcharge",
+    label: "Fuel surcharge",
     value: "FuelSurcharge",
     color: "var(--warning)",
     description: "Passes a share of the shipment's fuel surcharge to the driver.",
   },
   {
-    label: "Stop Pay",
+    label: "Stop pay",
     value: "StopPay",
     color: "var(--accent-teal)",
     description: "Pays for each extra stop beyond pickup and delivery.",
@@ -1848,19 +1848,19 @@ export const payComponentKindChoices = [
 
 export const payCalcMethodChoices = [
   {
-    label: "Per Loaded Mile",
+    label: "Per loaded mile",
     value: "PerLoadedMile",
     color: "var(--info)",
     description: "Rate × the move's loaded miles; supports mileage bands.",
   },
   {
-    label: "Per Empty Mile",
+    label: "Per empty mile",
     value: "PerEmptyMile",
     color: "var(--accent-teal)",
     description: "Rate × the move's empty (deadhead) miles.",
   },
   {
-    label: "Per Total Mile",
+    label: "Per total mile",
     value: "PerTotalMile",
     color: "var(--accent-indigo)",
     description: "Rate × all dispatched miles, loaded or empty.",
@@ -1872,31 +1872,31 @@ export const payCalcMethodChoices = [
     description: "Share of shipment revenue, allocated to the move by distance.",
   },
   {
-    label: "Flat per Shipment",
+    label: "Flat per shipment",
     value: "FlatPerShipment",
     color: "var(--success)",
     description: "Fixed amount for each shipment regardless of miles.",
   },
   {
-    label: "Per Stop",
+    label: "Per stop",
     value: "PerStop",
     color: "var(--warning)",
     description: "Rate × extra stops beyond pickup and delivery.",
   },
   {
-    label: "Per Hour",
+    label: "Per hour",
     value: "PerHour",
     color: "var(--warning-foreground)",
     description: "Rate × hours — used for detention beyond free time.",
   },
   {
-    label: "Per Day",
+    label: "Per day",
     value: "PerDay",
     color: "var(--accent-violet-on-subtle)",
     description: "Rate × days — used for layover and similar daily pay.",
   },
   {
-    label: "Per Event",
+    label: "Per event",
     value: "PerEvent",
     color: "var(--foreground-subtle)",
     description: "Fixed amount per occurrence (breakdown, tarp, etc.).",
@@ -1911,7 +1911,7 @@ export const payRevenueBasisChoices = [
     description: "Percentage applies to freight charges only.",
   },
   {
-    label: "Linehaul + Fuel Surcharge",
+    label: "Linehaul + fuel surcharge",
     value: "LinehaulPlusFuelSurcharge",
     color: "var(--warning)",
     description: "Percentage applies to freight charges plus fuel surcharge.",
@@ -1941,7 +1941,7 @@ export const payCodeDirectionChoices = [
 
 export const recurringDeductionFrequencyChoices = [
   {
-    label: "Every Settlement",
+    label: "Every settlement",
     value: "EverySettlement",
     color: "var(--info)",
     description: "Withheld from every qualifying settlement.",
@@ -1977,7 +1977,7 @@ export const recurringDeductionStatusChoices = [
 
 export const recurringEarningFrequencyChoices = [
   {
-    label: "Every Settlement",
+    label: "Every settlement",
     value: "EverySettlement",
     color: "var(--info)",
     description: "Added to every qualifying settlement.",
@@ -2062,19 +2062,19 @@ export const payAdvanceSourceChoices = [
     description: "Cash handed to the driver directly.",
   },
   {
-    label: "EFS Money Code",
+    label: "EFS money code",
     value: "EFSMoneyCode",
     color: "var(--info)",
     description: "EFS code the driver cashes at a truck stop.",
   },
   {
-    label: "Comdata Code",
+    label: "Comdata code",
     value: "ComdataCode",
     color: "var(--accent-indigo)",
     description: "Comdata Comchek code issued to the driver.",
   },
   {
-    label: "Fuel Card",
+    label: "Fuel card",
     value: "FuelCard",
     color: "var(--warning)",
     description: "Cash advance drawn on the driver's fuel card.",
@@ -2110,25 +2110,25 @@ export const payPeriodFrequencyChoices = [
 
 export const settlementPayTriggerChoices = [
   {
-    label: "Move Completed",
+    label: "Move completed",
     value: "MoveCompleted",
     color: "var(--success)",
     description: "Pay accrues the moment a driver finishes their own move — best for split loads.",
   },
   {
-    label: "Shipment Delivered",
+    label: "Shipment delivered",
     value: "ShipmentDelivered",
     color: "var(--info)",
     description: "Pay accrues when the whole shipment reaches Completed.",
   },
   {
-    label: "POD Received (Ready to Invoice)",
+    label: "POD received (ready to invoice)",
     value: "PODReceived",
     color: "var(--warning)",
     description: "Pay accrues once paperwork is in and the shipment is ready to invoice.",
   },
   {
-    label: "Shipment Invoiced",
+    label: "Shipment invoiced",
     value: "ShipmentInvoiced",
     color: "var(--accent-violet)",
     description: "Pay accrues only after the customer has been invoiced.",
@@ -2143,7 +2143,7 @@ export const settlementDisputeStatusChoices = [
     description: "Newly submitted by the driver and waiting for a first look.",
   },
   {
-    label: "In Review",
+    label: "In review",
     value: "InReview",
     color: "var(--warning)",
     description: "Being investigated by payroll or the fleet manager.",
@@ -2170,7 +2170,7 @@ export const settlementDisputeStatusChoices = [
 
 export const settlementDisputeCategoryChoices = [
   {
-    label: "Missing Pay",
+    label: "Missing pay",
     value: "MissingPay",
     color: "var(--danger)",
     description: "A load or accessorial the driver ran isn't on the statement.",
@@ -2188,7 +2188,7 @@ export const settlementDisputeCategoryChoices = [
     description: "A deduction is wrong, duplicated, or shouldn't apply.",
   },
   {
-    label: "Missing Reimbursement",
+    label: "Missing reimbursement",
     value: "MissingReimbursement",
     color: "var(--info)",
     description: "An expense the carrier owes back wasn't reimbursed.",
@@ -2252,32 +2252,32 @@ export const detentionWaiverReasonChoices = [
     description: "Weather kept the facility from working the truck.",
   },
   {
-    label: "Facility Closure",
+    label: "Facility closure",
     value: "FacilityClosure",
     description: "The facility was closed or unable to receive during the stay.",
   },
   {
-    label: "Carrier Fault",
+    label: "Carrier fault",
     value: "CarrierFault",
     description: "Our own error caused the delay, so the charge is not defensible.",
   },
   {
-    label: "Equipment Issue",
+    label: "Equipment issue",
     value: "EquipmentIssue",
     description: "An equipment problem on our side extended the dwell.",
   },
   {
-    label: "Customer Goodwill",
+    label: "Customer goodwill",
     value: "CustomerGoodwill",
     description: "A commercial concession to preserve the relationship.",
   },
   {
-    label: "Data Correction",
+    label: "Data correction",
     value: "DataCorrection",
     description: "The underlying timestamps were wrong; the charge should not stand.",
   },
   {
-    label: "Force Majeure",
+    label: "Force majeure",
     value: "ForceMajeure",
     description: "An event outside anyone's control caused the detention.",
   },

@@ -15,7 +15,7 @@ export function ServiceFailuresPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Service Failures"),
+        title: t("Service failures"),
         description: t("Review unresolved pickup and delivery service failures"),
       }}
     >

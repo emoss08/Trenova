@@ -223,7 +223,7 @@ function LinkControl({ editor, disabled }: { editor: Editor; disabled?: boolean 
               }
             }}
             placeholder="https://example.com"
-            className="h-6 w-48 rounded border-none bg-transparent px-1.5 text-xs focus:outline-none"
+            className="h-6 w-48 rounded-md border-none bg-transparent px-1.5 text-xs focus:outline-none"
           />
           <Button
             type="button"
@@ -334,7 +334,7 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
         }),
         Mention.configure({
           HTMLAttributes: {
-            class: "rounded bg-info/10 px-0.5 font-medium text-info-foreground",
+            class: "rounded-md bg-info/10 px-0.5 font-medium text-info-foreground",
           },
           deleteTriggerWithBackspace: true,
           suggestion: {
@@ -356,7 +356,7 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
         }),
         EntityRefMention.configure({
           HTMLAttributes: {
-            class: "rounded bg-accent-violet/10 px-0.5 font-medium text-accent-violet-on-subtle",
+            class: "rounded-md bg-accent-violet/10 px-0.5 font-medium text-accent-violet-on-subtle",
           },
           deleteTriggerWithBackspace: true,
           suggestion: {

@@ -11,7 +11,7 @@ export function ShipmentTypesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Shipment Types"),
+        title: t("Shipment types"),
         description: t("Manage and configure shipment types for your organization"),
       }}
     >

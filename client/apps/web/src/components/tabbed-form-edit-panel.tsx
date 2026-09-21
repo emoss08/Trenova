@@ -85,7 +85,7 @@ type TabbedFormEditPanelProps<T extends FieldValues, TData extends Record<string
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
-  { id: "save-close", label: "Save & Close" },
+  { id: "save-close", label: "Save & close" },
 ];
 
 function TabFallback() {

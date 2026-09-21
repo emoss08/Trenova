@@ -51,7 +51,7 @@ export function CommentOptionPill<T extends string>({
             key={String(option.value)}
             type="button"
             className={cn(
-              "hover:bg-accent flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs",
+              "hover:bg-accent flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs",
               option.value === value && "bg-accent",
             )}
             onClick={() => {

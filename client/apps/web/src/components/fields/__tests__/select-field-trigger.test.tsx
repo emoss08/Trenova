@@ -19,7 +19,7 @@ function Harness({ value }: { value: string }) {
       options={[
         {
           value: "with-mark",
-          label: "Local Qwen",
+          label: "Local qwen",
           icon: <svg data-testid="vendor-mark" />,
         },
         { value: "with-colour", label: "Draft", color: "#d97706" },
@@ -40,7 +40,7 @@ describe("SelectField trigger", () => {
     render(<Harness value="with-mark" />);
 
     expect(screen.getByTestId("vendor-mark")).toBeInTheDocument();
-    expect(screen.getByText("Local Qwen")).toBeInTheDocument();
+    expect(screen.getByText("Local qwen")).toBeInTheDocument();
   });
 
   it("falls back to the colour dot for an option with no mark", () => {

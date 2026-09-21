@@ -13,7 +13,7 @@ export function getColumns(
   return [
     {
       accessorKey: "resourceType",
-      header: t("Resource Type"),
+      header: t("Resource type"),
       cell: ({ row }) => {
         return <p>{row.original.resourceType}</p>;
       },
@@ -21,7 +21,7 @@ export function getColumns(
       minSize: 120,
       maxSize: 180,
       meta: {
-        label: t("Resource Type"),
+        label: t("Resource type"),
         apiField: "resourceType",
         filterable: true,
         sortable: true,
@@ -32,7 +32,7 @@ export function getColumns(
     },
     {
       accessorKey: "documentTypeId",
-      header: t("Document Type"),
+      header: t("Document type"),
       cell: ({ row }) => {
         const docType = documentTypeMap.get(row.original.documentTypeId);
         return docType ? (
@@ -45,7 +45,7 @@ export function getColumns(
       minSize: 150,
       maxSize: 300,
       meta: {
-        label: t("Document Type"),
+        label: t("Document type"),
         apiField: "documentTypeId",
         filterable: false,
         sortable: false,
@@ -73,7 +73,7 @@ export function getColumns(
     },
     {
       accessorKey: "allowMultiple",
-      header: t("Allow Multiple"),
+      header: t("Allow multiple"),
       cell: ({ row }) => (
         <Badge variant={row.original.allowMultiple ? "info" : "neutral"}>
           {row.original.allowMultiple ? t("Yes") : t("No")}
@@ -83,7 +83,7 @@ export function getColumns(
       minSize: 100,
       maxSize: 160,
       meta: {
-        label: t("Allow Multiple"),
+        label: t("Allow multiple"),
         apiField: "allowMultiple",
         filterable: false,
         sortable: true,
@@ -105,7 +105,7 @@ export function getColumns(
     },
     {
       accessorKey: "expirationRequired",
-      header: t("Expiration Req."),
+      header: t("Expiration req."),
       cell: ({ row }) => (
         <Badge variant={row.original.expirationRequired ? "warning" : "neutral"}>
           {row.original.expirationRequired ? t("Yes") : t("No")}
@@ -115,7 +115,7 @@ export function getColumns(
       minSize: 110,
       maxSize: 170,
       meta: {
-        label: t("Expiration Required"),
+        label: t("Expiration required"),
         apiField: "expirationRequired",
         filterable: false,
         sortable: true,
@@ -123,7 +123,7 @@ export function getColumns(
     },
     {
       accessorKey: "expirationWarningDays",
-      header: t("Warning Days"),
+      header: t("Warning days"),
       cell: ({ row }) =>
         row.original.expirationRequired ? (
           <span>{t("{0}d", row.original.expirationWarningDays)}</span>
@@ -134,7 +134,7 @@ export function getColumns(
       minSize: 90,
       maxSize: 150,
       meta: {
-        label: t("Warning Days"),
+        label: t("Warning days"),
         apiField: "expirationWarningDays",
         filterable: false,
         sortable: true,

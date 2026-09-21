@@ -203,7 +203,7 @@ export function BillingQueuePage() {
     return (
       <BillingWorkspaceLayout
         pageHeaderProps={{
-          title: t("Billing Queue"),
+          title: t("Billing queue"),
           description: t(
             "What each statement customer has accrued this period, and the invoices it becomes",
           ),
@@ -236,7 +236,7 @@ export function BillingQueuePage() {
     <>
       <BillingWorkspaceLayout
         pageHeaderProps={{
-          title: t("Billing Queue"),
+          title: t("Billing queue"),
           description: t("Review and approve shipments before invoicing"),
           actions: headerActions,
         }}
@@ -272,7 +272,7 @@ export function BillingQueuePage() {
       >
         <SheetContent side="right" className="w-[min(92vw,1100px)] p-0 sm:max-w-none">
           <SheetHeader className="border-border border-b pr-12">
-            <SheetTitle>{selectedDocumentName || t("Document Preview")}</SheetTitle>
+            <SheetTitle>{selectedDocumentName || t("Document preview")}</SheetTitle>
             <SheetDescription>
               {t("Review the supporting shipment document attached to this billing queue item.")}
             </SheetDescription>

@@ -36,7 +36,7 @@ export function EquipmentManufacturerPanel({
         form={form}
         url="/equipment-manufacturers/"
         queryKey="equipment-manufacturer-list"
-        title={t("Equipment Manufacturer")}
+        title={t("Equipment manufacturer")}
         fieldKey="name"
         formComponent={<EquipmentManufacturerForm />}
       />
@@ -50,7 +50,7 @@ export function EquipmentManufacturerPanel({
       form={form}
       url="/equipment-manufacturers/"
       queryKey="equipment-manufacturer-list"
-      title={t("Equipment Manufacturer")}
+      title={t("Equipment manufacturer")}
       formComponent={<EquipmentManufacturerForm />}
     />
   );

@@ -43,7 +43,7 @@ export const SequencePreview = memo(function SequencePreview({ index, showTokens
     <div className="border-border bg-muted/30 rounded-lg border px-4 py-3.5">
       <div className="mb-1.5 flex items-center justify-between gap-3">
         <span className="text-muted-foreground text-xs font-medium">
-          {t("Live Preview")}
+          {t("Live preview")}
         </span>
         <div className="flex items-center gap-1">
           {showTokens ? (
@@ -61,7 +61,7 @@ export const SequencePreview = memo(function SequencePreview({ index, showTokens
                 <ul className="text-muted-foreground grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
                   {tokenLegend.map(({ token, label }) => (
                     <li key={token} className="flex items-center gap-1.5">
-                      <code className="bg-muted text-foreground rounded px-1 py-0.5 font-mono text-2xs">
+                      <code className="bg-muted text-foreground rounded-md px-1 py-0.5 font-mono text-2xs">
                         {token}
                       </code>
                       <span>{label}</span>

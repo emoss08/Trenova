@@ -125,8 +125,8 @@ describe("EDI test case columns", () => {
       "Name",
       "Partner",
       "Transaction",
-      "Document Profile",
-      "Expected Outcome",
+      "Document profile",
+      "Expected outcome",
       "Updated",
     ]);
     expect(columns[0]?.meta?.filterable).toBe(true);

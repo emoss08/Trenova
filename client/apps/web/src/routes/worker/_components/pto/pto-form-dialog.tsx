@@ -397,7 +397,7 @@ export function PTOFormDialog({
                   isLoading={isSubmitting}
                   loadingText={isEdit ? "Saving..." : "Requesting..."}
                 >
-                  {isEdit ? t("Save Changes") : t("Request PTO")}
+                  {isEdit ? t("Save changes") : t("Request PTO")}
                 </Button>
               </DialogFooter>
             </Form>

@@ -11,7 +11,7 @@ export function RateMatrixPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Rate Matrices"),
+        title: t("Rate matrices"),
         description: t(
           "Price a tariff the way it was published — a grid of zones, weight breaks and classes — instead of one lane per cell",
         ),

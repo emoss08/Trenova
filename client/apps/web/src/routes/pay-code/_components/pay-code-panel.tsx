@@ -79,7 +79,7 @@ function PayCodeCreatePanel({
     <FormCreatePanel<PayCodeFormValues, PayCodeRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Pay Code")}
+      title={t("Pay code")}
       description={t(
         "Define a carrier-specific earning or deduction code, its settlement behavior, and where it posts in the GL.",
       )}
@@ -120,7 +120,7 @@ function PayCodeEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title={t("Pay Code")}
+      title={t("Pay code")}
       fieldKey="code"
       queryKey="pay-code-list"
       form={form}
@@ -212,7 +212,7 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
           <GLAccountAutocompleteField
             control={control}
             name="glAccountId"
-            label={t("GL Account")}
+            label={t("GL account")}
             placeholder={t("Select GL account")}
             description={t(
               "Settlement lines carrying this code post to this account; leave blank to use the accounting control defaults.",
@@ -224,7 +224,7 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
           <NumberField
             control={control}
             name="defaultAmount"
-            label={t("Default Amount")}
+            label={t("Default amount")}
             decimalScale={2}
             fixedDecimalScale
             sideText={t("USD")}
@@ -250,7 +250,7 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
               <SwitchField
                 control={control}
                 name="countsTowardGuarantee"
-                label={t("Counts Toward Guaranteed Minimum")}
+                label={t("Counts toward guaranteed minimum")}
                 description={t(
                   "When off, pay under this code is ignored when checking a driver's guaranteed period minimum.",
                 )}

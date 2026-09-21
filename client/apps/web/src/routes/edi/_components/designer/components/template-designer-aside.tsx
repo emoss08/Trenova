@@ -139,7 +139,7 @@ export default function TemplateDesignerAside() {
       <FormCreateModal
         open={isCreateDialogOpen}
         onOpenChange={handleCreateDialogOpenChange}
-        title={t("EDI Template")}
+        title={t("EDI template")}
         description={t(
           "Choose a document type and name the EDI template before editing its version details.",
         )}
@@ -196,7 +196,7 @@ function TemplateFilterPopover({
       />
       <PopoverContent align="start" className="w-72 p-0">
         <div className="border-b px-3 py-2">
-          <div className="text-sm font-semibold">{t("Template Filters")}</div>
+          <div className="text-sm font-semibold">{t("Template filters")}</div>
           <div className="text-muted-foreground text-xs">{t("Narrow the template list.")}</div>
         </div>
         <div className="flex flex-col gap-1 px-3">

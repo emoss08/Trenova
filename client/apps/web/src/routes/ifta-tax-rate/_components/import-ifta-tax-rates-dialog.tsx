@@ -136,7 +136,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent size="xl" className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t("Import IFTA Tax Rates")}</DialogTitle>
+          <DialogTitle>{t("Import IFTA tax rates")}</DialogTitle>
           <DialogDescription>
             {t(
               "Read a CSV of the quarter's matrix in the browser, check every row, then publish the good ones. Rows with problems are shown but never sent.",

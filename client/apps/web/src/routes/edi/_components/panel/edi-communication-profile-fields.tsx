@@ -48,7 +48,7 @@ export function TransportProfileFields({
   if (method === "AS2") {
     return (
       <>
-        <FormSection title={t("AS2 Identifiers")}>
+        <FormSection title={t("AS2 identifiers")}>
           <FormGroup cols={2}>
             <FormControl>
               <InputField
@@ -92,7 +92,7 @@ export function TransportProfileFields({
               <SelectField
                 control={control}
                 name="config.mdnMode"
-                label={t("MDN Mode")}
+                label={t("MDN mode")}
                 options={mdnModeOptions}
                 rules={{ required: true }}
                 description={t(
@@ -104,7 +104,7 @@ export function TransportProfileFields({
               <InputField
                 control={control}
                 name="config.mdnUrl"
-                label={t("Async MDN Return URL")}
+                label={t("Async MDN return URL")}
                 placeholder="https://edi.trenova.com/as2/mdn"
                 description={t("Required when MDN mode is asynchronous.")}
               />
@@ -113,7 +113,7 @@ export function TransportProfileFields({
               <SelectField
                 control={control}
                 name="config.signingAlgorithm"
-                label={t("Signing Algorithm")}
+                label={t("Signing algorithm")}
                 options={as2SigningAlgorithmOptions}
                 description={t("The hashing algorithm used to sign outbound messages and MDNs.")}
               />
@@ -122,7 +122,7 @@ export function TransportProfileFields({
               <SelectField
                 control={control}
                 name="config.encryptionAlgorithm"
-                label={t("Encryption Algorithm")}
+                label={t("Encryption algorithm")}
                 options={as2EncryptionAlgorithmOptions}
                 description={t("The cipher used to encrypt outbound message payloads.")}
               />
@@ -142,7 +142,7 @@ export function TransportProfileFields({
               <InputField
                 control={control}
                 name="config.basicAuthUsername"
-                label={t("Basic Auth Username")}
+                label={t("Basic auth username")}
                 placeholder="trenova"
                 description={t("Optional HTTP basic auth credential the partner endpoint expects.")}
               />
@@ -151,7 +151,7 @@ export function TransportProfileFields({
               <SelectField
                 control={control}
                 name="config.requireSignedInbound"
-                label={t("Require Signed Inbound")}
+                label={t("Require signed inbound")}
                 options={as2InboundRequirementOptions}
                 description={t(
                   "Reject inbound documents that are not signed by the partner. Automatic requires a signature when a partner signing certificate is configured.",
@@ -162,7 +162,7 @@ export function TransportProfileFields({
               <SelectField
                 control={control}
                 name="config.requireEncryptedInbound"
-                label={t("Require Encrypted Inbound")}
+                label={t("Require encrypted inbound")}
                 options={as2InboundRequirementOptions}
                 description={t(
                   "Reject inbound documents that are not encrypted to us. Automatic requires encryption when a local certificate and private key are configured.",
@@ -177,7 +177,7 @@ export function TransportProfileFields({
               <EDICertificateField
                 control={control}
                 name="config.localCertificate"
-                label={t("Local Certificate (PEM)")}
+                label={t("Local certificate (PEM)")}
                 description={t(
                   "Our public certificate. Partners use it to encrypt to us and verify our signatures; pair it with the private key secret.",
                 )}
@@ -187,7 +187,7 @@ export function TransportProfileFields({
               <EDICertificateField
                 control={control}
                 name="config.partnerSigningCertificate"
-                label={t("Partner Signing Certificate (PEM)")}
+                label={t("Partner signing certificate (PEM)")}
                 description={t(
                   "Used to verify inbound signatures and signed MDNs from this partner.",
                 )}
@@ -197,7 +197,7 @@ export function TransportProfileFields({
               <EDICertificateField
                 control={control}
                 name="config.partnerEncryptionCertificate"
-                label={t("Partner Encryption Certificate (PEM)")}
+                label={t("Partner encryption certificate (PEM)")}
                 description={t(
                   "Used to encrypt outbound documents. Leave blank to reuse the signing certificate.",
                 )}
@@ -213,7 +213,7 @@ export function TransportProfileFields({
   if (method === "SFTP") {
     return (
       <>
-        <SftpEndpointSections control={control} title={t("SFTP Endpoint")} />
+        <SftpEndpointSections control={control} title={t("SFTP endpoint")} />
         <DeliveryRetrySection control={control} />
         <EDIEmptyState
           message={`Save a ${authMode === "password" ? "password" : "private key"} in the Secrets tab before activating this profile.`}
@@ -224,14 +224,14 @@ export function TransportProfileFields({
 
   return (
     <>
-      <FormSection title={t("VAN Mailbox")}>
+      <FormSection title={t("VAN mailbox")}>
         <FormGroup cols={2}>
           <FormControl>
             <InputField
               control={control}
               name="config.providerName"
-              label={t("Provider Name")}
-              placeholder={t("OpenText / SPS Commerce")}
+              label={t("Provider name")}
+              placeholder={t("OpenText / SPS commerce")}
               rules={{ required: true }}
               description={t("The name of the VAN provider hosting this mailbox.")}
             />
@@ -263,14 +263,14 @@ export function TransportProfileFields({
             <InputField
               control={control}
               name="config.contactEmail"
-              label={t("Contact Email")}
+              label={t("Contact email")}
               placeholder={t("edi@trenova.com")}
               description={t("The email address the VAN provider uses for service notifications.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
-      <SftpEndpointSections control={control} title={t("VAN Gateway Endpoint")} />
+      <SftpEndpointSections control={control} title={t("VAN gateway endpoint")} />
       <DeliveryRetrySection control={control} />
       <EDIEmptyState
         message={`Save a ${authMode === "password" ? "password" : "private key"} in the Secrets tab before activating this profile.`}
@@ -283,13 +283,13 @@ function DeliveryRetrySection({ control }: ProfileFieldsProps) {
   const t = useT();
 
   return (
-    <FormSection title={t("Delivery Retry")}>
+    <FormSection title={t("Delivery retry")}>
       <FormGroup cols={3}>
         <FormControl>
           <InputField
             control={control}
             name="config.retryMaxAttempts"
-            label={t("Max Attempts")}
+            label={t("Max attempts")}
             type="number"
             placeholder="6"
             description={t("Delivery attempts before the message is dead-lettered. Defaults to 6.")}
@@ -375,7 +375,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
             <TextareaField
               control={control}
               name="config.knownHostKey"
-              label={t("Known Host Key")}
+              label={t("Known host key")}
               placeholder={t("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...")}
               description={t("The known host key for the SFTP server.")}
               rules={{ required: true }}
@@ -389,7 +389,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
             <InputField
               control={control}
               name="config.inboundDirectory"
-              label={t("Inbound Directory")}
+              label={t("Inbound directory")}
               placeholder="/inbound"
               description={t("The directory where inbound files are stored.")}
             />
@@ -398,7 +398,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
             <InputField
               control={control}
               name="config.outboundDirectory"
-              label={t("Outbound Directory")}
+              label={t("Outbound directory")}
               placeholder="/outbound"
               description={t("The directory where outbound files are written for pickup.")}
             />
@@ -407,7 +407,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
             <InputField
               control={control}
               name="config.archiveDirectory"
-              label={t("Archive Directory")}
+              label={t("Archive directory")}
               placeholder="/archive"
               description={t("The directory where processed files are moved for retention.")}
             />
@@ -416,7 +416,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
             <InputField
               control={control}
               name="config.fileNamingPattern"
-              label={t("File Naming Pattern")}
+              label={t("File naming pattern")}
               placeholder="{partner}-{timestamp}.edi"
               description={t("The template used to name outbound files, with token substitution.")}
             />
@@ -431,13 +431,13 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
   const t = useT();
 
   return (
-    <FormSection title={t("X12 Envelope")}>
+    <FormSection title={t("X12 envelope")}>
       <FormGroup cols={2}>
         <FormControl>
           <InputField
             control={control}
             name="config.isaSenderQualifier"
-            label={t("ISA Sender Qualifier")}
+            label={t("ISA sender qualifier")}
             placeholder={t("ZZ")}
             rules={{ required: true }}
             description={t(
@@ -449,7 +449,7 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
           <InputField
             control={control}
             name="config.isaSenderId"
-            label={t("ISA Sender ID")}
+            label={t("ISA sender ID")}
             placeholder="TRENOVA"
             rules={{ required: true }}
             description={t("Our sender identifier placed in the ISA interchange header.")}
@@ -459,7 +459,7 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
           <InputField
             control={control}
             name="config.isaReceiverQualifier"
-            label={t("ISA Receiver Qualifier")}
+            label={t("ISA receiver qualifier")}
             placeholder={t("ZZ")}
             rules={{ required: true }}
             description={t(
@@ -471,7 +471,7 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
           <InputField
             control={control}
             name="config.isaReceiverId"
-            label={t("ISA Receiver ID")}
+            label={t("ISA receiver ID")}
             placeholder="PARTNERCO"
             rules={{ required: true }}
             description={t(
@@ -483,7 +483,7 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
           <InputField
             control={control}
             name="config.gsSenderId"
-            label={t("GS Sender ID")}
+            label={t("GS sender ID")}
             placeholder="TRENOVA"
             rules={{ required: true }}
             description={t("Our application sender code placed in the GS functional group header.")}
@@ -493,7 +493,7 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
           <InputField
             control={control}
             name="config.gsReceiverId"
-            label={t("GS Receiver ID")}
+            label={t("GS receiver ID")}
             placeholder="PARTNERCO"
             rules={{ required: true }}
             description={t(
@@ -505,7 +505,7 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
           <InputField
             control={control}
             name="config.x12Version"
-            label={t("X12 Version")}
+            label={t("X12 version")}
             placeholder="004010"
             rules={{ required: true }}
             description={t("The X12 release version the partner expects (e.g. 004010, 005010).")}
@@ -527,7 +527,7 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
           <SelectField
             control={control}
             name="config.acknowledgmentPreference"
-            label={t("Acknowledgment Preference")}
+            label={t("Acknowledgment preference")}
             options={acknowledgmentOptions}
             description={t(
               "Which functional acknowledgments (997/999) to request from the partner.",
@@ -561,7 +561,7 @@ export function SecretProfileFields({
     <div className="flex flex-col gap-6">
       {secretState && secretState.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold">{t("Saved Secrets")}</h3>
+          <h3 className="text-sm font-semibold">{t("Saved secrets")}</h3>
           <div className="flex flex-wrap gap-1.5">
             {secretState.map((secret) => (
               <Badge key={secret.key} variant="neutral">
@@ -571,7 +571,7 @@ export function SecretProfileFields({
           </div>
         </div>
       )}
-      <FormSection title={t("Secret Values")}>
+      <FormSection title={t("Secret values")}>
         <FormGroup cols={1}>
           {method === "AS2" && (
             <>
@@ -579,7 +579,7 @@ export function SecretProfileFields({
                 <SensitiveTextareaField
                   control={control}
                   name="secrets.privateKey"
-                  label={t("AS2 Private Key (PEM)")}
+                  label={t("AS2 private key (PEM)")}
                   description={t(
                     "Pairs with the local certificate for signing and decryption. Leave blank to keep the saved value.",
                   )}
@@ -589,7 +589,7 @@ export function SecretProfileFields({
                 <SensitiveField
                   control={control}
                   name="secrets.basicAuthPassword"
-                  label={t("Basic Auth Password")}
+                  label={t("Basic auth password")}
                   description={t("Leave blank to keep the saved value.")}
                 />
               </FormControl>
@@ -610,7 +610,7 @@ export function SecretProfileFields({
               <TextareaField
                 control={control}
                 name="secrets.privateKey"
-                label={t("Private Key")}
+                label={t("Private key")}
                 description={t("Leave blank to keep the saved value.")}
               />
             </FormControl>

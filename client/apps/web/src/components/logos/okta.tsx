@@ -10,5 +10,5 @@ export function OktaLogo({ className }: { className?: string }) {
   const { theme } = useTheme();
   const src = theme === "dark" ? oktaDarkLogo : oktaLightLogo;
 
-  return <LazyImage src={src} alt={t("Okta Logo")} className={className || "size-5"} />;
+  return <LazyImage src={src} alt={t("Okta logo")} className={className || "size-5"} />;
 }

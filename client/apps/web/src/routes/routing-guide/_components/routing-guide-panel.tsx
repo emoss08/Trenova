@@ -111,7 +111,7 @@ export function RoutingGuidePanel({
         row={row}
         form={form}
         queryKey={QUERY_KEY}
-        title={t("Routing Guide")}
+        title={t("Routing guide")}
         fieldKey="name"
         size="lg"
         formComponent={<RoutingGuideForm />}
@@ -134,7 +134,7 @@ export function RoutingGuidePanel({
       onOpenChange={onOpenChange}
       form={form}
       queryKey={QUERY_KEY}
-      title={t("Routing Guide")}
+      title={t("Routing guide")}
       size="lg"
       description={t(
         "Rank the carriers a lane should waterfall through, with the rate and offer window for each.",

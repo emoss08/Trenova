@@ -37,7 +37,7 @@ export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRat
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <HistoryIcon className="size-4" />
-            {t("Previous Rates")}
+            {t("Previous rates")}
           </DialogTitle>
           <DialogDescription>
             {t("Historical rates for this lane, service, and shipment type")}
@@ -139,7 +139,7 @@ export function PreviousRatesButton({
         disabled={disabled || !canFetch}
         onClick={() => setOpen(true)}
       >
-        {t("View Previous Rates")}
+        {t("View previous rates")}
       </Button>
       {open && <PreviousRatesDialog open={open} onOpenChange={setOpen} request={request} />}
     </>

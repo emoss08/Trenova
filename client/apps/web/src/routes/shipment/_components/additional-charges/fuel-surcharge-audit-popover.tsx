@@ -84,7 +84,7 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
       <PopoverContent align="end" className="w-80 space-y-3">
         <div>
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium">{detail.programName ?? t("Fuel Surcharge")}</p>
+            <p className="text-sm font-medium">{detail.programName ?? t("Fuel surcharge")}</p>
             <Badge variant="neutral" className="text-2xs">
               {detail.method ?? ""}
             </Badge>

@@ -182,7 +182,7 @@ export default function DataTableSortBuilder<TData extends RowData>({
             </div>
             <Button onClick={handleAddSort} disabled={availableColumns.length === 0}>
               <PlusIcon className="size-3.5" />
-              {t("Add Sort")}
+              {t("Add sort")}
             </Button>
           </div>
         ) : (
@@ -229,11 +229,11 @@ export default function DataTableSortBuilder<TData extends RowData>({
                 disabled={availableColumns.length === 0}
               >
                 <PlusIcon className="size-3.5" />
-                {t("Add Sort")}
+                {t("Add sort")}
               </Button>
               {sort.length > 0 && (
                 <Button variant="ghost" size="sm" onClick={handleResetSort}>
-                  {t("Reset Sort")}
+                  {t("Reset sort")}
                 </Button>
               )}
             </div>

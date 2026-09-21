@@ -267,7 +267,7 @@ export function DocumentPreviewArchiveTab() {
   return (
     <div className="grid h-full min-h-0 grid-cols-[360px_minmax(0,1fr)] gap-3 overflow-hidden">
       <aside className="bg-background flex min-h-0 flex-col overflow-hidden rounded-md border">
-        <PanelHeader icon={<ShieldCheckIcon />} title={t("Document Profile")} />
+        <PanelHeader icon={<ShieldCheckIcon />} title={t("Document profile")} />
         <ScrollArea className="min-h-0 flex-1" viewportClassName="min-h-0">
           <div className="flex flex-col gap-3 p-3">
             <ControlledEDIPartnerAutocompleteField
@@ -311,7 +311,7 @@ export function DocumentPreviewArchiveTab() {
               noResultsMessage={t("No document profiles match this partner and document context.")}
             />
             <InputBlock
-              label={t("Profile Name")}
+              label={t("Profile name")}
               value={profileDraft.name}
               onChange={(name) => setProfileDraft((current) => ({ ...current, name }))}
             />
@@ -336,7 +336,7 @@ export function DocumentPreviewArchiveTab() {
             />
             <div className="grid grid-cols-2 gap-2">
               <InputBlock
-                label={t("Version Override")}
+                label={t("Version override")}
                 value={profileDraft.x12VersionOverride ?? ""}
                 onChange={(x12VersionOverride) =>
                   setProfileDraft((current) => ({ ...current, x12VersionOverride }))
@@ -386,7 +386,7 @@ export function DocumentPreviewArchiveTab() {
               />
             )}
             <TextareaBlock
-              label={t("Partner Settings")}
+              label={t("Partner settings")}
               description={t("Raw partner settings for advanced profile configuration.")}
               value={rawPartnerSettings}
               onChange={setRawPartnerSettings}
@@ -408,7 +408,7 @@ export function DocumentPreviewArchiveTab() {
               disabled={!partnerId}
             >
               <ShieldCheckIcon className="size-4" />
-              {t("Save Profile")}
+              {t("Save profile")}
             </Button>
           </div>
         </ScrollArea>
@@ -589,12 +589,12 @@ function ServiceFailure214SettingsEditor({
 
   return (
     <div className="space-y-3 rounded-md border p-3">
-      <div className="text-muted-foreground text-xs font-medium">{t("Service Failure 214")}</div>
+      <div className="text-muted-foreground text-xs font-medium">{t("Service failure 214")}</div>
       <div className="grid grid-cols-2 gap-2">
         {serviceFailure214BooleanFields.map((field) => (
           <label
             key={field.key}
-            className="flex min-h-8 items-center gap-2 rounded border px-2 text-xs"
+            className="flex min-h-8 items-center gap-2 rounded-md border px-2 text-xs"
           >
             <Checkbox
               checked={Boolean(settings[field.key])}
@@ -606,18 +606,18 @@ function ServiceFailure214SettingsEditor({
       </div>
       <div className="grid grid-cols-2 gap-2">
         <InputBlock
-          label={t("Status Code")}
+          label={t("Status code")}
           value={settingString(settings.statusCode)}
           onChange={(statusCode) => updateSettings({ statusCode: statusCode.trim().toUpperCase() })}
         />
         <InputBlock
-          label={t("Time Code")}
+          label={t("Time code")}
           value={settingString(settings.timeCode)}
           onChange={(timeCode) => updateSettings({ timeCode: timeCode.trim().toUpperCase() })}
         />
       </div>
       <InputBlock
-        label={t("Accepted Reason Codes")}
+        label={t("Accepted reason codes")}
         value={settingStringArray(settings.acceptedReasonCodes).join(", ")}
         onChange={(value) =>
           updateSettings({
@@ -634,17 +634,17 @@ function ServiceFailure214SettingsEditor({
 
 const serviceFailure214BooleanFields = [
   { key: "enabled", label: "Enabled" },
-  { key: "sendOnReviewed", label: "Send Reviewed" },
-  { key: "sendOnResolved", label: "Send Resolved" },
-  { key: "mandatoryOnReviewed", label: "Mandatory Reviewed" },
-  { key: "mandatoryOnResolved", label: "Mandatory Resolved" },
-  { key: "requireStatusReasonCode", label: "Require Reason" },
-  { key: "requireLocation", label: "Require Location" },
-  { key: "requireLocationName", label: "Require Location Name" },
-  { key: "requireCityState", label: "Require City/State" },
-  { key: "requirePostalCode", label: "Require Postal" },
-  { key: "requireTimeCode", label: "Require Time Code" },
-  { key: "requireStop", label: "Require Stop" },
+  { key: "sendOnReviewed", label: "Send reviewed" },
+  { key: "sendOnResolved", label: "Send resolved" },
+  { key: "mandatoryOnReviewed", label: "Mandatory reviewed" },
+  { key: "mandatoryOnResolved", label: "Mandatory resolved" },
+  { key: "requireStatusReasonCode", label: "Require reason" },
+  { key: "requireLocation", label: "Require location" },
+  { key: "requireLocationName", label: "Require location name" },
+  { key: "requireCityState", label: "Require city/state" },
+  { key: "requirePostalCode", label: "Require postal" },
+  { key: "requireTimeCode", label: "Require time code" },
+  { key: "requireStop", label: "Require stop" },
   { key: "requireProNumber", label: "Require PRO" },
   { key: "requireBol", label: "Require BOL" },
 ] as const;
@@ -768,7 +768,7 @@ function MessageArchive({
               <TableHead>{t("Direction")}</TableHead>
               <TableHead>{t("Status")}</TableHead>
               <TableHead>{t("Version")}</TableHead>
-              <TableHead>{t("Control Numbers")}</TableHead>
+              <TableHead>{t("Control numbers")}</TableHead>
               <TableHead>{t("Shipment")}</TableHead>
               <TableHead>{t("Transfer")}</TableHead>
               <TableHead>{t("Diagnostics")}</TableHead>

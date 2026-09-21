@@ -160,7 +160,7 @@ function UnsettledPaySection({
 
   if (isLoading) {
     return (
-      <RailSection title={t("Unsettled Pay")} hint={t("Accrued pay not yet on a settlement.")}>
+      <RailSection title={t("Unsettled pay")} hint={t("Accrued pay not yet on a settlement.")}>
         <Skeleton className="h-16 w-full" />
       </RailSection>
     );
@@ -170,7 +170,7 @@ function UnsettledPaySection({
 
   return (
     <RailSection
-      title={t("Unsettled Pay")}
+      title={t("Unsettled pay")}
       hint={t("Accrued pay not yet on a settlement — attach it, or hold it for a later period.")}
     >
       {list.length === 0 ? (
@@ -307,7 +307,7 @@ function HoldDialog({
           </Button>
           <Button disabled={!reason.trim() || mutation.isPending} onClick={() => mutation.mutate()}>
             <PauseCircle className="size-4" />
-            {t("Hold Pay")}
+            {t("Hold pay")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -351,7 +351,7 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
 
   if (isLoading) {
     return (
-      <RailSection title={t("Recurring Earnings")} hint={t("Added each settlement.")}>
+      <RailSection title={t("Recurring earnings")} hint={t("Added each settlement.")}>
         <Skeleton className="h-12 w-full" />
       </RailSection>
     );
@@ -361,7 +361,7 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
 
   return (
     <RailSection
-      title={t("Recurring Earnings")}
+      title={t("Recurring earnings")}
       hint={t("Added automatically each settlement — pause here to skip a period.")}
       action={
         <Link
@@ -454,7 +454,7 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
 
   if (isLoading) {
     return (
-      <RailSection title={t("Recurring Deductions")} hint={t("Withheld each settlement.")}>
+      <RailSection title={t("Recurring deductions")} hint={t("Withheld each settlement.")}>
         <Skeleton className="h-12 w-full" />
       </RailSection>
     );
@@ -464,7 +464,7 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
 
   return (
     <RailSection
-      title={t("Recurring Deductions")}
+      title={t("Recurring deductions")}
       hint={t("Withheld automatically each settlement — pause here to skip a period.")}
       action={
         <Link

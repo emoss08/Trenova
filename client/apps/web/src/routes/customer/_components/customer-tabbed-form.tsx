@@ -31,16 +31,16 @@ export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
           </TabsTab>
           <TabsTab value="billing">
             <CreditCardIcon className="size-4" />
-            {t("Billing Profile")}
+            {t("Billing profile")}
           </TabsTab>
           <TabsTab value="email">
             <MailIcon className="size-4" />
-            {t("Email Profile")}
+            {t("Email profile")}
           </TabsTab>
           {customerId ? (
             <TabsTab value="broker-vetting">
               <RadarIcon className="size-4" />
-              {t("Broker Vetting")}
+              {t("Broker vetting")}
             </TabsTab>
           ) : null}
         </TabsList>

@@ -134,7 +134,7 @@ export function JsonEditor() {
                   ) : (
                     <>
                       <UploadIcon className="size-3.5" />
-                      {t("Apply Changes")}
+                      {t("Apply changes")}
                     </>
                   )}
                 </Button>
@@ -157,7 +157,7 @@ export function JsonEditor() {
                   className="gap-1"
                 >
                   <RefreshCwIcon className="size-3.5" />
-                  {t("Refresh from Builder")}
+                  {t("Refresh from builder")}
                 </Button>
               }
             />

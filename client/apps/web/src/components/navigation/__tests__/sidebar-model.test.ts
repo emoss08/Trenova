@@ -24,7 +24,7 @@ function moduleById(id: string): NavModule {
 describe("moduleDisplayLabel", () => {
   it("prefers the short label and falls back to the full one", () => {
     expect(moduleDisplayLabel(moduleById("hr"))).toBe("People");
-    expect(moduleDisplayLabel(moduleById("carrier-settlements"))).toBe("Carrier Settlements");
+    expect(moduleDisplayLabel(moduleById("carrier-settlements"))).toBe("Carrier settlements");
   });
 });
 
@@ -69,8 +69,8 @@ describe("buildModuleView", () => {
     expect(view.sections.map((section) => section.label)).toEqual([
       null,
       "Reports",
-      "Accounts Receivable",
-      "Bank Reconciliation",
+      "Accounts receivable",
+      "Bank reconciliation",
     ]);
     expect(view.configuration.map((item) => item.id)).toEqual(["account-types", "fiscal-years"]);
   });
@@ -115,7 +115,7 @@ describe("buildModuleView", () => {
       navigation: [
         {
           id: "cfg",
-          label: "Configuration Files",
+          label: "Configuration files",
           kind: "configuration",
           items: [{ id: "x", label: "X", path: "/reports/x" }],
         },
@@ -127,8 +127,8 @@ describe("buildModuleView", () => {
   it("builds the settings module from the admin links, one section per group", () => {
     const links: SidebarLink[] = [
       { href: "/admin/users/", title: "Users", group: "Organization" },
-      { href: "/admin/api-keys", title: "API Keys", group: "Data & Integrations" },
-      { href: "/admin/hold-reasons/", title: "Hold Reasons", group: "Organization" },
+      { href: "/admin/api-keys", title: "API keys", group: "Data & Integrations" },
+      { href: "/admin/hold-reasons/", title: "Hold reasons", group: "Organization" },
       { href: "/admin/loose", title: "Loose", includeBetaTag: true },
     ];
     const view = buildModuleView(moduleById("admin"), links);

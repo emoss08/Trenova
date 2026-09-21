@@ -183,7 +183,7 @@ function UncoveredBar({
       title={`${span.move.proNumber} · ${span.move.originCity} → ${span.move.destinationCity}`}
       onClick={() => onSelect(span.move.moveId)}
       className={cn(
-"ui-focus-ring absolute flex cursor-grab items-center overflow-hidden rounded px-1.5 transition-[opacity,box-shadow] outline-none active:cursor-grabbing",
+"ui-focus-ring absolute flex cursor-grab items-center overflow-hidden rounded-md px-1.5 transition-[opacity,box-shadow] outline-none active:cursor-grabbing",
         tone,
         isDragging && "opacity-40",
         isSelected && "shadow-[0_0_0_2px_var(--brand)]",
@@ -224,7 +224,7 @@ function CommitmentBar({
       title={`${span.commitment.proNumber} → ${span.commitment.destinationCity}, ${span.commitment.destinationState}`}
       onClick={() => onSelect(span.commitment.moveId)}
       className={cn(
-"ui-focus-ring absolute flex cursor-pointer items-center overflow-hidden rounded px-1.5 transition-colors outline-none",
+"ui-focus-ring absolute flex cursor-pointer items-center overflow-hidden rounded-md px-1.5 transition-colors outline-none",
         inTransit
           ? "bg-brand text-brand-foreground hover:bg-brand/85"
           : "bg-brand/60 text-brand-foreground hover:bg-brand/75",

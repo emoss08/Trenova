@@ -23,7 +23,7 @@ import { Link } from "react-router";
 
 const settlementStatusChoices = [
   { value: "Unpaid", label: "Unpaid" },
-  { value: "PartiallyPaid", label: "Partially Paid" },
+  { value: "PartiallyPaid", label: "Partially paid" },
   { value: "Paid", label: "Paid" },
 ];
 
@@ -136,7 +136,7 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
     {
       id: "invoiceDate",
       accessorKey: "invoiceDate",
-      header: t("Invoice Date"),
+      header: t("Invoice date"),
       cell: ({ row }) => <span>{formatDate(row.original.invoiceDate)}</span>,
       meta: {
         apiField: "invoiceDate",
@@ -148,7 +148,7 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
     {
       id: "dueDate",
       accessorKey: "dueDate",
-      header: t("Due Date"),
+      header: t("Due date"),
       cell: ({ row }) => <span>{formatDate(row.original.dueDate)}</span>,
       meta: {
         apiField: "dueDate",
@@ -203,7 +203,7 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
     {
       id: "daysPastDue",
       accessorKey: "daysPastDue",
-      header: t("Past Due"),
+      header: t("Past due"),
       cell: ({ row }) =>
         row.original.daysPastDue !== null && row.original.daysPastDue !== undefined ? (
           <AgingBadge daysPastDue={row.original.daysPastDue} />

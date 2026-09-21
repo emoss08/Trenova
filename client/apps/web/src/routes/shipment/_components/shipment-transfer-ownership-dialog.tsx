@@ -81,7 +81,7 @@ export function ShipmentTransferOwnershipDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Transfer Ownership")}</DialogTitle>
+          <DialogTitle>{t("Transfer ownership")}</DialogTitle>
           <DialogDescription>{t("Transfer this shipment to a different user.")}</DialogDescription>
         </DialogHeader>
         <Form
@@ -96,7 +96,7 @@ export function ShipmentTransferOwnershipDialog({
               <UserAutocompleteField
                 control={control}
                 name="ownerId"
-                label={t("New Owner")}
+                label={t("New owner")}
                 rules={{ required: true }}
               />
             </FormControl>
@@ -106,7 +106,7 @@ export function ShipmentTransferOwnershipDialog({
               {t("Close")}
             </Button>
             <Button type="submit" isLoading={isSubmitting} loadingText={t("Transferring...")}>
-              {t("Transfer Ownership")}
+              {t("Transfer ownership")}
             </Button>
           </DialogFooter>
         </Form>

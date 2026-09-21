@@ -18,7 +18,7 @@ export function FuelManagementPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Fuel Management"),
+        title: t("Fuel management"),
         description: t(
           "DOE diesel prices, fuel surcharge programs, and automatic surcharge application",
         ),
@@ -33,15 +33,15 @@ export function FuelManagementPage() {
           <TabsList variant="underline">
             <TabsTab value="dashboard">
               <Gauge className="size-4" />
-              {t("Price Dashboard")}
+              {t("Price dashboard")}
             </TabsTab>
             <TabsTab value="programs">
               <Fuel className="size-4" />
-              {t("Surcharge Programs")}
+              {t("Surcharge programs")}
             </TabsTab>
             <TabsTab value="indices">
               <ListTree className="size-4" />
-              {t("Fuel Indices")}
+              {t("Fuel indices")}
             </TabsTab>
           </TabsList>
         </div>

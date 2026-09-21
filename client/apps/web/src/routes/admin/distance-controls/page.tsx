@@ -11,7 +11,7 @@ export function DistanceControlsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Distance Control"),
+        title: t("Distance control"),
         description: t("Configure mileage storage behavior and distance profile assignments"),
       }}
     >

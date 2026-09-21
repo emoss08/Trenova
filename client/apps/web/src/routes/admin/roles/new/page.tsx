@@ -83,16 +83,16 @@ export function RoleCreatePage() {
     <FormProvider {...form}>
       <Form onSubmit={onSubmit}>
         <RolePageLayout
-          title={t("Create Role")}
+          title={t("Create role")}
           isSubmitting={isSubmitting}
-          submitLabel={t("Create Role")}
+          submitLabel={t("Create role")}
           onSubmit={onSubmit}
           onCancel={handleCancel}
           permissionCount={permissions.length}
         >
           <Card>
             <CardHeader>
-              <CardTitle>{t("Role Details")}</CardTitle>
+              <CardTitle>{t("Role details")}</CardTitle>
               <CardDescription>{t("Basic information for this role")}</CardDescription>
             </CardHeader>
             <CardContent>

@@ -101,8 +101,8 @@ export function AccessorialChargeForm() {
             control={control}
             rules={{ required: methodIsPerUnit }}
             name="rateUnit"
-            label={t("Rate Unit")}
-            placeholder={t("Rate Unit")}
+            label={t("Rate unit")}
+            placeholder={t("Rate unit")}
             description={t("Unit of measure for this charge (mile, hour, day, stop)")}
             options={rateUnitChoices}
           />

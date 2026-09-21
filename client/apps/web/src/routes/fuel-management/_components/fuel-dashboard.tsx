@@ -157,12 +157,12 @@ function IndexPriceCard({
           {entry.index.name}
         </span>
         {entry.index.source === "Custom" ? (
-          <span className="bg-muted text-2xs text-muted-foreground rounded px-1.5 py-0.5">
+          <span className="bg-muted text-2xs text-muted-foreground rounded-md px-1.5 py-0.5">
             {entry.index.region || t("Custom")}
           </span>
         ) : (
           entry.index.region && (
-            <span className="bg-primary/10 text-2xs text-primary shrink-0 rounded px-1.5 py-0.5">
+            <span className="bg-primary/10 text-2xs text-primary shrink-0 rounded-md px-1.5 py-0.5">
               {entry.index.region}
             </span>
           )

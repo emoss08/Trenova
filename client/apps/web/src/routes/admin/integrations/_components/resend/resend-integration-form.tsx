@@ -160,7 +160,7 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
               label={
                 <span className="inline-flex items-center gap-1.5">
                   {t(
-                    "Webhook Signing Secret {0}",
+                    "Webhook signing secret {0}",
                     hasWebhookSecret ? ` ${t("(leave blank to keep existing secret)")}` : "",
                   )}
                   <ResendWebhookHelpPopover webhookURL={webhookURL} />
@@ -175,7 +175,7 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
             <InputField
               name="configuration.webhookToken"
               control={control}
-              label={t("Webhook Token")}
+              label={t("Webhook token")}
               readOnly
               placeholder={t("Generated after first save")}
               description={t("Use this token in the Resend webhook URL path.")}
@@ -192,7 +192,7 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
             loadingText={t("Saving...")}
             disabled={configQuery.isLoading}
           >
-            {t("Save Changes")}
+            {t("Save changes")}
           </Button>
         </DialogFooter>
       </Form>
@@ -253,7 +253,7 @@ function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
               {resendWebhookEvents.map((event) => (
                 <code
                   key={event}
-                  className="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs"
+                  className="bg-muted text-foreground rounded-md px-1.5 py-0.5 text-xs"
                 >
                   {event}
                 </code>

@@ -86,7 +86,7 @@ function CreateReversalPanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title={t("New Journal Reversal")}
+      title={t("New journal reversal")}
       description={t("Create a new journal entry reversal request.")}
       footer={
         <>
@@ -95,7 +95,7 @@ function CreateReversalPanel({
           </Button>
           <Button type="submit" form="journal-reversal-create-form" disabled={isSubmitting}>
             <SendIcon className="mr-1.5 size-3.5" />
-            {isSubmitting ? t("Creating...") : t("Create Reversal")}
+            {isSubmitting ? t("Creating...") : t("Create reversal")}
           </Button>
         </>
       }
@@ -181,18 +181,18 @@ function ReversalDetailPanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Journal Reversal")}
+      title={t("Journal reversal")}
       description={`Reversal for entry ${reversal.originalJournalEntryId}`}
       headerActions={<AccountingStatusBadge status={reversal.status} />}
     >
       <div className="flex flex-col gap-6">
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
           <div>
-            <dt className="text-2xs text-muted-foreground font-medium">{t("Original Entry")}</dt>
+            <dt className="text-2xs text-muted-foreground font-medium">{t("Original entry")}</dt>
             <dd className="mt-0.5 font-mono text-xs">{reversal.originalJournalEntryId}</dd>
           </div>
           <div>
-            <dt className="text-2xs text-muted-foreground font-medium">{t("Reason Code")}</dt>
+            <dt className="text-2xs text-muted-foreground font-medium">{t("Reason code")}</dt>
             <dd className="mt-0.5 text-xs font-medium">{reversal.reasonCode}</dd>
           </div>
           <div className="col-span-2">
@@ -201,21 +201,21 @@ function ReversalDetailPanel({
           </div>
           {reversal.reversalJournalEntryId ? (
             <div>
-              <dt className="text-2xs text-muted-foreground font-medium">{t("Reversal Entry")}</dt>
+              <dt className="text-2xs text-muted-foreground font-medium">{t("Reversal entry")}</dt>
               <dd className="mt-0.5 font-mono text-xs">{reversal.reversalJournalEntryId}</dd>
             </div>
           ) : null}
           {reversal.rejectionReason ? (
             <div className="col-span-2">
               <dt className="text-2xs text-muted-foreground font-medium">
-                {t("Rejection Reason")}
+                {t("Rejection reason")}
               </dt>
               <dd className="mt-0.5 text-xs text-danger-foreground">{reversal.rejectionReason}</dd>
             </div>
           ) : null}
           {reversal.cancelReason ? (
             <div className="col-span-2">
-              <dt className="text-2xs text-muted-foreground font-medium">{t("Cancel Reason")}</dt>
+              <dt className="text-2xs text-muted-foreground font-medium">{t("Cancel reason")}</dt>
               <dd className="mt-0.5 text-xs">{reversal.cancelReason}</dd>
             </div>
           ) : null}
@@ -254,7 +254,7 @@ function ReversalDetailPanel({
                   onClick={() => setShowCancelInput(true)}
                   disabled={showCancelInput}
                 >
-                  {t("Cancel Reversal")}
+                  {t("Cancel reversal")}
                 </Button>
               ) : null}
             </div>
@@ -275,7 +275,7 @@ function ReversalDetailPanel({
                     onClick={() => void reject(undefined)}
                     disabled={isRejecting || !rejectionReason.trim()}
                   >
-                    {isRejecting ? t("Rejecting...") : t("Confirm Reject")}
+                    {isRejecting ? t("Rejecting...") : t("Confirm reject")}
                   </Button>
                   <Button
                     size="sm"
@@ -307,7 +307,7 @@ function ReversalDetailPanel({
                     onClick={() => void cancel(undefined)}
                     disabled={isCancelling || !cancelReason.trim()}
                   >
-                    {isCancelling ? t("Cancelling...") : t("Confirm Cancel")}
+                    {isCancelling ? t("Cancelling...") : t("Confirm cancel")}
                   </Button>
                   <Button
                     size="sm"

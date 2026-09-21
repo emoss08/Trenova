@@ -80,7 +80,7 @@ export function BillingQueueRerateDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-100">
         <DialogHeader>
-          <DialogTitle>{t("Change Formula Template")}</DialogTitle>
+          <DialogTitle>{t("Change formula template")}</DialogTitle>
           <DialogDescription>
             {t("Select a different formula template to re-rate the freight charge.")}
           </DialogDescription>
@@ -91,7 +91,7 @@ export function BillingQueueRerateDialog({
               <FormulaTemplateAutocompleteField
                 control={control}
                 name="formulaTemplateId"
-                label={t("Formula Template")}
+                label={t("Formula template")}
                 rules={{ required: true }}
               />
             </FormControl>

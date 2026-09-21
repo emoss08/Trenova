@@ -172,7 +172,7 @@ function RecordPaymentPanel({
         }
         onOpenChange(next);
       }}
-      title={t("Record Payment")}
+      title={t("Record payment")}
       description={t("Post a customer payment and apply it across open invoices in one step.")}
       size="xl"
       footer={
@@ -181,7 +181,7 @@ function RecordPaymentPanel({
             {t("Cancel")}
           </Button>
           <Button type="submit" form="record-payment-form" isLoading={isSubmitting}>
-            {t("Post Payment")}
+            {t("Post payment")}
           </Button>
         </>
       }

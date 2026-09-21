@@ -1446,7 +1446,7 @@ export function ControlledEDIDocumentProfileAutocompleteField({
   };
   return (
     <ControlledAutocompleteField<GraphQLSelectOption>
-      label={t("Document Profile")}
+      label={t("Document profile")}
       link="/edi/document-profiles/select-options/"
       graphql={
         Object.keys(graphqlFilters).length > 0
@@ -1471,7 +1471,7 @@ export function ControlledEDIDocumentProfileAutocompleteField({
 }
 
 export function ControlledFormulaTemplateAutocompleteField({
-  label = "Formula Template",
+  label = "Formula template",
   placeholder = "Search templates...",
   ...props
 }: ControlledGraphQLAutocompleteFieldProps) {
@@ -1753,12 +1753,12 @@ export function FiscalYearAutocompleteField<T extends FieldValues>({
             <span className="flex items-center gap-1.5">
               {t(option.label)}
               {selectOptionMetaBoolean(option, "isCurrent") && (
-                <span className="inline-flex items-center rounded border border-success/30 bg-success/20 px-1 py-px text-2xs font-medium text-success-foreground">
+                <span className="inline-flex items-center rounded-md border border-success/30 bg-success/20 px-1 py-px text-2xs font-medium text-success-foreground">
                   {t("Current")}
                 </span>
               )}
               {status && status !== "Open" && (
-                <span className="bg-muted text-2xs text-muted-foreground rounded px-1 py-0.5">
+                <span className="bg-muted text-2xs text-muted-foreground rounded-md px-1 py-0.5">
                   {status}
                 </span>
               )}
@@ -1794,7 +1794,7 @@ export function FiscalPeriodAutocompleteField<T extends FieldValues>({
             <span className="flex items-center gap-1.5">
               {t(option.label)}
               {status && status !== "Open" && (
-                <span className="bg-muted text-2xs text-muted-foreground rounded px-1 py-0.5">
+                <span className="bg-muted text-2xs text-muted-foreground rounded-md px-1 py-0.5">
                   {status}
                 </span>
               )}
@@ -1848,7 +1848,7 @@ export function FuelIndexAutocompleteField<T extends FieldValues>({
             <span className="flex items-center gap-1.5">
               {t(option.label)}
               {region && (
-                <span className="bg-muted text-2xs text-muted-foreground rounded px-1 py-0.5">
+                <span className="bg-muted text-2xs text-muted-foreground rounded-md px-1 py-0.5">
                   {region}
                 </span>
               )}
@@ -2348,7 +2348,7 @@ function payCodeOptionLabel(option: GraphQLSelectOption, direction?: PayCodeDire
  * that hold their state in useState rather than a react-hook-form control.
  */
 export function ControlledPayCodeAutocompleteField({
-  label = "Pay Code",
+  label = "Pay code",
   placeholder = "Search pay codes...",
   direction,
   ...props

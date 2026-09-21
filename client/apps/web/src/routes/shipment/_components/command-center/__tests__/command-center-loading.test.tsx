@@ -64,7 +64,7 @@ function signIn() {
 const columns: ColumnDef<Shipment>[] = [
   {
     id: "proNumber",
-    header: "Pro Number",
+    header: "Pro number",
     accessorFn: (row: Shipment) => row.proNumber,
     cell: ({ row }: { row: { original: Shipment } }) => row.original.proNumber,
   } as unknown as ColumnDef<Shipment>,

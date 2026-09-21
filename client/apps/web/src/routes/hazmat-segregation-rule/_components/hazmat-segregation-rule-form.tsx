@@ -90,9 +90,9 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
         <HazardousMaterialAutocompleteField<HazmatSegregationRule>
           name="hazmatAId"
           control={control}
-          label={t("Hazardous Material A")}
+          label={t("Hazardous material A")}
           clearable
-          placeholder={t("Select Hazardous Material A")}
+          placeholder={t("Select hazardous material A")}
           description={t("Optional specific hazardous material")}
         />
       </FormControl>
@@ -100,9 +100,9 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
         <HazardousMaterialAutocompleteField<HazmatSegregationRule>
           name="hazmatBId"
           control={control}
-          label={t("Hazardous Material B")}
+          label={t("Hazardous material B")}
           clearable
-          placeholder={t("Select Hazardous Material B")}
+          placeholder={t("Select hazardous material B")}
           description={t("Optional specific hazardous material")}
         />
       </FormControl>
@@ -111,8 +111,8 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
           control={control}
           rules={{ required: true }}
           name="segregationType"
-          label={t("Segregation Type")}
-          placeholder={t("Segregation Type")}
+          label={t("Segregation type")}
+          placeholder={t("Segregation type")}
           description={t("Type of segregation required")}
           options={segregationTypeChoices}
           isReadOnly={disabled}
@@ -125,8 +125,8 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
               control={control}
               rules={{ required: showDistanceOptions }}
               name="minimumDistance"
-              label={t("Minimum Distance")}
-              placeholder={t("Minimum Distance")}
+              label={t("Minimum distance")}
+              placeholder={t("Minimum distance")}
               description={t("Minimum required distance")}
               min={0}
               step={0.1}
@@ -138,8 +138,8 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
               control={control}
               rules={{ required: showDistanceOptions }}
               name="distanceUnit"
-              label={t("Distance Unit")}
-              placeholder={t("Distance Unit")}
+              label={t("Distance unit")}
+              placeholder={t("Distance unit")}
               description={t("Measurement unit for minimum distance")}
               options={segregationDistanceUnitChoices}
               isReadOnly={disabled}
@@ -152,7 +152,7 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
           control={control}
           outlined
           name="hasExceptions"
-          label={t("Has Exceptions")}
+          label={t("Has exceptions")}
           description={t("Indicates whether exceptions to this rule exist")}
           disabled={disabled}
         />
@@ -162,8 +162,8 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
           <TextareaField
             control={control}
             name="exceptionNotes"
-            label={t("Exception Notes")}
-            placeholder={t("Exception Notes")}
+            label={t("Exception notes")}
+            placeholder={t("Exception notes")}
             description={t("Document exceptions or special cases")}
             rules={{ required: hasExceptions }}
             disabled={disabled}
@@ -174,7 +174,7 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
         <InputField
           control={control}
           name="referenceCode"
-          label={t("Reference Code")}
+          label={t("Reference code")}
           placeholder={t("49 CFR 177.848")}
           description={t("Regulatory code reference")}
           disabled={disabled}
@@ -184,7 +184,7 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
         <InputField
           control={control}
           name="regulationSource"
-          label={t("Regulation Source")}
+          label={t("Regulation source")}
           placeholder={t("DOT")}
           description={t("Source of the regulation")}
           disabled={disabled}

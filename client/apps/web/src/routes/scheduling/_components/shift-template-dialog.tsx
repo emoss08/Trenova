@@ -431,7 +431,7 @@ function ShiftPreview({
             <span
               key={label}
               className={cn(
-                "grid h-6 place-items-center rounded text-2xs",
+                "grid h-6 place-items-center rounded-md text-2xs",
                 on ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground/70",
               )}
               aria-hidden

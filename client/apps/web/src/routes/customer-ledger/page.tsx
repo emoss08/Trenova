@@ -101,7 +101,7 @@ export function CustomerLedgerPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Customer Ledger"),
+        title: t("Customer ledger"),
         description: t("Statement-style transaction history with the customer's AR profile."),
         actions: customerId ? (
           <div className="flex items-center gap-2">
@@ -127,7 +127,7 @@ export function CustomerLedgerPage() {
                 }
               >
                 <HandCoinsIcon className="size-4" />
-                {t("Record Payment")}
+                {t("Record payment")}
               </Button>
             ) : null}
           </div>

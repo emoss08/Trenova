@@ -210,7 +210,7 @@ export function ReportSourcePicker({
         ) : loading ? (
           <div className="flex flex-col gap-1">
             {[0, 1, 2, 3].map((row) => (
-              <Skeleton key={row} className="h-9 rounded" />
+              <Skeleton key={row} className="h-9 rounded-md" />
             ))}
           </div>
         ) : rows.length === 0 ? (
@@ -289,7 +289,7 @@ function PickerRow({ row }: { row: Row }) {
       aria-selected={row.selected}
       onClick={row.onSelect}
       className={cn(
-        "flex w-full items-start gap-2 rounded px-2 py-1.5 text-left transition-colors",
+        "flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition-colors",
 "ui-focus-ring",
         row.selected
           ? "border-brand/50 bg-brand/10 border"

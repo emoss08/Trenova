@@ -141,7 +141,7 @@ export function ForkLineageDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GitBranchIcon className="size-4" />
-            {t("Fork Lineage")}
+            {t("Fork lineage")}
           </DialogTitle>
           <DialogDescription>
             {t(

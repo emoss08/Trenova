@@ -112,7 +112,7 @@ function SortableRow({
         type="button"
         aria-label={t("Reorder")}
         className={cn(
-          "text-muted-foreground/60 hover:text-foreground ml-auto flex size-6 shrink-0 cursor-grab touch-none items-center justify-center rounded transition-colors",
+          "text-muted-foreground/60 hover:text-foreground ml-auto flex size-6 shrink-0 cursor-grab touch-none items-center justify-center rounded-md transition-colors",
           disabled && "invisible",
         )}
         {...attributes}
@@ -311,7 +311,7 @@ function ActivityEditor({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <GroupLabel>{t("Recent Activity")}</GroupLabel>
+      <GroupLabel>{t("Recent activity")}</GroupLabel>
       <div className="border-border bg-background flex h-8 items-center justify-between rounded-md border px-2">
         <span className="text-xs font-medium">{t("Entries per page")}</span>
         <Select
@@ -413,7 +413,7 @@ export default function CustomizeSidebarForm({
           onChange={(sections) => setDraft((previous) => ({ ...previous, sections }))}
         />
         <ChecklistEditor
-          label={t("Needs Attention")}
+          label={t("Needs attention")}
           items={options.attentionMetrics.map((metric) => ({
             id: metric.key,
             label: metric.label,
@@ -424,7 +424,7 @@ export default function CustomizeSidebarForm({
           }
         />
         <ChecklistEditor
-          label={t("Quick Actions")}
+          label={t("Quick actions")}
           hint={`${draft.quickActionIds.length}/${options.maxQuickActions}`}
           items={options.quickActions.map((action) => ({ id: action.id, label: action.label }))}
           selected={draft.quickActionIds}

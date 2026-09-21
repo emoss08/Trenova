@@ -34,7 +34,7 @@ export function EmailProfilePanel({
         form={form}
         url="/email-profiles/"
         queryKey={emailProfileQueryKey}
-        title={t("Email Profile")}
+        title={t("Email profile")}
         fieldKey="name"
         formComponent={<EmailProfileForm />}
       />
@@ -48,7 +48,7 @@ export function EmailProfilePanel({
       form={form}
       url="/email-profiles/"
       queryKey={emailProfileQueryKey}
-      title={t("Email Profile")}
+      title={t("Email profile")}
       formComponent={<EmailProfileForm />}
     />
   );

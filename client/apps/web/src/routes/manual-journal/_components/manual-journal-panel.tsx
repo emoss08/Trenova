@@ -79,7 +79,7 @@ function CreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       size="xl"
-      title={t("New Manual Journal")}
+      title={t("New manual journal")}
       description={t("Create a new manual journal entry draft.")}
       footer={
         <>
@@ -92,7 +92,7 @@ function CreatePanel({
             isLoading={isPending}
             disabled={isPending}
           >
-            {t("Create Draft")}
+            {t("Create draft")}
           </Button>
         </>
       }
@@ -234,7 +234,7 @@ function EditPanel({
         isLoading={saveMutation.isPending}
         disabled={saveMutation.isPending}
       >
-        {t("Save Draft")}
+        {t("Save draft")}
       </Button>
     </>
   ) : (
@@ -255,8 +255,8 @@ function EditPanel({
     >
       {detailQuery.isLoading ? (
         <div className="space-y-3 p-4">
-          <div className="bg-muted h-8 w-full animate-pulse rounded" />
-          <div className="bg-muted h-40 w-full animate-pulse rounded" />
+          <div className="bg-muted h-8 w-full animate-pulse rounded-md" />
+          <div className="bg-muted h-40 w-full animate-pulse rounded-md" />
         </div>
       ) : journal ? (
         <div className="flex flex-col gap-6">
@@ -302,7 +302,7 @@ function EditPanel({
                         onClick={() => rejectMutation.mutate(undefined)}
                         disabled={!rejectReason.trim() || rejectMutation.isPending}
                       >
-                        {t("Confirm Reject")}
+                        {t("Confirm reject")}
                       </Button>
                       <Button
                         size="sm"
@@ -342,7 +342,7 @@ function EditPanel({
           (status === "Draft" || status === "PendingApproval" || status === "Approved") ? (
             <div>
               <Button size="sm" variant="outline" onClick={() => setShowCancelInput(true)}>
-                {t("Cancel Journal")}
+                {t("Cancel journal")}
               </Button>
             </div>
           ) : null}
@@ -363,7 +363,7 @@ function EditPanel({
                   onClick={() => cancelMutation.mutate(undefined)}
                   disabled={!cancelReason.trim() || cancelMutation.isPending}
                 >
-                  {t("Confirm Cancel")}
+                  {t("Confirm cancel")}
                 </Button>
                 <Button
                   size="sm"

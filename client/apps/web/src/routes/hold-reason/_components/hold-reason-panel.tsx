@@ -24,7 +24,7 @@ import { HoldReasonForm } from "./hold-reason-form";
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
-  { id: "save-close", label: "Save & Close" },
+  { id: "save-close", label: "Save & close" },
 ];
 
 export function HoldReasonPanel({
@@ -63,7 +63,7 @@ export function HoldReasonPanel({
       form={form}
       url="/hold-reasons/"
       queryKey="hold-reason-list"
-      title={t("Hold Reason")}
+      title={t("Hold reason")}
       formComponent={<HoldReasonForm />}
     />
   );
@@ -192,7 +192,7 @@ function HoldReasonEditPanel({ open, onOpenChange, row, form }: HoldReasonEditPa
       }
     >
       {!row ? (
-        <ComponentLoader message={t("Loading Hold Reason...")} />
+        <ComponentLoader message={t("Loading hold reason...")} />
       ) : (
         <FormProvider {...form}>
           <Form id="panel-edit-form" onSubmit={handleSubmit(handleFormSubmit)}>

@@ -11,7 +11,7 @@ export function RecurringDeductionsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Recurring Deductions"),
+        title: t("Recurring deductions"),
         description: t(
           "Standing per-settlement deductions: insurance, lease payments, escrow contributions, and loan repayments with caps.",
         ),

@@ -64,8 +64,8 @@ export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
         <TableHeader>
           <TableRow>
             <TableHead className="w-16 text-xs">{t("Version")}</TableHead>
-            <TableHead className="text-xs">{t("In Force")}</TableHead>
-            <TableHead className="text-xs">{t("What Changed")}</TableHead>
+            <TableHead className="text-xs">{t("In force")}</TableHead>
+            <TableHead className="text-xs">{t("What changed")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

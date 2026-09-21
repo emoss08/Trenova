@@ -150,7 +150,7 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
           <div className="border-border flex items-center justify-between border-b px-4 py-3">
             <div className="flex flex-col gap-0.5">
               <Dialog.Title className="text-sm leading-none font-medium">
-                {t("Create Worker")}
+                {t("Create worker")}
               </Dialog.Title>
               <Dialog.Description className="text-muted-foreground text-xs">
                 {t("Add a new worker to your organization")}
@@ -185,21 +185,21 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
                   <TabsList variant="underline">
                     <TabsTab value="general" className={cn(hasGeneralErrors && "text-destructive")}>
                       <UserIcon className="size-4" />
-                      {t("General Information")}
+                      {t("General information")}
                     </TabsTab>
                     <TabsTab
                       value="employment"
                       className={cn(hasEmploymentErrors && "text-destructive")}
                     >
                       <BriefcaseIcon className="size-4" />
-                      {t("Employment Information")}
+                      {t("Employment information")}
                     </TabsTab>
                     <TabsTab
                       value="compliance"
                       className={cn(hasComplianceErrors && "text-destructive")}
                     >
                       <ShieldCheckIcon className="size-4" />
-                      {t("Compliance Status")}
+                      {t("Compliance status")}
                     </TabsTab>
                   </TabsList>
                 </div>
@@ -223,7 +223,7 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
               {t("Cancel")}
             </Button>
             <Button type="submit" form="worker-create-form" disabled={isSubmitting}>
-              {isSubmitting ? t("Creating...") : t("Create Worker")}
+              {isSubmitting ? t("Creating...") : t("Create worker")}
             </Button>
           </div>
         </Dialog.Popup>

@@ -166,7 +166,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
             <Input
               id="preset-name"
               value={draft.name}
-              placeholder={t("Dispatch Home")}
+              placeholder={t("Dispatch home")}
               onChange={(event) => patch({ name: event.target.value })}
             />
           </div>
@@ -221,7 +221,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
               {(roles.data ?? []).map((role) => (
                 <label
                   key={role.id}
-                  className="border-border hover:bg-muted/40 flex items-center gap-2 rounded border px-2 py-1.5 text-xs transition-colors"
+                  className="border-border hover:bg-muted/40 flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs transition-colors"
                 >
                   <Checkbox
                     checked={draft.roleIds.includes(role.id)}

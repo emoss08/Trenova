@@ -217,7 +217,7 @@ function LaneRow({
             control={control}
             name={`rules.${index}.label` as never}
             label={t("Label")}
-            placeholder={t("Dallas to Chicago")}
+            placeholder={t("Dallas to chicago")}
             description={t("What this lane is called on a rate confirmation and in a trace")}
           />
         </FormControl>
@@ -251,7 +251,7 @@ function LaneRow({
               control={control}
               rules={{ required: !usesMatrix }}
               name={`rules.${index}.formulaTemplateId` as never}
-              label={t("Rating Method")}
+              label={t("Rating method")}
               placeholder={t("Select rating method")}
               description={t(
                 "The formula template this lane prices through — the lane's rate binds in as the template's base rate",
@@ -281,7 +281,7 @@ function LaneRow({
               control={control}
               rules={{ required: !usesFormula }}
               name={`rules.${index}.rateMatrixId` as never}
-              label={t("Rate Matrix")}
+              label={t("Rate matrix")}
               placeholder={t("Matrix")}
               description={t(
                 "Reads the price from a grid instead of a rating method — the matrix's own rating method says what its cells mean",
@@ -296,7 +296,7 @@ function LaneRow({
           <NumberField
             control={control}
             name={`rules.${index}.minCharge` as never}
-            label={t("Minimum Charge")}
+            label={t("Minimum charge")}
             placeholder="850.00"
             sideText="$"
             decimalScale={2}
@@ -308,7 +308,7 @@ function LaneRow({
           <NumberField
             control={control}
             name={`rules.${index}.maxCharge` as never}
-            label={t("Maximum Charge")}
+            label={t("Maximum charge")}
             placeholder="0.00"
             sideText="$"
             decimalScale={2}
@@ -320,7 +320,7 @@ function LaneRow({
           <NumberField
             control={control}
             name={`rules.${index}.minBillableDistance` as never}
-            label={t("Minimum Billable Miles")}
+            label={t("Minimum billable miles")}
             placeholder="250"
             sideText="mi"
             description={t("Short hauls bill at this distance however far they actually ran")}

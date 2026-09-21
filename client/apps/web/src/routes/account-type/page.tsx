@@ -11,7 +11,7 @@ export function AccountTypesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Account Types"),
+        title: t("Account types"),
         description: t("Manage and configure account types for your organization"),
       }}
     >

@@ -138,7 +138,7 @@ function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
       <DataTablePanelContainer
         open={open}
         onOpenChange={onOpenChange}
-        title={t("Create API Key")}
+        title={t("Create API key")}
         description={t(
           "Define the bearer credential and grant only the resources the integration needs.",
         )}
@@ -154,7 +154,7 @@ function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
               isLoading={isSubmitting}
               loadingText={t("Creating...")}
             >
-              {t("Create API Key")}
+              {t("Create API key")}
             </Button>
           </>
         }
@@ -309,7 +309,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
                   </Button>
                 }
               />
-              <TooltipContent>{t("Rotate Secret")}</TooltipContent>
+              <TooltipContent>{t("Rotate secret")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger
@@ -326,7 +326,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
                   </Button>
                 }
               />
-              <TooltipContent>{t("Revoke Key")}</TooltipContent>
+              <TooltipContent>{t("Revoke key")}</TooltipContent>
             </Tooltip>
           </>
         )}
@@ -355,7 +355,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
               loadingText={t("Saving...")}
               disabled={isRevoked}
             >
-              {t("Save Changes")}
+              {t("Save changes")}
             </Button>
           </>
         }
@@ -412,7 +412,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
             <AlertDialogMedia>
               <ShieldAlertIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>{t("Revoke API Key")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("Revoke API key")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t(
                 "Revoke this bearer credential immediately. Existing integrations will stop authenticating until a new key is provisioned.",
@@ -426,7 +426,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
               onClick={() => revokeMutation.mutate(undefined)}
               disabled={revokeMutation.isPending}
             >
-              {t("Revoke Key")}
+              {t("Revoke key")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -479,7 +479,7 @@ function TokenSuccessDialog({
           </Button>
           <Button type="button" onClick={() => copy(token, { withToast: true })}>
             {isCopied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
-            {isCopied ? t("Copied") : t("Copy API Key")}
+            {isCopied ? t("Copied") : t("Copy API key")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -68,14 +68,14 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
   switch (action) {
     case "activate":
       return {
-        title: t("Open Fiscal Period"),
+        title: t("Open fiscal period"),
         intro: t("You are about to open {0}.", period.name),
         effectsHeading: t("Opening this period will:"),
         effects: [
           t("Accept subledger postings such as invoices and vendor bills"),
           t("Accept manual journal entries"),
         ],
-        confirm: t("Open Period"),
+        confirm: t("Open period"),
         pending: t("Opening..."),
         success: t("Period opened"),
         successDescription: t("{0} is now open", period.name),
@@ -83,7 +83,7 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
       };
     case "lock":
       return {
-        title: t("Lock Fiscal Period"),
+        title: t("Lock fiscal period"),
         intro: t("You are about to lock {0}.", period.name),
         effectsHeading: t("Locking this period will:"),
         effects: [
@@ -91,7 +91,7 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
           t("Keep accepting manual journal entries for accruals and adjustments"),
           t("Allow unlocking if subledger postings need to resume"),
         ],
-        confirm: t("Lock Period"),
+        confirm: t("Lock period"),
         pending: t("Locking..."),
         success: t("Period locked"),
         successDescription: t("{0} is now locked", period.name),
@@ -99,11 +99,11 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
       };
     case "unlock":
       return {
-        title: t("Unlock Fiscal Period"),
+        title: t("Unlock fiscal period"),
         intro: t("You are about to unlock {0}.", period.name),
         effectsHeading: t("Unlocking this period will:"),
         effects: [t("Return the period to Open"), t("Accept subledger postings again")],
-        confirm: t("Unlock Period"),
+        confirm: t("Unlock period"),
         pending: t("Unlocking..."),
         success: t("Period unlocked"),
         successDescription: t("{0} is open again", period.name),
@@ -111,14 +111,14 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
       };
     case "close":
       return {
-        title: t("Close Fiscal Period"),
+        title: t("Close fiscal period"),
         intro: t("You are about to close {0}.", period.name),
         effectsHeading: t("Closing this period will:"),
         effects: [
           t("Block every posting, including manual journal entries"),
           t("Require reopening, with a recorded reason, before anything can change"),
         ],
-        confirm: t("Close Period"),
+        confirm: t("Close period"),
         pending: t("Closing..."),
         success: t("Period closed"),
         successDescription: t("{0} is now closed", period.name),
@@ -126,7 +126,7 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
       };
     case "reopen":
       return {
-        title: t("Reopen Fiscal Period"),
+        title: t("Reopen fiscal period"),
         intro: t("You are about to reopen {0}.", period.name),
         effectsHeading: t("Reopening this period will:"),
         effects: [
@@ -134,7 +134,7 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
           t("Accept subledger postings and manual journal entries again"),
           t("Record who reopened it, when, and why"),
         ],
-        confirm: t("Reopen Period"),
+        confirm: t("Reopen period"),
         pending: t("Reopening..."),
         success: t("Period reopened"),
         successDescription: t("{0} is open again", period.name),

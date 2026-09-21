@@ -8,7 +8,7 @@ export function CarrierSourcingPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Carrier Sourcing"),
+        title: t("Carrier sourcing"),
         description: t("Find carriers, vet them against your rules and import the ones you want"),
       }}
     >

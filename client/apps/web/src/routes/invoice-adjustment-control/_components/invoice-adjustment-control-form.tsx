@@ -78,7 +78,7 @@ export default function InvoiceAdjustmentControlForm() {
           <DocumentationCard />
           <ApprovalCard />
           <CreditAndVisibilityCard />
-          <FormSaveDock saveButtonContent={t("Save Changes")} />
+          <FormSaveDock saveButtonContent={t("Save changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -93,7 +93,7 @@ function EligibilityCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Eligibility Policy")}</CardTitle>
+        <CardTitle>{t("Eligibility policy")}</CardTitle>
         <CardDescription>
           {t(
             "Define which invoice states may be adjusted and how accounting dates are assigned when credits, rebills, or related adjustments are created.",
@@ -106,7 +106,7 @@ function EligibilityCard() {
             <SelectField
               control={control}
               name="partiallyPaidInvoiceAdjustmentPolicy"
-              label={t("Partially Paid Invoice Adjustment Policy")}
+              label={t("Partially paid invoice adjustment policy")}
               description={t(
                 "Controls whether partially paid invoices can be adjusted and whether approval is required.",
               )}
@@ -118,7 +118,7 @@ function EligibilityCard() {
             <SelectField
               control={control}
               name="paidInvoiceAdjustmentPolicy"
-              label={t("Paid Invoice Adjustment Policy")}
+              label={t("Paid invoice adjustment policy")}
               description={t(
                 "Controls whether fully paid invoices may be adjusted through the formal adjustment workflow.",
               )}
@@ -130,7 +130,7 @@ function EligibilityCard() {
             <SelectField
               control={control}
               name="disputedInvoiceAdjustmentPolicy"
-              label={t("Disputed Invoice Adjustment Policy")}
+              label={t("Disputed invoice adjustment policy")}
               description={t(
                 "Controls whether disputed invoices can be adjusted and whether approval is required.",
               )}
@@ -142,7 +142,7 @@ function EligibilityCard() {
             <SelectField
               control={control}
               name="adjustmentAccountingDatePolicy"
-              label={t("Adjustment Accounting Date Policy")}
+              label={t("Adjustment accounting date policy")}
               description={t(
                 "Defines whether adjustments use the original invoice accounting date when open or always book in the next open period.",
               )}
@@ -154,7 +154,7 @@ function EligibilityCard() {
             <SelectField
               control={control}
               name="closedPeriodAdjustmentPolicy"
-              label={t("Closed Period Adjustment Policy")}
+              label={t("Closed period adjustment policy")}
               description={t(
                 "Defines whether closed-period adjustments are disallowed, require reopen, or must post in the next open period with approval.",
               )}
@@ -166,7 +166,7 @@ function EligibilityCard() {
             <NumberField
               control={control}
               name="rerateVarianceTolerancePercent"
-              label={t("Rerate Variance Tolerance Percent")}
+              label={t("Rerate variance tolerance percent")}
               description={t(
                 "Tolerance percentage used when comparing rerated replacement invoice economics to the superseded invoice.",
               )}
@@ -177,7 +177,7 @@ function EligibilityCard() {
             <SelectField
               control={control}
               name="replacementInvoiceReviewPolicy"
-              label={t("Replacement Invoice Review Policy")}
+              label={t("Replacement invoice review policy")}
               description={t(
                 "Defines when a replacement invoice must be reviewed after a credit and rebill workflow changes economic terms.",
               )}
@@ -199,7 +199,7 @@ function DocumentationCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Documentation Requirements")}</CardTitle>
+        <CardTitle>{t("Documentation requirements")}</CardTitle>
         <CardDescription>
           {t(
             "Define the minimum supporting documentation and business justification required before an adjustment can be completed.",
@@ -212,7 +212,7 @@ function DocumentationCard() {
             <SelectField
               control={control}
               name="adjustmentReasonRequirement"
-              label={t("Adjustment Reason Requirement")}
+              label={t("Adjustment reason requirement")}
               description={t(
                 "Determines whether a structured reason is mandatory before an adjustment can be completed.",
               )}
@@ -236,7 +236,7 @@ function ApprovalCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Approval Policy")}</CardTitle>
+        <CardTitle>{t("Approval policy")}</CardTitle>
         <CardDescription>
           {t(
             "Define which adjustments require approval and where amount thresholds apply for standard adjustments and write-offs.",
@@ -249,7 +249,7 @@ function ApprovalCard() {
             <SelectField
               control={control}
               name="standardAdjustmentApprovalPolicy"
-              label={t("Standard Adjustment Approval Policy")}
+              label={t("Standard adjustment approval policy")}
               description={t(
                 "Defines whether standard invoice adjustments require approval always, never, or only above a configured threshold.",
               )}
@@ -262,7 +262,7 @@ function ApprovalCard() {
               <NumberField
                 control={control}
                 name="standardAdjustmentApprovalThreshold"
-                label={t("Standard Adjustment Approval Threshold")}
+                label={t("Standard adjustment approval threshold")}
                 description={t(
                   "Adjustment amount above which approval is required when the standard approval policy uses an amount threshold.",
                 )}
@@ -274,7 +274,7 @@ function ApprovalCard() {
             <SelectField
               control={control}
               name="writeOffApprovalPolicy"
-              label={t("Write-Off Approval Policy")}
+              label={t("Write-off approval policy")}
               description={t(
                 "Defines whether write-offs are disallowed, always require approval, or require approval only above a threshold.",
               )}
@@ -287,7 +287,7 @@ function ApprovalCard() {
               <NumberField
                 control={control}
                 name="writeOffApprovalThreshold"
-                label={t("Write-Off Approval Threshold")}
+                label={t("Write-off approval threshold")}
                 description={t(
                   "Write-off amount above which approval is required when the write-off approval policy uses an amount threshold.",
                 )}
@@ -309,7 +309,7 @@ function CreditAndVisibilityCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Credit And Visibility")}</CardTitle>
+        <CardTitle>{t("Credit and visibility")}</CardTitle>
         <CardDescription>
           {t(
             "Define whether unapplied customer credits are allowed, whether over-crediting can occur, and what external users may see after invoice replacement.",
@@ -322,7 +322,7 @@ function CreditAndVisibilityCard() {
             <SelectField
               control={control}
               name="customerCreditBalancePolicy"
-              label={t("Customer Credit Balance Policy")}
+              label={t("Customer credit balance policy")}
               description={t(
                 "Defines whether invoice adjustments may leave an unapplied customer credit balance.",
               )}
@@ -334,7 +334,7 @@ function CreditAndVisibilityCard() {
             <SelectField
               control={control}
               name="overCreditPolicy"
-              label={t("Over-Credit Policy")}
+              label={t("Over-credit policy")}
               description={t(
                 "Controls unapplied customer-credit outcomes caused by payment state and does not permit credit beyond true eligible invoice line or item scope.",
               )}
@@ -346,7 +346,7 @@ function CreditAndVisibilityCard() {
             <SelectField
               control={control}
               name="supersededInvoiceVisibilityPolicy"
-              label={t("Superseded Invoice Visibility Policy")}
+              label={t("Superseded invoice visibility policy")}
               description={t(
                 "Defines whether external customer-facing views show only the current invoice or also expose superseded invoices with status.",
               )}

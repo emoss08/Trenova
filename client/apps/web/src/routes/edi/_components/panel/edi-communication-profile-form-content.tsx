@@ -30,7 +30,7 @@ export function OverviewTab() {
 
   return (
     <div className="flex flex-col gap-6">
-      <FormSection title={t("Profile Identity")}>
+      <FormSection title={t("Profile identity")}>
         <FormGroup cols={2}>
           <FormControl>
             <InputField
@@ -84,7 +84,7 @@ export function OverviewTab() {
         </FormGroup>
       </FormSection>
       {method === "Internal" && (
-        <FormSection title={t("Internal Routing")}>
+        <FormSection title={t("Internal routing")}>
           <FormGroup cols={2}>
             <FormControl>
               <EDIConnectionAutocompleteField
@@ -100,7 +100,7 @@ export function OverviewTab() {
               <OrganizationAutocompleteField
                 control={control}
                 name="config.connectedOrganizationId"
-                label={t("Connected Organization")}
+                label={t("Connected organization")}
                 placeholder={t("Select organization")}
                 description={t("Organization that receives documents delivered over this profile.")}
                 clearable

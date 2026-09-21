@@ -7,7 +7,7 @@ import {
 function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormValues {
   return {
     preset: "",
-    name: "Local Qwen",
+    name: "Local qwen",
     description: "",
     kind: "OpenAIChat",
     baseUrl: "http://10.0.0.5:8000/v1",

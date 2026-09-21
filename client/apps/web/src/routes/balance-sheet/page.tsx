@@ -27,7 +27,7 @@ export function BalanceSheetPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Balance Sheet"),
+        title: t("Balance sheet"),
         description: t("Assets, liabilities, and equity as of a fiscal period."),
       }}
     >
@@ -52,7 +52,7 @@ export function BalanceSheetPage() {
             <FinancialReportSection section={data.assets} />
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
-              <span className="text-sm font-semibold">{t("Total Assets")}</span>
+              <span className="text-sm font-semibold">{t("Total assets")}</span>
               <AmountDisplay value={data.totalAssetsMinor} className="text-lg font-semibold" />
             </div>
 
@@ -61,7 +61,7 @@ export function BalanceSheetPage() {
             <FinancialReportSection section={data.liabilities} />
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
-              <span className="text-sm font-semibold">{t("Total Liabilities")}</span>
+              <span className="text-sm font-semibold">{t("Total liabilities")}</span>
               <AmountDisplay value={data.totalLiabilitiesMinor} className="text-lg font-semibold" />
             </div>
 
@@ -69,7 +69,7 @@ export function BalanceSheetPage() {
 
             {data.currentYearEarningsMinor !== 0 ? (
               <div className="flex items-center justify-between rounded-md border px-4 py-2 text-sm">
-                <span className="text-muted-foreground">{t("Current Year Earnings")}</span>
+                <span className="text-muted-foreground">{t("Current year earnings")}</span>
                 <AmountDisplay
                   value={data.currentYearEarningsMinor}
                   variant="auto"
@@ -79,7 +79,7 @@ export function BalanceSheetPage() {
             ) : null}
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
-              <span className="text-sm font-semibold">{t("Total Equity")}</span>
+              <span className="text-sm font-semibold">{t("Total equity")}</span>
               <AmountDisplay value={data.totalEquityMinor} className="text-lg font-semibold" />
             </div>
 
@@ -92,7 +92,7 @@ export function BalanceSheetPage() {
               )}
             >
               <span className="text-base font-semibold">
-                {isBalanced ? t("Balance Sheet is Balanced") : t("Balance Sheet is NOT Balanced")}
+                {isBalanced ? t("Balance sheet is balanced") : t("Balance sheet is NOT balanced")}
               </span>
               <div className="flex items-center gap-4">
                 <div className="text-right">

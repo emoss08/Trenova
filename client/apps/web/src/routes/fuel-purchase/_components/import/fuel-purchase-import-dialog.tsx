@@ -339,7 +339,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
       >
         <DialogContent size="xl" className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t("Import Fuel Card Statement")}</DialogTitle>
+            <DialogTitle>{t("Import fuel card statement")}</DialogTitle>
             <DialogDescription>
               {t(
                 "Upload a provider statement, read what it would record, then confirm. Nothing becomes a purchase until you do.",

@@ -131,7 +131,7 @@ describe("ShipmentBillingReadinessPanel payers", () => {
     const amd = screen.getByTestId("billing-payer-row-cus_amd");
     expect(amd).toHaveTextContent("$400.00");
     expect(amd).toHaveTextContent("Credit hold");
-    expect(await screen.findByText("On Hold")).toBeInTheDocument();
+    expect(await screen.findByText("On hold")).toBeInTheDocument();
     expect(mocks.queueItems).toHaveBeenCalledWith("shp_1");
   });
 

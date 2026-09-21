@@ -50,7 +50,7 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
   return (
     <Card>
       <CardHeader className="border-b pb-3">
-        <CardTitle>{t("Code Strategy")}</CardTitle>
+        <CardTitle>{t("Code strategy")}</CardTitle>
         <CardDescription>
           {t(
             "Derive readable components from location attributes, then append a sequence. The combined length cannot exceed 32 characters.",
@@ -127,7 +127,7 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
             <NumberField
               control={control}
               name={`configs.${index}.locationCodeStrategy.componentWidth`}
-              label={t("Component Width")}
+              label={t("Component width")}
               description={t("Characters drawn from each selected attribute (1–10).")}
               min={1}
               max={10}
@@ -137,7 +137,7 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
             <NumberField
               control={control}
               name={`configs.${index}.locationCodeStrategy.sequenceDigits`}
-              label={t("Sequence Digits")}
+              label={t("Sequence digits")}
               description={t("Width of the zero-padded counter (1–10).")}
               min={1}
               max={10}
@@ -167,7 +167,7 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
             <InputField
               control={control}
               name={`configs.${index}.locationCodeStrategy.fallbackPrefix`}
-              label={t("Fallback Prefix")}
+              label={t("Fallback prefix")}
               description={t("Used when the location name cannot produce a usable prefix.")}
               placeholder={t("LOC")}
               maxLength={10}

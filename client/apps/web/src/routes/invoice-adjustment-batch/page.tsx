@@ -77,7 +77,7 @@ export function InvoiceAdjustmentBatchPage() {
   return (
     <BillingWorkspaceLayout
       pageHeaderProps={{
-        title: t("Batch Monitor"),
+        title: t("Batch monitor"),
         description: t(
           "Track bulk adjustment submission progress, failures, and created artifacts.",
         ),
@@ -232,10 +232,10 @@ export function InvoiceAdjustmentBatchPage() {
                     {formatTimestamp(selectedRow.submittedAt)}
                   </DescriptionItem>
                   <DescriptionItem label={t("Status")}>{selectedRow.status}</DescriptionItem>
-                  <DescriptionItem label={t("Last Failure Count")}>
+                  <DescriptionItem label={t("Last failure count")}>
                     {String(selectedRow.lastFailureCount)}
                   </DescriptionItem>
-                  <DescriptionItem label={t("Idempotency Key")} valueClassName="break-all">
+                  <DescriptionItem label={t("Idempotency key")} valueClassName="break-all">
                     {selectedRow.idempotencyKey}
                   </DescriptionItem>
                 </DescriptionList>

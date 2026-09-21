@@ -79,7 +79,7 @@ export function StepHeading({ title, children }: { title: string; children?: Rea
 
 export function KeyHint({ children }: { children: ReactNode }) {
   return (
-    <span className="border-border-2 text-subtle-foreground font-table rounded border px-[5px] py-px text-2xs whitespace-nowrap">
+    <span className="border-border-2 text-subtle-foreground font-table rounded-md border px-[5px] py-px text-2xs whitespace-nowrap">
       {children}
     </span>
   );
@@ -181,7 +181,7 @@ export function AuthOption({
       {shortcut ? (
         <span
           aria-hidden="true"
-          className="border-border-2 text-subtle-foreground font-table hidden rounded border px-[5px] py-px text-2xs opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 sm:inline"
+          className="border-border-2 text-subtle-foreground font-table hidden rounded-md border px-[5px] py-px text-2xs opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 sm:inline"
         >
           {shortcut}
         </span>

@@ -42,8 +42,8 @@ export function LocationCategoryForm() {
         <SelectField
           control={control}
           name="facilityType"
-          label={t("Facility Type")}
-          placeholder={t("Facility Type")}
+          label={t("Facility type")}
+          placeholder={t("Facility type")}
           description={t("The facility type of the location category")}
           options={facilityTypeChoices}
           isClearable
@@ -70,7 +70,7 @@ export function LocationCategoryForm() {
         <SwitchField
           control={control}
           name="hasSecureParking"
-          label={t("Secure Parking")}
+          label={t("Secure parking")}
           description={t("Whether this location has secure parking")}
         />
       </FormControl>
@@ -78,7 +78,7 @@ export function LocationCategoryForm() {
         <SwitchField
           control={control}
           name="requiresAppointment"
-          label={t("Requires Appointment")}
+          label={t("Requires appointment")}
           description={t("Whether this location requires an appointment")}
         />
       </FormControl>
@@ -86,7 +86,7 @@ export function LocationCategoryForm() {
         <SwitchField
           control={control}
           name="allowsOvernight"
-          label={t("Allows Overnight")}
+          label={t("Allows overnight")}
           description={t("Whether this location allows overnight stays")}
         />
       </FormControl>
@@ -94,7 +94,7 @@ export function LocationCategoryForm() {
         <SwitchField
           control={control}
           name="hasRestroom"
-          label={t("Has Restroom")}
+          label={t("Has restroom")}
           description={t("Whether this location has restroom facilities")}
         />
       </FormControl>

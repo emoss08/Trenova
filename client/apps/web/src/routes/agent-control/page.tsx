@@ -102,7 +102,7 @@ export function AgentControlPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("AI Control"),
+        title: t("AI control"),
         description: t(
           "Providers say where AI work goes, agents say what it may do, and activity shows what it did.",
         ),

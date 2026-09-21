@@ -25,7 +25,7 @@ export function OshaLogPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("OSHA 300 Log"),
+        title: t("OSHA 300 log"),
         description: t(
           "Recordable injuries and illnesses for the year, and the 300A summary posted over them. The totals are counted from the log every time it is read, so a case corrected years later cannot leave a stale summary behind.",
         ),

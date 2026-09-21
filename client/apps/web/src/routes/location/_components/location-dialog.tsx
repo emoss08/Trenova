@@ -45,13 +45,13 @@ const FORM_ID = "location-dialog-form";
 
 const CREATE_SAVE_OPTIONS: SplitButtonOption<CreatePanelSaveAction>[] = [
   { id: "save", label: "Save" },
-  { id: "save-close", label: "Save & Close" },
-  { id: "save-add-another", label: "Save & Add Another" },
+  { id: "save-close", label: "Save & close" },
+  { id: "save-add-another", label: "Save & add another" },
 ];
 
 const EDIT_SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
-  { id: "save-close", label: "Save & Close" },
+  { id: "save-close", label: "Save & close" },
 ];
 
 const CREATE_DEFAULT_VALUES: LocationFormInput = {

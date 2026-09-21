@@ -91,7 +91,7 @@ export function StudioEditorPane({
               <button type="button" className="flex w-full items-center justify-between">
                 <SectionHeader
                   icon={FileCode2}
-                  title={t("Template Details")}
+                  title={t("Template details")}
                   description={t("Name, type, and description")}
                 />
                 {detailErrorCount > 0 && !detailsOpen && (
@@ -197,7 +197,7 @@ export function StudioEditorPane({
         <Separator />
         <SectionHeader
           icon={ShieldCheckIcon}
-          title={t("Charge Policy")}
+          title={t("Charge policy")}
           description={t(
             "Clamp the calculated charge to a range, then round it to what gets billed",
           )}
@@ -205,7 +205,7 @@ export function StudioEditorPane({
         <FormGroup cols={2}>
           <FormControl>
             <NumberField
-              label={t("Minimum Charge")}
+              label={t("Minimum charge")}
               name="minCharge"
               control={control}
               placeholder={t("No minimum")}
@@ -216,7 +216,7 @@ export function StudioEditorPane({
           </FormControl>
           <FormControl>
             <NumberField
-              label={t("Maximum Charge")}
+              label={t("Maximum charge")}
               name="maxCharge"
               control={control}
               placeholder={t("No maximum")}
@@ -227,7 +227,7 @@ export function StudioEditorPane({
           </FormControl>
           <FormControl>
             <SelectField
-              label={t("Rounding Mode")}
+              label={t("Rounding mode")}
               name="roundingMode"
               control={control}
               options={rateRoundingModeChoices}
@@ -238,7 +238,7 @@ export function StudioEditorPane({
           </FormControl>
           <FormControl>
             <NumberField
-              label={t("Rounding Precision")}
+              label={t("Rounding precision")}
               name="roundingPrecision"
               control={control}
               placeholder="2"

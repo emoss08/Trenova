@@ -11,7 +11,7 @@ export function LeaveControlPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Leave Settings"),
+        title: t("Leave settings"),
         description: t(
           "How family and medical leave is measured, and what an employee must do to qualify",
         ),

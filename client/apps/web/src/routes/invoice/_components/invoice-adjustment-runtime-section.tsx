@@ -75,7 +75,7 @@ export function InvoiceAdjustmentRuntimeSection({
   if (!latestAdjustment && !correctionSummary?.adjustments.length) {
     return (
       <div className="rounded-lg border border-dashed p-3">
-        <p className="text-muted-foreground text-xs font-medium">{t("Invoice Adjustments")}</p>
+        <p className="text-muted-foreground text-xs font-medium">{t("Invoice adjustments")}</p>
         <p className="text-2xs text-muted-foreground mt-0.5">
           {t("No invoice adjustments have been created for this invoice yet.")}
         </p>
@@ -87,7 +87,7 @@ export function InvoiceAdjustmentRuntimeSection({
     <div className="space-y-4">
       {latestAdjustment ? (
         <div className="space-y-1.5">
-          <p className="text-muted-foreground text-xs font-medium">{t("Latest Adjustment")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Latest adjustment")}</p>
           <InvoiceAdjustmentLatestCard
             invoice={invoice}
             latestAdjustment={latestAdjustment}
@@ -98,7 +98,7 @@ export function InvoiceAdjustmentRuntimeSection({
       {correctionSummary ? (
         <div className="grid gap-5 xl:grid-cols-2">
           <div className="space-y-1.5">
-            <p className="text-muted-foreground text-xs font-medium">{t("Invoice Lineage")}</p>
+            <p className="text-muted-foreground text-xs font-medium">{t("Invoice lineage")}</p>
             <ScrollArea className="h-[260px]">
               <div className="space-y-1.5">
                 {sortedInvoices.map((lineageInvoice) => {
@@ -125,7 +125,7 @@ export function InvoiceAdjustmentRuntimeSection({
             </ScrollArea>
           </div>
           <div className="space-y-1.5">
-            <p className="text-muted-foreground text-xs font-medium">{t("Adjustment History")}</p>
+            <p className="text-muted-foreground text-xs font-medium">{t("Adjustment history")}</p>
             <ScrollArea className="h-[260px]">
               <div className="space-y-1.5">
                 {sortedAdjustments.map((adjustment) => (
@@ -259,7 +259,7 @@ function InvoiceAdjustmentLatestCard({
 
       <p className="text-2xs text-muted-foreground mt-1.5">
         {t(
-          "Credit {0} · Rebill {1}",
+          "Credit {0} · rebill {1}",
           formatCurrency(Number(latestAdjustment.creditTotalAmount)),
           formatCurrency(Number(latestAdjustment.rebillTotalAmount)),
         )}
@@ -278,11 +278,11 @@ function InvoiceAdjustmentLatestCard({
       ) : null}
 
       <div className="text-2xs mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
-        <ArtifactLink to={`/billing/invoices?item=${invoice.id}`} label={t("Current Invoice")} />
+        <ArtifactLink to={`/billing/invoices?item=${invoice.id}`} label={t("Current invoice")} />
         {latestAdjustment.creditMemoInvoiceId ? (
           <ArtifactLink
             to={`/billing/invoices?item=${latestAdjustment.creditMemoInvoiceId}`}
-            label={t("Credit Memo")}
+            label={t("Credit memo")}
           />
         ) : null}
         {latestAdjustment.replacementInvoiceId ? (
@@ -294,7 +294,7 @@ function InvoiceAdjustmentLatestCard({
         {latestAdjustment.rebillQueueItemId ? (
           <ArtifactLink
             to={`/billing/queue?item=${latestAdjustment.rebillQueueItemId}&includePosted=true`}
-            label={t("Rebill Queue")}
+            label={t("Rebill queue")}
           />
         ) : null}
         {latestAdjustment.batchId ? (
@@ -354,7 +354,7 @@ function InvoiceAdjustmentLatestCard({
                 <InputField
                   control={approvalForm.control}
                   name="rejectReason"
-                  label={t("Rejection Reason")}
+                  label={t("Rejection reason")}
                   placeholder={t("Why is this being rejected?")}
                 />
                 <div className="flex items-center gap-2">
@@ -364,7 +364,7 @@ function InvoiceAdjustmentLatestCard({
                     type="submit"
                     disabled={rejectMutation.isPending}
                   >
-                    {t("Confirm Rejection")}
+                    {t("Confirm rejection")}
                   </Button>
                   <Button
                     size="sm"

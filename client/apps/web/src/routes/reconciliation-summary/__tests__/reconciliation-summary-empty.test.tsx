@@ -67,7 +67,7 @@ describe("Reconciliation summary", () => {
       "href",
       "/accounting/reconciliation/import-batches",
     );
-    expect(screen.queryByText("Match Rate")).not.toBeInTheDocument();
+    expect(screen.queryByText("Match rate")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Work Queue/ })).not.toBeInTheDocument();
   });
 
@@ -77,7 +77,7 @@ describe("Reconciliation summary", () => {
     mocks.getSummary.mockResolvedValue(summary({ inReviewWorkItemCount: 1 }));
     renderAccountingPage(<ReconciliationSummaryPage />);
 
-    expect(await screen.findByText("Match Rate")).toBeInTheDocument();
+    expect(await screen.findByText("Match rate")).toBeInTheDocument();
     expect(screen.getByText("0%")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Nothing to reconcile yet" })).toBeNull();
     expect(screen.getByRole("link", { name: /Work Queue/ })).toHaveAttribute(

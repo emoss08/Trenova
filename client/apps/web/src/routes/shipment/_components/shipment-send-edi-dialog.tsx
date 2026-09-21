@@ -46,7 +46,7 @@ export function ShipmentSendEDIDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t("Send EDI Load Tender")}</AlertDialogTitle>
+          <AlertDialogTitle>{t("Send EDI load tender")}</AlertDialogTitle>
           <AlertDialogDescription>
             {t("{0} will be tendered to", shipment.proNumber ?? t("This shipment"))}
             <span className="text-foreground font-medium">
@@ -60,7 +60,7 @@ export function ShipmentSendEDIDialog({
         <AlertDialogFooter>
           <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
           <AlertDialogAction disabled={mutation.isPending} onClick={() => mutation.mutate()}>
-            {t("Send Tender")}
+            {t("Send tender")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

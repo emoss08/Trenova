@@ -165,7 +165,7 @@ export function PermissionScopeBadge({ scope }: { scope?: string }) {
 
   const valueAttrs: Record<string, BadgeAttrProps> = {
     full: {
-      text: t("Full Access"),
+      text: t("Full access"),
       phase: "draft",
       icon: <CheckIcon />,
     },
@@ -215,14 +215,14 @@ export function ShipmentStatusBadge({
     },
     [shipmentStatusSchema.enum.PartiallyAssigned]: {
       phase: "active",
-      text: t("Partially Assigned"),
+      text: t("Partially assigned"),
       description: t(
         "Equipment or worker assignments are pending for one or more moves within this shipment.",
       ),
     },
     [shipmentStatusSchema.enum.PartiallyCompleted]: {
       phase: "active",
-      text: t("Partially Completed"),
+      text: t("Partially completed"),
       description: t("Some moves within this shipment have been completed, but not all."),
     },
     [shipmentStatusSchema.enum.Assigned]: {
@@ -234,7 +234,7 @@ export function ShipmentStatusBadge({
     },
     [shipmentStatusSchema.enum.InTransit]: {
       phase: "active",
-      text: t("In Transit"),
+      text: t("In transit"),
       description: t(
         "Active shipment with cargo currently in transport between designated locations.",
       ),
@@ -262,7 +262,7 @@ export function ShipmentStatusBadge({
     },
     [shipmentStatusSchema.enum.ReadyToInvoice]: {
       phase: "awaiting",
-      text: t("Ready to Invoice"),
+      text: t("Ready to invoice"),
       description: t(
         "All moves within this shipment have been completed, and the shipment is ready to be invoiced.",
       ),
@@ -333,11 +333,11 @@ export function ShipmentTenderStatusBadge({
 export const billingQueueStatusBadges: Record<BillingQueueStatus, BadgeAttrProps> = {
   ReadyForReview: {
     phase: "active",
-    text: "Ready for Review",
+    text: "Ready for review",
   },
   InReview: {
     phase: "awaiting",
-    text: "In Review",
+    text: "In review",
   },
   Approved: {
     phase: "complete",
@@ -349,11 +349,11 @@ export const billingQueueStatusBadges: Record<BillingQueueStatus, BadgeAttrProps
   },
   OnHold: {
     phase: "awaiting",
-    text: "On Hold",
+    text: "On hold",
   },
   SentBackToOps: {
     phase: "attention",
-    text: "Sent Back to Ops",
+    text: "Sent back to ops",
   },
   Exception: {
     phase: "failed",
@@ -393,11 +393,11 @@ export function PlainBillingQueueStatusBadge({ status }: { status: BillingQueueS
   const statusAttributes: Record<BillingQueueStatus, PlainBadgeAttrProps> = {
     ReadyForReview: {
       className: "bg-info-subtle text-info-foreground dark:bg-info-subtle dark:text-info-foreground",
-      text: t("Ready for Review"),
+      text: t("Ready for review"),
     },
     InReview: {
       className: "bg-accent-indigo-subtle text-accent-indigo-on-subtle dark:bg-accent-indigo-subtle dark:text-accent-indigo-on-subtle",
-      text: t("In Review"),
+      text: t("In review"),
     },
     Approved: {
       className: "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
@@ -409,11 +409,11 @@ export function PlainBillingQueueStatusBadge({ status }: { status: BillingQueueS
     },
     OnHold: {
       className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
-      text: t("On Hold"),
+      text: t("On hold"),
     },
     SentBackToOps: {
       className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
-      text: t("Sent Back to Ops"),
+      text: t("Sent back to ops"),
     },
     Exception: {
       className: "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
@@ -724,7 +724,7 @@ export function OrderStatusBadge({
     },
     InProgress: {
       phase: "active",
-      text: t("In Progress"),
+      text: t("In progress"),
       description: t("Order is actively being fulfilled."),
     },
     Completed: {
@@ -769,12 +769,12 @@ export function EDITransferStatusBadge({ status }: { status?: EDITransferStatus 
     },
     MappingRequired: {
       phase: "awaiting",
-      text: t("Mapping Required"),
+      text: t("Mapping required"),
       description: t("Tender references entities that are not mapped for this partner yet."),
     },
     PendingApproval: {
       phase: "active",
-      text: t("Pending Approval"),
+      text: t("Pending approval"),
       description: t("Tender is ready for the receiving organization to approve or reject."),
     },
     Processing: {
@@ -902,7 +902,7 @@ export function EDIMessageDeliveryStatusBadge({
     },
     DeadLettered: {
       phase: "failed",
-      text: t("Dead Lettered"),
+      text: t("Dead lettered"),
       description: t("Delivery retries were exhausted. Retry manually after fixing the cause."),
     },
   };
@@ -929,12 +929,12 @@ export function EDIMessageAckStatusBadge({
   const attrs: Record<EDIMessageAcknowledgmentStatus, BadgeAttrProps> = {
     NotExpected: {
       phase: "draft",
-      text: t("Not Expected"),
+      text: t("Not expected"),
       description: t("No acknowledgment is expected for this message."),
     },
     Pending: {
       phase: "awaiting",
-      text: t("Ack Pending"),
+      text: t("Ack pending"),
       description: t("Waiting for the trading partner to acknowledge this message."),
     },
     Accepted: {
@@ -951,7 +951,7 @@ export function EDIMessageAckStatusBadge({
     },
     Failed: {
       phase: "failed",
-      text: t("Ack Failed"),
+      text: t("Ack failed"),
       description: t("Acknowledgment processing failed."),
     },
   };
@@ -1033,7 +1033,7 @@ export function DriverSettlementStatusBadge({
     },
     PendingApproval: {
       phase: "awaiting",
-      text: t("Pending Approval"),
+      text: t("Pending approval"),
       description: t("Submitted for review and waiting on an approver."),
     },
     Approved: {
@@ -1112,7 +1112,7 @@ export function PayAdvanceStatusBadge({ status }: { status: PayAdvanceStatus }) 
     },
     PartiallyRecovered: {
       phase: "active",
-      text: t("Partially Recovered"),
+      text: t("Partially recovered"),
       description: t(
         "Some of the advance has been recovered; the rest is withheld from future settlements.",
       ),
@@ -1124,7 +1124,7 @@ export function PayAdvanceStatusBadge({ status }: { status: PayAdvanceStatus }) 
     },
     WrittenOff: {
       phase: "failed",
-      text: t("Written Off"),
+      text: t("Written off"),
       description: t("Remaining balance was written off and will not be recovered."),
     },
   };
@@ -1273,12 +1273,12 @@ export function PayeeClassificationBadge({
   const attributes: Record<PayeeClassification, BadgeClassAttrProps> = {
     CompanyDriver: {
       accent: "accent-sky",
-      text: t("Company Driver"),
+      text: t("Company driver"),
       description: t("W-2 employee — settlements post to the driver pay expense account."),
     },
     OwnerOperator: {
       accent: "accent-violet",
-      text: t("Owner-Operator"),
+      text: t("Owner-operator"),
       description: t("1099 contractor — settlements post to the purchased transportation account."),
     },
   };
@@ -1313,7 +1313,7 @@ export function CarrierSettlementStatusBadge({
     },
     PendingApproval: {
       phase: "awaiting",
-      text: t("Pending Approval"),
+      text: t("Pending approval"),
       description: t("Submitted for review and waiting on an approver."),
     },
     Approved: {
@@ -1544,7 +1544,7 @@ export function CarrierSafetyRatingBadge({
     },
     NotRated: {
       phase: "draft",
-      text: t("Not Rated"),
+      text: t("Not rated"),
       description: t("FMCSA has not issued a safety rating for this carrier."),
     },
   };
@@ -1632,7 +1632,7 @@ export function TenderStatusBadge({
     },
     NeedsReview: {
       phase: "awaiting",
-      text: t("Needs Review"),
+      text: t("Needs review"),
       description: t(
         "A carrier accepted but auto-assignment failed — assign the move manually or cancel.",
       ),
@@ -1704,7 +1704,7 @@ export function TenderOfferStatusBadge({
     },
     DeliveryFailed: {
       phase: "failed",
-      text: t("Delivery Failed"),
+      text: t("Delivery failed"),
       description: t("The offer could not be delivered on its channel."),
     },
   };

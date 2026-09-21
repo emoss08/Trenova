@@ -147,7 +147,7 @@ export function ImportTemplateDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileUpIcon className="size-4" />
-            {t("Import Templates")}
+            {t("Import templates")}
           </DialogTitle>
           <DialogDescription>
             {t(

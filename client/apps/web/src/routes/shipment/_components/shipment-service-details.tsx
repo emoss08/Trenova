@@ -29,7 +29,7 @@ function ShipmentServiceDetailsInner({ children }: { children: React.ReactNode }
 
   return (
     <FormSection
-      title={t("Service & Classification")}
+      title={t("Service & classification")}
       description={t("Shipment type, service level, and equipment requirements")}
     >
       {children}
@@ -53,8 +53,8 @@ function ShipmentServiceDetailsForm() {
           control={control}
           name="serviceTypeId"
           rules={{ required: true }}
-          label={t("Service Type")}
-          placeholder={t("Select Service Type")}
+          label={t("Service type")}
+          placeholder={t("Select Service type")}
           description={t("Select the service type for the shipment.")}
         />
       ),
@@ -66,8 +66,8 @@ function ShipmentServiceDetailsForm() {
           control={control}
           name="shipmentTypeId"
           rules={{ required: true }}
-          label={t("Shipment Type")}
-          placeholder={t("Select Shipment Type")}
+          label={t("Shipment type")}
+          placeholder={t("Select shipment type")}
           description={t("Select the shipment type for the shipment.")}
         />
       ),
@@ -78,8 +78,8 @@ function ShipmentServiceDetailsForm() {
         <EquipmentTypeAutocompleteField
           control={control}
           name="tractorTypeId"
-          label={t("Tractor Type")}
-          placeholder={t("Select Tractor Type")}
+          label={t("Tractor type")}
+          placeholder={t("Select tractor type")}
           description={t(
             "Select the type of tractor used, considering any special requirements (e.g., refrigeration).",
           )}
@@ -99,8 +99,8 @@ function ShipmentServiceDetailsForm() {
         <EquipmentTypeAutocompleteField
           control={control}
           name="trailerTypeId"
-          label={t("Trailer Type")}
-          placeholder={t("Select Trailer Type")}
+          label={t("Trailer type")}
+          placeholder={t("Select trailer type")}
           description={t(
             "Select the type of trailer used, considering any special requirements (e.g., refrigeration).",
           )}

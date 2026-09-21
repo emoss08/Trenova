@@ -11,7 +11,7 @@ export function CarrierInvoiceMatchingPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Carrier Invoice Matching"),
+        title: t("Carrier invoice matching"),
         description: t(
           "Reconcile inbound carrier freight invoices against negotiated buy rates — link carriers, create matches, and resolve variances.",
         ),

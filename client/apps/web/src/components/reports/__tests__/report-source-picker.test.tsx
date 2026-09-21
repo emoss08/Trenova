@@ -73,7 +73,7 @@ beforeEach(() => {
     },
     {
       key: "ar_aging",
-      name: "AR Aging",
+      name: "AR aging",
       description: "Open receivables by bucket",
       category: "Finance",
     },

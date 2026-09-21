@@ -57,12 +57,12 @@ export function BankReceiptBatchPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Import Batches"),
+        title: t("Import batches"),
         description: t("View and create bank receipt import batches."),
         actions: (
           <Button size="sm" onClick={() => setDialogOpen(true)}>
             <UploadIcon className="size-3.5" />
-            {t("Import Batch")}
+            {t("Import batch")}
           </Button>
         ),
       }}
@@ -118,7 +118,7 @@ export function BankReceiptBatchPage() {
                 <th className="px-3 py-2.5 text-right text-xs font-medium">{t("Imported")}</th>
                 <th className="px-3 py-2.5 text-right text-xs font-medium">{t("Matched")}</th>
                 <th className="px-3 py-2.5 text-right text-xs font-medium">{t("Exceptions")}</th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium">{t("Total Amount")}</th>
+                <th className="px-3 py-2.5 text-right text-xs font-medium">{t("Total amount")}</th>
                 <th className="px-3 py-2.5 text-xs font-medium">{t("Created")}</th>
                 <th className="w-10 px-3 py-2.5" />
               </tr>

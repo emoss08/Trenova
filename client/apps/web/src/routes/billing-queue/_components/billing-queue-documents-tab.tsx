@@ -133,7 +133,7 @@ export function BillingQueueDocumentsTab({
   };
 
   const isInvoice = context === "invoice";
-  const requirementTitle = isInvoice ? t("Supporting Requirements") : t("Required Documents");
+  const requirementTitle = isInvoice ? t("Supporting requirements") : t("Required documents");
   const loadingLabel = isInvoice ? t("Loading supporting documents...") : t("Loading documents...");
   const emptyTitle = isInvoice ? t("No supporting documents") : t("No documents yet");
   const emptyDescription = isEditable
@@ -326,7 +326,7 @@ export function BillingQueueDocumentsTab({
         onRetry={retryUpload}
         onRemove={removeUpload}
         onClearCompleted={clearCompleted}
-        title={replacingLineageId ? t("Replace Document") : t("Upload Documents")}
+        title={replacingLineageId ? t("Replace document") : t("Upload documents")}
         description={
           replacingLineageId
             ? t("Upload a new version to replace the existing document.")

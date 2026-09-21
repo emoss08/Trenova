@@ -97,7 +97,7 @@ function item(overrides: Partial<BillingTransferRunItem> = {}): BillingTransferR
     billingQueueNumber: null,
     billingQueueStatus: null,
     missingRequirements: [
-      { documentTypeId: "dt_pod", documentTypeCode: "POD", documentTypeName: "Proof of Delivery" },
+      { documentTypeId: "dt_pod", documentTypeCode: "POD", documentTypeName: "Proof of delivery" },
     ],
     validationFailures: [],
     ...overrides,
@@ -227,7 +227,7 @@ describe("BulkBillingTransferDialog", () => {
     const summary = await screen.findByRole("group", { name: "Transfer summary" });
     expect(summary).toHaveTextContent("9");
     expect(await screen.findByText("Missing billing requirements")).toBeInTheDocument();
-    expect(screen.getByText("Proof of Delivery")).toBeInTheDocument();
+    expect(screen.getByText("Proof of delivery")).toBeInTheDocument();
   });
 
   it("starts a second run over what a retry could still move", async () => {

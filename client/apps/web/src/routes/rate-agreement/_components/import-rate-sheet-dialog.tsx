@@ -182,7 +182,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="lg" className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t("Import Rate Sheet")}</DialogTitle>
+          <DialogTitle>{t("Import rate sheet")}</DialogTitle>
           <DialogDescription>
             {t(
               "Upload a CSV or XLSX rate sheet into an agreement. Nothing is applied until you have read exactly what it would change.",
@@ -209,7 +209,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                     <AutoCompleteDateField
                       control={form.control}
                       name="effectiveFrom"
-                      label={t("Rates Take Effect")}
+                      label={t("Rates take effect")}
                       rules={{ required: true }}
                       description={t(
                         "The day the imported rates start pricing — the negotiated date, not the upload date.",
@@ -285,7 +285,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                 className="gap-1.5"
               >
                 <DownloadIcon className="size-3.5" />
-                {t("Download Template")}
+                {t("Download template")}
               </Button>
             </div>
           </>
@@ -348,7 +348,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-xs">{t("Lane")}</TableHead>
-                      <TableHead className="text-xs">{t("What Happens")}</TableHead>
+                      <TableHead className="text-xs">{t("What happens")}</TableHead>
                       <TableHead className="text-xs">{t("Changes")}</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -399,7 +399,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                 loadingText={t("Applying...")}
                 onClick={() => commit()}
               >
-                {t("Apply These Rates")}
+                {t("Apply these rates")}
               </Button>
             </>
           ) : (

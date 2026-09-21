@@ -34,7 +34,7 @@ describe("worker roster HR columns", () => {
     ["profile.complianceStatus", "Compliance"],
     ["profile.trainingHealth", "Training"],
     ["profile.safetyRating", "Safety"],
-    ["profile.nextCredentialExpiry", "Expires Next"],
+    ["profile.nextCredentialExpiry", "Expires next"],
   ])("offers a %s column", (apiField, label) => {
     const column = columnByApiField(apiField);
     expect((column.meta as Meta).label).toBe(label);

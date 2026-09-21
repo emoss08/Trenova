@@ -50,7 +50,7 @@ export function HazardousMaterialPanel({
         form={form}
         url="/hazardous-materials/"
         queryKey="hazardous-material-list"
-        title={t("Hazardous Material")}
+        title={t("Hazardous material")}
         fieldKey="name"
         formComponent={<HazardousMaterialForm />}
       />
@@ -64,7 +64,7 @@ export function HazardousMaterialPanel({
       form={form}
       url="/hazardous-materials/"
       queryKey="hazardous-material-list"
-      title={t("Hazardous Material")}
+      title={t("Hazardous material")}
       formComponent={<HazardousMaterialForm isEditing />}
     />
   );

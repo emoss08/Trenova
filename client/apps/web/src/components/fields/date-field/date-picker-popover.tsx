@@ -40,7 +40,7 @@ export function DatePickerPopover({ children, date, setDate }: DatePickerPopover
         <DrawerTrigger asChild>{children}</DrawerTrigger>
         <DrawerContent>
           <DrawerHeader className="sr-only text-left">
-            <DrawerTitle>{t("Date Picker")}</DrawerTitle>
+            <DrawerTitle>{t("Date picker")}</DrawerTitle>
             <DrawerDescription>{t("Select date")}</DrawerDescription>
           </DrawerHeader>
           <div className="flex flex-col py-5">

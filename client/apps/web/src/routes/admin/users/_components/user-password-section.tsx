@@ -39,7 +39,7 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
       {isLocked && (
         <Alert variant="destructive" size="sm">
           <LockIcon />
-          <AlertTitle>{t("Account Locked")}</AlertTitle>
+          <AlertTitle>{t("Account locked")}</AlertTitle>
           <AlertDescription>
             {t("This account has been locked due to too many failed login attempts.")}
           </AlertDescription>
@@ -49,7 +49,7 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-2">
           <Button type="button" onClick={handleResetPassword} disabled={isResetting}>
-            {isResetting ? t("Sending...") : t("Send Reset Email")}
+            {isResetting ? t("Sending...") : t("Send reset email")}
           </Button>
           <p className="text-muted-foreground text-2xs">
             {t(
@@ -61,7 +61,7 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
             variant="outline"
             onClick={() => setShowNewPassword(!showNewPassword)}
           >
-            {showNewPassword ? t("Cancel") : t("Set New Password")}
+            {showNewPassword ? t("Cancel") : t("Set new password")}
           </Button>
         </div>
       </div>
@@ -76,7 +76,7 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
           <SensitiveField
             control={control}
             name="newPassword"
-            label={t("New Password")}
+            label={t("New password")}
             description={t("Enter new password")}
             rules={{ required: true }}
           />

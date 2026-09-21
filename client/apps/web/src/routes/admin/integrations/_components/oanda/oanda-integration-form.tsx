@@ -168,7 +168,7 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
             <SelectField
               name="configuration.defaultRateType"
               control={control}
-              label={t("Default Rate Type")}
+              label={t("Default rate type")}
               options={rateTypeOptions}
               placeholder={t("Select rate type")}
             />
@@ -183,7 +183,7 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
             loadingText={t("Testing...")}
             disabled={configQuery.isLoading || saveMutation.isPending}
           >
-            {t("Test Connection")}
+            {t("Test connection")}
           </Button>
           <div className="flex flex-col-reverse gap-2 sm:flex-row">
             <Button type="button" variant="outline" onClick={onClose}>
@@ -195,7 +195,7 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
               loadingText={t("Saving...")}
               disabled={configQuery.isLoading}
             >
-              {t("Save Changes")}
+              {t("Save changes")}
             </Button>
           </div>
         </DialogFooter>
@@ -219,10 +219,10 @@ function OANDAExchangeRatesFormHeader() {
           <div className="bg-muted-foreground size-1 rounded-full" />
           <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
-        <LazyImage src={logo} alt={t("OANDA Logo")} className="h-8 max-w-24 object-contain" />
+        <LazyImage src={logo} alt={t("OANDA logo")} className="h-8 max-w-24 object-contain" />
       </div>
       <DialogHeader>
-        <DialogTitle>{t("Connect with OANDA Exchange Rates")}</DialogTitle>
+        <DialogTitle>{t("Connect with OANDA exchange rates")}</DialogTitle>
         <DialogDescription>
           {t("Midpoint is used by default for quotes.")}{" "}
           <ExternalLink href="https://www.oanda.com/foreign-exchange-data-services/en/exchange-rates-api/">

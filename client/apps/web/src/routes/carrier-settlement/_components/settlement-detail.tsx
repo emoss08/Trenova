@@ -142,7 +142,7 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 shrink-0 text-xs")}
         >
           <ArrowUpRight className="size-3.5" />
-          {t("Open in Workspace")}
+          {t("Open in workspace")}
         </Link>
       )}
     </div>
@@ -172,7 +172,7 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <SummaryTile label={t("Gross Cost")}>
+        <SummaryTile label={t("Gross cost")}>
           <AmountDisplay value={settlement.grossCostMinor} currency={settlement.currencyCode} />
         </SummaryTile>
         <SummaryTile label={t("Adjustments")}>
@@ -185,7 +185,7 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
         <SummaryTile label={t("Loads")}>
           <span className="tabular-nums">{settlement.shipmentCount}</span>
         </SummaryTile>
-        <SummaryTile label={t("Net Payable")} highlight>
+        <SummaryTile label={t("Net payable")} highlight>
           <AmountDisplay
             value={settlement.netPayableMinor}
             variant="positive"
@@ -277,7 +277,7 @@ function SettlementActions({
         <>
           <Button size="sm" disabled={busy} onClick={() => runAction.mutate("submit")}>
             <Send className="size-3.5" />
-            {t("Submit for Approval")}
+            {t("Submit for approval")}
           </Button>
           <Button
             size="sm"
@@ -316,7 +316,7 @@ function SettlementActions({
       {status === "Posted" && (
         <Button size="sm" disabled={busy} onClick={() => setPayDialogOpen(true)}>
           <CircleDollarSign className="size-3.5" />
-          {t("Mark Paid")}
+          {t("Mark paid")}
         </Button>
       )}
       {(status === "Draft" || status === "PendingApproval") && (
@@ -327,7 +327,7 @@ function SettlementActions({
           onClick={() => setAdjustDialogOpen(true)}
         >
           <Plus className="size-3.5" />
-          {t("Add Adjustment")}
+          {t("Add adjustment")}
         </Button>
       )}
       {settlement.batchId && <BatchCsvExportButton batchId={settlement.batchId} />}
@@ -528,7 +528,7 @@ function MarkPaidDialog({
             <div className="flex gap-2">
               {[
                 { value: "Check", label: t("Check") },
-                { value: "ACHManual", label: t("ACH (Manual)") },
+                { value: "ACHManual", label: t("ACH (manual)") },
                 { value: "Other", label: t("Other") },
               ].map((method) => (
                 <Button
@@ -559,7 +559,7 @@ function MarkPaidDialog({
             {t("Cancel")}
           </Button>
           <Button disabled={mutation.isPending} onClick={() => mutation.mutate()}>
-            {t("Mark Paid")}
+            {t("Mark paid")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -642,7 +642,7 @@ function AddAdjustmentDialog({
             {t("Cancel")}
           </Button>
           <Button disabled={!valid || mutation.isPending} onClick={() => mutation.mutate()}>
-            {t("Add Adjustment")}
+            {t("Add adjustment")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -799,7 +799,7 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
             <p className="text-muted-foreground text-xs">{t("Payment method")}</p>
             <p className="text-xs font-medium">
               {settlement.paymentMethod ||
-                (carrier.paymentMethod === "ACHManual" ? t("ACH (Manual)") : carrier.paymentMethod)}
+                (carrier.paymentMethod === "ACHManual" ? t("ACH (manual)") : carrier.paymentMethod)}
               {settlement.paymentReference ? ` · ${settlement.paymentReference}` : ""}
             </p>
           </div>
@@ -842,7 +842,7 @@ function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailD
   return (
     <div>
       <h4 className="text-muted-foreground mb-1 text-xs font-semibold">
-        {t("Rate Confirmations")}
+        {t("Rate confirmations")}
       </h4>
       {isLoading ? (
         <Skeleton className="h-10 w-full" />
@@ -908,7 +908,7 @@ function LinkedInvoiceMatches({ settlement }: { settlement: SettlementDetailData
   return (
     <div>
       <h4 className="text-muted-foreground mb-1 text-xs font-semibold">
-        {t("Invoice Matches")}
+        {t("Invoice matches")}
       </h4>
       <ul className="flex flex-col gap-1">
         {matches.map((match) => (

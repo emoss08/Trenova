@@ -20,7 +20,7 @@ export const URGENCY_META: Record<
     dotClass: "bg-destructive",
   },
   Now: {
-    label: "Next 4 Hours",
+    label: "Next 4 hours",
     description: "Needs a driver now",
     variant: "warning",
     dotClass: "bg-warning",

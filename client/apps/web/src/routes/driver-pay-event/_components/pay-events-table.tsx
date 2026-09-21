@@ -89,7 +89,7 @@ export default function PayEventsTable() {
       },
       {
         id: "release",
-        label: t("Release Holds"),
+        label: t("Release holds"),
         loadingLabel: t("Releasing..."),
         icon: PlayIcon,
         onClick: handleBulkRelease,
@@ -136,7 +136,7 @@ export default function PayEventsTable() {
               disabled={holdReason.trim() === "" || holdPending}
               onClick={() => void confirmBulkHold()}
             >
-              {t("Hold Pay")}
+              {t("Hold pay")}
             </Button>
           </DialogFooter>
         </DialogContent>

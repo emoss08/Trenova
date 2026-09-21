@@ -22,7 +22,7 @@ export function EmailProfileForm() {
           control={control}
           rules={{ required: true }}
           name="name"
-          label={t("Profile Name")}
+          label={t("Profile name")}
           placeholder={t("Billing sender")}
           description={t("Internal label used when assigning this sender profile.")}
           maxLength={100}
@@ -55,8 +55,8 @@ export function EmailProfileForm() {
           control={control}
           rules={{ required: true }}
           name="senderName"
-          label={t("Sender Name")}
-          placeholder={t("Trenova Billing")}
+          label={t("Sender name")}
+          placeholder={t("Trenova billing")}
           description={t("Display name recipients see in their inbox.")}
           maxLength={100}
         />
@@ -66,7 +66,7 @@ export function EmailProfileForm() {
           control={control}
           rules={{ required: true }}
           name="senderEmail"
-          label={t("Sender Email")}
+          label={t("Sender email")}
           placeholder={t("billing@example.com")}
           description={t("Verified sender email address for this profile.")}
           type="email"
@@ -77,7 +77,7 @@ export function EmailProfileForm() {
         <InputField
           control={control}
           name="replyToEmail"
-          label={t("Reply-To Email")}
+          label={t("Reply-to email")}
           placeholder={t("replies@example.com")}
           description={t("Optional reply destination. Blank uses the sender email.")}
           type="email"

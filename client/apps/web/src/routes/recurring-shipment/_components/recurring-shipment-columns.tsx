@@ -105,7 +105,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RecurringShipmentRow>[] {
     },
     {
       accessorKey: "nextOccurrenceAt",
-      header: t("Next Pickup"),
+      header: t("Next pickup"),
       cell: ({ row }) =>
         row.original.nextOccurrenceAt ? (
           <HoverCardTimestamp timestamp={row.original.nextOccurrenceAt} />

@@ -15,7 +15,7 @@ export function DetentionDeskPage() {
     <PageLayout
       className="gap-y-0 p-0"
       pageHeaderProps={{
-        title: t("Detention Desk"),
+        title: t("Detention desk"),
         description: t(
           "Live free-time clocks, notice deadlines, and accruing detention across every driver currently on a dock",
         ),

@@ -56,7 +56,7 @@ export function FuelBindingForm() {
   return (
     <div className="space-y-6">
       <FormSection
-        title={t("Fuel Terms")}
+        title={t("Fuel terms")}
         description={t(
           "The program this contract's fuel surcharge reads, and the terms it negotiated over it.",
         )}
@@ -67,7 +67,7 @@ export function FuelBindingForm() {
               control={control}
               rules={{ required: !waived }}
               name="fuelBinding.fuelSurchargeProgramId"
-              label={t("Fuel Program")}
+              label={t("Fuel program")}
               placeholder={t("Select program")}
               description={t(
                 "Overrides whatever the customer's billing profile names, because one customer can hold several contracts",
@@ -101,7 +101,7 @@ export function FuelBindingForm() {
               <NumberField
                 control={control}
                 name="fuelBinding.pegPriceOverride"
-                label={t("Peg Price Override")}
+                label={t("Peg price override")}
                 placeholder="0.00"
                 sideText="$"
                 decimalScale={3}
@@ -127,7 +127,7 @@ export function FuelBindingForm() {
               <NumberField
                 control={control}
                 name="fuelBinding.capAmount"
-                label={t("Cap Amount")}
+                label={t("Cap amount")}
                 placeholder="0.00"
                 sideText="$"
                 decimalScale={2}

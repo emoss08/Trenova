@@ -113,7 +113,7 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
                 <dt className="flex items-center gap-1.5">
                   <span className="text-muted-foreground text-xs">{t(field.label)}</span>
                   {field.type ? (
-                    <span className="bg-muted text-muted-foreground rounded px-1 py-px text-3xs font-medium">
+                    <span className="bg-muted text-muted-foreground rounded-md px-1 py-px text-3xs font-medium">
                       {field.type}
                     </span>
                   ) : null}

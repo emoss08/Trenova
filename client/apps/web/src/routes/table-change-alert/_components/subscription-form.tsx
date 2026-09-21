@@ -88,7 +88,7 @@ export function SubscriptionForm() {
             render={({ field, fieldState }) => (
               <div className="space-y-2">
                 <Label className={fieldState.error ? "text-destructive" : ""}>
-                  {t("Event Types *")}
+                  {t("Event types *")}
                 </Label>
                 <div className="flex gap-6">
                   {(["INSERT", "UPDATE", "DELETE"] as const).map((et) => (
@@ -127,7 +127,7 @@ export function SubscriptionForm() {
                   <InputField<TCASubscriptionFormValues>
                     control={control}
                     name="watchedColumns"
-                    label={t("Watched Columns")}
+                    label={t("Watched columns")}
                     placeholder={t("e.g. status, eta, assigned_driver_id")}
                     description={t(
                       "Comma-separated column names. Only trigger on UPDATE when these columns change. Leave empty to watch all.",
@@ -168,7 +168,7 @@ export function SubscriptionForm() {
             <InputField<TCASubscriptionFormValues>
               control={control}
               name="customTitle"
-              label={t("Custom Title")}
+              label={t("Custom title")}
               placeholder={t("e.g. {{new.pro_number}} status changed")}
               description={t(
                 "Available: {{table}}, {{operation}}, {{record_id}}, {{new.field}}, {{old.field}}, {{changed_fields}}",
@@ -180,7 +180,7 @@ export function SubscriptionForm() {
             <TextareaField<TCASubscriptionFormValues>
               control={control}
               name="customMessage"
-              label={t("Custom Message")}
+              label={t("Custom message")}
               placeholder={t("e.g. Status changed from {{old.status}} to {{new.status}}")}
               description={t("Leave empty to use auto-generated summary.")}
             />

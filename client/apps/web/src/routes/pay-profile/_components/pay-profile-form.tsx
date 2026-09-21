@@ -75,7 +75,7 @@ export function PayProfileForm() {
           <NumberField
             control={control}
             name="guaranteedPeriodMinimum"
-            label={t("Guaranteed Minimum / Period")}
+            label={t("Guaranteed minimum / period")}
             decimalScale={2}
             fixedDecimalScale
             sideText={t("USD")}
@@ -86,7 +86,7 @@ export function PayProfileForm() {
           <NumberField
             control={control}
             name="perDiemDailyCap"
-            label={t("Per Diem Daily Cap")}
+            label={t("Per diem daily cap")}
             decimalScale={2}
             fixedDecimalScale
             sideText={t("USD")}
@@ -98,7 +98,7 @@ export function PayProfileForm() {
       </FormGroup>
 
       <FormSection
-        title={t("Pay Components")}
+        title={t("Pay components")}
         description={t("Each component computes pay per completed move; team splits apply on top.")}
         action={
           <Button
@@ -121,7 +121,7 @@ export function PayProfileForm() {
             }
           >
             <Plus className="size-3.5" />
-            {t("Add Component")}
+            {t("Add component")}
           </Button>
         }
       >
@@ -202,7 +202,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               <SelectField
                 control={control}
                 name={`components.${index}.revenueBasis`}
-                label={t("Revenue Basis")}
+                label={t("Revenue basis")}
                 options={payRevenueBasisChoices}
                 rules={{ required: true }}
                 description={t(
@@ -238,7 +238,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
             <NumberField
               control={control}
               name={`components.${index}.minAmount`}
-              label={t("Minimum per Move")}
+              label={t("Minimum per move")}
               decimalScale={2}
               fixedDecimalScale
               sideText={t("USD")}
@@ -251,7 +251,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
             <NumberField
               control={control}
               name={`components.${index}.maxAmount`}
-              label={t("Maximum per Move")}
+              label={t("Maximum per move")}
               decimalScale={2}
               fixedDecimalScale
               sideText={t("USD")}
@@ -290,7 +290,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
         <div className="mt-3 border-t pt-3">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-xs font-medium">
-              {t("Mileage Bands")}
+              {t("Mileage bands")}
               <span className="text-muted-foreground ml-1 font-normal">
                 {t("(optional; sliding scale by length of haul)")}
               </span>
@@ -308,7 +308,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               }
             >
               <Plus className="size-3" />
-              {t("Add Band")}
+              {t("Add band")}
             </Button>
           </div>
           {bandsArray.fields.length > 0 && (

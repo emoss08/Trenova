@@ -185,7 +185,7 @@ export function GenerateTableDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AssistMark className="size-4" />
-            {t("Generate Price Bands")}
+            {t("Generate price bands")}
           </DialogTitle>
           <DialogDescription>
             {t(
@@ -335,7 +335,7 @@ export function GenerateTableDialog({
               onClick={handleApply}
               disabled={!valid || tooMany || isFetching || !preview || preview.length === 0}
             >
-              {t("Use These Bands{0}", preview && !tooMany && valid ? ` (${preview.length})` : "")}
+              {t("Use these bands{0}", preview && !tooMany && valid ? ` (${preview.length})` : "")}
             </Button>
           </div>
         </DialogFooter>

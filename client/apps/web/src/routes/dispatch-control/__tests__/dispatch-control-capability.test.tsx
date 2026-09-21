@@ -42,21 +42,21 @@ vi.mock("@/hooks/use-optimistic-mutation", () => ({
 
 /** Every driver-compliance control the plan calls for hiding. */
 const DRIVER_COMPLIANCE_LABELS = [
-  "Enable Automated Assignment",
-  "Assignment Optimization Strategy",
-  "Candidate Scoring Weights",
-  "Enable DOT Compliance Enforcement",
-  "Medical Certification Validation",
-  "Driver Qualification Verification",
-  "Drug and Alcohol Testing Compliance",
-  "Require Worker Assignment",
-  "Require Trailer Continuity",
-  "Enforce Worker PTA Restrictions",
-  "Enforce Worker Tractor Fleet Continuity",
+  "Enable automated assignment",
+  "Assignment optimization strategy",
+  "Candidate scoring weights",
+  "Enable DOT compliance enforcement",
+  "Medical certification validation",
+  "Driver qualification verification",
+  "Drug and alcohol testing compliance",
+  "Require worker assignment",
+  "Require trailer continuity",
+  "Enforce worker PTA restrictions",
+  "Enforce worker tractor fleet continuity",
 ];
 
 /** Neutral settings that describe the freight, not the driver moving it. */
-const NEUTRAL_LABELS = ["Record Service Failures"];
+const NEUTRAL_LABELS = ["Record Service failures"];
 
 const hybrid: OrganizationCapabilities = {
   brokerageEnabled: true,
@@ -115,7 +115,7 @@ describe("dispatch control field visibility", () => {
 
     renderForm();
 
-    await screen.findByText("Record Service Failures");
+    await screen.findByText("Record Service failures");
 
     for (const label of DRIVER_COMPLIANCE_LABELS) {
       expect(screen.queryByText(label), label).toBeNull();
@@ -130,6 +130,6 @@ describe("dispatch control field visibility", () => {
     for (const label of NEUTRAL_LABELS) {
       expect(await screen.findByText(label), label).toBeInTheDocument();
     }
-    expect(screen.getByText("Service Failure Monitoring")).toBeInTheDocument();
+    expect(screen.getByText("Service failure monitoring")).toBeInTheDocument();
   });
 });

@@ -20,7 +20,7 @@ export function OrganizationSettingsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Organization Settings"),
+        title: t("Organization settings"),
         description: t("Manage your organization profile, compliance, and security settings"),
       }}
     >

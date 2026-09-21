@@ -144,7 +144,7 @@ export function LateChargesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Late Charges"),
+        title: t("Late charges"),
         description: t(
           "Overdue invoices charged once per thirty-day period at each customer's rate, raised as one debit memo per customer.",
         ),

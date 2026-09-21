@@ -22,7 +22,7 @@ const fullRecord = (version: number): Agreement => ({
   id: "rag_01",
   version,
   name: "Acme TL 2026",
-  rules: [{ id: "ragr_01", label: "Dallas to Chicago" }],
+  rules: [{ id: "ragr_01", label: "Dallas to chicago" }],
 });
 
 let formHandle: UseFormReturn<Agreement> | null = null;

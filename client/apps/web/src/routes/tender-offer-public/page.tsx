@@ -233,7 +233,7 @@ export function TenderOfferPublicPage() {
     content = (
       <Card className="w-full max-w-md">
         <CardContent className="flex flex-col gap-3 py-6">
-          <Skeleton className="h-5 w-48 rounded" />
+          <Skeleton className="h-5 w-48 rounded-md" />
           <Skeleton className="h-24 rounded-md" />
           <Skeleton className="h-9 rounded-md" />
         </CardContent>
@@ -312,7 +312,7 @@ export function TenderOfferPublicPage() {
 
   return (
     <>
-      <Metadata title={t("Load Offer")} description={t("Review and respond to a load offer")} />
+      <Metadata title={t("Load offer")} description={t("Review and respond to a load offer")} />
       <PublicPageShell
         footer={t("Powered by Trenova. Questions about this load? Reply to the offer email.")}
       >

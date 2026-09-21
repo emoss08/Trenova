@@ -210,7 +210,7 @@ export function RollbackConfirmDialog({
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent className="max-w-lg">
         <AlertDialogHeader>
-          <AlertDialogTitle>{t("Rollback to Version {0}", targetVersion)}</AlertDialogTitle>
+          <AlertDialogTitle>{t("Rollback to version {0}", targetVersion)}</AlertDialogTitle>
           <AlertDialogDescription
             render={
               <div className="space-y-3">

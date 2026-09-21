@@ -90,7 +90,7 @@ export function JurisdictionRulePanel({
       form={form}
       url="/jurisdiction-rules/"
       queryKey={QUERY_KEY}
-      title={t("Jurisdiction Rule")}
+      title={t("Jurisdiction rule")}
       formComponent={<JurisdictionRuleForm />}
     />
   );
@@ -172,7 +172,7 @@ function JurisdictionRuleEditPanel({
         }
       >
         {!row ? (
-          <ComponentLoader message={t("Loading Jurisdiction Rule...")} />
+          <ComponentLoader message={t("Loading jurisdiction rule...")} />
         ) : (
           <>
             <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border px-4 py-3">

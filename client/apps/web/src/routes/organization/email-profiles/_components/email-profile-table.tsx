@@ -108,7 +108,7 @@ export default function EmailProfileTable() {
     () => [
       {
         id: "send-test",
-        label: t("Send Test"),
+        label: t("Send test"),
         icon: SendIcon,
         onClick: openTestDialog,
         disabled: (row) => row.original.status !== "Active",
@@ -139,7 +139,7 @@ export default function EmailProfileTable() {
       <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("Send Test Email")}</DialogTitle>
+            <DialogTitle>{t("Send test email")}</DialogTitle>
             <DialogDescription>
               {t(
                 "Queue a test message from {0}.",
@@ -149,7 +149,7 @@ export default function EmailProfileTable() {
           </DialogHeader>
           <div className="grid gap-2">
             <label className="text-muted-foreground text-xs font-medium" htmlFor="test-recipient">
-              {t("Recipient Email")}
+              {t("Recipient email")}
             </label>
             <Input
               id="test-recipient"
@@ -175,7 +175,7 @@ export default function EmailProfileTable() {
               }}
             >
               <SendIcon />
-              {t("Send Test")}
+              {t("Send test")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -187,7 +187,7 @@ export default function EmailProfileTable() {
             <AlertDialogMedia>
               <TrashIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>{t("Delete Email Profile")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete email profile")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t(
                 "Delete {0} and remove it from any purpose assignment. This action cannot be undone.",

@@ -14,7 +14,7 @@ export function InvoiceAdjustmentControlPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Invoice Adjustment Controls"),
+        title: t("Invoice adjustment controls"),
         description: t(
           "Configure organization policy for credits, rebills, write-offs, and invoice adjustment review.",
         ),

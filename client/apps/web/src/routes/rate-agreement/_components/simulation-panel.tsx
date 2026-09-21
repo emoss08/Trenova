@@ -140,7 +140,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
     <div className="space-y-4">
       <div className="bg-muted/30 rounded-lg border p-3">
         <div className="mb-3">
-          <p className="text-sm font-medium">{t("Replay Historical Shipments")}</p>
+          <p className="text-sm font-medium">{t("Replay historical shipments")}</p>
           <p className="text-muted-foreground mt-0.5 text-xs">
             {t(
               "Every shipment is re-rated against its own facts — the weight it had, the lane it ran, the day it shipped — so the result is what would have been invoiced. Nothing it produces touches a shipment.",
@@ -151,7 +151,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-32">
             <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
-              {t("Window (Days)")}
+              {t("Window (days)")}
             </label>
             <NumberFieldRoot
               value={days}
@@ -177,7 +177,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
             className="gap-1.5"
           >
             <PlayIcon className="size-3.5" />
-            {t("Run Simulation")}
+            {t("Run simulation")}
           </Button>
         </div>
       </div>
@@ -232,7 +232,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
       {problems.length > 0 && (
         <div className="space-y-2">
           <div>
-            <p className="text-sm font-medium">{t("Lanes That Did Nothing")}</p>
+            <p className="text-sm font-medium">{t("Lanes that did nothing")}</p>
             <p className="text-muted-foreground mt-0.5 text-xs">
               {t(
                 "These are invisible in the revenue total, and they are usually why a tariff prices differently from how it was written.",
@@ -245,7 +245,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
                 <TableRow>
                   <TableHead className="text-xs">{t("Lane")}</TableHead>
                   <TableHead className="text-xs">{t("Outcome")}</TableHead>
-                  <TableHead className="text-xs">{t("What That Means")}</TableHead>
+                  <TableHead className="text-xs">{t("What that means")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -278,7 +278,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
       {results && results.length > 0 && (
         <div className="space-y-2">
           <div>
-            <p className="text-sm font-medium">{t("Shipments This Would Have Moved")}</p>
+            <p className="text-sm font-medium">{t("Shipments this would have moved")}</p>
             <p className="text-muted-foreground mt-0.5 text-xs">
               {t(
                 "Largest increases first — the shipment that will produce the phone call is what this list is for.",
@@ -292,7 +292,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
                   <TableHead className="text-xs">{t("Pro #")}</TableHead>
                   <TableHead className="text-xs">{t("Lane")}</TableHead>
                   <TableHead className="text-right text-xs">{t("Billed")}</TableHead>
-                  <TableHead className="text-right text-xs">{t("Would Charge")}</TableHead>
+                  <TableHead className="text-right text-xs">{t("Would charge")}</TableHead>
                   <TableHead className="text-right text-xs">{t("Delta")}</TableHead>
                 </TableRow>
               </TableHeader>

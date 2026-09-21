@@ -89,7 +89,7 @@ export function AutoRateDialog() {
   return (
     <>
       <Button type="button" size="xxxs" onClick={() => setOpen(true)}>
-        <span className="text-2xs">{t("Re-Apply Rate")}</span>
+        <span className="text-2xs">{t("Re-apply rate")}</span>
       </Button>
 
       <ConfirmDialog

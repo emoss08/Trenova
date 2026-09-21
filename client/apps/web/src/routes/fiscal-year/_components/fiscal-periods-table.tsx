@@ -52,15 +52,15 @@ const actionIcons: Record<FiscalPeriodAction, LucideIcon> = {
 function actionLabel(action: FiscalPeriodAction, t: TranslateFn) {
   switch (action) {
     case "activate":
-      return t("Open Period");
+      return t("Open period");
     case "lock":
-      return t("Lock Period");
+      return t("Lock period");
     case "unlock":
-      return t("Unlock Period");
+      return t("Unlock period");
     case "close":
-      return t("Close Period");
+      return t("Close period");
     case "reopen":
-      return t("Reopen Period");
+      return t("Reopen period");
   }
 }
 
@@ -132,7 +132,7 @@ export function FiscalPeriodTable({
             <TableHead>{t("Status")}</TableHead>
             <TableHead>{t("Name")}</TableHead>
             <TableHead>{t("Type")}</TableHead>
-            <TableHead>{t("Date Range")}</TableHead>
+            <TableHead>{t("Date range")}</TableHead>
             <TableHead className="w-10" />
           </TableRow>
         </TableHeader>

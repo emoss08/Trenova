@@ -131,7 +131,7 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
       },
       "awaiting-approval": {
         icon: <ShieldQuestion className="size-3.5" />,
-        label: t("Awaiting Approval"),
+        label: t("Awaiting approval"),
         className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
       },
       denied: {

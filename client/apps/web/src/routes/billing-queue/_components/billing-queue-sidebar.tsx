@@ -279,7 +279,7 @@ export function BillingQueueSidebar({
                         <SelectValue placeholder={t("All statuses")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">{t("All Statuses")}</SelectItem>
+                        <SelectItem value="all">{t("All statuses")}</SelectItem>
                         {billingQueueStatusChoices.map((choice) => (
                           <SelectItem key={choice.value} value={choice.value}>
                             {t(choice.label)}
@@ -289,7 +289,7 @@ export function BillingQueueSidebar({
                     </Select>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <p className="text-muted-foreground text-xs">{t("Bill Type")}</p>
+                    <p className="text-muted-foreground text-xs">{t("Bill type")}</p>
                     <Select
                       value={billTypeFilter ?? "all"}
                       items={billTypeChoices}
@@ -303,7 +303,7 @@ export function BillingQueueSidebar({
                         <SelectValue placeholder={t("All bill types")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">{t("All Bill Types")}</SelectItem>
+                        <SelectItem value="all">{t("All bill types")}</SelectItem>
                         {billTypeChoices.map((choice) => (
                           <SelectItem key={choice.value} value={choice.value}>
                             {t(choice.label)}
@@ -331,7 +331,7 @@ export function BillingQueueSidebar({
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-muted-foreground text-xs">{t("Assigned Billers")}</p>
+                  <p className="text-muted-foreground text-xs">{t("Assigned billers")}</p>
                   <MultiSelectAutocomplete<User>
                     link="/users/select-options/"
                     label={t("Billers")}

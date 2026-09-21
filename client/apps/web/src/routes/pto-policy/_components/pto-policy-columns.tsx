@@ -82,7 +82,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PTOPolicyRow>[] {
     },
     {
       id: "rules",
-      header: t("Tracked Types"),
+      header: t("Tracked types"),
       cell: ({ row }) => (
         <div className="flex flex-wrap gap-1">
           {ruleSummary(row.original).map((summary) => (

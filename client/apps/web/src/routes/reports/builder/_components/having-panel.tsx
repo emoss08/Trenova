@@ -159,7 +159,7 @@ export function HavingPanel({ index, ir, onChange }: HavingPanelProps) {
         }}
       >
         <PlusIcon className="size-3.5" />
-        {t("Measure Filter")}
+        {t("Measure filter")}
       </Button>
     </div>
   );

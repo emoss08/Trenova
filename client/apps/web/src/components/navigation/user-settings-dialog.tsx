@@ -314,7 +314,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                   <SelectField
                     control={settingsForm.control}
                     name="timeFormat"
-                    label={t("Time Format")}
+                    label={t("Time format")}
                     options={timeFormatChoices}
                     rules={{ required: "Time format is required" }}
                   />
@@ -328,7 +328,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
           <div className="space-y-3">
             <SectionHeader
               icon={KeyRound}
-              title={t("Change Password")}
+              title={t("Change password")}
               description={t("Leave blank to keep your current password.")}
             />
             <Form onSubmit={(e) => e.preventDefault()}>
@@ -337,7 +337,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                   <SensitiveField
                     control={passwordForm.control}
                     name="currentPassword"
-                    label={t("Current Password")}
+                    label={t("Current password")}
                     placeholder={t("Enter current password")}
                   />
                 </FormControl>
@@ -347,7 +347,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                   <SensitiveField
                     control={passwordForm.control}
                     name="newPassword"
-                    label={t("New Password")}
+                    label={t("New password")}
                     placeholder={t("Enter new password")}
                   />
                 </FormControl>
@@ -355,7 +355,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                   <SensitiveField
                     control={passwordForm.control}
                     name="confirmPassword"
-                    label={t("Confirm Password")}
+                    label={t("Confirm password")}
                     placeholder={t("Confirm new password")}
                   />
                 </FormControl>
@@ -376,7 +376,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
             isLoading={isSubmitting}
             loadingText={t("Saving...")}
           >
-            {t("Save Changes")}
+            {t("Save changes")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -384,12 +384,12 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
       <ImageCropUploadDialog
         open={isCropOpen}
         file={pendingFile}
-        title={t("Crop Profile Picture")}
+        title={t("Crop profile picture")}
         description={t(
           "Adjust your image before uploading. Profile pictures are cropped to a square.",
         )}
         {...profilePictureCropConfig}
-        confirmLabel={t("Upload Picture")}
+        confirmLabel={t("Upload picture")}
         onClose={() => {
           setIsCropOpen(false);
           setPendingFile(null);

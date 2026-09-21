@@ -38,7 +38,7 @@ export function AIProviderPanel({
         row={row}
         form={form}
         queryKey={PROVIDER_QUERY_SCOPE}
-        title={t("AI Provider")}
+        title={t("AI provider")}
         fieldKey="name"
         formComponent={<AIProviderForm mode="edit" />}
         mutationFn={(values, current) =>
@@ -55,7 +55,7 @@ export function AIProviderPanel({
       onOpenChange={onOpenChange}
       form={form}
       queryKey={PROVIDER_QUERY_SCOPE}
-      title={t("AI Provider")}
+      title={t("AI provider")}
       description={t(
         "Point Trenova at a model endpoint and choose which work it handles. Start from a preset, or configure any OpenAI-compatible server directly.",
       )}

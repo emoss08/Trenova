@@ -174,7 +174,7 @@ export function BulkBillingTransferDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>{t("Transfer to Billing")}</DialogTitle>
+          <DialogTitle>{t("Transfer to billing")}</DialogTitle>
           <DialogDescription>
             {t(
               "Each shipment runs the billing readiness check before it moves into the queue. Completed shipments that pass are marked Ready to Invoice first.",

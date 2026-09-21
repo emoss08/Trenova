@@ -97,7 +97,7 @@ export default function SettlementControlForm() {
           <WorkflowCard />
           <ExceptionCard />
           <EscrowCard />
-          <FormSaveDock saveButtonContent={t("Save Changes")} />
+          <FormSaveDock saveButtonContent={t("Save changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -111,7 +111,7 @@ function PayPeriodCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Pay Period")}</CardTitle>
+        <CardTitle>{t("Pay period")}</CardTitle>
         <CardDescription>
           {t("Defines the settlement cycle and when drivers earn pay for a shipment.")}
         </CardDescription>
@@ -134,7 +134,7 @@ function PayPeriodCard() {
             <SelectField
               control={control}
               name="periodEndDayOfWeek"
-              label={t("Period End Day")}
+              label={t("Period end day")}
               options={weekdayChoices}
               rules={{ required: true }}
               description={t("The pay period closes at the start of this day.")}
@@ -153,7 +153,7 @@ function PayPeriodCard() {
             <SelectField
               control={control}
               name="payTrigger"
-              label={t("Pay Trigger")}
+              label={t("Pay trigger")}
               options={settlementPayTriggerChoices}
               rules={{ required: true }}
               description={t(
@@ -174,7 +174,7 @@ function WorkflowCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Workflow Automation")}</CardTitle>
+        <CardTitle>{t("Workflow automation")}</CardTitle>
         <CardDescription>
           {t("Exception-driven review: automate the clean 90% and focus reviewers on anomalies.")}
         </CardDescription>
@@ -185,7 +185,7 @@ function WorkflowCard() {
             <SwitchField
               control={control}
               name="autoGenerateBatches"
-              label={t("Auto-Generate Batches")}
+              label={t("Auto-generate batches")}
               description={t(
                 "Generate a settlement batch automatically when each pay period closes.",
               )}
@@ -195,7 +195,7 @@ function WorkflowCard() {
             <SwitchField
               control={control}
               name="autoApproveClean"
-              label={t("Auto-Approve Clean Settlements")}
+              label={t("Auto-approve clean settlements")}
               description={t(
                 "Settlements without exceptions skip manual review and go straight to approved.",
               )}
@@ -205,7 +205,7 @@ function WorkflowCard() {
             <SwitchField
               control={control}
               name="autoAttachAccruals"
-              label={t("Auto-Attach New Pay to Open Drafts")}
+              label={t("Auto-attach new pay to open drafts")}
               description={t(
                 "As drivers complete work, new pay events flow into their open draft settlement automatically — no manual transfer needed.",
               )}
@@ -215,7 +215,7 @@ function WorkflowCard() {
             <SwitchField
               control={control}
               name="autoPostOnApprove"
-              label={t("Auto-Post on Approval")}
+              label={t("Auto-post on approval")}
               description={t(
                 "Approving a settlement immediately posts it to the general ledger, collapsing two steps into one.",
               )}
@@ -225,7 +225,7 @@ function WorkflowCard() {
             <SwitchField
               control={control}
               name="allowNegativeNet"
-              label={t("Allow Negative Net (Carry Forward)")}
+              label={t("Allow negative net (carry forward)")}
               description={t(
                 "When deductions exceed earnings, carry the balance to the next settlement instead of capping recoveries.",
               )}
@@ -244,7 +244,7 @@ function ExceptionCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Exception Detection")}</CardTitle>
+        <CardTitle>{t("Exception detection")}</CardTitle>
         <CardDescription>
           {t("Settlements deviating from a driver's recent history are flagged for review.")}
         </CardDescription>
@@ -255,7 +255,7 @@ function ExceptionCard() {
             <NumberField
               control={control}
               name="varianceThresholdPct"
-              label={t("Variance Threshold")}
+              label={t("Variance threshold")}
               sideText="%"
               description={t(
                 "Flag when net pay deviates from the trailing average by more than this percentage.",
@@ -283,7 +283,7 @@ function EscrowCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Escrow Interest")}</CardTitle>
+        <CardTitle>{t("Escrow interest")}</CardTitle>
         <CardDescription>
           {t("49 CFR 376.12(k) requires interest on owner-operator escrow at least quarterly.")}
         </CardDescription>
@@ -294,7 +294,7 @@ function EscrowCard() {
             <NumberField
               control={control}
               name="defaultEscrowInterestRate"
-              label={t("Default Annual Interest Rate")}
+              label={t("Default annual interest rate")}
               sideText="%"
               decimalScale={2}
               fixedDecimalScale

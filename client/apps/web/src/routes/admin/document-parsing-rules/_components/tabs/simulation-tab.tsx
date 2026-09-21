@@ -223,7 +223,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
         <CardHeader>
           <div className="flex items-center gap-2">
             <FlaskConicalIcon className="text-muted-foreground size-4" />
-            <CardTitle>{t("Rule Simulation")}</CardTitle>
+            <CardTitle>{t("Rule simulation")}</CardTitle>
           </div>
           <CardDescription>
             {t(
@@ -235,7 +235,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
           {/* -- Document Input Section -- */}
           <div className="space-y-4">
             <SectionHeading
-              title={t("Document Input")}
+              title={t("Document input")}
               description={t(
                 "Select the rule version to test and provide the document text to parse.",
               )}
@@ -257,7 +257,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
 
             <div className="flex flex-col gap-0.5">
               <div className="flex items-center justify-between">
-                <Label className="required text-xs font-medium">{t("Document Text")}</Label>
+                <Label className="required text-xs font-medium">{t("Document text")}</Label>
                 {text && (
                   <span className="text-2xs text-muted-foreground tabular-nums">
                     {lineCount} {lineCount === 1 ? "line" : "lines"}
@@ -282,7 +282,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
           {/* -- Optional Context Section -- */}
           <div className="space-y-4">
             <SectionHeading
-              title={t("Optional Context")}
+              title={t("Optional context")}
               description={t(
                 "Additional metadata that helps the rule engine match and parse more accurately.",
               )}
@@ -290,7 +290,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-0.5">
-                <Label className="text-xs font-medium">{t("File Name")}</Label>
+                <Label className="text-xs font-medium">{t("File name")}</Label>
                 <Input
                   value={fileName}
                   onChange={(e) => setFileName(e.target.value)}
@@ -303,7 +303,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
                 </HelpText>
               </div>
               <div className="flex flex-col gap-0.5">
-                <Label className="text-xs font-medium">{t("Provider Fingerprint")}</Label>
+                <Label className="text-xs font-medium">{t("Provider fingerprint")}</Label>
                 <Input
                   value={providerFingerprint}
                   onChange={(e) => setProviderFingerprint(e.target.value)}
@@ -318,7 +318,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <Label className="text-xs font-medium">{t("Baseline Analysis JSON")}</Label>
+              <Label className="text-xs font-medium">{t("Baseline analysis JSON")}</Label>
               <Textarea
                 value={baselineJson}
                 onChange={(e) => setBaselineJson(e.target.value)}
@@ -350,7 +350,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
               ) : (
                 <>
                   <PlayIcon className="size-4" />
-                  {t("Run Simulation")}
+                  {t("Run simulation")}
                 </>
               )}
             </Button>
@@ -362,7 +362,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
                 className="gap-1.5"
               >
                 <EraserIcon className="size-3.5" />
-                {t("Clear Results")}
+                {t("Clear results")}
               </Button>
             )}
           </div>

@@ -95,7 +95,7 @@ export default function LeaveControlForm() {
           <MeasurementCard />
           <EntitlementCard />
           <EligibilityCard />
-          <FormSaveDock saveButtonContent={t("Save Changes")} />
+          <FormSaveDock saveButtonContent={t("Save changes")} />
         </div>
       </Form>
     </FormProvider>

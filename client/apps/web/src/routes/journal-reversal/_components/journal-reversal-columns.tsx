@@ -27,7 +27,7 @@ export function getColumns(t: TranslateFn): ColumnDef<JournalReversalRow>[] {
     },
     {
       accessorKey: "originalJournalEntryId",
-      header: t("Original Journal Entry"),
+      header: t("Original journal entry"),
       cell: ({ row }) => (
         <Link
           to={`/accounting/journal-entries/${row.original.originalJournalEntryId}`}
@@ -49,7 +49,7 @@ export function getColumns(t: TranslateFn): ColumnDef<JournalReversalRow>[] {
     },
     {
       accessorKey: "reasonCode",
-      header: t("Reason Code"),
+      header: t("Reason code"),
       cell: ({ row }) => <span className="font-medium">{row.original.reasonCode}</span>,
       size: 150,
       minSize: 120,

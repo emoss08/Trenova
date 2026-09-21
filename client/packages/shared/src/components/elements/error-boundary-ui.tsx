@@ -115,7 +115,7 @@ export function ErrorBoundaryUi({
             type="button"
             onClick={resetError}
             aria-label={t("Try again")}
-            className="flex items-center gap-1.5 rounded bg-danger-subtle px-3 py-1.5 text-sm font-medium text-danger-foreground transition-colors hover:bg-danger-subtle/50 dark:text-danger-foreground dark:hover:bg-danger-subtle"
+            className="flex items-center gap-1.5 rounded-md bg-danger-subtle px-3 py-1.5 text-sm font-medium text-danger-foreground transition-colors hover:bg-danger-subtle/50 dark:text-danger-foreground dark:hover:bg-danger-subtle"
           >
             <RefreshCw className="h-3.5 w-3.5" />
             {t("Try again")}
@@ -125,7 +125,7 @@ export function ErrorBoundaryUi({
           type="button"
           onClick={handleCopy}
           aria-label={copied ? "Copied to clipboard" : "Copy error details"}
-          className="flex items-center gap-1.5 rounded bg-danger-subtle px-3 py-1.5 text-sm font-medium text-danger-foreground transition-colors hover:bg-danger-subtle/50 dark:text-danger-foreground dark:hover:bg-danger-subtle"
+          className="flex items-center gap-1.5 rounded-md bg-danger-subtle px-3 py-1.5 text-sm font-medium text-danger-foreground transition-colors hover:bg-danger-subtle/50 dark:text-danger-foreground dark:hover:bg-danger-subtle"
         >
           <Copy className="h-3.5 w-3.5" />
           {copied ? t("Copied!") : t("Copy error")}
@@ -142,7 +142,7 @@ export function ErrorBoundaryUi({
             aria-label={t("Toggle stack trace")}
             className="flex w-full items-center justify-between px-4 py-2 text-sm text-danger-foreground transition-colors hover:bg-danger-subtle dark:text-danger-foreground dark:hover:bg-danger-subtle/30"
           >
-            <span className="font-medium">{t("Stack Trace")}</span>
+            <span className="font-medium">{t("Stack trace")}</span>
             {showStack ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
           {showStack && (
@@ -177,7 +177,7 @@ export function ErrorBoundaryUi({
             aria-label={t("Toggle component stack")}
             className="flex w-full items-center justify-between px-4 py-2 text-sm text-danger-foreground transition-colors hover:bg-danger-subtle dark:text-danger-foreground dark:hover:bg-danger-subtle/30"
           >
-            <span className="font-medium">{t("Component Stack")}</span>
+            <span className="font-medium">{t("Component stack")}</span>
             {showComponentStack ? (
               <ChevronUp className="h-4 w-4" />
             ) : (

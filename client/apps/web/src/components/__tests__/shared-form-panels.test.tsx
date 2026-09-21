@@ -43,7 +43,7 @@ function SharedFormPanels({
         form={form}
         url="/accessorial-charges/"
         queryKey="accessorial-charge-list"
-        title="Accessorial Charge"
+        title="Accessorial charge"
         formComponent={null}
       />
     );
@@ -56,7 +56,7 @@ function SharedFormPanels({
       form={form}
       url="/accessorial-charges/"
       queryKey="accessorial-charge-list"
-      title="Accessorial Charge"
+      title="Accessorial charge"
       formComponent={null}
     />
   );

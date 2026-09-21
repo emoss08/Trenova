@@ -162,12 +162,12 @@ export function ReportsPage() {
           <div className="flex items-center gap-2">
             <Button variant="outline" render={<Link to="/reports/runs" />}>
               <HistoryIcon className="size-4" />
-              {t("Run History")}
+              {t("Run history")}
             </Button>
             {canCreate && (
               <Button onClick={() => void navigate("/reports/builder")}>
                 <PlusIcon className="size-4" />
-                {t("New Report")}
+                {t("New report")}
               </Button>
             )}
           </div>
@@ -177,7 +177,7 @@ export function ReportsPage() {
       <div className="border-border flex flex-wrap items-center gap-1.5 border-b px-4 pt-1 pb-1.5">
         <div className="flex items-center">
           <TabButton active={isLibrary} onClick={() => switchTab("library")}>
-            {t("My Reports")}
+            {t("My reports")}
           </TabButton>
           <TabButton active={params.tab === "gallery"} onClick={() => switchTab("gallery")}>
             {t("Gallery")}
@@ -257,7 +257,7 @@ export function ReportsPage() {
             disabled={createDashboard.isPending}
           >
             <PlusIcon className="size-3.5" />
-            {t("New Dashboard")}
+            {t("New dashboard")}
           </Button>
         )}
       </div>

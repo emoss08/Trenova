@@ -150,7 +150,7 @@ describe("carrier intelligence cost confirmation", () => {
       screen.getByRole("combobox", { name: "Enrollment policy" }),
       "AllActive",
     );
-    await user.click(screen.getByRole("button", { name: "Save Changes" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(await screen.findByText("Confirm monitoring cost")).toBeInTheDocument();
     expect(screen.getByTestId("cost-estimate-subjects")).toHaveTextContent("1,250");
@@ -179,7 +179,7 @@ describe("carrier intelligence cost confirmation", () => {
       screen.getByRole("combobox", { name: "Enrollment policy" }),
       "AllActive",
     );
-    await user.click(screen.getByRole("button", { name: "Save Changes" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
     await screen.findByText("Confirm monitoring cost");
 
     await user.click(screen.getByRole("button", { name: "Cancel" }));
@@ -195,7 +195,7 @@ describe("carrier intelligence cost confirmation", () => {
     renderForm();
 
     await user.click(screen.getByRole("switch", { name: "Exclusive watchlist" }));
-    await user.click(screen.getByRole("button", { name: "Save Changes" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => expect(mocks.updateCarrierIntelControl).toHaveBeenCalledTimes(1));
     expect(mocks.updateCarrierIntelControl).toHaveBeenCalledWith({

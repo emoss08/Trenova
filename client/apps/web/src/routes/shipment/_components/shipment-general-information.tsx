@@ -20,7 +20,7 @@ function Inner({ children }: { children: React.ReactNode }) {
 
   return (
     <FormSection
-      title={t("General Information")}
+      title={t("General information")}
       description={t("Basic information about the shipment")}
     >
       {children}
@@ -56,8 +56,8 @@ export default function ShipmentGeneralInformation() {
           control={control}
           name="temperatureMin"
           description={t("The minimum temperature for the shipment.")}
-          label={t("Temperature Min")}
-          placeholder={t("Enter Temperature Min")}
+          label={t("Temperature min")}
+          placeholder={t("Enter temperature min")}
           sideText={t("°F")}
           rules={{ required }}
         />
@@ -70,9 +70,9 @@ export default function ShipmentGeneralInformation() {
         <NumberField
           control={control}
           name="temperatureMax"
-          label={t("Temperature Max")}
+          label={t("Temperature max")}
           description={t("The maximum temperature for the shipment.")}
-          placeholder={t("Enter Temperature Max")}
+          placeholder={t("Enter temperature max")}
           sideText={t("°F")}
           rules={{ required }}
         />

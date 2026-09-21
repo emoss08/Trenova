@@ -48,7 +48,7 @@ export function IncomeStatementPage() {
             <FinancialReportSection section={data.costOfRevenue} />
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
-              <span className="text-sm font-semibold">{t("Gross Profit")}</span>
+              <span className="text-sm font-semibold">{t("Gross profit")}</span>
               <AmountDisplay
                 value={data.grossProfitMinor}
                 variant="auto"

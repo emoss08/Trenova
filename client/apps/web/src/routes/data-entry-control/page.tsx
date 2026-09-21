@@ -11,7 +11,7 @@ export function DataEntryControlPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Data Entry Control"),
+        title: t("Data entry control"),
         description: t("Configure case formatting rules for data entry across the system"),
       }}
     >

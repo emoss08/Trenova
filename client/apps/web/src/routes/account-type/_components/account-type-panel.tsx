@@ -38,7 +38,7 @@ export function AccountTypePanel({
         form={form}
         url="/account-types/"
         queryKey="account-type-list"
-        title={t("Account Type")}
+        title={t("Account type")}
         fieldKey="code"
         formComponent={<AccountTypeForm />}
       />
@@ -52,7 +52,7 @@ export function AccountTypePanel({
       form={form}
       url="/account-types/"
       queryKey="account-type-list"
-      title={t("Account Type")}
+      title={t("Account type")}
       formComponent={<AccountTypeForm />}
     />
   );

@@ -186,7 +186,7 @@ export default function Workspace() {
               )}
             >
               <Zap className="size-3.5" />
-              {t("Pay Now")}
+              {t("Pay now")}
             </Button>
             <Button
               size="sm"
@@ -199,7 +199,7 @@ export default function Workspace() {
               }
             >
               <AssistMark className="size-3.5" />
-              {t("Generate Settlements")}
+              {t("Generate settlements")}
             </Button>
           </div>
         }

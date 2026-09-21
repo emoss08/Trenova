@@ -54,7 +54,7 @@ export default function LoadPlannerDialog({
         file,
         resourceId: shipmentMeta.shipmentId,
         resourceType: "shipment",
-        description: t("Load Plan"),
+        description: t("Load plan"),
       });
       toast.success(t("Load plan saved to shipment documents"));
     } catch {
@@ -73,7 +73,7 @@ export default function LoadPlannerDialog({
     >
       <DialogContent size="xl" className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0">
         <DialogHeader className="border-border border-b px-4 py-3">
-          <DialogTitle>{t("Load Planner")}</DialogTitle>
+          <DialogTitle>{t("Load planner")}</DialogTitle>
           <DialogDescription>
             {t("Commodity placement, weight distribution, and compliance")}
           </DialogDescription>
@@ -179,7 +179,7 @@ export default function LoadPlannerDialog({
           )}
           <Button type="button" onClick={calculate} disabled={isPending || !hasCommodities}>
             {isPending && <LoaderIcon className="size-3.5 animate-spin" />}
-            {data ? t("Recalculate") : t("Calculate Optimal Loading")}
+            {data ? t("Recalculate") : t("Calculate optimal loading")}
           </Button>
         </DialogFooter>
       </DialogContent>

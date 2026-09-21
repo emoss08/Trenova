@@ -381,7 +381,7 @@ export function UploadPanel({
   onRemove,
   onClearCompleted,
   disabled,
-  title = "Upload Documents",
+  title = "Upload documents",
   accept = ACCEPTED_TYPES,
   maxFileSize = MAX_FILE_SIZE,
   multiple = true,
@@ -581,7 +581,7 @@ export function UploadPanel({
                           key={tab.value}
                           onClick={() => setFilter(tab.value)}
                           className={cn(
-                            "rounded px-2 py-1 text-xs font-medium transition-colors",
+                            "rounded-md px-2 py-1 text-xs font-medium transition-colors",
                             filter === tab.value
                               ? "bg-primary text-primary-foreground"
                               : "text-muted-foreground hover:bg-muted hover:text-foreground",

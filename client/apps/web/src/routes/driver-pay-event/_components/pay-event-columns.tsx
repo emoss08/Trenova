@@ -120,7 +120,7 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
               {t("Cancel")}
             </Button>
             <Button disabled={reason.trim() === "" || pending} onClick={() => void hold()}>
-              {t("Hold Pay")}
+              {t("Hold pay")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -199,7 +199,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverPayEventRow>[] {
     },
     {
       accessorKey: "grossAmountMinor",
-      header: () => <div className="text-right">{t("Gross Pay")}</div>,
+      header: () => <div className="text-right">{t("Gross pay")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay

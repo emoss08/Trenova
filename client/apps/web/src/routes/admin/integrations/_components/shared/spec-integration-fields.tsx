@@ -244,7 +244,7 @@ export function SpecIntegrationFooter({
         loadingText={t("Testing...")}
         disabled={isLoading || isSaving || !canTest}
       >
-        {t("Test Connection")}
+        {t("Test connection")}
       </Button>
       <div className="flex flex-col-reverse gap-2 sm:flex-row">
         <Button type="button" variant="outline" onClick={onCancel}>
@@ -256,7 +256,7 @@ export function SpecIntegrationFooter({
           loadingText={t("Saving...")}
           disabled={isLoading}
         >
-          {t("Save Changes")}
+          {t("Save changes")}
         </Button>
       </div>
     </DialogFooter>

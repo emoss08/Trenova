@@ -11,7 +11,7 @@ export function PTOPoliciesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("PTO Policies"),
+        title: t("PTO policies"),
         description: t(
           "Accrual rules for paid time off — how days are earned, capped, and carried over, and which drivers each policy governs.",
         ),

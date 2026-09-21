@@ -114,7 +114,7 @@ export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
     >
       <DialogContent size={size} className={className}>
         <DialogHeader>
-          <DialogTitle>{t("Add New {0}", title)}</DialogTitle>
+          <DialogTitle>{t("Add new {0}", title)}</DialogTitle>
           <DialogDescription>
             {description
               ? description

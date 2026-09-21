@@ -46,7 +46,7 @@ export function IftaReturnsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("IFTA Returns"),
+        title: t("IFTA returns"),
         description: t(
           "The quarterly fuel tax worksheet: every jurisdiction's miles and tax-paid gallons, the fleet MPG they are taxed through, and what the quarter owes or is owed. Draft figures move with the data until the return is finalized.",
         ),

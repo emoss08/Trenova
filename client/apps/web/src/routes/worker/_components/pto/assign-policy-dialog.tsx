@@ -135,7 +135,7 @@ export function AssignPolicyDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {currentPolicyId ? t("Change PTO Policy") : t("Assign PTO Policy")}
+            {currentPolicyId ? t("Change PTO policy") : t("Assign PTO policy")}
           </DialogTitle>
           <DialogDescription>
             {currentPolicyId
@@ -226,7 +226,7 @@ export function AssignPolicyDialog({
                 isLoading={isPending}
                 loadingText={t("Assigning...")}
               >
-                {t("Assign Policy")}
+                {t("Assign policy")}
               </Button>
             </DialogFooter>
           </Form>

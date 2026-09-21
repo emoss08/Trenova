@@ -11,7 +11,7 @@ export function SequenceConfigPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Sequence Configuration"),
+        title: t("Sequence configuration"),
         description: t("Configure sequence generation formats for shipments and billing workflows"),
       }}
     >

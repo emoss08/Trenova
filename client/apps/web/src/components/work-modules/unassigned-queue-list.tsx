@@ -153,7 +153,7 @@ export function UnassignedQueueList({
             key={s.id}
             type="button"
             onClick={() => s.id && onSelect(s.id)}
-            className="border-border bg-muted/30 hover:border-foreground/20 hover:bg-muted/60 flex flex-col gap-1 rounded border px-2 py-1.5 text-left transition-colors"
+            className="border-border bg-muted/30 hover:border-foreground/20 hover:bg-muted/60 flex flex-col gap-1 rounded-md border px-2 py-1.5 text-left transition-colors"
           >
             <div className="flex items-center justify-between gap-1.5">
               <div className="flex min-w-0 items-center gap-1">
@@ -164,7 +164,7 @@ export function UnassignedQueueList({
               </div>
               <span
                 className={cn(
-                  "shrink-0 rounded px-1 py-px text-2xs font-semibold",
+                  "shrink-0 rounded-md px-1 py-px text-2xs font-semibold",
                   PILL_TONE[priority.tone],
                 )}
               >
@@ -172,7 +172,7 @@ export function UnassignedQueueList({
               </span>
             </div>
             <div className="text-muted-foreground flex items-center justify-between gap-2 text-2xs">
-              <span className="truncate">{s.customer?.name ?? t("No Customer Found")}</span>
+              <span className="truncate">{s.customer?.name ?? t("No customer found")}</span>
             </div>
             <div className="font-table flex items-baseline justify-between gap-2 tabular-nums">
               <span className="text-muted-foreground truncate text-3xs">

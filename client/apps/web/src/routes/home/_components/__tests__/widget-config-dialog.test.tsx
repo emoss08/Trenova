@@ -87,8 +87,8 @@ function option(configKind: string, label = "Widget"): HomeWidgetOption {
 }
 
 const METRICS = [
-  { key: "activeShipments", label: "Active Shipments" },
-  { key: "revenueToday", label: "Revenue Today" },
+  { key: "activeShipments", label: "Active shipments" },
+  { key: "revenueToday", label: "Revenue today" },
 ];
 
 function renderDialog(
@@ -134,7 +134,7 @@ describe("WidgetConfigDialog", () => {
     expect(saveButton()).toBeDisabled();
     expect(screen.getByText("Choose the metric this tile shows.")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("checkbox", { name: "Revenue Today" }));
+    await user.click(screen.getByRole("checkbox", { name: "Revenue today" }));
 
     expect(saveButton()).toBeEnabled();
     await user.click(saveButton());
@@ -145,8 +145,8 @@ describe("WidgetConfigDialog", () => {
     const user = userEvent.setup();
     const { onSave } = renderDialog("metric");
 
-    await user.click(screen.getByRole("checkbox", { name: "Active Shipments" }));
-    await user.click(screen.getByRole("checkbox", { name: "Revenue Today" }));
+    await user.click(screen.getByRole("checkbox", { name: "Active shipments" }));
+    await user.click(screen.getByRole("checkbox", { name: "Revenue today" }));
     await user.click(saveButton());
 
     expect(onSave.mock.calls[0][0].config.metric).toBe("revenueToday");

@@ -152,7 +152,7 @@ export function AiGeneratePanel({
         <SheetHeader className="border-b pb-3">
           <SheetTitle className="flex items-center gap-2">
             <AssistMark className="size-4" />
-            {t("Generate Formula")}
+            {t("Generate formula")}
           </SheetTitle>
           <SheetDescription>
             {t(
@@ -219,7 +219,7 @@ export function AiGeneratePanel({
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <p className="text-muted-foreground text-xs font-medium">
-                    {t("Generated Expression")}
+                    {t("Generated expression")}
                   </p>
                   <pre className="bg-muted overflow-x-auto rounded-md border p-3 font-mono text-xs whitespace-pre-wrap">
                     {data.expression}
@@ -229,7 +229,7 @@ export function AiGeneratePanel({
                 {data.variableDefinitions.length > 0 && (
                   <div className="space-y-1.5">
                     <p className="text-muted-foreground text-xs font-medium">
-                      {t("Custom Variables")}
+                      {t("Custom variables")}
                     </p>
                     <div className="overflow-hidden rounded-md border">
                       {data.variableDefinitions.map((variable) => (

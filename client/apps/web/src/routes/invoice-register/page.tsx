@@ -16,7 +16,7 @@ export function InvoiceRegisterPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Invoice Register"),
+        title: t("Invoice register"),
         description: t(
           "Every invoice issued, with its bill-to, shipper, dates and settlement status.",
         ),

@@ -49,7 +49,7 @@ function AttentionTile({ row, count }: { row: AttentionRowConfig; count: number 
   return (
     <Link
       to={row.path}
-      className="hover:bg-muted/60 flex items-center gap-2 rounded px-1.5 py-1 transition-colors"
+      className="hover:bg-muted/60 flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors"
     >
       <span
         className={cn(
@@ -158,7 +158,7 @@ export function DetentionWatchWidget({ widget, data }: WidgetProps) {
             <Link
               key={item.shipmentId}
               to={shipmentHref(item.shipmentId)}
-              className="hover:bg-muted/60 flex items-center gap-2 rounded px-1.5 py-1 transition-colors"
+              className="hover:bg-muted/60 flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors"
             >
               <span
                 className={cn(
@@ -200,7 +200,7 @@ export function TomorrowsPickupsWidget({ widget, data }: WidgetProps) {
             <Link
               key={item.shipmentId}
               to={shipmentHref(item.shipmentId)}
-              className="hover:bg-muted/60 flex flex-col gap-0.5 rounded px-1.5 py-1 transition-colors"
+              className="hover:bg-muted/60 flex flex-col gap-0.5 rounded-md px-1.5 py-1 transition-colors"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-table truncate text-2xs font-semibold tabular-nums">
@@ -363,7 +363,7 @@ export function ExpiringCredentialsWidget({ widget }: WidgetProps) {
           <Link
             key={target.href}
             to={target.href}
-            className="hover:bg-muted/60 rounded px-1.5 py-1 text-xs transition-colors"
+            className="hover:bg-muted/60 rounded-md px-1.5 py-1 text-xs transition-colors"
           >
             {t(target.label)}
           </Link>

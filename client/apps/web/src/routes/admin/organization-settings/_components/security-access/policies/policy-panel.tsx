@@ -98,7 +98,7 @@ export function AccessPolicyPanel({
         row={policy ? (toAccessPolicyFormValues(policy) as AccessPolicyRecord) : null}
         form={editForm}
         queryKey={queryKey}
-        title={t("Access Policy")}
+        title={t("Access policy")}
         fieldKey="name"
         formComponent={formComponent}
         mutationFn={async (values) => {
@@ -119,7 +119,7 @@ export function AccessPolicyPanel({
       onOpenChange={onOpenChange}
       form={createForm}
       queryKey={queryKey}
-      title={t("Access Policy")}
+      title={t("Access policy")}
       description={t("Create a priority-ordered authorization decision for a protected resource.")}
       formComponent={formComponent}
       mutationFn={async (values) => {

@@ -37,7 +37,7 @@ export function RateAgreementForm() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("General Information")}
+        title={t("General information")}
         description={t("Who the contract is with and how it is identified across the system.")}
       >
         <FormGroup cols={2}>
@@ -46,7 +46,7 @@ export function RateAgreementForm() {
               control={control}
               rules={{ required: true }}
               name="partyType"
-              label={t("Party Type")}
+              label={t("Party type")}
               placeholder={t("Select party type")}
               description={t(
                 "Whether this contract sets what a customer pays or what a carrier is paid",
@@ -119,7 +119,7 @@ export function RateAgreementForm() {
               control={control}
               rules={{ required: true }}
               name="agreementType"
-              label={t("Agreement Type")}
+              label={t("Agreement type")}
               placeholder={t("Select type")}
               description={t(
                 "Contract, published tariff, spot deal, project, or dedicated capacity",
@@ -145,7 +145,7 @@ export function RateAgreementForm() {
             <InputField
               control={control}
               name="contractRef"
-              label={t("Contract Reference")}
+              label={t("Contract reference")}
               placeholder={t("e.g., MSA-2026-114")}
               description={t("The signed document's own number, for when somebody asks")}
             />
@@ -192,7 +192,7 @@ export function RateAgreementForm() {
             <SwitchField
               control={control}
               name="autoRenew"
-              label={t("Auto Renew")}
+              label={t("Auto renew")}
               description={t("The term rolls forward automatically unless somebody gives notice")}
               outlined
             />
@@ -201,7 +201,7 @@ export function RateAgreementForm() {
             <NumberField
               control={control}
               name="renewalNoticeDays"
-              label={t("Renewal Notice")}
+              label={t("Renewal notice")}
               placeholder="30"
               sideText="days"
               description={t("How much warning the contract requires before it ends")}
@@ -211,7 +211,7 @@ export function RateAgreementForm() {
       </FormSection>
 
       <FormSection
-        title={t("Pricing Defaults")}
+        title={t("Pricing defaults")}
         description={t(
           "The currency, guardrails, and rounding every lane inherits unless it sets its own.",
         )}
@@ -234,7 +234,7 @@ export function RateAgreementForm() {
             <SelectField
               control={control}
               name="roundingMode"
-              label={t("Rounding Mode")}
+              label={t("Rounding mode")}
               placeholder={t("Select rounding")}
               description={t("How the final amount is rounded")}
               options={rateRoundingModeChoices}
@@ -244,7 +244,7 @@ export function RateAgreementForm() {
             <NumberField
               control={control}
               name="defaultMinCharge"
-              label={t("Default Minimum Charge")}
+              label={t("Default minimum charge")}
               placeholder="0.00"
               sideText="$"
               decimalScale={2}
@@ -256,7 +256,7 @@ export function RateAgreementForm() {
             <NumberField
               control={control}
               name="defaultMaxCharge"
-              label={t("Default Maximum Charge")}
+              label={t("Default maximum charge")}
               placeholder="0.00"
               sideText="$"
               decimalScale={2}
@@ -268,7 +268,7 @@ export function RateAgreementForm() {
             <NumberField
               control={control}
               name="roundingPrecision"
-              label={t("Rounding Precision")}
+              label={t("Rounding precision")}
               placeholder="2"
               description={t("How many decimal places the rounded amount keeps")}
             />
@@ -278,7 +278,7 @@ export function RateAgreementForm() {
 
       {partyType === "Carrier" && (
         <FormSection
-          title={t("Margin Guardrails")}
+          title={t("Margin guardrails")}
           description={t(
             "Limits on what this carrier may be paid relative to what the load sells for.",
           )}
@@ -288,7 +288,7 @@ export function RateAgreementForm() {
               <NumberField
                 control={control}
                 name="marginFloorPercent"
-                label={t("Margin Floor")}
+                label={t("Margin floor")}
                 placeholder="12"
                 sideText="%"
                 decimalScale={2}
@@ -299,7 +299,7 @@ export function RateAgreementForm() {
               <NumberField
                 control={control}
                 name="maxPayPercentOfSell"
-                label={t("Maximum Pay")}
+                label={t("Maximum pay")}
                 placeholder="85"
                 sideText="%"
                 decimalScale={2}

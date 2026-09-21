@@ -102,7 +102,7 @@ function HosRow({ state, withDivider }: { state: WorkerHosState; withDivider: bo
             {state.workerName}
           </Link>
         </div>
-        <Badge variant={duty.variant} className="h-4 shrink-0 rounded px-1 text-3xs">
+        <Badge variant={duty.variant} className="h-4 shrink-0 rounded-md px-1 text-3xs">
           {t(duty.label)}
         </Badge>
       </div>
@@ -162,7 +162,7 @@ function ConnectSamsaraState() {
         render={<Link to="/admin/integrations?type=Samsara" />}
       >
         <ExternalLinkIcon className="size-3" />
-        {t("Open Integrations")}
+        {t("Open integrations")}
       </Button>
     </div>
   );

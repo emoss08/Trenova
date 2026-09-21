@@ -11,7 +11,7 @@ export function JurisdictionRulesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Jurisdiction Rules"),
+        title: t("Jurisdiction rules"),
         description: t(
           "Oversize and overweight limits per state. These limits are shared across every organization; record a carrier override to hold your own fleet to something stricter.",
         ),

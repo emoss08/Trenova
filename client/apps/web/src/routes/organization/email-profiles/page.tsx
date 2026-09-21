@@ -12,7 +12,7 @@ export function EmailProfilesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Email Profiles"),
+        title: t("Email profiles"),
         description: t(
           "Manage verified sender identities and route email purposes to the right provider profile.",
         ),

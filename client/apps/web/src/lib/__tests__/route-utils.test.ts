@@ -6,22 +6,22 @@ describe("generateBreadcrumbSegments", () => {
     const segments = generateBreadcrumbSegments("/admin/api-keys");
     expect(segments).toEqual([
       { path: "/admin", label: "Settings" },
-      { path: "/admin/api-keys", label: "API Keys" },
+      { path: "/admin/api-keys", label: "API keys" },
     ]);
   });
 
   it("uses the navigation label for every segment that has one", () => {
     const segments = generateBreadcrumbSegments("/hr/my-team");
     expect(segments).toEqual([
-      { path: "/hr", label: "Human Resource Management" },
-      { path: "/hr/my-team", label: "My Team" },
+      { path: "/hr", label: "Human resource management" },
+      { path: "/hr/my-team", label: "My team" },
     ]);
   });
 
   it("does not prefix-match a nav path onto a deeper segment", () => {
     const segments = generateBreadcrumbSegments("/hr/workers/wrk_01HZX2K3M4N5P6Q7R8S9T0V1");
     expect(segments.map((segment) => segment.label)).toEqual([
-      "Human Resource Management",
+      "Human resource management",
       "Workers",
       "Details",
     ]);
@@ -32,9 +32,9 @@ describe("generateBreadcrumbSegments", () => {
       "/billing/configuration-files/formula-templates/ft_01HZX2K3M4N5P6Q7R8S9T0V1/edit",
     );
     expect(segments).toEqual([
-      { path: "/billing", label: "Billing Management" },
-      { path: "/billing/configuration-files", label: "Configuration Files" },
-      { path: "/billing/configuration-files/formula-templates", label: "Formula Templates" },
+      { path: "/billing", label: "Billing management" },
+      { path: "/billing/configuration-files", label: "Configuration files" },
+      { path: "/billing/configuration-files/formula-templates", label: "Formula templates" },
       {
         path: "/billing/configuration-files/formula-templates/ft_01HZX2K3M4N5P6Q7R8S9T0V1/edit",
         label: "Details",
@@ -49,8 +49,8 @@ describe("generateBreadcrumbSegments", () => {
       "/billing/configuration-files/formula-templates": "Templates",
     });
     expect(segments.map((segment) => segment.label)).toEqual([
-      "Billing Management",
-      "Configuration Files",
+      "Billing management",
+      "Configuration files",
       "Templates",
       "Base Linehaul",
     ]);
@@ -125,22 +125,22 @@ describe("generateBreadcrumbSegments group labels", () => {
   it("names the prefix a navigation group's pages share after the group", () => {
     const segments = generateBreadcrumbSegments("/accounting/ar/aging");
     expect(segments.map((segment) => segment.label)).toEqual([
-      "Accounting Management",
-      "Accounts Receivable",
-      "AR Aging",
+      "Accounting management",
+      "Accounts receivable",
+      "AR aging",
     ]);
   });
 
   it("names a module's own root after the module, even when its base path is a page inside it", () => {
     const segments = generateBreadcrumbSegments("/edi/designer");
-    expect(segments.map((segment) => segment.label)).toEqual(["EDI", "Template Designer"]);
+    expect(segments.map((segment) => segment.label)).toEqual(["EDI", "Template designer"]);
   });
 
   it("does not let a group claim the module itself when its pages sit directly under it", () => {
     const segments = generateBreadcrumbSegments("/hr/credential-types");
     expect(segments.map((segment) => segment.label)).toEqual([
-      "Human Resource Management",
-      "Credential Types",
+      "Human resource management",
+      "Credential types",
     ]);
   });
 });

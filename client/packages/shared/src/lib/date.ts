@@ -818,7 +818,7 @@ export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
       },
     },
     {
-      label: translate("This Quarter"),
+      label: translate("This quarter"),
       getValue: () => {
         const now = today();
         return {

@@ -95,7 +95,7 @@ export function CustomerBillingProfileForm() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("Payment Terms")}
+        title={t("Payment terms")}
         description={t("How long this customer has to pay, and in what currency")}
       >
         <FormGroup cols={2}>
@@ -103,7 +103,7 @@ export function CustomerBillingProfileForm() {
             <SelectField
               control={control}
               name="billingProfile.paymentTerm"
-              label={t("Payment Term")}
+              label={t("Payment term")}
               description={t(
                 "The number of days this customer has to pay after an invoice is issued. Overrides the organization default when set.",
               )}
@@ -125,7 +125,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.hasBillingControlOverrides"
-              label={t("Override Global Billing Settings")}
+              label={t("Override global billing settings")}
               description={t(
                 "When enabled, this customer's billing profile takes precedence over your organization's global billing control settings.",
               )}
@@ -135,7 +135,7 @@ export function CustomerBillingProfileForm() {
         </FormGroup>
       </FormSection>
       <FormSection
-        title={t("Credit Management")}
+        title={t("Credit management")}
         description={t("Set credit limits and automatic hold rules to manage financial exposure")}
       >
         <FormGroup cols={2}>
@@ -143,7 +143,7 @@ export function CustomerBillingProfileForm() {
             <SelectField
               control={control}
               name="billingProfile.creditStatus"
-              label={t("Credit Status")}
+              label={t("Credit status")}
               description={t(
                 "Reflects this customer's current creditworthiness. 'Hold' and 'Suspended' block new shipments from being dispatched.",
               )}
@@ -154,7 +154,7 @@ export function CustomerBillingProfileForm() {
             <NumberField
               control={control}
               name="billingProfile.creditLimit"
-              label={t("Credit Limit")}
+              label={t("Credit limit")}
               placeholder="0.00"
               description={t(
                 "Maximum outstanding balance allowed before shipments are blocked. Leave empty for unlimited credit.",
@@ -165,7 +165,7 @@ export function CustomerBillingProfileForm() {
             <NumberField
               control={control}
               name="billingProfile.creditBalance"
-              label={t("Outstanding Balance")}
+              label={t("Outstanding balance")}
               placeholder="0.00"
               description={t(
                 "Current unpaid invoice total. Automatically updated as invoices are generated and payments received.",
@@ -176,7 +176,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.enforceCreditLimit"
-              label={t("Enforce Credit Limit")}
+              label={t("Enforce credit limit")}
               description={t(
                 "When enabled, the system will prevent new shipments from being created once the outstanding balance exceeds the credit limit.",
               )}
@@ -186,7 +186,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.autoCreditHold"
-              label={t("Auto Credit Hold")}
+              label={t("Auto credit hold")}
               description={t(
                 "Automatically change credit status to 'Hold' when the outstanding balance exceeds the credit limit, without requiring manual intervention.",
               )}
@@ -197,7 +197,7 @@ export function CustomerBillingProfileForm() {
               <TextareaField
                 control={control}
                 name="billingProfile.creditHoldReason"
-                label={t("Hold Reason")}
+                label={t("Hold reason")}
                 placeholder={t("e.g., Past due on Invoice #1234, awaiting payment...")}
                 description={t(
                   "Document why this customer is on hold or suspended. This is visible to dispatch and billing staff when they attempt to create shipments.",
@@ -208,7 +208,7 @@ export function CustomerBillingProfileForm() {
         </FormGroup>
       </FormSection>
       <FormSection
-        title={t("Invoice Configuration")}
+        title={t("Invoice configuration")}
         description={t(
           "Control how invoices are formatted, numbered, and which GL accounts they post to",
         )}
@@ -218,7 +218,7 @@ export function CustomerBillingProfileForm() {
             <SelectField
               control={control}
               name="billingProfile.invoiceNumberFormat"
-              label={t("Invoice Number Format")}
+              label={t("Invoice number format")}
               description={t(
                 "How invoice numbers are generated. 'Custom Prefix' prepends a customer-specific string; 'PO Based' uses the customer's PO number as the invoice identifier.",
               )}
@@ -230,7 +230,7 @@ export function CustomerBillingProfileForm() {
               <InputField
                 control={control}
                 name="billingProfile.customerInvoicePrefix"
-                label={t("Invoice Prefix")}
+                label={t("Invoice prefix")}
                 placeholder={t("e.g., ACME-")}
                 description={t(
                   "Custom string prepended to all invoice numbers for this customer, useful when customers require a specific format for their AP system.",
@@ -242,7 +242,7 @@ export function CustomerBillingProfileForm() {
             <NumberField
               control={control}
               name="billingProfile.invoiceCopies"
-              label={t("Invoice Copies")}
+              label={t("Invoice copies")}
               placeholder="1"
               description={t(
                 "Number of invoice copies to generate per billing run. Additional copies are often required for customers with multiple AP departments.",
@@ -253,7 +253,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.autoSendInvoiceOnGeneration"
-              label={t("Auto-Send After PDF Generation")}
+              label={t("Auto-send after PDF generation")}
               description={t(
                 "Email the invoice to the configured recipients after the invoice PDF is generated.",
               )}
@@ -261,7 +261,7 @@ export function CustomerBillingProfileForm() {
           </FormControl>
           <FormControl cols="full">
             <div className="flex flex-col gap-2 rounded-md border p-3">
-              <p className="text-xs font-medium">{t("Invoice Delivery")}</p>
+              <p className="text-xs font-medium">{t("Invoice delivery")}</p>
               <SwitchField
                 control={control}
                 name="billingProfile.emailInvoiceEnabled"
@@ -306,7 +306,7 @@ export function CustomerBillingProfileForm() {
             <GLAccountAutocompleteField
               control={control}
               name="billingProfile.revenueAccountId"
-              label={t("Revenue Account")}
+              label={t("Revenue account")}
               description={t(
                 "GL account where revenue from this customer's shipments is posted. Overrides the organization default revenue account.",
               )}
@@ -317,7 +317,7 @@ export function CustomerBillingProfileForm() {
             <GLAccountAutocompleteField
               control={control}
               name="billingProfile.arAccountId"
-              label={t("Accounts Receivable")}
+              label={t("Accounts receivable")}
               description={t(
                 "GL account for tracking this customer's outstanding invoices. Overrides the organization default AR account.",
               )}
@@ -328,7 +328,7 @@ export function CustomerBillingProfileForm() {
             <DocumentTypeMultiSelectField
               control={control}
               name="billingProfile.documentTypes"
-              label={t("Required Document Types")}
+              label={t("Required document types")}
               description={t(
                 "Documents that must be attached before an invoice can be generated (e.g., signed BOL, proof of delivery). Missing documents will block billing.",
               )}
@@ -338,7 +338,7 @@ export function CustomerBillingProfileForm() {
       </FormSection>
 
       <FormSection
-        title={t("Billing Schedule")}
+        title={t("Billing schedule")}
         description={t("How this customer's shipments turn into invoices, and how often")}
       >
         <FormGroup cols={1}>
@@ -346,7 +346,7 @@ export function CustomerBillingProfileForm() {
             <SelectField
               control={control}
               name="billingProfile.invoiceDelivery"
-              label={t("Invoice Delivery")}
+              label={t("Invoice delivery")}
               description={t(
                 "Whether this customer gets an invoice per shipment, per order, or one statement covering a billing period.",
               )}
@@ -361,7 +361,7 @@ export function CustomerBillingProfileForm() {
                   <SelectField
                     control={control}
                     name="billingProfile.billingCycle"
-                    label={t("Bill Every")}
+                    label={t("Bill every")}
                     description={t("How often the period closes and invoices are produced.")}
                     options={billingCycleChoices}
                   />
@@ -383,7 +383,7 @@ export function CustomerBillingProfileForm() {
                   <SelectField
                     control={control}
                     name="billingProfile.billingCycleTimezone"
-                    label={t("Time Zone")}
+                    label={t("Time zone")}
                     description={t(
                       "The zone period boundaries are evaluated in. Getting this wrong moves loads into the wrong period.",
                     )}
@@ -394,7 +394,7 @@ export function CustomerBillingProfileForm() {
                   <SelectField
                     control={control}
                     name="billingProfile.splitBy"
-                    label={t("Separate Invoice For Each")}
+                    label={t("Separate invoice for each")}
                     description={t(
                       "Decides how many invoices a period produces. Choose nothing for a single statement.",
                     )}
@@ -405,7 +405,7 @@ export function CustomerBillingProfileForm() {
                   <SelectField
                     control={control}
                     name="billingProfile.sectionBy"
-                    label={t("Group Lines By")}
+                    label={t("Group lines by")}
                     description={t(
                       "How the lines inside each invoice are organised. Never changes how many invoices there are.",
                     )}
@@ -416,7 +416,7 @@ export function CustomerBillingProfileForm() {
                   <SelectField
                     control={control}
                     name="billingProfile.invoiceDetail"
-                    label={t("Detail Level")}
+                    label={t("Detail level")}
                     description={t(
                       "Whether each section lists every charge or collapses to one line per shipment.",
                     )}
@@ -427,7 +427,7 @@ export function CustomerBillingProfileForm() {
                   <NumberField
                     control={control}
                     name="billingProfile.maxShipmentsPerInvoice"
-                    label={t("Max Shipments Per Invoice")}
+                    label={t("Max shipments per invoice")}
                     placeholder="0"
                     description={t(
                       "Splits an oversized group across several invoices. Zero means no limit.",
@@ -438,7 +438,7 @@ export function CustomerBillingProfileForm() {
                   <NumberField
                     control={control}
                     name="billingProfile.minConsolidatedAmount"
-                    label={t("Minimum Invoice Amount")}
+                    label={t("Minimum invoice amount")}
                     placeholder="0.00"
                     description={t(
                       "A group worth less than this defers to the next period instead of billing.",
@@ -454,7 +454,7 @@ export function CustomerBillingProfileForm() {
       </FormSection>
 
       <FormSection
-        title={t("Late Charges & Tax")}
+        title={t("Late charges & tax")}
         description={t("Configure penalty rates for overdue invoices and tax exemption status")}
       >
         <FormGroup cols={1}>
@@ -462,7 +462,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.applyLateCharges"
-              label={t("Apply Late Charges")}
+              label={t("Apply late charges")}
               description={t(
                 "Automatically assess a percentage-based late fee on invoices that remain unpaid past the grace period.",
               )}
@@ -475,7 +475,7 @@ export function CustomerBillingProfileForm() {
                 <NumberField
                   control={control}
                   name="billingProfile.lateChargeRate"
-                  label={t("Late Charge Rate")}
+                  label={t("Late charge rate")}
                   placeholder="1.50"
                   sideText="%"
                   description={t(
@@ -487,7 +487,7 @@ export function CustomerBillingProfileForm() {
                 <NumberField
                   control={control}
                   name="billingProfile.gracePeriodDays"
-                  label={t("Grace Period")}
+                  label={t("Grace period")}
                   placeholder="0"
                   sideText="days"
                   description={t(
@@ -501,7 +501,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.taxExempt"
-              label={t("Tax Exempt")}
+              label={t("Tax exempt")}
               description={t(
                 "Mark this customer as exempt from sales tax. You must have a valid tax exemption certificate on file.",
               )}
@@ -513,7 +513,7 @@ export function CustomerBillingProfileForm() {
               <InputField
                 control={control}
                 name="billingProfile.taxExemptNumber"
-                label={t("Exemption Certificate Number")}
+                label={t("Exemption certificate number")}
                 placeholder={t("e.g., EX-2024-00123")}
                 description={t(
                   "The customer's tax exemption certificate or resale number, required for audit compliance.",
@@ -524,7 +524,7 @@ export function CustomerBillingProfileForm() {
         </FormGroup>
       </FormSection>
       <FormSection
-        title={t("Fuel Surcharge")}
+        title={t("Fuel surcharge")}
         description={t(
           "How fuel is billed for this customer — not everyone uses a fuel table, so pick the arrangement that matches the contract",
         )}
@@ -534,7 +534,7 @@ export function CustomerBillingProfileForm() {
             <SelectField
               control={control}
               name="billingProfile.fuelSurchargeMode"
-              label={t("Fuel Billing")}
+              label={t("Fuel billing")}
               options={customerFuelSurchargeModeChoices}
               description={t("Choose how fuel costs are recovered from this customer.")}
             />
@@ -544,7 +544,7 @@ export function CustomerBillingProfileForm() {
               <FuelSurchargeProgramAutocompleteField
                 control={control}
                 name="billingProfile.fuelSurchargeProgramId"
-                label={t("Fuel Surcharge Program")}
+                label={t("Fuel surcharge program")}
                 placeholder={t("Select a program")}
                 rules={{ required: true }}
                 description={t(
@@ -556,7 +556,7 @@ export function CustomerBillingProfileForm() {
         </FormGroup>
       </FormSection>
       <FormSection
-        title={t("Billing Automation")}
+        title={t("Billing automation")}
         description={t(
           "Control which steps in the billing pipeline happen automatically vs. requiring manual action",
         )}
@@ -566,7 +566,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.autoTransfer"
-              label={t("Auto-Transfer to Billing")}
+              label={t("Auto-transfer to billing")}
               description={t(
                 "Automatically move completed shipments from operations into the billing queue without manual handoff.",
               )}
@@ -577,7 +577,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.autoMarkReadyToBill"
-              label={t("Auto-Mark Ready to Bill")}
+              label={t("Auto-mark ready to bill")}
               description={t(
                 "Automatically flag transferred shipments as 'Ready to Bill' once all required documents and validations are satisfied.",
               )}
@@ -588,7 +588,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.autoApprove"
-              label={t("Auto-Approve Clean Shipments")}
+              label={t("Auto-approve clean shipments")}
               description={t(
                 "Clear shipments through the billing queue without review when every billing requirement and rate check passes, so the queue holds only the freight that needs a human. Requires automatic queue transfer.",
               )}
@@ -599,7 +599,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.autoBill"
-              label={t("Auto-Generate Invoices")}
+              label={t("Auto-generate invoices")}
               description={t(
                 "Automatically create invoices for shipments marked as ready to bill, removing the need for a billing clerk to manually trigger invoice generation.",
               )}
@@ -610,7 +610,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.autoApplyAccessorials"
-              label={t("Auto-Apply Accessorial Charges")}
+              label={t("Auto-apply accessorial charges")}
               description={t(
                 "Automatically add applicable accessorial charges (fuel surcharge, detention, liftgate, etc.) to shipments based on service rules.",
               )}
@@ -620,7 +620,7 @@ export function CustomerBillingProfileForm() {
         </FormGroup>
       </FormSection>
       <FormSection
-        title={t("Billing Requirements")}
+        title={t("Billing requirements")}
         description={t("Enforce documentation and validation rules before shipments can be billed")}
       >
         <FormGroup cols={1}>
@@ -628,7 +628,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.enforceCustomerBillingReq"
-              label={t("Enforce Customer Billing Requirements")}
+              label={t("Enforce customer billing requirements")}
               description={t(
                 "Require that all customer-mandated documentation, reference numbers, and special instructions are present before a shipment can enter the billing queue.",
               )}
@@ -639,7 +639,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.validateCustomerRates"
-              label={t("Validate Rates Against Contracts")}
+              label={t("Validate rates against contracts")}
               description={t(
                 "Cross-check all applied rates against this customer's contracted rate agreements before invoicing. Mismatches will block billing and flag for review.",
               )}
@@ -650,7 +650,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.requirePONumber"
-              label={t("Require PO Number")}
+              label={t("Require PO number")}
               description={t(
                 "Shipments cannot be billed without a customer purchase order number. Ensures the customer's AP department can match invoices to approved POs.",
               )}
@@ -661,7 +661,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.requireBOLNumber"
-              label={t("Require BOL Number")}
+              label={t("Require BOL number")}
               description={t(
                 "Shipments must have a bill of lading number before they can be invoiced. Required by many customers for freight payment verification.",
               )}
@@ -672,7 +672,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.requireDeliveryNumber"
-              label={t("Require Delivery Number")}
+              label={t("Require delivery number")}
               description={t(
                 "A delivery confirmation number must be recorded before the shipment can move to billing. Commonly required for retail and distribution customers.",
               )}
@@ -682,7 +682,7 @@ export function CustomerBillingProfileForm() {
         </FormGroup>
       </FormSection>
       <FormSection
-        title={t("Stop Performance")}
+        title={t("Stop performance")}
         description={t("How appointment scheduling affects late and detention evaluation")}
       >
         <FormGroup cols={1}>
@@ -690,7 +690,7 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.countLateOnlyOnAppointmentStops"
-              label={t("Count Late Only on Appointment Stops")}
+              label={t("Count late only on appointment stops")}
               description={t(
                 "When enabled, late-performance evaluation only applies to stops explicitly marked as appointment stops. Open stops remain operationally scheduled but do not count as late exceptions.",
               )}
@@ -700,7 +700,7 @@ export function CustomerBillingProfileForm() {
         </FormGroup>
       </FormSection>
       <FormSection
-        title={t("Default Biller")}
+        title={t("Default biller")}
         description={t(
           "Assign a default biller for this customer. New billing queue items will be auto-assigned to this user.",
         )}
@@ -710,7 +710,7 @@ export function CustomerBillingProfileForm() {
             <UserAutocompleteField
               control={control}
               name="billingProfile.defaultBillerId"
-              label={t("Default Biller")}
+              label={t("Default biller")}
               description={t(
                 "When shipments for this customer are transferred to the billing queue, they will be automatically assigned to this biller.",
               )}
@@ -719,7 +719,7 @@ export function CustomerBillingProfileForm() {
         </FormGroup>
       </FormSection>
       <FormSection
-        title={t("Billing Notes")}
+        title={t("Billing notes")}
         description={t(
           "Internal notes visible to billing staff when processing this customer's invoices",
         )}

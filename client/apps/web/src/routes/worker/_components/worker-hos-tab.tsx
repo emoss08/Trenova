@@ -86,11 +86,11 @@ const BREAK_LIMIT_MS = 8 * HOUR_MS;
 
 const dutyStatusMeta: Record<string, { label: string; variant: BadgeVariant }> = {
   driving: { label: "Driving", variant: "accent-emerald" },
-  onDuty: { label: "On Duty", variant: "accent-amber" },
-  offDuty: { label: "Off Duty", variant: "neutral" },
-  sleeperBed: { label: "Sleeper Berth", variant: "accent-violet" },
-  yardMove: { label: "Yard Move", variant: "accent-sky" },
-  personalConveyance: { label: "Personal Conveyance", variant: "accent-teal" },
+  onDuty: { label: "On duty", variant: "accent-amber" },
+  offDuty: { label: "Off duty", variant: "neutral" },
+  sleeperBed: { label: "Sleeper berth", variant: "accent-violet" },
+  yardMove: { label: "Yard move", variant: "accent-sky" },
+  personalConveyance: { label: "Personal conveyance", variant: "accent-teal" },
 };
 
 function getDutyStatusMeta(dutyStatus: string | null): { label: string; variant: BadgeVariant } {
@@ -756,7 +756,7 @@ function DailyLogsSection({ workerId }: { workerId: string }) {
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <h3 className="text-sm font-semibold">{t("Daily Logs")}</h3>
+        <h3 className="text-sm font-semibold">{t("Daily logs")}</h3>
         <p className="text-muted-foreground text-xs">
           {t("Duty status graph and log entries for the last 7 days.")}
         </p>
@@ -988,7 +988,7 @@ function HosLiveState({
 
       <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
         <HosClockCard
-          label={t("Until Break")}
+          label={t("Until break")}
           limitLabel={limitLabel(state.breakLimitMs)}
           remainingMs={state.breakRemainingMs}
           limitMs={state.breakLimitMs || BREAK_LIMIT_MS}
@@ -1068,7 +1068,7 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
             className="mt-3"
             render={<Link to="/admin/integrations?type=Samsara" />}
           >
-            {t("Open Integrations")}
+            {t("Open integrations")}
           </Button>
         }
       />
@@ -1103,7 +1103,7 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
             className="mt-3"
             render={<Link to="/admin/integrations?type=Samsara" />}
           >
-            {t("Open Samsara Integration")}
+            {t("Open Samsara integration")}
           </Button>
         }
       />

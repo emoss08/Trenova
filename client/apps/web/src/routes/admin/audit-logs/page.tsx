@@ -12,7 +12,7 @@ export function AuditLogsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Audit Entries"),
+        title: t("Audit entries"),
         description: t("Monitor and review system activity across your organization"),
       }}
     >

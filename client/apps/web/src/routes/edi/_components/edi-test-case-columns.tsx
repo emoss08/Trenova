@@ -74,7 +74,7 @@ export function getTestCaseColumns(t: TranslateFn): ColumnDef<EDITestCaseTableRo
     },
     {
       id: "documentProfile",
-      header: t("Document Profile"),
+      header: t("Document profile"),
       cell: ({ row }) =>
         row.original.documentProfile?.name ? (
           <span className="truncate">{row.original.documentProfile.name}</span>
@@ -83,7 +83,7 @@ export function getTestCaseColumns(t: TranslateFn): ColumnDef<EDITestCaseTableRo
         ),
       size: 220,
       meta: {
-        label: t("Document Profile"),
+        label: t("Document profile"),
         apiField: "partnerDocumentProfileId",
         filterable: false,
         sortable: false,
@@ -91,7 +91,7 @@ export function getTestCaseColumns(t: TranslateFn): ColumnDef<EDITestCaseTableRo
     },
     {
       id: "expectations",
-      header: t("Expected Outcome"),
+      header: t("Expected outcome"),
       cell: ({ row }) => {
         const { expectedWarnings, expectedErrors } = row.original;
         if (expectedWarnings === 0 && expectedErrors === 0) {
@@ -114,7 +114,7 @@ export function getTestCaseColumns(t: TranslateFn): ColumnDef<EDITestCaseTableRo
       },
       size: 180,
       meta: {
-        label: t("Expected Outcome"),
+        label: t("Expected outcome"),
         apiField: "expectedWarnings",
         filterable: false,
         sortable: false,

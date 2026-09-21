@@ -98,7 +98,7 @@ export function DeleteDefinitionDialog({
             {hasExistingValues ? <AlertTriangleIcon /> : <TrashIcon />}
           </AlertDialogMedia>
           <AlertDialogTitle>
-            {hasExistingValues ? t("Cannot Delete Custom Field") : t("Delete Custom Field")}
+            {hasExistingValues ? t("Cannot delete custom field") : t("Delete custom field")}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {hasExistingValues ? (

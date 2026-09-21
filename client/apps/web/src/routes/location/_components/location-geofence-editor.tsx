@@ -259,7 +259,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
         <div className="relative flex h-full flex-col items-center justify-center gap-4 px-6">
           <img
             src={googleMapsEmptyState}
-            alt={t("Google Maps Empty State")}
+            alt={t("Google maps empty state")}
             className="pointer-events-none absolute inset-0 size-full object-cover opacity-50 blur-sm select-none"
           />
           <div className="text-foreground relative z-10 flex flex-col items-center gap-4 text-center text-sm">
@@ -271,7 +271,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
             {canCreateIntegrations ? (
               <Button onClick={() => navigate("/admin/integrations?type=GoogleMaps")}>
                 <PlusIcon className="size-4 shrink-0" aria-hidden />
-                {t("Configure Google Maps")}
+                {t("Configure Google maps")}
               </Button>
             ) : null}
           </div>

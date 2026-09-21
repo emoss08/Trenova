@@ -84,7 +84,7 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
     <div className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-xs font-medium">{guide.name}</span>
-        <Badge variant="neutral" appearance="outline" className="h-4 rounded px-1 text-3xs">
+        <Badge variant="neutral" appearance="outline" className="h-4 rounded-md px-1 text-3xs">
           {ROUTING_GUIDE_TIER_LABEL[guide.specificity] ?? t("Unranked")}
         </Badge>
         <span className="text-muted-foreground text-2xs">{formatRoutingGuideLane(guide)}</span>
@@ -92,13 +92,13 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
       {entries.map((entry) => (
         <div
           key={entry.id}
-          className="bg-muted/30 flex items-center justify-between gap-2 rounded border px-2 py-1"
+          className="bg-muted/30 flex items-center justify-between gap-2 rounded-md border px-2 py-1"
         >
           <div className="flex min-w-0 items-center gap-1.5">
             <Badge
               variant="neutral"
               appearance="outline"
-              className="h-4 shrink-0 rounded px-1 text-3xs tabular-nums"
+              className="h-4 shrink-0 rounded-md px-1 text-3xs tabular-nums"
             >
               #{entry.rank}
             </Badge>
@@ -386,7 +386,7 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                 <SelectField
                   control={control}
                   name={`lines.${index}.rateMethod`}
-                  label={t("Rate Method")}
+                  label={t("Rate method")}
                   placeholder={t("Select method")}
                   rules={{ required: true }}
                   options={carrierRateMethodChoices}
@@ -407,7 +407,7 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                 <SelectField
                   control={control}
                   name={`lines.${index}.offerTtlSeconds`}
-                  label={t("Offer Expiry")}
+                  label={t("Offer expiry")}
                   placeholder={t("Select expiry")}
                   rules={{ required: true }}
                   options={offerTtlChoices}
@@ -428,7 +428,7 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                   <InputField
                     control={control}
                     name={`lines.${index}.email`}
-                    label={t("Email Override")}
+                    label={t("Email override")}
                     placeholder={t("dispatch@carrier.com")}
                     description={t("Optional — defaults to the carrier's tender contact.")}
                   />
@@ -519,7 +519,7 @@ export function TenderDialog({
     <Dialog open onOpenChange={handleOpenChange}>
       <DialogContent size="lg">
         <DialogHeader>
-          <DialogTitle>{liveTender ? t("Live Tender") : t("Tender to Carriers")}</DialogTitle>
+          <DialogTitle>{liveTender ? t("Live tender") : t("Tender to carriers")}</DialogTitle>
           <DialogDescription>
             {move.proNumber} · {move.originCity}, {move.originState} → {move.destinationCity},{" "}
             {move.destinationState}
@@ -530,7 +530,7 @@ export function TenderDialog({
           {screening && <ScreeningAlert screening={screening} />}
           {isLoading ? (
             <div className="flex flex-col gap-2 py-1">
-              <Skeleton className="h-6 w-40 rounded" />
+              <Skeleton className="h-6 w-40 rounded-md" />
               <Skeleton className="h-20 rounded-md" />
               <Skeleton className="h-20 rounded-md" />
             </div>

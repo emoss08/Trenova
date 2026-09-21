@@ -293,22 +293,22 @@ function IntelligenceSummary({
       <DescriptionItem label={t("Confidence")} numeric>
         {formatConfidence(intelligence?.overallConfidence ?? fallbackConfidence)}
       </DescriptionItem>
-      <DescriptionItem label={t("Review Status")}>
+      <DescriptionItem label={t("Review status")}>
         {intelligence?.reviewStatus || t("NeedsReview")}
       </DescriptionItem>
-      <DescriptionItem label={t("Classifier Source")}>
+      <DescriptionItem label={t("Classifier source")}>
         {intelligence?.classifierSource || "deterministic"}
       </DescriptionItem>
-      <DescriptionItem label={t("Provider Fingerprint")}>
+      <DescriptionItem label={t("Provider fingerprint")}>
         {intelligence?.providerFingerprint || t("None")}
       </DescriptionItem>
-      <DescriptionItem label={t("Missing Critical Fields")}>
+      <DescriptionItem label={t("Missing critical fields")}>
         {intelligence?.missingFields?.length === 0
           ? t("None")
           : (intelligence?.missingFields?.length ?? t("Not scored"))}
       </DescriptionItem>
       {intelligence?.classificationReason ? (
-        <DescriptionItem label={t("Classification Reason")} span="full">
+        <DescriptionItem label={t("Classification reason")} span="full">
           {intelligence.classificationReason}
         </DescriptionItem>
       ) : null}
@@ -367,7 +367,7 @@ function AnalysisSnapshotCard({
       {analysis.missingFields?.length ? (
         <div className="mt-3">
           <div className="text-muted-foreground mb-1 text-xs font-medium">
-            {t("Missing Fields")}
+            {t("Missing fields")}
           </div>
           <div className="flex flex-wrap gap-2">
             {analysis.missingFields.map((field) => (
@@ -402,7 +402,7 @@ function AIDiagnosticsSection({
   return (
     <div className="grid gap-3">
       <div>
-        <h3 className="text-sm font-medium">{t("AI Extraction Diagnostics")}</h3>
+        <h3 className="text-sm font-medium">{t("AI extraction diagnostics")}</h3>
         <p className="text-muted-foreground text-xs">
           {t(
             "Compare the non-AI fallback result with the AI candidate and see why the AI output was accepted, rejected, or skipped.",
@@ -410,7 +410,7 @@ function AIDiagnosticsSection({
         </p>
       </div>
       <DescriptionList className="rounded-lg border p-3">
-        <DescriptionItem label={t("AI Outcome")}>
+        <DescriptionItem label={t("AI outcome")}>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <Badge variant={aiAcceptanceVariant(diagnostics.acceptanceStatus)}>
               {formatAIAcceptanceStatus(diagnostics.acceptanceStatus)}
@@ -420,16 +420,16 @@ function AIDiagnosticsSection({
             ) : null}
           </div>
         </DescriptionItem>
-        <DescriptionItem label={t("Rejection Reason")}>
+        <DescriptionItem label={t("Rejection reason")}>
           {formatDiagnosticReason(diagnostics.rejectionReason)}
         </DescriptionItem>
       </DescriptionList>
       <div className="grid gap-3 lg:grid-cols-2">
         <AnalysisSnapshotCard
-          title={t("Fallback Analysis")}
+          title={t("Fallback analysis")}
           analysis={diagnostics.fallbackAnalysis}
         />
-        <AnalysisSnapshotCard title={t("AI Candidate")} analysis={diagnostics.candidateAnalysis} />
+        <AnalysisSnapshotCard title={t("AI candidate")} analysis={diagnostics.candidateAnalysis} />
       </div>
     </div>
   );
@@ -477,13 +477,13 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
   return (
     <div className="grid gap-2">
       <DescriptionList columns={3} className="rounded-lg border p-3">
-        <DescriptionItem label={t("Draft Confidence")} numeric>
+        <DescriptionItem label={t("Draft confidence")} numeric>
           {formatConfidence(draft.draftData?.overallConfidence ?? draft.confidence)}
         </DescriptionItem>
-        <DescriptionItem label={t("Review Status")}>
+        <DescriptionItem label={t("Review status")}>
           {draft.draftData?.reviewStatus || t("NeedsReview")}
         </DescriptionItem>
-        <DescriptionItem label={t("Missing Critical Fields")}>
+        <DescriptionItem label={t("Missing critical fields")}>
           {missingFields.length === 0 ? t("None") : missingFields.length}
         </DescriptionItem>
       </DescriptionList>
@@ -507,7 +507,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
               size="sm"
               render={<Link to="/shipment-management/shipments" />}
             >
-              {t("Open Shipments")}
+              {t("Open shipments")}
             </Button>
           </AlertAction>
         </Alert>
@@ -517,7 +517,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
         <div className="rounded-lg border p-3">
           <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium">
             <AssistMark className="size-3.5" />
-            {t("Classification Signals")}
+            {t("Classification signals")}
           </div>
           <div className="flex flex-wrap gap-2">
             {signals.map((signal) => (
@@ -548,7 +548,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
       <ConflictSection conflicts={conflicts} />
 
       <div className="grid gap-2">
-        <div className="text-muted-foreground text-xs font-medium">{t("Extracted Stops")}</div>
+        <div className="text-muted-foreground text-xs font-medium">{t("Extracted stops")}</div>
         <StopsSection stops={stops} />
       </div>
 
@@ -611,7 +611,7 @@ function ContentSection({
         {intelligence?.signals?.length ? (
           <div className="rounded-lg border p-3">
             <div className="text-muted-foreground mb-2 text-xs font-medium">
-              {t("Classification Confidence")}
+              {t("Classification confidence")}
             </div>
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <Badge variant={confidenceVariant(intelligence.overallConfidence)}>
@@ -638,7 +638,7 @@ function ContentSection({
         <AIDiagnosticsSection diagnostics={aiDiagnostics} />
 
         <div className="grid gap-2">
-          <div className="text-muted-foreground text-xs font-medium">{t("Canonical Stops")}</div>
+          <div className="text-muted-foreground text-xs font-medium">{t("Canonical stops")}</div>
           <StopsSection stops={intelligence?.stops ?? []} />
         </div>
 
@@ -810,7 +810,7 @@ export function DocumentIntelligenceDialog({
                 <div className="grid gap-6 p-4">
                   <section className="grid gap-3">
                     <div>
-                      <h3 className="text-sm font-medium">{t("Document Intelligence")}</h3>
+                      <h3 className="text-sm font-medium">{t("Document intelligence")}</h3>
                       <p className="text-muted-foreground text-xs">
                         {t("Extraction status, classification, and structured output.")}
                       </p>
@@ -829,7 +829,7 @@ export function DocumentIntelligenceDialog({
                         fallbackConfidence={content?.classificationConfidence}
                       />
                       <DescriptionList className="rounded-lg border p-3">
-                        <DescriptionItem label={t("Extraction Source")}>
+                        <DescriptionItem label={t("Extraction source")}>
                           {content?.sourceKind || t("Not available")}
                         </DescriptionItem>
                         <DescriptionItem label={t("Pages")} numeric>
@@ -841,7 +841,7 @@ export function DocumentIntelligenceDialog({
 
                   <section className="grid gap-3">
                     <div>
-                      <h3 className="text-sm font-medium">{t("Shipment Draft")}</h3>
+                      <h3 className="text-sm font-medium">{t("Shipment draft")}</h3>
                       <p className="text-muted-foreground text-xs">
                         {t("Review structured fields extracted from supported shipment documents.")}
                       </p>
@@ -869,7 +869,7 @@ export function DocumentIntelligenceDialog({
 
                   <section className="grid gap-3">
                     <div>
-                      <h3 className="text-sm font-medium">{t("Extracted Text")}</h3>
+                      <h3 className="text-sm font-medium">{t("Extracted text")}</h3>
                       <p className="text-muted-foreground text-xs">
                         {t("Full extracted text used for search and document classification.")}
                       </p>
@@ -893,12 +893,12 @@ export function DocumentIntelligenceDialog({
               <DialogFooter className="m-0" showCloseButton>
                 {canReviewShipmentDraft ? (
                   <Button variant="secondary" onClick={() => setReviewShipmentOpen(true)}>
-                    {t("Create Shipment")}
+                    {t("Create shipment")}
                   </Button>
                 ) : null}
                 {shipmentDraft?.attachedShipmentId ? (
                   <Button variant="secondary" render={<Link to="/shipment-management/shipments" />}>
-                    {t("Open Shipments")}
+                    {t("Open shipments")}
                   </Button>
                 ) : null}
                 {supportsTargetedReextract ? (

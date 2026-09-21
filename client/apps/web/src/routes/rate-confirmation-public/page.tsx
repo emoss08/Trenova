@@ -248,7 +248,7 @@ export function RateConfirmationPublicPage() {
     content = (
       <Card className="w-full max-w-md">
         <CardContent className="flex flex-col gap-3 py-6">
-          <Skeleton className="h-5 w-48 rounded" />
+          <Skeleton className="h-5 w-48 rounded-md" />
           <Skeleton className="h-24 rounded-md" />
           <Skeleton className="h-9 rounded-md" />
         </CardContent>
@@ -308,7 +308,7 @@ export function RateConfirmationPublicPage() {
   return (
     <>
       <Metadata
-        title={t("Rate Confirmation")}
+        title={t("Rate confirmation")}
         description={t("Review and sign a rate confirmation")}
       />
       <PublicPageShell

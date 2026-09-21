@@ -11,7 +11,7 @@ export function DocumentIntelligencePage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Document Intelligence"),
+        title: t("Document intelligence"),
         description: t("Configure OCR, classification, extraction, and shipment draft behavior"),
       }}
     >

@@ -194,7 +194,7 @@ export const SuggestionList = forwardRef<SuggestionListHandle, SuggestionListPro
               )}
             </span>
             {item.kind && KIND_LABELS[item.kind] && (
-              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground">
+              <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground">
                 {KIND_LABELS[item.kind]}
               </span>
             )}

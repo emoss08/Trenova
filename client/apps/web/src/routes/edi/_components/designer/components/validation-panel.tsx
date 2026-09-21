@@ -20,7 +20,7 @@ export function ValidationPanel() {
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
       <div className="flex items-center justify-between border-b p-3">
         <div>
-          <div className="text-sm font-semibold">{t("Validation Diagnostics")}</div>
+          <div className="text-sm font-semibold">{t("Validation diagnostics")}</div>
           <div className="text-muted-foreground text-xs">
             {t("{0} diagnostics returned by backend validation", diagnostics.length)}
           </div>

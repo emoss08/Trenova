@@ -113,7 +113,7 @@ export function getColumns(t: TranslateFn): ColumnDef<HazmatSegregationRule>[] {
     },
     {
       accessorKey: "segregationType",
-      header: t("Segregation Type"),
+      header: t("Segregation type"),
       cell: ({ row }) => {
         const choice = segregationTypeChoices.find((c) => c.value === row.original.segregationType);
         return choice ? (
@@ -126,7 +126,7 @@ export function getColumns(t: TranslateFn): ColumnDef<HazmatSegregationRule>[] {
       minSize: 160,
       maxSize: 220,
       meta: {
-        label: t("Segregation Type"),
+        label: t("Segregation type"),
         apiField: "segregationType",
         filterable: true,
         sortable: true,
@@ -137,7 +137,7 @@ export function getColumns(t: TranslateFn): ColumnDef<HazmatSegregationRule>[] {
     },
     {
       accessorKey: "minimumDistance",
-      header: t("Min Distance"),
+      header: t("Min distance"),
       cell: ({ row }) => {
         if (typeof row.original.minimumDistance !== "number") {
           return "—";
@@ -153,7 +153,7 @@ export function getColumns(t: TranslateFn): ColumnDef<HazmatSegregationRule>[] {
       minSize: 130,
       maxSize: 180,
       meta: {
-        label: t("Minimum Distance"),
+        label: t("Minimum distance"),
         apiField: "minimumDistance",
         filterable: true,
         sortable: true,
@@ -163,13 +163,13 @@ export function getColumns(t: TranslateFn): ColumnDef<HazmatSegregationRule>[] {
     },
     {
       accessorKey: "hasExceptions",
-      header: t("Has Exceptions"),
+      header: t("Has exceptions"),
       cell: ({ row }) => <BooleanBadge value={row.original.hasExceptions} />,
       size: 140,
       minSize: 130,
       maxSize: 180,
       meta: {
-        label: t("Has Exceptions"),
+        label: t("Has exceptions"),
         apiField: "hasExceptions",
         filterable: true,
         sortable: true,

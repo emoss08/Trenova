@@ -62,7 +62,7 @@ export function GeofencePopover({
             <button
               type="button"
               onClick={onClose}
-              className="text-muted-foreground hover:text-foreground rounded"
+              className="text-muted-foreground hover:text-foreground rounded-md"
               aria-label={t("Close geofence info")}
             >
               <XIcon className="size-3.5" />

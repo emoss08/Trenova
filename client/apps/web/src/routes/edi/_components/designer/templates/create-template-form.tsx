@@ -57,14 +57,14 @@ export function CreateTemplateForm({
           <EDIDocumentTypeAutocompleteField<TemplateFormValues>
             control={control}
             name="documentTypeId"
-            label={t("Document Type")}
+            label={t("Document type")}
             rules={{ required: true }}
             clearable
             disabled={disabled}
             description={t(
               "The EDI document type that seeds the template direction and transaction set.",
             )}
-            placeholder={t("Document Type")}
+            placeholder={t("Document type")}
             onOptionChange={handleDocumentTypeChange}
           />
         </FormControl>
@@ -97,7 +97,7 @@ export function CreateTemplateForm({
               control={control}
               rules={{ required: true }}
               name="x12Version"
-              label={t("X12 Version")}
+              label={t("X12 version")}
               placeholder="004010"
               description={t("The X12 version for the first draft.")}
               disabled={disabled}

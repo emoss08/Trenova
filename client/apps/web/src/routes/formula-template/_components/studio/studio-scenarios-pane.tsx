@@ -276,7 +276,7 @@ export function StudioScenariosPane({
             className="gap-1"
           >
             <PlayIcon className="size-3" />
-            {t("Run All")}
+            {t("Run all")}
           </Button>
         </div>
       </div>

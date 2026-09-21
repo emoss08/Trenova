@@ -89,7 +89,7 @@ describe("TileEditorDialog", () => {
     const { onSave } = renderEditor();
 
     await user.click(screen.getByRole("button", { name: "Pick a far-off report" }));
-    await user.click(screen.getByRole("button", { name: "Save Tile" }));
+    await user.click(screen.getByRole("button", { name: "Save tile" }));
 
     expect(onSave.mock.calls[0][0]).toMatchObject({
       definitionId: "rdef_9000",
@@ -114,7 +114,7 @@ describe("TileEditorDialog", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Pick a far-off report" }));
-    await user.click(screen.getByRole("button", { name: "Save Tile" }));
+    await user.click(screen.getByRole("button", { name: "Save tile" }));
 
     expect(onSave.mock.calls[0][0]).toMatchObject({
       chartId: undefined,
@@ -125,13 +125,13 @@ describe("TileEditorDialog", () => {
   it("will not save a report tile with no report behind it", () => {
     renderEditor();
 
-    expect(screen.getByRole("button", { name: "Save Tile" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save tile" })).toBeDisabled();
   });
 
   it("needs no report for a text tile", () => {
     renderEditor(tile({ kind: "text", text: "Yard closes at 4pm" }));
 
     expect(screen.queryByRole("button", { name: "Pick a far-off report" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Save Tile" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Save tile" })).toBeEnabled();
   });
 });

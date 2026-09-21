@@ -232,7 +232,7 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
     <Card className="gap-0 p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
         <div>
-          <CardTitle className="text-sm font-semibold">{t("Live Matrix Preview")}</CardTitle>
+          <CardTitle className="text-sm font-semibold">{t("Live matrix preview")}</CardTitle>
           <p className="text-muted-foreground text-xs">
             {t(
               "Rendered from the formula parameters — no rows to maintain. {0}",
@@ -250,7 +250,7 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
           className="gap-1.5"
         >
           <PencilRuler className="size-3.5" />
-          {t("Customize Bands")}
+          {t("Customize bands")}
         </Button>
       </CardHeader>
       <CardContent className="p-0">
@@ -258,7 +258,7 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
           <table className="w-full text-sm">
             <thead className="bg-muted/80 sticky top-0 backdrop-blur">
               <tr className="text-muted-foreground text-left text-xs">
-                <th className="px-4 py-2 font-medium">{t("Fuel Price From")}</th>
+                <th className="px-4 py-2 font-medium">{t("Fuel price from")}</th>
                 <th className="px-4 py-2 font-medium">{t("To")}</th>
                 <th className="px-4 py-2 font-medium">{t("Rate ($/mi)")}</th>
               </tr>
@@ -317,7 +317,7 @@ function ConvertToTableDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="lg">
         <DialogHeader>
-          <DialogTitle>{t("Make These Bands Editable")}</DialogTitle>
+          <DialogTitle>{t("Make these bands editable")}</DialogTitle>
           <DialogDescription>
             {t(
               "Use this when the formula almost fits but some bands need a different range or rate — like a customer's own fuel table with uneven brackets.",
@@ -402,7 +402,7 @@ function ConvertToTableDialog({
             {t("Cancel")}
           </Button>
           <Button type="button" onClick={onConfirm} disabled={conversionRows.length === 0}>
-            {t("Create {0} Editable Bands", conversionRows.length)}
+            {t("Create {0} editable bands", conversionRows.length)}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -193,7 +193,7 @@ export function VersionHistoryPanel({
           <SheetHeader className="border-border border-b pb-2">
             <SheetTitle className="flex items-center gap-2">
               <ClockIcon className="size-5" />
-              {t("Version History")}
+              {t("Version history")}
             </SheetTitle>
             <SheetDescription>
               {t("{0} - {1} version(s)", template?.name, versions.length)}
@@ -635,7 +635,7 @@ function VersionItem({
                   <DropdownMenuGroup>
                     <DropdownMenuItem
                       startContent={<TagIcon className="size-4" />}
-                      title={t("Manage Tags")}
+                      title={t("Manage tags")}
                       description={t("Add or remove version labels")}
                       onClick={handleOpenTagsDialog}
                     />
@@ -645,7 +645,7 @@ function VersionItem({
                     {compareMode && isSelectedForCompare ? null : (
                       <DropdownMenuItem
                         startContent={<GitCompareArrowsIcon className="size-4" />}
-                        title={t("Select for Compare")}
+                        title={t("Select for compare")}
                         description={t("Compare with any version")}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -656,7 +656,7 @@ function VersionItem({
                     {onComparePrevious && (
                       <DropdownMenuItem
                         startContent={<GitCompare className="size-4" />}
-                        title={t("Compare Previous")}
+                        title={t("Compare previous")}
                         description={t("Compare with previous version")}
                         onClick={onComparePrevious}
                       />
@@ -668,14 +668,14 @@ function VersionItem({
                       <DropdownMenuGroup>
                         <DropdownMenuItem
                           startContent={<CalendarClockIcon className="size-4" />}
-                          title={t("Schedule Activation")}
+                          title={t("Schedule activation")}
                           description={t("Set the date this version takes effect")}
                           onClick={handleOpenScheduleDialog}
                         />
                         {version.effectiveFrom != null && (
                           <DropdownMenuItem
                             startContent={<CalendarOffIcon className="size-4" />}
-                            title={t("Clear Schedule")}
+                            title={t("Clear schedule")}
                             description={t("Remove the scheduled activation")}
                             onClick={() => updateEffectiveDateMutation.mutate(null)}
                             disabled={updateEffectiveDateMutation.isPending}
@@ -718,7 +718,7 @@ function VersionItem({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarClockIcon className="size-4" />
-              {t("Schedule Activation")}
+              {t("Schedule activation")}
             </DialogTitle>
             <DialogDescription>
               {t(
@@ -776,7 +776,7 @@ function VersionItem({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <TagIcon className="size-4" />
-              {t("Manage Tags")}
+              {t("Manage tags")}
             </DialogTitle>
             <DialogDescription>
               {t("Select tags for version {0}", version.versionNumber)}
@@ -822,7 +822,7 @@ function VersionItem({
               ) : (
                 <>
                   <CheckIcon className="mr-1 size-3" />
-                  {t("Save Tags")}
+                  {t("Save tags")}
                 </>
               )}
             </Button>

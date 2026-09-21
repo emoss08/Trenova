@@ -96,18 +96,18 @@ export function DetentionChargeLabel({
     <>
       <TimerIcon className="text-primary size-3 shrink-0" />
       {code}
-      <span className="bg-primary/10 text-2xs text-primary rounded px-1 py-0.5">
+      <span className="bg-primary/10 text-2xs text-primary rounded-md px-1 py-0.5">
         {t("Detention")}
       </span>
       {occurrences.length > 1 && (
-        <span className="bg-muted text-2xs text-muted-foreground rounded px-1 py-0.5">
+        <span className="bg-muted text-2xs text-muted-foreground rounded-md px-1 py-0.5">
           {t("{0, plural, one {# stop} other {# stops}}", occurrences.length)}
         </span>
       )}
       {risk && (
         <Tooltip>
           <TooltipTrigger>
-            <span className={cn("text-2xs rounded px-1 py-0.5", risk.className)}>
+            <span className={cn("text-2xs rounded-md px-1 py-0.5", risk.className)}>
               {t(risk.label)}
             </span>
           </TooltipTrigger>
@@ -202,7 +202,7 @@ export function DetentionChargeAction({
                 key={occurrence.id}
                 type="button"
                 onClick={() => onOpenClaimFile(occurrence.id)}
-                className="hover:bg-muted flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-xs"
+                className="hover:bg-muted flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-xs"
               >
                 <span className="truncate">
                   <span className="font-medium">{stopCaption(occurrence, t)}</span>

@@ -36,7 +36,7 @@ export function ServiceTypePanel({
         form={form}
         url="/service-types/"
         queryKey="service-type-list"
-        title={t("Service Type")}
+        title={t("Service type")}
         fieldKey="code"
         formComponent={<ServiceTypeForm />}
       />
@@ -50,7 +50,7 @@ export function ServiceTypePanel({
       form={form}
       url="/service-types/"
       queryKey="service-type-list"
-      title={t("Service Type")}
+      title={t("Service type")}
       formComponent={<ServiceTypeForm />}
     />
   );

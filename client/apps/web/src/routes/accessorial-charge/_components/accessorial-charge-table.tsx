@@ -44,7 +44,7 @@ export default function AccessorialChargeTable() {
   //       {
   //         id: "status-update",
   //         type: "select",
-  //         label: "Update Status",
+  //         label: "Update status",
   //         loadingLabel: "Updating...",
   //         icon: CircleCheckIcon,
   //         options: statusChoices,

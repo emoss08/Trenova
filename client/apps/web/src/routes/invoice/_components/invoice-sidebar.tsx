@@ -58,14 +58,14 @@ export function InvoiceSidebar({
   const { mutate: postInvoice } = usePostInvoice();
 
   const statusOptions = useMemo(
-    () => withAllOption(t("All Statuses"), invoiceStatusChoices, t),
+    () => withAllOption(t("All statuses"), invoiceStatusChoices, t),
     [t],
   );
   const billTypeOptions = useMemo(
-    () => withAllOption(t("All Bill Types"), billTypeChoices, t),
+    () => withAllOption(t("All bill types"), billTypeChoices, t),
     [t],
   );
-  const scopeOptions = useMemo(() => withAllOption(t("All Scopes"), invoiceScopeChoices, t), [t]);
+  const scopeOptions = useMemo(() => withAllOption(t("All scopes"), invoiceScopeChoices, t), [t]);
 
   const queryKey = useMemo(
     () => ["invoice-list", status, billType, scope, dispute, deferredSearch],

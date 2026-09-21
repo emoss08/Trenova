@@ -11,7 +11,7 @@ export function WorkerChecklistTemplatesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Checklist Templates"),
+        title: t("Checklist templates"),
         description: t(
           "Onboarding and offboarding checklists that start automatically from a hire, rehire or termination — with who owns each step and when it is due.",
         ),

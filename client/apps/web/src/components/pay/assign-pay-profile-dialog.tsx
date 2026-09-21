@@ -124,7 +124,7 @@ export function AssignPayProfileDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="lg" className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t("Assign Pay Profile")}</DialogTitle>
+          <DialogTitle>{t("Assign pay profile")}</DialogTitle>
           <DialogDescription>
             {t(
               "The driver's pay is computed from this profile for every shipment delivered on or after the effective date. Any currently-open assignment ends automatically — no cleanup needed.",
@@ -153,7 +153,7 @@ export function AssignPayProfileDialog({
                   <PayProfileAutocompleteField
                     control={control}
                     name="payProfileId"
-                    label={t("Pay Profile")}
+                    label={t("Pay profile")}
                     placeholder={t("Select pay profile")}
                     rules={{ required: true }}
                     description={t(
@@ -177,7 +177,7 @@ export function AssignPayProfileDialog({
                 <NumberField
                   control={control}
                   name="splitPercent"
-                  label={t("Split Percent")}
+                  label={t("Split percent")}
                   sideText="%"
                   description={t("100 for solo drivers; 50 each for an even team split.")}
                   rules={{ required: true }}
@@ -200,7 +200,7 @@ export function AssignPayProfileDialog({
 
         {activeComponents.length > 0 && (
           <div className="rounded-lg border p-3">
-            <p className="text-xs font-medium">{t("Driver-Specific Rate Overrides")}</p>
+            <p className="text-xs font-medium">{t("Driver-specific rate overrides")}</p>
             <p className="text-muted-foreground mb-2 text-xs">
               {t(
                 "Leave blank to use the profile rate. An override replaces the component's base rate and any mileage bands for this driver only.",
@@ -242,7 +242,7 @@ export function AssignPayProfileDialog({
             {t("Cancel")}
           </Button>
           <Button form="assign-pay-profile-form" type="submit" disabled={isSubmitting}>
-            {t("Assign Profile")}
+            {t("Assign profile")}
           </Button>
         </DialogFooter>
       </DialogContent>

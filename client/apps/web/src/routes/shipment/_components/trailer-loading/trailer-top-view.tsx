@@ -33,7 +33,7 @@ export function TrailerTopView({
     <div className="border-border rounded-lg border p-3">
       <div className="mb-1 flex items-center justify-between">
         <span className="text-xs text-muted-foreground font-medium">
-          {t("Trailer Layout")}
+          {t("Trailer layout")}
         </span>
         <div className="flex items-center gap-2">
           {scoreBadge}

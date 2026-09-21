@@ -124,13 +124,13 @@ export function getColumns(t: TranslateFn): ColumnDef<ServiceFailureReasonCodeRo
     },
     {
       accessorKey: "defaultStatusCode",
-      header: t("X12 Status"),
+      header: t("X12 status"),
       cell: ({ row }) => row.original.defaultStatusCode || "—",
       size: 120,
       minSize: 100,
       maxSize: 140,
       meta: {
-        label: t("X12 Status"),
+        label: t("X12 status"),
         apiField: "defaultStatusCode",
         filterable: true,
         sortable: true,
@@ -140,13 +140,13 @@ export function getColumns(t: TranslateFn): ColumnDef<ServiceFailureReasonCodeRo
     },
     {
       accessorKey: "defaultReasonCode",
-      header: t("X12 Reason"),
+      header: t("X12 reason"),
       cell: ({ row }) => row.original.defaultReasonCode || "—",
       size: 120,
       minSize: 100,
       maxSize: 140,
       meta: {
-        label: t("X12 Reason"),
+        label: t("X12 reason"),
         apiField: "defaultReasonCode",
         filterable: true,
         sortable: true,

@@ -32,21 +32,21 @@ describe("RecordStopActualDialog", () => {
   it("renders the arrival copy with the stop description", () => {
     renderDialog();
 
-    expect(screen.getByRole("heading", { name: "Record Arrival" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Record arrival" })).toBeInTheDocument();
     expect(screen.getByText(/Pickup · Chicago, IL/)).toBeInTheDocument();
   });
 
   it("renders the departure copy when departing", () => {
     renderDialog({ action: "Depart" });
 
-    expect(screen.getByRole("heading", { name: "Record Departure" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Record departure" })).toBeInTheDocument();
   });
 
   it("confirms with no event time when the field is left empty", async () => {
     const user = userEvent.setup();
     const { onConfirm } = renderDialog();
 
-    await user.click(screen.getByRole("button", { name: "Record Arrival" }));
+    await user.click(screen.getByRole("button", { name: "Record arrival" }));
 
     expect(onConfirm).toHaveBeenCalledWith(undefined);
   });
@@ -58,7 +58,7 @@ describe("RecordStopActualDialog", () => {
     const past = new Date(Date.now() - 60 * 60 * 1000);
     past.setSeconds(0, 0);
     await user.type(screen.getByLabelText(/Event time/), toDatetimeLocal(past));
-    await user.click(screen.getByRole("button", { name: "Record Arrival" }));
+    await user.click(screen.getByRole("button", { name: "Record arrival" }));
 
     expect(onConfirm).toHaveBeenCalledWith(Math.floor(past.getTime() / 1000));
   });
@@ -69,7 +69,7 @@ describe("RecordStopActualDialog", () => {
 
     const future = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await user.type(screen.getByLabelText(/Event time/), toDatetimeLocal(future));
-    await user.click(screen.getByRole("button", { name: "Record Arrival" }));
+    await user.click(screen.getByRole("button", { name: "Record arrival" }));
 
     expect(onConfirm).not.toHaveBeenCalled();
     expect(screen.getByText("The event time cannot be in the future")).toBeInTheDocument();

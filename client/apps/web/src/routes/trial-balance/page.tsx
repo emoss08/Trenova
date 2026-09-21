@@ -36,7 +36,7 @@ export function TrialBalancePage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Trial Balance"),
+        title: t("Trial balance"),
         description: t("View account balances for a fiscal period."),
       }}
     >
@@ -70,12 +70,12 @@ export function TrialBalancePage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-muted-foreground text-left">
                 <tr>
-                  <th className="px-3 py-2 text-xs font-medium">{t("Account Code")}</th>
-                  <th className="px-3 py-2 text-xs font-medium">{t("Account Name")}</th>
+                  <th className="px-3 py-2 text-xs font-medium">{t("Account code")}</th>
+                  <th className="px-3 py-2 text-xs font-medium">{t("Account name")}</th>
                   <th className="px-3 py-2 text-xs font-medium">{t("Category")}</th>
                   <th className="px-3 py-2 text-right text-xs font-medium">{t("Debit")}</th>
                   <th className="px-3 py-2 text-right text-xs font-medium">{t("Credit")}</th>
-                  <th className="px-3 py-2 text-right text-xs font-medium">{t("Net Change")}</th>
+                  <th className="px-3 py-2 text-right text-xs font-medium">{t("Net change")}</th>
                 </tr>
               </thead>
               <tbody>

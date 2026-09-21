@@ -46,9 +46,9 @@ const ACTION_CONFIG: Record<
   }
 > = {
   submit: {
-    title: "Submit for Review",
+    title: "Submit for review",
     description: "Send this template to a reviewer for approval before it can be activated.",
-    confirmLabel: "Submit for Review",
+    confirmLabel: "Submit for review",
     loadingLabel: "Submitting...",
     successMessage: "Template submitted for review",
     commentLabel: "Comment (optional)",
@@ -57,7 +57,7 @@ const ACTION_CONFIG: Record<
     destructive: false,
   },
   approve: {
-    title: "Approve Template",
+    title: "Approve template",
     description: "Approving activates this template so it can be used to rate shipments.",
     confirmLabel: "Approve",
     loadingLabel: "Approving...",
@@ -68,7 +68,7 @@ const ACTION_CONFIG: Record<
     destructive: false,
   },
   reject: {
-    title: "Reject Template",
+    title: "Reject template",
     description:
       "Rejecting closes this review round and archives the template; it cannot rate shipments until someone resubmits it from the archive. Use Request Changes to send it back to the author instead.",
     confirmLabel: "Reject",
@@ -80,10 +80,10 @@ const ACTION_CONFIG: Record<
     destructive: true,
   },
   requestChanges: {
-    title: "Request Changes",
+    title: "Request changes",
     description:
       "Send the template back to its author with what needs fixing. The round stays open, so their resubmission continues this review.",
-    confirmLabel: "Request Changes",
+    confirmLabel: "Request changes",
     loadingLabel: "Sending...",
     successMessage: "Changes requested; the author has been notified",
     commentLabel: "What needs to change (required)",

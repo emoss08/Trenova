@@ -154,7 +154,7 @@ export function getColumns(t: TranslateFn): ColumnDef<ServiceFailureRow>[] {
       minSize: 90,
       maxSize: 120,
       meta: {
-        label: t("Late Minutes"),
+        label: t("Late minutes"),
         apiField: "lateMinutes",
         filterable: true,
         sortable: true,

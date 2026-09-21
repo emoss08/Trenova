@@ -11,7 +11,7 @@ export function AccountingControlPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Accounting Control"),
+        title: t("Accounting control"),
         description: t("Configure and manage your accounting control settings"),
       }}
     >

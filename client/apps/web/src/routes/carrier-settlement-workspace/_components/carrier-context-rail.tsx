@@ -110,7 +110,7 @@ function UnsettledCostSection({ carrierId }: { carrierId: string }) {
 
   if (isLoading) {
     return (
-      <RailSection title={t("Unsettled Cost")} hint={t("Accrued cost not yet on a settlement.")}>
+      <RailSection title={t("Unsettled cost")} hint={t("Accrued cost not yet on a settlement.")}>
         <Skeleton className="h-16 w-full" />
       </RailSection>
     );
@@ -120,7 +120,7 @@ function UnsettledCostSection({ carrierId }: { carrierId: string }) {
 
   return (
     <RailSection
-      title={t("Unsettled Cost")}
+      title={t("Unsettled cost")}
       hint={t("Accrued purchased-transportation cost waiting for the next settlement run.")}
     >
       {list.length === 0 ? (
@@ -172,7 +172,7 @@ function RecentSettlementsSection({
 
   if (isLoading) {
     return (
-      <RailSection title={t("Recent Settlements")} hint={t("Latest statements for this carrier.")}>
+      <RailSection title={t("Recent settlements")} hint={t("Latest statements for this carrier.")}>
         <Skeleton className="h-12 w-full" />
       </RailSection>
     );
@@ -181,7 +181,7 @@ function RecentSettlementsSection({
   const list = (settlements ?? []).filter((settlement) => settlement.id !== selectedSettlementId);
 
   return (
-    <RailSection title={t("Recent Settlements")} hint={t("Latest statements for this carrier.")}>
+    <RailSection title={t("Recent settlements")} hint={t("Latest statements for this carrier.")}>
       {list.length === 0 ? (
         <p className="text-muted-foreground text-xs">{t("No other settlements on record.")}</p>
       ) : (
@@ -226,7 +226,7 @@ function LedgerSection({ carrierId }: { carrierId: string }) {
 
   if (isLoading) {
     return (
-      <RailSection title={t("AP Subledger")} hint={t("Bills, payments, and adjustments.")}>
+      <RailSection title={t("AP subledger")} hint={t("Bills, payments, and adjustments.")}>
         <Skeleton className="h-12 w-full" />
       </RailSection>
     );
@@ -237,7 +237,7 @@ function LedgerSection({ carrierId }: { carrierId: string }) {
 
   return (
     <RailSection
-      title={t("AP Subledger")}
+      title={t("AP subledger")}
       hint={t("Bills, payments, and adjustments — the balance reconciles to the GL's AP account.")}
     >
       <p className="text-sm font-semibold">

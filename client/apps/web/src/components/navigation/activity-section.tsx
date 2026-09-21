@@ -270,7 +270,7 @@ export function ActivitySection() {
                 {...props}
                 className="group text-xs text-muted-foreground hover:text-foreground flex h-6 items-center gap-1 rounded-md px-2 font-semibold transition-colors select-none"
               >
-                <span>{t("Recent Activity")}</span>
+                <span>{t("Recent activity")}</span>
                 <ChevronRightIcon
                   className={cn("size-3 shrink-0 transition-transform", open && "rotate-90")}
                 />

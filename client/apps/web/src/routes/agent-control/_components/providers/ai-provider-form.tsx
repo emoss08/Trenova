@@ -114,7 +114,7 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
               name="name"
               control={control}
               label={t("Name")}
-              placeholder={t("Local Qwen")}
+              placeholder={t("Local qwen")}
               rules={{ required: t("Name is required") }}
               description={t("How this endpoint appears when assigning work.")}
             />

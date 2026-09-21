@@ -11,26 +11,26 @@ export function CommandPaletteSkeleton() {
       <div className="fixed inset-0 bg-scrim" />
       <div className="border-border bg-popover relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-lg border">
         <div className="border-border flex h-11 items-center gap-2 border-b px-3">
-          <Skeleton className="size-4 shrink-0 rounded" />
-          <Skeleton className="h-3.5 w-48 rounded" />
+          <Skeleton className="size-4 shrink-0 rounded-md" />
+          <Skeleton className="h-3.5 w-48 rounded-md" />
         </div>
         <div className="flex flex-col gap-3 p-2">
           {Array.from({ length: 2 }, (_, group) => (
             <div key={group} className="flex flex-col gap-1.5">
-              <Skeleton className="mx-2 h-2.5 w-20 rounded" />
+              <Skeleton className="mx-2 h-2.5 w-20 rounded-md" />
               {Array.from({ length: 4 }, (_, row) => (
                 <div key={row} className="flex items-center gap-2 px-2 py-1.5">
-                  <Skeleton className="size-4 shrink-0 rounded" />
-                  <Skeleton className="h-3 w-full max-w-64 rounded" />
+                  <Skeleton className="size-4 shrink-0 rounded-md" />
+                  <Skeleton className="h-3 w-full max-w-64 rounded-md" />
                 </div>
               ))}
             </div>
           ))}
         </div>
         <div className="border-border flex h-9 items-center gap-3 border-t px-3">
-          <Skeleton className="h-2.5 w-16 rounded" />
-          <Skeleton className="h-2.5 w-16 rounded" />
-          <Skeleton className="ml-auto h-2.5 w-24 rounded" />
+          <Skeleton className="h-2.5 w-16 rounded-md" />
+          <Skeleton className="h-2.5 w-16 rounded-md" />
+          <Skeleton className="ml-auto h-2.5 w-24 rounded-md" />
         </div>
       </div>
     </div>

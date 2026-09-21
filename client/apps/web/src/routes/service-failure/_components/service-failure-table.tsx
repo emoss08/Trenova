@@ -113,7 +113,7 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
     },
     {
       id: "edi-214-payload",
-      label: t("Build EDI 214 Payload"),
+      label: t("Build EDI 214 payload"),
       icon: ClipboardIcon,
       onClick: (row) => void handleBuildEDI(row),
       hidden: () => !canExport.allowed,

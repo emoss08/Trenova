@@ -175,7 +175,7 @@ export function OrderLegsSection() {
           !membershipLocked && (
             <Button type="button" variant="outline" size="xxs" onClick={() => setAddLegOpen(true)}>
               <PlusIcon className="size-3" />
-              {t("Add Legs")}
+              {t("Add legs")}
             </Button>
           )
         }
@@ -191,7 +191,7 @@ export function OrderLegsSection() {
                     aria-label={t("Select all invoiceable legs")}
                   />
                 )}
-                {t("Pro Number")}
+                {t("Pro number")}
               </span>
               <span className="col-span-3">{t("Status")}</span>
               <span className="col-span-2 text-right">{t("Freight")}</span>
@@ -279,14 +279,14 @@ export function OrderLegsSection() {
         ) : (
           <EmptyState
             className="border-bg-sidebar-border max-h-[200px] rounded-lg border p-4"
-            title={t("No Legs")}
+            title={t("No legs")}
             description={t("This order has no shipments attached yet")}
             icons={[PackageIcon, TruckIcon]}
             action={
               membershipLocked
                 ? undefined
                 : {
-                    label: t("Add First Leg"),
+                    label: t("Add first leg"),
                     onClick: () => setAddLegOpen(true),
                     icon: PlusIcon,
                   }

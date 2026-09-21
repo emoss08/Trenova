@@ -254,10 +254,10 @@ export function APIKeyPermissionsEditor() {
               onClick={() => applyBulkPreset(allResources, mode)}
             >
               {mode === "read"
-                ? t("All Read")
+                ? t("All read")
                 : mode === "write"
-                  ? t("All Write")
-                  : t("Full Access")}
+                  ? t("All write")
+                  : t("Full access")}
             </Button>
           ))}
           <Button
@@ -267,7 +267,7 @@ export function APIKeyPermissionsEditor() {
             onClick={() => applyBulkPreset(allResources, "clear")}
             disabled={permissions.length === 0}
           >
-            {t("Clear All")}
+            {t("Clear all")}
           </Button>
           <div className="text-muted-foreground ml-auto flex flex-wrap items-center gap-2 text-xs">
             <Badge variant="neutral">
@@ -367,7 +367,7 @@ function CategorySection({
               onCategoryPreset(category, "read");
             }}
           >
-            {t("All Read")}
+            {t("All read")}
           </Button>
           <Button
             type="button"
@@ -378,7 +378,7 @@ function CategorySection({
               onCategoryPreset(category, "write");
             }}
           >
-            {t("All Write")}
+            {t("All write")}
           </Button>
           <Button
             type="button"
@@ -458,9 +458,9 @@ function ResourceRow({
               {isGranted && (
                 <Badge variant={isFullAccess ? "neutral" : "neutral"} className="text-2xs">
                   {isFullAccess
-                    ? t("Full Access")
+                    ? t("Full access")
                     : isViewOnly
-                      ? t("View Only")
+                      ? t("View only")
                       : `${operationCount}/${totalOperations}`}
                 </Badge>
               )}
@@ -493,7 +493,7 @@ function ResourceRow({
                 </Button>
               }
             />
-            <TooltipContent>{t("View Only")}</TooltipContent>
+            <TooltipContent>{t("View only")}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger
@@ -509,7 +509,7 @@ function ResourceRow({
                 </Button>
               }
             />
-            <TooltipContent>{t("Full Access")}</TooltipContent>
+            <TooltipContent>{t("Full access")}</TooltipContent>
           </Tooltip>
         </div>
       </div>

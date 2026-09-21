@@ -336,7 +336,7 @@ export function TileEditorDialog({
               onOpenChange(false);
             }}
           >
-            {t("Save Tile")}
+            {t("Save tile")}
           </Button>
         </DialogFooter>
       </DialogContent>

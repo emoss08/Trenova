@@ -155,7 +155,7 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
                 <AlertDialogMedia className="bg-destructive/10">
                   <TrashIcon className="text-destructive size-5" />
                 </AlertDialogMedia>
-                <AlertDialogTitle>{t("Delete Rule Set")}</AlertDialogTitle>
+                <AlertDialogTitle>{t("Delete rule set")}</AlertDialogTitle>
                 <AlertDialogDescription>
                   {t(
                     'This will permanently delete "{0}" including all versions, fixtures, and simulation results. Any shipments currently using this rule set will fall back to default parsing. This action cannot be undone.',

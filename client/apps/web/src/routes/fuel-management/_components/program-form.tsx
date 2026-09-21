@@ -44,7 +44,7 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
             control={control}
             name="name"
             label={t("Name")}
-            placeholder={t("Acme National DOE Program")}
+            placeholder={t("Acme national DOE program")}
             rules={{ required: true }}
             maxLength={100}
             description={t("Shown on customer profiles and the fuel dashboard.")}
@@ -90,8 +90,8 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
           <FuelIndexAutocompleteField
             control={control}
             name="fuelIndexId"
-            label={t("Fuel Index")}
-            placeholder={t("Select Fuel Index")}
+            label={t("Fuel index")}
+            placeholder={t("Select fuel index")}
             rules={{ required: true }}
             description={t(
               "The weekly price series this program keys off (DOE region or custom index).",
@@ -102,8 +102,8 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
           <AccessorialChargeAutocompleteField
             control={control}
             name="accessorialChargeId"
-            label={t("Accessorial Charge")}
-            placeholder={t("Select Accessorial Charge")}
+            label={t("Accessorial charge")}
+            placeholder={t("Select accessorial charge")}
             rules={{ required: true }}
             description={t("The catalog charge the generated fuel surcharge line posts against.")}
           />
@@ -145,7 +145,7 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
           <SelectField
             control={control}
             name="percentBasis"
-            label={t("Percentage Applies To")}
+            label={t("Percentage applies to")}
             options={fuelSurchargePercentBasisChoices}
             description={t(
               "What the band's percentage is taken from — check the customer's contract before changing.",
@@ -167,7 +167,7 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
         <NumberField
           control={control}
           name="pegPrice"
-          label={t("Peg Price")}
+          label={t("Peg price")}
           placeholder="1.20"
           rules={{ required: true }}
           decimalScale={4}
@@ -210,7 +210,7 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
           <NumberField
             control={control}
             name="milesPerGallon"
-            label={t("Miles per Gallon")}
+            label={t("Miles per gallon")}
             placeholder="6.5"
             rules={{ required: true }}
             decimalScale={2}
@@ -233,7 +233,7 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
   return (
     <Card className="gap-0 p-0">
       <CardHeader className="gap-0 border-b pt-3">
-        <CardTitle className="text-sm font-medium">{t("Week Resolution & Rounding")}</CardTitle>
+        <CardTitle className="text-sm font-medium">{t("Week resolution & rounding")}</CardTitle>
         <p className="text-muted-foreground text-xs">
           {t(
             "Pins exactly which week's price applies and how rates round — the two most common fuel surcharge dispute sources",
@@ -246,7 +246,7 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <SelectField
               control={control}
               name="dateBasis"
-              label={t("Date Basis")}
+              label={t("Date basis")}
               options={fuelSurchargeDateBasisChoices}
               description={t("Which shipment date selects the price week.")}
               isReadOnly={disabled}
@@ -256,7 +256,7 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <SelectField
               control={control}
               name="priceEffectiveDay"
-              label={t("Price Effective Day")}
+              label={t("Price effective day")}
               options={fuelSurchargeEffectiveDayChoices}
               description={t("Monday's DOE price applies starting this weekday.")}
               isReadOnly={disabled}
@@ -266,7 +266,7 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <SelectField
               control={control}
               name="missingPriceFallback"
-              label={t("Missing Price Behavior")}
+              label={t("Missing price behavior")}
               options={fuelSurchargeFallbackChoices}
               description={t("What happens when the week's price hasn't published yet.")}
               isReadOnly={disabled}
@@ -277,7 +277,7 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
               <SelectField
                 control={control}
                 name="stepRounding"
-                label={t("Step Rounding")}
+                label={t("Step rounding")}
                 options={fuelSurchargeStepRoundingChoices}
                 description={t("How partial increments above the peg count.")}
                 isReadOnly={disabled}
@@ -288,7 +288,7 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <SelectField
               control={control}
               name="rateRounding"
-              label={t("Rate Rounding")}
+              label={t("Rate rounding")}
               options={fuelSurchargeRateRoundingChoices}
               description={t("Rounding mode for computed rates and final amounts.")}
               isReadOnly={disabled}
@@ -298,7 +298,7 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <NumberField
               control={control}
               name="ratePrecision"
-              label={t("Rate Precision")}
+              label={t("Rate precision")}
               placeholder="4"
               decimalScale={0}
               description={t("Decimal places for the computed per-mile rate (0–6).")}
@@ -309,7 +309,7 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <NumberField
               control={control}
               name="minAmount"
-              label={t("Minimum Amount")}
+              label={t("Minimum amount")}
               placeholder={t("No floor")}
               decimalScale={2}
               sideText="$"
@@ -321,7 +321,7 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <NumberField
               control={control}
               name="maxAmount"
-              label={t("Maximum Amount")}
+              label={t("Maximum amount")}
               placeholder={t("No cap")}
               decimalScale={2}
               sideText="$"
@@ -356,7 +356,7 @@ function ApplicabilitySection() {
             <ShipmentTypeMultiSelectField
               control={control}
               name="shipmentTypeIds"
-              label={t("Shipment Types")}
+              label={t("Shipment types")}
               placeholder={t("All shipment types")}
             />
           </FormControl>
@@ -364,7 +364,7 @@ function ApplicabilitySection() {
             <ServiceTypeMultiSelectField
               control={control}
               name="serviceTypeIds"
-              label={t("Service Types")}
+              label={t("Service types")}
               placeholder={t("All service types")}
             />
           </FormControl>
@@ -372,7 +372,7 @@ function ApplicabilitySection() {
             <EquipmentTypeMultiSelectField
               control={control}
               name="tractorTypeIds"
-              label={t("Tractor Types")}
+              label={t("Tractor types")}
               placeholder={t("All tractor types")}
             />
           </FormControl>
@@ -380,7 +380,7 @@ function ApplicabilitySection() {
             <EquipmentTypeMultiSelectField
               control={control}
               name="trailerTypeIds"
-              label={t("Trailer Types")}
+              label={t("Trailer types")}
               placeholder={t("All trailer types")}
             />
           </FormControl>

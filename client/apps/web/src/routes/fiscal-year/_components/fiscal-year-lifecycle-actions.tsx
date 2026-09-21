@@ -17,11 +17,11 @@ const actionIcons: Record<FiscalYearAction, LucideIcon> = {
 function actionLabel(action: FiscalYearAction, t: TranslateFn) {
   switch (action) {
     case "activate":
-      return t("Set as Current");
+      return t("Set as current");
     case "close":
-      return t("Close Year");
+      return t("Close year");
     case "reopen":
-      return t("Reopen Year");
+      return t("Reopen year");
   }
 }
 

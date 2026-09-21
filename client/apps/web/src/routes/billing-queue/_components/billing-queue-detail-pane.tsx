@@ -123,7 +123,7 @@ export default function BillingQueueDetailPane({
           {onBehalfOf ? <MetadataCell label={t("On behalf of")} value={onBehalfOf} /> : null}
           {shipment?.bol ? <MetadataCell label={t("BOL")} value={shipment.bol} /> : null}
           {item.assignedBiller ? (
-            <MetadataCell label={t("Assigned Biller")} value={item.assignedBiller.name} />
+            <MetadataCell label={t("Assigned biller")} value={item.assignedBiller.name} />
           ) : null}
           {originLocation && destLocation ? (
             <MetadataCell
@@ -142,7 +142,7 @@ export default function BillingQueueDetailPane({
         <div className="p-2">
           <Alert variant="info">
             <AlertTriangleIcon className="size-4" />
-            <AlertTitle>{t("Billing Notes")}</AlertTitle>
+            <AlertTitle>{t("Billing notes")}</AlertTitle>
             <AlertDescription>{shipment.customer.billingProfile.billingNotes}</AlertDescription>
           </Alert>
         </div>
@@ -254,15 +254,15 @@ function AdjustmentOriginBanner({
         <RefreshCwIcon className="size-3.5 shrink-0 text-info-foreground" />
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <span className="text-xs font-medium text-info-foreground">
-            {t("Adjustment-Origin Rebill")}
+            {t("Adjustment-origin rebill")}
           </span>
           {rebillStrategy ? (
-            <span className="text-2xs rounded bg-info/10 px-1.5 py-0.5 font-medium text-info-foreground">
+            <span className="text-2xs rounded-md bg-info/10 px-1.5 py-0.5 font-medium text-info-foreground">
               {rebillStrategy}
             </span>
           ) : null}
           {requiresReplacementReview ? (
-            <span className="text-2xs rounded bg-warning/10 px-1.5 py-0.5 font-medium text-warning-foreground">
+            <span className="text-2xs rounded-md bg-warning/10 px-1.5 py-0.5 font-medium text-warning-foreground">
               {t("Review required")}
             </span>
           ) : null}
@@ -286,7 +286,7 @@ function AdjustmentOriginBanner({
               className="text-2xs font-medium text-info-foreground hover:underline dark:text-info-foreground"
               onClick={(e) => e.stopPropagation()}
             >
-              {t("Credit Memo")}
+              {t("Credit memo")}
             </Link>
           ) : null}
           <ChevronDownIcon

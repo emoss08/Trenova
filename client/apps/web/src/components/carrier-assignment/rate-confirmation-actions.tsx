@@ -91,7 +91,7 @@ export function RateConfirmationActions({
     <div className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-xs text-muted-foreground font-medium">
-          {t("Rate Con")}
+          {t("Rate con")}
         </span>
         {latest ? (
           <>
@@ -174,7 +174,7 @@ export function RateConfirmationActions({
               title={t("Record that the carrier confirmed this rate")}
             >
               <FileCheck2Icon className="size-3" aria-hidden />
-              {t("Mark Confirmed")}
+              {t("Mark confirmed")}
             </Button>
           </>
         )}
@@ -275,7 +275,7 @@ function MarkConfirmedDialog({
             disabled={!confirmedByName.trim() || mutation.isPending}
             onClick={() => mutation.mutate()}
           >
-            {t("Mark Confirmed")}
+            {t("Mark confirmed")}
           </Button>
         </DialogFooter>
       </DialogContent>

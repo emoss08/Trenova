@@ -135,7 +135,7 @@ describe("BillingQueueChargesTab safe edits", () => {
       .mockRejectedValueOnce(
         new ApiRequestError(422, {
           type: "https://api.trenova.app/problems/validation-error",
-          title: "Validation Failed",
+          title: "Validation failed",
           status: 422,
           errors: [
             {

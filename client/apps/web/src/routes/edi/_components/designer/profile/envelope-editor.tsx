@@ -16,35 +16,35 @@ export function EnvelopeEditor({
   };
   return (
     <div className="bg-muted/30 space-y-2 rounded-md border p-2">
-      <div className="text-xs font-medium">{t("X12 Envelope")}</div>
+      <div className="text-xs font-medium">{t("X12 envelope")}</div>
       <div className="grid grid-cols-2 gap-2">
         <InputBlock
-          label={t("ISA Sender Qualifier (ISA05)")}
+          label={t("ISA sender qualifier (ISA05)")}
           value={envelope.interchangeSenderQualifier}
           onChange={(value) => update("interchangeSenderQualifier", value)}
         />
         <InputBlock
-          label={t("ISA Sender")}
+          label={t("ISA sender")}
           value={envelope.interchangeSenderId}
           onChange={(value) => update("interchangeSenderId", value)}
         />
         <InputBlock
-          label={t("ISA Receiver Qualifier (ISA07)")}
+          label={t("ISA receiver qualifier (ISA07)")}
           value={envelope.interchangeReceiverQualifier}
           onChange={(value) => update("interchangeReceiverQualifier", value)}
         />
         <InputBlock
-          label={t("ISA Receiver")}
+          label={t("ISA receiver")}
           value={envelope.interchangeReceiverId}
           onChange={(value) => update("interchangeReceiverId", value)}
         />
         <InputBlock
-          label={t("GS Sender")}
+          label={t("GS sender")}
           value={envelope.applicationSenderCode}
           onChange={(value) => update("applicationSenderCode", value)}
         />
         <InputBlock
-          label={t("GS Receiver")}
+          label={t("GS receiver")}
           value={envelope.applicationReceiverCode}
           onChange={(value) => update("applicationReceiverCode", value)}
         />

@@ -11,7 +11,7 @@ export function DriverExpensesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Driver Expenses"),
+        title: t("Driver expenses"),
         description: t(
           "Driver-submitted out-of-pocket expenses — review receipts, approve to reimburse on the driver's open settlement, or reject with an explanation.",
         ),

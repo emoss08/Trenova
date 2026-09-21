@@ -11,7 +11,7 @@ export function ServiceTypesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Service Types"),
+        title: t("Service types"),
         description: t("Manage and configure service types for your organization"),
       }}
     >

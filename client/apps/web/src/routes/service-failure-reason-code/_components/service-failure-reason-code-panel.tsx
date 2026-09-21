@@ -29,7 +29,7 @@ import { ServiceFailureReasonCodeForm } from "./service-failure-reason-code-form
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
-  { id: "save-close", label: "Save & Close" },
+  { id: "save-close", label: "Save & close" },
 ];
 
 const defaultValues: ServiceFailureReasonCode = {
@@ -85,7 +85,7 @@ export function ServiceFailureReasonCodePanel({
       form={form}
       url="/service-failure-reason-codes/"
       queryKey="service-failure-reason-code-list"
-      title={t("Service Failure Reason Code")}
+      title={t("Service failure reason code")}
       formComponent={<ServiceFailureReasonCodeForm />}
     />
   );

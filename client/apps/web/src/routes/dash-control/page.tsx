@@ -11,7 +11,7 @@ export function DashControlPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Dash Control"),
+        title: t("Dash control"),
         description: t("Choose what drivers can see and do in the Dash driver portal"),
       }}
     >

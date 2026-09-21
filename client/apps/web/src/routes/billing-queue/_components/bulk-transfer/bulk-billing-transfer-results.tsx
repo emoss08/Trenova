@@ -330,7 +330,7 @@ function FailureItem({ item }: { item: BillingTransferRunItem }) {
         <div className="flex items-center gap-1.5">
           {item.markedReadyToInvoice ? (
             <Badge variant="info" className="max-h-5 text-2xs">
-              {t("Marked Ready to Invoice")}
+              {t("Marked ready to invoice")}
             </Badge>
           ) : null}
           <span className="text-destructive text-xs font-medium" title={t(reason.description)}>
@@ -357,7 +357,7 @@ function TransferredItem({ item }: { item: BillingTransferRunItem }) {
         <div className="flex items-center gap-1.5">
           {item.markedReadyToInvoice ? (
             <Badge variant="info" className="max-h-5 text-2xs">
-              {t("Marked Ready to Invoice")}
+              {t("Marked ready to invoice")}
             </Badge>
           ) : null}
           {item.billingQueueNumber ? (

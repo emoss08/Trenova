@@ -41,13 +41,13 @@ export function getPartnerColumns(t: TranslateFn): ColumnDef<EDIPartner>[] {
     },
     {
       accessorKey: "internalOrganization.name",
-      header: t("Target Organization"),
+      header: t("Target organization"),
       cell: ({ row }) =>
         row.original.internalOrganization?.name ??
         row.original.internalOrganizationId ?? <DataTablePlaceholder />,
       size: 240,
       meta: {
-        label: t("Target Organization"),
+        label: t("Target organization"),
         apiField: "internalOrganizationId",
         filterable: false,
         sortable: false,

@@ -101,7 +101,7 @@ export function getColumns(t: TranslateFn): ColumnDef<HoldReason>[] {
     },
     {
       accessorKey: "defaultSeverity",
-      header: t("Default Severity"),
+      header: t("Default severity"),
       cell: ({ row }) => {
         const choice = holdSeverityChoices.find((c) => c.value === row.original.defaultSeverity);
         return choice ? (
@@ -114,7 +114,7 @@ export function getColumns(t: TranslateFn): ColumnDef<HoldReason>[] {
       minSize: 130,
       maxSize: 180,
       meta: {
-        label: t("Default Severity"),
+        label: t("Default severity"),
         apiField: "defaultSeverity",
         filterable: true,
         sortable: true,
@@ -125,13 +125,13 @@ export function getColumns(t: TranslateFn): ColumnDef<HoldReason>[] {
     },
     {
       accessorKey: "defaultBlocksDispatch",
-      header: t("Blocks Dispatch"),
+      header: t("Blocks dispatch"),
       cell: ({ row }) => <BooleanBadge value={row.original.defaultBlocksDispatch} />,
       size: 150,
       minSize: 130,
       maxSize: 180,
       meta: {
-        label: t("Blocks Dispatch"),
+        label: t("Blocks dispatch"),
         apiField: "defaultBlocksDispatch",
         filterable: true,
         sortable: true,
@@ -141,13 +141,13 @@ export function getColumns(t: TranslateFn): ColumnDef<HoldReason>[] {
     },
     {
       accessorKey: "defaultBlocksDelivery",
-      header: t("Blocks Delivery"),
+      header: t("Blocks delivery"),
       cell: ({ row }) => <BooleanBadge value={row.original.defaultBlocksDelivery} />,
       size: 150,
       minSize: 130,
       maxSize: 180,
       meta: {
-        label: t("Blocks Delivery"),
+        label: t("Blocks delivery"),
         apiField: "defaultBlocksDelivery",
         filterable: true,
         sortable: true,
@@ -157,13 +157,13 @@ export function getColumns(t: TranslateFn): ColumnDef<HoldReason>[] {
     },
     {
       accessorKey: "defaultBlocksBilling",
-      header: t("Blocks Billing"),
+      header: t("Blocks billing"),
       cell: ({ row }) => <BooleanBadge value={row.original.defaultBlocksBilling} />,
       size: 150,
       minSize: 130,
       maxSize: 180,
       meta: {
-        label: t("Blocks Billing"),
+        label: t("Blocks billing"),
         apiField: "defaultBlocksBilling",
         filterable: true,
         sortable: true,

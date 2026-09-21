@@ -12,7 +12,7 @@ export function JournalReversalForm() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("Reversal Target")}
+        title={t("Reversal target")}
         description={t("Specify the journal entry to reverse and the desired posting date")}
       >
         <FormGroup cols={2}>
@@ -20,7 +20,7 @@ export function JournalReversalForm() {
             <InputField
               control={control}
               name="originalJournalEntryId"
-              label={t("Original Journal Entry ID")}
+              label={t("Original journal entry ID")}
               rules={{ required: true }}
               placeholder={t("Enter the journal entry ID to reverse")}
               description={t("The ID of the posted journal entry you want to reverse.")}
@@ -30,7 +30,7 @@ export function JournalReversalForm() {
             <InputField
               control={control}
               name="requestedAccountingDate"
-              label={t("Requested Accounting Date")}
+              label={t("Requested accounting date")}
               rules={{ required: true }}
               type="date"
               description={t("The date the reversal should be posted to the general ledger.")}
@@ -48,7 +48,7 @@ export function JournalReversalForm() {
             <InputField
               control={control}
               name="reasonCode"
-              label={t("Reason Code")}
+              label={t("Reason code")}
               rules={{ required: true }}
               placeholder={t("e.g., ERROR, DUPLICATE, ADJUSTMENT")}
               description={t("A short classification code for the reversal reason.")}

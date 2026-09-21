@@ -54,7 +54,7 @@ export function BillingQueueCancelDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-100">
         <DialogHeader>
-          <DialogTitle>{t("Cancel Billing Queue Item")}</DialogTitle>
+          <DialogTitle>{t("Cancel billing queue item")}</DialogTitle>
           <DialogDescription>
             {t("This item will be removed from the billing queue.")}
           </DialogDescription>
@@ -76,7 +76,7 @@ export function BillingQueueCancelDialog({
             isLoading={isPending}
             loadingText={t("Canceling...")}
           >
-            {t("Cancel Item")}
+            {t("Cancel item")}
           </Button>
         </DialogFooter>
       </DialogContent>

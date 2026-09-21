@@ -11,7 +11,7 @@ export function EquipmentTypesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Equipment Types"),
+        title: t("Equipment types"),
         description: t("Manage and configure equipment types for your organization"),
       }}
     >

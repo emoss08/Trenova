@@ -136,7 +136,7 @@ export const transformOperationDefinitions: TransformOperationDefinition[] = [
   },
   {
     operation: "left_pad",
-    label: "Left Pad",
+    label: "Left pad",
     description: "Pad to a fixed length on the left.",
     arguments: [
       { key: "length", label: "Length", kind: "number", required: true },
@@ -145,7 +145,7 @@ export const transformOperationDefinitions: TransformOperationDefinition[] = [
   },
   {
     operation: "right_pad",
-    label: "Right Pad",
+    label: "Right pad",
     description: "Pad to a fixed length on the right.",
     arguments: [
       { key: "length", label: "Length", kind: "number", required: true },
@@ -200,7 +200,7 @@ export const transformOperationDefinitions: TransformOperationDefinition[] = [
   },
   {
     operation: "empty_if_none",
-    label: "Empty If None",
+    label: "Empty if none",
     description: "Return an empty string for null.",
     arguments: [],
   },
@@ -212,43 +212,43 @@ export const transformOperationDefinitions: TransformOperationDefinition[] = [
   },
   {
     operation: "format_date",
-    label: "Format Date",
+    label: "Format date",
     description: "Format a timestamp/date value.",
     arguments: [{ key: "layout", label: "Layout", kind: "string", placeholder: "20060102" }],
   },
   {
     operation: "format_time",
-    label: "Format Time",
+    label: "Format time",
     description: "Format a timestamp time value.",
     arguments: [{ key: "layout", label: "Layout", kind: "string", placeholder: "1504" }],
   },
   {
     operation: "format_decimal",
-    label: "Format Decimal",
+    label: "Format decimal",
     description: "Format a decimal with fixed places.",
     arguments: [{ key: "places", label: "Places", kind: "number", placeholder: "2" }],
   },
   {
     operation: "format_int",
-    label: "Format Int",
+    label: "Format int",
     description: "Round and format as an integer.",
     arguments: [],
   },
   {
     operation: "normalize_phone",
-    label: "Normalize Phone",
+    label: "Normalize phone",
     description: "Strip phone punctuation.",
     arguments: [],
   },
   {
     operation: "normalize_state",
-    label: "Normalize State",
+    label: "Normalize state",
     description: "Uppercase and trim to two characters.",
     arguments: [],
   },
   {
     operation: "normalize_postal",
-    label: "Normalize Postal",
+    label: "Normalize postal",
     description: "Uppercase alphanumeric postal code.",
     arguments: [],
   },
@@ -274,7 +274,7 @@ export const transformOperationDefinitions: TransformOperationDefinition[] = [
     arguments: [
       { key: "when", label: "When", kind: "string", required: true, placeholder: "$shipment.bol" },
       { key: "rule", label: "Rule", kind: "string", placeholder: "truthy" },
-      { key: "value", label: "Compare Value", kind: "string" },
+      { key: "value", label: "Compare value", kind: "string" },
       { key: "then", label: "Then", kind: "string" },
       { key: "else", label: "Else", kind: "string" },
     ],

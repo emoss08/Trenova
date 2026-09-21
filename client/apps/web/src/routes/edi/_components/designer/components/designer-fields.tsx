@@ -220,7 +220,7 @@ function SourceContextPicker({
   return (
     <PathPicker<EDISourceContextField>
       link="/edi/catalog/source-context/fields/select-options/"
-      label={t("Source Fields")}
+      label={t("Source fields")}
       disabled={disabled}
       placeholder={placeholder}
       getOptionValue={(field) => field.path}
@@ -262,7 +262,7 @@ function PartnerSettingPicker({
   return (
     <PathPicker<EDIPartnerSettingField>
       link="/edi/catalog/partner-settings/fields/select-options/"
-      label={t("Partner Settings")}
+      label={t("Partner settings")}
       disabled={disabled}
       placeholder={placeholder}
       getOptionValue={(field) => field.path}

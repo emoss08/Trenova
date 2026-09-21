@@ -126,14 +126,14 @@ export function PendingConnectionsPanel() {
       <EDIReasonDialog
         open={!!rejecting}
         onOpenChange={(open) => !open && setRejecting(null)}
-        title={t("Reject EDI Connection")}
+        title={t("Reject EDI connection")}
         description={
           rejecting
             ? `Reject the connection request from ${rejecting.sourceOrganization?.name ?? rejecting.sourceOrganizationId}.`
             : undefined
         }
         placeholder={t("Reason shared with the requesting organization")}
-        confirmLabel={t("Reject Connection")}
+        confirmLabel={t("Reject connection")}
         isPending={rejectMutation.isPending}
         onConfirm={(reason) =>
           rejecting && rejectMutation.mutate({ connection: rejecting, reason })

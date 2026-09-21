@@ -85,7 +85,7 @@ export function PTOFilterPopover({
                 <SelectField
                   control={form.control}
                   name="type"
-                  label={t("PTO Type")}
+                  label={t("PTO type")}
                   placeholder={t("Select type")}
                   options={ptoTypeOptions}
                   description={t("Show only this kind of time off.")}
@@ -105,7 +105,7 @@ export function PTOFilterPopover({
                 <FleetCodeAutocompleteField
                   control={form.control}
                   name="fleetCodeId"
-                  label={t("Fleet Code")}
+                  label={t("Fleet code")}
                   placeholder={t("Select fleet code")}
                   description={t("Show only workers in this fleet.")}
                   clearable
@@ -115,7 +115,7 @@ export function PTOFilterPopover({
                 <AutoCompleteDateField
                   control={form.control}
                   name="startDate"
-                  label={t("Start Date")}
+                  label={t("Start date")}
                   placeholder={t("Start date")}
                   rules={{ required: true }}
                   description={t("The earliest day of time off to include.")}
@@ -125,7 +125,7 @@ export function PTOFilterPopover({
                 <AutoCompleteDateField
                   control={form.control}
                   name="endDate"
-                  label={t("End Date")}
+                  label={t("End date")}
                   placeholder={t("End date")}
                   rules={{ required: true }}
                   description={t("The latest day of time off to include.")}

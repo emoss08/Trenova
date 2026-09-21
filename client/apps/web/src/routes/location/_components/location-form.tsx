@@ -27,7 +27,7 @@ export function LocationForm() {
   return (
     <div className="space-y-6 p-3">
       <FormSection
-        title={t("Basic Details")}
+        title={t("Basic details")}
         description={t("Identification, address, and operating boundary for this location.")}
       >
         <FormGroup cols={1}>
@@ -58,14 +58,14 @@ export function LocationForm() {
               control={control}
               rules={{ required: true }}
               name="locationCategoryId"
-              label={t("Location Category")}
-              placeholder={t("Location Category")}
+              label={t("Location category")}
+              placeholder={t("Location category")}
               description={t("The category this location belongs to.")}
             />
           </FormControl>
           {googleMapsQuery.isLoading ? (
             <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
-              {t("Loading Maps Configuration..")}
+              {t("Loading maps configuration..")}
             </div>
           ) : googleMapsQuery.data?.config.apiKey ? (
             <FormControl cols="full">
@@ -118,7 +118,7 @@ export function LocationForm() {
                 rules={{ required: true }}
                 control={control}
                 name="postalCode"
-                label={t("Postal Code")}
+                label={t("Postal code")}
                 placeholder={t("e.g., 90210")}
                 description={t(
                   "ZIP or ZIP+4 code. Used for geocoding, mileage calculations, and tax jurisdiction lookups.",

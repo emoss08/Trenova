@@ -26,7 +26,7 @@ const HR_ITEM_IDS = [
 describe("human resource management module", () => {
   it("is registered with its own base path and sits in the people group", () => {
     const hr = moduleById("hr");
-    expect(hr.label).toBe("Human Resource Management");
+    expect(hr.label).toBe("Human resource management");
     expect(hr.basePath).toBe("/hr");
 
     const people = appModuleGroups.find((group) => group.id === "people");

@@ -36,7 +36,7 @@ export function PayEventPanel({
             <thead className="bg-muted/50 text-left">
               <tr>
                 <th className="px-3 py-2 font-medium">{t("Component")}</th>
-                <th className="px-3 py-2 text-right font-medium">{t("Qty × Rate")}</th>
+                <th className="px-3 py-2 text-right font-medium">{t("Qty × rate")}</th>
                 <th className="px-3 py-2 text-right font-medium">{t("Amount")}</th>
               </tr>
             </thead>

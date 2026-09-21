@@ -73,7 +73,7 @@ export function InvoiceReconciliationPage() {
   return (
     <BillingWorkspaceLayout
       pageHeaderProps={{
-        title: t("Reconciliation Exceptions"),
+        title: t("Reconciliation exceptions"),
         description: t(
           "Investigate adjustment-created finance exceptions and trace them back to source artifacts.",
         ),
@@ -202,10 +202,10 @@ export function InvoiceReconciliationPage() {
                   <DescriptionItem label={t("Amount")}>
                     {formatCurrency(Number(selectedRow.amount))}
                   </DescriptionItem>
-                  <DescriptionItem label={t("Adjustment Kind")}>
+                  <DescriptionItem label={t("Adjustment kind")}>
                     {selectedRow.adjustmentKind}
                   </DescriptionItem>
-                  <DescriptionItem label={t("Adjustment Status")}>
+                  <DescriptionItem label={t("Adjustment status")}>
                     {selectedRow.adjustmentStatus}
                   </DescriptionItem>
                   <DescriptionItem label={t("Requested By")}>
@@ -214,10 +214,10 @@ export function InvoiceReconciliationPage() {
                   <DescriptionItem label={t("Submitted At")}>
                     {formatTimestamp(selectedRow.submittedAt)}
                   </DescriptionItem>
-                  <DescriptionItem label={t("Policy Source")}>
+                  <DescriptionItem label={t("Policy source")}>
                     {selectedRow.policySource || "Policy-controlled"}
                   </DescriptionItem>
-                  <DescriptionItem label={t("Finance Notes")}>
+                  <DescriptionItem label={t("Finance notes")}>
                     {selectedRow.financeNotes || "No finance notes recorded"}
                   </DescriptionItem>
                 </DescriptionList>
@@ -229,23 +229,23 @@ export function InvoiceReconciliationPage() {
               >
                 <div className="flex flex-wrap gap-2 p-3">
                   <LinkButton to={`/billing/invoices?item=${selectedRow.originalInvoiceId}`}>
-                    {t("Original Invoice")}
+                    {t("Original invoice")}
                   </LinkButton>
                   {selectedRow.creditMemoInvoiceId ? (
                     <LinkButton to={`/billing/invoices?item=${selectedRow.creditMemoInvoiceId}`}>
-                      {t("Credit Memo")}
+                      {t("Credit memo")}
                     </LinkButton>
                   ) : null}
                   {selectedRow.replacementInvoiceId ? (
                     <LinkButton to={`/billing/invoices?item=${selectedRow.replacementInvoiceId}`}>
-                      {t("Replacement Invoice")}
+                      {t("Replacement invoice")}
                     </LinkButton>
                   ) : null}
                   {selectedRow.rebillQueueItemId ? (
                     <LinkButton
                       to={`/billing/queue?item=${selectedRow.rebillQueueItemId}&includePosted=true`}
                     >
-                      {t("Rebill Queue Item")}
+                      {t("Rebill queue item")}
                     </LinkButton>
                   ) : null}
                 </div>

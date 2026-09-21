@@ -16,7 +16,7 @@ describe("StatusCell", () => {
       />,
     );
 
-    expect(screen.getByText("Ready to Invoice")).toBeInTheDocument();
-    expect(screen.queryByText("In Review")).not.toBeInTheDocument();
+    expect(screen.getByText("Ready to invoice")).toBeInTheDocument();
+    expect(screen.queryByText("In review")).not.toBeInTheDocument();
   });
 });

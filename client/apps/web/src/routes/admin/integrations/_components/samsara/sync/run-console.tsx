@@ -60,7 +60,7 @@ export default function RunConsole({ isWorkflowRunning }: { isWorkflowRunning: b
       <div className="border-border bg-sidebar flex items-center justify-between border-b px-3 py-2">
         <div className="text-foreground inline-flex items-center gap-2 text-xs font-medium">
           <TerminalIcon className="size-3.5" />
-          {t("Run Console")}
+          {t("Run console")}
           {isWorkflowRunning && (
             <Badge variant="success" className="ml-2">
               {t("Live")}

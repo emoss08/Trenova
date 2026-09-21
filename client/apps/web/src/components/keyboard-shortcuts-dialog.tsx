@@ -31,7 +31,7 @@ export function KeyboardShortcutsDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>{t("Keyboard Shortcuts")}</DialogTitle>
+          <DialogTitle>{t("Keyboard shortcuts")}</DialogTitle>
           <DialogDescription>
             {t("Available keyboard shortcuts throughout the application.")}
           </DialogDescription>

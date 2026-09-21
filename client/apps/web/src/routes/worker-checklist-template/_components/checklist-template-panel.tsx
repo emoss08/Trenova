@@ -123,7 +123,7 @@ function ChecklistTemplateCreatePanel({
     <FormCreatePanel<ChecklistTemplateFormValues, WorkerChecklistTemplateRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Checklist Template")}
+      title={t("Checklist template")}
       description={t(
         "Lay out the steps a worker goes through when they join or leave, and who owns each one.",
       )}
@@ -167,7 +167,7 @@ function ChecklistTemplateEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title={t("Checklist Template")}
+      title={t("Checklist template")}
       fieldKey="code"
       queryKey={WORKER_CHECKLIST_TEMPLATE_LIST_KEY}
       form={form}

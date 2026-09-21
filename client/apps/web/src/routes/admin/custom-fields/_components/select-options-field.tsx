@@ -31,7 +31,7 @@ export function SelectOptionsField({ control }: SelectOptionsFieldProps) {
           onClick={() => append({ value: "", label: "", color: "", description: "" })}
         >
           <PlusIcon className="size-3" />
-          {t("Add Option")}
+          {t("Add option")}
         </Button>
       }
     >
@@ -53,7 +53,7 @@ export function SelectOptionsField({ control }: SelectOptionsFieldProps) {
               control={control}
               name={`options.${index}.label`}
               label={t("Label")}
-              placeholder={t("Display Label")}
+              placeholder={t("Display label")}
             />
             <ColorField control={control} name={`options.${index}.color`} label={t("Color")} />
             <div className="pb-0.5">

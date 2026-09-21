@@ -40,7 +40,7 @@ const NEW_VERSION_TEMPLATE = {
     fields: [
       {
         key: "referenceNumber",
-        label: "Reference Number",
+        label: "Reference number",
         sectionNames: [],
         aliases: ["reference number"],
         patterns: [],
@@ -126,7 +126,7 @@ function VersionList({
             disabled={createMutation.isPending}
           >
             <PlusIcon className="size-3.5" />
-            {createMutation.isPending ? t("Creating...") : t("New Draft")}
+            {createMutation.isPending ? t("Creating...") : t("New draft")}
           </Button>
         )}
       </div>

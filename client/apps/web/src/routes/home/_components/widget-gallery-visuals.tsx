@@ -122,7 +122,7 @@ function Line({ className }: { className?: string }) {
 
 function Cell({ className }: { className?: string }) {
   return (
-    <span className={cn("border-foreground/10 flex flex-col gap-1 rounded border p-1", className)}>
+    <span className={cn("border-foreground/10 flex flex-col gap-1 rounded-md border p-1", className)}>
       <span className={cn("block h-1 w-2/3 rounded-full", GHOST)} />
       <span className={cn("block h-1.5 w-1/2 rounded-full", GHOST_STRONG)} />
     </span>
@@ -186,7 +186,7 @@ function SketchBody({ shape }: { shape: WidgetShape }) {
       return (
         <span className="flex h-full flex-col justify-between">
           <Line className="w-1/3" />
-          <span className={cn("block h-4 w-1/2 rounded", GHOST_STRONG)} />
+          <span className={cn("block h-4 w-1/2 rounded-md", GHOST_STRONG)} />
           <span className="flex items-end gap-0.5">
             {BAR_HEIGHTS.map((height, index) => (
               <span
@@ -248,7 +248,7 @@ function SketchBody({ shape }: { shape: WidgetShape }) {
             <span key={index} className="flex flex-col gap-1">
               <span className={cn("block h-1 rounded-full", GHOST)} style={{ width: "60%" }} />
               <span
-                className={cn("block h-2.5 rounded", GHOST_STRONG)}
+                className={cn("block h-2.5 rounded-md", GHOST_STRONG)}
                 style={{ width: `${width}%` }}
               />
             </span>
@@ -318,7 +318,7 @@ function SketchBody({ shape }: { shape: WidgetShape }) {
 
     case "map":
       return (
-        <span className="relative block h-full overflow-hidden rounded">
+        <span className="relative block h-full overflow-hidden rounded-md">
           <svg viewBox="0 0 96 40" className="size-full" preserveAspectRatio="none">
             <path
               d="M0 28 Q16 12 34 20 T64 14 T96 24"
@@ -349,8 +349,8 @@ function SketchBody({ shape }: { shape: WidgetShape }) {
 
     case "link":
       return (
-        <span className="border-foreground/10 flex h-full items-center gap-2 rounded border px-2">
-          <span className={cn("size-5 shrink-0 rounded", GHOST_BRAND)} />
+        <span className="border-foreground/10 flex h-full items-center gap-2 rounded-md border px-2">
+          <span className={cn("size-5 shrink-0 rounded-md", GHOST_BRAND)} />
           <span className="flex flex-1 flex-col gap-1">
             <Line className="w-2/3" />
             <Line className="w-1/3" />

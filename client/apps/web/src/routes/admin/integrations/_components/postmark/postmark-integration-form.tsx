@@ -149,7 +149,7 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
             <InputField
               name="configuration.messageStream"
               control={control}
-              label={t("Message Stream")}
+              label={t("Message stream")}
               placeholder="outbound"
               description={t("Postmark message stream used for transactional sends.")}
             />
@@ -160,7 +160,7 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
               control={control}
               label={
                 <span className="inline-flex items-center gap-1.5">
-                  {t("Webhook Token")}
+                  {t("Webhook token")}
                   <PostmarkWebhookHelpPopover webhookURL={webhookURL} />
                 </span>
               }
@@ -180,7 +180,7 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
             loadingText={t("Saving...")}
             disabled={configQuery.isLoading}
           >
-            {t("Save Changes")}
+            {t("Save changes")}
           </Button>
         </DialogFooter>
       </Form>
@@ -239,7 +239,7 @@ function PostmarkWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
               {postmarkWebhookEvents.map((event) => (
                 <code
                   key={event}
-                  className="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs"
+                  className="bg-muted text-foreground rounded-md px-1.5 py-0.5 text-xs"
                 >
                   {event}
                 </code>

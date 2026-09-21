@@ -17,7 +17,7 @@ export function CarrierForm() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("General Information")}
+        title={t("General information")}
         description={t("Core identifiers used across the system to reference this carrier.")}
       >
         <FormGroup cols={2}>
@@ -64,7 +64,7 @@ export function CarrierForm() {
             <InputField
               control={control}
               name="dbaName"
-              label={t("DBA Name")}
+              label={t("DBA name")}
               placeholder={t("Doing business as")}
               description={t(
                 "Trade name the carrier operates under when it differs from the legal name.",
@@ -77,8 +77,8 @@ export function CarrierForm() {
               control={control}
               rules={{ required: true }}
               name="carrierType"
-              label={t("Carrier Type")}
-              placeholder={t("Carrier Type")}
+              label={t("Carrier type")}
+              placeholder={t("Carrier type")}
               description={t(
                 "Operating authority classification: common, contract, broker, or exempt.",
               )}
@@ -89,7 +89,7 @@ export function CarrierForm() {
       </FormSection>
 
       <FormSection
-        title={t("Operating Authority")}
+        title={t("Operating authority")}
         description={t("Federal identifiers used for safety lookups and compliance monitoring.")}
       >
         <FormGroup cols={2}>
@@ -97,7 +97,7 @@ export function CarrierForm() {
             <InputField
               control={control}
               name="dotNumber"
-              label={t("DOT Number")}
+              label={t("DOT number")}
               placeholder={t("e.g., 1234567")}
               description={t("USDOT number issued by the FMCSA. Digits only, up to 12 characters.")}
               maxLength={12}
@@ -107,7 +107,7 @@ export function CarrierForm() {
             <InputField
               control={control}
               name="mcNumber"
-              label={t("MC Number")}
+              label={t("MC number")}
               placeholder={t("e.g., 987654")}
               description={t(
                 "Motor carrier (operating authority) number. Digits only, up to 12 characters.",
@@ -131,7 +131,7 @@ export function CarrierForm() {
       </FormSection>
 
       <FormSection
-        title={t("Address & Contact")}
+        title={t("Address & contact")}
         description={t("Primary business address and contact details for this carrier.")}
       >
         <FormGroup cols={2}>
@@ -181,7 +181,7 @@ export function CarrierForm() {
             <InputField
               control={control}
               name="postalCode"
-              label={t("Postal Code")}
+              label={t("Postal code")}
               placeholder={t("e.g., 90210")}
               description={t("ZIP or ZIP+4 code for the carrier's primary address.")}
               maxLength={10}
@@ -210,7 +210,7 @@ export function CarrierForm() {
       </FormSection>
 
       <FormSection
-        title={t("Additional Details")}
+        title={t("Additional details")}
         description={t("External references and internal notes for this carrier.")}
       >
         <FormGroup cols={2}>

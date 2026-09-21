@@ -82,7 +82,7 @@ describe("TractorForm fuel type", () => {
   it("picks the fuel from the server-backed IFTA fuel type resource", () => {
     render(<Harness />);
 
-    const fuelType = screen.getByLabelText("Fuel Type");
+    const fuelType = screen.getByLabelText("Fuel type");
     expect(fuelType).toHaveAttribute("data-source", "ifta-fuel-type-autocomplete");
     expect(fuelType).toHaveValue("Diesel");
   });

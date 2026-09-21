@@ -11,7 +11,7 @@ export function CarrierSettlementsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Carrier Settlement History"),
+        title: t("Carrier settlement history"),
         description: t(
           "Read-only record of every carrier payable statement across pay periods — process active settlements in the workspace.",
         ),

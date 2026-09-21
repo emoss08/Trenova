@@ -8,7 +8,7 @@ import { hasMaterialChange, saveDemotesToDraft } from "../formula-template-mater
 function template(overrides: Partial<FormulaTemplate> = {}): FormulaTemplate {
   return {
     id: "ft_1",
-    name: "Per Mile",
+    name: "Per mile",
     description: "Rate per mile",
     type: "FreightCharge",
     expression: "baseRate * totalDistance",

@@ -63,7 +63,7 @@ function signIn(capabilities: OrganizationCapabilities) {
 const columns: ColumnDef<Shipment>[] = [
   {
     id: "proNumber",
-    header: "Pro Number",
+    header: "Pro number",
     accessorFn: () => null,
     cell: () => null,
   } as unknown as ColumnDef<Shipment>,

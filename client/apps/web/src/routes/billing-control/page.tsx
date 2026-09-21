@@ -14,7 +14,7 @@ export function BillingControlPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Billing Control"),
+        title: t("Billing control"),
         description: t("Configure and manage your billing control settings"),
       }}
     >
@@ -32,7 +32,7 @@ function BillingControlAlert() {
   return (
     <Alert variant="warning" size="sm">
       <TriangleAlertIcon />
-      <AlertTitle>{t("Critical Financial Configuration")}</AlertTitle>
+      <AlertTitle>{t("Critical financial configuration")}</AlertTitle>
       <AlertDescription>
         {t(
           "Billing Control settings directly impact your organization's revenue processing, financial reporting, and customer invoicing. Changes to these settings should be made infrequently and only after thorough review by financial stakeholders.",

@@ -185,13 +185,13 @@ export function ProgramPanel({ open, onOpenChange, programId }: ProgramPanelProp
             {t("Cancel")}
           </Button>
           <Button type="submit" form="fuel-program-form" isLoading={isSubmitting}>
-            {isEdit ? t("Save Changes") : t("Create Program")}
+            {isEdit ? t("Save changes") : t("Create program")}
           </Button>
         </>
       }
     >
       {isEdit && isDetailLoading ? (
-        <ComponentLoader message={t("Loading Fuel Surcharge Program...")} />
+        <ComponentLoader message={t("Loading fuel surcharge program...")} />
       ) : (
         <FormProvider {...form}>
           <Form id="fuel-program-form" onSubmit={handleSubmit(onSubmit)}>

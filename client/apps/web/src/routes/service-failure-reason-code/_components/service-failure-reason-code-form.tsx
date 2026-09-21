@@ -37,7 +37,7 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
           <InputField
             control={control}
             name="code"
-            label={t("Reason Code")}
+            label={t("Reason code")}
             placeholder="LATE_DELIVERY"
             rules={{ required: true }}
             maxLength={64}
@@ -49,8 +49,8 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
           <InputField
             control={control}
             name="label"
-            label={t("Display Name")}
-            placeholder={t("Late Delivery")}
+            label={t("Display name")}
+            placeholder={t("Late delivery")}
             rules={{ required: true }}
             maxLength={120}
             description={t("Name shown to operations and billing users.")}
@@ -62,7 +62,7 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             control={control}
             name="category"
             label={t("Category")}
-            placeholder={t("Select Category")}
+            placeholder={t("Select category")}
             options={serviceFailureReasonCategoryChoices}
             rules={{ required: true }}
             isReadOnly={disabled}
@@ -73,7 +73,7 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             control={control}
             name="appliesTo"
             label={t("Applies To")}
-            placeholder={t("Select Stop Type")}
+            placeholder={t("Select stop type")}
             options={serviceFailureReasonCodeAppliesToChoices}
             rules={{ required: true }}
             isReadOnly={disabled}
@@ -91,7 +91,7 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
       </FormGroup>
 
       <FormSection
-        title={t("EDI Defaults")}
+        title={t("EDI defaults")}
         description={t("Defaults used when building a service failure EDI 214 payload.")}
       >
         <FormGroup cols={3}>
@@ -99,7 +99,7 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             <InputField
               control={control}
               name="defaultStatusCode"
-              label={t("Status Code")}
+              label={t("Status code")}
               placeholder={t("SD")}
               maxLength={3}
               disabled={disabled}
@@ -109,7 +109,7 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             <InputField
               control={control}
               name="defaultReasonCode"
-              label={t("Reason Code")}
+              label={t("Reason code")}
               placeholder={t("NS")}
               maxLength={3}
               disabled={disabled}
@@ -119,7 +119,7 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             <InputField
               control={control}
               name="defaultExceptionCode"
-              label={t("Exception Code")}
+              label={t("Exception code")}
               placeholder={t("A3")}
               maxLength={3}
               disabled={disabled}
@@ -129,7 +129,7 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             <TextareaField
               control={control}
               name="defaultNote"
-              label={t("Default Note")}
+              label={t("Default note")}
               placeholder={t("Default note applied to detected failures")}
               disabled={disabled}
             />
@@ -143,7 +143,7 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             <NumberField
               control={control}
               name="sortOrder"
-              label={t("Sort Order")}
+              label={t("Sort order")}
               min={0}
               disabled={disabled}
             />

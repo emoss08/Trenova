@@ -61,7 +61,7 @@ export function JurisdictionRuleForm() {
       </FormSection>
 
       <FormSection
-        title={t("Legal Limits")}
+        title={t("Legal limits")}
         description={t("A load exceeding any of these needs a permit in this state")}
       >
         <FormGroup cols={2}>
@@ -69,7 +69,7 @@ export function JurisdictionRuleForm() {
             <NumberField
               control={control}
               name="maxWidthFeet"
-              label={t("Max Width")}
+              label={t("Max width")}
               sideText="ft"
               placeholder="8.5"
               rules={{ required: true }}
@@ -79,7 +79,7 @@ export function JurisdictionRuleForm() {
             <NumberField
               control={control}
               name="maxHeightFeet"
-              label={t("Max Height")}
+              label={t("Max height")}
               sideText="ft"
               placeholder="13.5"
               rules={{ required: true }}
@@ -89,7 +89,7 @@ export function JurisdictionRuleForm() {
             <NumberField
               control={control}
               name="maxLengthFeet"
-              label={t("Max Length")}
+              label={t("Max length")}
               sideText="ft"
               placeholder="53"
               rules={{ required: true }}
@@ -99,7 +99,7 @@ export function JurisdictionRuleForm() {
             <NumberField
               control={control}
               name="maxWeightPounds"
-              label={t("Max Weight")}
+              label={t("Max weight")}
               sideText="lbs"
               thousandSeparator
               placeholder="80000"
@@ -110,7 +110,7 @@ export function JurisdictionRuleForm() {
       </FormSection>
 
       <FormSection
-        title={t("Superload Thresholds")}
+        title={t("Superload thresholds")}
         description={t(
           "Above these a load needs superload review rather than an ordinary permit. Leave blank if unknown.",
         )}
@@ -120,7 +120,7 @@ export function JurisdictionRuleForm() {
             <NumberField
               control={control}
               name="superloadWidthFeet"
-              label={t("Superload Width")}
+              label={t("Superload width")}
               sideText="ft"
               placeholder={t("Leave blank if unknown")}
             />
@@ -129,7 +129,7 @@ export function JurisdictionRuleForm() {
             <NumberField
               control={control}
               name="superloadWeightPounds"
-              label={t("Superload Weight")}
+              label={t("Superload weight")}
               sideText="lbs"
               thousandSeparator
               placeholder={t("Leave blank if unknown")}
@@ -139,7 +139,7 @@ export function JurisdictionRuleForm() {
       </FormSection>
 
       <FormSection
-        title={t("Permit Terms")}
+        title={t("Permit terms")}
         description={t("How long a permit takes to obtain and how long it lasts")}
       >
         <FormGroup cols={2}>
@@ -147,7 +147,7 @@ export function JurisdictionRuleForm() {
             <NumberField
               control={control}
               name="permitLeadTimeDays"
-              label={t("Lead Time")}
+              label={t("Lead time")}
               sideText="days"
               description={t("Quoting a pickup sooner than this is a missed appointment.")}
               rules={{ required: true }}
@@ -163,16 +163,16 @@ export function JurisdictionRuleForm() {
             />
           </FormControl>
           <FormControl>
-            <MoneyField control={control} name="permitBaseFee" label={t("Base Fee")} />
+            <MoneyField control={control} name="permitBaseFee" label={t("Base fee")} />
           </FormControl>
           <FormControl>
-            <MoneyField control={control} name="permitPerMileFee" label={t("Per Mile Fee")} />
+            <MoneyField control={control} name="permitPerMileFee" label={t("Per mile fee")} />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title={t("Travel Restrictions")}
+        title={t("Travel restrictions")}
         description={t("When an oversize load may legally move in this state")}
       >
         <FormGroup cols={2}>
@@ -180,7 +180,7 @@ export function JurisdictionRuleForm() {
             <CheckboxField
               control={control}
               name="daylightOnly"
-              label={t("Daylight Only")}
+              label={t("Daylight only")}
               outlined
               description={t("Movement confined to daylight hours")}
             />
@@ -189,7 +189,7 @@ export function JurisdictionRuleForm() {
             <CheckboxField
               control={control}
               name="rushHourRestricted"
-              label={t("Rush Hour Restricted")}
+              label={t("Rush hour restricted")}
               outlined
               description={t("Barred through metro areas at peak times")}
             />
@@ -198,7 +198,7 @@ export function JurisdictionRuleForm() {
             <CheckboxField
               control={control}
               name="weekendRestricted"
-              label={t("Weekend Restricted")}
+              label={t("Weekend restricted")}
               outlined
               description={t("Movement restricted at weekends")}
             />
@@ -207,7 +207,7 @@ export function JurisdictionRuleForm() {
             <CheckboxField
               control={control}
               name="holidayRestricted"
-              label={t("Holiday Restricted")}
+              label={t("Holiday restricted")}
               outlined
               description={t("Movement restricted on public holidays")}
             />
@@ -226,7 +226,7 @@ export function JurisdictionRuleForm() {
             <TextareaField
               control={control}
               name="sourceNote"
-              label={t("Source Note")}
+              label={t("Source note")}
               placeholder={t("Which statute or permit office publication these limits came from")}
             />
           </FormControl>

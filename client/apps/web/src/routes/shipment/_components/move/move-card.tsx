@@ -239,8 +239,8 @@ export function MoveCard({
             )}
             {canCancelCarrier && (
               <DropdownMenuItem
-                label={t("Cancel Carrier Assignment")}
-                title={t("Cancel Carrier Assignment")}
+                label={t("Cancel carrier assignment")}
+                title={t("Cancel carrier assignment")}
                 color="danger"
                 startContent={<Building2Icon className="size-3.5" />}
                 onClick={() => setCancelCarrierOpen(true)}
@@ -256,8 +256,8 @@ export function MoveCard({
             )}
             {shipmentId && (
               <DropdownMenuItem
-                label={t("Recalculate Distance")}
-                title={t("Recalculate Distance")}
+                label={t("Recalculate distance")}
+                title={t("Recalculate distance")}
                 startContent={<TruckIcon className="size-3.5" />}
                 onClick={() => recalculateDistanceMutation.mutateAsync()}
               />
@@ -420,7 +420,7 @@ const moveStatusConfig: Record<
 > = {
   New: { label: "New", variant: "neutral" },
   Assigned: { label: "Assigned", variant: "info" },
-  InTransit: { label: "In Transit", variant: "info" },
+  InTransit: { label: "In transit", variant: "info" },
   Completed: { label: "Completed", variant: "success" },
   Canceled: { label: "Canceled", variant: "danger" },
 };
@@ -617,7 +617,7 @@ function StopTimelineItem({
             />
             <TooltipContent side="top" className="max-w-xs">
               <div className="space-y-1">
-                <p className="text-xs font-semibold">{t("Validation Errors:")}</p>
+                <p className="text-xs font-semibold">{t("Validation errors:")}</p>
                 {errorMessages.map((msg) => (
                   <p key={msg} className="text-xs">
                     • {msg}
@@ -660,7 +660,7 @@ function StopTimelineItem({
           </div>
         ) : (
           <span className="text-muted-foreground text-xs">
-            {t("Enter {0} Information", stopTypeLabels[stop.type])}
+            {t("Enter {0} information", stopTypeLabels[stop.type])}
           </span>
         )}
       </div>
@@ -716,7 +716,7 @@ function CarrierAssignmentDetails({
           </span>
           <CarrierAssignmentStatusBadge
             status={carrierAssignment.status}
-            className="h-4 shrink-0 rounded px-1 text-3xs"
+            className="h-4 shrink-0 rounded-md px-1 text-3xs"
           />
         </div>
         {canCancel && (
@@ -729,7 +729,7 @@ function CarrierAssignmentDetails({
       <div className="grid grid-cols-2 gap-x-6 gap-y-2">
         {carrierAssignment.proNumber && (
           <div>
-            <p className="text-2xs text-muted-foreground">{t("Carrier Pro Number")}</p>
+            <p className="text-2xs text-muted-foreground">{t("Carrier pro number")}</p>
             <p className="text-xs font-medium">{carrierAssignment.proNumber}</p>
           </div>
         )}
@@ -823,7 +823,7 @@ function AssignmentDetails({ assignmentId }: { assignmentId?: string }) {
       )}
       {primaryWorker && (
         <div>
-          <p className="text-2xs text-muted-foreground">{t("Primary Worker")}</p>
+          <p className="text-2xs text-muted-foreground">{t("Primary worker")}</p>
           <p className="text-xs font-medium">
             {`${primaryWorker.firstName} ${primaryWorker.lastName}`}
           </p>
@@ -831,7 +831,7 @@ function AssignmentDetails({ assignmentId }: { assignmentId?: string }) {
       )}
       {secondaryWorker && (
         <div>
-          <p className="text-2xs text-muted-foreground">{t("Secondary Worker")}</p>
+          <p className="text-2xs text-muted-foreground">{t("Secondary worker")}</p>
           <p className="text-xs font-medium">
             {`${secondaryWorker.firstName} ${secondaryWorker.lastName}`}
           </p>

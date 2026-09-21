@@ -11,7 +11,7 @@ export function DistanceProfilesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Distance Profiles"),
+        title: t("Distance profiles"),
         description: t("Manage business-unit routing policy used by distance calculations"),
       }}
     >

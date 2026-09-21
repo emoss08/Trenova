@@ -170,14 +170,14 @@ export default function FormulaTemplatesDataTable() {
     () => [
       {
         id: "fork",
-        label: t("Fork Template"),
+        label: t("Fork template"),
         icon: GitForkIcon,
         group: { id: "fork", label: t("Fork") },
         onClick: (row) => setForkDialogTemplate(row.original),
       },
       {
         id: "lineage",
-        label: t("View Lineage"),
+        label: t("View lineage"),
         icon: NetworkIcon,
         group: { id: "fork", label: t("Fork") },
         onClick: (row) => setLineageDialogTemplate(row.original),
@@ -304,13 +304,13 @@ export default function FormulaTemplatesDataTable() {
         addRecordActions={[
           {
             id: "install-standards",
-            label: t("Install Standard Templates"),
+            label: t("Install standard templates"),
             description: t("Add the vetted standard rating library (per mile, per CWT, ...)."),
             onClick: () => setInstallDialogOpen(true),
           },
           {
             id: "import-templates",
-            label: t("Import Templates"),
+            label: t("Import templates"),
             description: t("Import templates from an exported JSON file."),
             onClick: () => setImportDialogOpen(true),
           },

@@ -43,7 +43,7 @@ describe("ShipmentForm billing lock", () => {
 
       expect(await screen.findByText("billing details")).toBeInTheDocument();
       expect(screen.getByText("Locked — shipment has been invoiced")).toBeInTheDocument();
-      expect(screen.queryByText("Under Billing Review")).not.toBeInTheDocument();
+      expect(screen.queryByText("Under billing review")).not.toBeInTheDocument();
     },
   );
 
@@ -52,6 +52,6 @@ describe("ShipmentForm billing lock", () => {
 
     expect(await screen.findByText("billing details")).toBeInTheDocument();
     expect(screen.queryByText("Locked — shipment has been invoiced")).not.toBeInTheDocument();
-    expect(screen.queryByText("Under Billing Review")).not.toBeInTheDocument();
+    expect(screen.queryByText("Under billing review")).not.toBeInTheDocument();
   });
 });

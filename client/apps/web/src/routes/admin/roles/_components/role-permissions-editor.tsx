@@ -371,7 +371,7 @@ function AddPermissionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>{t("Add Permission")}</DialogTitle>
+          <DialogTitle>{t("Add permission")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -417,7 +417,7 @@ function AddPermissionDialog({
                     className="h-6 text-xs"
                     onClick={selectAllOperations}
                   >
-                    {t("Select All")}
+                    {t("Select all")}
                   </Button>
                   <Button
                     type="button"
@@ -449,7 +449,7 @@ function AddPermissionDialog({
           )}
 
           <div className="space-y-2">
-            <Label>{t("Data Scope")}</Label>
+            <Label>{t("Data scope")}</Label>
             <Select
               value={selectedScope}
               onValueChange={(value) => setSelectedScope(value as DataScope)}
@@ -476,7 +476,7 @@ function AddPermissionDialog({
             onClick={handleSubmit}
             disabled={isSubmitting || !selectedResource || selectedOperations.length === 0}
           >
-            {t("Add Permission")}
+            {t("Add permission")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -747,7 +747,7 @@ function CreateAddPermissionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>{t("Add Permission")}</DialogTitle>
+          <DialogTitle>{t("Add permission")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -793,7 +793,7 @@ function CreateAddPermissionDialog({
                     className="h-6 text-xs"
                     onClick={selectAllOperations}
                   >
-                    {t("Select All")}
+                    {t("Select all")}
                   </Button>
                   <Button
                     type="button"
@@ -825,7 +825,7 @@ function CreateAddPermissionDialog({
           )}
 
           <div className="space-y-2">
-            <Label>{t("Data Scope")}</Label>
+            <Label>{t("Data scope")}</Label>
             <Select
               value={selectedScope}
               onValueChange={(value) => setSelectedScope(value as DataScope)}
@@ -852,7 +852,7 @@ function CreateAddPermissionDialog({
             onClick={handleSubmit}
             disabled={!selectedResource || selectedOperations.length === 0}
           >
-            {t("Add Permission")}
+            {t("Add permission")}
           </Button>
         </DialogFooter>
       </DialogContent>

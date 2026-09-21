@@ -156,7 +156,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
   return (
     <div className="space-y-4">
       <div className="border-border flex flex-col border-b p-4 leading-tight">
-        <p className="text-2xl font-semibold">{t("Samsara Configuration")}</p>
+        <p className="text-2xl font-semibold">{t("Samsara configuration")}</p>
         <span className="text-muted-foreground text-sm">
           {t("Configure your Samsara integration settings for this organization.")}
         </span>
@@ -240,7 +240,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
             <FormControl cols="full">
               {webhookUrl ? (
                 <div className="flex flex-col gap-1.5">
-                  <Label>{t("Webhook Endpoint")}</Label>
+                  <Label>{t("Webhook endpoint")}</Label>
                   <div className="border-border bg-muted/40 flex items-center gap-2 rounded-md border p-2">
                     <p className="min-w-0 flex-1 truncate font-mono text-xs">{webhookUrl}</p>
                     <Button
@@ -277,7 +277,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
                   loadingText={saveMutation.isPending ? "Saving..." : "Testing..."}
                   disabled={configQuery.isLoading}
                 >
-                  {t("Save Configuration")}
+                  {t("Save configuration")}
                 </Button>
               </div>
             </FormControl>

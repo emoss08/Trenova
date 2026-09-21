@@ -283,7 +283,7 @@ export function AddressField<TForm extends FieldValues>({
                           }}
                         >
                           <div className="flex flex-col">
-                            <span>{location.name || t("Unknown Location")}</span>
+                            <span>{location.name || t("Unknown location")}</span>
                             <span className="text-2xs text-muted-foreground">
                               {location.addressLine1}
                               {location.city ? `, ${location.city}` : ""}
@@ -303,7 +303,7 @@ export function AddressField<TForm extends FieldValues>({
                   )}
                 </CommandList>
                 <div className="bg-muted text-2xs text-muted-foreground flex items-center justify-between gap-0.5 border-t px-2 py-0.5">
-                  <div className="flex items-center gap-0.5">{t("Powered by Google Maps")}</div>
+                  <div className="flex items-center gap-0.5">{t("Powered by Google maps")}</div>
                   <div>{t("Found {0} locations", locations.length)}</div>
                 </div>
               </Command>
@@ -339,7 +339,7 @@ function LocationSearchError({ error }: { error: string }) {
     <div className="animate-in fade-in flex flex-col items-center gap-2.5 px-4 py-3 duration-300">
       <div className="border-destructive/30 bg-destructive/5 text-destructive flex w-full max-w-md items-center gap-2 rounded-lg border p-3">
         <div className="flex flex-col space-y-0.5">
-          <span className="text-sm font-medium">{t("API Key Error")}</span>
+          <span className="text-sm font-medium">{t("API key error")}</span>
           <span className="text-destructive/80 text-xs">{error}</span>
         </div>
       </div>

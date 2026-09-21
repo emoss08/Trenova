@@ -70,7 +70,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold">{t("Pay Profile")}</h3>
+          <h3 className="text-sm font-semibold">{t("Pay profile")}</h3>
           <p className="text-muted-foreground text-xs">
             {t(
               "Pay accrues automatically from delivered shipments using the assignment in effect on the delivery date. Manage shared profiles under Payroll → Pay Profiles.",
@@ -79,7 +79,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
         </div>
         <Button size="sm" onClick={() => setAssignOpen(true)}>
           <Wallet className="size-3.5" />
-          {assignment ? t("Change Profile") : t("Assign Profile")}
+          {assignment ? t("Change profile") : t("Assign profile")}
         </Button>
       </div>
 
@@ -101,7 +101,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-muted/30 rounded-lg border p-3">
             <p className="text-muted-foreground text-xs font-medium">
-              {t("Unsettled Earnings")}
+              {t("Unsettled earnings")}
             </p>
             <p className="mt-1 text-sm font-semibold">
               <AmountDisplay value={earnings.accruedGrossMinor} variant="positive" />
@@ -115,7 +115,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
           </div>
           <div className="bg-muted/30 rounded-lg border p-3">
             <p className="text-muted-foreground text-xs font-medium">
-              {t("Outstanding Advances")}
+              {t("Outstanding advances")}
             </p>
             <p className="mt-1 text-sm font-semibold">
               <AmountDisplay
@@ -129,7 +129,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
           </div>
           <div className="bg-muted/30 rounded-lg border p-3">
             <p className="text-muted-foreground text-xs font-medium">
-              {t("Escrow Balance")}
+              {t("Escrow balance")}
             </p>
             <p className="mt-1 text-sm font-semibold">
               <AmountDisplay value={earnings.escrowBalanceMinor} />
@@ -144,7 +144,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
       {(history ?? []).length > 0 && (
         <div>
           <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
-            {t("Assignment History")}
+            {t("Assignment history")}
           </h4>
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-xs">
@@ -236,7 +236,7 @@ function CurrentAssignmentCard({
           className="ml-auto text-danger-foreground"
           onClick={onEnd}
         >
-          {t("End Assignment")}
+          {t("End assignment")}
         </Button>
       </div>
 
@@ -246,8 +246,8 @@ function CurrentAssignmentCard({
             <thead className="bg-muted/50 text-left">
               <tr>
                 <th className="px-3 py-1.5 font-medium">{t("Component")}</th>
-                <th className="px-3 py-1.5 text-right font-medium">{t("Profile Rate")}</th>
-                <th className="px-3 py-1.5 text-right font-medium">{t("This Driver")}</th>
+                <th className="px-3 py-1.5 text-right font-medium">{t("Profile rate")}</th>
+                <th className="px-3 py-1.5 text-right font-medium">{t("This driver")}</th>
               </tr>
             </thead>
             <tbody>
@@ -349,7 +349,7 @@ function EndAssignmentDialog({
             disabled={mutation.isPending}
             onClick={() => mutation.mutate()}
           >
-            {t("End Assignment")}
+            {t("End assignment")}
           </Button>
         </DialogFooter>
       </DialogContent>

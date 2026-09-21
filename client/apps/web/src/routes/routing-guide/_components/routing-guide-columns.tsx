@@ -66,7 +66,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RoutingGuideRow>[] {
     },
     {
       accessorKey: "specificity",
-      header: t("Match Level"),
+      header: t("Match level"),
       cell: ({ row }) => (
         <Badge variant="neutral" appearance="outline" className="text-2xs">
           {ROUTING_GUIDE_TIER_LABEL[row.original.specificity ?? 0] ?? "—"}
@@ -76,7 +76,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RoutingGuideRow>[] {
       minSize: 120,
       maxSize: 170,
       meta: {
-        label: t("Match Level"),
+        label: t("Match level"),
         apiField: "specificity",
         filterable: false,
         sortable: true,

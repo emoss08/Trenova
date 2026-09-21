@@ -32,7 +32,7 @@ export function MyTeamPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("My Team"),
+        title: t("My team"),
         description: t(
           "Everyone you answer for: your own reports, the terminals you run, and anybody whose approvals have been handed to you.",
         ),

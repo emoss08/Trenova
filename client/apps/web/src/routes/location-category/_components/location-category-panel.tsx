@@ -39,7 +39,7 @@ export function LocationCategoryPanel({
         form={form}
         url="/location-categories/"
         queryKey="location-category-list"
-        title={t("Location Category")}
+        title={t("Location category")}
         fieldKey="name"
         formComponent={<LocationCategoryForm />}
       />
@@ -53,7 +53,7 @@ export function LocationCategoryPanel({
       form={form}
       url="/location-categories/"
       queryKey="location-category-list"
-      title={t("Location Category")}
+      title={t("Location category")}
       formComponent={<LocationCategoryForm />}
     />
   );

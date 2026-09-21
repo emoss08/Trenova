@@ -11,7 +11,7 @@ export function PayAdvancesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Pay Advances"),
+        title: t("Pay advances"),
         description: t(
           "Cash and money-code advances that are automatically recovered from the driver's next settlement.",
         ),

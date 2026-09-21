@@ -190,7 +190,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
     },
     {
       accessorKey: "safetyRating",
-      header: t("Safety Rating"),
+      header: t("Safety rating"),
       cell: ({ row }) => <CarrierSafetyRatingBadge status={row.original.safetyRating} />,
       size: 140,
       minSize: 110,
@@ -222,7 +222,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
     },
     {
       accessorKey: "intelReviewRequired",
-      header: t("Intel Review"),
+      header: t("Intel review"),
       cell: ({ row }) => <ReviewRequiredLabel required={row.original.intelReviewRequired} />,
       size: 140,
       minSize: 110,

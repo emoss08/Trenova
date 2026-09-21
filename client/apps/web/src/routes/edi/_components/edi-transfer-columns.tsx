@@ -88,7 +88,7 @@ export function getTransferColumns(
     },
     {
       accessorKey: "targetShipmentId",
-      header: t("Target Shipment"),
+      header: t("Target shipment"),
       cell: ({ row }) =>
         row.original.targetShipmentId ? (
           <Link
@@ -103,7 +103,7 @@ export function getTransferColumns(
         ),
       size: 180,
       meta: {
-        label: t("Target Shipment"),
+        label: t("Target shipment"),
         apiField: "targetShipmentId",
         filterable: false,
         sortable: false,

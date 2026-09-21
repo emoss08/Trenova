@@ -124,11 +124,11 @@ function ChangeRow({
       </div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <div className="space-y-1 rounded-md border border-danger-border bg-danger-subtle p-2.5">
-          <p className="text-muted-foreground text-xs font-medium">{t("Previous Value")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Previous value")}</p>
           <AuditValueCell value={from} path={`${path}.from`} />
         </div>
         <div className="space-y-1 rounded-md border border-success-border bg-success-subtle p-2.5">
-          <p className="text-muted-foreground text-xs font-medium">{t("Current Value")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Current value")}</p>
           <AuditValueCell value={to} path={`${path}.to`} />
         </div>
       </div>
@@ -144,7 +144,7 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
       <DataTablePanelContainer
         open={open}
         onOpenChange={onOpenChange}
-        title={t("Audit Entry")}
+        title={t("Audit entry")}
         description={t("Loading audit details")}
         size="xl"
       >
@@ -165,7 +165,7 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
     >
       <div className="space-y-5">
         <Section
-          title={t("Entry Details")}
+          title={t("Entry details")}
           description={t("Detailed information about this audit event")}
         >
           <DescriptionList layout="inline" className="rounded-md border p-3">
@@ -183,7 +183,7 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
               {row.user?.name || row.user?.emailAddress || "Unknown user"}
             </DescriptionItem>
             <DescriptionItem label={t("Critical")}>{row.critical ? "Yes" : "No"}</DescriptionItem>
-            <DescriptionItem label={t("IP Address")} numeric>
+            <DescriptionItem label={t("IP address")} numeric>
               {row.ipAddress || <DescriptionEmpty />}
             </DescriptionItem>
             <DescriptionItem label={t("Category")}>
@@ -197,7 +197,7 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
             <DescriptionItem label={t("Correlation ID")}>
               {row.correlationId || <DescriptionEmpty />}
             </DescriptionItem>
-            <DescriptionItem label={t("User Agent")}>
+            <DescriptionItem label={t("User agent")}>
               {row.userAgent || <DescriptionEmpty />}
             </DescriptionItem>
           </DescriptionList>
@@ -227,13 +227,13 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
         <Section title={t("Metadata")} description={t("Additional contextual information")}>
           <ShikiJsonBlock value={row.metadata} searchable />
         </Section>
-        <Section title={t("Previous State")} description={t("State before the operation")}>
+        <Section title={t("Previous state")} description={t("State before the operation")}>
           <ShikiJsonBlock value={row.previousState} searchable copyPath />
         </Section>
-        <Section title={t("Current State")} description={t("State after the operation")}>
+        <Section title={t("Current state")} description={t("State after the operation")}>
           <ShikiJsonBlock value={row.currentState} searchable copyPath />
         </Section>
-        <Section title={t("Full Event Data")} description={t("Complete raw event payload")}>
+        <Section title={t("Full event data")} description={t("Complete raw event payload")}>
           <ShikiJsonBlock value={row} searchable copyPath />
         </Section>
       </div>

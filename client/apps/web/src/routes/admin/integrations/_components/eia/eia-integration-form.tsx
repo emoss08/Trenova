@@ -107,7 +107,7 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
           <FormControl cols="full">
             <div className="border-border bg-background flex items-center justify-between rounded-md border p-3">
               <div>
-                <Label htmlFor="eia-enabled">{t("Enable EIA Fuel Prices")}</Label>
+                <Label htmlFor="eia-enabled">{t("Enable EIA fuel prices")}</Label>
                 <p className="text-muted-foreground text-xs">
                   {t(
                     "Ingests weekly DOE diesel prices every Tuesday and auto-provisions all 11 DOE regional indices.",
@@ -151,7 +151,7 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
             loadingText={t("Testing...")}
             disabled={configQuery.isLoading || saveMutation.isPending}
           >
-            {t("Test Connection")}
+            {t("Test connection")}
           </Button>
           <div className="flex flex-col-reverse gap-2 sm:flex-row">
             <Button type="button" variant="outline" onClick={onClose}>
@@ -163,7 +163,7 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
               loadingText={t("Saving...")}
               disabled={configQuery.isLoading}
             >
-              {t("Save Changes")}
+              {t("Save changes")}
             </Button>
           </div>
         </DialogFooter>
@@ -187,10 +187,10 @@ function EIAFuelPricesFormHeader() {
           <div className="bg-muted-foreground size-1 rounded-full" />
           <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
-        <LazyImage src={logo} alt={t("EIA Logo")} className="h-8 max-w-24 object-contain" />
+        <LazyImage src={logo} alt={t("EIA logo")} className="h-8 max-w-24 object-contain" />
       </div>
       <DialogHeader>
-        <DialogTitle>{t("Connect with EIA Fuel Prices")}</DialogTitle>
+        <DialogTitle>{t("Connect with EIA fuel prices")}</DialogTitle>
         <DialogDescription>
           {t("Free API key powers weekly DOE diesel price ingestion.")}{" "}
           <ExternalLink href="https://www.eia.gov/opendata/">{t("Get a key")}</ExternalLink>

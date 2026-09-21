@@ -137,7 +137,7 @@ function KeyValueEditorInner({
         {!disabled && (
           <Button type="button" variant="outline" size="sm" onClick={addEntry} className="gap-1">
             <PlusIcon className="size-3.5" />
-            {t("Add Entry")}
+            {t("Add entry")}
           </Button>
         )}
       </div>

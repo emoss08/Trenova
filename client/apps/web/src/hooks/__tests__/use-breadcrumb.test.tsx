@@ -51,9 +51,9 @@ describe("useBreadcrumbs", () => {
     renderRouter(EDIT_PATH, "Base Linehaul");
 
     expect(trailText()).toEqual([
-      "Billing Management",
-      "Configuration Files",
-      "Formula Templates",
+      "Billing management",
+      "Configuration files",
+      "Formula templates",
       "Base Linehaul",
     ]);
   });
@@ -62,9 +62,9 @@ describe("useBreadcrumbs", () => {
     renderRouter(EDIT_PATH, undefined);
 
     expect(trailText()).toEqual([
-      "Billing Management",
-      "Configuration Files",
-      "Formula Templates",
+      "Billing management",
+      "Configuration files",
+      "Formula templates",
       "Details",
     ]);
   });
@@ -78,7 +78,7 @@ describe("useBreadcrumbs", () => {
     });
 
     expect(useBreadcrumbStore.getState().labels).toEqual({});
-    expect(trailText()).toEqual(["Billing Management", "Configuration Files", "Formula Templates"]);
+    expect(trailText()).toEqual(["Billing management", "Configuration files", "Formula templates"]);
   });
 });
 

@@ -33,9 +33,9 @@ const ACTION_CONFIG: Record<
   }
 > = {
   submit: {
-    title: "Submit for Review",
+    title: "Submit for review",
     description: "Send this agreement to a reviewer for approval before it can price shipments.",
-    confirmLabel: "Submit for Review",
+    confirmLabel: "Submit for review",
     loadingLabel: "Submitting...",
     successMessage: "Agreement submitted for review",
     commentLabel: "Comment (optional)",
@@ -45,7 +45,7 @@ const ACTION_CONFIG: Record<
     destructive: false,
   },
   approve: {
-    title: "Approve Agreement",
+    title: "Approve agreement",
     description:
       "Approving activates this agreement, and shipments on its lanes start pricing against it.",
     confirmLabel: "Approve",
@@ -58,7 +58,7 @@ const ACTION_CONFIG: Record<
     destructive: false,
   },
   reject: {
-    title: "Reject Agreement",
+    title: "Reject agreement",
     description: "Rejecting returns this agreement to draft so the author can make changes.",
     confirmLabel: "Reject",
     loadingLabel: "Rejecting...",
@@ -70,7 +70,7 @@ const ACTION_CONFIG: Record<
     destructive: true,
   },
   suspend: {
-    title: "Suspend Agreement",
+    title: "Suspend agreement",
     description:
       "A suspended agreement stops pricing shipments immediately, and can be resumed without another review.",
     confirmLabel: "Suspend",
@@ -83,7 +83,7 @@ const ACTION_CONFIG: Record<
     destructive: true,
   },
   resume: {
-    title: "Resume Agreement",
+    title: "Resume agreement",
     description: "The agreement returns to active and its lanes price shipments again.",
     confirmLabel: "Resume",
     loadingLabel: "Resuming...",
@@ -95,7 +95,7 @@ const ACTION_CONFIG: Record<
     destructive: false,
   },
   archive: {
-    title: "Archive Agreement",
+    title: "Archive agreement",
     description:
       "Archiving is permanent. The agreement stops pricing and is kept only because quotes point at it.",
     confirmLabel: "Archive",

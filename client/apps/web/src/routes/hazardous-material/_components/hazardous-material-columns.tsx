@@ -96,7 +96,7 @@ export function getColumns(t: TranslateFn): ColumnDef<HazardousMaterial>[] {
     },
     {
       accessorKey: "packingGroup",
-      header: t("Packing Group"),
+      header: t("Packing group"),
       cell: ({ row }) => {
         const pgLabel = packingGroupChoices.find(
           (c) => c.value === row.original.packingGroup,

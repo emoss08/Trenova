@@ -62,7 +62,7 @@ export default function EscrowTable() {
     () => [
       {
         id: "close",
-        label: t("Close Accounts"),
+        label: t("Close accounts"),
         icon: ArchiveIcon,
         variant: "destructive",
         onClick: openCloseDialog,
@@ -114,7 +114,7 @@ export default function EscrowTable() {
               {t("Cancel")}
             </Button>
             <Button variant="destructive" disabled={pending} onClick={() => void confirmClose()}>
-              {t("Close Accounts")}
+              {t("Close accounts")}
             </Button>
           </DialogFooter>
         </DialogContent>

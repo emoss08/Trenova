@@ -54,7 +54,7 @@ function formatCompactRelativeTime(timestamp: number): string {
 function CommentRow({ comment }: { comment: ShipmentComment }) {
   return (
     <li className="min-w-0">
-      <p className="hover:bg-muted/40 flex min-w-0 items-baseline gap-1.5 rounded px-1.5 py-1 text-xs leading-tight transition-colors">
+      <p className="hover:bg-muted/40 flex min-w-0 items-baseline gap-1.5 rounded-md px-1.5 py-1 text-xs leading-tight transition-colors">
         <span className="font-table text-foreground shrink-0 font-semibold">
           {formatUserHandle(comment)}
         </span>

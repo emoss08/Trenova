@@ -42,7 +42,7 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
         ) : (
           <ChevronRightIcon className="text-muted-foreground size-3 shrink-0" aria-hidden />
         )}
-        <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded px-1 text-3xs">
+        <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded-md px-1 text-3xs">
           {TENDER_MODE_LABEL[tender.mode]}
         </Badge>
         <TenderStatusBadge status={tender.status} className="shrink-0 text-3xs" />
@@ -68,13 +68,13 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
           {offers.map((offer) => (
             <div
               key={offer.id}
-              className="bg-muted/30 flex flex-col gap-0.5 rounded border px-2 py-1"
+              className="bg-muted/30 flex flex-col gap-0.5 rounded-md border px-2 py-1"
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-1.5">
                   <Badge
                     variant="neutral" appearance="outline"
-                    className="h-4 shrink-0 rounded px-1 text-3xs tabular-nums"
+                    className="h-4 shrink-0 rounded-md px-1 text-3xs tabular-nums"
                   >
                     #{offer.rank}
                   </Badge>

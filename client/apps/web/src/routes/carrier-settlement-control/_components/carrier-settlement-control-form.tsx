@@ -100,7 +100,7 @@ export default function CarrierSettlementControlForm() {
           <WorkflowCard />
           <MatchingCard />
           <PostingAccountsCard />
-          <FormSaveDock saveButtonContent={t("Save Changes")} />
+          <FormSaveDock saveButtonContent={t("Save changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -114,7 +114,7 @@ function PayPeriodCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Pay Period")}</CardTitle>
+        <CardTitle>{t("Pay period")}</CardTitle>
         <CardDescription>
           {t(
             "Defines the carrier settlement cycle and when purchased-transportation cost accrues.",
@@ -139,7 +139,7 @@ function PayPeriodCard() {
             <SelectField
               control={control}
               name="periodEndDayOfWeek"
-              label={t("Period End Day")}
+              label={t("Period end day")}
               options={weekdayChoices}
               rules={{ required: true }}
               description={t("The pay period closes at the start of this day.")}
@@ -158,7 +158,7 @@ function PayPeriodCard() {
             <SelectField
               control={control}
               name="payTrigger"
-              label={t("Pay Trigger")}
+              label={t("Pay trigger")}
               options={settlementPayTriggerChoices}
               rules={{ required: true }}
               description={t(
@@ -179,7 +179,7 @@ function WorkflowCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Workflow Automation")}</CardTitle>
+        <CardTitle>{t("Workflow automation")}</CardTitle>
         <CardDescription>
           {t("Automate the routine AP run so reviewers focus on exceptions.")}
         </CardDescription>
@@ -190,7 +190,7 @@ function WorkflowCard() {
             <SwitchField
               control={control}
               name="autoGenerateBatches"
-              label={t("Auto-Generate Batches")}
+              label={t("Auto-generate batches")}
               description={t(
                 "Generate a carrier settlement batch automatically when each pay period closes.",
               )}
@@ -200,7 +200,7 @@ function WorkflowCard() {
             <SwitchField
               control={control}
               name="autoPostOnApprove"
-              label={t("Auto-Post on Approval")}
+              label={t("Auto-post on approval")}
               description={t(
                 "Approving a settlement immediately posts it to the general ledger, collapsing two steps into one.",
               )}
@@ -220,7 +220,7 @@ function MatchingCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Invoice Matching")}</CardTitle>
+        <CardTitle>{t("Invoice matching")}</CardTitle>
         <CardDescription>
           {t(
             "Carrier invoices are compared to the negotiated buy rate; gaps beyond the tolerance flag a variance.",
@@ -233,7 +233,7 @@ function MatchingCard() {
             <NumberField
               control={control}
               name="varianceTolerance"
-              label={t("Variance Tolerance")}
+              label={t("Variance tolerance")}
               sideText={t("USD")}
               decimalScale={2}
               fixedDecimalScale
@@ -248,7 +248,7 @@ function MatchingCard() {
             <SwitchField
               control={control}
               name="autoMatchInboundInvoices"
-              label={t("Auto-Match Inbound Invoices")}
+              label={t("Auto-match inbound invoices")}
               description={t(
                 "Inbound EDI 210 invoices from tendered carriers are matched to their carrier assignment automatically; gaps beyond the tolerance still land in the review workspace.",
               )}
@@ -258,7 +258,7 @@ function MatchingCard() {
             <SwitchField
               control={control}
               name="autoAcceptWithinTolerance"
-              label={t("Auto-Accept Within Tolerance")}
+              label={t("Auto-accept within tolerance")}
               disabled={!autoMatchInboundInvoices}
               description={t(
                 "Auto-matched invoices within the variance tolerance are resolved into the carrier's settlement pool without review. Requires auto-match.",
@@ -278,7 +278,7 @@ function PostingAccountsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Posting Accounts")}</CardTitle>
+        <CardTitle>{t("Posting accounts")}</CardTitle>
         <CardDescription>
           {t(
             "GL defaults for carrier settlement postings — posting debits purchased transportation and credits accounts payable; blank falls back to the accounting control defaults.",
@@ -291,7 +291,7 @@ function PostingAccountsCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultApAccountId"
-              label={t("Accounts Payable Account")}
+              label={t("Accounts payable account")}
               clearable
               description={t(
                 "The AP account credited when a settlement posts and debited when it is paid.",
@@ -302,7 +302,7 @@ function PostingAccountsCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultPurchasedTransportationAccountId"
-              label={t("Purchased Transportation Account")}
+              label={t("Purchased transportation account")}
               clearable
               description={t(
                 "The expense account debited for carrier cost when a settlement posts.",

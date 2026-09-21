@@ -46,10 +46,10 @@ import {
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 
 const adjustmentKindChoices: Array<{ label: string; value: InvoiceAdjustmentKind }> = [
-  { label: "Credit Only", value: "CreditOnly" },
-  { label: "Credit & Rebill", value: "CreditAndRebill" },
-  { label: "Full Reversal", value: "FullReversal" },
-  { label: "Write-Off", value: "WriteOff" },
+  { label: "Credit only", value: "CreditOnly" },
+  { label: "Credit & rebill", value: "CreditAndRebill" },
+  { label: "Full reversal", value: "FullReversal" },
+  { label: "Write-off", value: "WriteOff" },
 ];
 
 const KIND_LABELS: Record<InvoiceAdjustmentKind, string> = {
@@ -155,7 +155,7 @@ export function InvoiceApprovalPage() {
   return (
     <BillingWorkspaceLayout
       pageHeaderProps={{
-        title: t("Pending Approvals"),
+        title: t("Pending approvals"),
         description: t("Review policy-controlled invoice adjustments awaiting finance approval."),
       }}
       toolbar={
@@ -371,14 +371,14 @@ function ApprovalDetail({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="warning">{t("Pending Approval")}</Badge>
+        <Badge variant="warning">{t("Pending approval")}</Badge>
         <Badge variant="neutral">{KIND_LABELS[selectedRow.kind]}</Badge>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-2">
         <div className="flex flex-col gap-5">
           <div className="bg-card rounded-lg border p-3">
-            <SectionLabel>{t("Financial Impact")}</SectionLabel>
+            <SectionLabel>{t("Financial impact")}</SectionLabel>
             <div className="mt-2 space-y-2">
               <ChargeSummaryRow
                 label={t("Credit")}
@@ -389,7 +389,7 @@ function ApprovalDetail({
                 value={formatCurrency(Number(selectedRow.rebillTotalAmount))}
               />
               <Separator />
-              <ChargeSummaryRow label={t("Net Delta")} value={formatCurrency(netDelta)} bold />
+              <ChargeSummaryRow label={t("Net delta")} value={formatCurrency(netDelta)} bold />
             </div>
           </div>
 
@@ -422,12 +422,12 @@ function ApprovalDetail({
                   {formatTimestamp(selectedRow.submittedAt)}
                 </span>
               </PropertyCell>
-              <PropertyCell label={t("Policy Source")}>
+              <PropertyCell label={t("Policy source")}>
                 <span className="text-xs font-medium">
                   {selectedRow.policySource || t("Policy-controlled")}
                 </span>
               </PropertyCell>
-              <PropertyCell label={t("Invoice Status")}>
+              <PropertyCell label={t("Invoice status")}>
                 <span className="text-xs font-medium">{selectedRow.originalInvoiceStatus}</span>
               </PropertyCell>
             </div>
@@ -436,29 +436,29 @@ function ApprovalDetail({
             selectedRow.wouldCreateUnappliedCredit ? (
               <div className="mt-2.5 flex flex-wrap gap-1">
                 {selectedRow.requiresReconciliationException ? (
-                  <Badge variant="warning">{t("Reconciliation Exception")}</Badge>
+                  <Badge variant="warning">{t("Reconciliation exception")}</Badge>
                 ) : null}
                 {selectedRow.requiresReplacementInvoiceReview ? (
-                  <Badge variant="info">{t("Replacement Review")}</Badge>
+                  <Badge variant="info">{t("Replacement review")}</Badge>
                 ) : null}
                 {selectedRow.wouldCreateUnappliedCredit ? (
-                  <Badge variant="warning">{t("Unapplied Credit")}</Badge>
+                  <Badge variant="warning">{t("Unapplied credit")}</Badge>
                 ) : null}
               </div>
             ) : null}
           </div>
 
           <div className="bg-card rounded-lg border p-3">
-            <SectionLabel>{t("Linked Artifacts")}</SectionLabel>
+            <SectionLabel>{t("Linked artifacts")}</SectionLabel>
             <div className="text-2xs mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
               <ArtifactLink
                 to={`/billing/invoices?item=${selectedRow.originalInvoiceId}`}
-                label={t("Original Invoice")}
+                label={t("Original invoice")}
               />
               {selectedRow.creditMemoInvoiceId ? (
                 <ArtifactLink
                   to={`/billing/invoices?item=${selectedRow.creditMemoInvoiceId}`}
-                  label={t("Credit Memo")}
+                  label={t("Credit memo")}
                 />
               ) : null}
               {selectedRow.replacementInvoiceId ? (
@@ -470,7 +470,7 @@ function ApprovalDetail({
               {selectedRow.rebillQueueItemId ? (
                 <ArtifactLink
                   to={`/billing/queue?item=${selectedRow.rebillQueueItemId}&includePosted=true`}
-                  label={t("Rebill Queue")}
+                  label={t("Rebill queue")}
                 />
               ) : null}
               {selectedRow.batchId ? (
@@ -485,7 +485,7 @@ function ApprovalDetail({
 
         <div className="flex flex-col gap-5">
           <div className="bg-card rounded-lg border p-3">
-            <SectionLabel>{t("Charge Detail")}</SectionLabel>
+            <SectionLabel>{t("Charge detail")}</SectionLabel>
             <div className="mt-2 overflow-hidden rounded-md border">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-muted-foreground text-left">
@@ -545,7 +545,7 @@ function ApprovalDetail({
                     <TextareaField
                       control={rejectForm.control}
                       name="rejectReason"
-                      label={t("Rejection Reason")}
+                      label={t("Rejection reason")}
                       placeholder={t("Why is this adjustment being rejected?")}
                       minRows={3}
                     />
@@ -556,7 +556,7 @@ function ApprovalDetail({
                         type="submit"
                         disabled={rejectMutation.isPending}
                       >
-                        {t("Confirm Rejection")}
+                        {t("Confirm rejection")}
                       </Button>
                       <Button
                         size="sm"

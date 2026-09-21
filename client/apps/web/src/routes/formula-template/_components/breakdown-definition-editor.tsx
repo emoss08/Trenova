@@ -58,7 +58,7 @@ export function BreakdownDefinitionEditor({
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
         <div className="flex items-center gap-2">
           <div>
-            <CardTitle className="text-sm font-medium">{t("Charge Breakdown")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Charge breakdown")}</CardTitle>
             <p className="text-muted-foreground text-xs">
               {t("Itemize the total into named components for invoices and audit")}
             </p>
@@ -94,7 +94,7 @@ export function BreakdownDefinitionEditor({
               className="mt-4 gap-1.5"
             >
               <Plus className="size-3.5" />
-              {t("Add Item")}
+              {t("Add item")}
             </Button>
           </div>
         ) : (
@@ -133,7 +133,7 @@ export function BreakdownDefinitionEditor({
                     <Input
                       id={`breakdown-${index}-label`}
                       {...register(`breakdownDefinitions.${index}.label`)}
-                      placeholder={t("Fuel Surcharge")}
+                      placeholder={t("Fuel surcharge")}
                       className="h-8 text-sm"
                     />
                     <FieldError message={rowErrors?.label?.message} />

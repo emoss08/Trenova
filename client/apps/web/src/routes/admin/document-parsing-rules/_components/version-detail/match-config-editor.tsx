@@ -12,7 +12,7 @@ export function MatchConfigEditor() {
   return (
     <div className="space-y-4">
       <FormSection
-        title={t("Provider Matching")}
+        title={t("Provider matching")}
         description={t(
           "Identify documents by their source provider or file name. These criteria are checked before the document content is analyzed.",
         )}
@@ -22,7 +22,7 @@ export function MatchConfigEditor() {
             <TagInput
               control={control}
               name="matchConfig.providerFingerprints"
-              label={t("Provider Fingerprints")}
+              label={t("Provider fingerprints")}
               description={t(
                 "Unique identifiers for document providers (e.g. carrier SCAC codes). A document matches if its provider fingerprint appears in this list.",
               )}
@@ -33,7 +33,7 @@ export function MatchConfigEditor() {
             <TagInput
               control={control}
               name="matchConfig.fileNameContains"
-              label={t("File Name Contains")}
+              label={t("File name contains")}
               description={t(
                 "Substrings to look for in the uploaded file name. Useful for providers that use consistent naming conventions.",
               )}
@@ -44,7 +44,7 @@ export function MatchConfigEditor() {
       </FormSection>
 
       <FormSection
-        title={t("Content Matching")}
+        title={t("Content matching")}
         description={t(
           "Match documents based on text found within the document body. These criteria help distinguish documents from the same provider that may have different formats.",
         )}
@@ -54,7 +54,7 @@ export function MatchConfigEditor() {
             <TagInput
               control={control}
               name="matchConfig.requiresAll"
-              label={t("Requires All")}
+              label={t("Requires all")}
               description={t(
                 "Every term listed here must appear somewhere in the document text for the rule to match.",
               )}
@@ -65,7 +65,7 @@ export function MatchConfigEditor() {
             <TagInput
               control={control}
               name="matchConfig.requiresAny"
-              label={t("Requires Any")}
+              label={t("Requires any")}
               description={t(
                 "At least one of these terms must appear in the document text. Use this for documents that vary in wording.",
               )}
@@ -76,7 +76,7 @@ export function MatchConfigEditor() {
             <TagInput
               control={control}
               name="matchConfig.sectionAnchors"
-              label={t("Section Anchors")}
+              label={t("Section anchors")}
               description={t(
                 "Headings or labels in the document that indicate this rule applies. The parser looks for these strings as section boundaries.",
               )}

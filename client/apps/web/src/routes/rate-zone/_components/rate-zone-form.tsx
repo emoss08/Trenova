@@ -16,7 +16,7 @@ export function RateZoneForm() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("General Information")}
+        title={t("General information")}
         description={t("How this zone is identified and whether it is live.")}
       >
         <FormGroup cols={2}>
@@ -38,7 +38,7 @@ export function RateZoneForm() {
               control={control}
               rules={{ required: true }}
               name="kind"
-              label={t("Zone Kind")}
+              label={t("Zone kind")}
               placeholder={t("Select kind")}
               description={t(
                 "What sort of area this is, which is how somebody else reads it later",

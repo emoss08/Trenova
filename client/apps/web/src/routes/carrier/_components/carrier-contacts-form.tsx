@@ -101,7 +101,7 @@ export function CarrierContactsForm() {
                   <SwitchField
                     control={control}
                     name={`contacts.${index}.isPrimary`}
-                    label={t("Primary Contact")}
+                    label={t("Primary contact")}
                     description={t("Main point of contact for this carrier.")}
                   />
                 </FormControl>
@@ -109,7 +109,7 @@ export function CarrierContactsForm() {
                   <SwitchField
                     control={control}
                     name={`contacts.${index}.receivesRateConfirmations`}
-                    label={t("Receives Rate Confirmations")}
+                    label={t("Receives rate confirmations")}
                     description={t("Send rate confirmations to this contact's email.")}
                   />
                 </FormControl>

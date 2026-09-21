@@ -125,7 +125,7 @@ export function FiscalYearActivateAlertDialogContent({
       <AlertDialogFooter>
         <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
         <AlertDialogAction disabled={isPending} onClick={handleFiscalYearActivate}>
-          {t("Set as Current")}
+          {t("Set as current")}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
@@ -171,7 +171,7 @@ export function FiscalYearCloseAlertDialogContent({ record, onClose, onCompleted
   return (
     <AlertDialogContent className="min-w-lg">
       <AlertDialogHeader>
-        <AlertDialogTitle>{t("Close Fiscal Year {0}?", record?.year)}</AlertDialogTitle>
+        <AlertDialogTitle>{t("Close fiscal year {0}?", record?.year)}</AlertDialogTitle>
         {record?.endDate && record.endDate > today && (
           <Alert variant="warning">
             <AlertTriangleIcon />
@@ -206,7 +206,7 @@ export function FiscalYearCloseAlertDialogContent({ record, onClose, onCompleted
           disabled={isLoading || isPending || blocked}
           onClick={handleFiscalYearClose}
         >
-          {t("Post and Close Year")}
+          {t("Post and close year")}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
@@ -243,7 +243,7 @@ export function FiscalYearReopenAlertDialogContent({ record, onClose, onComplete
   return (
     <AlertDialogContent className="min-w-lg">
       <AlertDialogHeader>
-        <AlertDialogTitle>{t("Reopen Fiscal Year {0}?", record?.year)}</AlertDialogTitle>
+        <AlertDialogTitle>{t("Reopen fiscal year {0}?", record?.year)}</AlertDialogTitle>
         <Alert variant="warning">
           <AlertTriangleIcon />
           <AlertTitle>{t("The close will be reversed")}</AlertTitle>
@@ -278,7 +278,7 @@ export function FiscalYearReopenAlertDialogContent({ record, onClose, onComplete
           disabled={isPending || reason.trim().length === 0}
           onClick={handleFiscalYearReopen}
         >
-          {t("Reverse and Reopen")}
+          {t("Reverse and reopen")}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>

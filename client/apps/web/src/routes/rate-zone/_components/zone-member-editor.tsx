@@ -73,7 +73,7 @@ export function ZoneMemberEditor() {
                   control={control}
                   rules={{ required: true }}
                   name={`members.${index}.scopeType` as never}
-                  label={t("Place Type")}
+                  label={t("Place type")}
                   placeholder={t("Select type")}
                   description={t("How this place is named")}
                   options={MEMBER_SCOPE_CHOICES}

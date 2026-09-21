@@ -126,57 +126,57 @@ export const SCORING_FACTOR_META: ReadonlyArray<{
 }> = [
   {
     key: "deadhead",
-    label: "Empty Miles",
+    label: "Empty miles",
     description: "Fewer empty miles from the driver's projected location to the pickup.",
   },
   {
     key: "hosMargin",
-    label: "Hours Remaining",
+    label: "Hours remaining",
     description: "Projected hours-of-service margin left after completing the trip.",
   },
   {
     key: "onTime",
-    label: "On-Time Margin",
+    label: "On-time margin",
     description: "Slack between the projected arrival and the pickup appointment.",
   },
   {
     key: "trailerContinuity",
-    label: "Trailer Continuity",
+    label: "Trailer continuity",
     description: "Driver keeps the trailer from their previous leg instead of swapping.",
   },
   {
     key: "fleetMatch",
-    label: "Fleet Match",
+    label: "Fleet match",
     description: "Driver and power unit belong to the same fleet.",
   },
   {
     key: "driverTypeFit",
-    label: "Haul Fit",
+    label: "Haul fit",
     description: "Trip length suits the driver's type (local, regional, or over-the-road).",
   },
   {
     key: "homeTime",
-    label: "Home Time",
+    label: "Home time",
     description: "Drivers recently home score higher than those out for weeks.",
   },
   {
     key: "loadBalance",
-    label: "Load Balance",
+    label: "Load balance",
     description: "Spreads work by weekly miles, move count, and open assignments.",
   },
   {
     key: "laneExperience",
-    label: "Customer Experience",
+    label: "Customer experience",
     description: "How often the driver has run freight for this customer in the last year.",
   },
   {
     key: "onTimeHistory",
-    label: "On-Time History",
+    label: "On-time history",
     description: "The driver's delivered-on-time percentage versus the organization's goal.",
   },
   {
     key: "safetyHistory",
-    label: "Safety History",
+    label: "Safety history",
     description: "Hours-of-service violations recorded in the last 90 days.",
   },
   {
@@ -186,7 +186,7 @@ export const SCORING_FACTOR_META: ReadonlyArray<{
   },
   {
     key: "ptoProximity",
-    label: "Time-Off Buffer",
+    label: "Time-off buffer",
     description: "Whether the run finishes comfortably before the driver's approved time off.",
   },
 ];

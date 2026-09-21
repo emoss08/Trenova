@@ -40,7 +40,7 @@ export function AccountingDashboardPage() {
           <Link to="/accounting/ar/payments?panelType=create">
             <Button size="sm">
               <HandCoinsIcon className="size-4" />
-              {t("Record Payment")}
+              {t("Record payment")}
             </Button>
           </Link>
         ) : undefined,

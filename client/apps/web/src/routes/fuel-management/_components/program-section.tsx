@@ -71,7 +71,7 @@ export default function ProgramSection() {
         </p>
         <Button type="button" size="sm" onClick={openCreate} className="gap-1.5">
           <Plus className="size-3.5" />
-          {t("New Program")}
+          {t("New program")}
         </Button>
       </div>
 

@@ -135,7 +135,7 @@ export function ShipmentBillingReadinessPanel({
       {/* Header */}
       <div className="border-b px-4 py-3">
         <div className="flex items-center justify-between gap-4">
-          <span className="text-sm font-semibold">{t("Billing Readiness")}</span>
+          <span className="text-sm font-semibold">{t("Billing readiness")}</span>
           {shipment?.billingTransferStatus ? (
             <ShipmentBillingQueueBadge status={shipment.billingTransferStatus} />
           ) : (
@@ -233,7 +233,7 @@ export function ShipmentBillingReadinessPanel({
               loadingText={t("Marking...")}
             >
               <CheckCircle2Icon className="size-4" />
-              {t("Mark Ready To Invoice")}
+              {t("Mark ready to invoice")}
             </Button>
           </div>
         )}

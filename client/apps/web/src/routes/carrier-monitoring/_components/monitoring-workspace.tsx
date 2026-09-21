@@ -380,7 +380,7 @@ export function MonitoringWorkspace() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Carrier Monitoring"),
+        title: t("Carrier monitoring"),
         description: t("Authority, insurance and safety changes on the carriers you watch."),
         actions: status ? <ProviderStatus status={status} canManage={canManage} /> : null,
       }}

@@ -90,7 +90,7 @@ export function VariableDefinitionEditor({
             <Variable className="text-primary size-4" />
           </div>
           <div>
-            <CardTitle className="text-sm font-medium">{t("Custom Variables")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Custom variables")}</CardTitle>
             <p className="text-muted-foreground text-xs">
               {t("Define additional variables for your formula")}
             </p>
@@ -119,7 +119,7 @@ export function VariableDefinitionEditor({
               className="mt-4 gap-1.5"
             >
               <Plus className="size-3.5" />
-              {t("Add Variable")}
+              {t("Add variable")}
             </Button>
           </div>
         ) : (

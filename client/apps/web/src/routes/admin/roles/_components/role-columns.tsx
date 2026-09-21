@@ -58,10 +58,10 @@ export function getColumns(t: TranslateFn): ColumnDef<RoleRow>[] {
     },
     {
       accessorKey: "maxSensitivity",
-      header: t("Max Sensitivity"),
+      header: t("Max sensitivity"),
       cell: ({ row }) => <SensitivityBadge sensitivity={row.original.maxSensitivity} />,
       meta: {
-        label: t("Max Sensitivity"),
+        label: t("Max sensitivity"),
         apiField: "maxSensitivity",
         filterable: true,
         sortable: true,

@@ -34,7 +34,7 @@ export function InternalPartnerPairForm({
       }}
     >
       <FormSection
-        title={t("Organization Pairing")}
+        title={t("Organization pairing")}
         description={t(
           "Choose the organization to connect with and confirm the reciprocal partner records that will be created.",
         )}
@@ -44,7 +44,7 @@ export function InternalPartnerPairForm({
             <OrganizationAutocompleteField
               control={control}
               name="targetOrganizationId"
-              label={t("Target Organization")}
+              label={t("Target organization")}
               placeholder={t("Select organization")}
               description={t(
                 "Organization that will receive the connection request. The current organization is excluded from this list.",
@@ -58,7 +58,7 @@ export function InternalPartnerPairForm({
             />
           </FormControl>
           <PartnerSideFields
-            title={t("Current Organization View")}
+            title={t("Current organization view")}
             description={t(
               "Partner record created in your current organization to represent the selected organization.",
             )}
@@ -66,7 +66,7 @@ export function InternalPartnerPairForm({
             control={control}
           />
           <PartnerSideFields
-            title={t("Target Organization View")}
+            title={t("Target organization view")}
             description={t(
               "Partner record created in the selected organization to represent your current organization.",
             )}
@@ -111,7 +111,7 @@ function PartnerSideFields({
           <InputField
             control={control}
             name={codeName}
-            label={t("Partner Code")}
+            label={t("Partner code")}
             placeholder={t("Partner code")}
             description={t(
               "Stable code used to identify this organization in internal EDI routing and connection records.",
@@ -123,7 +123,7 @@ function PartnerSideFields({
           <InputField
             control={control}
             name={partnerName}
-            label={t("Partner Name")}
+            label={t("Partner name")}
             placeholder={t("Partner name")}
             description={t(
               "Display name shown on the reciprocal partner record after the connection is accepted.",
@@ -135,7 +135,7 @@ function PartnerSideFields({
           <InputField
             control={control}
             name={contactName}
-            label={t("Contact Name")}
+            label={t("Contact name")}
             placeholder={t("Contact name")}
             description={t(
               "Operational owner for questions about this side of the internal connection.",
@@ -146,7 +146,7 @@ function PartnerSideFields({
           <InputField
             control={control}
             name={contactEmail}
-            label={t("Contact Email")}
+            label={t("Contact email")}
             placeholder={t("ops@example.com")}
             description={t(
               "Email address used for coordination if the internal connection needs attention.",
@@ -157,7 +157,7 @@ function PartnerSideFields({
           <InputField
             control={control}
             name={contactPhone}
-            label={t("Contact Phone")}
+            label={t("Contact phone")}
             placeholder={t("Contact phone")}
             description={t("Phone number for urgent operational follow-up about this connection.")}
           />
@@ -166,7 +166,7 @@ function PartnerSideFields({
           <SwitchField
             control={control}
             name={inboundName}
-            label={t("Inbound Enabled")}
+            label={t("Inbound enabled")}
             description={t(
               "Allow this partner record to receive load tenders from the connected organization.",
             )}
@@ -177,7 +177,7 @@ function PartnerSideFields({
           <SwitchField
             control={control}
             name={outboundName}
-            label={t("Outbound Enabled")}
+            label={t("Outbound enabled")}
             description={t(
               "Allow this partner record to send load tenders to the connected organization.",
             )}

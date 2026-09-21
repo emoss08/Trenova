@@ -11,7 +11,7 @@ export function SettlementControlPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Settlement Control"),
+        title: t("Settlement control"),
         description: t(
           "Configure pay periods, accrual triggers, exception policies, and escrow interest",
         ),

@@ -11,7 +11,7 @@ export function RateAgreementPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Rate Agreements"),
+        title: t("Rate agreements"),
         description: t(
           "The contracts that decide what a shipment costs, and the lanes each one prices",
         ),

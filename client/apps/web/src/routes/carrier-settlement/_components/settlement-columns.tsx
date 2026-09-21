@@ -40,7 +40,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
       size: 150,
       meta: {
         apiField: "settlementNumber",
-        label: t("Settlement Number"),
+        label: t("Settlement number"),
         filterable: true,
         sortable: true,
         filterType: "text",
@@ -55,12 +55,12 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "periodEnd",
-      header: t("Period End"),
+      header: t("Period end"),
       cell: ({ row }) => <span>{formatSettlementDate(row.original.periodEnd)}</span>,
       size: 110,
       meta: {
         apiField: "periodEnd",
-        label: t("Period End"),
+        label: t("Period end"),
         filterable: true,
         sortable: true,
         filterType: "date",
@@ -69,12 +69,12 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "payDate",
-      header: t("Pay Date"),
+      header: t("Pay date"),
       cell: ({ row }) => <span>{formatSettlementDate(row.original.payDate)}</span>,
       size: 110,
       meta: {
         apiField: "payDate",
-        label: t("Pay Date"),
+        label: t("Pay date"),
         filterable: true,
         sortable: true,
         filterType: "date",
@@ -90,7 +90,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
       size: 70,
       meta: {
         apiField: "shipmentCount",
-        label: t("Shipment Count"),
+        label: t("Shipment count"),
         filterable: true,
         sortable: true,
         filterType: "number",
@@ -99,7 +99,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "grossCostMinor",
-      header: () => <div className="text-right">{t("Gross Cost")}</div>,
+      header: () => <div className="text-right">{t("Gross cost")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay value={row.original.grossCostMinor} currency={row.original.currencyCode} />
@@ -108,7 +108,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
       size: 110,
       meta: {
         apiField: "grossCostMinor",
-        label: t("Gross Cost Minor"),
+        label: t("Gross cost minor"),
         filterable: true,
         sortable: true,
         filterType: "number",
@@ -130,7 +130,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
       size: 110,
       meta: {
         apiField: "adjustmentsMinor",
-        label: t("Adjustments Minor"),
+        label: t("Adjustments minor"),
         filterable: true,
         sortable: true,
         filterType: "number",
@@ -139,7 +139,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "netPayableMinor",
-      header: () => <div className="text-right">{t("Net Payable")}</div>,
+      header: () => <div className="text-right">{t("Net payable")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay
@@ -152,7 +152,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
       size: 120,
       meta: {
         apiField: "netPayableMinor",
-        label: t("Net Payable Minor"),
+        label: t("Net payable minor"),
         filterable: true,
         sortable: true,
         filterType: "number",

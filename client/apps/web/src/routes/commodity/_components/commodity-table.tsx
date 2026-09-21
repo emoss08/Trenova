@@ -48,7 +48,7 @@ export default function CommodityTable() {
       {
         id: "status-update",
         type: "select",
-        label: t("Update Status"),
+        label: t("Update status"),
         loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: statusChoices,

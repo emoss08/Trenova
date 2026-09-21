@@ -143,7 +143,7 @@ export function AddChargeDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>{isEditing ? t("Edit Charge") : t("Add Charge")}</DialogTitle>
+          <DialogTitle>{isEditing ? t("Edit charge") : t("Add charge")}</DialogTitle>
           <DialogDescription>
             {t(
               "Order-level charges not tied to a single leg roll into the order total and are billed exactly once on the first grouped invoice.",
@@ -193,7 +193,7 @@ export function AddChargeDialog({
             loadingText={isEditing ? "Saving..." : "Adding..."}
             onClick={() => void handleSubmit()}
           >
-            {isEditing ? t("Save Charge") : t("Add Charge")}
+            {isEditing ? t("Save charge") : t("Add charge")}
           </Button>
         </DialogFooter>
       </DialogContent>

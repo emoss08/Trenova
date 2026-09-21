@@ -50,7 +50,7 @@ export default function Table() {
       {
         id: "status-update",
         type: "select",
-        label: t("Update Status"),
+        label: t("Update status"),
         loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: equipmentStatusChoices,
@@ -65,7 +65,7 @@ export default function Table() {
     () => [
       {
         id: "locate",
-        label: t("Locate Trailer"),
+        label: t("Locate trailer"),
         icon: MapPinIcon,
         onClick: (row) => setLocateTrailerId(row.original.id ?? null),
       },

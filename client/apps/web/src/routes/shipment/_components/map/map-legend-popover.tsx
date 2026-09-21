@@ -89,9 +89,9 @@ export function MapLegendPopover() {
         </span>
         <div className="mt-2 flex flex-col gap-0.5">
           <LegendItem swatch={<Dot color="#000" />} label={t("Vehicle")} />
-          <LegendItem swatch={<TruckChip />} label={t("Live Vehicle")} />
-          <LegendItem swatch={<Dot color="#3b82f6" />} label={t("Pickup Stop")} />
-          <LegendItem swatch={<Dot color="#16a34a" />} label={t("Delivery Stop")} />
+          <LegendItem swatch={<TruckChip />} label={t("Live vehicle")} />
+          <LegendItem swatch={<Dot color="#3b82f6" />} label={t("Pickup stop")} />
+          <LegendItem swatch={<Dot color="#16a34a" />} label={t("Delivery stop")} />
           <LegendItem swatch={<DashedLine />} label={t("Route")} />
           <LegendItem swatch={<Ring color="#3b82f6" />} label={t("Geofence")} />
         </div>
@@ -109,7 +109,7 @@ export function MapLegendPopover() {
           />
           <LegendItem
             swatch={<GradientBar from="#dbeafe" to="#6366f1" />}
-            label={t("Wind Speed")}
+            label={t("Wind speed")}
           />
           <LegendItem
             swatch={<GradientBar from="#3b82f6" to="#ef4444" />}

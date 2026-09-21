@@ -13,7 +13,7 @@ export function RevokedKeysCard({ data }: Props) {
   const { count, percentOfTotal } = data;
 
   return (
-    <KPICard label={t("Revoked Keys")} value={count.toLocaleString()} icon={ShieldOff}>
+    <KPICard label={t("Revoked keys")} value={count.toLocaleString()} icon={ShieldOff}>
       <div className="mt-1.5 space-y-1">
         <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
           <div

@@ -67,28 +67,28 @@ function buildComparison(selected: Document, current: Document): CompareField[] 
 
   if (selected.originalName !== current.originalName) {
     fields.push({
-      label: translate("File Name"),
+      label: translate("File name"),
       selected: selected.originalName,
       current: current.originalName,
     });
   }
   if (selected.fileSize !== current.fileSize) {
     fields.push({
-      label: translate("File Size"),
+      label: translate("File size"),
       selected: formatFileSize(selected.fileSize),
       current: formatFileSize(current.fileSize),
     });
   }
   if (selected.fileType !== current.fileType) {
     fields.push({
-      label: translate("File Type"),
+      label: translate("File type"),
       selected: selected.fileType,
       current: current.fileType,
     });
   }
   if (selected.detectedKind !== current.detectedKind) {
     fields.push({
-      label: translate("Detected Kind"),
+      label: translate("Detected kind"),
       selected: selected.detectedKind || "Unclassified",
       current: current.detectedKind || "Unclassified",
     });
@@ -102,7 +102,7 @@ function buildComparison(selected: Document, current: Document): CompareField[] 
   }
   if (selected.contentStatus !== current.contentStatus) {
     fields.push({
-      label: translate("Text Extraction"),
+      label: translate("Text extraction"),
       selected: selected.contentStatus,
       current: current.contentStatus,
     });
@@ -129,7 +129,7 @@ function VersionCompare({ selected, current }: { selected: Document; current: Do
       <thead>
         <tr className="text-muted-foreground">
           <th className="pb-1.5 text-left font-medium" />
-          <th className="pb-1.5 text-left font-medium">{t("This Version")}</th>
+          <th className="pb-1.5 text-left font-medium">{t("This version")}</th>
           <th className="pb-1.5 text-left font-medium">{t("Current")}</th>
         </tr>
       </thead>
@@ -199,7 +199,7 @@ export function DocumentVersionDialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <HistoryIcon className="size-4" />
-              {t("Version History")}
+              {t("Version history")}
             </DialogTitle>
             <DialogDescription>
               {document ? document.originalName : t("Document versions")}
@@ -239,7 +239,7 @@ export function DocumentVersionDialog({
                     <div className="flex items-center gap-3">
                       <Separator className="flex-1" />
                       <span className="text-muted-foreground text-xs font-medium">
-                        {t("Previous Versions")}
+                        {t("Previous versions")}
                       </span>
                       <Separator className="flex-1" />
                     </div>
@@ -297,7 +297,7 @@ export function DocumentVersionDialog({
             {document && (
               <Button variant="outline" onClick={() => onUploadNewVersion(document)}>
                 <UploadIcon className="size-4" />
-                {t("Upload New Version")}
+                {t("Upload new version")}
               </Button>
             )}
           </DialogFooter>

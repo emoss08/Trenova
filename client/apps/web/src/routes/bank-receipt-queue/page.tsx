@@ -184,7 +184,7 @@ export function BankReceiptQueuePage() {
   return (
     <BillingWorkspaceLayout
       pageHeaderProps={{
-        title: t("Bank Receipt Work Queue"),
+        title: t("Bank receipt work queue"),
         description: t("Review and resolve bank receipt exceptions requiring attention."),
       }}
       toolbar={
@@ -374,7 +374,7 @@ function WorkItemDetail({
         <div>
           <h2 className="text-lg font-semibold">{workItem.id}</h2>
           <p className="text-muted-foreground text-sm">
-            {t("Bank Receipt: {0}", workItem.bankReceiptId)}
+            {t("Bank receipt: {0}", workItem.bankReceiptId)}
           </p>
         </div>
         <Badge variant={STATUS_VARIANTS[workItem.status]}>{STATUS_LABELS[workItem.status]}</Badge>
@@ -382,9 +382,9 @@ function WorkItemDetail({
 
       {receipt ? (
         <div className="bg-card rounded-lg border p-3">
-          <SectionLabel>{t("Bank Receipt Info")}</SectionLabel>
+          <SectionLabel>{t("Bank receipt info")}</SectionLabel>
           <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
-            <PropertyCell label={t("Receipt Date")}>
+            <PropertyCell label={t("Receipt date")}>
               <span className="text-xs font-medium">{formatUnixDate(receipt.receiptDate)}</span>
             </PropertyCell>
             <PropertyCell label={t("Amount")}>
@@ -402,7 +402,7 @@ function WorkItemDetail({
               <Badge variant="neutral">{receipt.status}</Badge>
             </PropertyCell>
             {receipt.exceptionReason ? (
-              <PropertyCell label={t("Exception Reason")}>
+              <PropertyCell label={t("Exception reason")}>
                 <span className="text-xs font-medium text-danger-foreground">
                   {receipt.exceptionReason}
                 </span>
@@ -437,7 +437,7 @@ function WorkItemDetail({
           <SectionLabel>{t("Resolution")}</SectionLabel>
           <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
             {workItem.resolutionType ? (
-              <PropertyCell label={t("Resolution Type")}>
+              <PropertyCell label={t("Resolution type")}>
                 <span className="text-xs font-medium">
                   {resolutionTypeChoices.find((c) => c.value === workItem.resolutionType)?.label ??
                     workItem.resolutionType}
@@ -477,7 +477,7 @@ function WorkItemDetail({
                 disabled={assignMutation.isPending}
               >
                 <UserPlusIcon className="size-3.5" />
-                {t("Assign to Me")}
+                {t("Assign to me")}
               </Button>
             </div>
           ) : null}
@@ -491,7 +491,7 @@ function WorkItemDetail({
                 disabled={startReviewMutation.isPending}
               >
                 <PlayIcon className="size-3.5" />
-                {t("Start Review")}
+                {t("Start review")}
               </Button>
             </div>
           ) : null}
@@ -563,7 +563,7 @@ function WorkItemDetail({
                         })
                       }
                     >
-                      {t("Confirm Resolution")}
+                      {t("Confirm resolution")}
                     </Button>
                     <Button
                       size="sm"
@@ -602,7 +602,7 @@ function WorkItemDetail({
                         })
                       }
                     >
-                      {t("Confirm Dismiss")}
+                      {t("Confirm dismiss")}
                     </Button>
                     <Button
                       size="sm"

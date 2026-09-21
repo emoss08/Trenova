@@ -50,7 +50,7 @@ describe("balance sheet equity", () => {
     renderAccountingPage(<BalanceSheetPage />);
     await userEvent.click(screen.getByRole("button", { name: "Pick period" }));
 
-    expect(await screen.findByText("Current Year Earnings")).toBeInTheDocument();
+    expect(await screen.findByText("Current year earnings")).toBeInTheDocument();
     expect(screen.getByText("$1,250.00")).toBeInTheDocument();
     expect(screen.queryByText("Current Period Net Income")).not.toBeInTheDocument();
   });
@@ -63,8 +63,8 @@ describe("balance sheet equity", () => {
     renderAccountingPage(<BalanceSheetPage />);
     await userEvent.click(screen.getByRole("button", { name: "Pick period" }));
 
-    // The section footer and the page total both read "Total Equity".
-    expect(await screen.findAllByText("Total Equity")).not.toHaveLength(0);
-    expect(screen.queryByText("Current Year Earnings")).not.toBeInTheDocument();
+    // The section footer and the page total both read "Total equity".
+    expect(await screen.findAllByText("Total equity")).not.toHaveLength(0);
+    expect(screen.queryByText("Current year earnings")).not.toBeInTheDocument();
   });
 });

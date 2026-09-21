@@ -11,7 +11,7 @@ export function ReviewTemplatesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Review Templates"),
+        title: t("Review templates"),
         description: t(
           "What a performance review rates and how much each item counts. Items are copied onto every review, so editing a template never rewrites history.",
         ),

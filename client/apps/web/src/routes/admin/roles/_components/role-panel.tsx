@@ -116,7 +116,7 @@ function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
     <DataTablePanelContainer
       open={open}
       onOpenChange={handleOpenChange}
-      title={t("Add New Role")}
+      title={t("Add new role")}
       description={t("Define the role and configure what it can access.")}
       size="xl"
       footer={
@@ -130,7 +130,7 @@ function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
             isLoading={isSubmitting}
             loadingText={t("Creating...")}
           >
-            {t("Create Role")}
+            {t("Create role")}
           </Button>
         </>
       }
@@ -260,7 +260,7 @@ function RoleEditPanel({ open, onOpenChange, row }: RoleEditPanelProps) {
       }
     >
       {!row ? (
-        <ComponentLoader message={t("Loading Role...")} />
+        <ComponentLoader message={t("Loading role...")} />
       ) : (
         <div className="flex flex-col gap-6">
           {isSystemRole && (

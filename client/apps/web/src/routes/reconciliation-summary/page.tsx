@@ -24,7 +24,7 @@ export function ReconciliationSummaryPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Reconciliation Summary"),
+        title: t("Reconciliation summary"),
         description: t("Overview of bank receipt reconciliation status."),
       }}
     >
@@ -68,7 +68,7 @@ function SummaryBody({ data }: { data: ReconciliationSummary }) {
           sub={formatCurrency(data.exceptionAmount / 100)}
           tone="danger"
         />
-        <KpiStripItem label={t("Match Rate")} value={`${matchRate(data)}%`} />
+        <KpiStripItem label={t("Match rate")} value={`${matchRate(data)}%`} />
       </KpiStrip>
       <div className="grid gap-4 xl:grid-cols-2">
         <SectionPanel title={t("Exception aging")}>
@@ -115,7 +115,7 @@ function SummaryBody({ data }: { data: ReconciliationSummary }) {
             <DescriptionItem label={t("Assigned")} numeric>
               {data.assignedWorkItemCount}
             </DescriptionItem>
-            <DescriptionItem label={t("In Review")} numeric>
+            <DescriptionItem label={t("In review")} numeric>
               {data.inReviewWorkItemCount}
             </DescriptionItem>
           </DescriptionList>
@@ -124,13 +124,13 @@ function SummaryBody({ data }: { data: ReconciliationSummary }) {
       <div className="flex items-center gap-3">
         <Link to="/accounting/reconciliation/bank-receipts">
           <Button variant="outline" size="sm">
-            {t("Bank Receipts")}
+            {t("Bank receipts")}
             <ArrowRightIcon className="ml-1.5 size-3.5" />
           </Button>
         </Link>
         <Link to="/accounting/reconciliation/work-queue">
           <Button variant="outline" size="sm">
-            {t("Work Queue")}
+            {t("Work queue")}
             <ArrowRightIcon className="ml-1.5 size-3.5" />
           </Button>
         </Link>

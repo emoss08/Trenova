@@ -11,7 +11,7 @@ export function DetentionPolicyPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Detention Policies"),
+        title: t("Detention policies"),
         description: t(
           "Encode each contract's detention terms and see what they would charge before they touch a shipment",
         ),

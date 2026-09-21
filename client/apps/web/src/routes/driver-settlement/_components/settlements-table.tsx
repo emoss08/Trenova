@@ -94,7 +94,7 @@ export default function SettlementsTable() {
       {
         id: "lifecycle",
         type: "select",
-        label: t("Lifecycle Action"),
+        label: t("Lifecycle action"),
         loadingLabel: t("Running..."),
         icon: CircleCheckIcon,
         options: settlementLifecycleChoices,
@@ -103,7 +103,7 @@ export default function SettlementsTable() {
       },
       {
         id: "mark-paid",
-        label: t("Mark Paid"),
+        label: t("Mark paid"),
         icon: CircleDollarSignIcon,
         onClick: openMarkPaidDialog,
       },

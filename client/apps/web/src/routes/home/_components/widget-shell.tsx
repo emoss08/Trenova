@@ -112,7 +112,7 @@ export function WidgetCount({
   return (
     <span
       className={cn(
-        "font-table inline-flex min-w-4.5 shrink-0 justify-center rounded px-1 text-3xs tabular-nums",
+        "font-table inline-flex min-w-4.5 shrink-0 justify-center rounded-md px-1 text-3xs tabular-nums",
         toneClass,
       )}
     >
@@ -146,7 +146,7 @@ export function WidgetSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div className="flex flex-col gap-1.5">
       {Array.from({ length: rows }, (_, index) => (
-        <Skeleton key={index} className="h-6 w-full rounded" />
+        <Skeleton key={index} className="h-6 w-full rounded-md" />
       ))}
     </div>
   );

@@ -73,7 +73,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
   if (field.status === "missing" && !isEditing) {
     return (
       <div
-        className="group hover:bg-muted/50 flex items-center gap-2 rounded px-2 py-1 transition-colors"
+        className="group hover:bg-muted/50 flex items-center gap-2 rounded-md px-2 py-1 transition-colors"
         onKeyDown={handleKeyDown}
         tabIndex={0}
         role="row"
@@ -96,7 +96,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
   return (
     <div
       className={cn(
-        "group rounded px-2 py-1.5 transition-colors",
+        "group rounded-md px-2 py-1.5 transition-colors",
         style.bg,
         !style.bg && "hover:bg-muted/30",
       )}
@@ -170,7 +170,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
                     <button
                       key={alt}
                       type="button"
-                      className="text-2xs hover:bg-muted rounded border px-1.5 py-0.5 transition-colors"
+                      className="text-2xs hover:bg-muted rounded-md border px-1.5 py-0.5 transition-colors"
                       onClick={() => {
                         onSelectAlternative?.(field.key, alt);
                         setShowAlts(false);

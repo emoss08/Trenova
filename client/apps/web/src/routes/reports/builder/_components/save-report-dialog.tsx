@@ -79,7 +79,7 @@ export function SaveReportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isNew ? t("Save Report") : t("Save Changes")}</DialogTitle>
+          <DialogTitle>{isNew ? t("Save report") : t("Save changes")}</DialogTitle>
           <DialogDescription>
             {t("Saving creates a new revision — runs always execute against a specific revision.")}
           </DialogDescription>
@@ -91,7 +91,7 @@ export function SaveReportDialog({
               id="report-meta-name"
               value={meta.name}
               onChange={(event) => onMetaChange({ ...meta, name: event.target.value })}
-              placeholder={t("Weekly Revenue by Customer")}
+              placeholder={t("Weekly Revenue by customer")}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -126,7 +126,7 @@ export function SaveReportDialog({
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="report-meta-format">{t("Default Format")}</Label>
+              <Label htmlFor="report-meta-format">{t("Default format")}</Label>
               <Select
                 value={meta.defaultFormat}
                 onValueChange={(defaultFormat) => {
@@ -212,7 +212,7 @@ export function SaveReportDialog({
             {t("Cancel")}
           </Button>
           <Button onClick={onSave} disabled={saving || meta.name.trim() === ""}>
-            {saving ? t("Saving...") : t("Save Report")}
+            {saving ? t("Saving...") : t("Save report")}
           </Button>
         </DialogFooter>
       </DialogContent>

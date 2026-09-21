@@ -54,7 +54,7 @@ export function CostEventPanel({
                 <td className="px-3 py-2 text-right">{formatSettlementDate(row.eventDate)}</td>
               </tr>
               <tr className="border-b">
-                <td className="px-3 py-2 font-medium">{t("Pro Number")}</td>
+                <td className="px-3 py-2 font-medium">{t("Pro number")}</td>
                 <td className="px-3 py-2 text-right font-mono">{row.proNumber || "—"}</td>
               </tr>
               <tr className="border-b">

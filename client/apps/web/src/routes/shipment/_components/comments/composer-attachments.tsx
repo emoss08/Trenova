@@ -43,7 +43,7 @@ function AttachmentThumbnail({ upload }: { upload: UploadState }) {
   }
 
   return (
-    <span className="bg-muted flex size-8 shrink-0 items-center justify-center overflow-hidden rounded">
+    <span className="bg-muted flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md">
       {objectUrl ? (
         <img
           src={objectUrl}

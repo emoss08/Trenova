@@ -114,7 +114,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RecurringEarningRow>[] {
     },
     {
       id: "progress",
-      header: () => <div className="text-right">{t("Paid / Cap")}</div>,
+      header: () => <div className="text-right">{t("Paid / cap")}</div>,
       cell: ({ row }) => {
         const cap = row.original.totalCapMinor;
         return (

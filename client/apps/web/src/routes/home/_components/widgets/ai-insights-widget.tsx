@@ -52,7 +52,7 @@ export function AIInsightsWidget({ widget }: WidgetProps) {
 
   return (
     <WidgetShell
-      title={widget.title || t("Operational Insights")}
+      title={widget.title || t("Operational insights")}
       icon={LightbulbIcon}
       badge={criticalCount > 0 ? <WidgetCount value={criticalCount} tone="danger" /> : null}
       href="/insights"

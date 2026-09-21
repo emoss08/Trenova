@@ -129,7 +129,7 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
           {canAssign ? (
             <Button size="sm" variant="outline" onClick={() => setAssignOpen(true)}>
               <ShieldCheckIcon className="size-3.5" />
-              {current ? t("Change Policy") : t("Assign Policy")}
+              {current ? t("Change policy") : t("Assign policy")}
             </Button>
           ) : null}
           {canManage && current ? (

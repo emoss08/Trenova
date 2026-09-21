@@ -142,7 +142,7 @@ export function ApplyUnappliedForm({
                 <AutoCompleteDateField
                   control={form.control}
                   name="accountingDate"
-                  label={t("Accounting Date")}
+                  label={t("Accounting date")}
                   rules={{ required: "Accounting date is required" }}
                   placeholder={t("Select date")}
                   description={t(
@@ -169,7 +169,7 @@ export function ApplyUnappliedForm({
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isSubmitting}>
-                {t("Apply Cash")}
+                {t("Apply cash")}
               </Button>
             </div>
           </div>

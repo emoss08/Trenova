@@ -79,18 +79,18 @@ type AlertCategoryConfig = {
 };
 
 export const ALERT_CATEGORY_CONFIG: Record<WeatherAlertCategory, AlertCategoryConfig> = {
-  winter_weather: { stroke: "#6366f1", fill: "#6366f180", label: "Winter Weather" },
-  wind_storm: { stroke: "#ca8a04", fill: "#ca8a0480", label: "Wind & Storm" },
-  flood_water: { stroke: "#16a34a", fill: "#16a34a80", label: "Flood & Water" },
+  winter_weather: { stroke: "#6366f1", fill: "#6366f180", label: "Winter weather" },
+  wind_storm: { stroke: "#ca8a04", fill: "#ca8a0480", label: "Wind & storm" },
+  flood_water: { stroke: "#16a34a", fill: "#16a34a80", label: "Flood & water" },
   fire: { stroke: "#ea580c", fill: "#ea580c80", label: "Fire" },
   heat: { stroke: "#dc2626", fill: "#dc262680", label: "Heat" },
-  tornado_severe_storm: { stroke: "#e11d48", fill: "#e11d4880", label: "Tornado & Severe Storm" },
+  tornado_severe_storm: { stroke: "#e11d48", fill: "#e11d4880", label: "Tornado & severe storm" },
   tropical_storm_hurricane: {
     stroke: "#7c3aed",
     fill: "#7c3aed80",
-    label: "Tropical Storms & Hurricanes",
+    label: "Tropical storms & hurricanes",
   },
-  other: { stroke: "#a78bfa", fill: "#a78bfa80", label: "Other Alerts" },
+  other: { stroke: "#a78bfa", fill: "#a78bfa80", label: "Other alerts" },
 };
 
 export const SEVERITY_BADGE_MAP: Record<string, BadgeVariant> = {

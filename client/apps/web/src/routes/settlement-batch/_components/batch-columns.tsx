@@ -42,7 +42,7 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementBatchRow>[] {
     },
     {
       accessorKey: "payDate",
-      header: t("Pay Date"),
+      header: t("Pay date"),
       cell: ({ row }) => <span>{formatDate(row.original.payDate)}</span>,
       size: 110,
       meta: { apiField: "payDate" },
@@ -72,7 +72,7 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementBatchRow>[] {
     },
     {
       accessorKey: "totalGrossMinor",
-      header: () => <div className="text-right">{t("Total Gross")}</div>,
+      header: () => <div className="text-right">{t("Total gross")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay
@@ -86,7 +86,7 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementBatchRow>[] {
     },
     {
       accessorKey: "totalNetMinor",
-      header: () => <div className="text-right">{t("Total Net")}</div>,
+      header: () => <div className="text-right">{t("Total net")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay

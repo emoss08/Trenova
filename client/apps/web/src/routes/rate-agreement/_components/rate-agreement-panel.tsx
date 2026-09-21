@@ -101,7 +101,7 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
           onClick={() => onReviewAction("submit")}
         >
           <SendIcon className="size-3" />
-          {t("Submit for Review")}
+          {t("Submit for review")}
         </Button>
       )}
       {agreement.status === "InReview" && (
@@ -258,7 +258,7 @@ export function RateAgreementPanel({
           form={form}
           size="xl"
           queryKey="rate-agreement-list"
-          title={t("Rate Agreement")}
+          title={t("Rate agreement")}
           fieldKey="name"
           formTabs={formTabs}
           isRecordLoading={isLoading || !isSeated}
@@ -296,7 +296,7 @@ export function RateAgreementPanel({
       form={form}
       size="xl"
       queryKey="rate-agreement-list"
-      title={t("Rate Agreement")}
+      title={t("Rate agreement")}
       description={t(
         "Write the contract once, and every shipment on its lanes prices itself against it.",
       )}

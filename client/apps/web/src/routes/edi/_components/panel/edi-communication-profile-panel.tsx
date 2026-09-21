@@ -120,7 +120,7 @@ export function CommunicationProfilePanel({
         form={form}
         url="/edi/communication-profiles/"
         queryKey="edi-communication-profile-list"
-        title={t("Communication Profile")}
+        title={t("Communication profile")}
         fieldKey="name"
         size="xl"
         formTabs={formTabs}
@@ -139,7 +139,7 @@ export function CommunicationProfilePanel({
                   : "Verify certificates, credentials, and endpoint reachability"
               }
             >
-              {t("Test Connection")}
+              {t("Test connection")}
             </Button>
           ) : undefined
         }
@@ -162,7 +162,7 @@ export function CommunicationProfilePanel({
       form={form}
       url="/edi/communication-profiles/"
       queryKey="edi-communication-profile-list"
-      title={t("Communication Profile")}
+      title={t("Communication profile")}
       description={t(
         "Configure the transport profile and envelope values used for this organization.",
       )}

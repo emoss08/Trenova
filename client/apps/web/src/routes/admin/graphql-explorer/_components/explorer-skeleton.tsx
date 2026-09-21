@@ -19,8 +19,8 @@ export function ExplorerSkeleton() {
         <div className="flex flex-col gap-1 pt-1">
           {Array.from({ length: 14 }, (_, index) => (
             <div key={index} className="flex items-center gap-2 px-1 py-1.5">
-              <Skeleton className="h-3.5 w-10 shrink-0 rounded" />
-              <Skeleton className="h-3 flex-1 rounded" />
+              <Skeleton className="h-3.5 w-10 shrink-0 rounded-md" />
+              <Skeleton className="h-3 flex-1 rounded-md" />
             </div>
           ))}
         </div>
@@ -28,13 +28,13 @@ export function ExplorerSkeleton() {
 
       <div className="flex min-w-0 flex-1 flex-col gap-3 p-4">
         <div className="flex flex-col gap-2">
-          <Skeleton className="h-5 w-64 rounded" />
-          <Skeleton className="h-3 w-80 rounded" />
+          <Skeleton className="h-5 w-64 rounded-md" />
+          <Skeleton className="h-3 w-80 rounded-md" />
         </div>
         <div className="flex gap-4">
-          <Skeleton className="h-6 w-20 rounded" />
-          <Skeleton className="h-6 w-20 rounded" />
-          <Skeleton className="h-6 w-16 rounded" />
+          <Skeleton className="h-6 w-20 rounded-md" />
+          <Skeleton className="h-6 w-20 rounded-md" />
+          <Skeleton className="h-6 w-16 rounded-md" />
         </div>
         <Skeleton className="min-h-0 flex-1 rounded-md" />
       </div>

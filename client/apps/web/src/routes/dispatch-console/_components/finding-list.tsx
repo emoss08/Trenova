@@ -61,7 +61,7 @@ export function FindingList({
               {finding.message}
             </span>
             {finding.regulation ? (
-              <span className="border-border bg-muted/50 text-muted-foreground shrink-0 rounded border px-1 py-px font-mono text-3xs leading-4">
+              <span className="border-border bg-muted/50 text-muted-foreground shrink-0 rounded-md border px-1 py-px font-mono text-3xs leading-4">
                 {finding.regulation}
               </span>
             ) : null}

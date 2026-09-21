@@ -142,7 +142,7 @@ export function PermitRecordDialog({
     >
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? t("Edit Permit") : t("Record Permit")}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit permit") : t("Record permit")}</DialogTitle>
           <DialogDescription>
             {requirement
               ? describeRequirement(requirement)
@@ -157,7 +157,7 @@ export function PermitRecordDialog({
               <InputField
                 control={control}
                 name="permitNumber"
-                label={t("Permit Number")}
+                label={t("Permit number")}
                 description={t(
                   "Exactly as printed on the permit — this is the number enforcement matches at an inspection.",
                 )}
@@ -170,7 +170,7 @@ export function PermitRecordDialog({
               <UsStateAutocompleteField
                 control={control}
                 name="stateId"
-                label={t("Issuing State")}
+                label={t("Issuing state")}
                 description={t(
                   "The state that issued this permit. A permit covers one jurisdiction — record one per state on the route.",
                 )}
@@ -231,7 +231,7 @@ export function PermitRecordDialog({
             other document on the load. */}
         {isEdit && permit?.id && (
           <div className="border-t pt-3">
-            <p className="mb-2 text-xs font-medium">{t("Permit Document")}</p>
+            <p className="mb-2 text-xs font-medium">{t("Permit document")}</p>
             <DocumentUploadSection resourceType="permit" resourceId={permit.id} />
           </div>
         )}
@@ -254,8 +254,8 @@ export function PermitRecordDialog({
                 ? t("Saving...")
                 : t("Recording...")
               : isEdit
-                ? t("Save Permit")
-                : t("Record Permit")}
+                ? t("Save permit")
+                : t("Record permit")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -314,7 +314,7 @@ export function PermitWaiveDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Waive Requirement")}</DialogTitle>
+          <DialogTitle>{t("Waive requirement")}</DialogTitle>
           <DialogDescription>
             {requirement ? describeRequirement(requirement) : t("Waive this permit requirement")}
           </DialogDescription>
@@ -359,7 +359,7 @@ export function PermitWaiveDialog({
             onClick={handleSubmit((values) => mutation.mutate(values))}
             disabled={mutation.isPending}
           >
-            {mutation.isPending ? t("Waiving...") : t("Waive Requirement")}
+            {mutation.isPending ? t("Waiving...") : t("Waive requirement")}
           </Button>
         </DialogFooter>
       </DialogContent>

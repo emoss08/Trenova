@@ -287,7 +287,7 @@ export function AutocompleteCommandContent<TOption>({
             </span>
             {popoutLink && (
               <Button size="sm" onClick={(event) => openPopoutWindow(popoutLink, event)}>
-                {t("Add New")}
+                {t("Add new")}
               </Button>
             )}
           </div>

@@ -85,10 +85,10 @@ function plan(overrides: Partial<FiscalYearClosePlan> = {}): FiscalYearClosePlan
     subledgerChecks: [
       {
         key: "accounts_receivable",
-        label: "Accounts Receivable",
+        label: "Accounts receivable",
         glAccountId: "gla_ar",
         accountCode: "1110",
-        accountName: "Accounts Receivable",
+        accountName: "Accounts receivable",
         glBalanceMinor: 400_000,
         subledgerBalanceMinor: 400_000,
         differenceMinor: 0,
@@ -163,10 +163,10 @@ describe("FiscalYearCloseAlertDialogContent", () => {
         subledgerChecks: [
           {
             key: "accounts_receivable",
-            label: "Accounts Receivable",
+            label: "Accounts receivable",
             glAccountId: "gla_ar",
             accountCode: "1110",
-            accountName: "Accounts Receivable",
+            accountName: "Accounts receivable",
             glBalanceMinor: 400_000,
             subledgerBalanceMinor: 375_000,
             differenceMinor: 25_000,
@@ -183,7 +183,7 @@ describe("FiscalYearCloseAlertDialogContent", () => {
     expect(await screen.findByText(/off by \$250\.00/)).toBeInTheDocument();
     // Reported, but the carrier has not asked for it to stop the close.
     expect(screen.getByText(/not enforced/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Post and Close Year" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Post and close year" })).toBeEnabled();
   });
 
   it("refuses to close while the preview reports blockers", async () => {
@@ -216,7 +216,7 @@ describe("FiscalYearCloseAlertDialogContent", () => {
       screen.getByText("Set a default retained earnings account in Accounting Control."),
     ).toBeInTheDocument();
 
-    const action = screen.getByRole("button", { name: "Post and Close Year" });
+    const action = screen.getByRole("button", { name: "Post and close year" });
     expect(action).toBeDisabled();
 
     await userEvent.click(action);
@@ -229,7 +229,7 @@ describe("FiscalYearCloseAlertDialogContent", () => {
 
     renderCloseDialog();
 
-    const action = await screen.findByRole("button", { name: "Post and Close Year" });
+    const action = await screen.findByRole("button", { name: "Post and close year" });
     await waitFor(() => expect(action).toBeEnabled());
 
     await userEvent.click(action);

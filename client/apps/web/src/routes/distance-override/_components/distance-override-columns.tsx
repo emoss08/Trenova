@@ -9,7 +9,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DistanceOverrideRow>[] {
   return [
     {
       accessorKey: "originLocationId",
-      header: t("Origin Location"),
+      header: t("Origin location"),
       cell: ({ row }) => {
         const { originLocation } = row.original;
         if (!originLocation) {
@@ -37,14 +37,14 @@ export function getColumns(t: TranslateFn): ColumnDef<DistanceOverrideRow>[] {
         );
       },
       meta: {
-        label: t("Origin Location"),
+        label: t("Origin location"),
         filterable: false,
         sortable: false,
       },
     },
     {
       accessorKey: "destinationLocationId",
-      header: t("Destination Location"),
+      header: t("Destination location"),
       cell: ({ row }) => {
         const { destinationLocation } = row.original;
         if (!destinationLocation) {
@@ -72,7 +72,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DistanceOverrideRow>[] {
         );
       },
       meta: {
-        label: t("Destination Location"),
+        label: t("Destination location"),
         filterable: false,
         sortable: false,
       },

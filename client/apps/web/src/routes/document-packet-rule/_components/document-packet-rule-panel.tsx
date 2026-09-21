@@ -36,7 +36,7 @@ export function DocumentPacketRulePanel({
         onOpenChange={onOpenChange}
         row={row}
         url="/document-packet-rules/"
-        title={t("Document Packet Rule")}
+        title={t("Document packet rule")}
         queryKey="document-packet-rule-list"
         formComponent={<DocumentPacketRuleForm />}
         form={form}
@@ -51,7 +51,7 @@ export function DocumentPacketRulePanel({
       form={form}
       url="/document-packet-rules/"
       queryKey="document-packet-rule-list"
-      title={t("Document Packet Rule")}
+      title={t("Document packet rule")}
       formComponent={<DocumentPacketRuleForm />}
     />
   );

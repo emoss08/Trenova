@@ -15,12 +15,12 @@ import { useEffect, useId, useState } from "react";
 
 const actionCopy: Record<StopActualAction, { title: string; description: string }> = {
   Arrive: {
-    title: "Record Arrival",
+    title: "Record arrival",
     description:
       "Records the carrier's arrival at this stop and advances the move. Leave the event time empty to record it as of now, or backdate it to when the check call reported the arrival.",
   },
   Depart: {
-    title: "Record Departure",
+    title: "Record departure",
     description:
       "Records the carrier's departure from this stop and advances the move. Leave the event time empty to record it as of now, or backdate it to when the check call reported the departure.",
   },

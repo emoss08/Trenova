@@ -127,7 +127,7 @@ export function AROpenItemsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Open Items"),
+        title: t("Open items"),
         description: t("Outstanding invoices and their payment status across all customers."),
         actions: canRecordPayment ? (
           <Button
@@ -135,7 +135,7 @@ export function AROpenItemsPage() {
             onClick={() => void navigate("/accounting/ar/payments?panelType=create")}
           >
             <HandCoinsIcon className="size-4" />
-            {t("Record Payment")}
+            {t("Record payment")}
           </Button>
         ) : undefined,
       }}
@@ -154,7 +154,7 @@ export function AROpenItemsPage() {
           <AutoCompleteDateField
             control={filterForm.control}
             name="asOfDate"
-            label={t("As of Date")}
+            label={t("As of date")}
             placeholder={t("Today")}
             clearable
           />
@@ -253,7 +253,7 @@ export function AROpenItemsPage() {
                     className="h-7 text-xs"
                   >
                     <HandCoinsIcon className="size-3.5" />
-                    {t("Apply Payment")}
+                    {t("Apply payment")}
                   </Button>
                 ) : null}
               </div>

@@ -316,7 +316,7 @@ export function MappingProfileTablePanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={handleOpenChange}
-      title={t("New Mapping Profile")}
+      title={t("New mapping profile")}
       description={t("Choose which partner source values should map into local records.")}
       size="xl"
     >

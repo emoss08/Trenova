@@ -37,7 +37,7 @@ export function OrgStructurePage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Org Structure"),
+        title: t("Org structure"),
         description: t(
           "The shape of the organisation: the positions the roster is counted by, the headcount in each, and who is approving in whose place.",
         ),

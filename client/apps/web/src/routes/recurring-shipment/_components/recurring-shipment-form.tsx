@@ -111,7 +111,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               control={control}
               name="name"
               label={t("Name")}
-              placeholder={t("Acme Weekly Chicago Run")}
+              placeholder={t("Acme weekly chicago run")}
               rules={{ required: true }}
               maxLength={100}
               description={t("A short name dispatchers will recognize in lists and history.")}
@@ -134,7 +134,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
             <ShipmentAutocompleteField
               control={control}
               name="sourceShipmentId"
-              label={t("Source Shipment")}
+              label={t("Source shipment")}
               placeholder={t("Search by Pro # or BOL...")}
               rules={{ required: "Source shipment is required" }}
               description={t(
@@ -189,7 +189,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
             <NumberField
               control={control}
               name="leadTimeDays"
-              label={t("Lead Time")}
+              label={t("Lead time")}
               placeholder="1"
               sideText="days"
               rules={{ required: true }}
@@ -217,7 +217,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
             <AutoCompleteDateField
               control={control}
               name="startDate"
-              label={t("Start Date")}
+              label={t("Start date")}
               placeholder={t("Starts immediately")}
               description={t(
                 "The first day the series may generate. Occurrences before it are ignored.",
@@ -229,7 +229,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
             <AutoCompleteDateField
               control={control}
               name="endDate"
-              label={t("End Date")}
+              label={t("End date")}
               placeholder={t("No end date")}
               description={t("The series expires after this day. Must fall after the start date.")}
               clearable
@@ -239,7 +239,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
             <NumberField
               control={control}
               name="maxOccurrences"
-              label={t("Max Occurrences")}
+              label={t("Max occurrences")}
               placeholder={t("Unlimited")}
               min={1}
               description={t("The series expires once it has generated this many shipments.")}
@@ -269,7 +269,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
             <SelectField
               control={control}
               name="exceptionPolicy"
-              label={t("Exception Policy")}
+              label={t("Exception policy")}
               placeholder={t("Select exception policy")}
               rules={{ required: true }}
               options={recurringShipmentExceptionPolicyChoices}

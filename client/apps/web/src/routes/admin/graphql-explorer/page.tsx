@@ -32,7 +32,7 @@ export function GraphQLExplorerPage() {
     <PageLayout
       className="flex h-[calc(100vh-3rem)] flex-col"
       pageHeaderProps={{
-        title: t("GraphQL Explorer"),
+        title: t("GraphQL explorer"),
         description: t("Browse, search, and run every persisted GraphQL operation in the client"),
         actions: index ? (
           <Badge variant="neutral" className="font-normal">

@@ -119,9 +119,9 @@ describe("ControlledSelectField", () => {
       {
         name: "element source type",
         options: templateElementSourceOptions,
-        expected: "Partner Setting",
+        expected: "Partner setting",
       },
-      { name: "validation mode", options: validationModeOptions, expected: "Warn Only" },
+      { name: "validation mode", options: validationModeOptions, expected: "Warn only" },
       {
         name: "transform operation",
         options: transformOperationDefinitions.map((definition) => ({

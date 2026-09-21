@@ -11,7 +11,7 @@ export function RecurringEarningsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Recurring Earnings"),
+        title: t("Recurring earnings"),
         description: t(
           "Standing per-settlement earnings: per diem, safety and performance bonuses, stipends, and equipment rental payments with caps.",
         ),

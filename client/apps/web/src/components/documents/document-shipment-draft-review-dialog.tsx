@@ -290,7 +290,7 @@ export function DocumentShipmentDraftReviewDialog({
           <div className="grid gap-4 p-4">
             <div className="rounded-lg border p-3">
               <div className="text-muted-foreground text-xs font-medium">
-                {t("Source Document")}
+                {t("Source document")}
               </div>
               <div className="mt-1 text-sm font-medium">
                 {document?.originalName ?? t("Document")}
@@ -302,7 +302,7 @@ export function DocumentShipmentDraftReviewDialog({
               ) : null}
             </div>
             <div className="rounded-lg border p-3">
-              <div className="text-muted-foreground text-xs font-medium">{t("Draft Summary")}</div>
+              <div className="text-muted-foreground text-xs font-medium">{t("Draft summary")}</div>
               <DescriptionList layout="inline" className="mt-3">
                 <DescriptionItem label={t("Shipper:")}>
                   {renderField(draft?.draftData?.fields?.shipper)}
@@ -337,7 +337,7 @@ export function DocumentShipmentDraftReviewDialog({
                     size="sm"
                     render={<Link to="/shipment-management/shipments" />}
                   >
-                    {t("Open Shipments")}
+                    {t("Open shipments")}
                   </Button>
                 </AlertDescription>
               </Alert>
@@ -346,7 +346,7 @@ export function DocumentShipmentDraftReviewDialog({
               <div className="rounded-lg border p-3">
                 <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium">
                   <AssistMark className="size-3.5" />
-                  {t("Draft Signals")}
+                  {t("Draft signals")}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {signals.map((signal) => (
@@ -374,7 +374,7 @@ export function DocumentShipmentDraftReviewDialog({
             ) : null}
             <div className="rounded-lg border p-3">
               <div className="text-muted-foreground text-xs font-medium">
-                {t("Extracted Stops")}
+                {t("Extracted stops")}
               </div>
               {stops.length === 0 ? (
                 <div className="text-muted-foreground mt-2 text-sm">
@@ -450,7 +450,7 @@ export function DocumentShipmentDraftReviewDialog({
           disabled={createShipment.isPending || isAttached}
         >
           {createShipment.isPending ? <LoaderCircleIcon className="size-4 animate-spin" /> : null}
-          {isAttached ? t("Shipment Attached") : t("Create Shipment")}
+          {isAttached ? t("Shipment attached") : t("Create shipment")}
         </Button>
       </div>
     </>
@@ -465,7 +465,7 @@ export function DocumentShipmentDraftReviewDialog({
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-6xl" showCloseButton>
         <DialogHeader className="border-b px-6 pt-6 pb-4">
           <div className="flex flex-wrap items-center gap-2">
-            <DialogTitle>{t("Create Shipment from Document")}</DialogTitle>
+            <DialogTitle>{t("Create shipment from document")}</DialogTitle>
             {draft?.status ? <Badge variant="neutral">{draft.status}</Badge> : null}
           </div>
           <DialogDescription>

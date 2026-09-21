@@ -697,7 +697,7 @@ export function SamsaraWorkerSyncCard({
       {embedded && (
         <div className="border-border flex flex-col border-b p-4 leading-tight">
           <div className="flex flex-row items-center gap-2">
-            <p className="text-2xl font-semibold">{t("Samsara Worker Sync")}</p>
+            <p className="text-2xl font-semibold">{t("Samsara worker sync")}</p>
             <Badge variant={isTrackingWorkflow ? activeStatusVariant : "neutral"}>
               {currentStatusLabel}
             </Badge>
@@ -732,7 +732,7 @@ export function SamsaraWorkerSyncCard({
             retryWorkerMutation.isPending
           }
         >
-          {t("Start Sync")}
+          {t("Start sync")}
         </Button>
 
         {isTrackingWorkflow && (
@@ -742,7 +742,7 @@ export function SamsaraWorkerSyncCard({
             onClick={handleClearTrackedRun}
             disabled={startSyncMutation.isPending}
           >
-            {t("Clear Tracked Run")}
+            {t("Clear tracked run")}
           </Button>
         )}
         <Button
@@ -758,7 +758,7 @@ export function SamsaraWorkerSyncCard({
             retryWorkerMutation.isPending
           }
         >
-          {t("Detect Drift")}
+          {t("Detect drift")}
         </Button>
         <Button
           size="sm"
@@ -774,7 +774,7 @@ export function SamsaraWorkerSyncCard({
             retryWorkerMutation.isPending
           }
         >
-          {t("Repair Drift")}
+          {t("Repair drift")}
         </Button>
       </div>
       <ScrollArea className="flex max-h-[calc(100vh-14rem)] flex-col px-4 [&_[data-slot=scroll-area-viewport]>div]:block!">
@@ -801,7 +801,7 @@ export function SamsaraWorkerSyncCard({
               </p>
             </div>
             <div className="border-border bg-background text-muted-foreground rounded-md border p-3 text-xs">
-              <p>{t("Last Updated")}</p>
+              <p>{t("Last updated")}</p>
               <p className="text-foreground mt-1">
                 {generateDateTimeStringFromUnixTimestamp(
                   statusResponse?.closedAt || statusResponse?.startedAt,
@@ -812,21 +812,21 @@ export function SamsaraWorkerSyncCard({
           {readiness && (
             <div className="border-border bg-muted/30 grid gap-2 rounded-md border p-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
               <div className="border-border bg-background rounded-md border p-3">
-                <p className="text-muted-foreground">{t("Synced Active")}</p>
+                <p className="text-muted-foreground">{t("Synced active")}</p>
                 <p className="text-foreground font-semibold">
                   {readiness.syncedActiveWorkers} / {readiness.activeWorkers}
                 </p>
               </div>
               <div className="border-border bg-background rounded-md border p-3">
-                <p className="text-muted-foreground">{t("Unsynced Active")}</p>
+                <p className="text-muted-foreground">{t("Unsynced active")}</p>
                 <p className="text-foreground font-semibold">{readiness.unsyncedActiveWorkers}</p>
               </div>
               <div className="border-border bg-background rounded-md border p-3">
-                <p className="text-muted-foreground">{t("Total Workers")}</p>
+                <p className="text-muted-foreground">{t("Total workers")}</p>
                 <p className="text-foreground font-semibold">{readiness.totalWorkers}</p>
               </div>
               <div className="border-border bg-background rounded-md border p-3">
-                <p className="text-muted-foreground">{t("Readiness Scan")}</p>
+                <p className="text-muted-foreground">{t("Readiness scan")}</p>
                 <p className="text-foreground font-semibold">
                   {formatToUserTimezone(readiness.lastCalculatedAt)}
                 </p>
@@ -855,7 +855,7 @@ export function SamsaraWorkerSyncCard({
             )}
           {driftRows.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-sm font-medium">{t("Detected Drift ({0})", driftRows.length)}</h3>
+              <h3 className="text-sm font-medium">{t("Detected drift ({0})", driftRows.length)}</h3>
               <div className="border-border rounded-md border">
                 <Table containerClassName="max-h-72 rounded-md">
                   <TableHeader>
@@ -888,10 +888,10 @@ export function SamsaraWorkerSyncCard({
           {failures.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium">{t("Sync Failures ({0})", failures.length)}</h3>
+                <h3 className="text-sm font-medium">{t("Sync failures ({0})", failures.length)}</h3>
                 {hasHiddenFailures && (
                   <Button size="sm" variant="outline" onClick={() => setShowAllFailures(true)}>
-                    {t("Show All")}
+                    {t("Show all")}
                   </Button>
                 )}
               </div>
@@ -975,7 +975,7 @@ export function SamsaraWorkerSyncCard({
   return (
     <div>
       <div className="border-border border-b">
-        <div>{t("Samsara Worker Sync")}</div>
+        <div>{t("Samsara worker sync")}</div>
         <div>{t("Start and monitor worker synchronization from TMS to Samsara.")}</div>
       </div>
       <CardContent className="space-y-4">{content}</CardContent>

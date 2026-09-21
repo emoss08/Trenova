@@ -69,7 +69,7 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
           <NumberField
             control={control}
             name="amount"
-            label={t("Payment Amount")}
+            label={t("Payment amount")}
             placeholder="0.00"
             rules={{ required: true }}
             decimalScale={2}
@@ -81,7 +81,7 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
           <SelectField
             control={control}
             name="paymentMethod"
-            label={t("Payment Method")}
+            label={t("Payment method")}
             rules={{ required: true }}
             options={paymentMethodChoices}
           />
@@ -90,7 +90,7 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
           <AutoCompleteDateField
             control={control}
             name="paymentDate"
-            label={t("Payment Date")}
+            label={t("Payment date")}
             rules={{ required: "Payment date is required" }}
             placeholder={t("Select date")}
             description={t("The date the funds were received.")}
@@ -100,7 +100,7 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
           <AutoCompleteDateField
             control={control}
             name="accountingDate"
-            label={t("Accounting Date")}
+            label={t("Accounting date")}
             rules={{ required: "Accounting date is required" }}
             placeholder={t("Select date")}
             description={t("The GL date. It must fall within an open fiscal period.")}
@@ -110,7 +110,7 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
           <InputField
             control={control}
             name="referenceNumber"
-            label={t("Reference Number")}
+            label={t("Reference number")}
             placeholder={t("Check # / ACH trace")}
             maxLength={100}
           />

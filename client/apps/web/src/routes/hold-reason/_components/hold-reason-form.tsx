@@ -31,8 +31,8 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
           <SelectField
             control={control}
             name="type"
-            label={t("Hold Type")}
-            placeholder={t("Select Type")}
+            label={t("Hold type")}
+            placeholder={t("Select type")}
             rules={{ required: true }}
             description={t(
               "Choose the hold category to drive default behavior, gating, and reporting.",
@@ -45,7 +45,7 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
           <InputField
             control={control}
             name="code"
-            label={t("Reason Code")}
+            label={t("Reason code")}
             placeholder="ELD_OOS"
             rules={{ required: true }}
             maxLength={64}
@@ -59,8 +59,8 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
           <InputField
             control={control}
             name="label"
-            label={t("Display Name")}
-            placeholder={t("ELD Out of Service")}
+            label={t("Display name")}
+            placeholder={t("ELD out of Service")}
             rules={{ required: true }}
             maxLength={100}
             description={t("Human-friendly name shown in boards, forms, and customer portals.")}
@@ -83,8 +83,8 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
           <SelectField
             control={control}
             name="defaultSeverity"
-            label={t("Default Severity")}
-            placeholder={t("Select Severity")}
+            label={t("Default severity")}
+            placeholder={t("Select severity")}
             description={t(
               "Starting impact level applied when users select this reason; adjustable per hold.",
             )}
@@ -95,7 +95,7 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
         </FormControl>
       </FormGroup>
       <FormSection
-        title={t("Gating Rules")}
+        title={t("Gating rules")}
         description={t(
           "Select which actions this reason blocks by default; multiple can apply and stack.",
         )}
@@ -105,7 +105,7 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             <SwitchField
               control={control}
               name="defaultBlocksDispatch"
-              label={t("Block Dispatch")}
+              label={t("Block dispatch")}
               description={t(
                 "Prevents assigning or dispatching power/trailer until this hold is cleared.",
               )}
@@ -117,7 +117,7 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             <SwitchField
               control={control}
               name="defaultBlocksDelivery"
-              label={t("Block Delivery")}
+              label={t("Block delivery")}
               description={t(
                 "Prevents marking stops delivered or closing freight until this hold clears.",
               )}
@@ -129,7 +129,7 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             <SwitchField
               control={control}
               name="defaultBlocksBilling"
-              label={t("Block Billing")}
+              label={t("Block billing")}
               description={t(
                 "Prevents invoicing or moving to billable states while the hold is active.",
               )}
@@ -141,7 +141,7 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             <SwitchField
               control={control}
               name="defaultVisibleToCustomer"
-              label={t("Visible to Customer")}
+              label={t("Visible to customer")}
               description={t("Makes this reason visible to customers in the portal.")}
               position="left"
               disabled={disabled}

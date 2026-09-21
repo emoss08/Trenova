@@ -63,7 +63,7 @@ function KindGlyph({ kind }: { kind: GlyphKind }) {
   return (
     <span
       className={cn(
-        "text-2xs flex size-5 shrink-0 items-center justify-center rounded font-mono font-semibold",
+        "text-2xs flex size-5 shrink-0 items-center justify-center rounded-md font-mono font-semibold",
         className,
       )}
     >

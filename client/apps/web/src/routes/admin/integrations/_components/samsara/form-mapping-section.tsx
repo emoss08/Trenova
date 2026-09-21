@@ -37,15 +37,15 @@ const TARGET_KIND = {
 } as const;
 
 const TARGET_KIND_OPTIONS: SelectOption[] = [
-  { value: TARGET_KIND.shipmentField, label: "Shipment Field" },
-  { value: TARGET_KIND.shipmentCustomField, label: "Shipment Custom Field" },
-  { value: TARGET_KIND.stopField, label: "Stop Field" },
+  { value: TARGET_KIND.shipmentField, label: "Shipment field" },
+  { value: TARGET_KIND.shipmentCustomField, label: "Shipment custom field" },
+  { value: TARGET_KIND.stopField, label: "Stop field" },
 ];
 
 const SHIPMENT_FIELD_OPTIONS: SelectOption[] = [
   { value: "bol", label: "BOL" },
-  { value: "temperatureMin", label: "Temp Min" },
-  { value: "temperatureMax", label: "Temp Max" },
+  { value: "temperatureMin", label: "Temp min" },
+  { value: "temperatureMax", label: "Temp max" },
   { value: "pieces", label: "Pieces" },
   { value: "weight", label: "Weight" },
 ];
@@ -187,14 +187,14 @@ function MappingItemRow({
         <InputField
           name={`items.${index}.sourceFieldLabel`}
           control={control}
-          label={t("Source Field Label")}
-          placeholder={t("Trailer Temperature (°F)")}
+          label={t("Source field label")}
+          placeholder={t("Trailer temperature (°F)")}
           description={t("The exact form field label as it appears in the driver form.")}
         />
         <SelectField
           name={`items.${index}.targetKind`}
           control={control}
-          label={t("Target Kind")}
+          label={t("Target kind")}
           options={TARGET_KIND_OPTIONS}
           placeholder={t("Select target")}
         />
@@ -202,7 +202,7 @@ function MappingItemRow({
           <InputField
             name={`items.${index}.targetCustomFieldKey`}
             control={control}
-            label={t("Target Custom Field Key")}
+            label={t("Target custom field key")}
             placeholder={t("e.g. reeferSetpoint")}
             description={t("The custom field key on the shipment to populate.")}
           />
@@ -210,7 +210,7 @@ function MappingItemRow({
           <SelectField
             name={`items.${index}.targetField`}
             control={control}
-            label={t("Target Field")}
+            label={t("Target field")}
             options={isStop ? STOP_FIELD_OPTIONS : SHIPMENT_FIELD_OPTIONS}
             placeholder={t("Select field")}
           />
@@ -292,7 +292,7 @@ function MappingEditor({
               name="templateName"
               control={control}
               label={t("Template Name (optional)")}
-              placeholder={t("Reefer Pre-Trip")}
+              placeholder={t("Reefer pre-trip")}
             />
           </FormControl>
           <FormControl cols="full">

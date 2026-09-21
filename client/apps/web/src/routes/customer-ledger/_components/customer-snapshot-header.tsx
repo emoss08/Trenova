@@ -89,7 +89,7 @@ export function CustomerSnapshotHeader({
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
-        <SnapshotTile index={0} label={t("Open Balance")}>
+        <SnapshotTile index={0} label={t("Open balance")}>
           <p className="text-2xl font-semibold tracking-tight tabular-nums">
             {formatCurrency(snapshot.totalOpenMinor / 100)}
           </p>
@@ -101,7 +101,7 @@ export function CustomerSnapshotHeader({
             )}
           </p>
         </SnapshotTile>
-        <SnapshotTile index={1} label={t("Credit Utilization")}>
+        <SnapshotTile index={1} label={t("Credit utilization")}>
           {snapshot.hasCreditLimit && snapshot.creditLimitMinor > 0 ? (
             <>
               <p className="text-2xl font-semibold tracking-tight tabular-nums">
@@ -126,7 +126,7 @@ export function CustomerSnapshotHeader({
             </>
           )}
         </SnapshotTile>
-        <SnapshotTile index={2} label={t("DSO / Days to Pay")}>
+        <SnapshotTile index={2} label={t("DSO / days to pay")}>
           <p className="text-2xl font-semibold tracking-tight tabular-nums">
             {t("{0}d", profile.dsoDays.toFixed(0))}
             <span className="text-muted-foreground ml-2 text-sm font-medium tabular-nums">
@@ -136,7 +136,7 @@ export function CustomerSnapshotHeader({
           </p>
           <p className="text-muted-foreground mt-0.5 text-xs">trailing 91d / 12mo</p>
         </SnapshotTile>
-        <SnapshotTile index={3} label={t("Delinquency Score")}>
+        <SnapshotTile index={3} label={t("Delinquency score")}>
           <p className={cn("text-2xl font-semibold tracking-tight tabular-nums", scoreClass)}>
             {score.toFixed(0)}
           </p>

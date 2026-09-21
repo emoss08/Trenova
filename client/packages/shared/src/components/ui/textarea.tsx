@@ -37,7 +37,7 @@ const ITEMS = [
     },
   },
   {
-    text: "Fix Spelling and Grammar",
+    text: "Fix spelling and grammar",
     icon: <CheckIcon />,
     colors: {
       icon: "text-success-foreground",

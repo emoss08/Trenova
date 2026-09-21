@@ -103,7 +103,7 @@ export default function ReconciliationWorkspace({
               <div className="border-b">
                 <div className="px-3 pt-2 pb-1">
                   <span className="text-xs text-muted-foreground/50 font-medium">
-                    {t("Required Details")}
+                    {t("Required details")}
                   </span>
                 </div>
                 <RequiredFieldsSection
@@ -115,7 +115,7 @@ export default function ReconciliationWorkspace({
               <div className="border-b">
                 <div className="px-3 pt-3 pb-1">
                   <span className="text-xs text-muted-foreground/50 font-medium">
-                    {t("Extracted Fields")}
+                    {t("Extracted fields")}
                   </span>
                 </div>
                 <FieldReconciliationList
@@ -164,7 +164,7 @@ export default function ReconciliationWorkspace({
                 disabled={isCreating || !canCreateShipment}
               >
                 {isCreating && <LoaderCircleIcon className="size-3.5 animate-spin" />}
-                {t("Create Shipment")}
+                {t("Create shipment")}
               </Button>
             </div>
           </div>

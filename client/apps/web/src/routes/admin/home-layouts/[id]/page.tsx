@@ -16,7 +16,7 @@ export function EditHomeLayoutPage() {
 
   if (isLoading) {
     return (
-      <PageLayout pageHeaderProps={{ title: t("Home Screens"), description: t("Loading...") }}>
+      <PageLayout pageHeaderProps={{ title: t("Home screens"), description: t("Loading...") }}>
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-48 rounded-lg" />
       </PageLayout>
@@ -27,7 +27,7 @@ export function EditHomeLayoutPage() {
     return (
       <PageLayout
         pageHeaderProps={{
-          title: t("Home Screens"),
+          title: t("Home screens"),
           description: t("It may have been deleted by another administrator."),
         }}
       >

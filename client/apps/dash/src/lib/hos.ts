@@ -33,11 +33,11 @@ export type DutyStatusInfo = { label: string; variant: BadgeVariant };
 
 const dutyStatuses: Record<string, DutyStatusInfo> = {
   driving: { label: "Driving", variant: "accent-emerald" },
-  onDuty: { label: "On Duty", variant: "accent-amber" },
-  offDuty: { label: "Off Duty", variant: "accent-slate" },
-  sleeperBed: { label: "Sleeper Berth", variant: "accent-violet" },
-  yardMove: { label: "Yard Move", variant: "accent-sky" },
-  personalConveyance: { label: "Personal Conveyance", variant: "accent-teal" },
+  onDuty: { label: "On duty", variant: "accent-amber" },
+  offDuty: { label: "Off duty", variant: "accent-slate" },
+  sleeperBed: { label: "Sleeper berth", variant: "accent-violet" },
+  yardMove: { label: "Yard move", variant: "accent-sky" },
+  personalConveyance: { label: "Personal conveyance", variant: "accent-teal" },
 };
 
 export function dutyStatusInfo(status: string | null | undefined): DutyStatusInfo {

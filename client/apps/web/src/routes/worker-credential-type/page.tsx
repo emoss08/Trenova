@@ -11,7 +11,7 @@ export function WorkerCredentialTypesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Credential Types"),
+        title: t("Credential types"),
         description: t(
           "The licences, cards, endorsements and certificates workers can hold — which are required, for whom, and how far ahead renewals are flagged.",
         ),

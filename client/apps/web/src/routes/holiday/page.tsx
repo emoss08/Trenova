@@ -15,7 +15,7 @@ export function HolidayCalendarPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Holiday Calendar"),
+        title: t("Holiday calendar"),
         description: t(
           "Company holidays PTO policies skip when counting days, and blackout dates no one can request off.",
         ),

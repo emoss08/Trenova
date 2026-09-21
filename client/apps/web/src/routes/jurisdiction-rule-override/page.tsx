@@ -11,7 +11,7 @@ export function JurisdictionRuleOverridesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Carrier Overrides"),
+        title: t("Carrier overrides"),
         description: t(
           "Hold your fleet to stricter limits than a state requires. An override can only tighten a limit, never loosen one, and applies to your organization alone.",
         ),

@@ -179,7 +179,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
           <div className="min-w-0 flex-1">
             <span className="text-sm font-semibold tracking-tight">{t("Microsoft Entra ID")}</span>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              {t("{0} · OpenID Connect", enabled ? t("Active") : t("Not configured"))}
+              {t("{0} · OpenID connect", enabled ? t("Active") : t("Not configured"))}
             </p>
           </div>
           <ChevronRightIcon
@@ -223,7 +223,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                   {/* Authentication Policy */}
                   <div className="space-y-3">
                     <SectionHeader
-                      title={t("Authentication Policy")}
+                      title={t("Authentication policy")}
                       description={t("Control how users authenticate to this tenant.")}
                     />
                     <FormGroup cols={1}>
@@ -276,7 +276,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                       {/* Service Provider */}
                       <div className="space-y-3">
                         <SectionHeader
-                          title={t("Service Provider")}
+                          title={t("Service provider")}
                           description={t("Copy this value into your Entra ID app registration.")}
                         />
                         <Alert variant="info">
@@ -289,7 +289,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                         </Alert>
                         <CopyableInput
                           value={redirectUrl}
-                          label={t("Redirect URL (OAuth Callback)")}
+                          label={t("Redirect URL (OAuth callback)")}
                         />
                       </div>
 
@@ -298,7 +298,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                       {/* Identity Provider */}
                       <div className="space-y-3">
                         <SectionHeader
-                          title={t("Identity Provider")}
+                          title={t("Identity provider")}
                           description={t(
                             "Paste these values from your Microsoft Entra ID app registration.",
                           )}
@@ -308,7 +308,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                             <InputField
                               control={control}
                               name="tenantId"
-                              label={t("Directory (Tenant) ID")}
+                              label={t("Directory (tenant) ID")}
                               placeholder="00000000-0000-0000-0000-000000000000"
                               rules={{ required: enabled }}
                             />
@@ -317,7 +317,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                             <InputField
                               control={control}
                               name="clientId"
-                              label={t("Application (Client) ID")}
+                              label={t("Application (client) ID")}
                               placeholder="00000000-0000-0000-0000-000000000000"
                               rules={{ required: enabled }}
                             />
@@ -326,7 +326,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                             <SensitiveField
                               control={control}
                               name="clientSecret"
-                              label={t("Client Secret Value")}
+                              label={t("Client secret value")}
                               placeholder={t("Paste a new client secret")}
                               description={
                                 configQuery.data?.secretConfigured
@@ -343,7 +343,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                       {/* Domain Restrictions */}
                       <div className="space-y-3">
                         <SectionHeader
-                          title={t("Domain Restrictions")}
+                          title={t("Domain restrictions")}
                           description={t("Limit which email domains can sign in with Entra ID.")}
                         />
                         <FormGroup cols={1}>
@@ -351,7 +351,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                             <InputField
                               control={control}
                               name="allowedDomainsText"
-                              label={t("Allowed Email Domains")}
+                              label={t("Allowed email domains")}
                               placeholder={t("company.com, contractor.com")}
                               description={t(
                                 "Comma-separated list. Leave blank to allow all Entra ID account domains.",
@@ -366,7 +366,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                       {/* Tenant Login URL */}
                       <div className="space-y-3">
                         <SectionHeader
-                          title={t("Tenant Login URL")}
+                          title={t("Tenant login URL")}
                           description={t(
                             "Share this URL with your users for Entra ID SSO sign-in.",
                           )}
@@ -374,7 +374,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                         <CopyableInput value={tenantLoginUrl} label={t("Login URL")} />
                         <p className="text-muted-foreground text-xs">
                           {t("Replace")}{" "}
-                          <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">
+                          <code className="bg-muted rounded-md px-1 py-0.5 font-mono text-xs">
                             {t("{loginSlug}")}
                           </code>{" "}
                           {t("with your organization's login slug from General settings.")}

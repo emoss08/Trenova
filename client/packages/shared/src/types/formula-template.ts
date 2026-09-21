@@ -456,12 +456,12 @@ export type SchemaVariable = {
 };
 
 export const VARIABLE_CATEGORIES = [
-  { id: "shipment", label: "Shipment Fields" },
+  { id: "shipment", label: "Shipment fields" },
   { id: "customer", label: "Customer" },
   { id: "equipment", label: "Equipment" },
   { id: "origin", label: "Origin" },
   { id: "destination", label: "Destination" },
-  { id: "computed", label: "Computed Rollups" },
+  { id: "computed", label: "Computed rollups" },
 ] as const;
 
 export const SHIPMENT_VARIABLES: SchemaVariable[] = [

@@ -166,7 +166,7 @@ export function DispatchTimelineSkeleton() {
             {(TIMELINE_BARS[index % TIMELINE_BARS.length] ?? []).map((bar) => (
               <Skeleton
                 key={bar.left}
-                className="absolute rounded"
+                className="absolute rounded-md"
                 style={{
                   left: bar.left,
                   width: bar.width,

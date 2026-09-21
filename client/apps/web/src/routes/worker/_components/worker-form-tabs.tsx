@@ -32,7 +32,7 @@ export function GeneralTab() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("General Information")}
+        title={t("General information")}
         description={t("General information for the worker.")}
       >
         <FormGroup cols={2}>
@@ -56,7 +56,7 @@ export function GeneralTab() {
               options={workerTypeChoices}
               rules={{ required: true }}
               name="type"
-              label={t("Worker Type")}
+              label={t("Worker type")}
               placeholder={t("Employee or contractor")}
               description={t("Whether the worker is an employee or contractor.")}
             />
@@ -66,7 +66,7 @@ export function GeneralTab() {
               control={control}
               rules={{ required: true }}
               name="firstName"
-              label={t("First Name")}
+              label={t("First name")}
               placeholder={t("e.g. Maria")}
               description={t("Legal first name as it appears on the CDL.")}
               maxLength={100}
@@ -77,7 +77,7 @@ export function GeneralTab() {
               control={control}
               rules={{ required: true }}
               name="lastName"
-              label={t("Last Name")}
+              label={t("Last name")}
               placeholder={t("e.g. Alvarez")}
               description={t("Legal last name as it appears on the CDL.")}
               maxLength={100}
@@ -100,7 +100,7 @@ export function GeneralTab() {
               options={driverTypeChoices}
               rules={{ required: true }}
               name="driverType"
-              label={t("Driver Type")}
+              label={t("Driver type")}
               placeholder={t("Local, regional, OTR or team")}
               description={t("Type of driving operations (Local, Regional, OTR, Team).")}
             />
@@ -110,7 +110,7 @@ export function GeneralTab() {
               name="fleetCodeId"
               control={control}
               clearable
-              label={t("Fleet Code")}
+              label={t("Fleet code")}
               placeholder={t("Search fleet codes")}
               description={t("The fleet code associated with this worker.")}
             />
@@ -132,7 +132,7 @@ export function GeneralTab() {
       </FormSection>
 
       <FormSection
-        title={t("Address Information")}
+        title={t("Address information")}
         description={t("Address information for the worker's residence.")}
       >
         <FormGroup cols={2}>
@@ -183,7 +183,7 @@ export function GeneralTab() {
               control={control}
               rules={{ required: true }}
               name="postalCode"
-              label={t("Postal Code")}
+              label={t("Postal code")}
               placeholder={t("e.g. 60432")}
               description={t("5-digit ZIP code (or ZIP+4).")}
               maxLength={10}
@@ -193,7 +193,7 @@ export function GeneralTab() {
       </FormSection>
 
       <FormSection
-        title={t("Contact Information")}
+        title={t("Contact information")}
         description={t("Contact information for the worker.")}
       >
         <FormGroup cols={2}>
@@ -211,7 +211,7 @@ export function GeneralTab() {
             <PhoneNumberField
               control={control}
               name="phoneNumber"
-              label={t("Phone Number")}
+              label={t("Phone number")}
               placeholder="(555) 555-0100"
               description={t("Worker's primary phone number.")}
             />
@@ -220,7 +220,7 @@ export function GeneralTab() {
             <InputField
               control={control}
               name="emergencyContactName"
-              label={t("Emergency Contact Name")}
+              label={t("Emergency contact name")}
               placeholder={t("e.g. Ana Alvarez")}
               description={t("Name of emergency contact.")}
               maxLength={100}
@@ -230,7 +230,7 @@ export function GeneralTab() {
             <PhoneNumberField
               control={control}
               name="emergencyContactPhone"
-              label={t("Emergency Contact Phone")}
+              label={t("Emergency contact phone")}
               placeholder="(555) 555-0100"
               description={t("Phone number of emergency contact.")}
             />
@@ -253,7 +253,7 @@ export function EmploymentTab() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("Employment Information")}
+        title={t("Employment information")}
         description={t("Employment information for the worker.")}
       >
         <FormGroup cols={2}>
@@ -261,7 +261,7 @@ export function EmploymentTab() {
             <AutoCompleteDateField
               control={control}
               name="profile.dob"
-              label={t("Date of Birth")}
+              label={t("Date of birth")}
               rules={{ required: true }}
               description={t("Date of birth as shown on the license.")}
               placeholder={t("MM/DD/YYYY")}
@@ -271,7 +271,7 @@ export function EmploymentTab() {
             <AutoCompleteDateField
               control={control}
               name="profile.hireDate"
-              label={t("Hire Date")}
+              label={t("Hire date")}
               rules={{ required: true }}
               description={t("Date the worker was hired; tenure is counted from here.")}
               placeholder={t("MM/DD/YYYY")}
@@ -281,7 +281,7 @@ export function EmploymentTab() {
             <AutoCompleteDateField
               control={control}
               name="profile.terminationDate"
-              label={t("Termination Date")}
+              label={t("Termination date")}
               description={t("Set by a Terminated event in the employment history.")}
               placeholder={t("Not terminated")}
               disabled
@@ -291,7 +291,7 @@ export function EmploymentTab() {
       </FormSection>
 
       <FormSection
-        title={t("License Details")}
+        title={t("License details")}
         description={t("License information for the worker.")}
       >
         <FormGroup cols={2}>
@@ -300,7 +300,7 @@ export function EmploymentTab() {
               control={control}
               rules={{ required: true }}
               name="profile.licenseNumber"
-              label={t("License Number")}
+              label={t("License number")}
               placeholder={t("e.g. A123-4567-8901")}
               description={t("CDL number as printed on the license.")}
               maxLength={50}
@@ -310,7 +310,7 @@ export function EmploymentTab() {
             <UsStateAutocompleteField
               control={control}
               name="profile.licenseStateId"
-              label={t("License State")}
+              label={t("License state")}
               placeholder={t("Search states")}
               description={t("State that issued the license.")}
             />
@@ -319,7 +319,7 @@ export function EmploymentTab() {
             <AutoCompleteDateField
               control={control}
               name="profile.licenseExpiry"
-              label={t("License Expiry")}
+              label={t("License expiry")}
               rules={{ required: true }}
               description={t("When the CDL expires.")}
               placeholder={t("MM/DD/YYYY")}
@@ -331,7 +331,7 @@ export function EmploymentTab() {
               options={cdlClassChoices}
               rules={{ required: true }}
               name="profile.cdlClass"
-              label={t("CDL Class")}
+              label={t("CDL class")}
               placeholder={t("A, B or C")}
               description={t("Commercial driver's license class (A, B, or C).")}
             />
@@ -340,7 +340,7 @@ export function EmploymentTab() {
             <InputField
               control={control}
               name="profile.cdlRestrictions"
-              label={t("CDL Restrictions")}
+              label={t("CDL restrictions")}
               placeholder={t("e.g. L, Z")}
               description={t("Restriction codes printed on the CDL, such as L for no air brakes.")}
               maxLength={100}
@@ -362,7 +362,7 @@ export function EmploymentTab() {
               <AutoCompleteDateField
                 control={control}
                 name="profile.hazmatExpiry"
-                label={t("Hazmat Expiry")}
+                label={t("Hazmat expiry")}
                 rules={{ required: requiresHazmatExpiry }}
                 description={t("Expiration date of hazmat endorsement.")}
                 placeholder={t("MM/DD/YYYY")}
@@ -373,7 +373,7 @@ export function EmploymentTab() {
       </FormSection>
 
       <FormSection
-        title={t("Medical Certification")}
+        title={t("Medical certification")}
         description={t("Medical certification information for the worker.")}
       >
         <FormGroup cols={2}>
@@ -381,7 +381,7 @@ export function EmploymentTab() {
             <AutoCompleteDateField
               control={control}
               name="profile.medicalCardExpiry"
-              label={t("Medical Card Expiry")}
+              label={t("Medical card expiry")}
               description={t("Expiration date of medical examiner's certificate.")}
               placeholder={t("MM/DD/YYYY")}
             />
@@ -390,7 +390,7 @@ export function EmploymentTab() {
             <AutoCompleteDateField
               control={control}
               name="profile.physicalDueDate"
-              label={t("Physical Due Date")}
+              label={t("Physical due date")}
               description={t("Next physical examination due date.")}
               placeholder={t("MM/DD/YYYY")}
             />
@@ -399,7 +399,7 @@ export function EmploymentTab() {
             <InputField
               control={control}
               name="profile.medicalExaminerName"
-              label={t("Medical Examiner Name")}
+              label={t("Medical examiner name")}
               placeholder={t("e.g. Dr. J. Patel")}
               description={t("Name of the medical examiner.")}
               maxLength={100}
@@ -409,7 +409,7 @@ export function EmploymentTab() {
             <InputField
               control={control}
               name="profile.medicalExaminerNpi"
-              label={t("Medical Examiner NPI")}
+              label={t("Medical examiner NPI")}
               placeholder={t("10-digit NPI")}
               description={t("National Provider Identifier of the medical examiner.")}
               maxLength={20}
@@ -429,7 +429,7 @@ export function ComplianceTab() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("Compliance Status")}
+        title={t("Compliance status")}
         description={t("Compliance status information for the worker.")}
       >
         <FormGroup cols={2}>
@@ -439,7 +439,7 @@ export function ComplianceTab() {
               options={complianceStatusChoices}
               rules={{ required: true }}
               name="profile.complianceStatus"
-              label={t("Compliance Status")}
+              label={t("Compliance status")}
               placeholder={t("Pick a status")}
               description={t("Current compliance status of the worker.")}
             />
@@ -448,7 +448,7 @@ export function ComplianceTab() {
             <AutoCompleteDateField
               control={control}
               name="profile.mvrDueDate"
-              label={t("MVR Due Date")}
+              label={t("MVR due date")}
               description={t("Next motor vehicle record check due date.")}
               placeholder={t("MM/DD/YYYY")}
             />
@@ -457,7 +457,7 @@ export function ComplianceTab() {
             <SwitchField
               control={control}
               name="profile.isQualified"
-              label={t("Is Qualified")}
+              label={t("Is qualified")}
               description={t("Whether the worker is qualified to drive.")}
             />
           </FormControl>
@@ -465,7 +465,7 @@ export function ComplianceTab() {
             <InputField
               control={control}
               name="profile.disqualificationReason"
-              label={t("Disqualification Reason")}
+              label={t("Disqualification reason")}
               placeholder={t("e.g. Medical certificate lapsed")}
               description={t("Reason for disqualification (if applicable).")}
               maxLength={255}
@@ -475,7 +475,7 @@ export function ComplianceTab() {
       </FormSection>
 
       <FormSection
-        title={t("TWIC Credentials")}
+        title={t("TWIC credentials")}
         description={t("TWIC credentials information for the worker.")}
       >
         <FormGroup cols={2}>
@@ -483,7 +483,7 @@ export function ComplianceTab() {
             <InputField
               control={control}
               name="profile.twicCardNumber"
-              label={t("TWIC Card Number")}
+              label={t("TWIC card number")}
               placeholder={t("e.g. 1234567890")}
               description={t("Transportation Worker Identification Credential number.")}
               maxLength={50}
@@ -493,7 +493,7 @@ export function ComplianceTab() {
             <AutoCompleteDateField
               control={control}
               name="profile.twicExpiry"
-              label={t("TWIC Expiry")}
+              label={t("TWIC expiry")}
               description={t("Expiration date of TWIC card.")}
               placeholder={t("MM/DD/YYYY")}
             />
@@ -502,7 +502,7 @@ export function ComplianceTab() {
       </FormSection>
 
       <FormSection
-        title={t("Exemptions & Availability")}
+        title={t("Exemptions & availability")}
         description={t("Exemptions and availability information for the worker.")}
       >
         <FormGroup cols={2}>
@@ -510,7 +510,7 @@ export function ComplianceTab() {
             <SwitchField
               control={control}
               name="profile.eldExempt"
-              label={t("ELD Exempt")}
+              label={t("ELD exempt")}
               description={t("Whether the worker is exempt from ELD requirements.")}
             />
           </FormControl>
@@ -518,7 +518,7 @@ export function ComplianceTab() {
             <SwitchField
               control={control}
               name="profile.shortHaulExempt"
-              label={t("Short Haul Exempt")}
+              label={t("Short haul exempt")}
               description={t("Whether the worker qualifies for short-haul exemption.")}
             />
           </FormControl>
@@ -526,7 +526,7 @@ export function ComplianceTab() {
             <SwitchField
               control={control}
               name="availableForDispatch"
-              label={t("Available for Dispatch")}
+              label={t("Available for dispatch")}
               description={t("Whether the worker can be dispatched.")}
             />
           </FormControl>
@@ -534,7 +534,7 @@ export function ComplianceTab() {
             <SwitchField
               control={control}
               name="canBeAssigned"
-              label={t("Can Be Assigned")}
+              label={t("Can be assigned")}
               description={t("Whether the worker can be assigned to equipment.")}
             />
           </FormControl>

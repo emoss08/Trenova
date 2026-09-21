@@ -30,7 +30,7 @@ export function MappingReview({
     <div className="flex flex-col gap-3 rounded-md border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="font-medium">{t("Mapping Preview")}</div>
+          <div className="font-medium">{t("Mapping preview")}</div>
           <div className="text-muted-foreground text-xs">
             {t("Resolve required mappings before accepting and creating the receiving shipment.")}
           </div>

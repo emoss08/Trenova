@@ -48,7 +48,7 @@ export function RecurringShipmentPanel({
         form={form}
         url="/recurring-shipments/"
         queryKey="recurring-shipment-list"
-        title={t("Recurring Shipment")}
+        title={t("Recurring shipment")}
         fieldKey="name"
         formComponent={<RecurringShipmentForm mode="edit" />}
       />
@@ -62,7 +62,7 @@ export function RecurringShipmentPanel({
       form={form}
       url="/recurring-shipments/"
       queryKey="recurring-shipment-list"
-      title={t("Recurring Shipment")}
+      title={t("Recurring shipment")}
       formComponent={<RecurringShipmentForm mode="create" />}
     />
   );

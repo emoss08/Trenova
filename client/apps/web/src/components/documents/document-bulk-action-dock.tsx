@@ -64,7 +64,7 @@ export function DocumentBulkActionDock({
                   onClick={onSelectAll}
                 >
                   <CheckCheckIcon className="size-4" />
-                  {t("Select All")}
+                  {t("Select all")}
                 </Button>
               )}
               <Button

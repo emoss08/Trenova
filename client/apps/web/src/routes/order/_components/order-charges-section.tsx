@@ -78,7 +78,7 @@ export function OrderChargesSection() {
 
   return (
     <FormSection
-      title={t("Order Charges")}
+      title={t("Order charges")}
       titleCount={charges.length}
       description={t(
         "Order-level charges not tied to a single leg (e.g. customs brokerage). These roll into the total and are billed exactly once on the first grouped invoice.",
@@ -88,7 +88,7 @@ export function OrderChargesSection() {
         !chargesLocked && (
           <Button type="button" variant="outline" size="xxs" onClick={openAddCharge}>
             <PlusIcon className="size-3" />
-            {t("Add Charge")}
+            {t("Add charge")}
           </Button>
         )
       }
@@ -162,14 +162,14 @@ export function OrderChargesSection() {
       ) : (
         <EmptyState
           className="border-bg-sidebar-border max-h-[160px] rounded-lg border p-4"
-          title={t("No Order Charges")}
+          title={t("No order charges")}
           description={t("Add customs brokerage, order-wide fuel, or other order-level fees")}
           icons={[ReceiptTextIcon]}
           action={
             chargesLocked
               ? undefined
               : {
-                  label: t("Add First Charge"),
+                  label: t("Add first charge"),
                   onClick: openAddCharge,
                   icon: PlusIcon,
                 }

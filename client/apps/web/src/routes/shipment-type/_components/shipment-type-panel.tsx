@@ -36,7 +36,7 @@ export function ShipmentTypePanel({
         form={form}
         url="/shipment-types/"
         queryKey="shipment-type-list"
-        title={t("Shipment Type")}
+        title={t("Shipment type")}
         fieldKey="code"
         formComponent={<ShipmentTypeForm />}
       />
@@ -50,7 +50,7 @@ export function ShipmentTypePanel({
       form={form}
       url="/shipment-types/"
       queryKey="shipment-type-list"
-      title={t("Shipment Type")}
+      title={t("Shipment type")}
       formComponent={<ShipmentTypeForm />}
     />
   );

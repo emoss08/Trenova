@@ -11,7 +11,7 @@ export function DriverPayEventsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Pay Events"),
+        title: t("Pay events"),
         description: t(
           "Real-time driver earnings accrued as shipments deliver — the source ledger behind every settlement.",
         ),

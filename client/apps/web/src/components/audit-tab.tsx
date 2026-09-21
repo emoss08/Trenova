@@ -271,7 +271,7 @@ function ChangeItem({ change }: { change: NormalizedAuditChange }) {
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 text-xs">
         {change.type !== "added" && (
           <span
-            className="max-w-[140px] truncate rounded bg-danger/10 px-1.5 py-0.5 text-danger-foreground"
+            className="max-w-[140px] truncate rounded-md bg-danger/10 px-1.5 py-0.5 text-danger-foreground"
             title={fromDisplay}
           >
             {fromDisplay}
@@ -280,7 +280,7 @@ function ChangeItem({ change }: { change: NormalizedAuditChange }) {
         {change.type === "changed" && <span className="text-muted-foreground">&rarr;</span>}
         {change.type !== "removed" && (
           <span
-            className="max-w-[140px] truncate rounded bg-success/10 px-1.5 py-0.5 text-success-foreground"
+            className="max-w-[140px] truncate rounded-md bg-success/10 px-1.5 py-0.5 text-success-foreground"
             title={toDisplay}
           >
             {toDisplay}

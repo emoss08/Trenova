@@ -43,11 +43,11 @@ function BalanceSummary({ totalDebit, totalCredit }: { totalDebit: number; total
   return (
     <div className="divide-border bg-muted/30 grid grid-cols-3 divide-x overflow-hidden rounded-lg border">
       <div className="flex flex-col gap-1 px-4 py-3">
-        <span className="text-xs text-muted-foreground font-medium">{t("Total Debits")}</span>
+        <span className="text-xs text-muted-foreground font-medium">{t("Total debits")}</span>
         <AmountDisplay value={totalDebit} className="text-sm font-semibold" />
       </div>
       <div className="flex flex-col gap-1 px-4 py-3">
-        <span className="text-xs text-muted-foreground font-medium">{t("Total Credits")}</span>
+        <span className="text-xs text-muted-foreground font-medium">{t("Total credits")}</span>
         <AmountDisplay value={totalCredit} className="text-sm font-semibold" />
       </div>
       <div
@@ -104,7 +104,7 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("Journal Details")}
+        title={t("Journal details")}
         description={t("Describe the entry and when it should hit the general ledger.")}
       >
         <FormGroup cols={2}>
@@ -135,7 +135,7 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
             <AutoCompleteDateField
               control={control}
               name="accountingDate"
-              label={t("Accounting Date")}
+              label={t("Accounting date")}
               rules={{ required: "Accounting date is required" }}
               disabled={!isDraft}
               description={t(
@@ -161,7 +161,7 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
             <FiscalYearAutocompleteField
               control={control}
               name="requestedFiscalYearId"
-              label={t("Fiscal Year")}
+              label={t("Fiscal year")}
               disabled={!isDraft}
               placeholder={t("Select fiscal year")}
               description={t(
@@ -174,7 +174,7 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
             <FiscalPeriodAutocompleteField
               control={control}
               name="requestedFiscalPeriodId"
-              label={t("Fiscal Period")}
+              label={t("Fiscal period")}
               disabled={!isDraft || !fiscalYearId}
               placeholder={fiscalYearId ? "Select period" : "Select a fiscal year first"}
               description={t("Requested period within the selected fiscal year.")}
@@ -185,7 +185,7 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
       </FormSection>
 
       <FormSection
-        title={t("Line Items")}
+        title={t("Line items")}
         titleCount={lines.length}
         description={t(
           "Each line debits or credits a GL account. Total debits must equal total credits before the journal can be submitted.",

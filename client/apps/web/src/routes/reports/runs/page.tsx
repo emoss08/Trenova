@@ -11,7 +11,7 @@ export function ReportRunsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Run History"),
+        title: t("Run history"),
         description: t("Track report generation, download artifacts, and cancel active runs"),
       }}
     >

@@ -37,7 +37,7 @@ export function AccessorialChargePanel({
         form={form}
         url="/accessorial-charges/"
         queryKey="accessorial-charge-list"
-        title={t("Accessorial Charge")}
+        title={t("Accessorial charge")}
         fieldKey="code"
         formComponent={<AccessorialChargeForm />}
       />
@@ -51,7 +51,7 @@ export function AccessorialChargePanel({
       form={form}
       url="/accessorial-charges/"
       queryKey="accessorial-charge-list"
-      title={t("Accessorial Charge")}
+      title={t("Accessorial charge")}
       formComponent={<AccessorialChargeForm />}
     />
   );

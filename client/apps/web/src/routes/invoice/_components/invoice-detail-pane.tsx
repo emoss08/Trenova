@@ -170,7 +170,7 @@ export default function InvoiceDetailPane({
             ) : isVoided ? null : (
               <Button size="sm" onClick={() => postInvoice(invoice.id)} disabled={isPosting}>
                 <SendIcon className="size-3.5" />
-                {t("Post Invoice")}
+                {t("Post invoice")}
               </Button>
             )}
             <InvoiceShareDialog invoice={invoice} />
@@ -189,21 +189,21 @@ export default function InvoiceDetailPane({
         </div>
 
         <DescriptionList columns={4}>
-          <DescriptionItem label={t("Invoice Date")} numeric>
+          <DescriptionItem label={t("Invoice date")} numeric>
             {formatUnixDate(invoice.invoiceDate)}
           </DescriptionItem>
-          <DescriptionItem label={t("Due Date")} numeric>
+          <DescriptionItem label={t("Due date")} numeric>
             {formatUnixDate(invoice.dueDate)}
           </DescriptionItem>
-          <DescriptionItem label={t("Payment Terms")}>{invoice.paymentTerm}</DescriptionItem>
-          <DescriptionItem label={t("Bill Type")}>{invoice.billType}</DescriptionItem>
+          <DescriptionItem label={t("Payment terms")}>{invoice.paymentTerm}</DescriptionItem>
+          <DescriptionItem label={t("Bill type")}>{invoice.billType}</DescriptionItem>
           {daysPastDue !== null && daysPastDue > 0 ? (
             <DescriptionItem label={t("Days past due")} numeric>
               {String(daysPastDue)}
             </DescriptionItem>
           ) : null}
           {billingPeriod ? (
-            <DescriptionItem label={t("Billing Period")}>{billingPeriod}</DescriptionItem>
+            <DescriptionItem label={t("Billing period")}>{billingPeriod}</DescriptionItem>
           ) : null}
           {billedShipmentCount > 1 || !billsSingleShipment ? (
             <DescriptionItem label={t("Shipments")} numeric>
@@ -211,7 +211,7 @@ export default function InvoiceDetailPane({
             </DescriptionItem>
           ) : null}
           {billedShipmentCount <= 1 && billsSingleShipment && invoice.shipmentProNumber ? (
-            <DescriptionItem label={t("PRO Number")}>{invoice.shipmentProNumber}</DescriptionItem>
+            <DescriptionItem label={t("PRO number")}>{invoice.shipmentProNumber}</DescriptionItem>
           ) : null}
           {billedShipmentCount <= 1 && billsSingleShipment && invoice.shipmentBol ? (
             <DescriptionItem label={t("BOL")}>{invoice.shipmentBol}</DescriptionItem>
@@ -415,7 +415,7 @@ function InvoiceDeliveryTab({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold">{t("Email Delivery")}</h3>
+                  <h3 className="text-sm font-semibold">{t("Email delivery")}</h3>
                   <Badge variant={SEND_STATUS_VARIANTS[invoice.sendStatus ?? "NotSent"]}>
                     {invoice.sendStatus ?? t("NotSent")}
                   </Badge>
@@ -480,7 +480,7 @@ function InvoiceDeliveryTab({
           />
 
           <div className="border-border rounded-md border p-4">
-            <h3 className="text-sm font-semibold">{t("Send Plan")}</h3>
+            <h3 className="text-sm font-semibold">{t("Send plan")}</h3>
             {sendPlanQuery.isLoading ? (
               <Skeleton className="mt-3 h-24 w-full" />
             ) : sendPlan ? (
@@ -797,7 +797,7 @@ function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {
 
   return (
     <div className="border-border flex min-h-[20rem] flex-col rounded-md border p-4 lg:h-full lg:min-h-0">
-      <h3 className="text-sm font-semibold">{t("Send History")}</h3>
+      <h3 className="text-sm font-semibold">{t("Send history")}</h3>
       <ScrollArea className="mt-3 min-h-0 flex-1" viewportClassName="pr-2">
         {query.isLoading ? (
           <div className="space-y-3">

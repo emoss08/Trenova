@@ -17,7 +17,7 @@ describe("recent pages store", () => {
 
   it("records a visit with the newest page first", () => {
     const { recordVisit } = useRecentPagesStore.getState();
-    recordVisit(ORG_A, { path: "/billing/queue", title: "Billing Queue" });
+    recordVisit(ORG_A, { path: "/billing/queue", title: "Billing queue" });
     recordVisit(ORG_A, { path: "/hr/workers", title: "Workers" });
 
     expect(pathsFor(ORG_A)).toEqual(["/hr/workers", "/billing/queue"]);
@@ -25,7 +25,7 @@ describe("recent pages store", () => {
 
   it("keeps each organization's history apart", () => {
     const { recordVisit } = useRecentPagesStore.getState();
-    recordVisit(ORG_A, { path: "/billing/queue", title: "Billing Queue" });
+    recordVisit(ORG_A, { path: "/billing/queue", title: "Billing queue" });
     recordVisit(ORG_B, { path: "/hr/workers", title: "Workers" });
 
     expect(pathsFor(ORG_A)).toEqual(["/billing/queue"]);
@@ -34,9 +34,9 @@ describe("recent pages store", () => {
 
   it("moves a revisited page to the front instead of duplicating it", () => {
     const { recordVisit } = useRecentPagesStore.getState();
-    recordVisit(ORG_A, { path: "/billing/queue", title: "Billing Queue" });
+    recordVisit(ORG_A, { path: "/billing/queue", title: "Billing queue" });
     recordVisit(ORG_A, { path: "/hr/workers", title: "Workers" });
-    recordVisit(ORG_A, { path: "/billing/queue", title: "Billing Queue" });
+    recordVisit(ORG_A, { path: "/billing/queue", title: "Billing queue" });
 
     expect(pathsFor(ORG_A)).toEqual(["/billing/queue", "/hr/workers"]);
   });
@@ -63,7 +63,7 @@ describe("recent pages store", () => {
 
   it("returns nothing for an unknown or missing organization", () => {
     const { recordVisit } = useRecentPagesStore.getState();
-    recordVisit(ORG_A, { path: "/billing/queue", title: "Billing Queue" });
+    recordVisit(ORG_A, { path: "/billing/queue", title: "Billing queue" });
 
     expect(pathsFor(ORG_B)).toEqual([]);
     expect(pathsFor(undefined)).toEqual([]);
@@ -83,8 +83,8 @@ describe("recent pages store", () => {
 
   it("forgets a page for one organization only", () => {
     const { recordVisit, forget } = useRecentPagesStore.getState();
-    recordVisit(ORG_A, { path: "/billing/queue", title: "Billing Queue" });
-    recordVisit(ORG_B, { path: "/billing/queue", title: "Billing Queue" });
+    recordVisit(ORG_A, { path: "/billing/queue", title: "Billing queue" });
+    recordVisit(ORG_B, { path: "/billing/queue", title: "Billing queue" });
     forget(ORG_A, "/billing/queue");
 
     expect(pathsFor(ORG_A)).toEqual([]);

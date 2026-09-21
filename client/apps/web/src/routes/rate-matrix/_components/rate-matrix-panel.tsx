@@ -84,7 +84,7 @@ export function RateMatrixPanel({
         form={form}
         size="xl"
         queryKey="rate-matrix-list"
-        title={t("Rate Matrix")}
+        title={t("Rate matrix")}
         fieldKey="name"
         formTabs={formTabs}
         isRecordLoading={isLoading || !isSeated}
@@ -107,7 +107,7 @@ export function RateMatrixPanel({
       form={form}
       size="xl"
       queryKey="rate-matrix-list"
-      title={t("Rate Matrix")}
+      title={t("Rate matrix")}
       description={t(
         "Enter a published tariff as the grid it was published as, and point any lane at it.",
       )}

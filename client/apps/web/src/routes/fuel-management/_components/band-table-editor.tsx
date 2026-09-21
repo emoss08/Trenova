@@ -37,21 +37,21 @@ function valueMetaForMethod(method: string): BandValueMeta {
   switch (method) {
     case "TablePercent":
       return {
-        header: translate("% of Charge"),
+        header: translate("% of charge"),
         suffix: "%",
         decimalScale: 2,
         readingHint: "add that percentage of the freight charge",
       };
     case "TableFlat":
       return {
-        header: translate("Flat Amount"),
+        header: translate("Flat amount"),
         prefix: "$",
         decimalScale: 2,
         readingHint: "add that flat dollar amount",
       };
     default:
       return {
-        header: translate("Rate per Mile"),
+        header: translate("Rate per mile"),
         prefix: "$",
         decimalScale: 4,
         readingHint: "charge that rate for every mile",
@@ -335,7 +335,7 @@ function SortButton({
       className="gap-1.5"
     >
       <ArrowDownUp className="size-3.5" />
-      {t("Sort by Price")}
+      {t("Sort by price")}
     </Button>
   );
 }
@@ -405,7 +405,7 @@ function IssuesStrip({
                 disabled={disabled}
                 className="h-6 shrink-0 px-2 text-xs"
               >
-                {t("Fill Gap")}
+                {t("Fill gap")}
               </Button>
             )}
           </div>
@@ -625,7 +625,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
             <Table2 className="text-primary size-4" />
           </div>
           <div>
-            <CardTitle className="text-sm font-medium">{t("Price Band Table")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Price band table")}</CardTitle>
             <p className="text-muted-foreground text-xs">
               {t(
                 "Read each row as: when fuel costs at least “from” and less than “up to”, {0}.",
@@ -657,7 +657,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
               className="gap-1.5"
             >
               <Plus className="size-3.5" />
-              {t("Add Band")}
+              {t("Add band")}
             </Button>
           </div>
         )}
@@ -684,7 +684,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
                 className="gap-1.5"
               >
                 <AssistMark className="size-3.5" />
-                {t("Generate the Table for Me")}
+                {t("Generate the table for me")}
               </Button>
               <Button
                 type="button"
@@ -695,7 +695,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
                 className="gap-1.5"
               >
                 <Plus className="size-3.5" />
-                {t("Start From Scratch")}
+                {t("Start from scratch")}
               </Button>
             </div>
           </div>
@@ -706,7 +706,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
                 <thead className="bg-muted/80 sticky top-0 z-10 backdrop-blur">
                   <tr className="text-muted-foreground text-left text-xs">
                     <th className="w-10 px-3 py-2 text-center font-medium">#</th>
-                    <th className="px-2 py-2 font-medium">{t("Fuel Price From")}</th>
+                    <th className="px-2 py-2 font-medium">{t("Fuel price from")}</th>
                     <th className="px-2 py-2 font-medium">{t("Up To (not incl.)")}</th>
                     <th className="px-2 py-2 font-medium">{t(meta.header)}</th>
                     <th className="w-16 px-2 py-2" />

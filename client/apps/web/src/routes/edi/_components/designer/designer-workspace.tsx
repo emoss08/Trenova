@@ -30,7 +30,7 @@ export function DesignerWorkspace() {
         </TabsTrigger>
         <TabsTrigger value="documents" className="max-w-52">
           <ArchiveIcon data-icon="inline-start" />
-          {t("Document Preview & Archive")}
+          {t("Document preview & archive")}
         </TabsTrigger>
       </TabsList>
       <TabsContent value="templates" className="m-0 min-h-0 overflow-hidden px-3 pt-3">

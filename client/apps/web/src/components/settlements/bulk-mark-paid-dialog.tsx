@@ -20,14 +20,14 @@ export type BulkMarkPaidMethod = {
 export const DRIVER_MARK_PAID_METHODS: ReadonlyArray<BulkMarkPaidMethod> = [
   { value: "ACH", label: "ACH" },
   { value: "Check", label: "Check" },
-  { value: "InstantPay", label: "Instant Pay" },
+  { value: "InstantPay", label: "Instant pay" },
   { value: "Other", label: "Other" },
 ];
 
 /** Carrier AP disbursement methods — carriers are paid by check or manual ACH, never payroll rails. */
 export const CARRIER_MARK_PAID_METHODS: ReadonlyArray<BulkMarkPaidMethod> = [
   { value: "Check", label: "Check" },
-  { value: "ACHManual", label: "ACH (Manual)" },
+  { value: "ACHManual", label: "ACH (manual)" },
   { value: "Other", label: "Other" },
 ];
 
@@ -102,7 +102,7 @@ export function BulkMarkPaidDialog({
             {t("Cancel")}
           </Button>
           <Button disabled={pending} onClick={() => onConfirm(paymentMethod, paymentReference)}>
-            {t("Mark Paid")}
+            {t("Mark paid")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -35,7 +35,7 @@ export function FuelSurchargeChangeDialog({ change, onResolve }: FuelSurchargeCh
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <FuelIcon className="text-primary size-4" />
-            {t("Fuel Surcharge Re-Rated")}
+            {t("Fuel surcharge re-rated")}
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-2">
             <span className="block">
@@ -60,10 +60,10 @@ export function FuelSurchargeChangeDialog({ change, onResolve }: FuelSurchargeCh
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => onResolve("keep")}>
-            {t("Keep Original{0}", change ? ` (${money(change.previousAmount)})` : "")}
+            {t("Keep original{0}", change ? ` (${money(change.previousAmount)})` : "")}
           </AlertDialogCancel>
           <AlertDialogAction onClick={() => onResolve("replace")}>
-            {t("Use New Amount{0}", change ? ` (${money(change.nextAmount)})` : "")}
+            {t("Use new amount{0}", change ? ` (${money(change.nextAmount)})` : "")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

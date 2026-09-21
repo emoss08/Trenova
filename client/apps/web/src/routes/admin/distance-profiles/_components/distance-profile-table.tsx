@@ -78,7 +78,7 @@ export default function DistanceProfileTable() {
   const contextMenuActions: RowAction<DistanceProfileRow>[] = [
     {
       id: "set-default",
-      label: t("Set Default"),
+      label: t("Set default"),
       icon: CheckCircleIcon,
       disabled: (row) => row.original.isDefault || row.original.status !== "Active",
       onClick: handleSetDefault,
@@ -118,7 +118,7 @@ export default function DistanceProfileTable() {
             <AlertDialogMedia>
               <TrashIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>{t("Delete Distance Profile")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete distance profile")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t(
                 "Are you sure you want to delete this distance profile? Default profiles cannot be deleted.",

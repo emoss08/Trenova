@@ -77,7 +77,7 @@ describe("InvoiceItemCard for voided and disputed invoices", () => {
 
     await user.pointer({ keys: "[MouseRight]", target: screen.getByText("INV-1") });
 
-    expect(await screen.findByRole("menuitem", { name: "Post Invoice" })).toHaveAttribute(
+    expect(await screen.findByRole("menuitem", { name: "Post invoice" })).toHaveAttribute(
       "aria-disabled",
       "true",
     );

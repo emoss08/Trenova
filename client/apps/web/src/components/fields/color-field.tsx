@@ -142,7 +142,7 @@ fieldInvalidClass,
             <div className="flex w-full items-center gap-1">
               {value ? (
                 <div
-                  className="size-4 rounded bg-cover! bg-center! transition-all"
+                  className="size-4 rounded-md bg-cover! bg-center! transition-all"
                   style={{ background: value }}
                 />
               ) : (
@@ -159,7 +159,7 @@ fieldInvalidClass,
         <div className="flex flex-col gap-1">
           {!hideHeader && (
             <div className="border-border mb-2 flex items-center justify-between border-b">
-              <p className="text-2xs text-left font-normal">{t("Predefined Colors")}</p>
+              <p className="text-2xs text-left font-normal">{t("Predefined colors")}</p>
               <p className="text-2xs text-muted-foreground">{t("Click to select a color")}</p>
             </div>
           )}

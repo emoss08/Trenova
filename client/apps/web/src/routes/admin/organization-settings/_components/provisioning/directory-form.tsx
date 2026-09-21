@@ -11,14 +11,14 @@ export function SCIMDirectoryForm() {
   const { control } = useFormContext<SCIMDirectoryFormValues>();
 
   return (
-    <FormSection title={t("Directory Details")}>
+    <FormSection title={t("Directory details")}>
       <FormGroup cols={2}>
         <FormControl cols="full">
           <InputField
             control={control}
             rules={{ required: true }}
             name="tenantSlug"
-            label={t("Tenant Slug")}
+            label={t("Tenant slug")}
             placeholder="acme-directory"
             description={t("Stable SCIM tenant identifier used by directory sync clients.")}
             maxLength={80}

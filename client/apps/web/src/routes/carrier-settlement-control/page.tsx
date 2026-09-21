@@ -13,7 +13,7 @@ export function CarrierSettlementControlPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Carrier Settlement Control"),
+        title: t("Carrier settlement control"),
         description: t(
           "Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts",
         ),

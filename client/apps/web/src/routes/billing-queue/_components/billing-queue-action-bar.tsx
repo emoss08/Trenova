@@ -82,11 +82,11 @@ export function BillingQueueActionBar({
             disabled={isPending || !currentUser?.id}
           >
             <PlayIcon className="size-3.5" />
-            {t("Start Review")}
+            {t("Start review")}
           </Button>
           <Button size="sm" variant="outline" onClick={onAssignBiller} disabled={isPending}>
             <UserPlusIcon className="size-3.5" />
-            {t("Assign Biller")}
+            {t("Assign biller")}
           </Button>
           <Button
             size="sm"
@@ -141,7 +141,7 @@ export function BillingQueueActionBar({
           <BillingQueueExceptionPopover
             itemId={item.id}
             targetStatus="SentBackToOps"
-            label={t("Send Back")}
+            label={t("Send back")}
             icon={<SendIcon className="size-3.5" />}
             variant="outline"
             disabled={isPending}
@@ -199,7 +199,7 @@ export function BillingQueueActionBar({
             disabled={isPending}
           >
             <UndoIcon className="size-3.5" />
-            {t("Revert to Review")}
+            {t("Revert to review")}
           </Button>
         </div>
       );

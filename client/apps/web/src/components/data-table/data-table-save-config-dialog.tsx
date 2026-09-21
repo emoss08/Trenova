@@ -142,7 +142,7 @@ export function DataTableSaveConfigDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>{t("Save View")}</DialogTitle>
+          <DialogTitle>{t("Save view")}</DialogTitle>
           <DialogDescription>
             {t("Save the current table configuration for quick access later.")}
           </DialogDescription>
@@ -199,7 +199,7 @@ export function DataTableSaveConfigDialog({
               {t("Cancel")}
             </Button>
             <Button type="submit" isLoading={isSubmitting} loadingText={t("Saving...")}>
-              {t("Save View")}
+              {t("Save view")}
             </Button>
           </DialogFooter>
         </Form>

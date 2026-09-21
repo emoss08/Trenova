@@ -45,7 +45,7 @@ export function CustomFieldDefinitionPanel({
         form={form}
         url="/custom-fields/definitions/"
         queryKey="custom-field-definition-list"
-        title={t("Custom Field Definition")}
+        title={t("Custom field definition")}
         fieldKey="label"
         formComponent={<CustomFieldDefinitionForm />}
       />
@@ -59,7 +59,7 @@ export function CustomFieldDefinitionPanel({
       form={form}
       url="/custom-fields/definitions/"
       queryKey="custom-field-definition-list"
-      title={t("Custom Field Definition")}
+      title={t("Custom field definition")}
       formComponent={<CustomFieldDefinitionForm />}
     />
   );

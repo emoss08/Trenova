@@ -76,9 +76,9 @@ export function getColumns(t: TranslateFn): ColumnDef<EquipmentType>[] {
     },
     {
       accessorKey: "class",
-      header: t("Equip. Class"),
+      header: t("Equip. class"),
       meta: {
-        label: t("Equip. Class"),
+        label: t("Equip. class"),
         apiField: "class",
         filterable: true,
         sortable: true,

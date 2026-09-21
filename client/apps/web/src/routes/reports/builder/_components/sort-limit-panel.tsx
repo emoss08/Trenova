@@ -111,7 +111,7 @@ export function SortLimitPanel({
       </div>
       <div className="flex items-center gap-2">
         <Label htmlFor="report-limit" className="text-muted-foreground text-xs">
-          {t("Row Limit")}
+          {t("Row limit")}
         </Label>
         <Input
           id="report-limit"

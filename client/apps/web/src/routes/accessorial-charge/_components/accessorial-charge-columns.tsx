@@ -48,7 +48,7 @@ function MethodBadge({ method }: { method: AccessorialChargeRow["method"] }) {
     },
     PerUnit: {
       accent: "accent-indigo",
-      text: t("Per Unit"),
+      text: t("Per unit"),
     },
     Percentage: {
       accent: "accent-violet",

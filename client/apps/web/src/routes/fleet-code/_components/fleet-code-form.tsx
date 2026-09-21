@@ -52,8 +52,8 @@ export function FleetCodeForm() {
           type="number"
           control={control}
           name="deadheadGoal"
-          label={t("Deadhead Goal")}
-          placeholder={t("Deadhead Goal")}
+          label={t("Deadhead goal")}
+          placeholder={t("Deadhead goal")}
           description={t("The deadhead goal of the fleet code")}
         />
       </FormControl>
@@ -62,8 +62,8 @@ export function FleetCodeForm() {
           type="number"
           control={control}
           name="revenueGoal"
-          label={t("Revenue Goal")}
-          placeholder={t("Revenue Goal")}
+          label={t("Revenue goal")}
+          placeholder={t("Revenue goal")}
           description={t("The revenue goal of the fleet code")}
         />
       </FormControl>
@@ -81,7 +81,7 @@ export function FleetCodeForm() {
           name="managerId"
           control={control}
           label={t("Manager")}
-          placeholder={t("Select Manager")}
+          placeholder={t("Select manager")}
           description={t("Select the manager of the fleet code")}
         />
       </FormControl>

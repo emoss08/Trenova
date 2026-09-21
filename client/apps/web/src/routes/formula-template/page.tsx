@@ -11,7 +11,7 @@ export function FormulaTemplatesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Formula Templates"),
+        title: t("Formula templates"),
         description: t("Manage and configure formula templates for your organization"),
       }}
     >

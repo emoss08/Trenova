@@ -35,9 +35,9 @@ const FIELD_KEY_OPTIONS = [
   { value: "addressLine2", label: "Address Line 2" },
   { value: "city", label: "City" },
   { value: "state", label: "State" },
-  { value: "postalCode", label: "Postal Code" },
+  { value: "postalCode", label: "Postal code" },
   { value: "date", label: "Date" },
-  { value: "timeWindow", label: "Time Window" },
+  { value: "timeWindow", label: "Time window" },
 ];
 
 export function StopRuleEditor() {
@@ -86,7 +86,7 @@ export function StopRuleEditor() {
           }
         >
           <PlusIcon className="size-3" />
-          {t("Add Stop")}
+          {t("Add stop")}
         </Button>
       }
     >
@@ -178,7 +178,7 @@ function StopItem({
                 <NumberField
                   control={control}
                   name={`ruleDocument.stops.${index}.sequenceStart`}
-                  label={t("Sequence Start")}
+                  label={t("Sequence start")}
                   description={t("Starting sequence number for this stop type")}
                 />
               </FormControl>
@@ -186,7 +186,7 @@ function StopItem({
                 <TagInput
                   control={control}
                   name={`ruleDocument.stops.${index}.sectionNames`}
-                  label={t("Section Names")}
+                  label={t("Section names")}
                   description={t("Restrict stop extraction to these document sections")}
                   placeholder={t("Add section...")}
                 />
@@ -195,7 +195,7 @@ function StopItem({
                 <TagInput
                   control={control}
                   name={`ruleDocument.stops.${index}.startAnchors`}
-                  label={t("Start Anchors")}
+                  label={t("Start anchors")}
                   description={t("Text that marks the beginning of stop data")}
                   placeholder={t("Add anchor...")}
                 />
@@ -204,7 +204,7 @@ function StopItem({
                 <TagInput
                   control={control}
                   name={`ruleDocument.stops.${index}.endAnchors`}
-                  label={t("End Anchors")}
+                  label={t("End anchors")}
                   description={t("Text that marks the end of stop data")}
                   placeholder={t("Add anchor...")}
                 />
@@ -213,7 +213,7 @@ function StopItem({
                 <TagInput
                   control={control}
                   name={`ruleDocument.stops.${index}.appointmentPatterns`}
-                  label={t("Appointment Patterns")}
+                  label={t("Appointment patterns")}
                   description={t("Regex patterns to extract appointment windows")}
                   placeholder={t("Add regex...")}
                 />
@@ -230,7 +230,7 @@ function StopItem({
                 <SwitchField
                   control={control}
                   name={`ruleDocument.stops.${index}.allowMultiple`}
-                  label={t("Allow Multiple")}
+                  label={t("Allow multiple")}
                   description={t("Allow multiple instances of this stop type")}
                 />
               </FormControl>
@@ -285,11 +285,11 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
           }
         >
           <PlusIcon className="size-3" />
-          {t("Add Extractor")}
+          {t("Add extractor")}
         </Button>
       </div>
       {fields.map((field, extIdx) => (
-        <div key={field.id} className="bg-background rounded border p-3">
+        <div key={field.id} className="bg-background rounded-md border p-3">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-muted-foreground text-xs font-medium">
               {field.fieldKey || t("Extractor {0}", extIdx + 1)}
@@ -309,7 +309,7 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
               <SelectField
                 control={control}
                 name={`ruleDocument.stops.${stopIndex}.extractors.${extIdx}.fieldKey`}
-                label={t("Field Key")}
+                label={t("Field key")}
                 options={FIELD_KEY_OPTIONS}
               />
             </FormControl>
@@ -341,7 +341,7 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
               <NumberField
                 control={control}
                 name={`ruleDocument.stops.${stopIndex}.extractors.${extIdx}.confidence`}
-                label={t("Min Confidence")}
+                label={t("Min confidence")}
                 description={t("0.0 to 1.0")}
               />
             </FormControl>

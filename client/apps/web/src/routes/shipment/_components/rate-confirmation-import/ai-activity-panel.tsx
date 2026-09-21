@@ -814,7 +814,7 @@ export default function AIActivityPanel({
       <div className="shrink-0 border-b px-3 py-2.5">
         <div className="flex items-center gap-2">
           <AssistMark className="text-muted-foreground size-3.5" />
-          <span className="text-xs font-medium">{t("AI Assistant")}</span>
+          <span className="text-xs font-medium">{t("AI assistant")}</span>
         </div>
         <div className="mt-2">
           <div className="text-2xs text-muted-foreground mb-1 flex items-center justify-between">

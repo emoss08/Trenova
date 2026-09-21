@@ -209,11 +209,11 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
     >
       <Button size="sm" className="cursor-pointer" variant="outline" onClick={() => setOpen(true)}>
         <WalletCardsIcon className="size-3.5" />
-        {t("Adjust Invoice")}
+        {t("Adjust invoice")}
       </Button>
       <DialogContent size="xl" className="gap-0 p-0">
         <DialogHeader className="border-border border-b px-4 py-3">
-          <DialogTitle>{t("Invoice Adjustment")}</DialogTitle>
+          <DialogTitle>{t("Invoice adjustment")}</DialogTitle>
           <DialogDescription>
             {t(
               "Preview and submit a policy-controlled credit, reversal, or credit-and-rebill flow.",
@@ -266,7 +266,7 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
               type="submit"
               disabled={submitMutation.isPending || createDraftMutation.isPending || !draft}
             >
-              {preview?.requiresApproval ? t("Submit for Approval") : t("Execute")}
+              {preview?.requiresApproval ? t("Submit for approval") : t("Execute")}
             </Button>
           </DialogFooter>
         </Form>

@@ -128,7 +128,7 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
             loadingText={t("Testing...")}
             disabled={configQuery.isLoading || saveMutation.isPending}
           >
-            {t("Test Connection")}
+            {t("Test connection")}
           </Button>
           <div className="flex flex-col-reverse gap-2 sm:flex-row">
             <Button type="button" variant="outline" onClick={onClose}>
@@ -140,7 +140,7 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
               loadingText={t("Saving...")}
               disabled={configQuery.isLoading}
             >
-              {t("Save Changes")}
+              {t("Save changes")}
             </Button>
           </div>
         </DialogFooter>
@@ -190,14 +190,14 @@ function PCMilerFormHeader() {
           <div className="bg-muted-foreground size-1 rounded-full" />
           <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
-        <LazyImage src={logo} alt={t("PC*Miler Logo")} className="h-8 max-w-24 object-contain" />
+        <LazyImage src={logo} alt={t("PC*Miler logo")} className="h-8 max-w-24 object-contain" />
       </div>
       <DialogHeader>
         <DialogTitle>{t("Connect with PC*Miler")}</DialogTitle>
         <DialogDescription>
           {t("Configure mileage rating with")}{" "}
           <ExternalLink href="https://developer.trimblemaps.com/">
-            {t("Trimble Maps APIs.")}
+            {t("Trimble maps APIs.")}
           </ExternalLink>
         </DialogDescription>
       </DialogHeader>

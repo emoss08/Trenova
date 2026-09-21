@@ -71,7 +71,7 @@ export function DataRetentionPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Data Retention"),
+        title: t("Data retention"),
         description: t(
           "Configure how long audit entries and raw EDI payloads are kept before the nightly purge jobs remove them.",
         ),
@@ -90,7 +90,7 @@ export function DataRetentionPage() {
             void handleSubmit((values) => mutation.mutate(values))(event);
           }}
         >
-          <FormSection title={t("Retention Windows")} className="bg-muted/20 rounded-md border p-3">
+          <FormSection title={t("Retention windows")} className="bg-muted/20 rounded-md border p-3">
             <FormGroup cols={1}>
               <FormControl>
                 <NumberField
@@ -128,7 +128,7 @@ export function DataRetentionPage() {
           {canUpdate && (
             <div className="mt-3 flex justify-end">
               <Button type="submit" isLoading={mutation.isPending}>
-                {t("Save Settings")}
+                {t("Save settings")}
               </Button>
             </div>
           )}

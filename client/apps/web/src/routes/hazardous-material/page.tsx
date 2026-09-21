@@ -11,7 +11,7 @@ export function HazardousMaterialsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Hazardous Materials"),
+        title: t("Hazardous materials"),
         description: t("Manage and configure hazardous materials for your organization"),
       }}
     >

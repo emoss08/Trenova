@@ -651,7 +651,7 @@ function DayOverflow({
             data-testid={`pto-overflow-${day.key}`}
             aria-label={`${count} more on ${day.key}`}
             onMouseDown={(event) => event.stopPropagation()}
-            className="text-muted-foreground hover:bg-accent hover:text-foreground absolute left-1 z-10 inline-flex h-4 items-center rounded px-1 text-2xs font-medium tabular-nums transition-colors"
+            className="text-muted-foreground hover:bg-accent hover:text-foreground absolute left-1 z-10 inline-flex h-4 items-center rounded-md px-1 text-2xs font-medium tabular-nums transition-colors"
             style={{ top }}
           />
         }

@@ -115,7 +115,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
         </FormControl>
       </FormGroup>
       <FormSection
-        title={t("Date Configuration")}
+        title={t("Date configuration")}
         description={
           isEdit
             ? t("The calendar is fixed once the fiscal year is created")
@@ -127,7 +127,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             <SwitchField
               control={control}
               name="isCalendarYear"
-              label={t("Calendar Year")}
+              label={t("Calendar year")}
               description={t("Standard Jan 1 - Dec 31 period (automatically sets dates)")}
               position="left"
               readOnly={isEdit}
@@ -142,7 +142,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               rules={{ required: true }}
               control={control}
               name="startDate"
-              label={t("Start Date")}
+              label={t("Start date")}
               placeholder={t("Select start date")}
               description={t("First day of fiscal period (UTC)")}
               timezone={FISCAL_CALENDAR_TIMEZONE}
@@ -155,7 +155,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               rules={{ required: true }}
               control={control}
               name="endDate"
-              label={t("End Date")}
+              label={t("End date")}
               placeholder={t("Select end date")}
               description={t("Last day of fiscal period (UTC)")}
               timezone={FISCAL_CALENDAR_TIMEZONE}
@@ -165,7 +165,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
         </FormGroup>
       </FormSection>
       <FormSection
-        title={t("Year-End Settings")}
+        title={t("Year-end settings")}
         description={t("Post-close adjustment configuration")}
       >
         <FormGroup cols={2}>
@@ -173,7 +173,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             <SwitchField
               control={control}
               name="allowAdjustingEntries"
-              label={t("Allow Adjusting Entries")}
+              label={t("Allow adjusting entries")}
               description={t("Permit accounting adjustments after year-end close")}
               position="left"
               outlined
@@ -183,13 +183,13 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
         </FormGroup>
       </FormSection>
       {isEdit && (
-        <FormSection title={t("System Settings")} description={t("Active fiscal year designation")}>
+        <FormSection title={t("System settings")} description={t("Active fiscal year designation")}>
           <FormGroup cols={1}>
             <FormControl>
               <SwitchField
                 control={control}
                 name="isCurrent"
-                label={t("Current Fiscal Year")}
+                label={t("Current fiscal year")}
                 description={t(
                   "Active year for transaction posting (only one allowed per organization)",
                 )}
@@ -203,7 +203,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
       )}
 
       {isEdit && (
-        <FormSection title={t("Fiscal Periods")} description={t("Manage fiscal periods")}>
+        <FormSection title={t("Fiscal periods")} description={t("Manage fiscal periods")}>
           <LazyLoadComponent>
             <FiscalPeriodTable
               periods={periods}

@@ -66,7 +66,7 @@ function FilterToggleRow({
     <button
       type="button"
       className={cn(
-        "hover:bg-accent flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs",
+        "hover:bg-accent flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs",
         checked && "bg-accent",
       )}
       onClick={onToggle}

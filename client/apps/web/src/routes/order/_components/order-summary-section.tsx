@@ -94,7 +94,7 @@ export function OrderSummarySection() {
 
   return (
     <FormSection
-      title={t("Accounts Receivable")}
+      title={t("Accounts receivable")}
       description={t("The commercial rollup across every leg and order-level charge")}
       className="border-border border-t pt-4"
       action={
@@ -109,13 +109,13 @@ export function OrderSummarySection() {
               onClick={() => close()}
             >
               <CheckCircle2Icon className="size-3" />
-              {t("Close Order")}
+              {t("Close order")}
             </Button>
           )}
           {canCancel && (
             <Button type="button" variant="outline" size="xxs" onClick={() => setCancelOpen(true)}>
               <BanIcon className="text-destructive size-3" />
-              {t("Cancel Order")}
+              {t("Cancel order")}
             </Button>
           )}
         </div>
@@ -134,7 +134,7 @@ export function OrderSummarySection() {
           value={formatAmount(order.totalAmount)}
         />
         <SummaryStat
-          label={t("Quote Variance")}
+          label={t("Quote variance")}
           value={
             order.quotedAmount != null && order.totalAmount != null
               ? formatCurrency(Number(order.totalAmount) - Number(order.quotedAmount), currency)

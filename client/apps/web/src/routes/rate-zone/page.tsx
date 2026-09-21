@@ -11,7 +11,7 @@ export function RateZonePage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Rate Zones"),
+        title: t("Rate zones"),
         description: t(
           "Name a market area once and price against it, instead of listing every postal prefix it covers",
         ),

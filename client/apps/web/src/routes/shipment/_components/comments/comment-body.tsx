@@ -36,7 +36,7 @@ export function CommentBody({ comment }: { comment: LocalShipmentComment }) {
         <button
           key={key}
           type="button"
-          className="cursor-pointer rounded bg-accent-violet/10 px-0.5 font-medium text-accent-violet-on-subtle hover:bg-accent-violet/20"
+          className="cursor-pointer rounded-md bg-accent-violet/10 px-0.5 font-medium text-accent-violet-on-subtle hover:bg-accent-violet/20"
           onClick={() => handleEntityRefClick(attrs)}
         >
           #{t(attrs.label)}

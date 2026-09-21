@@ -654,7 +654,7 @@ function ScheduleForm({
         <EmailChipsField
           control={control}
           name="emailRecipients"
-          label={t("Email Recipients")}
+          label={t("Email recipients")}
           placeholder={t("Add an email and press Enter")}
           description={t(
             "Each recipient gets an email with a link to the report when it completes.",
@@ -685,7 +685,7 @@ function ScheduleForm({
         <UserMultiSelectAutocompleteField<ScheduleFormValues>
           control={control}
           name="notifyUserIds"
-          label={t("In-App Recipients")}
+          label={t("In-app recipients")}
           placeholder={t("Search teammates...")}
           description={t(
             "Teammates get an in-app notification with the download when it completes.",
@@ -1001,7 +1001,7 @@ export function ReportSchedulesDialog({
                 onSubmit={handleSubmit}
                 onCancel={closeForm}
                 submitting={updateSchedule.isPending}
-                submitLabel={t("Save Changes")}
+                submitLabel={t("Save changes")}
                 measures={measures}
               />
             ) : (
@@ -1023,13 +1023,13 @@ export function ReportSchedulesDialog({
               onSubmit={handleSubmit}
               onCancel={closeForm}
               submitting={createSchedule.isPending}
-              submitLabel={t("Create Schedule")}
+              submitLabel={t("Create schedule")}
               measures={measures}
             />
           ) : (
             <Button variant="outline" onClick={() => setEditing("new")}>
               <PlusIcon className="size-4" />
-              {t("Add Schedule")}
+              {t("Add schedule")}
             </Button>
           )}
         </div>

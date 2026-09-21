@@ -26,7 +26,7 @@ import { DocumentTypeForm } from "./document-type-form";
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
-  { id: "save-close", label: "Save & Close" },
+  { id: "save-close", label: "Save & close" },
 ];
 
 export function DocumentTypePanel({
@@ -60,7 +60,7 @@ export function DocumentTypePanel({
       form={form}
       url="/document-types/"
       queryKey="document-type-list"
-      title={t("Document Type")}
+      title={t("Document type")}
       formComponent={<DocumentTypeForm />}
     />
   );
@@ -195,13 +195,13 @@ function DocumentTypeEditPanel({ open, onOpenChange, row, form }: DocumentTypeEd
       }
     >
       {!row ? (
-        <ComponentLoader message={t("Loading Document Type...")} />
+        <ComponentLoader message={t("Loading document type...")} />
       ) : (
         <div className="flex flex-col gap-6">
           {isSystem && (
             <Alert variant="info">
               <CircleAlertIcon />
-              <AlertTitle>{t("System Document Type")}</AlertTitle>
+              <AlertTitle>{t("System document type")}</AlertTitle>
               <AlertDescription>
                 {t("This is a system document type and cannot be modified.")}
               </AlertDescription>

@@ -12,7 +12,7 @@ export function FuelFeedRunsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Feed Runs"),
+        title: t("Feed runs"),
         description: t(
           "Every time a connected fuel card feed has read your transactions, and what became of the rows. Rows a run could not place wait here until the card they were on is assigned or the unit they name is added.",
         ),

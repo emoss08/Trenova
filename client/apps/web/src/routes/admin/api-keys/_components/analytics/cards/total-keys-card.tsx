@@ -14,7 +14,7 @@ export function TotalKeysCard({ data }: Props) {
 
   return (
     <KPICard
-      label={t("Total Keys")}
+      label={t("Total keys")}
       value={count.toLocaleString()}
       icon={KeyRound}
       detail={`+${newThisMonth} this month`}

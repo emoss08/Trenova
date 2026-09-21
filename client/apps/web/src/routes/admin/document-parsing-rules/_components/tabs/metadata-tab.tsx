@@ -39,7 +39,7 @@ function PublishedVersionInfo({ ruleSet }: { ruleSet: RuleSet }) {
 
   return (
     <FormSection
-      title={t("Published Version")}
+      title={t("Published version")}
       description={t("The currently active version used for document parsing in production.")}
     >
       {publishedVersion ? (
@@ -63,7 +63,7 @@ function PublishedVersionInfo({ ruleSet }: { ruleSet: RuleSet }) {
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground">{t("Parser Mode")}</p>
+            <p className="text-muted-foreground">{t("Parser mode")}</p>
             <p className="font-medium capitalize">
               {publishedVersion.parserMode.replace(/_/g, " ")}
             </p>
@@ -136,7 +136,7 @@ function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
             </Alert>
           )} */}
           <FormSection
-            title={t("Rule Set Details")}
+            title={t("Rule set details")}
             description={t("Configure the name, document kind, and priority for this rule set.")}
           >
             <FormGroup cols={2}>
@@ -154,7 +154,7 @@ function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
                 <SelectField
                   control={control}
                   name="documentKind"
-                  label={t("Document Kind")}
+                  label={t("Document kind")}
                   options={documentKindChoices}
                   description={t("The type of document this rule set is designed to parse.")}
                   rules={{ required: true }}
@@ -194,7 +194,7 @@ function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
             </FormGroup>
           </FormSection>
         </div>
-        <FormSaveDock saveButtonContent={t("Save Changes")} />
+        <FormSaveDock saveButtonContent={t("Save changes")} />
       </Form>
     </FormProvider>
   );

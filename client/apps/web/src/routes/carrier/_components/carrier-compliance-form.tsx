@@ -63,7 +63,7 @@ function CarrierInsurancePolicyEditor() {
               <SelectField
                 control={control}
                 name={`insurancePolicies.${index}.policyType`}
-                label={t("Policy Type")}
+                label={t("Policy type")}
                 placeholder={t("Select policy type")}
                 rules={{ required: true }}
                 options={carrierInsurancePolicyTypeChoices}
@@ -74,7 +74,7 @@ function CarrierInsurancePolicyEditor() {
               <InputField
                 control={control}
                 name={`insurancePolicies.${index}.policyNumber`}
-                label={t("Policy Number")}
+                label={t("Policy number")}
                 placeholder={t("e.g., AL-1234567")}
                 rules={{ required: true }}
                 description={t("Policy number as issued by the insurance provider.")}
@@ -96,7 +96,7 @@ function CarrierInsurancePolicyEditor() {
               <NumberField
                 control={control}
                 name={`insurancePolicies.${index}.coverageAmount`}
-                label={t("Coverage Amount")}
+                label={t("Coverage amount")}
                 placeholder="1,000,000"
                 sideText="$"
                 rules={{ required: true }}
@@ -107,8 +107,8 @@ function CarrierInsurancePolicyEditor() {
               <AutoCompleteDateField
                 control={control}
                 name={`insurancePolicies.${index}.effectiveDate`}
-                label={t("Effective Date")}
-                placeholder={t("Effective Date")}
+                label={t("Effective date")}
+                placeholder={t("Effective date")}
                 rules={{ required: true }}
                 description={t("Date coverage under this policy begins.")}
               />
@@ -117,8 +117,8 @@ function CarrierInsurancePolicyEditor() {
               <AutoCompleteDateField
                 control={control}
                 name={`insurancePolicies.${index}.expirationDate`}
-                label={t("Expiration Date")}
-                placeholder={t("Expiration Date")}
+                label={t("Expiration date")}
+                placeholder={t("Expiration date")}
                 rules={{ required: true }}
                 description={t("Date coverage under this policy ends.")}
               />
@@ -155,7 +155,7 @@ export function CarrierComplianceForm() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("Compliance Status")}
+        title={t("Compliance status")}
         description={t("Qualification standing and FMCSA safety rating for this carrier.")}
       >
         <FormGroup cols={2}>
@@ -164,8 +164,8 @@ export function CarrierComplianceForm() {
               control={control}
               rules={{ required: true }}
               name="complianceStatus"
-              label={t("Compliance Status")}
-              placeholder={t("Compliance Status")}
+              label={t("Compliance status")}
+              placeholder={t("Compliance status")}
               description={t(
                 "Whether the carrier is qualified to haul freight for your organization.",
               )}
@@ -177,8 +177,8 @@ export function CarrierComplianceForm() {
               control={control}
               rules={{ required: true }}
               name="safetyRating"
-              label={t("Safety Rating")}
-              placeholder={t("Safety Rating")}
+              label={t("Safety rating")}
+              placeholder={t("Safety rating")}
               description={t("Most recent FMCSA safety rating on record for this carrier.")}
               options={carrierSafetyRatingChoices}
             />
@@ -198,7 +198,7 @@ export function CarrierComplianceForm() {
                 control={control}
                 rules={{ required: true }}
                 name="disqualifiedReason"
-                label={t("Disqualification Reason")}
+                label={t("Disqualification reason")}
                 placeholder={t("Reason the carrier was disqualified")}
                 description={t(
                   "Required when a carrier is disqualified. Recorded for audit purposes.",
@@ -210,7 +210,7 @@ export function CarrierComplianceForm() {
       </FormSection>
 
       <FormSection
-        title={t("Insurance Policies")}
+        title={t("Insurance policies")}
         description={t("Active insurance coverage on file for this carrier.")}
       >
         <CarrierInsurancePolicyEditor />

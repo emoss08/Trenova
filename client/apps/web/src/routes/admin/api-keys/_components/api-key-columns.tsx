@@ -81,7 +81,7 @@ export function getColumns(t: TranslateFn): ColumnDef<ApiKeyRow>[] {
     },
     {
       accessorKey: "lastUsedAt",
-      header: t("Last Used"),
+      header: t("Last used"),
       cell: ({ row }) =>
         row.original.lastUsedAt ? (
           <HoverCardTimestamp timestamp={row.original.lastUsedAt} />
@@ -89,7 +89,7 @@ export function getColumns(t: TranslateFn): ColumnDef<ApiKeyRow>[] {
           <span className="text-muted-foreground">{t("Never")}</span>
         ),
       meta: {
-        label: t("Last Used"),
+        label: t("Last used"),
         apiField: "lastUsedAt",
         filterable: false,
         sortable: true,

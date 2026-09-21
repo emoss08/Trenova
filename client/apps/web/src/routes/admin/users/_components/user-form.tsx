@@ -47,7 +47,7 @@ export function UserForm({
           control={control}
           rules={{ required: true }}
           name="name"
-          label={t("Full Name")}
+          label={t("Full name")}
           placeholder={t("Enter your full name")}
           disabled={isDisabled}
         />
@@ -68,7 +68,7 @@ export function UserForm({
           control={control}
           rules={{ required: true }}
           name="emailAddress"
-          label={t("Email Address")}
+          label={t("Email address")}
           type="email"
           placeholder={t("john@example.com")}
           disabled={isDisabled}
@@ -214,7 +214,7 @@ function OrganizationMembershipSection({
     <FormControl>
       <div className="border-border space-y-3 rounded-lg border p-4">
         <div className="space-y-1">
-          <h4 className="text-sm font-medium">{t("Organization Access")}</h4>
+          <h4 className="text-sm font-medium">{t("Organization access")}</h4>
           <p className="text-muted-foreground text-xs">
             {t("Choose which organizations this user can access in the current business unit.")}
           </p>
@@ -244,7 +244,7 @@ function OrganizationMembershipSection({
                 <span className="inline-flex flex-wrap items-center gap-2">
                   <span>{organization.name}</span>
                   {organization.id === defaultOrganizationID && (
-                    <span className="bg-muted text-xs text-muted-foreground rounded px-1.5 py-0.5">
+                    <span className="bg-muted text-xs text-muted-foreground rounded-md px-1.5 py-0.5">
                       default
                     </span>
                   )}
@@ -281,7 +281,7 @@ function OrganizationMembershipSection({
             isLoading={isSaving}
             loadingText={t("Saving...")}
           >
-            {t("Save Organization Access")}
+            {t("Save organization access")}
           </Button>
         </div>
       </div>

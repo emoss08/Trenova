@@ -32,7 +32,7 @@ export type QueueFilter =
 
 const filterChips: Array<{ value: QueueFilter; label: string }> = [
   { value: "all", label: "All" },
-  { value: "attention", label: "Needs Review" },
+  { value: "attention", label: "Needs review" },
   { value: "Draft", label: "Draft" },
   { value: "PendingApproval", label: "Pending" },
   { value: "Approved", label: "Approved" },

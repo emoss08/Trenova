@@ -100,7 +100,7 @@ const components: Components = {
 
     return (
       <code
-        className="bg-muted rounded px-1 py-0.5 font-mono text-[0.85em]"
+        className="bg-muted rounded-md px-1 py-0.5 font-mono text-[0.85em]"
         {...(props as ComponentProps<"code">)}
       >
         {children}

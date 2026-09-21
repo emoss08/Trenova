@@ -282,7 +282,7 @@ function ResolvedVariablesView({
         >
           {isOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
           <Braces className="size-3" />
-          {t("Resolved Variables ({0})", count)}
+          {t("Resolved variables ({0})", count)}
         </button>
         {onUseValues && (
           <Button
@@ -367,7 +367,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
       <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
         <div className="flex items-center gap-2">
           <FlaskConical className="text-muted-foreground size-4" />
-          <span className="text-sm font-semibold">{t("Live Preview")}</span>
+          <span className="text-sm font-semibold">{t("Live preview")}</span>
           {isPending ? (
             <span className="text-muted-foreground text-2xs flex items-center gap-1">
               <Spinner className="size-3" />
@@ -493,7 +493,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                     isValid ? "text-success-subtle-foreground" : "text-danger-subtle-foreground",
                   )}
                 >
-                  {isValid ? t("Expression Valid") : t("Expression Invalid")}
+                  {isValid ? t("Expression valid") : t("Expression invalid")}
                 </span>
                 {isValid && numericResult !== null && onPinScenario && (
                   <Tooltip>
@@ -524,7 +524,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                 {isValid && result.result !== undefined && (
                   <div className="space-y-1">
                     <div className="text-muted-foreground text-xs font-medium">
-                      {t("Computed Charge")}
+                      {t("Computed charge")}
                     </div>
                     <span className="text-foreground font-mono text-3xl font-semibold tabular-nums">
                       {typeof result.result === "number"
@@ -539,7 +539,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                 {!isValid && result.error && (
                   <div className="space-y-2">
                     <div className="text-muted-foreground text-xs font-medium">
-                      {t("Error Details")}
+                      {t("Error details")}
                     </div>
                     <pre className="border-danger-border bg-danger-subtle text-danger-subtle-foreground overflow-x-auto rounded-md border p-3 font-mono text-sm wrap-break-word whitespace-pre-wrap">
                       {result.error}

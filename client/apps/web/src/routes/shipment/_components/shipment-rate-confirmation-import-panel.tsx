@@ -399,7 +399,7 @@ export function ShipmentRateConfirmationImportPanel({
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <DialogTitle>{t("Import from Rate Confirmation")}</DialogTitle>
+                <DialogTitle>{t("Import from rate confirmation")}</DialogTitle>
                 <Badge variant="neutral">{t("Guided workflow")}</Badge>
               </div>
               <DialogDescription>
@@ -410,7 +410,7 @@ export function ShipmentRateConfirmationImportPanel({
             </div>
             {currentStep !== "success" ? (
               <Button variant="outline" onClick={closeAndReset}>
-                {t("Cancel Import")}
+                {t("Cancel import")}
               </Button>
             ) : null}
           </div>
@@ -505,17 +505,17 @@ export function ShipmentRateConfirmationImportPanel({
                       <div className="flex flex-wrap gap-2">
                         {currentUpload.status === "error" ? (
                           <Button variant="outline" onClick={() => retryUpload(currentUpload.id)}>
-                            {t("Retry Upload")}
+                            {t("Retry upload")}
                           </Button>
                         ) : null}
                         {currentUpload.status !== "success" ? (
                           <Button variant="outline" onClick={() => cancelUpload(currentUpload.id)}>
-                            {t("Cancel Upload")}
+                            {t("Cancel upload")}
                           </Button>
                         ) : null}
                         {currentUpload.status === "error" ? (
                           <Button variant="ghost" onClick={() => removeUpload(currentUpload.id)}>
-                            {t("Remove File")}
+                            {t("Remove file")}
                           </Button>
                         ) : null}
                       </div>
@@ -544,13 +544,13 @@ export function ShipmentRateConfirmationImportPanel({
                   showLabel
                 />
                 <DescriptionList columns={3} className="rounded-lg border p-3">
-                  <DescriptionItem label={t("Uploaded File")}>
+                  <DescriptionItem label={t("Uploaded file")}>
                     {importedDocument?.originalName ?? currentUpload?.file.name ?? t("Waiting")}
                   </DescriptionItem>
-                  <DescriptionItem label={t("Content Status")}>
+                  <DescriptionItem label={t("Content status")}>
                     {importedDocument?.contentStatus ?? t("Uploading")}
                   </DescriptionItem>
-                  <DescriptionItem label={t("Draft Status")}>
+                  <DescriptionItem label={t("Draft status")}>
                     {importedDocument?.shipmentDraftStatus ?? t("Waiting")}
                   </DescriptionItem>
                 </DescriptionList>
@@ -570,11 +570,11 @@ export function ShipmentRateConfirmationImportPanel({
                             {retryExtraction.isPending ? (
                               <LoaderCircleIcon className="size-4 animate-spin" />
                             ) : null}
-                            {t("Retry Extraction")}
+                            {t("Retry extraction")}
                           </Button>
                         ) : null}
                         <Button variant="outline" onClick={handleReplaceFile}>
-                          {t("Replace File")}
+                          {t("Replace file")}
                         </Button>
                       </div>
                     </AlertDescription>
@@ -658,7 +658,7 @@ export function ShipmentRateConfirmationImportPanel({
                 )}
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline" render={<Link to="/shipment-management/shipments" />}>
-                    {t("Open Shipments")}
+                    {t("Open shipments")}
                   </Button>
                   <Button onClick={closeAndReset}>{t("Done")}</Button>
                 </div>

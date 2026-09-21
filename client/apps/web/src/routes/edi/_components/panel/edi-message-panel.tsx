@@ -90,7 +90,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
               onClick={() => replayMutation.mutate(detail.id)}
               title={t("Queue this already-delivered document for another delivery to the partner")}
             >
-              {t("Replay Delivery")}
+              {t("Replay delivery")}
             </Button>
           )}
           {canRetry && (
@@ -99,7 +99,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
               isLoading={retryMutation.isPending}
               onClick={() => retryMutation.mutate(detail.id)}
             >
-              {t("Retry Delivery")}
+              {t("Retry delivery")}
             </Button>
           )}
         </>
@@ -107,18 +107,18 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
     >
       <div className="flex min-h-0 flex-col gap-3">
         <DetailSection title={t("Overview")}>
-          <DetailField label={t("Transaction Set")}>
+          <DetailField label={t("Transaction set")}>
             <Badge variant="neutral">{detail.transactionSet}</Badge>
           </DetailField>
           <DetailField label={t("Direction")}>{detail.direction}</DetailField>
           <DetailField label={t("Partner")}>
             <EDIPartnerRef partner={detail.partner} />
           </DetailField>
-          <DetailField label={t("X12 Version")}>{detail.x12Version}</DetailField>
-          <DetailField label={t("ISA Control Number")}>
+          <DetailField label={t("X12 version")}>{detail.x12Version}</DetailField>
+          <DetailField label={t("ISA control number")}>
             <span className="font-mono text-xs">{detail.interchangeControlNumber || "—"}</span>
           </DetailField>
-          <DetailField label={t("GS / ST Control Numbers")}>
+          <DetailField label={t("GS / ST control numbers")}>
             <span className="font-mono text-xs">
               {detail.groupControlNumber || "—"} / {detail.transactionControlNumber || "—"}
             </span>
@@ -138,7 +138,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
               )}
             </DetailField>
             <DetailField label={t("Attempts")}>{detail.deliveryAttempts}</DetailField>
-            <DetailField label={t("Remote Path")}>
+            <DetailField label={t("Remote path")}>
               {detail.deliveryRemotePath ? (
                 <span className="font-mono text-xs">{detail.deliveryRemotePath}</span>
               ) : (
@@ -149,7 +149,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
               {detail.deliverySentAt ? formatToUserTimezone(detail.deliverySentAt) : "—"}
             </DetailField>
             {detail.deliveryLastError && (
-              <DetailField label={t("Last Error")} fullWidth>
+              <DetailField label={t("Last error")} fullWidth>
                 <span className="text-destructive text-xs">{detail.deliveryLastError}</span>
               </DetailField>
             )}

@@ -329,7 +329,7 @@ export function DatabaseSessionsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Database Sessions"),
+        title: t("Database sessions"),
         description: t("Inspect lock contention and manually terminate blocking database sessions"),
       }}
     >

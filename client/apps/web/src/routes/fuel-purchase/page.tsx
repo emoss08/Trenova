@@ -11,7 +11,7 @@ export function FuelPurchasesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Fuel Purchases"),
+        title: t("Fuel purchases"),
         description: t(
           "Every gallon bought for a tractor, keyed by hand or imported from a fuel card statement. Tax-paid gallons credit the jurisdiction they were bought in on the quarterly IFTA return.",
         ),

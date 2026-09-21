@@ -117,7 +117,7 @@ export function TimelineRowItem({
           aria-expanded={!collapsed}
           aria-label={collapsed ? `Expand ${row.workerName}` : `Collapse ${row.workerName}`}
           onClick={() => onToggleCollapsed(row.key)}
-          className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-5 shrink-0 items-center justify-center rounded transition-colors"
+          className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-5 shrink-0 items-center justify-center rounded-md transition-colors"
         >
           {collapsed ? (
             <ChevronRightIcon className="size-3.5" />

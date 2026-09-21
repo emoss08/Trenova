@@ -31,7 +31,7 @@ export function LinearFeetBar({
     <div className="border-border rounded-lg border p-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs text-muted-foreground font-medium">
-          {t("Linear Feet")}
+          {t("Linear feet")}
         </span>
         <span className={cn("text-xs font-semibold tabular-nums", isOver && "text-destructive")}>
           {t("{0} / {1} ft", totalLinearFeet.toFixed(1), trailerLengthFeet)}

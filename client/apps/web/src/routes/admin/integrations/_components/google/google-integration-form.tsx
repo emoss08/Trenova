@@ -85,7 +85,7 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
           <FormControl cols="full">
             <div className="border-border bg-background flex items-center justify-between rounded-md border p-3">
               <div>
-                <Label htmlFor="google-enabled">{t("Enable Google Maps")}</Label>
+                <Label htmlFor="google-enabled">{t("Enable Google maps")}</Label>
                 <p className="text-muted-foreground text-xs">
                   {t("Toggle integration state for this business unit.")}
                 </p>
@@ -123,7 +123,7 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
             loadingText={t("Saving...")}
             disabled={configQuery.isLoading}
           >
-            {t("Save Changes")}
+            {t("Save changes")}
           </Button>
         </DialogFooter>
       </Form>
@@ -143,14 +143,14 @@ export function GoogleMapsFormHeader() {
           <div className="bg-muted-foreground size-1 rounded-full" />
           <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
-        <LazyImage src={googleMapsPinLogo} alt={t("Google Maps Logo")} className="size-8" />
+        <LazyImage src={googleMapsPinLogo} alt={t("Google maps logo")} className="size-8" />
       </div>
       <DialogHeader>
-        <DialogTitle>{t("Connect with Google Maps")}</DialogTitle>
+        <DialogTitle>{t("Connect with Google maps")}</DialogTitle>
         <DialogDescription>
           {t("To get a Google Maps API key, visit the")}{" "}
           <ExternalLink href="https://console.cloud.google.com/google/maps-apis/overview">
-            {t("Google Cloud Console.")}
+            {t("Google cloud console.")}
           </ExternalLink>
         </DialogDescription>
       </DialogHeader>

@@ -104,7 +104,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TrailerRow>[] {
     },
     {
       accessorKey: "equipmentType",
-      header: t("Equip. Type"),
+      header: t("Equip. type"),
       cell: ({ row }) => {
         const { equipmentType } = row.original;
 
@@ -134,12 +134,12 @@ export function getColumns(t: TranslateFn): ColumnDef<TrailerRow>[] {
         sortable: true,
         filterType: "text",
         defaultFilterOperator: "contains",
-        label: t("Equip. Type"),
+        label: t("Equip. type"),
       },
     },
     {
       accessorKey: "equipmentManufacturer",
-      header: t("Equip. Manufacturer"),
+      header: t("Equip. manufacturer"),
       cell: ({ row }) => {
         const { equipmentManufacturer } = row.original;
         if (!equipmentManufacturer) {
@@ -162,7 +162,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TrailerRow>[] {
     },
     {
       accessorKey: "fleetCode",
-      header: t("Fleet Code"),
+      header: t("Fleet code"),
       cell: ({ row }) => {
         const { fleetCode } = row.original;
         if (!fleetCode) {
@@ -188,7 +188,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TrailerRow>[] {
     },
     {
       accessorKey: "lastKnownLocationName",
-      header: t("Last Known Location"),
+      header: t("Last known location"),
       cell: ({ row }) => {
         const { lastKnownLocationId, lastKnownLocationName } = row.original;
         if (!lastKnownLocationId || !lastKnownLocationName) {
@@ -217,14 +217,14 @@ export function getColumns(t: TranslateFn): ColumnDef<TrailerRow>[] {
       minSize: 180,
       maxSize: 320,
       meta: {
-        label: t("Last Known Location"),
+        label: t("Last known location"),
         filterable: false,
         sortable: false,
       },
     },
     {
       accessorKey: "lastInspectionDate",
-      header: t("Last Inspection Date"),
+      header: t("Last inspection date"),
       cell: ({ row }) => {
         return <LastInspectionDateCell row={row.original} />;
       },
@@ -233,7 +233,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TrailerRow>[] {
       maxSize: 300,
       meta: {
         apiField: "lastInspectionDate",
-        label: t("Last Inspection Date"),
+        label: t("Last inspection date"),
         filterable: true,
         sortable: true,
         filterType: "date",

@@ -139,7 +139,7 @@ function PTOPolicyCreatePanel({
     <FormCreatePanel<PTOPolicyFormValues, PTOPolicyRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("PTO Policy")}
+      title={t("PTO policy")}
       description={t(
         "Define how each type of paid time off accrues, caps, and carries over for the workers you assign to it.",
       )}
@@ -178,7 +178,7 @@ function PTOPolicyEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title={t("PTO Policy")}
+      title={t("PTO policy")}
       fieldKey="code"
       queryKey={PTO_POLICY_LIST_KEY}
       form={form}

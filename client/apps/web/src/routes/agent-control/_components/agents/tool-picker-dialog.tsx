@@ -279,7 +279,7 @@ function ToolRow({
                 onClick={() => onTier(option)}
                 title={allowed ? undefined : t("Above this agent's ceiling")}
                 className={cn(
-                  "ui-focus-ring rounded px-2 py-0.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+                  "ui-focus-ring rounded-md px-2 py-0.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-40",
                   tier === option
                     ? "bg-card text-foreground"
                     : "text-muted-foreground hover:text-foreground",

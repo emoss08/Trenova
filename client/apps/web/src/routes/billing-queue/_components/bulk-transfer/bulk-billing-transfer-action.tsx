@@ -40,7 +40,7 @@ export function BulkBillingTransferAction({
     <>
       <Button size="sm" variant="outline" onClick={() => onOpenChange(true)}>
         <SendIcon className="size-3.5" />
-        {t("Transfer to Billing")}
+        {t("Transfer to billing")}
       </Button>
       {open ? (
         <LazyComponent>

@@ -84,7 +84,7 @@ describe("hasOrganizationCapability", () => {
   it("labels capabilities for user-facing messages", () => {
     expect(organizationCapabilityLabel(OrganizationCapability.Brokerage)).toBe("Brokerage");
     expect(organizationCapabilityLabel(OrganizationCapability.AssetOperations)).toBe(
-      "Asset Operations",
+      "Asset operations",
     );
   });
 });

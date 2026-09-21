@@ -44,7 +44,7 @@ export default function ReportRunsTable({ definitionId }: { definitionId?: strin
       },
       {
         id: "cancel",
-        label: t("Cancel Run"),
+        label: t("Cancel run"),
         icon: BanIcon,
         variant: "destructive",
         hidden: (row) => !isReportRunActive(row.original.status),

@@ -104,7 +104,7 @@ export function ConditionBuilder({ control }: { control: Control<TCASubscription
           <SelectField<TCASubscriptionFormValues>
             control={control}
             name="conditionMatch"
-            label={t("Condition Matching")}
+            label={t("Condition matching")}
             options={MATCH_OPTIONS}
             description={t("How multiple conditions are evaluated together.")}
           />

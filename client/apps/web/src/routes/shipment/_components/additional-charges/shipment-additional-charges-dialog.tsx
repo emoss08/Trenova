@@ -101,7 +101,7 @@ export function AdditionalChargeDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? t("Edit Additional Charge") : t("Add Additional Charge")}
+            {isEditing ? t("Edit additional charge") : t("Add additional charge")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
@@ -114,10 +114,10 @@ export function AdditionalChargeDialog({
             <AccessorialChargeAutocompleteField
               control={control}
               name={`additionalCharges.${index}.accessorialChargeId`}
-              label={t("Accessorial Charge")}
+              label={t("Accessorial charge")}
               clearable
               rules={{ required: true }}
-              placeholder={t("Select Accessorial Charge")}
+              placeholder={t("Select accessorial charge")}
               description={t(
                 "Accessorial charges are additional fees charged for services such as detention, fuel surcharge, and more.",
               )}
@@ -144,7 +144,7 @@ export function AdditionalChargeDialog({
               label={t("Method")}
               options={accessorialChargeMethodChoices}
               rules={{ required: true }}
-              placeholder={t("Select Method")}
+              placeholder={t("Select method")}
               description={t(
                 "Calculation method for this charge (flat rate, per mile, percentage of linehaul, etc.)",
               )}

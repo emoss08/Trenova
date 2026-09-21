@@ -117,7 +117,7 @@ export function SCIMGroupMappingCreatePanel({
       onOpenChange={onOpenChange}
       form={form}
       queryKey={queryKey}
-      title={t("Group Mapping")}
+      title={t("Group mapping")}
       description={t("Map an external SCIM group to a Trenova role.")}
       size="md"
       formComponent={<SCIMGroupMappingForm />}
@@ -158,7 +158,7 @@ function SCIMGroupMappingEditPanel({
       row={row ? (toSCIMGroupMappingFormValuesFromRow(row) as SCIMGroupMappingRecord) : null}
       form={form}
       queryKey={queryKey}
-      title={t("Group Mapping")}
+      title={t("Group mapping")}
       fieldKey="displayName"
       size="md"
       formComponent={<SCIMGroupMappingForm />}

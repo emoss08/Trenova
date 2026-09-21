@@ -82,7 +82,7 @@ export function ShipmentDuplicateDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Duplicate Shipment")}</DialogTitle>
+          <DialogTitle>{t("Duplicate shipment")}</DialogTitle>
           <DialogDescription>{t("Create one or more copies of this shipment.")}</DialogDescription>
         </DialogHeader>
         <Form
@@ -97,7 +97,7 @@ export function ShipmentDuplicateDialog({
               <NumberField
                 control={control}
                 name="count"
-                label={t("Number of Copies")}
+                label={t("Number of copies")}
                 placeholder="1"
                 min={1}
                 max={20}
@@ -108,7 +108,7 @@ export function ShipmentDuplicateDialog({
               <SwitchField
                 control={control}
                 name="overrideDates"
-                label={t("Override Dates")}
+                label={t("Override dates")}
                 description={t(
                   "Reset planned arrival and departure times on the duplicated shipment stops.",
                 )}

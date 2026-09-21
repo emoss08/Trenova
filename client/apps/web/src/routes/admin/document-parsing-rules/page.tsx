@@ -14,7 +14,7 @@ export function DocumentParsingRulesPage() {
     <PageLayout
       className="flex h-[calc(100vh-3rem)] flex-col"
       pageHeaderProps={{
-        title: t("Document Parsing Rules"),
+        title: t("Document parsing rules"),
         description: t(
           "Define provider-specific parsing rules, test with fixtures, and simulate extraction results",
         ),

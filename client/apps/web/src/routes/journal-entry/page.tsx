@@ -45,7 +45,7 @@ export function JournalEntryDetailPage() {
     return (
       <PageLayout
         pageHeaderProps={{
-          title: t("Journal Entry"),
+          title: t("Journal entry"),
           description: t("Loading entry details..."),
         }}
       >
@@ -59,7 +59,7 @@ export function JournalEntryDetailPage() {
     return (
       <PageLayout
         pageHeaderProps={{
-          title: t("Journal Entry"),
+          title: t("Journal entry"),
           description: t("Entry not found."),
           actions: backButton,
         }}
@@ -98,7 +98,7 @@ export function JournalEntryDetailPage() {
         <CardContent>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
             <div>
-              <dt className="text-muted-foreground">{t("Reference Type")}</dt>
+              <dt className="text-muted-foreground">{t("Reference type")}</dt>
               <dd className="mt-0.5 font-medium">{entry.referenceType}</dd>
             </div>
             <div>
@@ -111,7 +111,7 @@ export function JournalEntryDetailPage() {
               </dd>
             </div>
             <div>
-              <dt className="text-muted-foreground">{t("Is Reversal")}</dt>
+              <dt className="text-muted-foreground">{t("Is reversal")}</dt>
               <dd className="mt-0.5">
                 <Badge variant={entry.isReversal ? "warning" : "neutral"}>
                   {entry.isReversal ? t("Yes") : t("No")}
@@ -151,14 +151,14 @@ export function JournalEntryDetailPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>{t("Line Items")}</CardTitle>
+            <CardTitle>{t("Line items")}</CardTitle>
             <div className="flex items-center gap-4 text-sm">
               <span className="text-muted-foreground">
-                {t("Total Debit:")}{" "}
+                {t("Total debit:")}{" "}
                 <AmountDisplay value={entry.totalDebit} className="font-semibold" />
               </span>
               <span className="text-muted-foreground">
-                {t("Total Credit:")}{" "}
+                {t("Total credit:")}{" "}
                 <AmountDisplay value={entry.totalCredit} className="font-semibold" />
               </span>
             </div>

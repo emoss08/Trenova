@@ -11,7 +11,7 @@ export function CarrierSettlementBatchesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Carrier Settlement Batches"),
+        title: t("Carrier settlement batches"),
         description: t("Generate pay-period AP runs, review totals, and export remittance files."),
       }}
     >

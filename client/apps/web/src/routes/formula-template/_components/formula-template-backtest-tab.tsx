@@ -60,12 +60,12 @@ type FormulaTemplateBacktestTabProps = {
 const SOURCE_OPTIONS: { value: CandidateSource; label: string; description: string }[] = [
   {
     value: "editor",
-    label: "Current Expression",
+    label: "Current expression",
     description: "Use the expression currently in the editor",
   },
   {
     value: "version",
-    label: "Saved Version",
+    label: "Saved version",
     description: "Use a previously saved version snapshot",
   },
 ];
@@ -298,7 +298,7 @@ export default function FormulaTemplateBacktestTab({
     <div className="space-y-4">
       <div className="bg-muted/30 rounded-lg border p-3">
         <div className="mb-3">
-          <p className="text-sm font-medium">{t("Backtest Candidate")}</p>
+          <p className="text-sm font-medium">{t("Backtest candidate")}</p>
           <p className="text-muted-foreground mt-0.5 text-xs">
             {t(
               "Re-rate recent shipments priced by this template and compare against their current amounts. Nothing is saved.",
@@ -335,7 +335,7 @@ export default function FormulaTemplateBacktestTab({
           )}
           <div className="w-32">
             <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
-              {t("Shipment Limit")}
+              {t("Shipment limit")}
             </label>
             <NumberFieldRoot
               value={limit}
@@ -360,7 +360,7 @@ export default function FormulaTemplateBacktestTab({
             className="gap-1.5"
           >
             <PlayIcon className="size-3.5" />
-            {t("Run Backtest")}
+            {t("Run backtest")}
           </Button>
         </div>
       </div>

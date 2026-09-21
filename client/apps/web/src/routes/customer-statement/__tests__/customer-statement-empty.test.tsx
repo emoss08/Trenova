@@ -64,11 +64,11 @@ describe("customer statement empty states", () => {
     renderStatement();
     await screen.findByText("Nothing in this period");
 
-    const from = screen.getByLabelText("Start Date");
+    const from = screen.getByLabelText("Start date");
     await user.type(from, "2026-01-01");
     expect(await screen.findByRole("button", { name: "Clear filters" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Clear filters" }));
-    expect(screen.getByLabelText("Start Date")).toHaveValue("");
+    expect(screen.getByLabelText("Start date")).toHaveValue("");
   });
 });

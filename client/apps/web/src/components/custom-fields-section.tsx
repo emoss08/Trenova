@@ -151,7 +151,7 @@ export function CustomFieldsSection<T extends FieldValues>({
   }
 
   return (
-    <FormSection title={t("Custom Fields")}>
+    <FormSection title={t("Custom fields")}>
       <FormGroup cols={2}>
         {sortedFields.map((definition) => (
           <FormControl key={definition.id} cols={definition.fieldType === "boolean" ? "full" : 1}>

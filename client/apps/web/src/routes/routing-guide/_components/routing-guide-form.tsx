@@ -113,7 +113,7 @@ export function RoutingGuideForm() {
               control={control}
               name="name"
               label={t("Name")}
-              placeholder={t("Dallas → Atlanta Dry Van")}
+              placeholder={t("Dallas → atlanta dry van")}
               rules={{ required: true }}
               maxLength={255}
               description={t("Shown wherever a tender references this guide.")}
@@ -164,7 +164,7 @@ export function RoutingGuideForm() {
                   <LocationAutocompleteField
                     control={control}
                     name="originLocationId"
-                    label={t("Origin Location")}
+                    label={t("Origin location")}
                     placeholder={t("Select origin facility")}
                     rules={{ required: true }}
                   />
@@ -173,7 +173,7 @@ export function RoutingGuideForm() {
                   <LocationAutocompleteField
                     control={control}
                     name="destinationLocationId"
-                    label={t("Destination Location")}
+                    label={t("Destination location")}
                     placeholder={t("Select destination facility")}
                     rules={{ required: true }}
                   />
@@ -187,7 +187,7 @@ export function RoutingGuideForm() {
                   <InputField
                     control={control}
                     name="originCity"
-                    label={t("Origin City")}
+                    label={t("Origin city")}
                     placeholder={t("Dallas")}
                     rules={{ required: true }}
                     maxLength={100}
@@ -197,7 +197,7 @@ export function RoutingGuideForm() {
                   <SelectField
                     control={control}
                     name="originState"
-                    label={t("Origin State")}
+                    label={t("Origin state")}
                     placeholder={t("Select state")}
                     rules={{ required: true }}
                     options={usStateAbbreviationChoices}
@@ -207,7 +207,7 @@ export function RoutingGuideForm() {
                   <InputField
                     control={control}
                     name="destinationCity"
-                    label={t("Destination City")}
+                    label={t("Destination city")}
                     placeholder={t("Atlanta")}
                     rules={{ required: true }}
                     maxLength={100}
@@ -217,7 +217,7 @@ export function RoutingGuideForm() {
                   <SelectField
                     control={control}
                     name="destinationState"
-                    label={t("Destination State")}
+                    label={t("Destination state")}
                     placeholder={t("Select state")}
                     rules={{ required: true }}
                     options={usStateAbbreviationChoices}
@@ -232,7 +232,7 @@ export function RoutingGuideForm() {
                   <SelectField
                     control={control}
                     name="originState"
-                    label={t("Origin State")}
+                    label={t("Origin state")}
                     placeholder={t("Select state")}
                     rules={{ required: true }}
                     options={usStateAbbreviationChoices}
@@ -242,7 +242,7 @@ export function RoutingGuideForm() {
                   <SelectField
                     control={control}
                     name="destinationState"
-                    label={t("Destination State")}
+                    label={t("Destination state")}
                     placeholder={t("Select state")}
                     rules={{ required: true }}
                     options={usStateAbbreviationChoices}
@@ -255,7 +255,7 @@ export function RoutingGuideForm() {
       </FormSection>
 
       <FormSection
-        title={t("Carrier Waterfall")}
+        title={t("Carrier waterfall")}
         description={t(
           "Ranked carriers with the rate, offer expiry, and channel each is tendered on",
         )}

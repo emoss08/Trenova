@@ -11,7 +11,7 @@ export function SettlementWorkspacePage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Settlement Workspace"),
+        title: t("Settlement workspace"),
         description: t(
           "Everything needed to run a pay period from one screen — review the queue, transfer pay, manage deductions, and process settlements one at a time or in bulk.",
         ),

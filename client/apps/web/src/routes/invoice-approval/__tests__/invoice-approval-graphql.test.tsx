@@ -230,10 +230,10 @@ describe("pending approvals over GraphQL", () => {
     await screen.findByText("Linehaul");
     await user.click(screen.getByRole("button", { name: "Reject" }));
     await user.type(
-      screen.getByRole("textbox", { name: "Rejection Reason" }),
+      screen.getByRole("textbox", { name: "Rejection reason" }),
       "  Duplicate charge  ",
     );
-    await user.click(screen.getByRole("button", { name: "Confirm Rejection" }));
+    await user.click(screen.getByRole("button", { name: "Confirm rejection" }));
 
     await waitFor(() => expect(mocks.reject).toHaveBeenCalled());
     expect(mocks.reject.mock.calls[0][0]).toEqual({

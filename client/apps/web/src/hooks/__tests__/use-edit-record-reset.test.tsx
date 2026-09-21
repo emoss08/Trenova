@@ -16,7 +16,7 @@ const bareRow: Record = { id: "rag_01", name: "Acme TL 2026", rules: [] };
 const fullRecord: Record = {
   id: "rag_01",
   name: "Acme TL 2026",
-  rules: [{ id: "ragr_01", label: "Dallas to Chicago" }],
+  rules: [{ id: "ragr_01", label: "Dallas to chicago" }],
 };
 
 function harness(options: {
@@ -58,7 +58,7 @@ describe("useEditRecordReset", () => {
       expect(result.current.getValues("rules")).toHaveLength(1);
     });
     expect(fetch).toHaveBeenCalledWith("rag_01");
-    expect(result.current.getValues("rules.0.label")).toBe("Dallas to Chicago");
+    expect(result.current.getValues("rules.0.label")).toBe("Dallas to chicago");
   });
 
   it("never fetches for a create panel, which has no record to load", async () => {

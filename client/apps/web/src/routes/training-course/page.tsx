@@ -11,7 +11,7 @@ export function TrainingCoursesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Training Courses"),
+        title: t("Training courses"),
         description: t(
           "The courses workers can be put through — which are required for each driver type, how they are delivered, what passes, and how long a completion stays valid.",
         ),

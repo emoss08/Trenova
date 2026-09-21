@@ -35,7 +35,7 @@ export function ExpensePanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Driver Expense")}
+      title={t("Driver expense")}
       description={row.worker ? `${row.worker.firstName} ${row.worker.lastName}`.trim() : undefined}
       size="lg"
     >

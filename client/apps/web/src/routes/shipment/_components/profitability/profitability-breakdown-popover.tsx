@@ -16,8 +16,8 @@ import { useState, type ReactNode } from "react";
 const sourceBadges: Record<string, { label: string; className: string }> = {
   Benchmark: { label: "Benchmark", className: "text-2xs" },
   Override: { label: "Override", className: "text-2xs" },
-  GLActual: { label: "GL Actual", className: "text-2xs" },
-  LiveIndex: { label: "Live Fuel", className: "text-2xs" },
+  GLActual: { label: "GL actual", className: "text-2xs" },
+  LiveIndex: { label: "Live fuel", className: "text-2xs" },
 };
 
 export function ProfitabilityBreakdownPopover({
@@ -75,7 +75,7 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
     <>
       <div>
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-medium">{t("Cost Estimate")}</p>
+          <p className="text-sm font-medium">{t("Cost estimate")}</p>
           <Badge variant="neutral" className="text-2xs">
             {formatPerMile(parseDecimal(data.profile.totalCpm))}
           </Badge>

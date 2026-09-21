@@ -349,7 +349,7 @@ function MetricPicker({
               <label
                 key={metric.key}
                 className={cn(
-                  "flex cursor-pointer items-center gap-2 rounded border px-2 py-1.5 text-xs transition-colors",
+                  "flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 text-xs transition-colors",
                   checked ? "border-brand/50 bg-brand/10" : "hover:bg-muted/70 border-transparent",
                   disabled && "cursor-not-allowed opacity-45",
                 )}
@@ -601,7 +601,7 @@ function DashboardPicker({
               aria-selected={dashboardId === entry.id}
               onClick={() => onChange(entry.id)}
               className={cn(
-                "flex w-full flex-col gap-0.5 rounded border px-2 py-1.5 text-left transition-colors",
+                "flex w-full flex-col gap-0.5 rounded-md border px-2 py-1.5 text-left transition-colors",
                 dashboardId === entry.id
                   ? "border-brand/50 bg-brand/10"
                   : "hover:bg-muted/70 border-transparent",

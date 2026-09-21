@@ -169,7 +169,7 @@ export function BlackoutDatesField() {
 
   return (
     <FieldWrapper
-      label={t("Blackout Dates")}
+      label={t("Blackout dates")}
       description={t(
         "Days your facilities are closed. An occurrence landing on one of these follows the exception policy instead of generating a shipment.",
       )}

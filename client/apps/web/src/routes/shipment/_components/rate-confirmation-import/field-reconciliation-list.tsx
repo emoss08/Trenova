@@ -20,15 +20,15 @@ type FieldGroup = {
 
 const FIELD_GROUPS: FieldGroup[] = [
   {
-    label: "Reference Numbers",
+    label: "Reference numbers",
     keys: ["bol", "proNumber", "loadNumber", "referenceNumber", "poNumber", "appointmentNumber"],
   },
   {
-    label: "Rates & Charges",
+    label: "Rates & charges",
     keys: ["rate", "fuelSurcharge", "paymentTerms"],
   },
   {
-    label: "Shipment Details",
+    label: "Shipment details",
     keys: ["equipmentType", "commodity", "weight", "pieces", "serviceType"],
   },
   {

@@ -14,7 +14,7 @@ export function QuickActionsSection() {
 
   return (
     <div className="flex flex-col gap-1">
-      <SidebarSectionLabel>{t("Quick Actions")}</SidebarSectionLabel>
+      <SidebarSectionLabel>{t("Quick actions")}</SidebarSectionLabel>
       <div className="grid grid-cols-2 gap-1.5 px-0.5">
         {actions.map(({ definition, icon: Icon, href, shortLabel }) => (
           <Link

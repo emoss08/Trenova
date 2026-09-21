@@ -13,7 +13,7 @@ export function IftaTaxRatesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("IFTA Tax Rates"),
+        title: t("IFTA tax rates"),
         description: t(
           "The per-gallon rates each jurisdiction publishes for a quarter and fuel type, as the IFTA rate matrix lists them. A return cannot be finalized while any of its member lines is missing a rate.",
         ),

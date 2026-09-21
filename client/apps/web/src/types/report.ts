@@ -475,8 +475,8 @@ export const REPORT_DATE_STYLE_CHOICES: Choice<ReportDateStyle>[] = [
 
 export const REPORT_BOOL_STYLE_CHOICES: Choice<ReportBoolStyle>[] = [
   { value: "yesNo", label: "Yes / No" },
-  { value: "trueFalse", label: "True / False" },
-  { value: "onOff", label: "On / Off" },
+  { value: "trueFalse", label: "True / false" },
+  { value: "onOff", label: "On / off" },
   { value: "check", label: "✓ / ✗" },
   { value: "oneZero", label: "1 / 0" },
 ];
@@ -525,7 +525,7 @@ export const REPORT_NUMERIC_TRANSFORM_CHOICES: Choice<ReportTransformOp>[] = [
 export const REPORT_TEXT_TRANSFORM_CHOICES: Choice<ReportTransformOp>[] = [
   { value: "upper", label: "UPPERCASE" },
   { value: "lower", label: "lowercase" },
-  { value: "title", label: "Title Case" },
+  { value: "title", label: "Title case" },
   { value: "trim", label: "Trim whitespace" },
 ];
 
@@ -538,7 +538,7 @@ export const REPORT_TRANSFORM_LABELS: Record<ReportTransformOp, string> = {
   scale: "Multiply by",
   upper: "UPPERCASE",
   lower: "lowercase",
-  title: "Title Case",
+  title: "Title case",
   trim: "Trim whitespace",
 };
 

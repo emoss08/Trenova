@@ -58,7 +58,7 @@ export function BankReceiptBatchDetailPage() {
       onClick={() => void navigate("/accounting/reconciliation/import-batches")}
     >
       <ArrowLeftIcon className="size-3.5" />
-      {t("Back to Batches")}
+      {t("Back to batches")}
     </Button>
   );
 
@@ -66,7 +66,7 @@ export function BankReceiptBatchDetailPage() {
     return (
       <PageLayout
         pageHeaderProps={{
-          title: t("Import Batch"),
+          title: t("Import batch"),
           description: t("Loading..."),
         }}
       >
@@ -81,7 +81,7 @@ export function BankReceiptBatchDetailPage() {
     return (
       <PageLayout
         pageHeaderProps={{
-          title: t("Import Batch"),
+          title: t("Import batch"),
           description: t("Failed to load batch details."),
           actions: backButton,
         }}

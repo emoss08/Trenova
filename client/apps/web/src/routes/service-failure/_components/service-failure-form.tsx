@@ -35,8 +35,8 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
           <ServiceFailureReasonCodeAutocompleteField
             control={control}
             name="reasonCodeId"
-            label={t("Reason Code")}
-            placeholder={t("Select Reason Code")}
+            label={t("Reason code")}
+            placeholder={t("Select reason code")}
             extraSearchParams={appliesTo ? { appliesTo } : undefined}
             clearable
             disabled={disabled}
@@ -46,7 +46,7 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
           <SwitchField
             control={control}
             name="clearReasonCode"
-            label={t("Clear Reason Code")}
+            label={t("Clear reason code")}
             description={t(
               "Removes the assigned reason code while preserving the service failure record.",
             )}
@@ -59,7 +59,7 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
           <TextareaField
             control={control}
             name="notes"
-            label={t("Operations Notes")}
+            label={t("Operations notes")}
             placeholder={t("Customer-facing operational context")}
             disabled={disabled}
           />
@@ -68,7 +68,7 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
           <TextareaField
             control={control}
             name="internalNotes"
-            label={t("Internal Notes")}
+            label={t("Internal notes")}
             placeholder={t("Internal review notes")}
             disabled={disabled}
           />
@@ -76,7 +76,7 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
       </FormGroup>
 
       <FormSection
-        title={t("EDI Overrides")}
+        title={t("EDI overrides")}
         description={t("Overrides apply only to this failure.")}
       >
         <FormGroup cols={3}>
@@ -84,7 +84,7 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
             <InputField
               control={control}
               name="x12StatusCodeOverride"
-              label={t("Status Code")}
+              label={t("Status code")}
               placeholder={t("SD")}
               maxLength={3}
               disabled={disabled}
@@ -94,7 +94,7 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
             <InputField
               control={control}
               name="x12ReasonCodeOverride"
-              label={t("Reason Code")}
+              label={t("Reason code")}
               placeholder={t("NS")}
               maxLength={3}
               disabled={disabled}
@@ -104,7 +104,7 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
             <InputField
               control={control}
               name="x12ExceptionCode"
-              label={t("Exception Code")}
+              label={t("Exception code")}
               placeholder={t("A3")}
               maxLength={3}
               disabled={disabled}

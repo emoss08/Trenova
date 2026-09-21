@@ -263,7 +263,7 @@ export function JsonViewer({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("Search...")}
-            className="border-border bg-background w-full rounded border px-2 py-1 text-sm"
+            className="border-border bg-background w-full rounded-md border px-2 py-1 text-sm"
           />
         </div>
       )}

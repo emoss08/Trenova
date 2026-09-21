@@ -55,7 +55,7 @@ export default function DataEntryControlForm() {
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4 pb-14">
           <CaseFormattingForm />
-          <FormSaveDock saveButtonContent={t("Save Changes")} />
+          <FormSaveDock saveButtonContent={t("Save changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -70,7 +70,7 @@ function CaseFormattingForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Case Formatting Rules")}</CardTitle>
+        <CardTitle>{t("Case formatting rules")}</CardTitle>
         <CardDescription>
           {t(
             "Control how text is automatically formatted when entering data. These rules apply system-wide to standardize codes, names, emails, and city fields.",
@@ -83,7 +83,7 @@ function CaseFormattingForm() {
             <SelectField
               control={control}
               name="codeCase"
-              label={t("Code Case")}
+              label={t("Code case")}
               description={t(
                 "Formatting applied to code fields (e.g., equipment codes, fleet codes).",
               )}
@@ -94,7 +94,7 @@ function CaseFormattingForm() {
             <SelectField
               control={control}
               name="nameCase"
-              label={t("Name Case")}
+              label={t("Name case")}
               description={t(
                 "Formatting applied to name fields (e.g., commodity names, hazmat names).",
               )}
@@ -105,7 +105,7 @@ function CaseFormattingForm() {
             <SelectField
               control={control}
               name="emailCase"
-              label={t("Email Case")}
+              label={t("Email case")}
               description={t("Formatting applied to email address fields.")}
               options={caseFormatChoices}
             />
@@ -114,7 +114,7 @@ function CaseFormattingForm() {
             <SelectField
               control={control}
               name="cityCase"
-              label={t("City Case")}
+              label={t("City case")}
               description={t("Formatting applied to city name fields.")}
               options={caseFormatChoices}
             />

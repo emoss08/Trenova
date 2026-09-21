@@ -465,7 +465,7 @@ export function FormEditModal<T extends FieldValues>({
               </Button>
               {!fetchError && (
                 <Button type="submit" isLoading={isSubmitting} loadingText={t("Saving...")}>
-                  {t("Save and Close")}
+                  {t("Save and close")}
                 </Button>
               )}
             </DialogFooter>

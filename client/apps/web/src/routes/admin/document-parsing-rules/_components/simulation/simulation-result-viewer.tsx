@@ -31,7 +31,7 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
           ) : (
             <XCircleIcon className="size-3.5" />
           )}
-          {result.matched ? t("Matched") : t("Not Matched")}
+          {result.matched ? t("Matched") : t("Not matched")}
         </Badge>
         <Badge
           variant={result.validationPassed ? "success" : "danger"}
@@ -42,7 +42,7 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
           ) : (
             <XCircleIcon className="size-3.5" />
           )}
-          {result.validationPassed ? t("Validation Passed") : t("Validation Failed")}
+          {result.validationPassed ? t("Validation passed") : t("Validation failed")}
         </Badge>
         {result.candidate?.overallConfidence != null && (
           <Badge variant="info" className="gap-1.5 px-3 py-1 text-sm">
@@ -56,7 +56,7 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
           <CardHeader>
             <CardTitle className="text-destructive flex items-center gap-2">
               <AlertTriangleIcon className="size-4" />
-              {t("Validation Errors")}
+              {t("Validation errors")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -72,7 +72,7 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
       {result.metadata && (
         <Card>
           <CardHeader>
-            <CardTitle>{t("Rule Metadata")}</CardTitle>
+            <CardTitle>{t("Rule metadata")}</CardTitle>
             <CardDescription>
               {t("Details about which rule version matched and how.")}
             </CardDescription>
@@ -80,7 +80,7 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
               <div>
-                <dt className="text-muted-foreground text-xs">{t("Rule Set")}</dt>
+                <dt className="text-muted-foreground text-xs">{t("Rule set")}</dt>
                 <dd className="font-medium">{result.metadata.ruleSetName}</dd>
               </div>
               <div>
@@ -88,15 +88,15 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
                 <dd className="font-medium">{result.metadata.versionNumber}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground text-xs">{t("Parser Mode")}</dt>
+                <dt className="text-muted-foreground text-xs">{t("Parser mode")}</dt>
                 <dd className="font-medium">{result.metadata.parserMode}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground text-xs">{t("Provider Matched")}</dt>
+                <dt className="text-muted-foreground text-xs">{t("Provider matched")}</dt>
                 <dd className="font-medium">{result.metadata.providerMatched || "\u2014"}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground text-xs">{t("Match Specificity")}</dt>
+                <dt className="text-muted-foreground text-xs">{t("Match specificity")}</dt>
                 <dd className="font-medium">{result.metadata.matchSpecificity}</dd>
               </div>
             </dl>
@@ -105,7 +105,7 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
       )}
 
       {result.candidate && (
-        <AnalysisCard title={t("Candidate Analysis")} analysis={result.candidate} />
+        <AnalysisCard title={t("Candidate analysis")} analysis={result.candidate} />
       )}
 
       {result.diff && (
@@ -212,7 +212,7 @@ function AnalysisCard({ title, analysis }: { title: string; analysis: DocumentPa
           <>
             <Separator />
             <div>
-              <h4 className="text-warning mb-2 text-sm font-medium">{t("Missing Fields")}</h4>
+              <h4 className="text-warning mb-2 text-sm font-medium">{t("Missing fields")}</h4>
               <div className="flex flex-wrap gap-1">
                 {analysis.missingFields?.map((f) => (
                   <Badge key={f} variant="warning">

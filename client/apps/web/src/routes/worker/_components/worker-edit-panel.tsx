@@ -123,7 +123,7 @@ const EMPLOYMENT_VIEWS = [
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
-  { id: "save-close", label: "Save & Close" },
+  { id: "save-close", label: "Save & close" },
 ];
 
 interface WorkerEditPanelProps {
@@ -288,7 +288,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
 
           {!row ? (
             <div className="flex-1 p-4">
-              <ComponentLoader message={t("Loading Worker...")} />
+              <ComponentLoader message={t("Loading worker...")} />
             </div>
           ) : (
             <FormProvider {...form}>
@@ -312,19 +312,19 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                         },
                         {
                           value: "general",
-                          label: t("General Information"),
+                          label: t("General information"),
                           icon: UserIcon,
                           className: cn(hasGeneralErrors && "text-destructive"),
                         },
                         {
                           value: "employment",
-                          label: t("Employment Information"),
+                          label: t("Employment information"),
                           icon: BriefcaseIcon,
                           className: cn(hasEmploymentErrors && "text-destructive"),
                         },
                         {
                           value: "compliance",
-                          label: t("Compliance Status"),
+                          label: t("Compliance status"),
                           icon: ShieldCheckIcon,
                           className: cn(hasComplianceErrors && "text-destructive"),
                         },
@@ -333,11 +333,11 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                         { value: "training", label: t("Training"), icon: GraduationCapIcon },
                         { value: "safety", label: t("Safety"), icon: ShieldAlertIcon },
                         { value: "testing", label: t("Testing"), icon: FlaskConicalIcon },
-                        { value: "dqf", label: t("DQ File"), icon: FolderCheckIcon },
+                        { value: "dqf", label: t("DQ file"), icon: FolderCheckIcon },
                         { value: "reviews", label: t("Reviews"), icon: ClipboardCheckIcon },
                         { value: "hos", label: t("HOS"), icon: Clock4Icon },
                         { value: "pay", label: t("Pay"), icon: WalletIcon },
-                        { value: "pto", label: t("Time Off"), icon: CalendarRangeIcon },
+                        { value: "pto", label: t("Time off"), icon: CalendarRangeIcon },
                         { value: "schedule", label: t("Schedule"), icon: CalendarClockIcon },
                         { value: "leave", label: t("Leave"), icon: HeartPulseIcon },
                         { value: "documents", label: t("Documents"), icon: FileTextIcon },

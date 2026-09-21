@@ -115,7 +115,7 @@ export function CarrierAssignDialog({
       <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>
-            {replace ? t("Replace Carrier Assignment") : t("Assign Move to Carrier")}
+            {replace ? t("Replace carrier assignment") : t("Assign move to carrier")}
           </DialogTitle>
           <DialogDescription>
             {move.proNumber} · {move.originCity}, {move.originState} → {move.destinationCity},{" "}

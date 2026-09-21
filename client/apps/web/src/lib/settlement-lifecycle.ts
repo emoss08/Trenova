@@ -18,7 +18,7 @@ export const bulkActionVerbs: Record<BulkSettlementActionType, string> = {
 export const settlementLifecycleChoices = [
   {
     value: "Submit",
-    label: "Submit for Approval",
+    label: "Submit for approval",
     color: "var(--info)",
     description: "Moves drafts into the approval queue.",
   },

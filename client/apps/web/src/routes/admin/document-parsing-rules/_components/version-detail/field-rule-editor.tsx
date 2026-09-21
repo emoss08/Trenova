@@ -49,7 +49,7 @@ export function FieldRuleEditor() {
           }
         >
           <PlusIcon className="size-3" />
-          {t("Add Field")}
+          {t("Add field")}
         </Button>
       }
     >
@@ -157,7 +157,7 @@ function FieldItem({
                 <TagInput
                   control={control}
                   name={`ruleDocument.fields.${index}.sectionNames`}
-                  label={t("Section Names")}
+                  label={t("Section names")}
                   description={t("Restrict extraction to these document sections")}
                   placeholder={t("Limit to sections...")}
                 />
@@ -195,7 +195,7 @@ function FieldItem({
                 <NumberField
                   control={control}
                   name={`ruleDocument.fields.${index}.confidence`}
-                  label={t("Min Confidence")}
+                  label={t("Min confidence")}
                   description={t("Minimum confidence threshold (0.0 to 1.0)")}
                 />
               </FormControl>

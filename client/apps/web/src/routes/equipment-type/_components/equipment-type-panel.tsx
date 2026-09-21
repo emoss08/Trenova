@@ -36,7 +36,7 @@ export function EquipmentTypePanel({
         row={row}
         form={form}
         queryKey="equipment-type-list"
-        title={t("Equipment Type")}
+        title={t("Equipment type")}
         fieldKey="code"
         formComponent={<EquipTypeForm />}
         mutationFn={(values, currentRow) => {
@@ -56,7 +56,7 @@ export function EquipmentTypePanel({
       onOpenChange={onOpenChange}
       form={form}
       queryKey="equipment-type-list"
-      title={t("Equipment Type")}
+      title={t("Equipment type")}
       formComponent={<EquipTypeForm />}
       mutationFn={(values) => apiService.equipmentTypeService.create(values)}
     />

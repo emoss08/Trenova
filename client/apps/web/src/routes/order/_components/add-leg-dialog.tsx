@@ -79,7 +79,7 @@ export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLeg
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Add Legs")}</DialogTitle>
+          <DialogTitle>{t("Add legs")}</DialogTitle>
           <DialogDescription>
             {t("Attach one or more shipments to this order as additional legs.")}
           </DialogDescription>
@@ -138,7 +138,7 @@ export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLeg
             loadingText={t("Adding...")}
             onClick={() => mutate()}
           >
-            {selected.length > 1 ? t("Add {0} Legs", selected.length) : t("Add Leg")}
+            {selected.length > 1 ? t("Add {0} legs", selected.length) : t("Add leg")}
           </Button>
         </DialogFooter>
       </DialogContent>

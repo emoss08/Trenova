@@ -19,7 +19,7 @@ describe("EDI partner form helpers", () => {
       internalOrganizationId: "org_target",
       ediConnectionId: "edicn_123",
       code: "EXT",
-      name: "External Partner",
+      name: "External partner",
       enabledForInbound: false,
       enabledForOutbound: false,
     });

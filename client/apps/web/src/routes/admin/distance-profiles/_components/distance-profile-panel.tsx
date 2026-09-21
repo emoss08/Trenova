@@ -51,7 +51,7 @@ export function DistanceProfilePanel({
         form={form}
         url="/distance-profiles/"
         queryKey="distance-profile-list"
-        title={t("Distance Profile")}
+        title={t("Distance profile")}
         fieldKey="name"
         formComponent={<DistanceProfileForm />}
       />
@@ -65,7 +65,7 @@ export function DistanceProfilePanel({
       form={form}
       url="/distance-profiles/"
       queryKey="distance-profile-list"
-      title={t("Distance Profile")}
+      title={t("Distance profile")}
       formComponent={<DistanceProfileForm />}
     />
   );

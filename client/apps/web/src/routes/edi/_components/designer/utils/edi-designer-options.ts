@@ -80,11 +80,11 @@ export const messageStatusOptions = toOptions(ediMessageStatusSchema.options);
 
 export const conditionModeOptions: SelectOption[] = [
   { value: "none", label: "None" },
-  { value: "truthy", label: "Path Truthy" },
-  { value: "falsey", label: "Path Falsey" },
+  { value: "truthy", label: "Path truthy" },
+  { value: "falsey", label: "Path falsey" },
   { value: "comparison", label: "Comparison" },
-  { value: "starlarkFunction", label: "Starlark Function" },
-  { value: "inlineStarlark", label: "Inline Starlark" },
+  { value: "starlarkFunction", label: "Starlark function" },
+  { value: "inlineStarlark", label: "Inline starlark" },
 ];
 
 export const conditionOperatorOptions: SelectOption[] = [

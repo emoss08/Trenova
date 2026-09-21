@@ -71,7 +71,7 @@ describe("buildBulkBillingTransferReportCsv", () => {
             {
               documentTypeId: "dt_pod",
               documentTypeCode: "POD",
-              documentTypeName: "Proof of Delivery",
+              documentTypeName: "Proof of delivery",
             },
           ],
           validationFailures: [
@@ -90,7 +90,7 @@ describe("buildBulkBillingTransferReportCsv", () => {
 
     const lines = csv.split("\r\n");
     expect(lines).toHaveLength(4);
-    expect(lines[0]).toContain("PRO Number");
+    expect(lines[0]).toContain("PRO number");
 
     expect(lines[1]).toContain("PRO-OK");
     expect(lines[1]).toContain("Transferred");
@@ -100,7 +100,7 @@ describe("buildBulkBillingTransferReportCsv", () => {
     expect(lines[2]).toContain("PRO-BAD");
     expect(lines[2]).toContain("Not transferred");
     expect(lines[2]).toContain(BILLING_TRANSFER_FAILURE_REASONS.RequirementsUnmet.label);
-    expect(lines[2]).toContain("Proof of Delivery");
+    expect(lines[2]).toContain("Proof of delivery");
     expect(lines[2]).toContain("The rate has no basis");
 
     // A shipment the run never reached is still in the report: that is the work

@@ -42,7 +42,7 @@ export function AckEditor({
           options={acknowledgmentTypeOptions}
         />
         <InputBlock
-          label={t("SLA Minutes")}
+          label={t("SLA minutes")}
           value={String(profile.acknowledgment.slaInMinutes)}
           onChange={(slaInMinutes) =>
             onChange((current) => ({

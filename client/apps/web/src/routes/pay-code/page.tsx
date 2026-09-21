@@ -11,7 +11,7 @@ export function PayCodesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Pay Codes"),
+        title: t("Pay codes"),
         description: t(
           "Your carrier's catalog of earning and deduction codes — behavior flags and GL account mappings drive how each code settles and posts.",
         ),

@@ -41,14 +41,14 @@ export default function FiscalYearTable() {
     () => [
       {
         id: "activate",
-        label: t("Set as Current"),
+        label: t("Set as current"),
         icon: PlayIcon,
         onClick: (row: Row<FiscalYearRow>) => handleYearAction(row.original, "activate"),
         hidden: (row: Row<FiscalYearRow>) => isHidden(row, "activate"),
       },
       {
         id: "close",
-        label: t("Close Year"),
+        label: t("Close year"),
         icon: XCircleIcon,
         variant: "destructive",
         onClick: (row: Row<FiscalYearRow>) => handleYearAction(row.original, "close"),
@@ -56,7 +56,7 @@ export default function FiscalYearTable() {
       },
       {
         id: "reopen",
-        label: t("Reopen Year"),
+        label: t("Reopen year"),
         icon: RotateCcwIcon,
         variant: "destructive",
         onClick: (row: Row<FiscalYearRow>) => handleYearAction(row.original, "reopen"),

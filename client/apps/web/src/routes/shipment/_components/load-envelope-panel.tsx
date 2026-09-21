@@ -74,7 +74,7 @@ export default function LoadEnvelopePanel() {
 
   return (
     <FormSection
-      title={t("Load Envelope")}
+      title={t("Load envelope")}
       description={t(
         "Dimensions, jurisdiction limits, and permits derived from the cargo on this shipment",
       )}

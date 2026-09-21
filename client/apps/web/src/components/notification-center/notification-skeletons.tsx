@@ -14,8 +14,8 @@ export function NotificationFeedSkeleton() {
         <div key={index} className="flex gap-3 px-4 py-3">
           <Skeleton className="size-7 shrink-0 rounded-md" />
           <div className="flex flex-1 flex-col gap-1.5">
-            <Skeleton className="h-3 w-3/5 rounded" />
-            <Skeleton className="h-2.5 w-4/5 rounded" />
+            <Skeleton className="h-3 w-3/5 rounded-md" />
+            <Skeleton className="h-2.5 w-4/5 rounded-md" />
           </div>
         </div>
       ))}
@@ -37,8 +37,8 @@ export function NotificationPanelSkeleton() {
         <SheetTitle>{t("Notifications")}</SheetTitle>
       </div>
       <div className="border-border flex items-center gap-3 border-b pr-3 pl-4">
-        <Skeleton className="my-2 h-4 w-12 rounded" />
-        <Skeleton className="my-2 h-4 w-14 rounded" />
+        <Skeleton className="my-2 h-4 w-12 rounded-md" />
+        <Skeleton className="my-2 h-4 w-14 rounded-md" />
       </div>
       <NotificationFeedSkeleton />
     </>

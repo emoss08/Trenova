@@ -11,14 +11,14 @@ export function SCIMGroupMappingForm() {
   const { control } = useFormContext<SCIMGroupRoleMappingFormValues>();
 
   return (
-    <FormSection title={t("Group Mapping")}>
+    <FormSection title={t("Group mapping")}>
       <FormGroup cols={2}>
         <FormControl cols="full">
           <InputField
             control={control}
             rules={{ required: true }}
             name="externalGroupId"
-            label={t("External Group ID")}
+            label={t("External group ID")}
             placeholder={t("00g1abcd2EFGH3ijk4l5")}
             description={t("Immutable group identifier sent by the external SCIM directory.")}
             maxLength={160}
@@ -28,8 +28,8 @@ export function SCIMGroupMappingForm() {
           <InputField
             control={control}
             name="displayName"
-            label={t("Display Name")}
-            placeholder={t("Operations Managers")}
+            label={t("Display name")}
+            placeholder={t("Operations managers")}
             description={t("Readable group name shown in provisioning reviews.")}
             maxLength={160}
           />

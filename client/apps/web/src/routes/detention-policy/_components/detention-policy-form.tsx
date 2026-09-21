@@ -79,7 +79,7 @@ export function DetentionPolicyForm() {
               control={control}
               name="name"
               label={t("Name")}
-              placeholder={t("Standard Dry Van Detention")}
+              placeholder={t("Standard dry van detention")}
               rules={{ required: true }}
               maxLength={100}
               description={t("Human-friendly name shown in lists, notices, and audit history.")}
@@ -184,7 +184,7 @@ export function DetentionPolicyForm() {
                 <ShipmentTypeMultiSelectField
                   control={control}
                   name="shipmentTypeIds"
-                  label={t("Shipment Types")}
+                  label={t("Shipment types")}
                   placeholder={t("Any shipment type")}
                   description={t("Only shipments of these types are governed. Specificity +4.")}
                 />
@@ -193,7 +193,7 @@ export function DetentionPolicyForm() {
                 <ServiceTypeMultiSelectField
                   control={control}
                   name="serviceTypeIds"
-                  label={t("Service Types")}
+                  label={t("Service types")}
                   placeholder={t("Any service type")}
                   description={t("Only these service levels are governed. Specificity +2.")}
                 />
@@ -213,7 +213,7 @@ export function DetentionPolicyForm() {
                 <MultiCheckboxField
                   control={control}
                   name="stopTypes"
-                  label={t("Stop Types")}
+                  label={t("Stop types")}
                   options={stopTypeChoices}
                   description={t("Leave all unchecked to govern every stop type. Specificity +1.")}
                 />

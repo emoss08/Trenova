@@ -88,7 +88,7 @@ export function LocateTrailerDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>{t("Locate Trailer")}</DialogTitle>
+          <DialogTitle>{t("Locate trailer")}</DialogTitle>
           <DialogDescription>
             {t(
               "Set the trailer's new location. The system will create and complete an empty reposition move automatically.",
@@ -107,7 +107,7 @@ export function LocateTrailerDialog({
               <LocationAutocompleteField
                 control={control}
                 name="newLocationId"
-                label={t("New Location")}
+                label={t("New location")}
                 placeholder={t("Select location")}
                 rules={{ required: true }}
               />
@@ -118,7 +118,7 @@ export function LocateTrailerDialog({
               {t("Cancel")}
             </Button>
             <Button type="submit" isLoading={isSubmitting} loadingText={t("Locating...")}>
-              {t("Locate Trailer")}
+              {t("Locate trailer")}
             </Button>
           </DialogFooter>
         </Form>

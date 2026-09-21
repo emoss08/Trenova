@@ -185,7 +185,7 @@ export function CarrierSourcingWorkspace() {
             },
             {
               id: "lane",
-              label: t("Running Illinois → Georgia"),
+              label: t("Running illinois → georgia"),
               onSelect: () =>
                 setFilters({
                   ...EMPTY_SOURCING_FILTERS,

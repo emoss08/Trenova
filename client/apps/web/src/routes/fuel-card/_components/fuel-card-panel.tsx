@@ -81,7 +81,7 @@ function FuelCardCreatePanel({
     <FormCreatePanel<FuelCardFormValues, FuelCardRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Fuel Card")}
+      title={t("Fuel card")}
       description={t(
         "Register a card so imported statements and hand-keyed purchases can be tied to the driver and unit that fuelled with it.",
       )}
@@ -120,7 +120,7 @@ function FuelCardEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title={t("Fuel Card")}
+      title={t("Fuel card")}
       fieldKey="label"
       queryKey={FUEL_CARD_LIST_KEY}
       form={form}

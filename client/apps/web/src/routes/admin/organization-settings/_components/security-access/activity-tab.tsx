@@ -41,8 +41,8 @@ import { ConsoleToolbar, EmptyState, ErrorState, RowSkeleton } from "./shared";
 import { outcomeVariant, riskVariant } from "./utils";
 
 const activityViewOptions: Array<{ value: ActivityViewValue; label: string }> = [
-  { value: "auth", label: "Auth Events" },
-  { value: "risk", label: "Risk Decisions" },
+  { value: "auth", label: "Auth events" },
+  { value: "risk", label: "Risk decisions" },
   { value: "identities", label: "External identities" },
   { value: "mfa", label: "MFA authenticators" },
 ];

@@ -73,7 +73,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
           <thead className="bg-muted/50 text-muted-foreground text-left">
             <tr>
               <th className="w-8 px-2 py-2 text-center text-xs font-medium">#</th>
-              <th className="px-2 py-2 text-xs font-medium">{t("GL Account")}</th>
+              <th className="px-2 py-2 text-xs font-medium">{t("GL account")}</th>
               <th className="px-2 py-2 text-xs font-medium">{t("Memo")}</th>
               <th className="w-28 px-2 py-2 text-right text-xs font-medium">{t("Debit")}</th>
               <th className="w-28 px-2 py-2 text-right text-xs font-medium">{t("Credit")}</th>
@@ -157,7 +157,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
       <div className="flex items-center justify-between">
         <Button type="button" variant="outline" size="sm" onClick={handleAppend}>
           <PlusIcon className="mr-1.5 size-3.5" />
-          {t("Add Line")}
+          {t("Add line")}
         </Button>
 
         {hasAmounts &&

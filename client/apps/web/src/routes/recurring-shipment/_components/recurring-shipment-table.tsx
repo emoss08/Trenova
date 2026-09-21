@@ -68,21 +68,21 @@ export default function RecurringShipmentTable() {
     () => [
       {
         id: "generate-now",
-        label: t("Generate Now"),
+        label: t("Generate now"),
         icon: ZapIcon,
         onClick: (row) => handleGenerateNow(row.original),
         disabled: (row) => row.original.status === "Expired",
       },
       {
         id: "toggle-status",
-        label: t("Pause / Resume"),
+        label: t("Pause / resume"),
         icon: PauseIcon,
         onClick: (row) => handleToggleStatus(row.original),
         hidden: (row) => row.original.status === "Expired",
       },
       {
         id: "view-runs",
-        label: t("View History"),
+        label: t("View history"),
         icon: HistoryIcon,
         onClick: (row) => {
           setRunsSeries(row.original);

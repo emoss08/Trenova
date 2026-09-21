@@ -11,7 +11,7 @@ export function SettlementDisputesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Settlement Disputes"),
+        title: t("Settlement disputes"),
         description: t(
           "Driver-submitted questions and challenges against issued settlements — review, resolve with a correcting adjustment, or deny with an explanation.",
         ),

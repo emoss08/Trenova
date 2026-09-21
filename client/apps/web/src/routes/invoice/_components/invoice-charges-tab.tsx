@@ -324,14 +324,14 @@ function FreightRows({ line, currencyCode }: { line: InvoiceLine; currencyCode: 
     <>
       {line.rate != null ? (
         <ChargeRowLayout
-          label={t("Base Rate")}
+          label={t("Base rate")}
           details={[t("Per-unit rate before formula")]}
           value={formatCurrency(line.rate, currencyCode)}
           muted
         />
       ) : null}
       <ChargeRowLayout
-        label={t("Line Haul")}
+        label={t("Line haul")}
         details={[t("Line {0}", line.lineNumber)]}
         value={formatCurrency(line.amount ?? 0, currencyCode)}
       />
@@ -377,7 +377,7 @@ function ChargeRowLayout({
         <span className="flex min-w-0 items-center gap-1.5">
           <span className="truncate text-sm">{label}</span>
           {code ? (
-            <span className="bg-muted text-muted-foreground shrink-0 rounded border px-1 font-mono text-2xs leading-4">
+            <span className="bg-muted text-muted-foreground shrink-0 rounded-md border px-1 font-mono text-2xs leading-4">
               {code}
             </span>
           ) : null}

@@ -13,7 +13,7 @@ export function IntegrationMarketplaceHeader() {
     <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div className="space-y-2">
         <h2 className="text-2xl font-semibold tracking-tight">
-          {t("Integrations and Connected Apps")}
+          {t("Integrations and connected apps")}
         </h2>
         <p className="text-muted-foreground text-sm">
           {t(

@@ -142,7 +142,7 @@ function FuelPurchaseCreatePanel({
     <FormCreatePanel<FuelPurchaseFormValues, FuelPurchaseRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Fuel Purchase")}
+      title={t("Fuel purchase")}
       description={t(
         "Record fuel bought for a tractor. The purchase is a tax record: its gallons and the jurisdiction they were bought in feed the quarterly IFTA return.",
       )}
@@ -200,7 +200,7 @@ function FuelPurchaseEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title={t("Fuel Purchase")}
+      title={t("Fuel purchase")}
       titleComponent={(record) => (
         <span>
           {t(

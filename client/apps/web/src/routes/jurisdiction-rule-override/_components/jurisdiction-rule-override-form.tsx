@@ -43,7 +43,7 @@ export function JurisdictionRuleOverrideForm() {
       </FormSection>
 
       <FormSection
-        title={t("Tighter Limits")}
+        title={t("Tighter limits")}
         description={t(
           "Leave blank to defer to the state. A value above the state limit is rejected.",
         )}
@@ -53,7 +53,7 @@ export function JurisdictionRuleOverrideForm() {
             <NumberField
               control={control}
               name="maxWidthFeet"
-              label={t("Max Width")}
+              label={t("Max width")}
               sideText="ft"
               placeholder={t("Defer to state")}
             />
@@ -62,7 +62,7 @@ export function JurisdictionRuleOverrideForm() {
             <NumberField
               control={control}
               name="maxHeightFeet"
-              label={t("Max Height")}
+              label={t("Max height")}
               sideText="ft"
               placeholder={t("Defer to state")}
             />
@@ -71,7 +71,7 @@ export function JurisdictionRuleOverrideForm() {
             <NumberField
               control={control}
               name="maxLengthFeet"
-              label={t("Max Length")}
+              label={t("Max length")}
               sideText="ft"
               placeholder={t("Defer to state")}
             />
@@ -80,7 +80,7 @@ export function JurisdictionRuleOverrideForm() {
             <NumberField
               control={control}
               name="maxWeightPounds"
-              label={t("Max Weight")}
+              label={t("Max weight")}
               sideText="lbs"
               thousandSeparator
               placeholder={t("Defer to state")}
@@ -90,7 +90,7 @@ export function JurisdictionRuleOverrideForm() {
       </FormSection>
 
       <FormSection
-        title={t("Lead Time")}
+        title={t("Lead time")}
         description={t(
           "This one runs the other way: an override may require more notice than the state, never less.",
         )}
@@ -100,7 +100,7 @@ export function JurisdictionRuleOverrideForm() {
             <NumberField
               control={control}
               name="permitLeadTimeDays"
-              label={t("Permit Lead Time")}
+              label={t("Permit lead time")}
               sideText="days"
               placeholder={t("Defer to state")}
             />
@@ -109,7 +109,7 @@ export function JurisdictionRuleOverrideForm() {
       </FormSection>
 
       <FormSection
-        title={t("Added Restrictions")}
+        title={t("Added restrictions")}
         description={t(
           "Restrictions the state does not impose. A restriction the state does impose cannot be lifted here.",
         )}
@@ -119,7 +119,7 @@ export function JurisdictionRuleOverrideForm() {
             <CheckboxField
               control={control}
               name="daylightOnly"
-              label={t("Daylight Only")}
+              label={t("Daylight only")}
               description={t("We do not run oversize at night in this state")}
             />
           </FormControl>
@@ -127,7 +127,7 @@ export function JurisdictionRuleOverrideForm() {
             <CheckboxField
               control={control}
               name="holidayRestricted"
-              label={t("Holiday Restricted")}
+              label={t("Holiday restricted")}
               description={t("We do not run oversize on holidays in this state")}
             />
           </FormControl>

@@ -76,7 +76,7 @@ export function FiscalYearPanel({
         form={form}
         url="/fiscal-years/"
         queryKey="fiscal-year-list"
-        title={t("Fiscal Year")}
+        title={t("Fiscal year")}
         fieldKey="name"
         formComponent={<FiscalYearForm mode="edit" />}
         size="lg"
@@ -98,7 +98,7 @@ export function FiscalYearPanel({
       form={form}
       url="/fiscal-years/"
       queryKey="fiscal-year-list"
-      title={t("Fiscal Year")}
+      title={t("Fiscal year")}
       formComponent={<FiscalYearForm mode="create" />}
     />
   );

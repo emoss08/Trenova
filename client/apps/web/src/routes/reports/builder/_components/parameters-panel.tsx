@@ -186,7 +186,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
               </div>
               {param.type !== "bool" && param.type !== "epoch" && param.type !== "ref" && (
                 <div className="col-span-2 flex flex-col gap-1">
-                  <Label className="text-muted-foreground text-xs">{t("Allowed Values")}</Label>
+                  <Label className="text-muted-foreground text-xs">{t("Allowed values")}</Label>
                   <Input
                     className="h-7"
                     placeholder={t("Any value — or comma-separated choices")}

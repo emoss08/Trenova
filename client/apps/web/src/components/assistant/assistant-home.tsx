@@ -67,7 +67,7 @@ export function AssistantHome({
             render={<Link to="/admin/agent-control" onClick={closeWidget} />}
           >
             <PlugZapIcon className="size-3.5" />
-            {t("Open AI Control")}
+            {t("Open AI control")}
           </Button>
         )}
       </div>

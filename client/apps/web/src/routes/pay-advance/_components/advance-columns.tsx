@@ -57,7 +57,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayAdvanceRow>[] {
       header: t("Issued"),
       cell: ({ row }) => <span>{formatDate(row.original.issuedDate)}</span>,
       size: 110,
-      meta: { apiField: "issuedDate", label: t("Issued Date") },
+      meta: { apiField: "issuedDate", label: t("Issued date") },
     },
     {
       accessorKey: "amountMinor",
@@ -68,7 +68,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayAdvanceRow>[] {
         </div>
       ),
       size: 100,
-      meta: { apiField: "amountMinor", label: t("Amount Minor") },
+      meta: { apiField: "amountMinor", label: t("Amount minor") },
     },
     {
       accessorKey: "recoveredMinor",
@@ -79,7 +79,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayAdvanceRow>[] {
         </div>
       ),
       size: 100,
-      meta: { apiField: "recoveredMinor", label: t("Recovered Minor") },
+      meta: { apiField: "recoveredMinor", label: t("Recovered minor") },
     },
     {
       accessorKey: "outstandingMinor",
@@ -94,7 +94,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayAdvanceRow>[] {
         </div>
       ),
       size: 110,
-      meta: { apiField: "outstandingMinor", label: t("Outstanding Minor") },
+      meta: { apiField: "outstandingMinor", label: t("Outstanding minor") },
     },
   ];
 }

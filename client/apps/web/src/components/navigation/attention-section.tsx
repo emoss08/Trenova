@@ -63,7 +63,7 @@ export function AttentionSection() {
 
   return (
     <div className="flex flex-col gap-0.5">
-      <SidebarSectionLabel>{t("Needs Attention")}</SidebarSectionLabel>
+      <SidebarSectionLabel>{t("Needs attention")}</SidebarSectionLabel>
       {isLoading
         ? Array.from({ length: 3 }, (_, index) => (
             <Skeleton key={index} className="h-7 w-full rounded-md" />

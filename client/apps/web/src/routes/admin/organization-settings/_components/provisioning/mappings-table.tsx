@@ -14,9 +14,9 @@ function getColumns(t: TranslateFn): ColumnDef<SCIMGroupRoleMappingRow>[] {
   return [
     {
       accessorKey: "externalGroupId",
-      header: t("External Group ID"),
+      header: t("External group ID"),
       meta: {
-        label: t("External Group ID"),
+        label: t("External group ID"),
         apiField: "externalGroupId",
         filterable: true,
         sortable: true,
@@ -26,9 +26,9 @@ function getColumns(t: TranslateFn): ColumnDef<SCIMGroupRoleMappingRow>[] {
     },
     {
       accessorKey: "displayName",
-      header: t("Display Name"),
+      header: t("Display name"),
       meta: {
-        label: t("Display Name"),
+        label: t("Display name"),
         apiField: "displayName",
         filterable: true,
         sortable: true,

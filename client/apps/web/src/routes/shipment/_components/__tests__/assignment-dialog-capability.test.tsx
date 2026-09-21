@@ -96,7 +96,7 @@ describe("AssignmentDialog coverage modes", () => {
 
     renderDialog();
 
-    expect(screen.getByText("Assign Move to Carrier")).toBeInTheDocument();
+    expect(screen.getByText("Assign move to carrier")).toBeInTheDocument();
   });
 
   it("still opens in driver mode for an organization that employs drivers", () => {
@@ -104,7 +104,7 @@ describe("AssignmentDialog coverage modes", () => {
 
     renderDialog();
 
-    expect(screen.getByText("Assign Move")).toBeInTheDocument();
+    expect(screen.getByText("Assign move")).toBeInTheDocument();
   });
 
   /**
@@ -137,6 +137,6 @@ describe("AssignmentDialog coverage modes", () => {
     renderDialog({ existingAssignment });
 
     expect(screen.queryByText("Driver assignment is not enabled")).toBeNull();
-    expect(screen.getByText("Reassign Move")).toBeInTheDocument();
+    expect(screen.getByText("Reassign move")).toBeInTheDocument();
   });
 });

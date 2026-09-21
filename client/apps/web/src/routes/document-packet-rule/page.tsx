@@ -11,7 +11,7 @@ export function DocumentPacketRulesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Document Packet Rules"),
+        title: t("Document packet rules"),
         description: t("Configure which document types are required for each resource type"),
       }}
     >

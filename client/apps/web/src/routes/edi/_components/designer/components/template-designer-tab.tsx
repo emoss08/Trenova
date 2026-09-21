@@ -179,7 +179,7 @@ function TemplateDesignerHeader() {
           disabled={!selectedTemplateId || !selectedVersion || selectedVersion.status === "Draft"}
         >
           <CopyPlusIcon className="size-4" />
-          {t("New Draft")}
+          {t("New draft")}
         </Button>
         <Button
           type="button"
@@ -326,7 +326,7 @@ function TemplateDesignerTabBar() {
           disabled={!isEditable || !metadataDirty}
         >
           <SaveIcon className="size-4" />
-          {t("Save Metadata")}
+          {t("Save metadata")}
         </Button>
         <Button
           type="button"
@@ -345,7 +345,7 @@ function TemplateDesignerTabBar() {
           disabled={!isEditable || !segmentsDirty}
         >
           <SaveIcon className="size-4" />
-          {t("Save Draft")}
+          {t("Save draft")}
         </Button>
       </div>
     </div>
@@ -393,7 +393,7 @@ function TemplateDesignerFooter() {
         }
       >
         <ArchiveIcon className="size-4" />
-        {t("Archive Version")}
+        {t("Archive version")}
       </Button>
     </div>
   );

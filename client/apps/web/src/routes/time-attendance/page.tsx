@@ -37,7 +37,7 @@ export function TimeAttendancePage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Time & Attendance"),
+        title: t("Time & attendance"),
         description: t(
           "Hours worked by staff paid by the clock. A week's totals are frozen when it is handed over, so what a manager approves is what payroll is run from.",
         ),

@@ -99,7 +99,7 @@ function EarningCreatePanel({
     <FormCreatePanel<RecurringEarningFormValues, RecurringEarningRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Recurring Earning")}
+      title={t("Recurring earning")}
       description={t(
         "Added automatically to each qualifying settlement until its end date or cap.",
       )}
@@ -137,7 +137,7 @@ function EarningEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title={t("Recurring Earning")}
+      title={t("Recurring earning")}
       fieldKey="description"
       queryKey="recurring-earning-list"
       form={form}
@@ -192,7 +192,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
           <PayCodeAutocompleteField
             control={control}
             name="payCodeId"
-            label={t("Pay Code")}
+            label={t("Pay code")}
             placeholder={t("Select pay code")}
             direction="Earning"
             rules={{ required: true }}
@@ -243,7 +243,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
           <NumberField
             control={control}
             name="amount"
-            label={t("Amount per Application")}
+            label={t("Amount per application")}
             decimalScale={2}
             fixedDecimalScale
             sideText={t("USD")}
@@ -255,7 +255,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
           <NumberField
             control={control}
             name="totalCap"
-            label={t("Total Cap")}
+            label={t("Total cap")}
             decimalScale={2}
             fixedDecimalScale
             sideText={t("USD")}
@@ -266,7 +266,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
           <AutoCompleteDateField
             control={control}
             name="startDate"
-            label={t("Start Date")}
+            label={t("Start date")}
             rules={{ required: true }}
             description={t(
               "The earning begins applying to settlements whose period ends after this date.",
@@ -277,7 +277,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
           <AutoCompleteDateField
             control={control}
             name="endDate"
-            label={t("End Date")}
+            label={t("End date")}
             description={t("Optional last day the earning applies; leave blank for open-ended.")}
           />
         </FormControl>

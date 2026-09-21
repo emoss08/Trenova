@@ -81,7 +81,7 @@ function GenerateBatchPanel({
     <FormCreatePanel<GenerateBatchFormValues, SettlementBatchRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Settlement Batch")}
+      title={t("Settlement batch")}
       description={t(
         "Creates a draft settlement for every driver with accrued pay in the current period.",
       )}
@@ -90,7 +90,7 @@ function GenerateBatchPanel({
       notice={
         period ? (
           <div className="bg-muted/30 rounded-lg border p-3 text-sm">
-            <p className="text-muted-foreground text-xs font-medium">{t("Current Pay Period")}</p>
+            <p className="text-muted-foreground text-xs font-medium">{t("Current pay period")}</p>
             <p className="mt-1 font-medium">
               {formatDate(period.periodStart)} – {formatDate(period.periodEnd)}
             </p>
@@ -106,7 +106,7 @@ function GenerateBatchPanel({
             <InputField
               control={control}
               name="name"
-              label={t("Batch Name")}
+              label={t("Batch name")}
               placeholder={t("Defaults to the pay period end date")}
               description={t(
                 "A label for this payroll run; if left blank it is named after the period end date.",
@@ -207,7 +207,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
           onClick={() => exportMutation.mutate()}
         >
           <Download className="size-3.5" />
-          {t("Export Payroll CSV")}
+          {t("Export payroll CSV")}
         </Button>
       </div>
 
@@ -226,13 +226,13 @@ function BatchDetail({ batchId }: { batchId: string }) {
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium">{t("Total Gross")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Total gross")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={data.totalGrossMinor} currency={data.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium">{t("Total Net")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Total net")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay
               value={data.totalNetMinor}

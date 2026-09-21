@@ -59,7 +59,7 @@ export function getColumns(t: TranslateFn): ColumnDef<FiscalYearRow>[] {
     },
     {
       accessorKey: "startDate",
-      header: t("Date Range"),
+      header: t("Date range"),
       cell: ({ row }) => {
         const { startDate, endDate } = row.original;
         if (!startDate || !endDate) return "—";

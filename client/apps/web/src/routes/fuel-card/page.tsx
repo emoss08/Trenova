@@ -11,7 +11,7 @@ export function UnassignedFuelCardsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Unassigned Cards"),
+        title: t("Unassigned cards"),
         description: t(
           "Cards a connected fuel card feed saw a transaction on before anybody had registered them. Until a card is tied to a tractor or driver, its purchases can only be matched by the unit number on the receipt.",
         ),
@@ -30,7 +30,7 @@ export function FuelCardsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Fuel Cards"),
+        title: t("Fuel cards"),
         description: t(
           "The cards drivers fuel with — which provider issued each one, who carries it, and which unit it is tied to. Imported statements are matched to purchases through these cards.",
         ),

@@ -126,7 +126,7 @@ export function EDITransferReviewPanel({
               isLoading={cancelMutation.isPending}
               onClick={() => cancelMutation.mutate(undefined)}
             >
-              {t("Cancel Transfer")}
+              {t("Cancel transfer")}
             </Button>
           )}
         </>
@@ -171,14 +171,14 @@ export function EDITransferReviewPanel({
       <EDIReasonDialog
         open={rejectDialogOpen}
         onOpenChange={setRejectDialogOpen}
-        title={t("Reject Load Tender")}
+        title={t("Reject load tender")}
         description={
           transfer?.tenderPayload.bol
             ? `Reject the load tender for BOL ${transfer.tenderPayload.bol}.`
             : "Reject this load tender."
         }
         placeholder={t("Reason shared with the submitting partner")}
-        confirmLabel={t("Reject Transfer")}
+        confirmLabel={t("Reject transfer")}
         isPending={rejectMutation.isPending}
         onConfirm={(reason) => rejectMutation.mutate(reason)}
       />

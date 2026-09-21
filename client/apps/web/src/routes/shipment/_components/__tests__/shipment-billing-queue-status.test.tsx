@@ -20,7 +20,7 @@ describe("ShipmentBillingQueueStatus", () => {
   it("shows the billing queue state and links to the shipment in the queue", () => {
     renderStatus({ status: "ReadyToInvoice", billingTransferStatus: "SentBackToOps" });
 
-    expect(screen.getByText("Sent Back to Ops")).toBeInTheDocument();
+    expect(screen.getByText("Sent back to ops")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /view in billing queue/i })).toHaveAttribute(
       "href",
       "/billing/queue?query=PRO%201001%2FA&includePosted=true",

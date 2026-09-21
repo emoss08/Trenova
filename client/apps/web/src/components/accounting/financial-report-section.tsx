@@ -20,8 +20,8 @@ export function FinancialReportSection({ section, className }: FinancialReportSe
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-muted-foreground text-left">
             <tr>
-              <th className="px-3 py-2 text-xs font-medium">{t("Account Code")}</th>
-              <th className="px-3 py-2 text-xs font-medium">{t("Account Name")}</th>
+              <th className="px-3 py-2 text-xs font-medium">{t("Account code")}</th>
+              <th className="px-3 py-2 text-xs font-medium">{t("Account name")}</th>
               <th className="px-3 py-2 text-right text-xs font-medium">{t("Amount")}</th>
             </tr>
           </thead>

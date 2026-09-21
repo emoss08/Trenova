@@ -140,7 +140,7 @@ function FixtureForm({
                 />
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>{t("Delete Fixture")}</AlertDialogTitle>
+                    <AlertDialogTitle>{t("Delete fixture")}</AlertDialogTitle>
                     <AlertDialogDescription>
                       {t('This will permanently delete "{0}".', fixture.name)}
                     </AlertDialogDescription>
@@ -160,7 +160,7 @@ function FixtureForm({
           </div>
 
           <FormSection
-            title={t("Fixture Details")}
+            title={t("Fixture details")}
             description={t(
               "Identify this fixture with a name and optional metadata used during provider matching.",
             )}
@@ -178,7 +178,7 @@ function FixtureForm({
                 <InputField
                   control={control}
                   name="fileName"
-                  label={t("File Name")}
+                  label={t("File name")}
                   placeholder={t("e.g. rate_confirmation.pdf")}
                 />
               </FormControl>
@@ -186,7 +186,7 @@ function FixtureForm({
                 <InputField
                   control={control}
                   name="providerFingerprint"
-                  label={t("Provider Fingerprint")}
+                  label={t("Provider fingerprint")}
                   placeholder={t("e.g. ch_robinson")}
                 />
               </FormControl>
@@ -197,7 +197,7 @@ function FixtureForm({
           </FormSection>
 
           <FormSection
-            title={t("Text Snapshot")}
+            title={t("Text snapshot")}
             description={t(
               "The full extracted text of the document. This is the primary input the parser operates on during simulation.",
             )}
@@ -212,7 +212,7 @@ function FixtureForm({
             <TextareaField
               control={control}
               name="textSnapshot"
-              label={t("Full Document Text")}
+              label={t("Full document text")}
               placeholder={t("Paste the full document text here...")}
               rules={{ required: true }}
               className="font-mono text-xs"
@@ -220,7 +220,7 @@ function FixtureForm({
           </FormSection>
 
           <FormSection
-            title={t("Page Snapshots")}
+            title={t("Page snapshots")}
             titleCount={pageFields.length}
             description={t(
               "Per-page text used when rules target specific pages. If omitted, the parser uses the full text snapshot.",
@@ -239,7 +239,7 @@ function FixtureForm({
                 }
               >
                 <PlusIcon className="size-3.5" />
-                {t("Add Page")}
+                {t("Add page")}
               </Button>
             }
           >
@@ -289,12 +289,12 @@ function FixtureForm({
                         <NumberField
                           control={control}
                           name={`pageSnapshots.${idx}.pageNumber`}
-                          label={t("Page Number")}
+                          label={t("Page number")}
                         />
                         <TextareaField
                           control={control}
                           name={`pageSnapshots.${idx}.text`}
-                          label={t("Page Text")}
+                          label={t("Page text")}
                           className="font-mono text-xs"
                         />
                       </div>
@@ -307,7 +307,7 @@ function FixtureForm({
 
           <AssertionsEditor />
 
-          <FormSaveDock saveButtonContent={t("Save Fixture")} />
+          <FormSaveDock saveButtonContent={t("Save fixture")} />
         </div>
       </Form>
     </FormProvider>

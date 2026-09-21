@@ -109,7 +109,7 @@ export function ExceptionStrip({
             aria-label={t("Previous match")}
             disabled={matchCount === 0}
             onClick={() => onStep(-1)}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-5 items-center justify-center rounded transition-colors disabled:pointer-events-none disabled:opacity-40"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-5 items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronLeftIcon className="size-3.5" />
           </button>
@@ -118,7 +118,7 @@ export function ExceptionStrip({
             aria-label={t("Next match")}
             disabled={matchCount === 0}
             onClick={() => onStep(1)}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-5 items-center justify-center rounded transition-colors disabled:pointer-events-none disabled:opacity-40"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-5 items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronRightIcon className="size-3.5" />
           </button>
@@ -126,7 +126,7 @@ export function ExceptionStrip({
             type="button"
             aria-label={t("Clear focus")}
             onClick={() => onFocusChange(null)}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground ml-0.5 flex size-5 items-center justify-center rounded transition-colors"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground ml-0.5 flex size-5 items-center justify-center rounded-md transition-colors"
           >
             <XIcon className="size-3.5" />
           </button>

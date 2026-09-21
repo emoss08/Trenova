@@ -38,7 +38,7 @@ export default function WorkersContent() {
         </TabsTab>
         <TabsTab value="pto">
           <CalendarIcon size={16} aria-hidden="true" />
-          {t("Paid Time Off")}
+          {t("Paid time off")}
         </TabsTab>
       </TabsList>
       <TabsContent value="workers" className="flex flex-col gap-2">

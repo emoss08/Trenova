@@ -94,7 +94,7 @@ function OpenEscrowPanel({
     <FormCreatePanel<OpenEscrowAccountFormValues, EscrowAccountRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Escrow Account")}
+      title={t("Escrow account")}
       description={t(
         "One active escrow account per driver; contributions flow in from settlements via a recurring deduction.",
       )}
@@ -119,7 +119,7 @@ function OpenEscrowPanel({
             <NumberField
               control={control}
               name="targetAmount"
-              label={t("Funding Target")}
+              label={t("Funding target")}
               decimalScale={2}
               fixedDecimalScale
               sideText={t("USD")}
@@ -132,7 +132,7 @@ function OpenEscrowPanel({
             <NumberField
               control={control}
               name="annualInterestRate"
-              label={t("Annual Interest Rate")}
+              label={t("Annual interest rate")}
               decimalScale={2}
               fixedDecimalScale
               sideText="%"
@@ -233,7 +233,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
         {account.status === "Active" && (
           <div className="ml-auto flex gap-2">
             <Button size="sm" variant="outline" onClick={() => setAdjustOpen(true)}>
-              {t("Record Adjustment")}
+              {t("Record adjustment")}
             </Button>
             <Button
               size="sm"
@@ -241,7 +241,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
               className="text-danger-foreground"
               onClick={() => setCloseOpen(true)}
             >
-              {t("Close Account")}
+              {t("Close account")}
             </Button>
           </div>
         )}
@@ -265,7 +265,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium">{t("Interest Rate")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Interest rate")}</p>
           <p className="mt-1 text-sm font-semibold tabular-nums">
             {Number(account.annualInterestRate) > 0
               ? t("{0}% / yr", Number(account.annualInterestRate).toFixed(2))
@@ -275,7 +275,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
       </div>
 
       <div>
-        <h3 className="mb-2 text-sm font-semibold">{t("Transaction Ledger")}</h3>
+        <h3 className="mb-2 text-sm font-semibold">{t("Transaction ledger")}</h3>
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-xs">
             <thead className="bg-muted/50 text-left">
@@ -392,7 +392,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
               disabled={closeMutation.isPending}
               onClick={() => closeMutation.mutate()}
             >
-              {t("Close Account")}
+              {t("Close account")}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -38,7 +38,7 @@ export function FleetCodePanel({
         form={form}
         url="/fleet-codes/"
         queryKey="fleet-code-list"
-        title={t("Fleet Code")}
+        title={t("Fleet code")}
         fieldKey="code"
         formComponent={<FleetCodeForm />}
       />
@@ -52,7 +52,7 @@ export function FleetCodePanel({
       form={form}
       url="/fleet-codes/"
       queryKey="fleet-code-list"
-      title={t("Fleet Code")}
+      title={t("Fleet code")}
       formComponent={<FleetCodeForm />}
     />
   );

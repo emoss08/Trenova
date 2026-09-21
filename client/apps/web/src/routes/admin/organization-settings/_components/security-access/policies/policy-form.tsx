@@ -39,14 +39,14 @@ export function AccessPolicyForm({
 
   return (
     <div className="flex flex-col gap-6">
-      <FormSection title={t("Policy Decision")}>
+      <FormSection title={t("Policy decision")}>
         <FormGroup cols={2}>
           <FormControl cols="full">
             <InputField
               control={control}
               rules={{ required: true }}
               name="name"
-              label={t("Policy Name")}
+              label={t("Policy name")}
               placeholder={t("Require managed devices for billing exports")}
               description={t("Administrative name that explains when this policy should match.")}
               maxLength={120}
@@ -183,7 +183,7 @@ function ConditionRowFields({
       <InputField
         control={control}
         name={`conditionRows.${index}.key`}
-        label={t("Condition Key")}
+        label={t("Condition key")}
         placeholder={t("Claim")}
         description={t("Claim, signal, or context key to evaluate.")}
         defaultValue={condition.key}
@@ -191,7 +191,7 @@ function ConditionRowFields({
       <InputField
         control={control}
         name={`conditionRows.${index}.value`}
-        label={t("Condition Value")}
+        label={t("Condition value")}
         placeholder={t("Expected value")}
         description={t("Expected value for the configured condition key.")}
         defaultValue={condition.value}

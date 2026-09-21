@@ -11,7 +11,7 @@ export function FleetCodesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Fleet Codes"),
+        title: t("Fleet codes"),
         description: t("Manage and configure fleet codes for your organization"),
       }}
     >

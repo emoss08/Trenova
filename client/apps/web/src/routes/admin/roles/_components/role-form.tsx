@@ -29,7 +29,7 @@ export function RoleForm({ isSystemRole }: { isSystemRole?: boolean }) {
           control={control}
           rules={{ required: true }}
           name="maxSensitivity"
-          label={t("Max Sensitivity Level")}
+          label={t("Max sensitivity level")}
           options={fieldSensitivityChoices}
           isReadOnly={isSystemRole}
         />
@@ -38,7 +38,7 @@ export function RoleForm({ isSystemRole }: { isSystemRole?: boolean }) {
         <SelectField
           control={control}
           name="coreResponsibility"
-          label={t("Core Responsibility")}
+          label={t("Core responsibility")}
           options={coreResponsibilityChoices}
           isClearable
           isReadOnly={isSystemRole}

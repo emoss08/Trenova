@@ -11,7 +11,7 @@ export function ServiceFailureReasonCodesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Service Failure Reason Codes"),
+        title: t("Service failure reason codes"),
         description: t("Manage operational exception reasons and EDI 214 defaults"),
       }}
     >

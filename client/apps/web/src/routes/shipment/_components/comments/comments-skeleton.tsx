@@ -18,9 +18,9 @@ export function CommentsTabSkeleton() {
           <div key={index} className="flex gap-2.5">
             <Skeleton className="size-7 shrink-0 rounded-full" />
             <div className="flex flex-1 flex-col gap-1.5">
-              <Skeleton className="h-3 w-40 rounded" />
-              <Skeleton className="h-3 w-full rounded" />
-              <Skeleton className="h-3 w-3/4 rounded" />
+              <Skeleton className="h-3 w-40 rounded-md" />
+              <Skeleton className="h-3 w-full rounded-md" />
+              <Skeleton className="h-3 w-3/4 rounded-md" />
             </div>
           </div>
         ))}

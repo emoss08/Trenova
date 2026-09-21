@@ -11,7 +11,7 @@ export function RecurringShipmentsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Recurring Shipments"),
+        title: t("Recurring shipments"),
         description: t(
           "Automatically generate shipments for repeating lanes on a schedule you control",
         ),

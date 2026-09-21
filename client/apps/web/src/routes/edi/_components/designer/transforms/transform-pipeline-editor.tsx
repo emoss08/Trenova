@@ -44,10 +44,10 @@ export function TransformPipelineEditor({
     <div className="space-y-3 rounded-md border p-2">
       <div className="flex items-center gap-2 text-xs font-semibold">
         <ShuffleIcon className="size-4" />
-        {t("Transform Pipeline")}
+        {t("Transform pipeline")}
       </div>
       <ControlledSelectField
-        label={t("Base Source")}
+        label={t("Base source")}
         value={baseSource.source}
         onValueChange={(source) =>
           updateBase({ source: source as EDITemplateElementBaseSource["source"] })
@@ -86,7 +86,7 @@ export function TransformPipelineEditor({
         ))}
       </div>
       <ControlledSelectField
-        label={t("Add Operation")}
+        label={t("Add operation")}
         value=""
         onValueChange={(operation) => {
           if (!operation) return;
@@ -114,7 +114,7 @@ function BaseSourceValueEditor({
   if (source.source === "partnerSetting") {
     return (
       <PathReferenceField
-        label={t("Base Partner Setting")}
+        label={t("Base partner setting")}
         value={source.partnerSettingPath ?? ""}
         onChange={(partnerSettingPath) => onChange({ partnerSettingPath })}
         disabled={disabled}
@@ -125,7 +125,7 @@ function BaseSourceValueEditor({
   if (source.source === "fieldPath" || source.source === "repeat" || source.source === "mapping") {
     return (
       <PathReferenceField
-        label={t("Base Path")}
+        label={t("Base path")}
         value={source.fieldPath ?? source.repeatPath ?? source.mappingSourcePath ?? ""}
         onChange={(value) => {
           if (source.source === "repeat") onChange({ repeatPath: value });
@@ -140,7 +140,7 @@ function BaseSourceValueEditor({
   if (source.source === "runtime") {
     return (
       <InputBlock
-        label={t("Base Runtime Key")}
+        label={t("Base runtime key")}
         value={source.runtimeKey ?? ""}
         onChange={(runtimeKey) => onChange({ runtimeKey })}
         disabled={disabled}
@@ -149,7 +149,7 @@ function BaseSourceValueEditor({
   }
   return (
     <InputBlock
-      label={t("Base Value")}
+      label={t("Base value")}
       value={source.value ?? ""}
       onChange={(value) => onChange({ value })}
       disabled={disabled}

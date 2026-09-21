@@ -72,7 +72,7 @@ export function ElementDesigner() {
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
       <div className="bg-background sticky top-0 z-10 grid grid-cols-4 gap-2 border-b p-3 max-xl:grid-cols-2 max-sm:grid-cols-1">
         <InputBlock
-          label={t("X12 Version")}
+          label={t("X12 version")}
           value={metadataDraft.x12Version}
           onChange={(value) => {
             if (!isEditable) return;
@@ -81,7 +81,7 @@ export function ElementDesigner() {
           disabled={!isEditable}
         />
         <InputBlock
-          label={t("Functional Group")}
+          label={t("Functional group")}
           value={metadataDraft.functionalGroupId}
           onChange={(value) => {
             if (!isEditable) return;
@@ -99,7 +99,7 @@ export function ElementDesigner() {
           disabled={!isEditable}
         />
         <InputBlock
-          label={t("Segment Condition")}
+          label={t("Segment condition")}
           value={segment.condition ?? ""}
           onChange={(condition) => {
             if (!isEditable) return;
@@ -131,7 +131,7 @@ export function ElementDesigner() {
                   <TableHead className="w-14">{t("Pos")}</TableHead>
                   <TableHead>{t("Name")}</TableHead>
                   <TableHead>{t("Source")}</TableHead>
-                  <TableHead>{t("Path / Value")}</TableHead>
+                  <TableHead>{t("Path / value")}</TableHead>
                   <TableHead className="w-20">{t("Issues")}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -251,7 +251,7 @@ function ElementInspector({
             disabled={!isEditable}
           />
           <InputBlock
-            label={t("Max Length")}
+            label={t("Max length")}
             value={String(element.validation.maxLength || "")}
             onChange={(value) =>
               update({
@@ -275,7 +275,7 @@ function ElementInspector({
           />
         </div>
         <TextareaBlock
-          label={t("Implementation Guide Note")}
+          label={t("Implementation guide note")}
           value={element.implementationGuideNote ?? ""}
           onChange={(value) => update({ implementationGuideNote: value })}
           disabled={!isEditable}
@@ -309,7 +309,7 @@ function SourceEditor({
   if (element.source === "fieldPath") {
     return (
       <PathReferenceField
-        label={t("Field Path")}
+        label={t("Field path")}
         value={element.fieldPath ?? ""}
         onChange={(fieldPath) => onChange({ fieldPath })}
         disabled={!isEditable}
@@ -319,7 +319,7 @@ function SourceEditor({
   if (element.source === "partnerSetting") {
     return (
       <PathReferenceField
-        label={t("Partner Setting")}
+        label={t("Partner setting")}
         value={element.partnerSettingPath ?? ""}
         onChange={(partnerSettingPath) => onChange({ partnerSettingPath })}
         disabled={!isEditable}
@@ -330,7 +330,7 @@ function SourceEditor({
   if (element.source === "runtime") {
     return (
       <InputBlock
-        label={t("Runtime Key")}
+        label={t("Runtime key")}
         value={element.runtimeKey ?? ""}
         onChange={(runtimeKey) => onChange({ runtimeKey })}
         disabled={!isEditable}
@@ -340,7 +340,7 @@ function SourceEditor({
   if (element.source === "repeat") {
     return (
       <PathReferenceField
-        label={t("Repeat Path")}
+        label={t("Repeat path")}
         value={element.repeatPath ?? ""}
         onChange={(repeatPath) => onChange({ repeatPath })}
         disabled={!isEditable}
@@ -352,7 +352,7 @@ function SourceEditor({
     return (
       <div className="space-y-2">
         <ControlledSelectField
-          label={t("Mapping Entity")}
+          label={t("Mapping entity")}
           value={element.mappingEntityType ?? ""}
           onValueChange={(mappingEntityType) =>
             onChange({
@@ -363,7 +363,7 @@ function SourceEditor({
           options={mappingEntityTypeOptions}
         />
         <PathReferenceField
-          label={t("Mapping Source Path")}
+          label={t("Mapping source path")}
           value={element.mappingSourcePath ?? ""}
           onChange={(mappingSourcePath) => onChange({ mappingSourcePath })}
           disabled={!isEditable}
@@ -391,13 +391,13 @@ function SourceEditor({
   return (
     <div className="space-y-2">
       <InputBlock
-        label={t("Function Name")}
+        label={t("Function name")}
         value={element.starlarkFunction ?? ""}
         onChange={(starlarkFunction) => onChange({ starlarkFunction })}
         disabled={!isEditable}
       />
       <TextareaBlock
-        label={t("Inline Script")}
+        label={t("Inline script")}
         value={element.starlarkScript ?? ""}
         onChange={(starlarkScript) => onChange({ starlarkScript })}
         disabled={!isEditable}

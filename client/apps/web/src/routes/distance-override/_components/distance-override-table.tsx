@@ -90,7 +90,7 @@ export default function DistanceOverrideTable() {
             <AlertDialogMedia>
               <TrashIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>{t("Delete Distance Override")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete distance override")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t(
                 "Are you sure you want to delete this distance override? This action cannot be undone.",

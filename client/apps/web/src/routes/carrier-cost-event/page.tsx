@@ -11,7 +11,7 @@ export function CarrierCostEventsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Carrier Cost Events"),
+        title: t("Carrier cost events"),
         description: t(
           "Purchased-transportation cost accrued as carrier-covered shipments deliver — the source ledger behind every carrier settlement.",
         ),

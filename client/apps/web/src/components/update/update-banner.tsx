@@ -50,7 +50,7 @@ export function LatestChange() {
         <Button
           render={
             <a href={status.latestRelease.htmlUrl} target="_blank" rel="noopener noreferrer">
-              {t("View Release")}
+              {t("View release")}
             </a>
           }
           className="w-max px-0 text-xs font-light"

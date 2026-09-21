@@ -69,7 +69,7 @@ export default function AdvancesTable() {
     () => [
       {
         id: "write-off",
-        label: t("Write Off"),
+        label: t("Write off"),
         icon: BanIcon,
         variant: "destructive",
         onClick: openWriteOffDialog,
@@ -116,7 +116,7 @@ export default function AdvancesTable() {
               disabled={reason.trim() === "" || pending}
               onClick={() => void confirmWriteOff()}
             >
-              {t("Write Off")}
+              {t("Write off")}
             </Button>
           </DialogFooter>
         </DialogContent>

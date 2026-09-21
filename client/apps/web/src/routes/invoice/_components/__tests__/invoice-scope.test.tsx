@@ -185,9 +185,9 @@ describe("invoice list card scope", () => {
     );
 
     const menu = await openContextMenu("INV-2");
-    expect(within(menu).queryByRole("menuitem", { name: "View Shipment" })).toBeNull();
-    expect(within(menu).queryByRole("menuitem", { name: "View Billing Queue Item" })).toBeNull();
-    expect(within(menu).getByRole("menuitem", { name: "Post Invoice" })).toBeInTheDocument();
+    expect(within(menu).queryByRole("menuitem", { name: "View shipment" })).toBeNull();
+    expect(within(menu).queryByRole("menuitem", { name: "View billing queue item" })).toBeNull();
+    expect(within(menu).getByRole("menuitem", { name: "Post invoice" })).toBeInTheDocument();
   });
 
   it("links an order invoice to its order rather than to one leg", async () => {
@@ -201,9 +201,9 @@ describe("invoice list card scope", () => {
     );
 
     const menu = await openContextMenu("INV-1");
-    expect(within(menu).getByRole("menuitem", { name: "View Order" })).toBeInTheDocument();
-    expect(within(menu).queryByRole("menuitem", { name: "View Shipment" })).toBeNull();
-    expect(within(menu).queryByRole("menuitem", { name: "View Billing Queue Item" })).toBeNull();
+    expect(within(menu).getByRole("menuitem", { name: "View order" })).toBeInTheDocument();
+    expect(within(menu).queryByRole("menuitem", { name: "View shipment" })).toBeNull();
+    expect(within(menu).queryByRole("menuitem", { name: "View billing queue item" })).toBeNull();
   });
 
   it("keeps the shipment and queue item links on a single-shipment invoice", async () => {
@@ -212,11 +212,11 @@ describe("invoice list card scope", () => {
     );
 
     const menu = await openContextMenu("INV-1");
-    expect(within(menu).getByRole("menuitem", { name: "View Shipment" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "View shipment" })).toBeInTheDocument();
     expect(
-      within(menu).getByRole("menuitem", { name: "View Billing Queue Item" }),
+      within(menu).getByRole("menuitem", { name: "View billing queue item" }),
     ).toBeInTheDocument();
-    expect(within(menu).queryByRole("menuitem", { name: "View Order" })).toBeNull();
+    expect(within(menu).queryByRole("menuitem", { name: "View order" })).toBeNull();
   });
 
   it("opens the shipment in its edit panel from the context menu", async () => {
@@ -227,7 +227,7 @@ describe("invoice list card scope", () => {
     );
 
     const menu = await openContextMenu("INV-1");
-    await user.click(within(menu).getByRole("menuitem", { name: "View Shipment" }));
+    await user.click(within(menu).getByRole("menuitem", { name: "View shipment" }));
 
     expect(open).toHaveBeenCalledWith(
       "/shipment-management/shipments?expanded=shp_1&panelType=edit&panelEntityId=shp_1",
@@ -273,7 +273,7 @@ describe("invoice sidebar scope filter", () => {
 
     await waitFor(() => expect(mocks.requestGraphQL).toHaveBeenCalled());
     expect(lastFieldFilters().some((filter) => filter.field === "scope")).toBe(false);
-    expect(screen.getByRole("combobox", { name: "Invoice scope" })).toHaveTextContent("All Scopes");
+    expect(screen.getByRole("combobox", { name: "Invoice scope" })).toHaveTextContent("All scopes");
   });
 
   it("clears the scope along with the other filters", async () => {
@@ -356,11 +356,11 @@ describe("invoice detail pane scope", () => {
 
     expect(await screen.findByRole("heading", { name: "INV-2" })).toBeInTheDocument();
     expect(screen.getByText("Consolidated")).toBeInTheDocument();
-    expect(screen.getByText("Billing Period")).toBeInTheDocument();
+    expect(screen.getByText("Billing period")).toBeInTheDocument();
     expect(screen.getByText(periodRange(PERIOD_START, PERIOD_END))).toBeInTheDocument();
     expect(screen.getByText("Shipments")).toBeInTheDocument();
     expect(screen.getByText("12")).toBeInTheDocument();
-    expect(screen.queryByText("PRO Number")).toBeNull();
+    expect(screen.queryByText("PRO number")).toBeNull();
     expect(screen.queryByText("SEED-DET-011")).toBeNull();
   });
 
@@ -387,7 +387,7 @@ describe("invoice detail pane scope", () => {
 
     expect(await screen.findByRole("heading", { name: "INV-1" })).toBeInTheDocument();
     expect(screen.getByText("SEED-DET-011")).toBeInTheDocument();
-    expect(screen.queryByText("Billing Period")).toBeNull();
+    expect(screen.queryByText("Billing period")).toBeNull();
     expect(screen.queryByText("Consolidated")).toBeNull();
   });
 });

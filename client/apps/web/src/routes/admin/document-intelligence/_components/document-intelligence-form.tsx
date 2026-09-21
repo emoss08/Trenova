@@ -90,7 +90,7 @@ export default function DocumentIntelligenceForm() {
           <ClassificationAndExtractionCard />
           <ShipmentDraftCard />
           <SearchCard />
-          <FormSaveDock saveButtonContent={t("Save Changes")} />
+          <FormSaveDock saveButtonContent={t("Save changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -109,7 +109,7 @@ function PlatformAvailabilityCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Platform Availability")}</CardTitle>
+        <CardTitle>{t("Platform availability")}</CardTitle>
         <CardDescription>
           {t(
             "Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if a provider is configured.",
@@ -122,7 +122,7 @@ function PlatformAvailabilityCard() {
             <SwitchField
               control={control}
               name="enableDocumentIntelligence"
-              label={t("Enable Document Intelligence")}
+              label={t("Enable document intelligence")}
               description={t(
                 "Master switch for OCR, document classification, extraction, and indexing workflows.",
               )}
@@ -157,7 +157,7 @@ function ClassificationAndExtractionCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Classification And Extraction")}</CardTitle>
+        <CardTitle>{t("Classification and extraction")}</CardTitle>
         <CardDescription>
           {t(
             "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on an enabled AI provider that serves document work.",
@@ -170,7 +170,7 @@ function ClassificationAndExtractionCard() {
             <SwitchField
               control={control}
               name="enableAutoClassification"
-              label={t("Enable Automatic Classification")}
+              label={t("Enable automatic classification")}
               description={t(
                 "Classify uploaded documents into supported kinds as they are processed.",
               )}
@@ -182,7 +182,7 @@ function ClassificationAndExtractionCard() {
             <SwitchField
               control={control}
               name="enableAiAssistedClassification"
-              label={t("Enable AI-Assisted Classification")}
+              label={t("Enable AI-assisted classification")}
               description={t(
                 "Use an AI provider to improve document-kind routing when deterministic classification is insufficient.",
               )}
@@ -194,7 +194,7 @@ function ClassificationAndExtractionCard() {
             <SwitchField
               control={control}
               name="enableAutoDocumentTypeAssociate"
-              label={t("Enable Automatic Document Type Association")}
+              label={t("Enable automatic document type association")}
               description={t(
                 "Map detected document kinds to existing document types automatically.",
               )}
@@ -206,7 +206,7 @@ function ClassificationAndExtractionCard() {
             <SwitchField
               control={control}
               name="enableAutoCreateDocumentTypes"
-              label={t("Enable Automatic Document Type Creation")}
+              label={t("Enable automatic document type creation")}
               description={t(
                 "Create missing document types during auto-association when a mapping does not exist yet.",
               )}
@@ -218,7 +218,7 @@ function ClassificationAndExtractionCard() {
             <SwitchField
               control={control}
               name="enableAiAssistedExtraction"
-              label={t("Enable AI-Assisted Extraction")}
+              label={t("Enable AI-assisted extraction")}
               description={t(
                 "Use an AI provider for structured extraction on supported document kinds.",
               )}
@@ -267,7 +267,7 @@ function ShipmentDraftCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Shipment Draft Extraction")}</CardTitle>
+        <CardTitle>{t("Shipment draft extraction")}</CardTitle>
         <CardDescription>
           {t(
             "Limit structured shipment-draft generation to the resources where operators should be able to review a draft and create a shipment from it.",
@@ -280,7 +280,7 @@ function ShipmentDraftCard() {
             <SwitchField
               control={control}
               name="enableShipmentDraftExtraction"
-              label={t("Enable Shipment Draft Extraction")}
+              label={t("Enable shipment draft extraction")}
               description={t(
                 "Generate reviewable shipment drafts for supported document kinds such as rate confirmations.",
               )}
@@ -329,7 +329,7 @@ function SearchCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Search And Retrieval")}</CardTitle>
+        <CardTitle>{t("Search and retrieval")}</CardTitle>
         <CardDescription>
           {t(
             "Control whether extracted text is indexed for document search and retrieval experiences.",
@@ -342,7 +342,7 @@ function SearchCard() {
             <SwitchField
               control={control}
               name="enableFullTextIndexing"
-              label={t("Enable Full-Text Indexing")}
+              label={t("Enable full-text indexing")}
               description={t(
                 "Store extracted text in the search index so operators can find documents by content.",
               )}

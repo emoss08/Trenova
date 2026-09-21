@@ -39,8 +39,8 @@ import { MatchConfigEditor } from "./match-config-editor";
 import { RuleBuilder } from "./rule-builder";
 
 const PARSER_MODE_OPTIONS = [
-  { value: "merge_with_base", label: "Merge with Base Parser" },
-  { value: "override_base", label: "Override Base Parser" },
+  { value: "merge_with_base", label: "Merge with base parser" },
+  { value: "override_base", label: "Override base parser" },
 ];
 
 const STATUS_BADGE_VARIANT = {
@@ -196,7 +196,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      {t("Publish Version {0}", version.versionNumber)}
+                      {t("Publish version {0}", version.versionNumber)}
                     </AlertDialogTitle>
                     <AlertDialogDescription className="space-y-2">
                       <span>
@@ -220,7 +220,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                   <AlertDialogFooter>
                     <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
                     <AlertDialogAction onClick={() => publishMutation.mutate()}>
-                      {publishMutation.isPending ? t("Publishing...") : t("Publish Version")}
+                      {publishMutation.isPending ? t("Publishing...") : t("Publish version")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -245,7 +245,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
           {hasValidationIssues && (
             <Alert variant="destructive">
               <AlertTriangleIcon />
-              <AlertTitle>{t("Validation Issues")}</AlertTitle>
+              <AlertTitle>{t("Validation issues")}</AlertTitle>
               <AlertDescription>
                 {fixtureCount !== null && (
                   <p>{t("{0, plural, one {# fixture} other {# fixtures}} tested", fixtureCount)}</p>
@@ -267,7 +267,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
 
           {/* Version settings */}
           <FormSection
-            title={t("Version Settings")}
+            title={t("Version settings")}
             description={t("Label this version and choose how it interacts with the base parser.")}
           >
             <FormGroup cols={2}>
@@ -285,7 +285,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                 <SelectField
                   control={control}
                   name="parserMode"
-                  label={t("Parser Mode")}
+                  label={t("Parser mode")}
                   description={t(
                     "Merge extends the base parser results. Override replaces them entirely.",
                   )}
@@ -299,8 +299,8 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
           {/* Rule configuration tabs */}
           <Tabs defaultValue="match-config">
             <TabsList variant="underline">
-              <TabsTab value="match-config">{t("Match Config")}</TabsTab>
-              <TabsTab value="rule-builder">{t("Rule Builder")}</TabsTab>
+              <TabsTab value="match-config">{t("Match config")}</TabsTab>
+              <TabsTab value="rule-builder">{t("Rule builder")}</TabsTab>
               <TabsTab value="json">JSON</TabsTab>
             </TabsList>
             <TabsPanel value="match-config" className="mt-4">
@@ -314,7 +314,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
             </TabsPanel>
           </Tabs>
 
-          {isDraft && <FormSaveDock saveButtonContent={t("Save Changes")} />}
+          {isDraft && <FormSaveDock saveButtonContent={t("Save changes")} />}
         </div>
       </Form>
     </FormProvider>

@@ -35,7 +35,7 @@ describe("derivePageContext", () => {
       path: "/billing/queue",
       entityType: "billing_queue_item",
       entityId: "",
-      title: "Billing Queue",
+      title: "Billing queue",
     });
   });
 

@@ -116,7 +116,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayProfileRow>[] {
     },
     {
       id: "components",
-      header: t("Pay Components"),
+      header: t("Pay components"),
       cell: ({ row }) => (
         <span className="text-muted-foreground text-xs">{componentSummary(row.original)}</span>
       ),

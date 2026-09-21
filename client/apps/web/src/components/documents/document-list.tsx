@@ -45,8 +45,8 @@ function LoadingStateList() {
         <div key={i} className="bg-card flex items-center gap-3 rounded-lg border p-3">
           <div className="bg-muted size-12 animate-pulse rounded-md" />
           <div className="flex-1 space-y-2">
-            <div className="bg-muted h-4 w-3/4 animate-pulse rounded" />
-            <div className="bg-muted h-3 w-1/2 animate-pulse rounded" />
+            <div className="bg-muted h-4 w-3/4 animate-pulse rounded-md" />
+            <div className="bg-muted h-3 w-1/2 animate-pulse rounded-md" />
           </div>
         </div>
       ))}
@@ -63,8 +63,8 @@ function LoadingStateGrid() {
             <div className="bg-muted size-16 animate-pulse rounded-lg" />
           </div>
           <div className="flex flex-col gap-1.5 border-t px-3 py-2.5">
-            <div className="bg-muted h-4 w-3/4 animate-pulse rounded" />
-            <div className="bg-muted h-3 w-1/2 animate-pulse rounded" />
+            <div className="bg-muted h-4 w-3/4 animate-pulse rounded-md" />
+            <div className="bg-muted h-3 w-1/2 animate-pulse rounded-md" />
           </div>
         </div>
       ))}

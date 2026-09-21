@@ -13,7 +13,7 @@ export function TableChangeAlertPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Table Change Alert"),
+        title: t("Table change alert"),
         description: t("Monitor and review system activity across your organization"),
       }}
     >

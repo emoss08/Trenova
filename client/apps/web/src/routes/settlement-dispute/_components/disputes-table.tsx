@@ -41,7 +41,7 @@ export default function DisputesTable() {
     () => [
       {
         id: "start-review",
-        label: t("Start Review"),
+        label: t("Start review"),
         loadingLabel: t("Updating..."),
         icon: EyeIcon,
         onClick: handleStartReview,

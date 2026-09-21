@@ -366,16 +366,16 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
           <span>{formatTimestamp(doc.updatedAt)}</span>
           <span className="text-muted-foreground ml-1">{relativeTime(doc.updatedAt)}</span>
         </DescriptionItem>
-        <DescriptionItem label={t("Preview Status")}>
+        <DescriptionItem label={t("Preview status")}>
           <Badge variant={statusVariant(doc.previewStatus)}>{doc.previewStatus}</Badge>
         </DescriptionItem>
-        <DescriptionItem label={t("Content Status")}>
+        <DescriptionItem label={t("Content status")}>
           <Badge variant={statusVariant(doc.contentStatus)}>{doc.contentStatus}</Badge>
         </DescriptionItem>
-        <DescriptionItem label={t("Draft Status")}>
+        <DescriptionItem label={t("Draft status")}>
           <Badge variant={statusVariant(doc.shipmentDraftStatus)}>{doc.shipmentDraftStatus}</Badge>
         </DescriptionItem>
-        <DescriptionItem label={t("Detected Kind")}>
+        <DescriptionItem label={t("Detected kind")}>
           {doc.detectedKind ? (
             <Badge variant="neutral">{doc.detectedKind}</Badge>
           ) : (
@@ -392,10 +392,10 @@ function ActionsSection({ documentId, onSuccess }: { documentId: string; onSucce
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={RefreshCwIcon} title={t("Recovery Actions")} />
+      <SectionHeader icon={RefreshCwIcon} title={t("Recovery actions")} />
       <div className="grid gap-2.5 sm:grid-cols-3">
         <ActionButton
-          label={t("Reextract Content")}
+          label={t("Reextract content")}
           detail={t("Re-process text and structured data")}
           description={t(
             "Re-run content extraction for this document. This will re-process the document and update extracted text and structured data.",
@@ -406,7 +406,7 @@ function ActionsSection({ documentId, onSuccess }: { documentId: string; onSucce
           onSuccess={onSuccess}
         />
         <ActionButton
-          label={t("Regenerate Preview")}
+          label={t("Regenerate preview")}
           detail={t("Start a new thumbnail workflow")}
           description={t(
             "Regenerate the document preview thumbnail. A new Temporal workflow will be started to generate the thumbnail.",
@@ -417,7 +417,7 @@ function ActionsSection({ documentId, onSuccess }: { documentId: string; onSucce
           onSuccess={onSuccess}
         />
         <ActionButton
-          label={t("Resync Search")}
+          label={t("Resync search")}
           detail={t("Update the search index projection")}
           description={t(
             "Re-sync this document's search index entry. This will update the search projection with the latest document data.",
@@ -446,7 +446,7 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
           <FileSearchIcon className="size-4" />
         </span>
         <div>
-          <div className="text-sm font-medium">{t("Extracted Content")}</div>
+          <div className="text-sm font-medium">{t("Extracted content")}</div>
           <div className="text-muted-foreground text-xs">
             {hasContent ? t("Content available") : t("Not extracted yet")}
           </div>
@@ -461,7 +461,7 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
           <LayersIcon className="size-4" />
         </span>
         <div>
-          <div className="text-sm font-medium">{t("Shipment Draft")}</div>
+          <div className="text-sm font-medium">{t("Shipment draft")}</div>
           <div className="text-muted-foreground text-xs">
             {hasDraft ? t("Draft available") : t("No draft generated")}
           </div>
@@ -478,7 +478,7 @@ function VersionsSection({ versions }: { versions: Document[] }) {
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={GitBranchIcon} title={t("Version History")} count={versions.length} />
+      <SectionHeader icon={GitBranchIcon} title={t("Version history")} count={versions.length} />
       <div className="grid gap-2">
         {versions.map((v) => (
           <div
@@ -513,7 +513,7 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={UploadIcon} title={t("Upload Sessions")} count={sessions.length} />
+      <SectionHeader icon={UploadIcon} title={t("Upload sessions")} count={sessions.length} />
       <div className="grid gap-2">
         {sessions.map((s) => {
           const hasFailure = !!(s.failureCode || s.failureMessage);
@@ -577,7 +577,7 @@ function WorkflowsSection({ refs }: { refs: WorkflowReference[] }) {
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={WorkflowIcon} title={t("Workflow References")} count={refs.length} />
+      <SectionHeader icon={WorkflowIcon} title={t("Workflow references")} count={refs.length} />
       <div className="grid gap-2 sm:grid-cols-2">
         {refs.map((ref) => (
           <div
@@ -712,7 +712,7 @@ export function DocumentOperationsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Document Operations"),
+        title: t("Document operations"),
         description: t("Inspect document lifecycle state and trigger recovery actions"),
       }}
     >

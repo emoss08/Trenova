@@ -26,7 +26,7 @@ export function DistanceOverrideForm() {
           control={control}
           rules={{ required: true }}
           name="originLocationId"
-          label={t("Origin Location")}
+          label={t("Origin location")}
           placeholder={t("Select origin location")}
           description={t("The origin location for this distance override")}
         />
@@ -36,7 +36,7 @@ export function DistanceOverrideForm() {
           control={control}
           rules={{ required: true }}
           name="destinationLocationId"
-          label={t("Destination Location")}
+          label={t("Destination location")}
           placeholder={t("Select destination location")}
           description={t("The destination location for this distance override")}
         />
@@ -63,7 +63,7 @@ export function DistanceOverrideForm() {
       </FormControl>
       <FormControl cols="full">
         <FormSection
-          title={t("Intermediate Stops")}
+          title={t("Intermediate stops")}
           description={t("Add optional stops between origin and destination in travel order")}
           action={
             <Button
@@ -73,7 +73,7 @@ export function DistanceOverrideForm() {
               onClick={() => append({ locationId: "" })}
             >
               <PlusIcon className="size-3" />
-              {t("Add Stop")}
+              {t("Add stop")}
             </Button>
           }
         >

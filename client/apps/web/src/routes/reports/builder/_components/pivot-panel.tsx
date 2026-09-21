@@ -121,7 +121,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
       {pivot && (
         <>
           <div className="flex flex-col gap-1.5">
-            <Label className="text-muted-foreground text-xs">{t("Pivot Values")}</Label>
+            <Label className="text-muted-foreground text-xs">{t("Pivot values")}</Label>
             {pivotField && pivotField.enumValues.length > 0 ? (
               <div className="flex flex-col gap-1">
                 {pivotField.enumValues.map((enumValue) => (
@@ -193,7 +193,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
             </div>
           )}
           <div className="flex flex-col gap-1.5">
-            <Label className="text-muted-foreground text-xs">{t("Measures to Pivot")}</Label>
+            <Label className="text-muted-foreground text-xs">{t("Measures to pivot")}</Label>
             <div className="flex flex-col gap-1">
               {measures.map((column) => (
                 <label key={column.id} className="flex items-center gap-2 text-sm">

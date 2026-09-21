@@ -11,7 +11,7 @@ export function EscrowAccountsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Escrow Accounts"),
+        title: t("Escrow accounts"),
         description: t(
           "Owner-operator maintenance escrow with a full transaction ledger and quarterly interest per 49 CFR 376.12(k).",
         ),

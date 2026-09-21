@@ -144,7 +144,7 @@ export function ScenarioDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FlaskConicalIcon className="size-4" />
-            {editing ? t("Edit Scenario") : t("New Scenario")}
+            {editing ? t("Edit scenario") : t("New scenario")}
           </DialogTitle>
           <DialogDescription>
             {t(
@@ -258,7 +258,7 @@ export function ScenarioDialog({
             isLoading={isSaving}
             loadingText={t("Saving...")}
           >
-            {editing ? t("Save Scenario") : t("Add Scenario")}
+            {editing ? t("Save scenario") : t("Add scenario")}
           </Button>
         </DialogFooter>
       </DialogContent>

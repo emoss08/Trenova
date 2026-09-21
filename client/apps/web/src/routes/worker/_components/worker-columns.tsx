@@ -193,13 +193,13 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
     },
     {
       accessorKey: "driverType",
-      header: t("Driver Type"),
+      header: t("Driver type"),
       cell: ({ row }) => <DriverTypeCell row={row.original} />,
       size: 140,
       minSize: 120,
       maxSize: 160,
       meta: {
-        label: t("Driver Type"),
+        label: t("Driver type"),
         apiField: "driverType",
         filterable: true,
         sortable: true,
@@ -210,7 +210,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
     },
     {
       accessorKey: "fleetCode",
-      header: t("Fleet Code"),
+      header: t("Fleet code"),
       cell: ({ row }) => {
         const { fleetCode } = row.original;
         if (!fleetCode) {
@@ -234,7 +234,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
         );
       },
       meta: {
-        label: t("Fleet Code"),
+        label: t("Fleet code"),
         apiField: "fleetCode.code",
         filterable: true,
         sortable: false,
@@ -382,7 +382,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
     {
       id: "nextCredentialExpiry",
       accessorKey: "profile.nextCredentialExpiry",
-      header: t("Expires Next"),
+      header: t("Expires next"),
       cell: ({ row }) => {
         const expiry = row.original.profile?.nextCredentialExpiry;
         if (!expiry) {
@@ -413,7 +413,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
       minSize: 130,
       maxSize: 190,
       meta: {
-        label: t("Expires Next"),
+        label: t("Expires next"),
         apiField: "profile.nextCredentialExpiry",
         filterable: true,
         sortable: true,

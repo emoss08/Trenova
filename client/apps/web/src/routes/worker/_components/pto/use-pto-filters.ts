@@ -3,7 +3,7 @@ import type { PTOType } from "@trenova/shared/types/worker";
 import { useMemo } from "react";
 
 export const ptoTypeOptions = [
-  { value: "All", label: "All Types" },
+  { value: "All", label: "All types" },
   { value: "Vacation", label: "Vacation" },
   { value: "Sick", label: "Sick" },
   { value: "Holiday", label: "Holiday" },

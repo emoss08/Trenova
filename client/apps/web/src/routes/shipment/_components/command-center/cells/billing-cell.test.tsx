@@ -13,12 +13,12 @@ function renderCell(overrides: Partial<Shipment>) {
 
 describe("BillingCell", () => {
   it.each([
-    ["ReadyForReview", "Ready for Review"],
-    ["InReview", "In Review"],
+    ["ReadyForReview", "Ready for review"],
+    ["InReview", "In review"],
     ["Approved", "Approved"],
     ["Posted", "Posted"],
-    ["OnHold", "On Hold"],
-    ["SentBackToOps", "Sent Back to Ops"],
+    ["OnHold", "On hold"],
+    ["SentBackToOps", "Sent back to ops"],
     ["Exception", "Exception"],
     ["Canceled", "Canceled"],
   ] as const)("labels %s as %s", (billingTransferStatus, label) => {

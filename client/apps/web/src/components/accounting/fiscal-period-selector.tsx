@@ -41,7 +41,7 @@ export function FiscalPeriodSelector({ value, onChange, className }: FiscalPerio
         <FiscalYearAutocompleteField
           control={form.control}
           name="fiscalYearId"
-          label={t("Fiscal Year")}
+          label={t("Fiscal year")}
           placeholder={t("Select fiscal year")}
           onOptionChange={(option) => {
             const yearId = option?.id ?? null;
@@ -53,7 +53,7 @@ export function FiscalPeriodSelector({ value, onChange, className }: FiscalPerio
       <div className="w-[240px]">
         <FiscalPeriodAutocompleteField
           control={form.control}
-          label={t("Fiscal Period")}
+          label={t("Fiscal period")}
           name="fiscalPeriodId"
           placeholder={t("Select period")}
           extraSearchParams={periodSearchParams}

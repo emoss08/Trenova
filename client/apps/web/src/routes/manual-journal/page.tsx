@@ -18,7 +18,7 @@ export function ManualJournalsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Manual Journals"),
+        title: t("Manual journals"),
         description: t("Create and manage manual journal entries."),
       }}
     >

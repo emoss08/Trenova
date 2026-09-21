@@ -33,11 +33,11 @@ vi.mock("@/lib/formula-template-export", () => ({
 
 // The list row is a projection: it carries neither `metadata` nor the typed
 // variable definitions, so an export built from it would silently drop them.
-const listRow = { id: "ft_01", name: "Per Mile" };
+const listRow = { id: "ft_01", name: "Per mile" };
 
 const fullTemplate = {
   id: "ft_01",
-  name: "Per Mile",
+  name: "Per mile",
   description: "Rates by loaded mile",
   type: "FreightCharge",
   expression: "distance * rate",

@@ -113,7 +113,7 @@ function IftaMileageEntryCreatePanel({
     <FormCreatePanel<IftaMileageEntryFormValues, IftaMileageEntryRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Jurisdiction Mileage")}
+      title={t("Jurisdiction mileage")}
       description={t(
         "Record miles a tractor ran in a jurisdiction that routing did not see, such as repositioning between shipments. The entry lands on the quarter's return at its next recompute.",
       )}
@@ -156,7 +156,7 @@ function IftaMileageEntryEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title={t("Jurisdiction Mileage")}
+      title={t("Jurisdiction mileage")}
       titleComponent={(record) => (
         <span>
           {t(

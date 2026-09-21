@@ -489,9 +489,9 @@ function ResourceRow({
               {isGranted && (
                 <Badge variant={isFullAccess ? "neutral" : "neutral"} className="text-2xs">
                   {isFullAccess
-                    ? t("Full Access")
+                    ? t("Full access")
                     : isViewOnly
-                      ? t("View Only")
+                      ? t("View only")
                       : `${operationCount}/${totalOperations}`}
                 </Badge>
               )}
@@ -524,7 +524,7 @@ function ResourceRow({
                 </Button>
               }
             />
-            <TooltipContent>{t("View Only")}</TooltipContent>
+            <TooltipContent>{t("View only")}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger
@@ -540,7 +540,7 @@ function ResourceRow({
                 </Button>
               }
             />
-            <TooltipContent>{t("Full Access")}</TooltipContent>
+            <TooltipContent>{t("Full access")}</TooltipContent>
           </Tooltip>
         </div>
       </div>

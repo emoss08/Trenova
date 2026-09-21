@@ -48,14 +48,14 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomFieldDefinitionRow>[
     },
     {
       accessorKey: "resourceType",
-      header: t("Resource Type"),
+      header: t("Resource type"),
       cell: ({ row }) => (
         <Badge variant="neutral" appearance="outline" className="capitalize">
           {row.original.resourceType}
         </Badge>
       ),
       meta: {
-        label: t("Resource Type"),
+        label: t("Resource type"),
         apiField: "resourceType",
         filterable: true,
         sortable: true,
@@ -65,7 +65,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomFieldDefinitionRow>[
     },
     {
       accessorKey: "fieldType",
-      header: t("Field Type"),
+      header: t("Field type"),
       cell: ({ row }) => {
         const fieldType = row.original.fieldType;
         const choice = fieldTypeChoices.find((c) => c.value === fieldType);
@@ -73,7 +73,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomFieldDefinitionRow>[
         return <Badge variant={variant}>{choice?.label || fieldType}</Badge>;
       },
       meta: {
-        label: t("Field Type"),
+        label: t("Field type"),
         apiField: "fieldType",
         filterable: true,
         sortable: true,

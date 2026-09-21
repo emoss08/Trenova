@@ -11,7 +11,7 @@ export function SettlementBatchesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Settlement Batches"),
+        title: t("Settlement batches"),
         description: t(
           "Generate pay-period batches, monitor exceptions, and export payroll files.",
         ),

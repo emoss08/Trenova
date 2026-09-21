@@ -231,7 +231,7 @@ export function TimelineToolbar({
         )}
         {truncated && (
           <span
-            className="border-warning/30 bg-warning/10 text-warning inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-2xs"
+            className="border-warning/30 bg-warning/10 text-warning inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-2xs"
             title={t("Narrow the window or filters to see everything at once.")}
           >
             <TriangleAlertIcon className="size-3" />

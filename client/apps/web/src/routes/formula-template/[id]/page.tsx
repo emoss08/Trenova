@@ -221,7 +221,7 @@ export function FormulaStudioEditPage() {
           size="sm"
           onClick={() => void navigate(formulaTemplateRoutes.list)}
         >
-          {t("Back to Formula Templates")}
+          {t("Back to formula templates")}
         </Button>
       </div>
     );

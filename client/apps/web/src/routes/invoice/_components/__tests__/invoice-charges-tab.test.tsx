@@ -96,7 +96,7 @@ describe("InvoiceChargesTab", () => {
       screen.queryByRole("button", { name: /expand all|collapse all/i }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("PRO-1")).not.toBeInTheDocument();
-    expect(screen.getByText("Line Haul")).toBeInTheDocument();
+    expect(screen.getByText("Line haul")).toBeInTheDocument();
     expect(screen.getByText("Detention")).toBeInTheDocument();
     expect(screen.getByText("2 charges")).toBeInTheDocument();
   });
@@ -122,7 +122,7 @@ describe("InvoiceChargesTab", () => {
           id: "l3",
           lineNumber: 3,
           shipmentId: "shp_1",
-          description: "Fuel Surcharge",
+          description: "Fuel surcharge",
           chargeCode: "FSC",
           chargeMethod: "Percentage",
           rate: 10,
@@ -152,7 +152,7 @@ describe("InvoiceChargesTab", () => {
     expect(within(detention).getByText("$75.00 × 2 hours · Line 2")).toBeInTheDocument();
     expect(within(detention).getByText("$150.00")).toBeInTheDocument();
 
-    const fuel = chargeRow("Fuel Surcharge");
+    const fuel = chargeRow("Fuel surcharge");
     expect(within(fuel).getByText("FSC")).toBeInTheDocument();
     expect(within(fuel).getByText("10% of line haul ($2,450.00) · Line 3")).toBeInTheDocument();
 
@@ -172,21 +172,21 @@ describe("InvoiceChargesTab", () => {
           amount: 2450,
           unitPrice: 2450,
           rate: 3.5,
-          formulaTemplateName: "Per Mile",
+          formulaTemplateName: "Per mile",
         }),
       ]),
     );
 
-    expect(screen.getByText("Rating:").parentElement).toHaveTextContent("Per Mile");
-    expect(within(chargeRow("Base Rate")).getByText("$3.50")).toBeInTheDocument();
-    expect(within(chargeRow("Line Haul")).getByText("$2,450.00")).toBeInTheDocument();
+    expect(screen.getByText("Rating:").parentElement).toHaveTextContent("Per mile");
+    expect(within(chargeRow("Base rate")).getByText("$3.50")).toBeInTheDocument();
+    expect(within(chargeRow("Line haul")).getByText("$2,450.00")).toBeInTheDocument();
   });
 
   it("leaves out the rating and base rate when the freight line recorded neither", () => {
     renderTab(invoiceWith([line({ id: "l1", lineNumber: 1, shipmentId: "shp_1" })]));
 
     expect(screen.queryByText("Rating:")).not.toBeInTheDocument();
-    expect(screen.queryByText("Base Rate")).not.toBeInTheDocument();
+    expect(screen.queryByText("Base rate")).not.toBeInTheDocument();
   });
 
   it("says when a shipment carries no accessorial charges", () => {
@@ -199,7 +199,7 @@ describe("InvoiceChargesTab", () => {
   it("keeps the line number the customer's PDF prints beside each charge", () => {
     renderTab(invoiceWith([line({ id: "l1", lineNumber: 7, shipmentId: "shp_1" })]));
 
-    expect(within(chargeRow("Line Haul")).getByText("Line 7")).toBeInTheDocument();
+    expect(within(chargeRow("Line haul")).getByText("Line 7")).toBeInTheDocument();
   });
 
   it("puts each shipment's subtotal on its section heading", () => {

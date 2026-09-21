@@ -40,8 +40,8 @@ type FormCreatePanelProps<
 
 const SAVE_OPTIONS: SplitButtonOption<CreatePanelSaveAction>[] = [
   { id: "save", label: "Save" },
-  { id: "save-close", label: "Save & Close" },
-  { id: "save-add-another", label: "Save & Add Another" },
+  { id: "save-close", label: "Save & close" },
+  { id: "save-add-another", label: "Save & add another" },
 ];
 
 export function FormCreatePanel<

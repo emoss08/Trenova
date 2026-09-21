@@ -229,7 +229,7 @@ export function RouteCommandPalette() {
           setPreviewId(undefined);
         }
       }}
-      title={t("Command Palette")}
+      title={t("Command palette")}
       description={t("Search for routes, commands, and synced records.")}
       className={cn(
         "z-50 grid w-full max-w-4xl gap-4 overflow-visible border duration-200 sm:max-w-4xl",

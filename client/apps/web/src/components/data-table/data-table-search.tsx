@@ -109,7 +109,7 @@ function SearchSyntaxHelper() {
           <div className="space-y-2">
             {SEARCH_SYNTAX_EXAMPLES.map((item) => (
               <div key={item.syntax} className="grid grid-cols-[100px_1fr] gap-2 text-sm">
-                <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
+                <code className="bg-muted rounded-md px-1.5 py-0.5 font-mono text-xs">
                   {item.syntax}
                 </code>
                 <div>

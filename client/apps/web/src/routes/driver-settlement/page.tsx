@@ -12,7 +12,7 @@ export function DriverSettlementsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Settlement History"),
+        title: t("Settlement history"),
         description: t(
           "Read-only record of every driver and owner-operator settlement across pay periods — process active settlements in the workspace.",
         ),

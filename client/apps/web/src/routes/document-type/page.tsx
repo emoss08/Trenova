@@ -11,7 +11,7 @@ export function DocumentTypesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Document Types"),
+        title: t("Document types"),
         description: t("Manage and configure document types for your organization"),
       }}
     >

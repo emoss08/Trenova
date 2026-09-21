@@ -95,7 +95,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
             type="button"
             onClick={() => setViewMode("single")}
             className={cn(
-              "rounded px-3 py-1.5 text-xs font-medium transition-colors",
+              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
               viewMode === "single"
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -107,7 +107,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
             type="button"
             onClick={() => setViewMode("scroll")}
             className={cn(
-              "rounded px-3 py-1.5 text-xs font-medium transition-colors",
+              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
               viewMode === "scroll"
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -119,7 +119,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
             type="button"
             onClick={() => setViewMode("book")}
             className={cn(
-              "rounded px-3 py-1.5 text-xs font-medium transition-colors",
+              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
               viewMode === "book"
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -136,7 +136,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
               type="button"
               onClick={goToPreviousPage}
               disabled={currentPage <= 1}
-              className="border-border bg-background hover:bg-muted rounded border px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              className="border-border bg-background hover:bg-muted rounded-md border px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
             >
               ←
             </button>
@@ -147,7 +147,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
                 max={numPages}
                 value={currentPage}
                 onChange={handlePageInput}
-                className="border-border bg-background w-12 rounded border px-2 py-1 text-center"
+                className="border-border bg-background w-12 rounded-md border px-2 py-1 text-center"
               />
               <span className="text-muted-foreground">/ {numPages}</span>
             </div>
@@ -155,7 +155,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
               type="button"
               onClick={goToNextPage}
               disabled={currentPage >= numPages}
-              className="border-border bg-background hover:bg-muted rounded border px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              className="border-border bg-background hover:bg-muted rounded-md border px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
             >
               →
             </button>
@@ -168,7 +168,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
             type="button"
             onClick={handleZoomOut}
             disabled={zoom <= 0.5}
-            className="border-border bg-background hover:bg-muted rounded border px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+            className="border-border bg-background hover:bg-muted rounded-md border px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
             −
           </button>
@@ -179,14 +179,14 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
             type="button"
             onClick={handleZoomIn}
             disabled={zoom >= 2.0}
-            className="border-border bg-background hover:bg-muted rounded border px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+            className="border-border bg-background hover:bg-muted rounded-md border px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
             +
           </button>
           <button
             type="button"
             onClick={handleFitWidth}
-            className="border-border bg-background hover:bg-muted rounded border px-2 py-1 text-xs"
+            className="border-border bg-background hover:bg-muted rounded-md border px-2 py-1 text-xs"
           >
             {t("Fit")}
           </button>
@@ -227,7 +227,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
                     pageNumber={index + 1}
                     width={pageWidth}
                     loading={
-                      <div className="bg-background h-[800px] w-full animate-pulse rounded" />
+                      <div className="bg-background h-[800px] w-full animate-pulse rounded-md" />
                     }
                   />
                 </div>
@@ -240,7 +240,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
               <Page
                 pageNumber={currentPage}
                 width={pageWidth}
-                loading={<div className="bg-background h-[800px] w-full animate-pulse rounded" />}
+                loading={<div className="bg-background h-[800px] w-full animate-pulse rounded-md" />}
               />
             </div>
           )}
@@ -251,7 +251,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
                 <Page
                   pageNumber={currentPage}
                   width={pageWidth}
-                  loading={<div className="bg-background h-[800px] w-full animate-pulse rounded" />}
+                  loading={<div className="bg-background h-[800px] w-full animate-pulse rounded-md" />}
                 />
               </div>
               {!showCoverAlone && bookSecondPage && bookSecondPage <= numPages && (
@@ -260,7 +260,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
                     pageNumber={bookSecondPage}
                     width={pageWidth}
                     loading={
-                      <div className="bg-background h-[800px] w-full animate-pulse rounded" />
+                      <div className="bg-background h-[800px] w-full animate-pulse rounded-md" />
                     }
                   />
                 </div>

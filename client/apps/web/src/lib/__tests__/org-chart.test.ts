@@ -166,7 +166,7 @@ describe("vacantPositions", () => {
   // A dispatch desk is held by somebody who logs in, not by a worker; a
   // title only staff hold is filled, not vacant.
   it("counts a title held only by staff as filled", () => {
-    const desk = position({ id: "desk", title: "Load Planner", isDrivingPosition: false });
+    const desk = position({ id: "desk", title: "Load planner", isDrivingPosition: false });
     expect(vacantPositions([desk], [count("desk", 0, { staff: 2 })])).toEqual([]);
     const tree = buildPositionTree([desk], [count("desk", 0, { staff: 2 })]);
     expect(tree.roots[0]).toMatchObject({ workers: 0, staff: 2, people: 2, rolledUp: 2 });

@@ -59,7 +59,7 @@ export function CarrierAssignmentCancelDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Cancel Carrier Assignment")}</DialogTitle>
+          <DialogTitle>{t("Cancel carrier assignment")}</DialogTitle>
           <DialogDescription>
             {carrierName
               ? t(

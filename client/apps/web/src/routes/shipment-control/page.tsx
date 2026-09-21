@@ -11,7 +11,7 @@ export function ShipmentControlPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Shipment Control"),
+        title: t("Shipment control"),
         description: t("Configure and manage your shipment control settings"),
       }}
     >

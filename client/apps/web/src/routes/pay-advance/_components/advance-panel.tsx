@@ -91,7 +91,7 @@ function IssueAdvancePanel({
     <FormCreatePanel<IssuePayAdvanceFormValues, PayAdvanceRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Pay Advance")}
+      title={t("Pay advance")}
       description={t(
         "Records a cash or money-code advance recovered from the driver's future settlements.",
       )}
@@ -138,7 +138,7 @@ function IssueAdvancePanel({
             <AutoCompleteDateField
               control={control}
               name="issuedDate"
-              label={t("Issued Date")}
+              label={t("Issued date")}
               rules={{ required: true }}
               description={t("The date the driver actually received the funds.")}
             />
@@ -249,7 +249,7 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
       {canWriteOff && (
         <div>
           <Button size="sm" variant="outline" onClick={() => setWriteOffOpen(true)}>
-            {t("Write Off Remaining Balance")}
+            {t("Write off remaining balance")}
           </Button>
         </div>
       )}
@@ -277,7 +277,7 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
               disabled={!reason.trim() || writeOffMutation.isPending}
               onClick={() => writeOffMutation.mutate()}
             >
-              {t("Write Off")}
+              {t("Write off")}
             </Button>
           </DialogFooter>
         </DialogContent>

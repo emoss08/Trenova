@@ -27,7 +27,7 @@ export const reportsPageSearchParamsParser = {
 export const LIBRARY_SORT_CHOICES: { value: ReportSortOrder; label: string }[] = [
   { value: "name_asc", label: "Name (A-Z)" },
   { value: "name_desc", label: "Name (Z-A)" },
-  { value: "last_run", label: "Recently Run" },
+  { value: "last_run", label: "Recently run" },
 ];
 
 export const GALLERY_SORT_CHOICES: { value: ReportSortOrder; label: string }[] = [
@@ -36,12 +36,12 @@ export const GALLERY_SORT_CHOICES: { value: ReportSortOrder; label: string }[] =
 ];
 
 export const REPORT_CATEGORY_FILTER_CHOICES: { value: string; label: string }[] = [
-  { value: "all", label: "All Categories" },
+  { value: "all", label: "All categories" },
   ...REPORT_CATEGORY_CHOICES,
 ];
 
 export const REPORT_STATUS_FILTER_CHOICES: { value: string; label: string }[] = [
-  { value: "all", label: "All Statuses" },
+  { value: "all", label: "All statuses" },
   ...reportStatusFilters
     .filter((status) => status !== "all")
     .map((status) => ({

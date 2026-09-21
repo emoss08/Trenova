@@ -22,7 +22,7 @@ function escapeRegExp(str: string): string {
 
 function injectSensitiveBadgesIntoHtml(html: string): string {
   const badge =
-    '<span title="Sensitive data omitted" class="ml-1 inline-flex h-4 select-none items-center rounded border border-warning/40 bg-warning/15 px-1 text-2xs leading-none text-warning-foreground">Sensitive</span>';
+    '<span title="Sensitive data omitted" class="ml-1 inline-flex h-4 select-none items-center rounded-md border border-warning/40 bg-warning/15 px-1 text-2xs leading-none text-warning-foreground">Sensitive</span>';
 
   return html
     .split("\n")

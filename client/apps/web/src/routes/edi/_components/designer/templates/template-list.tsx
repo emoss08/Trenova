@@ -200,7 +200,7 @@ function TemplateEditDialog({
       form={form}
       url="/edi/templates/"
       queryKey="templates"
-      title={t("EDI Template")}
+      title={t("EDI template")}
       fieldKey="name"
       size="md"
       formComponent={<CreateTemplateForm mode="edit" />}

@@ -155,7 +155,7 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 shrink-0 text-xs")}
         >
           <ArrowUpRight className="size-3.5" />
-          {t("Open in Workspace")}
+          {t("Open in workspace")}
         </Link>
       )}
     </div>
@@ -187,7 +187,7 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <SummaryTile label={t("Gross Earnings")}>
+        <SummaryTile label={t("Gross earnings")}>
           <AmountDisplay value={settlement.grossEarningsMinor} currency={settlement.currencyCode} />
         </SummaryTile>
         <SummaryTile label={t("Deductions")}>
@@ -197,7 +197,7 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
             currency={settlement.currencyCode}
           />
         </SummaryTile>
-        <SummaryTile label={t("Miles / Loads")}>
+        <SummaryTile label={t("Miles / loads")}>
           <span className="tabular-nums">
             {t(
               "{0} mi · {1}",
@@ -206,7 +206,7 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
             )}
           </span>
         </SummaryTile>
-        <SummaryTile label={t("Net Pay")} highlight>
+        <SummaryTile label={t("Net pay")} highlight>
           <AmountDisplay
             value={settlement.netPayMinor}
             variant="positive"
@@ -334,7 +334,7 @@ function SettlementActions({
         <>
           <Button size="sm" disabled={busy} onClick={() => runAction.mutate("submit")}>
             <Send className="size-3.5" />
-            {t("Submit for Approval")}
+            {t("Submit for approval")}
           </Button>
           <Button
             size="sm"
@@ -373,7 +373,7 @@ function SettlementActions({
       {status === "Posted" && (
         <Button size="sm" disabled={busy} onClick={() => setPayDialogOpen(true)}>
           <CircleDollarSign className="size-3.5" />
-          {t("Mark Paid")}
+          {t("Mark paid")}
         </Button>
       )}
       {(status === "Draft" || status === "PendingApproval") && (
@@ -384,7 +384,7 @@ function SettlementActions({
           onClick={() => setAdjustDialogOpen(true)}
         >
           <Plus className="size-3.5" />
-          {t("Add Adjustment")}
+          {t("Add adjustment")}
         </Button>
       )}
       {status !== "Paid" && status !== "Voided" && (
@@ -550,7 +550,7 @@ function MarkPaidDialog({
                   variant={paymentMethod === method ? "default" : "outline"}
                   onClick={() => setPaymentMethod(method)}
                 >
-                  {method === "InstantPay" ? t("Instant Pay") : method}
+                  {method === "InstantPay" ? t("Instant pay") : method}
                 </Button>
               ))}
             </div>
@@ -572,7 +572,7 @@ function MarkPaidDialog({
             {t("Cancel")}
           </Button>
           <Button disabled={mutation.isPending} onClick={() => mutation.mutate()}>
-            {t("Mark Paid")}
+            {t("Mark paid")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -664,7 +664,7 @@ function AddAdjustmentDialog({
             {t("Cancel")}
           </Button>
           <Button disabled={!valid || mutation.isPending} onClick={() => mutation.mutate()}>
-            {t("Add Adjustment")}
+            {t("Add adjustment")}
           </Button>
         </DialogFooter>
       </DialogContent>

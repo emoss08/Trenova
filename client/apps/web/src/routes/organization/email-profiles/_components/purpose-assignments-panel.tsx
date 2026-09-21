@@ -79,7 +79,7 @@ export function PurposeAssignmentsPanel() {
     <section className="border-border bg-background rounded-md border">
       <div className="border-border flex flex-col gap-1 border-b px-4 py-3">
         <div className="flex items-center gap-2 text-sm font-medium">
-          {t("Purpose Assignments")}
+          {t("Purpose assignments")}
         </div>
         <p className="text-muted-foreground text-xs">
           {t(
@@ -105,7 +105,7 @@ export function PurposeAssignmentsPanel() {
                 </FormControl>
               ))}
             </FormGroup>
-            <FormSaveDock saveButtonContent={t("Save Assignments")} showHeightGap={false} />
+            <FormSaveDock saveButtonContent={t("Save assignments")} showHeightGap={false} />
           </Form>
         </FormProvider>
       </div>

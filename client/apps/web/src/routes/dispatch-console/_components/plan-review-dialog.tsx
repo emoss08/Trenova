@@ -70,7 +70,7 @@ function PlannedAssignmentRow({
           >
             {assignment.score.score}
           </span>
-          <Badge variant={verdict.variant} className="h-4 shrink-0 rounded px-1 text-3xs">
+          <Badge variant={verdict.variant} className="h-4 shrink-0 rounded-md px-1 text-3xs">
             {t(verdict.label)}
           </Badge>
         </div>
@@ -145,7 +145,7 @@ function UncoveredGroupCard({ group }: { group: UncoveredGroup }) {
         {shown.map((proNumber) => (
           <span
             key={proNumber}
-            className="border-border bg-muted/40 rounded border px-1.5 py-px font-mono text-2xs leading-4"
+            className="border-border bg-muted/40 rounded-md border px-1.5 py-px font-mono text-2xs leading-4"
           >
             {proNumber}
           </span>

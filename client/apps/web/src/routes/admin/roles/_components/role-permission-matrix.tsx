@@ -415,7 +415,7 @@ function ResourceRow({
               type="button"
               onClick={onToggleAll}
               className={cn(
-                "flex size-5 shrink-0 items-center justify-center rounded border transition-colors",
+                "flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors",
                 isFullAccess
                   ? "border-primary bg-primary text-primary-foreground"
                   : isPartial

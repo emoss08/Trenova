@@ -106,14 +106,14 @@ describe("fiscal year lifecycle actions in the edit panel header", () => {
     mocks.activate.mockResolvedValue({ ...fiscalYear(), status: "Open", isCurrent: true });
     renderForm(fiscalYear());
 
-    await user.click(headerButton("Set as Current"));
+    await user.click(headerButton("Set as current"));
     const dialog = await screen.findByRole("alertdialog");
-    await user.click(within(dialog).getByRole("button", { name: "Set as Current" }));
+    await user.click(within(dialog).getByRole("button", { name: "Set as current" }));
 
     expect(mocks.activate).toHaveBeenCalledWith("fy_2026");
     expect(await screen.findByText("This is the current fiscal year.")).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Set as Current" })).not.toBeInTheDocument();
-    expect(headerButton("Close Year")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Set as current" })).not.toBeInTheDocument();
+    expect(headerButton("Close year")).toBeVisible();
   });
 
   it("keeps unsaved edits when the year is set as current", async () => {
@@ -127,9 +127,9 @@ describe("fiscal year lifecycle actions in the edit panel header", () => {
     renderForm(fiscalYear());
 
     await user.type(screen.getByLabelText("Description"), "Primary books");
-    await user.click(screen.getByRole("button", { name: "Set as Current" }));
+    await user.click(screen.getByRole("button", { name: "Set as current" }));
     const dialog = await screen.findByRole("alertdialog");
-    await user.click(within(dialog).getByRole("button", { name: "Set as Current" }));
+    await user.click(within(dialog).getByRole("button", { name: "Set as current" }));
 
     expect(await screen.findByText("This is the current fiscal year.")).toBeVisible();
     expect(screen.getByLabelText("Description")).toHaveValue("Primary books");
@@ -138,31 +138,31 @@ describe("fiscal year lifecycle actions in the edit panel header", () => {
   it("offers setting an open year that is not current as current", async () => {
     renderForm(fiscalYear({ status: "Open" }));
 
-    expect(headerButton("Set as Current")).toBeVisible();
-    expect(headerButton("Close Year")).toBeVisible();
+    expect(headerButton("Set as current")).toBeVisible();
+    expect(headerButton("Close year")).toBeVisible();
   });
 
   it("offers closing the current open year but not setting it current again", () => {
     renderForm(fiscalYear({ status: "Open", isCurrent: true }));
 
-    expect(screen.queryByRole("button", { name: "Set as Current" })).not.toBeInTheDocument();
-    expect(headerButton("Close Year")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Set as current" })).not.toBeInTheDocument();
+    expect(headerButton("Close year")).toBeVisible();
   });
 
   it("offers only reopening a closed year", () => {
     renderForm(fiscalYear({ status: "Closed" }));
 
-    expect(screen.queryByRole("button", { name: "Set as Current" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Close Year" })).not.toBeInTheDocument();
-    expect(headerButton("Reopen Year")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Set as current" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Close year" })).not.toBeInTheDocument();
+    expect(headerButton("Reopen year")).toBeVisible();
   });
 
   it("offers nothing for a permanently closed year", () => {
     renderForm(fiscalYear({ status: "PermanentlyClosed" }));
 
-    expect(screen.queryByRole("button", { name: "Set as Current" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Close Year" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Reopen Year" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Set as current" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Close year" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reopen year" })).not.toBeInTheDocument();
   });
 
   it("hides actions the user is not permitted to take", async () => {
@@ -170,6 +170,6 @@ describe("fiscal year lifecycle actions in the edit panel header", () => {
     mocks.denied.add(Operation.Activate);
     renderForm(fiscalYear());
 
-    expect(screen.queryByRole("button", { name: "Set as Current" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Set as current" })).not.toBeInTheDocument();
   });
 });

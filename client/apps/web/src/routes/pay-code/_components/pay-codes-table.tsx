@@ -45,7 +45,7 @@ export default function PayCodesTable() {
       {
         id: "status-update",
         type: "select",
-        label: t("Update Status"),
+        label: t("Update status"),
         loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: [

@@ -119,7 +119,7 @@ export function ARAgingPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("AR Aging"),
+        title: t("AR aging"),
         description: t("Receivables aging by customer with drill-down to the ledger."),
         actions: (
           <Button
@@ -149,7 +149,7 @@ export function ARAgingPage() {
             <AutoCompleteDateField
               control={filterForm.control}
               name="asOfDate"
-              label={t("As of Date")}
+              label={t("As of date")}
               placeholder={t("Today")}
               clearable
             />

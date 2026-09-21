@@ -54,7 +54,7 @@ export default function UserTable() {
       {
         id: "status-update",
         type: "select",
-        label: t("Update Status"),
+        label: t("Update status"),
         loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: statusChoices,
@@ -82,7 +82,7 @@ export default function UserTable() {
     () => [
       {
         id: "manage-memberships",
-        label: t("Manage Memberships"),
+        label: t("Manage memberships"),
         icon: LayersPlus,
         onClick: handleManageMemberships,
         hidden: (row) => row.original.status === "Inactive",

@@ -11,7 +11,7 @@ export function FiscalYearsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Fiscal Years"),
+        title: t("Fiscal years"),
         description: t("Manage and configure fiscal years for your organization"),
       }}
     >

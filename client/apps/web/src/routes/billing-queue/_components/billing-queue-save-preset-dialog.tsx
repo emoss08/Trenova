@@ -86,7 +86,7 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>{t("Save Filter Preset")}</DialogTitle>
+          <DialogTitle>{t("Save filter preset")}</DialogTitle>
           <DialogDescription>
             {t("Save the current filter combination as a reusable preset.")}
           </DialogDescription>

@@ -37,7 +37,7 @@ export function CustomFieldDefinitionForm() {
           control={control}
           rules={{ required: true }}
           name="resourceType"
-          label={t("Resource Type")}
+          label={t("Resource type")}
           placeholder={t("Select resource type")}
           description={t("The entity type this field applies to")}
           options={resourceTypeChoices}
@@ -48,7 +48,7 @@ export function CustomFieldDefinitionForm() {
           control={control}
           rules={{ required: true }}
           name="fieldType"
-          label={t("Field Type")}
+          label={t("Field type")}
           placeholder={t("Select field type")}
           description={t("The data type for this field")}
           options={fieldTypeChoices}
@@ -71,7 +71,7 @@ export function CustomFieldDefinitionForm() {
           rules={{ required: true }}
           name="label"
           label={t("Label")}
-          placeholder={t("Display Label")}
+          placeholder={t("Display label")}
           description={t("Display label shown to users")}
           maxLength={150}
         />
@@ -107,7 +107,7 @@ export function CustomFieldDefinitionForm() {
         <InputField
           control={control}
           name="displayOrder"
-          label={t("Display Order")}
+          label={t("Display order")}
           type="number"
           placeholder="0"
           description={t("Sort order for display")}

@@ -70,7 +70,7 @@ export function ShipmentForm() {
                 </div>
                 <div className="max-w-sm text-center">
                   <p className="text-sm font-medium">
-                    {isCanceled ? t("Billing Canceled") : t("Under Billing Review")}
+                    {isCanceled ? t("Billing canceled") : t("Under billing review")}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
                     {isCanceled

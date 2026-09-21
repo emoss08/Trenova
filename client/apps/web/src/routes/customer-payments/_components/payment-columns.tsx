@@ -51,14 +51,14 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomerPaymentRow>[] {
     },
     {
       accessorKey: "paymentDate",
-      header: t("Payment Date"),
+      header: t("Payment date"),
       cell: ({ row }) => <span>{formatDate(row.original.paymentDate)}</span>,
       size: 120,
       meta: { apiField: "paymentDate" },
     },
     {
       accessorKey: "accountingDate",
-      header: t("Accounting Date"),
+      header: t("Accounting date"),
       cell: ({ row }) => <span>{formatDate(row.original.accountingDate)}</span>,
       size: 120,
       meta: { apiField: "accountingDate" },

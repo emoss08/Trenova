@@ -59,7 +59,7 @@ function Harness({ defaultValue = "" }: { defaultValue?: string }) {
       <IftaFuelTypeAutocompleteField<Values>
         control={form.control}
         name="fuelType"
-        label="Fuel Type"
+        label="Fuel type"
         placeholder="Select a fuel type"
       />
       <output aria-label="fuel type value">{current ?? ""}</output>

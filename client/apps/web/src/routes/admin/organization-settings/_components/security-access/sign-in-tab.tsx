@@ -285,7 +285,7 @@ function IdentityProviderPanelController({
       form={editForm}
       url={identityProviderEndpoint(organizationId)}
       queryKey={identityProviderQueryKey(organizationId)}
-      title={t("Identity Provider")}
+      title={t("Identity provider")}
       fieldKey="name"
       size="lg"
       formComponent={<IdentityProviderForm mode="edit" />}
@@ -303,7 +303,7 @@ function IdentityProviderPanelController({
       form={createForm}
       url={identityProviderEndpoint(organizationId)}
       queryKey={identityProviderQueryKey(organizationId)}
-      title={t("Identity Provider")}
+      title={t("Identity provider")}
       description={t(
         "Configure OIDC sign-in details, allowed domains, scopes, and enforcement settings.",
       )}

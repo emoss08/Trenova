@@ -36,7 +36,7 @@ export function DistanceOverridePanel({
         form={form}
         url="/distance-overrides/"
         queryKey="distance-override-list"
-        title={t("Distance Override")}
+        title={t("Distance override")}
         fieldKey="originLocationId"
         formComponent={<DistanceOverrideForm />}
       />
@@ -50,7 +50,7 @@ export function DistanceOverridePanel({
       form={form}
       url="/distance-overrides/"
       queryKey="distance-override-list"
-      title={t("Distance Override")}
+      title={t("Distance override")}
       formComponent={<DistanceOverrideForm />}
     />
   );

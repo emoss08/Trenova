@@ -85,7 +85,7 @@ export function FavoritesWidget({ widget }: WidgetProps) {
             <Link
               key={favorite.id}
               to={favorite.pageUrl}
-              className="hover:bg-muted/60 flex items-center gap-2 rounded px-1.5 py-1 text-xs transition-colors"
+              className="hover:bg-muted/60 flex items-center gap-2 rounded-md px-1.5 py-1 text-xs transition-colors"
             >
               <StarIcon className="size-3 shrink-0 fill-warning text-warning-foreground" />
               <span className="truncate">{favorite.pageTitle}</span>
@@ -128,7 +128,7 @@ function ActivityRows({ limit, mineOnly }: { limit: number; mineOnly: boolean })
   return (
     <div className="flex flex-col gap-0.5">
       {rows.map((entry) => (
-        <div key={entry.id} className="flex flex-col gap-0.5 rounded px-1.5 py-1">
+        <div key={entry.id} className="flex flex-col gap-0.5 rounded-md px-1.5 py-1">
           <div className="flex items-baseline justify-between gap-2">
             <span className="truncate text-xs">
               <span className="font-medium">{entry.user?.name ?? t("Someone")}</span>{" "}
@@ -191,7 +191,7 @@ export function SavedViewsWidget({ widget }: WidgetProps) {
           <Link
             key={target.href}
             to={target.href}
-            className="hover:bg-muted/60 rounded px-1.5 py-1 text-xs transition-colors"
+            className="hover:bg-muted/60 rounded-md px-1.5 py-1 text-xs transition-colors"
           >
             {t(target.label)}
           </Link>
@@ -225,7 +225,7 @@ export function NotificationsWidget({ widget }: WidgetProps) {
       ) : (
         <div className="flex flex-col gap-0.5">
           {notifications.map((notification) => (
-            <div key={notification.id} className="flex flex-col gap-0.5 rounded px-1.5 py-1">
+            <div key={notification.id} className="flex flex-col gap-0.5 rounded-md px-1.5 py-1">
               <span className="truncate text-xs font-medium">{t(notification.title)}</span>
               <span className="text-muted-foreground truncate text-2xs">
                 {notification.message}

@@ -10,7 +10,7 @@ export function getColumns(t: TranslateFn): ColumnDef<OrderRow>[] {
   return [
     {
       accessorKey: "orderNumber",
-      header: t("Order Number"),
+      header: t("Order number"),
       cell: ({ row }) => <span className="font-medium">{row.original.orderNumber}</span>,
       meta: {
         apiField: "orderNumber",
@@ -58,7 +58,7 @@ export function getColumns(t: TranslateFn): ColumnDef<OrderRow>[] {
     },
     {
       accessorKey: "poNumber",
-      header: t("PO Number"),
+      header: t("PO number"),
       cell: ({ row }) => row.original.poNumber || "—",
       meta: {
         apiField: "poNumber",

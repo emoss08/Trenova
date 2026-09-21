@@ -50,7 +50,7 @@ export function InvoiceEdiDeliveryCard({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">{t("EDI Delivery")}</h3>
+            <h3 className="text-sm font-semibold">{t("EDI delivery")}</h3>
             {plan ? <InvoiceEdiSendStatusBadge status={plan.status} /> : null}
           </div>
           {isLoading && !plan ? (

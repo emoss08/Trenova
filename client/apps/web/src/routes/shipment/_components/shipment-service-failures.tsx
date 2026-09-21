@@ -271,7 +271,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                 </div>
               </div>
               {failure.notes && (
-                <p className="bg-muted/40 mt-2 rounded px-2 py-1.5 text-xs">{failure.notes}</p>
+                <p className="bg-muted/40 mt-2 rounded-md px-2 py-1.5 text-xs">{failure.notes}</p>
               )}
               <ServiceFailureEDI214Readiness failure={failure} />
             </div>
@@ -285,7 +285,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
       >
         <DialogContent size="lg">
           <DialogHeader>
-            <DialogTitle>{t("Service Failure Evaluation")}</DialogTitle>
+            <DialogTitle>{t("Service failure evaluation")}</DialogTitle>
             <DialogDescription>
               {t(
                 "{0} created, {1} updated, {2} skipped.",
@@ -299,7 +299,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
           <div className="bg-muted/20 max-h-[28rem] overflow-y-auto rounded-md border">
             <div className="flex items-center gap-2 border-b px-3 py-2 text-sm font-medium">
               <InfoIcon className="size-4 text-warning-foreground" />
-              {t("Stop Results")}
+              {t("Stop results")}
             </div>
             <EvaluationStopGroup
               label={t("Created")}
@@ -411,7 +411,7 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
   return (
     <div
       className={cn(
-        "mt-2 flex flex-wrap items-center gap-2 rounded border px-2 py-1.5 text-xs",
+        "mt-2 flex flex-wrap items-center gap-2 rounded-md border px-2 py-1.5 text-xs",
         blocked
           ? "border-danger-border bg-danger-subtle text-danger-foreground"
           : available || ready

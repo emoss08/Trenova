@@ -351,7 +351,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       : [];
 
   const lineName = (line: PayerShareLine) => {
-    if (line.kind === "Freight") return t("Line Haul");
+    if (line.kind === "Freight") return t("Line haul");
     const charge = additionalCharges.find((row) => row.id === line.additionalChargeId);
     return chargeName(charge, line.description);
   };
@@ -413,7 +413,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                   <Button
                     size="icon-xs"
                     variant="ghost"
-                    aria-label={t("Change Template")}
+                    aria-label={t("Change template")}
                     onClick={() => setRerateDialogOpen(true)}
                     disabled={isPending}
                   >
@@ -422,7 +422,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                 }
               />
               <TooltipContent side="top" sideOffset={10}>
-                {t("Change Template")}
+                {t("Change template")}
               </TooltipContent>
             </Tooltip>
           )}
@@ -432,7 +432,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       <div className="flex flex-col">
         <div className="group hover:bg-muted flex items-center justify-between gap-2 rounded-md p-2">
           <div className="flex min-w-0 flex-col">
-            <span className="text-sm">{t("Base Rate")}</span>
+            <span className="text-sm">{t("Base rate")}</span>
             <span className="text-muted-foreground text-xs">
               {share ? t("Shipment rate before formula") : t("Per-unit rate before formula")}
             </span>
@@ -494,7 +494,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                         <Button
                           size="icon-xs"
                           variant="ghostInvert"
-                          aria-label={t("Adjust Base Rate")}
+                          aria-label={t("Adjust base rate")}
                           disabled={isPending}
                           onClick={() => {
                             setFreightDraft(String(baseRate));
@@ -506,7 +506,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                       }
                     />
                     <TooltipContent side="top" sideOffset={10}>
-                      {t("Adjust Base Rate")}
+                      {t("Adjust base rate")}
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -650,7 +650,7 @@ function AccessorialsHeader({
               <Button
                 size="icon-xs"
                 variant="ghost"
-                aria-label={t("Add Charge")}
+                aria-label={t("Add charge")}
                 onClick={onAddCharge}
                 disabled={isPending}
               >
@@ -659,7 +659,7 @@ function AccessorialsHeader({
             }
           />
           <TooltipContent side="top" sideOffset={10}>
-            {t("Add Charge")}
+            {t("Add charge")}
           </TooltipContent>
         </Tooltip>
       )}
@@ -691,7 +691,7 @@ function ShipmentChargeLines({
   const t = useT();
   return (
     <>
-      <ChargeRow name={t("Line Haul")} amount={freightCharge} actions={[]} />
+      <ChargeRow name={t("Line haul")} amount={freightCharge} actions={[]} />
       <Separator className="my-1" />
       <AccessorialsHeader isEditable={isEditable} isPending={isPending} onAddCharge={onAddCharge} />
       {additionalCharges.length === 0 && (
@@ -788,10 +788,10 @@ function PayerBillLines({
       {freightLine ? (
         <ChargeRow
           testId="payer-line-freight"
-          name={t("Line Haul")}
+          name={t("Line haul")}
           amount={freightLine.amount}
           secondary={ofChargeTotal(freightLine)}
-          actions={reassignAction(freightLine, t("Line Haul"))}
+          actions={reassignAction(freightLine, t("Line haul"))}
         />
       ) : null}
       <Separator className="my-1" />
@@ -832,7 +832,7 @@ function PayerBillLines({
                 <ChargeRow
                   key="other-payer-line-freight"
                   testId="other-payer-line-freight"
-                  name={t("Line Haul")}
+                  name={t("Line haul")}
                   muted
                   details={
                     <span className="text-muted-foreground text-xs">
@@ -840,7 +840,7 @@ function PayerBillLines({
                     </span>
                   }
                   amount={line.chargeTotal}
-                  actions={reassignAction(line, t("Line Haul"))}
+                  actions={reassignAction(line, t("Line haul"))}
                 />
               ) : (
                 accessorialRow(line, "other-payer-line", true)

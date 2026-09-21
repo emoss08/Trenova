@@ -11,7 +11,7 @@ export function JurisdictionMileagePage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Jurisdiction Mileage"),
+        title: t("Jurisdiction mileage"),
         description: t(
           "Miles by state or province that dispatch did not compute — deadhead, yard moves, and units without telematics. They are added to the miles the quarter's IFTA return works out from shipment moves.",
         ),

@@ -48,7 +48,7 @@ export function ModuleCard({ id, title, count, countTone = "muted", rightSlot, c
           <button
             type="button"
             aria-label={`Drag ${title}`}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-4 shrink-0 cursor-grab items-center justify-center rounded active:cursor-grabbing"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-4 shrink-0 cursor-grab items-center justify-center rounded-md active:cursor-grabbing"
             {...attributes}
             {...listeners}
           >
@@ -58,7 +58,7 @@ export function ModuleCard({ id, title, count, countTone = "muted", rightSlot, c
           {typeof count === "number" && (
             <span
               className={cn(
-                "font-table inline-flex min-w-4.5 justify-center rounded px-1 text-3xs tabular-nums",
+                "font-table inline-flex min-w-4.5 justify-center rounded-md px-1 text-3xs tabular-nums",
                 COUNT_CLASS[countTone],
               )}
             >
@@ -82,7 +82,7 @@ export function ModuleCard({ id, title, count, countTone = "muted", rightSlot, c
                 </Button>
               }
             />
-            <TooltipContent side="left">{t("Hide Panel")}</TooltipContent>
+            <TooltipContent side="left">{t("Hide panel")}</TooltipContent>
           </Tooltip>
         </div>
       </header>

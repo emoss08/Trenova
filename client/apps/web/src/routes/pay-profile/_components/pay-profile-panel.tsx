@@ -155,7 +155,7 @@ function PayProfileCreatePanel({
     <FormCreatePanel<PayProfileFormValues, PayProfileRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Pay Profile")}
+      title={t("Pay profile")}
       description={t(
         "A reusable pay package; assign it to drivers and add per-driver rate overrides where rates differ.",
       )}
@@ -194,7 +194,7 @@ function PayProfileEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title={t("Pay Profile")}
+      title={t("Pay profile")}
       fieldKey="name"
       queryKey="pay-profile-list"
       form={form}
@@ -208,7 +208,7 @@ function PayProfileEditPanel({
         },
         {
           value: "assigned-drivers",
-          label: t("Assigned Drivers"),
+          label: t("Assigned drivers"),
           icon: UsersIcon,
           content: <AssignedDriversSection profileId={row.id} />,
         },
@@ -238,7 +238,7 @@ function AssignedDriversSection({ profileId }: { profileId: string }) {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold">{t("Assigned Drivers")}</h3>
+          <h3 className="text-sm font-semibold">{t("Assigned drivers")}</h3>
           <p className="text-muted-foreground text-xs">
             {t(
               "Drivers currently paid under this profile. Overrides show where a driver's rate differs from the template — prefer overrides over cloning profiles.",
@@ -247,7 +247,7 @@ function AssignedDriversSection({ profileId }: { profileId: string }) {
         </div>
         <Button type="button" size="sm" variant="outline" onClick={() => setAssignOpen(true)}>
           <UserPlus className="size-3.5" />
-          {t("Assign Driver")}
+          {t("Assign driver")}
         </Button>
       </div>
       {(assignments ?? []).length > 0 ? (

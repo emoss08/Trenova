@@ -140,7 +140,7 @@ export function WeatherAlertDetailPanel({
               <>
                 <div className="px-3 py-2">
                   <span className="text-xs text-muted-foreground font-medium">
-                    {t("Recommended Action")}
+                    {t("Recommended action")}
                   </span>
                   <p className="text-foreground mt-1 text-xs leading-relaxed">
                     {props.instruction}

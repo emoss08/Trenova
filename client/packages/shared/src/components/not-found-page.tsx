@@ -49,7 +49,7 @@ export function NotFoundPage({
           {isDev && errorName && errorMessage && (
             <div className="mb-5 rounded-xl border border-border/70 bg-background/60 p-4 text-left">
               <p className="text-xs font-semibold text-muted-foreground">
-                {t("Development Details")}
+                {t("Development details")}
               </p>
               <p className="mt-2 font-mono text-xs text-destructive">
                 {errorName}: {errorMessage}
@@ -60,13 +60,13 @@ export function NotFoundPage({
 
           <div className="grid gap-5 text-left text-sm text-muted-foreground sm:grid-cols-3">
             <div>
-              <p className="text-xs">{t("Need Help?")}</p>
+              <p className="text-xs">{t("Need help?")}</p>
               <p className="mt-2 text-base font-medium text-foreground">
                 {t("support@trenova.com")}
               </p>
             </div>
             <div>
-              <p className="text-xs">{t("Quick Links")}</p>
+              <p className="text-xs">{t("Quick links")}</p>
               <p className="mt-2">{t("Dashboard")}</p>
               <p>{t("Shipments")}</p>
             </div>

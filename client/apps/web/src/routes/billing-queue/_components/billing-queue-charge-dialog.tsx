@@ -106,7 +106,7 @@ export function BillingQueueChargeDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEditing ? t("Edit Charge") : t("Add Charge")}</DialogTitle>
+          <DialogTitle>{isEditing ? t("Edit charge") : t("Add charge")}</DialogTitle>
           <DialogDescription>
             {isEditing
               ? t("Update the accessorial charge details")
@@ -120,10 +120,10 @@ export function BillingQueueChargeDialog({
                 <AccessorialChargeAutocompleteField
                   control={control}
                   name="accessorialChargeId"
-                  label={t("Accessorial Charge")}
+                  label={t("Accessorial charge")}
                   clearable
                   rules={{ required: true }}
-                  placeholder={t("Select Accessorial Charge")}
+                  placeholder={t("Select accessorial charge")}
                   onOptionChange={handleChargeSelected}
                 />
               </FormControl>
@@ -144,7 +144,7 @@ export function BillingQueueChargeDialog({
                   label={t("Method")}
                   options={accessorialChargeMethodChoices}
                   rules={{ required: true }}
-                  placeholder={t("Select Method")}
+                  placeholder={t("Select method")}
                 />
               </FormControl>
               <FormControl className="col-span-2">

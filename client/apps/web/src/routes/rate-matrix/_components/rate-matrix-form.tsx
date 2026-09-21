@@ -17,7 +17,7 @@ export function RateMatrixForm() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("General Information")}
+        title={t("General information")}
         description={t("How this tariff grid is identified and whether it is live.")}
       >
         <FormGroup cols={2}>
@@ -80,7 +80,7 @@ export function RateMatrixForm() {
               control={control}
               rules={{ required: true }}
               name="formulaTemplateId"
-              label={t("Rating Method")}
+              label={t("Rating method")}
               placeholder={t("Select rating method")}
               description={t(
                 "The formula template that says what each number in the grid means — the same grid is a per-mile tariff or a flat table depending on which template prices it",
@@ -105,7 +105,7 @@ export function RateMatrixForm() {
               control={control}
               rules={{ required: true }}
               name="roundingMode"
-              label={t("Rounding Mode")}
+              label={t("Rounding mode")}
               placeholder={t("Select rounding")}
               description={t("How a looked-up rate is rounded before it becomes a charge")}
               options={rateRoundingModeChoices}
@@ -116,7 +116,7 @@ export function RateMatrixForm() {
               control={control}
               rules={{ required: true }}
               name="roundingPrecision"
-              label={t("Rounding Precision")}
+              label={t("Rounding precision")}
               placeholder="2"
               description={t("How many decimals survive the rounding")}
             />

@@ -23,12 +23,12 @@ type OverlayConfig = {
 };
 
 const OVERLAY_OPTIONS: OverlayConfig[] = [
-  { id: "vehicles", label: "Live Vehicles", icon: TruckIcon },
+  { id: "vehicles", label: "Live vehicles", icon: TruckIcon },
   { id: "geofences", label: "Geofences", icon: CircleDotIcon },
   { id: "addresses", label: "Addresses", icon: MapPinnedIcon },
   { id: "traffic", label: "Traffic", icon: TrafficConeIcon },
   { id: "weather", label: "Weather", icon: CloudSunIcon },
-  { id: "alerts", label: "Weather Alerts", icon: TriangleAlertIcon },
+  { id: "alerts", label: "Weather alerts", icon: TriangleAlertIcon },
 ];
 
 const MAP_BASE_OPTIONS: { id: MapStyleId; label: string }[] = [
@@ -69,7 +69,7 @@ export function MapOptionsPopover({
       </Tooltip>
       <PopoverContent side="bottom" sideOffset={8} className="w-48 p-0">
         <div className="max-h-[70vh] overflow-y-auto p-3">
-          <SectionLabel>{t("Map Base")}</SectionLabel>
+          <SectionLabel>{t("Map base")}</SectionLabel>
           <div className="mt-1.5 flex flex-col">
             {MAP_BASE_OPTIONS.map((opt) => (
               <label

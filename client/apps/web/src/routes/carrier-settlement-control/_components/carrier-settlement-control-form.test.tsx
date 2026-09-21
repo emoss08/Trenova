@@ -69,8 +69,8 @@ describe("CarrierSettlementControlForm auto-match toggles", () => {
 
     renderForm();
 
-    const autoMatch = await screen.findByRole("switch", { name: "Auto-Match Inbound Invoices" });
-    const autoAccept = screen.getByRole("switch", { name: "Auto-Accept Within Tolerance" });
+    const autoMatch = await screen.findByRole("switch", { name: "Auto-match inbound invoices" });
+    const autoAccept = screen.getByRole("switch", { name: "Auto-accept within tolerance" });
     expect(autoMatch).not.toBeChecked();
     expect(autoAccept).toHaveAttribute("aria-disabled", "true");
   });
@@ -80,10 +80,10 @@ describe("CarrierSettlementControlForm auto-match toggles", () => {
 
     renderForm();
 
-    const autoMatch = await screen.findByRole("switch", { name: "Auto-Match Inbound Invoices" });
+    const autoMatch = await screen.findByRole("switch", { name: "Auto-match inbound invoices" });
     await userEvent.click(autoMatch);
 
-    const autoAccept = screen.getByRole("switch", { name: "Auto-Accept Within Tolerance" });
+    const autoAccept = screen.getByRole("switch", { name: "Auto-accept within tolerance" });
     expect(autoAccept).not.toHaveAttribute("aria-disabled", "true");
   });
 
@@ -94,7 +94,7 @@ describe("CarrierSettlementControlForm auto-match toggles", () => {
 
     renderForm();
 
-    const autoAccept = await screen.findByRole("switch", { name: "Auto-Accept Within Tolerance" });
+    const autoAccept = await screen.findByRole("switch", { name: "Auto-accept within tolerance" });
     expect(autoAccept).not.toHaveAttribute("aria-disabled", "true");
     expect(autoAccept).toBeChecked();
   });
@@ -105,9 +105,9 @@ describe("CarrierSettlementControlForm auto-match toggles", () => {
 
     const { container } = renderForm();
 
-    const autoMatch = await screen.findByRole("switch", { name: "Auto-Match Inbound Invoices" });
+    const autoMatch = await screen.findByRole("switch", { name: "Auto-match inbound invoices" });
     await userEvent.click(autoMatch);
-    const autoAccept = screen.getByRole("switch", { name: "Auto-Accept Within Tolerance" });
+    const autoAccept = screen.getByRole("switch", { name: "Auto-accept within tolerance" });
     await userEvent.click(autoAccept);
 
     const form = container.querySelector("form");

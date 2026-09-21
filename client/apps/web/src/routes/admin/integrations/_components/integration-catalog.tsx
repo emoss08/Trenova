@@ -71,7 +71,7 @@ const sortOptions = [
 ];
 
 const statusOptions = [
-  { label: "All Statuses", value: "all" },
+  { label: "All statuses", value: "all" },
   { label: "Connected", value: "connected" },
   { label: "Disconnected", value: "disconnected" },
 ];
@@ -229,7 +229,7 @@ export function IntegrationCatalogCard() {
     }
   }
   const categoryOptions = [
-    { label: t("All Categories"), value: "all" },
+    { label: t("All categories"), value: "all" },
     ...Array.from(uniqueCategories.entries())
       .map(([value, label]) => ({ value, label }))
       .sort((left, right) => left.label.localeCompare(right.label)),

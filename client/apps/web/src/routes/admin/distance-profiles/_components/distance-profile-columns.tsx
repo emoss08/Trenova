@@ -52,7 +52,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DistanceProfileRow>[] {
       accessorKey: "routingType",
       header: t("Routing"),
       cell: ({ row }) => row.original.routingType,
-      meta: { label: t("Routing Type"), apiField: "routingType", filterable: true, sortable: true },
+      meta: { label: t("Routing type"), apiField: "routingType", filterable: true, sortable: true },
       size: 140,
     },
     {
@@ -64,9 +64,9 @@ export function getColumns(t: TranslateFn): ColumnDef<DistanceProfileRow>[] {
     },
     {
       accessorKey: "dataVersion",
-      header: t("Data Version"),
+      header: t("Data version"),
       cell: ({ row }) => row.original.dataVersion,
-      meta: { label: t("Data Version"), apiField: "dataVersion", filterable: true, sortable: true },
+      meta: { label: t("Data version"), apiField: "dataVersion", filterable: true, sortable: true },
       size: 140,
     },
     {

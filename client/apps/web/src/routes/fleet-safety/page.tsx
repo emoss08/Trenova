@@ -41,7 +41,7 @@ export function FleetSafetyPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Fleet Safety"),
+        title: t("Fleet safety"),
         description: t(
           "The fleet read the way a safety director thinks: the seven CSA BASICs, the trend behind them, and which terminals and drivers are carrying the weight.",
         ),

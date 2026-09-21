@@ -79,7 +79,7 @@ export function ShipmentCancelDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Cancel Shipment")}</DialogTitle>
+          <DialogTitle>{t("Cancel shipment")}</DialogTitle>
           <DialogDescription>
             {t(
               "Are you sure you want to cancel this shipment? You can optionally provide a reason.",
@@ -98,7 +98,7 @@ export function ShipmentCancelDialog({
               <TextareaField
                 control={control}
                 name="cancelReason"
-                label={t("Cancel Reason")}
+                label={t("Cancel reason")}
                 placeholder={t("Optional reason for cancellation...")}
               />
             </FormControl>
@@ -113,7 +113,7 @@ export function ShipmentCancelDialog({
               isLoading={isSubmitting}
               loadingText={t("Canceling...")}
             >
-              {t("Cancel Shipment")}
+              {t("Cancel shipment")}
             </Button>
           </DialogFooter>
         </Form>

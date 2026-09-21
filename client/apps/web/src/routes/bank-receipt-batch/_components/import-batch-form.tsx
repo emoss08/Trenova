@@ -52,7 +52,7 @@ export function ImportBatchForm() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("Batch Information")}
+        title={t("Batch information")}
         description={t("Identify the source bank and a reference for this import")}
       >
         <FormGroup cols={2}>
@@ -81,7 +81,7 @@ export function ImportBatchForm() {
       </FormSection>
 
       <FormSection
-        title={t("Receipt Lines")}
+        title={t("Receipt lines")}
         description={t("Individual bank receipts to import in this batch")}
         titleCount={fields.length}
       >
@@ -194,7 +194,7 @@ export function ImportBatchForm() {
 
         <Button type="button" variant="outline" size="sm" onClick={() => append({ ...EMPTY_LINE })}>
           <PlusIcon className="mr-1.5 size-3.5" />
-          {t("Add Line")}
+          {t("Add line")}
         </Button>
       </FormSection>
     </div>

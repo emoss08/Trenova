@@ -74,7 +74,7 @@ export function InboundFilePanel({
               isLoading={reprocessMutation.isPending}
               onClick={() => reprocessMutation.mutate(detail.id)}
             >
-              {t("Reprocess File")}
+              {t("Reprocess file")}
             </Button>
           )}
         </>
@@ -89,11 +89,11 @@ export function InboundFilePanel({
           <DetailField label={t("Processed At")}>
             {detail.processedAt ? formatToUserTimezone(detail.processedAt) : "—"}
           </DetailField>
-          <DetailField label={t("ISA Control Number")}>
+          <DetailField label={t("ISA control number")}>
             <span className="font-mono text-xs">{detail.interchangeControlNumber || "—"}</span>
           </DetailField>
           {detail.failureReason && (
-            <DetailField label={t("Processing Notes")} fullWidth>
+            <DetailField label={t("Processing notes")} fullWidth>
               <span className="text-destructive text-xs">{detail.failureReason}</span>
             </DetailField>
           )}
@@ -107,15 +107,15 @@ export function InboundFilePanel({
               {detail.method}
             </Badge>
           </DetailField>
-          <DetailField label={t("Remote Path")} fullWidth>
+          <DetailField label={t("Remote path")} fullWidth>
             <span className="font-mono text-xs">{detail.remotePath}</span>
           </DetailField>
-          <DetailField label={t("ISA Sender")}>
+          <DetailField label={t("ISA sender")}>
             <span className="font-mono text-xs">
               {detail.isaSenderQualifier || "—"}:{detail.isaSenderId || "—"}
             </span>
           </DetailField>
-          <DetailField label={t("ISA Receiver")}>
+          <DetailField label={t("ISA receiver")}>
             <span className="font-mono text-xs">
               {detail.isaReceiverQualifier || "—"}:{detail.isaReceiverId || "—"}
             </span>
@@ -148,7 +148,7 @@ export function InboundFilePanel({
           </DetailSection>
         )}
         {file?.rawContent && (
-          <DetailSection title={t("Raw Content")} fullWidth>
+          <DetailSection title={t("Raw content")} fullWidth>
             <EDIRawContent content={file.rawContent} />
           </DetailSection>
         )}

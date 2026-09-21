@@ -62,7 +62,7 @@ export function SCIMDirectoryPanel({
         row={directory ? (toSCIMDirectoryFormValues(directory) as SCIMDirectoryRecord) : null}
         form={form}
         queryKey={queryKey}
-        title={t("SCIM Directory")}
+        title={t("SCIM directory")}
         fieldKey="tenantSlug"
         size="md"
         formComponent={<SCIMDirectoryForm />}
@@ -84,7 +84,7 @@ export function SCIMDirectoryPanel({
       onOpenChange={onOpenChange}
       form={form}
       queryKey={queryKey}
-      title={t("SCIM Directory")}
+      title={t("SCIM directory")}
       description={t("Configure a SCIM tenant before issuing tokens or mapping directory groups.")}
       size="md"
       formComponent={<SCIMDirectoryForm />}

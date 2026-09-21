@@ -86,7 +86,7 @@ function EDIPage({ kind }: { kind: EDIPageKind }) {
       <DataTableLazyComponent
         fallback={
           kind === "designer" ? (
-            <ComponentLoader message={t("Loading Template Designer")} />
+            <ComponentLoader message={t("Loading template designer")} />
           ) : undefined
         }
       >

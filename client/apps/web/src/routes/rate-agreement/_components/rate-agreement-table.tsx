@@ -38,7 +38,7 @@ export default function RateAgreementTable() {
     () => [
       {
         id: "import-rate-sheet",
-        label: t("Import Rate Sheet"),
+        label: t("Import rate sheet"),
         description: t("Upload a CSV or XLSX rate sheet into an agreement."),
         icon: FileUpIcon,
         onClick: () => setImportOpen(true),
@@ -77,7 +77,7 @@ export default function RateAgreementTable() {
     () => [
       {
         id: "duplicate-agreement",
-        label: t("Duplicate Agreement"),
+        label: t("Duplicate agreement"),
         icon: CopyIcon,
         hidden: () => !canDuplicate,
         onClick: (row) => {

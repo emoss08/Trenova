@@ -206,7 +206,7 @@ function RuleSetEmptyState({ onCreateClick }: { onCreateClick?: () => void }) {
       {onCreateClick && (
         <Button variant="outline" size="sm" className="mt-1 gap-1" onClick={onCreateClick}>
           <PlusIcon className="size-3.5" />
-          {t("Create Rule Set")}
+          {t("Create rule set")}
         </Button>
       )}
     </div>
@@ -282,7 +282,7 @@ function CreateRuleSetDialog({
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{t("Create Rule Set")}</DialogTitle>
+            <DialogTitle>{t("Create rule set")}</DialogTitle>
             <DialogDescription>
               {t(
                 "A rule set defines how a specific type of document is parsed. Each rule set contains versions with match criteria, section definitions, and field extraction rules.",

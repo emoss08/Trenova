@@ -87,7 +87,7 @@ export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorP
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">{t("Assigned Roles")}</h3>
+        <h3 className="text-sm font-medium">{t("Assigned roles")}</h3>
         <Button
           type="button"
           size="sm"
@@ -96,7 +96,7 @@ export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorP
           disabled={isDisabled}
         >
           <PlusIcon className="mr-1 size-3.5" />
-          {t("Assign Role")}
+          {t("Assign role")}
         </Button>
       </div>
 
@@ -155,7 +155,7 @@ function RoleAssignmentRow({ assignment, isDisabled, onUnassign }: RoleAssignmen
     <div className="rounded-md border p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
-          <p className="text-sm font-medium">{role?.name ?? t("Unknown Role")}</p>
+          <p className="text-sm font-medium">{role?.name ?? t("Unknown role")}</p>
           {role?.description && (
             <p className="text-muted-foreground mt-1 text-xs">{t(role.description)}</p>
           )}
@@ -266,7 +266,7 @@ function AssignRoleDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Assign Role")}</DialogTitle>
+          <DialogTitle>{t("Assign role")}</DialogTitle>
         </DialogHeader>
         <Form
           className="flex flex-col gap-4"
@@ -311,7 +311,7 @@ function AssignRoleDialog({
               loadingText={t("Assigning...")}
               disabled={isDisabled}
             >
-              {t("Assign Role")}
+              {t("Assign role")}
             </Button>
           </DialogFooter>
         </Form>

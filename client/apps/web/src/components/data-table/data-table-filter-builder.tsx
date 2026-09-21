@@ -285,7 +285,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
             </div>
             <Button onClick={handleAddFilter} disabled={filterableColumns.length === 0}>
               <PlusIcon className="size-3.5" />
-              {t("Add Filter")}
+              {t("Add filter")}
             </Button>
           </div>
         ) : (
@@ -328,7 +328,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
                 disabled={filterableColumns.length === 0}
               >
                 <PlusIcon className="size-3.5" />
-                {t("Add Filter")}
+                {t("Add filter")}
               </Button>
               <Button
                 variant="outline"
@@ -336,11 +336,11 @@ export default function DataTableFilterBuilder<TData extends RowData>({
                 disabled={filterableColumns.length === 0}
               >
                 <FolderPlusIcon className="size-3.5" />
-                {t("Add Filter Group")}
+                {t("Add filter group")}
               </Button>
               {filters.length > 0 && (
                 <Button variant="ghost" onClick={handleResetFilters}>
-                  {t("Reset Filters")}
+                  {t("Reset filters")}
                 </Button>
               )}
             </div>
@@ -391,7 +391,7 @@ function FilterGroupRow({
             onValueChange={(val) => onConnectorChange(group.id, val as FilterConnector)}
           >
             <SelectTrigger className="w-18">
-              <SelectValue placeholder={t("Select Connector")}>
+              <SelectValue placeholder={t("Select connector")}>
                 {getConnectorLabel(group.connector)}
               </SelectValue>
             </SelectTrigger>
@@ -581,7 +581,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
                 ? selectedLabels.length === 1
                   ? selectedLabels[0]
                   : t("{0} Selected", selectedLabels.length)
-                : t("Select Values")}
+                : t("Select values")}
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="w-auto">

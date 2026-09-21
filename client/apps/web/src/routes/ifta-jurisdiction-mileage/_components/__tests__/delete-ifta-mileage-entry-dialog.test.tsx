@@ -108,7 +108,7 @@ describe("DeleteIftaMileageEntryDialog", () => {
     await waitFor(() => {
       expect(handleMutationError).toHaveBeenCalledWith({
         error: failure,
-        resourceName: "Jurisdiction Mileage",
+        resourceName: "Jurisdiction mileage",
       });
     });
     expect(onDeleted).not.toHaveBeenCalled();

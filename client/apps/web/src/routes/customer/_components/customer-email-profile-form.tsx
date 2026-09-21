@@ -14,7 +14,7 @@ export function CustomerEmailProfileForm() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("Email Delivery")}
+        title={t("Email delivery")}
         description={t(
           "Configure how invoices are emailed to this customer's accounts payable team",
         )}
@@ -24,7 +24,7 @@ export function CustomerEmailProfileForm() {
             <InputField
               control={control}
               name="emailProfile.subject"
-              label={t("Subject Line")}
+              label={t("Subject line")}
               placeholder={t("e.g., Invoice #{number} from {company}")}
               description={t(
                 "Email subject used when sending invoices. Supports {number}, {customer}, and {company}.",
@@ -35,7 +35,7 @@ export function CustomerEmailProfileForm() {
             <InputField
               control={control}
               name="emailProfile.fromEmail"
-              label={t("From Address")}
+              label={t("From address")}
               placeholder={t("e.g., billing@yourcompany.com")}
               description={t(
                 "The sender address that appears on invoice emails. Must be a verified email domain in your organization's email settings.",
@@ -46,7 +46,7 @@ export function CustomerEmailProfileForm() {
             <InputField
               control={control}
               name="emailProfile.toRecipients"
-              label={t("To Recipients")}
+              label={t("To recipients")}
               placeholder={t("e.g., ap@customer.com, billing@customer.com")}
               description={t(
                 "Primary recipient addresses for invoice delivery. Separate multiple addresses with commas.",
@@ -57,7 +57,7 @@ export function CustomerEmailProfileForm() {
             <InputField
               control={control}
               name="emailProfile.ccRecipients"
-              label={t("CC Recipients")}
+              label={t("CC recipients")}
               placeholder={t("e.g., controller@customer.com")}
               description={t(
                 "Carbon copy recipients who receive a copy of every invoice email. Useful for the customer's management or your internal billing team.",
@@ -68,7 +68,7 @@ export function CustomerEmailProfileForm() {
             <InputField
               control={control}
               name="emailProfile.bccRecipients"
-              label={t("BCC Recipients")}
+              label={t("BCC recipients")}
               placeholder={t("e.g., billing-archive@yourcompany.com")}
               description={t(
                 "Blind carbon copy recipients. Other recipients will not see these addresses — useful for internal archiving or compliance.",
@@ -79,7 +79,7 @@ export function CustomerEmailProfileForm() {
       </FormSection>
 
       <FormSection
-        title={t("Attachments & Content")}
+        title={t("Attachments & content")}
         description={t("Control the invoice attachment format and email body content")}
       >
         <FormGroup cols={2}>
@@ -87,7 +87,7 @@ export function CustomerEmailProfileForm() {
             <InputField
               control={control}
               name="emailProfile.attachmentName"
-              label={t("Attachment Filename")}
+              label={t("Attachment filename")}
               placeholder={t("e.g., Invoice-{number}-{customer}.pdf")}
               description={t(
                 "Filename for the PDF invoice attachment. Supports {number}, {customer}, and {company}.",
@@ -98,7 +98,7 @@ export function CustomerEmailProfileForm() {
             <TextareaField
               control={control}
               name="emailProfile.comment"
-              label={t("Email Body")}
+              label={t("Email body")}
               placeholder={t("e.g., Please find invoice {number} attached for {customer}.")}
               description={t(
                 "Default message included in the email body above the invoice details. Supports {number}, {customer}, and {company}.",
@@ -108,7 +108,7 @@ export function CustomerEmailProfileForm() {
         </FormGroup>
       </FormSection>
 
-      <FormSection title={t("Delivery Options")} description={t("Email content preferences")}>
+      <FormSection title={t("Delivery options")} description={t("Email content preferences")}>
         <FormGroup cols={1}>
           <FormControl className="min-h-[3em]">
             <SwitchField
@@ -125,7 +125,7 @@ export function CustomerEmailProfileForm() {
             <SwitchField
               control={control}
               name="emailProfile.readReceipt"
-              label={t("Request Read Receipt")}
+              label={t("Request read receipt")}
               description={t(
                 "Ask the recipient's email client to send a delivery/read confirmation. Note: many email clients and corporate mail servers silently ignore read receipt requests.",
               )}

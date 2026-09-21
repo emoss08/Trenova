@@ -178,7 +178,7 @@ function CommodityDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEditing ? t("Edit Commodity") : t("Add Commodity")}</DialogTitle>
+          <DialogTitle>{isEditing ? t("Edit commodity") : t("Add commodity")}</DialogTitle>
           <DialogDescription>
             {isEditing
               ? t("Update the commodity details")
@@ -303,7 +303,7 @@ export default function CommoditiesSection() {
           fields.length > 0 && (
             <Button type="button" variant="outline" size="xxs" onClick={handleAdd}>
               <PlusIcon className="size-3" />
-              {t("Add Commodity")}
+              {t("Add commodity")}
             </Button>
           )
         }
@@ -499,11 +499,11 @@ export default function CommoditiesSection() {
         ) : (
           <EmptyState
             className="border-bg-sidebar-border max-h-[200px] rounded-lg border p-4"
-            title={t("No Commodities")}
+            title={t("No commodities")}
             description={t("Shipment has no associated commodities")}
             icons={[CaravanIcon, BoxesIcon, TruckIcon]}
             action={{
-              label: t("Add First Commodity"),
+              label: t("Add first commodity"),
               onClick: handleAdd,
               icon: PlusIcon,
             }}

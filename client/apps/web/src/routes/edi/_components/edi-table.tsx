@@ -245,7 +245,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
           "The rejection reason is sent back to the trading partner on the outbound 990 response.",
         )}
         placeholder={t("Explain why these tenders are being rejected")}
-        confirmLabel={t("Reject Tenders")}
+        confirmLabel={t("Reject tenders")}
         isPending={rejectPending}
         onConfirm={handleBulkRejectConfirm}
       />
@@ -292,7 +292,7 @@ function MessagesWorkspace() {
     return [
       {
         id: "bulk-retry-delivery",
-        label: t("Retry Delivery"),
+        label: t("Retry delivery"),
         loadingLabel: t("Queueing retries..."),
         icon: RotateCcwIcon,
         onClick: handleBulkRetry,

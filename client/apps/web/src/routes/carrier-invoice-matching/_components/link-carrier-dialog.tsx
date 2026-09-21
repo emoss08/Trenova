@@ -88,7 +88,7 @@ export function LinkCarrierDialog({
             disabled={!carrierId || mutation.isPending}
             onClick={handleSubmit((values) => mutation.mutate(values))}
           >
-            {t("Link Carrier")}
+            {t("Link carrier")}
           </Button>
         </DialogFooter>
       </DialogContent>

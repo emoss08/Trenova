@@ -245,7 +245,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
               {t("Tint rows that need attention — for example, unassigned or late records.")}
             </p>
             <Button size="sm" onClick={addRule} disabled={formatColumns.length === 0}>
-              {t("Add Rule")}
+              {t("Add rule")}
             </Button>
           </div>
         ) : (
@@ -341,7 +341,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
             <div className="flex items-center gap-1">
               <Button variant="outline" size="sm" onClick={addRule}>
                 <PlusIcon className="size-3.5" />
-                {t("Add Rule")}
+                {t("Add rule")}
               </Button>
               <Button
                 variant="ghost"
@@ -349,7 +349,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
                 className="text-muted-foreground"
                 onClick={() => onRulesChange([])}
               >
-                {t("Clear Rules")}
+                {t("Clear rules")}
               </Button>
             </div>
           ) : (

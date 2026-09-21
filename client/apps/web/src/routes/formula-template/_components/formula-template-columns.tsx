@@ -111,7 +111,7 @@ export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
     },
     {
       accessorKey: "usageCount",
-      header: t("In Use"),
+      header: t("In use"),
       cell: ({ row }) => {
         const count = row.original.usageCount ?? 0;
         return count > 0 ? (
@@ -123,7 +123,7 @@ export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
         );
       },
       meta: {
-        label: t("In Use"),
+        label: t("In use"),
         apiField: "usageCount",
         filterable: false,
         sortable: false,

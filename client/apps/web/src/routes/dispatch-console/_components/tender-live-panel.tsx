@@ -80,7 +80,7 @@ function TenderCancelDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Cancel Tender")}</DialogTitle>
+          <DialogTitle>{t("Cancel tender")}</DialogTitle>
           <DialogDescription>
             {t(
               "Outstanding offers are withdrawn and carriers can no longer accept. The reason is recorded on the tender.",
@@ -145,7 +145,7 @@ function RecordResponseDialog({
     <Dialog open onOpenChange={(nextOpen) => !nextOpen && onOpenChange(false)}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Record Carrier Response")}</DialogTitle>
+          <DialogTitle>{t("Record carrier response")}</DialogTitle>
           <DialogDescription>
             {t(
               "{0} responded off-channel — by phone or a direct email. Record it here so the tender advances.",
@@ -182,7 +182,7 @@ function RecordResponseDialog({
               <TextareaField
                 control={control}
                 name="declineReason"
-                label={t("Decline Reason")}
+                label={t("Decline reason")}
                 rules={{ required: true }}
                 placeholder={t("e.g., No truck available in the area")}
               />
@@ -230,7 +230,7 @@ function OfferRow({
           <Badge
             variant="neutral"
             appearance="outline"
-            className="h-4 shrink-0 rounded px-1 text-3xs tabular-nums"
+            className="h-4 shrink-0 rounded-md px-1 text-3xs tabular-nums"
           >
             #{offer.rank}
           </Badge>
@@ -350,7 +350,7 @@ export function TenderLivePanel({
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-1.5">
         <TenderStatusBadge status={tender.status} />
-        <Badge variant="neutral" appearance="outline" className="h-4 rounded px-1 text-3xs">
+        <Badge variant="neutral" appearance="outline" className="h-4 rounded-md px-1 text-3xs">
           {TENDER_MODE_LABEL[tender.mode]}
         </Badge>
         {tender.routingGuide && (

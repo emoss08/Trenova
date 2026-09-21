@@ -51,7 +51,7 @@ const ediDocumentSourceInputsByTransactionSet: Record<string, EDIDocumentSourceI
   ],
   "214": [
     { field: "shipmentId", label: "Shipment ID", placeholder: "sp_..." },
-    { field: "shipmentEventId", label: "Shipment Event ID", placeholder: "se_..." },
+    { field: "shipmentEventId", label: "Shipment event ID", placeholder: "se_..." },
     { field: "payload", label: "Payload JSON", placeholder: "" },
   ],
   "990": [
@@ -59,11 +59,11 @@ const ediDocumentSourceInputsByTransactionSet: Record<string, EDIDocumentSourceI
     { field: "payload", label: "Payload JSON", placeholder: "" },
   ],
   "997": [
-    { field: "sourceMessageId", label: "Source Message ID", placeholder: "edimsg_..." },
+    { field: "sourceMessageId", label: "Source message ID", placeholder: "edimsg_..." },
     { field: "payload", label: "Payload JSON", placeholder: "" },
   ],
   "999": [
-    { field: "sourceMessageId", label: "Source Message ID", placeholder: "edimsg_..." },
+    { field: "sourceMessageId", label: "Source message ID", placeholder: "edimsg_..." },
     { field: "payload", label: "Payload JSON", placeholder: "" },
   ],
 };

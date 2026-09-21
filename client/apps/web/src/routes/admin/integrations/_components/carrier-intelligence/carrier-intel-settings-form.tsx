@@ -240,7 +240,7 @@ export function CarrierIntelSettingsForm({
                     isLoading={saveMutation.isPending || isEstimating}
                     loadingText={isEstimating ? t("Estimating...") : t("Saving...")}
                   >
-                    {t("Save Changes")}
+                    {t("Save changes")}
                   </Button>
                 </>
               ) : null}

@@ -11,7 +11,7 @@ export function DispatchControlPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Dispatch Control"),
+        title: t("Dispatch control"),
         description: t("Configure and manage your dispatch control settings"),
       }}
     >

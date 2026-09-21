@@ -15,7 +15,7 @@ export function CarrierTaxForm() {
   return (
     <div className="space-y-6">
       <FormSection
-        title={t("Tax Information")}
+        title={t("Tax information")}
         description={t("Tax identification and 1099 reporting details for this carrier.")}
       >
         <FormGroup cols={2}>
@@ -35,8 +35,8 @@ export function CarrierTaxForm() {
             <SelectField
               control={control}
               name="taxIdType"
-              label={t("Tax ID Type")}
-              placeholder={t("Tax ID Type")}
+              label={t("Tax ID type")}
+              placeholder={t("Tax ID type")}
               description={t(
                 "Whether the tax ID is an employer identification number or a social security number.",
               )}
@@ -48,7 +48,7 @@ export function CarrierTaxForm() {
             <SwitchField
               control={control}
               name="w9OnFile"
-              label={t("W-9 On File")}
+              label={t("W-9 on file")}
               description={t("A completed W-9 form has been received from this carrier.")}
             />
           </FormControl>

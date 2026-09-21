@@ -102,7 +102,7 @@ export function AccessorialScheduleEditor() {
                     control={control}
                     rules={{ required: true }}
                     name={`accessorials.${index}.rateUnit` as never}
-                    label={t("Rate Unit")}
+                    label={t("Rate unit")}
                     placeholder={t("Unit")}
                     description={t("What a unit is on this charge")}
                     options={rateUnitChoices}
@@ -130,7 +130,7 @@ export function AccessorialScheduleEditor() {
                   <NumberField
                     control={control}
                     name={`accessorials.${index}.amount` as never}
-                    label={t("Amount Per Unit")}
+                    label={t("Amount per unit")}
                     placeholder="65.00"
                     sideText="$"
                     decimalScale={2}
@@ -142,7 +142,7 @@ export function AccessorialScheduleEditor() {
                   <NumberField
                     control={control}
                     name={`accessorials.${index}.freeUnits` as never}
-                    label={t("Free Units")}
+                    label={t("Free units")}
                     placeholder="2"
                     description={t("Units the contract gives away before charging")}
                   />
@@ -151,7 +151,7 @@ export function AccessorialScheduleEditor() {
                   <NumberField
                     control={control}
                     name={`accessorials.${index}.maxAmount` as never}
-                    label={t("Maximum Amount")}
+                    label={t("Maximum amount")}
                     placeholder="0.00"
                     sideText="$"
                     decimalScale={2}
@@ -167,7 +167,7 @@ export function AccessorialScheduleEditor() {
                 <SwitchField
                   control={control}
                   name={`accessorials.${index}.autoApply` as never}
-                  label={t("Auto Apply")}
+                  label={t("Auto apply")}
                   description={t(
                     "Added to every shipment this contract prices, so it never depends on somebody remembering",
                   )}
@@ -193,7 +193,7 @@ export function AccessorialScheduleEditor() {
                   <InputField
                     control={control}
                     name={`accessorials.${index}.applyCondition` as never}
-                    label={t("Apply Condition")}
+                    label={t("Apply condition")}
                     placeholder={t("totalStops > 2")}
                     description={t(
                       "An expression in the same language the rating formulas use. Leave empty to apply to every shipment.",

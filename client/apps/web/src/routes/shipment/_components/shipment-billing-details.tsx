@@ -81,7 +81,7 @@ function Inner({ children }: { children: React.ReactNode }) {
 
   return (
     <FormSection
-      title={t("Billing & Rating")}
+      title={t("Billing & rating")}
       description={t("Customer, rating method, and charge amounts")}
       action={<PreviousRatesButton request={previousRatesRequest} />}
       className="border-border border-t pt-4"
@@ -97,22 +97,22 @@ const CREDIT_STATUS_CONFIG: Record<
   Hold: {
     variant: "destructive",
     icon: ShieldAlertIcon,
-    label: "Credit Hold",
+    label: "Credit hold",
   },
   Suspended: {
     variant: "destructive",
     icon: ShieldAlertIcon,
-    label: "Credit Suspended",
+    label: "Credit suspended",
   },
   Warning: {
     variant: "warning",
     icon: AlertTriangleIcon,
-    label: "Credit Warning",
+    label: "Credit warning",
   },
   Review: {
     variant: "warning",
     icon: AlertTriangleIcon,
-    label: "Under Credit Review",
+    label: "Under credit review",
   },
 };
 
@@ -281,7 +281,7 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
         </div>
       )}
       <div className="mb-3">
-        <span className="text-xs font-medium">{t("Charge Summary")}</span>
+        <span className="text-xs font-medium">{t("Charge summary")}</span>
         <p className="text-2xs text-muted-foreground mt-0.5">
           {t(
             "Automatically calculated based on the rating method, freight charges, and any additional accessorial charges.",
@@ -290,7 +290,7 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
       </div>
       <div className="space-y-2">
         <ChargeSummaryRow
-          label={t("Freight Charges")}
+          label={t("Freight charges")}
           value={freightChargeAmount}
           action={
             <ChargePayerControl
@@ -305,7 +305,7 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
             />
           }
         />
-        <ChargeSummaryRow label={t("Other Charges")} value={otherChargeAmount} />
+        <ChargeSummaryRow label={t("Other charges")} value={otherChargeAmount} />
         <Separator className="my-2" />
         <ChargeSummaryRow label={t("Total")} value={totalChargeAmount} bold />
       </div>
@@ -463,7 +463,7 @@ function RatingBreakdownCard() {
         <div className="flex flex-col gap-1 w-full">
           <div className="flex justify-between items-center">
             <div className="flex flex-row gap-1">
-              <span className="text-xs font-medium">{t("Rating Breakdown")}</span>
+              <span className="text-xs font-medium">{t("Rating breakdown")}</span>
               <AutoRateDialog />
             </div>
             <WhyThisRate shipmentId={shipmentId} />
@@ -601,7 +601,7 @@ export default function ShipmentBillingDetails() {
           control={control}
           name="orderId"
           label={t("Order")}
-          placeholder={t("Select Order")}
+          placeholder={t("Select order")}
           description={t(
             "Optionally group this shipment under a commercial order for the same customer. Set on creation; use the order's Add Legs afterwards.",
           )}
@@ -618,7 +618,7 @@ export default function ShipmentBillingDetails() {
           name="customerId"
           rules={{ required: true }}
           label={t("Customer")}
-          placeholder={t("Select Customer")}
+          placeholder={t("Select customer")}
           description={t("Choose the customer who requested this shipment.")}
         />
       ),
@@ -648,9 +648,9 @@ export default function ShipmentBillingDetails() {
         <SelectField
           control={control}
           name="freightTerms"
-          label={t("Freight Terms")}
+          label={t("Freight terms")}
           options={freightTermsChoices}
-          placeholder={t("Select Freight Terms")}
+          placeholder={t("Select freight terms")}
           description={t(
             "Who is responsible for the freight charges: prepaid by the shipper, collect from the consignee, or a third party.",
           )}
@@ -664,8 +664,8 @@ export default function ShipmentBillingDetails() {
         <FormulaTemplateAutocompleteField
           control={control}
           name="formulaTemplateId"
-          label={t("Rating Method")}
-          placeholder={t("Select Rating Method")}
+          label={t("Rating method")}
+          placeholder={t("Select rating method")}
           description={t(
             "Select how the shipment charges are calculated (e.g., per mile, per stop, flat rate).",
           )}
@@ -683,8 +683,8 @@ export default function ShipmentBillingDetails() {
           control={control}
           rules={{ required: true }}
           name="baseRate"
-          label={t("Base Rate")}
-          placeholder={t("Enter Base Rate")}
+          label={t("Base rate")}
+          placeholder={t("Enter base rate")}
           description={t(
             "Per-unit rate used by the formula template to calculate freight charges.",
           )}

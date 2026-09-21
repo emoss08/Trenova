@@ -11,7 +11,7 @@ export function CustomFieldDefinitionsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Custom Field Definitions"),
+        title: t("Custom field definitions"),
         description: t("Define custom fields for trailers, workers, and other resources"),
       }}
     >

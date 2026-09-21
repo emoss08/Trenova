@@ -137,7 +137,7 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
                   </TooltipContent>
                 </Tooltip>
               )}
-              <Badge variant="danger" className="h-4 shrink-0 rounded px-1 text-3xs">
+              <Badge variant="danger" className="h-4 shrink-0 rounded-md px-1 text-3xs">
                 {t("{0} failed", status.failureCount)}
               </Badge>
             </>
@@ -161,7 +161,7 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
     <div className="border-border flex flex-col gap-3 border-t pt-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-col gap-0.5">
-          <p className="text-sm font-semibold">{t("Sync Health")}</p>
+          <p className="text-sm font-semibold">{t("Sync health")}</p>
           <p className="text-muted-foreground text-xs">
             {t("Live polling status for the Samsara telematics feed.")}
           </p>

@@ -157,7 +157,7 @@ export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: Exc
           >
             <span
               className={cn(
-                "flex size-5 shrink-0 items-center justify-center rounded",
+                "flex size-5 shrink-0 items-center justify-center rounded-md",
                 sevBgClass,
                 sevTextClass,
               )}

@@ -19,7 +19,7 @@ export function CustomerForm() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("General Information")}
+        title={t("General information")}
         description={t("Core identifiers used across the system to reference this customer")}
       >
         <FormGroup cols={2}>
@@ -114,7 +114,7 @@ export function CustomerForm() {
               rules={{ required: true }}
               control={control}
               name="postalCode"
-              label={t("Postal Code")}
+              label={t("Postal code")}
               placeholder={t("e.g., 90210")}
               description={t(
                 "ZIP or ZIP+4 code. Used for geocoding, mileage calculations, and tax jurisdiction lookups.",
@@ -125,7 +125,7 @@ export function CustomerForm() {
       </FormSection>
 
       <FormSection
-        title={t("External Identifiers")}
+        title={t("External identifiers")}
         description={t(
           "Link this customer to records in external systems like your ERP, CRM, or mapping provider",
         )}
@@ -168,7 +168,7 @@ export function CustomerForm() {
             <InputField
               control={control}
               name="dotNumber"
-              label={t("DOT Number")}
+              label={t("DOT number")}
               placeholder={t("e.g., 1234567")}
               inputMode="numeric"
               maxLength={12}
@@ -182,7 +182,7 @@ export function CustomerForm() {
             <InputField
               control={control}
               name="mcNumber"
-              label={t("MC Number")}
+              label={t("MC number")}
               placeholder={t("e.g., 654321")}
               inputMode="numeric"
               maxLength={12}
@@ -203,7 +203,7 @@ export function CustomerForm() {
       </FormSection>
 
       <FormSection
-        title={t("Shipment Consolidation")}
+        title={t("Shipment consolidation")}
         description={t(
           "Control whether multiple shipments for this customer can share trailer space",
         )}
@@ -213,7 +213,7 @@ export function CustomerForm() {
             <SwitchField
               control={control}
               name="allowConsolidation"
-              label={t("Allow Consolidation")}
+              label={t("Allow consolidation")}
               description={t(
                 "Permit this customer's shipments to be combined with other shipments on the same trailer to improve load utilization and reduce costs.",
               )}
@@ -223,7 +223,7 @@ export function CustomerForm() {
             <SwitchField
               control={control}
               name="exclusiveConsolidation"
-              label={t("Exclusive Consolidation")}
+              label={t("Exclusive consolidation")}
               description={t(
                 "Only consolidate with other shipments from this same customer — never mix with other customers' freight. Requires 'Allow Consolidation' to be enabled.",
               )}

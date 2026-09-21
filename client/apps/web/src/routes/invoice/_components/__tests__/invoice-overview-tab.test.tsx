@@ -89,13 +89,13 @@ describe("invoice overview scope", () => {
       }),
     );
 
-    expect(screen.getByText("Billing Period")).toBeInTheDocument();
+    expect(screen.getByText("Billing period")).toBeInTheDocument();
     expect(screen.getByText(periodRange(PERIOD_START, PERIOD_END))).toBeInTheDocument();
-    expect(screen.queryByText("Service Date")).toBeNull();
+    expect(screen.queryByText("Service date")).toBeNull();
     expect(screen.getByText("12 shipments")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Queue Item/ })).toBeNull();
     expect(screen.queryByText("BOL-2026-0211")).toBeNull();
-    expect(screen.getByText("Generated from Statement")).toBeInTheDocument();
+    expect(screen.getByText("Generated from statement")).toBeInTheDocument();
   });
 
   it("does not point an order invoice at its anchor queue item", () => {
@@ -112,8 +112,8 @@ describe("invoice overview scope", () => {
     expect(screen.getByRole("link", { name: /ORD-1/ })).toBeInTheDocument();
     expect(screen.getByText("3 shipments")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Queue Item/ })).toBeNull();
-    expect(screen.getByText("Service Date")).toBeInTheDocument();
-    expect(screen.getByText("Generated from Billing Queue")).toBeInTheDocument();
+    expect(screen.getByText("Service date")).toBeInTheDocument();
+    expect(screen.getByText("Generated from billing queue")).toBeInTheDocument();
   });
 
   it("keeps a single-shipment invoice's shipment, queue item, BOL and service date", () => {
@@ -125,7 +125,7 @@ describe("invoice overview scope", () => {
     );
     expect(screen.getByRole("link", { name: /Queue Item/ })).toBeInTheDocument();
     expect(screen.getByText("BOL-2026-0211")).toBeInTheDocument();
-    expect(screen.getByText("Service Date")).toBeInTheDocument();
-    expect(screen.queryByText("Billing Period")).toBeNull();
+    expect(screen.getByText("Service date")).toBeInTheDocument();
+    expect(screen.queryByText("Billing period")).toBeNull();
   });
 });

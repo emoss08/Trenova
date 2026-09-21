@@ -77,7 +77,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TractorRow>[] {
     },
     {
       accessorKey: "primaryWorker",
-      header: t("Primary Worker"),
+      header: t("Primary worker"),
       cell: ({ row }) => {
         const { primaryWorker } = row.original;
 
@@ -105,12 +105,12 @@ export function getColumns(t: TranslateFn): ColumnDef<TractorRow>[] {
         sortable: false,
         filterType: "text",
         defaultFilterOperator: "contains",
-        label: t("Primary Worker"),
+        label: t("Primary worker"),
       },
     },
     {
       accessorKey: "equipmentType",
-      header: t("Equip. Type"),
+      header: t("Equip. type"),
       cell: ({ row }) => {
         const { equipmentType } = row.original;
 
@@ -140,12 +140,12 @@ export function getColumns(t: TranslateFn): ColumnDef<TractorRow>[] {
         sortable: false,
         filterType: "text",
         defaultFilterOperator: "contains",
-        label: t("Equip. Type"),
+        label: t("Equip. type"),
       },
     },
     {
       accessorKey: "equipmentManufacturer",
-      header: t("Equip. Manufacturer"),
+      header: t("Equip. manufacturer"),
       cell: ({ row }) => {
         const { equipmentManufacturer } = row.original;
         if (!equipmentManufacturer) {
@@ -168,7 +168,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TractorRow>[] {
     },
     {
       accessorKey: "fleetCode",
-      header: t("Fleet Code"),
+      header: t("Fleet code"),
       cell: ({ row }) => {
         const { fleetCode } = row.original;
         if (!fleetCode) {

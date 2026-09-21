@@ -103,7 +103,7 @@ export function BillingQueueItemCard({
       <ContextMenuContent>
         <ContextMenuItem onClick={onAssignBiller} disabled={isTerminal}>
           <UserPlusIcon className="size-3.5" />
-          {t("Assign Biller")}
+          {t("Assign biller")}
         </ContextMenuItem>
         <ContextMenuItem onClick={onHold} disabled={isTerminal || item.status === "OnHold"}>
           <PauseIcon className="size-3.5" />
@@ -116,7 +116,7 @@ export function BillingQueueItemCard({
           }
         >
           <ExternalLinkIcon className="size-3.5" />
-          {t("View Shipment")}
+          {t("View shipment")}
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onClick={onCancel} disabled={isTerminal} className="text-destructive">

@@ -92,7 +92,7 @@ export function getColumns(
       },
       meta: {
         apiField: "tenderStatus",
-        label: t("Tender Status"),
+        label: t("Tender status"),
         filterable: true,
         sortable: true,
         filterType: "select",
@@ -139,7 +139,7 @@ export function getColumns(
       minSize: 140,
       maxSize: 220,
       meta: {
-        label: t("PRO Number"),
+        label: t("PRO number"),
         apiField: "proNumber",
         filterable: true,
         sortable: true,
@@ -208,7 +208,7 @@ export function getColumns(
       },
       meta: {
         apiField: "customer.name",
-        label: t("Customer Name"),
+        label: t("Customer name"),
         filterable: true,
         sortable: true,
         filterType: "text",
@@ -237,7 +237,7 @@ export function getColumns(
     },
     {
       id: "pickupAppointment",
-      header: t("Pickup Appt"),
+      header: t("Pickup appt"),
       accessorFn: (row) => getAppointmentStop(getOriginStop(row))?.scheduledWindowStart ?? null,
       cell: ({ row }) => (
         <span className="font-table tabular-nums">
@@ -249,7 +249,7 @@ export function getColumns(
       maxSize: 220,
       meta: {
         apiField: "pickupAppointment.scheduledWindowStart",
-        label: t("Pickup Appointment"),
+        label: t("Pickup appointment"),
         filterable: true,
         sortable: true,
         filterType: "date",
@@ -258,7 +258,7 @@ export function getColumns(
     },
     {
       id: "deliveryAppointment",
-      header: t("Delivery Appt"),
+      header: t("Delivery appt"),
       accessorFn: (row) =>
         getAppointmentStop(getDestinationStop(row))?.scheduledWindowStart ?? null,
       cell: ({ row }) => (
@@ -271,7 +271,7 @@ export function getColumns(
       maxSize: 220,
       meta: {
         apiField: "deliveryAppointment.scheduledWindowStart",
-        label: t("Delivery Appointment"),
+        label: t("Delivery appointment"),
         filterable: true,
         sortable: true,
         filterType: "date",

@@ -18,7 +18,7 @@ export function DocumentPacketRuleForm({ disabled }: { disabled?: boolean }) {
   return (
     <div className="flex flex-col gap-4">
       <FormSection
-        title={t("Rule Target")}
+        title={t("Rule target")}
         description={t("Which resource type and document type does this rule apply to?")}
       >
         <FormGroup cols={2}>
@@ -27,7 +27,7 @@ export function DocumentPacketRuleForm({ disabled }: { disabled?: boolean }) {
               control={control}
               rules={{ required: true }}
               name="resourceType"
-              label={t("Resource Type")}
+              label={t("Resource type")}
               placeholder={t("Select resource type")}
               description={t("Shipment, trailer, tractor, or worker")}
               options={resourceTypeChoices}
@@ -39,7 +39,7 @@ export function DocumentPacketRuleForm({ disabled }: { disabled?: boolean }) {
               control={control}
               rules={{ required: true }}
               name="documentTypeId"
-              label={t("Document Type")}
+              label={t("Document type")}
               placeholder={t("Select document type")}
               description={t("The document type required by this rule")}
             />
@@ -50,7 +50,7 @@ export function DocumentPacketRuleForm({ disabled }: { disabled?: boolean }) {
       <Separator />
 
       <FormSection
-        title={t("Rule Behavior")}
+        title={t("Rule behavior")}
         description={t("Configure how this document requirement is enforced")}
       >
         <FormGroup cols={2}>
@@ -69,7 +69,7 @@ export function DocumentPacketRuleForm({ disabled }: { disabled?: boolean }) {
             <SwitchField
               control={control}
               name="allowMultiple"
-              label={t("Allow Multiple")}
+              label={t("Allow multiple")}
               description={t("Allow more than one document of this type")}
               disabled={disabled}
               position="left"
@@ -80,7 +80,7 @@ export function DocumentPacketRuleForm({ disabled }: { disabled?: boolean }) {
             <NumberField
               control={control}
               name="displayOrder"
-              label={t("Display Order")}
+              label={t("Display order")}
               placeholder="0"
               description={t("Lower numbers appear first in the packet")}
               disabled={disabled}
@@ -92,7 +92,7 @@ export function DocumentPacketRuleForm({ disabled }: { disabled?: boolean }) {
       <Separator />
 
       <FormSection
-        title={t("Expiration Tracking")}
+        title={t("Expiration tracking")}
         description={t("Optionally require an expiration date and configure early warnings")}
       >
         <FormGroup cols={2}>
@@ -100,7 +100,7 @@ export function DocumentPacketRuleForm({ disabled }: { disabled?: boolean }) {
             <SwitchField
               control={control}
               name="expirationRequired"
-              label={t("Expiration Required")}
+              label={t("Expiration required")}
               description={t("Documents must include an expiration date")}
               disabled={disabled}
               position="left"
@@ -112,7 +112,7 @@ export function DocumentPacketRuleForm({ disabled }: { disabled?: boolean }) {
               <NumberField
                 control={control}
                 name="expirationWarningDays"
-                label={t("Warning Days")}
+                label={t("Warning days")}
                 placeholder="30"
                 description={t("Days before expiration to flag as expiring soon")}
                 disabled={disabled}

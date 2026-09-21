@@ -97,7 +97,7 @@ export default function WorkerTable() {
       {
         id: "status-update",
         type: "select",
-        label: t("Update Status"),
+        label: t("Update status"),
         loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: statusChoices,
@@ -107,7 +107,7 @@ export default function WorkerTable() {
       {
         id: "type-update",
         type: "select",
-        label: t("Update Type"),
+        label: t("Update type"),
         loadingLabel: t("Updating..."),
         icon: UserIcon,
         options: workerTypeChoices,
@@ -117,7 +117,7 @@ export default function WorkerTable() {
       {
         id: "driver-type-update",
         type: "select",
-        label: t("Update Driver Type"),
+        label: t("Update driver type"),
         loadingLabel: t("Updating..."),
         icon: TruckIcon,
         options: driverTypeChoices,
@@ -126,7 +126,7 @@ export default function WorkerTable() {
       },
       {
         id: "assign-training",
-        label: t("Assign Training"),
+        label: t("Assign training"),
         icon: GraduationCapIcon,
         onClick: (rows) => setTrainingTargets(rows),
       },

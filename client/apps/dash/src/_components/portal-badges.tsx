@@ -6,7 +6,7 @@ type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];
 const moveStatusVariants: Record<string, { label: string; variant: BadgeVariant }> = {
   New: { label: "New", variant: "neutral" },
   Assigned: { label: "Assigned", variant: "info" },
-  InTransit: { label: "In Transit", variant: "info" },
+  InTransit: { label: "In transit", variant: "info" },
   Completed: { label: "Completed", variant: "success" },
   Canceled: { label: "Canceled", variant: "danger" },
 };
@@ -20,7 +20,7 @@ export function LoadStatusBadge({ status }: { status: string }) {
 
 const disputeStatusVariants: Record<string, { label: string; variant: BadgeVariant }> = {
   Open: { label: "Open", variant: "info" },
-  InReview: { label: "In Review", variant: "warning" },
+  InReview: { label: "In review", variant: "warning" },
   Resolved: { label: "Resolved", variant: "success" },
   Denied: { label: "Denied", variant: "danger" },
   Withdrawn: { label: "Withdrawn", variant: "neutral" },

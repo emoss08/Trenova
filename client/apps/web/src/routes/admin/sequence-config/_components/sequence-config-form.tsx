@@ -76,7 +76,7 @@ export default function SequenceConfigForm() {
           ) : null}
         </div>
 
-        <FormSaveDock saveButtonContent={t("Save Changes")} />
+        <FormSaveDock saveButtonContent={t("Save changes")} />
       </Form>
     </FormProvider>
   );

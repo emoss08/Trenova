@@ -35,7 +35,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementBatchRow>
       size: 220,
       meta: {
         apiField: "name",
-        label: t("Batch Name"),
+        label: t("Batch name"),
         filterable: true,
         sortable: true,
         filterType: "text",
@@ -54,7 +54,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementBatchRow>
       size: 180,
       meta: {
         apiField: "periodStart",
-        label: t("Period Start"),
+        label: t("Period start"),
         filterable: true,
         sortable: true,
         filterType: "date",
@@ -63,12 +63,12 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementBatchRow>
     },
     {
       accessorKey: "payDate",
-      header: t("Pay Date"),
+      header: t("Pay date"),
       cell: ({ row }) => <span>{formatSettlementDate(row.original.payDate)}</span>,
       size: 110,
       meta: {
         apiField: "payDate",
-        label: t("Pay Date"),
+        label: t("Pay date"),
         filterable: true,
         sortable: true,
         filterType: "date",
@@ -84,7 +84,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementBatchRow>
       size: 100,
       meta: {
         apiField: "settlementCount",
-        label: t("Settlement Count"),
+        label: t("Settlement count"),
         filterable: true,
         sortable: true,
         filterType: "number",
@@ -93,7 +93,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementBatchRow>
     },
     {
       accessorKey: "totalGrossMinor",
-      header: () => <div className="text-right">{t("Total Gross")}</div>,
+      header: () => <div className="text-right">{t("Total gross")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay
@@ -105,7 +105,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementBatchRow>
       size: 120,
       meta: {
         apiField: "totalGrossMinor",
-        label: t("Total Gross Minor"),
+        label: t("Total gross minor"),
         filterable: true,
         sortable: true,
         filterType: "number",
@@ -114,7 +114,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementBatchRow>
     },
     {
       accessorKey: "totalNetMinor",
-      header: () => <div className="text-right">{t("Total Net")}</div>,
+      header: () => <div className="text-right">{t("Total net")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay
@@ -127,7 +127,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementBatchRow>
       size: 120,
       meta: {
         apiField: "totalNetMinor",
-        label: t("Total Net Minor"),
+        label: t("Total net minor"),
         filterable: true,
         sortable: true,
         filterType: "number",

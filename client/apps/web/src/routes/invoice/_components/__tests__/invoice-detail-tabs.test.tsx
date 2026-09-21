@@ -219,7 +219,7 @@ describe("invoice detail tabs in the URL", () => {
     renderPane("?item=inv_1");
 
     expect(await screen.findByText("Billed the wrong customer")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Post Invoice" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Post invoice" })).toBeNull();
     expect(screen.getByText("Released for rebilling")).toBeInTheDocument();
   });
 

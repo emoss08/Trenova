@@ -106,7 +106,7 @@ export default function DocumentPacketRuleTable() {
             <AlertDialogMedia>
               <TrashIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>{t("Delete Document Packet Rule")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete document packet rule")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t("Are you sure you want to delete this packet rule? This action cannot be undone.")}
             </AlertDialogDescription>

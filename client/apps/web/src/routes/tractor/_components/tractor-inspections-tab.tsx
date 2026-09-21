@@ -258,7 +258,7 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
             className="mt-3"
             render={<Link to="/admin/integrations?type=Samsara" />}
           >
-            {t("Open Integrations")}
+            {t("Open integrations")}
           </Button>
         }
       />

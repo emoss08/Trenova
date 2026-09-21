@@ -35,7 +35,7 @@ export function OrderForm({ mode }: OrderFormProps) {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("General Information")}
+        title={t("General information")}
         description={t("The customer, ownership, and reference numbers that identify this order")}
       >
         <FormGroup cols={2}>
@@ -44,8 +44,8 @@ export function OrderForm({ mode }: OrderFormProps) {
               <InputField
                 control={control}
                 name="orderNumber"
-                label={t("Order Number")}
-                placeholder={t("Order Number")}
+                label={t("Order number")}
+                placeholder={t("Order number")}
                 description={t("System-generated identifier for this order. Read-only.")}
                 readOnly
                 disabled
@@ -93,7 +93,7 @@ export function OrderForm({ mode }: OrderFormProps) {
             <InputField
               control={control}
               name="poNumber"
-              label={t("PO Number")}
+              label={t("PO number")}
               placeholder={t("e.g. PO-10432")}
               description={t("The customer's purchase order number, shown on their invoice.")}
             />
@@ -132,7 +132,7 @@ export function OrderForm({ mode }: OrderFormProps) {
             <NumberField
               control={control}
               name="quotedAmount"
-              label={t("Quoted Amount")}
+              label={t("Quoted amount")}
               placeholder="0.00"
               description={t(
                 "Price quoted to the customer for the whole order, including expected extra charges.",
@@ -146,7 +146,7 @@ export function OrderForm({ mode }: OrderFormProps) {
             <NumberField
               control={control}
               name="baseAmount"
-              label={t("Base Amount")}
+              label={t("Base amount")}
               placeholder="0.00"
               description={t(
                 "Base freight amount before accessorial or other extra charges are applied.",

@@ -69,7 +69,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CommodityRow>[] {
     },
     {
       accessorKey: "freightClass",
-      header: t("Freight Class"),
+      header: t("Freight class"),
       cell: ({ row }) => {
         const classLabel = freightClassChoices.find(
           (c) => c.value === row.original.freightClass,

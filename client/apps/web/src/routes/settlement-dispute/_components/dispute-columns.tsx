@@ -10,7 +10,7 @@ type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];
 
 export const disputeStatusMeta: Record<string, { label: string; variant: BadgeVariant }> = {
   Open: { label: "Open", variant: "info" },
-  InReview: { label: "In Review", variant: "warning" },
+  InReview: { label: "In review", variant: "warning" },
   Resolved: { label: "Resolved", variant: "success" },
   Denied: { label: "Denied", variant: "danger" },
   Withdrawn: { label: "Withdrawn", variant: "neutral" },

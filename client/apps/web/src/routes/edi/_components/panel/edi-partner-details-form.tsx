@@ -53,7 +53,7 @@ export function PartnerDetailsForm({
             <InputField
               control={control}
               name="code"
-              label={t("Partner Code")}
+              label={t("Partner code")}
               placeholder={t("SCAC or ISA ID")}
               description={t(
                 "Stable identifier used in EDI envelopes, searches, and cross-system references. Avoid changing it after documents are exchanged.",
@@ -66,7 +66,7 @@ export function PartnerDetailsForm({
             <InputField
               control={control}
               name="name"
-              label={t("Partner Name")}
+              label={t("Partner name")}
               placeholder={t("Partner name")}
               description={t(
                 "Display name for dispatch, billing, and support teams. Internal partner names are controlled by the organization connection.",
@@ -162,7 +162,7 @@ export function PartnerDetailsForm({
             <InputField
               control={control}
               name="contactName"
-              label={t("Contact Name")}
+              label={t("Contact name")}
               placeholder={t("Contact name")}
               description={t("Primary business or integration contact for this partner.")}
               disabled={disabled}
@@ -172,7 +172,7 @@ export function PartnerDetailsForm({
             <InputField
               control={control}
               name="contactEmail"
-              label={t("Contact Email")}
+              label={t("Contact email")}
               placeholder={t("ops@example.com")}
               description={t(
                 "Email address used for EDI coordination, delivery failures, and onboarding follow-up.",
@@ -184,7 +184,7 @@ export function PartnerDetailsForm({
             <InputField
               control={control}
               name="contactPhone"
-              label={t("Contact Phone")}
+              label={t("Contact phone")}
               placeholder={t("Contact phone")}
               description={t("Phone number for urgent operational or implementation escalations.")}
               disabled={disabled}
@@ -204,7 +204,7 @@ export function PartnerDetailsForm({
             <SwitchField
               control={control}
               name="enabledForInbound"
-              label={t("Inbound Enabled")}
+              label={t("Inbound enabled")}
               description={t("Allow documents received from this partner to enter EDI processing.")}
               disabled={disabled}
               outlined
@@ -214,7 +214,7 @@ export function PartnerDetailsForm({
             <SwitchField
               control={control}
               name="enabledForOutbound"
-              label={t("Outbound Enabled")}
+              label={t("Outbound enabled")}
               description={t("Allow Trenova to send outbound documents to this partner.")}
               disabled={disabled}
               outlined
@@ -224,7 +224,7 @@ export function PartnerDetailsForm({
             <EDICommunicationProfileAutocompleteField
               control={control}
               name="defaultTransportId"
-              label={t("Default Transport Profile")}
+              label={t("Default transport profile")}
               placeholder={t("Select transport profile")}
               description={t(
                 "Transport profile used by default for this partner, such as AS2, SFTP, or internal delivery.",
@@ -238,7 +238,7 @@ export function PartnerDetailsForm({
             <EDIMappingProfileAutocompleteField
               control={control}
               name="defaultMappingProfileId"
-              label={t("Default Mapping Profile")}
+              label={t("Default mapping profile")}
               placeholder={t("Select mapping profile")}
               description={t(
                 "Mapping profile used to translate partner payloads when no document-specific mapping overrides it.",

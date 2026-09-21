@@ -50,7 +50,7 @@ const unguardedItem: NavItem = {
 
 const capabilityOnlyItem: NavItem = {
   id: "routing-guides",
-  label: "Routing Guides",
+  label: "Routing guides",
   path: "/dispatch/routing-guides",
   capability: OrganizationCapability.Brokerage,
 };
@@ -103,7 +103,7 @@ describe("canAccessNavEntry", () => {
     };
     const module: NavModule = {
       id: "carrier-settlements",
-      label: "Carrier Settlements",
+      label: "Carrier settlements",
       icon: () => null,
       basePath: "/carrier-settlements",
       navigation: [],

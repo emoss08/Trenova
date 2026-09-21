@@ -58,7 +58,7 @@ export function LaneHistoryPopover({
       />
       <PopoverContent align="end" className="w-96 p-0">
         <div className="border-b p-3">
-          <p className="text-xs font-medium">{t("Rate History")}</p>
+          <p className="text-xs font-medium">{t("Rate history")}</p>
           <p className="text-2xs text-muted-foreground mt-0.5 font-mono">
             {displayLaneKey ?? laneKey}
           </p>

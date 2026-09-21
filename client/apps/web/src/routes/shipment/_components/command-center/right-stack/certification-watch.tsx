@@ -86,7 +86,7 @@ function ConnectSamsaraState() {
         render={<Link to="/admin/integrations?type=Samsara" />}
       >
         <ExternalLinkIcon className="size-3" />
-        {t("Open Integrations")}
+        {t("Open integrations")}
       </Button>
     </div>
   );

@@ -11,7 +11,7 @@ export function AccessorialChargesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Accessorial Charges"),
+        title: t("Accessorial charges"),
         description: t("Manage and configure accessorial charges for your organization"),
       }}
     >

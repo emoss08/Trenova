@@ -23,7 +23,7 @@ describe("sampleInputKind", () => {
 
 describe("categoryLabel", () => {
   it("falls back to the raw category or Other", () => {
-    expect(categoryLabel("computed", CATEGORY_LABELS)).toBe("Computed Rollups");
+    expect(categoryLabel("computed", CATEGORY_LABELS)).toBe("Computed rollups");
     expect(categoryLabel("weird", CATEGORY_LABELS)).toBe("weird");
     expect(categoryLabel("", CATEGORY_LABELS)).toBe("Other");
   });
@@ -37,8 +37,8 @@ describe("FUNCTION_CATEGORY_LABELS", () => {
 
 describe("CATEGORY_LABELS for typed relations", () => {
   it("names the service and shipment type groups", () => {
-    expect(CATEGORY_LABELS.serviceType).toBe("Service Type");
-    expect(CATEGORY_LABELS.shipmentType).toBe("Shipment Type");
+    expect(CATEGORY_LABELS.serviceType).toBe("Service type");
+    expect(CATEGORY_LABELS.shipmentType).toBe("Shipment type");
   });
 });
 

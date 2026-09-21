@@ -113,7 +113,7 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="xl">
         <DialogHeader>
-          <DialogTitle>{t("Import Bank Receipts")}</DialogTitle>
+          <DialogTitle>{t("Import bank receipts")}</DialogTitle>
           <DialogDescription>
             {t("Create a batch of bank receipts to import for reconciliation.")}
           </DialogDescription>
@@ -127,7 +127,7 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
               </Button>
               <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}>
                 <UploadIcon className="mr-1.5 size-3.5" />
-                {t("Import Batch")}
+                {t("Import batch")}
               </Button>
             </DialogFooter>
           </Form>

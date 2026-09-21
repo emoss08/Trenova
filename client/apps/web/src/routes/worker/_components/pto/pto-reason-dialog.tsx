@@ -36,12 +36,12 @@ export type PTOReasonDialogMode = "reject" | "cancel";
 const REJECTION_PRESETS: TextareaPreset[] = [
   {
     id: "worker-request",
-    label: "Worker Request",
+    label: "Worker request",
     description: "PTO rejected at worker's request",
   },
   {
     id: "business-request",
-    label: "Business Request",
+    label: "Business request",
     description: "PTO rejected at business's request",
   },
   {
@@ -59,12 +59,12 @@ const REJECTION_PRESETS: TextareaPreset[] = [
 const CANCELLATION_PRESETS: TextareaPreset[] = [
   {
     id: "worker-request",
-    label: "Worker Request",
+    label: "Worker request",
     description: "Cancelled at worker's request",
   },
   {
     id: "schedule-change",
-    label: "Schedule Change",
+    label: "Schedule change",
     description: "Cancelled due to a schedule change",
   },
   {

@@ -103,7 +103,7 @@ export function RoutingGuideEntryEditor() {
               <SelectField
                 control={control}
                 name={`entries.${index}.rateMethod`}
-                label={t("Rate Method")}
+                label={t("Rate method")}
                 placeholder={t("Select method")}
                 rules={{ required: true }}
                 options={carrierRateMethodChoices}
@@ -125,7 +125,7 @@ export function RoutingGuideEntryEditor() {
               <SelectField
                 control={control}
                 name={`entries.${index}.offerTtlSeconds`}
-                label={t("Offer Expiry")}
+                label={t("Offer expiry")}
                 placeholder={t("Select expiry")}
                 rules={{ required: true }}
                 options={ttlOptionsFor(

@@ -14,7 +14,7 @@ export function LastSuccessfulSyncCard() {
 
   return (
     <DescriptionList columns={3} className="bg-card rounded-lg border p-3 lg:grid-cols-5">
-      <DescriptionItem numeric label={t("Last Successful Sync")}>
+      <DescriptionItem numeric label={t("Last successful sync")}>
         {formatToUserTimezone(lastSuccessfulSync.closedAt)}
       </DescriptionItem>
       <DescriptionItem numeric label={t("Duration")}>
@@ -23,10 +23,10 @@ export function LastSuccessfulSyncCard() {
       <DescriptionItem numeric label={t("Workers")}>
         {lastSuccessfulSync.result.activeWorkers}/{lastSuccessfulSync.result.totalWorkers}
       </DescriptionItem>
-      <DescriptionItem numeric label={t("Created Drivers")}>
+      <DescriptionItem numeric label={t("Created drivers")}>
         {lastSuccessfulSync.result.createdDrivers}
       </DescriptionItem>
-      <DescriptionItem numeric label={t("Updated Mappings")}>
+      <DescriptionItem numeric label={t("Updated mappings")}>
         {lastSuccessfulSync.result.updatedMappings}
       </DescriptionItem>
     </DescriptionList>

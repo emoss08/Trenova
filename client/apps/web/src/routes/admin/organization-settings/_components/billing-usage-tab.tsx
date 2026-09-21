@@ -66,7 +66,7 @@ export function BillingUsageTab() {
       <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
           icon={ShieldCheckIcon}
-          label={t("Access State")}
+          label={t("Access state")}
           value={summary.active ? "Active" : "Blocked"}
           detail={formatReason(summary.reason)}
           tone={summary.active ? "success" : "danger"}
@@ -91,7 +91,7 @@ export function BillingUsageTab() {
         />
         <SummaryCard
           icon={GaugeIcon}
-          label={t("Tracked Usage")}
+          label={t("Tracked usage")}
           value={numberFormatter.format(trackedMeters)}
           detail={formatPeriod(
             summary.subscription?.currentPeriodStart,
@@ -104,7 +104,7 @@ export function BillingUsageTab() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]">
         <Card className="rounded-md">
           <CardHeader className="flex flex-row items-center justify-between gap-3">
-            <CardTitle className="text-sm font-semibold">{t("Usage This Period")}</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t("Usage this period")}</CardTitle>
             <Button
               variant="outline"
               size="sm"
@@ -134,7 +134,7 @@ export function BillingUsageTab() {
 
         <Card className="rounded-md">
           <CardHeader>
-            <CardTitle className="text-sm font-semibold">{t("Enabled Features")}</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t("Enabled features")}</CardTitle>
           </CardHeader>
           <CardContent>
             {summary.features.length > 0 ? (

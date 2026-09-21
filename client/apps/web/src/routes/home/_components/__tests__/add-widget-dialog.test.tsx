@@ -40,7 +40,7 @@ const CATALOG = {
     }),
     option({
       key: "billing-queue",
-      label: "Billing Queue",
+      label: "Billing queue",
       description: "Delivered loads waiting to be billed",
       category: "work",
       configKind: "queue",
@@ -60,7 +60,7 @@ const CATALOG = {
 
 const ALL_LABELS = [
   "Unassigned Loads",
-  "Billing Queue",
+  "Billing queue",
   "Metric",
   "Metric Strip",
   "Fleet Status",
@@ -128,7 +128,7 @@ describe("AddWidgetDialog", () => {
 
     await user.type(screen.getByLabelText("Search widgets"), "billed");
 
-    expect(cardNames()).toEqual(["Billing Queue"]);
+    expect(cardNames()).toEqual(["Billing queue"]);
     expect(screen.getByText("1 match")).toBeInTheDocument();
   });
 
@@ -151,7 +151,7 @@ describe("AddWidgetDialog", () => {
     await user.click(screen.getByRole("button", { name: /^Pulse/ }));
     await user.type(screen.getByLabelText("Search widgets"), "billed");
 
-    expect(cardNames()).toEqual(["Billing Queue"]);
+    expect(cardNames()).toEqual(["Billing queue"]);
   });
 
   it("returns to the chosen category once the search is cleared", async () => {

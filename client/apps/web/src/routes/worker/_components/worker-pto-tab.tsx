@@ -88,7 +88,7 @@ export default function WorkerPTOTab({ workerId }: { workerId: string }) {
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold">{t("Paid Time Off")}</h3>
+          <h3 className="text-sm font-semibold">{t("Paid time off")}</h3>
           <p className="text-muted-foreground text-xs">
             {t(
               "Requests made here or from Dash wait in the approval queue until a dispatcher decides on them.",

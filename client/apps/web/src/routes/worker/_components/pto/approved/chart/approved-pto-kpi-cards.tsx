@@ -27,25 +27,25 @@ export function ApprovedPTOKPICards({
   return (
     <div className="mb-3 grid shrink-0 grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
       <MetricCard
-        label={t("Approved PTO Days")}
+        label={t("Approved PTO days")}
         value={metrics.approvedPtoDays.toLocaleString()}
         detail={t("Daily occupancy total")}
         icon={CalendarCheck2}
       />
       <MetricCard
-        label={t("Requested PTO Requests")}
+        label={t("Requested PTO requests")}
         value={requestedError ? "--" : requestedCount.toLocaleString()}
         detail={t("Pending approvals in range")}
         icon={CalendarClock}
       />
       <MetricCard
-        label={t("Workers With Approved PTO")}
+        label={t("Workers with approved PTO")}
         value={metrics.workersWithApprovedPTO.toLocaleString()}
         detail={t("Unique workers in range")}
         icon={Users}
       />
       <MetricCard
-        label={t("Peak Day Occupancy")}
+        label={t("Peak day occupancy")}
         value={metrics.peakDay.occupancy.toLocaleString()}
         detail={metrics.peakDay.dateLabel ?? "No peak day"}
         icon={TrendingUp}

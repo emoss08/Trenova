@@ -11,7 +11,7 @@ export function RoutingGuidesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Routing Guides"),
+        title: t("Routing guides"),
         description: t(
           "Ranked carrier waterfalls that cover a lane automatically when a move tenders",
         ),

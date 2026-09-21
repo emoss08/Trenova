@@ -63,7 +63,7 @@ export default function ShipmentControlForm() {
           <DelayShipmentForm />
           <AutoCancelShipmentsForm />
           <DetentionForm />
-          <FormSaveDock saveButtonContent={t("Save Changes")} />
+          <FormSaveDock saveButtonContent={t("Save changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -78,7 +78,7 @@ function PerformanceMetricsForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Performance Metrics Configuration")}</CardTitle>
+        <CardTitle>{t("Performance metrics configuration")}</CardTitle>
         <CardDescription>
           {t(
             "Establish key performance indicators (KPIs) and operational targets that drive your transportation business. These metrics serve as benchmarks for evaluating carrier performance, influence performance-based compensation models, and help identify operational improvement opportunities. The targets set here will be used across dashboards, reports, and exception alerts.",
@@ -91,7 +91,7 @@ function PerformanceMetricsForm() {
             <SwitchField
               control={control}
               name="trackCustomerRejections"
-              label={t("Track Customer Rejections")}
+              label={t("Track customer rejections")}
               description={t(
                 "When enabled, the system will monitor and document instances where customers refuse shipments.",
               )}
@@ -112,7 +112,7 @@ function ShipmentEntryForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Shipment Processing Configuration")}</CardTitle>
+        <CardTitle>{t("Shipment processing configuration")}</CardTitle>
         <CardDescription>
           {t(
             "Define core operational rules for shipment creation, validation, and management throughout the shipment lifecycle. These settings establish system-wide behaviors that ensure data integrity, prevent duplications, and determine permissible operations for users across all departments.",
@@ -125,7 +125,7 @@ function ShipmentEntryForm() {
             <NumberField
               control={control}
               name="maxShipmentWeightLimit"
-              label={t("Max Shipment Weight Limit")}
+              label={t("Max shipment weight limit")}
               placeholder={t("Enter maximum shipment weight")}
               description={t(
                 "Sets the upper weight limit (in pounds) for shipments created in the system. This helps ensure compliance with carrier weight restrictions and prevents data entry errors during shipment creation.",
@@ -137,7 +137,7 @@ function ShipmentEntryForm() {
             <SwitchField
               control={control}
               name="checkForDuplicateBols"
-              label={t("Check for Duplicate Bills of Lading")}
+              label={t("Check for duplicate bills of lading")}
               description={t(
                 "When enabled, the system will verify that each BOL number is unique during shipment creation. This prevents accidental duplications that could lead to operational confusion, billing errors, and customer service issues. Recommended for most operations to maintain data integrity.",
               )}
@@ -148,7 +148,7 @@ function ShipmentEntryForm() {
             <SwitchField
               control={control}
               name="allowMoveRemovals"
-              label={t("Allow Move Removals")}
+              label={t("Allow move removals")}
               description={t(
                 "When enabled, users can completely remove moves from shipments rather than canceling them. This affects shipment integrity, billing, and audit trails. Enable with caution as it allows permanent removal of shipment segments, which may impact financial reconciliation and historical reporting.",
               )}
@@ -159,7 +159,7 @@ function ShipmentEntryForm() {
             <SwitchField
               control={control}
               name="checkHazmatSegregation"
-              label={t("Check Hazmat Segregation")}
+              label={t("Check Hazmat segregation")}
               description={t(
                 "When enabled, the system will verify that hazmat shipments are properly segregated and labeled according to DOT regulations. This ensures that hazardous materials are transported safely and in compliance with all applicable laws and regulations.",
               )}
@@ -184,7 +184,7 @@ function DelayShipmentForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Shipment Delay Management")}</CardTitle>
+        <CardTitle>{t("Shipment delay management")}</CardTitle>
         <CardDescription>
           {t(
             'Configure how the system identifies, records, and responds to shipment delays throughout the transportation lifecycle. Automated delay detection and status updates improve operational visibility, enable proactive customer communication, and provide key data for service failure analysis. These settings determine when a shipment\'s status is automatically changed to "Delayed" and what threshold triggers escalation protocols.',
@@ -197,7 +197,7 @@ function DelayShipmentForm() {
             <SwitchField
               control={control}
               name="autoDelayShipments"
-              label={t("Automatic Delay Status Updates")}
+              label={t("Automatic delay status updates")}
               description={t(
                 "When enabled, the system will automatically change a shipment's status to 'Delayed' when it exceeds the configured threshold from the scheduled delivery time. This ensures consistent status reporting, eliminates manual status updates, and triggers appropriate notifications to internal staff and external stakeholders.",
               )}
@@ -209,7 +209,7 @@ function DelayShipmentForm() {
               <NumberField
                 control={control}
                 name="autoDelayShipmentsThreshold"
-                label={t("Delay Status Threshold")}
+                label={t("Delay status threshold")}
                 placeholder={t("Enter threshold in minutes")}
                 description={t(
                   "Defines the time variance (in minutes) from scheduled delivery or transit milestones before a shipment is flagged as 'Delayed'.",
@@ -237,7 +237,7 @@ function AutoCancelShipmentsForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Auto Cancel Shipments")}</CardTitle>
+        <CardTitle>{t("Auto cancel shipments")}</CardTitle>
         <CardDescription>
           {t(
             'Configure how the system automatically voids shipments that have been in the "New" status for more than the configured threshold based on the creation date. This helps maintain operational efficiency and ensures that shipments are not left in a "New" state for an extended period of time.',
@@ -250,7 +250,7 @@ function AutoCancelShipmentsForm() {
             <SwitchField
               control={control}
               name="autoCancelShipments"
-              label={t("Automatic Cancel Shipments")}
+              label={t("Automatic cancel shipments")}
               description={t(
                 "When enabled, the system will automatically cancel shipments that have been in the 'New' status for more than the configured threshold.",
               )}
@@ -262,7 +262,7 @@ function AutoCancelShipmentsForm() {
               <NumberField
                 control={control}
                 name="autoCancelShipmentsThreshold"
-                label={t("Auto Cancel Shipments Threshold")}
+                label={t("Auto cancel shipments threshold")}
                 placeholder={t("Enter threshold in days")}
                 description={t(
                   "Defines the number of days a shipment can be in the 'New' status before it is automatically canceled.",
@@ -294,7 +294,7 @@ function DetentionForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Detention Management")}</CardTitle>
+        <CardTitle>{t("Detention management")}</CardTitle>
         <CardDescription>
           {t(
             "Configure how the system monitors, calculates, and bills for detention time when drivers are delayed at shipping or receiving facilities beyond allowable timeframes. Proper detention tracking helps recover revenue, improve asset utilization, and provide documentation for customer negotiations.",
@@ -307,7 +307,7 @@ function DetentionForm() {
             <SwitchField
               control={control}
               name="useDetentionPolicyEngine"
-              label={t("Use Detention Policy Engine")}
+              label={t("Use detention policy engine")}
               description={t(
                 "Compute detention with configurable detention policies — clock rules, tiered rates, notices, and full calculation receipts — instead of the legacy flat threshold below. Requires at least one Active detention policy or a default policy.",
               )}
@@ -320,8 +320,8 @@ function DetentionForm() {
                 <DetentionPolicyAutocompleteField
                   control={control}
                   name="defaultDetentionPolicyId"
-                  label={t("Default Detention Policy")}
-                  placeholder={t("Select Default Policy")}
+                  label={t("Default detention policy")}
+                  placeholder={t("Select default policy")}
                   description={t(
                     "The fallback policy used when no scoped policy matches a stop. Leave empty to rely on a policy marked as the organization default.",
                   )}
@@ -334,7 +334,7 @@ function DetentionForm() {
             <SwitchField
               control={control}
               name="trackDetentionTime"
-              label={t("Track Detention Time")}
+              label={t("Track detention time")}
               description={t(
                 "When enabled, the system will automatically calculate and record detention time at pickup and delivery locations based on geofence entry/exit times or driver status updates.",
               )}
@@ -347,7 +347,7 @@ function DetentionForm() {
                 <SwitchField
                   control={control}
                   name="autoGenerateDetentionCharges"
-                  label={t("Auto Generate Detention Charges")}
+                  label={t("Auto generate detention charges")}
                   description={t(
                     "Automatically creates detention charge line items on invoices when detention exceeds the configured threshold.",
                   )}
@@ -359,8 +359,8 @@ function DetentionForm() {
                   control={control}
                   rules={{ required: trackDetentionTime }}
                   name="detentionChargeId"
-                  label={t("Detention Charge")}
-                  placeholder={t("Select Detention Charge Code")}
+                  label={t("Detention charge")}
+                  placeholder={t("Select detention charge code")}
                   description={t("Select the accessorial charge to be used for detention charges.")}
                   clearable
                 />
@@ -370,7 +370,7 @@ function DetentionForm() {
                   control={control}
                   rules={{ required: trackDetentionTime }}
                   name="detentionThreshold"
-                  label={t("Detention Threshold")}
+                  label={t("Detention threshold")}
                   placeholder={t("Enter threshold in minutes")}
                   description={t(
                     "Defines the standard free time allowance (in minutes) at facilities before detention charges begin accruing.",

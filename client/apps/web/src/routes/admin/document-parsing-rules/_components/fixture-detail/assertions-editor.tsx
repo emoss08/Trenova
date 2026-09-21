@@ -26,9 +26,9 @@ import { PlusIcon, XIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 
 const REVIEW_STATUS_OPTIONS = [
-  { value: "", label: "Not Set" },
+  { value: "", label: "Not set" },
   { value: "Ready", label: "Ready" },
-  { value: "NeedsReview", label: "Needs Review" },
+  { value: "NeedsReview", label: "Needs review" },
   { value: "Unavailable", label: "Unavailable" },
 ];
 
@@ -44,7 +44,7 @@ const FIELD_ASSERTION_OPERATOR_OPTIONS: Array<{
   },
   {
     value: "not_empty",
-    label: "Not Empty",
+    label: "Not empty",
     description: "Field value must be present and non-blank.",
   },
   {
@@ -54,7 +54,7 @@ const FIELD_ASSERTION_OPERATOR_OPTIONS: Array<{
   },
   {
     value: "matches_regex",
-    label: "Matches Regex",
+    label: "Matches regex",
     description: "Field value must match the provided regex pattern.",
   },
   {
@@ -130,7 +130,7 @@ export function AssertionsEditor() {
           <FieldAssertionsEditor
             control={control}
             name="assertions.fieldAssertions"
-            label={t("Field Assertions")}
+            label={t("Field assertions")}
             description={t(
               "Recommended for production fixtures. Assert that fields exist, are non-empty, match regexes, or match one of several acceptable values.",
             )}
@@ -143,7 +143,7 @@ export function AssertionsEditor() {
           <KeyValueEditor
             control={control}
             name="assertions.expectedFields"
-            label={t("Legacy Exact Matches")}
+            label={t("Legacy exact matches")}
             description={t(
               "Optional strict assertions for fixtures that intentionally require an exact extracted value. Prefer field assertions above for general template validation.",
             )}
@@ -159,7 +159,7 @@ export function AssertionsEditor() {
             <TagInput
               control={control}
               name="assertions.requiredStopRoles"
-              label={t("Required Stop Roles")}
+              label={t("Required stop roles")}
               description={t(
                 "Stop roles that must appear in the extraction result (e.g. pickup, delivery).",
               )}
@@ -170,7 +170,7 @@ export function AssertionsEditor() {
             <NumberField
               control={control}
               name="assertions.minimumStopCount"
-              label={t("Minimum Stop Count")}
+              label={t("Minimum stop count")}
               description={t(
                 "The minimum number of stops the parser must extract for this fixture to pass.",
               )}
@@ -180,7 +180,7 @@ export function AssertionsEditor() {
             <SelectField
               control={control}
               name="assertions.reviewStatus"
-              label={t("Review Status")}
+              label={t("Review status")}
               description={t(
                 "Track whether this fixture's assertions have been verified as correct.",
               )}
@@ -386,7 +386,7 @@ function FieldAssertionsEditorInner({
                 onClick={() => addAssertion(fieldKey)}
               >
                 <PlusIcon className="size-3.5" />
-                {t("Add Assertion")}
+                {t("Add assertion")}
               </Button>
             )}
           </div>
@@ -395,7 +395,7 @@ function FieldAssertionsEditorInner({
         {!disabled && (
           <Button type="button" variant="outline" size="sm" className="gap-1" onClick={addField}>
             <PlusIcon className="size-3.5" />
-            {t("Add Field Assertion")}
+            {t("Add field assertion")}
           </Button>
         )}
       </div>
@@ -463,9 +463,9 @@ function FieldAssertionRow({
               {assertion.operator === "matches_regex"
                 ? t("Pattern")
                 : assertion.operator === "one_of"
-                  ? t("Accepted Values")
+                  ? t("Accepted values")
                   : assertion.operator === "equals"
-                    ? t("Expected Value")
+                    ? t("Expected value")
                     : t("Details")}
             </label>
             {assertion.operator === "equals" && (

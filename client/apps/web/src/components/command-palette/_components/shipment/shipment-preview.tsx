@@ -18,7 +18,7 @@ const moveStatusConfig: Record<
 > = {
   New: { label: "New", variant: "neutral" },
   Assigned: { label: "Assigned", variant: "info" },
-  InTransit: { label: "In Transit", variant: "info" },
+  InTransit: { label: "In transit", variant: "info" },
   Completed: { label: "Completed", variant: "success" },
   Canceled: { label: "Canceled", variant: "danger" },
 };

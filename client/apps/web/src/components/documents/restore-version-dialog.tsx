@@ -44,7 +44,7 @@ export function RestoreVersionDialog({
             <RotateCcwIcon />
           </AlertDialogMedia>
           <AlertDialogTitle>
-            {t("Restore Version {0}", versionToRestore.versionNumber)}
+            {t("Restore version {0}", versionToRestore.versionNumber)}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {t(

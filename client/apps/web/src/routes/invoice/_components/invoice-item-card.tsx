@@ -102,7 +102,7 @@ export function InvoiceItemCard({
             onClick={() => window.open(shipmentPanelPath(invoice.shipmentId), "_blank")}
           >
             <ExternalLinkIcon className="size-3.5" />
-            {t("View Shipment")}
+            {t("View shipment")}
           </ContextMenuItem>
         ) : null}
         {invoice.scope === "Order" && invoice.orderId ? (
@@ -115,7 +115,7 @@ export function InvoiceItemCard({
             }
           >
             <PackageIcon className="size-3.5" />
-            {t("View Order")}
+            {t("View order")}
           </ContextMenuItem>
         ) : null}
         {billsSingleShipment ? (
@@ -125,12 +125,12 @@ export function InvoiceItemCard({
             }
           >
             <FileTextIcon className="size-3.5" />
-            {t("View Billing Queue Item")}
+            {t("View billing queue item")}
           </ContextMenuItem>
         ) : null}
         <ContextMenuItem onClick={onPost} disabled={invoice.status !== "Draft"}>
           <SendIcon className="size-3.5" />
-          {t("Post Invoice")}
+          {t("Post invoice")}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

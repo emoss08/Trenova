@@ -34,7 +34,7 @@ export function AxleWeightDisplay({
     <div className="border-border rounded-lg border p-3">
       <div className="mb-2.5 flex items-center justify-between">
         <span className="text-xs text-muted-foreground font-medium">
-          {t("Axle Weights")}
+          {t("Axle weights")}
         </span>
         <span
           className={cn("text-xs font-semibold tabular-nums", isOverweight && "text-destructive")}

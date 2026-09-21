@@ -45,7 +45,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
         <span className="font-mono font-medium">{row.original.settlementNumber}</span>
       ),
       size: 150,
-      meta: { apiField: "settlementNumber", label: t("Settlement Number") },
+      meta: { apiField: "settlementNumber", label: t("Settlement number") },
     },
     {
       id: "worker",
@@ -66,17 +66,17 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
     },
     {
       accessorKey: "periodEnd",
-      header: t("Period End"),
+      header: t("Period end"),
       cell: ({ row }) => <span>{formatDate(row.original.periodEnd)}</span>,
       size: 110,
-      meta: { apiField: "periodEnd", label: t("Period End") },
+      meta: { apiField: "periodEnd", label: t("Period end") },
     },
     {
       accessorKey: "payDate",
-      header: t("Pay Date"),
+      header: t("Pay date"),
       cell: ({ row }) => <span>{formatDate(row.original.payDate)}</span>,
       size: 110,
-      meta: { apiField: "payDate", label: t("Pay Date") },
+      meta: { apiField: "payDate", label: t("Pay date") },
     },
     {
       accessorKey: "shipmentCount",
@@ -85,7 +85,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
         <div className="text-right tabular-nums">{row.original.shipmentCount}</div>
       ),
       size: 70,
-      meta: { apiField: "shipmentCount", label: t("Shipment Count") },
+      meta: { apiField: "shipmentCount", label: t("Shipment count") },
     },
     {
       accessorKey: "grossEarningsMinor",
@@ -99,7 +99,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
         </div>
       ),
       size: 110,
-      meta: { apiField: "grossEarningsMinor", label: t("Gross Earnings Minor") },
+      meta: { apiField: "grossEarningsMinor", label: t("Gross earnings minor") },
     },
     {
       accessorKey: "deductionsMinor",
@@ -114,11 +114,11 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
         </div>
       ),
       size: 110,
-      meta: { apiField: "deductionsMinor", label: t("Deductions Minor") },
+      meta: { apiField: "deductionsMinor", label: t("Deductions minor") },
     },
     {
       accessorKey: "netPayMinor",
-      header: () => <div className="text-right">{t("Net Pay")}</div>,
+      header: () => <div className="text-right">{t("Net pay")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay
@@ -129,7 +129,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
         </div>
       ),
       size: 120,
-      meta: { apiField: "netPayMinor", label: t("Net Pay Minor") },
+      meta: { apiField: "netPayMinor", label: t("Net pay minor") },
     },
   ];
 }

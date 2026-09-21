@@ -173,7 +173,7 @@ export default function AdditionalChargesSection() {
   return (
     <>
       <FormSection
-        title={t("Additional Charges")}
+        title={t("Additional charges")}
         description={t(
           "Additional fees charged for services such as detention, fuel surcharge, and more.",
         )}
@@ -181,7 +181,7 @@ export default function AdditionalChargesSection() {
           fields.length > 0 && (
             <Button type="button" variant="outline" size="xxs" onClick={handleAdd}>
               <PlusIcon className="size-3" />
-              {t("Add Charge")}
+              {t("Add charge")}
             </Button>
           )
         }
@@ -263,7 +263,7 @@ export default function AdditionalChargesSection() {
                         }
                       />
                       {isFuelSurcharge && !fuelSurchargeLocked && (
-                        <span className="bg-primary/10 text-2xs text-primary rounded px-1 py-0.5">
+                        <span className="bg-primary/10 text-2xs text-primary rounded-md px-1 py-0.5">
                           {t("Auto")}
                         </span>
                       )}
@@ -275,7 +275,7 @@ export default function AdditionalChargesSection() {
                               onClick={() =>
                                 setValue("fuelSurchargeLocked", false, { shouldDirty: true })
                               }
-                              className="text-2xs flex items-center gap-1 rounded bg-warning/10 px-1 py-0.5 text-warning-foreground"
+                              className="text-2xs flex items-center gap-1 rounded-md bg-warning/10 px-1 py-0.5 text-warning-foreground"
                             >
                               <LockIcon className="size-2.5" />
                               {t("Locked")}
@@ -358,12 +358,12 @@ export default function AdditionalChargesSection() {
           </div>
         ) : (
           <EmptyState
-            title={t("No Additional Charges")}
+            title={t("No additional charges")}
             description={t("Shipment has no associated additional charges")}
             icons={[ReceiptIcon, BoxesIcon, TruckIcon]}
             className="border-bg-sidebar-border max-h-50 rounded-lg border p-4"
             action={{
-              label: t("Add First Charge"),
+              label: t("Add first charge"),
               onClick: handleAdd,
               icon: PlusIcon,
             }}

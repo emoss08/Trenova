@@ -5,7 +5,7 @@ import { copyValuesFrom, starterValuesFrom } from "../starter-values";
 describe("starterValuesFrom", () => {
   it("takes the expression and variables from a catalog entry and resets the rest", () => {
     const standard: StandardTemplate = {
-      name: "Per Mile",
+      name: "Per mile",
       description: "Rate per mile",
       type: "FreightCharge",
       expression: "baseRate * totalDistance",

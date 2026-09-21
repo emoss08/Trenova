@@ -11,7 +11,7 @@ export function JournalReversalsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Journal Reversals"),
+        title: t("Journal reversals"),
         description: t("Request and manage journal entry reversals."),
       }}
     >

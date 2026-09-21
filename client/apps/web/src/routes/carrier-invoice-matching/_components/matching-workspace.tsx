@@ -281,7 +281,7 @@ export default function MatchingWorkspace() {
               <div className="flex flex-wrap gap-1">
                 {(
                   [
-                    { value: "attention", label: t("Needs Attention") },
+                    { value: "attention", label: t("Needs attention") },
                     { value: "all", label: t("All") },
                   ] as Array<{ value: InvoiceFilter; label: string }>
                 ).map((chip) => (
@@ -660,28 +660,28 @@ function InvoiceDetail({
         )}
       >
         <DescriptionList columns={2} className="p-3">
-          <DescriptionItem label={t("Reconciliation Status")}>
+          <DescriptionItem label={t("Reconciliation status")}>
             {invoice.reconciliationStatus}
           </DescriptionItem>
-          <DescriptionItem label={t("Invoice Total")} numeric>
+          <DescriptionItem label={t("Invoice total")} numeric>
             {invoice.totalAmount != null
               ? formatCurrency(Number(invoice.totalAmount), invoice.currencyCode || "USD")
               : "—"}
           </DescriptionItem>
-          <DescriptionItem label={t("Invoice Date")}>
+          <DescriptionItem label={t("Invoice date")}>
             {formatSettlementDate(invoice.invoiceDate)}
           </DescriptionItem>
-          <DescriptionItem label={t("Delivery Date")}>
+          <DescriptionItem label={t("Delivery date")}>
             {formatSettlementDate(invoice.deliveryDate)}
           </DescriptionItem>
-          <DescriptionItem label={t("Pro Number")}>{invoice.proNumber || "—"}</DescriptionItem>
+          <DescriptionItem label={t("Pro number")}>{invoice.proNumber || "—"}</DescriptionItem>
           <DescriptionItem label={t("BOL")}>{invoice.bol || "—"}</DescriptionItem>
-          <DescriptionItem label={t("Shipment Reference")}>
+          <DescriptionItem label={t("Shipment reference")}>
             {invoice.shipmentReference || "—"}
           </DescriptionItem>
           <DescriptionItem label={t("Bill To")}>{invoice.billToName || "—"}</DescriptionItem>
           {invoice.expectedAmount != null && (
-            <DescriptionItem label={t("Expected Amount")} numeric>
+            <DescriptionItem label={t("Expected amount")} numeric>
               {formatCurrency(Number(invoice.expectedAmount), invoice.currencyCode || "USD")}
             </DescriptionItem>
           )}
@@ -693,7 +693,7 @@ function InvoiceDetail({
         </DescriptionList>
       </SectionPanel>
 
-      <SectionPanel title={t("Carrier Link")}>
+      <SectionPanel title={t("Carrier link")}>
         <div className="p-3">
           <p className="text-muted-foreground mb-2 text-xs">
             {invoice.carrierId
@@ -714,11 +714,11 @@ function InvoiceDetail({
                   onClick={() => suggestMutation.mutate()}
                 >
                   <AssistMark className="size-3.5" />
-                  {t("Suggest Carrier")}
+                  {t("Suggest carrier")}
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setLinkOpen(true)}>
                   <LinkIcon className="size-3.5" />
-                  {t("Link Carrier")}
+                  {t("Link carrier")}
                 </Button>
               </>
             )}
@@ -733,7 +733,7 @@ function InvoiceDetail({
               onClick={() => createMatchMutation.mutate()}
             >
               <FileTextIcon className="size-3.5" />
-              {t("Create Match")}
+              {t("Create match")}
             </Button>
           </div>
         </div>
@@ -807,7 +807,7 @@ function MatchDetail({
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <SectionPanel title={t("Carrier Invoice")}>
+        <SectionPanel title={t("Carrier invoice")}>
           <div className="flex flex-col gap-2 p-3 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t("Invoice number")}</span>
@@ -828,7 +828,7 @@ function MatchDetail({
           </div>
         </SectionPanel>
 
-        <SectionPanel title={t("Negotiated Buy Rate")}>
+        <SectionPanel title={t("Negotiated buy rate")}>
           <div className="flex flex-col gap-2 p-3 text-xs">
             {assignment ? (
               <>
@@ -938,7 +938,7 @@ function MatchDetail({
               )}
             >
               <ScaleIcon className="size-3.5" />
-              {t("Accept with Variance (")}
+              {t("Accept with variance (")}
               <AmountDisplay value={match.varianceMinor} variant="auto" currency={currency} />)
             </Button>
           )}

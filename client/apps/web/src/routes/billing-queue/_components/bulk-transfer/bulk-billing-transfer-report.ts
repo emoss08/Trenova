@@ -48,7 +48,7 @@ function reportColumns(t: TranslateFn): ExportColumn<ReportRow>[] {
   return [
     {
       id: "proNumber",
-      header: t("PRO Number"),
+      header: t("PRO number"),
       getValue: (row) => spreadsheetSafeText(row.proNumber),
     },
     {
@@ -83,7 +83,7 @@ function reportColumns(t: TranslateFn): ExportColumn<ReportRow>[] {
     },
     {
       id: "missingDocuments",
-      header: t("Missing Documents"),
+      header: t("Missing documents"),
       getValue: (row) =>
         spreadsheetSafeText(
           row.missingRequirements.map((requirement) => requirement.documentTypeName).join("; "),
@@ -91,18 +91,18 @@ function reportColumns(t: TranslateFn): ExportColumn<ReportRow>[] {
     },
     {
       id: "validationFailures",
-      header: t("Validation Failures"),
+      header: t("Validation failures"),
       getValue: (row) =>
         spreadsheetSafeText(row.validationFailures.map((failure) => failure.message).join("; ")),
     },
     {
       id: "billingQueueNumber",
-      header: t("Billing Queue Number"),
+      header: t("Billing queue number"),
       getValue: (row) => spreadsheetSafeText(row.billingQueueNumber),
     },
     {
       id: "markedReadyToInvoice",
-      header: t("Marked Ready to Invoice"),
+      header: t("Marked ready to invoice"),
       getValue: (row) => (row.markedReadyToInvoice ? t("Yes") : t("No")),
     },
   ];

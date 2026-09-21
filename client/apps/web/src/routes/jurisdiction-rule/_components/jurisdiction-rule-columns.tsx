@@ -69,41 +69,41 @@ export function getColumns(t: TranslateFn): ColumnDef<JurisdictionRuleRow>[] {
     },
     {
       accessorKey: "maxWidthFeet",
-      header: t("Max Width"),
+      header: t("Max width"),
       cell: ({ row }) => formatFeetInches(row.original.maxWidthFeet),
       size: 120,
-      meta: { label: t("Max Width"), apiField: "maxWidthFeet", sortable: true },
+      meta: { label: t("Max width"), apiField: "maxWidthFeet", sortable: true },
     },
     {
       accessorKey: "maxHeightFeet",
-      header: t("Max Height"),
+      header: t("Max height"),
       cell: ({ row }) => formatFeetInches(row.original.maxHeightFeet),
       size: 120,
-      meta: { label: t("Max Height"), apiField: "maxHeightFeet", sortable: true },
+      meta: { label: t("Max height"), apiField: "maxHeightFeet", sortable: true },
     },
     {
       accessorKey: "maxLengthFeet",
-      header: t("Max Length"),
+      header: t("Max length"),
       cell: ({ row }) => formatFeetInches(row.original.maxLengthFeet),
       size: 120,
-      meta: { label: t("Max Length"), apiField: "maxLengthFeet", sortable: true },
+      meta: { label: t("Max length"), apiField: "maxLengthFeet", sortable: true },
     },
     {
       accessorKey: "maxWeightPounds",
-      header: t("Max Weight"),
+      header: t("Max weight"),
       cell: ({ row }) => formatPounds(row.original.maxWeightPounds),
       size: 140,
-      meta: { label: t("Max Weight"), apiField: "maxWeightPounds", sortable: true },
+      meta: { label: t("Max weight"), apiField: "maxWeightPounds", sortable: true },
     },
     {
       accessorKey: "permitLeadTimeDays",
-      header: t("Lead Time"),
+      header: t("Lead time"),
       cell: ({ row }) => {
         const days = row.original.permitLeadTimeDays;
         return `${days} day${days === 1 ? "" : "s"}`;
       },
       size: 110,
-      meta: { label: t("Lead Time"), apiField: "permitLeadTimeDays", sortable: true },
+      meta: { label: t("Lead time"), apiField: "permitLeadTimeDays", sortable: true },
     },
     {
       accessorKey: "verifiedAt",

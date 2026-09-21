@@ -85,12 +85,12 @@ export function InvoiceOverviewTab({
             {invoice.scope === "Memo" ? <MemoDetailsCard invoice={invoice} /> : null}
 
             <div className="bg-card rounded-lg border p-3">
-              <SectionLabel>{t("Charge Summary")}</SectionLabel>
+              <SectionLabel>{t("Charge summary")}</SectionLabel>
               <DescriptionList layout="split" className="mt-1">
-                <DescriptionItem label={t("Freight Charges")} numeric>
+                <DescriptionItem label={t("Freight charges")} numeric>
                   {formatCurrency(Number(invoice.subtotalAmount ?? 0), invoice.currencyCode)}
                 </DescriptionItem>
-                <DescriptionItem label={t("Other Charges")} numeric>
+                <DescriptionItem label={t("Other charges")} numeric>
                   {formatCurrency(Number(invoice.otherAmount ?? 0), invoice.currencyCode)}
                 </DescriptionItem>
                 <DescriptionItem
@@ -129,12 +129,12 @@ export function InvoiceOverviewTab({
                   </DescriptionItem>
                 ) : null}
                 {billsSingleShipment ? (
-                  <DescriptionItem label={t("Billing Queue")}>
+                  <DescriptionItem label={t("Billing queue")}>
                     <Link
                       to={`/billing/queue?item=${invoice.billingQueueItemId}&includePosted=true`}
                       className="inline-flex items-center gap-1 hover:underline"
                     >
-                      {t("Queue Item")}
+                      {t("Queue item")}
                       <ExternalLinkIcon className="size-2.5" />
                     </Link>
                   </DescriptionItem>
@@ -158,12 +158,12 @@ export function InvoiceOverviewTab({
 
           <div className="flex flex-col gap-5">
             <div className="bg-card rounded-lg border p-3">
-              <SectionLabel>{t("Invoice Details")}</SectionLabel>
+              <SectionLabel>{t("Invoice details")}</SectionLabel>
               <DescriptionList className="mt-2">
                 {billingPeriod ? (
-                  <DescriptionItem label={t("Billing Period")}>{billingPeriod}</DescriptionItem>
+                  <DescriptionItem label={t("Billing period")}>{billingPeriod}</DescriptionItem>
                 ) : (
-                  <DescriptionItem label={t("Service Date")}>
+                  <DescriptionItem label={t("Service date")}>
                     {formatUnixDate(invoice.serviceDate)}
                   </DescriptionItem>
                 )}
@@ -189,21 +189,21 @@ export function InvoiceOverviewTab({
                 <LifecycleStep
                   label={
                     invoice.scope === "Consolidated"
-                      ? t("Generated from Statement")
+                      ? t("Generated from statement")
                       : invoice.scope === "Memo"
                         ? t("Generated as a memo")
-                        : t("Generated from Billing Queue")
+                        : t("Generated from billing queue")
                   }
                   active
                   timestamp={formatUnixDateTime(invoice.createdAt)}
                 />
                 <LifecycleStep
-                  label={t("Ready for Posting")}
+                  label={t("Ready for posting")}
                   active
                   timestamp={formatUnixDate(invoice.invoiceDate)}
                 />
                 <LifecycleStep
-                  label={t("Posted to Invoice History")}
+                  label={t("Posted to invoice history")}
                   active={invoice.status === "Posted" || Boolean(invoice.postedAt)}
                   timestamp={formatUnixDateTime(invoice.postedAt)}
                   isLast={invoice.status !== "Voided"}
@@ -228,7 +228,7 @@ export function InvoiceOverviewTab({
 
             {correctionSummary?.invoices.length ? (
               <div className="bg-card rounded-lg border p-3">
-                <SectionLabel>{t("Correction Group")}</SectionLabel>
+                <SectionLabel>{t("Correction group")}</SectionLabel>
                 <div className="mt-2 flex flex-col gap-1.5">
                   {correctionSummary.invoices.map((lineageInvoice) => {
                     const current =

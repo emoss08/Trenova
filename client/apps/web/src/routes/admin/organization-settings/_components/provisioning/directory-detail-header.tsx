@@ -73,7 +73,7 @@ export function DirectoryDetailHeader({
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("Delete SCIM Directory")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete SCIM directory")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t(
                 "This removes the selected SCIM directory and its provisioning configuration. This action cannot be undone.",

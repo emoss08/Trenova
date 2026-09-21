@@ -16,7 +16,7 @@ export function CarrierRemittanceForm() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title={t("Payment Terms")}
+        title={t("Payment terms")}
         description={t("How and when this carrier is paid for completed loads.")}
       >
         <FormGroup cols={2}>
@@ -25,8 +25,8 @@ export function CarrierRemittanceForm() {
               control={control}
               rules={{ required: true }}
               name="paymentMethod"
-              label={t("Payment Method")}
-              placeholder={t("Payment Method")}
+              label={t("Payment method")}
+              placeholder={t("Payment method")}
               description={t("Method used to remit payment to this carrier.")}
               options={carrierPaymentMethodChoices}
             />
@@ -36,7 +36,7 @@ export function CarrierRemittanceForm() {
               control={control}
               rules={{ required: true }}
               name="paymentTermDays"
-              label={t("Payment Term Days")}
+              label={t("Payment term days")}
               placeholder="30"
               sideText="days"
               description={t("Number of days after invoice receipt that payment is due. 0-365.")}
@@ -46,7 +46,7 @@ export function CarrierRemittanceForm() {
       </FormSection>
 
       <FormSection
-        title={t("Remit-To Address")}
+        title={t("Remit-to address")}
         description={t(
           "Where payments to this carrier are mailed when it differs from the primary address.",
         )}
@@ -56,7 +56,7 @@ export function CarrierRemittanceForm() {
             <InputField
               control={control}
               name="remitToName"
-              label={t("Remit-To Name")}
+              label={t("Remit-to name")}
               placeholder={t("e.g., Swift Transportation Co. or factoring company")}
               description={t(
                 "Payee name printed on checks. Use the factoring company name when payments are factored.",
@@ -108,7 +108,7 @@ export function CarrierRemittanceForm() {
             <InputField
               control={control}
               name="remitPostalCode"
-              label={t("Postal Code")}
+              label={t("Postal code")}
               placeholder={t("e.g., 90210")}
               description={t("ZIP or ZIP+4 code for the remit-to address.")}
               maxLength={10}

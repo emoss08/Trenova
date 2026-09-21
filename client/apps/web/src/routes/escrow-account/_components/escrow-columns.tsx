@@ -102,7 +102,7 @@ export function getColumns(t: TranslateFn): ColumnDef<EscrowAccountRow>[] {
     },
     {
       accessorKey: "lastInterestAccrualDate",
-      header: t("Last Interest"),
+      header: t("Last interest"),
       cell: ({ row }) => <span>{formatDate(row.original.lastInterestAccrualDate)}</span>,
       size: 110,
       meta: { apiField: "lastInterestAccrualDate" },

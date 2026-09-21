@@ -144,7 +144,7 @@ export function RoleEditPage() {
         <RolePageLayout
           title={`Edit ${role.name}`}
           isSubmitting={isSubmitting}
-          submitLabel={t("Save Changes")}
+          submitLabel={t("Save changes")}
           onSubmit={onSubmit}
           onCancel={handleCancel}
           permissionCount={permissions.length}
@@ -152,7 +152,7 @@ export function RoleEditPage() {
         >
           <Card>
             <CardHeader>
-              <CardTitle>{t("Role Details")}</CardTitle>
+              <CardTitle>{t("Role details")}</CardTitle>
               <CardDescription>{t("Basic information for this role")}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -172,7 +172,7 @@ export function RoleEditPage() {
                     control={control}
                     rules={{ required: true }}
                     name="maxSensitivity"
-                    label={t("Max Sensitivity")}
+                    label={t("Max sensitivity")}
                     description={t("Highest sensitivity level this role can access")}
                     options={fieldSensitivityChoices}
                     isReadOnly={role.isSystem}

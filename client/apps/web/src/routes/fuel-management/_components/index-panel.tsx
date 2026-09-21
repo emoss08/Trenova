@@ -113,7 +113,7 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
             {t("Cancel")}
           </Button>
           <Button type="submit" form="fuel-index-form" isLoading={isSubmitting}>
-            {isEdit ? t("Save Changes") : t("Create Index")}
+            {isEdit ? t("Save changes") : t("Create index")}
           </Button>
         </>
       }
@@ -138,7 +138,7 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
                 control={form.control}
                 name="name"
                 label={t("Name")}
-                placeholder={t("FCA Canadian Diesel")}
+                placeholder={t("FCA Canadian diesel")}
                 rules={{ required: true }}
                 maxLength={100}
               />
@@ -158,7 +158,7 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
               <SelectField
                 control={form.control}
                 name="fuelType"
-                label={t("Fuel Type")}
+                label={t("Fuel type")}
                 options={fuelTypeChoices}
                 description={t("The fuel product this index prices.")}
               />
@@ -168,7 +168,7 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
                 control={form.control}
                 name="region"
                 label={t("Region")}
-                placeholder={t("Canada, PADD 2, Northeast...")}
+                placeholder={t("Canada, PADD 2, northeast...")}
                 maxLength={100}
                 description={t("Geographic region the price applies to.")}
               />

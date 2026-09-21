@@ -11,7 +11,7 @@ export function CostControlPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Cost Control"),
+        title: t("Cost control"),
         description: t(
           "Configure the cost-per-mile model that powers shipment profitability estimates",
         ),

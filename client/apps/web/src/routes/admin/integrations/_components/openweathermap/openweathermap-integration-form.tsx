@@ -119,7 +119,7 @@ export function OpenWeatherMapForm({ open, onClose }: { open: boolean; onClose: 
             loadingText={t("Saving...")}
             disabled={configQuery.isLoading}
           >
-            {t("Save Changes")}
+            {t("Save changes")}
           </Button>
         </DialogFooter>
       </Form>
@@ -141,7 +141,7 @@ function OpenWeatherMapFormHeader() {
         </div>
         <LazyImage
           src={openWeatherMapLogo}
-          alt={t("OpenWeatherMap Logo")}
+          alt={t("OpenWeatherMap logo")}
           className="h-8 max-w-28 object-contain"
         />
       </div>
@@ -150,7 +150,7 @@ function OpenWeatherMapFormHeader() {
         <DialogDescription>
           {t("To get a free API key, visit")}{" "}
           <ExternalLink href="https://home.openweathermap.org/api_keys">
-            {t("OpenWeatherMap API Keys.")}
+            {t("OpenWeatherMap API keys.")}
           </ExternalLink>
         </DialogDescription>
       </DialogHeader>

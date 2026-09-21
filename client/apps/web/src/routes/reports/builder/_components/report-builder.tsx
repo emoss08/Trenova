@@ -214,7 +214,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
           />
           {definition?.status === "needs_attention" && (
             <Badge variant="warning" className="shrink-0">
-              {t("Needs Attention")}
+              {t("Needs attention")}
             </Badge>
           )}
         </div>
@@ -340,7 +340,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
                   {inspectorTab === "filters" && (
                     <div className="flex flex-col gap-4">
                       <div>
-                        <SectionLabel>{t("Row Filters")}</SectionLabel>
+                        <SectionLabel>{t("Row filters")}</SectionLabel>
                         <FiltersPanel
                           index={index}
                           ir={ir}
@@ -349,7 +349,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
                         />
                       </div>
                       <div>
-                        <SectionLabel>{t("Measure Filters")}</SectionLabel>
+                        <SectionLabel>{t("Measure filters")}</SectionLabel>
                         <HavingPanel
                           index={index}
                           ir={ir}
@@ -368,7 +368,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
                   {inspectorTab === "options" && (
                     <div className="flex flex-col gap-4">
                       <div>
-                        <SectionLabel>{t("Sort, Limit & Totals")}</SectionLabel>
+                        <SectionLabel>{t("Sort, limit & totals")}</SectionLabel>
                         <SortLimitPanel
                           index={index}
                           ir={ir}

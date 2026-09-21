@@ -74,7 +74,7 @@ function MapErrorFallback({ error }: { error: Error }) {
           {isConfigError && (
             <Button variant="outline" size="sm" onClick={() => navigate("/admin/integrations")}>
               <SettingsIcon className="size-3.5" />
-              {t("Configure Integration")}
+              {t("Configure integration")}
             </Button>
           )}
         </div>

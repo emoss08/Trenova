@@ -98,7 +98,7 @@ function IftaTaxRateCreatePanel({
     <FormCreatePanel<IftaTaxRateFormValues, IftaTaxRateRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("IFTA Tax Rate")}
+      title={t("IFTA tax rate")}
       description={t(
         "Publish one jurisdiction's rate for a quarter and fuel type. Rates are global, so this is what every organization's return will owe.",
       )}
@@ -140,7 +140,7 @@ function IftaTaxRateEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title={t("IFTA Tax Rate")}
+      title={t("IFTA tax rate")}
       titleComponent={(record) => (
         <span>
           {t(

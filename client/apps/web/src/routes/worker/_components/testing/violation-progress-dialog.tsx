@@ -161,7 +161,7 @@ export function ViolationProgressDialog({
                 <AutoCompleteDateField<ViolationProgressFormValues>
                   control={control}
                   name="reportedToClearinghouseAt"
-                  label={t("Reported to the Clearinghouse")}
+                  label={t("Reported to the clearinghouse")}
                   placeholder={t("MM/DD/YYYY")}
                   description={t("When the violation was reported to the Clearinghouse.")}
                 />

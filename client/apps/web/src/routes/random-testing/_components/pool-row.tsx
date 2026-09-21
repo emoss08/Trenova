@@ -129,7 +129,7 @@ export function PoolRow({
         ) : (
           <>
             {t(
-              "Drug {0} of {1} · Alcohol {2} of {3}{4}",
+              "Drug {0} of {1} · alcohol {2} of {3}{4}",
               progress.drugSelected,
               progress.drugTarget,
               progress.alcoholSelected,

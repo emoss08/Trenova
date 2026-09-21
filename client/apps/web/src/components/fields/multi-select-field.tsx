@@ -720,7 +720,7 @@ fieldInvalidClass,
                     >
                       <CheckIcon className="size-4" />
                     </div>
-                    <span>{t("(Select All)")}</span>
+                    <span>{t("(Select all)")}</span>
                   </CommandItem>
                 )}
                 {options.map((option) => {

@@ -187,7 +187,7 @@ export default function OrganizationSettingsForm() {
         </TabsTab>
         <TabsTab value="billing-usage">
           <CreditCardIcon size={16} />
-          {t("Billing & Usage")}
+          {t("Billing & usage")}
         </TabsTab>
       </TabsList>
       <TabsContent value="general" className="pb-10">
@@ -199,7 +199,7 @@ export default function OrganizationSettingsForm() {
               <OperatingModelForm />
               <ComplianceForm />
               <AddressForm />
-              <FormSaveDock saveButtonContent={t("Save Changes")} />
+              <FormSaveDock saveButtonContent={t("Save changes")} />
             </Form>
           </FormProvider>
         </Activity>
@@ -307,7 +307,7 @@ function LogoForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Organization Branding")}</CardTitle>
+        <CardTitle>{t("Organization branding")}</CardTitle>
         <CardDescription>
           {t("Upload and manage your organization logo used across the application.")}
         </CardDescription>
@@ -345,7 +345,7 @@ function LogoForm({
             disabled={isRemovingLogo}
           >
             <UploadIcon className="size-4" />
-            {t("Upload Logo")}
+            {t("Upload logo")}
           </Button>
           <input
             ref={fileInputRef}
@@ -360,10 +360,10 @@ function LogoForm({
       <ImageCropUploadDialog
         open={isCropOpen}
         file={pendingFile}
-        title={t("Crop Organization Logo")}
+        title={t("Crop organization logo")}
         description={t("Adjust the visible bounds before uploading your organization logo.")}
         {...organizationLogoCropConfig}
-        confirmLabel={t("Upload Logo")}
+        confirmLabel={t("Upload logo")}
         onClose={() => {
           setIsCropOpen(false);
           setPendingFile(null);
@@ -382,7 +382,7 @@ function GeneralForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Organization Details")}</CardTitle>
+        <CardTitle>{t("Organization details")}</CardTitle>
         <CardDescription>
           {t(
             "Core business identifiers and operational settings that define your organization profile in the system.",
@@ -422,7 +422,7 @@ function GeneralForm() {
             <InputField
               control={control}
               name="loginSlug"
-              label={t("Tenant Login Slug")}
+              label={t("Tenant login slug")}
               placeholder="acme-logistics"
               description={t("Used for tenant sign-in URLs such as /login/acme-logistics.")}
             />
@@ -475,7 +475,7 @@ function OperatingModelForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Operating Model")}</CardTitle>
+        <CardTitle>{t("Operating model")}</CardTitle>
         <CardDescription>
           {t(
             "Tailors the menus to the freight this organization actually moves. This controls visibility only — it hides features from menus and navigation. It does not restrict permissions or API access, and it never changes existing records.",
@@ -504,7 +504,7 @@ function OperatingModelForm() {
               <SwitchField
                 control={control}
                 name="brokerageEnabled"
-                label={t("Brokerage Features")}
+                label={t("Brokerage features")}
                 description={t(
                   "Shows carriers, routing guides, tendering, and carrier settlements. Turning this off hides them from menus and navigation; it does not restrict permissions or API access.",
                 )}
@@ -514,7 +514,7 @@ function OperatingModelForm() {
               <SwitchField
                 control={control}
                 name="assetOperationsEnabled"
-                label={t("Asset Operations")}
+                label={t("Asset operations")}
                 description={t(
                   "Marks this organization as running its own fleet. Recorded for reporting today — it does not hide anything yet.",
                 )}
@@ -535,7 +535,7 @@ function ComplianceForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Regulatory Compliance")}</CardTitle>
+        <CardTitle>{t("Regulatory compliance")}</CardTitle>
         <CardDescription>
           {t("Regulatory identifiers required for operations and reporting.")}
         </CardDescription>
@@ -547,7 +547,7 @@ function ComplianceForm() {
               control={control}
               name="scacCode"
               rules={{ required: true }}
-              label={t("SCAC Code")}
+              label={t("SCAC code")}
               placeholder={t("Enter SCAC code")}
             />
           </FormControl>
@@ -556,7 +556,7 @@ function ComplianceForm() {
               control={control}
               name="dotNumber"
               rules={{ required: true }}
-              label={t("DOT Number")}
+              label={t("DOT number")}
               placeholder={t("Enter DOT number")}
             />
           </FormControl>
@@ -565,7 +565,7 @@ function ComplianceForm() {
               control={control}
               name="taxId"
               label={t("Tax ID")}
-              placeholder={t("Enter Tax ID")}
+              placeholder={t("Enter tax ID")}
             />
           </FormControl>
         </FormGroup>
@@ -582,7 +582,7 @@ function AddressForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Registered Address")}</CardTitle>
+        <CardTitle>{t("Registered address")}</CardTitle>
         <CardDescription>
           {t("Legal headquarters location used for correspondence and compliance.")}
         </CardDescription>
@@ -602,7 +602,7 @@ function AddressForm() {
             <InputField
               control={control}
               name="addressLine2"
-              label={t("Suite/Unit")}
+              label={t("Suite/unit")}
               placeholder={t("Enter suite or unit number")}
             />
           </FormControl>
@@ -629,7 +629,7 @@ function AddressForm() {
               control={control}
               name="postalCode"
               rules={{ required: true }}
-              label={t("ZIP Code")}
+              label={t("ZIP code")}
               placeholder={t("Enter ZIP code")}
             />
           </FormControl>

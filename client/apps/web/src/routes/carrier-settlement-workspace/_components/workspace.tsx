@@ -156,7 +156,7 @@ export default function Workspace() {
               }
             >
               <AssistMark className="size-3.5" />
-              {t("Generate Settlements")}
+              {t("Generate settlements")}
             </Button>
           </div>
         }

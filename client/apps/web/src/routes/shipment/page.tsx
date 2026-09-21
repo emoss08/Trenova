@@ -100,7 +100,7 @@ export function ShipmentsPage() {
                   minute: "2-digit",
                   second: "2-digit",
                 })}`}
-                className="border-success/25 bg-success/10 font-table text-success inline-flex h-5 items-center gap-1 rounded border px-1.5 text-2xs tabular-nums"
+                className="border-success/25 bg-success/10 font-table text-success inline-flex h-5 items-center gap-1 rounded-md border px-1.5 text-2xs tabular-nums"
               >
                 <span className="bg-success size-1 rounded-full" />
                 {t("Live · {0}", formattedCount)}
@@ -129,7 +129,7 @@ export function ShipmentsPage() {
             {canCreateShipment && (
               <Button type="button" size="sm" onClick={handleCreateShipment}>
                 <PlusIcon className="size-3.5" />
-                {t("New Shipment")}
+                {t("New shipment")}
               </Button>
             )}
           </>

@@ -112,7 +112,7 @@ function TrainingCourseCreatePanel({
     <FormCreatePanel<TrainingCourseFormValues, TrainingCourseRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Training Course")}
+      title={t("Training course")}
       description={t(
         "Add a course workers can be assigned, and decide whether it is required, how it is taken, and what passes.",
       )}
@@ -153,7 +153,7 @@ function TrainingCourseEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title={t("Training Course")}
+      title={t("Training course")}
       fieldKey="code"
       queryKey={TRAINING_COURSE_LIST_KEY}
       form={form}

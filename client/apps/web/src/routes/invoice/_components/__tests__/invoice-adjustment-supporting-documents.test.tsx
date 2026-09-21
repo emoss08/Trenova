@@ -47,7 +47,7 @@ describe("InvoiceAdjustmentSupportingDocumentsSection", () => {
   it("never requires supporting documents", () => {
     render(<Harness />);
 
-    expect(screen.getByText("Supporting Documents (Optional)")).toBeInTheDocument();
+    expect(screen.getByText("Supporting documents (optional)")).toBeInTheDocument();
     expect(screen.queryByText(/Required by policy/)).not.toBeInTheDocument();
     const props = mocks.documentField.mock.calls.at(-1)?.[0];
     expect(props?.rules?.required).toBeFalsy();

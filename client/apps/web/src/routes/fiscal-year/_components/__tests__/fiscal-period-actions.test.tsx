@@ -162,7 +162,7 @@ describe("fiscal period actions", () => {
     await openMenu(user, "Adjusting Period - FY 2026");
     await user.click(await screen.findByRole("menuitem", { name: /Open Period/ }));
     const dialog = await screen.findByRole("alertdialog");
-    await user.click(within(dialog).getByRole("button", { name: "Open Period" }));
+    await user.click(within(dialog).getByRole("button", { name: "Open period" }));
 
     expect(mocks.activate).toHaveBeenCalledWith("fp_13");
     expect(await within(rowFor("Adjusting Period - FY 2026")).findByText("Open")).toBeVisible();
@@ -176,7 +176,7 @@ describe("fiscal period actions", () => {
     await openMenu(user, "Period 1");
     await user.click(await screen.findByRole("menuitem", { name: /Close Period/ }));
     const dialog = await screen.findByRole("alertdialog");
-    const confirm = within(dialog).getByRole("button", { name: "Close Period" });
+    const confirm = within(dialog).getByRole("button", { name: "Close period" });
     await vi.waitFor(() => expect(confirm).toBeEnabled());
     await user.click(confirm);
 
@@ -190,11 +190,11 @@ describe("fiscal period actions", () => {
     renderForm(fiscalYear([period(1, { status: "Locked" }), period(2)]));
 
     await openMenu(user, "Period 1");
-    expect(await menuItemNames()).toEqual(["Unlock Period", "Close Period"]);
+    expect(await menuItemNames()).toEqual(["Unlock period", "Close period"]);
     await user.keyboard("{Escape}");
 
     await openMenu(user, "Period 2");
-    expect(await menuItemNames()).toEqual(["Lock Period", "Close Period"]);
+    expect(await menuItemNames()).toEqual(["Lock period", "Close period"]);
   });
 
   it("offers only reopen for a closed period, and never lock", async () => {
@@ -203,7 +203,7 @@ describe("fiscal period actions", () => {
 
     await openMenu(user, "Period 1");
 
-    expect(await menuItemNames()).toEqual(["Reopen Period"]);
+    expect(await menuItemNames()).toEqual(["Reopen period"]);
   });
 
   it("requires a reason to reopen and sends it", async () => {
@@ -214,7 +214,7 @@ describe("fiscal period actions", () => {
     await openMenu(user, "Period 1");
     await user.click(await screen.findByRole("menuitem", { name: /Reopen Period/ }));
     const dialog = await screen.findByRole("alertdialog");
-    const confirm = within(dialog).getByRole("button", { name: "Reopen Period" });
+    const confirm = within(dialog).getByRole("button", { name: "Reopen period" });
 
     expect(confirm).toBeDisabled();
     await user.type(within(dialog).getByLabelText("Reason"), "  Late vendor invoice ");
@@ -231,7 +231,7 @@ describe("fiscal period actions", () => {
     await openMenu(user, "Period 2");
     await user.click(await screen.findByRole("menuitem", { name: /Lock Period/ }));
     const dialog = await screen.findByRole("alertdialog");
-    await user.click(within(dialog).getByRole("button", { name: "Lock Period" }));
+    await user.click(within(dialog).getByRole("button", { name: "Lock period" }));
 
     expect(mocks.lock).toHaveBeenCalledWith("fp_02");
     expect(await within(rowFor("Period 2")).findByText("Locked")).toBeVisible();
@@ -248,7 +248,7 @@ describe("fiscal period actions", () => {
     await openMenu(user, "Period 2");
     await user.click(await screen.findByRole("menuitem", { name: /Lock Period/ }));
     const dialog = await screen.findByRole("alertdialog");
-    await user.click(within(dialog).getByRole("button", { name: "Lock Period" }));
+    await user.click(within(dialog).getByRole("button", { name: "Lock period" }));
 
     expect(await within(rowFor("Period 2")).findByText("Locked")).toBeVisible();
     expect(screen.getByLabelText("Description")).toHaveValue("Audit in progress");
@@ -295,6 +295,6 @@ describe("fiscal period actions", () => {
 
     await openMenu(user, "Period 1");
 
-    expect(await menuItemNames()).toEqual(["Lock Period"]);
+    expect(await menuItemNames()).toEqual(["Lock period"]);
   });
 });

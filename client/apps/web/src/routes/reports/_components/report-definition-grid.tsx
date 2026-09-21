@@ -143,12 +143,12 @@ function DefinitionCard({
             />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                title={t("Explore Results")}
+                title={t("Explore results")}
                 startContent={<TableIcon className="size-3.5" />}
                 onClick={() => void navigate(`/reports/explore/${definition.id}`)}
               />
               <DropdownMenuItem
-                title={t("Edit in Builder")}
+                title={t("Edit in builder")}
                 startContent={<PencilIcon className="size-3.5" />}
                 onClick={() => void navigate(`/reports/builder/${definition.id}`)}
               />
@@ -168,7 +168,7 @@ function DefinitionCard({
               )}
               {definition.kind === "canned_fork" && canUpdate && (
                 <DropdownMenuItem
-                  title={t("Reset to Default")}
+                  title={t("Reset to default")}
                   startContent={<RotateCcwIcon className="size-3.5" />}
                   onClick={() =>
                     resetFork.mutate(definition.id, {

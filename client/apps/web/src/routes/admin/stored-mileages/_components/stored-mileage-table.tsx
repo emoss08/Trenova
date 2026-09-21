@@ -91,7 +91,7 @@ export default function StoredMileageTable() {
             <AlertDialogMedia>
               <TrashIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>{t("Deactivate Stored Mileage")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("Deactivate stored mileage")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t(
                 "This keeps the record for audit/history but removes it from future mileage lookups.",

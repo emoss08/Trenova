@@ -163,7 +163,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
           <SelectField
             control={control}
             name="rateMethod"
-            label={t("Rate Method")}
+            label={t("Rate method")}
             placeholder={t("Select rate method")}
             rules={{ required: true }}
             options={carrierRateMethodChoices}
@@ -174,7 +174,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
           <NumberField
             control={control}
             name="baseRate"
-            label={t("Base Rate")}
+            label={t("Base rate")}
             placeholder="0.00"
             sideText="$"
             rules={{ required: true }}
@@ -187,7 +187,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
           <NumberField
             control={control}
             name="fuelSurcharge"
-            label={t("Fuel Surcharge")}
+            label={t("Fuel surcharge")}
             placeholder="0.00"
             sideText="$"
             decimalScale={4}
@@ -199,7 +199,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
           <InputField
             control={control}
             name="proNumber"
-            label={t("Carrier Pro Number")}
+            label={t("Carrier pro number")}
             placeholder={t("e.g., PRO-482910")}
             maxLength={50}
             description={t("The carrier's own tracking reference for this move.")}
@@ -209,7 +209,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
           <InputField
             control={control}
             name="externalDriverName"
-            label={t("Driver Name")}
+            label={t("Driver name")}
             placeholder={t("e.g., John Smith")}
             maxLength={255}
             description={t("Name of the carrier's driver running this move.")}
@@ -219,7 +219,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
           <PhoneNumberField
             control={control}
             name="externalDriverPhone"
-            label={t("Driver Phone")}
+            label={t("Driver phone")}
             placeholder="(555) 555-5555"
             description={t("Contact number for the carrier's driver while in transit.")}
           />
@@ -228,7 +228,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
           <InputField
             control={control}
             name="externalTractorNumber"
-            label={t("Tractor Number")}
+            label={t("Tractor number")}
             placeholder={t("e.g., T-4521")}
             maxLength={50}
             description={t("Unit number of the carrier's tractor on this move.")}
@@ -238,7 +238,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
           <InputField
             control={control}
             name="externalTrailerNumber"
-            label={t("Trailer Number")}
+            label={t("Trailer number")}
             placeholder={t("e.g., TR-8834")}
             maxLength={50}
             description={t("Unit number of the carrier's trailer on this move.")}
@@ -287,7 +287,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
                 <AccessorialChargeAutocompleteField
                   control={control}
                   name={`accessorials.${index}.accessorialChargeId`}
-                  label={t("Accessorial Charge")}
+                  label={t("Accessorial charge")}
                   placeholder={t("Link a configured charge (optional)")}
                   clearable
                   description={t("Optionally link a configured charge to prefill the description.")}

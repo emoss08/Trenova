@@ -11,7 +11,7 @@ export function PayProfilesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Pay Profiles"),
+        title: t("Pay profiles"),
         description: t(
           "Reusable driver pay packages: mileage rates and bands, revenue percentages, accessorial pay, and guarantees.",
         ),

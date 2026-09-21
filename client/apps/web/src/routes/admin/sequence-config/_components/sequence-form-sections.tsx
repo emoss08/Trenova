@@ -59,7 +59,7 @@ export function CoreStructureSection({ index }: SectionProps) {
 
   return (
     <SectionCard
-      title={t("Core Structure")}
+      title={t("Core structure")}
       description={t("Primary sequence components and delimiter behavior.")}
     >
       <FormControl>
@@ -76,7 +76,7 @@ export function CoreStructureSection({ index }: SectionProps) {
         <NumberField
           control={control}
           name={`configs.${index}.sequenceDigits`}
-          label={t("Sequence Digits")}
+          label={t("Sequence digits")}
           description={t("Width of the zero-padded counter (1–10).")}
           min={1}
           max={10}
@@ -86,7 +86,7 @@ export function CoreStructureSection({ index }: SectionProps) {
         <SwitchField
           control={control}
           name={`configs.${index}.useSeparators`}
-          label={t("Use Separators")}
+          label={t("Use separators")}
           description={t("Insert a delimiter between each token segment.")}
           position="left"
           outlined
@@ -97,7 +97,7 @@ export function CoreStructureSection({ index }: SectionProps) {
           <SelectField
             control={control}
             name={`configs.${index}.separatorChar`}
-            label={t("Separator Character")}
+            label={t("Separator character")}
             options={separatorOptions}
             placeholder={t("Select separator")}
           />
@@ -118,7 +118,7 @@ export function DateComponentsSection({ index }: SectionProps) {
 
   return (
     <SectionCard
-      title={t("Date Components")}
+      title={t("Date components")}
       description={t("Embed period context to make values self-describing.")}
     >
       <FormControl cols="full">
@@ -165,7 +165,7 @@ export function DateComponentsSection({ index }: SectionProps) {
             render={({ field, fieldState }) => (
               <div className="space-y-1.5">
                 <Label className={fieldState.error ? "text-destructive" : ""}>
-                  {t("Year Digits")}
+                  {t("Year digits")}
                 </Label>
                 <div className="grid grid-cols-2 gap-2">
                   {yearDigitsOptions.map((option) => {
@@ -212,7 +212,7 @@ export function ContextComponentsSection({ index }: SectionProps) {
 
   return (
     <SectionCard
-      title={t("Context Components")}
+      title={t("Context components")}
       description={t("Embed operational identity fields resolved at generation time.")}
     >
       <FormControl>
@@ -313,7 +313,7 @@ export function AdvancedSection({ index }: SectionProps) {
                   <NumberField
                     control={control}
                     name={`configs.${index}.randomDigitsCount`}
-                    label={t("Random Digits Count")}
+                    label={t("Random digits count")}
                     description={t("Number of random digits to append (1–10).")}
                     min={1}
                     max={10}
@@ -334,7 +334,7 @@ export function AdvancedSection({ index }: SectionProps) {
                 <SwitchField
                   control={control}
                   name={`configs.${index}.allowCustomFormat`}
-                  label={t("Allow Custom Format")}
+                  label={t("Allow custom format")}
                   description={t("Override auto-composition with a token template.")}
                   position="left"
                   outlined
@@ -345,7 +345,7 @@ export function AdvancedSection({ index }: SectionProps) {
                   <InputField
                     control={control}
                     name={`configs.${index}.customFormat`}
-                    label={t("Custom Format Template")}
+                    label={t("Custom format template")}
                     placeholder={t("{P}-{Y}{M}-{S}")}
                     description={t(
                       "Use tokens like {P}, {Y}, {M}, {S}. See Tokens reference above.",

@@ -11,7 +11,7 @@ export function CarrierSettlementWorkspacePage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Carrier Settlement Workspace"),
+        title: t("Carrier settlement workspace"),
         description: t(
           "Everything needed to run a carrier pay period from one screen — review the queue, process settlements one at a time or in bulk, and keep the AP subledger current.",
         ),

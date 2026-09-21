@@ -42,7 +42,7 @@ export function DisputePanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Settlement Dispute")}
+      title={t("Settlement dispute")}
       description={row.worker ? `${row.worker.firstName} ${row.worker.lastName}`.trim() : undefined}
       size="lg"
     >

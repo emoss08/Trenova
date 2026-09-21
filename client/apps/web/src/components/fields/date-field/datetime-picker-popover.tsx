@@ -54,7 +54,7 @@ export function DateTimePickerPopover({
         <DrawerTrigger asChild>{children}</DrawerTrigger>
         <DrawerContent>
           <DrawerHeader className="sr-only text-left">
-            <DrawerTitle>{t("Date Time Picker")}</DrawerTitle>
+            <DrawerTitle>{t("Date time picker")}</DrawerTitle>
             <DrawerDescription>{t("Select date and time")}</DrawerDescription>
           </DrawerHeader>
           <div className="flex flex-col py-5">

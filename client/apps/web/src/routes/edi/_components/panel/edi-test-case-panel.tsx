@@ -86,7 +86,7 @@ function CreateTestCasePanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={handleOpenChange}
-      title={t("New EDI Test Case")}
+      title={t("New EDI test case")}
       description={t(
         "Bind a document profile to a payload and expected validation outcome for partner certification.",
       )}
@@ -97,7 +97,7 @@ function CreateTestCasePanel({
             {t("Cancel")}
           </Button>
           <Button type="submit" form="edi-create-test-case-form" isLoading={mutation.isPending}>
-            {t("Create Test Case")}
+            {t("Create test case")}
           </Button>
         </>
       }
@@ -247,12 +247,12 @@ function TestCaseEditPanel({
                 title={isDirty ? "Save your changes before running the preview" : undefined}
               >
                 <PlayIcon className="size-4" />
-                {t("Run Preview")}
+                {t("Run preview")}
               </Button>
             )}
             {testCase && canUpdate && (
               <Button type="submit" form="edi-edit-test-case-form" isLoading={mutation.isPending}>
-                {t("Save Test Case")}
+                {t("Save test case")}
               </Button>
             )}
           </>
@@ -377,7 +377,7 @@ function TestCaseVerdict({
         </div>
       </div>
       <Button type="button" variant="ghost" size="sm" onClick={onOpenInspector}>
-        {t("Open Inspector")}
+        {t("Open inspector")}
       </Button>
     </div>
   );
@@ -408,7 +408,7 @@ function TestCaseForm({
       }}
     >
       <FormSection
-        title={t("Test Case")}
+        title={t("Test case")}
         description={t("Name the scenario and pick the partner document profile it certifies.")}
       >
         <FormGroup cols={2}>
@@ -426,7 +426,7 @@ function TestCaseForm({
             <EDIDocumentProfileAutocompleteField
               control={control}
               name="partnerDocumentProfileId"
-              label={t("Document Profile")}
+              label={t("Document profile")}
               placeholder={t("Select a document profile")}
               rules={{ required: true }}
               disabled={disabled}
@@ -444,7 +444,7 @@ function TestCaseForm({
         </FormGroup>
       </FormSection>
       <FormSection
-        title={t("Expected Outcome")}
+        title={t("Expected outcome")}
         description={t("Diagnostics the rendered document is expected to produce.")}
       >
         <FormGroup cols={2}>
@@ -452,7 +452,7 @@ function TestCaseForm({
             <NumberField
               control={control}
               name="expectedWarnings"
-              label={t("Expected Warnings")}
+              label={t("Expected warnings")}
               disabled={disabled}
             />
           </FormControl>
@@ -460,7 +460,7 @@ function TestCaseForm({
             <NumberField
               control={control}
               name="expectedErrors"
-              label={t("Expected Errors")}
+              label={t("Expected errors")}
               disabled={disabled}
             />
           </FormControl>
@@ -468,7 +468,7 @@ function TestCaseForm({
             <InputField
               control={control}
               name="expectedWarningCodes"
-              label={t("Expected Warning Codes")}
+              label={t("Expected warning codes")}
               disabled={disabled}
               placeholder={t("missing_optional_element, value_truncated")}
               description={t(
@@ -480,7 +480,7 @@ function TestCaseForm({
             <InputField
               control={control}
               name="expectedErrorCodes"
-              label={t("Expected Error Codes")}
+              label={t("Expected error codes")}
               disabled={disabled}
               placeholder="missing_required_element"
               description={t(
@@ -491,7 +491,7 @@ function TestCaseForm({
         </FormGroup>
       </FormSection>
       <FormSection
-        title={t("Document Payload")}
+        title={t("Document payload")}
         description={t(
           "Structured payload rendered through the profile's template when the preview runs.",
         )}

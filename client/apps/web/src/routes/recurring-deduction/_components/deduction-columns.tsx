@@ -118,7 +118,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RecurringDeductionRow>[] {
     },
     {
       id: "progress",
-      header: () => <div className="text-right">{t("Deducted / Cap")}</div>,
+      header: () => <div className="text-right">{t("Deducted / cap")}</div>,
       cell: ({ row }) => {
         const cap = row.original.totalCapMinor;
         return (

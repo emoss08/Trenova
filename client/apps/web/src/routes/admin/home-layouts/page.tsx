@@ -61,7 +61,7 @@ export function HomeLayoutsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Home Screens"),
+        title: t("Home screens"),
         description: t(
           "Author a home screen once and assign it to the roles that should land on it.",
         ),

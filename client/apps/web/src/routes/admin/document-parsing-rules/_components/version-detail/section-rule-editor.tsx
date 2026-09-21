@@ -47,7 +47,7 @@ export function SectionRuleEditor() {
           }
         >
           <PlusIcon className="size-3" />
-          {t("Add Section")}
+          {t("Add section")}
         </Button>
       }
     >
@@ -149,7 +149,7 @@ function SectionItem({
                 <TagInput
                   control={control}
                   name={`ruleDocument.sections.${index}.startAnchors`}
-                  label={t("Start Anchors")}
+                  label={t("Start anchors")}
                   description={t("Text strings that mark the beginning of this section")}
                   placeholder={t("Add anchor text...")}
                 />
@@ -158,7 +158,7 @@ function SectionItem({
                 <TagInput
                   control={control}
                   name={`ruleDocument.sections.${index}.endAnchors`}
-                  label={t("End Anchors")}
+                  label={t("End anchors")}
                   description={t("Text strings that mark the end of this section")}
                   placeholder={t("Add anchor text...")}
                 />
@@ -167,7 +167,7 @@ function SectionItem({
                 <SwitchField
                   control={control}
                   name={`ruleDocument.sections.${index}.captureBlankLine`}
-                  label={t("Capture Blank Lines")}
+                  label={t("Capture blank lines")}
                   description={t("Include blank lines within the section boundaries")}
                 />
               </FormControl>
@@ -175,7 +175,7 @@ function SectionItem({
                 <SwitchField
                   control={control}
                   name={`ruleDocument.sections.${index}.allowMultiple`}
-                  label={t("Allow Multiple")}
+                  label={t("Allow multiple")}
                   description={t("Allow this section to appear more than once in the document")}
                 />
               </FormControl>

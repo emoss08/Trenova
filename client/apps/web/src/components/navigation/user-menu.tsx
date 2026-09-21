@@ -58,9 +58,9 @@ function UserSettingsDialogSkeleton({
         <div className="bg-sidebar flex items-center gap-4 rounded-md border p-4">
           <Skeleton className="size-14 shrink-0 rounded-md" />
           <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-            <Skeleton className="h-3.5 w-40 rounded" />
-            <Skeleton className="h-3 w-28 rounded" />
-            <Skeleton className="h-3 w-48 rounded" />
+            <Skeleton className="h-3.5 w-40 rounded-md" />
+            <Skeleton className="h-3 w-28 rounded-md" />
+            <Skeleton className="h-3 w-48 rounded-md" />
           </div>
         </div>
         <div className="space-y-5">
@@ -69,8 +69,8 @@ function UserSettingsDialogSkeleton({
               <div className="flex items-center gap-3">
                 <Skeleton className="size-8 shrink-0 rounded-lg" />
                 <div className="flex flex-col gap-1.5">
-                  <Skeleton className="h-3.5 w-32 rounded" />
-                  <Skeleton className="h-3 w-56 rounded" />
+                  <Skeleton className="h-3.5 w-32 rounded-md" />
+                  <Skeleton className="h-3 w-56 rounded-md" />
                 </div>
               </div>
               <Skeleton className="h-9 w-full rounded-md" />
@@ -202,7 +202,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <Palette className="mr-2 size-4" />
-                <span>{t("Switch Theme")}</span>
+                <span>{t("Switch theme")}</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
                 <DropdownMenuSubContent sideOffset={5}>

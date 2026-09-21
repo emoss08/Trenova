@@ -54,14 +54,14 @@ export function buildShipmentRowActions(
     },
     {
       id: "transfer-ownership",
-      label: translate("Transfer Ownership"),
+      label: translate("Transfer ownership"),
       icon: ArrowRightLeftIcon,
       onClick: handlers.onTransferOwnership,
       hidden: (row) => row.original.status === "Canceled",
     },
     {
       id: "send-edi-load-tender",
-      label: translate("Send EDI Load Tender"),
+      label: translate("Send EDI load tender"),
       icon: SendIcon,
       onClick: handlers.onSendEDI,
       hidden: (row) => {

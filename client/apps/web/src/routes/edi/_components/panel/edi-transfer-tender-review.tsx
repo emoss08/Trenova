@@ -82,11 +82,11 @@ export function TransferOverview({ transfer, mappingRows }: TenderReviewProps) {
             value={sourceValueLabel(payload.serviceTypeLabel, payload.serviceTypeId)}
           />
           <InfoTile
-            label={t("Shipment Type")}
+            label={t("Shipment type")}
             value={sourceValueLabel(payload.shipmentTypeLabel, payload.shipmentTypeId)}
           />
           <InfoTile
-            label={t("Rating Template")}
+            label={t("Rating template")}
             value={sourceValueLabel(payload.formulaTemplateLabel, payload.formulaTemplateId)}
           />
           <InfoTile
@@ -256,7 +256,7 @@ export function TenderFreightReview({ transfer, mappingRows }: TenderReviewProps
       </ReviewSection>
       <ReviewSection
         icon={<DollarSignIcon className="size-4" />}
-        title={t("Additional Charges")}
+        title={t("Additional charges")}
         count={payload.additionalCharges?.length ?? 0}
         empty={t("No additional charges were included in this tender.")}
       >

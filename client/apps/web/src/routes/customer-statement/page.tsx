@@ -106,7 +106,7 @@ export function CustomerStatementPage() {
   const backButton = (
     <Button variant="outline" size="sm" onClick={() => void navigate("/accounting/ar/open-items")}>
       <ArrowLeftIcon className="size-3.5" />
-      {t("Back to Open Items")}
+      {t("Back to open items")}
     </Button>
   );
 
@@ -114,7 +114,7 @@ export function CustomerStatementPage() {
     return (
       <PageLayout
         pageHeaderProps={{
-          title: t("Customer Statement"),
+          title: t("Customer statement"),
           description: t("No customer specified."),
           actions: backButton,
         }}
@@ -129,7 +129,7 @@ export function CustomerStatementPage() {
   if (isLoading) {
     return (
       <PageLayout
-        pageHeaderProps={{ title: t("Customer Statement"), description: t("Loading...") }}
+        pageHeaderProps={{ title: t("Customer statement"), description: t("Loading...") }}
       >
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-20 w-full rounded-lg" />
@@ -143,7 +143,7 @@ export function CustomerStatementPage() {
     return (
       <PageLayout
         pageHeaderProps={{
-          title: t("Customer Statement"),
+          title: t("Customer statement"),
           description: t("Failed to load."),
           actions: backButton,
         }}
@@ -173,11 +173,11 @@ export function CustomerStatementPage() {
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <label className="text-2xs text-muted-foreground mb-1 block font-medium">
-            {t("Statement Date")}
+            {t("Statement date")}
           </label>
           <Input
             type="date"
-            aria-label={t("Statement Date")}
+            aria-label={t("Statement date")}
             value={statementDate}
             onChange={(e) => setStatementDate(e.target.value)}
             className="h-8 w-[160px] text-xs"
@@ -185,11 +185,11 @@ export function CustomerStatementPage() {
         </div>
         <div>
           <label className="text-2xs text-muted-foreground mb-1 block font-medium">
-            {t("Start Date")}
+            {t("Start date")}
           </label>
           <Input
             type="date"
-            aria-label={t("Start Date")}
+            aria-label={t("Start date")}
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             className="h-8 w-[160px] text-xs"
@@ -321,14 +321,14 @@ export function CustomerStatementPage() {
       </SectionPanel>
 
       {statement.openItems.length > 0 ? (
-        <SectionPanel title={t("Open Items")} count={statement.openItems.length}>
+        <SectionPanel title={t("Open items")} count={statement.openItems.length}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-muted-foreground text-left">
                 <tr>
                   <th className="px-4 py-2.5 text-xs font-medium">{t("Invoice")}</th>
-                  <th className="px-4 py-2.5 text-xs font-medium">{t("Invoice Date")}</th>
-                  <th className="px-4 py-2.5 text-xs font-medium">{t("Due Date")}</th>
+                  <th className="px-4 py-2.5 text-xs font-medium">{t("Invoice date")}</th>
+                  <th className="px-4 py-2.5 text-xs font-medium">{t("Due date")}</th>
                   <th className="px-4 py-2.5 text-xs font-medium">{t("Aging")}</th>
                   <th className="px-4 py-2.5 text-right text-xs font-medium">{t("Total")}</th>
                   <th className="px-4 py-2.5 text-right text-xs font-medium">{t("Open")}</th>
@@ -363,7 +363,7 @@ export function CustomerStatementPage() {
               <tfoot className="bg-muted/30 border-t">
                 <tr>
                   <td colSpan={4} className="px-4 py-2.5 text-right text-xs font-medium">
-                    {t("Total Open")}
+                    {t("Total open")}
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     <AmountDisplay

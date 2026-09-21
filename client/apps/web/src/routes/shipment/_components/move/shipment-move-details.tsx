@@ -87,7 +87,7 @@ export default function ShipmentMoveDetails() {
   return (
     <>
       <FormSection
-        title={t("Move Details")}
+        title={t("Move details")}
         description={t("Execution legs and stop sequences for this shipment")}
         action={
           <div className="flex items-center gap-1.5">
@@ -98,7 +98,7 @@ export default function ShipmentMoveDetails() {
             <CapabilityExplainer profile={profile} field="moves" />
             <Button type="button" variant="outline" size="xxs" onClick={handleAddMove}>
               <PlusIcon className="size-3" />
-              {t("Add Move")}
+              {t("Add move")}
             </Button>
           </div>
         }
@@ -132,7 +132,7 @@ export default function ShipmentMoveDetails() {
               onClick={handleAddMove}
             >
               <PlusIcon className="size-3" />
-              {t("Add First Move")}
+              {t("Add first move")}
             </Button>
           </div>
         )}

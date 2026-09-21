@@ -97,7 +97,7 @@ describe("shouldRetry", () => {
     });
     const notRetryable = new ApiRequestError(400, {
       type: `${PROBLEM_BASE}validation-error`,
-      title: "Validation Failed",
+      title: "Validation failed",
       status: 400,
     });
 

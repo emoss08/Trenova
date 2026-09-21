@@ -103,7 +103,7 @@ export function getInboundFileColumns(t: TranslateFn): ColumnDef<EDIInboundFileR
     },
     {
       accessorKey: "interchangeControlNumber",
-      header: t("Control Number"),
+      header: t("Control number"),
       cell: ({ row }) =>
         row.original.interchangeControlNumber ? (
           <span className="font-mono">{row.original.interchangeControlNumber}</span>
@@ -112,7 +112,7 @@ export function getInboundFileColumns(t: TranslateFn): ColumnDef<EDIInboundFileR
         ),
       size: 140,
       meta: {
-        label: t("Control Number"),
+        label: t("Control number"),
         apiField: "interchangeControlNumber",
         filterable: true,
         sortable: false,

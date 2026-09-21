@@ -11,7 +11,7 @@ export function HazmatSegregationRulesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Hazmat Segregation Rules"),
+        title: t("Hazmat segregation rules"),
         description: t("Manage and configure hazmat segregation rules for your organization"),
       }}
     >

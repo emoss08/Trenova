@@ -95,7 +95,7 @@ export function AgingTable({
       bucketColumn("daysOver90Minor", "90+"),
       {
         id: "totalOpenMinor",
-        header: t("Total Open"),
+        header: t("Total open"),
         accessorFn: (row) => row.buckets.totalOpenMinor,
         cell: ({ row }) => (
           <AmountDisplay

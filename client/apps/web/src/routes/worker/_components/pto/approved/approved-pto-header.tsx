@@ -49,7 +49,7 @@ export function ApprovedPTOHeader() {
   };
 
   return (
-    <HeaderContent title={t("Approved PTO Overview")}>
+    <HeaderContent title={t("Approved PTO overview")}>
       <SegmentedControl<PTOViewType>
         items={VIEW_ITEMS}
         value={viewType}

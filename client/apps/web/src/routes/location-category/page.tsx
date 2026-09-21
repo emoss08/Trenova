@@ -11,7 +11,7 @@ export function LocationCategoriesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Location Categories"),
+        title: t("Location categories"),
         description: t("Manage and configure location categories for your organization"),
       }}
     >

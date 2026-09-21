@@ -11,7 +11,7 @@ export function HoldReasonsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Hold Reasons"),
+        title: t("Hold reasons"),
         description: t("Manage and configure hold reasons for your organization"),
       }}
     >

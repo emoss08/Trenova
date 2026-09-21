@@ -37,7 +37,7 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
             name="customerId"
             rules={{ required: true }}
             label={t("Customer")}
-            placeholder={t("Select Customer")}
+            placeholder={t("Select customer")}
           />
         </FormControl>
         <FormControl>
@@ -45,8 +45,8 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
             control={control}
             name="serviceTypeId"
             rules={{ required: true }}
-            label={t("Service Type")}
-            placeholder={t("Select Service Type")}
+            label={t("Service type")}
+            placeholder={t("Select Service type")}
           />
         </FormControl>
         <FormControl>
@@ -54,8 +54,8 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
             control={control}
             name="shipmentTypeId"
             rules={{ required: true }}
-            label={t("Shipment Type")}
-            placeholder={t("Select Shipment Type")}
+            label={t("Shipment type")}
+            placeholder={t("Select shipment type")}
           />
         </FormControl>
         <FormControl>
@@ -63,16 +63,16 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
             control={control}
             name="formulaTemplateId"
             rules={{ required: true }}
-            label={t("Rating Method")}
-            placeholder={t("Select Rating Method")}
+            label={t("Rating method")}
+            placeholder={t("Select rating method")}
           />
         </FormControl>
         <FormControl>
           <EquipmentTypeAutocompleteField
             control={control}
             name="tractorTypeId"
-            label={t("Tractor Type")}
-            placeholder={t("Select Tractor Type")}
+            label={t("Tractor type")}
+            placeholder={t("Select tractor type")}
             extraSearchParams={{
               classes: [equipmentClassSchema.enum.Tractor],
             }}
@@ -83,8 +83,8 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
           <EquipmentTypeAutocompleteField
             control={control}
             name="trailerTypeId"
-            label={t("Trailer Type")}
-            placeholder={t("Select Trailer Type")}
+            label={t("Trailer type")}
+            placeholder={t("Select trailer type")}
             extraSearchParams={{
               classes: [equipmentClassSchema.enum.Trailer, equipmentClassSchema.enum.Container],
             }}

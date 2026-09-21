@@ -34,7 +34,7 @@ export function RateZonePanel({ open, onOpenChange, mode, row }: DataTablePanelP
         size="lg"
         url="/rate-zones/"
         queryKey="rate-zone-list"
-        title={t("Rate Zone")}
+        title={t("Rate zone")}
         fieldKey="name"
         formComponent={<RateZoneForm />}
       />
@@ -49,7 +49,7 @@ export function RateZonePanel({ open, onOpenChange, mode, row }: DataTablePanelP
       size="lg"
       url="/rate-zones/"
       queryKey="rate-zone-list"
-      title={t("Rate Zone")}
+      title={t("Rate zone")}
       formComponent={<RateZoneForm />}
     />
   );

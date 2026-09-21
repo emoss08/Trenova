@@ -75,7 +75,7 @@ export function RecurringShipmentRunsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>{t("Generation History")}</DialogTitle>
+          <DialogTitle>{t("Generation history")}</DialogTitle>
           <DialogDescription>
             {t(
               "{0} — every generated, skipped, and failed occurrence.",

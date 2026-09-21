@@ -232,7 +232,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
               >
                 <ContainerIcon className="size-4" />
               </TooltipTrigger>
-              <TooltipContent side="bottom">{t("Load Planner")}</TooltipContent>
+              <TooltipContent side="bottom">{t("Load planner")}</TooltipContent>
             </Tooltip>
           </>
         }

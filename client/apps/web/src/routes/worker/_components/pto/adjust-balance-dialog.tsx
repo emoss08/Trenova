@@ -110,7 +110,7 @@ export function AdjustBalanceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Adjust PTO Balance")}</DialogTitle>
+          <DialogTitle>{t("Adjust PTO balance")}</DialogTitle>
           <DialogDescription>
             {t(
               "Post a manual correction to the ledger. Positive amounts add days, negative amounts remove them. The note is kept on the ledger and in the audit log.",
@@ -187,7 +187,7 @@ export function AdjustBalanceDialog({
                 loadingText={t("Posting...")}
                 // disabled={tracked.length === 0}
               >
-                {t("Post Adjustment")}
+                {t("Post adjustment")}
               </Button>
             </DialogFooter>
           </Form>

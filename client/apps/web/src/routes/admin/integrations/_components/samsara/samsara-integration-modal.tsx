@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
     value: "configuration",
   },
   {
-    label: "Worker Sync",
+    label: "Worker sync",
     icon: UsersIcon,
     value: "worker-sync",
   },

@@ -13,7 +13,7 @@ export function APIKeysPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("API Keys"),
+        title: t("API keys"),
         description: t(
           "Provision bearer credentials for third-party systems with direct, tenant-scoped permissions.",
         ),

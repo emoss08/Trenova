@@ -23,7 +23,7 @@ type StatusFilterValue = "all" | BillingTransferCandidateStatus;
 
 const STATUS_FILTERS: readonly { value: StatusFilterValue; label: string }[] = [
   { value: "all", label: "All eligible" },
-  { value: "ReadyToInvoice", label: "Ready to Invoice" },
+  { value: "ReadyToInvoice", label: "Ready to invoice" },
   { value: "Completed", label: "Completed" },
 ];
 

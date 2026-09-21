@@ -144,7 +144,7 @@ function CreatePartnerPanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={handleOpenChange}
-      title={t("New EDI Partner")}
+      title={t("New EDI partner")}
       description={t(
         "Create an external trading partner or request an internal organization connection.",
       )}
@@ -160,7 +160,7 @@ function CreatePartnerPanel({
               form="edi-create-external-partner-form"
               isLoading={createExternalMutation.isPending}
             >
-              {t("Create Partner")}
+              {t("Create partner")}
             </Button>
           ) : (
             <Button
@@ -168,7 +168,7 @@ function CreatePartnerPanel({
               form="edi-create-pair-form"
               isLoading={createConnectionMutation.isPending}
             >
-              {t("Request Connection")}
+              {t("Request connection")}
             </Button>
           )}
         </>
@@ -178,11 +178,11 @@ function CreatePartnerPanel({
         <TabsList variant="underline" className="border-border w-full border-b">
           <TabsTrigger value="external">
             <Building2Icon className="size-4" />
-            {t("External Partner")}
+            {t("External partner")}
           </TabsTrigger>
           <TabsTrigger value="internal">
             <HandshakeIcon className="size-4" />
-            {t("Internal Connection")}
+            {t("Internal connection")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="external" className="pt-4">
@@ -328,7 +328,7 @@ function PartnerEditPanel({
           </Button>
           {partner && canUpdate && (
             <Button type="submit" form="edi-edit-partner-form" isLoading={mutation.isPending}>
-              {t("Save Partner")}
+              {t("Save partner")}
             </Button>
           )}
         </>

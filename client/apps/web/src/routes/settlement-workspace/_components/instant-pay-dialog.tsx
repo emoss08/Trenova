@@ -240,7 +240,7 @@ export function InstantPayDialog({
                       variant={paymentMethod === method ? "default" : "outline"}
                       onClick={() => setPaymentMethod(method)}
                     >
-                      {method === "InstantPay" ? t("Instant Pay") : method}
+                      {method === "InstantPay" ? t("Instant pay") : method}
                     </Button>
                   ))}
                 </div>

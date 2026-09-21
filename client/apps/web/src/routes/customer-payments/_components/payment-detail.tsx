@@ -116,7 +116,7 @@ function PaymentDetailView({
           {canManage && isPosted && payment.unappliedAmountMinor > 0 ? (
             <Button size="sm" variant="outline" onClick={onApplyUnapplied}>
               <HandCoinsIcon className="size-4" />
-              {t("Apply Unapplied")}
+              {t("Apply unapplied")}
             </Button>
           ) : null}
           {canManage && isPosted ? <ReversePaymentButton payment={payment} /> : null}
@@ -261,7 +261,7 @@ function ApplicationsSection({
               <TableRow className="hover:bg-transparent">
                 <TableHead className="h-8 text-xs">{t("Invoice")}</TableHead>
                 <TableHead className="h-8 text-xs">{t("Due")}</TableHead>
-                <TableHead className="h-8 text-right text-xs">{t("Invoice Total")}</TableHead>
+                <TableHead className="h-8 text-right text-xs">{t("Invoice total")}</TableHead>
                 <TableHead className="h-8 text-right text-xs">{t("Applied")}</TableHead>
                 <TableHead className="h-8 text-right text-xs">{t("Short-pay")}</TableHead>
                 <TableHead className="h-8 text-xs">{t("Settlement")}</TableHead>
@@ -372,7 +372,7 @@ function GLActivitySection({ paymentId }: { paymentId: string }) {
     <div>
       <div className="mb-2 flex items-center justify-between">
         <p className="text-sm font-medium">
-          {t("GL Postings")}
+          {t("GL postings")}
           {postings.length > 0 ? (
             <span className="text-muted-foreground ml-1.5 text-xs font-normal">
               {postings.length} {postings.length === 1 ? "entry" : "entries"}
@@ -504,7 +504,7 @@ function ReversePaymentButton({ payment }: { payment: CustomerPaymentDetail }) {
             <AutoCompleteDateField
               control={control}
               name="accountingDate"
-              label={t("Accounting Date")}
+              label={t("Accounting date")}
               rules={{ required: true }}
             />
             <TextareaField
@@ -524,7 +524,7 @@ function ReversePaymentButton({ payment }: { payment: CustomerPaymentDetail }) {
               onClick={() => void handleSubmit(onSubmit)()}
               isLoading={isPending}
             >
-              {t("Reverse Payment")}
+              {t("Reverse payment")}
             </Button>
           </DialogFooter>
         </DialogContent>

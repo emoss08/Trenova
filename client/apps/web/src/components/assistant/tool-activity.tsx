@@ -106,7 +106,7 @@ function ToolStepRow({ step, live }: { step: ToolStep; live: boolean }) {
             {description.title}
           </span>
           {description.subject !== "" && (
-            <span className="bg-muted text-muted-foreground ml-1.5 rounded px-1 py-px font-mono text-2xs">
+            <span className="bg-muted text-muted-foreground ml-1.5 rounded-md px-1 py-px font-mono text-2xs">
               {description.subject}
             </span>
           )}

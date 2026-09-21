@@ -129,7 +129,7 @@ export function handleMutationError<T extends FieldValues>({
   }
 
   if (apiProblem.isBusinessError(normalized)) {
-    toast.error(translate("Invalid Operation"), {
+    toast.error(translate("Invalid operation"), {
       description: normalized.message,
     });
     return;

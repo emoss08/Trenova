@@ -40,7 +40,7 @@ export function ChargePayerChip({
   if (rows.length === 1) {
     return (
       <span
-        className="text-2xs shrink-0 rounded bg-accent-indigo/10 px-1 py-0.5 text-accent-indigo-on-subtle"
+        className="text-2xs shrink-0 rounded-md bg-accent-indigo/10 px-1 py-0.5 text-accent-indigo-on-subtle"
         data-testid="charge-payer-chip"
       >
         {t("Bill to {0}", allocationPayerLabel(rows[0]))}
@@ -52,7 +52,7 @@ export function ChargePayerChip({
     <Tooltip>
       <TooltipTrigger>
         <span
-          className="text-2xs flex shrink-0 items-center gap-1 rounded bg-accent-indigo/10 px-1 py-0.5 text-accent-indigo-on-subtle"
+          className="text-2xs flex shrink-0 items-center gap-1 rounded-md bg-accent-indigo/10 px-1 py-0.5 text-accent-indigo-on-subtle"
           data-testid="charge-payer-chip"
         >
           <SplitIcon className="size-2.5" />

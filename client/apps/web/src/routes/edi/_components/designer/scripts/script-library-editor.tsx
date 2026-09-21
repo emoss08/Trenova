@@ -163,13 +163,13 @@ export function ScriptLibraryEditor() {
               }
             >
               <SaveIcon className="size-4" />
-              {t("Save Scripts")}
+              {t("Save scripts")}
             </Button>
           </div>
         </div>
         <div className="border-b p-3">
           <ScriptPresetPicker
-            title={t("Script Presets")}
+            title={t("Script presets")}
             presets={getEDIScriptPresetsByCategory("scriptLibrary")}
             disabled={!isEditable || !selected}
             onApply={applyPreset}

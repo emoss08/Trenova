@@ -63,7 +63,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DetentionPolicyRow>[] {
       accessorKey: "code",
       header: t("Code"),
       cell: ({ row }) => (
-        <span className="bg-muted rounded px-1.5 py-0.5 font-mono">{row.original.code}</span>
+        <span className="bg-muted rounded-md px-1.5 py-0.5 font-mono">{row.original.code}</span>
       ),
       size: 140,
       minSize: 120,
@@ -77,7 +77,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DetentionPolicyRow>[] {
     },
     {
       accessorKey: "billingFreeMinutes",
-      header: t("Free Time"),
+      header: t("Free time"),
       cell: ({ row }) => (
         <span className="tabular-nums">
           {formatDetentionMinutes(row.original.billingFreeMinutes)}
@@ -87,7 +87,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DetentionPolicyRow>[] {
       minSize: 100,
       maxSize: 130,
       meta: {
-        label: t("Free Time"),
+        label: t("Free time"),
         apiField: "billingFreeMinutes",
         filterable: false,
         sortable: true,
@@ -95,7 +95,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DetentionPolicyRow>[] {
     },
     {
       accessorKey: "rateSource",
-      header: t("Rate Source"),
+      header: t("Rate source"),
       cell: ({ row }) => {
         const choice = detentionRateSourceChoices.find(
           (option) => option.value === row.original.rateSource,
@@ -106,7 +106,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DetentionPolicyRow>[] {
       minSize: 130,
       maxSize: 180,
       meta: {
-        label: t("Rate Source"),
+        label: t("Rate source"),
         apiField: "rateSource",
         filterable: true,
         sortable: true,

@@ -215,8 +215,8 @@ export function StudioHeader({
           <div className="flex items-center gap-2">
             <h1 className="truncate text-sm font-semibold">
               {mode === "create"
-                ? t("New Formula Template")
-                : templateName || t("Formula Template")}
+                ? t("New formula template")
+                : templateName || t("Formula template")}
             </h1>
             {statusChoice && (
               <ColorOptionValue color={statusChoice.color} value={statusChoice.label} />
@@ -262,8 +262,8 @@ export function StudioHeader({
                     >
                       <SendIcon className="size-3" />
                       {template?.status === "Inactive"
-                        ? t("Reactivate via Review")
-                        : t("Submit for Review")}
+                        ? t("Reactivate via review")
+                        : t("Submit for review")}
                     </Button>
                   </span>
                 }
@@ -299,7 +299,7 @@ export function StudioHeader({
                   onClick={() => onApprovalAction("requestChanges")}
                 >
                   <MessageSquareWarningIcon className="size-3" />
-                  {t("Request Changes")}
+                  {t("Request changes")}
                 </Button>
                 <Button
                   type="button"
@@ -328,7 +328,7 @@ export function StudioHeader({
             <DropdownMenuContent align="end" className="min-w-[200px]">
               <DropdownMenuGroup>
                 <DropdownMenuItem
-                  title={t("Version History")}
+                  title={t("Version history")}
                   startContent={<ClockIcon className="size-4" />}
                   onClick={onVersionHistory}
                 />
@@ -342,12 +342,12 @@ export function StudioHeader({
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuItem
-                  title={t("Fork Template")}
+                  title={t("Fork template")}
                   startContent={<GitForkIcon className="size-4" />}
                   onClick={onFork}
                 />
                 <DropdownMenuItem
-                  title={t("View Lineage")}
+                  title={t("View lineage")}
                   startContent={<NetworkIcon className="size-4" />}
                   onClick={onLineage}
                 />
@@ -360,7 +360,7 @@ export function StudioHeader({
                   onClick={onExport}
                 />
                 <DropdownMenuItem
-                  title={t("Import Templates")}
+                  title={t("Import templates")}
                   startContent={<FileUpIcon className="size-4" />}
                   onClick={onImport}
                 />
@@ -381,7 +381,7 @@ export function StudioHeader({
                   loadingText={t("Saving...")}
                   disabled={mode === "edit" && !isDirty}
                 >
-                  {mode === "create" ? t("Create Template") : t("Save Changes")}
+                  {mode === "create" ? t("Create template") : t("Save changes")}
                 </Button>
               </span>
             }

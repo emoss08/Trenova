@@ -122,7 +122,7 @@ export function getColumns(onlineUserIDs: Set<string>, t: TranslateFn): ColumnDe
     },
     {
       accessorKey: "lastLoginAt",
-      header: t("Last Login"),
+      header: t("Last login"),
       cell: ({ row }) => {
         const lastLogin = row.original.lastLoginAt;
         if (!lastLogin) {

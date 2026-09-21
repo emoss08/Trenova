@@ -12,7 +12,7 @@ export function APIKeyForm() {
 
   return (
     <FormSection
-      title={t("Key Details")}
+      title={t("Key details")}
       description={t(
         "Name the credential, document its intended use, and define an expiration if the integration should rotate automatically.",
       )}
@@ -22,7 +22,7 @@ export function APIKeyForm() {
           <InputField
             control={control}
             name="name"
-            label={t("Display Name")}
+            label={t("Display name")}
             placeholder={t("Warehouse connector")}
             description={t("Used in the API keys table and audit trail.")}
             rules={{ required: true }}

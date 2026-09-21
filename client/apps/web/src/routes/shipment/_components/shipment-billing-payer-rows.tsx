@@ -58,7 +58,7 @@ export function ShipmentBillingPayerRows({
             <div className="flex min-w-0 items-center gap-1.5">
               <span className="truncate text-xs font-medium">{label}</span>
               {payer.isPrimary ? (
-                <span className="bg-primary/10 text-2xs text-primary rounded px-1 py-0.5">
+                <span className="bg-primary/10 text-2xs text-primary rounded-md px-1 py-0.5">
                   {t("Primary")}
                 </span>
               ) : null}

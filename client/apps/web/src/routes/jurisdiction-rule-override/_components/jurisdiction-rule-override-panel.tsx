@@ -58,7 +58,7 @@ export function JurisdictionRuleOverridePanel({
       form={form}
       url="/jurisdiction-rule-overrides/"
       queryKey={QUERY_KEY}
-      title={t("Carrier Override")}
+      title={t("Carrier override")}
       formComponent={<JurisdictionRuleOverrideForm />}
     />
   );
@@ -134,7 +134,7 @@ function OverrideEditPanel({
             onClick={() => removeMutation.mutate(undefined)}
             disabled={removeMutation.isPending}
           >
-            {removeMutation.isPending ? t("Removing...") : t("Remove Override")}
+            {removeMutation.isPending ? t("Removing...") : t("Remove override")}
           </Button>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t("Cancel")}
@@ -146,7 +146,7 @@ function OverrideEditPanel({
       }
     >
       {!row ? (
-        <ComponentLoader message={t("Loading Carrier Override...")} />
+        <ComponentLoader message={t("Loading carrier override...")} />
       ) : (
         <FormProvider {...form}>
           <Form

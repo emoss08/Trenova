@@ -23,7 +23,7 @@ vi.mock("../bulk-billing-transfer-dialog", () => ({
     onOpenChange: (open: boolean) => void;
   }) =>
     open ? (
-      <div role="dialog" aria-label="Transfer to Billing">
+      <div role="dialog" aria-label="Transfer to billing">
         <button type="button" onClick={() => onOpenChange(false)}>
           close
         </button>
@@ -62,8 +62,8 @@ describe("BulkBillingTransferAction", () => {
     expect(mocks.permission).toHaveBeenCalledWith(Resource.Shipment, Operation.Update);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Transfer to Billing" }));
-    expect(await screen.findByRole("dialog", { name: "Transfer to Billing" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Transfer to billing" }));
+    expect(await screen.findByRole("dialog", { name: "Transfer to billing" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "close" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -73,6 +73,6 @@ describe("BulkBillingTransferAction", () => {
     mocks.permission.mockReturnValue({ allowed: false, isLoading: false });
     render(<Harness />);
 
-    expect(screen.queryByRole("button", { name: "Transfer to Billing" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Transfer to billing" })).not.toBeInTheDocument();
   });
 });

@@ -14,7 +14,7 @@ export function ActiveKeysCard({ data }: Props) {
 
   return (
     <KPICard
-      label={t("Active Keys")}
+      label={t("Active keys")}
       value={count.toLocaleString()}
       icon={ShieldCheck}
       detail={`${percentOfTotal}% of total`}

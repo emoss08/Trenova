@@ -97,7 +97,7 @@ export function DimensionEditor() {
                   control={control}
                   rules={{ required: true }}
                   name={`dimensions.${index}.matchMode` as never}
-                  label={t("Match Mode")}
+                  label={t("Match mode")}
                   placeholder={t("Select match mode")}
                   description={
                     matchMode === "Range"

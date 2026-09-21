@@ -90,10 +90,10 @@ export const tokenLegend = [
   { token: "{W}", label: "Week" },
   { token: "{D}", label: "Day" },
   { token: "{L}", label: "Location" },
-  { token: "{B}", label: "Business Unit" },
+  { token: "{B}", label: "Business unit" },
   { token: "{S}", label: "Sequence" },
   { token: "{R}", label: "Random" },
-  { token: "{C}", label: "Check Digit" },
+  { token: "{C}", label: "Check digit" },
 ];
 
 const defaultLocationCodeStrategy: LocationCodeStrategy = {

@@ -112,13 +112,13 @@ export function OpenItemsTable({
       },
       {
         id: "invoiceDate",
-        header: t("Invoice Date"),
+        header: t("Invoice date"),
         accessorFn: (row) => row.invoiceDate,
         cell: ({ row }) => <span className="text-xs">{formatDate(row.original.invoiceDate)}</span>,
       },
       {
         id: "dueDate",
-        header: t("Due Date"),
+        header: t("Due date"),
         accessorFn: (row) => row.dueDate,
         cell: ({ row }) => <span className="text-xs">{formatDate(row.original.dueDate)}</span>,
       },

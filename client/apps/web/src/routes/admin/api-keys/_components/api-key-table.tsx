@@ -82,7 +82,7 @@ export default function APIKeyTable() {
             <AlertDialogMedia>
               <ShieldAlertIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>{t("Revoke API Key")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("Revoke API key")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t(
                 "Revoke {0} now. Any integration using this bearer token will begin failing authentication immediately.",
@@ -101,7 +101,7 @@ export default function APIKeyTable() {
               }}
               disabled={revokeMutation.isPending}
             >
-              {t("Revoke Key")}
+              {t("Revoke key")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -51,9 +51,9 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
         <EquipmentTypeAutocompleteField<Tractor>
           name="equipmentTypeId"
           control={control}
-          label={t("Equipment Type")}
+          label={t("Equipment type")}
           rules={{ required: true }}
-          placeholder={t("Equipment Type")}
+          placeholder={t("Equipment type")}
           description={t("The type of equipment the tractor is categorized under.")}
           extraSearchParams={{
             classes: [equipmentClassSchema.enum.Tractor],
@@ -64,9 +64,9 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
         <EquipmentManufacturerAutocompleteField<Tractor>
           name="equipmentManufacturerId"
           control={control}
-          label={t("Equip. Manufacturer")}
+          label={t("Equip. manufacturer")}
           rules={{ required: true }}
-          placeholder={t("Equip. Manufacturer")}
+          placeholder={t("Equip. manufacturer")}
           description={t("The manufacturer of the tractor's equipment.")}
           extraSearchParams={{
             status: statusSchema.enum.Active,
@@ -107,8 +107,8 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
           name="fleetCodeId"
           control={control}
           clearable
-          label={t("Fleet Code")}
-          placeholder={t("Fleet Code")}
+          label={t("Fleet code")}
+          placeholder={t("Fleet code")}
           description={t("The fleet code associated with the tractor.")}
         />
       </FormControl>
@@ -120,7 +120,7 @@ function RegistrationInformationSection({ control }: { control: Control<Tractor>
   const t = useT();
 
   return (
-    <FormSection title={t("Registration Information")}>
+    <FormSection title={t("Registration information")}>
       <FormGroup cols={2}>
         <FormControl>
           <InputField
@@ -136,8 +136,8 @@ function RegistrationInformationSection({ control }: { control: Control<Tractor>
           <InputField
             control={control}
             name="registrationNumber"
-            label={t("Registration Number")}
-            placeholder={t("Registration Number")}
+            label={t("Registration number")}
+            placeholder={t("Registration number")}
             description={t("The unique registration number assigned to the tractor.")}
             maxLength={50}
           />
@@ -146,8 +146,8 @@ function RegistrationInformationSection({ control }: { control: Control<Tractor>
           <UsStateAutocompleteField
             control={control}
             name="stateId"
-            label={t("License State")}
-            placeholder={t("License State")}
+            label={t("License state")}
+            placeholder={t("License state")}
             description={t("The U.S. state where the tractor is licensed.")}
           />
         </FormControl>
@@ -155,17 +155,17 @@ function RegistrationInformationSection({ control }: { control: Control<Tractor>
           <AutoCompleteDateField
             control={control}
             name="registrationExpiry"
-            label={t("Registration Expiry")}
+            label={t("Registration expiry")}
             description={t("The expiration date of the tractor's registration.")}
-            placeholder={t("Registration Expiry")}
+            placeholder={t("Registration expiry")}
           />
         </FormControl>
         <FormControl cols="full">
           <InputField
             control={control}
             name="licensePlateNumber"
-            label={t("License Plate Number")}
-            placeholder={t("License Plate Number")}
+            label={t("License plate number")}
+            placeholder={t("License plate number")}
             description={t("The license plate number associated with the tractor.")}
             maxLength={50}
           />
@@ -185,8 +185,8 @@ function TelematicsSection({ control }: { control: Control<Tractor> }) {
           <InputField
             control={control}
             name="externalId"
-            label={t("Samsara Vehicle ID")}
-            placeholder={t("Samsara Vehicle ID")}
+            label={t("Samsara vehicle ID")}
+            placeholder={t("Samsara vehicle ID")}
             description={t(
               "Links this tractor to its Samsara vehicle for live telematics. Leave blank to auto-match by VIN.",
             )}
@@ -208,7 +208,7 @@ function FuelTaxSection({ control }: { control: Control<Tractor> }) {
           <IftaFuelTypeAutocompleteField<Tractor>
             control={control}
             name="fuelType"
-            label={t("Fuel Type")}
+            label={t("Fuel type")}
             rules={{ required: true }}
             placeholder={t("Select a fuel type")}
             description={t(
@@ -238,15 +238,15 @@ function WorkerAssignmentSection({ control }: { control: Control<Tractor> }) {
   const t = useT();
 
   return (
-    <FormSection title={t("Worker Assignment")}>
+    <FormSection title={t("Worker assignment")}>
       <FormGroup cols={2}>
         <FormControl>
           <WorkerAutocompleteField<Tractor>
             name="primaryWorkerId"
             control={control}
-            label={t("Primary Worker")}
+            label={t("Primary worker")}
             rules={{ required: true }}
-            placeholder={t("Select Primary Worker")}
+            placeholder={t("Select primary worker")}
             description={t("The primary worker assigned to this tractor.")}
           />
         </FormControl>
@@ -255,8 +255,8 @@ function WorkerAssignmentSection({ control }: { control: Control<Tractor> }) {
             name="secondaryWorkerId"
             control={control}
             clearable
-            label={t("Secondary Worker")}
-            placeholder={t("Select Secondary Worker")}
+            label={t("Secondary worker")}
+            placeholder={t("Select secondary worker")}
             description={t("An optional secondary worker assigned to this tractor.")}
           />
         </FormControl>

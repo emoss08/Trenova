@@ -108,7 +108,7 @@ export function StatementSidebar({
               onClick={() => setSort(option.key)}
               aria-pressed={sort === option.key}
               className={cn(
-                "rounded px-1.5 py-0.5 text-xs transition-colors",
+                "rounded-md px-1.5 py-0.5 text-xs transition-colors",
                 sort === option.key
                   ? "bg-muted text-foreground font-medium"
                   : "text-muted-foreground hover:text-foreground",

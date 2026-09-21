@@ -162,7 +162,7 @@ export function TestDataEditor({
       >
         <div className="flex items-center gap-2">
           <Database className="text-muted-foreground size-3.5" />
-          <span className="text-xs font-medium">{t("Sample Data")}</span>
+          <span className="text-xs font-medium">{t("Sample data")}</span>
           <span className="text-muted-foreground text-xs">
             {t("({0} values)", Object.keys(values).length)}
           </span>

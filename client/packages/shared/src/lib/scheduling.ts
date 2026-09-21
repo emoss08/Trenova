@@ -143,8 +143,8 @@ export function weeklyShiftMinutes(mask: string, durationMinutes: number): numbe
 }
 
 export const DAY_MASK_PRESETS = [
-  { label: "Mon–Fri", mask: "0111110" },
-  { label: "Mon–Sat", mask: "0111111" },
+  { label: "Mon–fri", mask: "0111110" },
+  { label: "Mon–sat", mask: "0111111" },
   { label: "Weekend", mask: "1000001" },
   { label: "Every day", mask: "1111111" },
 ] as const;

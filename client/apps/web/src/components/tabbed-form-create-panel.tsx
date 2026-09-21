@@ -53,8 +53,8 @@ type TabbedFormCreatePanelProps<T extends FieldValues, TData> = Pick<
 
 const SAVE_OPTIONS: SplitButtonOption<CreatePanelSaveAction>[] = [
   { id: "save", label: "Save" },
-  { id: "save-close", label: "Save & Close" },
-  { id: "save-add-another", label: "Save & Add Another" },
+  { id: "save-close", label: "Save & close" },
+  { id: "save-add-another", label: "Save & add another" },
 ];
 
 export function TabbedFormCreatePanel<T extends FieldValues, TData>({
@@ -185,7 +185,7 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
           <div className="border-border flex flex-col border-b px-4 py-3">
             <div className="flex items-center justify-between">
               <Dialog.Title className="text-2xl leading-none font-semibold">
-                {t("Add New {0}", title)}
+                {t("Add new {0}", title)}
               </Dialog.Title>
               <div className="flex items-center gap-1">
                 {headerActions}

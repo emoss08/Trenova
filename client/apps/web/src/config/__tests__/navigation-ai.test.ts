@@ -34,7 +34,7 @@ describe("AI surfaces in navigation", () => {
     const byHref = new Map(adminLinks.map((link) => [link.href, link]));
 
     const hub = byHref.get("/admin/agent-control");
-    expect(hub?.title).toBe("AI Control");
+    expect(hub?.title).toBe("AI control");
     expect(hub?.group).toBe("AI & Automation");
     expect(hub?.resource).toBe(Resource.AgentControl);
     expect(hub?.requiredOperation).toBe(Operation.Read);

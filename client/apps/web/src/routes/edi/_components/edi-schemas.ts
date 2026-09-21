@@ -88,7 +88,7 @@ export const environmentOptions = [
 ];
 
 export const sftpAuthModeOptions = [
-  { label: "Private Key", value: "privateKey" },
+  { label: "Private key", value: "privateKey" },
   { label: "Password", value: "password" },
 ];
 

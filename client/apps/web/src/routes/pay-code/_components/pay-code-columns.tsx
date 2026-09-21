@@ -86,7 +86,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayCodeRow>[] {
         <span>
           {row.original.name}
           {row.original.isSystem && (
-            <span className="bg-muted text-muted-foreground ml-1.5 rounded px-1 py-0.5 text-2xs">
+            <span className="bg-muted text-muted-foreground ml-1.5 rounded-md px-1 py-0.5 text-2xs">
               {t("System")}
             </span>
           )}
@@ -111,7 +111,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayCodeRow>[] {
     },
     {
       id: "glAccount",
-      header: t("GL Account"),
+      header: t("GL account"),
       cell: ({ row }) =>
         row.original.glAccount ? (
           <span>
@@ -125,7 +125,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayCodeRow>[] {
     },
     {
       accessorKey: "defaultAmountMinor",
-      header: () => <div className="text-right">{t("Default Amount")}</div>,
+      header: () => <div className="text-right">{t("Default amount")}</div>,
       cell: ({ row }) =>
         row.original.defaultAmountMinor != null ? (
           <div className="text-right">

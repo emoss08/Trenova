@@ -289,7 +289,7 @@ export function AuthForm({
             rel="noreferrer"
             className="text-muted-foreground hover:text-foreground underline underline-offset-[3px]"
           >
-            {t("Privacy Policy")}
+            {t("Privacy policy")}
           </a>
           .
         </p>

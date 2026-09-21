@@ -69,20 +69,20 @@ function FeasibilityRow({
           </span>
           {selected && <CheckIcon className="text-brand size-3 shrink-0" />}
           {duty && (
-            <Badge variant={duty.variant} className="h-4 shrink-0 rounded px-1 text-3xs">
+            <Badge variant={duty.variant} className="h-4 shrink-0 rounded-md px-1 text-3xs">
               {t(duty.label)}
             </Badge>
           )}
           {driver.tractorCode && (
             <Badge
               variant="neutral" appearance="outline"
-              className="border-border h-4 shrink-0 rounded px-1 font-mono text-3xs"
+              className="border-border h-4 shrink-0 rounded-md px-1 font-mono text-3xs"
             >
               {driver.tractorCode}
             </Badge>
           )}
         </div>
-        <Badge variant={verdict.variant} className="h-4 shrink-0 rounded px-1 text-3xs">
+        <Badge variant={verdict.variant} className="h-4 shrink-0 rounded-md px-1 text-3xs">
           {t(verdict.label)}
         </Badge>
       </div>
@@ -261,7 +261,7 @@ export function AssignmentHosFeasibility({
             {!feasibilityQuery.isLoading && !feasibilityQuery.isError && drivers.length > 0 && (
               <Badge
                 variant={feasibleCount > 0 ? "success" : "warning"}
-                className="h-4 rounded px-1 text-3xs"
+                className="h-4 rounded-md px-1 text-3xs"
               >
                 {t("{0} feasible", feasibleCount)}
               </Badge>

@@ -18,25 +18,25 @@ export const keybindGroups: KeybindGroup[] = [
     keybinds: [
       {
         id: "command-palette",
-        label: "Command Palette",
+        label: "Command palette",
         keys: ["Ctrl", "K"],
         description: "Open the command palette to search routes and commands",
       },
       {
         id: "toggle-sidebar",
-        label: "Toggle Sidebar",
+        label: "Toggle sidebar",
         keys: ["Ctrl", "B"],
         description: "Expand or collapse the sidebar navigation",
       },
       {
         id: "user-settings",
-        label: "User Settings",
+        label: "User settings",
         keys: ["Ctrl", "Shift", "S"],
         description: "Open the user settings dialog",
       },
       {
         id: "keyboard-shortcuts",
-        label: "Keyboard Shortcuts",
+        label: "Keyboard shortcuts",
         keys: ["Ctrl", "/"],
         description: "Show this keyboard shortcuts dialog",
       },
@@ -54,13 +54,13 @@ export const keybindGroups: KeybindGroup[] = [
     keybinds: [
       {
         id: "comment-send",
-        label: "Send Comment",
+        label: "Send comment",
         keys: ["Ctrl", "Enter"],
         description: "Send the comment you are composing",
       },
       {
         id: "comment-cancel",
-        label: "Cancel Edit or Reply",
+        label: "Cancel edit or reply",
         keys: ["Esc"],
         description: "Close the inline comment editor or reply composer",
       },
@@ -78,7 +78,7 @@ export const keybindGroups: KeybindGroup[] = [
       },
       {
         id: "comment-mention",
-        label: "Mention or Reference",
+        label: "Mention or reference",
         keys: ["@", "#"],
         description:
           "Mention a teammate with @ or reference a shipment, worker, or customer with #",
@@ -87,17 +87,17 @@ export const keybindGroups: KeybindGroup[] = [
   },
   {
     id: "forms",
-    label: "Forms & Dialogs",
+    label: "Forms & dialogs",
     keybinds: [
       {
         id: "submit-form",
-        label: "Submit Form",
+        label: "Submit form",
         keys: ["Ctrl", "Enter"],
         description: "Submit the current form in a modal or panel",
       },
       {
         id: "close-dialog",
-        label: "Close Dialog",
+        label: "Close dialog",
         keys: ["Esc"],
         description: "Close the current dialog or modal",
       },
@@ -105,17 +105,17 @@ export const keybindGroups: KeybindGroup[] = [
   },
   {
     id: "navigation",
-    label: "Record Navigation",
+    label: "Record navigation",
     keybinds: [
       {
         id: "prev-record",
-        label: "Previous Record",
+        label: "Previous record",
         keys: ["↑"],
         description: "Navigate to the previous record in an edit dialog",
       },
       {
         id: "next-record",
-        label: "Next Record",
+        label: "Next record",
         keys: ["↓"],
         description: "Navigate to the next record in an edit dialog",
       },

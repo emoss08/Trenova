@@ -43,7 +43,7 @@ export function HazmatSegregationRulePanel({
         onOpenChange={onOpenChange}
         url="/hazmat-segregation-rules/"
         queryKey="hazmat-segregation-rule-list"
-        title={t("Hazmat Segregation Rule")}
+        title={t("Hazmat segregation rule")}
         fieldKey="name"
         formComponent={<HazmatSegregationRuleForm />}
         row={row}
@@ -59,7 +59,7 @@ export function HazmatSegregationRulePanel({
       form={form}
       url="/hazmat-segregation-rules/"
       queryKey="hazmat-segregation-rule-list"
-      title={t("Hazmat Segregation Rule")}
+      title={t("Hazmat segregation rule")}
       formComponent={<HazmatSegregationRuleForm />}
     />
   );

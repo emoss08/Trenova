@@ -164,21 +164,21 @@ export default function CostControlForm() {
         <div className="flex flex-col gap-4 pb-14">
           <CostBasisCard />
           <CategoryRatesCard
-            title={t("Variable Costs")}
+            title={t("Variable costs")}
             description={t(
               "Per-mile costs that scale with miles driven. Each category uses its industry benchmark unless you override it or map it to GL actuals.",
             )}
             behavior="Variable"
           />
           <CategoryRatesCard
-            title={t("Fixed Costs")}
+            title={t("Fixed costs")}
             description={t(
               "Ownership and overhead costs normalized to a per-mile rate. When GL actuals are enabled, fixed categories divide by planned monthly miles when set.",
             )}
             behavior="Fixed"
           />
           <GLActualsCard />
-          <FormSaveDock saveButtonContent={t("Save Changes")} />
+          <FormSaveDock saveButtonContent={t("Save changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -194,7 +194,7 @@ function CostBasisCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Cost Basis")}</CardTitle>
+        <CardTitle>{t("Cost basis")}</CardTitle>
         <CardDescription>
           {t(
             "Core assumptions behind the cost-per-mile estimate: fuel pricing, fleet efficiency, and how deadhead miles are attributed to shipment cost.",
@@ -207,7 +207,7 @@ function CostBasisCard() {
             <SwitchField
               control={control}
               name="useLiveFuelPrice"
-              label={t("Use Live Fuel Price")}
+              label={t("Use live fuel price")}
               description={t(
                 "Derives the fuel cost per mile from the latest fuel index price divided by fleet MPG instead of the static benchmark.",
               )}
@@ -219,7 +219,7 @@ function CostBasisCard() {
               <FuelIndexAutocompleteField
                 control={control}
                 name="fuelIndexId"
-                label={t("Fuel Index")}
+                label={t("Fuel index")}
                 placeholder={t("Select fuel index")}
                 description={t("Diesel price index used to resolve the live fuel cost per mile.")}
                 clearable
@@ -230,7 +230,7 @@ function CostBasisCard() {
             <NumberField
               control={control}
               name="milesPerGallon"
-              label={t("Fleet Miles Per Gallon")}
+              label={t("Fleet miles per gallon")}
               description={t(
                 "Average fleet fuel efficiency used to convert diesel price per gallon into cost per mile.",
               )}
@@ -252,7 +252,7 @@ function CostBasisCard() {
             <NumberField
               control={control}
               name="targetMarginPercent"
-              label={t("Target Margin Percent")}
+              label={t("Target margin percent")}
               description={t(
                 "Margin threshold used to color-code shipment profitability. Margins below this show as thin; defaults to 10% when unset.",
               )}
@@ -360,7 +360,7 @@ function CategoryRow({ index, isLast }: { index: number; isLast: boolean }) {
             id={`override-${category.id}`}
             checked={isOverride}
             onCheckedChange={(checked) => setRateSource(checked ? "Override" : "Benchmark")}
-            label={t("Override Rate")}
+            label={t("Override rate")}
             description={t("Replace the industry benchmark with your own per-mile rate.")}
           />
         </FormControl>
@@ -369,7 +369,7 @@ function CategoryRow({ index, isLast }: { index: number; isLast: boolean }) {
             <NumberField
               control={control}
               name={`categories.${index}.overrideRatePerMile`}
-              label={t("Override Rate Per Mile")}
+              label={t("Override rate per mile")}
               placeholder="0.00"
               rules={{ required: true }}
             />
@@ -381,7 +381,7 @@ function CategoryRow({ index, isLast }: { index: number; isLast: boolean }) {
               id={`gl-actual-${category.id}`}
               checked={isGLActual}
               onCheckedChange={(checked) => setRateSource(checked ? "GLActual" : "Benchmark")}
-              label={t("Use GL Actuals")}
+              label={t("Use GL actuals")}
               description={t(
                 "Derive this rate from posted GL expenses divided by fleet miles over the rolling window.",
               )}
@@ -393,7 +393,7 @@ function CategoryRow({ index, isLast }: { index: number; isLast: boolean }) {
         <GLAccountMultiSelectAutocompleteField
           control={control}
           name={`categories.${index}.glAccountIds`}
-          label={t("Mapped GL Accounts")}
+          label={t("Mapped GL accounts")}
           placeholder={t("Select GL accounts")}
           description={t(
             "Expense accounts whose postings feed this category when GL actuals are enabled.",
@@ -441,7 +441,7 @@ function GLActualsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("GL Actuals")}</CardTitle>
+        <CardTitle>{t("GL actuals")}</CardTitle>
         <CardDescription>
           {t(
             "When enabled, categories mapped to GL accounts derive their per-mile rate from real posted expenses over a rolling window, replacing benchmarks as your ledger fills in.",
@@ -454,7 +454,7 @@ function GLActualsCard() {
             <SwitchField
               control={control}
               name="glActualsEnabled"
-              label={t("Enable GL Actuals")}
+              label={t("Enable GL actuals")}
               description={t(
                 "Allow categories with mapped GL accounts to use posted expense actuals.",
               )}
@@ -467,7 +467,7 @@ function GLActualsCard() {
                 <NumberField
                   control={control}
                   name="glRollingMonths"
-                  label={t("Rolling Window (Months)")}
+                  label={t("Rolling window (months)")}
                   description={t(
                     "Number of trailing months of GL activity used to compute actual rates. Three months smooths lumpy maintenance spend.",
                   )}
@@ -478,7 +478,7 @@ function GLActualsCard() {
                 <NumberField
                   control={control}
                   name="plannedMonthlyMiles"
-                  label={t("Planned Monthly Miles")}
+                  label={t("Planned monthly miles")}
                   description={t(
                     "Divisor floor for fixed categories so low-mileage months do not inflate fixed cost per mile. Leave empty to always divide by actual fleet miles.",
                   )}

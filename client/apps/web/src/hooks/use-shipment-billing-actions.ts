@@ -75,7 +75,7 @@ export function useShipmentBillingActions(): ShipmentBillingActions {
     () => ({
       markReadyToBill: {
         id: "mark-ready-to-bill",
-        label: t("Mark Ready to Bill"),
+        label: t("Mark ready to bill"),
         icon: CheckCircle2Icon,
         isAvailable: canMarkShipmentReadyToBill,
         run: async (shipmentId) => {
@@ -84,7 +84,7 @@ export function useShipmentBillingActions(): ShipmentBillingActions {
       },
       markReadyAndTransferToBilling: {
         id: "mark-ready-and-transfer-to-billing",
-        label: t("Mark Ready & Transfer to Billing"),
+        label: t("Mark ready & transfer to billing"),
         icon: BanknoteArrowUpIcon,
         isAvailable: canMarkShipmentReadyToBill,
         run: async (shipmentId) => {
@@ -95,7 +95,7 @@ export function useShipmentBillingActions(): ShipmentBillingActions {
       },
       transferToBilling: {
         id: "transfer-to-billing",
-        label: t("Transfer to Billing"),
+        label: t("Transfer to billing"),
         icon: SendIcon,
         isAvailable: canTransferShipmentToBilling,
         run: async (shipmentId) => {

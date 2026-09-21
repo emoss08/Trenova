@@ -103,7 +103,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerPTORow>[] {
     },
     {
       accessorKey: "worker.firstName",
-      header: t("First Name"),
+      header: t("First name"),
       cell: (info) => {
         return <p>{info.getValue() as string}</p>;
       },
@@ -117,7 +117,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerPTORow>[] {
     },
     {
       accessorKey: "worker.lastName",
-      header: t("Last Name"),
+      header: t("Last name"),
       cell: (info) => {
         return <p>{info.getValue() as string}</p>;
       },
@@ -199,7 +199,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerPTORow>[] {
     },
     {
       accessorKey: "balanceAfterDays",
-      header: t("Balance After"),
+      header: t("Balance after"),
       cell: ({ row }) =>
         row.original.balanceAfterDays != null ? (
           <span className="font-table tabular-nums">

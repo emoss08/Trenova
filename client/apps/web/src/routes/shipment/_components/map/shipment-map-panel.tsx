@@ -144,7 +144,7 @@ export default function ShipmentMapPanel({
       >
         <div className="border-border bg-card flex h-9 shrink-0 items-center justify-between border-b px-2.5">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="text-foreground text-xs font-semibold">{t("Live Map")}</span>
+            <span className="text-foreground text-xs font-semibold">{t("Live map")}</span>
             <span className="border-border bg-muted/60 text-muted-foreground shrink truncate rounded-md border px-1.5 py-0.5 font-mono text-2xs">
               {t("{0} at-risk · {1} in-transit", delayedCount, inTransitCount)}
             </span>

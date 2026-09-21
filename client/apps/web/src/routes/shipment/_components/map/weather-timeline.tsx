@@ -31,7 +31,7 @@ const WEATHER_OPTIONS: WeatherOption[] = [
   },
   {
     id: "wind",
-    label: "Wind Speed",
+    label: "Wind speed",
     description: "See sustained wind speed (wind gusts not indicated)",
     icon: WindIcon,
   },
@@ -43,7 +43,7 @@ const WEATHER_OPTIONS: WeatherOption[] = [
   },
   {
     id: "clouds",
-    label: "Cloud Cover",
+    label: "Cloud cover",
     description: "Estimated cloud coverage worldwide",
     icon: CloudIcon,
   },

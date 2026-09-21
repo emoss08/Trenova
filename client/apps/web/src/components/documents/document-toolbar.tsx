@@ -41,7 +41,7 @@ interface DocumentToolbarProps {
 }
 
 const fileTypeOptions: { value: FileTypeFilter; label: string }[] = [
-  { value: "all", label: "All Files" },
+  { value: "all", label: "All files" },
   { value: "pdf", label: "PDF" },
   { value: "images", label: "Images" },
   { value: "documents", label: "Documents" },

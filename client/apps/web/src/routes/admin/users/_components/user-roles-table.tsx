@@ -24,7 +24,7 @@ export default function UserRolesTable() {
     >
       <TabsList variant="underline">
         <TabsTrigger value="users">{t("Users")}</TabsTrigger>
-        <TabsTrigger value="roles">{t("Roles & Permissions")}</TabsTrigger>
+        <TabsTrigger value="roles">{t("Roles & permissions")}</TabsTrigger>
       </TabsList>
       <TabsContent value="users" keepMounted>
         <Activity mode={activeTab === "users" ? "visible" : "hidden"}>

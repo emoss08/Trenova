@@ -12,7 +12,7 @@ export function CustomerPaymentsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Customer Payments"),
+        title: t("Customer payments"),
         description: t("Record, apply, and reverse customer payments with full GL traceability."),
       }}
     >

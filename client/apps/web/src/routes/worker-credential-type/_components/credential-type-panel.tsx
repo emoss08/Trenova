@@ -100,7 +100,7 @@ function CredentialTypeCreatePanel({
     <FormCreatePanel<CredentialTypeFormValues, WorkerCredentialTypeRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Credential Type")}
+      title={t("Credential type")}
       description={t(
         "Add a licence, endorsement or certificate workers can hold, and decide whether it is required.",
       )}
@@ -141,7 +141,7 @@ function CredentialTypeEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title={t("Credential Type")}
+      title={t("Credential type")}
       fieldKey="code"
       queryKey={WORKER_CREDENTIAL_TYPE_LIST_KEY}
       form={form}

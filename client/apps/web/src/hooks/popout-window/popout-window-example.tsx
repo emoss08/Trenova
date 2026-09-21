@@ -26,7 +26,7 @@ export function PopoutWindowExample() {
     return (
       <div className="p-4">
         <h2>{t("This is a popout window!")}</h2>
-        <Button onClick={() => window.close()}>{t("Close Window")}</Button>
+        <Button onClick={() => window.close()}>{t("Close window")}</Button>
       </div>
     );
   }
@@ -34,7 +34,7 @@ export function PopoutWindowExample() {
   // Main window content
   return (
     <div className="space-y-4">
-      <h2>{t("Popout Window Manager Example")}</h2>
+      <h2>{t("Popout window manager example")}</h2>
 
       <div className="flex gap-2">
         <Button
@@ -48,13 +48,13 @@ export function PopoutWindowExample() {
               {
                 width: 800,
                 height: 600,
-                title: t("Create Equipment Manufacturer"),
+                title: t("Create equipment manufacturer"),
                 rememberPosition: true,
               },
             );
           }}
         >
-          {t("Open Create Modal")}
+          {t("Open create modal")}
         </Button>
 
         <Button
@@ -68,13 +68,13 @@ export function PopoutWindowExample() {
               {
                 width: 900,
                 height: 700,
-                title: t("Edit Equipment Manufacturer"),
+                title: t("Edit equipment manufacturer"),
                 rememberPosition: true,
               },
             );
           }}
         >
-          {t("Open Edit Modal")}
+          {t("Open edit modal")}
         </Button>
 
         <Button
@@ -93,13 +93,13 @@ export function PopoutWindowExample() {
             );
           }}
         >
-          {t("Open Shipments")}
+          {t("Open shipments")}
         </Button>
       </div>
 
       {hasOpenWindows && (
-        <div className="rounded border p-4">
-          <h3>{t("Active Windows ({0})", activeWindows.length)}</h3>
+        <div className="rounded-md border p-4">
+          <h3>{t("Active windows ({0})", activeWindows.length)}</h3>
           <div className="mt-2 space-y-2">
             {activeWindows.map((windowId) => (
               <div key={windowId} className="flex items-center justify-between">
@@ -112,13 +112,13 @@ export function PopoutWindowExample() {
                     size="sm"
                     onClick={() => sendMessage(windowId, "test-message", { hello: "world" })}
                   >
-                    {t("Send Message")}
+                    {t("Send message")}
                   </Button>
                 </div>
               </div>
             ))}
             <Button onClick={closeAllPopouts} variant="destructive" className="mt-2">
-              {t("Close All Windows")}
+              {t("Close all windows")}
             </Button>
           </div>
         </div>

@@ -98,7 +98,7 @@ export default function DashControlForm() {
           <MoneyCard />
           <ProfileCard />
           <AlertsCard />
-          <FormSaveDock saveButtonContent={t("Save Changes")} />
+          <FormSaveDock saveButtonContent={t("Save changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -113,7 +113,7 @@ function LoadWorkflowCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Load Workflow")}</CardTitle>
+        <CardTitle>{t("Load workflow")}</CardTitle>
         <CardDescription>
           {t(
             "What drivers can do on their assigned loads. Everything here is enforced server-side — turning a toggle off removes the feature from Dash immediately.",
@@ -126,7 +126,7 @@ function LoadWorkflowCard() {
             <SwitchField
               control={control}
               name="requireLoadAcknowledgment"
-              label={t("Load Acceptance")}
+              label={t("Load acceptance")}
               description={t(
                 "Drivers see an accept/decline card on new assignments so dispatch knows the load was received.",
               )}
@@ -136,7 +136,7 @@ function LoadWorkflowCard() {
             <SwitchField
               control={control}
               name="allowLoadRefusals"
-              label={t("Allow Declines")}
+              label={t("Allow declines")}
               disabled={!requireAck}
               description={t(
                 "Drivers may decline a load with a reason. Turn off for forced dispatch — drivers can only acknowledge.",
@@ -147,7 +147,7 @@ function LoadWorkflowCard() {
             <SwitchField
               control={control}
               name="allowStopActions"
-              label={t("Self-Service Arrive / Depart")}
+              label={t("Self-Service arrive / depart")}
               description={t(
                 "Drivers record their own arrivals and departures at stops, driving move status and detention math.",
               )}
@@ -157,7 +157,7 @@ function LoadWorkflowCard() {
             <SwitchField
               control={control}
               name="allowLoadDocumentUpload"
-              label={t("POD / BOL Upload")}
+              label={t("POD / BOL upload")}
               description={t(
                 "Drivers photograph and upload signed paperwork straight from the cab.",
               )}
@@ -167,7 +167,7 @@ function LoadWorkflowCard() {
             <SwitchField
               control={control}
               name="allowLoadComments"
-              label={t("Load Messaging")}
+              label={t("Load messaging")}
               description={t(
                 "Drivers can send messages on load chat. Reading dispatch notes is always allowed.",
               )}
@@ -187,7 +187,7 @@ function PayVisibilityCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Pay Visibility")}</CardTitle>
+        <CardTitle>{t("Pay visibility")}</CardTitle>
         <CardDescription>
           {t(
             "Settlement statements are always visible to drivers — these toggles only control per-load pay detail shown before settlement.",
@@ -200,7 +200,7 @@ function PayVisibilityCard() {
             <SwitchField
               control={control}
               name="showLoadPay"
-              label={t("Per-Load Pay")}
+              label={t("Per-load pay")}
               description={t("Show what each load pays and recent pay events as they accrue.")}
             />
           </FormControl>
@@ -208,7 +208,7 @@ function PayVisibilityCard() {
             <SwitchField
               control={control}
               name="showPayEstimates"
-              label={t("Pay Estimates")}
+              label={t("Pay estimates")}
               disabled={!showLoadPay}
               description={t(
                 "Show an estimated payout on active loads before pay accrues, based on the driver's pay plan.",
@@ -229,7 +229,7 @@ function MoneyCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Expenses & Disputes")}</CardTitle>
+        <CardTitle>{t("Expenses & disputes")}</CardTitle>
         <CardDescription>
           {t("Driver-initiated money workflows — reimbursements and settlement challenges.")}
         </CardDescription>
@@ -240,7 +240,7 @@ function MoneyCard() {
             <SwitchField
               control={control}
               name="allowExpenseSubmission"
-              label={t("Expense Submission")}
+              label={t("Expense submission")}
               description={t(
                 "Drivers submit out-of-pocket expenses (lumpers, tolls, scales) for reimbursement review.",
               )}
@@ -250,7 +250,7 @@ function MoneyCard() {
             <SwitchField
               control={control}
               name="requireExpenseReceipt"
-              label={t("Require Receipts")}
+              label={t("Require receipts")}
               disabled={!allowExpenses}
               description={t("Expenses cannot be approved until a receipt photo is attached.")}
             />
@@ -259,7 +259,7 @@ function MoneyCard() {
             <SwitchField
               control={control}
               name="allowSettlementDisputes"
-              label={t("Settlement Disputes")}
+              label={t("Settlement disputes")}
               description={t("Drivers can flag a statement or line item for review from Dash.")}
             />
           </FormControl>
@@ -276,7 +276,7 @@ function ProfileCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Profile Self-Service")}</CardTitle>
+        <CardTitle>{t("Profile self-Service")}</CardTitle>
         <CardDescription>
           {t(
             "What drivers can maintain on their own record. Compliance dates (CDL, medical) are always carrier-controlled regardless of these settings.",
@@ -289,7 +289,7 @@ function ProfileCard() {
             <SwitchField
               control={control}
               name="allowProfileDocumentUpload"
-              label={t("Qualification Document Upload")}
+              label={t("Qualification document upload")}
               description={t(
                 "Drivers upload renewed CDLs, medical cards, and other DQ-file documents from their phone.",
               )}
@@ -299,7 +299,7 @@ function ProfileCard() {
             <SwitchField
               control={control}
               name="allowContactInfoEdit"
-              label={t("Contact Info Edits")}
+              label={t("Contact info edits")}
               description={t(
                 "Drivers keep their own phone, address, and emergency contact current.",
               )}
@@ -309,7 +309,7 @@ function ProfileCard() {
             <SwitchField
               control={control}
               name="requireContactChangeApproval"
-              label={t("Approve Contact Edits")}
+              label={t("Approve contact edits")}
               description={t(
                 "A driver's edit waits on the office as a change request instead of landing straight on the record.",
               )}
@@ -319,7 +319,7 @@ function ProfileCard() {
             <SwitchField
               control={control}
               name="allowPtoRequests"
-              label={t("Time-Off Requests")}
+              label={t("Time-off requests")}
               description={t(
                 "Drivers request PTO from Dash; requests land in the existing approval workflow.",
               )}
@@ -341,7 +341,7 @@ function AlertsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Reminders & Alerts")}</CardTitle>
+        <CardTitle>{t("Reminders & alerts")}</CardTitle>
         <CardDescription>
           {t("Automated notifications driven by driver activity and credential dates.")}
         </CardDescription>
@@ -352,7 +352,7 @@ function AlertsCard() {
             <SwitchField
               control={control}
               name="sendCredentialReminders"
-              label={t("Credential Expiry Reminders")}
+              label={t("Credential expiry reminders")}
               description={t(
                 "Push drivers reminders at 30/14/3 days before a credential expires. Compliance always gets expired-credential alerts.",
               )}
@@ -362,7 +362,7 @@ function AlertsCard() {
             <SelectField
               control={control}
               name="driverDigestCadence"
-              label={t("How Drivers Are Told")}
+              label={t("How drivers are told")}
               options={CADENCE_OPTIONS}
               isReadOnly={!reminders}
               description={t(
@@ -374,7 +374,7 @@ function AlertsCard() {
             <SelectField
               control={control}
               name="driverDigestWeekday"
-              label={t("Weekly Round-Up Day")}
+              label={t("Weekly round-up day")}
               options={WEEKDAY_OPTIONS}
               isReadOnly={cadence !== "Weekly"}
               description={t(
@@ -386,7 +386,7 @@ function AlertsCard() {
             <SwitchField
               control={control}
               name="enableDetentionAlerts"
-              label={t("Detention Alerts")}
+              label={t("Detention alerts")}
               description={t(
                 "Alert dispatch when a driver dwells at a stop beyond the threshold — a billing candidate for detention accessorials.",
               )}

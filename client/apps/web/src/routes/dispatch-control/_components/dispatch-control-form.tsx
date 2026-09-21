@@ -80,7 +80,7 @@ export default function DispatchControlForm() {
           <CapabilityGate capability={OrganizationCapability.AssetOperations}>
             <ComplianceForm />
           </CapabilityGate>
-          <FormSaveDock saveButtonContent={t("Save Changes")} />
+          <FormSaveDock saveButtonContent={t("Save changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -100,7 +100,7 @@ function AutoAssignmentForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Automated Resource Assignment")}</CardTitle>
+        <CardTitle>{t("Automated resource assignment")}</CardTitle>
         <CardDescription>
           {t(
             "Configure how the system chooses workers and equipment for shipments. These controls influence assignment consistency, utilization, and dispatch throughput.",
@@ -113,7 +113,7 @@ function AutoAssignmentForm() {
             <SwitchField
               control={control}
               name="enableAutoAssignment"
-              label={t("Enable Automated Assignment")}
+              label={t("Enable automated assignment")}
               description={t(
                 "When enabled, the system can automatically assign available resources to shipments.",
               )}
@@ -126,7 +126,7 @@ function AutoAssignmentForm() {
                 <SelectField
                   control={control}
                   name="autoAssignmentStrategy"
-                  label={t("Assignment Optimization Strategy")}
+                  label={t("Assignment optimization strategy")}
                   description={t(
                     "Select the primary strategy used when matching resources to shipments.",
                   )}
@@ -137,7 +137,7 @@ function AutoAssignmentForm() {
                 <NumberField
                   control={control}
                   name="autoAssignConfidenceThreshold"
-                  label={t("Auto-Execute Confidence Threshold")}
+                  label={t("Auto-execute confidence threshold")}
                   description={t(
                     "Minimum confidence (0 to 1) an automatic assignment must reach before it executes without dispatcher review.",
                   )}
@@ -149,7 +149,7 @@ function AutoAssignmentForm() {
                 <NumberField
                   control={control}
                   name="autoAssignMaxDeadheadMiles"
-                  label={t("Maximum Deadhead Miles")}
+                  label={t("Maximum deadhead miles")}
                   description={t(
                     "Candidates beyond this many empty miles from the pickup are never auto-assigned. Leave empty for no cap.",
                   )}
@@ -160,7 +160,7 @@ function AutoAssignmentForm() {
                 <NumberField
                   control={control}
                   name="autoAssignPlanningHorizonHours"
-                  label={t("Planning Horizon (Hours)")}
+                  label={t("Planning horizon (hours)")}
                   description={t("How far ahead the optimizer plans moves, from 1 to 336 hours.")}
                   placeholder="48"
                   sideText="hours"
@@ -189,7 +189,7 @@ function ServiceFailureForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("Service Failure Monitoring")}</CardTitle>
+        <CardTitle>{t("Service failure monitoring")}</CardTitle>
         <CardDescription>
           {t(
             "Define which service failures to track and when they should be recorded. These settings drive operational reporting and exception visibility.",
@@ -202,7 +202,7 @@ function ServiceFailureForm() {
             <SelectField
               control={control}
               name="recordServiceFailures"
-              label={t("Record Service Failures")}
+              label={t("Record Service failures")}
               description={t("Choose which incident types should be captured as service failures.")}
               options={serviceIncidentTypeChoices}
             />
@@ -213,7 +213,7 @@ function ServiceFailureForm() {
                 <NumberField
                   control={control}
                   name="serviceFailureGracePeriod"
-                  label={t("Service Failure Grace Period")}
+                  label={t("Service failure grace period")}
                   placeholder={t("Enter grace period in minutes")}
                   description={t(
                     "Defines the delay buffer before an eligible incident is recorded as a failure.",
@@ -226,7 +226,7 @@ function ServiceFailureForm() {
                 <NumberField
                   control={control}
                   name="serviceFailureTarget"
-                  label={t("Service Failure Target")}
+                  label={t("Service failure target")}
                   placeholder={t("Enter target percentage")}
                   description={t("Optional threshold for acceptable service failure rate.")}
                   sideText="%"
@@ -275,7 +275,7 @@ function ComplianceForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("DOT Compliance Enforcement")}</CardTitle>
+        <CardTitle>{t("DOT compliance enforcement")}</CardTitle>
         <CardDescription>
           {t(
             "Configure dispatch-time compliance checks for worker qualification, medical certification, hazmat eligibility, and testing requirements.",
@@ -288,7 +288,7 @@ function ComplianceForm() {
             <SwitchField
               control={control}
               name="enforceHosCompliance"
-              label={t("Enable DOT Compliance Enforcement")}
+              label={t("Enable DOT compliance enforcement")}
               description={t(
                 "When enabled, the system applies configured compliance checks before assignments proceed.",
               )}
@@ -301,7 +301,7 @@ function ComplianceForm() {
                 <SwitchField
                   control={control}
                   name="enforceMedicalCertCompliance"
-                  label={t("Medical Certification Validation")}
+                  label={t("Medical certification validation")}
                   description={t("Require current medical certification before assignment.")}
                   position="left"
                 />
@@ -310,7 +310,7 @@ function ComplianceForm() {
                 <SwitchField
                   control={control}
                   name="enforceDriverQualificationCompliance"
-                  label={t("Driver Qualification Verification")}
+                  label={t("Driver qualification verification")}
                   description={t(
                     "Require valid driver qualification and license state before assignment.",
                   )}
@@ -321,7 +321,7 @@ function ComplianceForm() {
                 <SwitchField
                   control={control}
                   name="enforceHazmatCompliance"
-                  label={t("Hazardous Materials Compliance")}
+                  label={t("Hazardous materials compliance")}
                   description={t("Require hazmat-specific compliance checks for regulated loads.")}
                   position="left"
                 />
@@ -330,7 +330,7 @@ function ComplianceForm() {
                 <SwitchField
                   control={control}
                   name="enforceDrugAndAlcoholCompliance"
-                  label={t("Drug and Alcohol Testing Compliance")}
+                  label={t("Drug and alcohol testing compliance")}
                   description={t("Require testing compliance checks before assignment.")}
                   position="left"
                 />
@@ -339,7 +339,7 @@ function ComplianceForm() {
                 <SelectField
                   control={control}
                   name="complianceEnforcementLevel"
-                  label={t("Compliance Enforcement Level")}
+                  label={t("Compliance enforcement level")}
                   description={t("Select whether violations should warn, block, or be audit-only.")}
                   options={complianceEnforcementLevelChoices}
                 />
@@ -350,7 +350,7 @@ function ComplianceForm() {
             <SwitchField
               control={control}
               name="enforceWorkerAssign"
-              label={t("Require Worker Assignment")}
+              label={t("Require worker assignment")}
               description={t("Prevent dispatching without an assigned worker.")}
               position="left"
             />
@@ -359,7 +359,7 @@ function ComplianceForm() {
             <SwitchField
               control={control}
               name="enforceTrailerContinuity"
-              label={t("Require Trailer Continuity")}
+              label={t("Require trailer continuity")}
               description={t("Enforce trailer continuity rules across movement chains.")}
               position="left"
             />
@@ -368,7 +368,7 @@ function ComplianceForm() {
             <SwitchField
               control={control}
               name="enforceWorkerPtaRestrictions"
-              label={t("Enforce Worker PTA Restrictions")}
+              label={t("Enforce worker PTA restrictions")}
               description={t(
                 "Apply worker availability and paid-time-away restrictions during assignment.",
               )}
@@ -379,7 +379,7 @@ function ComplianceForm() {
             <SwitchField
               control={control}
               name="enforceWorkerTractorFleetContinuity"
-              label={t("Enforce Worker Tractor Fleet Continuity")}
+              label={t("Enforce worker tractor fleet continuity")}
               description={t("Require worker-to-tractor fleet continuity where configured.")}
               position="left"
             />

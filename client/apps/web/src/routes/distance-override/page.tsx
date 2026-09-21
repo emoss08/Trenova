@@ -11,7 +11,7 @@ export function DistanceOverridesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Distance Overrides"),
+        title: t("Distance overrides"),
         description: t(
           "Override calculated distances between location pairs for routing and billing adjustments",
         ),

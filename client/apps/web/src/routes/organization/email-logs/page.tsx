@@ -13,7 +13,7 @@ export function EmailLogsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Email Logs"),
+        title: t("Email logs"),
         description: t("Transactional email send and delivery history."),
       }}
     >

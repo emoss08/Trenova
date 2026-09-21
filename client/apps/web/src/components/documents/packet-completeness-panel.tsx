@@ -142,12 +142,12 @@ export function PacketCompletenessPanel({ summary }: PacketCompletenessPanelProp
       <div className="bg-card rounded-lg border">
         <CollapsibleTrigger className="hover:bg-accent/50 flex w-full cursor-pointer items-center justify-between px-4 py-3 transition-colors">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium">{t("Packet Status")}</span>
+            <span className="text-sm font-medium">{t("Packet status")}</span>
             <Badge variant={getStatusBadgeVariant(summary.status)}>
               {summary.status === "ExpiringSoon"
-                ? t("Expiring Soon")
+                ? t("Expiring soon")
                 : summary.status === "NeedsReview"
-                  ? t("Needs Review")
+                  ? t("Needs review")
                   : summary.status}
             </Badge>
             <span className="text-muted-foreground text-sm">

@@ -52,17 +52,17 @@ describe("guarded quick actions", () => {
     const edit = vi.fn();
     const actions: RowAction<Shipment>[] = [
       { id: "edit", label: "Edit", onClick: edit },
-      { id: "transfer-to-billing", label: "Transfer to Billing", onClick: transfer },
+      { id: "transfer-to-billing", label: "Transfer to billing", onClick: transfer },
     ];
     render(<Harness rows={[makeRow("shp_1")]} actions={actions} />);
 
-    fireEvent.click(buttonIn("shp_1", "Transfer to Billing"));
-    fireEvent.click(buttonIn("shp_1", "Transfer to Billing"));
-    fireEvent.click(buttonIn("shp_1", "Transfer to Billing"));
+    fireEvent.click(buttonIn("shp_1", "Transfer to billing"));
+    fireEvent.click(buttonIn("shp_1", "Transfer to billing"));
+    fireEvent.click(buttonIn("shp_1", "Transfer to billing"));
 
     expect(transfer).toHaveBeenCalledOnce();
-    expect(buttonIn("shp_1", "Transfer to Billing")).toBeDisabled();
-    expect(buttonIn("shp_1", "Transfer to Billing")).toHaveAttribute("aria-busy", "true");
+    expect(buttonIn("shp_1", "Transfer to billing")).toBeDisabled();
+    expect(buttonIn("shp_1", "Transfer to billing")).toHaveAttribute("aria-busy", "true");
     expect(buttonIn("shp_1", "Edit")).toBeDisabled();
     expect(buttonIn("shp_1", "Edit")).not.toHaveAttribute("aria-busy", "true");
 
@@ -71,10 +71,10 @@ describe("guarded quick actions", () => {
       await pending.promise;
     });
 
-    expect(buttonIn("shp_1", "Transfer to Billing")).toBeEnabled();
+    expect(buttonIn("shp_1", "Transfer to billing")).toBeEnabled();
     expect(buttonIn("shp_1", "Edit")).toBeEnabled();
 
-    fireEvent.click(buttonIn("shp_1", "Transfer to Billing"));
+    fireEvent.click(buttonIn("shp_1", "Transfer to billing"));
     expect(transfer).toHaveBeenCalledTimes(2);
   });
 
@@ -84,19 +84,19 @@ describe("guarded quick actions", () => {
     render(
       <Harness
         rows={[makeRow("shp_1")]}
-        actions={[{ id: "transfer-to-billing", label: "Transfer to Billing", onClick: transfer }]}
+        actions={[{ id: "transfer-to-billing", label: "Transfer to billing", onClick: transfer }]}
       />,
     );
 
-    fireEvent.click(buttonIn("shp_1", "Transfer to Billing"));
-    expect(buttonIn("shp_1", "Transfer to Billing")).toBeDisabled();
+    fireEvent.click(buttonIn("shp_1", "Transfer to billing"));
+    expect(buttonIn("shp_1", "Transfer to billing")).toBeDisabled();
 
     await act(async () => {
       pending.reject(new Error("Shipment has already been transferred to billing"));
       await pending.promise.catch(() => undefined);
     });
 
-    expect(buttonIn("shp_1", "Transfer to Billing")).toBeEnabled();
+    expect(buttonIn("shp_1", "Transfer to billing")).toBeEnabled();
   });
 
   it("locks only the row whose action is running", () => {
@@ -105,16 +105,16 @@ describe("guarded quick actions", () => {
     render(
       <Harness
         rows={[makeRow("shp_1"), makeRow("shp_2")]}
-        actions={[{ id: "transfer-to-billing", label: "Transfer to Billing", onClick: transfer }]}
+        actions={[{ id: "transfer-to-billing", label: "Transfer to billing", onClick: transfer }]}
       />,
     );
 
-    fireEvent.click(buttonIn("shp_1", "Transfer to Billing"));
+    fireEvent.click(buttonIn("shp_1", "Transfer to billing"));
 
-    expect(buttonIn("shp_1", "Transfer to Billing")).toBeDisabled();
-    expect(buttonIn("shp_2", "Transfer to Billing")).toBeEnabled();
+    expect(buttonIn("shp_1", "Transfer to billing")).toBeDisabled();
+    expect(buttonIn("shp_2", "Transfer to billing")).toBeEnabled();
 
-    fireEvent.click(buttonIn("shp_2", "Transfer to Billing"));
+    fireEvent.click(buttonIn("shp_2", "Transfer to billing"));
     expect(transfer).toHaveBeenCalledTimes(2);
   });
 

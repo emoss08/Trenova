@@ -352,7 +352,7 @@ export function ImportWorkspace() {
             <ArrowLeftIcon className="size-4" />
           </Button>
           <div>
-            <h1 className="text-sm font-medium">{t("Import from Rate Confirmation")}</h1>
+            <h1 className="text-sm font-medium">{t("Import from rate confirmation")}</h1>
             <p className="text-muted-foreground text-xs">
               {currentPhase === "upload" &&
                 t("Upload a rate confirmation to extract shipment details.")}

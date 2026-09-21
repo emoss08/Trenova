@@ -486,7 +486,7 @@ export function CommandCenterTable({
           </TableBody>
         </Table>
         {dataQuery.isFetching && !isInitialLoading && (
-          <div className="bg-background/70 text-muted-foreground pointer-events-none absolute top-2 right-2 z-20 inline-flex items-center gap-1 rounded px-2 py-1 text-2xs backdrop-blur-sm">
+          <div className="bg-background/70 text-muted-foreground pointer-events-none absolute top-2 right-2 z-20 inline-flex items-center gap-1 rounded-md px-2 py-1 text-2xs backdrop-blur-sm">
             <Spinner className="size-3" />
             {t("Refreshing")}
           </div>

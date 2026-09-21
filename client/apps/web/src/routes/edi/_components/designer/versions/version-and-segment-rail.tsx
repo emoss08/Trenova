@@ -58,7 +58,7 @@ export default function VersionAndSegmentRail() {
       </ScrollArea>
       <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
         <div className="bg-background sticky top-0 z-10 border-b px-3 py-2">
-          <div className="text-xs font-semibold">{t("Segment Outline")}</div>
+          <div className="text-xs font-semibold">{t("Segment outline")}</div>
           <div className="text-muted-foreground text-xs">{t("{0} segments", segments.length)}</div>
         </div>
         <ScrollArea className="min-h-0" viewportClassName="min-h-0">

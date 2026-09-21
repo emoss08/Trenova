@@ -53,19 +53,19 @@ const adjustmentTypes: {
 }[] = [
   {
     value: "CreditOnly",
-    label: "Credit Only",
+    label: "Credit only",
     description: "Issue a credit memo without rebilling",
     icon: <CircleDollarSignIcon className="size-4" />,
   },
   {
     value: "CreditAndRebill",
-    label: "Credit & Rebill",
+    label: "Credit & rebill",
     description: "Credit the original and issue a corrected invoice",
     icon: <RefreshCwIcon className="size-4" />,
   },
   {
     value: "FullReversal",
-    label: "Full Reversal",
+    label: "Full reversal",
     description: "Reverse all charges on this invoice",
     icon: <RotateCcwIcon className="size-4" />,
   },
@@ -78,7 +78,7 @@ const rebillStrategies: {
 }[] = [
   {
     value: "CloneExact",
-    label: "Clone Exact",
+    label: "Clone exact",
     description: "Copy original line amounts",
   },
   {
@@ -160,7 +160,7 @@ export function InvoiceAdjustmentTypeSelector({
 
       {kind === "CreditAndRebill" ? (
         <div className="space-y-1.5">
-          <p className="text-muted-foreground text-xs font-medium">{t("Rebill Strategy")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Rebill strategy")}</p>
           <div className="border-border bg-muted/50 flex gap-1 rounded-lg border p-1">
             {rebillStrategies.map((strategy) => {
               const isSelected = rebillStrategy === strategy.value;
@@ -224,7 +224,7 @@ export function InvoiceAdjustmentSupportingDocumentsSection({
       <DocumentMultiSelectAutocompleteField
         control={control}
         name="referencedDocumentIds"
-        label={t("Supporting Documents (Optional)")}
+        label={t("Supporting documents (optional)")}
         placeholder={t("Search shipment documents...")}
         description={t("Attach supporting evidence for audit trail.")}
         extraSearchParams={{
@@ -422,23 +422,23 @@ export function InvoiceAdjustmentPreviewPanel({
     <div className="space-y-3">
       <div className="border-border overflow-hidden rounded-lg border">
         <div className="border-border bg-muted/40 border-b px-4 py-2">
-          <p className="text-muted-foreground text-xs font-medium">{t("Adjustment Summary")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Adjustment summary")}</p>
         </div>
         <DescriptionList layout="split" className="px-4">
-          <DescriptionItem label={t("Credit Total")} numeric>
+          <DescriptionItem label={t("Credit total")} numeric>
             {formatCurrency(Number(preview.creditTotalAmount))}
           </DescriptionItem>
-          <DescriptionItem label={t("Rebill Total")} numeric>
+          <DescriptionItem label={t("Rebill total")} numeric>
             {formatCurrency(Number(preview.rebillTotalAmount))}
           </DescriptionItem>
-          <DescriptionItem label={t("Net Delta")} numeric valueClassName="font-semibold">
+          <DescriptionItem label={t("Net delta")} numeric valueClassName="font-semibold">
             {formatCurrency(Number(preview.netDeltaAmount))}
           </DescriptionItem>
           <DescriptionItem
             label={
               <span className="inline-flex items-center gap-1.5">
                 <CalendarIcon className="size-3" />
-                {t("Accounting Date")}
+                {t("Accounting date")}
               </span>
             }
             numeric
@@ -454,7 +454,7 @@ export function InvoiceAdjustmentPreviewPanel({
       preview.wouldCreateUnappliedCredit ? (
         <Alert variant="warning">
           <ShieldAlertIcon />
-          <AlertTitle>{t("Policy Implications")}</AlertTitle>
+          <AlertTitle>{t("Policy implications")}</AlertTitle>
           <AlertDescription>
             <ul className="list-disc pl-4">
               {preview.requiresApproval ? (
@@ -493,7 +493,7 @@ export function InvoiceAdjustmentPreviewPanel({
       {hasIssues ? (
         <Alert variant="destructive">
           <AlertTriangleIcon />
-          <AlertTitle>{t("Issues Found")}</AlertTitle>
+          <AlertTitle>{t("Issues found")}</AlertTitle>
           <AlertDescription>
             {eligibilityIssues.map((line) => (
               <p key={line.originalLineId}>{line.eligibilityMessage}</p>

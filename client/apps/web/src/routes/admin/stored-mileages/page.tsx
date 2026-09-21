@@ -11,7 +11,7 @@ export function StoredMileagesPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Stored Mileages"),
+        title: t("Stored mileages"),
         description: t("Review reusable mileage records captured from PC*Miler calculations"),
       }}
     >

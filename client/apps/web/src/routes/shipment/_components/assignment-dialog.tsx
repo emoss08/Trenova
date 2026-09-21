@@ -242,14 +242,14 @@ export function AssignmentDialog({
         <DialogHeader>
           <DialogTitle>
             {driverAssignmentBlocked
-              ? t("Move Coverage")
+              ? t("Move coverage")
               : mode === "carrier"
                 ? hasCarrierCoverage
-                  ? t("Replace Carrier Assignment")
-                  : t("Assign Move to Carrier")
+                  ? t("Replace carrier assignment")
+                  : t("Assign move to carrier")
                 : isEditing
-                  ? t("Reassign Move")
-                  : t("Assign Move")}
+                  ? t("Reassign move")
+                  : t("Assign move")}
           </DialogTitle>
           <DialogDescription>
             {driverAssignmentBlocked
@@ -348,7 +348,7 @@ export function AssignmentDialog({
             {complianceViolations.length > 0 && (
               <Alert variant="destructive">
                 <TriangleAlertIcon />
-                <AlertTitle>{t("Compliance Violations")}</AlertTitle>
+                <AlertTitle>{t("Compliance violations")}</AlertTitle>
                 <AlertDescription>
                   <ul className="list-disc pl-4">
                     {complianceViolations.map((msg, idx) => (
@@ -361,7 +361,7 @@ export function AssignmentDialog({
             {continuityError && (
               <Alert variant="default">
                 <TriangleAlertIcon />
-                <AlertTitle>{t("Trailer Location Mismatch")}</AlertTitle>
+                <AlertTitle>{t("Trailer location mismatch")}</AlertTitle>
                 <AlertDescription>{continuityError.message}</AlertDescription>
                 <AlertAction>
                   <Button
@@ -370,7 +370,7 @@ export function AssignmentDialog({
                     variant="outline"
                     onClick={() => setLocateDialogOpen(true)}
                   >
-                    {t("Locate Trailer")}
+                    {t("Locate trailer")}
                   </Button>
                 </AlertAction>
               </Alert>
@@ -406,7 +406,7 @@ export function AssignmentDialog({
                   <WorkerAutocompleteField
                     control={control}
                     name="primaryWorkerId"
-                    label={t("Primary Worker")}
+                    label={t("Primary worker")}
                     placeholder={t("Select primary worker")}
                     rules={{ required: true }}
                     clearable
@@ -416,7 +416,7 @@ export function AssignmentDialog({
                   <WorkerAutocompleteField
                     control={control}
                     name="secondaryWorkerId"
-                    label={t("Secondary Worker")}
+                    label={t("Secondary worker")}
                     placeholder={t("Select secondary worker")}
                     clearable
                   />

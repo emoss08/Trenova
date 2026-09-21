@@ -61,7 +61,7 @@ export function MoveEditDialog({
     >
       <DialogContent size="lg" className="gap-0 overflow-hidden p-0">
         <DialogHeader className="border-border border-b px-4 py-3">
-          <DialogTitle>{isNew ? t("Add Move") : t("Edit Move {0}", moveIndex + 1)}</DialogTitle>
+          <DialogTitle>{isNew ? t("Add move") : t("Edit move {0}", moveIndex + 1)}</DialogTitle>
           <DialogDescription>
             {isNew
               ? t("Define the move legs and stop sequence for this shipment.")
@@ -115,7 +115,7 @@ export function MoveEditDialog({
             {t("Cancel")}
           </Button>
           <Button type="button" onClick={onClose}>
-            {isNew ? t("Add Move") : t("Save Changes")}
+            {isNew ? t("Add move") : t("Save changes")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -152,7 +152,7 @@ function StopsList({ moveIndex }: { moveIndex: number }) {
         </span>
         <Button type="button" variant="outline" size="xxs" onClick={() => addStop(fields.length)}>
           <PlusIcon className="size-3" />
-          {t("Add Stop")}
+          {t("Add stop")}
         </Button>
       </div>
 
@@ -176,7 +176,7 @@ function StopsList({ moveIndex }: { moveIndex: number }) {
             </p>
             <Button type="button" variant="outline" size="xxs" onClick={() => addStop(0)}>
               <PlusIcon className="size-3" />
-              {t("Add First Stop")}
+              {t("Add first stop")}
             </Button>
           </div>
         )}
@@ -270,7 +270,7 @@ function StopCard({
               control={control}
               name={`moves.${moveIndex}.stops.${stopIndex}.type`}
               rules={{ required: true }}
-              label={t("Stop Type")}
+              label={t("Stop type")}
               description={t(
                 "Defines the purpose of the stop — pickup, delivery, or a split operation",
               )}
@@ -316,7 +316,7 @@ function StopCard({
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.scheduleType`}
                   rules={{ required: true }}
-                  label={t("Schedule Type")}
+                  label={t("Schedule type")}
                   description={t(
                     "How this stop is scheduled — an open arrival window or a fixed appointment time",
                   )}
@@ -350,7 +350,7 @@ function StopCard({
                 <AutoCompleteDateTimeField
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.actualArrival`}
-                  label={t("Actual Arrival")}
+                  label={t("Actual arrival")}
                   description={t("Recorded time the driver checked in at the facility")}
                   placeholder={t("Arrival time")}
                 />
@@ -359,7 +359,7 @@ function StopCard({
                 <AutoCompleteDateTimeField
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.actualDeparture`}
-                  label={t("Actual Departure")}
+                  label={t("Actual departure")}
                   description={t(
                     "Recorded time the driver left the facility after loading or unloading",
                   )}

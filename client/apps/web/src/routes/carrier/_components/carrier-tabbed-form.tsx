@@ -40,7 +40,7 @@ export function CarrierTabbedForm({ carrierId }: CarrierTabbedFormProps) {
           </TabsTab>
           <TabsTab value="compliance">
             <ShieldCheckIcon className="size-4" />
-            {t("Compliance & Insurance")}
+            {t("Compliance & insurance")}
           </TabsTab>
           <TabsTab value="tax">
             <ReceiptIcon className="size-4" />

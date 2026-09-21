@@ -41,7 +41,7 @@ export function WeatherAlertLegendPanel({
         >
           <div className="flex items-center gap-1.5">
             <TriangleAlertIcon className="text-muted-foreground size-3.5" />
-            <span className="text-foreground text-xs font-semibold">{t("Public Alerts")}</span>
+            <span className="text-foreground text-xs font-semibold">{t("Public alerts")}</span>
             <span className="text-2xs text-muted-foreground tabular-nums">({totalCount})</span>
           </div>
           <ChevronDownIcon

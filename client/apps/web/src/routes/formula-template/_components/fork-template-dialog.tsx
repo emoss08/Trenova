@@ -102,7 +102,7 @@ export function ForkTemplateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">{t("Fork Template")}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">{t("Fork template")}</DialogTitle>
           <DialogDescription>
             {t(
               "Create a new template based on “{0}”. The forked template will start with its own version history.",
@@ -115,7 +115,7 @@ export function ForkTemplateDialog({
           <FormGroup>
             <FormControl cols="full">
               <InputField
-                label={t("New Template Name")}
+                label={t("New template name")}
                 name="newName"
                 control={control}
                 rules={{ required: true }}
@@ -140,7 +140,7 @@ export function ForkTemplateDialog({
             {t("Cancel")}
           </Button>
           <Button type="submit" form="fork-form" disabled={isSubmitting}>
-            {isSubmitting ? t("Forking...") : t("Fork Template")}
+            {isSubmitting ? t("Forking...") : t("Fork template")}
           </Button>
         </DialogFooter>
       </DialogContent>

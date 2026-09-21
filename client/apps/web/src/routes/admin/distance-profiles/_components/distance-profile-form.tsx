@@ -20,7 +20,7 @@ function ProfileDetailsSection({ control }: { control: Control<DistanceProfile> 
 
   return (
     <FormSection
-      title={t("Profile Details")}
+      title={t("Profile details")}
       description={t("Name, lifecycle state, and default selection for this business unit.")}
     >
       <FormGroup cols={2}>
@@ -77,7 +77,7 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
 
   return (
     <FormSection
-      title={t("Provider Policy")}
+      title={t("Provider policy")}
       description={t("PC*Miler dataset, geography, route type, units, and stop matching policy.")}
     >
       <FormGroup cols={2}>
@@ -97,7 +97,7 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
           <InputField
             control={control}
             name="dataVersion"
-            label={t("Data Version")}
+            label={t("Data version")}
             placeholder={t("Current")}
             description={t("PC*Miler data version sent with Route Reports requests.")}
             rules={{ required: true }}
@@ -120,8 +120,8 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
           <SelectField
             control={control}
             name="routingType"
-            label={t("Routing Type")}
-            placeholder={t("Routing Type")}
+            label={t("Routing type")}
+            placeholder={t("Routing type")}
             description={t("Controls how PC*Miler chooses roads for calculated distance.")}
             options={distanceProfileRoutingTypeChoices}
             rules={{ required: true }}
@@ -131,8 +131,8 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
           <SelectField
             control={control}
             name="distanceUnits"
-            label={t("Distance Units")}
-            placeholder={t("Distance Units")}
+            label={t("Distance units")}
+            placeholder={t("Distance units")}
             description={t("Unit stored on shipment moves and returned in calculation summaries.")}
             options={distanceProfileDistanceUnitChoices}
             rules={{ required: true }}
@@ -142,8 +142,8 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
           <SelectField
             control={control}
             name="locationGranularity"
-            label={t("Location Granularity")}
-            placeholder={t("Location Granularity")}
+            label={t("Location granularity")}
+            placeholder={t("Location granularity")}
             description={t("Determines which location fields are sent to PC*Miler stops.")}
             options={distanceProfileLocationGranularityChoices}
             rules={{ required: true }}
@@ -153,7 +153,7 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
           <InputField
             control={control}
             name="profileName"
-            label={t("PC*Miler Profile Name")}
+            label={t("PC*Miler profile name")}
             placeholder={t("Optional Trimble vehicle profile")}
             description={t(
               "Optional PC*Miler vehicle profile name for account-specific routing settings.",
@@ -171,7 +171,7 @@ function RouteBehaviorSection({ control }: { control: Control<DistanceProfile> }
 
   return (
     <FormSection
-      title={t("Route Behavior")}
+      title={t("Route behavior")}
       description={t(
         "Road restrictions and supplemental reporting options sent with mileage requests.",
       )}

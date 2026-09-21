@@ -76,7 +76,7 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DownloadIcon className="size-4" />
-            {t("Export Template")}
+            {t("Export template")}
           </DialogTitle>
           <DialogDescription>
             {t(

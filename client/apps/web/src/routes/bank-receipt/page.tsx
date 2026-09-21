@@ -119,7 +119,7 @@ export function BankReceiptPage() {
   return (
     <BillingWorkspaceLayout
       pageHeaderProps={{
-        title: t("Bank Receipt Reconciliation"),
+        title: t("Bank receipt reconciliation"),
         description: t("Match imported bank receipts to customer payments and resolve exceptions."),
       }}
       toolbar={
@@ -318,7 +318,7 @@ function ReceiptDetail({
       <div className="grid gap-5 xl:grid-cols-2">
         <div className="flex flex-col gap-5">
           <div className="bg-card rounded-lg border p-3">
-            <SectionLabel>{t("Receipt Details")}</SectionLabel>
+            <SectionLabel>{t("Receipt details")}</SectionLabel>
             <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
               <PropertyCell label={t("Reference")}>
                 <span className="text-xs font-medium">{receipt.referenceNumber}</span>
@@ -348,7 +348,7 @@ function ReceiptDetail({
             <div className="rounded-lg border border-danger-border bg-danger-subtle/50 p-3 dark:border-danger-border/50 dark:bg-danger-subtle/20">
               <div className="flex items-center gap-1.5">
                 <TriangleAlertIcon className="size-3.5 text-danger-foreground" />
-                <SectionLabel>{t("Exception Reason")}</SectionLabel>
+                <SectionLabel>{t("Exception reason")}</SectionLabel>
               </div>
               <p className="mt-1.5 text-xs text-danger-foreground">{receipt.exceptionReason}</p>
             </div>
@@ -358,7 +358,7 @@ function ReceiptDetail({
             <div className="rounded-lg border border-success-border bg-success-subtle/50 p-3 dark:border-success-border/50 dark:bg-success-subtle/20">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2Icon className="size-3.5 text-success-foreground" />
-                <SectionLabel>{t("Matched Payment")}</SectionLabel>
+                <SectionLabel>{t("Matched payment")}</SectionLabel>
               </div>
               <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
                 <PropertyCell label={t("Payment ID")}>
@@ -382,7 +382,7 @@ function ReceiptDetail({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <LinkIcon className="text-muted-foreground size-3.5" />
-                  <SectionLabel>{t("Match Suggestions")}</SectionLabel>
+                  <SectionLabel>{t("Match suggestions")}</SectionLabel>
                 </div>
                 {suggestionsQuery.data ? (
                   <Badge variant="neutral">{t("{0} found", suggestionsQuery.data.length)}</Badge>

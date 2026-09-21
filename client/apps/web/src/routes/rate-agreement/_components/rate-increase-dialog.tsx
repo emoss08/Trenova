@@ -54,7 +54,7 @@ const ADJUSTMENT_OPTIONS: { value: AdjustmentKind; label: string; description: s
   },
   {
     value: "flat",
-    label: "Flat Amount",
+    label: "Flat amount",
     description: "Every rate moves by this amount per rating unit",
   },
 ];
@@ -217,17 +217,17 @@ export function RateIncreaseDialog({
       : []),
     {
       value: "customer",
-      label: t("One Customer"),
+      label: t("One customer"),
       description: t("Every active agreement billing one customer"),
     },
     {
       value: "carrier",
-      label: t("One Carrier"),
+      label: t("One carrier"),
       description: t("Every active agreement paying one carrier"),
     },
     {
       value: "party",
-      label: t("Across the Board"),
+      label: t("Across the board"),
       description: t("Every active agreement of a party type"),
     },
   ];
@@ -303,7 +303,7 @@ export function RateIncreaseDialog({
                   <SelectField
                     control={form.control}
                     name="partyType"
-                    label={t("Party Type")}
+                    label={t("Party type")}
                     options={ratePartyTypeChoices}
                     description={t(
                       "Customer agreements raise what you bill; carrier agreements raise what you pay.",
@@ -315,7 +315,7 @@ export function RateIncreaseDialog({
                 <AutoCompleteDateField
                   control={form.control}
                   name="effectiveFrom"
-                  label={t("Takes Effect")}
+                  label={t("Takes effect")}
                   rules={{ required: true }}
                   description={t(
                     "The announced date. Shipments before it keep pricing at the old rates.",
@@ -376,7 +376,7 @@ export function RateIncreaseDialog({
               isLoading={preview.isPending}
               loadingText={t("Reading...")}
             >
-              {t("Preview Changes")}
+              {t("Preview changes")}
             </Button>
             <p className="text-2xs text-muted-foreground">
               {t("A negative change is a decrease. Weight breaks move with their lane.")}

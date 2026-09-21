@@ -99,7 +99,7 @@ function ReviewTemplateCreatePanel({
     <FormCreatePanel<ReviewTemplateFormValues, ReviewTemplateRow>
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Review Template")}
+      title={t("Review template")}
       description={t(
         "Decide what a review rates, how much each item counts, and how often the review comes round.",
       )}
@@ -140,7 +140,7 @@ function ReviewTemplateEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title={t("Review Template")}
+      title={t("Review template")}
       fieldKey="code"
       queryKey={REVIEW_TEMPLATE_LIST_KEY}
       form={form}

@@ -25,7 +25,7 @@ export function FormCopyButton({ rowId }: { rowId: string }) {
           </Button>
         }
       />
-      <TooltipContent>{t("Copy Row ID")}</TooltipContent>
+      <TooltipContent>{t("Copy row ID")}</TooltipContent>
     </Tooltip>
   );
 }
