@@ -13,9 +13,10 @@ import {
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
+import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import type { AutonomyTier, ToolCatalogEntry } from "@/types/assistant";
 import { PencilLineIcon, RotateCcwIcon, SearchIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { tierWithin } from "./agent-form-schema";
 import {
   TIER_LABEL,
@@ -76,13 +77,53 @@ export function ToolPickerDialog({
     [tools],
   );
 
-  const toggle = (name: string, on: boolean) => {
-    const next = toggleTool(selected, tiers, name, on);
-    onSelectedChange(next.selected);
-    if (next.tiers !== tiers) {
-      onTiersChange(next.tiers);
-    }
-  };
+  const toggle = useCallback(
+    (name: string, on: boolean) => {
+      const next = toggleTool(selected, tiers, name, on);
+      onSelectedChange(next.selected);
+      if (next.tiers !== tiers) {
+        onTiersChange(next.tiers);
+      }
+    },
+    [onSelectedChange, onTiersChange, selected, tiers],
+  );
+
+  // One row per tool, with a heading row before each group while searching,
+  // since a search shows tools from several groups at once.
+  const rows = useMemo<VirtualRow[]>(
+    () =>
+      openGroups.flatMap((group) => {
+        const heading: VirtualRow[] = searching
+          ? [
+              {
+                key: `group-${group.resource}`,
+                render: () => (
+                  <h4 className="text-muted-foreground px-1 pt-2 pb-1 text-xs font-medium">
+                    {group.label}
+                  </h4>
+                ),
+              },
+            ]
+          : [];
+        return [
+          ...heading,
+          ...group.tools.map((tool) => ({
+            key: tool.name,
+            render: () => (
+              <ToolRow
+                tool={tool}
+                checked={selectedSet.has(tool.name)}
+                tier={tiers[tool.name] ?? ceiling}
+                ceiling={ceiling}
+                onToggle={(on) => toggle(tool.name, on)}
+                onTier={(tier) => onTiersChange({ ...tiers, [tool.name]: tier })}
+              />
+            ),
+          })),
+        ];
+      }),
+    [ceiling, onTiersChange, openGroups, searching, selectedSet, tiers, toggle],
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -171,42 +212,18 @@ export function ToolPickerDialog({
             </nav>
           </ScrollArea>
 
-          <ScrollArea
-            className="min-h-0"
-            viewportClassName="max-h-[60dvh]"
-            maskVariant="background"
-          >
-            {openGroups.length === 0 ? (
+          <VirtualRows
+            rows={rows}
+            estimateSize={56}
+            initialHeight={480}
+            aria-label={t("Tools")}
+            className="max-h-[60dvh] min-h-0 px-4 py-3"
+            empty={
               <p className="text-muted-foreground px-5 py-10 text-center text-sm">
                 {t("No tools match that search.")}
               </p>
-            ) : (
-              <div className="flex flex-col gap-4 px-4 py-3">
-                {openGroups.map((group) => (
-                  <section key={group.resource} className="flex flex-col gap-1">
-                    {searching && (
-                      <h4 className="text-muted-foreground px-1 text-xs font-medium">
-                        {group.label}
-                      </h4>
-                    )}
-                    <ul className="flex flex-col">
-                      {group.tools.map((tool) => (
-                        <ToolRow
-                          key={tool.name}
-                          tool={tool}
-                          checked={selectedSet.has(tool.name)}
-                          tier={tiers[tool.name] ?? ceiling}
-                          ceiling={ceiling}
-                          onToggle={(on) => toggle(tool.name, on)}
-                          onTier={(tier) => onTiersChange({ ...tiers, [tool.name]: tier })}
-                        />
-                      ))}
-                    </ul>
-                  </section>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
+            }
+          />
         </div>
 
         <DialogFooter className="mx-0 mb-0 rounded-b-none">
@@ -239,7 +256,7 @@ function ToolRow({
   const id = `tool-${tool.name}`;
 
   return (
-    <li
+    <div
       className={cn(
         "flex items-start gap-3 rounded-md px-2 py-2 transition-colors",
         checked && "bg-surface-selected",
@@ -299,6 +316,6 @@ function ToolRow({
           })}
         </div>
       )}
-    </li>
+    </div>
   );
 }

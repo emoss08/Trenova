@@ -1,10 +1,20 @@
+import { stubLayout } from "@/test/layout";
 import type { ToolCatalogEntry } from "@/types/assistant";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolSummary } from "../tool-summary";
 
-afterEach(cleanup);
+let restoreLayout = () => {};
+
+beforeEach(() => {
+  restoreLayout = stubLayout();
+});
+
+afterEach(() => {
+  restoreLayout();
+  cleanup();
+});
 
 function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
   return {
