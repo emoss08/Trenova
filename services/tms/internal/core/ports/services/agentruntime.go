@@ -83,6 +83,9 @@ type ProposalOutcome struct {
 	Status          agent.ProposalStatus
 	ExecutionError  string
 	ExecutedAt      *int64
+	// Modifications are what the approver changed before approving, so the
+	// model learns what actually ran rather than what it asked for.
+	Modifications map[string]any
 }
 
 // Pending reports that the person has not decided yet.

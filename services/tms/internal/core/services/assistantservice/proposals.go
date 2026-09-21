@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -241,12 +242,77 @@ func (s *Service) ListThreadProposals(
 		return nil, err
 	}
 
+	modifications := s.modificationsFor(ctx, stored, req.TenantInfo)
+
 	proposals := make([]services.AssistantProposal, 0, len(stored))
 	for _, proposal := range stored {
-		proposals = append(proposals, toAssistantProposal(proposal, holdFor(verdicts[proposal.RunID])))
+		out := toAssistantProposal(proposal, holdFor(verdicts[proposal.RunID]))
+		out.Fields = s.editableFields(proposal)
+		out.Modifications = modifications[proposal.ID]
+		proposals = append(proposals, out)
 	}
 
 	return proposals, nil
+}
+
+// editableFields is what a person may change on a pending proposal, from
+// the tool's own schema. A decided proposal has nothing left to edit and a
+// tool the registry no longer has cannot be edited into running.
+func (s *Service) editableFields(proposal *agent.AgentProposal) []toolschema.Field {
+	if s.tools == nil || proposal.Status != agent.ProposalStatusPending {
+		return []toolschema.Field{}
+	}
+
+	tool, ok := s.tools.Get(proposal.ToolName)
+	if !ok {
+		return []toolschema.Field{}
+	}
+
+	return toolschema.Fields(tool.ParamSchema())
+}
+
+// modificationsFor reads what approvers changed on the decided proposals,
+// keyed by proposal. A read that fails degrades to showing none: the
+// decision is the record and the card still says the proposal was approved.
+func (s *Service) modificationsFor(
+	ctx context.Context,
+	stored []*agent.AgentProposal,
+	tenant pagination.TenantInfo,
+) map[pulid.ID]map[string]any {
+	if s.decisions == nil {
+		return nil
+	}
+
+	ids := make([]pulid.ID, 0, len(stored))
+	for _, proposal := range stored {
+		if proposal != nil && proposal.Status != agent.ProposalStatusPending {
+			ids = append(ids, proposal.ID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+
+	decisions, err := s.decisions.ListByProposals(ctx, repositories.ListAgentDecisionsByProposalsRequest{
+		ProposalIDs: ids,
+		TenantInfo:  tenant,
+	})
+	if err != nil {
+		s.logger.Warn("could not read the decisions behind the thread's proposals", zap.Error(err))
+
+		return nil
+	}
+
+	out := make(map[pulid.ID]map[string]any, len(decisions))
+	for _, decision := range decisions {
+		if decision == nil || decision.ProposalID == nil || decision.Decision != agent.DecisionModified ||
+			len(decision.Modifications) == 0 {
+			continue
+		}
+		out[*decision.ProposalID] = decision.Modifications
+	}
+
+	return out
 }
 
 type chatPlanStore interface {
@@ -378,6 +444,8 @@ func (s *Service) proposalOutcomes(
 		return nil
 	}
 
+	modifications := s.modificationsFor(ctx, stored, tenant)
+
 	outcomes := make([]services.ProposalOutcome, 0, len(stored))
 	for _, proposal := range stored {
 		if proposal == nil {
@@ -391,6 +459,7 @@ func (s *Service) proposalOutcomes(
 			Status:          proposal.Status,
 			ExecutionError:  proposal.ExecutionError,
 			ExecutedAt:      proposal.ExecutedAt,
+			Modifications:   modifications[proposal.ID],
 		})
 	}
 

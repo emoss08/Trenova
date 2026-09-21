@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/toolsimulation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -199,6 +200,16 @@ func (s *Service) Execute(
 	}
 
 	params := mergeParams(proposal.ToolParams, modifications)
+	if len(modifications) > 0 {
+		// What the approver changed is checked against the tool's own
+		// schema once more here, where it runs: the decision that carried
+		// it was checked when it was made, and the tool may have changed.
+		if err := toolschema.Validate(tool.ParamSchema(), params); err != nil {
+			s.recordFailure(ctx, proposal, err)
+
+			return err
+		}
+	}
 
 	// The proposal id is the idempotency key. It is stable across retries of the
 	// same approval and distinct between proposals, which is exactly what a tool
@@ -247,6 +258,52 @@ func (s *Service) Execute(
 	s.recordSuccess(ctx, proposal, actor, params)
 
 	return nil
+}
+
+// CheckModifications validates what an approver changed before the decision
+// that carries it is recorded: the merged parameters must fit the tool's
+// schema, and a tool that checks its own arguments gets to check them. It
+// returns the parameters as they would run.
+//
+// Checking here rather than at execution alone is the difference between a
+// form that says which value is wrong and a decision that is recorded,
+// audited, and then fails. A change that would not run is refused as a
+// validation error, before anything is written.
+func (s *Service) CheckModifications(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+	modifications map[string]any,
+	actor *services.RequestActor,
+) (map[string]any, error) {
+	if actor == nil || proposal.OrganizationID != actor.OrganizationID ||
+		proposal.BusinessUnitID != actor.BusinessUnitID {
+		return nil, ErrTenantMismatch
+	}
+
+	tool, ok := s.tools.Get(proposal.ToolName)
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", ErrToolMissing, proposal.ToolName)
+	}
+
+	params := mergeParams(proposal.ToolParams, modifications)
+	if err := toolschema.Validate(tool.ParamSchema(), params); err != nil {
+		return nil, err
+	}
+
+	if validator, checks := tool.(services.ToolValidator); checks {
+		if err := validator.Validate(ctx, services.ToolExecuteParams{
+			OrganizationID: proposal.OrganizationID,
+			BusinessUnitID: proposal.BusinessUnitID,
+			Actor:          actor,
+			IdempotencyKey: proposal.ID.String(),
+			RunID:          proposal.RunID,
+			Params:         params,
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	return params, nil
 }
 
 func (s *Service) definitionFor(

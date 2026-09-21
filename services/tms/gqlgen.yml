@@ -1978,6 +1978,12 @@ models:
     fields:
       confidence:
         resolver: true
+  AgentProposalField:
+    model:
+      - github.com/emoss08/trenova/pkg/toolschema.Field
+  AgentProposalFieldKind:
+    model:
+      - github.com/emoss08/trenova/pkg/toolschema.Kind
   AgentException:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentException

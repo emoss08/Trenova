@@ -15,6 +15,18 @@ fragment AgentProposalTableRowFields on AgentProposal {
   rationale
   autonomyTier
   status
+  parameterFields {
+    name
+    label
+    description
+    kind
+    required
+    options
+    minimum
+    maximum
+    maxLength
+  }
+  modifications
   version
   createdAt
   updatedAt

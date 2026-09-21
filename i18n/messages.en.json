@@ -536,6 +536,15 @@
       "routes/shipment"
     ]
   },
+  "1 value changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "1 works every week; 2 alternates, which is how an A/B pair is built from one shift.": {
     "sites": 1,
     "scope": [
@@ -16301,6 +16310,16 @@
       "routes/agent-control"
     ]
   },
+  "Approve with changes": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/agent-control"
+    ]
+  },
   "Approve worker PTO requests": {
     "sites": 1,
     "scope": [
@@ -16401,6 +16420,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Approved with changes:": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Approved, but it did not finish.": {
@@ -24838,7 +24866,7 @@
     ]
   },
   "Cancel": {
-    "sites": 243,
+    "sites": 244,
     "scope": [
       "ts"
     ],
@@ -27869,6 +27897,15 @@
       "routes/agent-control"
     ]
   },
+  "Change approved with your values": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Change employment status by recording a Terminated, Rehired or similar event on the Timeline tab": {
     "sites": 1,
     "scope": [
@@ -29950,6 +29987,15 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "Choose…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Chosen for this agent": {
@@ -32595,11 +32641,12 @@
     ]
   },
   "Comma-separated values": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/reports"
     ]
   },
@@ -89654,6 +89701,15 @@
       "domain/agent"
     ]
   },
+  "Modify": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Modify PTO policies": {
     "sites": 1,
     "scope": [
@@ -93372,7 +93428,7 @@
     ]
   },
   "No": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -99030,6 +99086,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Nothing changed yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Nothing changes — the worker already has that type": {
@@ -121337,7 +121402,7 @@
     ]
   },
   "Reason": {
-    "sites": 49,
+    "sites": 50,
     "scope": [
       "ts"
     ],
@@ -154112,6 +154177,15 @@
       "routes/osha"
     ]
   },
+  "The change could not be saved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The change returned it to Draft. Shipments cannot be rated with it until it is approved again.": {
     "sites": 1,
     "scope": [
@@ -163407,6 +163481,15 @@
       "routes/reports"
     ]
   },
+  "This tool does not take this value": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This transfer has already finished": {
     "sites": 1,
     "scope": [
@@ -163450,6 +163533,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "This value is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This verification has already been overridden": {
@@ -178771,6 +178863,15 @@
       "apps/web/components"
     ]
   },
+  "Why the values changed, for the audit trail.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Why these miles exist, so an auditor can see the reason without asking.": {
     "sites": 1,
     "scope": [
@@ -180529,7 +180630,7 @@
     ]
   },
   "Yes": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -190950,6 +191051,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} values changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} voided": {

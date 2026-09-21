@@ -154,9 +154,39 @@ type AgentProposal {
   simulatedAt: Timestamp
   "What the write would have changed: a summary and field changes."
   simulation: JSON
+  "The tool's parameters as a person may edit them before approving, from the tool's schema. Empty once decided."
+  parameterFields: [AgentProposalField!]!
+  "The values the approver changed before approving, keyed by parameter. Absent when approved as proposed."
+  modifications: JSON
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"One parameter of a proposal's tool as a person can edit it, derived from the tool's schema."
+type AgentProposalField {
+  name: String!
+  label: String!
+  description: String!
+  kind: AgentProposalFieldKind!
+  required: Boolean!
+  "The choices for a Choice field, or the allowed items of a List; empty otherwise."
+  options: [String!]!
+  minimum: Float
+  maximum: Float
+  maxLength: Int
+}
+
+"The control a parameter takes when edited: the schema's type, read for a form."
+enum AgentProposalFieldKind {
+  Text
+  Multiline
+  Integer
+  Number
+  Boolean
+  Choice
+  List
+  JSON
 }
 
 "Several proposals from one run, decided once and run in order."

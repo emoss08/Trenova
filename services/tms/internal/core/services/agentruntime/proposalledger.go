@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/bytedance/sonic"
@@ -92,6 +93,32 @@ func (l *proposalLedger) currentContent(msg conversation.Message) (string, bool)
 
 // proposalOutcomeText says what became of a proposal, in words the model
 // can act on: what to tell the person, and whether to propose again.
+// modifiedHow says what the person changed before approving, so the model
+// speaks of what ran rather than of what it asked for. Keys are listed in
+// order so the text is the same for the same change.
+func modifiedHow(outcome serviceports.ProposalOutcome) string {
+	if len(outcome.Modifications) == 0 {
+		return ""
+	}
+
+	keys := make([]string, 0, len(outcome.Modifications))
+	for key := range outcome.Modifications {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	parts := make([]string, 0, len(keys))
+	for _, key := range keys {
+		encoded, err := sonic.ConfigStd.Marshal(outcome.Modifications[key])
+		if err != nil {
+			continue
+		}
+		parts = append(parts, key+" = "+string(encoded))
+	}
+
+	return " after changing " + strings.Join(parts, ", ")
+}
+
 func proposalOutcomeText(toolName string, outcome serviceports.ProposalOutcome) string {
 	switch outcome.Status {
 	case agent.ProposalStatusPending:
@@ -104,15 +131,15 @@ func proposalOutcomeText(toolName string, outcome serviceports.ProposalOutcome) 
 		)
 	case agent.ProposalStatusAccepted, agent.ProposalStatusModified:
 		return fmt.Sprintf(
-			"The person approved the proposal to run %q and it is being carried out now. "+
+			"The person approved the proposal to run %q%s and it is being carried out now. "+
 				"Do not propose it again.",
-			toolName,
+			toolName, modifiedHow(outcome),
 		)
 	case agent.ProposalStatusExecuted:
 		return fmt.Sprintf(
-			"The person approved the proposal to run %q and it ran successfully%s. "+
+			"The person approved the proposal to run %q%s and it ran successfully%s. "+
 				"The change has been made; do not propose it again.",
-			toolName, executedWhen(outcome),
+			toolName, modifiedHow(outcome), executedWhen(outcome),
 		)
 	case agent.ProposalStatusSimulated:
 		return fmt.Sprintf(

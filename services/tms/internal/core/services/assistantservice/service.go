@@ -25,6 +25,10 @@ type Params struct {
 	AIProviders   repositories.AIProviderRepository
 	Shadow        *agentshadow.Resolver
 	Budgets       serviceports.AgentBudgetService `optional:"true"`
+	// Tools names the parameters a proposal's tool takes, for the fields a
+	// person may edit before approving; Decisions carries what they changed.
+	Tools     serviceports.AgentToolRegistry       `optional:"true"`
+	Decisions repositories.AgentDecisionRepository `optional:"true"`
 }
 
 type Service struct {
@@ -40,6 +44,8 @@ type Service struct {
 	providers     repositories.AIProviderRepository
 	shadow        *agentshadow.Resolver
 	budgets       serviceports.AgentBudgetService
+	tools         serviceports.AgentToolRegistry
+	decisions     repositories.AgentDecisionRepository
 }
 
 func New(p Params) serviceports.AssistantService {
@@ -56,5 +62,7 @@ func New(p Params) serviceports.AssistantService {
 		plans:         planStoreOrNil(p.Plans),
 		shadow:        p.Shadow,
 		budgets:       p.Budgets,
+		tools:         p.Tools,
+		decisions:     p.Decisions,
 	}
 }

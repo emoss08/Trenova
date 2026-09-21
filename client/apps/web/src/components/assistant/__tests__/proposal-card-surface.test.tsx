@@ -102,6 +102,52 @@ describe("ProposalCard", () => {
     ).toBeInTheDocument();
   });
 
+  // A person who would approve the change with one value different used to
+  // have to reject it and ask again. The card offers to change it, and only
+  // when the server says what can be changed.
+  it("offers to change the values when the tool declares editable fields", () => {
+    renderCard(
+      proposal({
+        fields: [
+          {
+            name: "severity",
+            label: "Severity",
+            description: "",
+            kind: "Choice",
+            required: true,
+            options: ["Low", "Medium", "High"],
+            minimum: null,
+            maximum: null,
+            maxLength: null,
+          },
+        ],
+      }),
+    );
+
+    expect(screen.getByRole("button", { name: /modify/i })).toBeInTheDocument();
+  });
+
+  it("offers no change when there is nothing to edit", () => {
+    renderCard(proposal({ fields: [] }));
+
+    expect(screen.queryByRole("button", { name: /modify/i })).not.toBeInTheDocument();
+  });
+
+  // An approval with changes ran something other than what the agent asked
+  // for; the collapsed card says what.
+  it("says what the approver changed once it has run", () => {
+    renderCard(
+      proposal({
+        status: "Executed",
+        executedAt: 1_790_000_000,
+        modifications: { severity: "High" },
+      }),
+    );
+
+    expect(screen.getByText(/approved with changes/i)).toBeInTheDocument();
+    expect(screen.getByText(/severity: High/)).toBeInTheDocument();
+  });
+
   it("collapses to one line once a decision has been made", () => {
     renderCard(proposal({ status: "Rejected" }));
 

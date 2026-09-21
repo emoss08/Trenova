@@ -16,10 +16,13 @@ import {
   FlaskConicalIcon,
   LoaderIcon,
   PauseCircleIcon,
+  PencilIcon,
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
 import { m } from "motion/react";
+import { useState } from "react";
+import { ProposalEditor, type ProposalEditorRequest } from "./proposal-editor";
 import { presentProposal } from "./proposal-presenters";
 import { classifyProposal, type ProposalPresentation } from "./proposal-state";
 
@@ -51,8 +54,24 @@ export function ProposalCard({
     onSuccess: () => invalidateProposalViews(queryClient, threadId),
     resourceName: "Proposal",
   });
+  const [editor, setEditor] = useState<ProposalEditorRequest | null>(null);
 
   const awaiting = state === "awaiting";
+  const fields = proposal.fields ?? [];
+  const editable = awaiting && fields.length > 0;
+
+  // The values open as a form built from the tool's schema; approval carries
+  // only what was changed, and the server validates it before recording.
+  const openEditor = () =>
+    setEditor({
+      summary: view.summary,
+      fields,
+      arguments: proposal.arguments,
+      onConfirm: async (modifications) => {
+        await apiService.assistantService.decideProposal(proposal.id, "Modified", modifications);
+        await invalidateProposalViews(queryClient, threadId);
+      },
+    });
 
   // Once a decision is made the card is history, not a question. It keeps the
   // sentence and the outcome and drops everything that existed to help decide.
@@ -140,6 +159,17 @@ export function ProposalCard({
             <XIcon className="size-3.5" />
             {t("Reject")}
           </Button>
+          {editable && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={openEditor}
+              disabled={decideMutation.isPending}
+            >
+              <PencilIcon className="size-3.5" />
+              {t("Modify")}
+            </Button>
+          )}
 
           <span className="ml-auto flex items-center gap-2">
             {/* Reversibility is only news one way round. Saying a change can be
@@ -156,8 +186,40 @@ export function ProposalCard({
           </span>
         </div>
       )}
+      <ProposalEditor request={editor} onClose={() => setEditor(null)} />
     </m.div>
   );
+}
+
+/**
+ * What the approver changed before approving, so a collapsed card says what
+ * ran rather than only that something did.
+ */
+function ChangesLine({ modifications }: { modifications: AssistantProposal["modifications"] }) {
+  const t = useT();
+  const entries = Object.entries(modifications ?? {});
+  if (entries.length === 0) {
+    return null;
+  }
+
+  return (
+    <span className="block">
+      {t("Approved with changes:")}{" "}
+      {entries.map(([key, value], index) => (
+        <span key={key}>
+          {index > 0 ? ", " : ""}
+          {key}: {formatChange(value)}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function formatChange(value: unknown): string {
+  if (value === null || value === undefined) return "—";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return JSON.stringify(value);
 }
 
 /**
@@ -247,22 +309,33 @@ function OutcomeLine({
   switch (state) {
     case "failed":
       return (
-        <span className="block" style={{ color: toneVar("danger") }}>
-          {proposal.executionError === ""
-            ? t("Approved, but it did not run. Nothing was changed.")
-            : t("Approved, but it did not run: {0}", proposal.executionError)}
-        </span>
+        <>
+          <ChangesLine modifications={proposal.modifications} />
+          <span className="block" style={{ color: toneVar("danger") }}>
+            {proposal.executionError === ""
+              ? t("Approved, but it did not run. Nothing was changed.")
+              : t("Approved, but it did not run: {0}", proposal.executionError)}
+          </span>
+        </>
       );
     case "done":
       return (
-        <span className="block">
-          {proposal.executedAt
-            ? t("Done {0}", generateDateTimeStringFromUnixTimestamp(proposal.executedAt))
-            : t("Done")}
-        </span>
+        <>
+          <ChangesLine modifications={proposal.modifications} />
+          <span className="block">
+            {proposal.executedAt
+              ? t("Done {0}", generateDateTimeStringFromUnixTimestamp(proposal.executedAt))
+              : t("Done")}
+          </span>
+        </>
       );
     case "running":
-      return <span className="block">{t("Approved. Waiting for it to run.")}</span>;
+      return (
+        <>
+          <ChangesLine modifications={proposal.modifications} />
+          <span className="block">{t("Approved. Waiting for it to run.")}</span>
+        </>
+      );
     case "declined":
       return <span className="block">{t("Rejected. Nothing was changed.")}</span>;
     case "simulated":

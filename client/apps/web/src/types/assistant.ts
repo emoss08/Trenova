@@ -400,6 +400,36 @@ export const proposalHoldSchema = z.object({
   agentName: z.string().optional().default(""),
 });
 
+/** The control a parameter takes when a person edits it, from the tool's schema. */
+export const proposalFieldKindSchema = z.enum([
+  "Text",
+  "Multiline",
+  "Integer",
+  "Number",
+  "Boolean",
+  "Choice",
+  "List",
+  "JSON",
+]);
+
+/**
+ * One parameter of a proposal's tool as a person may edit it before
+ * approving: its name and label, the control it takes, and the bounds the
+ * tool's schema puts on it. Derived server-side from the schema, so the form
+ * follows the tool rather than a hand-kept list.
+ */
+export const proposalFieldSchema = z.object({
+  name: z.string(),
+  label: z.string(),
+  description: z.string().optional().default(""),
+  kind: proposalFieldKindSchema,
+  required: z.boolean().default(false),
+  options: nullableList(z.string()),
+  minimum: z.number().nullish(),
+  maximum: z.number().nullish(),
+  maxLength: z.number().int().nullish(),
+});
+
 /**
  * A proposal is a write the assistant asked for and has not made. It is a
  * persisted record, so it survives a refresh and is decided through the same
@@ -435,6 +465,10 @@ export const assistantProposalSchema = z.object({
   /** Set when the write was previewed instead of made, because the agent was in simulation. */
   simulatedAt: z.number().nullish(),
   simulation: toolSimulationSchema.nullish(),
+  /** What a person may edit before approving; empty once decided. */
+  fields: nullableList(proposalFieldSchema),
+  /** The values the approver changed before approving, keyed by parameter. */
+  modifications: z.record(z.string(), z.unknown()).nullish(),
 });
 
 export const assistantProposalListSchema = z.object({
@@ -604,6 +638,8 @@ export type SendMessageResult = z.infer<typeof sendMessageResultSchema>;
 export type AssistantProposal = z.infer<typeof assistantProposalSchema>;
 export type ProposalStatus = z.infer<typeof proposalStatusSchema>;
 export type ProposalDecision = z.infer<typeof proposalDecisionSchema>;
+export type ProposalField = z.infer<typeof proposalFieldSchema>;
+export type ProposalFieldKind = z.infer<typeof proposalFieldKindSchema>;
 export type ProposalHold = z.infer<typeof proposalHoldSchema>;
 export type AssistantPlan = z.infer<typeof assistantPlanSchema>;
 export type PlanStatus = z.infer<typeof planStatusSchema>;

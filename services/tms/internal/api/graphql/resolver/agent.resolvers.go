@@ -11,12 +11,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -52,6 +54,50 @@ func (r *agentProposalResolver) Simulation(ctx context.Context, obj *agent.Agent
 	}
 
 	return jsonutils.MustToJSON(obj.Simulation), nil
+}
+
+func (r *agentProposalResolver) ParameterFields(ctx context.Context, obj *agent.AgentProposal) ([]*toolschema.Field, error) {
+	// A decided proposal has nothing left to edit, and a tool the registry no
+	// longer has cannot be edited into running.
+	if obj.Status != agent.ProposalStatusPending || r.agentTools == nil {
+		return []*toolschema.Field{}, nil
+	}
+
+	tool, ok := r.agentTools.Get(obj.ToolName)
+	if !ok {
+		return []*toolschema.Field{}, nil
+	}
+
+	fields := toolschema.Fields(tool.ParamSchema())
+	out := make([]*toolschema.Field, 0, len(fields))
+	for i := range fields {
+		out = append(out, &fields[i])
+	}
+
+	return out, nil
+}
+
+func (r *agentProposalResolver) Modifications(ctx context.Context, obj *agent.AgentProposal) (map[string]any, error) {
+	if obj.Status == agent.ProposalStatusPending {
+		return nil, nil
+	}
+
+	l, ok := loaders.FromContext(ctx)
+	if !ok {
+		return nil, nil
+	}
+
+	decisions, err := l.AgentDecisionsByProposalID.Load(ctx, obj.ID.String())
+	if err != nil {
+		return nil, err
+	}
+	for _, decision := range decisions {
+		if decision != nil && decision.Decision == agent.DecisionModified && len(decision.Modifications) > 0 {
+			return decision.Modifications, nil
+		}
+	}
+
+	return nil, nil
 }
 
 func (r *mutationResolver) DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error) {

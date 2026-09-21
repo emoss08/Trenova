@@ -59,6 +59,42 @@ func HumanizeCamelCase(s string) string {
 	return result.String()
 }
 
+// HumanizeCamelCaseSentence is HumanizeCamelCase in sentence case: only the
+// first word is capitalized, and an initialism keeps its letters. It is the
+// form a label takes in the product, where "Shipment ID" is a label and
+// "Shipment Id" is a typo.
+func HumanizeCamelCaseSentence(s string) string {
+	if s == "" {
+		return ""
+	}
+
+	words := strings.Split(ConvertCamelToSnake(s), "_")
+
+	var result strings.Builder
+	result.Grow(len(s) + len(words))
+
+	written := 0
+	for _, word := range words {
+		if word == "" {
+			continue
+		}
+		if written > 0 {
+			result.WriteByte(' ')
+		}
+		switch {
+		case humanizeSpecialWords[word] != "":
+			result.WriteString(humanizeSpecialWords[word])
+		case written == 0:
+			result.WriteString(CapitalizeFirst(word))
+		default:
+			result.WriteString(word)
+		}
+		written++
+	}
+
+	return result.String()
+}
+
 func ConvertCamelToSnake(s string) string {
 	if s == "" {
 		return ""

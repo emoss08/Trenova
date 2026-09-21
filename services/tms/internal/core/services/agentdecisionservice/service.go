@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -119,6 +120,11 @@ func (s *Service) DecideWithOutcome(
 		return nil, shadowRefusal(verdict)
 	}
 
+	req, err = s.settleModifications(ctx, proposal, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
 	decision := &agent.AgentDecision{
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
@@ -192,6 +198,41 @@ func (s *Service) DecideWithOutcome(
 	}
 
 	return &services.DecisionOutcome{Decision: created, ExecutionError: execErr}, nil
+}
+
+// settleModifications turns what the form sent back into what the decision
+// records. A form returns every field; only the values that differ from
+// the proposal are changes. With none, the person approved as proposed and
+// the decision says so, since a "modified" decision with nothing modified
+// would be a lie in the audit trail. With some, they are checked against
+// the tool before anything is recorded, so a change that could not run is
+// refused as a validation error rather than approved and then failed.
+func (s *Service) settleModifications(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+	req *services.DecideAgentProposalRequest,
+	actor *services.RequestActor,
+) (*services.DecideAgentProposalRequest, error) {
+	if req.Decision != agent.DecisionModified {
+		return req, nil
+	}
+
+	settled := *req
+	settled.Modifications = toolschema.Changed(proposal.ToolParams, req.Modifications)
+	if len(settled.Modifications) == 0 {
+		settled.Decision = agent.DecisionAccepted
+		settled.Modifications = nil
+
+		return &settled, nil
+	}
+
+	if s.executor != nil {
+		if _, err := s.executor.CheckModifications(ctx, proposal, settled.Modifications, actor); err != nil {
+			return nil, err
+		}
+	}
+
+	return &settled, nil
 }
 
 // SignalRun tells a run's workflow that its proposals were decided. The

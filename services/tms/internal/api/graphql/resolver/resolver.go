@@ -217,6 +217,7 @@ type Params struct {
 	AgentEvaluationService       services.AgentEvaluationService
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
+	AgentTools                   services.AgentToolRegistry
 	AgentControlService          services.AgentControlService
 	IAMService                   services.IAMService
 	RoleService                  *roleservice.Service
@@ -365,6 +366,7 @@ type Resolver struct {
 	agentEvaluationService       services.AgentEvaluationService
 	agentExceptionService        services.AgentExceptionService
 	agentDecisionService         services.AgentDecisionService
+	agentTools                   services.AgentToolRegistry
 	agentControlService          services.AgentControlService
 	iamService                   services.IAMService
 	roleService                  *roleservice.Service
@@ -514,6 +516,7 @@ func New(p Params) *Resolver {
 		agentEvaluationService:       p.AgentEvaluationService,
 		agentExceptionService:        p.AgentExceptionService,
 		agentDecisionService:         p.AgentDecisionService,
+		agentTools:                   p.AgentTools,
 		agentControlService:          p.AgentControlService,
 		iamService:                   p.IAMService,
 		roleService:                  p.RoleService,

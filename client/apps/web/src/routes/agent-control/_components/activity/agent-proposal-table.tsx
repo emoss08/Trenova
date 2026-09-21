@@ -11,9 +11,12 @@ import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, XIcon } from "lucide-react";
+import { CheckIcon, PencilIcon, XIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { ProposalEditor, type ProposalEditorRequest } from "@/components/assistant/proposal-editor";
+import { presentProposal } from "@/components/assistant/proposal-presenters";
+import type { AssistantProposal } from "@/types/assistant";
 import { getProposalColumns } from "./agent-proposal-columns";
 import { ReasonDialog, type ReasonDialogRequest } from "./reason-dialog";
 
@@ -25,6 +28,7 @@ export default function AgentProposalTable() {
   // wrong operation hid the buttons from everyone who actually held the right.
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Update);
   const [dialog, setDialog] = useState<ReasonDialogRequest | null>(null);
+  const [editor, setEditor] = useState<ProposalEditorRequest | null>(null);
 
   const afterDecision = async (message: string) => {
     toast.success(message);
@@ -63,6 +67,31 @@ export default function AgentProposalTable() {
     });
   };
 
+  // The values open as a form built from the tool's schema. Only real
+  // changes are sent; the server validates them against the tool before it
+  // records the decision, and runs the tool with them.
+  const modify = (row: Row<AgentProposalRow>) => {
+    const proposal = row.original;
+    const args = (proposal.toolParams ?? {}) as Record<string, unknown>;
+    setEditor({
+      summary: presentProposal({
+        toolName: proposal.toolName,
+        arguments: args,
+      } as AssistantProposal).summary,
+      fields: proposal.parameterFields,
+      arguments: args,
+      withReason: { label: t("Reason"), required: false },
+      onConfirm: async (modifications, reason) => {
+        await decideAgentProposal(proposal.id, {
+          decision: "Modified",
+          modifications,
+          reasonCode: reason || "modified_from_activity",
+        });
+        await afterDecision(t("Change approved with your values"));
+      },
+    });
+  };
+
   const contextMenuActions: RowAction<AgentProposalRow>[] = [
     {
       id: "approve",
@@ -70,6 +99,16 @@ export default function AgentProposalTable() {
       icon: CheckIcon,
       onClick: (row) => decide(row, "Accepted"),
       hidden: (row) => !canDecide || row.original.status !== "Pending",
+    },
+    {
+      id: "modify",
+      label: t("Approve with changes"),
+      icon: PencilIcon,
+      onClick: modify,
+      hidden: (row) =>
+        !canDecide ||
+        row.original.status !== "Pending" ||
+        row.original.parameterFields.length === 0,
     },
     {
       id: "reject",
@@ -95,6 +134,7 @@ export default function AgentProposalTable() {
         initialColumnVisibility={{ runId: false }}
       />
       <ReasonDialog request={dialog} onClose={() => setDialog(null)} />
+      <ProposalEditor request={editor} onClose={() => setEditor(null)} />
     </>
   );
 }

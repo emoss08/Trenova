@@ -246,3 +246,21 @@ func TestRun_RefusesAProposalItsToolSaysWouldFail(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, result.Actions, 1)
 }
+
+// A change the approver made before approving is part of what ran, and the
+// model that proposed the original values is told, so its reply describes
+// the message that was sent rather than the one it drafted.
+func TestProposalOutcomeText_SaysWhatTheApproverChanged(t *testing.T) {
+	t.Parallel()
+
+	text := proposalOutcomeText("notify_driver", serviceports.ProposalOutcome{
+		Status:        agent.ProposalStatusExecuted,
+		Modifications: map[string]any{"priority": "high", "message": "Call dispatch now"},
+	})
+
+	assert.Contains(t, text, `after changing message = "Call dispatch now", priority = "high"`)
+	assert.Contains(t, text, "ran successfully")
+
+	plain := proposalOutcomeText("notify_driver", serviceports.ProposalOutcome{Status: agent.ProposalStatusExecuted})
+	assert.NotContains(t, plain, "after changing")
+}

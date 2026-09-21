@@ -898,7 +898,15 @@ type AgentProposal {
   createdAt: Timestamp!
   evidence: [AgentEvidenceRef!]!
   id: ID!
+  """
+  The values the approver changed before approving, keyed by parameter. Absent when approved as proposed.
+  """
+  modifications: JSON
   organizationId: ID!
+  """
+  The tool's parameters as a person may edit them before approving, from the tool's schema. Empty once decided.
+  """
+  parameterFields: [AgentProposalField!]!
   """
   The plan this proposal is a step of, when it is one; absent for a proposal decided on its own.
   """
@@ -938,6 +946,38 @@ input AgentProposalDecisionInput {
 type AgentProposalEdge {
   cursor: String!
   node: AgentProposal!
+}
+
+"""
+One parameter of a proposal's tool as a person can edit it, derived from the tool's schema.
+"""
+type AgentProposalField {
+  description: String!
+  kind: AgentProposalFieldKind!
+  label: String!
+  maxLength: Int
+  maximum: Float
+  minimum: Float
+  name: String!
+  """
+  The choices for a Choice field, or the allowed items of a List; empty otherwise.
+  """
+  options: [String!]!
+  required: Boolean!
+}
+
+"""
+The control a parameter takes when edited: the schema's type, read for a form.
+"""
+enum AgentProposalFieldKind {
+  Boolean
+  Choice
+  Integer
+  JSON
+  List
+  Multiline
+  Number
+  Text
 }
 
 enum AgentProposalStatus {

@@ -783,24 +783,26 @@ type ComplexityRoot struct {
 	}
 
 	AgentProposal struct {
-		AutonomyTier   func(childComplexity int) int
-		BusinessUnitID func(childComplexity int) int
-		Confidence     func(childComplexity int) int
-		CreatedAt      func(childComplexity int) int
-		Evidence       func(childComplexity int) int
-		ID             func(childComplexity int) int
-		OrganizationID func(childComplexity int) int
-		PlanID         func(childComplexity int) int
-		PlanStep       func(childComplexity int) int
-		Rationale      func(childComplexity int) int
-		RunID          func(childComplexity int) int
-		SimulatedAt    func(childComplexity int) int
-		Simulation     func(childComplexity int) int
-		Status         func(childComplexity int) int
-		ToolName       func(childComplexity int) int
-		ToolParams     func(childComplexity int) int
-		UpdatedAt      func(childComplexity int) int
-		Version        func(childComplexity int) int
+		AutonomyTier    func(childComplexity int) int
+		BusinessUnitID  func(childComplexity int) int
+		Confidence      func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		Evidence        func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Modifications   func(childComplexity int) int
+		OrganizationID  func(childComplexity int) int
+		ParameterFields func(childComplexity int) int
+		PlanID          func(childComplexity int) int
+		PlanStep        func(childComplexity int) int
+		Rationale       func(childComplexity int) int
+		RunID           func(childComplexity int) int
+		SimulatedAt     func(childComplexity int) int
+		Simulation      func(childComplexity int) int
+		Status          func(childComplexity int) int
+		ToolName        func(childComplexity int) int
+		ToolParams      func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
+		Version         func(childComplexity int) int
 	}
 
 	AgentProposalConnection struct {
@@ -812,6 +814,18 @@ type ComplexityRoot struct {
 	AgentProposalEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	AgentProposalField struct {
+		Description func(childComplexity int) int
+		Kind        func(childComplexity int) int
+		Label       func(childComplexity int) int
+		MaxLength   func(childComplexity int) int
+		Maximum     func(childComplexity int) int
+		Minimum     func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Options     func(childComplexity int) int
+		Required    func(childComplexity int) int
 	}
 
 	AgentRun struct {
@@ -14130,12 +14144,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposal.ID(childComplexity), true
+	case "AgentProposal.modifications":
+		if e.ComplexityRoot.AgentProposal.Modifications == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposal.Modifications(childComplexity), true
 	case "AgentProposal.organizationId":
 		if e.ComplexityRoot.AgentProposal.OrganizationID == nil {
 			break
 		}
 
 		return e.ComplexityRoot.AgentProposal.OrganizationID(childComplexity), true
+	case "AgentProposal.parameterFields":
+		if e.ComplexityRoot.AgentProposal.ParameterFields == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposal.ParameterFields(childComplexity), true
 	case "AgentProposal.planId":
 		if e.ComplexityRoot.AgentProposal.PlanID == nil {
 			break
@@ -14234,6 +14260,61 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposalEdge.Node(childComplexity), true
+
+	case "AgentProposalField.description":
+		if e.ComplexityRoot.AgentProposalField.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.Description(childComplexity), true
+	case "AgentProposalField.kind":
+		if e.ComplexityRoot.AgentProposalField.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.Kind(childComplexity), true
+	case "AgentProposalField.label":
+		if e.ComplexityRoot.AgentProposalField.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.Label(childComplexity), true
+	case "AgentProposalField.maxLength":
+		if e.ComplexityRoot.AgentProposalField.MaxLength == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.MaxLength(childComplexity), true
+	case "AgentProposalField.maximum":
+		if e.ComplexityRoot.AgentProposalField.Maximum == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.Maximum(childComplexity), true
+	case "AgentProposalField.minimum":
+		if e.ComplexityRoot.AgentProposalField.Minimum == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.Minimum(childComplexity), true
+	case "AgentProposalField.name":
+		if e.ComplexityRoot.AgentProposalField.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.Name(childComplexity), true
+	case "AgentProposalField.options":
+		if e.ComplexityRoot.AgentProposalField.Options == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.Options(childComplexity), true
+	case "AgentProposalField.required":
+		if e.ComplexityRoot.AgentProposalField.Required == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.Required(childComplexity), true
 
 	case "AgentRun.agentDefinitionId":
 		if e.ComplexityRoot.AgentRun.AgentDefinitionID == nil {
@@ -69996,9 +70077,39 @@ type AgentProposal {
   simulatedAt: Timestamp
   "What the write would have changed: a summary and field changes."
   simulation: JSON
+  "The tool's parameters as a person may edit them before approving, from the tool's schema. Empty once decided."
+  parameterFields: [AgentProposalField!]!
+  "The values the approver changed before approving, keyed by parameter. Absent when approved as proposed."
+  modifications: JSON
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"One parameter of a proposal's tool as a person can edit it, derived from the tool's schema."
+type AgentProposalField {
+  name: String!
+  label: String!
+  description: String!
+  kind: AgentProposalFieldKind!
+  required: Boolean!
+  "The choices for a Choice field, or the allowed items of a List; empty otherwise."
+  options: [String!]!
+  minimum: Float
+  maximum: Float
+  maxLength: Int
+}
+
+"The control a parameter takes when edited: the schema's type, read for a form."
+enum AgentProposalFieldKind {
+  Text
+  Multiline
+  Integer
+  Number
+  Boolean
+  Choice
+  List
+  JSON
 }
 
 "Several proposals from one run, decided once and run in order."
@@ -91276,6 +91387,10 @@ func (ec *executionContext) childFields_AgentProposal(ctx context.Context, field
 		return ec.fieldContext_AgentProposal_simulatedAt(ctx, field)
 	case "simulation":
 		return ec.fieldContext_AgentProposal_simulation(ctx, field)
+	case "parameterFields":
+		return ec.fieldContext_AgentProposal_parameterFields(ctx, field)
+	case "modifications":
+		return ec.fieldContext_AgentProposal_modifications(ctx, field)
 	case "version":
 		return ec.fieldContext_AgentProposal_version(ctx, field)
 	case "createdAt":
@@ -91306,6 +91421,30 @@ func (ec *executionContext) childFields_AgentProposalEdge(ctx context.Context, f
 		return ec.fieldContext_AgentProposalEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentProposalEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentProposalField(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_AgentProposalField_name(ctx, field)
+	case "label":
+		return ec.fieldContext_AgentProposalField_label(ctx, field)
+	case "description":
+		return ec.fieldContext_AgentProposalField_description(ctx, field)
+	case "kind":
+		return ec.fieldContext_AgentProposalField_kind(ctx, field)
+	case "required":
+		return ec.fieldContext_AgentProposalField_required(ctx, field)
+	case "options":
+		return ec.fieldContext_AgentProposalField_options(ctx, field)
+	case "minimum":
+		return ec.fieldContext_AgentProposalField_minimum(ctx, field)
+	case "maximum":
+		return ec.fieldContext_AgentProposalField_maximum(ctx, field)
+	case "maxLength":
+		return ec.fieldContext_AgentProposalField_maxLength(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentProposalField", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentRun(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

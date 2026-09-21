@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/emoss08/trenova/pkg/toolschema"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -91,6 +92,13 @@ type AssistantProposal struct {
 	// because the agent was in simulation when it was cleared.
 	SimulatedAt *int64                `json:"simulatedAt"`
 	Simulation  *agent.ToolSimulation `json:"simulation"`
+	// Fields are the tool's parameters as a person may edit them before
+	// approving, derived from the tool's schema. Set only while the proposal
+	// is pending, since a decided one can no longer be changed.
+	Fields []toolschema.Field `json:"fields"`
+	// Modifications are the values the approver changed before approving,
+	// keyed by parameter. Nil when it was approved as proposed.
+	Modifications map[string]any `json:"modifications"`
 }
 
 // AssistantPlan is several of a turn's proposals as one decision, as the

@@ -2,6 +2,7 @@ package loaders
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -58,6 +59,7 @@ type FactoryParams struct {
 	WorkerDQFVerificationsByWorkerID          *WorkerDQFVerificationsByWorkerIDLoaderFactory
 	WorkerLeaveEntriesByCaseID                *WorkerLeaveEntriesByCaseIDLoaderFactory
 	FiscalPeriodsByFiscalYearID               *FiscalPeriodsByFiscalYearIDLoaderFactory
+	AgentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	DocumentTemplateKindByTemplateID          *DocumentTemplateKindByTemplateIDLoaderFactory
 	IFTAJurisdictionByID                      *IFTAJurisdictionByIDLoaderFactory
 	IFTAReturnByID                            *IFTAReturnByIDLoaderFactory
@@ -103,6 +105,7 @@ type Factory struct {
 	workerDQFVerificationsByWorkerID          *WorkerDQFVerificationsByWorkerIDLoaderFactory
 	workerLeaveEntriesByCaseID                *WorkerLeaveEntriesByCaseIDLoaderFactory
 	fiscalPeriodsByFiscalYearID               *FiscalPeriodsByFiscalYearIDLoaderFactory
+	agentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	documentTemplateKindByTemplateID          *DocumentTemplateKindByTemplateIDLoaderFactory
 	iFTAJurisdictionByID                      *IFTAJurisdictionByIDLoaderFactory
 	iFTAReturnByID                            *IFTAReturnByIDLoaderFactory
@@ -148,6 +151,7 @@ type Loaders struct {
 	WorkerDQFVerificationsByWorkerID          *dataloadgen.Loader[string, []*worker.WorkerEmploymentVerification]
 	WorkerLeaveEntriesByCaseID                *dataloadgen.Loader[string, []*worker.WorkerLeaveEntry]
 	FiscalPeriodsByFiscalYearID               *dataloadgen.Loader[string, []*fiscalperiod.FiscalPeriod]
+	AgentDecisionsByProposalID                *dataloadgen.Loader[string, []*agent.AgentDecision]
 	DocumentTemplateKindByTemplateID          *dataloadgen.Loader[string, documenttemplate.Kind]
 	IFTAJurisdictionByID                      *dataloadgen.Loader[string, *ifta.Jurisdiction]
 	IFTAReturnByID                            *dataloadgen.Loader[string, *ifta.Return]
@@ -194,6 +198,7 @@ func NewFactory(p FactoryParams) *Factory {
 		workerDQFVerificationsByWorkerID:          p.WorkerDQFVerificationsByWorkerID,
 		workerLeaveEntriesByCaseID:                p.WorkerLeaveEntriesByCaseID,
 		fiscalPeriodsByFiscalYearID:               p.FiscalPeriodsByFiscalYearID,
+		agentDecisionsByProposalID:                p.AgentDecisionsByProposalID,
 		documentTemplateKindByTemplateID:          p.DocumentTemplateKindByTemplateID,
 		iFTAJurisdictionByID:                      p.IFTAJurisdictionByID,
 		iFTAReturnByID:                            p.IFTAReturnByID,
@@ -241,6 +246,7 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		WorkerDQFVerificationsByWorkerID:          f.workerDQFVerificationsByWorkerID.NewForTenant(tenantInfo),
 		WorkerLeaveEntriesByCaseID:                f.workerLeaveEntriesByCaseID.NewForTenant(tenantInfo),
 		FiscalPeriodsByFiscalYearID:               f.fiscalPeriodsByFiscalYearID.NewForTenant(tenantInfo),
+		AgentDecisionsByProposalID:                f.agentDecisionsByProposalID.NewForTenant(tenantInfo),
 		DocumentTemplateKindByTemplateID:          f.documentTemplateKindByTemplateID.NewForTenant(tenantInfo),
 		IFTAJurisdictionByID:                      f.iFTAJurisdictionByID.NewForTenant(tenantInfo),
 		IFTAReturnByID:                            f.iFTAReturnByID.NewForTenant(tenantInfo),
