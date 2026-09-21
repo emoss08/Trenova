@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { AutonomyTier, ToolCatalogEntry } from "@/types/assistant";
 import { PencilLineIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
@@ -87,51 +88,57 @@ export function ToolSummary({
         </Button>
       </div>
 
+      {/* The chosen list has a ceiling of its own. An agent holding the whole
+          catalog would otherwise run the height of the panel, which is the
+          thing the dialog exists to prevent; the totals and the button above
+          stay put and the list scrolls beneath them. */}
       {chosenGroups.length > 0 && (
-        <ul className="border-border divide-border divide-y border-t">
-          {chosenGroups.map((group) => (
-            <li key={group.resource} className="flex flex-wrap items-center gap-1.5 px-3 py-2">
-              <span className="text-muted-foreground mr-1 shrink-0 text-xs font-medium">
-                {group.label}
-              </span>
-              {group.tools.map((tool) => {
-                const tier = effectiveTier(tool.name, tiers, ceiling);
-                return (
-                  <span
-                    key={tool.name}
-                    className="border-border inline-flex h-6 max-w-full items-center gap-1 rounded-full border pl-2 text-xs"
-                  >
-                    {tool.kind === "action" && (
-                      <PencilLineIcon className="text-warning-foreground size-3 shrink-0" />
-                    )}
-                    <span className="truncate">{toolTitle(tool)}</span>
-                    {tool.kind === "action" && (
-                      <Badge variant="neutral" appearance="outline" className="h-4 px-1 text-2xs">
-                        {t(TIER_LABEL[tier])}
-                      </Badge>
-                    )}
-                    <button
-                      type="button"
-                      aria-label={t("Remove {0}", toolTitle(tool))}
-                      onClick={() => remove(tool.name)}
-                      className="text-muted-foreground hover:text-foreground ui-focus-ring flex h-full items-center rounded-r-full px-1.5"
+        <ScrollArea className="border-border max-h-56 border-t" maskVariant="card" maskHeight={16}>
+          <ul className="divide-border divide-y">
+            {chosenGroups.map((group) => (
+              <li key={group.resource} className="flex flex-wrap items-center gap-1.5 px-3 py-2">
+                <span className="text-muted-foreground mr-1 shrink-0 text-xs font-medium">
+                  {group.label}
+                </span>
+                {group.tools.map((tool) => {
+                  const tier = effectiveTier(tool.name, tiers, ceiling);
+                  return (
+                    <span
+                      key={tool.name}
+                      className="border-border inline-flex h-6 max-w-full items-center gap-1 rounded-full border pl-2 text-xs"
                     >
-                      <XIcon className="size-3" />
-                    </button>
-                  </span>
-                );
-              })}
-            </li>
-          ))}
-          {summary.unknown.length > 0 && (
-            <li className="text-muted-foreground px-3 py-2 text-xs">
-              {t(
-                "{0, plural, one {# tool the catalog no longer offers is kept on the agent and ignored.} other {# tools the catalog no longer offers are kept on the agent and ignored.}}",
-                summary.unknown.length,
-              )}
-            </li>
-          )}
-        </ul>
+                      {tool.kind === "action" && (
+                        <PencilLineIcon className="text-warning-foreground size-3 shrink-0" />
+                      )}
+                      <span className="truncate">{toolTitle(tool)}</span>
+                      {tool.kind === "action" && (
+                        <Badge variant="neutral" appearance="outline" className="h-4 px-1 text-2xs">
+                          {t(TIER_LABEL[tier])}
+                        </Badge>
+                      )}
+                      <button
+                        type="button"
+                        aria-label={t("Remove {0}", toolTitle(tool))}
+                        onClick={() => remove(tool.name)}
+                        className="text-muted-foreground hover:text-foreground ui-focus-ring flex h-full items-center rounded-r-full px-1.5"
+                      >
+                        <XIcon className="size-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </li>
+            ))}
+            {summary.unknown.length > 0 && (
+              <li className="text-muted-foreground px-3 py-2 text-xs">
+                {t(
+                  "{0, plural, one {# tool the catalog no longer offers is kept on the agent and ignored.} other {# tools the catalog no longer offers are kept on the agent and ignored.}}",
+                  summary.unknown.length,
+                )}
+              </li>
+            )}
+          </ul>
+        </ScrollArea>
       )}
 
       <ToolPickerDialog
