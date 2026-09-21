@@ -59,9 +59,13 @@ func TestListTimeOff_DefaultsToAWindowStartingNow(t *testing.T) {
 	_, err := newListTimeOffTool(pto).Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
-	assert.GreaterOrEqual(t, pto.request.StartDateFrom, before)
+	// The window runs in whole days: from the start of today, so leave that
+	// began this morning is still in it, through the end of the horizon's
+	// last day.
+	assert.LessOrEqual(t, pto.request.StartDateFrom, before)
+	assert.Less(t, before-pto.request.StartDateFrom, int64(secondsPerDay))
 	assert.Equal(t,
-		int64(defaultTimeOffWindowDays)*secondsPerDay,
+		int64(defaultTimeOffWindowDays+1)*secondsPerDay-1,
 		pto.request.StartDateTo-pto.request.StartDateFrom,
 	)
 }
@@ -95,7 +99,7 @@ func TestListTimeOff_ClampsAnOversizedHorizon(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t,
-		int64(defaultTimeOffWindowDays)*secondsPerDay,
+		int64(defaultTimeOffWindowDays+1)*secondsPerDay-1,
 		pto.request.StartDateTo-pto.request.StartDateFrom,
 	)
 }
