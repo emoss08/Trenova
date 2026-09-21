@@ -72,6 +72,7 @@ export const TEMPLATE_ICON: Partial<Record<string, AgentIconName>> = {
   DispatchAssignment: "route",
   ImportAssistant: "file",
   LoadMonitor: "radar",
+  ShipmentIntake: "package",
 };
 
 export function isAgentIconName(value: string | null | undefined): value is AgentIconName {

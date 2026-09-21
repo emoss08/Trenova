@@ -14,6 +14,7 @@ const (
 	TemplateDispatchAssignment  = Template("DispatchAssignment")
 	TemplateImportAssistant     = Template("ImportAssistant")
 	TemplateLoadMonitor         = Template("LoadMonitor")
+	TemplateShipmentIntake      = Template("ShipmentIntake")
 )
 
 func (t Template) IsValid() bool {
@@ -26,7 +27,8 @@ func (t Template) IsValid() bool {
 		TemplateBillingException,
 		TemplateDispatchAssignment,
 		TemplateImportAssistant,
-		TemplateLoadMonitor:
+		TemplateLoadMonitor,
+		TemplateShipmentIntake:
 		return true
 	default:
 		return false
@@ -44,6 +46,7 @@ func AllTemplates() []Template {
 		TemplateDispatchAssignment,
 		TemplateImportAssistant,
 		TemplateLoadMonitor,
+		TemplateShipmentIntake,
 	}
 }
 
@@ -67,6 +70,8 @@ func (t Template) Label() string {
 		return "Shipment import assistant"
 	case TemplateLoadMonitor:
 		return "Load monitor"
+	case TemplateShipmentIntake:
+		return "Shipment intake agent"
 	default:
 		return string(t)
 	}
@@ -93,6 +98,9 @@ func (t Template) Description() string {
 	case TemplateLoadMonitor:
 		return "Watches the board every quarter hour for late, stalled and uncovered loads, " +
 			"and proposes what to do about each."
+	case TemplateShipmentIntake:
+		return "Turns each document as it is read into a quoted, ready-to-enter shipment, " +
+			"and asks a person only about what it could not resolve."
 	default:
 		return ""
 	}
@@ -149,6 +157,20 @@ func (t Template) StarterInstructions() string {
 			"with the evidence. Never estimate an arrival as a promise; say it is an estimate. " +
 			"Do not repeat an action the shipment's comments show was taken in the last hour. " +
 			"Finish with a short report: what is at risk, what you did, what needs a person."
+	case TemplateShipmentIntake:
+		return "You enter shipments from customer documents. A run starts when document " +
+			"intelligence has read a document; read its draft with get_shipment_draft first. " +
+			"Resolve every name on the draft to a record: the customer with list_customers, " +
+			"each stop's address to a location with list_locations, the service and shipment " +
+			"types from their lists. Use a field only when its confidence is high or you " +
+			"confirmed it against another field; a low-confidence rate or date is not a " +
+			"guess to fill in. Price the lane with quote_shipment and compare it with the " +
+			"rate on the document. Then propose create_shipment with sourceDocumentId set, " +
+			"the stops in travel order, and the document's BOL as the reference. If a " +
+			"customer, location or type cannot be matched, if the draft needs review, or " +
+			"if the document's rate and the quote disagree by more than a little, raise an " +
+			"exception with what you found instead of creating the shipment. Never create " +
+			"a shipment twice for one document."
 	default:
 		return ""
 	}
@@ -169,6 +191,8 @@ func (t Template) StarterTools() []string {
 			"list_expiring_credentials",
 			"list_time_off",
 			"list_hold_reasons",
+			"rank_move_candidates",
+			"shop_carriers",
 			"assign_move",
 			"add_shipment_comment",
 			"place_shipment_hold",
@@ -253,9 +277,46 @@ func (t Template) StarterTools() []string {
 			"raise_exception",
 		}
 	case TemplateDispatchAssignment:
-		return []string{"get_shipment", "search_shipments", "get_worker", "search_worker", "assign_move", "raise_exception"}
+		return []string{
+			"get_shipment",
+			"search_shipments",
+			"get_worker",
+			"search_worker",
+			"get_dispatch_board",
+			"rank_move_candidates",
+			"plan_dispatch",
+			"list_carriers",
+			"shop_carriers",
+			"assign_move",
+			"tender_move_to_routing_guide",
+			"tender_move_to_carriers",
+			"raise_exception",
+		}
 	case TemplateImportAssistant:
-		return []string{"search_shipments", "search_worker"}
+		return []string{
+			"search_shipments",
+			"search_worker",
+			"get_shipment_draft",
+			"list_customers",
+			"list_locations",
+			"list_service_types",
+			"list_shipment_types",
+			"quote_shipment",
+			"create_shipment",
+		}
+	case TemplateShipmentIntake:
+		return []string{
+			"get_shipment_draft",
+			"list_customers",
+			"list_locations",
+			"list_service_types",
+			"list_shipment_types",
+			"list_equipment_types",
+			"search_shipments",
+			"quote_shipment",
+			"create_shipment",
+			"raise_exception",
+		}
 	default:
 		return nil
 	}
@@ -263,7 +324,7 @@ func (t Template) StarterTools() []string {
 
 func (t Template) StarterTrigger() TriggerMode {
 	switch t {
-	case TemplateBillingException:
+	case TemplateBillingException, TemplateShipmentIntake:
 		return TriggerEvent
 	case TemplateDispatchAssignment, TemplateLoadMonitor:
 		return TriggerScheduled
@@ -276,6 +337,8 @@ func (t Template) StarterEvents() []agent.EventKind {
 	switch t {
 	case TemplateBillingException:
 		return []agent.EventKind{agent.EventBillingQueueItemException}
+	case TemplateShipmentIntake:
+		return []agent.EventKind{agent.EventDocumentExtracted}
 	default:
 		return nil
 	}

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -110,13 +110,8 @@ func decodeParam(params map[string]any, key string, out any) error {
 		return fmt.Errorf("missing required parameter %q", key)
 	}
 
-	encoded, err := sonic.Marshal(raw)
-	if err != nil {
-		return fmt.Errorf("encode parameter %q: %w", key, err)
-	}
-
-	if err = sonic.Unmarshal(encoded, out); err != nil {
-		return fmt.Errorf("decode parameter %q: %w", key, err)
+	if err := jsonutils.Convert(raw, out); err != nil {
+		return fmt.Errorf("parameter %q: %w", key, err)
 	}
 
 	return nil

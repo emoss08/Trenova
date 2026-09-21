@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
@@ -20,6 +21,7 @@ import (
 const maxSubjectNotesChars = 12000
 
 type SubjectContext struct {
+	content      serviceports.DocumentContentService
 	billingQueue serviceports.BillingQueueService
 	shipments    serviceports.ShipmentService
 	console      repositories.DispatchConsoleRepository
@@ -39,6 +41,8 @@ func (s *SubjectContext) Describe(
 		return s.shipmentMove(ctx, tenant, subjectID)
 	case agent.SubjectShipment:
 		return s.shipment(ctx, tenant, subjectID)
+	case agent.SubjectDocument:
+		return s.document(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
 		return nil, nil
 	default:
@@ -210,6 +214,50 @@ func (s *SubjectContext) shipment(
 	})
 	subject.Label = "Shipment PRO " + entity.ProNumber
 	subject.Notes = marshalNotes(snapshot)
+
+	return subject, nil
+}
+
+// document describes an uploaded document by what intelligence read from
+// it: the draft's status and confidence, every field with its confidence,
+// the stops and what is missing. A run woken by document.extracted starts
+// with the whole draft in front of it, and get_shipment_draft is there for
+// a second look after a tool call has moved the conversation on.
+func (s *SubjectContext) document(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	documentID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectDocument,
+		ID:    documentID.String(),
+		Label: "Document",
+	}
+	if s.content == nil {
+		return subject, nil
+	}
+
+	draft, err := s.content.GetShipmentDraft(ctx, documentID, tenant)
+	if err != nil {
+		return nil, fmt.Errorf("load document draft: %w", err)
+	}
+
+	if draft.DocumentKind != "" {
+		subject.Label = "Document (" + stringutils.HumanizeSnakeCase(draft.DocumentKind) + ")"
+	}
+	notes := map[string]any{
+		"status":     draft.Status,
+		"confidence": draft.Confidence,
+		"draft":      draft.DraftData,
+	}
+	if draft.AttachedShipmentID != nil && draft.AttachedShipmentID.IsNotNil() {
+		notes["attachedShipmentId"] = draft.AttachedShipmentID.String()
+		notes["warning"] = "A shipment was already created from this document; do not create another."
+	}
+	if draft.FailureMessage != "" {
+		notes["failureMessage"] = draft.FailureMessage
+	}
+	subject.Notes = marshalNotes(notes)
 
 	return subject, nil
 }

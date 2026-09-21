@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/emailservice"
+	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
 	"go.uber.org/fx"
@@ -57,6 +58,11 @@ var Module = fx.Module("agent-query-tool-service",
 		fx.Annotate(provideListDetentionDeskTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideListWeatherAlertsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideListEmailProfilesTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideGetShipmentDraftTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideQuoteShipmentTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideShopCarriersTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideRankMoveCandidatesTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(providePlanDispatchTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		NewRegistry,
 	),
 )
@@ -150,4 +156,27 @@ func provideListWeatherAlertsTool(weather services.WeatherAlertService) services
 
 func provideListEmailProfilesTool(profiles *emailservice.Service) services.AgentQueryTool {
 	return newListEmailProfilesTool(profiles)
+}
+
+func provideGetShipmentDraftTool(content services.DocumentContentService) services.AgentQueryTool {
+	return newGetShipmentDraftTool(content)
+}
+
+func provideQuoteShipmentTool(
+	quotes *ratequoteservice.Service,
+	locations repositories.LocationRepository,
+) services.AgentQueryTool {
+	return newQuoteShipmentTool(quotes, locations)
+}
+
+func provideShopCarriersTool(quotes *ratequoteservice.Service) services.AgentQueryTool {
+	return newShopCarriersTool(quotes)
+}
+
+func provideRankMoveCandidatesTool(console services.DispatchConsoleService) services.AgentQueryTool {
+	return newRankMoveCandidatesTool(console)
+}
+
+func providePlanDispatchTool(planner services.DispatchAutoAssignService) services.AgentQueryTool {
+	return newPlanDispatchTool(planner)
 }

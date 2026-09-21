@@ -45,6 +45,7 @@ type ActivitiesParams struct {
 	Shipment     serviceports.ShipmentService
 	Console      repositories.DispatchConsoleRepository `optional:"true"`
 	Notifier     serviceports.AgentProposalNotifier     `optional:"true"`
+	Content      serviceports.DocumentContentService    `optional:"true"`
 }
 
 type Activities struct {
@@ -76,6 +77,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		recorder:     p.Recorder,
 		notifier:     p.Notifier,
 		subjects: &SubjectContext{
+			content:      p.Content,
 			billingQueue: p.BillingQueue,
 			shipments:    p.Shipment,
 			console:      p.Console,

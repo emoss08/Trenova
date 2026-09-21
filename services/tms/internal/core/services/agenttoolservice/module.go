@@ -5,9 +5,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 var Module = fx.Module("agent-tool-service",
@@ -38,6 +40,10 @@ var Module = fx.Module("agent-tool-service",
 		fx.Annotate(newEmailCustomerTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideSendDetentionNoticeTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideWaiveDetentionTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideCreateShipmentTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideUpdateShipmentTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideTenderToRoutingGuideTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideTenderToCarriersTool, fx.ResultTags(`group:"agent_tools"`)),
 		NewRegistry,
 	),
 )
@@ -104,4 +110,36 @@ func provideSendDetentionNoticeTool(detention *detentionservice.Service) service
 
 func provideWaiveDetentionTool(detention *detentionservice.Service) services.AgentTool {
 	return newWaiveDetentionTool(detention)
+}
+
+// The intake and tender tools take the concrete services, which fx provides
+// as such; the tools themselves depend on the narrow interfaces they use.
+
+type intakeToolParams struct {
+	fx.In
+
+	Logger    *zap.Logger
+	Shipments services.ShipmentService
+	Imports   services.ShipmentImportAssistantService `optional:"true"`
+}
+
+func provideCreateShipmentTool(p intakeToolParams) services.AgentTool {
+	var imports importCompleter
+	if p.Imports != nil {
+		imports = p.Imports
+	}
+
+	return newCreateShipmentTool(p.Shipments, imports, p.Logger)
+}
+
+func provideUpdateShipmentTool(shipments services.ShipmentService) services.AgentTool {
+	return newUpdateShipmentTool(shipments)
+}
+
+func provideTenderToRoutingGuideTool(tenders *tenderservice.Service) services.AgentTool {
+	return newTenderToRoutingGuideTool(tenders)
+}
+
+func provideTenderToCarriersTool(tenders *tenderservice.Service) services.AgentTool {
+	return newTenderToCarriersTool(tenders)
 }

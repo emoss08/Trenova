@@ -422,6 +422,110 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
+  create_shipment: (args) => {
+    const draft = (args.shipment ?? {}) as Args;
+    const moves = Array.isArray(draft.moves) ? (draft.moves as Args[]) : [];
+    const stops = moves.reduce(
+      (count, move) => count + (Array.isArray(move.stops) ? move.stops.length : 0),
+      0,
+    );
+    const bol = text(draft.bol);
+
+    return {
+      title: "Enter a shipment",
+      summary: `Enter a new shipment${bol ? ` for BOL ${bol}` : ""} with ${plural(
+        stops,
+        "stop",
+        "stops",
+      )}${args.sourceDocumentId ? ", read from an uploaded document" : ""}.`,
+      highlights: facts(
+        fact("Customer", shortRef(text(draft.customerId))),
+        fact("Service type", shortRef(text(draft.serviceTypeId))),
+        fact("Pieces", text(draft.pieces)),
+        fact("Weight", text(draft.weight) ? `${text(draft.weight)} lb` : ""),
+        fact("Freight charge", text(draft.freightChargeAmount)),
+        fact("Source document", shortRef(text(args.sourceDocumentId))),
+      ),
+      covered: ["shipment", "sourceDocumentId"],
+      reversible: false,
+    };
+  },
+
+  update_shipment: (args) => {
+    const changed = Object.keys(args).filter((key) => key !== "shipmentId");
+
+    return {
+      title: "Change a shipment",
+      summary: `Change ${changed.length === 0 ? "nothing" : changed.map((key) => midSentence(humanizeEnum(key))).join(", ")} on this shipment.`,
+      highlights: facts(
+        fact("Customer", shortRef(text(args.customerId))),
+        fact("Service type", shortRef(text(args.serviceTypeId))),
+        fact("Shipment type", shortRef(text(args.shipmentTypeId))),
+        fact("BOL", text(args.bol)),
+        fact("Pieces", text(args.pieces)),
+        fact("Weight", text(args.weight) ? `${text(args.weight)} lb` : ""),
+        fact(
+          "Temperature",
+          [text(args.temperatureMin), text(args.temperatureMax)].filter(Boolean).join(" to "),
+        ),
+      ),
+      covered: [
+        "shipmentId",
+        "customerId",
+        "serviceTypeId",
+        "shipmentTypeId",
+        "tractorTypeId",
+        "trailerTypeId",
+        "bol",
+        "pieces",
+        "weight",
+        "temperatureMin",
+        "temperatureMax",
+      ],
+      reversible: true,
+    };
+  },
+
+  tender_move_to_routing_guide: (args) => ({
+    title: "Tender down the routing guide",
+    summary: `Offer this move to carriers down ${
+      args.routingGuideId
+        ? `routing guide ${shortRef(text(args.routingGuideId))}`
+        : "the lane's routing guide"
+    }, in the guide's order at its rates.`,
+    highlights: facts(fact("Routing guide", shortRef(text(args.routingGuideId)))),
+    covered: ["shipmentMoveId", "routingGuideId"],
+    reversible: true,
+  }),
+
+  tender_move_to_carriers: (args) => {
+    const lines = Array.isArray(args.lines) ? (args.lines as Args[]) : [];
+    const mode = text(args.mode) === "SpotSequential" ? "one after another" : "all at once";
+
+    return {
+      title: "Tender to carriers",
+      summary: `Offer this move to ${plural(lines.length, "carrier", "carriers")} ${mode} at the rates below.`,
+      highlights: facts(
+        ...lines.map((line, index) =>
+          fact(
+            `Carrier ${index + 1}`,
+            [
+              shortRef(text(line.carrierId)),
+              text(line.rate)
+                ? `${text(line.rate)}${text(line.rateMethod) === "PerMile" ? "/mi" : ""}`
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" at "),
+          ),
+        ),
+        fact("Insurance warnings", args.overrideInsuranceWarnings === true ? "overridden" : ""),
+      ),
+      covered: ["shipmentMoveId", "mode", "lines", "overrideInsuranceWarnings"],
+      reversible: true,
+    };
+  },
+
   transition_item_to_in_review: (args) => ({
     title: "Send to review",
     summary: "Move this billing item into review so a biller picks it up.",

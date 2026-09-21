@@ -455,3 +455,85 @@ describe("shortRef", () => {
     expect(shortRef("")).toBe("");
   });
 });
+
+describe("presentProposal — intake and tendering", () => {
+  it("describes a new shipment by its BOL, stops and source document", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "create_shipment",
+        arguments: {
+          sourceDocumentId: "doc_0123456789ABCDEFGHJKMNPQRS",
+          shipment: {
+            customerId: "cust_0123456789ABCDEFGHJKMNPQRA",
+            serviceTypeId: "st_0123456789ABCDEFGHJKMNPQRB",
+            bol: "BOL-778",
+            pieces: 12,
+            weight: 18000,
+            moves: [{ stops: [{ type: "Pickup" }, { type: "Delivery" }] }],
+          },
+        },
+      }),
+    );
+
+    expect(view.title).toBe("Enter a shipment");
+    expect(view.summary).toBe(
+      "Enter a new shipment for BOL BOL-778 with 2 stops, read from an uploaded document.",
+    );
+    expect(view.highlights).toContainEqual({ label: "Weight", value: "18000 lb" });
+    expect(view.highlights).toContainEqual({ label: "Source document", value: "…MNPQRS" });
+    expect(view.reversible).toBe(false);
+  });
+
+  it("names the fields a shipment change touches and nothing else", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "update_shipment",
+        arguments: { shipmentId: "shp_0123456789ABCDEFGHJKMNPQRC", weight: 22000, bol: "NEW-1" },
+      }),
+    );
+
+    expect(view.summary).toBe("Change weight, bol on this shipment.");
+    expect(view.highlights).toEqual([
+      { label: "BOL", value: "NEW-1" },
+      { label: "Weight", value: "22000 lb" },
+    ]);
+  });
+
+  it("lists each carrier line of a spot tender with its rate", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "tender_move_to_carriers",
+        arguments: {
+          shipmentMoveId: "smv_0123456789ABCDEFGHJKMNPQRD",
+          mode: "SpotSequential",
+          lines: [
+            { carrierId: "carr_0123456789ABCDEFGHJKMNPQRS", rate: "1450.00", rateMethod: "Flat" },
+            { carrierId: "carr_0123456789ABCDEFGHJKMNPQRT", rate: "2.15", rateMethod: "PerMile" },
+          ],
+        },
+      }),
+    );
+
+    expect(view.summary).toBe(
+      "Offer this move to 2 carriers one after another at the rates below.",
+    );
+    expect(view.highlights).toEqual([
+      { label: "Carrier 1", value: "…MNPQRS at 1450.00" },
+      { label: "Carrier 2", value: "…MNPQRT at 2.15/mi" },
+    ]);
+  });
+
+  it("says which routing guide a waterfall follows", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "tender_move_to_routing_guide",
+        arguments: { shipmentMoveId: "smv_0123456789ABCDEFGHJKMNPQRD" },
+      }),
+    );
+
+    expect(view.summary).toBe(
+      "Offer this move to carriers down the lane's routing guide, in the guide's order at its rates.",
+    );
+    expect(view.reversible).toBe(true);
+  });
+});

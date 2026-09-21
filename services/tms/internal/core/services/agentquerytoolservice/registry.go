@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -203,4 +204,20 @@ func optionalObject(params map[string]any, key string) map[string]any {
 	value, _ := params[key].(map[string]any)
 
 	return value
+}
+
+// decodeParam reads a structured argument into a typed value. A model that
+// sends a list of objects gets each one checked against the struct rather
+// than picked apart by hand at every tool.
+func decodeParam(params map[string]any, key string, out any) error {
+	raw, ok := params[key]
+	if !ok {
+		return fmt.Errorf("missing required parameter %q", key)
+	}
+
+	if err := jsonutils.Convert(raw, out); err != nil {
+		return fmt.Errorf("parameter %q: %w", key, err)
+	}
+
+	return nil
 }

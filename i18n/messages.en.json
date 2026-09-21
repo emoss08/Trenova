@@ -27540,6 +27540,15 @@
       "apps/web/components"
     ]
   },
+  "Change a shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Change approved": {
     "sites": 1,
     "scope": [
@@ -48816,12 +48825,14 @@
     ]
   },
   "Document": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "packages/shared/lib",
       "routes/admin",
       "routes/agent-control",
@@ -55757,6 +55768,15 @@
     ],
     "areas": [
       "routes/rate-matrix"
+    ]
+  },
+  "Enter a shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Enter a valid email address": {
@@ -98982,6 +99002,15 @@
       "routes/worker"
     ]
   },
+  "Nothing to change: send at least one field besides the shipment id": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Nothing to count yet": {
     "sites": 1,
     "scope": [
@@ -141888,6 +141917,15 @@
       "domain/agentdefinition"
     ]
   },
+  "Shipment intake agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Shipment invoiced": {
     "sites": 1,
     "scope": [
@@ -144747,6 +144785,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Source document id is not an id": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Source event id cannot be longer than 200 characters": {
@@ -150691,6 +150738,15 @@
       "apps/web/lib"
     ]
   },
+  "Tender down the routing guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Tender exhausted": {
     "sites": 1,
     "scope": [
@@ -150855,11 +150911,12 @@
     ]
   },
   "Tender to carriers": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/dispatch-console"
     ]
   },
