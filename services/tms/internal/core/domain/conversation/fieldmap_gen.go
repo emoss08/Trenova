@@ -4,6 +4,13 @@ package conversation
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AssistantTurn].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.AssistantTurnFieldMap] instead of parsing struct tags via reflection.
+func (e *AssistantTurn) GetStaticFieldMap() map[string]string {
+	return buncolgen.AssistantTurnFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Message].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.MessageFieldMap] instead of parsing struct tags via reflection.
