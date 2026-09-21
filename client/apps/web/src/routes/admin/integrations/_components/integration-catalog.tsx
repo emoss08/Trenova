@@ -363,7 +363,7 @@ export function IntegrationCatalogCard() {
               {categoryGroups.map((group) => (
                 <section key={group.key} className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                    <h2 className="text-muted-foreground text-xs font-semibold">
                       {t(group.label)}
                     </h2>
                     <span className="text-muted-foreground/70 text-xs">

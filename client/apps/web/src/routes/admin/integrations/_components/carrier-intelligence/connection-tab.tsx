@@ -271,7 +271,7 @@ function BadgeList({
 }) {
   return (
     <div className="space-y-1">
-      <p className="text-muted-foreground text-2xs font-medium tracking-wide uppercase">{label}</p>
+      <p className="text-muted-foreground text-xs font-medium">{label}</p>
       {values.length === 0 ? (
         <p className="text-muted-foreground text-xs">{emptyText}</p>
       ) : (

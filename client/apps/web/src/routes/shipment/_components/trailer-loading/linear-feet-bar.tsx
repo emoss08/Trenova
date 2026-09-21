@@ -30,7 +30,7 @@ export function LinearFeetBar({
   return (
     <div className="border-border rounded-lg border p-3">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
+        <span className="text-xs text-muted-foreground font-medium">
           {t("Linear Feet")}
         </span>
         <span className={cn("text-xs font-semibold tabular-nums", isOver && "text-destructive")}>
@@ -64,7 +64,7 @@ export function LinearFeetBar({
             style={{ width: `${Math.min(utilization, 100)}%` }}
           />
         )}
-        <span className="absolute inset-0 flex items-center justify-center text-3xs font-bold text-foreground-on-solid drop-shadow-[0_0_3px_rgba(0,0,0,0.5)]">
+        <span className="absolute inset-0 flex items-center justify-center text-3xs font-semibold text-foreground-on-solid drop-shadow-[0_0_3px_rgba(0,0,0,0.5)]">
           {utilization.toFixed(0)}%
         </span>
       </div>

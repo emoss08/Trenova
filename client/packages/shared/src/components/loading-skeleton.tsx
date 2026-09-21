@@ -16,7 +16,7 @@ export default function LoadingSkeleton() {
           </div>
           <p className="mb-2 text-xl font-semibold">
             {t("Hang tight!")}{" "}
-            <u className="font-bold underline decoration-info">{t("Trenova")}</u>{" "}
+            <u className="font-semibold underline decoration-info">{t("Trenova")}</u>{" "}
             {t("is gearing up for you.")}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">

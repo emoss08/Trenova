@@ -118,7 +118,7 @@ function Stat({ value, label, tone }: { value: string; label: string; tone?: "la
       >
         {value}
       </span>
-      <span className="text-muted-foreground text-3xs font-medium tracking-wider uppercase">
+      <span className="text-muted-foreground text-2xs font-medium">
         {label}
       </span>
     </div>

@@ -504,7 +504,7 @@ export function UploadPanel({
             damping: 30,
             bounce: 0,
           }}
-          className="dark bg-popover fixed right-3 bottom-3 z-50 w-[400px] overflow-hidden rounded-lg border shadow-2xl"
+          className="dark bg-popover fixed right-3 bottom-3 z-50 w-[400px] overflow-hidden rounded-lg border"
           onDragOver={hasUploads ? handleDragOver : undefined}
           onDragLeave={hasUploads ? handleDragLeave : undefined}
           onDrop={hasUploads ? handleDrop : undefined}

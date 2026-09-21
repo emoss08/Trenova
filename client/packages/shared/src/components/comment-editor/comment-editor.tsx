@@ -205,7 +205,7 @@ function LinkControl({ editor, disabled }: { editor: Editor; disabled?: boolean 
         disabled={disabled}
       />
       {isOpen && (
-        <div className="absolute bottom-full left-0 z-50 mb-1.5 flex items-center gap-1 rounded-md border border-border bg-popover p-1 shadow-md">
+        <div className="absolute bottom-full left-0 z-50 mb-1.5 flex items-center gap-1 rounded-md border border-border bg-popover p-1">
           <input
             ref={inputRef}
             value={href}

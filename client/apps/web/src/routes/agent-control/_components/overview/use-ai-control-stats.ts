@@ -18,6 +18,11 @@ export function useAIControlStats() {
     refetchInterval: 60_000,
   });
 
+  const usageQuery = useQuery({
+    ...queries.aiProvider.usage(USAGE_WINDOW_DAYS),
+    refetchInterval: 60_000,
+  });
+
   const providers = providersQuery.data ?? [];
 
   return {
@@ -25,7 +30,13 @@ export function useAIControlStats() {
     providersTotal: providers.length,
     providersEnabled: providers.filter((provider) => provider.enabled).length,
     counts: countsQuery.data,
+    usage: usageQuery.data,
+    usageLoading: usageQuery.isLoading,
+    usageWindowDays: USAGE_WINDOW_DAYS,
   };
 }
+
+/** The overview reads a week: long enough to smooth a quiet weekend. */
+export const USAGE_WINDOW_DAYS = 7;
 
 export const aiControlStatsQueryKey = COUNTS_QUERY_KEY;

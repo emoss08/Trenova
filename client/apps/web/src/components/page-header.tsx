@@ -30,12 +30,12 @@ export function PageHeader({
           includeInnerPadding ? "px-4" : "",
         )}
       >
-        <div className="flex min-w-0 flex-col items-start leading-none">
+        <div className="flex min-w-0 flex-col items-start gap-0.5">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+            <h1 className="text-2xl font-semibold text-balance">{title}</h1>
             {context}
           </div>
-          <p className="text-muted-foreground">{description}</p>
+          <p className="text-foreground-muted text-sm text-pretty">{description}</p>
         </div>
         {actions ? (
           <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>

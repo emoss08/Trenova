@@ -33,7 +33,7 @@ export function AxleWeightDisplay({
   return (
     <div className="border-border rounded-lg border p-3">
       <div className="mb-2.5 flex items-center justify-between">
-        <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
+        <span className="text-xs text-muted-foreground font-medium">
           {t("Axle Weights")}
         </span>
         <span

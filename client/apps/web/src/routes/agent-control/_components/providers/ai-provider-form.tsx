@@ -317,6 +317,24 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
             />
           </FormControl>
 
+          <FormControl>
+            <NumberField
+              name="inputCostPerMillion"
+              control={control}
+              label={t("Input price, USD per million tokens")}
+              description={t("From the provider's price list. Leave empty if unknown.")}
+            />
+          </FormControl>
+
+          <FormControl>
+            <NumberField
+              name="outputCostPerMillion"
+              control={control}
+              label={t("Output price, USD per million tokens")}
+              description={t("With both prices set, every call and every turn shows what it cost.")}
+            />
+          </FormControl>
+
           <FormControl cols="full">
             <SwitchField
               name="allowPrivateNetwork"

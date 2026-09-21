@@ -71,7 +71,7 @@ export function AgingSummaryHeader({
       {totalOpen > 0 ? (
         <Card className="gap-0 rounded-md p-0">
           <CardHeader className="px-4 pt-3 pb-2">
-            <CardTitle className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+            <CardTitle className="text-muted-foreground text-xs font-semibold">
               {t("Distribution")}
             </CardTitle>
           </CardHeader>
@@ -105,7 +105,7 @@ function SummaryTile({
     >
       <Card className="h-full gap-0 rounded-md py-3">
         <CardContent className="px-4">
-          <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-semibold">
             {label}
           </p>
           <p

@@ -193,7 +193,7 @@ export function AgingTable({
               <AmountDisplay value={totals.daysOver90Minor} className="text-xs font-semibold" />
             </TableCell>
             <TableCell className="py-2 text-right">
-              <AmountDisplay value={totals.totalOpenMinor} className="text-xs font-bold" />
+              <AmountDisplay value={totals.totalOpenMinor} className="text-xs font-semibold" />
             </TableCell>
           </TableRow>
         </TableFooter>

@@ -113,7 +113,7 @@ export function EntityPicker({
               .reduce((total, [, groupEntities]) => total + groupEntities.length, 0);
             return (
               <div key={category}>
-                <p className="text-2xs text-muted-foreground mb-2 font-medium tracking-wide uppercase">
+                <p className="text-xs text-muted-foreground mb-2 font-medium">
                   {category}
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2">

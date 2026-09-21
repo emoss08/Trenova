@@ -58,7 +58,7 @@ export function MapOptionsPopover({
           render={
             <PopoverTrigger
               render={
-                <Button variant="outline" size="icon" className="bg-background size-7 shadow-sm" />
+                <Button variant="outline" size="icon" className="bg-background size-7" />
               }
             />
           }
@@ -112,7 +112,7 @@ export function MapOptionsPopover({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+    <span className="text-muted-foreground text-xs font-semibold">
       {children}
     </span>
   );

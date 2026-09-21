@@ -92,14 +92,71 @@ func toAdapterMessages(history []conversation.Message) []serviceports.Message {
 	return messages
 }
 
-func proposalRationale(completionText, toolName string) string {
-	trimmed := strings.TrimSpace(completionText)
-	if trimmed == "" {
-		return fmt.Sprintf(
-			"The agent asked to run %s without explaining why.",
-			toolName,
-		)
+// rationaleInput is everything the runtime knows about why a tool was
+// called, in the order it is trusted.
+type rationaleInput struct {
+	// Narration is what the model said in the same turn as the call.
+	Narration string
+	ToolName  string
+	Arguments map[string]any
+	// Input is what the person asked, for a call with no account of itself.
+	Input string
+}
+
+// rationaleArguments are the argument names a tool's own explanation lives
+// under, most specific first. raise_exception carries attemptSummary; the
+// writes carry a reason or a note.
+var rationaleArguments = [...]string{
+	"attemptSummary",
+	"reason",
+	"rationale",
+	"summary",
+	"justification",
+	"note",
+	"notes",
+	"description",
+}
+
+// proposalRationale is the account of a proposal the approver reads.
+//
+// The model's own narration comes first. A model that calls a tool without
+// narrating has usually put its reasoning in the call itself, so the
+// arguments are read next; failing that, the person's own request is the
+// best account of why, because they asked. Only a call with none of those
+// says the agent gave no reason — which used to be the line under every
+// proposal from a model that explains in arguments rather than prose.
+func proposalRationale(in rationaleInput) string {
+	if trimmed := strings.TrimSpace(in.Narration); trimmed != "" {
+		return stringutils.Ellipsize(trimmed, maxRationaleChars)
 	}
 
-	return stringutils.Ellipsize(trimmed, maxRationaleChars)
+	for _, key := range rationaleArguments {
+		value, ok := in.Arguments[key].(string)
+		if !ok {
+			continue
+		}
+		if trimmed := strings.TrimSpace(value); trimmed != "" {
+			return stringutils.Ellipsize(trimmed, maxRationaleChars)
+		}
+	}
+
+	if trimmed := strings.TrimSpace(in.Input); trimmed != "" {
+		prefix := fmt.Sprintf("Asked to %s in reply to: \u201c", humanizeToolName(in.ToolName))
+		room := maxRationaleChars - len([]rune(prefix)) - 1
+
+		return prefix + stringutils.Ellipsize(trimmed, room) + "\u201d"
+	}
+
+	return fmt.Sprintf(
+		"The agent asked to run %s without explaining why.",
+		in.ToolName,
+	)
+}
+
+// humanizeToolName reads a tool's snake_case name as words: reassign_move
+// becomes "reassign move".
+func humanizeToolName(toolName string) string {
+	return strings.Join(strings.FieldsFunc(toolName, func(r rune) bool {
+		return r == '_' || r == '-' || r == '.'
+	}), " ")
 }

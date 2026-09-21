@@ -12,8 +12,9 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon, SearchIcon, SparklesIcon, XIcon } from "lucide-react";
+import { CheckIcon, SearchIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const SEARCH_DEBOUNCE_MS = 250;
 /** How close to the bottom of the list a scroll gets before the next page is asked for. */
@@ -163,7 +164,7 @@ export function ReportSourcePicker({
           onValueChange={setTab}
           items={[
             { value: "saved", label: t("Saved reports") },
-            { value: "gallery", label: t("Report gallery"), icon: SparklesIcon },
+            { value: "gallery", label: t("Report gallery"), icon: AssistMark },
           ]}
         />
         <Input
@@ -308,7 +309,7 @@ function PickerRow({ row }: { row: Row }) {
         )}
       </span>
       {row.meta && (
-        <span className="text-muted-foreground/80 mt-0.5 shrink-0 text-3xs tracking-wide uppercase">
+        <span className="text-muted-foreground/80 mt-0.5 shrink-0 text-2xs">
           {row.meta}
         </span>
       )}

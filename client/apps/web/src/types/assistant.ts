@@ -210,6 +210,9 @@ export const assistantMessageSchema = z.object({
   inputTokens: z.number().default(0),
   outputTokens: z.number().default(0),
   reasoning: reasoningTraceSchema.nullish(),
+  /** How long the model took, and what the turn cost where the provider is priced. */
+  latencyMs: z.number().nullish(),
+  costUsd: z.union([z.string(), z.number()]).nullish(),
   createdAt: z.number(),
 });
 
@@ -271,6 +274,17 @@ export const proposalStatusSchema = z.enum([
 export const proposalDecisionSchema = z.enum(["Accepted", "Rejected", "Modified"]);
 
 /**
+ * Which switch is holding a proposal: the organization-wide pause on the AI
+ * Control overview, or the shadow switch on the agent that made it.
+ */
+export const proposalHoldReasonSchema = z.enum(["OrganizationPaused", "AgentShadow"]);
+
+export const proposalHoldSchema = z.object({
+  reason: proposalHoldReasonSchema,
+  agentName: z.string().optional().default(""),
+});
+
+/**
  * A proposal is a write the assistant asked for and has not made. It is a
  * persisted record, so it survives a refresh and is decided through the same
  * endpoint as any other agent's proposal.
@@ -292,6 +306,12 @@ export const assistantProposalSchema = z.object({
   executionError: z.string().optional().default(""),
   /** When a pending proposal stops being decidable; 0 for one made before expiry existed. */
   expiresAt: z.number().nullish().default(0),
+  /**
+   * Set while a shadow switch keeps the proposal from being decided. The server
+   * refuses a decision while it is set, so the card shows the reason instead of
+   * buttons. `agentName` is set when the switch is the agent's own.
+   */
+  hold: proposalHoldSchema.nullish(),
 });
 
 export const assistantProposalListSchema = z.object({
@@ -417,3 +437,4 @@ export type SendMessageResult = z.infer<typeof sendMessageResultSchema>;
 export type AssistantProposal = z.infer<typeof assistantProposalSchema>;
 export type ProposalStatus = z.infer<typeof proposalStatusSchema>;
 export type ProposalDecision = z.infer<typeof proposalDecisionSchema>;
+export type ProposalHold = z.infer<typeof proposalHoldSchema>;

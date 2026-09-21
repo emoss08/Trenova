@@ -101,15 +101,7 @@ export function DashHomePage() {
         transition={{ duration: 0.25, ease: "easeOut", delay: 0.04 }}
         className="relative overflow-hidden rounded-2xl border border-border bg-sunken p-5 text-foreground-subtle"
       >
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-24 -right-16 size-56 rounded-full bg-accent-teal/20 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-28 -left-10 size-56 rounded-full bg-accent-indigo/15 blur-3xl"
-        />
-        <p className="text-2xs font-medium tracking-wide text-foreground-subtle uppercase">
+        <p className="text-xs font-medium text-foreground-subtle">
           {t("Earned this period")}
         </p>
         {period.isPending ? (
@@ -147,7 +139,7 @@ export function DashHomePage() {
             className="grid grid-cols-2 gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:bg-muted/40"
           >
             <div>
-              <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+              <p className="text-xs font-medium text-muted-foreground">
                 {t("Drive left")}
               </p>
               <p className="mt-0.5 text-lg font-semibold tabular-nums">
@@ -155,7 +147,7 @@ export function DashHomePage() {
               </p>
             </div>
             <div>
-              <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+              <p className="text-xs font-medium text-muted-foreground">
                 {t("Shift left")}
               </p>
               <p className="mt-0.5 text-lg font-semibold tabular-nums">

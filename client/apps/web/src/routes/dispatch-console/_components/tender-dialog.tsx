@@ -155,7 +155,7 @@ function ScreeningAlert({ screening }: { screening: GuideScreeningSummary }) {
         )}
         {hasWarned && (
           <div className="mt-1 flex flex-col gap-0.5">
-            <span className="text-muted-foreground text-2xs tracking-wide uppercase">
+            <span className="text-muted-foreground text-xs">
               {t("Offered with warnings")}
             </span>
             <ul className="flex flex-col gap-0.5">
@@ -251,7 +251,7 @@ function WaterfallTab({
       )}
 
       <div className="flex flex-col gap-1">
-        <span className="text-muted-foreground text-2xs tracking-wide uppercase">
+        <span className="text-muted-foreground text-xs">
           {t("Override guide")}
         </span>
         <Select

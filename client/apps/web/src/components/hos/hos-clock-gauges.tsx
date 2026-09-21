@@ -76,7 +76,7 @@ export function HosClockGauge({
           aria-label={`${label} time remaining`}
         />
         <div className="flex min-w-0 flex-col">
-          <span className="text-muted-foreground text-3xs leading-tight font-semibold tracking-wide uppercase">
+          <span className="text-muted-foreground text-2xs leading-tight font-semibold">
             {label}
           </span>
           <span

@@ -6,9 +6,10 @@ import type { Insight, InsightSeverity } from "@/types/insight";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
-import { ExternalLinkIcon, SparklesIcon } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import { Link } from "react-router";
 import { ModuleCard } from "./module-card";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const SEVERITY_DOT: Record<InsightSeverity, string> = {
   Critical: "bg-destructive",
@@ -94,7 +95,7 @@ export function InsightsWatch({ enabled = true }: { enabled?: boolean }) {
     body = (
       <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-6 text-center">
         <span className="bg-success/15 text-success inline-flex size-8 items-center justify-center rounded-full">
-          <SparklesIcon className="size-4" />
+          <AssistMark className="size-4" />
         </span>
         <p className="text-xs font-medium">{t("Nothing needs attention right now")}</p>
         <p className="text-muted-foreground max-w-55 text-2xs leading-snug">

@@ -115,7 +115,7 @@ export function LedgerTable({ entries }: { entries: ARLedgerEntry[] }) {
               />
             </TableCell>
             <TableCell className="py-2 text-right">
-              <AmountDisplay value={endingBalance} className="text-xs font-bold" />
+              <AmountDisplay value={endingBalance} className="text-xs font-semibold" />
             </TableCell>
           </TableRow>
         </TableFooter>

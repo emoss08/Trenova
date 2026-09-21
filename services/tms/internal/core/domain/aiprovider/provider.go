@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -65,6 +66,13 @@ type Provider struct {
 	// ReasoningEffort asks a model that can think to do so before answering.
 	// Off is the default: the parameter is refused by models without it.
 	ReasoningEffort ReasoningEffort `json:"reasoningEffort" bun:"reasoning_effort,type:VARCHAR(50),notnull,nullzero,default:'Off'"`
+
+	// InputCostPerMillion and OutputCostPerMillion are what the provider
+	// charges, in USD per million tokens, entered by the operator from the
+	// provider's price list. Both nil means the cost of a call is unknown and
+	// is reported as such, never as zero.
+	InputCostPerMillion  *decimal.Decimal `json:"inputCostPerMillion"  bun:"input_cost_per_million,type:NUMERIC(12,6),nullzero"`
+	OutputCostPerMillion *decimal.Decimal `json:"outputCostPerMillion" bun:"output_cost_per_million,type:NUMERIC(12,6),nullzero"`
 
 	// Tasks are the units of work this provider may serve. Priority orders the
 	// candidates for a task, lowest first, which gives fallback chains without a
@@ -166,6 +174,36 @@ func (p *Provider) ResolvedBaseURL() string {
 	return p.Kind.DefaultBaseURL()
 }
 
+func nonNegativePrice(label string) validation.RuleFunc {
+	return func(value any) error {
+		price, _ := value.(*decimal.Decimal)
+		if price != nil && price.IsNegative() {
+			return errors.New(label + " per million tokens cannot be negative")
+		}
+
+		return nil
+	}
+}
+
+// Priced reports whether a call through this provider has a known cost.
+func (p *Provider) Priced() bool {
+	return p.InputCostPerMillion != nil && p.OutputCostPerMillion != nil
+}
+
+// CostFor prices a call. Nil without a price list: an unknown cost is not a
+// free one, and a sum that silently counted it as zero would understate spend
+// by exactly the providers nobody got round to pricing.
+func (p *Provider) CostFor(inputTokens, outputTokens int) *decimal.Decimal {
+	if !p.Priced() {
+		return nil
+	}
+	million := decimal.NewFromInt(1_000_000)
+	cost := p.InputCostPerMillion.Mul(decimal.NewFromInt(int64(inputTokens))).Div(million).
+		Add(p.OutputCostPerMillion.Mul(decimal.NewFromInt(int64(outputTokens))).Div(million))
+
+	return &cost
+}
+
 // ResolvedMaxTokens clamps the configured ceiling into the supported range.
 func (p *Provider) ResolvedMaxTokens() int {
 	if p.MaxTokens <= 0 {
@@ -239,6 +277,8 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Reasoning effort is required"),
 			domainvalidation.ValidEnum[ReasoningEffort]("Reasoning effort is invalid"),
 		),
+		validation.Field(&p.InputCostPerMillion, validation.By(nonNegativePrice("Input cost"))),
+		validation.Field(&p.OutputCostPerMillion, validation.By(nonNegativePrice("Output cost"))),
 		validation.Field(&p.MaxTokens,
 			validation.Min(minMaxTokens).
 				Error("Max tokens must be at least 256"),

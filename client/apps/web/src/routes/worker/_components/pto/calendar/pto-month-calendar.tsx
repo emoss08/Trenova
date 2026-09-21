@@ -375,7 +375,7 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
                     key={weekday}
                     role="columnheader"
                     className={cn(
-                      "text-muted-foreground px-1.5 py-1 text-2xs font-medium tracking-wide uppercase",
+                      "text-muted-foreground px-1.5 py-1 text-xs font-medium",
                       (index === 0 || index === 6) && "text-muted-foreground/70",
                     )}
                   >
@@ -616,7 +616,7 @@ function DayCell({
         {selectionDays !== null ? (
           <span
             data-testid="pto-selection-pill"
-            className="bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 z-30 rounded-full px-1.5 py-0.5 text-2xs leading-none font-semibold shadow-sm duration-150"
+            className="bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 z-30 rounded-full px-1.5 py-0.5 text-2xs leading-none font-semibold duration-150"
           >
             {t("{0, plural, one {# day} other {# days}}", selectionDays)}
           </span>
@@ -705,7 +705,7 @@ function SpanBar({
               PTO_STATUS_BAR_CLASS[pto.status],
               segment.continuesBefore && "rounded-l-none border-l-0",
               segment.continuesAfter && "rounded-r-none border-r-0",
-              active && "ring-ring/40 z-20 shadow-sm ring-2 brightness-95",
+              active && "ring-ring/40 z-20 ring-2 brightness-95",
             )}
             style={{
               left: `calc(${left} + 2px)`,

@@ -128,7 +128,7 @@ function TrainingRow({ item }: { item: PortalTraining }) {
           <p className="truncate text-sm font-medium">
             {item.name}
             {item.required ? (
-              <span className="ml-1 text-2xs font-normal uppercase text-muted-foreground">
+              <span className="ml-1 text-xs font-normal text-muted-foreground">
                 {t("Required")}
               </span>
             ) : null}

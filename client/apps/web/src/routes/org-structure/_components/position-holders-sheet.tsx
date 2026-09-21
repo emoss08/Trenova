@@ -176,7 +176,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
 
           <section aria-label={t("People in the position")} className="flex flex-col gap-1.5">
             <header className="flex items-center justify-between px-1">
-              <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              <h4 className="text-muted-foreground text-xs font-medium">
                 {t("{0} in it", driving ? t("Workers") : t("People"))}
               </h4>
               {holders.data ? (

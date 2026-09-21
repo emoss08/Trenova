@@ -211,10 +211,11 @@ Tokens live in `client/packages/shared/src/styles/tokens.css`; components consum
 define no colour, size or elevation of their own. **Read
 [docs/engineering/design-system.md](docs/engineering/design-system.md) before writing styles.**
 
-`pnpm lint:design` runs in CI and fails on the five ways the old set was bypassed: raw
+`pnpm lint:design` runs in CI and fails on the six ways the old set was bypassed: raw
 Tailwind palette classes (`bg-red-500`), arbitrary font sizes (`text-[11px]` — `text-xs` *is*
 11px and brings a line-height), hex colours in `className`/`style`, hand-rolled focus rings
-(`focus-visible:ring-*` — use `ui-focus-ring`), and retired Badge variants. Each message
+(`focus-visible:ring-*` — use `ui-focus-ring`), any `shadow-*` that draws a shadow, and
+retired Badge variants. Each message
 names the token to use instead.
 
 - Colour is a **tone** (`neutral`/`brand`/`info`/`success`/`warning`/`danger`) when the set has
@@ -222,9 +223,27 @@ names the token to use instead.
   does not — a HOS duty status and a pricing method are categories, not severities.
 - Status maps declare a lifecycle **phase** (`draft`/`queued`/`active`/`awaiting`/`attention`/
   `complete`/`closed`/`failed`) and the tone follows, so a new status cannot pick a colour.
-- Every grey carries `--hue-neutral` (warm, 75) and the brand is copper at 52. The warm arc
-  is pinned 20° apart — danger 25 → brand 52 → warning 78 → amber 98 — because copper sits
-  between red and amber and they otherwise converge into one orange.
+- The product is drawn in ink: the primary button is `--ink` (the foreground colour), never
+  a hue. Every grey carries `--hue-neutral` (cool slate, 260). The brand is cobalt at 262
+  and is spent only on links, focus, selection and the active nav row or tab. The blue arc
+  is pinned apart — info 222 → sky 232 → brand 262 → indigo 283 — and so is the warm one —
+  danger 25 → warning 78 → amber 98.
+- Labels are sentence case; no `uppercase tracking-wider` on section labels, column heads
+  or badges. Form controls spend `ui-field`, filled controls `ui-press`, skeletons
+  `ui-shimmer`. Motion answers an action — nothing loops on a working screen.
+- **No shadows, anywhere.** The `--elevation-*` tokens are all flat and must stay that way;
+  separate surfaces with a border or `ring-1 ring-foreground/10`. Zero-blur outlines
+  (`shadow-[0_0_0_1px_var(--brand)]`) and the focus ring are lines, not shadows, and are fine.
+- Everything that floats from a trigger (menus, selects, popovers, hover cards, tooltips) is
+  inverted — dark in light mode. The primitives set `dark` on the positioner; never write it
+  by hand, and build popover content from tokens only. Dialogs and sheets follow the theme.
+- Form controls are filled: `--field` never matches the canvas or the card. Every control
+  spends `ui-field` (rest, hover, open and disabled in one place); a `Button`-built trigger
+  takes `fieldTriggerClass` and an invalid one `fieldInvalidClass`, both from
+  `@trenova/shared/lib/variants/field`. Never hand-write `border-input bg-muted` or a
+  `data-pressed:ring-*` on a field.
+- Machine suggestions are marked with `AssistMark` from `@trenova/shared/components/ui/assist-mark`
+  (a real `LucideIcon`). Never import `Sparkles`, `WandSparkles` or `Wand2`.
 - Two radii: `--radius-control` (6px) for controls, `--radius-surface` (8px) for containers.
   The whole `rounded-*` scale points at them; a badge is `rounded-full`.
 - Weight means something: 400 body, 500 label, 600 heading. A value in a cell takes no
@@ -235,9 +254,10 @@ names the token to use instead.
   reaching for the palette. An incomplete set is what caused the drift in the first place.
 - Genuine exceptions take `design-tokens-ignore: <reason>` in a comment on or above the line.
 - `pnpm lint:design` also reads the oklch values out of `tokens.css` and fails on a contrast
-  pair below AA, a value outside sRGB, a hairline invisible against its surface, or the warm
-  hues closing up. `--foreground-on-solid` is near-white in light and near-**black** in dark,
-  because a dark theme's tone fills are the light end of their ramp.
+  pair below AA, a value outside sRGB, a hairline invisible against its surface, or either
+  hue arc closing up. `--foreground-on-solid` is near-white in light and near-**black** in dark,
+  because a dark theme's tone fills are the light end of their ramp. Text on a solid
+  warning is `text-warning-on-solid` in both themes, because the solid is a true amber.
 - Editing `tokens.css`: never let a comment-terminator sequence appear inside a comment body.
   It ends the comment early and every `@utility` after it silently stops emitting — which
   removes focus indicators without failing anything. `pnpm lint:design` compiles the file and

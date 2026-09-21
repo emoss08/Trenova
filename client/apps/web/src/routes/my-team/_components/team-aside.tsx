@@ -12,10 +12,10 @@ import {
   Building2Icon,
   CalendarDaysIcon,
   HandshakeIcon,
-  SparklesIcon,
 } from "lucide-react";
 import { Link } from "react-router";
 import { MemberAvatar, memberHref } from "./member-identity";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 type ByTerminalProps = {
   groups: readonly TerminalGroup[];
@@ -134,7 +134,7 @@ export function ComingUpPanel({ anniversaries, starters }: ComingUpProps) {
                 <span className="flex min-w-0 flex-1 flex-col leading-tight">
                   <span className="truncate text-xs font-medium">{item.member.name}</span>
                   <span className="text-muted-foreground text-2xs flex items-center gap-1">
-                    <SparklesIcon className="size-3" aria-hidden />
+                    <AssistMark className="size-3" aria-hidden />
                     {t("Started {0}", formatUnixDate(item.member.hireDate))}
                   </span>
                 </span>

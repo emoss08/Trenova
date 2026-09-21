@@ -120,7 +120,7 @@ export function MetricCell({
 }) {
   return (
     <div className={cn("min-w-0", className)}>
-      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">{label}</p>
+      <p className="text-xs text-muted-foreground font-medium">{label}</p>
       <p className={cn("mt-1 truncate text-sm font-medium tabular-nums", valueClassName)}>
         {value}
       </p>

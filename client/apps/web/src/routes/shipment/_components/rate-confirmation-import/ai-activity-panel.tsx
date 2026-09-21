@@ -22,10 +22,11 @@ import type {
   ImportAssistantSuggestion,
   ImportAssistantToolCallRecord,
 } from "@trenova/shared/types/document";
-import { ArrowUpIcon, CheckCircle2Icon, InfoIcon, SparklesIcon } from "lucide-react";
+import { ArrowUpIcon, CheckCircle2Icon, InfoIcon } from "lucide-react";
 import { m } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReconciliationState } from "./types";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const TOOL_LABELS: Record<string, string> = {
   search_customers: "Searching customers",
@@ -812,7 +813,7 @@ export default function AIActivityPanel({
       {/* Header */}
       <div className="shrink-0 border-b px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <SparklesIcon className="text-muted-foreground size-3.5" />
+          <AssistMark className="text-muted-foreground size-3.5" />
           <span className="text-xs font-medium">{t("AI Assistant")}</span>
         </div>
         <div className="mt-2">

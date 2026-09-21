@@ -85,12 +85,12 @@ func (s *Service) GetByID(
 		return nil, err
 	}
 
-	shadow, err := s.shadow.ForRun(ctx, *req.TenantInfo, proposal.RunID)
+	verdict, err := s.shadow.ForRun(ctx, *req.TenantInfo, proposal.RunID)
 	if err != nil {
 		return nil, err
 	}
 
-	if shadow {
+	if verdict.Shadow() {
 		return nil, errortypes.NewNotFoundError("Agent proposal not found")
 	}
 

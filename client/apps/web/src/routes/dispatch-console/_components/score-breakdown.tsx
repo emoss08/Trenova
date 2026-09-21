@@ -34,7 +34,7 @@ export function ScoreBreakdown({
     <div className={cn("flex flex-col gap-2.5", className)}>
       <div className="flex flex-col gap-1.5">
         <div className="flex items-baseline justify-between">
-          <span className="text-muted-foreground text-2xs font-medium tracking-wider uppercase">
+          <span className="text-muted-foreground text-xs font-medium">
             {t("Match score")}
           </span>
           <span className="flex items-baseline gap-1">

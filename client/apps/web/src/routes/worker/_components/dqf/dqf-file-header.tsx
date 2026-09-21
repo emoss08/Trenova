@@ -76,7 +76,7 @@ export function DQFFileHeader({ file, canCreate, onAddEmployer, onOpenTab }: DQF
           const body = (
             <>
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground truncate text-xs font-semibold uppercase">
+                <span className="text-muted-foreground truncate text-xs font-semibold">
                   {SPINE_LABELS[section.section]}
                 </span>
                 <span className="text-sm font-semibold tabular-nums">
@@ -164,7 +164,7 @@ function SpineBar({
 function Count({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col">
-      <dt className="text-2xs text-muted-foreground uppercase">{label}</dt>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="font-medium tabular-nums">{value}</dd>
     </div>
   );

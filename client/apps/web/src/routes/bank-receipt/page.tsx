@@ -300,7 +300,7 @@ function ReceiptDetail({
           <h2 className="text-lg font-semibold">{receipt.referenceNumber}</h2>
           <p className="text-muted-foreground text-sm">{formatReceiptDate(receipt.receiptDate)}</p>
         </div>
-        <AmountDisplay value={receipt.amountMinor} className="text-2xl font-bold" />
+        <AmountDisplay value={receipt.amountMinor} className="text-2xl font-semibold" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -479,7 +479,7 @@ function ScoreBadge({ score }: { score: number }) {
 function SummaryCard({ label, value, amount }: { label: string; value: string; amount?: number }) {
   return (
     <div className="bg-card rounded-lg border px-3 py-2.5">
-      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-medium">
         {label}
       </p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>

@@ -73,7 +73,7 @@ function MetricCard({
   return (
     <Card className="group border-border/80 hover:border-border relative gap-0 overflow-hidden transition-colors">
       <CardHeader className="relative flex flex-row items-start justify-between space-y-0 pb-2">
-        <CardTitle className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+        <CardTitle className="text-muted-foreground text-xs font-semibold">
           {label}
         </CardTitle>
         <span className="bg-accent inline-flex size-7 shrink-0 items-center justify-center rounded-md">

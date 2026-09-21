@@ -9,10 +9,11 @@ import { Resource } from "@trenova/shared/types/permission";
 import type { RecurringShipment } from "@/types/recurring-shipment";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarSyncIcon, SparklesIcon, XIcon } from "lucide-react";
+import { CalendarSyncIcon, XIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const MATCH_DEBOUNCE_MS = 600;
 
@@ -149,7 +150,7 @@ function PatternHint({
 
   return (
     <div className="border-border bg-muted/40 flex items-start gap-3 rounded-lg border p-3">
-      <SparklesIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
+      <AssistMark className="text-muted-foreground mt-0.5 size-4 shrink-0" />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="text-sm font-medium">{t("This looks like a repeating lane")}</p>
         <p className="text-muted-foreground text-xs">

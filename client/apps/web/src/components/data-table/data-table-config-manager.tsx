@@ -103,12 +103,12 @@ export default function DataTableConfigManager({
           </Button>
         }
       />
-      <PopoverContent align="end" className="dark w-72 gap-1 p-0">
+      <PopoverContent align="end" className="w-72 gap-1 p-0">
         {hasViews ? (
           <ScrollArea className="flex max-h-[calc(100vh-15rem)] flex-1 flex-col">
             {myViews.length > 0 && (
               <div className="flex flex-col px-1 pb-1">
-                <h3 className="text-muted-foreground flex items-center gap-1.5 px-1 py-1.5 text-xs font-medium uppercase">
+                <h3 className="text-muted-foreground flex items-center gap-1.5 px-1 py-1.5 text-xs font-medium">
                   <BookmarkIcon className="size-3" />
                   {t("My Views")}
                 </h3>
@@ -122,7 +122,7 @@ export default function DataTableConfigManager({
                   myViews.length > 0 && "border-border border-t",
                 )}
               >
-                <h3 className="text-muted-foreground flex items-center gap-1.5 px-1 py-1.5 text-xs font-medium uppercase">
+                <h3 className="text-muted-foreground flex items-center gap-1.5 px-1 py-1.5 text-xs font-medium">
                   <UsersIcon className="size-3" />
                   {t("Team Views")}
                 </h3>

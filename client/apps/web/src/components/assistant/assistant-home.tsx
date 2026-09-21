@@ -12,7 +12,7 @@ import { m, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
-import { TrenovaSpark } from "./trenova-spark";
+import { AssistantMark } from "./assistant-mark";
 
 type AssistantHomeProps = {
   agents: AgentDefinitionRow[];
@@ -88,7 +88,7 @@ export function AssistantHome({
           transition={{ duration: 0.25 }}
           className="flex flex-col gap-2 px-1 pt-1"
         >
-          <TrenovaSpark className="text-foreground size-6" />
+          <AssistantMark className="text-foreground size-6" />
           <p className="text-sm font-semibold">{t("Ask about anything you can see")}</p>
           <p className="text-muted-foreground text-xs leading-relaxed">
             {t(

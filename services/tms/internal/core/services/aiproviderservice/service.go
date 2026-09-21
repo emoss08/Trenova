@@ -268,6 +268,8 @@ func (s *Service) apply(
 	if provider.ReasoningEffort == "" {
 		provider.ReasoningEffort = aiprovider.ReasoningOff
 	}
+	provider.InputCostPerMillion = req.InputCostPerMillion
+	provider.OutputCostPerMillion = req.OutputCostPerMillion
 
 	// A nil key means "leave what is stored alone", so an administrator can
 	// retask a provider without re-entering its secret.

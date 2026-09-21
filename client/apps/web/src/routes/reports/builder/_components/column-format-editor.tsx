@@ -133,7 +133,7 @@ export function ColumnFormatEditor({
   return (
     <div className="border-border bg-muted/30 flex flex-col gap-2 rounded-md border border-dashed p-2">
       <div className="flex items-center gap-2">
-        <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+        <span className="text-xs text-muted-foreground font-medium">
           {t("Formatting")}
         </span>
         <span className="bg-background text-2xs text-foreground/80 rounded-sm px-1.5 py-px font-mono tabular-nums">

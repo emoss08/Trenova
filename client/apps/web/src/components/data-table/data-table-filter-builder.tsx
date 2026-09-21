@@ -272,7 +272,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
         }
       />
       <PopoverContent
-        className={cn("dark w-auto overflow-hidden p-0", filters.length === 0 && "min-w-[500px]")}
+        className={cn("w-auto overflow-hidden p-0", filters.length === 0 && "min-w-[500px]")}
         align="start"
       >
         {filters.length === 0 ? (
@@ -664,7 +664,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
               </Button>
             }
           />
-          <PopoverContent className="dark w-auto p-0" align="start">
+          <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="range"
               className="w-[250px]"

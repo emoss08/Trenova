@@ -58,7 +58,7 @@ export default function DataTableDisplayMenu({
           </Button>
         }
       />
-      <PopoverContent align="end" className="dark w-72 gap-0 p-0">
+      <PopoverContent align="end" className="w-72 gap-0 p-0">
         <div className="flex flex-col gap-3 p-3">
           {onDensityChange && (
             <div className="flex flex-col gap-1.5">
@@ -80,7 +80,7 @@ export default function DataTableDisplayMenu({
                       className={cn(
                         "flex h-6.5 cursor-pointer items-center justify-center gap-1.5 rounded-md text-xs transition-colors",
                         selected
-                          ? "bg-background text-foreground shadow-sm"
+                          ? "bg-background text-foreground"
                           : "text-muted-foreground hover:text-foreground",
                       )}
                     >

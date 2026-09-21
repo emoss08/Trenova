@@ -256,7 +256,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
       <Dialog.Portal>
         <Dialog.Popup
           className={cn(
-            "border-border bg-background fixed top-4 right-4 bottom-4 z-50 flex flex-col rounded-lg border shadow-lg outline-none",
+            "border-border bg-background fixed top-4 right-4 bottom-4 z-50 flex flex-col rounded-lg border outline-none",
             "data-[open]:animate-in data-[open]:slide-in-from-right",
             "data-[closed]:animate-out data-[closed]:slide-out-to-right",
             "duration-200",

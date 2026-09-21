@@ -22,7 +22,7 @@ import { SearchIcon } from "lucide-react";
 
 const ATTENTION_PILL_CLASSES: Record<AttentionTone, string> = {
   default: "bg-info text-foreground-on-solid",
-  warning: "bg-warning text-warning-foreground",
+  warning: "bg-warning text-warning-on-solid",
   destructive: "bg-destructive text-foreground-on-solid",
 };
 

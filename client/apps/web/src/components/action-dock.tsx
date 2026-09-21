@@ -37,7 +37,7 @@ export function ActionDock({
 }: ActionDockProps) {
   const containerClassName = cn("fixed bottom-6 z-50", POSITION_CLASSES[position], className);
   const pill = (
-    <div className="bg-foreground flex w-fit min-w-112.5 items-center gap-x-10 rounded-lg p-2 shadow-lg">
+    <div className="bg-foreground flex w-fit min-w-112.5 items-center gap-x-10 rounded-lg p-2">
       {indicator}
       <div className="ml-auto flex items-center space-x-2">{children}</div>
     </div>

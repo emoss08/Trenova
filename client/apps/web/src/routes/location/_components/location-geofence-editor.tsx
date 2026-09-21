@@ -23,15 +23,16 @@ import {
   Rectangle,
   useMap,
 } from "@vis.gl/react-google-maps";
-import { Circle as CircleIcon, PenTool, PlusIcon, Sparkles, Square } from "lucide-react";
+import { Circle as CircleIcon, PenTool, PlusIcon, Square } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFormContext, useFormState, useWatch, type Path, type PathValue } from "react-hook-form";
 import { useNavigate } from "react-router";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const DEFAULT_GEOFENCE_RADIUS_METERS = 50;
 const LOCATION_ZOOM = 18;
 const GEOFENCE_TYPE_ICONS: Record<LocationGeofenceType, typeof CircleIcon> = {
-  auto: Sparkles,
+  auto: AssistMark,
   circle: CircleIcon,
   rectangle: Square,
   draw: PenTool,
@@ -311,7 +312,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
                 >
                   <div
                     // design-tokens-ignore: a geofence handle sits on map imagery, not on a themed surface.
-                    className="size-3 rounded-full border-2 border-white shadow-md ring-1 ring-black/20"
+                    className="size-3 rounded-full border-2 border-white ring-1 ring-black/20"
                     style={{ backgroundColor: SHAPE_COLORS.center }}
                   />
                 </AdvancedMarker>
@@ -383,7 +384,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
       )}
 
       {errorMessages.length > 0 && (
-        <div className="pointer-events-none absolute top-3 left-3 max-w-sm rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger-foreground shadow-sm backdrop-blur">
+        <div className="pointer-events-none absolute top-3 left-3 max-w-sm rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger-foreground backdrop-blur">
           {errorMessages[0]}
         </div>
       )}

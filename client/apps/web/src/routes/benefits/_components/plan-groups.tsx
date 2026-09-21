@@ -85,7 +85,7 @@ function GroupHeading({ group }: { group: PlanTypeGroup<BenefitPlanRow, BenefitC
 
   return (
     <header className="flex flex-wrap items-baseline justify-between gap-2 px-1">
-      <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+      <h4 className="text-muted-foreground text-xs font-medium">
         {t(group.label)}
         <span className="ml-1.5 font-normal normal-case tabular-nums">
           {t("{0, plural, one {# plan} other {# plans}}", group.plans.length)}

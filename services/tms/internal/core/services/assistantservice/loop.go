@@ -21,6 +21,8 @@ type TurnRequest struct {
 	Page       *agentdefinition.PageContext
 	// PreferredProviderID is the reader's chosen model for this conversation.
 	PreferredProviderID pulid.ID
+	// ThreadID is the conversation, for attributing what the turn cost.
+	ThreadID pulid.ID
 }
 
 type TurnResult struct {
@@ -82,6 +84,7 @@ func (s *Service) RunObserved(
 		Input:               req.Input,
 		Emit:                emit,
 		PreferredProviderID: req.PreferredProviderID,
+		ThreadID:            req.ThreadID,
 	})
 	if err != nil {
 		return interruptedTurn(req, decision, run, err), err

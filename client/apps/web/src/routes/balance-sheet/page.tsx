@@ -54,7 +54,7 @@ export function BalanceSheetPage() {
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
               <span className="text-sm font-semibold">{t("Total Assets")}</span>
-              <AmountDisplay value={data.totalAssetsMinor} className="text-lg font-bold" />
+              <AmountDisplay value={data.totalAssetsMinor} className="text-lg font-semibold" />
             </div>
 
             <Separator />
@@ -63,7 +63,7 @@ export function BalanceSheetPage() {
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
               <span className="text-sm font-semibold">{t("Total Liabilities")}</span>
-              <AmountDisplay value={data.totalLiabilitiesMinor} className="text-lg font-bold" />
+              <AmountDisplay value={data.totalLiabilitiesMinor} className="text-lg font-semibold" />
             </div>
 
             <FinancialReportSection section={data.equity} />
@@ -81,7 +81,7 @@ export function BalanceSheetPage() {
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
               <span className="text-sm font-semibold">{t("Total Equity")}</span>
-              <AmountDisplay value={data.totalEquityMinor} className="text-lg font-bold" />
+              <AmountDisplay value={data.totalEquityMinor} className="text-lg font-semibold" />
             </div>
 
             <Separator />
@@ -92,7 +92,7 @@ export function BalanceSheetPage() {
                 isBalanced ? "bg-success-subtle" : "bg-danger-subtle",
               )}
             >
-              <span className="text-base font-bold">
+              <span className="text-base font-semibold">
                 {isBalanced ? t("Balance Sheet is Balanced") : t("Balance Sheet is NOT Balanced")}
               </span>
               <div className="flex items-center gap-4">

@@ -141,7 +141,7 @@ const CountrySelect = ({
           <Button
             type="button"
             variant="outline"
-            className="flex gap-1 rounded-s-lg rounded-e-none border-r-0 border-input bg-muted px-1 focus:z-10"
+            className="flex gap-1 rounded-s-md rounded-e-none border-r-0 border-input bg-field px-1 hover:bg-field focus:z-10 active:scale-100 active:bg-field"
             size="sm"
             disabled={disabled}
           >

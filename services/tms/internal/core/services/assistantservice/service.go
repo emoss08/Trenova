@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
+	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -21,6 +22,7 @@ type Params struct {
 	Recorder      *proposalrecorder.Service
 	Proposals     repositories.AgentProposalRepository
 	AIProviders   repositories.AIProviderRepository
+	Shadow        *agentshadow.Resolver
 }
 
 type Service struct {
@@ -33,6 +35,7 @@ type Service struct {
 	recorder      *proposalrecorder.Service
 	proposals     chatProposalStore
 	providers     repositories.AIProviderRepository
+	shadow        *agentshadow.Resolver
 }
 
 func New(p Params) serviceports.AssistantService {
@@ -46,5 +49,6 @@ func New(p Params) serviceports.AssistantService {
 		providers:     p.AIProviders,
 		recorder:      p.Recorder,
 		proposals:     p.Proposals,
+		shadow:        p.Shadow,
 	}
 }

@@ -3,6 +3,8 @@ package agentguard
 import (
 	"context"
 	"errors"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"go.uber.org/fx"
@@ -14,6 +16,11 @@ type Params struct {
 
 	Logger     *zap.Logger
 	Completion serviceports.CompletionService
+	// Verdicts is the store every replica shares. Optional: without it each
+	// replica remembers only its own classifications, which is what this
+	// service did before and what a test wants.
+	Verdicts repositories.ScopeVerdictCacheRepository `optional:"true"`
+	Config   *config.Config                           `optional:"true"`
 }
 
 type Service struct {
@@ -33,10 +40,16 @@ type Service struct {
 }
 
 func New(p Params) *Service {
+	logger := p.Logger.Named("service.agent-guard")
+	var ai *config.AIConfig
+	if p.Config != nil {
+		ai = p.Config.GetAIConfig()
+	}
+
 	return &Service{
-		logger:     p.Logger.Named("service.agent-guard"),
+		logger:     logger,
 		completion: p.Completion,
-		verdicts:   newVerdictCache(),
+		verdicts:   newVerdictCache(p.Verdicts, ai.GetVerdictCacheTTL(), logger),
 	}
 }
 

@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/aiproviderservice"
+	"github.com/emoss08/trenova/internal/core/services/aiusageservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
@@ -272,6 +273,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentdefinitionservice.New,
 	aiproviderservice.NewProber,
 	aiproviderservice.New,
+	aiusageservice.New,
 	agentrunservice.New,
 	agentshadow.New,
 	agentevents.New,

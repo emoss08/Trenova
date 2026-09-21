@@ -173,7 +173,7 @@ export function WeatherTimeline({
 
   return (
     <MapControl position={ControlPosition.BOTTOM_CENTER}>
-      <div className="bg-popover mb-2.5 w-[560px] rounded-md border shadow-sm">
+      <div className="bg-popover mb-2.5 w-[560px] rounded-md border">
         <div className="flex items-center justify-between px-3 pt-2 pb-1">
           <Popover open={weatherLayerOpen} onOpenChange={setWeatherLayerOpen}>
             <PopoverTrigger
@@ -192,7 +192,7 @@ export function WeatherTimeline({
               side="top"
               sideOffset={8}
               align="start"
-              className="w-auto gap-0 p-1 shadow-sm"
+              className="w-auto gap-0 p-1"
             >
               {WEATHER_OPTIONS.map((opt) => (
                 <button
@@ -274,7 +274,7 @@ export function WeatherTimeline({
               style={{ width: `${progress}%` }}
             />
             <div
-              className="border-border bg-background absolute top-0 size-4 -translate-x-1/2 rounded-full border shadow-sm"
+              className="border-border bg-background absolute top-0 size-4 -translate-x-1/2 rounded-full border"
               style={{ left: `${progress}%` }}
             />
           </div>

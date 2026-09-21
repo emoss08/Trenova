@@ -314,7 +314,7 @@ function SummaryCard({
     >
       <Card className="h-full gap-0 rounded-lg py-3">
         <CardContent className="px-4">
-          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-medium">
             {label}
           </p>
           <p

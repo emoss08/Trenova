@@ -137,7 +137,7 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
           {items.fields.map((field, index) => (
             <div key={field.id} className="bg-muted/30 rounded-lg border p-3">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-muted-foreground text-xs font-medium uppercase">
+                <p className="text-muted-foreground text-xs font-medium">
                   {t("Item {0}", index + 1)}
                 </p>
                 {items.fields.length > 1 ? (

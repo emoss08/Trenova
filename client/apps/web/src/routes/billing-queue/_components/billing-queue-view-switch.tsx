@@ -61,7 +61,7 @@ export function BillingQueueViewSwitch({
             className={cn(
               "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
               active
-                ? "bg-card text-foreground shadow-xs"
+                ? "bg-card text-foreground"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >

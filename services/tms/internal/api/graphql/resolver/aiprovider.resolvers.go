@@ -7,13 +7,23 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+func (r *aIProviderResolver) InputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error) {
+	panic(fmt.Errorf("not implemented: InputCostPerMillion - inputCostPerMillion"))
+}
+
+func (r *aIProviderResolver) OutputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error) {
+	panic(fmt.Errorf("not implemented: OutputCostPerMillion - outputCostPerMillion"))
+}
 
 func (r *queryResolver) AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
@@ -57,3 +67,7 @@ func (r *queryResolver) AiProvider(ctx context.Context, id string) (*aiprovider.
 		TenantInfo: tenantInfo(authCtx),
 	})
 }
+
+func (r *Resolver) AIProvider() generated.AIProviderResolver { return &aIProviderResolver{r} }
+
+type aIProviderResolver struct{ *Resolver }

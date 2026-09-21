@@ -77,7 +77,7 @@ export function PTOFilterPopover({
           </Button>
         }
       />
-      <PopoverContent align="end" className="dark w-[500px] p-0">
+      <PopoverContent align="end" className="w-[500px] p-0">
         <div className="flex">
           <div>
             <FormGroup dense cols={2} className="p-2">

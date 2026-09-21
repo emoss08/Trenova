@@ -350,7 +350,7 @@ function DimensionGrid({ rows }: { rows: DimensionRow[] }) {
   return (
     <div className="rounded-lg border p-3">
       <div className="mb-2.5 flex items-center justify-between gap-2">
-        <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
+        <span className="text-xs text-muted-foreground font-medium">
           {t("Dimensions vs tightest limit")}
         </span>
         {hasLimits && (
@@ -568,7 +568,7 @@ function StateChip({ code }: { code: string }) {
 function CardHeader({ title, meta }: { title: string; meta?: React.ReactNode }) {
   return (
     <div className="border-border flex items-center justify-between gap-2 border-b px-3 py-2">
-      <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
+      <span className="text-xs text-muted-foreground font-medium">
         {title}
       </span>
       {meta}
@@ -607,7 +607,7 @@ function SummaryCard({
         >
           {icon}
         </span>
-        <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
+        <span className="text-xs text-muted-foreground font-medium">
           {label}
         </span>
         {hint && (

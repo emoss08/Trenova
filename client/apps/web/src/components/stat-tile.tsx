@@ -37,7 +37,7 @@ export function StatTile({
         active && "ring-brand ring-1",
       )}
     >
-      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-medium">
         {label}
       </p>
       <div className="mt-1 text-sm font-semibold">{value}</div>

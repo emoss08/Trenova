@@ -14,6 +14,7 @@ import {
   CircleCheckIcon,
   CircleSlashIcon,
   LoaderIcon,
+  PauseCircleIcon,
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
@@ -64,7 +65,9 @@ export function ProposalCard({
 
   // Once a decision is made the card is history, not a question. It keeps the
   // sentence and the outcome and drops everything that existed to help decide.
-  if (!awaiting) {
+  // A held proposal is still a question, just not one anybody can answer yet,
+  // so it keeps the full card and swaps the buttons for the reason.
+  if (!awaiting && state !== "held") {
     return (
       <m.div
         layout
@@ -84,7 +87,7 @@ export function ProposalCard({
       layout
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card ring-foreground/10 flex flex-col overflow-hidden rounded-xl shadow-sm ring-1"
+      className="bg-card ring-foreground/10 flex flex-col overflow-hidden rounded-xl ring-1"
     >
       <div className="flex flex-col gap-2 px-3.5 pt-3 pb-2.5">
         <div className="flex items-center gap-2">
@@ -93,12 +96,12 @@ export function ProposalCard({
             className="size-1.5 shrink-0 rounded-full"
             style={{ backgroundColor: toneVar("warning") }}
           />
-          <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs tracking-wide uppercase">
+          <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
             {view.title}
           </span>
           {view.severity && (
             <span
-              className="shrink-0 text-2xs font-medium tracking-wide uppercase"
+              className="shrink-0 text-xs font-medium"
               style={{ color: toneVar(view.severity.tone) }}
             >
               {view.severity.label}
@@ -123,42 +126,72 @@ export function ProposalCard({
         )}
       </div>
 
-      <div className="flex items-center gap-2 px-3 pb-3">
-        <Button
-          size="sm"
-          onClick={() => decideMutation.mutate("Accepted")}
-          disabled={decideMutation.isPending}
-          isLoading={decideMutation.isPending && decideMutation.variables === "Accepted"}
-        >
-          <CheckIcon className="size-3.5" />
-          {t("Approve")}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => decideMutation.mutate("Rejected")}
-          disabled={decideMutation.isPending}
-          isLoading={decideMutation.isPending && decideMutation.variables === "Rejected"}
-        >
-          <XIcon className="size-3.5" />
-          {t("Reject")}
-        </Button>
+      {state === "held" ? (
+        <HoldLine hold={proposal.hold} />
+      ) : (
+        <div className="flex items-center gap-2 px-3 pb-3">
+          <Button
+            size="sm"
+            onClick={() => decideMutation.mutate("Accepted")}
+            disabled={decideMutation.isPending}
+            isLoading={decideMutation.isPending && decideMutation.variables === "Accepted"}
+          >
+            <CheckIcon className="size-3.5" />
+            {t("Approve")}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => decideMutation.mutate("Rejected")}
+            disabled={decideMutation.isPending}
+            isLoading={decideMutation.isPending && decideMutation.variables === "Rejected"}
+          >
+            <XIcon className="size-3.5" />
+            {t("Reject")}
+          </Button>
 
-        <span className="ml-auto flex items-center gap-2">
-          {/* Reversibility is only news one way round. Saying a change can be
+          <span className="ml-auto flex items-center gap-2">
+            {/* Reversibility is only news one way round. Saying a change can be
               undone reassures nobody; saying it cannot is the thing to read. */}
-          {!view.reversible && (
-            <span
-              className="flex items-center gap-1 text-xs"
-              style={{ color: toneVar("warning") }}
-            >
-              <TriangleAlertIcon className="size-3" />
-              {t("Permanent")}
-            </span>
-          )}
-        </span>
-      </div>
+            {!view.reversible && (
+              <span
+                className="flex items-center gap-1 text-xs"
+                style={{ color: toneVar("warning") }}
+              >
+                <TriangleAlertIcon className="size-3" />
+                {t("Permanent")}
+              </span>
+            )}
+          </span>
+        </div>
+      )}
     </m.div>
+  );
+}
+
+/**
+ * Why nobody can decide yet, naming the switch.
+ *
+ * There are two switches on two tabs, and the organization-wide pause is on
+ * from the day an organization is created. A line that said only "shadow mode"
+ * sent people to turn it off on the agent, where it already was, and back to
+ * the same refusal.
+ */
+function HoldLine({ hold }: { hold: AssistantProposal["hold"] }) {
+  const t = useT();
+  if (!hold) {
+    return null;
+  }
+
+  return (
+    <p className="text-muted-foreground flex items-center gap-1.5 px-3.5 pb-3 text-xs">
+      <PauseCircleIcon className="size-3.5 shrink-0" />
+      <span>
+        {hold.reason === "AgentShadow" && hold.agentName !== ""
+          ? t("On hold: {0} is in shadow mode in AI Control.", hold.agentName)
+          : t("On hold: all agents are paused in AI Control.")}
+      </span>
+    </p>
   );
 }
 

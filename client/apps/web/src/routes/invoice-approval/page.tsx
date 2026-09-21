@@ -366,7 +366,7 @@ function ApprovalDetail({
           <h2 className="text-lg font-semibold">{selectedRow.originalInvoiceNumber}</h2>
           <p className="text-muted-foreground text-sm">{selectedRow.customerName}</p>
         </div>
-        <p className="text-2xl font-bold tabular-nums">{formatCurrency(netDelta)}</p>
+        <p className="text-2xl font-semibold tabular-nums">{formatCurrency(netDelta)}</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -583,7 +583,7 @@ function ApprovalDetail({
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-card rounded-lg border px-3 py-2.5">
-      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-medium">
         {label}
       </p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>

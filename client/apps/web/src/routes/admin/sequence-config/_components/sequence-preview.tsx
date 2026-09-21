@@ -42,7 +42,7 @@ export const SequencePreview = memo(function SequencePreview({ index, showTokens
   return (
     <div className="border-border bg-muted/30 rounded-lg border px-4 py-3.5">
       <div className="mb-1.5 flex items-center justify-between gap-3">
-        <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        <span className="text-muted-foreground text-xs font-medium">
           {t("Live Preview")}
         </span>
         <div className="flex items-center gap-1">

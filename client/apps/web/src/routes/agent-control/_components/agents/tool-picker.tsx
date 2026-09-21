@@ -165,7 +165,7 @@ export function ToolPicker({
         <div className="border-border/70 divide-border/70 divide-y rounded-lg border">
           {groups.map((group) => (
             <section key={group.resource} className="flex flex-col">
-              <h4 className="bg-muted/40 text-muted-foreground px-3 py-1.5 text-2xs font-medium tracking-wider uppercase">
+              <h4 className="bg-muted/40 text-muted-foreground px-3 py-1.5 text-xs font-medium">
                 {resourceLabel(group.resource)}
               </h4>
               <ul className="divide-border/60 divide-y">
@@ -238,7 +238,7 @@ export function ToolPicker({
                                 className={cn(
                                   "rounded px-2 py-0.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-40",
                                   tier === option
-                                    ? "bg-background text-foreground shadow-xs"
+                                    ? "bg-background text-foreground"
                                     : "text-muted-foreground hover:text-foreground",
                                 )}
                               >

@@ -41,12 +41,12 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "border-input bg-muted data-[placeholder]:text-muted-foreground",
+        "ui-field data-[placeholder]:text-muted-foreground",
         "ui-focus-ring aria-invalid:border-danger aria-invalid:[--ring:var(--ring-danger)]",
-        "x gap-1.5 rounded-lg border py-1 pr-2 pl-2 text-sm transition-colors aria-invalid:border-destructive dark:aria-invalid:border-destructive/50",
-        "select-none data-[size=default]:h-7 data-[size=sm]:h-6 data-[size=sm]:rounded-[min(var(--radius-md),10px)]",
+        "gap-1.5 py-1 pr-2 pl-2 text-sm aria-invalid:border-destructive dark:aria-invalid:border-destructive/50",
+        "select-none data-[size=default]:h-7 data-[size=sm]:h-6 ",
         "flex w-fit items-center justify-between whitespace-nowrap *:data-[slot=select-value]:flex *:data-[slot=select-value]:gap-1.5 [&_svg:not([class*='size-'])]:size-4",
-        "outline-none disabled:cursor-not-allowed disabled:opacity-50 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center",
+        "outline-none disabled:cursor-not-allowed disabled:opacity-60 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0",
         className,
       )}
@@ -87,7 +87,7 @@ function SelectContent({
         <SelectPrimitive.Popup
           data-slot="select-content"
           className={cn(
-            "dark relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            "dark relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover text-popover-foreground ring-1 ring-foreground/10 duration-150 ease-settle data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
             className,
           )}
           {...props}

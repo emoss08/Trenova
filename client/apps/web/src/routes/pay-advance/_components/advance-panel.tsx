@@ -214,13 +214,13 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">{t("Amount")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Amount")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={row.amountMinor} currency={row.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">
+          <p className="text-muted-foreground text-xs font-medium">
             {t("Recovered")}
           </p>
           <p className="mt-1 text-sm font-semibold">
@@ -228,7 +228,7 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">
+          <p className="text-muted-foreground text-xs font-medium">
             {t("Outstanding")}
           </p>
           <p className="mt-1 text-sm font-semibold">

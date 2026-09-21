@@ -18,10 +18,11 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
-import { SearchXIcon, SparklesIcon, TriangleAlertIcon } from "lucide-react";
+import { SearchXIcon, TriangleAlertIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatMiles, scoreTone, verdictMeta } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 function assignable(assignment: DispatchPlannedAssignment): boolean {
   return Boolean(assignment.tractorId) && !assignment.score.blocked;
@@ -230,7 +231,7 @@ export function PlanReviewDialog({
       <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-1.5 text-sm">
-            <SparklesIcon className="text-brand size-4" aria-hidden />
+            <AssistMark className="text-brand size-4" aria-hidden />
             {t("Auto-assign proposal")}
           </DialogTitle>
           <DialogDescription className="flex flex-wrap items-center gap-x-1.5 text-xs">
@@ -271,7 +272,7 @@ export function PlanReviewDialog({
           )}
           {uncoveredGroups.length > 0 && (
             <div className="flex flex-col border-t">
-              <span className="bg-warning/[4%] text-warning flex items-center gap-1 border-b px-3 py-1.5 text-2xs font-semibold tracking-wide uppercase">
+              <span className="bg-warning/[4%] text-warning flex items-center gap-1 border-b px-3 py-1.5 text-xs font-semibold">
                 <TriangleAlertIcon className="size-3" aria-hidden />
                 {t("Not covered")}
               </span>

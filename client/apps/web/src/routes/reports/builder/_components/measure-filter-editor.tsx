@@ -157,7 +157,7 @@ export function MeasureFilterEditor({ index, ir, column, onUpdate }: MeasureFilt
     <div className="border-border bg-muted/30 flex flex-col gap-2 rounded-md border border-dashed p-2">
       <div className="flex items-center gap-2">
         <FilterIcon className="text-muted-foreground size-3" />
-        <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+        <span className="text-xs text-muted-foreground font-medium">
           {t("Only count")}
         </span>
         {filterCount(column.filter) > 1 && (

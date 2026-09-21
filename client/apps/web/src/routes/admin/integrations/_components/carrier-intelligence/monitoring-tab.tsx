@@ -395,7 +395,7 @@ function FeedRow({ feed }: { feed: CarrierIntelFeedState }) {
 function StatTile({ label, value, tone }: { label: string; value: number; tone?: "critical" }) {
   return (
     <div className="border-border rounded-md border p-2">
-      <p className="text-muted-foreground text-2xs uppercase">{label}</p>
+      <p className="text-muted-foreground text-xs">{label}</p>
       <p className={cn("text-lg font-semibold", tone === "critical" && "text-destructive")}>
         {value.toLocaleString()}
       </p>

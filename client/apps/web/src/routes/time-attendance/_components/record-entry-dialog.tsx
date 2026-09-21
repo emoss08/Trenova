@@ -158,7 +158,7 @@ export function RecordEntryDialog({
             </span>
           </div>
           <div className="text-right">
-            <p className="text-muted-foreground text-xs font-medium uppercase">
+            <p className="text-muted-foreground text-xs font-medium">
               {t("Would be paid")}
             </p>
             <p className="font-mono text-xl leading-none font-semibold tabular-nums">

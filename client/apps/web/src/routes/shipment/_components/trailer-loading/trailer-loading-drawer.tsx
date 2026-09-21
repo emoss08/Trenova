@@ -126,7 +126,7 @@ export default function LoadPlannerDialog({
 
                 {data.recommendations.length > 0 && (
                   <div>
-                    <span className="text-2xs text-muted-foreground mb-1.5 block font-medium tracking-wider uppercase">
+                    <span className="text-xs text-muted-foreground mb-1.5 block font-medium">
                       {t("Recommendations")}
                     </span>
                     <LoadingRecommendations recommendations={data.recommendations} />
@@ -135,7 +135,7 @@ export default function LoadPlannerDialog({
 
                 {data.warnings.length > 0 && (
                   <div>
-                    <span className="text-2xs text-muted-foreground mb-1.5 block font-medium tracking-wider uppercase">
+                    <span className="text-xs text-muted-foreground mb-1.5 block font-medium">
                       {t("Alerts")}
                     </span>
                     <LoadingWarnings warnings={data.warnings} />

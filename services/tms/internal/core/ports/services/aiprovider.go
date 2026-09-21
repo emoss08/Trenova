@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/shopspring/decimal"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -24,6 +25,8 @@ type SaveAIProviderRequest struct {
 	AllowPrivateNetwork  bool
 	StructuredOutputMode aiprovider.StructuredOutputMode
 	ReasoningEffort      aiprovider.ReasoningEffort
+	InputCostPerMillion  *decimal.Decimal
+	OutputCostPerMillion *decimal.Decimal
 	MaxTokens            int
 	Tasks                []aiprovider.Task
 	Priority             int

@@ -86,6 +86,36 @@ describe("classifyProposal", () => {
     ).toBe("failed");
   });
 
+  // The server refuses a decision while a shadow switch is on. The card used to
+  // offer Approve anyway and the click failed with a message that named no
+  // switch; now the proposal is held and says which one.
+  it("holds a pending proposal behind a shadow switch instead of offering buttons", () => {
+    const held = proposal({
+      status: "Pending",
+      hold: { reason: "OrganizationPaused", agentName: "" },
+    });
+
+    expect(classifyProposal(held)).toBe("held");
+    expect(isDecidable(held)).toBe(false);
+  });
+
+  it("does not hold a proposal already decided, whatever the switches say now", () => {
+    const hold = { reason: "AgentShadow", agentName: "Dispatch desk" } as const;
+
+    expect(classifyProposal(proposal({ status: "Rejected", hold }))).toBe("declined");
+    expect(classifyProposal(proposal({ status: "Executed", hold }))).toBe("done");
+  });
+
+  it("reads an expired proposal as closed even while it is also held", () => {
+    const held = proposal({
+      status: "Pending",
+      expiresAt: 1,
+      hold: { reason: "OrganizationPaused", agentName: "" },
+    });
+
+    expect(classifyProposal(held, 2)).toBe("closed");
+  });
+
   it("separates a rejection from a proposal that simply lapsed", () => {
     expect(classifyProposal(proposal({ status: "Rejected" }))).toBe("declined");
     expect(classifyProposal(proposal({ status: "Expired" }))).toBe("closed");

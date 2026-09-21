@@ -4,6 +4,7 @@ import type { AssistantMessage, AssistantProposal } from "@/types/assistant";
  * What a proposal card should show.
  *
  * - `awaiting` — nobody has decided; this is the only state with buttons
+ * - `held` — nobody has decided, and a shadow switch keeps anyone from doing so
  * - `running` — approved, but the tool has not reported back yet
  * - `done` — the tool ran
  * - `failed` — approved, and the tool refused or errored
@@ -12,6 +13,7 @@ import type { AssistantMessage, AssistantProposal } from "@/types/assistant";
  */
 export type ProposalPresentation =
   | "awaiting"
+  | "held"
   | "running"
   | "done"
   | "failed"
@@ -60,7 +62,9 @@ export function classifyProposal(
 
   switch (proposal.status) {
     case "Pending":
-      return "awaiting";
+      // The server refuses every decision while a shadow switch is on. A
+      // card with buttons would only teach that by failing the click.
+      return proposal.hold ? "held" : "awaiting";
     case "Accepted":
     case "Modified":
       return "running";

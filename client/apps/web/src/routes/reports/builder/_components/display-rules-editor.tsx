@@ -47,7 +47,7 @@ export function DisplayRulesEditor({ rules, onChange }: DisplayRulesEditorProps)
   return (
     <div className="border-border/60 flex flex-col gap-2 border-t pt-2">
       <div className="flex items-center gap-2">
-        <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+        <span className="text-xs text-muted-foreground font-medium">
           {t("Highlight when")}
         </span>
         <div className="flex-1" />

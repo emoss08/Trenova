@@ -55,7 +55,7 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
     <div className="flex h-56 flex-col justify-between">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-semibold">
             {t("Collection Effectiveness")}
           </p>
           <p className={cn("mt-1 text-3xl font-semibold tracking-tight tabular-nums", ceiClass)}>
@@ -71,7 +71,7 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
           </div>
         </div>
         <div>
-          <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-semibold">
             {t("Avg Days to Pay")}
           </p>
           <p className="mt-1 text-3xl font-semibold tracking-tight tabular-nums">
@@ -138,7 +138,7 @@ function RateStat({
 }) {
   return (
     <div className="px-3 py-2.5">
-      <p className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-semibold">
         {label}
       </p>
       <p

@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
-import { Sparkles } from "lucide-react";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 /**
  * The workspace as it will look once the period has settlements: the queue
@@ -48,7 +48,7 @@ export function SettlementPeriodEmpty({
       action={
         onGenerate ? (
           <Button variant="outline" size="sm" disabled={generating} onClick={onGenerate}>
-            <Sparkles className="size-3.5" />
+            <AssistMark className="size-3.5" />
             {t("Generate settlements")}
           </Button>
         ) : null

@@ -1,18 +1,21 @@
 import { cva } from "class-variance-authority";
 
 export const buttonVariants = cva(
-  "ui-focus-ring inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger aria-invalid:bg-danger/10 aria-invalid:[--ring:var(--ring-danger)] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "ui-focus-ring inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap ui-press outline-none select-none disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger aria-invalid:bg-danger/10 aria-invalid:[--ring:var(--ring-danger)] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-brand text-brand-foreground hover:bg-brand/90",
+        default:
+          "bg-ink text-ink-foreground hover:bg-ink-hover active:bg-ink-active",
         destructive:
           "bg-danger text-foreground-on-solid hover:bg-danger-hover [--ring:var(--ring-danger)]",
-        outline: "border border-input bg-background hover:bg-muted hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        ghostInvert: "bg-accent hover:bg-muted-foreground/40 hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        outline:
+          "border border-input bg-card hover:border-border-strong hover:bg-surface-hover active:bg-surface-active",
+        secondary:
+          "bg-surface-active/70 text-secondary-foreground hover:bg-surface-active active:bg-border",
+        ghost: "hover:bg-surface-hover hover:text-accent-foreground active:bg-surface-active",
+        ghostInvert: "bg-accent hover:bg-surface-active hover:text-accent-foreground",
+        link: "text-brand underline-offset-4 hover:underline active:scale-100",
       },
       size: {
         default: "h-8 px-3.5 py-1.5 has-[>svg]:px-2.5",

@@ -84,7 +84,7 @@ export function TimelineList({ events, canAmend, onAmend }: TimelineListProps) {
         <section key={group.year} className="flex flex-col gap-3">
           <h4
             data-testid={`timeline-year-${group.year}`}
-            className="text-muted-foreground sticky top-0 z-10 bg-background/95 py-1 text-xs font-semibold tracking-wide uppercase backdrop-blur"
+            className="text-muted-foreground sticky top-0 z-10 bg-background/95 py-1 text-xs font-semibold backdrop-blur"
           >
             {group.year}
           </h4>

@@ -117,6 +117,13 @@ func (f *fakeProposalRepo) UpdateStatus(
 	return nil, nil
 }
 
+func (f *fakeProposalRepo) ExpirePending(
+	context.Context,
+	repositories.ExpireAgentProposalsRequest,
+) (int, error) {
+	return 0, nil
+}
+
 func (f *fakeProposalRepo) ExpirePendingByRun(
 	context.Context,
 	repositories.ExpireAgentProposalsByRunRequest,

@@ -263,7 +263,7 @@ export function DashboardFiltersEditor({
     <div className="flex flex-col gap-4">
       {filters.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h3 className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+          <h3 className="text-xs text-muted-foreground font-medium">
             {t("On this dashboard")}
           </h3>
           {filters.map((filter, filterIndex) => (
@@ -281,7 +281,7 @@ export function DashboardFiltersEditor({
       )}
 
       <section className="flex flex-col gap-2">
-        <h3 className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+        <h3 className="text-xs text-muted-foreground font-medium">
           {t("Add from your reports")}
         </h3>
         <p className="text-2xs text-muted-foreground">

@@ -235,7 +235,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
           {activeTab === "variables" &&
             variableGroups.map(([category, variables]) => (
               <div key={category}>
-                <div className="text-muted-foreground px-2 pb-1 text-xs font-medium tracking-wide uppercase">
+                <div className="text-muted-foreground px-2 pb-1 text-xs font-medium">
                   {categoryLabel(category, CATEGORY_LABELS)}
                 </div>
                 <div className="space-y-0.5">
@@ -249,7 +249,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
           {activeTab === "functions" &&
             functionGroups.map(([category, functions]) => (
               <div key={category || "general"}>
-                <div className="text-muted-foreground px-2 pb-1 text-xs font-medium tracking-wide uppercase">
+                <div className="text-muted-foreground px-2 pb-1 text-xs font-medium">
                   {categoryLabel(category, FUNCTION_CATEGORY_LABELS) || t("Functions")}
                 </div>
                 <div className="space-y-0.5">

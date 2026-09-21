@@ -14,10 +14,10 @@ import {
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ContractRate, Shipment } from "@trenova/shared/types/shipment";
-import { SparklesIcon } from "lucide-react";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 /**
  * Re-rates a shipment from its contract, on request.
@@ -122,7 +122,7 @@ function ConfirmDialog({
       <DialogContent className="sm:max-w-110">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <SparklesIcon className="size-4" />
+            <AssistMark className="size-4" />
             {t("Re-rate from contract")}
           </DialogTitle>
           <DialogDescription>
@@ -161,7 +161,7 @@ function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: 
       <DialogContent className="sm:max-w-115">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <SparklesIcon className="size-4" />
+            <AssistMark className="size-4" />
             {t("Rate applied")}
           </DialogTitle>
           <DialogDescription>

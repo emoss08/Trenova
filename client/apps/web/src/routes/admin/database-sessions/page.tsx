@@ -112,7 +112,7 @@ function QueryBlock({ label, query }: { label: string; query: string }) {
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
-      <span className="text-muted-foreground text-2xs tracking-wider uppercase">{label}</span>
+      <span className="text-muted-foreground text-xs">{label}</span>
       {query ? (
         <div className="max-h-32 overflow-auto">
           <ShikiCodeBlock code={query} lang="plsql" darkTheme="vitesse-dark" />

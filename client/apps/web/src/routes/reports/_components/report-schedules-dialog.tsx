@@ -368,7 +368,7 @@ function AlertConditionFields({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-2xs text-muted-foreground font-semibold tracking-wide uppercase">
+    <span className="text-xs text-muted-foreground font-semibold">
       {children}
     </span>
   );
@@ -830,7 +830,7 @@ function ScheduleRow({
         <div className="text-2xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5">
           <span>{timezoneLabel(schedule.timezone)}</span>
           <span className="text-muted-foreground/50">·</span>
-          <span className="tracking-wide uppercase">
+          <span className="">
             {schedule.formats.map((format) => format.toUpperCase()).join(" ")}
           </span>
           <DeliveryFacts schedule={schedule} />

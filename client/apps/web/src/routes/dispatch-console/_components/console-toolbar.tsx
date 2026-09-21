@@ -14,12 +14,12 @@ import {
   ChevronRightIcon,
   Columns3Icon,
   GanttChartIcon,
-  SparklesIcon,
   Undo2Icon,
 } from "lucide-react";
 import { preloadCenterView } from "./console-center-pane";
 import { TIMELINE_ZOOM_OPTIONS } from "./timeline-metrics";
 import { useDispatchView, useDispatchWindow, type CenterMode } from "./url-state";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const CENTER_MODE_OPTIONS: readonly { id: CenterMode; label: string; Icon: typeof Columns3Icon }[] =
   [
@@ -196,7 +196,7 @@ export function ConsoleToolbar({
             isLoading={isPlanning}
             onClick={onPlan}
           >
-            <SparklesIcon className="size-3" aria-hidden />
+            <AssistMark className="size-3" aria-hidden />
             {t("Auto-assign")}
           </Button>
         </CapabilityGate>

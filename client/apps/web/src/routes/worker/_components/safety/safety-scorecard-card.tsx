@@ -134,7 +134,7 @@ export function SafetyScorecardCard({
         <Count label={t("Recognition")} value={scorecard.recognitions} />
         {scorecard.highestDiscipline ? (
           <div className="ml-auto flex flex-col">
-            <dt className="text-2xs text-muted-foreground uppercase">{t("Discipline")}</dt>
+            <dt className="text-xs text-muted-foreground">{t("Discipline")}</dt>
             <dd className="font-medium tabular-nums">
               {t(
                 "{0} active, highest {1}",
@@ -173,7 +173,7 @@ function Metric({
   return (
     <div className="border-border/80 flex min-w-0 flex-col gap-2 rounded-lg border p-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground truncate text-xs font-semibold uppercase">
+        <span className="text-muted-foreground truncate text-xs font-semibold">
           {label}
         </span>
         <span className="bg-accent inline-flex size-6 shrink-0 items-center justify-center rounded-md">
@@ -224,7 +224,7 @@ function ThresholdBar({ value, watch, atRisk }: { value: number; watch: number; 
 function Count({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col">
-      <dt className="text-2xs text-muted-foreground uppercase">{label}</dt>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="font-medium tabular-nums">{value}</dd>
     </div>
   );

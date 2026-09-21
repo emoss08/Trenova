@@ -32,6 +32,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
+	AIProvider() AIProviderResolver
 	AccessorialCharge() AccessorialChargeResolver
 	AgentDefinition() AgentDefinitionResolver
 	AgentProposal() AgentProposalResolver
@@ -206,12 +207,14 @@ type ComplexityRoot struct {
 		Enabled              func(childComplexity int) int
 		HasAPIKey            func(childComplexity int) int
 		ID                   func(childComplexity int) int
+		InputCostPerMillion  func(childComplexity int) int
 		Kind                 func(childComplexity int) int
 		LastTest             func(childComplexity int) int
 		MaxTokens            func(childComplexity int) int
 		Model                func(childComplexity int) int
 		Name                 func(childComplexity int) int
 		OrganizationID       func(childComplexity int) int
+		OutputCostPerMillion func(childComplexity int) int
 		Priority             func(childComplexity int) int
 		ReasoningEffort      func(childComplexity int) int
 		StructuredOutputMode func(childComplexity int) int
@@ -240,6 +243,35 @@ type ComplexityRoot struct {
 		SchemaHonoured  func(childComplexity int) int
 		Success         func(childComplexity int) int
 		TestedAt        func(childComplexity int) int
+	}
+
+	AIUsageProviderSlice struct {
+		Calls           func(childComplexity int) int
+		CostUSD         func(childComplexity int) int
+		Failed          func(childComplexity int) int
+		InputTokens     func(childComplexity int) int
+		LatencyP50Ms    func(childComplexity int) int
+		LatencyP95Ms    func(childComplexity int) int
+		Model           func(childComplexity int) int
+		OutputTokens    func(childComplexity int) int
+		PricedCalls     func(childComplexity int) int
+		ProviderID      func(childComplexity int) int
+		ProviderName    func(childComplexity int) int
+		ReasoningTokens func(childComplexity int) int
+	}
+
+	AIUsageSummary struct {
+		ByProvider      func(childComplexity int) int
+		Calls           func(childComplexity int) int
+		CostUSD         func(childComplexity int) int
+		Failed          func(childComplexity int) int
+		InputTokens     func(childComplexity int) int
+		LatencyP50Ms    func(childComplexity int) int
+		LatencyP95Ms    func(childComplexity int) int
+		OutputTokens    func(childComplexity int) int
+		PricedCalls     func(childComplexity int) int
+		ReasoningTokens func(childComplexity int) int
+		Since           func(childComplexity int) int
 	}
 
 	ARAgingBucketTotals struct {
@@ -7124,6 +7156,7 @@ type ComplexityRoot struct {
 		AgentRuns                           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AiProvider                          func(childComplexity int, id string) int
 		AiProviders                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AiUsageSummary                      func(childComplexity int, since *int) int
 		ApprovalDelegations                 func(childComplexity int, delegatorID *string, delegateID *string, activeOnly *bool) int
 		ArAgingSummary                      func(childComplexity int, asOfDate *int) int
 		ArAgingTrend                        func(childComplexity int, weeks *int) int
@@ -11342,6 +11375,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AIProvider.ID(childComplexity), true
+	case "AIProvider.inputCostPerMillion":
+		if e.ComplexityRoot.AIProvider.InputCostPerMillion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.InputCostPerMillion(childComplexity), true
 	case "AIProvider.kind":
 		if e.ComplexityRoot.AIProvider.Kind == nil {
 			break
@@ -11378,6 +11417,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AIProvider.OrganizationID(childComplexity), true
+	case "AIProvider.outputCostPerMillion":
+		if e.ComplexityRoot.AIProvider.OutputCostPerMillion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.OutputCostPerMillion(childComplexity), true
 	case "AIProvider.priority":
 		if e.ComplexityRoot.AIProvider.Priority == nil {
 			break
@@ -11495,6 +11540,146 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AIProviderTestOutcome.TestedAt(childComplexity), true
+
+	case "AIUsageProviderSlice.calls":
+		if e.ComplexityRoot.AIUsageProviderSlice.Calls == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageProviderSlice.Calls(childComplexity), true
+	case "AIUsageProviderSlice.costUsd":
+		if e.ComplexityRoot.AIUsageProviderSlice.CostUSD == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageProviderSlice.CostUSD(childComplexity), true
+	case "AIUsageProviderSlice.failed":
+		if e.ComplexityRoot.AIUsageProviderSlice.Failed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageProviderSlice.Failed(childComplexity), true
+	case "AIUsageProviderSlice.inputTokens":
+		if e.ComplexityRoot.AIUsageProviderSlice.InputTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageProviderSlice.InputTokens(childComplexity), true
+	case "AIUsageProviderSlice.latencyP50Ms":
+		if e.ComplexityRoot.AIUsageProviderSlice.LatencyP50Ms == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageProviderSlice.LatencyP50Ms(childComplexity), true
+	case "AIUsageProviderSlice.latencyP95Ms":
+		if e.ComplexityRoot.AIUsageProviderSlice.LatencyP95Ms == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageProviderSlice.LatencyP95Ms(childComplexity), true
+	case "AIUsageProviderSlice.model":
+		if e.ComplexityRoot.AIUsageProviderSlice.Model == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageProviderSlice.Model(childComplexity), true
+	case "AIUsageProviderSlice.outputTokens":
+		if e.ComplexityRoot.AIUsageProviderSlice.OutputTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageProviderSlice.OutputTokens(childComplexity), true
+	case "AIUsageProviderSlice.pricedCalls":
+		if e.ComplexityRoot.AIUsageProviderSlice.PricedCalls == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageProviderSlice.PricedCalls(childComplexity), true
+	case "AIUsageProviderSlice.providerId":
+		if e.ComplexityRoot.AIUsageProviderSlice.ProviderID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageProviderSlice.ProviderID(childComplexity), true
+	case "AIUsageProviderSlice.providerName":
+		if e.ComplexityRoot.AIUsageProviderSlice.ProviderName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageProviderSlice.ProviderName(childComplexity), true
+	case "AIUsageProviderSlice.reasoningTokens":
+		if e.ComplexityRoot.AIUsageProviderSlice.ReasoningTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageProviderSlice.ReasoningTokens(childComplexity), true
+
+	case "AIUsageSummary.byProvider":
+		if e.ComplexityRoot.AIUsageSummary.ByProvider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageSummary.ByProvider(childComplexity), true
+	case "AIUsageSummary.calls":
+		if e.ComplexityRoot.AIUsageSummary.Calls == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageSummary.Calls(childComplexity), true
+	case "AIUsageSummary.costUsd":
+		if e.ComplexityRoot.AIUsageSummary.CostUSD == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageSummary.CostUSD(childComplexity), true
+	case "AIUsageSummary.failed":
+		if e.ComplexityRoot.AIUsageSummary.Failed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageSummary.Failed(childComplexity), true
+	case "AIUsageSummary.inputTokens":
+		if e.ComplexityRoot.AIUsageSummary.InputTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageSummary.InputTokens(childComplexity), true
+	case "AIUsageSummary.latencyP50Ms":
+		if e.ComplexityRoot.AIUsageSummary.LatencyP50Ms == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageSummary.LatencyP50Ms(childComplexity), true
+	case "AIUsageSummary.latencyP95Ms":
+		if e.ComplexityRoot.AIUsageSummary.LatencyP95Ms == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageSummary.LatencyP95Ms(childComplexity), true
+	case "AIUsageSummary.outputTokens":
+		if e.ComplexityRoot.AIUsageSummary.OutputTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageSummary.OutputTokens(childComplexity), true
+	case "AIUsageSummary.pricedCalls":
+		if e.ComplexityRoot.AIUsageSummary.PricedCalls == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageSummary.PricedCalls(childComplexity), true
+	case "AIUsageSummary.reasoningTokens":
+		if e.ComplexityRoot.AIUsageSummary.ReasoningTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageSummary.ReasoningTokens(childComplexity), true
+	case "AIUsageSummary.since":
+		if e.ComplexityRoot.AIUsageSummary.Since == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageSummary.Since(childComplexity), true
 
 	case "ARAgingBucketTotals.currentMinor":
 		if e.ComplexityRoot.ARAgingBucketTotals.CurrentMinor == nil {
@@ -46093,6 +46278,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AiProviders(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.aiUsageSummary":
+		if e.ComplexityRoot.Query.AiUsageSummary == nil {
+			break
+		}
+
+		args, err := ec.field_Query_aiUsageSummary_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AiUsageSummary(childComplexity, args["since"].(*int)), true
 	case "Query.approvalDelegations":
 		if e.ComplexityRoot.Query.ApprovalDelegations == nil {
 			break
@@ -69189,6 +69385,10 @@ type AIProvider {
   allowPrivateNetwork: Boolean!
   structuredOutputMode: AIStructuredOutputMode!
   reasoningEffort: AIReasoningEffort!
+  "USD per million input tokens, from the provider price list; null means unknown."
+  inputCostPerMillion: Decimal
+  "USD per million output tokens; null means unknown."
+  outputCostPerMillion: Decimal
   maxTokens: Int!
   tasks: [AITask!]!
   priority: Int!
@@ -69214,6 +69414,50 @@ type AIProviderConnection {
 extend type Query {
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
   aiProvider(id: ID!): AIProvider
+}
+`, BuiltIn: false},
+	{Name: "../schema/aiusage.graphqls", Input: `"""
+One provider and model's share of a usage window.
+"""
+type AIUsageProviderSlice {
+  providerId: ID!
+  providerName: String!
+  model: String!
+  calls: Int!
+  failed: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  reasoningTokens: Int!
+  "Sum over the calls that carried a price; see pricedCalls."
+  costUsd: Decimal!
+  pricedCalls: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+}
+
+"""
+What the organization's models did over a window: how many calls, how many
+failed, what they consumed, what it cost where the price is known, and how
+long a person waited. Latency percentiles are over successful calls only.
+"""
+type AIUsageSummary {
+  since: Timestamp!
+  calls: Int!
+  failed: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  reasoningTokens: Int!
+  costUsd: Decimal!
+  "How many of the calls carried a price. Below calls, the cost is partial."
+  pricedCalls: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+  byProvider: [AIUsageProviderSlice!]!
+}
+
+extend type Query {
+  "Model usage since the given instant, defaulting to the last seven days."
+  aiUsageSummary(since: Timestamp): AIUsageSummary!
 }
 `, BuiltIn: false},
 	{Name: "../schema/api_key.graphqls", Input: `type ApiKey {
@@ -88742,6 +88986,10 @@ func (ec *executionContext) childFields_AIProvider(ctx context.Context, field gr
 		return ec.fieldContext_AIProvider_structuredOutputMode(ctx, field)
 	case "reasoningEffort":
 		return ec.fieldContext_AIProvider_reasoningEffort(ctx, field)
+	case "inputCostPerMillion":
+		return ec.fieldContext_AIProvider_inputCostPerMillion(ctx, field)
+	case "outputCostPerMillion":
+		return ec.fieldContext_AIProvider_outputCostPerMillion(ctx, field)
 	case "maxTokens":
 		return ec.fieldContext_AIProvider_maxTokens(ctx, field)
 	case "tasks":
@@ -88804,6 +89052,64 @@ func (ec *executionContext) childFields_AIProviderTestOutcome(ctx context.Contex
 		return ec.fieldContext_AIProviderTestOutcome_testedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AIProviderTestOutcome", field.Name)
+}
+
+func (ec *executionContext) childFields_AIUsageProviderSlice(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "providerId":
+		return ec.fieldContext_AIUsageProviderSlice_providerId(ctx, field)
+	case "providerName":
+		return ec.fieldContext_AIUsageProviderSlice_providerName(ctx, field)
+	case "model":
+		return ec.fieldContext_AIUsageProviderSlice_model(ctx, field)
+	case "calls":
+		return ec.fieldContext_AIUsageProviderSlice_calls(ctx, field)
+	case "failed":
+		return ec.fieldContext_AIUsageProviderSlice_failed(ctx, field)
+	case "inputTokens":
+		return ec.fieldContext_AIUsageProviderSlice_inputTokens(ctx, field)
+	case "outputTokens":
+		return ec.fieldContext_AIUsageProviderSlice_outputTokens(ctx, field)
+	case "reasoningTokens":
+		return ec.fieldContext_AIUsageProviderSlice_reasoningTokens(ctx, field)
+	case "costUsd":
+		return ec.fieldContext_AIUsageProviderSlice_costUsd(ctx, field)
+	case "pricedCalls":
+		return ec.fieldContext_AIUsageProviderSlice_pricedCalls(ctx, field)
+	case "latencyP50Ms":
+		return ec.fieldContext_AIUsageProviderSlice_latencyP50Ms(ctx, field)
+	case "latencyP95Ms":
+		return ec.fieldContext_AIUsageProviderSlice_latencyP95Ms(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIUsageProviderSlice", field.Name)
+}
+
+func (ec *executionContext) childFields_AIUsageSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "since":
+		return ec.fieldContext_AIUsageSummary_since(ctx, field)
+	case "calls":
+		return ec.fieldContext_AIUsageSummary_calls(ctx, field)
+	case "failed":
+		return ec.fieldContext_AIUsageSummary_failed(ctx, field)
+	case "inputTokens":
+		return ec.fieldContext_AIUsageSummary_inputTokens(ctx, field)
+	case "outputTokens":
+		return ec.fieldContext_AIUsageSummary_outputTokens(ctx, field)
+	case "reasoningTokens":
+		return ec.fieldContext_AIUsageSummary_reasoningTokens(ctx, field)
+	case "costUsd":
+		return ec.fieldContext_AIUsageSummary_costUsd(ctx, field)
+	case "pricedCalls":
+		return ec.fieldContext_AIUsageSummary_pricedCalls(ctx, field)
+	case "latencyP50Ms":
+		return ec.fieldContext_AIUsageSummary_latencyP50Ms(ctx, field)
+	case "latencyP95Ms":
+		return ec.fieldContext_AIUsageSummary_latencyP95Ms(ctx, field)
+	case "byProvider":
+		return ec.fieldContext_AIUsageSummary_byProvider(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIUsageSummary", field.Name)
 }
 
 func (ec *executionContext) childFields_ARAgingBucketTotals(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

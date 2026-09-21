@@ -105,7 +105,7 @@ function RailSection({
     <div className="border-t pt-3 first:border-t-0 first:pt-0">
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <div>
-          <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+          <h4 className="text-muted-foreground text-xs font-semibold">
             {title}
           </h4>
           <p className="text-muted-foreground text-2xs">{hint}</p>

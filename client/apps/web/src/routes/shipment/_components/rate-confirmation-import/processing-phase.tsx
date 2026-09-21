@@ -171,7 +171,7 @@ export function ProcessingPhase({
         <div className="relative rounded-xl">
           {!hasFailed && <BorderBeam duration={3} />}
 
-          <div className="bg-background relative rounded-xl border p-6 shadow-xs">
+          <div className="bg-background relative rounded-xl border p-6">
             {/* Header */}
             <div className="text-center">
               {!hasFailed ? (

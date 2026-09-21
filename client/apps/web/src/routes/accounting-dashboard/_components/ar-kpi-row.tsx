@@ -159,7 +159,7 @@ function KpiShell({
       )}
     >
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-        <CardTitle className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+        <CardTitle className="text-muted-foreground text-xs font-semibold">
           {label}
         </CardTitle>
         <span className="bg-muted inline-flex size-7 shrink-0 items-center justify-center rounded-md">

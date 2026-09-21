@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -76,7 +78,24 @@ func (s *Service) runChat(
 
 	var lastErr error
 	for _, provider := range usable {
+		started := time.Now()
 		result, emitted, attemptErr := s.attemptChat(ctx, provider, req, sink)
+		latency := time.Since(started)
+		s.record(ctx, usageAttempt{
+			provider:    provider,
+			task:        aiprovider.TaskAssistantChat,
+			surface:     aiusage.SurfaceChat,
+			attribution: req.Attribution,
+			tenant:      req.TenantInfo,
+			latency:     latency,
+			streamed:    sink != nil,
+			outcome:     chatOutcome(result),
+			err:         attemptErr,
+		})
+		if attemptErr == nil {
+			result.LatencyMs = latency.Milliseconds()
+			result.CostUSD = provider.CostFor(result.InputTokens, result.OutputTokens)
+		}
 		if attemptErr == nil {
 			return result, nil
 		}
@@ -198,6 +217,7 @@ func (s *Service) attemptChat(
 		ProviderKind:    provider.Kind,
 		Truncated:       resp.Truncated,
 		Reasoning:       resp.Reasoning,
+		ReasoningTokens: resp.ReasoningTokens,
 	}, emitted, nil
 }
 
@@ -271,4 +291,19 @@ func preferFirst(providers []*aiprovider.Provider, preferred pulid.ID) []*aiprov
 	}
 
 	return providers
+}
+
+// chatOutcome is what the usage record reads off a chat result: nil for a
+// failed attempt, whose tokens the provider never reported.
+func chatOutcome(result *serviceports.ChatCompletionResult) *runOutcome {
+	if result == nil {
+		return nil
+	}
+
+	return &runOutcome{
+		Model:           result.ModelIdentifier,
+		InputTokens:     result.InputTokens,
+		OutputTokens:    result.OutputTokens,
+		ReasoningTokens: result.ReasoningTokens,
+	}
 }

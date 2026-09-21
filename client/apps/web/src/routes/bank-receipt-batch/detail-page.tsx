@@ -46,7 +46,7 @@ function SummaryCard({
     <div className="bg-card rounded-lg border px-4 py-3">
       <div className="flex items-center gap-2">
         <Icon className={`size-4 ${colorClass ?? "text-muted-foreground"}`} />
-        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        <p className="text-muted-foreground text-xs font-medium">
           {label}
         </p>
       </div>

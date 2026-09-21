@@ -23,11 +23,12 @@ import type {
   DocumentShipmentDraft,
 } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, LoaderCircleIcon, RefreshCcwIcon, SparklesIcon } from "lucide-react";
+import { AlertCircleIcon, LoaderCircleIcon, RefreshCcwIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 interface DocumentIntelligenceDialogProps {
   open: boolean;
@@ -223,7 +224,7 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium">
                 {t("{0} stop #{1}", stop.role, stop.sequence)}
               </div>
               <div className="mt-1 text-sm font-medium">
@@ -245,13 +246,13 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
           </div>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             <div className="bg-muted/20 rounded-md p-2">
-              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium">
                 {t("Address")}
               </div>
               <div className="mt-1 text-sm">{formatStopSummary(stop)}</div>
             </div>
             <div className="bg-muted/20 rounded-md p-2">
-              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium">
                 {t("Timing")}
               </div>
               <div className="mt-1 text-sm">
@@ -284,13 +285,13 @@ function IntelligenceSummary({
   return (
     <div className="grid gap-3 md:grid-cols-6">
       <div className="rounded-lg border p-3">
-        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        <div className="text-muted-foreground text-xs font-medium">
           {t("Classification")}
         </div>
         <div className="mt-1 text-sm">{intelligence?.kind || fallbackKind || t("Other")}</div>
       </div>
       <div className="rounded-lg border p-3">
-        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        <div className="text-muted-foreground text-xs font-medium">
           {t("Confidence")}
         </div>
         <div className="mt-1 text-sm">
@@ -298,25 +299,25 @@ function IntelligenceSummary({
         </div>
       </div>
       <div className="rounded-lg border p-3">
-        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        <div className="text-muted-foreground text-xs font-medium">
           {t("Review Status")}
         </div>
         <div className="mt-1 text-sm">{intelligence?.reviewStatus || t("NeedsReview")}</div>
       </div>
       <div className="rounded-lg border p-3">
-        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        <div className="text-muted-foreground text-xs font-medium">
           {t("Classifier Source")}
         </div>
         <div className="mt-1 text-sm">{intelligence?.classifierSource || "deterministic"}</div>
       </div>
       <div className="rounded-lg border p-3">
-        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        <div className="text-muted-foreground text-xs font-medium">
           {t("Provider Fingerprint")}
         </div>
         <div className="mt-1 text-sm">{intelligence?.providerFingerprint || t("None")}</div>
       </div>
       <div className="rounded-lg border p-3">
-        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        <div className="text-muted-foreground text-xs font-medium">
           {t("Missing Critical Fields")}
         </div>
         <div className="mt-1 text-sm">
@@ -327,7 +328,7 @@ function IntelligenceSummary({
       </div>
       {intelligence?.classificationReason ? (
         <div className="rounded-lg border p-3 md:col-span-6">
-          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium">
             {t("Classification Reason")}
           </div>
           <div className="mt-1 text-sm">{intelligence.classificationReason}</div>
@@ -360,7 +361,7 @@ function AnalysisSnapshotCard({
     <div className="rounded-lg border p-3">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium">
             {title}
           </div>
           <div className="mt-1 text-sm font-medium">{analysis.kind || t("Other")}</div>
@@ -378,19 +379,19 @@ function AnalysisSnapshotCard({
       </div>
       <div className="grid gap-2 md:grid-cols-3">
         <div className="bg-muted/20 rounded-md p-2">
-          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium">
             {t("Fields")}
           </div>
           <div className="mt-1 text-sm">{fieldCount}</div>
         </div>
         <div className="bg-muted/20 rounded-md p-2">
-          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium">
             {t("Stops")}
           </div>
           <div className="mt-1 text-sm">{analysis.stops?.length ?? 0}</div>
         </div>
         <div className="bg-muted/20 rounded-md p-2">
-          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium">
             {t("Source")}
           </div>
           <div className="mt-1 text-sm">{analysis.classifierSource || t("Unknown")}</div>
@@ -398,7 +399,7 @@ function AnalysisSnapshotCard({
       </div>
       {analysis.missingFields?.length ? (
         <div className="mt-3">
-          <div className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground mb-1 text-xs font-medium">
             {t("Missing Fields")}
           </div>
           <div className="flex flex-wrap gap-2">
@@ -412,7 +413,7 @@ function AnalysisSnapshotCard({
       ) : null}
       {analysis.stops?.length ? (
         <div className="mt-3">
-          <div className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground mb-1 text-xs font-medium">
             {t("Stops")}
           </div>
           <StopsSection stops={analysis.stops.slice(0, 3)} />
@@ -445,7 +446,7 @@ function AIDiagnosticsSection({
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         <div className="rounded-lg border p-3">
-          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium">
             {t("AI Outcome")}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -460,7 +461,7 @@ function AIDiagnosticsSection({
           </div>
         </div>
         <div className="rounded-lg border p-3">
-          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium">
             {t("Rejection Reason")}
           </div>
           <div className="mt-1 text-sm">{formatDiagnosticReason(diagnostics.rejectionReason)}</div>
@@ -520,7 +521,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
     <div className="grid gap-2">
       <div className="grid gap-3 md:grid-cols-3">
         <div className="rounded-lg border p-3">
-          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium">
             {t("Draft Confidence")}
           </div>
           <div className="mt-1 text-sm font-medium">
@@ -528,13 +529,13 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
           </div>
         </div>
         <div className="rounded-lg border p-3">
-          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium">
             {t("Review Status")}
           </div>
           <div className="mt-1 text-sm">{draft.draftData?.reviewStatus || t("NeedsReview")}</div>
         </div>
         <div className="rounded-lg border p-3">
-          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium">
             {t("Missing Critical Fields")}
           </div>
           <div className="mt-1 text-sm">
@@ -571,8 +572,8 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
 
       {signals.length > 0 ? (
         <div className="rounded-lg border p-3">
-          <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
-            <SparklesIcon className="size-3.5" />
+          <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium">
+            <AssistMark className="size-3.5" />
             {t("Classification Signals")}
           </div>
           <div className="flex flex-wrap gap-2">
@@ -604,7 +605,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
       <ConflictSection conflicts={conflicts} />
 
       <div className="grid gap-2">
-        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        <div className="text-muted-foreground text-xs font-medium">
           {t("Extracted Stops")}
         </div>
         <StopsSection stops={stops} />
@@ -613,7 +614,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
       {entries.map(({ key, field }) => (
         <div key={key} className="rounded-lg border p-3">
           <div className="flex items-start justify-between gap-3">
-            <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+            <div className="text-muted-foreground text-xs font-medium">
               {field.label || key}
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -662,7 +663,7 @@ function ContentSection({
       <div className="grid gap-3">
         {intelligence?.signals?.length ? (
           <div className="rounded-lg border p-3">
-            <div className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
+            <div className="text-muted-foreground mb-2 text-xs font-medium">
               {t("Classification Confidence")}
             </div>
             <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -688,7 +689,7 @@ function ContentSection({
         <AIDiagnosticsSection diagnostics={aiDiagnostics} />
 
         <div className="grid gap-2">
-          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium">
             {t("Canonical Stops")}
           </div>
           <StopsSection stops={intelligence?.stops ?? []} />
@@ -880,7 +881,7 @@ export function DocumentIntelligenceDialog({
                       />
                       <div className="grid gap-3 md:grid-cols-2">
                         <div className="rounded-lg border p-3">
-                          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                          <div className="text-muted-foreground text-xs font-medium">
                             {t("Extraction Source")}
                           </div>
                           <div className="mt-1 text-sm">
@@ -888,7 +889,7 @@ export function DocumentIntelligenceDialog({
                           </div>
                         </div>
                         <div className="rounded-lg border p-3">
-                          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                          <div className="text-muted-foreground text-xs font-medium">
                             {t("Pages")}
                           </div>
                           <div className="mt-1 text-sm">

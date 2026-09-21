@@ -52,15 +52,15 @@ export function MagicCard(props: MagicCardProps) {
     children,
     className,
     gradientSize = 200,
-    gradientColor = "#262626",
+    gradientColor = "var(--surface-active)",
     gradientOpacity = 0.8,
-    gradientFrom = "#9E7AFF",
-    gradientTo = "#FE8BBB",
+    gradientFrom = "var(--brand)",
+    gradientTo = "var(--accent-sky)",
     mode = "gradient",
   } = props;
 
-  const glowFrom = isOrbMode(props) ? (props.glowFrom ?? "#ee4f27") : "#ee4f27";
-  const glowTo = isOrbMode(props) ? (props.glowTo ?? "#6b21ef") : "#6b21ef";
+  const glowFrom = isOrbMode(props) ? (props.glowFrom ?? "var(--brand)") : "var(--brand)";
+  const glowTo = isOrbMode(props) ? (props.glowTo ?? "var(--accent-sky)") : "var(--accent-sky)";
   const glowAngle = isOrbMode(props) ? (props.glowAngle ?? 90) : 90;
   const glowSize = isOrbMode(props) ? (props.glowSize ?? 420) : 420;
   const glowBlur = isOrbMode(props) ? (props.glowBlur ?? 60) : 60;

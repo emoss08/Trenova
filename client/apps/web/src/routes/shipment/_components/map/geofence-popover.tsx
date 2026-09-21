@@ -46,7 +46,7 @@ export function GeofencePopover({
   return (
     <AdvancedMarker position={center} zIndex={150} onClick={(e) => e.stopPropagation()}>
       <div className="relative mb-4">
-        <div className="bg-popover text-popover-foreground ring-foreground/10 relative z-10 flex w-72 flex-col gap-2.5 rounded-lg border p-3 text-xs shadow-lg ring-1">
+        <div className="bg-popover text-popover-foreground ring-foreground/10 relative z-10 flex w-72 flex-col gap-2.5 rounded-lg border p-3 text-xs ring-1">
           <div className="flex items-start justify-between gap-2">
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="text-foreground truncate text-sm font-semibold">

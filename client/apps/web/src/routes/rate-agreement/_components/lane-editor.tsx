@@ -235,13 +235,13 @@ function LaneRow({
 
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <div className="bg-muted/30 rounded-md border p-3">
-          <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
+          <p className="text-muted-foreground mb-2 text-xs font-medium">
             {t("Origin")}
           </p>
           <LaneScopeFields control={control} side="origin" namePrefix={`rules.${index}.`} />
         </div>
         <div className="bg-muted/30 rounded-md border p-3">
-          <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
+          <p className="text-muted-foreground mb-2 text-xs font-medium">
             {t("Destination")}
           </p>
           <LaneScopeFields control={control} side="destination" namePrefix={`rules.${index}.`} />

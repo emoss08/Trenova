@@ -1,0 +1,43 @@
+"""
+One provider and model's share of a usage window.
+"""
+type AIUsageProviderSlice {
+  providerId: ID!
+  providerName: String!
+  model: String!
+  calls: Int!
+  failed: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  reasoningTokens: Int!
+  "Sum over the calls that carried a price; see pricedCalls."
+  costUsd: Decimal!
+  pricedCalls: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+}
+
+"""
+What the organization's models did over a window: how many calls, how many
+failed, what they consumed, what it cost where the price is known, and how
+long a person waited. Latency percentiles are over successful calls only.
+"""
+type AIUsageSummary {
+  since: Timestamp!
+  calls: Int!
+  failed: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  reasoningTokens: Int!
+  costUsd: Decimal!
+  "How many of the calls carried a price. Below calls, the cost is partial."
+  pricedCalls: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+  byProvider: [AIUsageProviderSlice!]!
+}
+
+extend type Query {
+  "Model usage since the given instant, defaulting to the last seven days."
+  aiUsageSummary(since: Timestamp): AIUsageSummary!
+}

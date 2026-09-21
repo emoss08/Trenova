@@ -9,6 +9,7 @@ import {
   type FieldValues,
   type RegisterOptions,
 } from "react-hook-form";
+import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -90,17 +91,17 @@ export function EmailChipsField<T extends FieldValues>({
             <label
               htmlFor={inputId}
               className={cn(
-                "border-input bg-muted flex min-h-7 flex-wrap items-center gap-1 rounded-md border px-1.5 py-1",
-                "cursor-text transition-[border-color,box-shadow] duration-200 ease-in-out",
+                "ui-field flex min-h-7 flex-wrap items-center gap-1 px-1.5 py-1",
+                "cursor-text",
 "ui-container-focus-ring",
                 (invalidDraft || fieldState.invalid) &&
-"ui-container-focus-ring [--ring:var(--ring-danger)] border-destructive bg-destructive/20",
+fieldInvalidClass,
               )}
             >
               {emails.map((email) => (
                 <span
                   key={email}
-                  className="border-border bg-background inline-flex max-w-full items-center gap-1 rounded-sm border py-0.5 pr-1 pl-1.5 text-xs"
+                  className="border-border bg-card inline-flex max-w-full items-center gap-1 rounded-sm border py-0.5 pr-1 pl-1.5 text-xs"
                 >
                   <span className="truncate">{email}</span>
                   <button

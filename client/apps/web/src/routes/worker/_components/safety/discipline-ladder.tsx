@@ -62,7 +62,7 @@ export function DisciplineLadder({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-1.5">
-            <h4 className="text-muted-foreground text-xs font-semibold uppercase">
+            <h4 className="text-muted-foreground text-xs font-semibold">
               {t("Discipline")}
             </h4>
             <InfoPopover title={t("Discipline ladder")}>
@@ -165,7 +165,7 @@ export function DisciplineLadder({
                       {DISCIPLINARY_STATUS_LABELS[status] ?? status}
                     </Badge>
                     {action.acknowledgedAt ? (
-                      <span className="text-2xs text-muted-foreground uppercase">
+                      <span className="text-xs text-muted-foreground">
                         {t("Acknowledged")}
                       </span>
                     ) : null}

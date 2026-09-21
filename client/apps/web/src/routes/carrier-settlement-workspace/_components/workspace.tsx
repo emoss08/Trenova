@@ -11,7 +11,7 @@ import {
   type CarrierSettlementRow,
 } from "@/lib/graphql/carrier-settlement";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCcw, Sparkles } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import { CarrierSettlementDetail } from "@/routes/carrier-settlement/_components
 import { CarrierContextRail } from "./carrier-context-rail";
 import { SettlementQueue, type QueueFilter } from "./settlement-queue";
 import { WorkspaceSummaryStrip } from "./workspace-summary";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 export default function Workspace() {
   const t = useT();
@@ -154,7 +155,7 @@ export default function Workspace() {
                   : `Build one settlement per carrier from ${summary.pendingEventCount} pending cost events`
               }
             >
-              <Sparkles className="size-3.5" />
+              <AssistMark className="size-3.5" />
               {t("Generate Settlements")}
             </Button>
           </div>

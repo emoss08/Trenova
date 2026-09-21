@@ -10,9 +10,10 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AssistantProviderOption } from "@/types/assistant";
-import { CheckIcon, ChevronDownIcon, SparklesIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { kindMark } from "@/routes/agent-control/_components/providers/kind-marks";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 export type ModelPickerProps = {
   options: readonly AssistantProviderOption[];
@@ -73,7 +74,7 @@ export function ModelPicker({ options, value, onChange, disabled = false }: Mode
         aria-label={t("Choose which model answers")}
       >
         <span className="flex size-3.5 shrink-0 items-center justify-center [&_svg]:size-full">
-          {selected ? kindMark(selected.kind) : <SparklesIcon />}
+          {selected ? kindMark(selected.kind) : <AssistMark />}
         </span>
         <span className="truncate">{label}</span>
         <ChevronDownIcon className="size-3 shrink-0" />
@@ -85,7 +86,7 @@ export function ModelPicker({ options, value, onChange, disabled = false }: Mode
             <CommandEmpty>{t("No models match.")}</CommandEmpty>
             <CommandGroup>
               <ModelRow
-                icon={<SparklesIcon />}
+                icon={<AssistMark />}
                 title={t("Auto")}
                 detail={t("Let this organization's provider order decide")}
                 selected={value === ""}

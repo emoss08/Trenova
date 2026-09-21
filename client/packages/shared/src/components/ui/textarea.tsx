@@ -14,10 +14,9 @@ function Textarea({ className, isInvalid, ...props }: TextareaProps) {
     <TextareaAutosizeComponent
       data-slot="textarea"
       className={cn(
-        "flex w-full rounded-md border border-input bg-muted px-2 py-0.5 text-base",
-        "ui-focus-ring shadow-xs placeholder:text-muted-foreground",
-        "disabled:cursor-not-allowed disabled:opacity-50 md:text-xs",
-        "transition-[border-color,box-shadow] duration-200 ease-in-out",
+        "ui-field flex w-full px-2 py-0.5 text-base",
+        "ui-focus-ring placeholder:text-muted-foreground",
+        "disabled:cursor-not-allowed disabled:opacity-60 md:text-xs",
         isInvalid &&
           "border-danger bg-danger/10 placeholder:text-danger-foreground [--ring:var(--ring-danger)]",
         className,
@@ -126,7 +125,7 @@ function AITextarea({ className, isInvalid, onChange, ...props }: TextareaProps)
                     onClick={handleSubmit}
                     className={cn(
                       "inline-flex items-center gap-1.5",
-                      "rounded-md border px-2 py-0.5 text-xs font-medium shadow-xs",
+                      "rounded-md border px-2 py-0.5 text-xs font-medium",
                       "animate-fadeIn transition-colors duration-200 hover:bg-surface-hover",
                       currentItem.colors.bg,
                       currentItem.colors.border,

@@ -208,7 +208,7 @@ function AiToolCallInput({ input, className }: AiToolCallInputProps) {
 
   return (
     <div data-slot="ai-tool-call-input" className={cn("space-y-1.5", className)}>
-      <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+      <span className="text-muted-foreground text-xs font-medium">
         {t("Input")}
       </span>
       <pre className="bg-muted/50 text-foreground overflow-x-auto rounded-md p-3 font-mono text-xs">
@@ -228,7 +228,7 @@ function AiToolCallOutput({ children, className }: AiToolCallOutputProps) {
 
   return (
     <div data-slot="ai-tool-call-output" className={cn("space-y-1.5", className)}>
-      <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+      <span className="text-muted-foreground text-xs font-medium">
         {t("Output")}
       </span>
       <div className="bg-muted/50 overflow-x-auto rounded-md p-3 text-sm">{children}</div>
@@ -246,7 +246,7 @@ function AiToolCallError({ error, className }: AiToolCallErrorProps) {
 
   return (
     <div data-slot="ai-tool-call-error" className={cn("space-y-1.5", className)}>
-      <span className="text-xs font-medium tracking-wider text-danger-foreground uppercase dark:text-danger-foreground">
+      <span className="text-xs font-medium text-danger-foreground dark:text-danger-foreground">
         {t("Error")}
       </span>
       <div className="rounded-md border border-danger-border bg-danger-subtle p-3 text-sm text-danger-foreground dark:border-danger-border dark:bg-danger-subtle/30 dark:text-danger-foreground">

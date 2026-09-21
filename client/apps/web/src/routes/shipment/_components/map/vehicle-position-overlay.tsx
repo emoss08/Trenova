@@ -206,14 +206,14 @@ function VehicleDetailCard({
       onClick={(e) => e.stopPropagation()}
     >
       <div className={cn("relative mb-8", !pinned && "pointer-events-none")}>
-        <div className="cc-fade-in bg-popover text-popover-foreground ring-foreground/10 relative z-10 flex w-64 flex-col gap-2.5 rounded-lg border p-3 text-xs shadow-lg ring-1">
+        <div className="cc-fade-in bg-popover text-popover-foreground ring-foreground/10 relative z-10 flex w-64 flex-col gap-2.5 rounded-lg border p-3 text-xs ring-1">
           <div className="flex items-start justify-between gap-2">
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="text-foreground flex items-center gap-1.5 truncate text-sm font-semibold">
                 <TruckIcon className="text-muted-foreground size-3.5 shrink-0" />
                 {position.tractorCode}
                 {stale && (
-                  <span className="bg-warning/15 text-warning rounded px-1 py-px text-3xs font-bold tracking-wide uppercase">
+                  <span className="bg-warning/15 text-warning rounded px-1 py-px text-2xs font-semibold">
                     {t("Stale")}
                   </span>
                 )}

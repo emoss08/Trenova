@@ -233,7 +233,7 @@ export function RouteCommandPalette() {
       description={t("Search for routes, commands, and synced records.")}
       className={cn(
         "z-50 grid w-full max-w-4xl gap-4 overflow-visible border duration-200 sm:max-w-4xl",
-        "rounded-md border-none bg-clip-padding shadow-2xl ring-4",
+        "rounded-md border-none bg-clip-padding ring-4",
         "ring-border/80 dark:bg-raised dark:ring-border",
       )}
       commandProps={{
@@ -318,8 +318,8 @@ export function RouteCommandPalette() {
             </div>
           )}
           {mentionOpen && filteredEntityOptions.length > 0 && (
-            <div className="bg-popover absolute top-11 left-2 z-50 w-52 rounded-lg border p-2 shadow-lg">
-              <div className="text-2xs text-muted-foreground px-2 pb-1 font-medium tracking-[0.18em] uppercase">
+            <div className="bg-popover absolute top-11 left-2 z-50 w-52 rounded-lg border p-2">
+              <div className="text-xs text-muted-foreground px-2 pb-1 font-medium">
                 {t("Filter records")}
               </div>
               <div className="flex flex-col gap-1">

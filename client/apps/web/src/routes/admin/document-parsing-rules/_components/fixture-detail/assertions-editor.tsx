@@ -439,7 +439,7 @@ function FieldAssertionRow({
       <div className="flex items-start gap-2">
         <div className="grid flex-1 gap-2 md:grid-cols-[180px_minmax(0,1fr)]">
           <div className="space-y-1">
-            <label className="text-2xs text-muted-foreground font-medium uppercase">
+            <label className="text-xs text-muted-foreground font-medium">
               {t("Operator")}
             </label>
             <select
@@ -459,7 +459,7 @@ function FieldAssertionRow({
           </div>
 
           <div className="space-y-1">
-            <label className="text-2xs text-muted-foreground font-medium uppercase">
+            <label className="text-xs text-muted-foreground font-medium">
               {assertion.operator === "matches_regex"
                 ? t("Pattern")
                 : assertion.operator === "one_of"

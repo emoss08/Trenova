@@ -279,7 +279,7 @@ export function ShipmentStatusBadge({
   return (
     <Badge
       variant={phaseTone(statusAttributes[status].phase)}
-      className={cn(className, "max-h-5 uppercase")}
+      className={cn(className, "max-h-5")}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -323,7 +323,7 @@ export function ShipmentTenderStatusBadge({
   return (
     <Badge
       variant={phaseTone(statusAttributes[status].phase)}
-      className={cn(className, "max-h-5 uppercase")}
+      className={cn(className, "max-h-5")}
     >
       {statusAttributes[status].text}
     </Badge>

@@ -222,7 +222,6 @@ const SURFACES: [string, string][] = [
   ["bg-surface-selected", "selected fill"],
 ];
 
-const ELEVATIONS = ["shadow-flat", "shadow-raised", "shadow-overlay", "shadow-modal"];
 
 export const Surfaces: Story = {
   render: () => (
@@ -236,19 +235,6 @@ export const Surfaces: Story = {
             <div key={cls} className={`border-border rounded-md border p-3 ${cls}`}>
               <div className="text-foreground text-xs font-medium">{cls}</div>
               <div className="text-foreground-subtle text-2xs mt-0.5">{role}</div>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <Section
-        title="Elevation"
-        hint="Four steps, defined in both themes. A card is a border, not a shadow."
-      >
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {ELEVATIONS.map((s) => (
-            <div key={s} className={`bg-card border-border rounded-md border p-4 text-xs ${s}`}>
-              {s}
             </div>
           ))}
         </div>

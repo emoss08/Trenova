@@ -53,7 +53,7 @@ function SectionHeader({
   return (
     <button
       type="button"
-      className="text-2xs text-muted-foreground/60 hover:text-muted-foreground flex w-full items-center gap-2 px-2 py-1.5 font-medium tracking-wider uppercase transition-colors"
+      className="text-xs text-muted-foreground/60 hover:text-muted-foreground flex w-full items-center gap-2 px-2 py-1.5 font-medium transition-colors"
       onClick={onToggle}
     >
       <ChevronDownIcon className={cn("size-3 transition-transform", collapsed && "-rotate-90")} />

@@ -79,7 +79,7 @@ function DomainColumn({
 
   return (
     <div className="border-border flex min-w-0 flex-col gap-0.5 px-2 pt-3 pb-2.5 first:pl-3 not-first:border-l">
-      <span className="text-muted-foreground px-1.5 pb-1.5 text-xs font-medium tracking-wide select-none uppercase">
+      <span className="text-muted-foreground px-1.5 pb-1.5 text-xs font-medium select-none">
         {t(domain.label)}
       </span>
       {domain.modules.map((module) => {

@@ -7,7 +7,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { FuelSurchargeProgramFormValues } from "@/types/fuel-surcharge";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDownUp, CircleAlert, Plus, Table2, TriangleAlert, Trash2, Wand2 } from "lucide-react";
+import { ArrowDownUp, CircleAlert, Plus, Table2, TriangleAlert, Trash2 } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 import { memo, useCallback, useDeferredValue, useMemo, useRef, useState } from "react";
 import {
@@ -21,6 +21,7 @@ import {
 } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { GenerateTableDialog } from "./generate-table-dialog";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const ROW_HEIGHT = 40;
 
@@ -644,7 +645,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
               disabled={disabled}
               className="gap-1.5"
             >
-              <Wand2 className="size-3.5" />
+              <AssistMark className="size-3.5" />
               {t("Generate")}
             </Button>
             <Button
@@ -682,7 +683,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
                 disabled={disabled}
                 className="gap-1.5"
               >
-                <Wand2 className="size-3.5" />
+                <AssistMark className="size-3.5" />
                 {t("Generate the Table for Me")}
               </Button>
               <Button

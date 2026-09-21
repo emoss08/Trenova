@@ -185,6 +185,7 @@ func (s *Service) SendMessageStream(
 		Input:               content,
 		Page:                page,
 		PreferredProviderID: thread.PreferredProviderID,
+		ThreadID:            thread.ID,
 	}, emit)
 
 	// The save does not ride the request context. The two ways a turn is most

@@ -82,7 +82,7 @@ func (s *Service) Classify(
 	// part of the question: the same six words mean different things in two
 	// threads, and one cached verdict for both would be the bug this context
 	// was added to fix, made permanent.
-	if cached, ok := s.verdicts.get(req.TenantInfo.OrgID, conversation, req.Input); ok {
+	if cached, ok := s.verdicts.get(ctx, req.TenantInfo.OrgID, conversation, req.Input); ok {
 		return &cached, nil
 	}
 
@@ -128,7 +128,7 @@ func (s *Service) Classify(
 	// Only a verdict the classifier produced is remembered. Every path that
 	// returns early above is an error, and caching one of those would outlive
 	// the outage that caused it.
-	s.verdicts.put(req.TenantInfo.OrgID, conversation, req.Input, payload)
+	s.verdicts.put(ctx, req.TenantInfo.OrgID, conversation, req.Input, payload)
 
 	return &payload, nil
 }

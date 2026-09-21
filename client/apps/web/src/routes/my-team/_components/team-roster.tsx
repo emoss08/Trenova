@@ -213,7 +213,7 @@ function RosterGroup({
     <section aria-label={heading} className="flex flex-col gap-1.5">
       {showHeading ? (
         <header className="flex flex-wrap items-baseline justify-between gap-2 px-1">
-          <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <h4 className="text-muted-foreground text-xs font-medium">
             {heading}
             <span className="ml-1.5 font-normal normal-case tabular-nums">{group.rows.length}</span>
           </h4>

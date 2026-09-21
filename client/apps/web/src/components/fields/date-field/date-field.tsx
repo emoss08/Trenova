@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { FieldWrapper } from "../field-components";
 import { AutoCompleteDatePicker } from "./date-picker";
+import { fieldInvalidClass, fieldTriggerClass } from "@trenova/shared/lib/variants/field";
 
 export type BaseDateFieldProps = {
   label: string;
@@ -26,13 +27,12 @@ export type BaseDateFieldProps = {
 export type DateFieldProps<T extends FieldValues> = BaseDateFieldProps & FormControlProps<T>;
 
 const styles = {
-  base: "w-full h-7 text-sm justify-start text-left font-normal border border-input bg-muted rounded-md",
-  invalid:
-    "border-danger bg-danger/20 text-danger-foreground hover:text-danger-foreground hover:bg-danger/20 data-[state=open]:border-danger data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-danger/20",
-  open: "text-sm data-[state=open]:border-foreground data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-foreground/20",
+  base: `${fieldTriggerClass} w-full h-7 text-sm justify-start text-left font-normal`,
+  invalid: fieldInvalidClass,
+  open: "text-sm",
   focusVisible:
 "ui-focus-ring",
-  hover: "transition-[border-color,box-shadow] duration-200 ease-in-out hover:bg-none",
+  hover: "",
   disabled: "text-muted-foreground hover:text-muted-foreground",
 };
 

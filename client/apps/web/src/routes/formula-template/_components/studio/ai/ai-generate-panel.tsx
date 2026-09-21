@@ -26,12 +26,11 @@ import {
   CheckCircle2Icon,
   CheckIcon,
   PlusIcon,
-  SparklesIcon,
-  WandSparklesIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { acceptableScenarios, scenarioToTestCaseInput } from "./proposed-scenarios";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const SUGGESTED_PROMPTS = [
   "Per mile rate with an 18% fuel surcharge on top",
@@ -156,7 +155,7 @@ export function AiGeneratePanel({
       >
         <SheetHeader className="border-b pb-3">
           <SheetTitle className="flex items-center gap-2">
-            <WandSparklesIcon className="size-4" />
+            <AssistMark className="size-4" />
             {t("Generate Formula")}
           </SheetTitle>
           <SheetDescription>
@@ -190,7 +189,7 @@ export function AiGeneratePanel({
                   disabled={!instruction.trim()}
                   className="gap-1.5"
                 >
-                  <SparklesIcon className="size-3.5" />
+                  <AssistMark className="size-3.5" />
                   {t("Generate")}
                 </Button>
               </div>
@@ -198,7 +197,7 @@ export function AiGeneratePanel({
 
             {!data && !isPending && (
               <div className="space-y-1.5">
-                <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                <p className="text-muted-foreground text-xs font-medium">
                   {t("Try one of these")}
                 </p>
                 {SUGGESTED_PROMPTS.map((prompt) => (
@@ -223,7 +222,7 @@ export function AiGeneratePanel({
             {data && (
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                  <p className="text-muted-foreground text-xs font-medium">
                     {t("Generated Expression")}
                   </p>
                   <pre className="bg-muted overflow-x-auto rounded-md border p-3 font-mono text-xs whitespace-pre-wrap">
@@ -233,7 +232,7 @@ export function AiGeneratePanel({
 
                 {data.variableDefinitions.length > 0 && (
                   <div className="space-y-1.5">
-                    <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <p className="text-muted-foreground text-xs font-medium">
                       {t("Custom Variables")}
                     </p>
                     <div className="overflow-hidden rounded-md border">
@@ -262,7 +261,7 @@ export function AiGeneratePanel({
 
                 {data.explanation && (
                   <div className="space-y-1.5">
-                    <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <p className="text-muted-foreground text-xs font-medium">
                       {t("How it works")}
                     </p>
                     <p className="text-sm leading-relaxed">{data.explanation}</p>
@@ -297,7 +296,7 @@ export function AiGeneratePanel({
                 {data.scenarios.length > 0 && (
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                      <p className="text-muted-foreground text-xs font-medium">
                         {t("Proposed scenarios")}
                       </p>
                       {templateId && pendingScenarios.length > 1 && (

@@ -75,6 +75,17 @@ type AssistantProposal struct {
 	// ExpiresAt is when a pending proposal stops being decidable. Zero means
 	// it was made before expiry existed.
 	ExpiresAt int64 `json:"expiresAt"`
+	// Hold is set while a shadow switch keeps the proposal from being decided,
+	// so the client can say so instead of offering an approval the server
+	// will refuse. Nil means it can be decided.
+	Hold *ProposalHold `json:"hold"`
+}
+
+// ProposalHold names the switch holding a proposal and, when it is an agent's
+// own, which agent.
+type ProposalHold struct {
+	Reason    string `json:"reason"`
+	AgentName string `json:"agentName"`
 }
 
 // Names of the events a streamed turn emits, in the order a client should

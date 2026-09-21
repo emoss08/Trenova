@@ -9,10 +9,11 @@ import {
   isChangeAdverse,
 } from "@/routes/home/_components/widgets/insight-presentation";
 import type { Insight, InsightSeverity, InsightSurface } from "@/types/insight";
-import { CheckCircle2Icon, SparklesIcon } from "lucide-react";
+import { CheckCircle2Icon } from "lucide-react";
 import { m } from "motion/react";
 import { Link } from "react-router";
 import { PAGE_INSIGHTS_LIMIT, usePageInsights } from "./use-page-insights";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const SEVERITY_STYLES: Record<InsightSeverity, string> = {
   Critical: "bg-danger/15 text-danger-foreground",
@@ -58,7 +59,7 @@ export function PageInsightsCard({
     <Card className={cn("gap-0 p-0", className)}>
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
         <CardTitle className="flex items-center gap-1.5 text-sm font-medium">
-          <SparklesIcon className="text-muted-foreground size-3.5" />
+          <AssistMark className="text-muted-foreground size-3.5" />
           {title ?? t("Insights")}
           {insights.length > 0 ? (
             <span className="bg-muted text-muted-foreground ml-1 rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums">
@@ -160,7 +161,7 @@ function InsightRow({ insight }: { insight: Insight }) {
               {metric.label}
             </span>
           )}
-          {insight.narrated && <SparklesIcon className="size-2.5 shrink-0 opacity-60" />}
+          {insight.narrated && <AssistMark className="size-2.5 shrink-0 opacity-60" />}
         </div>
       </div>
     </Link>
@@ -194,8 +195,8 @@ export function PageInsightsStrip({
       className={cn("flex min-w-0 items-center gap-1.5 overflow-x-auto", className)}
       aria-label={t("Insights for this page")}
     >
-      <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 text-xs font-medium tracking-wide uppercase">
-        <SparklesIcon className="size-3" />
+      <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 text-xs font-medium">
+        <AssistMark className="size-3" />
         {t("Insights")}
       </span>
       {insights.map((insight) => (

@@ -2,6 +2,7 @@ package conversation
 
 import (
 	"context"
+	"github.com/shopspring/decimal"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -64,6 +65,10 @@ type Message struct {
 	ProviderID   pulid.ID `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero"`
 	InputTokens  int      `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0"`
 	OutputTokens int      `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0"`
+	// LatencyMs is how long the model took to answer this turn; CostUSD is
+	// what it cost at the provider's price, nil where no price is configured.
+	LatencyMs int64            `json:"latencyMs" bun:"latency_ms,type:BIGINT,nullzero"`
+	CostUSD   *decimal.Decimal `json:"costUsd"   bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
 
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

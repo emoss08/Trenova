@@ -23,7 +23,7 @@ export function RequestedPTOEmptyState() {
     <div className="border-border flex size-full flex-col items-center justify-center overflow-hidden rounded-md border">
       <div className="relative size-full">
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1">
-          <p className="font-table bg-warning px-1 py-0.5 text-center text-sm/none font-medium text-warning-foreground uppercase select-none dark:bg-warning dark:text-foreground">
+          <p className="font-table bg-warning px-1 py-0.5 text-center text-sm/none font-medium text-warning-on-solid select-none">
             {t("No data available")}
           </p>
           <p className="font-table bg-invert px-1 py-0.5 text-center text-sm/none font-medium uppercase select-none text-invert-foreground">

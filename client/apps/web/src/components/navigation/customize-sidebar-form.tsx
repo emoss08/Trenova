@@ -74,7 +74,7 @@ function useVerticalDndSensors() {
 function GroupLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
     <div className="flex items-baseline justify-between">
-      <span className="text-2xs text-muted-foreground font-semibold tracking-wider uppercase select-none">
+      <span className="text-xs text-muted-foreground font-semibold select-none">
         {children}
       </span>
       {hint && <span className="text-2xs text-muted-foreground/70 tabular-nums">{hint}</span>}

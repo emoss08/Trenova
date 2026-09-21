@@ -22,6 +22,7 @@ import {
 } from "@trenova/shared/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { FieldWrapper } from "./field-components";
+import { fieldInvalidClass, fieldTriggerClass } from "@trenova/shared/lib/variants/field";
 
 export type BaseSelectFieldProps = {
   options?: SelectOption[];
@@ -142,12 +143,11 @@ export function SelectField<T extends FieldValues>({
                     variant="outline"
                     aria-invalid={fieldState.invalid}
                     className={cn(
-                      "group border-input bg-muted hover:bg-muted/80 flex h-7 w-full items-center justify-between rounded-md border whitespace-nowrap",
+                      fieldTriggerClass,
+                      "group flex h-7 w-full items-center justify-between whitespace-nowrap",
                       "ring-offset-background placeholder:text-muted-foreground px-1.5 py-1 text-xs outline-hidden select-none",
-                      "data-pressed:border-brand data-pressed:ring-brand/30 data-pressed:ring-4",
-                      "transition-[border-color,box-shadow] duration-200 ease-in-out",
                       "cursor-default disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-                      fieldState.invalid && "data-pressed:ring-destructive/20",
+                      fieldState.invalid && fieldInvalidClass,
                       isReadOnly && "pointer-events-none cursor-not-allowed opacity-60",
                       warning?.show &&
 "ui-focus-ring border-warning bg-warning/10 ring-0 ring-warning placeholder:text-warning-foreground focus:outline-hidden",

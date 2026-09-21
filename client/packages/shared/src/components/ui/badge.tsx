@@ -22,7 +22,7 @@ import { cn } from "@trenova/shared/lib/utils";
 const badgeVariants = cva(
   // A pill, not a small rectangle: a badge is the one thing on screen that is
   // never a container, and the shape says so before the colour does.
-  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border px-2 py-0 text-xs font-medium whitespace-nowrap transition-all ui-focus-ring has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-danger [&>svg]:pointer-events-none [&>svg]:size-3!",
+  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border px-2 py-0 text-xs font-medium whitespace-nowrap transition-colors ui-focus-ring has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-danger [&>svg]:pointer-events-none [&>svg]:size-3!",
   {
     variants: {
       variant: {
@@ -34,7 +34,7 @@ const badgeVariants = cva(
         success:
           "[--badge:var(--success)] [--badge-border:var(--success-border)] [--badge-on-subtle:var(--success-subtle-foreground)] [--badge-subtle:var(--success-subtle)]",
         warning:
-          "[--badge:var(--warning)] [--badge-border:var(--warning-border)] [--badge-on-subtle:var(--warning-subtle-foreground)] [--badge-subtle:var(--warning-subtle)]",
+          "[--badge:var(--warning)] [--badge-on-solid:var(--warning-on-solid)] [--badge-border:var(--warning-border)] [--badge-on-subtle:var(--warning-subtle-foreground)] [--badge-subtle:var(--warning-subtle)]",
         danger:
           "[--badge:var(--danger)] [--badge-border:var(--danger-border)] [--badge-on-subtle:var(--danger-subtle-foreground)] [--badge-subtle:var(--danger-subtle)]",
 
@@ -58,7 +58,7 @@ const badgeVariants = cva(
 
       appearance: {
         subtle: "border-(--badge-border) bg-(--badge-subtle) text-(--badge-on-subtle)",
-        solid: "border-transparent bg-(--badge) text-foreground-on-solid",
+        solid: "border-transparent bg-(--badge) text-(--badge-on-solid,var(--foreground-on-solid))",
         outline: "border-(--badge-border) bg-transparent text-(--badge-on-subtle)",
       } satisfies Record<BadgeAppearance, string>,
     },

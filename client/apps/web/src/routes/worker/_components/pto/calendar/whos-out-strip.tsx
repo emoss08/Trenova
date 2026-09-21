@@ -78,7 +78,7 @@ export function WhosOutStrip({
   return (
     <section className="flex shrink-0 flex-col gap-1.5" data-testid="whos-out-strip">
       <div className="flex items-baseline justify-between">
-        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        <p className="text-muted-foreground text-xs font-medium">
           {t("Who's out")}
         </p>
         <p className="text-muted-foreground text-xs tabular-nums">

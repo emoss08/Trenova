@@ -69,7 +69,7 @@ export function InjuryList({ workerId }: { workerId: string }) {
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
-        <h4 className="text-muted-foreground text-xs font-semibold uppercase">
+        <h4 className="text-muted-foreground text-xs font-semibold">
           {t("Injuries & illnesses")}
         </h4>
         {canRecord ? (

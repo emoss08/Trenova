@@ -68,7 +68,11 @@ export function AssistantHeader({
           render={
             <button
               type="button"
-              className="hover:bg-muted/60 flex max-w-fit items-center gap-2 rounded-md p-2 text-left transition-colors"
+              // min-w-0 is what lets a flex item shrink below its content. Without
+              // it the first question, which becomes the thread's title, set the
+              // button's width and pushed the controls off the right edge; the
+              // truncate classes inside never got the chance to act.
+              className="hover:bg-muted/60 flex min-w-0 max-w-fit items-center gap-2 rounded-md p-2 text-left transition-colors"
               aria-label={t("Choose an agent")}
               disabled={agents.length === 0}
             />

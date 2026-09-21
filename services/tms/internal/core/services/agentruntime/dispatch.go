@@ -58,9 +58,14 @@ func (s *Service) dispatch(
 
 	tier := req.Definition.EffectiveTier(call.Name, tool.DefaultAutonomyTier())
 	action := &serviceports.PendingAction{
-		ToolName:   call.Name,
-		Arguments:  call.Arguments,
-		Rationale:  proposalRationale(completionText, call.Name),
+		ToolName:  call.Name,
+		Arguments: call.Arguments,
+		Rationale: proposalRationale(rationaleInput{
+			Narration: completionText,
+			ToolName:  call.Name,
+			Arguments: call.Arguments,
+			Input:     req.Input,
+		}),
 		Tier:       tier,
 		ToolCallID: call.ID,
 	}

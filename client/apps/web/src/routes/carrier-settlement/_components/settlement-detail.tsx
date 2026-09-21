@@ -215,7 +215,7 @@ function SummaryTile({
           : "bg-muted/30",
       )}
     >
-      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-medium">
         {label}
       </p>
       <div className="mt-1 text-sm font-semibold">{children}</div>
@@ -699,7 +699,7 @@ function SettlementLines({
         return (
           <div key={eventType}>
             <div className="mb-1 flex items-baseline justify-between">
-              <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+              <h4 className="text-muted-foreground text-xs font-semibold">
                 {lineTypeLabel(eventType)}
               </h4>
               <AmountDisplay value={subtotal} currency={settlement.currencyCode} />
@@ -776,7 +776,7 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
 
   return (
     <div className="bg-muted/30 rounded-lg border p-3">
-      <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+      <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
         {t("Remittance")}
       </h4>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -841,7 +841,7 @@ function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailD
 
   return (
     <div>
-      <h4 className="text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase">
+      <h4 className="text-muted-foreground mb-1 text-xs font-semibold">
         {t("Rate Confirmations")}
       </h4>
       {isLoading ? (
@@ -907,7 +907,7 @@ function LinkedInvoiceMatches({ settlement }: { settlement: SettlementDetailData
 
   return (
     <div>
-      <h4 className="text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase">
+      <h4 className="text-muted-foreground mb-1 text-xs font-semibold">
         {t("Invoice Matches")}
       </h4>
       <ul className="flex flex-col gap-1">
@@ -967,7 +967,7 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
 
   return (
     <div className="border-t pt-3">
-      <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+      <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
         {t("History")}
       </h4>
       <ol className="flex flex-col gap-1">

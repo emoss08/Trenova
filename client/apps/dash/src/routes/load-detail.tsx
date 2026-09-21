@@ -54,7 +54,7 @@ function DetailStat({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
   return (
     <div className="rounded-xl border border-border bg-card px-3 py-2">
-      <p className="text-2xs font-medium text-muted-foreground uppercase">{label}</p>
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <p className="mt-0.5 truncate text-sm font-semibold">{value}</p>
     </div>
   );
@@ -81,7 +81,7 @@ function PayEstimateCard({ shipmentId, moveId }: { shipmentId: string; moveId: s
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
-      <p className="text-2xs font-medium text-muted-foreground uppercase">
+      <p className="text-xs font-medium text-muted-foreground">
         {t("Estimated pay for this load")}
       </p>
       <p className="mt-1 text-2xl font-semibold tracking-tight">
@@ -172,7 +172,7 @@ export function DashLoadDetailPage() {
         <div className="rounded-2xl border border-border bg-card p-4">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-2xs font-medium text-muted-foreground uppercase">
+              <p className="text-xs font-medium text-muted-foreground">
                 {t("Your pay for this load")}
               </p>
               <p className="mt-1 text-2xl font-semibold tracking-tight">

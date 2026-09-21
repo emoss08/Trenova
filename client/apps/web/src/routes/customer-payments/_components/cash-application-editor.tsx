@@ -15,10 +15,10 @@ import {
 import { computeApplicationTotals } from "@/lib/cash-application";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { CashApplicationRow } from "@trenova/shared/types/customer-payment";
-import { WandSparklesIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 type CashApplicationFormShape = {
   applications: CashApplicationRow[];
@@ -61,7 +61,7 @@ export function CashApplicationEditor({
           disabled={budgetMinor <= 0 || rows.length === 0}
           className="h-7 text-xs"
         >
-          <WandSparklesIcon className="size-3.5" />
+          <AssistMark className="size-3.5" />
           {t("Auto-apply oldest first")}
         </Button>
       </div>

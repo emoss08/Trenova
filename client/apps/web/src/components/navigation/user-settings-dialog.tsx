@@ -236,7 +236,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
             name={user?.name}
             profilePicUrl={user?.profilePicUrl}
             thumbnailUrl={user?.thumbnailUrl}
-            fallbackClassName="rounded-md bg-linear-to-br from-sidebar-accent to-sidebar-accent/80 text-sm font-semibold text-sidebar-accent-foreground"
+            fallbackClassName="rounded-md bg-sidebar-accent text-sm font-semibold text-sidebar-accent-foreground"
           />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{user?.name}</p>

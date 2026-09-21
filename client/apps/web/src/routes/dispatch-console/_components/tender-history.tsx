@@ -142,7 +142,7 @@ export function TenderHistory({
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <span className="text-muted-foreground text-2xs tracking-wide uppercase">
+      <span className="text-muted-foreground text-xs">
         {t("Tenders")}
       </span>
       {isLoading ? (

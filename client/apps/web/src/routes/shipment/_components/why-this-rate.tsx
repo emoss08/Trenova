@@ -87,7 +87,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
 
       {(trace?.components?.length ?? 0) > 0 && (
         <div className="border-b p-3">
-          <p className="text-2xs text-muted-foreground mb-2 font-medium tracking-wide uppercase">
+          <p className="text-xs text-muted-foreground mb-2 font-medium">
             {t("What made up the rate")}
           </p>
           <div className="space-y-1.5">
@@ -113,7 +113,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
 
       {(trace?.guardrails?.length ?? 0) > 0 && (
         <div className="border-b p-3">
-          <p className="text-2xs text-muted-foreground mb-2 font-medium tracking-wide uppercase">
+          <p className="text-xs text-muted-foreground mb-2 font-medium">
             {t("Guardrails")}
           </p>
           {trace?.guardrails?.map((guardrail, index) => (
@@ -144,7 +144,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
 
       {losers.length > 0 && (
         <div className="p-3">
-          <p className="text-2xs text-muted-foreground mb-2 font-medium tracking-wide uppercase">
+          <p className="text-xs text-muted-foreground mb-2 font-medium">
             {t("Considered but not applied")}
           </p>
           <div className="space-y-1.5">

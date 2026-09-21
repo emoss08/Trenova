@@ -194,7 +194,7 @@ function TemplateFilterPopover({
           </Button>
         }
       />
-      <PopoverContent align="start" className="dark w-72 p-0">
+      <PopoverContent align="start" className="w-72 p-0">
         <div className="border-b px-3 py-2">
           <div className="text-sm font-semibold">{t("Template Filters")}</div>
           <div className="text-muted-foreground text-xs">{t("Narrow the template list.")}</div>

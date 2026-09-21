@@ -9,7 +9,7 @@ import { apiService } from "@/services/api";
 import type { Insight, InsightMetric, InsightSeverity } from "@/types/insight";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowRightIcon, ClockAlertIcon, LightbulbIcon, SparklesIcon, XIcon } from "lucide-react";
+import { ArrowRightIcon, ClockAlertIcon, LightbulbIcon, XIcon } from "lucide-react";
 import { Link } from "react-router";
 import { WidgetCount, WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget-shell";
 import type { WidgetProps } from "../widget-registry";
@@ -22,6 +22,7 @@ import {
   primaryMetrics,
   sortInsights,
 } from "./insight-presentation";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const INSIGHT_LIMIT = 6;
 
@@ -199,7 +200,7 @@ function GeneratedMark() {
       <TooltipTrigger
         render={
           <span className="text-muted-foreground/60 ml-1 inline-flex translate-y-px align-middle">
-            <SparklesIcon className="size-2.5" />
+            <AssistMark className="size-2.5" />
           </span>
         }
       />

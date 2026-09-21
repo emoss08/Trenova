@@ -19,11 +19,11 @@ import {
   ClockAlertIcon,
   LightbulbIcon,
   RotateCcwIcon,
-  SparklesIcon,
   XIcon,
 } from "lucide-react";
 import { Link } from "react-router";
 import { CATEGORY_LABELS, SEVERITY_TONE } from "./insight-labels";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 /**
  * One finding in full.
@@ -221,7 +221,7 @@ function GeneratedMark() {
         "This explanation was written by AI. The figures above were computed from your records.",
       )}
     >
-      <SparklesIcon className="size-2.5" />
+      <AssistMark className="size-2.5" />
     </span>
   );
 }

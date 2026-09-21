@@ -314,7 +314,7 @@ function KpiTile({
 
   return (
     <div className={cn("flex h-full flex-col justify-center gap-1 p-4", className)}>
-      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+      <p className="text-xs text-muted-foreground font-medium">
         {chart.title || column.label}
       </p>
       <p className="text-2xl font-semibold tracking-tight tabular-nums">

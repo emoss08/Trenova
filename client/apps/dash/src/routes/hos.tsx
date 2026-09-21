@@ -46,7 +46,7 @@ function ClockGauge({ label, remainingMs, limitMs, defaultTone }: ClockGaugeProp
           <span className="text-xl font-semibold tabular-nums">
             {formatClockDurationMs(remainingMs)}
           </span>
-          <span className="mt-1 text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+          <span className="mt-1 text-xs font-medium text-muted-foreground">
             left
           </span>
         </div>

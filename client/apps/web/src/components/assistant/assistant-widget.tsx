@@ -106,7 +106,7 @@ export function AssistantWidget() {
               reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 34 }
             }
             className={cn(
-              "bg-popover ring-foreground/10 fixed z-50 flex flex-col overflow-hidden shadow-xl shadow-black/15 ring-1",
+              "bg-popover ring-foreground/10 fixed z-50 flex flex-col overflow-hidden ring-1",
               expanded
                 ? "inset-x-3 inset-y-3 md:inset-x-[max(2rem,calc((100vw-1180px)/2))] md:inset-y-[max(2rem,calc((100dvh-820px)/2))]"
                 : "right-4 bottom-4 h-[min(600px,calc(100dvh-2rem))] w-[min(400px,calc(100vw-2rem))]",

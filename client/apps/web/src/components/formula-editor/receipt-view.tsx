@@ -101,7 +101,7 @@ export function ReceiptView({ receipt, onUseValues, className }: ReceiptViewProp
 
       {lookups.length > 0 && (
         <div className="space-y-1">
-          <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
             <TableIcon className="size-3" />
             {t("Rate tables consulted")}
           </div>
@@ -141,7 +141,7 @@ export function ReceiptView({ receipt, onUseValues, className }: ReceiptViewProp
             type="button"
             onClick={() => setShowVariables((prev) => !prev)}
             aria-expanded={showVariables}
-            className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase"
+            className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-xs font-medium"
           >
             <Braces className="size-3" />
             {t("Variables ({0})", receipt.variables.length)}

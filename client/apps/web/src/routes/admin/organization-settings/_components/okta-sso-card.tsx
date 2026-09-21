@@ -167,7 +167,7 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="border-border bg-background rounded-xl border transition-shadow has-[[data-state=open]]:shadow-sm">
+      <div className="border-border bg-background rounded-xl border transition-shadow">
         <CollapsibleTrigger
           render={
             <button
@@ -176,7 +176,7 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
             />
           }
         >
-          <div className="border-border bg-background flex size-10 shrink-0 items-center justify-center rounded-lg border shadow-xs">
+          <div className="border-border bg-background flex size-10 shrink-0 items-center justify-center rounded-lg border">
             <OktaLogo className="h-5 w-auto" />
           </div>
           <div className="min-w-0 flex-1">

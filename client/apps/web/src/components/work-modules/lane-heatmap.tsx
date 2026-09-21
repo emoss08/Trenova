@@ -36,7 +36,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
           {REGIONS.map((r) => (
             <span
               key={r}
-              className="text-muted-foreground text-center font-mono text-3xs tracking-wider uppercase"
+              className="text-muted-foreground text-center font-mono text-2xs"
             >
               {r}
             </span>
@@ -44,7 +44,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
         </div>
         {REGIONS.map((origin, rowIdx) => (
           <div key={origin} className="grid grid-cols-[60px_repeat(4,minmax(0,1fr))] gap-1">
-            <span className="text-muted-foreground flex items-center font-mono text-3xs tracking-wider uppercase">
+            <span className="text-muted-foreground flex items-center font-mono text-2xs">
               {origin}
             </span>
             {REGIONS.map((destination, colIdx) => (

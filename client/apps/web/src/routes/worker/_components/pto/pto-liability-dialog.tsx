@@ -170,7 +170,7 @@ export function PTOLiabilityDialog({
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div className="bg-muted/30 rounded-lg border p-3">
-      <p className="text-muted-foreground text-xs font-medium uppercase">{label}</p>
+      <p className="text-muted-foreground text-xs font-medium">{label}</p>
       <p className={cn("mt-1 text-lg font-semibold tabular-nums", tone)}>{value}</p>
     </div>
   );

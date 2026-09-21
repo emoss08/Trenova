@@ -318,7 +318,7 @@ function MoveInspector({
 
       <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
         {canRankDrivers && (
-          <span className="text-muted-foreground text-2xs tracking-wide uppercase">
+          <span className="text-muted-foreground text-xs">
             {t("{0} candidates", candidates.length)}
           </span>
         )}
@@ -485,7 +485,7 @@ function DriverInspector({
 
         {driver.commitments.length > 0 && (
           <div className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-2xs tracking-wide uppercase">
+            <span className="text-muted-foreground text-xs">
               {t("Committed")}
             </span>
             {driver.commitments.map((commitment) => (
@@ -503,7 +503,7 @@ function DriverInspector({
         )}
       </div>
 
-      <span className="text-muted-foreground border-b px-2.5 pb-1.5 text-2xs tracking-wide uppercase">
+      <span className="text-muted-foreground border-b px-2.5 pb-1.5 text-xs">
         {t("Best fit ({0})", matches.length)}
       </span>
 
@@ -564,7 +564,7 @@ export function Inspector({
   return (
     <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
       <header className="flex items-center justify-between border-b px-2.5 py-1.5">
-        <h2 className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase">
+        <h2 className="text-muted-foreground text-xs font-semibold">
           {selectedMove
             ? canRankDrivers
               ? t("Rank drivers")

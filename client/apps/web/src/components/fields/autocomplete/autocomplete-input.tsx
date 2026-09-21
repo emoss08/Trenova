@@ -3,6 +3,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
 import { ChevronDownIcon, XIcon } from "lucide-react";
 import React from "react";
+import { fieldInvalidClass, fieldTriggerClass } from "@trenova/shared/lib/variants/field";
 
 type AutocompleteTriggerProps<TOption> = {
   open: boolean;
@@ -44,13 +45,12 @@ export function AutocompleteTrigger<TOption>({
       aria-expanded={open}
       aria-controls={listboxId}
       className={cn(
-        "border-muted-foreground/20 bg-muted h-7 w-full gap-2 rounded px-1.5 text-xs font-normal",
-        "data-pressed:border-brand data-pressed:ring-brand/30 data-pressed:ring-4 data-pressed:outline-hidden",
-        "hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/30 cursor-default justify-between [&_svg]:size-3",
-        "transition-[border-color,box-shadow] duration-200 ease-in-out",
+        fieldTriggerClass,
+        "h-7 w-full gap-2 px-1.5 text-xs font-normal",
+        "cursor-default justify-between [&_svg]:size-3",
         disabled && "cursor-not-allowed opacity-50",
         isInvalid &&
-"ui-focus-ring [--ring:var(--ring-danger)] border-danger bg-danger/20 ring-0 ring-danger placeholder:text-danger-foreground hover:border-danger hover:bg-danger/20 focus:outline-hidden data-pressed:border-danger data-pressed:bg-danger/20 data-pressed:ring-danger/20",
+fieldInvalidClass,
         triggerClassName,
       )}
       disabled={disabled}

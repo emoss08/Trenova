@@ -226,7 +226,6 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
                   <Page
                     pageNumber={index + 1}
                     width={pageWidth}
-                    className="shadow-lg"
                     loading={
                       <div className="bg-background h-[800px] w-full animate-pulse rounded" />
                     }
@@ -241,7 +240,6 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
               <Page
                 pageNumber={currentPage}
                 width={pageWidth}
-                className="shadow-lg"
                 loading={<div className="bg-background h-[800px] w-full animate-pulse rounded" />}
               />
             </div>
@@ -253,7 +251,6 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
                 <Page
                   pageNumber={currentPage}
                   width={pageWidth}
-                  className="shadow-lg"
                   loading={<div className="bg-background h-[800px] w-full animate-pulse rounded" />}
                 />
               </div>
@@ -262,7 +259,6 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
                   <Page
                     pageNumber={bookSecondPage}
                     width={pageWidth}
-                    className="shadow-lg"
                     loading={
                       <div className="bg-background h-[800px] w-full animate-pulse rounded" />
                     }

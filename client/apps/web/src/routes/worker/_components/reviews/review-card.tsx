@@ -69,7 +69,7 @@ export function ReviewCard({
   return (
     <div
       data-testid={`review-${review.id}`}
-      className={cn("bg-card flex flex-col gap-3 rounded-xl border p-4", !isClosed && "shadow-xs")}
+      className={cn("bg-card flex flex-col gap-3 rounded-xl border p-4", !isClosed && "")}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">

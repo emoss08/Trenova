@@ -144,7 +144,6 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
                       </TextShimmer>
                     </div>
                   }
-                  className="shadow-sm"
                 />
               </div>
             ))}

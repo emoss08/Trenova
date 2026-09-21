@@ -28,12 +28,12 @@ import {
   CheckCircle2Icon,
   FileUpIcon,
   LoaderCircleIcon,
-  SparklesIcon,
 } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 type ShipmentRateConfirmationImportPanelProps = {
   open: boolean;
@@ -535,7 +535,7 @@ export function ShipmentRateConfirmationImportPanel({
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <SparklesIcon className="size-4" />
+                  <AssistMark className="size-4" />
                   <CardTitle>{t(processStatus.title)}</CardTitle>
                 </div>
                 <CardDescription>{t(processStatus.description)}</CardDescription>
@@ -548,7 +548,7 @@ export function ShipmentRateConfirmationImportPanel({
                 />
                 <div className="grid gap-3 md:grid-cols-3">
                   <div className="rounded-lg border p-3">
-                    <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <div className="text-muted-foreground text-xs font-medium">
                       {t("Uploaded File")}
                     </div>
                     <div className="mt-1 text-sm">
@@ -556,7 +556,7 @@ export function ShipmentRateConfirmationImportPanel({
                     </div>
                   </div>
                   <div className="rounded-lg border p-3">
-                    <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <div className="text-muted-foreground text-xs font-medium">
                       {t("Content Status")}
                     </div>
                     <div className="mt-1 text-sm">
@@ -564,7 +564,7 @@ export function ShipmentRateConfirmationImportPanel({
                     </div>
                   </div>
                   <div className="rounded-lg border p-3">
-                    <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <div className="text-muted-foreground text-xs font-medium">
                       {t("Draft Status")}
                     </div>
                     <div className="mt-1 text-sm">
@@ -653,7 +653,7 @@ export function ShipmentRateConfirmationImportPanel({
               </CardHeader>
               <CardContent className="grid gap-4">
                 <div className="bg-background/80 rounded-lg border border-success-border p-4">
-                  <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                  <div className="text-muted-foreground text-xs font-medium">
                     {t("Shipment ID")}
                   </div>
                   <div className="mt-1 text-sm font-medium">{createdShipmentId}</div>

@@ -52,7 +52,7 @@ export function PtoBalanceStrip({
             key={balance.ptoType}
             className="border-border bg-muted/30 rounded-xl border px-3 py-2"
           >
-            <p className="text-2xs text-muted-foreground uppercase">
+            <p className="text-xs text-muted-foreground">
               {ptoTypeLabels[balance.ptoType] ?? balance.ptoType}
             </p>
             <p

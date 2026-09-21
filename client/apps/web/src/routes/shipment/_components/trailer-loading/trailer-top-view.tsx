@@ -32,7 +32,7 @@ export function TrailerTopView({
   return (
     <div className="border-border rounded-lg border p-3">
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
+        <span className="text-xs text-muted-foreground font-medium">
           {t("Trailer Layout")}
         </span>
         <div className="flex items-center gap-2">
@@ -149,7 +149,7 @@ export function TrailerTopView({
                         y={innerH / 2 - 10}
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        className={`${palette.text} text-xs font-bold`}
+                        className={`${palette.text} text-xs font-semibold`}
                       >
                         {p.commodityName.length > Math.floor(bw / 8)
                           ? p.commodityName.slice(0, Math.floor(bw / 8)) + "\u2026"

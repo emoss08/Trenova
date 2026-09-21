@@ -75,7 +75,7 @@ function getChangeBadgeStyle(type: string) {
     case "updated":
       return "bg-info-subtle text-info-foreground dark:bg-info-subtle/30 dark:text-info-foreground uppercase";
     default:
-      return "bg-muted text-muted-foreground uppercase";
+      return "bg-muted text-muted-foreground";
   }
 }
 

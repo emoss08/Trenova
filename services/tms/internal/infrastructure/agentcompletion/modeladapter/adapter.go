@@ -56,6 +56,10 @@ type Response struct {
 	Truncated bool
 	// Reasoning is what the model thought first, when the protocol carried it.
 	Reasoning *ReasoningTrace
+	// ReasoningTokens is how many of the output tokens were thinking, where
+	// the protocol says. Anthropic folds them into output_tokens and reports
+	// no split, so zero here does not mean the model did not think.
+	ReasoningTokens int
 }
 
 // Adapter speaks one wire protocol.

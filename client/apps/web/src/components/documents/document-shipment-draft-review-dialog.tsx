@@ -21,12 +21,13 @@ import type {
 import { shipmentCreateSchema, type ShipmentCreateInput } from "@trenova/shared/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, LoaderCircleIcon, SparklesIcon } from "lucide-react";
+import { AlertCircleIcon, LoaderCircleIcon } from "lucide-react";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 interface DocumentShipmentDraftReviewDialogProps {
   open: boolean;
@@ -286,7 +287,7 @@ export function DocumentShipmentDraftReviewDialog({
         <ScrollArea className="bg-muted/10 flex h-[400px] border-r">
           <div className="grid gap-4 p-4">
             <div className="rounded-lg border p-3">
-              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium">
                 {t("Source Document")}
               </div>
               <div className="mt-1 text-sm font-medium">
@@ -299,7 +300,7 @@ export function DocumentShipmentDraftReviewDialog({
               ) : null}
             </div>
             <div className="rounded-lg border p-3">
-              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium">
                 {t("Draft Summary")}
               </div>
               <div className="mt-3 grid gap-2 text-sm">
@@ -346,8 +347,8 @@ export function DocumentShipmentDraftReviewDialog({
             ) : null}
             {signals.length > 0 ? (
               <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
-                  <SparklesIcon className="size-3.5" />
+                <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium">
+                  <AssistMark className="size-3.5" />
                   {t("Draft Signals")}
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -375,7 +376,7 @@ export function DocumentShipmentDraftReviewDialog({
               </div>
             ) : null}
             <div className="rounded-lg border p-3">
-              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium">
                 {t("Extracted Stops")}
               </div>
               {stops.length === 0 ? (

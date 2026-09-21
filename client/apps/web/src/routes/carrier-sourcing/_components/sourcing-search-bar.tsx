@@ -192,7 +192,7 @@ export function SourcingSearchBar({
       {open ? (
         <CommandList
           onMouseDown={(event) => event.preventDefault()}
-          className="bg-popover text-popover-foreground absolute top-full right-0 left-0 z-50 mt-1 rounded-md border shadow-md"
+          className="bg-popover text-popover-foreground absolute top-full right-0 left-0 z-50 mt-1 rounded-md border"
         >
           <CommandGroup>
             <CommandItem value="__submit" onSelect={submit}>

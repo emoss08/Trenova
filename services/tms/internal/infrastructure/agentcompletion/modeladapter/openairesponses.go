@@ -124,8 +124,11 @@ type responsesEnvelope struct {
 }
 
 type responsesUsage struct {
-	InputTokens  int `json:"input_tokens"`
-	OutputTokens int `json:"output_tokens"`
+	InputTokens         int `json:"input_tokens"`
+	OutputTokens        int `json:"output_tokens"`
+	OutputTokensDetails struct {
+		ReasoningTokens int `json:"reasoning_tokens"`
+	} `json:"output_tokens_details"`
 }
 
 func (a openAIResponsesAdapter) requestFor(call *Call) responsesRequest {
@@ -182,6 +185,7 @@ func (a openAIResponsesAdapter) responseFrom(call *Call, envelope *responsesEnve
 		Refused:         refused,
 		Truncated:       responsesTruncated(envelope),
 		Reasoning:       responsesReasoningOf(envelope),
+		ReasoningTokens: envelope.Usage.OutputTokensDetails.ReasoningTokens,
 	}
 }
 
@@ -411,6 +415,7 @@ func (a openAIResponsesAdapter) Stream(
 		Refused:         refused || finalRefused,
 		Truncated:       responsesTruncated(completed),
 		Reasoning:       reasoning,
+		ReasoningTokens: completed.Usage.OutputTokensDetails.ReasoningTokens,
 	}, nil
 }
 

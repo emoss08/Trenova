@@ -43,7 +43,7 @@ function ArContextCard({ invoice }: { invoice: Invoice }) {
 
   return (
     <div className="bg-card rounded-lg border p-3" data-testid="invoice-ar-context">
-      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+      <p className="text-xs text-muted-foreground font-medium">
         {t("On behalf of")}
       </p>
       {isLoading && !shipper ? (
@@ -72,7 +72,7 @@ function ArContextCard({ invoice }: { invoice: Invoice }) {
 
       {related.length > 0 ? (
         <div className="mt-3 border-t pt-2">
-          <p className="text-2xs text-muted-foreground mb-1.5 flex items-center gap-1 font-medium tracking-wide uppercase">
+          <p className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1 font-medium">
             <SplitIcon className="size-3" />
             {t("Related invoices")}
           </p>

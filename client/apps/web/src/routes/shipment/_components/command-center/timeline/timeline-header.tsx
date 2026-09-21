@@ -37,7 +37,7 @@ export function TimelineHeader({
         className="border-border bg-muted sticky left-0 z-50 flex shrink-0 items-center border-r px-2.5"
         style={{ width: RAIL_WIDTH_PX }}
       >
-        <span className="text-muted-foreground text-3xs font-semibold tracking-wide uppercase">
+        <span className="text-muted-foreground text-2xs font-semibold">
           {t("Drivers · {0}", driverCount)}
         </span>
       </div>
@@ -51,7 +51,7 @@ export function TimelineHeader({
             )}
             style={{ left: day.x, width: day.width, height: DAY_LABEL_HEIGHT_PX }}
           >
-            <span className="truncate text-2xs font-semibold tracking-wide uppercase">
+            <span className="truncate text-xs font-semibold">
               {t(day.label)}
             </span>
           </div>

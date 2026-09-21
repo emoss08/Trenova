@@ -128,7 +128,7 @@ function ToolStepDetails({ step }: { step: ToolStep }) {
     <div className="mt-1.5 flex flex-col gap-2 text-xs">
       {rows.length > 0 && (
         <section className="flex flex-col gap-1">
-          <h4 className="text-muted-foreground text-2xs font-medium tracking-wider uppercase">
+          <h4 className="text-muted-foreground text-xs font-medium">
             {t("Asked for")}
           </h4>
           <div className="flex flex-wrap gap-1">
@@ -147,7 +147,7 @@ function ToolStepDetails({ step }: { step: ToolStep }) {
 
       <section className="flex flex-col gap-1">
         <div className="flex items-center justify-between gap-2">
-          <h4 className="text-muted-foreground text-2xs font-medium tracking-wider uppercase">
+          <h4 className="text-muted-foreground text-xs font-medium">
             {step.status === "proposed" ? t("Outcome") : t("Returned")}
           </h4>
           {result?.kind === "json" && (

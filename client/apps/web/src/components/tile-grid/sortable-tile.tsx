@@ -44,7 +44,7 @@ export function SortableTile({ id, w, h, editing, className, children }: Sortabl
       }}
       className={cn(
         "group/tile border-border/80 bg-card hover:border-border flex min-h-0 flex-col overflow-hidden rounded-lg border transition-[border-color,box-shadow] duration-200 dark:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.04)]",
-        sortable.isDragging && "z-10 opacity-80 shadow-lg",
+        sortable.isDragging && "z-10 opacity-80",
         className,
       )}
     >

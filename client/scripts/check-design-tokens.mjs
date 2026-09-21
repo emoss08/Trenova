@@ -2,7 +2,7 @@
 /**
  * Fails the build on styling that bypasses the design tokens.
  *
- * These five rules are the ones the codebase actually broke. Before the token
+ * These six rules are the ones the codebase actually broke. Before the token
  * layer was rebuilt there were 1,914 raw palette classes, 961 arbitrary font
  * sizes and 253 hand-written line-height patches across 267 files, and nothing
  * stopped any of them landing. Tokens alone do not hold; the check does.
@@ -66,6 +66,16 @@ const RULES = [
     pattern: /\bfocus-(?:visible|within):(?:ring|border|outline)[a-z0-9/.[\]_-]*/g,
     message: (m) =>
       `\`${m}\` builds a focus ring by hand. Use ui-focus-ring, ui-container-focus-ring (focus lands on a child) or ui-inset-focus-ring (no room to bloom outward). For an invalid control add \`aria-invalid:[--ring:var(--ring-danger)]\` rather than a second ring.`,
+  },
+  {
+    id: "shadow",
+    // `shadow-[0_0_0_1px_var(--brand)]` is a zero-blur outline and `shadow-none`
+    // removes one; neither is matched. `drop-shadow-*` is preceded by a hyphen
+    // and is not matched either.
+    pattern:
+      /(?<![\w-])(?:[a-z0-9-]+:)*shadow-(?:2xs|xs|sm|md|lg|xl|2xl|raised|overlay|modal|black|white|foreground|brand)(?:\/\d+)?(?![\w-])/g,
+    message: (m) =>
+      `\`${m}\` draws a shadow, and Trenova draws none. Separate a surface with a border or \`ring-1 ring-foreground/10\`; a floating surface is already inverted. See the Elevation section of docs/engineering/design-system.md.`,
   },
   {
     id: "legacy-badge-variant",
@@ -158,7 +168,7 @@ async function auditTokenLayer() {
     // Geometry and the hue plan are the same in both themes by definition; a
     // corner radius does not get darker.
     const themeIndependent =
-      /^--(hue-|radius|ring-width|ring-opacity|kpi-|row-|cell-|elevation-flat)/;
+      /^--(hue-|radius|ring-width|ring-opacity|kpi-|row-|cell-|elevation-)/;
     for (const name of names(stripped.slice(0, darkAt))) {
       if (!dark.has(name) && !themeIndependent.test(name)) {
         problems.push(`${name} is defined for light only; a themed token needs a value in .dark too.`);

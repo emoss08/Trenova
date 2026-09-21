@@ -313,7 +313,7 @@ export default function CommoditiesSection() {
           <div className="rounded-lg border">
             <div
               className={cn(
-                "border-border text-2xs text-muted-foreground grid gap-2 border-b px-4 py-2 uppercase",
+                "border-border text-xs text-muted-foreground grid gap-2 border-b px-4 py-2",
                 showDimensions ? "grid-cols-12" : "grid-cols-10",
               )}
             >

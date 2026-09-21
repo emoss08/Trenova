@@ -507,7 +507,7 @@ export function InvoiceAdjustmentPreviewPanel({
             ))}
             {previewErrors.map(([field, messages]) => (
               <div key={field}>
-                <p className="text-2xs text-destructive/70 font-medium tracking-wide uppercase">
+                <p className="text-xs text-destructive/70 font-medium">
                   {field}
                 </p>
                 {messages.map((message) => (

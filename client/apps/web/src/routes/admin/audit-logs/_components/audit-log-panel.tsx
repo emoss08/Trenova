@@ -126,13 +126,13 @@ function ChangeRow({
       </div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <div className="space-y-1 rounded-md border border-danger/20 bg-danger/8 p-2.5">
-          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-medium">
             {t("Previous Value")}
           </p>
           <AuditValueCell value={from} path={`${path}.from`} />
         </div>
         <div className="space-y-1 rounded-md border border-success/20 bg-success/8 p-2.5">
-          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-medium">
             {t("Current Value")}
           </p>
           <AuditValueCell value={to} path={`${path}.to`} />

@@ -33,7 +33,7 @@ export function WeatherAlertLegendPanel({
 
   return (
     <MapControl position={ControlPosition.LEFT_BOTTOM}>
-      <div className="bg-background mx-3 my-4 rounded-lg border shadow-sm">
+      <div className="bg-background mx-3 my-4 rounded-lg border">
         <button
           type="button"
           onClick={() => onCollapsedChange(!collapsed)}

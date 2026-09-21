@@ -163,7 +163,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="border-border bg-background rounded-xl border transition-shadow has-[[data-state=open]]:shadow-sm">
+      <div className="border-border bg-background rounded-xl border transition-shadow">
         {/* Provider Header / Trigger */}
         <CollapsibleTrigger
           render={
@@ -173,7 +173,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
             />
           }
         >
-          <div className="border-border bg-background flex size-10 shrink-0 items-center justify-center rounded-lg border shadow-xs">
+          <div className="border-border bg-background flex size-10 shrink-0 items-center justify-center rounded-lg border">
             <EntraLogo className="size-6" />
           </div>
           <div className="min-w-0 flex-1">

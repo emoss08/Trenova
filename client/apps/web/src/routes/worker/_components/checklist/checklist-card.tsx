@@ -130,7 +130,7 @@ export function ChecklistCard({
       <div className="divide-border border-border divide-y border-t">
         {groups.map((group) => (
           <div key={group.owner} data-testid={`checklist-owner-${group.owner}`}>
-            <p className="text-2xs bg-muted/40 text-muted-foreground px-3 py-1 font-medium uppercase">
+            <p className="text-xs bg-muted/40 text-muted-foreground px-3 py-1 font-medium">
               {CHECKLIST_OWNER_LABELS[group.owner] ?? group.owner}
             </p>
             <ul className="divide-border divide-y">

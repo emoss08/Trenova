@@ -29,7 +29,6 @@ import {
   LightbulbIcon,
   RotateCcwIcon,
   SearchCheckIcon,
-  SparklesIcon,
   TrendingDownIcon,
   TrendingUpIcon,
   XIcon,
@@ -43,6 +42,7 @@ import {
   primaryTrendMetricKey,
   type MetricTrend,
 } from "./insight-trend";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 /**
  * One finding, opened.
@@ -134,7 +134,7 @@ function DetailBody({
               {t("Explanation")}
               {body.generated && (
                 <span className="text-muted-foreground/60 ml-1.5 inline-flex items-center gap-1 normal-case">
-                  <SparklesIcon className="size-2.5" />
+                  <AssistMark className="size-2.5" />
                   {t("written by AI")}
                 </span>
               )}

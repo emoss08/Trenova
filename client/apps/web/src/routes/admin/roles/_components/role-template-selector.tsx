@@ -5,8 +5,9 @@ import { getAvailableResources, type ResourceDefinition } from "@/lib/role-api";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AddPermission, DataScope, Operation } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
-import { EyeIcon, PencilIcon, ShieldIcon, SparklesIcon } from "lucide-react";
+import { EyeIcon, PencilIcon, ShieldIcon } from "lucide-react";
 import { useMemo } from "react";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 type RoleTemplate = {
   id: string;
@@ -63,7 +64,7 @@ const ROLE_TEMPLATES: RoleTemplate[] = [
     id: "custom",
     name: "Custom",
     description: "Build your own permission set",
-    icon: <SparklesIcon className="size-3.5" />,
+    icon: <AssistMark className="size-3.5" />,
     getPermissions: () => [],
   },
 ];

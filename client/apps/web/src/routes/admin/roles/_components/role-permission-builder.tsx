@@ -35,11 +35,11 @@ import {
   PencilIcon,
   SearchIcon,
   ShieldIcon,
-  SparklesIcon,
   XIcon,
   ZapIcon,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 type RoleTemplate = {
   id: string;
@@ -96,7 +96,7 @@ const ROLE_TEMPLATES: RoleTemplate[] = [
     id: "custom",
     name: "Custom",
     description: "Build your own permissions",
-    icon: <SparklesIcon className="size-4" />,
+    icon: <AssistMark className="size-4" />,
     getPermissions: () => [],
   },
 ];
