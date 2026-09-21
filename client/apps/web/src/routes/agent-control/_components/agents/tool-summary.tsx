@@ -93,7 +93,12 @@ export function ToolSummary({
           thing the dialog exists to prevent; the totals and the button above
           stay put and the list scrolls beneath them. */}
       {chosenGroups.length > 0 && (
-        <ScrollArea className="border-border max-h-56 border-t" maskVariant="card" maskHeight={16}>
+        <ScrollArea
+          className="border-border border-t"
+          viewportClassName="max-h-56"
+          maskVariant="card"
+          maskHeight={16}
+        >
           <ul className="divide-border divide-y">
             {chosenGroups.map((group) => (
               <li key={group.resource} className="flex flex-wrap items-center gap-1.5 px-3 py-2">

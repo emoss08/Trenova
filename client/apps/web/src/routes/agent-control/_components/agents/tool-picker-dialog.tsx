@@ -135,7 +135,11 @@ export function ToolPickerDialog({
         </DialogHeader>
 
         <div className="grid min-h-0 flex-1 grid-cols-[11rem_minmax(0,1fr)]">
-          <ScrollArea className="border-border min-h-0 border-r" maskVariant="background">
+          <ScrollArea
+            className="border-border min-h-0 border-r"
+            viewportClassName="max-h-[60dvh]"
+            maskVariant="background"
+          >
             <nav aria-label={t("Tool groups")} className="flex flex-col gap-0.5 p-2">
               {groups.map((group) => {
                 const active = !searching && group.resource === openGroups[0]?.resource;
@@ -167,7 +171,11 @@ export function ToolPickerDialog({
             </nav>
           </ScrollArea>
 
-          <ScrollArea className="min-h-0" maskVariant="background">
+          <ScrollArea
+            className="min-h-0"
+            viewportClassName="max-h-[60dvh]"
+            maskVariant="background"
+          >
             {openGroups.length === 0 ? (
               <p className="text-muted-foreground px-5 py-10 text-center text-sm">
                 {t("No tools match that search.")}

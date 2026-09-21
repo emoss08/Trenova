@@ -107,7 +107,7 @@ export function AssistantHeader({
           <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
             {t("Start a conversation with")}
           </p>
-          <ScrollArea className="max-h-72">
+          <ScrollArea viewportClassName="max-h-72">
             <div className="flex flex-col gap-0.5">
               {agents.map((agent) => (
                 <button
@@ -169,7 +169,7 @@ export function AssistantHeader({
               <TooltipContent>{t("Conversations")}</TooltipContent>
             </Tooltip>
             <PopoverContent align="end" className="w-80 p-0">
-              <ScrollArea className="max-h-80">
+              <ScrollArea viewportClassName="max-h-80">
                 <ThreadList
                   groups={groups}
                   agentsById={agentsById}
