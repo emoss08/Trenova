@@ -90,7 +90,7 @@ func (s *Service) Run(
 	repeats := newRepeatGuard()
 
 	system := definition.BuildSystemPrompt(runtimeContext)
-	messages := toAdapterMessages(req.History)
+	messages := toAdapterMessages(req.History, req.Proposals)
 	messages = append(messages, serviceports.Message{
 		Role:    serviceports.RoleUser,
 		Content: req.Input,
@@ -228,7 +228,7 @@ func (s *Service) Run(
 				continue
 			}
 
-			outcome := s.dispatch(ctx, req, call, completion.Text)
+			outcome := s.dispatch(ctx, req, call, completion.Text, result.Actions)
 			if outcome.failed {
 				repeats.record(call, outcome.content)
 			}

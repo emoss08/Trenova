@@ -64,6 +64,27 @@ type RunRequest struct {
 	// default for their own conversation, so the more specific choice applies.
 	// Empty falls back to the definition, and then to priority order.
 	PreferredProviderID pulid.ID
+	// Proposals is what became of the writes earlier turns of this
+	// conversation proposed, so the model reads the current state of each
+	// rather than the "awaiting review" it was told at the time, and does not
+	// propose again what is still waiting.
+	Proposals []ProposalOutcome
+}
+
+// ProposalOutcome is the current state of a proposal an earlier turn raised.
+type ProposalOutcome struct {
+	SourceMessageID pulid.ID
+	ToolName        string
+	ToolParams      map[string]any
+	Rationale       string
+	Status          agent.ProposalStatus
+	ExecutionError  string
+	ExecutedAt      *int64
+}
+
+// Pending reports that the person has not decided yet.
+func (o ProposalOutcome) Pending() bool {
+	return o.Status == agent.ProposalStatusPending
 }
 
 type RunResult struct {

@@ -633,3 +633,42 @@ func TestPreviewReport_DeclaresTheDefinitionShapeInItsSchema(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []string{"entity", "columns"}, definition["required"])
 }
+
+// A person asked for "dates I can read" and the model, reading epoch
+// seconds in the preview, rebuilt the report to get them. The preview
+// writes date columns as dates in the organization's timezone, so the
+// model sees what the download shows.
+func TestPreviewReport_WritesDateColumnsAsReadableDates(t *testing.T) {
+	t.Parallel()
+
+	service, _, tools := reportingTools(t)
+	service.preview = &reporting.PreviewResult{
+		Columns: []serviceports.ReportResultColumn{
+			{ID: "c1", Label: "Driver", Type: reportcatalog.FieldString},
+			{ID: "c2", Label: "Last Move", Type: reportcatalog.FieldEpoch},
+		},
+		Rows: []serviceports.ReportRow{
+			{"Mike Johnson", int64(1789996617)},
+			{"Nobody", nil},
+		},
+	}
+
+	params := testParams(map[string]any{
+		"definition": map[string]any{
+			"entity": "shipment_move",
+			"columns": []any{
+				map[string]any{"id": "c1", "ref": map[string]any{"path": []any{"assignment", "primaryWorker"}, "field": "firstName"}, "kind": "dimension"},
+				map[string]any{"id": "c2", "ref": map[string]any{"field": "createdAt"}, "kind": "measure", "agg": "max"},
+			},
+		},
+	})
+	params.Timezone = "America/Chicago"
+
+	result, err := tools["preview_report"].Query(t.Context(), params)
+	require.NoError(t, err)
+
+	preview := result.(reportPreview)
+	assert.Equal(t, "2026-09-21 08:16 CDT", preview.Rows[0]["Last Move"])
+	assert.Nil(t, preview.Rows[1]["Last Move"])
+	assert.Contains(t, preview.Note, "Date columns are shown here as dates")
+}

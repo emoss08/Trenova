@@ -374,7 +374,7 @@ func (r *repository) ListPendingForReminder(
 			return sq.Where(cols.ExpiresAt.IsNull()).
 				WhereOr(cols.ExpiresAt.Gt(), req.Now)
 		}).
-		OrderExpr(cols.CreatedAt.OrderAsc()).
+		OrderExpr(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
 		Limit(req.Limit).
 		Scan(ctx)
 	if err != nil {
@@ -431,7 +431,7 @@ func (r *repository) ListByPlan(
 				Where(cols.PlanID.Eq(), req.PlanID)
 		}).
 		OrderExpr(cols.PlanStep.OrderAsc()).
-		OrderExpr(cols.CreatedAt.OrderAsc()).
+		OrderExpr(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
 		Scan(ctx)
 	if err != nil {
 		r.l.Error("failed to list agent proposals by plan", zap.Error(err))
@@ -489,7 +489,7 @@ func (r *repository) ListByRun(
 			return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo).
 				Where(cols.RunID.Eq(), req.RunID)
 		}).
-		OrderExpr(cols.CreatedAt.OrderAsc()).
+		OrderExpr(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
 		OrderExpr(cols.ID.OrderAsc()).
 		Scan(ctx); err != nil {
 		r.l.Error("failed to list proposals by run",

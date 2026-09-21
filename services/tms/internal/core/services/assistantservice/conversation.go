@@ -292,6 +292,7 @@ func (s *Service) SendMessageStream(
 		Page:                page,
 		PreferredProviderID: thread.PreferredProviderID,
 		ThreadID:            thread.ID,
+		Proposals:           s.proposalOutcomes(ctx, thread, req.TenantInfo),
 	}, emit)
 
 	// The save does not ride the request context. The two ways a turn is most

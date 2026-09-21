@@ -23,6 +23,8 @@ type TurnRequest struct {
 	PreferredProviderID pulid.ID
 	// ThreadID is the conversation, for attributing what the turn cost.
 	ThreadID pulid.ID
+	// Proposals is what became of the writes earlier turns proposed.
+	Proposals []serviceports.ProposalOutcome
 }
 
 type TurnResult struct {
@@ -76,6 +78,8 @@ func (s *Service) RunObserved(
 
 	runtimeContext := s.buildContext(ctx, req)
 
+	runtimeContext.PendingProposals = pendingProposals(req.Proposals)
+
 	run, err := s.runtime.Run(ctx, &serviceports.RunRequest{
 		Definition:          req.Definition,
 		Actor:               req.Actor,
@@ -85,6 +89,7 @@ func (s *Service) RunObserved(
 		Emit:                emit,
 		PreferredProviderID: req.PreferredProviderID,
 		ThreadID:            req.ThreadID,
+		Proposals:           req.Proposals,
 	})
 	if err != nil {
 		return interruptedTurn(req, decision, run, err), err
@@ -275,4 +280,19 @@ func recentTurns(history []conversation.Message) []agentguard.Turn {
 	}
 
 	return turns
+}
+
+// pendingProposals names the undecided proposals for the prompt.
+func pendingProposals(outcomes []serviceports.ProposalOutcome) []agentdefinition.PendingProposal {
+	pending := make([]agentdefinition.PendingProposal, 0, len(outcomes))
+	for _, outcome := range outcomes {
+		if outcome.Pending() {
+			pending = append(pending, agentdefinition.PendingProposal{
+				ToolName:  outcome.ToolName,
+				Rationale: outcome.Rationale,
+			})
+		}
+	}
+
+	return pending
 }

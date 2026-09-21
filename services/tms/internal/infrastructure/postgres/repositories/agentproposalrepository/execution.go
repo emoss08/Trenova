@@ -87,7 +87,7 @@ func (r *repository) ListByThread(
 				Where(runCols.SubjectType.Eq(), agent.SubjectAssistantThread).
 				Where(runCols.SubjectID.Eq(), req.ThreadID)
 		}).
-		Order(cols.CreatedAt.OrderAsc()).
+		Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
 		Scan(ctx)
 	if err != nil {
 		log.Error("failed to list proposals for thread", zap.Error(err))

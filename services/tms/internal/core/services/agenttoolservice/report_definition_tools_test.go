@@ -2,6 +2,7 @@ package agenttoolservice
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -21,9 +22,20 @@ type fakeReportWriter struct {
 	entries     []*canned.Entry
 	definitions []*report.ReportDefinition
 
-	created *reporting.SaveDefinitionRequest
-	updated *reporting.SaveDefinitionRequest
-	forked  *reporting.ForkCannedRequest
+	created   *reporting.SaveDefinitionRequest
+	updated   *reporting.SaveDefinitionRequest
+	forked    *reporting.ForkCannedRequest
+	validated *reporting.SaveDefinitionRequest
+	invalid   error
+}
+
+func (f *fakeReportWriter) ValidateDefinition(
+	_ context.Context,
+	req *reporting.SaveDefinitionRequest,
+) error {
+	f.validated = req
+
+	return f.invalid
 }
 
 func (f *fakeReportWriter) GetCanned(key string) (*canned.Entry, error) {
@@ -466,4 +478,32 @@ func TestReportDefinitionTools_RejectAMismatchedActor(t *testing.T) {
 
 	require.ErrorIs(t, err, ErrTenantMismatch)
 	assert.Nil(t, writer.created)
+}
+
+// The definition is compiled before a proposal exists. A person used to
+// approve a card that then failed with "unknown field"; now the model hears
+// it first and fixes the call.
+func TestCreateAndUpdateReport_ValidateTheDefinitionBeforeProposing(t *testing.T) {
+	t.Parallel()
+
+	writer := &fakeReportWriter{invalid: errors.New("unknown field \"foo\" on entity \"shipment\"")}
+	create := newCreateReportTool(writer)
+	validator, ok := create.(serviceports.ToolValidator)
+	require.True(t, ok)
+
+	err := validator.Validate(t.Context(), executeParams(map[string]any{
+		"name":       "Lane revenue",
+		"definition": definitionArgument(),
+	}))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown field")
+	require.NotNil(t, writer.validated)
+	assert.Equal(t, "Lane revenue", writer.validated.Name)
+	assert.Nil(t, writer.created, "validation saves nothing")
+
+	writer.invalid = nil
+	require.NoError(t, validator.Validate(t.Context(), executeParams(map[string]any{
+		"name":       "Lane revenue",
+		"definition": definitionArgument(),
+	})))
 }

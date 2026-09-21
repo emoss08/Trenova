@@ -42,6 +42,7 @@ type reportDefinitionWriter interface {
 		ctx context.Context,
 		req *reporting.SaveDefinitionRequest,
 	) (*report.ReportDefinition, error)
+	ValidateDefinition(ctx context.Context, req *reporting.SaveDefinitionRequest) error
 }
 
 func reportingRequestFrom(params serviceports.ToolExecuteParams) reporting.Request {
@@ -255,26 +256,50 @@ func (t *createReportTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
+	save, err := t.prepare(params)
+	if err != nil {
 		return err
+	}
+
+	_, err = t.reports.CreateDefinition(ctx, save)
+
+	return err
+}
+
+// Validate compiles the definition against the catalog and the person's
+// access before the proposal is recorded, so a column naming a field that
+// does not exist is refused to the model now rather than failing after a
+// person approved it.
+func (t *createReportTool) Validate(ctx context.Context, params serviceports.ToolExecuteParams) error {
+	save, err := t.prepare(params)
+	if err != nil {
+		return err
+	}
+
+	return t.reports.ValidateDefinition(ctx, save)
+}
+
+func (t *createReportTool) prepare(params serviceports.ToolExecuteParams) (*reporting.SaveDefinitionRequest, error) {
+	if err := guardExecute(t, params); err != nil {
+		return nil, err
 	}
 
 	name, err := requireString(params.Params, "name")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	meta, err := readReportMetadata(params.Params)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	definition, err := readDefinition(params.Params, true)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = t.reports.CreateDefinition(ctx, &reporting.SaveDefinitionRequest{
+	return &reporting.SaveDefinitionRequest{
 		Request:       reportingRequestFrom(params),
 		Name:          strings.TrimSpace(name),
 		Description:   meta.Description,
@@ -284,9 +309,7 @@ func (t *createReportTool) Execute(
 		Status:        report.DefinitionStatusActive,
 		DefaultFormat: meta.DefaultFormat,
 		Definition:    definition,
-	})
-
-	return err
+	}, nil
 }
 
 type updateReportTool struct {
@@ -361,32 +384,61 @@ func (t *updateReportTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
+	save, err := t.prepare(ctx, params)
+	if err != nil {
 		return err
+	}
+
+	_, err = t.reports.UpdateDefinition(ctx, save)
+
+	return err
+}
+
+// Validate reads the saved report and compiles the edited definition, so a
+// change that would not save is refused to the model before anyone is asked
+// to approve it.
+func (t *updateReportTool) Validate(ctx context.Context, params serviceports.ToolExecuteParams) error {
+	save, err := t.prepare(ctx, params)
+	if err != nil {
+		return err
+	}
+	if save.Definition == nil {
+		return nil
+	}
+
+	return t.reports.ValidateDefinition(ctx, save)
+}
+
+func (t *updateReportTool) prepare(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) (*reporting.SaveDefinitionRequest, error) {
+	if err := guardExecute(t, params); err != nil {
+		return nil, err
 	}
 
 	definitionID, err := requirePulid(params.Params, "definitionId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	meta, err := readReportMetadata(params.Params)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	definition, err := readDefinition(params.Params, false)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	status, err := readDefinitionStatus(params.Params)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(meta.given) == 0 && definition == nil && status == "" {
-		return errors.New(
+		return nil, errors.New(
 			"nothing to change: send the definition, or at least one of name, " +
 				"description, category, tags, visibility, defaultFormat or status",
 		)
@@ -399,17 +451,17 @@ func (t *updateReportTool) Execute(
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"there is no saved report with the id %q that you can see; call "+
 					"list_reports for the ones that exist",
 				definitionID.String(),
 			)
 		}
 
-		return err
+		return nil, err
 	}
 	if existing.OwnerID != params.Actor.UserID {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%q belongs to someone else, so only they can change it; create_report "+
 				"can build the person their own version from its definition",
 			existing.Name,
@@ -431,7 +483,7 @@ func (t *updateReportTool) Execute(
 	}
 	if meta.given["name"] {
 		if meta.Name == "" {
-			return errors.New("parameter \"name\" must be a non-empty string")
+			return nil, errors.New("parameter \"name\" must be a non-empty string")
 		}
 		save.Name = meta.Name
 	}
@@ -457,9 +509,7 @@ func (t *updateReportTool) Execute(
 		save.Status = status
 	}
 
-	_, err = t.reports.UpdateDefinition(ctx, save)
-
-	return err
+	return save, nil
 }
 
 func readDefinitionStatus(params map[string]any) (report.DefinitionStatus, error) {

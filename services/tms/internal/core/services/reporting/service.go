@@ -124,6 +124,16 @@ func (s *Service) orgTimezone(ctx context.Context, tenant pagination.TenantInfo)
 	return org.Timezone
 }
 
+// ValidateDefinition compiles a definition as the caller may see it, without
+// saving anything. It is what an agent checks a proposal against before a
+// person is asked to approve it.
+func (s *Service) ValidateDefinition(
+	ctx context.Context,
+	req *SaveDefinitionRequest,
+) error {
+	return s.validateDefinition(ctx, req)
+}
+
 func (s *Service) validateDefinition(
 	ctx context.Context,
 	req *SaveDefinitionRequest,

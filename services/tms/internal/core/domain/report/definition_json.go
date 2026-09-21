@@ -3,6 +3,7 @@ package report
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/bytedance/sonic"
 )
@@ -15,7 +16,7 @@ func DecodeDefinition(value any) (*Definition, error) {
 		return nil, errors.New("a report definition is required")
 	}
 
-	encoded, err := sonic.Marshal(value)
+	encoded, err := sonic.Marshal(normalizeDefinitionShape(value))
 	if err != nil {
 		return nil, fmt.Errorf("encode report definition: %w", err)
 	}
@@ -33,8 +34,100 @@ func DecodeDefinition(value any) (*Definition, error) {
 	if len(definition.Columns) == 0 {
 		return nil, errors.New("the report definition has no columns")
 	}
+	for idx, column := range definition.Columns {
+		if column.Kind == ColumnKindComputed || column.Ref.Field != "" {
+			continue
+		}
+
+		return nil, fmt.Errorf(
+			"column %q (columns[%d]) names no field: give it {\"ref\": {\"field\": \"<key>\"}}, "+
+				"or {\"ref\": {\"path\": [\"<edge>\"], \"field\": \"<key>\"}} for a field on a "+
+				"related dataset, using the keys describe_report_dataset lists",
+			column.ID, idx,
+		)
+	}
 
 	return definition, nil
+}
+
+// normalizeDefinitionShape accepts the ways a field reference is written
+// besides the canonical one, so a definition copied from describe_report's
+// column summary — where a field reads "assignment.primaryWorker.firstName" —
+// decodes to the same thing the builder saves.
+//
+// A column with a dotted "field" and no "ref" gains a ref split on the dots;
+// a ref whose field is dotted and whose path is empty is split the same
+// way. Anything else is left exactly as written.
+func normalizeDefinitionShape(value any) any {
+	root, ok := value.(map[string]any)
+	if !ok {
+		return value
+	}
+
+	columns, ok := root["columns"].([]any)
+	if !ok {
+		return normalizeRefs(root)
+	}
+	for _, raw := range columns {
+		column, isMap := raw.(map[string]any)
+		if !isMap {
+			continue
+		}
+		if _, hasRef := column["ref"]; !hasRef {
+			if field, isString := column["field"].(string); isString && field != "" {
+				column["ref"] = map[string]any{"field": field}
+				delete(column, "field")
+			}
+		}
+	}
+
+	return normalizeRefs(root)
+}
+
+// normalizeRefs walks the definition and splits every dotted ref field
+// with no path into its edges and field.
+func normalizeRefs(value any) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		for key, child := range typed {
+			if key == "ref" {
+				if ref, isMap := child.(map[string]any); isMap {
+					splitDottedRef(ref)
+				}
+
+				continue
+			}
+			typed[key] = normalizeRefs(child)
+		}
+
+		return typed
+	case []any:
+		for idx, child := range typed {
+			typed[idx] = normalizeRefs(child)
+		}
+
+		return typed
+	default:
+		return value
+	}
+}
+
+func splitDottedRef(ref map[string]any) {
+	field, ok := ref["field"].(string)
+	if !ok || !strings.Contains(field, ".") {
+		return
+	}
+	if existing, hasPath := ref["path"].([]any); hasPath && len(existing) > 0 {
+		return
+	}
+
+	parts := strings.Split(field, ".")
+	path := make([]any, 0, len(parts)-1)
+	for _, part := range parts[:len(parts)-1] {
+		path = append(path, part)
+	}
+	ref["path"] = path
+	ref["field"] = parts[len(parts)-1]
 }
 
 // DefinitionJSONSchema describes a definition to a caller that writes one
@@ -143,7 +236,7 @@ func DefinitionJSONSchema() map[string]any {
 								"rightValue for a constant.",
 						},
 					},
-					"required":             []string{"id", "kind"},
+					"required":             []string{"id", "kind", "ref"},
 					"additionalProperties": true,
 				},
 			},

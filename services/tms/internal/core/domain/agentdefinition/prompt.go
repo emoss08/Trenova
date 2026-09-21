@@ -81,6 +81,16 @@ type RuntimeContext struct {
 	// the alternative is a model that reads a short tool list as the limit of
 	// what the system can do and tells the person it is not possible.
 	ToolsDisclosed bool
+	// PendingProposals are the writes earlier turns proposed that the person
+	// has not decided yet. The model is told so it points them at the card
+	// rather than proposing the same change again.
+	PendingProposals []PendingProposal
+}
+
+// PendingProposal is one undecided proposal as the prompt names it.
+type PendingProposal struct {
+	ToolName  string
+	Rationale string
 }
 
 func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
@@ -117,6 +127,11 @@ func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
 			builder.WriteString("\n\n")
 			builder.WriteString(section)
 		}
+	}
+
+	if section := buildPendingProposalSection(rc.PendingProposals); section != "" {
+		builder.WriteString("\n\n")
+		builder.WriteString(section)
 	}
 
 	builder.WriteString("\n\n")
@@ -416,4 +431,37 @@ func (d *Definition) buildOutputSection() string {
 		"improvising.\nKeep your working to yourself. Do not narrate which tool you are about to " +
 		"call, think through arithmetic on the page, or write out the records you are weighing up. " +
 		"The person wants the answer, not the process that produced it."
+}
+
+const maxPendingProposalRationaleChars = 200
+
+// buildPendingProposalSection tells the model what is still waiting on the
+// person. Without it a model read "yes" or "approved" as a decision and
+// proposed the same write again, and told the person a change had been made
+// that was still sitting on its card.
+func buildPendingProposalSection(pending []PendingProposal) string {
+	if len(pending) == 0 {
+		return ""
+	}
+
+	var builder strings.Builder
+	builder.WriteString("## Proposals awaiting a decision\n")
+	builder.WriteString(
+		"These changes you proposed earlier in this conversation are waiting on the " +
+			"person. They approve or reject each one on its card in this conversation, " +
+			"not by typing: a message such as \"yes\", \"approved\" or \"go ahead\" does " +
+			"not decide it. Do not propose any of them again. If the person asks you to " +
+			"proceed, tell them the proposal is waiting for their approval on its card, " +
+			"and that nothing has been changed yet.",
+	)
+	for _, proposal := range pending {
+		builder.WriteString("\n- ")
+		builder.WriteString(proposal.ToolName)
+		if rationale := strings.TrimSpace(proposal.Rationale); rationale != "" {
+			builder.WriteString(" — ")
+			builder.WriteString(stringutils.Ellipsize(rationale, maxPendingProposalRationaleChars))
+		}
+	}
+
+	return builder.String()
 }

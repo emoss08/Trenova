@@ -29,6 +29,14 @@ type ToolSimulator interface {
 	Simulate(ctx context.Context, params ToolExecuteParams) (*agent.ToolSimulation, error)
 }
 
+// ToolValidator is a tool that can check its arguments before anything is
+// recorded. The runtime asks it before raising a proposal, so a call that
+// would fail on execution is refused to the model now, while it can still
+// fix the call, rather than after a person has approved it.
+type ToolValidator interface {
+	Validate(ctx context.Context, params ToolExecuteParams) error
+}
+
 type AgentTool interface {
 	Name() string
 	Description() string

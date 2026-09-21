@@ -45,8 +45,12 @@ func fromToolCallRecords(records []conversation.ToolCallRecord) []serviceports.T
 	return calls
 }
 
-func toAdapterMessages(history []conversation.Message) []serviceports.Message {
+func toAdapterMessages(
+	history []conversation.Message,
+	outcomes []serviceports.ProposalOutcome,
+) []serviceports.Message {
 	messages := make([]serviceports.Message, 0, len(history)+1)
+	ledger := newProposalLedger(outcomes)
 
 	// The history is the newest N messages of the thread, and that cut lands
 	// wherever it lands — including between an assistant's tool calls and the
@@ -64,6 +68,7 @@ func toAdapterMessages(history []conversation.Message) []serviceports.Message {
 			if msg.Refused {
 				continue
 			}
+			ledger.noteCalls(msg)
 			messages = append(messages, serviceports.Message{
 				Role:      serviceports.RoleAssistant,
 				Content:   msg.Content,
@@ -73,7 +78,7 @@ func toAdapterMessages(history []conversation.Message) []serviceports.Message {
 		case conversation.RoleTool:
 			messages = append(messages, serviceports.Message{
 				Role:       serviceports.RoleTool,
-				Content:    msg.Content,
+				Content:    ledger.currentContent(msg),
 				ToolCallID: msg.ToolCallID,
 				ToolName:   msg.ToolName,
 				IsError:    msg.ToolFailed,

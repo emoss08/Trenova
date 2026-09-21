@@ -128,7 +128,7 @@ func TestToAdapterMessages_StartsAtAUserTurn(t *testing.T) {
 		{Role: conversation.RoleAssistant, Content: "Sarah Williams."},
 	}
 
-	messages := toAdapterMessages(history)
+	messages := toAdapterMessages(history, nil)
 
 	require.Len(t, messages, 2)
 	assert.Equal(t, serviceports.RoleUser, messages[0].Role)
@@ -145,7 +145,7 @@ func TestToAdapterMessages_KeepsAWholeHistoryThatAlreadyStartsRight(t *testing.T
 		{Role: conversation.RoleAssistant, Content: "Dallas."},
 	}
 
-	assert.Len(t, toAdapterMessages(history), 4)
+	assert.Len(t, toAdapterMessages(history, nil), 4)
 }
 
 // History replay carries the reasoning, since a provider that signs its
@@ -156,7 +156,7 @@ func TestToAdapterMessages_CarriesReasoning(t *testing.T) {
 	messages := toAdapterMessages([]conversation.Message{
 		{Role: conversation.RoleUser, Content: "hold it"},
 		{Role: conversation.RoleAssistant, Content: "Done.", Reasoning: &conversation.ReasoningTrace{Text: "t", Signature: "s"}},
-	})
+	}, nil)
 
 	require.Len(t, messages, 2)
 	require.NotNil(t, messages[1].Reasoning)

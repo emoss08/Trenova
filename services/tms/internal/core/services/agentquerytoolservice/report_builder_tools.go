@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -504,12 +506,16 @@ func aggregationNames(field *reportcatalog.Field) []string {
 }
 
 type reportColumnRow struct {
-	ID     string `json:"id"`
-	Label  string `json:"label,omitempty"`
-	Field  string `json:"field"`
-	Kind   string `json:"kind"`
-	Agg    string `json:"agg,omitempty"`
-	Bucket string `json:"bucket,omitempty"`
+	// Ref is the reference as a definition writes it. Field below is the
+	// same thing in one readable string, which is what a model copied into
+	// its own definitions until the decoder learned to read it.
+	Ref    report.FieldRef `json:"ref"`
+	ID     string          `json:"id"`
+	Label  string          `json:"label,omitempty"`
+	Field  string          `json:"field"`
+	Kind   string          `json:"kind"`
+	Agg    string          `json:"agg,omitempty"`
+	Bucket string          `json:"bucket,omitempty"`
 }
 
 type reportDescription struct {
@@ -621,6 +627,7 @@ func describeReport(source reportSource, actor pulid.ID) reportDescription {
 	description.Columns = make([]reportColumnRow, 0, len(definition.Columns))
 	for _, column := range definition.Columns {
 		description.Columns = append(description.Columns, reportColumnRow{
+			Ref:    column.Ref,
 			ID:     column.ID,
 			Label:  column.Label,
 			Field:  fieldRefText(column.Ref),
@@ -815,7 +822,7 @@ func (t *previewReportTool) Query(
 		)
 	}
 
-	return previewOf(source, result), nil
+	return previewOf(source, result, clockFor(params)), nil
 }
 
 // source reads what to preview: an inline definition first, because that is
@@ -849,7 +856,7 @@ func (t *previewReportTool) source(
 	return source, nil
 }
 
-func previewOf(source reportSource, result *reporting.PreviewResult) reportPreview {
+func previewOf(source reportSource, result *reporting.PreviewResult, clk clock) reportPreview {
 	preview := reportPreview{
 		Dataset:   source.Definition.Entity,
 		Columns:   make([]previewColumnRow, 0, len(result.Columns)),
@@ -875,16 +882,24 @@ func previewOf(source reportSource, result *reporting.PreviewResult) reportPrevi
 		})
 	}
 
+	// A date column comes back from the dataset as epoch seconds, which the
+	// download renders and a model reading the preview does not. It is
+	// written as a date here so the preview reads the way the report will.
+	dated := make([]bool, len(result.Columns))
+	for idx, column := range result.Columns {
+		dated[idx] = column.Type == reportcatalog.FieldEpoch
+	}
+
 	shown := len(result.Rows)
 	if shown > maxPreviewRows {
 		shown = maxPreviewRows
 	}
 	preview.Rows = make([]map[string]any, 0, shown)
 	for _, row := range result.Rows[:shown] {
-		preview.Rows = append(preview.Rows, rowByLabel(labels, row))
+		preview.Rows = append(preview.Rows, rowByLabel(labels, renderDates(row, dated, clk)))
 	}
 	if len(result.Totals) > 0 {
-		preview.Totals = rowByLabel(labels, result.Totals)
+		preview.Totals = rowByLabel(labels, renderDates(result.Totals, dated, clk))
 	}
 
 	switch {
@@ -907,8 +922,56 @@ func previewOf(source reportSource, result *reporting.PreviewResult) reportPrevi
 	if result.Truncated {
 		preview.Note += " The preview hit its row cap, so the count is a floor, not the total."
 	}
+	if hasDated(dated) {
+		preview.Note += " Date columns are shown here as dates in the organization's timezone, " +
+			"and the download renders them the same way; the stored value is epoch seconds."
+	}
 
 	return preview
+}
+
+func hasDated(dated []bool) bool {
+	for _, is := range dated {
+		if is {
+			return true
+		}
+	}
+
+	return false
+}
+
+// renderDates writes each epoch cell as a readable date.
+func renderDates(row serviceports.ReportRow, dated []bool, clk clock) serviceports.ReportRow {
+	out := make(serviceports.ReportRow, len(row))
+	for idx, value := range row {
+		if idx < len(dated) && dated[idx] {
+			if seconds, ok := epochSeconds(value); ok {
+				out[idx] = time.Unix(seconds, 0).In(clk.location()).Format("2006-01-02 15:04 MST")
+
+				continue
+			}
+		}
+		out[idx] = value
+	}
+
+	return out
+}
+
+func epochSeconds(value any) (int64, bool) {
+	switch typed := value.(type) {
+	case int64:
+		return typed, typed > 0
+	case int:
+		return int64(typed), typed > 0
+	case float64:
+		return int64(typed), typed > 0
+	case string:
+		parsed, err := strconv.ParseInt(strings.TrimSpace(typed), 10, 64)
+
+		return parsed, err == nil && parsed > 0
+	default:
+		return 0, false
+	}
 }
 
 func rowByLabel(labels []string, row serviceports.ReportRow) map[string]any {

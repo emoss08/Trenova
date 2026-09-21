@@ -353,3 +353,46 @@ func toAssistantProposal(
 
 	return out
 }
+
+// proposalOutcomes reads what became of every proposal this conversation
+// raised, for the model to see the current state of each. A read that fails
+// degrades to the stored tool results rather than failing the turn: a stale
+// "awaiting review" is what the model always used to see.
+func (s *Service) proposalOutcomes(
+	ctx context.Context,
+	thread *conversation.Thread,
+	tenant pagination.TenantInfo,
+) []services.ProposalOutcome {
+	if s.proposals == nil {
+		return nil
+	}
+
+	stored, err := s.proposals.ListByThread(ctx, repositories.ListAgentProposalsByThreadRequest{
+		ThreadID:   thread.ID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		s.logger.Warn("could not read the thread's proposals for the model",
+			zap.String("thread", thread.ID.String()), zap.Error(err))
+
+		return nil
+	}
+
+	outcomes := make([]services.ProposalOutcome, 0, len(stored))
+	for _, proposal := range stored {
+		if proposal == nil {
+			continue
+		}
+		outcomes = append(outcomes, services.ProposalOutcome{
+			SourceMessageID: proposal.SourceMessageID,
+			ToolName:        proposal.ToolName,
+			ToolParams:      proposal.ToolParams,
+			Rationale:       proposal.Rationale,
+			Status:          proposal.Status,
+			ExecutionError:  proposal.ExecutionError,
+			ExecutedAt:      proposal.ExecutedAt,
+		})
+	}
+
+	return outcomes
+}

@@ -341,3 +341,26 @@ func TestBuildSystemPrompt_LeavesMemoryOutWhenNotAskedForOrEmpty(t *testing.T) {
 	})
 	assert.NotContains(t, prompt, "organization_memory")
 }
+
+// The person typed "yes" at a card they had not clicked and the model raised
+// the same write again. The prompt names what is waiting and says how a
+// decision is actually made.
+func TestBuildSystemPrompt_NamesTheProposalsStillWaitingOnThePerson(t *testing.T) {
+	t.Parallel()
+
+	d := &agentdefinition.Definition{Name: "Report builder", Instructions: "Build reports."}
+	d.ApplyDefaults()
+
+	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
+		PendingProposals: []agentdefinition.PendingProposal{
+			{ToolName: "update_report", Rationale: "Asked to update report in reply to: “Approved”"},
+		},
+	})
+
+	assert.Contains(t, prompt, "## Proposals awaiting a decision")
+	assert.Contains(t, prompt, "- update_report — Asked to update report")
+	assert.Contains(t, prompt, "not by typing")
+	assert.Contains(t, prompt, "Do not propose any of them again")
+
+	assert.NotContains(t, d.BuildSystemPrompt(agentdefinition.RuntimeContext{}), "Proposals awaiting")
+}
