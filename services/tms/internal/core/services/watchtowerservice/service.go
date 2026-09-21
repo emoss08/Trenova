@@ -7,15 +7,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -44,32 +41,32 @@ const (
 type Params struct {
 	fx.In
 
-	Logger        *zap.Logger
-	Repo          repositories.WatchtowerRepository
-	Permissions   services.PermissionEngine
-	Definitions   repositories.AgentDefinitionRepository
-	Roles         repositories.RoleRepository  `optional:"true"`
-	Runs          services.AgentRunService     `optional:"true"`
-	Events        services.AgentEventPublisher `optional:"true"`
-	Realtime      services.RealtimeService     `optional:"true"`
-	Notifications *notificationservice.Service `optional:"true"`
-	Sources       []services.WatchtowerSource  `group:"watchtower_sources"`
+	Logger      *zap.Logger
+	Repo        repositories.WatchtowerRepository
+	Projector   *Projector
+	Permissions services.PermissionEngine
+	Definitions repositories.AgentDefinitionRepository
+	Runs        services.AgentRunService     `optional:"true"`
+	Events      services.AgentEventPublisher `optional:"true"`
+	Sources     []services.WatchtowerSource  `group:"watchtower_sources"`
 }
 
-// Service keeps the watchtower: what the sources project into it, what a
-// reader may see of it, and how an item is handed to an agent.
+// Service is the watchtower's read face: what a reader may see of it, where
+// their unseen line sits, and how an item is handed to an agent. It also
+// owns the sweeps, which is why it knows the sources.
+//
+// The write face lives in Projector and is injected rather than embedded.
+// See the note there for why the two cannot be one constructor.
 type Service struct {
-	l             *zap.Logger
-	repo          repositories.WatchtowerRepository
-	permissions   services.PermissionEngine
-	definitions   repositories.AgentDefinitionRepository
-	roles         repositories.RoleRepository
-	runs          services.AgentRunService
-	events        services.AgentEventPublisher
-	realtime      services.RealtimeService
-	notifications *notificationservice.Service
-	sources       map[watchtower.SourceKind]services.WatchtowerSource
-	now           func() int64
+	l           *zap.Logger
+	repo        repositories.WatchtowerRepository
+	projector   *Projector
+	permissions services.PermissionEngine
+	definitions repositories.AgentDefinitionRepository
+	runs        services.AgentRunService
+	events      services.AgentEventPublisher
+	sources     map[watchtower.SourceKind]services.WatchtowerSource
+	now         func() int64
 }
 
 func New(p Params) *Service {
@@ -81,196 +78,19 @@ func New(p Params) *Service {
 	}
 
 	return &Service{
-		l:             p.Logger.Named("service.watchtower"),
-		repo:          p.Repo,
-		permissions:   p.Permissions,
-		definitions:   p.Definitions,
-		roles:         p.Roles,
-		runs:          p.Runs,
-		events:        p.Events,
-		realtime:      p.Realtime,
-		notifications: p.Notifications,
-		sources:       sources,
-		now:           timeutils.NowUnix,
+		l:           p.Logger.Named("service.watchtower"),
+		repo:        p.Repo,
+		projector:   p.Projector,
+		permissions: p.Permissions,
+		definitions: p.Definitions,
+		runs:        p.Runs,
+		events:      p.Events,
+		sources:     sources,
+		now:         timeutils.NowUnix,
 	}
 }
-
-// AsProjector and AsService are the two faces fx hands out: sources hold the
-// first, the API the second.
-func AsProjector(s *Service) services.WatchtowerProjector { return s }
 
 func AsService(s *Service) services.WatchtowerService { return s }
-
-// itemFromInput builds the stored shape from what a source said.
-func itemFromInput(input services.WatchtowerItemInput) *watchtower.Item {
-	occurredAt := input.OccurredAt
-	if occurredAt <= 0 {
-		occurredAt = timeutils.NowUnix()
-	}
-	item := &watchtower.Item{
-		OrganizationID: input.TenantInfo.OrgID,
-		BusinessUnitID: input.TenantInfo.BuID,
-		SourceKind:     input.SourceKind,
-		SourceID:       input.SourceID,
-		Severity:       input.Severity,
-		Title:          input.Title,
-		Summary:        input.Summary,
-		SubjectType:    input.SubjectType,
-		SubjectID:      input.SubjectID,
-		EventKind:      input.EventKind,
-		Path:           input.Path,
-		OccurredAt:     occurredAt,
-	}
-	item.Normalize()
-
-	return item
-}
-
-// Upsert projects one source record. Nothing here reaches the caller: a
-// projection that fails is logged, and the nightly reconcile catches it.
-func (s *Service) Upsert(ctx context.Context, input services.WatchtowerItemInput) {
-	if _, err := s.upsert(ctx, input); err != nil {
-		s.l.Warn("watchtower projection lost",
-			zap.String("kind", string(input.SourceKind)),
-			zap.String("source", input.SourceID),
-			zap.Error(err),
-		)
-	}
-}
-
-func (s *Service) upsert(ctx context.Context, input services.WatchtowerItemInput) (*watchtower.Item, error) {
-	item := itemFromInput(input)
-	multiErr := errortypes.NewMultiError()
-	item.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	saved, inserted, err := s.repo.Upsert(ctx, item)
-	if err != nil {
-		return nil, err
-	}
-
-	action := services.ActivityUpdated
-	if inserted {
-		action = services.ActivityCreated
-	}
-	s.publish(ctx, saved, action)
-	if inserted && saved.Severity == watchtower.SeverityCritical {
-		s.notifyCritical(ctx, saved)
-	}
-
-	return saved, nil
-}
-
-// Resolve closes the item for a source record that is no longer open.
-func (s *Service) Resolve(
-	ctx context.Context,
-	tenant pagination.TenantInfo,
-	kind watchtower.SourceKind,
-	sourceID string,
-) {
-	item, err := s.repo.Resolve(ctx, repositories.ResolveWatchtowerItemRequest{
-		TenantInfo: tenant,
-		SourceKind: kind,
-		SourceID:   sourceID,
-		ResolvedAt: s.now(),
-	})
-	if err != nil {
-		s.l.Warn("watchtower resolution lost",
-			zap.String("kind", string(kind)),
-			zap.String("source", sourceID),
-			zap.Error(err),
-		)
-
-		return
-	}
-	if item != nil {
-		s.publish(ctx, item, "resolved")
-	}
-}
-
-func (s *Service) publish(ctx context.Context, item *watchtower.Item, action string) {
-	if s.realtime == nil || item == nil {
-		return
-	}
-
-	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-		OrganizationID: item.OrganizationID,
-		BusinessUnitID: item.BusinessUnitID,
-		ActorType:      services.PrincipalTypeSystem,
-		Resource:       RealtimeResource,
-		Action:         action,
-		RecordID:       item.ID,
-		Entity:         item,
-	}); err != nil {
-		s.l.Warn("watchtower invalidation lost", zap.String("item", item.ID.String()), zap.Error(err))
-	}
-}
-
-// notifyCritical tells the people who could open the record that something
-// critical appeared. Recipients are whoever may read the source's resource,
-// bounded, so a critical weather warning reaches dispatch and not the whole
-// company.
-func (s *Service) notifyCritical(ctx context.Context, item *watchtower.Item) {
-	if s.notifications == nil || s.roles == nil {
-		return
-	}
-
-	tenant := pagination.TenantInfo{OrgID: item.OrganizationID, BuID: item.BusinessUnitID}
-	recipients, err := s.roles.ListUsersWithPermission(ctx, repositories.ListUsersWithPermissionRequest{
-		OrganizationID: tenant.OrgID,
-		BusinessUnitID: tenant.BuID,
-		Resource:       item.SourceKind.ReadResource(),
-		Operation:      permission.OpRead,
-		Now:            s.now(),
-	})
-	if err != nil {
-		s.l.Warn("could not find who to tell about a critical item",
-			zap.String("item", item.ID.String()), zap.Error(err))
-
-		return
-	}
-	if len(recipients) > maxCriticalRecipients {
-		recipients = recipients[:maxCriticalRecipients]
-	}
-
-	correlation := item.ID.String()
-	link := item.Path
-	if link == "" {
-		link = FeedPath + "?item=" + item.ID.String()
-	}
-	for _, recipient := range recipients {
-		buID := tenant.BuID
-		userID := recipient.UserID
-		if _, err = s.notifications.Create(ctx, &notification.Notification{
-			OrganizationID: tenant.OrgID,
-			BusinessUnitID: &buID,
-			TargetUserID:   &userID,
-			Channel:        notification.ChannelUser,
-			EventType:      EventCritical,
-			Priority:       notification.PriorityHigh,
-			Title:          item.Title,
-			Message:        item.Summary,
-			Source:         notificationSource,
-			CorrelationID:  &correlation,
-			Data: map[string]any{
-				"link":       link,
-				"itemId":     item.ID.String(),
-				"sourceKind": string(item.SourceKind),
-				"sourceId":   item.SourceID,
-				"severity":   string(item.Severity),
-			},
-			RelatedEntities: map[string]any{"watchtowerItemId": item.ID.String()},
-		}); err != nil {
-			s.l.Warn("critical watchtower notification lost",
-				zap.String("item", item.ID.String()),
-				zap.String("userId", recipient.UserID.String()),
-				zap.Error(err),
-			)
-		}
-	}
-}
 
 // visibleKinds is the kinds this reader may be shown: those whose source
 // resource they may read. A request naming kinds is narrowed to the ones
@@ -491,7 +311,7 @@ func (s *Service) Dismiss(
 	if err != nil {
 		return nil, err
 	}
-	s.publish(ctx, resolved, "resolved")
+	s.projector.publish(ctx, resolved, "resolved")
 
 	return resolved, nil
 }

@@ -298,6 +298,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	narrator.New,
 	newDetectorRegistry,
 	insightservice.New,
+	watchtowerservice.NewProjector,
 	watchtowerservice.New,
 	watchtowerservice.AsProjector,
 	watchtowerservice.AsService,

@@ -223,9 +223,13 @@ func testActor() *services.RequestActor {
 }
 
 func newService(repo *stubRepo, perms *agentruntimetest.StubPermissions, sources ...services.WatchtowerSource) *Service {
+	projector := NewProjector(ProjectorParams{Logger: zap.NewNop(), Repo: repo})
+	projector.now = func() int64 { return 1_700_000_000 }
+
 	svc := New(Params{
 		Logger:      zap.NewNop(),
 		Repo:        repo,
+		Projector:   projector,
 		Permissions: perms,
 		Definitions: &stubDefinitions{},
 		Sources:     sources,
@@ -257,8 +261,8 @@ func TestList_ShowsOnlyKindsTheReaderMayOpen(t *testing.T) {
 	actor := testActor()
 	tenant := actor.TenantInfo()
 	svc := newService(repo, &agentruntimetest.StubPermissions{Denied: map[string]bool{"billing_queue:read": true}})
-	svc.Upsert(t.Context(), input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100))
-	svc.Upsert(t.Context(), input(tenant, watchtower.SourceBillingException, "bqi_1", watchtower.SeverityWarning, 200))
+	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100))
+	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceBillingException, "bqi_1", watchtower.SeverityWarning, 200))
 
 	page, err := svc.List(t.Context(), services.ListWatchtowerItemsRequest{TenantInfo: tenant, UnresolvedOnly: true}, actor)
 	require.NoError(t, err)
@@ -281,8 +285,8 @@ func TestList_MarksWhatTheReaderHasSeen(t *testing.T) {
 	actor := testActor()
 	tenant := actor.TenantInfo()
 	svc := newService(repo, &agentruntimetest.StubPermissions{})
-	svc.Upsert(t.Context(), input(tenant, watchtower.SourceInsight, "ins_old", watchtower.SeverityInfo, 100))
-	svc.Upsert(t.Context(), input(tenant, watchtower.SourceInsight, "ins_new", watchtower.SeverityCritical, 300))
+	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceInsight, "ins_old", watchtower.SeverityInfo, 100))
+	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceInsight, "ins_new", watchtower.SeverityCritical, 300))
 
 	counts, err := svc.MarkSeen(t.Context(), tenant, actor, 200)
 	require.NoError(t, err)
@@ -307,12 +311,12 @@ func TestUpsert_KeepsTheRowAndReopensIt(t *testing.T) {
 	tenant := actor.TenantInfo()
 	svc := newService(repo, &agentruntimetest.StubPermissions{})
 
-	svc.Upsert(t.Context(), input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100))
+	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100))
 	first := repo.items[repo.key(watchtower.SourceServiceFailure, "sf_1")]
-	svc.Resolve(t.Context(), tenant, watchtower.SourceServiceFailure, "sf_1")
+	svc.projector.Resolve(t.Context(), tenant, watchtower.SourceServiceFailure, "sf_1")
 	require.NotNil(t, first.ResolvedAt)
 
-	svc.Upsert(t.Context(), input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityCritical, 150))
+	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityCritical, 150))
 	again := repo.items[repo.key(watchtower.SourceServiceFailure, "sf_1")]
 	assert.Equal(t, first.ID, again.ID, "the same source keeps its item")
 	assert.Nil(t, again.ResolvedAt, "a source reported open again is open again")
@@ -329,7 +333,7 @@ func TestUpsert_RefusesAPathThatLeavesTheApplication(t *testing.T) {
 
 	bad := input(tenant, watchtower.SourceInsight, "ins_1", watchtower.SeverityInfo, 100)
 	bad.Path = "//evil.example/x"
-	_, err := svc.upsert(t.Context(), bad)
+	_, err := svc.projector.upsert(t.Context(), bad)
 	require.Error(t, err)
 	assert.Empty(t, repo.items)
 }
@@ -351,7 +355,7 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 	in.SubjectType = agent.SubjectShipment
 	in.SubjectID = subject
 	in.EventKind = agent.EventServiceFailureDetected
-	item, err := svc.upsert(t.Context(), in)
+	item, err := svc.projector.upsert(t.Context(), in)
 	require.NoError(t, err)
 
 	// Nobody subscribes: the person is told who could take it.
@@ -398,7 +402,7 @@ func TestHandOff_RefusesAnItemTheReaderMayNotSee(t *testing.T) {
 	in := input(tenant, watchtower.SourceBillingException, "bqi_1", watchtower.SeverityWarning, 100)
 	in.SubjectType = agent.SubjectBillingQueueItem
 	in.SubjectID = pulid.MustNew("bqi_")
-	item, err := svc.upsert(t.Context(), in)
+	item, err := svc.projector.upsert(t.Context(), in)
 	require.NoError(t, err)
 
 	_, err = svc.HandOff(t.Context(), services.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID}, actor)
@@ -421,8 +425,8 @@ func TestReconcile_FollowsTheSourcesAndSurvivesOneFailing(t *testing.T) {
 	}}
 	broken := &stubSource{kind: watchtower.SourceInsight, err: assert.AnError}
 	svc := newService(repo, &agentruntimetest.StubPermissions{}, failures, broken)
-	svc.Upsert(t.Context(), input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100))
-	svc.Upsert(t.Context(), input(tenant, watchtower.SourceInsight, "ins_1", watchtower.SeverityInfo, 100))
+	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100))
+	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceInsight, "ins_1", watchtower.SeverityInfo, 100))
 
 	result, err := svc.Reconcile(t.Context(), tenant)
 	require.NoError(t, err)
