@@ -40,7 +40,7 @@ export function KeyboardShortcutsDialog() {
           <div className="flex flex-col gap-4">
             {keybindGroups.map((group) => (
               <div key={group.id} className="flex flex-col gap-2">
-                <h3 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+                <h3 className="text-muted-foreground text-xs font-medium">
                   {t(group.label)}
                 </h3>
                 <div className="flex flex-col">

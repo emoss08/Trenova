@@ -136,7 +136,7 @@ export function SafetyCard() {
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-2">
-      <dt className="text-xs uppercase text-muted-foreground">{label}</dt>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="mt-0.5 font-medium">{value}</dd>
     </div>
   );

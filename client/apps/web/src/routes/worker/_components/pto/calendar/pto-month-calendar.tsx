@@ -375,7 +375,7 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
                     key={weekday}
                     role="columnheader"
                     className={cn(
-                      "text-muted-foreground px-1.5 py-1 text-2xs font-medium tracking-wide uppercase",
+                      "text-muted-foreground px-1.5 py-1 text-xs font-medium",
                       (index === 0 || index === 6) && "text-muted-foreground/70",
                     )}
                   >

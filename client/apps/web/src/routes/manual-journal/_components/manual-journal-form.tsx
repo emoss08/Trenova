@@ -43,13 +43,13 @@ function BalanceSummary({ totalDebit, totalCredit }: { totalDebit: number; total
   return (
     <div className="divide-border bg-muted/30 grid grid-cols-3 divide-x overflow-hidden rounded-lg border">
       <div className="flex flex-col gap-1 px-4 py-3">
-        <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+        <span className="text-xs text-muted-foreground font-medium">
           {t("Total Debits")}
         </span>
         <AmountDisplay value={totalDebit} className="text-sm font-semibold" />
       </div>
       <div className="flex flex-col gap-1 px-4 py-3">
-        <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+        <span className="text-xs text-muted-foreground font-medium">
           {t("Total Credits")}
         </span>
         <AmountDisplay value={totalCredit} className="text-sm font-semibold" />
@@ -62,7 +62,7 @@ function BalanceSummary({ totalDebit, totalCredit }: { totalDebit: number; total
       >
         <span
           className={cn(
-            "text-2xs font-medium tracking-wide uppercase",
+            "text-xs font-medium",
             !hasAmounts && "text-muted-foreground",
             hasAmounts &&
               (isBalanced

@@ -73,7 +73,7 @@ function CountFigure({
 
   return (
     <div className="bg-muted/30 rounded-lg border p-3" title={hint}>
-      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-medium">
         {label}
       </p>
       <p className="mt-1 text-sm font-semibold tabular-nums">

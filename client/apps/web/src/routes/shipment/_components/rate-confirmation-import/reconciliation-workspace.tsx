@@ -102,7 +102,7 @@ export default function ReconciliationWorkspace({
             <ScrollArea className="min-h-0 flex-1">
               <div className="border-b">
                 <div className="px-3 pt-2 pb-1">
-                  <span className="text-2xs text-muted-foreground/50 font-medium tracking-wider uppercase">
+                  <span className="text-xs text-muted-foreground/50 font-medium">
                     {t("Required Details")}
                   </span>
                 </div>
@@ -114,7 +114,7 @@ export default function ReconciliationWorkspace({
 
               <div className="border-b">
                 <div className="px-3 pt-3 pb-1">
-                  <span className="text-2xs text-muted-foreground/50 font-medium tracking-wider uppercase">
+                  <span className="text-xs text-muted-foreground/50 font-medium">
                     {t("Extracted Fields")}
                   </span>
                 </div>
@@ -130,7 +130,7 @@ export default function ReconciliationWorkspace({
               {state.stops.length > 0 && (
                 <div>
                   <div className="px-3 pt-3 pb-1">
-                    <span className="text-2xs text-muted-foreground/50 font-medium tracking-wider uppercase">
+                    <span className="text-xs text-muted-foreground/50 font-medium">
                       {t("Stops")}
                     </span>
                   </div>

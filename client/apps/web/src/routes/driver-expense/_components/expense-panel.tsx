@@ -128,7 +128,7 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
 
       {isTerminal ? (
         <div className="border-border rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">{t("Review")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Review")}</p>
           <p className="mt-1 text-sm whitespace-pre-wrap">{expense.reviewNote || "—"}</p>
           <p className="text-muted-foreground mt-2 text-xs">
             {formatUnixDate(expense.reviewedAt ?? 0) || "—"}

@@ -75,7 +75,7 @@ export function EDITrendCharts({ points }: { points: EDIVolumePoint[] }) {
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       <div className="bg-background rounded-md border p-3">
-        <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+        <h3 className="text-muted-foreground text-xs font-semibold">
           {t("Document volume")}
         </h3>
         <ChartContainer config={volumeChartConfig} className="mt-2 aspect-auto! h-[220px] w-full">
@@ -113,7 +113,7 @@ export function EDITrendCharts({ points }: { points: EDIVolumePoint[] }) {
         </ChartContainer>
       </div>
       <div className="bg-background rounded-md border p-3">
-        <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+        <h3 className="text-muted-foreground text-xs font-semibold">
           {t("Delivery success rate")}
         </h3>
         <ChartContainer

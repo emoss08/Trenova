@@ -257,10 +257,8 @@
 }
 
 .cc-label {
-  font-size: var(--text-2xs);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--text-xs);
+  font-weight: 500;
   color: var(--muted-foreground);
 }
 
@@ -318,10 +316,8 @@
 
 .cc-th {
   text-align: left;
-  font-size: var(--text-3xs);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--text-xs);
+  font-weight: 500;
   color: var(--muted-foreground);
   padding: 6px 10px;
   background: color-mix(in oklch, var(--muted) 50%, transparent);

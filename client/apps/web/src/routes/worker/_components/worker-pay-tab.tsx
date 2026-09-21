@@ -100,7 +100,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
       {earnings && (
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-muted/30 rounded-lg border p-3">
-            <p className="text-muted-foreground text-xs font-medium uppercase">
+            <p className="text-muted-foreground text-xs font-medium">
               {t("Unsettled Earnings")}
             </p>
             <p className="mt-1 text-sm font-semibold">
@@ -114,7 +114,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
             </p>
           </div>
           <div className="bg-muted/30 rounded-lg border p-3">
-            <p className="text-muted-foreground text-xs font-medium uppercase">
+            <p className="text-muted-foreground text-xs font-medium">
               {t("Outstanding Advances")}
             </p>
             <p className="mt-1 text-sm font-semibold">
@@ -128,7 +128,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
             </p>
           </div>
           <div className="bg-muted/30 rounded-lg border p-3">
-            <p className="text-muted-foreground text-xs font-medium uppercase">
+            <p className="text-muted-foreground text-xs font-medium">
               {t("Escrow Balance")}
             </p>
             <p className="mt-1 text-sm font-semibold">
@@ -143,7 +143,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
 
       {(history ?? []).length > 0 && (
         <div>
-          <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+          <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
             {t("Assignment History")}
           </h4>
           <div className="overflow-hidden rounded-lg border">

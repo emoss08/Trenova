@@ -152,11 +152,6 @@ export function BriefingBar({
 
   return (
     <div className="border-border relative isolate overflow-hidden border-b">
-      <div
-        aria-hidden
-        className="from-brand/[0.05] pointer-events-none absolute inset-0 bg-gradient-to-b via-transparent to-transparent"
-      />
-
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-4">
         <div className="flex min-w-0 flex-col gap-1.5">
           <h1 className="text-lg leading-none font-semibold tracking-tight">

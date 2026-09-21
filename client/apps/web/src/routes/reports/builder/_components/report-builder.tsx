@@ -84,7 +84,7 @@ function definitionToMeta(definition: ReportDefinition): ReportMeta {
 
 function SectionLabel({ children }: { children: string }) {
   return (
-    <p className="text-2xs text-muted-foreground px-0.5 pt-1 pb-2 font-medium tracking-wide uppercase">
+    <p className="text-xs text-muted-foreground px-0.5 pt-1 pb-2 font-medium">
       {children}
     </p>
   );
@@ -261,7 +261,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
         <div className="grid min-h-0 flex-1 grid-cols-[260px_minmax(0,1fr)_360px]">
           <aside className="border-border flex min-h-0 flex-col border-r">
             <div className="border-border flex h-8 shrink-0 items-center border-b px-3">
-              <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+              <span className="text-xs text-muted-foreground font-medium">
                 {t("{0} Fields", entity?.label ?? ir.entity)}
               </span>
             </div>

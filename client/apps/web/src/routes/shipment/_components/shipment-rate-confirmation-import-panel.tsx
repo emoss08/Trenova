@@ -548,7 +548,7 @@ export function ShipmentRateConfirmationImportPanel({
                 />
                 <div className="grid gap-3 md:grid-cols-3">
                   <div className="rounded-lg border p-3">
-                    <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <div className="text-muted-foreground text-xs font-medium">
                       {t("Uploaded File")}
                     </div>
                     <div className="mt-1 text-sm">
@@ -556,7 +556,7 @@ export function ShipmentRateConfirmationImportPanel({
                     </div>
                   </div>
                   <div className="rounded-lg border p-3">
-                    <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <div className="text-muted-foreground text-xs font-medium">
                       {t("Content Status")}
                     </div>
                     <div className="mt-1 text-sm">
@@ -564,7 +564,7 @@ export function ShipmentRateConfirmationImportPanel({
                     </div>
                   </div>
                   <div className="rounded-lg border p-3">
-                    <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <div className="text-muted-foreground text-xs font-medium">
                       {t("Draft Status")}
                     </div>
                     <div className="mt-1 text-sm">
@@ -653,7 +653,7 @@ export function ShipmentRateConfirmationImportPanel({
               </CardHeader>
               <CardContent className="grid gap-4">
                 <div className="bg-background/80 rounded-lg border border-success-border p-4">
-                  <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                  <div className="text-muted-foreground text-xs font-medium">
                     {t("Shipment ID")}
                   </div>
                   <div className="mt-1 text-sm font-medium">{createdShipmentId}</div>

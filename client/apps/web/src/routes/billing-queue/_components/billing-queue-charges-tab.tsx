@@ -640,7 +640,7 @@ function AccessorialsHeader({
   const t = useT();
   return (
     <div className="flex items-center justify-between p-2">
-      <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+      <span className="text-muted-foreground text-xs font-medium">
         {t("Accessorials")}
       </span>
       {isEditable && (

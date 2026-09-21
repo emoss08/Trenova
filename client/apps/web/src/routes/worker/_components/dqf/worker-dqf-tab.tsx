@@ -167,7 +167,7 @@ export default function WorkerDQFTab({ workerId, onOpenTab }: WorkerDQFTabProps)
         return (
           <section key={group.section} className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
-              <h4 className="text-muted-foreground text-xs font-semibold uppercase">
+              <h4 className="text-muted-foreground text-xs font-semibold">
                 {dqfSectionLabel(group.section)}
               </h4>
               {tab ? (
@@ -193,7 +193,7 @@ export default function WorkerDQFTab({ workerId, onOpenTab }: WorkerDQFTabProps)
 
       <section className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-3">
-          <h4 className="text-muted-foreground text-xs font-semibold uppercase">
+          <h4 className="text-muted-foreground text-xs font-semibold">
             {t("Previous employers")}
           </h4>
           <p className="text-muted-foreground truncate text-xs">

@@ -268,7 +268,7 @@ export function ActivitySection() {
             render={(props) => (
               <button
                 {...props}
-                className="group text-2xs text-muted-foreground hover:text-foreground flex h-6 items-center gap-1 rounded-md px-2 font-semibold tracking-wider uppercase transition-colors select-none"
+                className="group text-xs text-muted-foreground hover:text-foreground flex h-6 items-center gap-1 rounded-md px-2 font-semibold transition-colors select-none"
               >
                 <span>{t("Recent Activity")}</span>
                 <ChevronRightIcon

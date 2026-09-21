@@ -37,7 +37,7 @@ const NOW_TICK_MS = 60_000;
 
 const UNCOVERED_TONE: Record<UrgencyBucket, string> = {
   Late: "bg-destructive/75 text-foreground-on-solid hover:bg-destructive/90",
-  Now: "bg-warning/80 text-warning-foreground hover:bg-warning",
+  Now: "bg-warning text-warning-on-solid hover:bg-warning-hover",
   Today: "bg-info/70 text-foreground-on-solid hover:bg-info/85",
   Tomorrow: "bg-accent-violet/65 text-foreground-on-solid hover:bg-accent-violet/80",
   Planned: "bg-muted-foreground/40 text-foreground-on-solid hover:bg-muted-foreground/55",
@@ -508,7 +508,7 @@ export function DispatchTimeline({
             className="border-border bg-muted sticky left-0 z-50 flex shrink-0 items-center border-r px-2.5"
             style={{ width: RAIL_WIDTH_PX }}
           >
-            <span className="text-muted-foreground text-3xs font-semibold tracking-wide uppercase">
+            <span className="text-muted-foreground text-2xs font-semibold">
               {t("Drivers · {0}", drivers.length)}
             </span>
           </div>
@@ -522,7 +522,7 @@ export function DispatchTimeline({
                 )}
                 style={{ left: day.x, width: day.width, height: DAY_LABEL_HEIGHT_PX }}
               >
-                <span className="truncate text-2xs font-semibold tracking-wide uppercase">
+                <span className="truncate text-xs font-semibold">
                   {t(day.label)}
                 </span>
               </div>

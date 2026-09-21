@@ -291,7 +291,7 @@ function ChargeBreakdown({
       <Separator className="my-1" />
 
       <div className="px-2 pt-1">
-        <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        <span className="text-muted-foreground text-xs font-medium">
           {t("Accessorials")}
         </span>
       </div>

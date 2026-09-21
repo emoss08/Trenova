@@ -63,7 +63,7 @@ function BlackoutDateRow({ date, holidayName, isPast, onRemove }: BlackoutDateRo
 
   return (
     <li className="group/row hover:bg-muted flex items-center gap-2 rounded-md px-2 py-1 transition-colors">
-      <span className="text-2xs text-muted-foreground w-8 shrink-0 font-medium tracking-wide uppercase">
+      <span className="text-xs text-muted-foreground w-8 shrink-0 font-medium">
         {parsed ? format(parsed, "EEE") : "—"}
       </span>
       <span className={cn("text-sm tabular-nums", isPast && "text-muted-foreground")}>{label}</span>

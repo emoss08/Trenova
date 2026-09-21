@@ -68,7 +68,7 @@ export function ReviewDiffPanel({ templateId }: { templateId: string }) {
         <div className="space-y-2 p-3">
           {expressionChanged && (
             <div className="space-y-1">
-              <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+              <span className="text-xs text-muted-foreground font-medium">
                 {t("Expression")}
               </span>
               <ExpressionDiff before={data.baseExpression} after={data.currentExpression} />

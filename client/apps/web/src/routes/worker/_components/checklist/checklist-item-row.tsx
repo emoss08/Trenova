@@ -158,7 +158,7 @@ export function ChecklistItemRow({
             {t(item.label)}
           </span>
           {!item.required ? (
-            <span className="text-2xs text-muted-foreground uppercase">{t("Optional")}</span>
+            <span className="text-xs text-muted-foreground">{t("Optional")}</span>
           ) : null}
           {auto ? (
             <Badge variant="neutral" appearance="outline" title={t("Completes itself from evidence")}>

@@ -165,7 +165,7 @@ export function ToolPicker({
         <div className="border-border/70 divide-border/70 divide-y rounded-lg border">
           {groups.map((group) => (
             <section key={group.resource} className="flex flex-col">
-              <h4 className="bg-muted/40 text-muted-foreground px-3 py-1.5 text-2xs font-medium tracking-wider uppercase">
+              <h4 className="bg-muted/40 text-muted-foreground px-3 py-1.5 text-xs font-medium">
                 {resourceLabel(group.resource)}
               </h4>
               <ul className="divide-border/60 divide-y">

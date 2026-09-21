@@ -245,7 +245,7 @@ function SummaryTile({
           : "bg-muted/30",
       )}
     >
-      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-medium">
         {label}
       </p>
       <div className="mt-1 text-sm font-semibold">{children}</div>
@@ -735,7 +735,7 @@ function SettlementLines({
         return (
           <div key={category}>
             <div className="mb-1 flex items-baseline justify-between">
-              <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+              <h4 className="text-muted-foreground text-xs font-semibold">
                 {lineCategoryLabels[category] ?? category}
               </h4>
               <AmountDisplay value={subtotal} currency={settlement.currencyCode} />
@@ -834,7 +834,7 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
 
   return (
     <div className="border-t pt-3">
-      <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+      <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
         {t("History")}
       </h4>
       <ol className="flex flex-col gap-1">

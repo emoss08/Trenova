@@ -31,11 +31,11 @@ const PICKUP_STATUS: Record<PickupStatus, { label: string; variant: BadgeVariant
 };
 
 const SHARE_BAR_COLORS = [
-  "var(--color-brand)",
-  "oklch(0.6 0.18 200)",
-  "oklch(0.65 0.16 80)",
-  "oklch(0.6 0.16 320)",
-  "var(--color-muted-foreground)",
+  "var(--chart-1)",
+  "var(--chart-3)",
+  "var(--chart-2)",
+  "var(--chart-4)",
+  "var(--chart-8)",
 ];
 
 const PICKUPS_PAGE_SIZE = 20;

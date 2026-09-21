@@ -48,7 +48,7 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
   return (
     <div className="border-border bg-muted/40 rounded-md border p-2">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+        <span className="text-xs text-muted-foreground font-medium">
           {t("Profitability estimate")}
         </span>
         <ProfitabilityBreakdownPopover

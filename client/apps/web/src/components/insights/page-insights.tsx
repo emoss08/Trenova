@@ -194,7 +194,7 @@ export function PageInsightsStrip({
       className={cn("flex min-w-0 items-center gap-1.5 overflow-x-auto", className)}
       aria-label={t("Insights for this page")}
     >
-      <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 text-xs font-medium tracking-wide uppercase">
+      <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 text-xs font-medium">
         <SparklesIcon className="size-3" />
         {t("Insights")}
       </span>

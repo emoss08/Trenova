@@ -183,7 +183,7 @@ export function PacketCompletenessPanel({ summary }: PacketCompletenessPanelProp
           <div className="space-y-3 border-t px-4 py-3">
             {[...grouped.entries()].map(([status, items]) => (
               <div key={status} className="space-y-1.5">
-                <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wider uppercase">
+                <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
                   {getStatusIcon(status)}
                   <span>
                     {getStatusLabel(status)} ({items.length})

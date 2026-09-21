@@ -222,9 +222,14 @@ names the token to use instead.
   does not — a HOS duty status and a pricing method are categories, not severities.
 - Status maps declare a lifecycle **phase** (`draft`/`queued`/`active`/`awaiting`/`attention`/
   `complete`/`closed`/`failed`) and the tone follows, so a new status cannot pick a colour.
-- Every grey carries `--hue-neutral` (warm, 75) and the brand is copper at 52. The warm arc
-  is pinned 20° apart — danger 25 → brand 52 → warning 78 → amber 98 — because copper sits
-  between red and amber and they otherwise converge into one orange.
+- The product is drawn in ink: the primary button is `--ink` (the foreground colour), never
+  a hue. Every grey carries `--hue-neutral` (cool slate, 260). The brand is cobalt at 262
+  and is spent only on links, focus, selection and the active nav row or tab. The blue arc
+  is pinned apart — info 222 → sky 232 → brand 262 → indigo 283 — and so is the warm one —
+  danger 25 → warning 78 → amber 98.
+- Labels are sentence case; no `uppercase tracking-wider` on section labels, column heads
+  or badges. Form controls spend `ui-field`, filled controls `ui-press`, skeletons
+  `ui-shimmer`. Motion answers an action — nothing loops on a working screen.
 - Two radii: `--radius-control` (6px) for controls, `--radius-surface` (8px) for containers.
   The whole `rounded-*` scale points at them; a badge is `rounded-full`.
 - Weight means something: 400 body, 500 label, 600 heading. A value in a cell takes no
@@ -237,7 +242,8 @@ names the token to use instead.
 - `pnpm lint:design` also reads the oklch values out of `tokens.css` and fails on a contrast
   pair below AA, a value outside sRGB, a hairline invisible against its surface, or the warm
   hues closing up. `--foreground-on-solid` is near-white in light and near-**black** in dark,
-  because a dark theme's tone fills are the light end of their ramp.
+  because a dark theme's tone fills are the light end of their ramp. Text on a solid
+  warning is `text-warning-on-solid` in both themes, because the solid is a true amber.
 - Editing `tokens.css`: never let a comment-terminator sequence appear inside a comment body.
   It ends the comment early and every `@utility` after it silently stops emitting — which
   removes focus indicators without failing anything. `pnpm lint:design` compiles the file and

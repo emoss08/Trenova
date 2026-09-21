@@ -60,7 +60,7 @@ export function KpiRing({
             {unit && <span className="text-muted-foreground font-mono text-xs">{unit}</span>}
           </div>
           {target !== undefined && (
-            <span className="text-muted-foreground/80 font-mono text-3xs tracking-wide uppercase">
+            <span className="text-muted-foreground/80 font-mono text-2xs">
               {t("Target {0}{1}", target, unit ?? "")}
             </span>
           )}

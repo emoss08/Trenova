@@ -290,7 +290,7 @@ function RuleGroupRows({
       <TableRow className="bg-muted/40 hover:bg-muted/40">
         <TableCell
           colSpan={3}
-          className="text-muted-foreground py-1.5 text-xs font-semibold uppercase"
+          className="text-muted-foreground py-1.5 text-xs font-semibold"
         >
           {labels.section[group.section] ?? group.section}
         </TableCell>

@@ -110,7 +110,7 @@ export function ThreadSidebar({
           <div className="flex flex-col gap-3 p-2">
             {groups.map((group) => (
               <section key={group.label} className="flex flex-col gap-0.5">
-                <h3 className="text-muted-foreground px-2 pb-1 text-2xs font-medium tracking-wider uppercase">
+                <h3 className="text-muted-foreground px-2 pb-1 text-xs font-medium">
                   {t(group.label)}
                 </h3>
                 {group.threads.map((thread) => (

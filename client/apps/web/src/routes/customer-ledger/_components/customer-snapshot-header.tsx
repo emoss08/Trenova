@@ -234,7 +234,7 @@ function SnapshotTile({
     >
       <Card className="h-full gap-0 rounded-md py-3">
         <CardContent className="px-4">
-          <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-semibold">
             {label}
           </p>
           <div className="mt-1">{children}</div>

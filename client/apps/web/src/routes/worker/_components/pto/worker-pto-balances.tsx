@@ -257,7 +257,7 @@ function BalanceCard({ balance }: { balance: WorkerPTOBalanceView }) {
       data-testid={`pto-balance-${balance.ptoType}`}
     >
       <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-xs font-medium uppercase">
+        <p className="text-muted-foreground text-xs font-medium">
           {typeLabel(balance.ptoType)}
         </p>
         {!balance.enforced ? (

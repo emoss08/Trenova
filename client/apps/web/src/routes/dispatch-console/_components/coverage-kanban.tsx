@@ -196,7 +196,7 @@ function UrgencyColumn({
         title={t(meta.description)}
       >
         <span className={cn("size-1.5 rounded-full", meta.dotClass)} aria-hidden />
-        <span className="text-2xs font-semibold tracking-wide uppercase">{t(meta.label)}</span>
+        <span className="text-xs font-semibold">{t(meta.label)}</span>
         <span className="text-muted-foreground ml-auto text-2xs tabular-nums">
           {moves.length}
         </span>

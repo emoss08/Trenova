@@ -84,7 +84,7 @@ export function MapLegendPopover() {
         <TooltipContent side="bottom">{t("Map legend")}</TooltipContent>
       </Tooltip>
       <PopoverContent side="bottom" sideOffset={8} className="w-48 gap-0.5 p-3">
-        <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+        <span className="text-muted-foreground text-xs font-semibold">
           {t("Legend")}
         </span>
         <div className="mt-2 flex flex-col gap-0.5">
@@ -98,7 +98,7 @@ export function MapLegendPopover() {
 
         <Separator className="my-2.5" />
 
-        <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+        <span className="text-muted-foreground text-xs font-semibold">
           {t("Overlays")}
         </span>
         <div className="mt-2 flex flex-col gap-0.5">

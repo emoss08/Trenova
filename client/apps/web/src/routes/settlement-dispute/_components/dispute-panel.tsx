@@ -118,7 +118,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
 
       {dispute.settlement ? (
         <div className="border-border rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">{t("Settlement")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Settlement")}</p>
           <div className="mt-1 flex items-center justify-between text-sm">
             <span className="font-mono font-medium">{dispute.settlement.settlementNumber}</span>
             <span className="tabular-nums">
@@ -136,7 +136,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
           {dispute.settlementLine ? (
             <>
               <Separator className="my-2" />
-              <p className="text-muted-foreground text-xs font-medium uppercase">
+              <p className="text-muted-foreground text-xs font-medium">
                 {t("Disputed line")}
               </p>
               <div className="mt-1 flex items-center justify-between text-sm">
@@ -150,7 +150,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
 
       {isTerminal ? (
         <div className="border-border rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">{t("Resolution")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Resolution")}</p>
           <p className="mt-1 text-sm whitespace-pre-wrap">{dispute.resolutionNote || "—"}</p>
           <p className="text-muted-foreground mt-2 text-xs">
             {formatDate(dispute.resolvedAt)}

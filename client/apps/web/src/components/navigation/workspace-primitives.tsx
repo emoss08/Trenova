@@ -38,10 +38,10 @@ export function WorkspaceNavRow({
       tabIndex={disabled ? -1 : undefined}
       className={cn(
         "flex items-center gap-2 rounded-md pr-2 pl-2 transition-colors outline-none",
-"ui-focus-ring",
+        "ui-focus-ring",
         sub ? "h-6.5 text-sm" : "h-7 text-base",
         active
-          ? "bg-nav-active text-nav-active-foreground font-semibold"
+          ? "bg-nav-active text-nav-active-foreground font-medium"
           : cn("text-foreground hover:bg-muted", sub && "text-foreground/85"),
         disabled && "pointer-events-none opacity-40",
         className,
@@ -71,7 +71,7 @@ export function WorkspaceRowLabel({ children }: { children: ReactNode }) {
  */
 export function WorkspaceGroupLabel({ children }: { children: ReactNode }) {
   return (
-    <span className="text-muted-foreground block truncate pt-3 pr-2 pb-1 pl-2 text-xs font-semibold tracking-wider uppercase select-none">
+    <span className="text-muted-foreground block truncate pt-3 pr-2 pb-1 pl-2 text-xs font-semibold select-none">
       {children}
     </span>
   );

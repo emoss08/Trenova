@@ -42,28 +42,42 @@ Three, and each may only reference the one above it.
 
 ## The hue plan
 
-Everything coloured in the product resolves to one of ten hues, declared once in
-layer 1.
+Everything coloured in the product resolves to one of eleven hues, declared once
+in layer 1.
 
-`--hue-neutral: 75` is the spine. Every grey carries a little of it — the canvas,
-the panels, the rules, the four text weights. They were `oklch(L 0 0)` before:
-chroma exactly zero, which is the clearest sign a palette was inherited rather
-than chosen. The canvas is a warm off-white and panels are near-white, so a panel
-reads as a panel without a shadow to say so, and nothing on screen is pure white.
+`--hue-neutral: 260` is the spine, a cool slate. Every grey carries a trace of it
+— the canvas, the panels, the rules, the four text weights — low enough that a
+panel still reads as white and high enough that the ink reads as ink rather than
+as black. A grey at chroma exactly zero is the clearest sign a palette was
+inherited rather than chosen.
 
-`--hue-brand: 52` is copper. Blue was the previous brand, which is also what
-`--info` is, so a primary button and an informational badge were drawn in the same
-colour. Copper belongs to the warm ground and nothing else competes with it.
+**The product is drawn in ink.** The primary action is `--ink`, the foreground
+colour with its own hover and pressed rungs, not a hue. That is what lets every
+colour left on screen mean something: a tone is a severity, an accent is a
+category, and the brand marks place and affordance.
 
-Copper sits between red and amber, so four things crowd the same arc and each step
-is pinned at least 20° from the next:
+`--hue-brand: 262` is cobalt, and it is spent sparingly: links, the focus ring,
+selection (a selected row, selected text, a checked box), the active nav row and
+tab, the first chart series. It is never the primary button and never a severity.
+If you are about to write `bg-brand` on a button, you want `variant="default"`.
+
+Cobalt shares the blue arc with three other things, so that arc is pinned apart:
 
 ```
-danger 25  →  brand 52  →  warning 78  →  amber 98
+info 222  →  sky 232  →  brand 262  →  indigo 283
 ```
 
-`pnpm lint:design` fails if any of those gaps closes. Amber landing at 98 is why
-the *category* accent reads as a citron rather than as a dimmer warning.
+Brand keeps 30° from info and 20° from each category. Info is a steel cyan at
+under half of cobalt's chroma for the same reason: a link and an "In transit"
+badge share a row in nearly every table, and they must not read as one thing.
+
+The warm arc keeps its own floor:
+
+```
+danger 25  →  warning 78  →  amber 98
+```
+
+`pnpm lint:design` fails if any of those gaps closes.
 
 ## Colour
 
@@ -86,7 +100,12 @@ this tone* — which is why it is darker than `--x`. Text on a **solid** tone fi
 is `text-foreground-on-solid`, not `--x-foreground`.
 
 `--foreground-on-solid` is near-white in light mode and near-**black** in dark,
-because a dark theme's tone fills are the light end of their ramp. `--warning`
+because a dark theme's tone fills are the light end of their ramp. Warning is
+the exception in light mode too: an amber dark enough to carry white text is a
+brown, and the solid is spent almost entirely on dots and bars, so `--warning` is
+a true amber and the ink on it is `text-warning-on-solid`, dark in both themes.
+`Badge` handles this itself; hand-written `bg-warning` with text on it must not
+use `text-foreground-on-solid` or `text-warning-foreground`. `--warning`
 shipped for months as `oklch(0.75 0.16 70)` and drew near-white text on a solid
 badge at 2.1:1; every solid fill now clears AA against the ink that lands on it,
 and the check asserts it.
@@ -124,6 +143,7 @@ A ladder, not a pile. Each has one job.
 | `bg-sunken` | wells, table headers, code blocks — recedes from the card |
 | `bg-raised` | popovers, menus, combobox lists |
 | `bg-overlay` | dialogs and sheets |
+| `bg-field` | the ground of a form control — use `ui-field`, below, rather than this directly |
 | `bg-surface-hover` / `-active` / `-selected` | interaction fills |
 
 Interaction fills are separate from container surfaces on purpose, so a hover
@@ -164,7 +184,12 @@ Trenova is deliberately denser than its peers: body text is 12px against roughly
 Display sizes (`xl` and up) carry optical letter-spacing already, so a
 `tracking-tight` on a heading is usually redundant.
 
-Fonts: `font-sans` (Inter) for everything; `font-mono` (Geist Mono) for numbers
+Labels are sentence case. Do not write `uppercase tracking-wider` on a section
+label, a column head or a badge: 375 of them were removed, because a screen of
+tracked-out capitals reads as a template and costs legibility at 10px. `uppercase`
+is for data that *is* uppercase — a SCAC, a state code, a VIN.
+
+Fonts: `font-sans` (Geist) for everything; `font-mono` (Geist Mono) for numbers
 that must align in a column — load numbers, IDs, currency, timestamps. Pair it
 with `tabular-nums`.
 
@@ -221,6 +246,42 @@ border, not a shadow. Reserve shadow for things that genuinely float.
 
 `shadow-flat`, `shadow-raised` (cards), `shadow-overlay` (popovers, menus),
 `shadow-modal` (dialogs, sheets).
+
+Shadows are ink, not black: each carries the neutral hue and stacks a tight
+contact shadow under a wide ambient one. Two more are for controls, not
+surfaces: `shadow-key` is the lit top edge on a filled button, and `shadow-field`
+is the resting shadow of a form control.
+
+## Controls
+
+`ui-field` draws the resting box of every form control — ground, hairline,
+hover, disabled. `Input`, `Textarea`, `SelectTrigger` and `NumberField` all spend
+it, which is what makes them one family; before, they were three treatments. A
+new control takes `ui-field` plus one of the focus utilities and nothing else.
+
+`ui-press` gives a filled control its pressed state (a 2.5% give). `Button`
+carries it; a hand-built clickable tile that should feel like a button takes it
+too.
+
+`ui-shimmer` is the loading sweep. `Skeleton` spends it; do not reach for
+`animate-pulse`.
+
+## Motion
+
+One curve family and default speeds, declared in the `@theme` block, so a bare
+`transition-colors` already eases the house way.
+
+| Token | For |
+|---|---|
+| `ease-swift` (the default) | things answering the pointer: hover, press, focus |
+| `ease-settle` | things arriving: popovers, sheets, a sliding tab indicator |
+| `ease-spring` | a small overshoot, for the one thing that confirms an action |
+| `animate-rise` | content arriving in place |
+| `animate-confirm` | a check landing, a copied tick |
+
+Motion answers an action. Nothing on a working screen moves on its own: no
+looping shimmer on a badge, no pulsing glow, no floating sparkle. A global
+`prefers-reduced-motion` rule collapses every animation and transition to a cut.
 
 ## Focus
 

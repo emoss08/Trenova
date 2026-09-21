@@ -401,7 +401,7 @@ function ShiftPreview({
       )}
       aria-label={t("Shift preview")}
     >
-      <p className="text-muted-foreground text-xs font-medium uppercase">{t("On the board")}</p>
+      <p className="text-muted-foreground text-xs font-medium">{t("On the board")}</p>
       <div className="flex items-center gap-2">
         <span className="bg-accent grid size-8 shrink-0 place-items-center rounded-md text-xs font-semibold">
           {code.trim().slice(0, 3).toUpperCase() || "—"}

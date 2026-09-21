@@ -109,7 +109,7 @@ export function TrainingOverview({
 function Count({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col">
-      <dt className="text-2xs text-muted-foreground whitespace-nowrap uppercase">{label}</dt>
+      <dt className="text-xs text-muted-foreground whitespace-nowrap">{label}</dt>
       <dd className="font-medium tabular-nums">{value}</dd>
     </div>
   );

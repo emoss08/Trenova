@@ -194,7 +194,7 @@ function StatCell({
 }) {
   return (
     <div className="px-4 py-2.5">
-      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">{label}</p>
+      <p className="text-xs text-muted-foreground font-medium">{label}</p>
       <p className={cn("mt-0.5 text-sm font-medium tabular-nums", className)}>{value}</p>
     </div>
   );
@@ -254,7 +254,7 @@ function ScenarioResult({
             </p>
           </div>
           <div className="shrink-0 text-right">
-            <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+            <p className="text-xs text-muted-foreground font-medium">
               {t("Net margin")}
             </p>
             <p
@@ -423,7 +423,7 @@ export function DetentionPolicyPreview() {
     <div ref={rootRef} className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-2xs text-muted-foreground font-semibold tracking-wide uppercase">
+          <h3 className="text-xs text-muted-foreground font-semibold">
             {t("Live preview")}
           </h3>
           <p className="text-muted-foreground mt-1 text-xs">

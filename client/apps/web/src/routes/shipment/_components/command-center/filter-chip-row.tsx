@@ -40,7 +40,7 @@ export function FilterChipRow() {
             onClick={() => toggle(chip.id)}
             aria-pressed={isOn}
             className={cn(
-              "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-2xs font-semibold tracking-wide uppercase transition-colors",
+              "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors",
               isOn ? tone.on : tone.off,
             )}
           >

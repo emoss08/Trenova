@@ -26,7 +26,7 @@ export function DeskMetric({
 }: DeskMetricProps) {
   return (
     <div className={cn("flex min-w-0 flex-col gap-1", className)}>
-      <dt className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+      <dt className="text-xs text-muted-foreground font-medium">
         {label}
       </dt>
       <dd

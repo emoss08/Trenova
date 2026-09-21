@@ -11,8 +11,8 @@ interface BorderBeamProps {
 export function BorderBeam({
   className,
   duration = 4,
-  colorFrom = "oklch(0.55 0.22 263)",
-  colorTo = "oklch(0.55 0.22 263 / 0.1)",
+  colorFrom = "var(--brand)",
+  colorTo = "color-mix(in oklch, var(--brand) 10%, transparent)",
   borderWidth = 1.5,
 }: BorderBeamProps) {
   return (

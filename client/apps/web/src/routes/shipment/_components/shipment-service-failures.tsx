@@ -345,7 +345,7 @@ function EvaluationStopGroup({
 
   return (
     <div className="border-b last:border-b-0">
-      <div className="text-muted-foreground flex items-center justify-between px-3 py-2 text-xs font-medium tracking-normal uppercase">
+      <div className="text-muted-foreground flex items-center justify-between px-3 py-2 text-xs font-medium tracking-normal">
         <span>{label}</span>
         <span>{count}</span>
       </div>

@@ -286,7 +286,7 @@ export function DocumentShipmentDraftReviewDialog({
         <ScrollArea className="bg-muted/10 flex h-[400px] border-r">
           <div className="grid gap-4 p-4">
             <div className="rounded-lg border p-3">
-              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium">
                 {t("Source Document")}
               </div>
               <div className="mt-1 text-sm font-medium">
@@ -299,7 +299,7 @@ export function DocumentShipmentDraftReviewDialog({
               ) : null}
             </div>
             <div className="rounded-lg border p-3">
-              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium">
                 {t("Draft Summary")}
               </div>
               <div className="mt-3 grid gap-2 text-sm">
@@ -346,7 +346,7 @@ export function DocumentShipmentDraftReviewDialog({
             ) : null}
             {signals.length > 0 ? (
               <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
+                <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium">
                   <SparklesIcon className="size-3.5" />
                   {t("Draft Signals")}
                 </div>
@@ -375,7 +375,7 @@ export function DocumentShipmentDraftReviewDialog({
               </div>
             ) : null}
             <div className="rounded-lg border p-3">
-              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium">
                 {t("Extracted Stops")}
               </div>
               {stops.length === 0 ? (

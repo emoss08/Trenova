@@ -198,7 +198,7 @@ export function AiGeneratePanel({
 
             {!data && !isPending && (
               <div className="space-y-1.5">
-                <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                <p className="text-muted-foreground text-xs font-medium">
                   {t("Try one of these")}
                 </p>
                 {SUGGESTED_PROMPTS.map((prompt) => (
@@ -223,7 +223,7 @@ export function AiGeneratePanel({
             {data && (
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                  <p className="text-muted-foreground text-xs font-medium">
                     {t("Generated Expression")}
                   </p>
                   <pre className="bg-muted overflow-x-auto rounded-md border p-3 font-mono text-xs whitespace-pre-wrap">
@@ -233,7 +233,7 @@ export function AiGeneratePanel({
 
                 {data.variableDefinitions.length > 0 && (
                   <div className="space-y-1.5">
-                    <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <p className="text-muted-foreground text-xs font-medium">
                       {t("Custom Variables")}
                     </p>
                     <div className="overflow-hidden rounded-md border">
@@ -262,7 +262,7 @@ export function AiGeneratePanel({
 
                 {data.explanation && (
                   <div className="space-y-1.5">
-                    <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <p className="text-muted-foreground text-xs font-medium">
                       {t("How it works")}
                     </p>
                     <p className="text-sm leading-relaxed">{data.explanation}</p>
@@ -297,7 +297,7 @@ export function AiGeneratePanel({
                 {data.scenarios.length > 0 && (
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                      <p className="text-muted-foreground text-xs font-medium">
                         {t("Proposed scenarios")}
                       </p>
                       {templateId && pendingScenarios.length > 1 && (

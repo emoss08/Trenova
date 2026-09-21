@@ -263,7 +263,7 @@ export function CapacityRail({
       </header>
 
       <div className="flex items-center justify-between border-b px-2.5 py-1.5">
-        <span className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase">
+        <span className="text-muted-foreground text-xs font-semibold">
           {t("Capacity")}
         </span>
         <span className="text-muted-foreground text-2xs tabular-nums">

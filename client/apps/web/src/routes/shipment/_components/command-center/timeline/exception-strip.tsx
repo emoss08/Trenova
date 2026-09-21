@@ -68,7 +68,7 @@ export function ExceptionStrip({
 
   return (
     <div className="border-border bg-muted/30 flex min-h-7 flex-wrap items-center gap-1.5 border-b px-3 py-1">
-      <span className="text-muted-foreground text-3xs font-semibold tracking-wide uppercase">
+      <span className="text-muted-foreground text-2xs font-semibold">
         {t("Attention")}
       </span>
       {allClear ? (

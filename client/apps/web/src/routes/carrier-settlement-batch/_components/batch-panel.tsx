@@ -85,7 +85,7 @@ function GenerateBatchPanel({
       notice={
         period ? (
           <div className="bg-muted/30 rounded-lg border p-3 text-sm">
-            <p className="text-muted-foreground text-xs font-medium uppercase">
+            <p className="text-muted-foreground text-xs font-medium">
               {t("Current Pay Period")}
             </p>
             <p className="mt-1 font-medium">
@@ -202,13 +202,13 @@ function BatchDetail({ batchId }: { batchId: string }) {
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">
+          <p className="text-muted-foreground text-xs font-medium">
             {t("Settlements")}
           </p>
           <p className="mt-1 text-sm font-semibold tabular-nums">{data.settlementCount}</p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">
+          <p className="text-muted-foreground text-xs font-medium">
             {t("Total Gross")}
           </p>
           <p className="mt-1 text-sm font-semibold">
@@ -216,7 +216,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">
+          <p className="text-muted-foreground text-xs font-medium">
             {t("Total Net")}
           </p>
           <p className="mt-1 text-sm font-semibold">

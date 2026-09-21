@@ -249,13 +249,13 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
 
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">{t("Balance")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Balance")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={account.balanceMinor} currency={account.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">{t("Target")}</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Target")}</p>
           <p className="mt-1 text-sm font-semibold">
             {account.targetAmountMinor > 0 ? (
               <AmountDisplay value={account.targetAmountMinor} currency={account.currencyCode} />
@@ -265,7 +265,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">
+          <p className="text-muted-foreground text-xs font-medium">
             {t("Interest Rate")}
           </p>
           <p className="mt-1 text-sm font-semibold tabular-nums">
@@ -277,7 +277,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
       </div>
 
       <div>
-        <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+        <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
           {t("Transaction Ledger")}
         </h4>
         <div className="overflow-hidden rounded-lg border">

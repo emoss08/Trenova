@@ -101,7 +101,7 @@ export function FinancialsBlock({ shipment }: { shipment: Shipment }) {
       {estimate && hasEstimate && (
         <div className="border-border border-t pt-2">
           <div className="mb-1 flex items-center justify-between">
-            <span className="text-muted-foreground text-2xs font-medium tracking-wide uppercase">
+            <span className="text-muted-foreground text-xs font-medium">
               {t("Cost estimate")}
             </span>
             <ProfitabilityBreakdownPopover

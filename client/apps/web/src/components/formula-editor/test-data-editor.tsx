@@ -195,7 +195,7 @@ export function TestDataEditor({
           <div className="space-y-4">
             {groups.map(([category, categoryVars]) => (
               <div key={category}>
-                <h4 className="text-muted-foreground mb-2 text-2xs font-semibold tracking-wide uppercase">
+                <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
                   {categoryLabel(category, CATEGORY_LABELS)}
                 </h4>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">

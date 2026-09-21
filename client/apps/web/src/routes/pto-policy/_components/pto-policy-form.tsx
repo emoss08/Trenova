@@ -295,7 +295,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
   return (
     <div className="bg-muted/30 rounded-lg border p-3">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-muted-foreground text-xs font-medium uppercase">
+        <p className="text-muted-foreground text-xs font-medium">
           {t("Rule {0}", index + 1)}
         </p>
         {onRemove ? (

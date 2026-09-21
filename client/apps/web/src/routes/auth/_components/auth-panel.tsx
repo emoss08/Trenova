@@ -207,7 +207,7 @@ function CredentialReceiptCard({ receipt }: { receipt: CredentialReceipt }) {
         </div>
       ))}
       {receipt.issued && (
-        <span className="auth-stamp border-foreground font-table absolute right-3.5 bottom-3 rounded border px-[7px] py-[3px] text-2xs tracking-[0.04em] uppercase">
+        <span className="auth-stamp border-foreground font-table absolute right-3.5 bottom-3 rounded border px-[7px] py-[3px] text-xs">
           {t("Authorized")}
         </span>
       )}

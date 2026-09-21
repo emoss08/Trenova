@@ -45,7 +45,7 @@ function StatCell({
 }) {
   return (
     <div className="px-3 py-2.5">
-      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">{label}</p>
+      <p className="text-xs text-muted-foreground font-medium">{label}</p>
       <p className={cn("mt-0.5 text-sm font-medium tabular-nums", className)}>{value}</p>
     </div>
   );
@@ -178,7 +178,7 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
         <div className="px-4 py-3.5">
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+              <p className="text-xs text-muted-foreground font-medium">
                 {t("Revenue change")}
               </p>
               <p
@@ -308,7 +308,7 @@ export function DetentionBacktest() {
   return (
     <div className="flex flex-col gap-3">
       <div className="min-w-0">
-        <h3 className="text-2xs text-muted-foreground font-semibold tracking-wide uppercase">
+        <h3 className="text-xs text-muted-foreground font-semibold">
           {t("Backtest")}
         </h3>
         <p className="text-muted-foreground mt-1 text-xs">

@@ -88,7 +88,7 @@ function Section({
       {(title || action) && (
         <div className="mb-2.5 flex items-center justify-between gap-2">
           {title ? (
-            <h3 className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+            <h3 className="text-xs text-muted-foreground font-medium">
               {title}
             </h3>
           ) : (
@@ -623,7 +623,7 @@ export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: Occurrence
                     OCCURRENCE_STATUS_DOT[occurrence.status],
                   )}
                 />
-                <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+                <span className="text-xs text-muted-foreground font-medium">
                   {OCCURRENCE_STATUS_LABEL[occurrence.status]}
                 </span>
               </div>

@@ -19,7 +19,7 @@ export function EmailLogsPage() {
       </div>
       <section className="overflow-hidden rounded-md border">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-muted-foreground border-b text-left text-xs uppercase">
+          <thead className="bg-muted/50 text-muted-foreground border-b text-left text-xs">
             <tr>
               <th className="px-3 py-2">{t("Subject")}</th>
               <th className="px-3 py-2">{t("Purpose")}</th>

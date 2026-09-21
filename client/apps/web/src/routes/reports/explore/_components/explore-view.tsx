@@ -162,7 +162,7 @@ export function ExploreView({
           type="button"
           onClick={() => setView("table")}
           className={cn(
-            "text-2xs font-medium tracking-wide uppercase transition-colors",
+            "text-xs font-medium transition-colors",
             view === "table" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
           )}
         >
@@ -174,7 +174,7 @@ export function ExploreView({
             type="button"
             onClick={() => setView(chart.id)}
             className={cn(
-              "text-2xs max-w-32 truncate font-medium tracking-wide uppercase transition-colors",
+              "text-xs max-w-32 truncate font-medium transition-colors",
               view === chart.id ? "text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >

@@ -346,7 +346,7 @@ export function ListPanel({
                 >
                   {item.type === "header" ? (
                     <div className="flex h-full items-end px-2 pb-1">
-                      <span className="text-2xs text-muted-foreground/60 font-medium tracking-wider uppercase">
+                      <span className="text-xs text-muted-foreground/60 font-medium">
                         {t(item.label)} · {item.count}
                       </span>
                     </div>

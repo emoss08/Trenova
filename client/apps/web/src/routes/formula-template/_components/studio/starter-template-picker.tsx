@@ -61,7 +61,7 @@ export function StarterTemplatePicker() {
   return (
     <div className="bg-muted/30 space-y-3 rounded-lg border p-3">
       <div className="space-y-2">
-        <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
+        <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
           <LayoutTemplateIcon className="size-3" />
           {t("Start from a standard")}
         </div>
@@ -102,7 +102,7 @@ export function StarterTemplatePicker() {
       </div>
 
       <div className="space-y-2 border-t pt-3">
-        <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
+        <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
           <CopyIcon className="size-3" />
           {t("Or copy an existing template")}
         </div>

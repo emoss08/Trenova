@@ -153,7 +153,7 @@ export function BillingQueueDocumentsTab({
       {billingReadiness && billingReadiness.requirements.length > 0 && (
         <div className="shrink-0 border-b px-3 py-2">
           <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+            <span className="text-muted-foreground text-xs font-medium">
               {requirementTitle}
             </span>
             <span className="text-muted-foreground text-xs tabular-nums">

@@ -139,7 +139,7 @@ export function WeatherAlertDetailPanel({
             {props.instruction && (
               <>
                 <div className="px-3 py-2">
-                  <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
+                  <span className="text-xs text-muted-foreground font-medium">
                     {t("Recommended Action")}
                   </span>
                   <p className="text-foreground mt-1 text-xs leading-relaxed">
@@ -172,7 +172,7 @@ export function WeatherAlertDetailPanel({
             <Separator className="mx-3" />
 
             <div className="p-3">
-              <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
+              <span className="text-xs text-muted-foreground font-medium">
                 {t("Activity")}
               </span>
               <div className="mt-2">

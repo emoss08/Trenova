@@ -244,7 +244,7 @@ function OrganizationMembershipSection({
                 <span className="inline-flex flex-wrap items-center gap-2">
                   <span>{organization.name}</span>
                   {organization.id === defaultOrganizationID && (
-                    <span className="bg-muted text-2xs text-muted-foreground rounded px-1.5 py-0.5 uppercase">
+                    <span className="bg-muted text-xs text-muted-foreground rounded px-1.5 py-0.5">
                       default
                     </span>
                   )}

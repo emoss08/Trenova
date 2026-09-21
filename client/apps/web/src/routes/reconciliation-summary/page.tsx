@@ -71,7 +71,7 @@ function SummaryBody({ data }: { data: ReconciliationSummary }) {
         />
         <Card className="gap-0 overflow-hidden rounded-md">
           <CardHeader className="pb-1">
-            <CardTitle className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+            <CardTitle className="text-muted-foreground text-xs font-semibold">
               {t("Match Rate")}
             </CardTitle>
           </CardHeader>
@@ -178,7 +178,7 @@ function SummaryKPICard({
   return (
     <Card className="gap-0 overflow-hidden rounded-md">
       <CardHeader className="pb-1">
-        <CardTitle className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+        <CardTitle className="text-muted-foreground text-xs font-semibold">
           {label}
         </CardTitle>
       </CardHeader>

@@ -100,7 +100,7 @@ function AdminLinkGroups({
     <div className="flex flex-col gap-2">
       {Array.from(grouped.entries()).map(([groupName, groupLinks]) => (
         <div key={groupName} className="flex flex-col gap-0.5">
-          <span className="text-2xs text-foreground/50 px-2 pt-1 font-semibold tracking-wide uppercase select-none">
+          <span className="text-xs text-foreground/50 px-2 pt-1 font-semibold select-none">
             {groupName}
           </span>
           {groupLinks.map((link) => (

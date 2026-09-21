@@ -60,7 +60,7 @@ export function AssistantLauncher({ pendingCount, onClick }: AssistantLauncherPr
               colorFrom="var(--warning)"
               colorTo="color-mix(in oklch, var(--warning) 8%, transparent)"
             />
-            <span className="bg-warning text-warning-foreground ring-background absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold tabular-nums ring-2">
+            <span className="bg-warning text-warning-on-solid ring-background absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold tabular-nums ring-2">
               {pendingCount > 99 ? "99+" : pendingCount}
             </span>
           </>

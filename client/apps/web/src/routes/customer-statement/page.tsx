@@ -57,7 +57,7 @@ function MetricCard({
     <div className="bg-card rounded-lg border px-4 py-3">
       <div className="flex items-center gap-2">
         <Icon className={cn("text-muted-foreground size-4", colorClass)} />
-        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        <p className="text-muted-foreground text-xs font-medium">
           {label}
         </p>
       </div>

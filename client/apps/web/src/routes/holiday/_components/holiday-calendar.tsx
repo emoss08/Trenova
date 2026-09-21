@@ -231,7 +231,7 @@ export function HolidayCalendar() {
             {byMonth.map((entries, month) =>
               entries.length > 0 ? (
                 <section key={MONTH_NAMES[month]} className="flex flex-col gap-1.5">
-                  <p className="text-muted-foreground px-1 text-xs font-medium uppercase">
+                  <p className="text-muted-foreground px-1 text-xs font-medium">
                     {MONTH_NAMES[month]}
                   </p>
                   {entries.map((occurrence) => (

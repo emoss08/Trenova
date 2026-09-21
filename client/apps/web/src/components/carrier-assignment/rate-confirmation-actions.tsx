@@ -90,7 +90,7 @@ export function RateConfirmationActions({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-2xs text-muted-foreground font-medium uppercase">
+        <span className="text-xs text-muted-foreground font-medium">
           {t("Rate Con")}
         </span>
         {latest ? (

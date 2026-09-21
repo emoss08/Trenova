@@ -138,7 +138,7 @@ function Identity({ overview }: { overview: WorkerOverview }) {
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col">
-      <dt className="text-2xs text-muted-foreground uppercase">{label}</dt>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="font-medium">{value}</dd>
     </div>
   );
@@ -167,7 +167,7 @@ function Attention({
             const meta = concernSeverityMeta(group.severity);
             return (
               <div key={group.severity} className="divide-border divide-y">
-                <p className="text-2xs text-muted-foreground bg-muted/40 px-3 py-1 font-medium uppercase">
+                <p className="text-xs text-muted-foreground bg-muted/40 px-3 py-1 font-medium">
                   {t(meta.label)}
                 </p>
                 {group.items.map((concern) => (
@@ -259,7 +259,7 @@ function RecordSections({
 function SectionHeading({ children, count }: { children: string; count?: number }) {
   return (
     <div className="flex items-baseline justify-between">
-      <h4 className="text-muted-foreground text-xs font-semibold uppercase">{children}</h4>
+      <h4 className="text-muted-foreground text-xs font-semibold">{children}</h4>
       {count !== undefined && count > 0 ? (
         <span className="text-muted-foreground font-mono text-xs tabular-nums">{count}</span>
       ) : null}
@@ -305,7 +305,7 @@ function MetricCard({
       className="border-border/80 hover:border-border hover:bg-muted/30 group flex flex-col gap-2 rounded-lg border p-3 text-left transition-colors"
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground text-xs font-semibold uppercase">{title}</span>
+        <span className="text-muted-foreground text-xs font-semibold">{title}</span>
         <span className="bg-accent inline-flex size-6 shrink-0 items-center justify-center rounded-md">
           <Icon className="size-3.5" />
         </span>
@@ -553,7 +553,7 @@ function AtAGlance({ overview }: { overview: WorkerOverview }) {
       <dl className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg border p-3 text-xs sm:grid-cols-3">
         {rows.map(([label, value]) => (
           <div key={label} className="flex flex-col">
-            <dt className="text-2xs text-muted-foreground uppercase">{label}</dt>
+            <dt className="text-xs text-muted-foreground">{label}</dt>
             <dd className="font-medium">{value}</dd>
           </div>
         ))}

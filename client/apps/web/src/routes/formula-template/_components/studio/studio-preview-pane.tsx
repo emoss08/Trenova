@@ -117,7 +117,7 @@ function NullableWarnings({ warnings }: { warnings: ExpressionWarning[] }) {
 
   return (
     <div className="mt-4 space-y-2">
-      <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
+      <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
         <AlertTriangleIcon className="size-3" />
         {t("Would fail on some shipments")}
       </div>
@@ -184,7 +184,7 @@ function BreakdownResultTable({
 
   return (
     <div className="mt-4 space-y-2">
-      <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
+      <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
         <ListTree className="size-3" />
         {t("Breakdown")}
       </div>
@@ -275,7 +275,7 @@ function ResolvedVariablesView({
         <button
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
-          className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase"
+          className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-xs font-medium"
         >
           {isOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
           <Braces className="size-3" />
@@ -529,7 +529,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
               <div className="p-4">
                 {isValid && result.result !== undefined && (
                   <div className="space-y-1">
-                    <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <div className="text-muted-foreground text-xs font-medium">
                       {t("Computed Charge")}
                     </div>
                     <span className="text-foreground font-mono text-3xl font-semibold tabular-nums">
@@ -544,7 +544,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
 
                 {!isValid && result.error && (
                   <div className="space-y-2">
-                    <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <div className="text-muted-foreground text-xs font-medium">
                       {t("Error Details")}
                     </div>
                     <pre className="border-destructive/10 bg-background/50 text-destructive overflow-x-auto rounded-md border p-3 font-mono text-sm wrap-break-word whitespace-pre-wrap">

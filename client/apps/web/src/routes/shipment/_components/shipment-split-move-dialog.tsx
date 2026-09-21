@@ -156,7 +156,7 @@ function CurrentMovePreview({ move }: { move: ShipmentMove }) {
 
   return (
     <div>
-      <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+      <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
         {t("Current Move")}
       </h4>
       <div className="bg-muted/50 rounded-lg border p-3">
@@ -208,7 +208,7 @@ function AfterSplitPreview({
 
   return (
     <div>
-      <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+      <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
         {t("After Split")}
       </h4>
       <div className="grid grid-cols-2 gap-3">
@@ -366,7 +366,7 @@ export function SplitMoveDialog({
               <Separator />
 
               <div>
-                <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+                <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
                   {t("New Destination")}
                 </h4>
                 <FormGroup cols={1}>
@@ -482,7 +482,7 @@ function Section({
 }) {
   return (
     <div>
-      <h4 className="text-foreground text-xs font-semibold tracking-wide uppercase">{label}</h4>
+      <h4 className="text-foreground text-xs font-semibold">{label}</h4>
       {description && <p className="text-2xs text-muted-foreground mb-2">{description}</p>}
       {children}
     </div>

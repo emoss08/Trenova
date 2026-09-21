@@ -199,7 +199,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
 
       {data.invitations.length > 0 ? (
         <div className="border-border rounded-lg border">
-          <p className="text-muted-foreground px-4 pt-3 text-xs font-medium uppercase">
+          <p className="text-muted-foreground px-4 pt-3 text-xs font-medium">
             {t("Invitation history")}
           </p>
           <ul className="divide-border divide-y">

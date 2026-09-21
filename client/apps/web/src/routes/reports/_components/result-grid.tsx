@@ -161,7 +161,7 @@ export function ResultGrid({
                   onClick={() => onSortChange?.(nextSort(sort, column.id))}
                   className={cn(
                     COLUMN_WIDTH,
-                    "text-2xs text-muted-foreground flex shrink-0 items-center gap-1 px-3 py-1.5 font-medium tracking-wide uppercase",
+                    "text-xs text-muted-foreground flex shrink-0 items-center gap-1 px-3 py-1.5 font-medium",
                     numeric && "justify-end",
                     onSortChange && "hover:text-foreground transition-colors",
                     active && "text-foreground",

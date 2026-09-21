@@ -303,7 +303,7 @@ export default function MatchingWorkspace() {
                   ))}
                 </div>
                 <div className="flex flex-wrap items-center gap-1">
-                  <span className="text-muted-foreground text-2xs tracking-wide uppercase">
+                  <span className="text-muted-foreground text-xs">
                     {t("Created")}
                   </span>
                   {matchViaFilterChips.map((chip) => (
@@ -381,7 +381,7 @@ export default function MatchingWorkspace() {
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-card rounded-lg border px-4 py-3">
-      <p className="text-muted-foreground text-xs tracking-[0.16em] uppercase">{label}</p>
+      <p className="text-muted-foreground text-xs">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
     </div>
   );
@@ -706,7 +706,7 @@ function InvoiceDetail({
       </div>
 
       <div className="rounded-lg border p-4">
-        <h4 className="text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase">
+        <h4 className="text-muted-foreground mb-1 text-xs font-semibold">
           {t("Carrier Link")}
         </h4>
         <p className="text-muted-foreground mb-2 text-xs">
@@ -770,7 +770,7 @@ function InvoiceDetail({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-background rounded-lg border px-3 py-2">
-      <p className="text-muted-foreground text-2xs tracking-[0.16em] uppercase">{label}</p>
+      <p className="text-muted-foreground text-xs">{label}</p>
       <p className="mt-1 text-sm font-medium">{value}</p>
     </div>
   );
@@ -831,7 +831,7 @@ function MatchDetail({
       <div className="grid gap-3 lg:grid-cols-2">
         <div className="rounded-lg border">
           <div className="bg-muted/30 border-b px-4 py-2">
-            <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+            <h4 className="text-muted-foreground text-xs font-semibold">
               {t("Carrier Invoice")}
             </h4>
           </div>
@@ -857,7 +857,7 @@ function MatchDetail({
 
         <div className="rounded-lg border">
           <div className="bg-muted/30 border-b px-4 py-2">
-            <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+            <h4 className="text-muted-foreground text-xs font-semibold">
               {t("Negotiated Buy Rate")}
             </h4>
           </div>

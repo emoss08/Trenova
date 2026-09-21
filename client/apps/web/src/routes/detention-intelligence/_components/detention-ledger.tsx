@@ -33,7 +33,7 @@ function LedgerStat({
 }) {
   return (
     <div className="min-w-0 px-3.5 py-2.5">
-      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">{label}</p>
+      <p className="text-xs text-muted-foreground font-medium">{label}</p>
       <p className={cn("mt-1 truncate text-sm font-medium tabular-nums", valueClassName)}>
         {value}
       </p>
@@ -105,7 +105,7 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
 
       <div className="relative flex flex-col gap-5 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+          <p className="text-xs text-muted-foreground font-medium">
             {t("Net detention margin")}
           </p>
           <p

@@ -105,7 +105,7 @@ function defaultsFor(policy: WorkerPolicyRow | null): WorkerPolicyFormValues {
 function SectionHeading({ children, hint }: { children: string; hint?: string }) {
   return (
     <div className="col-span-full -mb-1 flex items-baseline justify-between gap-2 border-b pb-1.5 not-first:mt-2">
-      <p className="text-xs font-semibold tracking-wide uppercase">{children}</p>
+      <p className="text-xs font-semibold">{children}</p>
       {hint ? <p className="text-muted-foreground text-xs">{hint}</p> : null}
     </div>
   );

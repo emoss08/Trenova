@@ -319,7 +319,7 @@ export function RouteCommandPalette() {
           )}
           {mentionOpen && filteredEntityOptions.length > 0 && (
             <div className="bg-popover absolute top-11 left-2 z-50 w-52 rounded-lg border p-2 shadow-lg">
-              <div className="text-2xs text-muted-foreground px-2 pb-1 font-medium tracking-[0.18em] uppercase">
+              <div className="text-xs text-muted-foreground px-2 pb-1 font-medium">
                 {t("Filter records")}
               </div>
               <div className="flex flex-col gap-1">

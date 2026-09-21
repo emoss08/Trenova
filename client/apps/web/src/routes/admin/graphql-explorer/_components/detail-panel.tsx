@@ -98,7 +98,7 @@ function DocumentHeader({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-2xs text-muted-foreground/70 font-medium tracking-wider uppercase">
+    <span className="text-xs text-muted-foreground/70 font-medium">
       {children}
     </span>
   );

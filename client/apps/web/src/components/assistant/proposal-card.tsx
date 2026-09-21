@@ -93,12 +93,12 @@ export function ProposalCard({
             className="size-1.5 shrink-0 rounded-full"
             style={{ backgroundColor: toneVar("warning") }}
           />
-          <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs tracking-wide uppercase">
+          <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
             {view.title}
           </span>
           {view.severity && (
             <span
-              className="shrink-0 text-2xs font-medium tracking-wide uppercase"
+              className="shrink-0 text-xs font-medium"
               style={{ color: toneVar(view.severity.tone) }}
             >
               {view.severity.label}

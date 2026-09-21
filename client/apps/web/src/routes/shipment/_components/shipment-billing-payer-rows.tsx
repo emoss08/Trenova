@@ -40,7 +40,7 @@ export function ShipmentBillingPayerRows({
 
   return (
     <div className="mt-3 space-y-1" data-testid="billing-payer-rows">
-      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+      <p className="text-xs text-muted-foreground font-medium">
         {t("Payers")}
       </p>
       {payers.map((payer) => {

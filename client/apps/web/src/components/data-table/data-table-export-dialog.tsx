@@ -144,7 +144,7 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
         </DialogHeader>
         <div className="flex flex-col gap-4 pb-2">
           <div className="flex flex-col gap-2">
-            <Label className="text-muted-foreground text-xs font-medium uppercase">
+            <Label className="text-muted-foreground text-xs font-medium">
               {t("Rows")}
             </Label>
             <div className="flex gap-2" role="radiogroup" aria-label={t("Export scope")}>
@@ -173,7 +173,7 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
             )}
           </div>
           <div className="flex flex-col gap-2">
-            <Label className="text-muted-foreground text-xs font-medium uppercase">
+            <Label className="text-muted-foreground text-xs font-medium">
               {t("Columns")}
             </Label>
             <div className="flex gap-2" role="radiogroup" aria-label={t("Export columns")}>

@@ -126,7 +126,7 @@ export function TileFilterPopover({ index, ir, values, onChange }: TileFilterPop
       >
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+            <span className="text-xs text-muted-foreground font-medium">
               {t("Filter this tile")}
             </span>
             {active > 0 && (

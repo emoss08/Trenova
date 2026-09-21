@@ -271,7 +271,7 @@ export function PlanReviewDialog({
           )}
           {uncoveredGroups.length > 0 && (
             <div className="flex flex-col border-t">
-              <span className="bg-warning/[4%] text-warning flex items-center gap-1 border-b px-3 py-1.5 text-2xs font-semibold tracking-wide uppercase">
+              <span className="bg-warning/[4%] text-warning flex items-center gap-1 border-b px-3 py-1.5 text-xs font-semibold">
                 <TriangleAlertIcon className="size-3" aria-hidden />
                 {t("Not covered")}
               </span>

@@ -66,7 +66,7 @@ export function CalculationReceipt({
   return (
     <div className={cn("flex flex-col", className)}>
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
+        <h4 className="text-xs text-muted-foreground font-medium">
           {t("How this charge was calculated")}
         </h4>
         <div className="flex items-center gap-2">

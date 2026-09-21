@@ -308,7 +308,7 @@ function PickerRow({ row }: { row: Row }) {
         )}
       </span>
       {row.meta && (
-        <span className="text-muted-foreground/80 mt-0.5 shrink-0 text-3xs tracking-wide uppercase">
+        <span className="text-muted-foreground/80 mt-0.5 shrink-0 text-2xs">
           {row.meta}
         </span>
       )}

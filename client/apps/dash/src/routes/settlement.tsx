@@ -161,7 +161,7 @@ export function DashSettlementPage() {
 
       {groupedLines.map((group) => (
         <section key={group.category} className="rounded-2xl border border-border bg-card">
-          <h2 className="px-4 pt-3 text-xs font-medium text-muted-foreground uppercase">
+          <h2 className="px-4 pt-3 text-xs font-medium text-muted-foreground">
             {settlementCategoryLabels[group.category] ?? group.category}
           </h2>
           <ul className="divide-y divide-border">

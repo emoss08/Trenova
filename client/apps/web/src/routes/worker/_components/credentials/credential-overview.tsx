@@ -96,7 +96,7 @@ export function CredentialOverview({ summary, canCreate, onAdd }: CredentialOver
 function Count({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col">
-      <dt className="text-2xs text-muted-foreground uppercase">{label}</dt>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="font-medium tabular-nums">{value}</dd>
     </div>
   );

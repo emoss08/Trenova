@@ -175,7 +175,7 @@ function SectionHeader({
 function MetadataCell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="rounded-lg border p-3">
-      <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+      <div className="text-muted-foreground text-xs font-medium">
         {label}
       </div>
       <div className="mt-1.5 text-sm">{children}</div>
@@ -318,7 +318,7 @@ function StatusPipeline({ doc }: { doc: Document }) {
               render={<div className="flex items-center gap-1.5 rounded-full border px-2 py-1" />}
             >
               <span className={`size-1.5 rounded-full ${statusDotColor(stage.status)}`} />
-              <span className="text-2xs font-medium tracking-wide uppercase">
+              <span className="text-xs font-medium">
                 {t(stage.label)}
               </span>
             </TooltipTrigger>
@@ -610,7 +610,7 @@ function WorkflowsSection({ refs }: { refs: WorkflowReference[] }) {
               <WorkflowIcon className="text-muted-foreground size-3.5" />
             </span>
             <div className="min-w-0 flex-1">
-              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium">
                 {ref.kind.replace(/_/g, " ")}
               </div>
               <div className="mt-0.5">
