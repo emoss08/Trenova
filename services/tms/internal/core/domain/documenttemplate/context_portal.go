@@ -75,6 +75,86 @@ func newAgentEmailSampleContext() any {
 	}
 }
 
+// ProposalReminderLine is one proposal still waiting, as the reminder lists it.
+type ProposalReminderLine struct {
+	Tool      string
+	Rationale string
+}
+
+// AgentProposalReminderContext is what the reminder email has to say: which
+// agent, how many changes, how long they have waited, what each one is, and
+// where to go to decide.
+type AgentProposalReminderContext struct {
+	RecipientFirstName string
+	AgentName          string
+	PendingCount       int
+	WaitingHours       int
+	Proposals          []ProposalReminderLine
+	ReviewURL          template.URL
+	CompanyName        string
+	LogoDataURI        template.URL
+}
+
+func newAgentProposalReminderSampleContext() any {
+	return AgentProposalReminderContext{
+		RecipientFirstName: "Marcus",
+		AgentName:          "Dispatch coverage",
+		PendingCount:       2,
+		WaitingHours:       6,
+		Proposals: []ProposalReminderLine{
+			{Tool: "assign move", Rationale: "Dana Ortiz has 7 hours left and is 12 miles from the pickup."},
+			{Tool: "add shipment comment", Rationale: "Record that the customer asked for a morning delivery."},
+		},
+		ReviewURL:   template.URL("https://app.example.com/admin/agent-control?tab=activity&activity=proposals"),
+		CompanyName: sampleCompanyName,
+		//nolint:gosec // A compile-time constant data: URI; see the field's doc comment.
+		LogoDataURI: template.URL(sampleLogoDataURI),
+	}
+}
+
+func agentProposalReminderVariables() []VariableDefinition {
+	return []VariableDefinition{
+		{
+			Path:        "RecipientFirstName",
+			Type:        VariableString,
+			Description: "The first name of the person who can decide.",
+		},
+		{
+			Path:        "AgentName",
+			Type:        VariableString,
+			Required:    true,
+			Description: "The agent whose changes are waiting.",
+		},
+		{
+			Path:        "PendingCount",
+			Type:        VariableInt,
+			Description: "How many of its changes are waiting on a decision.",
+		},
+		{
+			Path:        "WaitingHours",
+			Type:        VariableInt,
+			Description: "How many hours the oldest of them has waited.",
+		},
+		{
+			Path:        "Proposals",
+			Type:        VariableCollection,
+			Description: "Each waiting change. Range over it: Tool is what the agent asked to do and Rationale is why.",
+			Fields: []VariableDefinition{
+				{Path: "Tool", Type: VariableString, Description: "What the agent asked to do, in words."},
+				{Path: "Rationale", Type: VariableString, Description: "The agent's reason."},
+			},
+		},
+		{
+			Path:        "ReviewURL",
+			Type:        VariableString,
+			Required:    true,
+			Description: "Where to decide: the proposals list in AI Control, already filtered to this run.",
+		},
+		companyNameVariable(),
+		logoVariable(),
+	}
+}
+
 func (r *Registry) registerPortalKinds() {
 	_ = r.Register(&KindDefinition{
 		Kind:        KindDriverPortalInvitationEmail,
@@ -142,6 +222,16 @@ func (r *Registry) registerAgentKinds() {
 			},
 			logoVariable(),
 		},
+	})
+	_ = r.Register(&KindDefinition{
+		Kind:        KindAgentProposalReminderEmail,
+		DisplayName: "Proposal Reminder",
+		Description: "Reminds the people who can decide an agent's proposals that some have been " +
+			"waiting for hours, and takes them to the list to decide.",
+		Category:      "Agent",
+		Channels:      []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
+		sampleFactory: newAgentProposalReminderSampleContext,
+		Variables:     agentProposalReminderVariables(),
 	})
 	_ = r.Register(&KindDefinition{
 		Kind:        KindAgentRequestMissingDocsEmail,

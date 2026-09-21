@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -456,4 +457,58 @@ func (r *repository) GetResourcePermissionsByRoleID(
 	}
 
 	return permissions, nil
+}
+
+// usersWithPermissionQuery walks each active assignment up through its role's
+// parents, so a person who holds a child role inherits what its parents
+// grant, the way the permission engine reads it. "manage" on a resource
+// carries every operation on it, so it counts as a match whatever was asked.
+const usersWithPermissionQuery = `
+WITH RECURSIVE held AS (
+    SELECT ura.user_id, r.id AS role_id, r.parent_role_ids
+    FROM user_role_assignments ura
+    JOIN roles r ON r.id = ura.role_id
+    WHERE ura.organization_id = ?
+      AND r.business_unit_id = ?
+      AND (ura.expires_at IS NULL OR ura.expires_at > ?)
+    UNION
+    SELECT h.user_id, p.id, p.parent_role_ids
+    FROM held h
+    JOIN roles p ON p.id = ANY(h.parent_role_ids)
+)
+SELECT DISTINCT u.id AS user_id, u.name, u.email_address, u.locale
+FROM held h
+JOIN resource_permissions rp ON rp.role_id = h.role_id
+JOIN users u ON u.id = h.user_id
+WHERE rp.resource = ?
+  AND (? = ANY(rp.operations) OR ? = ANY(rp.operations))
+  AND u.status = ?
+ORDER BY u.name`
+
+func (r *repository) ListUsersWithPermission(
+	ctx context.Context,
+	req repositories.ListUsersWithPermissionRequest,
+) ([]repositories.PermittedUser, error) {
+	log := r.l.With(
+		zap.String("operation", "ListUsersWithPermission"),
+		zap.String("resource", req.Resource.String()),
+		zap.String("permissionOperation", string(req.Operation)),
+	)
+
+	users := make([]repositories.PermittedUser, 0)
+	if err := r.db.DB().NewRaw(
+		usersWithPermissionQuery,
+		req.OrganizationID,
+		req.BusinessUnitID,
+		req.Now,
+		req.Resource.String(),
+		string(req.Operation),
+		string(permission.OpManage),
+		domaintypes.StatusActive,
+	).Scan(ctx, &users); err != nil {
+		log.Error("failed to list users with permission", zap.Error(err))
+		return nil, err
+	}
+
+	return users, nil
 }

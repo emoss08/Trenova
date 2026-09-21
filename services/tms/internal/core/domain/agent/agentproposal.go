@@ -54,6 +54,10 @@ type AgentProposal struct {
 	// gone and the judgement with it.
 	ExpiresAt int64 `json:"expiresAt" bun:"expires_at,type:BIGINT,nullzero"`
 
+	// RemindedAt is when the people who could decide this proposal were told,
+	// a second time, that it was still waiting. Null until they are.
+	RemindedAt *int64 `json:"remindedAt" bun:"reminded_at,type:BIGINT,nullzero"`
+
 	// TargetResource, TargetID and TargetVersion pin the record the proposal
 	// would change, as it was when proposed. The executor refuses to run
 	// against a different version: a hold proposed on a shipment that has

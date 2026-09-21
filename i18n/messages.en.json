@@ -42696,6 +42696,24 @@
       "service/reporting"
     ]
   },
+  "Decide here:": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.proposal_reminder.email"
+    ]
+  },
+  "Decide in AI Control": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.proposal_reminder.email"
+    ]
+  },
   "Decide the case before closing it": {
     "sites": 1,
     "scope": [
@@ -52900,6 +52918,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Each waiting change. Range over it: Tool is what the agent asked to do and Rationale is why.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
     ]
   },
   "Earlier in this conversation, for reference only": {
@@ -69960,24 +69987,26 @@
     ]
   },
   "Hello {0},": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go"
     ],
     "areas": [
       "template/agent.customer_update.email",
+      "template/agent.proposal_reminder.email",
       "template/agent.request_missing_docs.email",
       "template/invoice.email",
       "template/tender.offer.email"
     ]
   },
   "Hello,": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go"
     ],
     "areas": [
       "template/agent.customer_update.email",
+      "template/agent.proposal_reminder.email",
       "template/agent.request_missing_docs.email",
       "template/invoice.email",
       "template/tender.offer.email"
@@ -71354,7 +71383,25 @@
       "domain/documenttemplate"
     ]
   },
+  "How many hours the oldest of them has waited.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
+    ]
+  },
   "How many minutes the link is good for. Use this rather than writing a number into the copy, or the wording will drift from the real expiry.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
+    ]
+  },
+  "How many of its changes are waiting on a decision.": {
     "sites": 1,
     "scope": [
       "go"
@@ -124326,6 +124373,15 @@
       "routes/dash-control"
     ]
   },
+  "Reminds the people who can decide an agent's proposals that some have been waiting for hours, and takes them to the list to decide.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
+    ]
+  },
   "Remit To": {
     "sites": 1,
     "scope": [
@@ -151953,6 +152009,24 @@
       "routes/agent-control"
     ]
   },
+  "The agent whose changes are waiting.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
+    ]
+  },
+  "The agent's reason.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
+    ]
+  },
   "The agreed fuel surcharge amount.": {
     "sites": 1,
     "scope": [
@@ -154772,6 +154846,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "The first name of the person who can decide.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
     ]
   },
   "The first thing the worker reads once the review is submitted.": {
@@ -174735,6 +174818,15 @@
       "routes/rate-agreement"
     ]
   },
+  "What the agent asked to do, in words.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
+    ]
+  },
   "What the agent tried": {
     "sites": 2,
     "scope": [
@@ -176133,6 +176225,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Where to decide: the proposals list in AI Control, already filtered to this run.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
     ]
   },
   "Where to download the run.": {
@@ -187211,6 +187312,15 @@
       "template/driverportal.invitation.email"
     ]
   },
+  "{0} has {1} changes that have been waiting {2} hours for someone to decide. Nothing runs until one of you does.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.proposal_reminder.email"
+    ]
+  },
   "{0} held (": {
     "sites": 1,
     "scope": [
@@ -189945,6 +190055,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0}: {1} changes waiting on a decision": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.proposal_reminder.email"
     ]
   },
   "{0}: {1} of {2}h remaining": {

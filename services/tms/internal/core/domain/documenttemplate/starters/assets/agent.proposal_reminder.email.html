@@ -1,0 +1,17 @@
+<div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827;max-width:600px">
+  {{ if .LogoDataURI }}<img src="{{ .LogoDataURI }}" alt="{{ .CompanyName }}" style="display:block;max-height:36px;margin:0 0 18px">{{ end }}
+
+  <p style="margin:0 0 16px">{{ if .RecipientFirstName }}{{ t "Hello {0}," .RecipientFirstName }}{{ else }}{{ t "Hello," }}{{ end }}</p>
+
+  <p style="margin:0 0 16px">{{ t "{0} has {1} changes that have been waiting {2} hours for someone to decide. Nothing runs until one of you does." .AgentName .PendingCount .WaitingHours }}</p>
+
+  <ul style="margin:0 0 16px;padding-left:20px">
+    {{ range .Proposals }}
+    <li style="margin:0 0 6px"><strong>{{ .Tool }}</strong>{{ if .Rationale }}: {{ .Rationale }}{{ end }}</li>
+    {{ end }}
+  </ul>
+
+  <p style="margin:0 0 16px"><a href="{{ .ReviewURL }}" style="color:#1d4ed8">{{ t "Decide in AI Control" }}</a></p>
+
+  <p style="margin:0;color:#6b7280;font-size:13px">{{ .CompanyName }}</p>
+</div>

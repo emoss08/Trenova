@@ -33,6 +33,27 @@ func (m *stubProposalRepo) ExpirePendingByRun(
 	return args.Int(0), args.Error(1)
 }
 
+func (m *stubProposalRepo) ExpirePending(
+	context.Context,
+	repositories.ExpireAgentProposalsRequest,
+) (int, error) {
+	return 0, nil
+}
+
+func (m *stubProposalRepo) ListPendingForReminder(
+	context.Context,
+	repositories.ListPendingProposalsForReminderRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
+func (m *stubProposalRepo) MarkReminded(
+	context.Context,
+	repositories.MarkProposalsRemindedRequest,
+) (int, error) {
+	return 0, nil
+}
+
 func (m *stubProposalRepo) List(
 	context.Context,
 	*repositories.ListAgentProposalRequest,

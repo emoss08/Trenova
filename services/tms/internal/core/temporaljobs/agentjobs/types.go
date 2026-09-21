@@ -108,11 +108,23 @@ type SweepResult struct {
 
 // ExpireStaleProposalsResult is what one expiry sweep did.
 type ExpireStaleProposalsResult struct {
-	Expired int `json:"expired"`
+	Expired  int `json:"expired"`
+	Reminded int `json:"reminded"`
 }
 
 // ExpireStaleProposalsInput carries the workflow's clock, so the activity is
 // deterministic with respect to the workflow that ran it.
 type ExpireStaleProposalsInput struct {
 	Now int64 `json:"now"`
+}
+
+// RemindPendingProposalsInput says how long a proposal may wait before its
+// deciders are told again.
+type RemindPendingProposalsInput struct {
+	Now              int64 `json:"now"`
+	OlderThanSeconds int64 `json:"olderThanSeconds"`
+}
+
+type RemindPendingProposalsResult struct {
+	Reminded int `json:"reminded"`
 }

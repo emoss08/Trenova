@@ -1,0 +1,9 @@
+{{ if .RecipientFirstName }}{{ t "Hello {0}," .RecipientFirstName }}{{ else }}{{ t "Hello," }}{{ end }}
+
+{{ t "{0} has {1} changes that have been waiting {2} hours for someone to decide. Nothing runs until one of you does." .AgentName .PendingCount .WaitingHours }}
+{{ range .Proposals }}
+- {{ .Tool }}: {{ .Rationale }}
+{{ end }}
+{{ t "Decide here:" }} {{ .ReviewURL }}
+
+{{ .CompanyName }}

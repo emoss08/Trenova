@@ -506,6 +506,7 @@ var AgentProposalColumns = struct {
 	ExecutionError  Column // "execution_error" → qualified: "ap.execution_error"
 	SourceMessageID Column // "source_message_id" → qualified: "ap.source_message_id"
 	ExpiresAt       Column // "expires_at" → qualified: "ap.expires_at"
+	RemindedAt      Column // "reminded_at" → qualified: "ap.reminded_at"
 	TargetResource  Column // "target_resource" → qualified: "ap.target_resource"
 	TargetID        Column // "target_id" → qualified: "ap.target_id"
 	TargetVersion   Column // "target_version" → qualified: "ap.target_version"
@@ -528,6 +529,7 @@ var AgentProposalColumns = struct {
 	ExecutionError:  NewColumn("execution_error", "ap"),
 	SourceMessageID: NewColumn("source_message_id", "ap"),
 	ExpiresAt:       NewColumn("expires_at", "ap"),
+	RemindedAt:      NewColumn("reminded_at", "ap"),
 	TargetResource:  NewColumn("target_resource", "ap"),
 	TargetID:        NewColumn("target_id", "ap"),
 	TargetVersion:   NewColumn("target_version", "ap"),
@@ -556,6 +558,7 @@ var AgentProposalFieldMap = map[string]string{
 	"executionError":  "execution_error",
 	"sourceMessageId": "source_message_id",
 	"expiresAt":       "expires_at",
+	"remindedAt":      "reminded_at",
 	"targetResource":  "target_resource",
 	"targetId":        "target_id",
 	"targetVersion":   "target_version",
@@ -582,6 +585,7 @@ var AgentProposalInsertableColumns = []string{
 	"execution_error",
 	"source_message_id",
 	"expires_at",
+	"reminded_at",
 	"target_resource",
 	"target_id",
 	"target_version",
@@ -670,6 +674,7 @@ var AgentProposalFilter = struct {
 	ExecutionError  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executionError" → DB: "execution_error"
 	SourceMessageID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceMessageId" → DB: "source_message_id"
 	ExpiresAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	RemindedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remindedAt" → DB: "reminded_at"
 	TargetResource  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetResource" → DB: "target_resource"
 	TargetID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetId" → DB: "target_id"
 	TargetVersion   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetVersion" → DB: "target_version"
@@ -721,6 +726,9 @@ var AgentProposalFilter = struct {
 	},
 	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("expiresAt", op, value)
+	},
+	RemindedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("remindedAt", op, value)
 	},
 	TargetResource: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("targetResource", op, value)

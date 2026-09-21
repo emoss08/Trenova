@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -43,6 +44,7 @@ type ActivitiesParams struct {
 	BillingQueue serviceports.BillingQueueService
 	Shipment     serviceports.ShipmentService
 	Console      repositories.DispatchConsoleRepository `optional:"true"`
+	Notifier     serviceports.AgentProposalNotifier     `optional:"true"`
 }
 
 type Activities struct {
@@ -55,6 +57,7 @@ type Activities struct {
 	runtime      serviceports.AgentRuntime
 	contexts     serviceports.RuntimeContextBuilder
 	recorder     *proposalrecorder.Service
+	notifier     serviceports.AgentProposalNotifier
 	subjects     *SubjectContext
 }
 
@@ -71,6 +74,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		runtime:      p.Runtime,
 		contexts:     p.Contexts,
 		recorder:     p.Recorder,
+		notifier:     p.Notifier,
 		subjects: &SubjectContext{
 			billingQueue: p.BillingQueue,
 			shipments:    p.Shipment,
@@ -477,4 +481,34 @@ func (a *Activities) ExpireStaleProposalsActivity(
 	}
 
 	return &ExpireStaleProposalsResult{Expired: expired}, nil
+}
+
+// RemindPendingProposalsActivity brings proposals that have waited past the
+// cut-off back to the people who can decide them, once each. It runs in the
+// same sweep as expiry so a proposal is reminded about before it expires, not
+// after.
+func (a *Activities) RemindPendingProposalsActivity(
+	ctx context.Context,
+	input *RemindPendingProposalsInput,
+) (*RemindPendingProposalsResult, error) {
+	if a.notifier == nil {
+		return &RemindPendingProposalsResult{}, nil
+	}
+
+	reminded, err := a.notifier.RemindPending(ctx, serviceports.RemindPendingProposalsRequest{
+		Now:       input.Now,
+		OlderThan: time.Duration(input.OlderThanSeconds) * time.Second,
+		Limit:     reminderBatchLimit,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("remind pending proposals: %w", err)
+	}
+
+	if reminded > 0 {
+		a.logger.Info("reminded deciders of agent proposals still pending",
+			zap.Int("reminded", reminded),
+		)
+	}
+
+	return &RemindPendingProposalsResult{Reminded: reminded}, nil
 }

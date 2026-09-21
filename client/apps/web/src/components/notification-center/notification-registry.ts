@@ -28,6 +28,7 @@ import {
   ReceiptTextIcon,
   Share2Icon,
   ShieldAlertIcon,
+  ClockAlertIcon,
   TrendingDownIcon,
   TrendingUpIcon,
   TriangleAlertIcon,
@@ -139,6 +140,20 @@ const aiControlLink = (notification: Notification) =>
   notificationDataString(notification, "link") ?? "/admin/agent-control";
 
 const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
+  "agent.proposals_pending": {
+    category: "AI Control",
+    icon: ListChecksIcon,
+    iconClass: "text-brand",
+    tileClass: "bg-brand-subtle",
+    getLink: aiControlLink,
+  },
+  "agent.proposals_reminder": {
+    category: "AI Control",
+    icon: ClockAlertIcon,
+    iconClass: "text-warning",
+    tileClass: "bg-warning-subtle",
+    getLink: aiControlLink,
+  },
   "agent.tool_promoted": {
     category: "AI Control",
     icon: TrendingUpIcon,

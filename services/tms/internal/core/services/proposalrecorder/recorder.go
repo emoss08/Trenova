@@ -31,6 +31,9 @@ type Params struct {
 	// Trust learns from a tool that ran on its own and failed. Optional, so
 	// the recorder still stores proposals where no ledger is wired.
 	Trust serviceports.AgentTrustService `optional:"true"`
+	// Notifier tells the people who can decide that a background run left
+	// something waiting. Optional for the same reason.
+	Notifier serviceports.AgentProposalNotifier `optional:"true"`
 }
 
 type Service struct {
@@ -38,11 +41,13 @@ type Service struct {
 	runs      RunOpener
 	proposals ProposalStore
 	trust     serviceports.AgentTrustService
+	notifier  serviceports.AgentProposalNotifier
 }
 
 func New(p Params) *Service {
 	svc := NewWithStores(p.Logger, p.Runs, p.Proposals)
 	svc.trust = p.Trust
+	svc.notifier = p.Notifier
 
 	return svc
 }
@@ -145,7 +150,33 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 		proposals = append(proposals, created)
 	}
 
+	s.notifyPending(ctx, req.Definition, run, proposals)
+
 	return &RecordResult{Run: run, Proposals: proposals}, nil
+}
+
+// notifyPending is best effort. The proposals are stored; a notice that could
+// not be sent is logged, not allowed to fail the run that produced them.
+func (s *Service) notifyPending(
+	ctx context.Context,
+	definition *agentdefinition.Definition,
+	run *agent.AgentRun,
+	proposals []*agent.AgentProposal,
+) {
+	if s.notifier == nil {
+		return
+	}
+
+	if err := s.notifier.NotifyPending(ctx, serviceports.PendingProposalsNotice{
+		Definition: definition,
+		Run:        run,
+		Proposals:  proposals,
+	}); err != nil {
+		s.logger.Error("failed to notify deciders of pending proposals",
+			zap.String("run", run.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func (s *Service) openRun(ctx context.Context, req *RecordRequest) (*agent.AgentRun, error) {

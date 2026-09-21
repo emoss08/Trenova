@@ -16,6 +16,24 @@ type ImpactedUser struct {
 	AssignmentType string   `json:"assignmentType"`
 }
 
+// PermittedUser is an active user who holds an operation on a resource in an
+// organization, through any role they are assigned or that role's parents.
+type PermittedUser struct {
+	UserID       pulid.ID `bun:"user_id"`
+	Name         string   `bun:"name"`
+	EmailAddress string   `bun:"email_address"`
+	Locale       string   `bun:"locale"`
+}
+
+type ListUsersWithPermissionRequest struct {
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	Resource       permission.Resource
+	Operation      permission.Operation
+	// Now excludes expired role assignments.
+	Now int64
+}
+
 type ListRolesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
@@ -56,6 +74,10 @@ type RoleRepository interface {
 	GetByID(ctx context.Context, req GetRoleByIDRequest) (*permission.Role, error)
 	GetRolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) ([]*permission.Role, error)
 	GetUsersWithRole(ctx context.Context, roleID pulid.ID) ([]ImpactedUser, error)
+	ListUsersWithPermission(
+		ctx context.Context,
+		req ListUsersWithPermissionRequest,
+	) ([]PermittedUser, error)
 	GetUserRoleAssignments(
 		ctx context.Context,
 		userID, orgID pulid.ID,

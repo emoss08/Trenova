@@ -344,3 +344,72 @@ func (r *repository) ExpirePending(
 
 	return int(affected), nil
 }
+
+// ListPendingForReminder finds the proposals the sweeper should remind people
+// about: pending, from a run a person did not start in a chat, older than the
+// cut-off, not yet expired and never reminded. Unscoped like ExpirePending; the
+// partial index on pending unreminded rows keeps it cheap.
+func (r *repository) ListPendingForReminder(
+	ctx context.Context,
+	req repositories.ListPendingProposalsForReminderRequest,
+) ([]*agent.AgentProposal, error) {
+	log := r.l.With(zap.String("operation", "ListPendingForReminder"), zap.Int64("before", req.Before))
+
+	cols := buncolgen.AgentProposalColumns
+	runCols := buncolgen.AgentRunColumns
+	proposals := make([]*agent.AgentProposal, 0, req.Limit)
+
+	err := r.db.DB().
+		NewSelect().
+		Model(&proposals).
+		Join("JOIN agent_runs AS ar ON "+runCols.ID.Qualified()+" = "+cols.RunID.Qualified()+
+			" AND "+runCols.OrganizationID.Qualified()+" = "+cols.OrganizationID.Qualified()+
+			" AND "+runCols.BusinessUnitID.Qualified()+" = "+cols.BusinessUnitID.Qualified()).
+		Where(cols.Status.Eq(), agent.ProposalStatusPending).
+		Where(cols.RemindedAt.IsNull()).
+		Where(cols.CreatedAt.Lte(), req.Before).
+		Where(runCols.Trigger.Qualified()+" <> ?", agent.RunTriggerChat).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where(cols.ExpiresAt.IsNull()).
+				WhereOr(cols.ExpiresAt.Gt(), req.Now)
+		}).
+		OrderExpr(cols.CreatedAt.OrderAsc()).
+		Limit(req.Limit).
+		Scan(ctx)
+	if err != nil {
+		log.Error("failed to list pending agent proposals for reminder", zap.Error(err))
+		return nil, err
+	}
+
+	return proposals, nil
+}
+
+func (r *repository) MarkReminded(
+	ctx context.Context,
+	req repositories.MarkProposalsRemindedRequest,
+) (int, error) {
+	if len(req.IDs) == 0 {
+		return 0, nil
+	}
+
+	cols := buncolgen.AgentProposalColumns
+	results, err := r.db.DB().
+		NewUpdate().
+		Model((*agent.AgentProposal)(nil)).
+		Where(cols.ID.In(), bun.In(req.IDs)).
+		Where(cols.RemindedAt.IsNull()).
+		Set(cols.RemindedAt.Set(), req.At).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to mark agent proposals reminded", zap.Error(err))
+		return 0, err
+	}
+
+	affected, err := results.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(affected), nil
+}

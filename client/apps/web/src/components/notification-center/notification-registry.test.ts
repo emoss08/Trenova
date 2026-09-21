@@ -217,6 +217,17 @@ describe("notification registry — carrier intelligence notifications", () => {
   });
 });
 
+describe("notification registry — pending proposals", () => {
+  it("opens the proposals list the notice links to, filtered to its run", () => {
+    const link =
+      "/admin/agent-control?activity=proposals&fieldFilters=%5B%7B%22field%22%3A%22runId%22%7D%5D&tab=activity";
+    for (const eventType of ["agent.proposals_pending", "agent.proposals_reminder"]) {
+      expect(getNotificationDescriptor(eventType).category).toBe("AI Control");
+      expect(getNotificationLink(notification({ eventType, data: { link } }))).toBe(link);
+    }
+  });
+});
+
 describe("notification registry — earned autonomy", () => {
   it("files a tier change under AI Control and opens the agents tab it names", () => {
     for (const eventType of ["agent.tool_promoted", "agent.tool_demoted"]) {

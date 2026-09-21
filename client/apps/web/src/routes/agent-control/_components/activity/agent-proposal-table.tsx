@@ -20,7 +20,9 @@ export default function AgentProposalTable() {
   const t = useT();
   const queryClient = useQueryClient();
   const columns = useMemo(() => getProposalColumns(t), [t]);
-  const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Approve);
+  // The server decides a proposal under update, not approve; asking for the
+  // wrong operation hid the buttons from everyone who actually held the right.
+  const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Update);
   const [dialog, setDialog] = useState<ReasonDialogRequest | null>(null);
 
   const afterDecision = async (message: string) => {

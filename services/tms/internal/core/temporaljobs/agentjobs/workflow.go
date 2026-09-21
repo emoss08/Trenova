@@ -20,7 +20,18 @@ const (
 	sweepStartTimeout  = time.Minute
 	sweepListTimeout   = time.Minute
 	runActivityRetries = 2
+	// reminderAfter is how long a proposal waits before its deciders are told
+	// a second time. Long enough that a busy morning does not nag; short
+	// enough that a proposal is not stale by the time anyone hears twice.
+	reminderAfter      = 4 * time.Hour
+	reminderBatchLimit = 500
+	reminderTimeout    = 5 * time.Minute
 )
+
+var reminderOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: reminderTimeout,
+	RetryPolicy:         deterministicRetry,
+}
 
 var deterministicRetry = &temporal.RetryPolicy{
 	InitialInterval:    time.Second,
@@ -87,12 +98,25 @@ func ExpireStaleProposalsWorkflow(ctx workflow.Context) (*ExpireStaleProposalsRe
 	var a *Activities
 	result := &ExpireStaleProposalsResult{}
 
+	now := workflow.Now(ctx).Unix()
 	expireCtx := workflow.WithActivityOptions(ctx, sweepListOptions)
 	if err := workflow.ExecuteActivity(expireCtx, a.ExpireStaleProposalsActivity, &ExpireStaleProposalsInput{
-		Now: workflow.Now(ctx).Unix(),
+		Now: now,
 	}).Get(expireCtx, result); err != nil {
 		return nil, err
 	}
+
+	// Reminders ride the same sweep: what is still pending after expiry ran
+	// is exactly what somebody should hear about again.
+	remindCtx := workflow.WithActivityOptions(ctx, reminderOptions)
+	var reminded RemindPendingProposalsResult
+	if err := workflow.ExecuteActivity(remindCtx, a.RemindPendingProposalsActivity, &RemindPendingProposalsInput{
+		Now:              now,
+		OlderThanSeconds: int64(reminderAfter.Seconds()),
+	}).Get(remindCtx, &reminded); err != nil {
+		return nil, err
+	}
+	result.Reminded = reminded.Reminded
 
 	return result, nil
 }

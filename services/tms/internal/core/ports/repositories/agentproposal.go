@@ -65,6 +65,20 @@ type ExpireAgentProposalsRequest struct {
 	Before int64 `json:"before"`
 }
 
+// ListPendingProposalsForReminderRequest finds proposals from background
+// runs that have waited since before Before with nobody told twice. Unscoped,
+// like the expiry: it is the sweeper's request.
+type ListPendingProposalsForReminderRequest struct {
+	Before int64 `json:"before"`
+	Now    int64 `json:"now"`
+	Limit  int   `json:"limit"`
+}
+
+type MarkProposalsRemindedRequest struct {
+	IDs []pulid.ID `json:"ids"`
+	At  int64      `json:"at"`
+}
+
 type AgentProposalRepository interface {
 	List(
 		ctx context.Context,
@@ -86,6 +100,11 @@ type AgentProposalRepository interface {
 	) (*agent.AgentProposal, error)
 	ExpirePendingByRun(ctx context.Context, req ExpireAgentProposalsByRunRequest) (int, error)
 	ExpirePending(ctx context.Context, req ExpireAgentProposalsRequest) (int, error)
+	ListPendingForReminder(
+		ctx context.Context,
+		req ListPendingProposalsForReminderRequest,
+	) ([]*agent.AgentProposal, error)
+	MarkReminded(ctx context.Context, req MarkProposalsRemindedRequest) (int, error)
 	RecordExecution(
 		ctx context.Context,
 		req RecordAgentProposalExecutionRequest,

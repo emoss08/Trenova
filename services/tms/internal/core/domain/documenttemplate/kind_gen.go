@@ -68,6 +68,9 @@ const (
 	// customer, such as a late delivery or a revised arrival, in the
 	// organization's letterhead.
 	KindAgentCustomerUpdateEmail Kind = "agent.customer_update.email"
+	// KindAgentProposalReminderEmail tells the people who can decide an
+	// agent's proposals that some have been waiting for hours.
+	KindAgentProposalReminderEmail Kind = "agent.proposal_reminder.email"
 
 	// Notifications.
 	//
@@ -160,6 +163,7 @@ func AllKinds() []Kind {
 		KindPasswordResetEmail,
 		KindAgentRequestMissingDocsEmail,
 		KindAgentCustomerUpdateEmail,
+		KindAgentProposalReminderEmail,
 		KindNotificationLoadAssigned,
 		KindNotificationLoadUnassigned,
 		KindNotificationPTOReviewed,

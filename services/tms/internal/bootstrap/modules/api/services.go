@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/agentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionservice"
+	"github.com/emoss08/trenova/internal/core/services/agentproposalnotifier"
 	"github.com/emoss08/trenova/internal/core/services/agenttrustservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdefinitionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentevents"
@@ -285,6 +286,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	newDetectorRegistry,
 	insightservice.New,
 	agenttrustservice.New,
+	agentproposalnotifier.New,
 	agentdecisionservice.New,
 	assignmentservice.New,
 	fx.Annotate(
