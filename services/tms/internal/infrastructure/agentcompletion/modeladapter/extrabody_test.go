@@ -17,14 +17,12 @@ func TestMergeExtraBody_LetsAVendorFieldThroughWithoutTouchingOurs(t *testing.T)
 		MaxTokens: 4096,
 		Stream:    true,
 	}
-	// What NVIDIA's own example sends: thinking is switched on through the
-	// chat template, the reasoning budget is its own field, and the server
-	// reads max_tokens where this system sends max_completion_tokens.
+	// What NVIDIA's own example sends, minus the two fields this system now
+	// owns itself: the ceiling goes out as max_tokens from the provider's
+	// own setting, and sampling has a task default.
 	provider := &aiprovider.Provider{ExtraBody: map[string]any{
 		"chat_template_kwargs": map[string]any{"enable_thinking": true},
 		"reasoning_budget":     16384,
-		"max_tokens":           16384,
-		"temperature":          1,
 	}}
 
 	merged, err := mergeExtraBody(body, provider)
@@ -36,15 +34,12 @@ func TestMergeExtraBody_LetsAVendorFieldThroughWithoutTouchingOurs(t *testing.T)
 	require.NoError(t, sonic.Unmarshal(encoded, &out))
 
 	assert.Equal(t, float64(16384), out["reasoning_budget"])
-	assert.Equal(t, float64(16384), out["max_tokens"])
-	assert.Equal(t, float64(1), out["temperature"])
 	assert.Equal(t,
 		map[string]any{"enable_thinking": true},
 		out["chat_template_kwargs"],
 	)
-	// Ours are untouched: the vendor field named max_tokens is a different
-	// key from the one this system sends, and both reach the endpoint.
-	assert.Equal(t, float64(4096), out["max_completion_tokens"])
+	// Ours are untouched.
+	assert.Equal(t, float64(4096), out["max_tokens"])
 	assert.Equal(t, "nvidia/nemotron-3.5-lightning-30b-a3b", out["model"])
 	assert.Equal(t, true, out["stream"])
 }

@@ -58,16 +58,23 @@ type reportCatalogRow struct {
 	// DefinitionID names a report someone in this organization saved, from
 	// the builder or from create_report. It is what run_report, describe_report
 	// and update_report take for a saved report, where a canned one has a key.
-	DefinitionID string               `json:"definitionId,omitempty"`
-	Name         string               `json:"name"`
-	Description  string               `json:"description,omitempty"`
-	Category     string               `json:"category,omitempty"`
-	Kind         string               `json:"kind"`
-	Visibility   string               `json:"visibility,omitempty"`
-	Status       string               `json:"status,omitempty"`
-	Editable     bool                 `json:"editable,omitempty"`
-	Format       string               `json:"defaultFormat,omitempty"`
-	Parameters   []reportParameterRow `json:"parameters,omitempty"`
+	DefinitionID string `json:"definitionId,omitempty"`
+	Name         string `json:"name"`
+	Description  string `json:"description,omitempty"`
+	Category     string `json:"category,omitempty"`
+	Kind         string `json:"kind"`
+	Visibility   string `json:"visibility,omitempty"`
+	Status       string `json:"status,omitempty"`
+	Editable     bool   `json:"editable,omitempty"`
+	Format       string `json:"defaultFormat,omitempty"`
+	// Takes names the parameters this report needs, and nothing more. A
+	// listing is for choosing a report; describe_report is for filling one
+	// in, and it already returns each parameter's shape and allowed values.
+	// Carrying all of that here cost the catalog four times its size and
+	// pushed the result past the point where it was cut off mid-record —
+	// which left the model choosing from a list it had been told not to
+	// trust.
+	Takes []string `json:"takes,omitempty"`
 }
 
 type listReportsTool struct {
@@ -81,13 +88,14 @@ func newListReportsTool(reports reportRunner) serviceports.AgentQueryTool {
 func (t *listReportsTool) Name() string { return "list_reports" }
 
 func (t *listReportsTool) Description() string {
-	return "List the reports this organization can run, with the parameters each one " +
-		"takes: the built-in catalog (each with a reportKey) and the reports people " +
-		"here have saved in the report builder (each with a definitionId). Call this " +
-		"before run_report so you name a real report and supply the parameters it " +
-		"needs, rather than guessing. Narrow with category when the question is " +
-		"clearly about one area, such as Accounting or Fleet. A saved report marked " +
-		"editable is one you may adjust with update_report."
+	return "List the reports this organization can run, naming what each one takes: " +
+		"the built-in catalog (each with a reportKey) and the reports people here " +
+		"have saved in the report builder (each with a definitionId). Call this " +
+		"before run_report so you name a real report rather than guessing, then " +
+		"describe_report for the one you picked to see each parameter's shape and " +
+		"allowed values. Narrow with category when the question is clearly about one " +
+		"area, such as Accounting or Fleet. A saved report marked editable is one you " +
+		"may adjust with update_report."
 }
 
 func (t *listReportsTool) ParamSchema() map[string]any {
@@ -102,6 +110,13 @@ func (t *listReportsTool) ParamSchema() map[string]any {
 			"query": map[string]any{
 				"type":        "string",
 				"description": "Optional text matched against the report name and description.",
+			},
+			"limit": map[string]any{
+				"type": "integer",
+				"description": fmt.Sprintf(
+					"How many reports to return, at most %d. The count says how many matched.",
+					maxReportsListed,
+				),
 			},
 		},
 		"additionalProperties": false,
@@ -157,7 +172,32 @@ func (t *listReportsTool) Query(
 		rows = append(rows, toSavedRow(definition, params.Actor.UserID))
 	}
 
-	return criteria.result(rows, len(rows)), nil
+	matched := len(rows)
+	limit := optionalInt(params.Params, "limit", defaultReportsListed)
+	if limit <= 0 {
+		limit = defaultReportsListed
+	}
+	if limit > maxReportsListed {
+		limit = maxReportsListed
+	}
+	if len(rows) > limit {
+		rows = rows[:limit]
+	}
+
+	outcome := criteria.result(rows, matched)
+	if matched > len(rows) {
+		// The count alone reads as "this is all of them" to a model that has
+		// no other signal, and it will then answer as though the rest do not
+		// exist. Saying what was withheld, and how to reach it, is the whole
+		// difference between a narrowed list and a wrong one.
+		outcome.Note = fmt.Sprintf(
+			"Showing %d of %d matching reports. Narrow with category or query, "+
+				"or raise limit, before concluding a report does not exist.",
+			len(rows), matched,
+		)
+	}
+
+	return outcome, nil
 }
 
 // listableDefinitionStatuses are the saved reports worth naming: an active
@@ -174,6 +214,15 @@ var listableDefinitionStatuses = []report.DefinitionStatus{
 // again, so an organization with hundreds gets the newest and a hint to narrow.
 const maxSavedReportsListed = 100
 
+// defaultReportsListed and maxReportsListed bound the listing itself, which
+// the saved-report cap never did: it bounded one of the two halves while the
+// thirty-odd canned rows and the total went unbounded, and the result was
+// cut off mid-record by the tool-result guard.
+const (
+	defaultReportsListed = 25
+	maxReportsListed     = 60
+)
+
 func matchesReportText(name, description, query string) bool {
 	needle := strings.ToLower(query)
 
@@ -189,8 +238,20 @@ func toCatalogRow(entry *canned.Entry) reportCatalogRow {
 		Category:    entry.Category,
 		Kind:        "canned",
 		Format:      string(entry.DefaultFormat),
-		Parameters:  parameterRows(entry.Definition),
+		Takes:       parameterNames(entry.Definition),
 	}
+}
+
+// parameterNames is what a listing says about parameters: that they exist
+// and what they are called. describe_report carries the rest.
+func parameterNames(definition *report.Definition) []string {
+	rows := parameterRows(definition)
+	names := make([]string, 0, len(rows))
+	for _, row := range rows {
+		names = append(names, row.Name)
+	}
+
+	return names
 }
 
 func toSavedRow(definition *report.ReportDefinition, actor pulid.ID) reportCatalogRow {
@@ -204,7 +265,7 @@ func toSavedRow(definition *report.ReportDefinition, actor pulid.ID) reportCatal
 		Status:       string(definition.Status),
 		Editable:     definition.OwnerID == actor,
 		Format:       string(definition.DefaultFormat),
-		Parameters:   parameterRows(definition.Definition),
+		Takes:        parameterNames(definition.Definition),
 	}
 }
 

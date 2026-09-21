@@ -24,16 +24,68 @@ func NewOpenAIChatAdapter() Adapter { return openAIChatAdapter{} }
 func (openAIChatAdapter) Kind() aiprovider.Kind { return aiprovider.KindOpenAIChat }
 
 type chatRequest struct {
-	Model          string              `json:"model"`
-	Messages       []chatMessage       `json:"messages"`
-	MaxTokens      int                 `json:"max_completion_tokens,omitempty"`
+	Model    string        `json:"model"`
+	Messages []chatMessage `json:"messages"`
+	// MaxTokens is sent as max_tokens rather than OpenAI's newer
+	// max_completion_tokens, because this adapter never talks to OpenAI:
+	// KindOpenAIChat has no default base URL and an optional credential
+	// precisely because it is the shape every other runtime exposes, and
+	// vLLM, SGLang, NIM, llama.cpp, LM Studio, OpenRouter, Groq, Together
+	// and Fireworks all read max_tokens. Sending the OpenAI spelling meant
+	// the ceiling was quietly dropped on every one of them and the server's
+	// own default applied instead — which on a thinking model is how a
+	// reply comes back as pages of chain of thought and no answer. OpenAI's
+	// own endpoint is KindOpenAIResponses and has its own adapter.
+	MaxTokens      int                 `json:"max_tokens,omitempty"`
 	ResponseFormat *chatResponseFormat `json:"response_format,omitempty"`
 	Tools          []chatTool          `json:"tools,omitempty"`
 	Stream         bool                `json:"stream"`
 	StreamOptions  *chatStreamOptions  `json:"stream_options,omitempty"`
 	// ReasoningEffort is sent only when the provider is configured to reason;
 	// a model without reasoning rejects the parameter with a 400.
-	ReasoningEffort string `json:"reasoning_effort,omitempty"`
+	ReasoningEffort string   `json:"reasoning_effort,omitempty"`
+	Temperature     *float64 `json:"temperature,omitempty"`
+	TopP            *float64 `json:"top_p,omitempty"`
+}
+
+// reserveAnswerRoom raises the ceiling so a thinking model has somewhere
+// to put the answer.
+//
+// This adapter cannot name a thinking budget the way the Anthropic one can;
+// the server decides how long to think. So the only lever is the ceiling,
+// and a ceiling sized for an answer alone is spent entirely on the chain of
+// thought — the reply comes back with reasoning and empty content, which
+// reads as a broken endpoint rather than as a budget that was too small.
+func (r *chatRequest) reserveAnswerRoom(call *Call) {
+	if call.reasoning() == aiprovider.ReasoningOff {
+		return
+	}
+	if floor := thinkingFloor + thinkingAnswerRoom; r.MaxTokens < floor {
+		r.MaxTokens = floor
+	}
+}
+
+// thinkingFloor is the room a chain of thought is assumed to want when the
+// endpoint will not say. It is deliberately generous: overshooting costs
+// nothing on a reply that finishes early, while undershooting costs the
+// whole answer.
+const thinkingFloor = 8192
+
+// applySampling sets the sampling this task calls for, unless the provider
+// has stated its own. A value in the provider's extra fields is a
+// deliberate choice about a particular endpoint and outranks a default
+// chosen for a class of work; everywhere else the default fills the gap
+// the endpoint would otherwise fill with temperature 1 and no cutoff.
+func (r *chatRequest) applySampling(call *Call) {
+	sampling := call.Request.Sampling
+	extra := call.Provider.ExtraBody
+
+	if _, stated := extra["temperature"]; !stated {
+		r.Temperature = sampling.Temperature
+	}
+	if _, stated := extra["top_p"]; !stated {
+		r.TopP = sampling.TopP
+	}
 }
 
 // chatStreamOptions asks for a final usage chunk. Without it a streamed reply
@@ -122,6 +174,8 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 	}
 	body.ResponseFormat = chatResponseFormatFor(call)
 	body.ReasoningEffort = call.reasoning().Wire()
+	body.applySampling(call)
+	body.reserveAnswerRoom(call)
 
 	payload, err := mergeExtraBody(body, call.Provider)
 	if err != nil {
@@ -142,6 +196,7 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 	}
 
 	text, toolCalls, refused, truncated := firstChatResult(&envelope)
+	text, reasoning := mergeInlineThinking(text, firstChatReasoning(&envelope))
 
 	return &Response{
 		Text:            text,
@@ -151,7 +206,7 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 		OutputTokens:    envelope.Usage.CompletionTokens,
 		Refused:         refused,
 		Truncated:       truncated,
-		Reasoning:       firstChatReasoning(&envelope),
+		Reasoning:       reasoning,
 		ReasoningTokens: envelope.Usage.CompletionTokensDetails.ReasoningTokens,
 	}, nil
 }
@@ -215,6 +270,8 @@ func (a openAIChatAdapter) Stream(
 	}
 	body.ResponseFormat = chatResponseFormatFor(call)
 	body.ReasoningEffort = call.reasoning().Wire()
+	body.applySampling(call)
+	body.reserveAnswerRoom(call)
 
 	payload, err := mergeExtraBody(body, call.Provider)
 	if err != nil {
@@ -321,15 +378,22 @@ func (a openAIChatAdapter) Stream(
 		toolCalls = nil
 	}
 
+	// The inline block is lifted after the stream rather than during it.
+	// A tag arrives split across deltas, so deciding mid-stream would mean
+	// buffering until a close tag that may never come; the person watching
+	// sees the thinking appear and then settle into the answer, which is
+	// what a reasoning model looks like anyway.
+	reply, reasoning := mergeInlineThinking(text.String(), textReasoning(thinking.String()))
+
 	return &Response{
-		Text:            text.String(),
+		Text:            reply,
 		ToolCalls:       toolCalls,
 		ModelIdentifier: stringutils.FirstNonEmpty(model, call.Provider.Model),
 		InputTokens:     usage.PromptTokens,
 		OutputTokens:    usage.CompletionTokens,
 		Refused:         refused,
 		Truncated:       truncated,
-		Reasoning:       textReasoning(thinking.String()),
+		Reasoning:       reasoning,
 		ReasoningTokens: usage.CompletionTokensDetails.ReasoningTokens,
 	}, nil
 }

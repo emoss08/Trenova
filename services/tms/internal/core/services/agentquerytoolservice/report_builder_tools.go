@@ -351,9 +351,24 @@ type datasetDescription struct {
 	Category    string            `json:"category,omitempty"`
 	Fields      []datasetFieldRow `json:"fields"`
 	FieldCount  int               `json:"fieldCount"`
-	Edges       []datasetEdgeRow  `json:"edges,omitempty"`
-	Note        string            `json:"note"`
+	// Shown is how many of them this result carries. It differs from
+	// FieldCount when the dataset is wider than one result can hold, and
+	// the note then says how to reach the rest.
+	Shown int              `json:"shownFieldCount"`
+	Edges []datasetEdgeRow `json:"edges,omitempty"`
+	Note  string           `json:"note"`
 }
+
+// maxDatasetFieldsDescribed bounds one description.
+//
+// The widest datasets carry eighty fields, each with its label, its
+// description, its aggregations and, for an enum, every value it takes.
+// Emitting all of them with every edge's target fields inlined ran past
+// the tool-result ceiling, and the result came back cut off mid-record —
+// so the model was left choosing fields from a list it had been told not
+// to trust. A bounded answer with a note is worth more than a complete
+// one that is discarded.
+const maxDatasetFieldsDescribed = 40
 
 type describeReportDatasetTool struct {
 	access catalogAccess
@@ -456,6 +471,27 @@ func (t *describeReportDatasetTool) Query(
 		})
 	}
 
+	matched := len(fields)
+	withheld := 0
+	if len(fields) > maxDatasetFieldsDescribed {
+		withheld = len(fields) - maxDatasetFieldsDescribed
+		fields = fields[:maxDatasetFieldsDescribed]
+	}
+
+	note := "Refer to a field of this dataset as {\"field\": \"<key>\"} and to a field " +
+		"of a related dataset as {\"path\": [\"<edge>\"], \"field\": \"<key>\"}, " +
+		"using only the keys each edge's targetFields lists; an edge two steps " +
+		"away needs describe_report_dataset on the first target. A measure " +
+		"column needs an agg the field lists; a dimension column groups the " +
+		"rows. A field marked accessible: false cannot be used by this person."
+	if withheld > 0 {
+		note += fmt.Sprintf(
+			" Showing %d of %d matching fields; call this again with query to reach "+
+				"the other %d rather than assuming they do not exist.",
+			len(fields), matched, withheld,
+		)
+	}
+
 	return datasetDescription{
 		Dataset:     entity.Key,
 		Label:       entity.Label,
@@ -463,13 +499,9 @@ func (t *describeReportDatasetTool) Query(
 		Category:    entity.Category,
 		Fields:      fields,
 		FieldCount:  len(entity.Fields),
+		Shown:       len(fields),
 		Edges:       edgeRows(entity, true),
-		Note: "Refer to a field of this dataset as {\"field\": \"<key>\"} and to a field " +
-			"of a related dataset as {\"path\": [\"<edge>\"], \"field\": \"<key>\"}, " +
-			"using only the keys each edge's targetFields lists; an edge two steps " +
-			"away needs describe_report_dataset on the first target. A measure " +
-			"column needs an agg the field lists; a dimension column groups the " +
-			"rows. A field marked accessible: false cannot be used by this person.",
+		Note:        note,
 	}, nil
 }
 

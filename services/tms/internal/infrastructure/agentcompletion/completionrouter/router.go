@@ -355,6 +355,7 @@ func (s *Service) callFor(
 			OutputSchema: req.Schema,
 			SchemaName:   req.SchemaName,
 			MaxTokens:    maxTokens,
+			Sampling:     modeladapter.SamplingForTask(req.Task),
 		},
 	}
 }

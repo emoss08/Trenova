@@ -214,6 +214,10 @@ func (s *Service) attemptChat(
 			Messages:  req.Messages,
 			Tools:     req.Tools,
 			MaxTokens: maxTokens,
+			// A chat turn drives tools, so it is sampled for exactness: the
+			// model has to name a tool that exists and fill its arguments
+			// with JSON that parses, and invention there is only ever a bug.
+			Sampling: modeladapter.SamplingForTask(aiprovider.TaskAssistantChat),
 		},
 	}
 
