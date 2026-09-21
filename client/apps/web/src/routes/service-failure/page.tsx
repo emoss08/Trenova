@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
 import { useSearchParams } from "react-router";
 
@@ -13,16 +13,15 @@ export function ServiceFailuresPage() {
   const shipmentId = searchParams.get("shipmentId") ?? undefined;
 
   return (
-    <div className="flex h-full flex-col">
-      <PageHeader
-        title={t("Service Failures")}
-        description={t("Review unresolved pickup and delivery service failures")}
-      />
-      <div className="p-4">
-        <DataTableLazyComponent>
-          <Table shipmentId={shipmentId} />
-        </DataTableLazyComponent>
-      </div>
-    </div>
+    <PageLayout
+      pageHeaderProps={{
+        title: t("Service Failures"),
+        description: t("Review unresolved pickup and delivery service failures"),
+      }}
+    >
+      <DataTableLazyComponent>
+        <Table shipmentId={shipmentId} />
+      </DataTableLazyComponent>
+    </PageLayout>
   );
 }

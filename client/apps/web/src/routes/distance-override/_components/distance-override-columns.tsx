@@ -13,7 +13,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DistanceOverrideRow>[] {
       cell: ({ row }) => {
         const { originLocation } = row.original;
         if (!originLocation) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return (
@@ -48,7 +48,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DistanceOverrideRow>[] {
       cell: ({ row }) => {
         const { destinationLocation } = row.original;
         if (!destinationLocation) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return (
@@ -100,7 +100,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DistanceOverrideRow>[] {
         const { customer } = row.original;
 
         if (!customer) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return (

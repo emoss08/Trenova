@@ -132,13 +132,14 @@ export function HolidayDialog({
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
               event.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(event);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               <FormControl cols="full">
                 <InputField<OrgHolidayFormValues>
                   control={control}

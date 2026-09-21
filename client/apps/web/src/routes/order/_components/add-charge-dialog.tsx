@@ -141,7 +141,7 @@ export function AddChargeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{isEditing ? t("Edit Charge") : t("Add Charge")}</DialogTitle>
           <DialogDescription>
@@ -151,7 +151,7 @@ export function AddChargeDialog({
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
-          <FormGroup cols={1} className="pb-4">
+          <FormGroup cols={1}>
             <FormControl>
               <InputField
                 control={form.control}

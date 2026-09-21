@@ -16,9 +16,7 @@ export function AccountingControlPage() {
       }}
     >
       <Suspense fallback={<PageSkeleton />}>
-        <div className="p-4">
-          <AccountingControlForm />
-        </div>
+        <AccountingControlForm />
       </Suspense>
     </PageLayout>
   );

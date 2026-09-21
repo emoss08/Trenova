@@ -96,7 +96,7 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Arrange cover")}</DialogTitle>
           <DialogDescription>
@@ -107,13 +107,14 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               <FormControl cols="full">
                 <UserAutocompleteField<DelegationFormValues>
                   control={control}

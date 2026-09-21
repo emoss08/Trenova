@@ -16,9 +16,7 @@ export function DistanceControlsPage() {
       }}
     >
       <Suspense fallback={<PageSkeleton />}>
-        <div className="p-4">
-          <DistanceControlForm />
-        </div>
+        <DistanceControlForm />
       </Suspense>
     </PageLayout>
   );

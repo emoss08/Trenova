@@ -5,6 +5,7 @@ import {
   type DeskSummary,
 } from "@trenova/shared/lib/detention";
 import { pluralize } from "@trenova/shared/lib/utils";
+import { KpiStrip } from "@/components/kpi/kpi-strip";
 import { DeskMetric } from "./desk-metric";
 import { DeskMoney } from "./desk-money";
 
@@ -14,15 +15,15 @@ type DeskSummaryRailProps = {
 };
 
 /**
- * What the floor is worth and how long it has been sitting. Four numbers, no
- * boxes — the money reads as money because nothing around it is competing for
- * the same attention.
+ * What the floor is worth and how long it has been sitting. Four numbers in one
+ * joined strip — the money reads as money because nothing around it is
+ * competing for the same attention.
  */
 export function DeskSummaryRail({ summary, floor }: DeskSummaryRailProps) {
   const t = useT();
 
   return (
-    <dl className="sm:divide-border grid grid-cols-2 gap-x-6 gap-y-6 border-b p-4 pb-4 sm:grid-cols-4 sm:gap-y-0 sm:divide-x">
+    <KpiStrip>
       <DeskMetric
         label={t("Collectable now")}
         value={<DeskMoney value={summary.amountAtRisk} />}
@@ -33,7 +34,6 @@ export function DeskSummaryRail({ summary, floor }: DeskSummaryRailProps) {
                 floor.averageOnSiteMinutes,
               )} on site`
         }
-        className="sm:pr-6"
       />
       <DeskMetric
         label={t("Notice window")}
@@ -41,20 +41,17 @@ export function DeskSummaryRail({ summary, floor }: DeskSummaryRailProps) {
         sub={
           summary.noticesDue > 0 ? "Must go out before the deadline" : "The notice queue is clear"
         }
-        className="sm:px-6"
       />
       <DeskMetric
         label={t("Uncollectable")}
         value={<DeskMoney value={summary.amountLost} precise={false} />}
         sub={`${summary.lost} ${pluralize("stop", summary.lost)} past the notice deadline`}
-        className="sm:px-6"
       />
       <DeskMetric
         label={t("Longest wait")}
         value={formatDetentionMinutes(floor.longestOnSiteMinutes)}
         sub={floor.longestLocationName || "Nothing on a dock"}
-        className="sm:pl-6"
       />
-    </dl>
+    </KpiStrip>
   );
 }

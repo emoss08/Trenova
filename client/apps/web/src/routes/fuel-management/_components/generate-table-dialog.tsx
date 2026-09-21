@@ -113,7 +113,7 @@ function WizardField({
         className={cn(
           "border-input bg-muted flex h-8 w-full rounded-md border px-2.5 text-sm tabular-nums outline-none",
           "transition-[border-color,box-shadow] duration-150 ease-in-out",
-"ui-focus-ring focus-visible:bg-background",
+          "ui-focus-ring focus-visible:bg-background",
           invalid && "border-danger/60 bg-danger/10",
         )}
       />
@@ -181,7 +181,7 @@ export function GenerateTableDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent size="xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AssistMark className="size-4" />
@@ -316,7 +316,7 @@ export function GenerateTableDialog({
           </div>
         </div>
 
-        <DialogFooter className="items-center gap-3 sm:justify-between">
+        <DialogFooter className="sm:items-center sm:justify-between">
           <span className="text-muted-foreground text-xs">
             {replaceCount > 0
               ? t(
@@ -326,7 +326,7 @@ export function GenerateTableDialog({
                 )
               : ""}
           </span>
-          <div className="flex gap-2">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t("Cancel")}
             </Button>

@@ -28,20 +28,18 @@ function Section({
   title,
   to,
   toLabel,
-  delay,
   children,
 }: {
   title: string;
   to?: string;
   toLabel?: string;
-  delay: number;
   children: React.ReactNode;
 }) {
   return (
     <m.section
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22, ease: "easeOut", delay }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
       className="flex flex-col gap-3"
     >
       <div className="flex items-center justify-between">
@@ -98,7 +96,7 @@ export function DashHomePage() {
       <m.section
         initial={{ opacity: 0, y: 10, scale: 0.99 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.25, ease: "easeOut", delay: 0.04 }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
         className="relative overflow-hidden rounded-2xl border border-border bg-sunken p-5 text-foreground-subtle"
       >
         <p className="text-xs font-medium text-foreground-subtle">
@@ -118,7 +116,7 @@ export function DashHomePage() {
               <span className="rounded-full bg-surface-active/80 px-2.5 py-1 text-xs text-foreground-subtle">
                 {formatRange(period.data.periodStart, period.data.periodEnd)}
               </span>
-              <span className="rounded-full bg-accent-teal/15 px-2.5 py-1 text-xs font-medium text-accent-teal-on-subtle">
+              <span className="rounded-full bg-info-subtle px-2.5 py-1 text-xs font-medium text-info-subtle-foreground">
                 {Math.max(0, daysUntil(period.data.payDate)) === 0
                   ? t("Settles today")
                   : t("Settles in {0}d", Math.max(0, daysUntil(period.data.payDate)))}
@@ -133,7 +131,7 @@ export function DashHomePage() {
       </m.section>
 
       {hos.data ? (
-        <Section title={t("Hours of service")} to="/dash/hos" toLabel="Open" delay={0.06}>
+        <Section title={t("Hours of service")} to="/dash/hos" toLabel="Open">
           <Link
             to="/dash/hos"
             className="grid grid-cols-2 gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:bg-muted/40"
@@ -158,7 +156,7 @@ export function DashHomePage() {
         </Section>
       ) : null}
 
-      <Section title={t("Current load")} to="/dash/loads" toLabel="All loads" delay={0.08}>
+      <Section title={t("Current load")} to="/dash/loads" toLabel="All loads">
         {loads.isPending ? (
           <Skeleton className="h-36 w-full rounded-2xl" />
         ) : currentLoad ? (
@@ -170,7 +168,7 @@ export function DashHomePage() {
         )}
       </Section>
 
-      <Section title={t("Recent pay activity")} to="/dash/pay" toLabel="Settlements" delay={0.12}>
+      <Section title={t("Recent pay activity")} to="/dash/pay" toLabel="Settlements">
         {events.isPending ? (
           <Skeleton className="h-28 w-full rounded-2xl" />
         ) : events.data && events.data.length > 0 ? (

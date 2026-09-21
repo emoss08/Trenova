@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { BankReceipt, BankReceiptStatus, MatchSuggestion } from "@/types/bank-receipt";
@@ -121,29 +122,36 @@ export function BankReceiptPage() {
         title: t("Bank Receipt Reconciliation"),
         description: t("Match imported bank receipts to customer payments and resolve exceptions."),
       }}
-      className="p-0"
       toolbar={
-        <div className="mx-4 mt-3 grid gap-2.5 md:grid-cols-4">
-          <SummaryCard
+        <KpiStrip aria-label={t("Reconciliation totals")}>
+          <KpiStripItem
             label={t("Imported")}
             value={String(summaryQuery.data?.importedCount ?? 0)}
-            amount={summaryQuery.data?.importedAmount}
+            sub={
+              summaryQuery.data ? formatCurrency(summaryQuery.data.importedAmount / 100) : undefined
+            }
           />
-          <SummaryCard
+          <KpiStripItem
             label={t("Matched")}
             value={String(summaryQuery.data?.matchedCount ?? 0)}
-            amount={summaryQuery.data?.matchedAmount}
+            sub={
+              summaryQuery.data ? formatCurrency(summaryQuery.data.matchedAmount / 100) : undefined
+            }
           />
-          <SummaryCard
+          <KpiStripItem
             label={t("Exceptions")}
             value={String(summaryQuery.data?.exceptionCount ?? 0)}
-            amount={summaryQuery.data?.exceptionAmount}
+            sub={
+              summaryQuery.data
+                ? formatCurrency(summaryQuery.data.exceptionAmount / 100)
+                : undefined
+            }
           />
-          <SummaryCard
-            label={t("Active Work Items")}
+          <KpiStripItem
+            label={t("Active work items")}
             value={String(summaryQuery.data?.activeWorkItemCount ?? 0)}
           />
-        </div>
+        </KpiStrip>
       }
       sidebar={
         <div className="flex h-full flex-col">
@@ -342,9 +350,7 @@ function ReceiptDetail({
                 <TriangleAlertIcon className="size-3.5 text-danger-foreground" />
                 <SectionLabel>{t("Exception Reason")}</SectionLabel>
               </div>
-              <p className="mt-1.5 text-xs text-danger-foreground">
-                {receipt.exceptionReason}
-              </p>
+              <p className="mt-1.5 text-xs text-danger-foreground">{receipt.exceptionReason}</p>
             </div>
           ) : null}
 
@@ -473,22 +479,6 @@ function ScoreBadge({ score }: { score: number }) {
     <Badge variant={variant} className="tabular-nums">
       {score}%
     </Badge>
-  );
-}
-
-function SummaryCard({ label, value, amount }: { label: string; value: string; amount?: number }) {
-  return (
-    <div className="bg-card rounded-lg border px-3 py-2.5">
-      <p className="text-muted-foreground text-xs font-medium">
-        {label}
-      </p>
-      <p className="mt-1 text-2xl font-semibold">{value}</p>
-      {amount !== undefined ? (
-        <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">
-          {formatCurrency(amount / 100)}
-        </p>
-      ) : null}
-    </div>
   );
 }
 

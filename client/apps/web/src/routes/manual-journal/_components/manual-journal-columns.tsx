@@ -12,7 +12,7 @@ export function getManualJournalColumns(t: TranslateFn): ColumnDef<ManualJournal
       accessorKey: "requestNumber",
       header: t("Request #"),
       cell: ({ row }) => (
-        <span className="font-mono text-xs font-medium">{row.original.requestNumber}</span>
+        <span className="font-mono font-medium">{row.original.requestNumber}</span>
       ),
       meta: {
         apiField: "requestNumber",
@@ -40,9 +40,7 @@ export function getManualJournalColumns(t: TranslateFn): ColumnDef<ManualJournal
     {
       accessorKey: "description",
       header: t("Description"),
-      cell: ({ row }) => (
-        <span className="line-clamp-1 text-xs">{t(row.original.description)}</span>
-      ),
+      cell: ({ row }) => <span className="line-clamp-1">{t(row.original.description)}</span>,
       meta: {
         apiField: "description",
         label: t("Description"),
@@ -55,9 +53,7 @@ export function getManualJournalColumns(t: TranslateFn): ColumnDef<ManualJournal
     {
       accessorKey: "accountingDate",
       header: t("Accounting Date"),
-      cell: ({ row }) => (
-        <span className="text-xs">{formatUnixDate(row.original.accountingDate)}</span>
-      ),
+      cell: ({ row }) => <span>{formatUnixDate(row.original.accountingDate)}</span>,
       meta: {
         apiField: "accountingDate",
         label: t("Accounting Date"),
@@ -68,7 +64,7 @@ export function getManualJournalColumns(t: TranslateFn): ColumnDef<ManualJournal
     {
       accessorKey: "totalDebit",
       header: t("Total Debit"),
-      cell: ({ row }) => <AmountDisplay value={row.original.totalDebit} className="text-xs" />,
+      cell: ({ row }) => <AmountDisplay value={row.original.totalDebit} />,
       meta: {
         apiField: "totalDebit",
         label: t("Total Debit"),
@@ -79,7 +75,7 @@ export function getManualJournalColumns(t: TranslateFn): ColumnDef<ManualJournal
     {
       accessorKey: "totalCredit",
       header: t("Total Credit"),
-      cell: ({ row }) => <AmountDisplay value={row.original.totalCredit} className="text-xs" />,
+      cell: ({ row }) => <AmountDisplay value={row.original.totalCredit} />,
       meta: {
         apiField: "totalCredit",
         label: t("Total Credit"),

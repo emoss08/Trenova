@@ -65,7 +65,7 @@ function ClockHero({ state }: { state: MyHosState }) {
     <m.section
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22, ease: "easeOut", delay: 0.04 }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
       className="rounded-2xl border border-border bg-card p-5"
     >
       <div className="grid grid-cols-2 gap-x-4 gap-y-6">
@@ -166,7 +166,7 @@ function RecentLogsSection({ enabled }: { enabled: boolean }) {
     <m.section
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22, ease: "easeOut", delay: 0.1 }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
       className="flex flex-col gap-3"
     >
       <h2 className="text-sm font-semibold">{t("Last 7 days")}</h2>
@@ -232,7 +232,7 @@ function ViolationsSection({ enabled }: { enabled: boolean }) {
     <m.section
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22, ease: "easeOut", delay: 0.14 }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
       className="flex flex-col gap-3"
     >
       <h2 className="text-sm font-semibold">{t("Violations (last 30 days)")}</h2>

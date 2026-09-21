@@ -38,7 +38,7 @@ export function AccessPolicyForm({
     : operations;
 
   return (
-    <>
+    <div className="flex flex-col gap-6">
       <FormSection title={t("Policy Decision")}>
         <FormGroup cols={2}>
           <FormControl cols="full">
@@ -109,7 +109,7 @@ export function AccessPolicyForm({
         </FormGroup>
       </FormSection>
       <PolicyConditionsSection />
-    </>
+    </div>
   );
 }
 
@@ -136,7 +136,6 @@ function PolicyConditionsSection() {
       title={t("Conditions")}
       titleCount={fields.length}
       description={t("Optional claim or context key/value checks persisted with the policy.")}
-      className="border-t py-2"
       action={
         <Button type="button" size="sm" variant="outline" onClick={addCondition}>
           <PlusIcon />

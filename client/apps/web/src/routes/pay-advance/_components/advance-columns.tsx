@@ -24,7 +24,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayAdvanceRow>[] {
       id: "worker",
       header: t("Driver"),
       cell: ({ row }) => (
-        <span className="text-xs font-medium">
+        <span className="font-medium">
           {row.original.worker
             ? `${row.original.worker.firstName} ${row.original.worker.lastName}`.trim()
             : "—"}
@@ -37,7 +37,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayAdvanceRow>[] {
       accessorKey: "source",
       header: t("Source"),
       cell: ({ row }) => (
-        <span className="text-xs">
+        <span>
           {payAdvanceSourceChoices.find((choice) => choice.value === row.original.source)?.label ??
             row.original.source}
         </span>
@@ -48,14 +48,14 @@ export function getColumns(t: TranslateFn): ColumnDef<PayAdvanceRow>[] {
     {
       accessorKey: "reference",
       header: t("Reference"),
-      cell: ({ row }) => <span className="font-mono text-xs">{row.original.reference || "—"}</span>,
+      cell: ({ row }) => <span className="font-mono">{row.original.reference || "—"}</span>,
       size: 140,
       meta: { apiField: "reference", label: t("Reference") },
     },
     {
       accessorKey: "issuedDate",
       header: t("Issued"),
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.issuedDate)}</span>,
+      cell: ({ row }) => <span>{formatDate(row.original.issuedDate)}</span>,
       size: 110,
       meta: { apiField: "issuedDate", label: t("Issued Date") },
     },

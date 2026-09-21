@@ -1,5 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { SectionPanel } from "@/components/section-panel";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { CarrierInvoiceMatchStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -12,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -244,15 +247,15 @@ export default function MatchingWorkspace() {
           </Link>
         </p>
       )}
-      <div className="grid gap-3 md:grid-cols-4">
-        <SummaryCard
-          label={t("Invoices Needing Attention")}
+      <KpiStrip>
+        <KpiStripItem
+          label={t("Invoices needing attention")}
           value={String(attentionInvoiceCount)}
         />
-        <SummaryCard label={t("Variance Matches")} value={String(varianceCount)} />
-        <SummaryCard label={t("Suggested Matches")} value={String(suggestedCount)} />
-        <SummaryCard label={t("Resolved")} value={String(resolvedCount)} />
-      </div>
+        <KpiStripItem label={t("Variance matches")} value={String(varianceCount)} />
+        <KpiStripItem label={t("Suggested matches")} value={String(suggestedCount)} />
+        <KpiStripItem label={t("Resolved")} value={String(resolvedCount)} />
+      </KpiStrip>
       <div className="grid h-[calc(100vh-260px)] min-h-120 gap-0 overflow-hidden rounded-lg border md:grid-cols-[340px_1fr]">
         <div className="flex h-full min-h-0 flex-col overflow-hidden border-r">
           <div className="flex flex-col gap-2 border-b p-2">
@@ -303,9 +306,7 @@ export default function MatchingWorkspace() {
                   ))}
                 </div>
                 <div className="flex flex-wrap items-center gap-1">
-                  <span className="text-muted-foreground text-xs">
-                    {t("Created")}
-                  </span>
+                  <span className="text-muted-foreground text-xs">{t("Created")}</span>
                   {matchViaFilterChips.map((chip) => (
                     <FilterChip
                       key={chip.value}
@@ -374,15 +375,6 @@ export default function MatchingWorkspace() {
           )}
         </ScrollArea>
       </div>
-    </div>
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-card rounded-lg border px-4 py-3">
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
     </div>
   );
 }
@@ -502,9 +494,7 @@ function InvoiceList({
             <span
               className={cn(
                 "inline-flex items-center gap-1",
-                invoice.carrierId
-                  ? "text-success-foreground"
-                  : "text-warning-foreground",
+                invoice.carrierId ? "text-success-foreground" : "text-warning-foreground",
               )}
             >
               <Building2Icon className="size-3" aria-hidden />
@@ -662,95 +652,92 @@ function InvoiceDetail({
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <div className="rounded-lg border">
-        <div className="border-b px-4 py-3">
-          <h3 className="text-sm font-semibold">
-            {t("Invoice {0}", invoice.invoiceNumber || invoice.id)}
-          </h3>
-          <p className="text-muted-foreground text-xs">
-            {t(
-              "EDI 210 carrier freight invoice · received {0}",
-              formatSettlementDate(invoice.createdAt),
-            )}
-          </p>
-        </div>
-        <div className="grid gap-3 p-4 md:grid-cols-2">
-          <Metric label={t("Reconciliation Status")} value={invoice.reconciliationStatus} />
-          <Metric
-            label={t("Invoice Total")}
-            value={
-              invoice.totalAmount != null
-                ? formatCurrency(Number(invoice.totalAmount), invoice.currencyCode || "USD")
-                : "—"
-            }
-          />
-          <Metric label={t("Invoice Date")} value={formatSettlementDate(invoice.invoiceDate)} />
-          <Metric label={t("Delivery Date")} value={formatSettlementDate(invoice.deliveryDate)} />
-          <Metric label={t("Pro Number")} value={invoice.proNumber || "—"} />
-          <Metric label={t("BOL")} value={invoice.bol || "—"} />
-          <Metric label={t("Shipment Reference")} value={invoice.shipmentReference || "—"} />
-          <Metric label={t("Bill To")} value={invoice.billToName || "—"} />
+      <SectionPanel
+        title={t("Invoice {0}", invoice.invoiceNumber || invoice.id)}
+        hint={t(
+          "EDI 210 carrier freight invoice · received {0}",
+          formatSettlementDate(invoice.createdAt),
+        )}
+      >
+        <DescriptionList columns={2} className="p-3">
+          <DescriptionItem label={t("Reconciliation Status")}>
+            {invoice.reconciliationStatus}
+          </DescriptionItem>
+          <DescriptionItem label={t("Invoice Total")} numeric>
+            {invoice.totalAmount != null
+              ? formatCurrency(Number(invoice.totalAmount), invoice.currencyCode || "USD")
+              : "—"}
+          </DescriptionItem>
+          <DescriptionItem label={t("Invoice Date")}>
+            {formatSettlementDate(invoice.invoiceDate)}
+          </DescriptionItem>
+          <DescriptionItem label={t("Delivery Date")}>
+            {formatSettlementDate(invoice.deliveryDate)}
+          </DescriptionItem>
+          <DescriptionItem label={t("Pro Number")}>{invoice.proNumber || "—"}</DescriptionItem>
+          <DescriptionItem label={t("BOL")}>{invoice.bol || "—"}</DescriptionItem>
+          <DescriptionItem label={t("Shipment Reference")}>
+            {invoice.shipmentReference || "—"}
+          </DescriptionItem>
+          <DescriptionItem label={t("Bill To")}>{invoice.billToName || "—"}</DescriptionItem>
           {invoice.expectedAmount != null && (
-            <Metric
-              label={t("Expected Amount")}
-              value={formatCurrency(Number(invoice.expectedAmount), invoice.currencyCode || "USD")}
-            />
+            <DescriptionItem label={t("Expected Amount")} numeric>
+              {formatCurrency(Number(invoice.expectedAmount), invoice.currencyCode || "USD")}
+            </DescriptionItem>
           )}
           {invoice.varianceAmount != null && (
-            <Metric
-              label={t("Variance")}
-              value={formatCurrency(Number(invoice.varianceAmount), invoice.currencyCode || "USD")}
-            />
+            <DescriptionItem label={t("Variance")} numeric>
+              {formatCurrency(Number(invoice.varianceAmount), invoice.currencyCode || "USD")}
+            </DescriptionItem>
           )}
-        </div>
-      </div>
+        </DescriptionList>
+      </SectionPanel>
 
-      <div className="rounded-lg border p-4">
-        <h4 className="text-muted-foreground mb-1 text-xs font-semibold">
-          {t("Carrier Link")}
-        </h4>
-        <p className="text-muted-foreground mb-2 text-xs">
-          {invoice.carrierId
-            ? t(
-                "This invoice is linked to a carrier in the master and can be matched against its assignments.",
-              )
-            : t(
-                "Link the invoice to a carrier in the master before creating a match — suggest looks it up by SCAC and DOT number.",
-              )}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {!invoice.carrierId && (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={suggestMutation.isPending}
-                onClick={() => suggestMutation.mutate()}
-              >
-                <AssistMark className="size-3.5" />
-                {t("Suggest Carrier")}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setLinkOpen(true)}>
-                <LinkIcon className="size-3.5" />
-                {t("Link Carrier")}
-              </Button>
-            </>
-          )}
-          <Button
-            size="sm"
-            disabled={!invoice.carrierId || createMatchMutation.isPending}
-            title={
-              invoice.carrierId
-                ? "Pair this invoice with the carrier assignment resolved by pro number or shipment reference"
-                : "Link a carrier first"
-            }
-            onClick={() => createMatchMutation.mutate()}
-          >
-            <FileTextIcon className="size-3.5" />
-            {t("Create Match")}
-          </Button>
+      <SectionPanel title={t("Carrier Link")}>
+        <div className="p-3">
+          <p className="text-muted-foreground mb-2 text-xs">
+            {invoice.carrierId
+              ? t(
+                  "This invoice is linked to a carrier in the master and can be matched against its assignments.",
+                )
+              : t(
+                  "Link the invoice to a carrier in the master before creating a match — suggest looks it up by SCAC and DOT number.",
+                )}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {!invoice.carrierId && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={suggestMutation.isPending}
+                  onClick={() => suggestMutation.mutate()}
+                >
+                  <AssistMark className="size-3.5" />
+                  {t("Suggest Carrier")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setLinkOpen(true)}>
+                  <LinkIcon className="size-3.5" />
+                  {t("Link Carrier")}
+                </Button>
+              </>
+            )}
+            <Button
+              size="sm"
+              disabled={!invoice.carrierId || createMatchMutation.isPending}
+              title={
+                invoice.carrierId
+                  ? "Pair this invoice with the carrier assignment resolved by pro number or shipment reference"
+                  : "Link a carrier first"
+              }
+              onClick={() => createMatchMutation.mutate()}
+            >
+              <FileTextIcon className="size-3.5" />
+              {t("Create Match")}
+            </Button>
+          </div>
         </div>
-      </div>
+      </SectionPanel>
 
       <LinkCarrierDialog
         open={linkOpen}
@@ -763,15 +750,6 @@ function InvoiceDetail({
         }}
         onLinked={onChanged}
       />
-    </div>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-background rounded-lg border px-3 py-2">
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <p className="mt-1 text-sm font-medium">{value}</p>
     </div>
   );
 }
@@ -829,13 +807,8 @@ function MatchDetail({
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <div className="rounded-lg border">
-          <div className="bg-muted/30 border-b px-4 py-2">
-            <h4 className="text-muted-foreground text-xs font-semibold">
-              {t("Carrier Invoice")}
-            </h4>
-          </div>
-          <div className="flex flex-col gap-2 p-4 text-xs">
+        <SectionPanel title={t("Carrier Invoice")}>
+          <div className="flex flex-col gap-2 p-3 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t("Invoice number")}</span>
               <span className="font-mono font-medium">{match.invoiceNumber || "—"}</span>
@@ -853,15 +826,10 @@ function MatchDetail({
               </span>
             </div>
           </div>
-        </div>
+        </SectionPanel>
 
-        <div className="rounded-lg border">
-          <div className="bg-muted/30 border-b px-4 py-2">
-            <h4 className="text-muted-foreground text-xs font-semibold">
-              {t("Negotiated Buy Rate")}
-            </h4>
-          </div>
-          <div className="flex flex-col gap-2 p-4 text-xs">
+        <SectionPanel title={t("Negotiated Buy Rate")}>
+          <div className="flex flex-col gap-2 p-3 text-xs">
             {assignment ? (
               <>
                 <div className="flex justify-between">
@@ -911,7 +879,7 @@ function MatchDetail({
               </p>
             )}
           </div>
-        </div>
+        </SectionPanel>
       </div>
 
       <div

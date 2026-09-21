@@ -5,7 +5,7 @@ import { PCMilerIntegrationForm } from "./pcmiler-integration-form";
 export function PCMilerIntegrationModal({ open, onOpenChange }: TableSheetProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <PCMilerIntegrationForm open={open} onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>

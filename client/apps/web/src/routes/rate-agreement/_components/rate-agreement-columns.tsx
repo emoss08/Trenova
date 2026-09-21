@@ -53,7 +53,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RateAgreementRow>[] {
     {
       accessorKey: "code",
       header: t("Code"),
-      cell: ({ row }) => <span className="font-mono text-xs">{row.original.code}</span>,
+      cell: ({ row }) => <span className="font-mono">{row.original.code}</span>,
       size: 140,
       minSize: 120,
       maxSize: 180,

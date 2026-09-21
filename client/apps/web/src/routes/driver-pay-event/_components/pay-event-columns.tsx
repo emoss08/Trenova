@@ -151,7 +151,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverPayEventRow>[] {
       id: "worker",
       header: t("Driver"),
       cell: ({ row }) => (
-        <span className="text-xs font-medium">
+        <span className="font-medium">
           {row.original.worker
             ? `${row.original.worker.firstName} ${row.original.worker.lastName}`.trim()
             : "—"}
@@ -162,14 +162,14 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverPayEventRow>[] {
     {
       accessorKey: "proNumber",
       header: t("Pro #"),
-      cell: ({ row }) => <span className="font-mono text-xs">{row.original.proNumber || "—"}</span>,
+      cell: ({ row }) => <span className="font-mono">{row.original.proNumber || "—"}</span>,
       size: 140,
       meta: { apiField: "proNumber" },
     },
     {
       accessorKey: "eventDate",
       header: t("Earned"),
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.eventDate)}</span>,
+      cell: ({ row }) => <span>{formatDate(row.original.eventDate)}</span>,
       size: 110,
       meta: { apiField: "eventDate" },
     },
@@ -177,7 +177,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverPayEventRow>[] {
       accessorKey: "totalMiles",
       header: () => <div className="text-right">{t("Miles")}</div>,
       cell: ({ row }) => (
-        <div className="text-right text-xs tabular-nums">
+        <div className="text-right tabular-nums">
           {Number(row.original.totalMiles).toLocaleString()}
         </div>
       ),

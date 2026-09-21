@@ -48,7 +48,7 @@ export function TransportProfileFields({
   if (method === "AS2") {
     return (
       <>
-        <FormSection title={t("AS2 Identifiers")} className="bg-muted/20 rounded-md border p-3">
+        <FormSection title={t("AS2 Identifiers")}>
           <FormGroup cols={2}>
             <FormControl>
               <InputField
@@ -86,7 +86,7 @@ export function TransportProfileFields({
             </FormControl>
           </FormGroup>
         </FormSection>
-        <FormSection title={t("Security and MDN")} className="bg-muted/20 rounded-md border p-3">
+        <FormSection title={t("Security and MDN")}>
           <FormGroup cols={2}>
             <FormControl>
               <SelectField
@@ -171,7 +171,7 @@ export function TransportProfileFields({
             </FormControl>
           </FormGroup>
         </FormSection>
-        <FormSection title={t("Certificates")} className="bg-muted/20 rounded-md border p-3">
+        <FormSection title={t("Certificates")}>
           <FormGroup cols={1}>
             <FormControl cols="full">
               <EDICertificateField
@@ -224,7 +224,7 @@ export function TransportProfileFields({
 
   return (
     <>
-      <FormSection title={t("VAN Mailbox")} className="bg-muted/20 rounded-md border p-3">
+      <FormSection title={t("VAN Mailbox")}>
         <FormGroup cols={2}>
           <FormControl>
             <InputField
@@ -558,10 +558,10 @@ export function SecretProfileFields({
   const secretState = profile ? profile.secretState : null;
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-6">
       {secretState && secretState.length > 0 && (
-        <div className="bg-muted/20 rounded-md border p-3">
-          <div className="mb-2 text-sm font-medium">{t("Saved Secrets")}</div>
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-semibold">{t("Saved Secrets")}</h3>
           <div className="flex flex-wrap gap-1.5">
             {secretState.map((secret) => (
               <Badge key={secret.key} variant="neutral">

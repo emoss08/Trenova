@@ -69,7 +69,7 @@ export function ChargeSplitDialog({
         if (!next) handleCancel();
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>

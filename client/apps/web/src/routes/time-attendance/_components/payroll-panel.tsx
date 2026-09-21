@@ -1,6 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { KpiStat } from "@/components/kpi/kpi-stat";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { usePermission } from "@/hooks/use-permission";
 import {
   fetchPayrollExportRows,
@@ -23,14 +23,11 @@ import { buildPayrollCsv, formatHours } from "@trenova/shared/lib/timesheet";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
-  BanknoteIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ClipboardCheckIcon,
   DownloadIcon,
   FileSpreadsheetIcon,
   PlayIcon,
-  TimerIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -122,35 +119,32 @@ export function PayrollPanel() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-6 gap-3">
-        <KpiStat
+      <KpiStrip>
+        <KpiStripItem
           label={t("Ready to run")}
           value={String(readySheets.length)}
           tone={readySheets.length > 0 ? "success" : "muted"}
-          icon={<ClipboardCheckIcon className="size-[11px]" />}
           sub={
             readySheets.length > 0
               ? `${readySummary.workers} ${readySummary.workers === 1 ? "person" : "people"} in the period`
               : "Approved weeks in the period not yet sent"
           }
         />
-        <KpiStat
+        <KpiStripItem
           label={t("Hours in the run")}
           value={formatHours(readySummary.totalMinutes)}
-          icon={<TimerIcon className="size-[11px]" />}
           sub={
             readySummary.overtimeMinutes > 0
               ? `${formatHours(readySummary.overtimeMinutes)} of it overtime, on ${readySummary.overtimeWeeks} week${readySummary.overtimeWeeks === 1 ? "" : "s"}`
               : "Regular, overtime and paid leave together"
           }
         />
-        <KpiStat
+        <KpiStripItem
           label={t("Runs sent")}
           value={String(live.length)}
-          icon={<BanknoteIcon className="size-[11px]" />}
           sub={runs.length > live.length ? `${runs.length - live.length} voided` : "None voided"}
         />
-      </div>
+      </KpiStrip>
 
       <section
         aria-labelledby="run-payroll-heading"

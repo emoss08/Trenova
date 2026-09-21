@@ -17,24 +17,22 @@ export function TableChangeAlertPage() {
         description: t("Monitor and review system activity across your organization"),
       }}
     >
-      <div className="px-4">
-        <Tabs defaultValue="subscriptions">
-          <TabsList variant="underline">
-            <TabsTab value="subscriptions">{t("Subscriptions")}</TabsTab>
-            <TabsTab value="notifications">{t("Notifications")}</TabsTab>
-          </TabsList>
-          <TabsPanel value="subscriptions">
-            <DataTableLazyComponent>
-              <SubscriptionTable />
-            </DataTableLazyComponent>
-          </TabsPanel>
-          <TabsPanel value="notifications">
-            <Suspense>
-              <NotificationList />
-            </Suspense>
-          </TabsPanel>
-        </Tabs>
-      </div>
+      <Tabs defaultValue="subscriptions">
+        <TabsList variant="underline">
+          <TabsTab value="subscriptions">{t("Subscriptions")}</TabsTab>
+          <TabsTab value="notifications">{t("Notifications")}</TabsTab>
+        </TabsList>
+        <TabsPanel value="subscriptions">
+          <DataTableLazyComponent>
+            <SubscriptionTable />
+          </DataTableLazyComponent>
+        </TabsPanel>
+        <TabsPanel value="notifications">
+          <Suspense>
+            <NotificationList />
+          </Suspense>
+        </TabsPanel>
+      </Tabs>
     </PageLayout>
   );
 }

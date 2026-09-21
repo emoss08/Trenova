@@ -84,6 +84,7 @@ export function CredentialArchiveDialog({
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
               event.stopPropagation();
@@ -104,7 +105,7 @@ export function CredentialArchiveDialog({
                 />
               </FormControl>
             </FormGroup>
-            <DialogFooter className="mt-4">
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 {t("Cancel")}
               </Button>

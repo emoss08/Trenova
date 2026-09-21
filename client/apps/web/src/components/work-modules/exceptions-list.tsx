@@ -4,7 +4,13 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { AlertTriangleIcon, ClockIcon, FileWarningIcon, type LucideIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CheckIcon,
+  ClockIcon,
+  FileWarningIcon,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useExceptionShipments } from "./use-work-queues";
 
@@ -135,8 +141,9 @@ export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: Exc
         </div>
       )}
       {!isLoading && visible.length === 0 && (
-        <p className="text-muted-foreground px-2 py-4 text-center text-2xs">
-          {t("All clear ✓")}
+        <p className="text-muted-foreground flex items-center justify-center gap-1 px-2 py-4 text-2xs">
+          {t("All clear")}
+          <CheckIcon className="size-3" aria-hidden />
         </p>
       )}
       {visible.map((it, i) => {

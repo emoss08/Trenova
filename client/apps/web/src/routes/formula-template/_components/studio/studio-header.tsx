@@ -231,7 +231,7 @@ export function StudioHeader({
               <button
                 type="button"
                 onClick={onLineage}
-                className="flex items-center gap-1 rounded-sm border border-warning/50 bg-warning/15 px-1.5 py-0.5 text-xs text-warning-foreground"
+                className="flex items-center gap-1 rounded-md border border-warning-border bg-warning-subtle px-1.5 py-0.5 text-xs text-warning-subtle-foreground"
               >
                 <GitBranchIcon className="size-3" />
                 {t("Forked from v{0}", template.sourceVersionNumber)}

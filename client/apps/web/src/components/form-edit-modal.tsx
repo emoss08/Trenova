@@ -39,6 +39,7 @@ type FormEditModalProps<T extends FieldValues> = EditTableSheetProps<T> & {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   className?: string;
+  size?: React.ComponentProps<typeof DialogContent>["size"];
   fieldKey?: keyof T;
   titleComponent?: (currentRecord: T) => React.ReactNode;
   transformValues?: (values: T, currentRecord: T) => unknown;
@@ -56,6 +57,7 @@ export function FormEditModal<T extends FieldValues>({
   fieldKey,
   form,
   className,
+  size,
   titleComponent,
   transformValues,
   onSuccess,
@@ -328,7 +330,7 @@ export function FormEditModal<T extends FieldValues>({
         handleClose();
       }}
     >
-      <DialogContent showCloseButton={false} className={cn("max-w-[450px]", className)}>
+      <DialogContent showCloseButton={false} size={size} className={className}>
         <DialogHeader>
           <div className="flex items-center justify-between gap-2">
             <div className="flex flex-col">
@@ -428,7 +430,7 @@ export function FormEditModal<T extends FieldValues>({
           </div>
         </DialogHeader>
         <FormProvider {...form}>
-          <Form onSubmit={handleSubmit(onSubmit)}>
+          <Form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
             <div>
               {isLoadingRecord ? (
                 <ComponentLoader message={`Loading ${title}...`} />

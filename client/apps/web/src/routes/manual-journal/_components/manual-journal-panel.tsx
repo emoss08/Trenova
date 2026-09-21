@@ -2,8 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Form } from "@trenova/shared/components/ui/form";
-import { Separator } from "@trenova/shared/components/ui/separator";
+import { Form, FormSection } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { ManualJournalRow } from "@/lib/graphql/manual-journal-table";
 import { queries } from "@/lib/queries";
@@ -220,14 +219,6 @@ function EditPanel({
         {t("Cancel")}
       </Button>
       <Button
-        type="submit"
-        form="manual-journal-edit-form"
-        isLoading={saveMutation.isPending}
-        disabled={saveMutation.isPending}
-      >
-        {t("Save Draft")}
-      </Button>
-      <Button
         type="button"
         variant="outline"
         onClick={() => submitMutation.mutate(undefined)}
@@ -236,6 +227,14 @@ function EditPanel({
       >
         <SendIcon className="mr-1.5 size-3.5" />
         {t("Submit")}
+      </Button>
+      <Button
+        type="submit"
+        form="manual-journal-edit-form"
+        isLoading={saveMutation.isPending}
+        disabled={saveMutation.isPending}
+      >
+        {t("Save Draft")}
       </Button>
     </>
   ) : (
@@ -260,7 +259,7 @@ function EditPanel({
           <div className="bg-muted h-40 w-full animate-pulse rounded" />
         </div>
       ) : journal ? (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-6">
           <FormProvider {...form}>
             <Form
               id="manual-journal-edit-form"
@@ -271,66 +270,60 @@ function EditPanel({
           </FormProvider>
 
           {status === "PendingApproval" ? (
-            <>
-              <Separator />
-              <div className="space-y-3">
-                <h4 className="text-xs font-semibold">{t("Actions")}</h4>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    className="bg-success text-foreground-on-solid hover:bg-success"
-                    onClick={() => approveMutation.mutate(undefined)}
-                    disabled={approveMutation.isPending}
-                  >
-                    <CheckIcon className="mr-1.5 size-3.5" />
-                    {t("Approve")}
+            <FormSection title={t("Actions")}>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  className="bg-success text-foreground-on-solid hover:bg-success"
+                  onClick={() => approveMutation.mutate(undefined)}
+                  disabled={approveMutation.isPending}
+                >
+                  <CheckIcon className="mr-1.5 size-3.5" />
+                  {t("Approve")}
+                </Button>
+                {!showRejectInput ? (
+                  <Button size="sm" variant="outline" onClick={() => setShowRejectInput(true)}>
+                    <XIcon className="mr-1.5 size-3.5" />
+                    {t("Reject")}
                   </Button>
-                  {!showRejectInput ? (
-                    <Button size="sm" variant="outline" onClick={() => setShowRejectInput(true)}>
-                      <XIcon className="mr-1.5 size-3.5" />
-                      {t("Reject")}
-                    </Button>
-                  ) : (
-                    <div className="w-full space-y-2">
-                      <textarea
-                        value={rejectReason}
-                        onChange={(e) => setRejectReason(e.target.value)}
-                        placeholder={t("Rejection reason...")}
-                        className="bg-background w-full rounded-md border px-3 py-2 text-xs"
-                        rows={2}
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => rejectMutation.mutate(undefined)}
-                          disabled={!rejectReason.trim() || rejectMutation.isPending}
-                        >
-                          {t("Confirm Reject")}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setShowRejectInput(false);
-                            setRejectReason("");
-                          }}
-                        >
-                          {t("Cancel")}
-                        </Button>
-                      </div>
+                ) : (
+                  <div className="w-full space-y-2">
+                    <textarea
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      placeholder={t("Rejection reason...")}
+                      className="bg-background w-full rounded-md border px-3 py-2 text-xs"
+                      rows={2}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => rejectMutation.mutate(undefined)}
+                        disabled={!rejectReason.trim() || rejectMutation.isPending}
+                      >
+                        {t("Confirm Reject")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setShowRejectInput(false);
+                          setRejectReason("");
+                        }}
+                      >
+                        {t("Cancel")}
+                      </Button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            </>
+            </FormSection>
           ) : null}
 
           {status === "Approved" ? (
-            <>
-              <Separator />
-              <div className="space-y-3">
-                <h4 className="text-xs font-semibold">{t("Actions")}</h4>
+            <FormSection title={t("Actions")}>
+              <div>
                 <Button
                   size="sm"
                   onClick={() => postMutation.mutate(undefined)}
@@ -341,53 +334,49 @@ function EditPanel({
                   {t("Post to GL")}
                 </Button>
               </div>
-            </>
+            </FormSection>
           ) : null}
 
           {status &&
           !showCancelInput &&
           (status === "Draft" || status === "PendingApproval" || status === "Approved") ? (
-            <>
-              <Separator />
+            <div>
               <Button size="sm" variant="outline" onClick={() => setShowCancelInput(true)}>
                 {t("Cancel Journal")}
               </Button>
-            </>
+            </div>
           ) : null}
 
           {showCancelInput ? (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <textarea
-                  value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
-                  placeholder={t("Cancel reason...")}
-                  className="bg-background w-full rounded-md border px-3 py-2 text-xs"
-                  rows={2}
-                />
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => cancelMutation.mutate(undefined)}
-                    disabled={!cancelReason.trim() || cancelMutation.isPending}
-                  >
-                    {t("Confirm Cancel")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setShowCancelInput(false);
-                      setCancelReason("");
-                    }}
-                  >
-                    {t("Dismiss")}
-                  </Button>
-                </div>
+            <div className="space-y-2">
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder={t("Cancel reason...")}
+                className="bg-background w-full rounded-md border px-3 py-2 text-xs"
+                rows={2}
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => cancelMutation.mutate(undefined)}
+                  disabled={!cancelReason.trim() || cancelMutation.isPending}
+                >
+                  {t("Confirm Cancel")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setShowCancelInput(false);
+                    setCancelReason("");
+                  }}
+                >
+                  {t("Dismiss")}
+                </Button>
               </div>
-            </>
+            </div>
           ) : null}
         </div>
       ) : null}

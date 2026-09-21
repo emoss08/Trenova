@@ -21,18 +21,15 @@ export function ManualJournalsPage() {
         title: t("Manual Journals"),
         description: t("Create and manage manual journal entries."),
       }}
-      className="p-0"
     >
-      <div className="mx-4 mt-3 mb-4">
-        <DataTable<ManualJournalRow>
-          name="ManualJournal"
-          queryKey="manual-journal-list"
-          columns={columns}
-          resource={Resource.ManualJournal}
-          graphql={manualJournalTableGraphQLConfig}
-          TablePanel={ManualJournalPanel}
-        />
-      </div>
+      <DataTable<ManualJournalRow>
+        name="ManualJournal"
+        queryKey="manual-journal-list"
+        columns={columns}
+        resource={Resource.ManualJournal}
+        graphql={manualJournalTableGraphQLConfig}
+        TablePanel={ManualJournalPanel}
+      />
     </PageLayout>
   );
 }

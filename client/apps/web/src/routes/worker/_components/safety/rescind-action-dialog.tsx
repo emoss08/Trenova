@@ -95,13 +95,14 @@ export function RescindActionDialog({
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup className="pb-2" cols={1}>
+            <FormGroup cols={1}>
               <FormControl cols="full">
                 <TextareaField<RescindActionFormValues>
                   control={control}

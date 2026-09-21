@@ -23,12 +23,7 @@ import {
   type FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
 import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import {
-  ChevronDownIcon,
-  CodeIcon,
-  FileCode2,
-  ShieldCheckIcon,
-} from "lucide-react";
+import { ChevronDownIcon, CodeIcon, FileCode2, ShieldCheckIcon } from "lucide-react";
 import { useEffect, useState, type Ref } from "react";
 import { Controller, useFormContext, useFormState, useWatch } from "react-hook-form";
 import { BreakdownDefinitionEditor } from "../breakdown-definition-editor";
@@ -46,10 +41,8 @@ function SectionHeader({
   description: string;
 }) {
   return (
-    <div className="flex items-center gap-3 text-left">
-      <div className="bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-lg">
-        <Icon className="size-4" />
-      </div>
+    <div className="flex items-center gap-2 text-left">
+      <Icon className="text-muted-foreground size-4 shrink-0" />
       <div className="leading-2">
         <h3 className="text-sm leading-none font-semibold">{title}</h3>
         <p className="text-muted-foreground mt-1 text-xs">{description}</p>

@@ -124,7 +124,7 @@ export function ImportCarrierDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Import carrier")}</DialogTitle>
           <DialogDescription>
@@ -139,13 +139,14 @@ export function ImportCarrierDialog({
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup cols={1} className="pb-2">
+            <FormGroup cols={1}>
               <FormControl>
                 <InputField<ImportSourcedCarrierFormValues>
                   control={control}
@@ -169,7 +170,7 @@ export function ImportCarrierDialog({
               ) : null}
             </FormGroup>
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending} disabled={!candidate}>

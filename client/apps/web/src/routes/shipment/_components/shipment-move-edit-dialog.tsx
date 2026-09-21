@@ -59,8 +59,8 @@ export function MoveEditDialog({
         if (!open) onCancel();
       }}
     >
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-2xl">
-        <DialogHeader className="gap-0 p-4">
+      <DialogContent size="lg" className="gap-0 overflow-hidden p-0">
+        <DialogHeader className="border-border border-b px-4 py-3">
           <DialogTitle>{isNew ? t("Add Move") : t("Edit Move {0}", moveIndex + 1)}</DialogTitle>
           <DialogDescription>
             {isNew
@@ -68,7 +68,7 @@ export function MoveEditDialog({
               : t("Update move details, timing, and stop sequence.")}
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[65vh] px-4 pb-4">
+        <ScrollArea className="max-h-[65vh] p-4">
           <div className="space-y-4">
             <FormGroup cols={3} dense>
               <FormControl>

@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -313,7 +314,7 @@ function InvoiceAdjustmentLatestCard({
           <CollapsibleContent>
             <div className="mt-1.5 flex flex-wrap gap-1">
               {allDocs.map((name) => (
-                <span key={name} className="bg-background text-2xs rounded border px-1.5 py-0.5">
+                <span key={name} className="bg-background text-2xs rounded-md border px-1.5 py-0.5">
                   {name}
                 </span>
               ))}
@@ -417,9 +418,9 @@ function ExecutionFailureCollapsible({
         <ChevronDownIcon className="size-3 transition-transform group-data-[panel-open]:rotate-180" />
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <p className="border-destructive/20 bg-destructive/5 text-2xs text-destructive mt-1.5 rounded border px-2.5 py-1.5">
-          {errorText}
-        </p>
+        <Alert variant="destructive" size="sm" className="mt-1.5">
+          <AlertDescription>{errorText}</AlertDescription>
+        </Alert>
       </CollapsibleContent>
     </Collapsible>
   );

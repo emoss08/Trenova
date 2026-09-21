@@ -98,7 +98,7 @@ export function AdditionalChargeDialog({
         if (!isOpen) onCancel();
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {isEditing ? t("Edit Additional Charge") : t("Add Additional Charge")}

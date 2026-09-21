@@ -9,7 +9,12 @@ import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
-import { DialogFooter } from "@trenova/shared/components/ui/dialog";
+import {
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
@@ -114,24 +119,22 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
           </FormControl>
           <TextField control={control} name="baseUrl" label={t("Base URL")} />
         </FormGroup>
-        <DialogFooter className="flex flex-row items-center sm:justify-between">
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t("Cancel")}
+        <DialogFooter className="sm:justify-between">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => testConnectionMutation.mutateAsync()}
+            isLoading={testConnectionMutation.isPending}
+            loadingText={t("Testing...")}
+            disabled={configQuery.isLoading || saveMutation.isPending}
+          >
+            {t("Test Connection")}
           </Button>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => testConnectionMutation.mutateAsync()}
-              isLoading={testConnectionMutation.isPending}
-              loadingText={t("Testing...")}
-              disabled={configQuery.isLoading || saveMutation.isPending}
-            >
-              {t("Test Connection")}
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
+            <Button type="button" variant="outline" onClick={onClose}>
+              {t("Cancel")}
             </Button>
             <Button
-              size="sm"
               type="submit"
               isLoading={saveMutation.isPending}
               loadingText={t("Saving...")}
@@ -180,7 +183,7 @@ function PCMilerFormHeader() {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center gap-4">
         <LazyImage src={trenovaLogo} className="size-8" />
         <div className="flex items-center justify-center gap-1">
           <div className="bg-muted-foreground size-1 rounded-full" />
@@ -189,15 +192,15 @@ function PCMilerFormHeader() {
         </div>
         <LazyImage src={logo} alt={t("PC*Miler Logo")} className="h-8 max-w-24 object-contain" />
       </div>
-      <div className="flex flex-col gap-2 text-center">
-        <h3 className="text-lg font-semibold">{t("Connect with PC*Miler")}</h3>
-        <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">{t("Configure mileage rating with")}</p>
-          <ExternalLink href="https://developer.trimblemaps.com/" className="text-xs">
+      <DialogHeader>
+        <DialogTitle>{t("Connect with PC*Miler")}</DialogTitle>
+        <DialogDescription>
+          {t("Configure mileage rating with")}{" "}
+          <ExternalLink href="https://developer.trimblemaps.com/">
             {t("Trimble Maps APIs.")}
           </ExternalLink>
-        </div>
-      </div>
+        </DialogDescription>
+      </DialogHeader>
     </div>
   );
 }

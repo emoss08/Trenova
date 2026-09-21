@@ -7,6 +7,7 @@ import {
 } from "@/lib/billing-schedule";
 import { apiService } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -203,41 +204,45 @@ export function StatementDetail({
         ) : (
           <div className="flex flex-col gap-2 p-2">
             {standalone > 1 && (
-              <div className="bg-muted/40 flex items-start gap-2 rounded-lg border p-2.5">
-                <InfoIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
-                <p className="text-muted-foreground text-xs">
-                  {t(
-                    "{0, plural, one {# shipment isn't booked as an order} other {# shipments aren't booked as orders}}, so splitting by order bills each on its own invoice. If {1} expects one invoice for the period,",
-                    standalone,
-                    statement.customerName,
-                  )}{" "}
-                  <Link
-                    to={`/billing/configuration-files/customers?panelType=edit&panelEntityId=${statement.customerId}`}
-                    className="text-foreground font-medium underline underline-offset-2"
-                  >
-                    {t("change how they're split")}
-                  </Link>
-                  .
-                </p>
-              </div>
+              <Alert size="sm">
+                <InfoIcon />
+                <AlertDescription>
+                  <p>
+                    {t(
+                      "{0, plural, one {# shipment isn't booked as an order} other {# shipments aren't booked as orders}}, so splitting by order bills each on its own invoice. If {1} expects one invoice for the period,",
+                      standalone,
+                      statement.customerName,
+                    )}{" "}
+                    <Link
+                      to={`/billing/configuration-files/customers?panelType=edit&panelEntityId=${statement.customerId}`}
+                      className="text-foreground font-medium underline underline-offset-2"
+                    >
+                      {t("change how they're split")}
+                    </Link>
+                    .
+                  </p>
+                </AlertDescription>
+              </Alert>
             )}
             {statement.heldCount > 0 && (
-              <div className="flex items-start gap-2 rounded-lg border border-warning-border bg-warning-subtle/60 p-2.5 dark:border-warning-border dark:bg-warning-subtle/30">
-                <ClockIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
-                <p className="text-xs text-warning-foreground">
-                  {t(
-                    "{0, plural, one {# shipment} other {# shipments}} worth {1} {0, plural, one {is} other {are}} still in review and will not be on this invoice.",
-                    statement.heldCount,
-                    formatCurrency(Number(statement.heldAmount ?? 0), statement.currencyCode),
-                  )}{" "}
-                  <Link
-                    to={`/billing/queue?view=shipments&query=${encodeURIComponent(statement.customerName)}`}
-                    className="font-medium underline underline-offset-2"
-                  >
-                    {t("Review them")}
-                  </Link>
-                </p>
-              </div>
+              <Alert variant="warning" size="sm">
+                <ClockIcon />
+                <AlertDescription>
+                  <p>
+                    {t(
+                      "{0, plural, one {# shipment} other {# shipments}} worth {1} {0, plural, one {is} other {are}} still in review and will not be on this invoice.",
+                      statement.heldCount,
+                      formatCurrency(Number(statement.heldAmount ?? 0), statement.currencyCode),
+                    )}{" "}
+                    <Link
+                      to={`/billing/queue?view=shipments&query=${encodeURIComponent(statement.customerName)}`}
+                      className="font-medium underline underline-offset-2"
+                    >
+                      {t("Review them")}
+                    </Link>
+                  </p>
+                </AlertDescription>
+              </Alert>
             )}
             <p className="text-muted-foreground px-1 text-xs">
               {describeBillingSchedule({

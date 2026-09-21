@@ -63,9 +63,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DetentionPolicyRow>[] {
       accessorKey: "code",
       header: t("Code"),
       cell: ({ row }) => (
-        <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
-          {row.original.code}
-        </span>
+        <span className="bg-muted rounded px-1.5 py-0.5 font-mono">{row.original.code}</span>
       ),
       size: 140,
       minSize: 120,

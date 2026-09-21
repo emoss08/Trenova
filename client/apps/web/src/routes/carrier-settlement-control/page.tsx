@@ -20,9 +20,7 @@ export function CarrierSettlementControlPage() {
       }}
     >
       <SuspenseLoader>
-        <div className="p-4">
-          <CarrierSettlementControlForm />
-        </div>
+        <CarrierSettlementControlForm />
       </SuspenseLoader>
     </PageLayout>
   );

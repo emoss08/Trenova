@@ -54,7 +54,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RoutingGuideRow>[] {
     {
       id: "lane",
       header: t("Lane"),
-      cell: ({ row }) => <span className="text-xs">{formatRoutingGuideLane(row.original)}</span>,
+      cell: ({ row }) => <span>{formatRoutingGuideLane(row.original)}</span>,
       size: 240,
       minSize: 200,
       maxSize: 360,

@@ -30,9 +30,8 @@ export function BalanceSheetPage() {
         title: t("Balance Sheet"),
         description: t("Assets, liabilities, and equity as of a fiscal period."),
       }}
-      className="p-0"
     >
-      <div className="mx-4 mt-3 mb-4 space-y-4">
+      <>
         <FiscalPeriodSelector value={periodId} onChange={setPeriodId} />
 
         {!periodId ? (
@@ -112,7 +111,7 @@ export function BalanceSheetPage() {
             </div>
           </div>
         ) : null}
-      </div>
+      </>
     </PageLayout>
   );
 }

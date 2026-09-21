@@ -133,7 +133,7 @@ export function MemoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] sm:max-w-[680px]">
+      <DialogContent size="lg" className="max-h-[calc(100dvh-2rem)]">
         <DialogHeader>
           <DialogTitle>
             {chosenBillType === "DebitMemo" ? t("New debit memo") : t("New credit memo")}

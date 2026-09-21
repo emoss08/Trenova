@@ -1,6 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiInfoPopover, type KpiInfoRow } from "@/components/kpi/kpi-info-popover";
+import { KpiStrip } from "@/components/kpi/kpi-strip";
 import { StatTile } from "@/components/stat-tile";
 import {
   formatIftaMeasure,
@@ -74,7 +75,7 @@ export function ReturnSummaryStrip({ ret }: { ret: IftaReturnView }) {
   const net = netPosition(ret.netDue);
 
   return (
-    <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-5">
+    <KpiStrip>
       <StatTile
         label={t("Total miles")}
         value={formatIftaMeasure(ret.totalMiles, IFTA_MILES_DISPLAY_SCALE)}
@@ -139,6 +140,6 @@ export function ReturnSummaryStrip({ ret }: { ret: IftaReturnView }) {
           "Draft figures move with the data. Finalized locks them. Filed is immutable; corrections open an amendment.",
         )}
       />
-    </div>
+    </KpiStrip>
   );
 }

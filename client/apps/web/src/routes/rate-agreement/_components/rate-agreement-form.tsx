@@ -35,11 +35,10 @@ export function RateAgreementForm() {
   const partyType = useWatch({ control, name: "partyType" });
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <FormSection
         title={t("General Information")}
         description={t("Who the contract is with and how it is identified across the system.")}
-        className="border-b pb-4"
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -168,7 +167,6 @@ export function RateAgreementForm() {
       <FormSection
         title={t("Term")}
         description={t("When the contract is in force and how it renews.")}
-        className="border-b pb-4"
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -217,7 +215,6 @@ export function RateAgreementForm() {
         description={t(
           "The currency, guardrails, and rounding every lane inherits unless it sets its own.",
         )}
-        className={partyType ? "border-b pb-4" : undefined}
       >
         <FormGroup cols={2}>
           <FormControl>

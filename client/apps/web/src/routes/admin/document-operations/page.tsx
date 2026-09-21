@@ -14,6 +14,7 @@ import {
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent } from "@trenova/shared/components/ui/card";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -28,7 +29,6 @@ import {
   CheckIcon,
   ClockIcon,
   CopyIcon,
-  FileIcon,
   FileSearchIcon,
   GitBranchIcon,
   ImageIcon,
@@ -156,24 +156,13 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="bg-muted text-muted-foreground inline-flex size-6 shrink-0 items-center justify-center rounded-md">
-        <Icon className="size-3.5" />
-      </span>
-      <h3 className="text-sm font-medium">{title}</h3>
+      <Icon className="text-muted-foreground size-3.5 shrink-0" />
+      <h3 className="text-sm font-semibold">{title}</h3>
       {count != null && (
         <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-2xs font-medium tabular-nums">
           {count}
         </span>
       )}
-    </div>
-  );
-}
-
-function MetadataCell({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border p-3">
-      <div className="text-muted-foreground text-xs font-medium">{label}</div>
-      <div className="mt-1.5 text-sm">{children}</div>
     </div>
   );
 }
@@ -332,9 +321,6 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
     <section className="grid gap-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="bg-muted inline-flex size-10 shrink-0 items-center justify-center rounded-lg">
-            <FileIcon className="text-muted-foreground size-5" />
-          </span>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="truncate text-base font-semibold">{doc.originalName}</h2>
@@ -355,51 +341,48 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
         <StatusPipeline doc={doc} />
       </div>
 
-      <div className="grid gap-2.5 md:grid-cols-4">
-        <MetadataCell label={t("Resource")}>
+      <DescriptionList columns={4}>
+        <DescriptionItem label={t("Resource")}>
           <div className="flex items-center gap-1.5">
             <Badge variant="neutral" appearance="outline">
               {doc.resourceType}
             </Badge>
             <CopyableId value={doc.resourceId} />
           </div>
-        </MetadataCell>
-        <MetadataCell label={t("Version")}>
+        </DescriptionItem>
+        <DescriptionItem label={t("Version")}>
           <span className="font-mono">{t("v{0}", doc.versionNumber)}</span>
           {doc.isCurrentVersion && (
             <Badge variant="success" className="ml-1.5">
               {t("Current")}
             </Badge>
           )}
-        </MetadataCell>
-        <MetadataCell label={t("Created")}>
+        </DescriptionItem>
+        <DescriptionItem label={t("Created")}>
           <span>{formatTimestamp(doc.createdAt)}</span>
           <span className="text-muted-foreground ml-1">{relativeTime(doc.createdAt)}</span>
-        </MetadataCell>
-        <MetadataCell label={t("Updated")}>
+        </DescriptionItem>
+        <DescriptionItem label={t("Updated")}>
           <span>{formatTimestamp(doc.updatedAt)}</span>
           <span className="text-muted-foreground ml-1">{relativeTime(doc.updatedAt)}</span>
-        </MetadataCell>
-      </div>
-
-      <div className="grid gap-2.5 md:grid-cols-4">
-        <MetadataCell label={t("Preview Status")}>
+        </DescriptionItem>
+        <DescriptionItem label={t("Preview Status")}>
           <Badge variant={statusVariant(doc.previewStatus)}>{doc.previewStatus}</Badge>
-        </MetadataCell>
-        <MetadataCell label={t("Content Status")}>
+        </DescriptionItem>
+        <DescriptionItem label={t("Content Status")}>
           <Badge variant={statusVariant(doc.contentStatus)}>{doc.contentStatus}</Badge>
-        </MetadataCell>
-        <MetadataCell label={t("Draft Status")}>
+        </DescriptionItem>
+        <DescriptionItem label={t("Draft Status")}>
           <Badge variant={statusVariant(doc.shipmentDraftStatus)}>{doc.shipmentDraftStatus}</Badge>
-        </MetadataCell>
-        <MetadataCell label={t("Detected Kind")}>
+        </DescriptionItem>
+        <DescriptionItem label={t("Detected Kind")}>
           {doc.detectedKind ? (
             <Badge variant="neutral">{doc.detectedKind}</Badge>
           ) : (
             <span className="text-muted-foreground">{t("Not classified")}</span>
           )}
-        </MetadataCell>
-      </div>
+        </DescriptionItem>
+      </DescriptionList>
     </section>
   );
 }
@@ -654,7 +637,7 @@ function DiagnosticsView({ data }: { data: DocumentOperationsDiagnostics }) {
   }
 
   return (
-    <Card className="border-border/80 gap-0 overflow-hidden shadow-none">
+    <Card className="border-border/80 gap-0 overflow-hidden">
       <CardContent className="grid gap-6 p-5">
         <ErrorsBanner errors={data.lastErrors} />
         <DocumentOverviewSection doc={data.document} />
@@ -681,7 +664,7 @@ function DiagnosticsView({ data }: { data: DocumentOperationsDiagnostics }) {
 
 function DiagnosticsSkeleton() {
   return (
-    <Card className="border-border/80 gap-0 overflow-hidden shadow-none">
+    <Card className="border-border/80 gap-0 overflow-hidden">
       <CardContent className="grid gap-6 p-5">
         <div className="flex items-center gap-3">
           <Skeleton className="size-10 rounded-lg" />
@@ -733,12 +716,10 @@ export function DocumentOperationsPage() {
         description: t("Inspect document lifecycle state and trigger recovery actions"),
       }}
     >
-      <div className="p-4">
-        <DocumentSearch
-          onSearch={(id) => setDocumentId(id)}
-          isLoading={diagnosticsQuery.isFetching}
-        />
-      </div>
+      <DocumentSearch
+        onSearch={(id) => setDocumentId(id)}
+        isLoading={diagnosticsQuery.isFetching}
+      />
       {!documentId && (
         <div className="flex flex-col items-center justify-center py-20">
           <div className="bg-muted flex size-14 items-center justify-center rounded-full">
@@ -754,7 +735,7 @@ export function DocumentOperationsPage() {
       )}
       {documentId && diagnosticsQuery.isLoading && <DiagnosticsSkeleton />}
       {documentId && diagnosticsQuery.isError && (
-        <Card className="border-border/80 gap-0 overflow-hidden shadow-none">
+        <Card className="border-border/80 gap-0 overflow-hidden">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <div className="bg-destructive/10 flex size-12 items-center justify-center rounded-full">
               <XCircleIcon className="text-destructive size-6" />

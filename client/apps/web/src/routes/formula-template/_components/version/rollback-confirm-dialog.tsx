@@ -9,7 +9,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
-import { Badge } from "@trenova/shared/components/ui/badge";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
   Collapsible,
@@ -66,16 +67,16 @@ function formatFieldName(path: string): string {
     .trim();
 }
 
-function getChangeBadgeStyle(type: string) {
+function getChangeBadgeVariant(type: string): BadgeVariant {
   switch (type) {
     case "created":
-      return "bg-success-subtle text-success-foreground dark:bg-success-subtle/30 dark:text-success-foreground uppercase";
+      return "success";
     case "deleted":
-      return "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle/30 dark:text-danger-foreground uppercase";
+      return "danger";
     case "updated":
-      return "bg-info-subtle text-info-foreground dark:bg-info-subtle/30 dark:text-info-foreground uppercase";
+      return "info";
     default:
-      return "bg-muted text-muted-foreground";
+      return "neutral";
   }
 }
 
@@ -146,10 +147,10 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
             {changeEntries.map(([path, change]) => (
               <div
                 key={path}
-                className="hover:bg-muted flex items-center justify-between gap-2 rounded px-2 py-1 text-xs"
+                className="hover:bg-muted flex items-center justify-between gap-2 rounded-md px-2 py-1 text-xs"
               >
                 <span className="text-foreground font-medium">{formatFieldName(path)}</span>
-                <Badge className={cn("text-2xs", getChangeBadgeStyle(change.type))}>
+                <Badge variant={getChangeBadgeVariant(change.type)} className="text-2xs">
                   {change.type}
                 </Badge>
               </div>
@@ -228,24 +229,26 @@ export function RollbackConfirmDialog({
                 ) : null}
 
                 {usageData?.inUse && (
-                  <div className="flex items-start gap-2 rounded-md border border-warning/50 bg-warning/10 p-2 text-sm text-warning-foreground">
-                    <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" />
-                    <span>
-                      {t("This template is currently used by")} {totalUsageCount}{" "}
-                      {usageData.usages.map((u, i) => (
-                        <span key={u.type}>
-                          {i > 0 && ", "}
-                          {u.count} {formatUsageType(u.type)}
-                        </span>
-                      ))}
-                      .{" "}
-                      {templateStatus === "Active" || templateStatus === "InReview"
-                        ? t(
-                            "Rolling back to different content returns the template to Draft, and nothing rates with it until it is approved again.",
-                          )
-                        : t("Rolling back changes the content the next approval will review.")}
-                    </span>
-                  </div>
+                  <Alert variant="warning" size="sm">
+                    <AlertTriangleIcon />
+                    <AlertDescription>
+                      <p>
+                        {t("This template is currently used by")} {totalUsageCount}{" "}
+                        {usageData.usages.map((u, i) => (
+                          <span key={u.type}>
+                            {i > 0 && ", "}
+                            {u.count} {formatUsageType(u.type)}
+                          </span>
+                        ))}
+                        .{" "}
+                        {templateStatus === "Active" || templateStatus === "InReview"
+                          ? t(
+                              "Rolling back to different content returns the template to Draft, and nothing rates with it until it is approved again.",
+                            )
+                          : t("Rolling back changes the content the next approval will review.")}
+                      </p>
+                    </AlertDescription>
+                  </Alert>
                 )}
                 <Label htmlFor="rollback-confirm">
                   <Checkbox

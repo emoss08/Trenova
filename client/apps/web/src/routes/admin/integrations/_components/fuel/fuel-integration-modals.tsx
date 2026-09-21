@@ -67,7 +67,7 @@ function FuelFeedModal({
 }: TableSheetProps & { vendor: FuelFeedVendor }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <FuelFeedForm vendor={vendor} open={open} onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>

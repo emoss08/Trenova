@@ -79,7 +79,7 @@ export function getColumns(t: TranslateFn): ColumnDef<FuelCardRow>[] {
         const { assignedWorker } = row.original;
 
         if (!assignedWorker) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return (
@@ -109,7 +109,7 @@ export function getColumns(t: TranslateFn): ColumnDef<FuelCardRow>[] {
         const { assignedTractor } = row.original;
 
         if (!assignedTractor) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return (

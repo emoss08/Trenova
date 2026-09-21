@@ -129,11 +129,11 @@ function AttachmentLightbox({
 
   return (
     <Dialog open={current != null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent size="xl">
         {current && (
           <>
             <DialogHeader>
-              <DialogTitle className="truncate pr-8 text-sm">
+              <DialogTitle className="truncate pr-8">
                 {current.originalName ?? current.fileName}
               </DialogTitle>
               <DialogDescription className="sr-only">

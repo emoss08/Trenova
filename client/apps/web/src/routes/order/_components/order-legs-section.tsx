@@ -170,7 +170,6 @@ export function OrderLegsSection() {
         title={t("Legs")}
         titleCount={legs.length}
         description={t("Shipments executing this order")}
-        className="border-border border-t pt-4"
         action={
           legs.length > 0 &&
           !membershipLocked && (

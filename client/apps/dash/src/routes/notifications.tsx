@@ -74,7 +74,7 @@ export function DashNotificationsPage() {
       ) : notifications.length > 0 ? (
         <>
           <ul className="flex flex-col gap-2">
-            {notifications.map((notification, index) => {
+            {notifications.map((notification) => {
               const unread = notification.readAt === null;
               return (
                 <m.li
@@ -84,7 +84,6 @@ export function DashNotificationsPage() {
                   transition={{
                     duration: 0.2,
                     ease: "easeOut",
-                    delay: Math.min(index * 0.03, 0.2),
                   }}
                 >
                   <button

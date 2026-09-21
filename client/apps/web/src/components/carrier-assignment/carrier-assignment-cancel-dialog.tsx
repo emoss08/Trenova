@@ -57,7 +57,7 @@ export function CarrierAssignmentCancelDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent className="sm:max-w-[440px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Cancel Carrier Assignment")}</DialogTitle>
           <DialogDescription>
@@ -72,20 +72,19 @@ export function CarrierAssignmentCancelDialog({
           </DialogDescription>
         </DialogHeader>
         <Form
+          className="flex flex-col gap-4"
           onSubmit={(event) => {
             event.stopPropagation();
             void handleSubmit((values) => onConfirm(values.reason))(event);
           }}
         >
-          <div className="pb-4">
-            <TextareaField
-              control={control}
-              name="reason"
-              label={t("Reason")}
-              rules={{ required: true }}
-              placeholder={t("e.g., Carrier failed to dispatch a truck")}
-            />
-          </div>
+          <TextareaField
+            control={control}
+            name="reason"
+            label={t("Reason")}
+            rules={{ required: true }}
+            placeholder={t("e.g., Carrier failed to dispatch a truck")}
+          />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
               {t("Keep assignment")}

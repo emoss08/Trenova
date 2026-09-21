@@ -37,16 +37,6 @@ const TIMELINE_BARS: readonly { left: string; width: string }[][] = [
   ],
 ];
 
-export function SummaryStripSkeleton() {
-  return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-      {Array.from({ length: 6 }, (_, index) => (
-        <Skeleton key={index} className="h-20 rounded-lg" />
-      ))}
-    </div>
-  );
-}
-
 export function CapacityRailRowsSkeleton() {
   return (
     <div className="flex flex-col">

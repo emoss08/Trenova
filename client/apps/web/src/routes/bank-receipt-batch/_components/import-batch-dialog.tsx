@@ -111,7 +111,7 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent size="xl">
         <DialogHeader>
           <DialogTitle>{t("Import Bank Receipts")}</DialogTitle>
           <DialogDescription>
@@ -119,7 +119,7 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
-          <Form onSubmit={handleSubmit(onSubmit)}>
+          <Form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
             <ImportBatchForm />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

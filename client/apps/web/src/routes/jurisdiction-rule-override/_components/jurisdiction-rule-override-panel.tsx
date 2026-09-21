@@ -129,7 +129,8 @@ function OverrideEditPanel({
               statutory limits, so it sits apart from Cancel and Save. */}
           <Button
             type="button"
-            variant="destructive"
+            variant="ghost"
+            className="text-danger-foreground mr-auto"
             onClick={() => removeMutation.mutate(undefined)}
             disabled={removeMutation.isPending}
           >

@@ -10,7 +10,12 @@ import { ExternalLink } from "@/components/link";
 import type { ConfigFieldSpec, UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
-import { DialogFooter } from "@trenova/shared/components/ui/dialog";
+import {
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@trenova/shared/components/ui/dialog";
 import { FormControl } from "@trenova/shared/components/ui/form";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
@@ -230,24 +235,22 @@ export function SpecIntegrationFooter({
   const t = useT();
 
   return (
-    <DialogFooter className={cn("flex flex-row items-center sm:justify-between", className)}>
-      <Button type="button" variant="outline" onClick={onCancel}>
-        {t("Cancel")}
+    <DialogFooter className={cn("sm:justify-between", className)}>
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onTestConnection}
+        isLoading={isTesting}
+        loadingText={t("Testing...")}
+        disabled={isLoading || isSaving || !canTest}
+      >
+        {t("Test Connection")}
       </Button>
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onTestConnection}
-          isLoading={isTesting}
-          loadingText={t("Testing...")}
-          disabled={isLoading || isSaving || !canTest}
-        >
-          {t("Test Connection")}
+      <div className="flex flex-col-reverse gap-2 sm:flex-row">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          {t("Cancel")}
         </Button>
         <Button
-          size="sm"
           type="submit"
           isLoading={isSaving}
           loadingText={t("Saving...")}
@@ -266,7 +269,7 @@ export function SpecIntegrationHeader({ vendor }: { vendor: SpecIntegrationVendo
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center gap-4">
         <LazyImage src={trenovaLogo} className="size-8" />
         <div className="flex items-center justify-center gap-1">
           <div className="bg-muted-foreground size-1 rounded-full" />
@@ -285,15 +288,12 @@ export function SpecIntegrationHeader({ vendor }: { vendor: SpecIntegrationVendo
           </span>
         )}
       </div>
-      <div className="flex flex-col gap-2 text-center">
-        <h3 className="text-lg font-semibold">{vendor.headline}</h3>
-        <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">{vendor.blurb}</p>
-          <ExternalLink href={vendor.docsUrl} className="text-xs">
-            {vendor.docsLabel}
-          </ExternalLink>
-        </div>
-      </div>
+      <DialogHeader>
+        <DialogTitle>{vendor.headline}</DialogTitle>
+        <DialogDescription>
+          {vendor.blurb} <ExternalLink href={vendor.docsUrl}>{vendor.docsLabel}</ExternalLink>
+        </DialogDescription>
+      </DialogHeader>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { sendInvoiceEdi, type InvoiceArContext } from "@/lib/graphql/invoice";
 import { invalidateInvoiceQueries } from "@/lib/queries/invoice";
 import { useQueryClient } from "@tanstack/react-query";
 import { InvoiceEdiSendStatusBadge } from "@trenova/shared/components/status-badge";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -83,22 +84,21 @@ export function InvoiceEdiDeliveryCard({
       {plan?.enabled && plan.blockers.length > 0 ? (
         <ul className="mt-3 space-y-1">
           {plan.blockers.map((item) => (
-            <li
-              key={item}
-              className="flex gap-2 rounded-md border border-warning/30 bg-warning/10 p-2 text-sm text-warning-foreground"
-            >
-              <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0" />
-              <span>{item}</span>
+            <li key={item}>
+              <Alert variant="warning" size="sm">
+                <AlertTriangleIcon />
+                <AlertDescription>{item}</AlertDescription>
+              </Alert>
             </li>
           ))}
         </ul>
       ) : null}
 
       {plan?.lastError ? (
-        <div className="mt-3 flex gap-2 rounded-md border border-danger/30 bg-danger/10 p-2 text-sm text-danger-foreground">
-          <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0" />
-          <span>{plan.lastError}</span>
-        </div>
+        <Alert variant="destructive" size="sm" className="mt-3">
+          <AlertTriangleIcon />
+          <AlertDescription>{plan.lastError}</AlertDescription>
+        </Alert>
       ) : null}
     </div>
   );

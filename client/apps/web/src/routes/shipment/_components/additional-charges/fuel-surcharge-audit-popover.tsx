@@ -1,18 +1,18 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
-import { Separator } from "@trenova/shared/components/ui/separator";
 import type { FuelSurchargeDetail } from "@trenova/shared/types/shipment";
 import { AlertTriangle, FuelIcon } from "lucide-react";
 
 function DetailRow({ label, value }: { label: string; value: string | null }) {
   if (value === null) return null;
   return (
-    <div className="flex items-center justify-between gap-4 text-xs">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium tabular-nums">{value}</span>
-    </div>
+    <DescriptionItem label={label} numeric>
+      {value}
+    </DescriptionItem>
   );
 }
 
@@ -95,19 +95,19 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
         </div>
 
         {(detail.usedFallback || detail.stale) && (
-          <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-2 text-xs text-warning-foreground">
-            <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
-            <span>
+          <Alert variant="warning" size="sm">
+            <AlertTriangle />
+            <AlertDescription>
               {detail.stale
                 ? t("Rated with a price more than 3 weeks old.")
                 : t(
                     "Rated before this week's DOE price published — it will re-rate automatically once the price arrives.",
                   )}
-            </span>
-          </div>
+            </AlertDescription>
+          </Alert>
         )}
 
-        <div className="space-y-1.5">
+        <DescriptionList layout="split">
           <DetailRow
             label={t("Fuel index")}
             value={detail.indexCode ? `${detail.indexCode} (${detail.indexSource ?? ""})` : null}
@@ -120,31 +120,26 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
             label={t("Basis")}
             value={detail.basisDate ? `${detail.basisDate} (${detail.dateBasis ?? ""})` : null}
           />
-        </div>
+        </DescriptionList>
 
         {derivation.length > 0 && (
-          <>
-            <Separator />
-            <div className="space-y-1.5">
-              {derivation.map((row) => (
-                <DetailRow key={row.label} label={t(row.label)} value={row.value} />
-              ))}
-            </div>
-          </>
+          <DescriptionList layout="split">
+            {derivation.map((row) => (
+              <DetailRow key={row.label} label={t(row.label)} value={row.value} />
+            ))}
+          </DescriptionList>
         )}
 
-        <Separator />
-        <div className="space-y-1.5">
+        <DescriptionList layout="split">
           {detail.rawAmount != null && detail.rawAmount !== detail.amount && (
             <DetailRow label={t("Before cap/floor")} value={money(detail.rawAmount)} />
           )}
           {detail.capApplied && <DetailRow label={t("Cap applied")} value="Yes" />}
           {detail.floorApplied && <DetailRow label={t("Floor applied")} value="Yes" />}
-          <div className="flex items-center justify-between gap-4 text-sm">
-            <span className="font-medium">{t("Surcharge")}</span>
-            <span className="font-semibold tabular-nums">{money(detail.amount ?? null)}</span>
-          </div>
-        </div>
+          <DescriptionItem label={t("Surcharge")} numeric valueClassName="font-semibold">
+            {money(detail.amount ?? null)}
+          </DescriptionItem>
+        </DescriptionList>
       </PopoverContent>
     </Popover>
   );

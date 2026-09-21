@@ -1,8 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { KpiStrip } from "@/components/kpi/kpi-strip";
 import { StatTile } from "@/components/stat-tile";
 import type { SettlementWorkspaceSummary } from "@/lib/graphql/driver-settlement";
-import { TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
@@ -43,9 +43,9 @@ export function WorkspaceSummaryStrip({
         </p>
         {actions}
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+      <KpiStrip>
         <StatTile
-          label={t("In Pipeline")}
+          label={t("In pipeline")}
           hint={t("Settlements created for this period, across every status except voided.")}
           value={<span className="tabular-nums">{pipelineTotal}</span>}
           sub={
@@ -60,21 +60,16 @@ export function WorkspaceSummaryStrip({
           }
         />
         <StatTile
-          label={t("Needs Review")}
+          label={t("Needs review")}
           clickable={summary.exceptionCount > 0}
           onClick={summary.exceptionCount > 0 ? onFilterAttention : undefined}
           tone={summary.exceptionCount > 0 ? "warn" : undefined}
           hint={t("Settlements flagged with exceptions — click to filter the queue to them.")}
-          value={
-            <span className="flex items-center gap-1.5 tabular-nums">
-              {summary.exceptionCount > 0 && <TriangleAlert className="size-3.5" />}
-              {summary.exceptionCount}
-            </span>
-          }
+          value={<span className="tabular-nums">{summary.exceptionCount}</span>}
           sub={<span>exception-flagged settlements</span>}
         />
         <StatTile
-          label={t("Posted / Paid")}
+          label={t("Posted / paid")}
           hint={t("Settlements posted to the GL and settlements already paid out.")}
           value={
             <span className="tabular-nums">
@@ -84,7 +79,7 @@ export function WorkspaceSummaryStrip({
           sub={<span>{t("posted · paid")}</span>}
         />
         <StatTile
-          label={t("Period Net Pay")}
+          label={t("Period net pay")}
           hint={t("Total net pay across every non-voided settlement in this period.")}
           value={<AmountDisplay value={summary.totalNetMinor} currency="USD" />}
           sub={
@@ -94,7 +89,7 @@ export function WorkspaceSummaryStrip({
           }
         />
         <StatTile
-          label={t("Unsettled Pay")}
+          label={t("Unsettled pay")}
           clickable={summary.unsettledEventCount > 0 || summary.heldEventCount > 0}
           onClick={
             summary.unsettledEventCount > 0 || summary.heldEventCount > 0
@@ -116,13 +111,13 @@ export function WorkspaceSummaryStrip({
           }
         />
         <StatTile
-          label={t("On Hold")}
+          label={t("On hold")}
           tone={summary.heldEventCount > 0 ? "info" : undefined}
           hint={t("Pay events deliberately deferred — they skip generation until released.")}
           value={<AmountDisplay value={summary.heldGrossMinor} currency="USD" />}
           sub={<span>{t("{0} held events", summary.heldEventCount)}</span>}
         />
-      </div>
+      </KpiStrip>
     </div>
   );
 }

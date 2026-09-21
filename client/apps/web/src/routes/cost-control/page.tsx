@@ -18,9 +18,7 @@ export function CostControlPage() {
       }}
     >
       <Suspense fallback={<PageSkeleton />}>
-        <div className="p-4">
-          <CostControlForm />
-        </div>
+        <CostControlForm />
       </Suspense>
     </PageLayout>
   );

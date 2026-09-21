@@ -137,7 +137,7 @@ export function RunReportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xs">
+      <DialogContent size="xs">
         <DialogHeader>
           <DialogTitle>{t("Run {0}", reportName)}</DialogTitle>
           <DialogDescription>

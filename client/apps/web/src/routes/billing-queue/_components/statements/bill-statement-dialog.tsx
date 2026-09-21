@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { periodRange } from "@/lib/billing-schedule";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -100,16 +101,16 @@ export function BillStatementDialog({
           )}
 
           {statement.heldCount > 0 && (
-            <div className="flex items-start gap-2 rounded-lg border border-warning-border bg-warning-subtle/60 p-3 dark:border-warning-border dark:bg-warning-subtle/30">
-              <ClockIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
-              <p className="text-xs text-warning-foreground">
+            <Alert variant="warning" size="sm">
+              <ClockIcon />
+              <AlertDescription>
                 {t(
                   "{0, plural, one {# more shipment for this period is} other {# more shipments for this period are}} still in review and will not be on this invoice. Billing now leaves {1} unbilled.",
                   statement.heldCount,
                   formatCurrency(Number(statement.heldAmount ?? 0), statement.currencyCode),
                 )}
-              </p>
-            </div>
+              </AlertDescription>
+            </Alert>
           )}
 
           {held > 0 && (
@@ -124,16 +125,16 @@ export function BillStatementDialog({
           )}
 
           {offCycle ? (
-            <div className="flex flex-col gap-2 rounded-lg border border-warning-border bg-warning-subtle/60 p-3 dark:border-warning-border dark:bg-warning-subtle/30">
-              <div className="flex items-start gap-2">
-                <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
-                <p className="text-xs text-warning-foreground">
+            <div className="flex flex-col gap-2">
+              <Alert variant="warning" size="sm">
+                <TriangleAlertIcon />
+                <AlertDescription>
                   {t(
                     "This period has not closed yet. Billing now does not move {0}'s cycle — anything delivered for the rest of the period still bills on the original date.",
                     statement.customerName,
                   )}
-                </p>
-              </div>
+                </AlertDescription>
+              </Alert>
               <Textarea
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}

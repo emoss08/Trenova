@@ -105,7 +105,7 @@ export function EDITransferReviewPanel({
       footer={
         <>
           {transfer && canUpdate && direction === "inbound" && isActionable && (
-            <div className="ml-auto flex gap-2">
+            <>
               <Button variant="outline" onClick={() => setRejectDialogOpen(true)}>
                 <XIcon data-icon="inline-start" />
                 {t("Reject")}
@@ -118,11 +118,10 @@ export function EDITransferReviewPanel({
                 <CheckIcon data-icon="inline-start" />
                 {t("Approve")}
               </Button>
-            </div>
+            </>
           )}
           {transfer && canUpdate && direction === "outbound" && isActionable && (
             <Button
-              className="ml-auto"
               variant="outline"
               isLoading={cancelMutation.isPending}
               onClick={() => cancelMutation.mutate(undefined)}

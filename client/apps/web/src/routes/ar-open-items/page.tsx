@@ -5,6 +5,7 @@ import {
 } from "@/components/accounting/aging-buckets";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
@@ -15,7 +16,7 @@ import { Card, CardContent } from "@trenova/shared/components/ui/card";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { getEndOfDay } from "@trenova/shared/lib/date";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { HandCoinsIcon, XIcon } from "lucide-react";
 import { m } from "motion/react";
@@ -138,198 +139,147 @@ export function AROpenItemsPage() {
           </Button>
         ) : undefined,
       }}
-      className="p-0 px-4 pt-2"
     >
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="w-65">
-            <CustomerAutocompleteField
-              control={filterForm.control}
-              name="customerId"
-              label={t("Customer")}
-              placeholder={t("All customers")}
-              clearable
-            />
-          </div>
-          <div className="w-45">
-            <AutoCompleteDateField
-              control={filterForm.control}
-              name="asOfDate"
-              label={t("As of Date")}
-              placeholder={t("Today")}
-              clearable
-            />
-          </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="w-65">
+          <CustomerAutocompleteField
+            control={filterForm.control}
+            name="customerId"
+            label={t("Customer")}
+            placeholder={t("All customers")}
+            clearable
+          />
         </div>
+        <div className="w-45">
+          <AutoCompleteDateField
+            control={filterForm.control}
+            name="asOfDate"
+            label={t("As of Date")}
+            placeholder={t("Today")}
+            clearable
+          />
+        </div>
+      </div>
 
-        {isLoading ? (
-          <>
-            <div className="grid gap-2.5 md:grid-cols-5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 rounded-lg" />
-              ))}
-            </div>
-            <Skeleton className="h-64 w-full rounded-md" />
-          </>
-        ) : isError ? (
-          <div className="rounded-lg border border-danger-border bg-danger-subtle p-4 text-sm text-danger-foreground dark:border-danger-border dark:bg-danger-subtle dark:text-danger-foreground">
-            {t("Failed to load open items. Try refreshing the page.")}
+      {isLoading ? (
+        <>
+          <div className="grid gap-2.5 md:grid-cols-5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 rounded-lg" />
+            ))}
           </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-2.5 md:grid-cols-5">
-              <SummaryCard
-                index={0}
-                label={t("Total Open")}
-                value={formatCurrency(stats.totals.totalOpenMinor / 100)}
-                detail={`${openItems.length} ${openItems.length === 1 ? "item" : "items"}`}
-              />
-              <SummaryCard
-                index={1}
-                label={t("Current")}
-                value={formatCurrency(stats.currentAmount / 100)}
-                detail={`${stats.currentCount} items`}
-                valueClassName="text-success-foreground"
-              />
-              <SummaryCard
-                index={2}
-                label={t("Overdue")}
-                value={formatCurrency(stats.overdueAmount / 100)}
-                detail={`${stats.overdueCount} items`}
-                valueClassName={
-                  stats.overdueAmount > 0 ? "text-danger-foreground" : undefined
-                }
-              />
-              <SummaryCard
-                index={3}
-                label={t("Avg Age")}
-                value={`${stats.avgAgeDays.toFixed(0)}d`}
-                detail={t("weighted by open $")}
-              />
-              <SummaryCard
-                index={4}
-                label={t("Count")}
-                value={String(openItems.length)}
-                detail={t("open invoices")}
-              />
-            </div>
+          <Skeleton className="h-64 w-full rounded-md" />
+        </>
+      ) : isError ? (
+        <div className="rounded-lg border border-danger-border bg-danger-subtle p-4 text-sm text-danger-foreground dark:border-danger-border dark:bg-danger-subtle dark:text-danger-foreground">
+          {t("Failed to load open items. Try refreshing the page.")}
+        </div>
+      ) : (
+        <>
+          <KpiStrip aria-label={t("Open item totals")}>
+            <KpiStripItem
+              label={t("Total open")}
+              value={formatCurrency(stats.totals.totalOpenMinor / 100)}
+              sub={`${openItems.length} ${openItems.length === 1 ? "item" : "items"}`}
+            />
+            <KpiStripItem
+              label={t("Current")}
+              value={formatCurrency(stats.currentAmount / 100)}
+              sub={`${stats.currentCount} items`}
+              tone="success"
+            />
+            <KpiStripItem
+              label={t("Overdue")}
+              value={formatCurrency(stats.overdueAmount / 100)}
+              sub={`${stats.overdueCount} items`}
+              tone={stats.overdueAmount > 0 ? "danger" : undefined}
+            />
+            <KpiStripItem
+              label={t("Average age")}
+              value={`${stats.avgAgeDays.toFixed(0)}d`}
+              sub={t("weighted by open $")}
+            />
+            <KpiStripItem
+              label={t("Count")}
+              value={String(openItems.length)}
+              sub={t("open invoices")}
+            />
+          </KpiStrip>
 
-            {stats.totals.totalOpenMinor > 0 ? (
-              <Card className="gap-0 rounded-md py-3">
-                <CardContent className="px-4">
-                  <AgingDistributionBar totals={stats.totals} />
-                </CardContent>
-              </Card>
-            ) : null}
+          {stats.totals.totalOpenMinor > 0 ? (
+            <Card className="gap-0 rounded-md py-3">
+              <CardContent className="px-4">
+                <AgingDistributionBar totals={stats.totals} />
+              </CardContent>
+            </Card>
+          ) : null}
 
-            {selection.items.length > 0 ? (
-              <m.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="bg-card flex items-center justify-between rounded-md border px-3 py-2"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-medium tabular-nums">
-                    {t(
-                      "{0} selected · {1}",
-                      selection.items.length,
-                      formatCurrency(selection.totalOpen / 100),
-                    )}
+          {selection.items.length > 0 ? (
+            <m.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="bg-card flex items-center justify-between rounded-md border px-3 py-2"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-medium tabular-nums">
+                  {t(
+                    "{0} selected · {1}",
+                    selection.items.length,
+                    formatCurrency(selection.totalOpen / 100),
+                  )}
+                </span>
+                {!selection.singleCustomerId ? (
+                  <span className="text-muted-foreground text-xs">
+                    {t("Select invoices from a single customer to apply a payment")}
                   </span>
-                  {!selection.singleCustomerId ? (
-                    <span className="text-muted-foreground text-xs">
-                      {t("Select invoices from a single customer to apply a payment")}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="flex items-center gap-2">
+                ) : null}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setRowSelection({})}
+                  className="h-7 text-xs"
+                >
+                  <XIcon className="size-3.5" />
+                  {t("Clear")}
+                </Button>
+                {canRecordPayment ? (
                   <Button
-                    variant="ghost"
                     size="sm"
-                    onClick={() => setRowSelection({})}
+                    onClick={handleApplyPayment}
+                    disabled={!selection.singleCustomerId}
                     className="h-7 text-xs"
                   >
-                    <XIcon className="size-3.5" />
-                    {t("Clear")}
+                    <HandCoinsIcon className="size-3.5" />
+                    {t("Apply Payment")}
                   </Button>
-                  {canRecordPayment ? (
-                    <Button
-                      size="sm"
-                      onClick={handleApplyPayment}
-                      disabled={!selection.singleCustomerId}
-                      className="h-7 text-xs"
-                    >
-                      <HandCoinsIcon className="size-3.5" />
-                      {t("Apply Payment")}
-                    </Button>
-                  ) : null}
-                </div>
-              </m.div>
-            ) : null}
-
-            {openItems.length === 0 ? (
-              <EmptyTable
-                title={hasActiveFilters ? "Nothing matches" : "Nothing open"}
-                description={
-                  hasActiveFilters
-                    ? "No invoice is open under that filter. Widen it, or clear it to see everything outstanding."
-                    : "Every invoice is settled. An invoice sits here from the day it posts until it is paid in full."
-                }
-                columns={OPEN_ITEM_COLUMNS}
-                onClearFilters={hasActiveFilters ? () => filterForm.reset() : undefined}
-              />
-            ) : (
-              <OpenItemsTable
-                items={openItems}
-                rowSelection={rowSelection}
-                onRowSelectionChange={setRowSelection}
-              />
-            )}
-          </>
-        )}
-      </div>
-    </PageLayout>
-  );
-}
-
-function SummaryCard({
-  index,
-  label,
-  value,
-  detail,
-  valueClassName,
-}: {
-  index: number;
-  label: string;
-  value: string;
-  detail?: string;
-  valueClassName?: string;
-}) {
-  return (
-    <m.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05, ease: "easeOut" }}
-    >
-      <Card className="h-full gap-0 rounded-lg py-3">
-        <CardContent className="px-4">
-          <p className="text-muted-foreground text-xs font-medium">
-            {label}
-          </p>
-          <p
-            className={cn(
-              "mt-1 text-2xl font-semibold tracking-tight tabular-nums",
-              valueClassName,
-            )}
-          >
-            {value}
-          </p>
-          {detail ? (
-            <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">{detail}</p>
+                ) : null}
+              </div>
+            </m.div>
           ) : null}
-        </CardContent>
-      </Card>
-    </m.div>
+
+          {openItems.length === 0 ? (
+            <EmptyTable
+              title={hasActiveFilters ? "Nothing matches" : "Nothing open"}
+              description={
+                hasActiveFilters
+                  ? "No invoice is open under that filter. Widen it, or clear it to see everything outstanding."
+                  : "Every invoice is settled. An invoice sits here from the day it posts until it is paid in full."
+              }
+              columns={OPEN_ITEM_COLUMNS}
+              onClearFilters={hasActiveFilters ? () => filterForm.reset() : undefined}
+            />
+          ) : (
+            <OpenItemsTable
+              items={openItems}
+              rowSelection={rowSelection}
+              onRowSelectionChange={setRowSelection}
+            />
+          )}
+        </>
+      )}
+    </PageLayout>
   );
 }

@@ -64,7 +64,7 @@ export function InboundFilePanel({
       description={`Received via ${detail.method} · ${formatToUserTimezone(detail.receivedAt)}`}
       size="lg"
       footer={
-        <div className="flex w-full items-center justify-end gap-2">
+        <>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t("Close")}
           </Button>
@@ -77,7 +77,7 @@ export function InboundFilePanel({
               {t("Reprocess File")}
             </Button>
           )}
-        </div>
+        </>
       }
     >
       <div className="flex min-h-0 flex-col gap-3">
@@ -103,7 +103,9 @@ export function InboundFilePanel({
             <EDIPartnerRef partner={detail.partner} />
           </DetailField>
           <DetailField label={t("Method")}>
-            <Badge variant="neutral" appearance="outline">{detail.method}</Badge>
+            <Badge variant="neutral" appearance="outline">
+              {detail.method}
+            </Badge>
           </DetailField>
           <DetailField label={t("Remote Path")} fullWidth>
             <span className="font-mono text-xs">{detail.remotePath}</span>

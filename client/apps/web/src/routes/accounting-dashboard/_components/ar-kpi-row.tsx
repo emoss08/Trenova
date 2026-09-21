@@ -1,26 +1,24 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
+import type { Tone } from "@/components/kpi/tone";
 import {
   AR_CEI_HEALTHY_THRESHOLD,
   AR_CEI_WARNING_THRESHOLD,
   AR_DSO_TARGET_DAYS,
 } from "@/lib/accounting-constants";
-import type { ARDashboardKpis } from "@/lib/graphql/accounts-receivable";
 import { queries } from "@/lib/queries";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import {
-  AlertTriangleIcon,
-  BanknoteIcon,
-  GaugeIcon,
-  TimerIcon,
-  TrendingDownIcon,
-  TrendingUpIcon,
-  WalletIcon,
-} from "lucide-react";
-import { m } from "motion/react";
-import { Link } from "react-router";
+
+const AR_KPI_COUNT = 5;
+const AR_KPI_MIN_WIDTH = "11rem";
+
+function ceiTone(cei: number): Tone {
+  if (cei >= AR_CEI_HEALTHY_THRESHOLD) return "success";
+  if (cei >= AR_CEI_WARNING_THRESHOLD) return "warning";
+  return "danger";
+}
 
 export function ARKpiRow() {
   const t = useT();
@@ -28,182 +26,54 @@ export function ARKpiRow() {
   const { data: kpis, isLoading } = useQuery(queries.ar.dashboardKpis());
 
   if (isLoading || !kpis) {
-    return (
-      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-5">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <Skeleton key={index} className="h-[104px] w-full rounded-md" />
-        ))}
-      </div>
-    );
+    return <KpiStripSkeleton count={AR_KPI_COUNT} size="lg" minItemWidth={AR_KPI_MIN_WIDTH} />;
   }
 
+  const dsoDelta = kpis.dsoDeltaDays;
+  const dsoMoved = Math.abs(dsoDelta) > 0.05;
+
   return (
-    <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-5">
-      <KpiCard
-        index={0}
-        icon={WalletIcon}
-        label={t("AR Outstanding")}
+    <KpiStrip minItemWidth={AR_KPI_MIN_WIDTH}>
+      <KpiStripItem
+        size="lg"
+        label={t("AR outstanding")}
         value={formatCurrency(kpis.overview.totalOpenMinor / 100)}
-        detail={`${kpis.overview.openInvoiceCount} open ${
+        sub={`${kpis.overview.openInvoiceCount} open ${
           kpis.overview.openInvoiceCount === 1 ? "invoice" : "invoices"
         }`}
         to="/accounting/ar/aging"
       />
-      <DsoKpiCard kpis={kpis} />
-      <CeiKpiCard kpis={kpis} />
-      <KpiCard
-        index={3}
-        icon={BanknoteIcon}
-        label={t("Unapplied Cash")}
+      <KpiStripItem
+        size="lg"
+        label={t("Days sales outstanding")}
+        tone={kpis.currentDsoDays > AR_DSO_TARGET_DAYS ? "danger" : undefined}
+        value={t("{0}d", kpis.currentDsoDays.toFixed(1))}
+        delta={dsoMoved ? Number(dsoDelta.toFixed(1)) : null}
+        deltaLabel="d"
+        deltaTone={dsoDelta > 0 ? "danger" : "success"}
+        sub={t("target < {0}d · vs 4 weeks ago", AR_DSO_TARGET_DAYS)}
+      />
+      <KpiStripItem
+        size="lg"
+        label={t("Collection effectiveness")}
+        tone={ceiTone(kpis.cei)}
+        value={`${kpis.cei.toFixed(0)}%`}
+      />
+      <KpiStripItem
+        size="lg"
+        label={t("Unapplied cash")}
         value={formatCurrency(kpis.overview.unappliedCashMinor / 100)}
-        detail={t("awaiting application")}
+        sub={t("awaiting application")}
         to="/accounting/ar/payments"
       />
-      <KpiCard
-        index={4}
-        icon={AlertTriangleIcon}
+      <KpiStripItem
+        size="lg"
         label={t("Overdue")}
+        tone={kpis.overduePercent >= 25 ? "danger" : undefined}
         value={`${kpis.overduePercent.toFixed(1)}%`}
-        valueClassName={kpis.overduePercent >= 25 ? "text-danger-foreground" : undefined}
-        detail={`${formatCurrency(kpis.overview.overdueMinor / 100)} past due`}
+        sub={`${formatCurrency(kpis.overview.overdueMinor / 100)} past due`}
         to="/accounting/ar/open-items"
       />
-    </div>
-  );
-}
-
-function DsoKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
-  const t = useT();
-
-  const delta = kpis.dsoDeltaDays;
-  const isUp = delta > 0.05;
-  const isDown = delta < -0.05;
-  const overTarget = kpis.currentDsoDays > AR_DSO_TARGET_DAYS;
-
-  return (
-    <KpiShell index={1} icon={TimerIcon} label={t("Days Sales Outstanding")}>
-      <div className="flex items-baseline gap-2">
-        <p
-          className={cn(
-            "text-2xl font-semibold tracking-tight tabular-nums",
-            overTarget && "text-danger-foreground",
-          )}
-        >
-          {t("{0}d", kpis.currentDsoDays.toFixed(1))}
-        </p>
-        {(isUp || isDown) && (
-          <span
-            className={cn(
-              "flex items-center gap-0.5 text-xs font-medium tabular-nums",
-              isUp && "text-danger-foreground",
-              isDown && "text-success-foreground",
-            )}
-          >
-            {isUp ? <TrendingUpIcon className="size-3" /> : <TrendingDownIcon className="size-3" />}
-            {delta > 0 ? "+" : ""}
-            {delta.toFixed(1)}d
-          </span>
-        )}
-      </div>
-      <p className="text-muted-foreground text-xs">
-        {t("target < {0}d · vs 4 weeks ago", AR_DSO_TARGET_DAYS)}
-      </p>
-    </KpiShell>
-  );
-}
-
-function CeiKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
-  const t = useT();
-
-  const cei = kpis.cei;
-  const barClass =
-    cei >= AR_CEI_HEALTHY_THRESHOLD
-      ? "bg-success"
-      : cei >= AR_CEI_WARNING_THRESHOLD
-        ? "bg-warning"
-        : "bg-danger";
-
-  return (
-    <KpiShell index={2} icon={GaugeIcon} label={t("Collection Effectiveness")}>
-      <p className="text-2xl font-semibold tracking-tight tabular-nums">{cei.toFixed(0)}%</p>
-      <div className="bg-muted mt-1.5 h-1 w-full overflow-hidden rounded-full">
-        <m.div
-          className={cn("h-full rounded-full", barClass)}
-          initial={{ width: 0 }}
-          animate={{ width: `${Math.min(cei, 100)}%` }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        />
-      </div>
-    </KpiShell>
-  );
-}
-
-function KpiShell({
-  index,
-  icon: Icon,
-  label,
-  to,
-  children,
-}: {
-  index: number;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  to?: string;
-  children: React.ReactNode;
-}) {
-  const card = (
-    <Card
-      className={cn(
-        "h-full gap-0 overflow-hidden rounded-md",
-        to && "hover:bg-muted/40 transition-colors",
-      )}
-    >
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-        <CardTitle className="text-muted-foreground text-xs font-semibold">
-          {label}
-        </CardTitle>
-        <span className="bg-muted inline-flex size-7 shrink-0 items-center justify-center rounded-md">
-          <Icon className="size-4" />
-        </span>
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
-  );
-
-  return (
-    <m.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05, ease: "easeOut" }}
-    >
-      {to ? <Link to={to}>{card}</Link> : card}
-    </m.div>
-  );
-}
-
-function KpiCard({
-  index,
-  icon,
-  label,
-  value,
-  detail,
-  valueClassName,
-  to,
-}: {
-  index: number;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  detail?: string;
-  valueClassName?: string;
-  to?: string;
-}) {
-  return (
-    <KpiShell index={index} icon={icon} label={label} to={to}>
-      <p className={cn("text-2xl font-semibold tracking-tight tabular-nums", valueClassName)}>
-        {value}
-      </p>
-      {detail ? <p className="text-muted-foreground text-xs">{detail}</p> : null}
-    </KpiShell>
+    </KpiStrip>
   );
 }

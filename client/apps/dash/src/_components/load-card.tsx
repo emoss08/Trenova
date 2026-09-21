@@ -66,7 +66,7 @@ export function LoadPayChip({ load }: { load: PortalLoad }) {
   );
 }
 
-export function LoadCard({ load, index = 0 }: { load: PortalLoad; index?: number }) {
+export function LoadCard({ load }: { load: PortalLoad }) {
   const t = useT();
 
   const origin = originStop(load);
@@ -83,7 +83,7 @@ export function LoadCard({ load, index = 0 }: { load: PortalLoad; index?: number
     <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22, ease: "easeOut", delay: Math.min(index * 0.04, 0.24) }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
     >
       <Link to={`/dash/loads/${load.assignmentId}`} className="block">
         <m.div

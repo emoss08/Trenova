@@ -81,7 +81,7 @@ export function FinalizeReturnDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         {missing.length > 0 ? (
-          <ul className="mt-3 flex max-h-40 flex-col gap-1 overflow-y-auto rounded-md border p-2">
+          <ul className="flex max-h-40 flex-col gap-1 overflow-y-auto rounded-md border p-2">
             {missing.map((line) => (
               <li key={line.id} className="flex items-center gap-2 text-xs">
                 <Badge variant="danger">{t("No rate")}</Badge>
@@ -94,7 +94,7 @@ export function FinalizeReturnDialog({
             ))}
           </ul>
         ) : null}
-        <AlertDialogFooter className="mt-4">
+        <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>{t("Keep it a draft")}</AlertDialogCancel>
           <AlertDialogAction onClick={() => mutate()} disabled={isPending || missing.length > 0}>
             {isPending ? t("Finalizing...") : t("Finalize return")}

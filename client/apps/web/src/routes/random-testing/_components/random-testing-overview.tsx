@@ -1,14 +1,12 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
-import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
+import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
+import { KPI_VALUE_CLASS, KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import type { ProgrammeOverview } from "@/lib/random-testing";
 import NumberFlow from "@number-flow/react";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { CalendarCheckIcon, CalendarClockIcon, FlaskConicalIcon, UsersIcon } from "lucide-react";
-
-const VALUE_CLASS = "text-2xl leading-none font-semibold tabular-nums";
 
 type RandomTestingOverviewProps = {
   overview: ProgrammeOverview;
@@ -26,23 +24,27 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
   const target = overview.drugTarget + overview.alcoholTarget;
 
   return (
-    <div className="grid grid-cols-4 gap-3 lg:grid-cols-8">
-      <KpiCard span={2}>
-        <KpiHeader
-          icon={<CalendarClockIcon className="size-[11px]" />}
-          label={t("Owed now")}
-          info={
+    <KpiStrip>
+      <KpiStripItem
+        label={t("Owed now")}
+        tone={overview.missed > 0 ? "danger" : undefined}
+        info={
+          <>
             <InfoPopover title={t("Owed now")}>
               {t(
                 "Active pools whose current round has not been drawn. Missed means a past round of this year was never drawn, which a DOT audit will find.",
               )}
             </InfoPopover>
-          }
-          right={overview.missed > 0 ? <Badge variant="danger">{t("Missed")}</Badge> : null}
-        />
-        <NumberFlow value={overview.owedNow} className={VALUE_CLASS} aria-label={t("Owed now")} />
-        <KpiSub>
-          {overview.missed > 0
+            {overview.missed > 0 ? (
+              <Badge variant="danger" className="ml-auto">
+                {t("Missed")}
+              </Badge>
+            ) : null}
+          </>
+        }
+        value={<NumberFlow value={overview.owedNow} aria-label={t("Owed now")} />}
+        sub={
+          overview.missed > 0
             ? t("{0, plural, one {# round} other {# rounds}} missed this year", overview.missed)
             : overview.owedNow > 0
               ? t(
@@ -51,37 +53,29 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
                 )
               : overview.activePools === 0
                 ? t("No active pool to draw from")
-                : t("Every current round is drawn")}
-        </KpiSub>
-      </KpiCard>
+                : t("Every current round is drawn")
+        }
+      />
 
-      <KpiCard span={2}>
-        <KpiHeader
-          icon={<CalendarCheckIcon className="size-[11px]" />}
-          label={t("Rounds this year")}
-          info={
-            <InfoPopover title={t("Rounds this year")}>
-              {t(
-                "Draws made this year that were not voided. A draft round can still change; a final one is the record.",
-              )}
-            </InfoPopover>
-          }
-        />
-        <NumberFlow
-          value={overview.roundsThisYear}
-          className={VALUE_CLASS}
-          aria-label={t("Rounds this year")}
-        />
-        <KpiSub>
-          {overview.roundsThisYear === 0
+      <KpiStripItem
+        label={t("Rounds this year")}
+        info={
+          <InfoPopover title={t("Rounds this year")}>
+            {t(
+              "Draws made this year that were not voided. A draft round can still change; a final one is the record.",
+            )}
+          </InfoPopover>
+        }
+        value={<NumberFlow value={overview.roundsThisYear} aria-label={t("Rounds this year")} />}
+        sub={
+          overview.roundsThisYear === 0
             ? t("Nothing drawn yet this year")
-            : t("{0} final · {1} draft", overview.finalRounds, overview.draftRounds)}
-        </KpiSub>
-      </KpiCard>
+            : t("{0} final · {1} draft", overview.finalRounds, overview.draftRounds)
+        }
+      />
 
       <KpiCard span={2}>
         <KpiHeader
-          icon={<FlaskConicalIcon className="size-[11px]" />}
           label={t("Selected this year")}
           info={
             <InfoPopover title={t("Selected this year")}>
@@ -99,13 +93,11 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
         <div className="flex items-baseline gap-1">
           <NumberFlow
             value={selected}
-            className={VALUE_CLASS}
+            className={KPI_VALUE_CLASS}
             aria-label={t("Selected this year")}
           />
           {target > 0 ? (
-            <span className="text-muted-foreground font-mono text-xs tabular-nums">
-              / {target}
-            </span>
+            <span className="text-muted-foreground text-xs tabular-nums">/ {target}</span>
           ) : null}
         </div>
         <div className="mt-auto flex flex-col gap-1">
@@ -122,45 +114,44 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
         </div>
       </KpiCard>
 
-      <KpiCard span={2}>
-        <KpiHeader
-          icon={<UsersIcon className="size-[11px]" />}
-          label={t("In the hat")}
-          info={
-            <InfoPopover title={t("In the hat")}>
+      <KpiStripItem
+        label={t("In the hat")}
+        info={
+          <InfoPopover title={t("In the hat")}>
+            {t(
+              "Drivers eligible at the most recent draw. It changes as people join and leave the pool.",
+            )}
+          </InfoPopover>
+        }
+        value={
+          overview.lastPoolSize === null ? (
+            <span className="text-muted-foreground" aria-label={t("In the hat")}>
+              —
+            </span>
+          ) : (
+            <NumberFlow value={overview.lastPoolSize} aria-label={t("In the hat")} />
+          )
+        }
+        sub={
+          <>
+            <span className="block truncate">
+              {overview.lastDrawnAt
+                ? t("At the last draw, {0}", formatUnixDate(overview.lastDrawnAt))
+                : t("No round has been drawn yet")}
+            </span>
+            <span className="block truncate">
               {t(
-                "Drivers eligible at the most recent draw. It changes as people join and leave the pool.",
+                "{0, plural, one {# active pool} other {# active pools}}{1}",
+                overview.activePools,
+                overview.belowMinimum > 0
+                  ? ` ${t("· {0} below the DOT minimum", overview.belowMinimum)}`
+                  : "",
               )}
-            </InfoPopover>
-          }
-        />
-        {overview.lastPoolSize === null ? (
-          <span className={cn(VALUE_CLASS, "text-muted-foreground")} aria-label={t("In the hat")}>
-            —
-          </span>
-        ) : (
-          <NumberFlow
-            value={overview.lastPoolSize}
-            className={VALUE_CLASS}
-            aria-label={t("In the hat")}
-          />
-        )}
-        <KpiSub>
-          {overview.lastDrawnAt
-            ? t("At the last draw, {0}", formatUnixDate(overview.lastDrawnAt))
-            : t("No round has been drawn yet")}
-        </KpiSub>
-        <KpiSub>
-          {t(
-            "{0, plural, one {# active pool} other {# active pools}}{1}",
-            overview.activePools,
-            overview.belowMinimum > 0
-              ? ` ${t("· {0} below the DOT minimum", overview.belowMinimum)}`
-              : "",
-          )}
-        </KpiSub>
-      </KpiCard>
-    </div>
+            </span>
+          </>
+        }
+      />
+    </KpiStrip>
   );
 }
 

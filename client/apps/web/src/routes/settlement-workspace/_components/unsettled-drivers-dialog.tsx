@@ -115,7 +115,7 @@ export function UnsettledDriversDialog({
         }}
       />
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg">
+        <DialogContent size="md">
           <DialogHeader>
             <DialogTitle>{t("Unsettled drivers")}</DialogTitle>
             <DialogDescription>
@@ -218,11 +218,10 @@ export function UnsettledDriversDialog({
             </ScrollArea>
           )}
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
               {t("Close")}
             </Button>
             <Button
-              size="sm"
               disabled={generateAllMutation.isPending || settleable.length === 0}
               onClick={() => generateAllMutation.mutate()}
               title={t("Create draft settlements for every driver listed here in one pass")}

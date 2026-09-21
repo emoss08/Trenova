@@ -13,6 +13,7 @@ import {
 import { shortcutHint } from "@/components/formula-editor/studio-shortcuts";
 import { useFormulaSchema } from "@/hooks/use-formula-schema";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   HoverCard,
@@ -125,7 +126,9 @@ function FunctionRow({
           {fn.description || t("No description available.")}
         </p>
         {fn.example && (
-          <code className="bg-muted block rounded px-2 py-1 font-mono text-xs">{fn.example}</code>
+          <code className="bg-muted block rounded-md px-2 py-1 font-mono text-xs">
+            {fn.example}
+          </code>
         )}
       </HoverCardContent>
     </HoverCard>
@@ -183,25 +186,24 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
           <span className="text-muted-foreground text-2xs ml-auto">{t("Click to insert")}</span>
         </div>
         {schemaUnavailable && (
-          <div
-            role="status"
-            className="text-2xs flex items-center justify-between gap-2 rounded-md border border-warning/40 bg-warning/10 px-2 py-1.5 text-warning-foreground"
-          >
-            <span>
+          <Alert variant="warning" size="sm" role="status">
+            <AlertDescription>
               {t(
                 "Showing the built-in reference; the live schema could not be loaded, so newer variables may be missing and flagged as unknown.",
               )}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="xs"
-              className="h-5 shrink-0"
-              onClick={() => void refetchSchema()}
-            >
-              {t("Retry")}
-            </Button>
-          </div>
+            </AlertDescription>
+            <AlertAction>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                className="h-5 shrink-0"
+                onClick={() => void refetchSchema()}
+              >
+                {t("Retry")}
+              </Button>
+            </AlertAction>
+          </Alert>
         )}
         <div className="relative">
           <SearchIcon className="text-muted-foreground absolute top-1/2 left-2 size-3.5 -translate-y-1/2" />

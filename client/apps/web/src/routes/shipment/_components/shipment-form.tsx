@@ -2,6 +2,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { BillingQueueStatus } from "@trenova/shared/types/billing-queue";
 import type { Shipment } from "@trenova/shared/types/shipment";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { FileTextIcon, LockIcon } from "lucide-react";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { type ReactNode, lazy, Suspense } from "react";
@@ -97,19 +98,15 @@ function InvoicedBanner() {
   const t = useT();
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-info-border bg-info-subtle px-4 py-3 dark:border-info-border dark:bg-info-subtle/50">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-info-subtle">
-        <FileTextIcon className="size-4 text-info-foreground" />
-      </div>
-      <div>
-        <p className="text-sm font-medium text-info-foreground">{t("Invoiced")}</p>
-        <p className="text-xs text-info-foreground">
-          {t(
-            "This shipment has been invoiced. Billing and charge fields are locked. To make financial corrections, issue a credit memo and rebill.",
-          )}
-        </p>
-      </div>
-    </div>
+    <Alert variant="info" size="sm">
+      <FileTextIcon />
+      <AlertTitle>{t("Invoiced")}</AlertTitle>
+      <AlertDescription>
+        {t(
+          "This shipment has been invoiced. Billing and charge fields are locked. To make financial corrections, issue a credit memo and rebill.",
+        )}
+      </AlertDescription>
+    </Alert>
   );
 }
 

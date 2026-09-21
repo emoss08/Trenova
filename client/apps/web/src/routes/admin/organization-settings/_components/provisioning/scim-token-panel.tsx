@@ -1,4 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -112,7 +118,9 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
                   <TableRow key={token.id}>
                     <TableCell className="font-medium">{token.name}</TableCell>
                     <TableCell>
-                      <code className="bg-muted rounded px-1.5 py-0.5 text-xs">{token.prefix}</code>
+                      <code className="bg-muted rounded-md px-1.5 py-0.5 text-xs">
+                        {token.prefix}
+                      </code>
                     </TableCell>
                     <TableCell>
                       <Badge variant={token.status === "active" ? "success" : "danger"}>
@@ -156,24 +164,20 @@ function CopyableSecretBlock({ value }: { value: string }) {
   const { copy, isCopied } = useCopyToClipboard();
 
   return (
-    <div className="mx-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <div className="text-sm font-medium text-warning-foreground">
-            {t("Copy this token now")}
-          </div>
-          <div className="text-xs text-warning-foreground/80">
-            {t("The plaintext token is only shown once.")}
-          </div>
-        </div>
+    <Alert variant="warning" className="mx-2 w-auto">
+      <AlertTitle>{t("Copy this token now")}</AlertTitle>
+      <AlertDescription>
+        {t("The plaintext token is only shown once.")}
+        <code className="bg-card text-foreground mt-1 block w-full rounded-md border p-2 font-mono text-xs break-all">
+          {value}
+        </code>
+      </AlertDescription>
+      <AlertAction>
         <Button size="sm" variant="outline" onClick={() => void copy(value, { withToast: true })}>
           {isCopied ? <CheckIcon /> : <ClipboardIcon />}
           {isCopied ? t("Copied") : t("Copy")}
         </Button>
-      </div>
-      <code className="bg-background/80 block rounded-md border p-2 font-mono text-xs break-all">
-        {value}
-      </code>
-    </div>
+      </AlertAction>
+    </Alert>
   );
 }

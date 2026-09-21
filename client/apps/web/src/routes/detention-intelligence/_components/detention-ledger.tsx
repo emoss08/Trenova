@@ -1,11 +1,12 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
+import type { Tone } from "@/components/kpi/tone";
 import { ShareBreakdown, type ShareSegment } from "@/components/detention/detention-charts";
 import { RingGauge, type RingGaugeTone } from "@trenova/shared/components/ui/ring-gauge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { deltaToneClass } from "@trenova/shared/lib/detention";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import NumberFlow from "@number-flow/react";
-import { m } from "motion/react";
 import type { DetentionRollup } from "./use-detention-intelligence";
 
 const CURRENCY_FORMAT = {
@@ -20,30 +21,19 @@ function retentionTone(rate: number): RingGaugeTone {
   return "critical";
 }
 
-function LedgerStat({
-  label,
-  value,
-  detail,
-  valueClassName,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  valueClassName?: string;
-}) {
-  return (
-    <div className="min-w-0 px-3.5 py-2.5">
-      <p className="text-xs text-muted-foreground font-medium">{label}</p>
-      <p className={cn("mt-1 truncate text-sm font-medium tabular-nums", valueClassName)}>
-        {value}
-      </p>
-      <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">{detail}</p>
-    </div>
-  );
+function signTone(value: number): Tone | undefined {
+  if (value > 0) return "success";
+  if (value < 0) return "danger";
+  return undefined;
 }
 
 export function DetentionLedgerSkeleton() {
-  return <Skeleton className="h-[232px] w-full rounded-lg" />;
+  return (
+    <div className="flex flex-col gap-3">
+      <KpiStripSkeleton count={5} />
+      <Skeleton className="h-32 w-full rounded-lg" />
+    </div>
+  );
 }
 
 /**
@@ -88,44 +78,68 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
   ];
 
   return (
-    <m.section
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-      className="border-border bg-card relative overflow-hidden rounded-lg border"
-    >
+    <section className="flex flex-col gap-3">
+      <KpiStrip>
+        <KpiStripItem
+          size="lg"
+          className="col-span-full"
+          label={t("Net detention margin")}
+          tone={signTone(netMargin)}
+          value={<NumberFlow value={netMargin} format={CURRENCY_FORMAT} />}
+          sub={t(
+            "{0} settled {1} across {2} {3} · {4}% ran past free time {5}",
+            stopCount.toLocaleString(),
+            stopCount === 1 ? "stop" : "stops",
+            rollup.facilityCount,
+            rollup.facilityCount === 1 ? "facility" : "facilities",
+            Math.round(breachRate * 100),
+            rollup.truncated ? ` ${t("· top facilities only")}` : "",
+          )}
+        />
+        <KpiStripItem
+          label={t("Billed")}
+          value={formatCurrency(billed)}
+          sub={`${formatCurrency(exposure)} put in play`}
+        />
+        <KpiStripItem
+          label={t("Driver pay")}
+          value={formatCurrency(driverPay)}
+          sub={
+            billed > 0
+              ? `${Math.round((driverPay / billed) * 100)}% of billed`
+              : "no billed detention"
+          }
+        />
+        <KpiStripItem
+          label={t("Forgiven")}
+          tone={waived > 0 ? "warning" : undefined}
+          value={formatCurrency(waived)}
+          sub={
+            exposure > 0
+              ? `${Math.round((waived / exposure) * 100)}% of exposure`
+              : "nothing waived"
+          }
+        />
+        <KpiStripItem
+          label={t("Margin per stop")}
+          tone={signTone(marginPerStop)}
+          value={formatCurrency(marginPerStop)}
+          sub={
+            rollup.suppressedCount > 0
+              ? `${rollup.suppressedCount} lost to no notice`
+              : `${rollup.disputeCount} disputed`
+          }
+        />
+      </KpiStrip>
 
-      <div className="relative flex flex-col gap-5 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="border-border bg-card flex flex-col gap-5 rounded-lg border px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted-foreground font-medium">
-            {t("Net detention margin")}
-          </p>
-          <p
-            className={cn(
-              "mt-1.5 text-4xl leading-none font-semibold tracking-tight tabular-nums",
-              deltaToneClass(netMargin),
-            )}
-          >
-            <NumberFlow value={netMargin} format={CURRENCY_FORMAT} />
-          </p>
-          <p className="text-2xs text-muted-foreground mt-2 tabular-nums">
-            {t(
-              "{0} settled {1} across {2} {3} · {4}% ran past free time {5}",
-              stopCount.toLocaleString(),
-              stopCount === 1 ? "stop" : "stops",
-              rollup.facilityCount,
-              rollup.facilityCount === 1 ? "facility" : "facilities",
-              Math.round(breachRate * 100),
-              rollup.truncated ? ` ${t("· top facilities only")}` : "",
-            )}
-          </p>
-
-          <div className="mt-4 max-w-xl">
+          <div className="max-w-xl">
             <ShareBreakdown segments={segments} />
           </div>
 
           {overrun ? (
-            <p className="text-2xs mt-3 text-danger-foreground">
+            <p className="text-danger-foreground mt-3 text-xs">
               {t(
                 "Driver detention pay exceeded what was billed — the free-time concessions granted to customers are wider than the driver contract allows for.",
               )}
@@ -145,51 +159,14 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
               <p className="text-lg leading-none font-semibold tabular-nums">
                 {Math.round(retention * 100)}%
               </p>
-              <p className="text-2xs text-muted-foreground mt-0.5">retained</p>
+              <p className="text-muted-foreground mt-0.5 text-xs">retained</p>
             </div>
           </RingGauge>
-          <p className="text-2xs text-muted-foreground max-w-[9rem] leading-snug sm:text-center">
+          <p className="text-muted-foreground max-w-[9rem] text-xs leading-snug sm:text-center">
             {t("of every billed detention dollar survives driver pay")}
           </p>
         </div>
       </div>
-
-      <div className="divide-border border-border relative grid grid-cols-2 divide-x divide-y border-t sm:grid-cols-4 sm:divide-y-0">
-        <LedgerStat
-          label={t("Billed")}
-          value={formatCurrency(billed)}
-          detail={`${formatCurrency(exposure)} put in play`}
-        />
-        <LedgerStat
-          label={t("Driver pay")}
-          value={formatCurrency(driverPay)}
-          detail={
-            billed > 0
-              ? `${Math.round((driverPay / billed) * 100)}% of billed`
-              : "no billed detention"
-          }
-        />
-        <LedgerStat
-          label={t("Forgiven")}
-          value={formatCurrency(waived)}
-          detail={
-            exposure > 0
-              ? `${Math.round((waived / exposure) * 100)}% of exposure`
-              : "nothing waived"
-          }
-          valueClassName={waived > 0 ? "text-warning-foreground" : undefined}
-        />
-        <LedgerStat
-          label={t("Margin per stop")}
-          value={formatCurrency(marginPerStop)}
-          detail={
-            rollup.suppressedCount > 0
-              ? `${rollup.suppressedCount} lost to no notice`
-              : `${rollup.disputeCount} disputed`
-          }
-          valueClassName={deltaToneClass(marginPerStop)}
-        />
-      </div>
-    </m.section>
+    </section>
   );
 }

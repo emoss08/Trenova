@@ -9,7 +9,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { TimeFormat } from "@trenova/shared/types/user";
 import { ArrowRightIcon, CheckIcon, LayoutGridIcon, LockIcon } from "lucide-react";
-import { m } from "motion/react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
@@ -152,9 +151,9 @@ export function BriefingBar({
 
   return (
     <div className="border-border relative isolate overflow-hidden border-b">
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3">
         <div className="flex min-w-0 flex-col gap-1.5">
-          <h1 className="text-lg leading-none font-semibold tracking-tight">
+          <h1 className="truncate text-lg font-semibold">
             {greeting(clock.hour)}, {firstName}
           </h1>
 
@@ -166,15 +165,8 @@ export function BriefingBar({
                 <Skeleton className="h-5 w-24 rounded-full" />
               </>
             ) : total === 0 ? (
-              <m.span
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
-                className="text-muted-foreground flex items-center gap-1.5 text-xs"
-              >
-                <span className="bg-success/15 flex size-4 items-center justify-center rounded-full">
-                  <CheckIcon className="text-success size-2.5" />
-                </span>
+              <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                <CheckIcon className="text-success size-3.5" />
                 {analyticsReady
                   ? t(
                       "You're clear — {0} {1} moving, nothing flagged.",
@@ -182,36 +174,25 @@ export function BriefingBar({
                       analytics.activeShipments.count === 1 ? "load" : "loads",
                     )
                   : t("You're clear — nothing flagged.")}
-              </m.span>
+              </span>
             ) : (
               <>
-                <m.span
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
-                  className="text-xs font-medium"
-                >
+                <span className="text-xs font-medium">
                   {t("{0} {1} you", total, total === 1 ? t("item needs") : t("items need"))}
-                </m.span>
-                {chips.map((chip, index) => (
-                  <m.span
+                </span>
+                {chips.map((chip) => (
+                  <Link
                     key={`${chip.label}-${chip.href}`}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25, delay: 0.04 * (index + 1), ease: "easeOut" }}
+                    to={chip.href}
+                    className="group border-border bg-card text-muted-foreground hover:text-foreground flex h-5.5 items-center gap-1.5 rounded-full border px-2 text-xs transition-colors"
                   >
-                    <Link
-                      to={chip.href}
-                      className="group border-border/70 bg-card text-2xs text-muted-foreground hover:border-border hover:text-foreground flex h-5.5 items-center gap-1.5 rounded-full border px-2 transition-colors"
-                    >
-                      <span className={cn("size-1.5 rounded-full", CHIP_DOT[chip.tone])} />
-                      <span className="font-table text-foreground font-medium tabular-nums">
-                        {chip.count}
-                      </span>
-                      <span>{t(chip.label)}</span>
-                      <ArrowRightIcon className="-ml-0.5 size-2.5 -translate-x-0.5 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                    </Link>
-                  </m.span>
+                    <span className={cn("size-1.5 rounded-full", CHIP_DOT[chip.tone])} />
+                    <span className="font-table text-foreground font-medium tabular-nums">
+                      {chip.count}
+                    </span>
+                    <span>{t(chip.label)}</span>
+                    <ArrowRightIcon className="-ml-0.5 size-2.5 -translate-x-0.5 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+                  </Link>
                 ))}
               </>
             )}
@@ -220,14 +201,10 @@ export function BriefingBar({
 
         <div className="flex shrink-0 items-center gap-3">
           <div className="flex flex-col items-end gap-1">
-            <span className="flex items-center gap-1.5 font-mono text-sm leading-none font-medium tabular-nums">
-              <span className="relative flex size-1.5">
-                <span className="bg-success/60 absolute inline-flex size-full animate-ping rounded-full" />
-                <span className="bg-success relative inline-flex size-1.5 rounded-full" />
-              </span>
+            <span className="font-mono text-sm leading-none font-medium tabular-nums">
               {clock.time}
             </span>
-            <span className="text-2xs text-muted-foreground leading-none">{clock.date}</span>
+            <span className="text-muted-foreground text-xs leading-none">{clock.date}</span>
           </div>
 
           <div className="bg-border h-7 w-px" aria-hidden />

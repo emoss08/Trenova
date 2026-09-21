@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
-import { KpiStat } from "@/components/kpi/kpi-stat";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { usePermission } from "@/hooks/use-permission";
 import {
   fetchWorkerPolicies,
@@ -15,15 +15,7 @@ import { formatShiftDate } from "@trenova/shared/lib/scheduling";
 import { policyAudienceLabel } from "@trenova/shared/lib/self-service";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import {
-  ArchiveIcon,
-  FileSignatureIcon,
-  FileTextIcon,
-  PenLineIcon,
-  PlusIcon,
-  ScrollTextIcon,
-  UsersIcon,
-} from "lucide-react";
+import { FileTextIcon, PenLineIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useState } from "react";
 import { PolicyComplianceDialog } from "./policy-compliance-dialog";
 import { PoliciesEmpty } from "./policies-empty";
@@ -61,28 +53,25 @@ export default function PoliciesConsole() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-6 gap-3">
-        <KpiStat
+      <KpiStrip>
+        <KpiStripItem
           label={t("In force")}
           value={String(active.length)}
-          icon={<ScrollTextIcon className="size-[11px]" />}
           sub={t("Policies drivers are bound by today")}
         />
-        <KpiStat
+        <KpiStripItem
           label={t("Need a signature")}
           value={String(active.filter((row) => row.requiresSignature).length)}
           tone="warning"
-          icon={<FileSignatureIcon className="size-[11px]" />}
           sub={t("The rest only need reading")}
         />
-        <KpiStat
+        <KpiStripItem
           label={t("Retired")}
           value={String(rows.length - active.length)}
           tone="muted"
-          icon={<ArchiveIcon className="size-[11px]" />}
           sub={t("Kept so old signatures still point at something")}
         />
-      </div>
+      </KpiStrip>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -180,7 +169,9 @@ function PolicyCard({
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <Badge variant="neutral" appearance="outline">{t("v{0}", policy.versionLabel)}</Badge>
+        <Badge variant="neutral" appearance="outline">
+          {t("v{0}", policy.versionLabel)}
+        </Badge>
         <Badge variant="neutral">{policyAudienceLabel(policy.appliesTo)}</Badge>
         <Badge variant={policy.requiresSignature ? "warning" : "neutral"}>
           {policy.requiresSignature ? t("Signature") : t("Read only")}

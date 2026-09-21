@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
 import { useDeleteHomeLayoutPreset, useHomeLayoutPresets } from "@/hooks/use-home-layout";
 import type { HomeLayoutPreset } from "@/lib/graphql/home-layout";
@@ -59,27 +59,24 @@ export function HomeLayoutsPage() {
   };
 
   return (
-    <div className="flex flex-col p-6">
-      <PageHeader
-        title={t("Home Screens")}
-        description={t(
+    <PageLayout
+      pageHeaderProps={{
+        title: t("Home Screens"),
+        description: t(
           "Author a home screen once and assign it to the roles that should land on it.",
-        )}
-        className="p-0 py-4"
-        actions={
-          canCreate ? (
-            <Link to="/admin/home-layouts/new">
-              <Button size="sm">
-                <PlusIcon className="size-4" />
-                {t("New home screen")}
-              </Button>
-            </Link>
-          ) : undefined
-        }
-      />
-
+        ),
+        actions: canCreate ? (
+          <Link to="/admin/home-layouts/new">
+            <Button size="sm">
+              <PlusIcon className="size-4" />
+              {t("New home screen")}
+            </Button>
+          </Link>
+        ) : undefined,
+      }}
+    >
       {isLoading ? (
-        <div className="flex flex-col gap-2 pt-2">
+        <div className="flex flex-col gap-2">
           {Array.from({ length: 3 }, (_, index) => (
             <Skeleton key={index} className="h-16 rounded-lg" />
           ))}
@@ -87,7 +84,7 @@ export function HomeLayoutsPage() {
       ) : !presets || presets.length === 0 ? (
         <EmptyState canCreate={canCreate} />
       ) : (
-        <div className="flex flex-col gap-2 pt-2">
+        <div className="flex flex-col gap-2">
           {presets.map((preset) => (
             <PresetRow
               key={preset.id}
@@ -133,7 +130,7 @@ export function HomeLayoutsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }
 
@@ -218,7 +215,7 @@ function EmptyState({ canCreate }: { canCreate: boolean }) {
   const t = useT();
 
   return (
-    <div className="border-border mt-2 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
+    <div className="border-border flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
       <LayoutGridIcon className="text-muted-foreground/40 size-5" />
       <p className="text-sm font-medium">{t("No home screens yet")}</p>
       <p className="text-muted-foreground max-w-sm text-xs">

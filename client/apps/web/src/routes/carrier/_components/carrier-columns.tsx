@@ -130,7 +130,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
     {
       accessorKey: "dotNumber",
       header: t("DOT #"),
-      cell: ({ row }) => <span>{row.original.dotNumber || "-"}</span>,
+      cell: ({ row }) => <span>{row.original.dotNumber || "—"}</span>,
       size: 120,
       minSize: 90,
       maxSize: 150,
@@ -145,7 +145,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
     {
       accessorKey: "mcNumber",
       header: t("MC #"),
-      cell: ({ row }) => <span>{row.original.mcNumber || "-"}</span>,
+      cell: ({ row }) => <span>{row.original.mcNumber || "—"}</span>,
       size: 120,
       minSize: 90,
       maxSize: 150,
@@ -160,7 +160,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
     {
       accessorKey: "scac",
       header: "SCAC",
-      cell: ({ row }) => <span>{row.original.scac || "-"}</span>,
+      cell: ({ row }) => <span>{row.original.scac || "—"}</span>,
       size: 100,
       minSize: 80,
       maxSize: 120,

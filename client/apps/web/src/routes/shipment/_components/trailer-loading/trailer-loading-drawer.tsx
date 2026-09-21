@@ -71,23 +71,16 @@ export default function LoadPlannerDialog({
         if (!isOpen) onOpenChange(null);
       }}
     >
-      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
-        <DialogHeader className="px-5 pt-5 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary/10 flex size-7 items-center justify-center rounded-md">
-              <ContainerIcon className="text-primary size-4" />
-            </div>
-            <div className="flex-1">
-              <DialogTitle className="text-sm">{t("Load Planner")}</DialogTitle>
-              <DialogDescription className="text-2xs">
-                {t("Commodity placement, weight distribution, and compliance")}
-              </DialogDescription>
-            </div>
-          </div>
+      <DialogContent size="xl" className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0">
+        <DialogHeader className="border-border border-b px-4 py-3">
+          <DialogTitle>{t("Load Planner")}</DialogTitle>
+          <DialogDescription>
+            {t("Commodity placement, weight distribution, and compliance")}
+          </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="flex-1" viewportClassName="max-h-[calc(85vh-140px)]">
-          <div className="flex flex-col gap-3 px-5 pb-4">
+          <div className="flex flex-col gap-3 p-4">
             {data ? (
               <>
                 <TrailerTopView
@@ -158,7 +151,7 @@ export default function LoadPlannerDialog({
           </div>
         </ScrollArea>
 
-        <DialogFooter className="m-0 flex flex-row justify-between">
+        <DialogFooter className="m-0">
           {data && (
             <>
               <Button

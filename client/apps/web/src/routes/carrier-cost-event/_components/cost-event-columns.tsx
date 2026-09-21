@@ -31,9 +31,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierCostEventRow>[] {
       accessorKey: "eventType",
       header: t("Type"),
       cell: ({ row }) => (
-        <span className="text-xs">
-          {costEventTypeLabel(row.original.eventType as CarrierCostEventType)}
-        </span>
+        <span>{costEventTypeLabel(row.original.eventType as CarrierCostEventType)}</span>
       ),
       size: 130,
       meta: { apiField: "eventType", label: t("Event Type") },
@@ -42,7 +40,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierCostEventRow>[] {
       id: "carrier",
       header: t("Carrier"),
       cell: ({ row }) => (
-        <span className="text-xs font-medium">
+        <span className="font-medium">
           {row.original.carrier
             ? row.original.carrier.scac
               ? `${row.original.carrier.name} (${row.original.carrier.scac})`
@@ -55,7 +53,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierCostEventRow>[] {
     {
       accessorKey: "proNumber",
       header: t("Pro #"),
-      cell: ({ row }) => <span className="font-mono text-xs">{row.original.proNumber || "—"}</span>,
+      cell: ({ row }) => <span className="font-mono">{row.original.proNumber || "—"}</span>,
       size: 140,
       meta: { apiField: "proNumber", label: t("Pro Number") },
     },
@@ -71,9 +69,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierCostEventRow>[] {
     {
       accessorKey: "eventDate",
       header: t("Accrued"),
-      cell: ({ row }) => (
-        <span className="text-xs">{formatSettlementDate(row.original.eventDate)}</span>
-      ),
+      cell: ({ row }) => <span>{formatSettlementDate(row.original.eventDate)}</span>,
       size: 110,
       meta: { apiField: "eventDate", label: t("Event Date") },
     },

@@ -337,7 +337,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
           else requestClose();
         }}
       >
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+        <DialogContent size="xl" className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("Import Fuel Card Statement")}</DialogTitle>
             <DialogDescription>

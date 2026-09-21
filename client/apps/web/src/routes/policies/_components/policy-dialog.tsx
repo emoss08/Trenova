@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -224,7 +225,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Revise the policy") : t("Publish a policy")}</DialogTitle>
           <DialogDescription>
@@ -235,13 +236,14 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               <SectionHeading>{t("What it is")}</SectionHeading>
               <FormControl>
                 <InputField<WorkerPolicyFormValues>
@@ -305,9 +307,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   <div className="flex flex-col gap-1.5">
                     {documentId ? (
                       <div className="bg-muted/30 flex items-center gap-3 rounded-lg border p-3">
-                        <span className="bg-accent inline-flex size-7 shrink-0 items-center justify-center rounded-md">
-                          <FileTextIcon className="size-4" />
-                        </span>
+                        <FileTextIcon className="text-muted-foreground size-4 shrink-0" />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium">
                             {attachedName ?? t("Attached document")}
@@ -355,8 +355,8 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                         onDrop={onDrop}
                         className={cn(
                           "text-muted-foreground hover:border-border hover:bg-muted/40 flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed px-4 py-6 text-center text-xs transition-colors",
-                          dragging && "border-primary bg-primary/5 text-foreground",
-                          bodyError && "border-destructive/60",
+                          dragging && "border-brand bg-surface-selected text-foreground",
+                          bodyError && "border-danger-border",
                         )}
                       >
                         <UploadCloudIcon
@@ -390,17 +390,14 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
               )}
 
               {wordsChanged ? (
-                <div
-                  className="border-warning/40 bg-warning/10 text-warning-foreground col-span-full flex items-start gap-2 rounded-lg border px-3 py-2 text-xs"
-                  role="status"
-                >
-                  <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0" />
-                  <span>
+                <Alert variant="warning" size="sm" role="status" className="col-span-full">
+                  <AlertTriangleIcon />
+                  <AlertDescription>
                     {t(
                       "The words changed. Give this a new version, or the server will refuse it if anybody has signed the current one.",
                     )}
-                  </span>
-                </div>
+                  </AlertDescription>
+                </Alert>
               ) : null}
 
               <SectionHeading>{t("Who and when")}</SectionHeading>

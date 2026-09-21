@@ -75,7 +75,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayCodeRow>[] {
     {
       accessorKey: "code",
       header: t("Code"),
-      cell: ({ row }) => <span className="font-mono text-xs font-medium">{row.original.code}</span>,
+      cell: ({ row }) => <span className="font-mono font-medium">{row.original.code}</span>,
       size: 110,
       meta: { apiField: "code" },
     },
@@ -83,7 +83,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayCodeRow>[] {
       accessorKey: "name",
       header: t("Name"),
       cell: ({ row }) => (
-        <span className="text-xs">
+        <span>
           {row.original.name}
           {row.original.isSystem && (
             <span className="bg-muted text-muted-foreground ml-1.5 rounded px-1 py-0.5 text-2xs">
@@ -114,7 +114,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayCodeRow>[] {
       header: t("GL Account"),
       cell: ({ row }) =>
         row.original.glAccount ? (
-          <span className="text-xs">
+          <span>
             <span className="font-mono">{row.original.glAccount.accountCode}</span>{" "}
             <span className="text-muted-foreground">{row.original.glAccount.name}</span>
           </span>

@@ -71,8 +71,8 @@ function ScenarioRow({
         "group flex items-center justify-between gap-2 rounded-md border px-3 py-2 transition-opacity",
         result &&
           (result.passed
-            ? "border-success/40 bg-success/5"
-            : "border-destructive/40 bg-destructive/5"),
+            ? "border-success-border bg-success-subtle"
+            : "border-danger-border bg-danger-subtle"),
         isStale && "opacity-60",
       )}
     >

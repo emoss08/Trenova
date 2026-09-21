@@ -168,7 +168,7 @@ export function ReviewActionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon className="size-4" />
@@ -202,14 +202,12 @@ export function ReviewActionDialog({
         <DialogFooter>
           <Button
             variant="outline"
-            size="sm"
             onClick={() => onOpenChange(false)}
             disabled={mutation.isPending}
           >
             {t("Cancel")}
           </Button>
           <Button
-            size="sm"
             variant={config.destructive ? "destructive" : "default"}
             onClick={handleConfirm}
             isLoading={mutation.isPending}

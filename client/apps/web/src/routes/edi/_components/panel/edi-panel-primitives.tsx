@@ -1,3 +1,4 @@
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { cn } from "@trenova/shared/lib/utils";
 
 export function EDIEmptyState({ message, className }: { message: string; className?: string }) {
@@ -23,9 +24,9 @@ export function DetailSection({
   fullWidth?: boolean;
 }) {
   return (
-    <section className="bg-muted/20 rounded-md border p-3">
-      <h3 className="mb-2 text-sm font-medium">{title}</h3>
-      <div className={fullWidth ? "" : "grid grid-cols-2 gap-x-4 gap-y-2"}>{children}</div>
+    <section className="bg-card rounded-lg border p-3">
+      <h3 className="mb-2 text-sm font-semibold">{title}</h3>
+      {fullWidth ? children : <DescriptionList columns={2}>{children}</DescriptionList>}
     </section>
   );
 }
@@ -40,10 +41,9 @@ export function DetailField({
   fullWidth?: boolean;
 }) {
   return (
-    <div className={fullWidth ? "col-span-2" : ""}>
-      <div className="text-muted-foreground text-xs">{label}</div>
-      <div className="text-sm">{children}</div>
-    </div>
+    <DescriptionItem label={label} span={fullWidth ? "full" : 1}>
+      {children}
+    </DescriptionItem>
   );
 }
 

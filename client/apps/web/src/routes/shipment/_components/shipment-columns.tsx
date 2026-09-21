@@ -85,7 +85,7 @@ export function getColumns(
         const status = row.original.tenderStatus;
 
         if (status === null) {
-          return "-";
+          return "—";
         }
 
         return <ShipmentTenderStatusBadge status={row.original.tenderStatus} />;
@@ -127,7 +127,7 @@ export function getColumns(
       accessorFn: (row) => row.proNumber ?? row.bol ?? "",
       cell: ({ row }) => (
         <div className="flex flex-col gap-0.5">
-          <span className="font-table truncate text-xs font-semibold tabular-nums">
+          <span className="font-table truncate font-medium tabular-nums">
             {row.original.proNumber || "—"}
           </span>
           <span className="font-table text-muted-foreground truncate text-2xs tabular-nums">
@@ -157,7 +157,7 @@ export function getColumns(
         return (
           <Link
             to={`/shipment-management/orders?panelType=edit&panelEntityId=${orderId}`}
-            className="font-table truncate text-xs tabular-nums hover:underline"
+            className="font-table truncate tabular-nums hover:underline"
             onClick={(event) => event.stopPropagation()}
           >
             {orderNumber || orderId.slice(0, 12)}
@@ -240,7 +240,7 @@ export function getColumns(
       header: t("Pickup Appt"),
       accessorFn: (row) => getAppointmentStop(getOriginStop(row))?.scheduledWindowStart ?? null,
       cell: ({ row }) => (
-        <span className="font-table text-xs tabular-nums">
+        <span className="font-table tabular-nums">
           {formatAppointment(getOriginStop(row.original))}
         </span>
       ),
@@ -262,7 +262,7 @@ export function getColumns(
       accessorFn: (row) =>
         getAppointmentStop(getDestinationStop(row))?.scheduledWindowStart ?? null,
       cell: ({ row }) => (
-        <span className="font-table text-xs tabular-nums">
+        <span className="font-table tabular-nums">
           {formatAppointment(getDestinationStop(row.original))}
         </span>
       ),

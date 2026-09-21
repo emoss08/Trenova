@@ -69,9 +69,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverExpenseRow>[] {
     {
       accessorKey: "incurredDate",
       header: t("Incurred"),
-      cell: ({ row }) => (
-        <span className="text-xs">{formatUnixDate(row.original.incurredDate)}</span>
-      ),
+      cell: ({ row }) => <span>{formatUnixDate(row.original.incurredDate)}</span>,
       size: 110,
       meta: { apiField: "incurredDate", label: t("Incurred") },
     },
@@ -90,7 +88,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverExpenseRow>[] {
     {
       accessorKey: "createdAt",
       header: t("Submitted"),
-      cell: ({ row }) => <span className="text-xs">{formatUnixDate(row.original.createdAt)}</span>,
+      cell: ({ row }) => <span>{formatUnixDate(row.original.createdAt)}</span>,
       size: 110,
       meta: { apiField: "createdAt", label: t("Submitted") },
     },
@@ -100,7 +98,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverExpenseRow>[] {
       cell: ({ row }) =>
         row.original.reviewedAt ? (
           <div className="flex flex-col">
-            <span className="text-xs">{formatUnixDate(row.original.reviewedAt)}</span>
+            <span>{formatUnixDate(row.original.reviewedAt)}</span>
             {row.original.reviewedBy ? (
               <span className="text-muted-foreground text-xs">{row.original.reviewedBy.name}</span>
             ) : null}

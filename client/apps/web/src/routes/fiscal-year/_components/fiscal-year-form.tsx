@@ -61,8 +61,8 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
   );
 
   return (
-    <div className="flex flex-col">
-      <FormGroup cols={2} className="border-b pb-2">
+    <div className="flex flex-col gap-6">
+      <FormGroup cols={2}>
         <FormControl>
           <SelectField
             control={control}
@@ -121,7 +121,6 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             ? t("The calendar is fixed once the fiscal year is created")
             : t("Define the fiscal period and calendar year settings")
         }
-        className="border-b py-2"
       >
         <FormGroup cols={1}>
           <FormControl>
@@ -168,7 +167,6 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
       <FormSection
         title={t("Year-End Settings")}
         description={t("Post-close adjustment configuration")}
-        className={isEdit ? "border-b py-2" : "py-2"}
       >
         <FormGroup cols={2}>
           <FormControl cols="full">
@@ -185,11 +183,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
         </FormGroup>
       </FormSection>
       {isEdit && (
-        <FormSection
-          title={t("System Settings")}
-          description={t("Active fiscal year designation")}
-          className="border-b py-2"
-        >
+        <FormSection title={t("System Settings")} description={t("Active fiscal year designation")}>
           <FormGroup cols={1}>
             <FormControl>
               <SwitchField
@@ -209,11 +203,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
       )}
 
       {isEdit && (
-        <FormSection
-          title={t("Fiscal Periods")}
-          description={t("Manage fiscal periods")}
-          className="py-2"
-        >
+        <FormSection title={t("Fiscal Periods")} description={t("Manage fiscal periods")}>
           <LazyLoadComponent>
             <FiscalPeriodTable
               periods={periods}

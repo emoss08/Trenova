@@ -112,7 +112,7 @@ export function CarrierAssignDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="sm:max-w-[640px]">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>
             {replace ? t("Replace Carrier Assignment") : t("Assign Move to Carrier")}
@@ -123,13 +123,14 @@ export function CarrierAssignDialog({
           </DialogDescription>
         </DialogHeader>
         <Form
+          className="flex flex-col gap-4"
           onSubmit={(event) => {
             event.stopPropagation();
             void handleSubmit(onSubmit)(event);
           }}
         >
           <ScrollArea className="max-h-[60vh] pr-2">
-            <div className="flex flex-col gap-3 pb-4">
+            <div className="flex flex-col gap-3">
               <CarrierEligibilityAlerts
                 control={control}
                 eligibility={carrierId ? eligibility : undefined}

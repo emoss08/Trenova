@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -158,24 +159,24 @@ export function InvoiceApprovalPage() {
         description: t("Review policy-controlled invoice adjustments awaiting finance approval."),
       }}
       toolbar={
-        <div className="mx-4 mt-3 grid gap-2.5 md:grid-cols-4">
-          <SummaryCard
-            label={t("Pending Approvals")}
+        <KpiStrip aria-label={t("Approval totals")}>
+          <KpiStripItem
+            label={t("Pending approvals")}
             value={String(summaryQuery.data?.approvalsPending ?? 0)}
           />
-          <SummaryCard
+          <KpiStripItem
             label={t("Reconciliation")}
             value={String(summaryQuery.data?.reconciliationPending ?? 0)}
           />
-          <SummaryCard
-            label={t("Write-Offs")}
+          <KpiStripItem
+            label={t("Write-offs")}
             value={String(summaryQuery.data?.writeOffPending ?? 0)}
           />
-          <SummaryCard
-            label={t("Batch Failures")}
+          <KpiStripItem
+            label={t("Batch failures")}
             value={String(summaryQuery.data?.failedBatchItems ?? 0)}
           />
-        </div>
+        </KpiStrip>
       }
       sidebar={
         <div className="flex h-full flex-col">
@@ -576,17 +577,6 @@ function ApprovalDetail({
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-card rounded-lg border px-3 py-2.5">
-      <p className="text-muted-foreground text-xs font-medium">
-        {label}
-      </p>
-      <p className="mt-1 text-2xl font-semibold">{value}</p>
     </div>
   );
 }

@@ -11,7 +11,6 @@ import {
 import { Form } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { api } from "@trenova/shared/lib/api";
-import { cn } from "@trenova/shared/lib/utils";
 import type { TableSheetProps } from "@trenova/shared/types/data-table";
 import type { API_ENDPOINTS } from "@trenova/shared/types/server";
 import { useQueryClient } from "@tanstack/react-query";
@@ -27,6 +26,7 @@ type FormCreateModalProps<T extends FieldValues, TResponse = unknown> = TableShe
   description?: string;
   form: UseFormReturn<T>;
   className?: string;
+  size?: React.ComponentProps<typeof DialogContent>["size"];
   notice?: React.ReactNode;
   onSuccess?: (data: TResponse, values: T) => void | Promise<void>;
   submitText?: string;
@@ -41,6 +41,7 @@ export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
   formComponent,
   form,
   className,
+  size,
   url,
   queryKey,
   notice,
@@ -111,7 +112,7 @@ export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
         handleClose();
       }}
     >
-      <DialogContent className={cn("max-w-[450px]", className)}>
+      <DialogContent size={size} className={className}>
         <DialogHeader>
           <DialogTitle>{t("Add New {0}", title)}</DialogTitle>
           <DialogDescription>
@@ -122,7 +123,7 @@ export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
         </DialogHeader>
         {notice ? notice : null}
         <FormProvider {...form}>
-          <Form onSubmit={handleSubmit(onSubmit)}>
+          <Form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
             {formComponent}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose}>

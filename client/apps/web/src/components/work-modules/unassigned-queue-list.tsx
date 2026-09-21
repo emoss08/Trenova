@@ -10,7 +10,7 @@ import {
 } from "@/lib/shipment-utils";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { GripVerticalIcon } from "lucide-react";
+import { CheckIcon, GripVerticalIcon } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { useUnassignedShipments } from "./use-work-queues";
 
@@ -136,8 +136,9 @@ export function UnassignedQueueList({
         </div>
       )}
       {!isLoading && visible.length === 0 && (
-        <p className="text-muted-foreground py-3 text-center text-2xs">
-          {t("All loads are assigned ✓")}
+        <p className="text-muted-foreground flex items-center justify-center gap-1 py-3 text-2xs">
+          {t("All loads are assigned")}
+          <CheckIcon className="size-3" aria-hidden />
         </p>
       )}
       {visible.map((s) => {

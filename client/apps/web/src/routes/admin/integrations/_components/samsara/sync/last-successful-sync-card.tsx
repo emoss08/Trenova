@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { formatDurationFromSeconds, formatToUserTimezone } from "@trenova/shared/lib/date";
 import { useSamsaraSyncStore } from "@/stores/samsara-sync";
 
@@ -12,31 +13,22 @@ export function LastSuccessfulSyncCard() {
   }
 
   return (
-    <div className="grid gap-2 rounded-md border border-success/30 bg-success/5 p-3 text-xs sm:grid-cols-2 lg:grid-cols-6">
-      <ContentSection title={t("Last Successful Sync")}>
+    <DescriptionList columns={3} className="bg-card rounded-lg border p-3 lg:grid-cols-5">
+      <DescriptionItem numeric label={t("Last Successful Sync")}>
         {formatToUserTimezone(lastSuccessfulSync.closedAt)}
-      </ContentSection>
-      <ContentSection title={t("Duration")}>
+      </DescriptionItem>
+      <DescriptionItem numeric label={t("Duration")}>
         {formatDurationFromSeconds(lastSuccessfulSync.durationSeconds)}
-      </ContentSection>
-      <ContentSection title={t("Workers")}>
+      </DescriptionItem>
+      <DescriptionItem numeric label={t("Workers")}>
         {lastSuccessfulSync.result.activeWorkers}/{lastSuccessfulSync.result.totalWorkers}
-      </ContentSection>
-      <ContentSection title={t("Created Drivers")}>
+      </DescriptionItem>
+      <DescriptionItem numeric label={t("Created Drivers")}>
         {lastSuccessfulSync.result.createdDrivers}
-      </ContentSection>
-      <ContentSection title={t("Updated Mappings")}>
+      </DescriptionItem>
+      <DescriptionItem numeric label={t("Updated Mappings")}>
         {lastSuccessfulSync.result.updatedMappings}
-      </ContentSection>
-    </div>
-  );
-}
-
-function ContentSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-background/70 rounded-md border border-success/20 p-3">
-      <p className="text-muted-foreground">{title}</p>
-      <p className="text-foreground mt-1 font-semibold">{children}</p>
-    </div>
+      </DescriptionItem>
+    </DescriptionList>
   );
 }

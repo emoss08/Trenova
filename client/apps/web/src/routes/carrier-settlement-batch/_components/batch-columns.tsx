@@ -31,7 +31,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementBatchRow>
     {
       accessorKey: "name",
       header: t("Batch"),
-      cell: ({ row }) => <span className="text-xs font-medium">{row.original.name}</span>,
+      cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
       size: 220,
       meta: {
         apiField: "name",
@@ -46,7 +46,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementBatchRow>
       accessorKey: "periodStart",
       header: t("Period"),
       cell: ({ row }) => (
-        <span className="text-xs">
+        <span>
           {formatSettlementDate(row.original.periodStart)} –{" "}
           {formatSettlementDate(row.original.periodEnd)}
         </span>
@@ -64,9 +64,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementBatchRow>
     {
       accessorKey: "payDate",
       header: t("Pay Date"),
-      cell: ({ row }) => (
-        <span className="text-xs">{formatSettlementDate(row.original.payDate)}</span>
-      ),
+      cell: ({ row }) => <span>{formatSettlementDate(row.original.payDate)}</span>,
       size: 110,
       meta: {
         apiField: "payDate",
@@ -81,7 +79,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementBatchRow>
       accessorKey: "settlementCount",
       header: () => <div className="text-right">{t("Settlements")}</div>,
       cell: ({ row }) => (
-        <div className="text-right text-xs tabular-nums">{row.original.settlementCount}</div>
+        <div className="text-right tabular-nums">{row.original.settlementCount}</div>
       ),
       size: 100,
       meta: {

@@ -15,14 +15,11 @@ export function CustomerPaymentsPage() {
         title: t("Customer Payments"),
         description: t("Record, apply, and reverse customer payments with full GL traceability."),
       }}
-      className="p-0"
     >
-      <div className="mx-4 mt-3 flex flex-col gap-4">
-        <PaymentStatsRow />
-        <DataTableLazyComponent>
-          <Table />
-        </DataTableLazyComponent>
-      </div>
+      <PaymentStatsRow />
+      <DataTableLazyComponent>
+        <Table />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

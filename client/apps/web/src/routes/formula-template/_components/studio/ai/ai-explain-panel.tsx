@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { apiService } from "@/services/api";
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
@@ -87,12 +88,16 @@ export function AiExplainPanel({ expression, schemaId }: AiExplainPanelProps) {
           {data && (
             <div className="space-y-2 pr-6">
               {status === "stale" && (
-                <div className="flex items-center justify-between gap-2 rounded-md border border-warning/40 bg-warning/10 px-2 py-1 text-xs text-warning-foreground">
-                  <span>{t("The formula changed since this explanation was written.")}</span>
-                  <Button type="button" variant="ghost" size="xs" onClick={handleExplain}>
-                    {t("Explain again")}
-                  </Button>
-                </div>
+                <Alert variant="warning" size="sm">
+                  <AlertDescription>
+                    {t("The formula changed since this explanation was written.")}
+                  </AlertDescription>
+                  <AlertAction>
+                    <Button type="button" variant="ghost" size="xs" onClick={handleExplain}>
+                      {t("Explain again")}
+                    </Button>
+                  </AlertAction>
+                </Alert>
               )}
               <p
                 className={cn(

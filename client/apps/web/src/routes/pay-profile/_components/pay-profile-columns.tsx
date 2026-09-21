@@ -99,7 +99,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayProfileRow>[] {
     {
       accessorKey: "name",
       header: t("Name"),
-      cell: ({ row }) => <span className="text-xs font-medium">{row.original.name}</span>,
+      cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
       size: 180,
       meta: { apiField: "name" },
     },
@@ -143,7 +143,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayProfileRow>[] {
       accessorKey: "activeAssignmentCount",
       header: () => <div className="text-right">{t("Drivers")}</div>,
       cell: ({ row }) => (
-        <div className="text-right text-xs tabular-nums">{row.original.activeAssignmentCount}</div>
+        <div className="text-right tabular-nums">{row.original.activeAssignmentCount}</div>
       ),
       size: 80,
     },

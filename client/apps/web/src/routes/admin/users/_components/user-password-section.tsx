@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SensitiveField } from "@/components/fields/sensitive-field";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { resetUserPassword } from "@/lib/user-api";
@@ -36,15 +37,13 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
   return (
     <div className="space-y-4">
       {isLocked && (
-        <div className="border-destructive/30 bg-destructive/10 flex items-start gap-3 rounded-lg border p-3">
-          <LockIcon className="text-destructive size-4 shrink-0" />
-          <div>
-            <p className="text-destructive text-sm font-medium">{t("Account Locked")}</p>
-            <p className="text-destructive/80 text-xs">
-              {t("This account has been locked due to too many failed login attempts.")}
-            </p>
-          </div>
-        </div>
+        <Alert variant="destructive" size="sm">
+          <LockIcon />
+          <AlertTitle>{t("Account Locked")}</AlertTitle>
+          <AlertDescription>
+            {t("This account has been locked due to too many failed login attempts.")}
+          </AlertDescription>
+        </Alert>
       )}
 
       <div className="flex flex-col gap-3">

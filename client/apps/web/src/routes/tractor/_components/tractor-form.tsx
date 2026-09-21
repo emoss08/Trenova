@@ -24,7 +24,7 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
   const t = useT();
 
   return (
-    <FormGroup cols={2} className="pb-2">
+    <FormGroup cols={2}>
       <FormControl>
         <SelectField
           control={control}
@@ -120,7 +120,7 @@ function RegistrationInformationSection({ control }: { control: Control<Tractor>
   const t = useT();
 
   return (
-    <FormSection title={t("Registration Information")} className="border-t py-2">
+    <FormSection title={t("Registration Information")}>
       <FormGroup cols={2}>
         <FormControl>
           <InputField
@@ -179,7 +179,7 @@ function TelematicsSection({ control }: { control: Control<Tractor> }) {
   const t = useT();
 
   return (
-    <FormSection title={t("Telematics")} className="border-t py-2">
+    <FormSection title={t("Telematics")}>
       <FormGroup cols={1}>
         <FormControl cols="full">
           <InputField
@@ -202,7 +202,7 @@ function FuelTaxSection({ control }: { control: Control<Tractor> }) {
   const t = useT();
 
   return (
-    <FormSection title={t("Fuel & IFTA")} className="border-t py-2">
+    <FormSection title={t("Fuel & IFTA")}>
       <FormGroup cols={1}>
         <FormControl>
           <IftaFuelTypeAutocompleteField<Tractor>
@@ -238,7 +238,7 @@ function WorkerAssignmentSection({ control }: { control: Control<Tractor> }) {
   const t = useT();
 
   return (
-    <FormSection title={t("Worker Assignment")} className="border-t py-2">
+    <FormSection title={t("Worker Assignment")}>
       <FormGroup cols={2}>
         <FormControl>
           <WorkerAutocompleteField<Tractor>
@@ -274,13 +274,13 @@ export function TractorForm() {
   console.info("tractor form errors", errors);
 
   return (
-    <>
+    <div className="flex flex-col gap-6">
       <GeneralInformationSection control={control} />
       <RegistrationInformationSection control={control} />
       <TelematicsSection control={control} />
       <FuelTaxSection control={control} />
       <WorkerAssignmentSection control={control} />
       <CustomFieldsSection resourceType="tractor" control={control} />
-    </>
+    </div>
   );
 }

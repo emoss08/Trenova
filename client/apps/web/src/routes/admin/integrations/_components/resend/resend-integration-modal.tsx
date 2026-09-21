@@ -5,7 +5,7 @@ import { ResendIntegrationForm } from "./resend-integration-form";
 export function ResendIntegrationModal({ open, onOpenChange }: TableSheetProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <ResendIntegrationForm open={open} onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>

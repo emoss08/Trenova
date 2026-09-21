@@ -168,11 +168,9 @@ function ReviewDetailSheet({
       <SheetContent className="w-full gap-0 overflow-y-auto p-0 sm:max-w-lg">
         {item ? (
           <>
-            <SheetHeader className="gap-3 border-b border-border/60 px-5 py-4">
+            <SheetHeader className="border-border gap-3 border-b px-4 py-3">
               <RiskLabel level={item.riskLevel} />
-              <SheetTitle className="pr-8 text-base font-semibold">
-                {reviewCarrierName(item, t)}
-              </SheetTitle>
+              <SheetTitle className="pr-8">{reviewCarrierName(item, t)}</SheetTitle>
               <SheetDescription className="text-xs tabular-nums">
                 {item.docketNumber
                   ? t("USDOT {0} · MC {1}", item.dotNumber, item.docketNumber)

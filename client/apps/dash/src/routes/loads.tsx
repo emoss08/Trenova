@@ -34,8 +34,8 @@ function LoadList({ scope }: { scope: PortalLoadScope }) {
 
   return (
     <div className="flex flex-col gap-3">
-      {loads.data.map((load, index) => (
-        <LoadCard key={load.assignmentId} load={load} index={index} />
+      {loads.data.map((load) => (
+        <LoadCard key={load.assignmentId} load={load} />
       ))}
     </div>
   );

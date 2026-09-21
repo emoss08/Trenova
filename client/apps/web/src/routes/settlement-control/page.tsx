@@ -18,9 +18,7 @@ export function SettlementControlPage() {
       }}
     >
       <SuspenseLoader>
-        <div className="p-4">
-          <SettlementControlForm />
-        </div>
+        <SettlementControlForm />
       </SuspenseLoader>
     </PageLayout>
   );

@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
   formatAccountingDate,
@@ -13,6 +14,11 @@ import {
   PlainSettlementStatusBadge,
 } from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import {
+  DescriptionEmpty,
+  DescriptionItem,
+  DescriptionList,
+} from "@trenova/shared/components/ui/description-list";
 import {
   Dialog,
   DialogContent,
@@ -118,19 +124,18 @@ function PaymentDetailView({
       </div>
 
       {isReversed ? (
-        <div className="rounded-md border border-danger-border bg-danger-subtle px-3 py-2.5 dark:border-danger-border dark:bg-danger-subtle">
-          <p className="text-xs font-medium text-danger-foreground">
+        <Alert variant="destructive" size="sm">
+          <Undo2Icon />
+          <AlertTitle>
             {t(
               "Reversed {0} — cash was backed out and the applied invoices were reopened.",
               formatAccountingDate(payment.reversedAt),
             )}
-          </p>
+          </AlertTitle>
           {payment.reversalReason ? (
-            <p className="mt-0.5 text-xs text-danger-foreground/90">
-              {payment.reversalReason}
-            </p>
+            <AlertDescription>{payment.reversalReason}</AlertDescription>
           ) : null}
-        </div>
+        </Alert>
       ) : null}
 
       <CashAllocationBar
@@ -140,22 +145,27 @@ function PaymentDetailView({
         shortPayMinor={shortPayMinor}
       />
 
-      <div className="bg-muted/30 grid grid-cols-2 gap-x-6 gap-y-2.5 rounded-md border p-3 text-xs md:grid-cols-3">
-        <DetailItem label={t("Payment date")} value={formatAccountingDate(payment.paymentDate)} />
-        <DetailItem
-          label={t("Accounting date")}
-          value={formatAccountingDate(payment.accountingDate)}
-        />
-        <DetailItem label={t("Method")} value={payment.paymentMethod} />
-        <DetailItem label={t("Reference")} value={payment.referenceNumber || "—"} />
-        <DetailItem label={t("Currency")} value={payment.currencyCode} />
-        <DetailItem label={t("Recorded")} value={formatAccountingDate(payment.createdAt)} />
+      <DescriptionList columns={3} className="bg-card rounded-lg border p-3">
+        <DescriptionItem label={t("Payment date")} numeric>
+          {formatAccountingDate(payment.paymentDate)}
+        </DescriptionItem>
+        <DescriptionItem label={t("Accounting date")} numeric>
+          {formatAccountingDate(payment.accountingDate)}
+        </DescriptionItem>
+        <DescriptionItem label={t("Method")}>{payment.paymentMethod}</DescriptionItem>
+        <DescriptionItem label={t("Reference")} numeric>
+          {payment.referenceNumber || <DescriptionEmpty />}
+        </DescriptionItem>
+        <DescriptionItem label={t("Currency")}>{payment.currencyCode}</DescriptionItem>
+        <DescriptionItem label={t("Recorded")} numeric>
+          {formatAccountingDate(payment.createdAt)}
+        </DescriptionItem>
         {payment.memo ? (
-          <div className="col-span-2 md:col-span-3">
-            <DetailItem label={t("Memo")} value={payment.memo} />
-          </div>
+          <DescriptionItem label={t("Memo")} span="full">
+            {payment.memo}
+          </DescriptionItem>
         ) : null}
-      </div>
+      </DescriptionList>
 
       <ApplicationsSection payment={payment} shortPayMinor={shortPayMinor} />
 
@@ -420,15 +430,6 @@ function CopyIdButton({ id }: { id: string }) {
         <CopyIcon className="size-3.5" />
       )}
     </Button>
-  );
-}
-
-function DetailItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-muted-foreground">{label}</p>
-      <p className="mt-0.5 font-medium tabular-nums">{value}</p>
-    </div>
   );
 }
 

@@ -11,7 +11,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { statusChoices } from "@/lib/choices";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   CHECKLIST_ITEM_KIND_LABELS,
@@ -68,13 +68,12 @@ export function ChecklistTemplateForm({
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-3">
-        <SectionTitle
-          title={t("General")}
-          hint={t(
-            "Name and code identify the checklist; the trigger decides when it starts on its own.",
-          )}
-        />
+      <FormSection
+        title={t("General")}
+        description={t(
+          "Name and code identify the checklist; the trigger decides when it starts on its own.",
+        )}
+      >
         <FormGroup cols={2}>
           <FormControl>
             <InputField
@@ -159,16 +158,14 @@ export function ChecklistTemplateForm({
             />
           </FormControl>
         </FormGroup>
-      </section>
+      </FormSection>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-2">
-          <SectionTitle
-            title={t("Items")}
-            hint={t(
-              "Each line has an owner and a due date counted from the day the checklist starts.",
-            )}
-          />
+      <FormSection
+        title={t("Items")}
+        description={t(
+          "Each line has an owner and a due date counted from the day the checklist starts.",
+        )}
+        action={
           <Button
             type="button"
             size="sm"
@@ -189,7 +186,8 @@ export function ChecklistTemplateForm({
             <PlusIcon className="size-3.5" />
             {t("Add item")}
           </Button>
-        </div>
+        }
+      >
         <Alert variant="default">
           <InfoIcon className="size-4" />
           <AlertTitle>{t("Items are copied when a checklist starts")}</AlertTitle>
@@ -214,7 +212,7 @@ export function ChecklistTemplateForm({
             />
           ))}
         </div>
-      </section>
+      </FormSection>
     </div>
   );
 }
@@ -367,15 +365,6 @@ function ItemRow({
           />
         </FormControl>
       </FormGroup>
-    </div>
-  );
-}
-
-function SectionTitle({ title, hint }: { title: string; hint: string }) {
-  return (
-    <div>
-      <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="text-muted-foreground text-xs">{hint}</p>
     </div>
   );
 }

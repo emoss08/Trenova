@@ -74,7 +74,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CommodityRow>[] {
         const classLabel = freightClassChoices.find(
           (c) => c.value === row.original.freightClass,
         )?.label;
-        return <span>{classLabel || row.original.freightClass || "-"}</span>;
+        return <span>{classLabel || row.original.freightClass || "—"}</span>;
       },
       size: 160,
       minSize: 120,

@@ -6,6 +6,7 @@ import type {
 } from "@/lib/graphql/billing-transfer";
 import { listBillingTransferRunItemsGraphQL } from "@/lib/graphql/billing-transfer";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -187,15 +188,12 @@ export function BulkBillingTransferDialog({
           ) : (
             <>
               {startError ? (
-                <div
-                  role="alert"
-                  className="border-destructive/40 bg-destructive/5 rounded-lg border px-3 py-2 text-xs"
-                >
-                  <p className="font-medium">{t("The transfer could not be started")}</p>
+                <Alert variant="destructive" size="sm">
+                  <AlertTitle>{t("The transfer could not be started")}</AlertTitle>
                   {startError instanceof Error && startError.message ? (
-                    <p className="text-muted-foreground">{startError.message}</p>
+                    <AlertDescription>{startError.message}</AlertDescription>
                   ) : null}
-                </div>
+                </Alert>
               ) : null}
               <BulkBillingTransferCandidates
                 filters={filters}

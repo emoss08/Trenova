@@ -89,7 +89,6 @@ export default function ShipmentMoveDetails() {
       <FormSection
         title={t("Move Details")}
         description={t("Execution legs and stop sequences for this shipment")}
-        className="border-border border-t pt-4"
         action={
           <div className="flex items-center gap-1.5">
             {/* Three rules name `moves` — move removal, permit lead time and curfew

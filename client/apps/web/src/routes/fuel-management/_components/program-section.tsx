@@ -147,7 +147,11 @@ function ProgramCard({
           </p>
         </div>
         <div className="flex items-center gap-1.5">
-          {inactive && <Badge variant="neutral" appearance="outline">{t("Inactive")}</Badge>}
+          {inactive && (
+            <Badge variant="neutral" appearance="outline">
+              {t("Inactive")}
+            </Badge>
+          )}
           <Button
             type="button"
             variant="ghost"
@@ -166,7 +170,7 @@ function ProgramCard({
       <div className="mt-4 flex items-baseline gap-1.5">
         {rate ? (
           <>
-            <span className="text-2xl font-semibold tabular-nums">{rate.value}</span>
+            <span className="text-xl font-semibold tabular-nums">{rate.value}</span>
             <span className="text-muted-foreground text-xs">{rate.unit}</span>
           </>
         ) : (
@@ -185,8 +189,9 @@ function ProgramCard({
         )}
         {entry.usedFallback && (
           <Badge
-            variant="neutral" appearance="outline"
-            className="text-2xs gap-1 border-warning/50 text-warning-foreground"
+            variant="neutral"
+            appearance="outline"
+            className="text-2xs border-warning-border text-warning-foreground gap-1"
           >
             <AlertTriangle className="size-3" />
             {t("Prior week price")}

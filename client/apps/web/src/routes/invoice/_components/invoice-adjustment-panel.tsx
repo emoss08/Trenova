@@ -211,8 +211,8 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
         <WalletCardsIcon className="size-3.5" />
         {t("Adjust Invoice")}
       </Button>
-      <DialogContent className="gap-0 p-0 sm:max-w-4xl">
-        <DialogHeader className="gap-0 p-4">
+      <DialogContent size="xl" className="gap-0 p-0">
+        <DialogHeader className="border-border border-b px-4 py-3">
           <DialogTitle>{t("Invoice Adjustment")}</DialogTitle>
           <DialogDescription>
             {t(
@@ -221,7 +221,7 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
           </DialogDescription>
         </DialogHeader>
         <Form onSubmit={handleSubmit(handleAdjustmentSubmit)}>
-          <div className="grid gap-4 px-4 pb-4 lg:grid-cols-[0.75fr_1.25fr]">
+          <div className="grid gap-4 p-4 lg:grid-cols-[0.75fr_1.25fr]">
             <div className="space-y-4">
               <InvoiceAdjustmentTypeSelector
                 kind={kind}

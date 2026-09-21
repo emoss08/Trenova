@@ -13,7 +13,7 @@ import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FuelSurchargeProgramFormValues } from "@/types/fuel-surcharge";
 import { useQuery } from "@tanstack/react-query";
-import { Eye, PencilRuler } from "lucide-react";
+import { PencilRuler } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -231,20 +231,15 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
   return (
     <Card className="gap-0 p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <div className="flex items-center gap-2">
-          <div className="bg-primary/10 flex size-8 items-center justify-center rounded-lg">
-            <Eye className="text-primary size-4" />
-          </div>
-          <div>
-            <CardTitle className="text-sm font-medium">{t("Live Matrix Preview")}</CardTitle>
-            <p className="text-muted-foreground text-xs">
-              {t(
-                "Rendered from the formula parameters — no rows to maintain. {0}",
-                currentPrice !== null &&
-                  ` ${t("The highlighted band contains this week's price (${0}).", currentPrice.toFixed(3))}`,
-              )}
-            </p>
-          </div>
+        <div>
+          <CardTitle className="text-sm font-semibold">{t("Live Matrix Preview")}</CardTitle>
+          <p className="text-muted-foreground text-xs">
+            {t(
+              "Rendered from the formula parameters — no rows to maintain. {0}",
+              currentPrice !== null &&
+                ` ${t("The highlighted band contains this week's price (${0}).", currentPrice.toFixed(3))}`,
+            )}
+          </p>
         </div>
         <Button
           type="button"
@@ -320,11 +315,9 @@ function ConvertToTableDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent size="lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {t("Make These Bands Editable")}
-          </DialogTitle>
+          <DialogTitle>{t("Make These Bands Editable")}</DialogTitle>
           <DialogDescription>
             {t(
               "Use this when the formula almost fits but some bands need a different range or rate — like a customer's own fuel table with uneven brackets.",

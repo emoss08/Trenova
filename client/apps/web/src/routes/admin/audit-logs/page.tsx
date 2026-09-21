@@ -16,12 +16,10 @@ export function AuditLogsPage() {
         description: t("Monitor and review system activity across your organization"),
       }}
     >
-      <div className="flex flex-col gap-2 p-4">
-        <AuditAlert />
-        <DataTableLazyComponent>
-          <AuditLogTable />
-        </DataTableLazyComponent>
-      </div>
+      <AuditAlert />
+      <DataTableLazyComponent>
+        <AuditLogTable />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

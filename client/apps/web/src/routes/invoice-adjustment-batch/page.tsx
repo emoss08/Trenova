@@ -1,15 +1,11 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { SectionPanel } from "@/components/section-panel";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
@@ -87,24 +83,24 @@ export function InvoiceAdjustmentBatchPage() {
         ),
       }}
       toolbar={
-        <div className="mx-4 mt-3 grid gap-3 md:grid-cols-4">
-          <SummaryCard
-            label={t("Batches In Flight")}
+        <KpiStrip aria-label={t("Batch totals")}>
+          <KpiStripItem
+            label={t("Batches in flight")}
             value={String(summaryQuery.data?.batchesInFlight ?? 0)}
           />
-          <SummaryCard
-            label={t("Failed Items")}
+          <KpiStripItem
+            label={t("Failed items")}
             value={String(summaryQuery.data?.failedBatchItems ?? 0)}
           />
-          <SummaryCard
-            label={t("Approvals Pending")}
+          <KpiStripItem
+            label={t("Approvals pending")}
             value={String(summaryQuery.data?.approvalsPending ?? 0)}
           />
-          <SummaryCard
-            label={t("Write-Offs")}
+          <KpiStripItem
+            label={t("Write-offs")}
             value={String(summaryQuery.data?.writeOffPending ?? 0)}
           />
-        </div>
+        </KpiStrip>
       }
       sidebar={
         <div className="flex h-full flex-col">
@@ -177,15 +173,17 @@ export function InvoiceAdjustmentBatchPage() {
                         {row.submittedByName || row.submittedById || t("System")}
                       </p>
                     </div>
-                    <span className="rounded-full border px-2 py-0.5 text-xs">
-                      {row.status}
-                    </span>
+                    <span className="rounded-full border px-2 py-0.5 text-xs">{row.status}</span>
                   </div>
                   <div className="mt-3 grid grid-cols-4 gap-2 text-xs">
-                    <Metric label={t("Total")} value={String(row.totalCount)} />
-                    <Metric label={t("Done")} value={String(row.processedCount)} />
-                    <Metric label={t("Failed")} value={String(row.failedCount)} />
-                    <Metric label={t("Pending")} value={String(row.pendingCount)} />
+                    <DescriptionItem label={t("Total")}>{String(row.totalCount)}</DescriptionItem>
+                    <DescriptionItem label={t("Done")}>
+                      {String(row.processedCount)}
+                    </DescriptionItem>
+                    <DescriptionItem label={t("Failed")}>{String(row.failedCount)}</DescriptionItem>
+                    <DescriptionItem label={t("Pending")}>
+                      {String(row.pendingCount)}
+                    </DescriptionItem>
                   </div>
                   {row.lastFailure ? (
                     <p className="text-destructive mt-3 line-clamp-2 text-xs">{row.lastFailure}</p>
@@ -213,103 +211,83 @@ export function InvoiceAdjustmentBatchPage() {
             </div>
           ) : (
             <div className="space-y-4 p-4">
-              <Card>
-                <CardHeader className="border-b">
-                  <CardTitle>{selectedRow.batchId}</CardTitle>
-                  <CardDescription>
-                    {selectedRow.submittedByName || selectedRow.submittedById || t("System batch")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-3 pt-4 md:grid-cols-4">
-                  <Metric label={t("Total")} value={String(selectedRow.totalCount)} />
-                  <Metric label={t("Succeeded")} value={String(selectedRow.succeededCount)} />
-                  <Metric label={t("Failed")} value={String(selectedRow.failedCount)} />
-                  <Metric label={t("Pending")} value={String(selectedRow.pendingCount)} />
-                  <Metric
-                    label={t("Submitted At")}
-                    value={formatTimestamp(selectedRow.submittedAt)}
-                  />
-                  <Metric label={t("Status")} value={selectedRow.status} />
-                  <Metric
-                    label={t("Last Failure Count")}
-                    value={String(selectedRow.lastFailureCount)}
-                  />
-                  <Metric label={t("Idempotency Key")} value={selectedRow.idempotencyKey} />
-                </CardContent>
-              </Card>
+              <SectionPanel
+                title={selectedRow.batchId}
+                hint={selectedRow.submittedByName || selectedRow.submittedById || t("System batch")}
+              >
+                <DescriptionList columns={4} className="p-3">
+                  <DescriptionItem label={t("Total")}>
+                    {String(selectedRow.totalCount)}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Succeeded")}>
+                    {String(selectedRow.succeededCount)}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Failed")}>
+                    {String(selectedRow.failedCount)}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Pending")}>
+                    {String(selectedRow.pendingCount)}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Submitted At")}>
+                    {formatTimestamp(selectedRow.submittedAt)}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Status")}>{selectedRow.status}</DescriptionItem>
+                  <DescriptionItem label={t("Last Failure Count")}>
+                    {String(selectedRow.lastFailureCount)}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Idempotency Key")} valueClassName="break-all">
+                    {selectedRow.idempotencyKey}
+                  </DescriptionItem>
+                </DescriptionList>
+              </SectionPanel>
 
-              <Card>
-                <CardHeader className="border-b">
-                  <CardTitle>{t("Item Results")}</CardTitle>
-                  <CardDescription>
-                    {t("Per-item outcome, failure reason, and created artifacts.")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="overflow-hidden rounded-xl border">
-                    <table className="w-full text-sm">
-                      <thead className="bg-muted/40 text-muted-foreground text-left">
-                        <tr>
-                          <th className="px-4 py-3">{t("Invoice")}</th>
-                          <th className="px-4 py-3">{t("Status")}</th>
-                          <th className="px-4 py-3">{t("Failure")}</th>
-                          <th className="px-4 py-3">{t("Artifacts")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {detailQuery.data.items.map((item) => (
-                          <tr key={item.id} className="border-t align-top">
-                            <td className="px-4 py-3 font-mono text-xs">{item.invoiceId}</td>
-                            <td className="px-4 py-3">{item.status}</td>
-                            <td className="text-muted-foreground px-4 py-3 text-xs">
-                              {item.errorMessage || t("No failure recorded")}
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex flex-wrap gap-2">
-                                <LinkButton to={`/billing/invoices?item=${item.invoiceId}`}>
-                                  {t("Invoice")}
+              <SectionPanel
+                title={t("Item results")}
+                help={t("Per-item outcome, failure reason, and created artifacts.")}
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/40 text-muted-foreground text-left">
+                      <tr>
+                        <th className="px-4 py-3">{t("Invoice")}</th>
+                        <th className="px-4 py-3">{t("Status")}</th>
+                        <th className="px-4 py-3">{t("Failure")}</th>
+                        <th className="px-4 py-3">{t("Artifacts")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detailQuery.data.items.map((item) => (
+                        <tr key={item.id} className="border-t align-top">
+                          <td className="px-4 py-3 font-mono text-xs">{item.invoiceId}</td>
+                          <td className="px-4 py-3">{item.status}</td>
+                          <td className="text-muted-foreground px-4 py-3 text-xs">
+                            {item.errorMessage || t("No failure recorded")}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-2">
+                              <LinkButton to={`/billing/invoices?item=${item.invoiceId}`}>
+                                {t("Invoice")}
+                              </LinkButton>
+                              {item.adjustmentId ? (
+                                <LinkButton
+                                  to={`/billing/pending-approvals?item=${item.adjustmentId}`}
+                                >
+                                  {t("Adjustment")}
                                 </LinkButton>
-                                {item.adjustmentId ? (
-                                  <LinkButton
-                                    to={`/billing/pending-approvals?item=${item.adjustmentId}`}
-                                  >
-                                    {t("Adjustment")}
-                                  </LinkButton>
-                                ) : null}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
+                              ) : null}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </SectionPanel>
             </div>
           )}
         </ScrollArea>
       }
     />
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Card className="shadow-none">
-      <CardContent className="px-4 py-3">
-        <p className="text-muted-foreground text-xs">{label}</p>
-        <p className="mt-1 text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-background rounded-lg border px-3 py-2">
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <p className="mt-1 text-sm font-medium break-all">{value}</p>
-    </div>
   );
 }
 

@@ -119,7 +119,7 @@ function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-110">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AssistMark className="size-4" />
@@ -158,7 +158,7 @@ function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: 
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="sm:max-w-115">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AssistMark className="size-4" />

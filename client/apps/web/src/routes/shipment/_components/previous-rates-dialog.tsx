@@ -33,7 +33,7 @@ export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRat
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <HistoryIcon className="size-4" />

@@ -35,7 +35,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
       accessorKey: "settlementNumber",
       header: t("Settlement #"),
       cell: ({ row }) => (
-        <span className="font-mono text-xs font-medium">{row.original.settlementNumber}</span>
+        <span className="font-mono font-medium">{row.original.settlementNumber}</span>
       ),
       size: 150,
       meta: {
@@ -50,15 +50,13 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
     {
       id: "carrier",
       header: t("Carrier"),
-      cell: ({ row }) => <span className="text-xs font-medium">{carrierName(row.original)}</span>,
+      cell: ({ row }) => <span className="font-medium">{carrierName(row.original)}</span>,
       size: 200,
     },
     {
       accessorKey: "periodEnd",
       header: t("Period End"),
-      cell: ({ row }) => (
-        <span className="text-xs">{formatSettlementDate(row.original.periodEnd)}</span>
-      ),
+      cell: ({ row }) => <span>{formatSettlementDate(row.original.periodEnd)}</span>,
       size: 110,
       meta: {
         apiField: "periodEnd",
@@ -72,9 +70,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
     {
       accessorKey: "payDate",
       header: t("Pay Date"),
-      cell: ({ row }) => (
-        <span className="text-xs">{formatSettlementDate(row.original.payDate)}</span>
-      ),
+      cell: ({ row }) => <span>{formatSettlementDate(row.original.payDate)}</span>,
       size: 110,
       meta: {
         apiField: "payDate",
@@ -89,7 +85,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
       accessorKey: "shipmentCount",
       header: () => <div className="text-right">{t("Loads")}</div>,
       cell: ({ row }) => (
-        <div className="text-right text-xs tabular-nums">{row.original.shipmentCount}</div>
+        <div className="text-right tabular-nums">{row.original.shipmentCount}</div>
       ),
       size: 70,
       meta: {

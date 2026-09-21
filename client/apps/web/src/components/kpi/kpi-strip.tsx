@@ -1,6 +1,7 @@
 import { cn } from "@trenova/shared/lib/utils";
 import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 import { createContext, useContext } from "react";
+import { Link } from "react-router";
 import type React from "react";
 import type { Tone } from "./tone";
 
@@ -64,6 +65,13 @@ export function KpiStrip({
 
 export const KPI_STRIP_CELL_CLASS = "border-border min-w-0 border-r border-b px-3 py-2.5";
 
+export const KPI_VALUE_CLASS = "text-xl leading-none font-semibold tabular-nums";
+
+export const KPI_VALUE_LG_CLASS = "text-2xl leading-none font-semibold tabular-nums";
+
+const KPI_INTERACTIVE_CLASS =
+  "ui-inset-focus-ring hover:bg-surface-hover cursor-pointer text-left transition-colors";
+
 const KPI_LONE_CELL_CLASS = "border-border bg-card min-w-0 rounded-lg border px-3 py-2.5";
 
 type KpiStripItemProps = {
@@ -79,6 +87,7 @@ type KpiStripItemProps = {
   hint?: string;
   active?: boolean;
   onClick?: () => void;
+  to?: string;
   className?: string;
 };
 
@@ -95,6 +104,7 @@ export function KpiStripItem({
   hint,
   active = false,
   onClick,
+  to,
   className,
 }: KpiStripItemProps) {
   const cellClass = useInKpiStrip() ? KPI_STRIP_CELL_CLASS : KPI_LONE_CELL_CLASS;
@@ -109,8 +119,8 @@ export function KpiStripItem({
       </div>
       <div
         className={cn(
-          "text-foreground mt-1 truncate font-semibold tabular-nums",
-          size === "lg" ? "text-2xl" : "text-xl",
+          "text-foreground mt-1.5 truncate",
+          size === "lg" ? KPI_VALUE_LG_CLASS : KPI_VALUE_CLASS,
         )}
       >
         {value}
@@ -124,6 +134,18 @@ export function KpiStripItem({
     </>
   );
 
+  if (to) {
+    return (
+      <Link
+        to={to}
+        title={hint}
+        className={cn(cellClass, KPI_INTERACTIVE_CLASS, "block", className)}
+      >
+        {body}
+      </Link>
+    );
+  }
+
   if (onClick) {
     return (
       <button
@@ -133,7 +155,7 @@ export function KpiStripItem({
         onClick={onClick}
         className={cn(
           cellClass,
-          "ui-inset-focus-ring hover:bg-surface-hover cursor-pointer text-left transition-colors",
+          KPI_INTERACTIVE_CLASS,
           active && "bg-surface-selected hover:bg-surface-selected",
           className,
         )}

@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
+import { FormSection } from "@trenova/shared/components/ui/form";
 import type { SequenceConfig, SequenceConfigDocument, SequenceType } from "@/types/sequence-config";
 import { RotateCcwIcon } from "lucide-react";
 import { useFormContext } from "react-hook-form";
@@ -47,22 +48,17 @@ export function SequenceConfigPanel({ index, sequenceType }: PanelProps) {
   const isLocationCode = sequenceType === "location_code";
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-foreground text-lg font-semibold tracking-tight">
-            {sequenceTitles[sequenceType]}
-          </h2>
-          <p className="text-muted-foreground mt-0.5 text-sm">
-            {sequenceDescriptions[sequenceType]}
-          </p>
-        </div>
+    <FormSection
+      className="min-w-0 flex-1 gap-6"
+      title={sequenceTitles[sequenceType]}
+      description={sequenceDescriptions[sequenceType]}
+      action={
         <Button type="button" variant="ghost" size="sm" onClick={handleReset} className="gap-1.5">
           <RotateCcwIcon className="size-3.5" />
           {t("Reset to default")}
         </Button>
-      </div>
-
+      }
+    >
       <SequencePreview index={index} showTokens={!isLocationCode} />
 
       {isLocationCode ? (
@@ -75,6 +71,6 @@ export function SequenceConfigPanel({ index, sequenceType }: PanelProps) {
           <AdvancedSection index={index} />
         </>
       )}
-    </div>
+    </FormSection>
   );
 }

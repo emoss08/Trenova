@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { EDIPartnerReadinessBadge } from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -75,17 +76,17 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
         </div>
       </div>
       {!data.ready && exchangeEnabled && (
-        <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning-foreground">
-          <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
-          <p>
+        <Alert variant="warning" size="sm">
+          <TriangleAlertIcon />
+          <AlertDescription>
             {t(
               "This partner is enabled for {0}{1}{2} exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.",
               partner.enabledForInbound ? "inbound" : "",
               partner.enabledForInbound && partner.enabledForOutbound ? " and " : "",
               partner.enabledForOutbound ? "outbound" : "",
             )}
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
       <div className="bg-background flex flex-col divide-y rounded-md border">
         {data.items.map((item) => {

@@ -51,7 +51,7 @@ export function getColumns(
         const { tractor } = row.original;
 
         if (!tractor) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return (
@@ -82,7 +82,7 @@ export function getColumns(
         const { worker } = row.original;
 
         if (!worker) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return (
@@ -235,7 +235,7 @@ export function getColumns(
       accessorKey: "transactionReference",
       header: t("Reference"),
       cell: ({ row }) => (
-        <span className="font-table text-xs">{row.original.transactionReference ?? "—"}</span>
+        <span className="font-table">{row.original.transactionReference ?? "—"}</span>
       ),
       meta: {
         apiField: "transactionReference",

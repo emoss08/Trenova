@@ -261,14 +261,14 @@ function CountWidget({
         <div className="flex flex-1 flex-col items-start justify-center gap-1">
           <span
             className={cn(
-              "text-3xl leading-none font-semibold tabular-nums",
-              tone === "danger" && "text-destructive",
-              tone === "warning" && "text-warning",
+              "text-2xl leading-none font-semibold tabular-nums",
+              tone === "danger" && "text-danger-foreground",
+              tone === "warning" && "text-warning-foreground",
             )}
           >
             {count}
           </span>
-          <span className="text-2xs text-muted-foreground">{t("waiting on you")}</span>
+          <span className="text-muted-foreground text-xs">{t("waiting on you")}</span>
         </div>
       )}
     </WidgetShell>

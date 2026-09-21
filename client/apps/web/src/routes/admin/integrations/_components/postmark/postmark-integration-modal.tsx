@@ -5,7 +5,7 @@ import { PostmarkIntegrationForm } from "./postmark-integration-form";
 export function PostmarkIntegrationModal({ open, onOpenChange }: TableSheetProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <PostmarkIntegrationForm open={open} onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>

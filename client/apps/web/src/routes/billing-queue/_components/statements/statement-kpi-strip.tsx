@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { OpenStatement } from "@trenova/shared/types/statement";
 
 const WEEK_SECONDS = 7 * 86_400;
@@ -80,25 +81,15 @@ export function StatementKPIStrip({
   }
 
   return (
-    <div className="mx-4 mt-3">
-      <div className="bg-card flex items-center rounded-lg border">
-        {tiles.map((tile, index) => (
-          <div
-            key={tile.key}
-            className={cn("flex items-center gap-2 px-4 py-2.5", index > 0 && "border-l")}
-          >
-            <span className="text-muted-foreground text-xs">{t(tile.label)}</span>
-            <span
-              className={cn(
-                "text-sm font-semibold tabular-nums",
-                tile.muted && "text-muted-foreground",
-              )}
-            >
-              {tile.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+    <KpiStrip>
+      {tiles.map((tile) => (
+        <KpiStripItem
+          key={tile.key}
+          label={t(tile.label)}
+          value={tile.value}
+          tone={tile.muted ? "muted" : undefined}
+        />
+      ))}
+    </KpiStrip>
   );
 }

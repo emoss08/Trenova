@@ -122,7 +122,7 @@ export function AssignPayProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent size="lg" className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("Assign Pay Profile")}</DialogTitle>
           <DialogDescription>

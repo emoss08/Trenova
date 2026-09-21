@@ -110,13 +110,14 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               <FormControl>
                 <SelectField<RecognitionFormValues>
                   control={control}

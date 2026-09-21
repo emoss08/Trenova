@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { queries } from "@/lib/queries";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -77,7 +78,6 @@ export default function LoadEnvelopePanel() {
       description={t(
         "Dimensions, jurisdiction limits, and permits derived from the cargo on this shipment",
       )}
-      className="border-border border-t pt-4"
       action={assessment ? <EnvelopeStatusBadge assessment={assessment} /> : null}
     >
       {isPending ? (
@@ -107,7 +107,11 @@ function EnvelopeStatusBadge({ assessment }: { assessment: PermitAssessment }) {
     return <Badge variant="success">{t("Permits in place")}</Badge>;
   }
   if (!assessment.routeResolved) {
-    return <Badge variant="neutral" appearance="outline">{t("Route not resolved")}</Badge>;
+    return (
+      <Badge variant="neutral" appearance="outline">
+        {t("Route not resolved")}
+      </Badge>
+    );
   }
 
   return <Badge variant="success">{t("Legal on this route")}</Badge>;
@@ -297,19 +301,17 @@ function EnvelopeBody({
       </div>
 
       {unverified.length > 0 && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5">
-          <ShieldQuestionIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
-          <div className="space-y-0.5">
-            <p className="text-xs font-medium text-warning-foreground">
-              {t("Unconfirmed limits for {0}", unverified.map((j) => j.stateCode).join(", "))}
-            </p>
-            <p className="text-muted-foreground text-xs">
-              {t(
-                "These thresholds came from Trenova's researched baseline and have not been confirmed against the issuing authority by your organization. Verify them in jurisdiction rules before relying on them for a permit filing.",
-              )}
-            </p>
-          </div>
-        </div>
+        <Alert variant="warning" size="sm">
+          <ShieldQuestionIcon />
+          <AlertTitle>
+            {t("Unconfirmed limits for {0}", unverified.map((j) => j.stateCode).join(", "))}
+          </AlertTitle>
+          <AlertDescription>
+            {t(
+              "These thresholds came from Trenova's researched baseline and have not been confirmed against the issuing authority by your organization. Verify them in jurisdiction rules before relying on them for a permit filing.",
+            )}
+          </AlertDescription>
+        </Alert>
       )}
 
       <PermitRecordDialog
@@ -382,14 +384,14 @@ function DimensionTile({ row }: { row: DimensionRow }) {
     <div
       className={cn(
         "rounded-md border px-2.5 py-2",
-        row.exceeded && "border-destructive/40 bg-destructive/5",
+        row.exceeded && "border-danger-border bg-danger-subtle",
       )}
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="text-2xs text-muted-foreground font-medium">{t(row.label)}</span>
         {row.headroom !== null &&
           (row.exceeded ? (
-            <span className="bg-destructive/15 text-2xs text-destructive rounded-full px-1.5 py-px font-semibold tabular-nums">
+            <span className="bg-danger-subtle text-2xs text-danger-subtle-foreground border-danger-border rounded-full border px-1.5 py-px font-medium tabular-nums">
               {t("{0} over", formatMeasurement(Math.abs(row.headroom), row.unit))}
             </span>
           ) : (
@@ -470,7 +472,7 @@ function RequirementRow({
           {exceedances.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {requirement.isSuperload && (
-                <span className="text-2xs rounded-sm bg-warning/15 px-1.5 py-px font-medium text-warning-foreground">
+                <span className="text-2xs rounded-sm bg-warning-subtle px-1.5 py-px font-medium text-warning-subtle-foreground">
                   superload
                 </span>
               )}
@@ -568,9 +570,7 @@ function StateChip({ code }: { code: string }) {
 function CardHeader({ title, meta }: { title: string; meta?: React.ReactNode }) {
   return (
     <div className="border-border flex items-center justify-between gap-2 border-b px-3 py-2">
-      <span className="text-xs text-muted-foreground font-medium">
-        {title}
-      </span>
+      <span className="text-xs text-muted-foreground font-medium">{title}</span>
       {meta}
     </div>
   );
@@ -595,21 +595,16 @@ function SummaryCard({
     <div
       className={cn(
         "bg-muted/40 rounded-lg border px-3 py-2.5",
-        tone === "warning" && "border-warning/30 bg-warning/10",
+        tone === "warning" && "border-warning-border bg-warning-subtle",
       )}
     >
       <div className="flex items-center gap-1.5">
         <span
-          className={cn(
-            "text-muted-foreground",
-            tone === "warning" && "text-warning-foreground",
-          )}
+          className={cn("text-muted-foreground", tone === "warning" && "text-warning-foreground")}
         >
           {icon}
         </span>
-        <span className="text-xs text-muted-foreground font-medium">
-          {label}
-        </span>
+        <span className="text-xs text-muted-foreground font-medium">{label}</span>
         {hint && (
           <Tooltip>
             <TooltipTrigger

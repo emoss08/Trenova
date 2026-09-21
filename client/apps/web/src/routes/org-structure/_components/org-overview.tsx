@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
-import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
+import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
+import { KPI_VALUE_CLASS, KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import type {
   ApprovalDelegationRow,
   HeadcountSummary,
@@ -10,10 +11,7 @@ import { coverSummary, headcountSummary, largestGroup, vacantPositions } from "@
 import NumberFlow from "@number-flow/react";
 import { CompositionBar } from "@trenova/shared/components/ui/composition-bar";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { BriefcaseIcon, Building2Icon, HandshakeIcon, UsersIcon } from "lucide-react";
 import { useMemo } from "react";
-
-const VALUE_CLASS = "text-2xl leading-none font-semibold tabular-nums";
 
 type OrgOverviewProps = {
   headcount: HeadcountSummary | undefined;
@@ -54,16 +52,9 @@ export function OrgOverview({
   const cover = useMemo(() => coverSummary(delegations ?? [], now), [delegations, now]);
 
   return (
-    <div
-      className={
-        showCover
-          ? "grid grid-cols-4 gap-3 lg:grid-cols-8"
-          : "grid grid-cols-4 gap-3 lg:grid-cols-6"
-      }
-    >
+    <KpiStrip>
       <KpiCard span={2}>
         <KpiHeader
-          icon={<UsersIcon className="size-[11px]" />}
           label={t("People")}
           info={
             <InfoPopover title={t("People")}>
@@ -72,9 +63,9 @@ export function OrgOverview({
           }
         />
         {headcount ? (
-          <NumberFlow value={people.people} className={VALUE_CLASS} aria-label={t("People")} />
+          <NumberFlow value={people.people} className={KPI_VALUE_CLASS} aria-label={t("People")} />
         ) : (
-          <Skeleton className="h-6.5 w-10" />
+          <Skeleton className="h-6 w-10" />
         )}
         <CompositionBar
           size="sm"
@@ -88,82 +79,69 @@ export function OrgOverview({
         />
       </KpiCard>
 
-      <KpiCard span={2}>
-        <KpiHeader
-          icon={<BriefcaseIcon className="size-[11px]" />}
-          label={t("Positions")}
-          info={
-            <InfoPopover title={t("Positions")}>
-              {t(
-                "Positions still open, driving and non-driving, whether or not somebody holds them. Retired titles are not counted.",
-              )}
-            </InfoPopover>
-          }
-        />
-        {positions ? (
-          <NumberFlow value={activePositions} className={VALUE_CLASS} aria-label={t("Positions")} />
-        ) : (
-          <Skeleton className="h-6.5 w-10" />
-        )}
-        <KpiSub>
-          {describePositions(vacant, archivedPositions, Boolean(positions && headcount))}
-        </KpiSub>
-      </KpiCard>
+      <KpiStripItem
+        label={t("Positions")}
+        info={
+          <InfoPopover title={t("Positions")}>
+            {t(
+              "Positions still open, driving and non-driving, whether or not somebody holds them. Retired titles are not counted.",
+            )}
+          </InfoPopover>
+        }
+        value={
+          positions ? (
+            <NumberFlow value={activePositions} aria-label={t("Positions")} />
+          ) : (
+            <Skeleton className="h-6 w-10" />
+          )
+        }
+        sub={describePositions(vacant, archivedPositions, Boolean(positions && headcount))}
+      />
 
-      <KpiCard span={2}>
-        <KpiHeader
-          icon={<Building2Icon className="size-[11px]" />}
-          label={t("Terminals")}
-          info={
-            <InfoPopover title={t("Terminals")}>
-              {t("Terminals with at least one active worker assigned.")}
-            </InfoPopover>
-          }
-        />
-        {headcount ? (
-          <NumberFlow
-            value={headcount.byFleet.length}
-            className={VALUE_CLASS}
-            aria-label={t("Terminals")}
-          />
-        ) : (
-          <Skeleton className="h-6.5 w-10" />
-        )}
-        <KpiSub>
-          {largestTerminal
+      <KpiStripItem
+        label={t("Terminals")}
+        info={
+          <InfoPopover title={t("Terminals")}>
+            {t("Terminals with at least one active worker assigned.")}
+          </InfoPopover>
+        }
+        value={
+          headcount ? (
+            <NumberFlow value={headcount.byFleet.length} aria-label={t("Terminals")} />
+          ) : (
+            <Skeleton className="h-6 w-10" />
+          )
+        }
+        sub={
+          largestTerminal
             ? t("Largest: {0}, {1} people", largestTerminal.label, largestTerminal.workers)
             : headcount && people.terminated > 0
               ? t("{0} off the roster", people.terminated)
-              : t("Nobody on the roster yet")}
-        </KpiSub>
-      </KpiCard>
+              : t("Nobody on the roster yet")
+        }
+      />
 
       {showCover ? (
-        <KpiCard span={2}>
-          <KpiHeader
-            icon={<HandshakeIcon className="size-[11px]" />}
-            label={t("Cover in force")}
-            info={
-              <InfoPopover title={t("Cover in force")}>
-                {t(
-                  "Delegations running today. Ones scheduled to start later and ones that have ended do not count.",
-                )}
-              </InfoPopover>
-            }
-          />
-          {delegations ? (
-            <NumberFlow
-              value={cover.active}
-              className={VALUE_CLASS}
-              aria-label={t("Cover in force")}
-            />
-          ) : (
-            <Skeleton className="h-6.5 w-10" />
-          )}
-          <KpiSub>{describeCover(cover)}</KpiSub>
-        </KpiCard>
+        <KpiStripItem
+          label={t("Cover in force")}
+          info={
+            <InfoPopover title={t("Cover in force")}>
+              {t(
+                "Delegations running today. Ones scheduled to start later and ones that have ended do not count.",
+              )}
+            </InfoPopover>
+          }
+          value={
+            delegations ? (
+              <NumberFlow value={cover.active} aria-label={t("Cover in force")} />
+            ) : (
+              <Skeleton className="h-6 w-10" />
+            )
+          }
+          sub={describeCover(cover)}
+        />
       ) : null}
-    </div>
+    </KpiStrip>
   );
 }
 

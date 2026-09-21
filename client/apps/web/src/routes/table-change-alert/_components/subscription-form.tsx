@@ -37,7 +37,7 @@ export function SubscriptionForm() {
   );
 
   return (
-    <>
+    <div className="flex flex-col gap-6">
       <FormGroup cols={2}>
         <FormControl>
           <InputField<TCASubscriptionFormValues>
@@ -115,7 +115,7 @@ export function SubscriptionForm() {
         </FormControl>
       </FormGroup>
 
-      <FormSection title={t("Conditions")} className="border-t py-2">
+      <FormSection title={t("Conditions")}>
         <div className="space-y-4">
           <ConditionBuilder control={control} />
           <FormGroup cols={1}>
@@ -152,7 +152,7 @@ export function SubscriptionForm() {
         </div>
       </FormSection>
 
-      <FormSection title={t("Notification")} className="border-t py-2">
+      <FormSection title={t("Notification")}>
         <FormGroup cols={2}>
           <FormControl>
             <InputField<TCASubscriptionFormValues>
@@ -187,6 +187,6 @@ export function SubscriptionForm() {
           </FormControl>
         </FormGroup>
       </FormSection>
-    </>
+    </div>
   );
 }

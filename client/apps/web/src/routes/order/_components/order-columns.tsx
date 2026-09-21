@@ -42,7 +42,7 @@ export function getColumns(t: TranslateFn): ColumnDef<OrderRow>[] {
       header: t("Customer"),
       cell: ({ row }) => {
         const customer = row.original.customer;
-        if (!customer) return "-";
+        if (!customer) return "—";
         return (
           <div className="flex flex-col">
             <span className="truncate">{customer.name}</span>
@@ -59,7 +59,7 @@ export function getColumns(t: TranslateFn): ColumnDef<OrderRow>[] {
     {
       accessorKey: "poNumber",
       header: t("PO Number"),
-      cell: ({ row }) => row.original.poNumber || "-",
+      cell: ({ row }) => row.original.poNumber || "—",
       meta: {
         apiField: "poNumber",
         filterable: true,
@@ -71,7 +71,7 @@ export function getColumns(t: TranslateFn): ColumnDef<OrderRow>[] {
     {
       accessorKey: "bol",
       header: t("BOL"),
-      cell: ({ row }) => row.original.bol || "-",
+      cell: ({ row }) => row.original.bol || "—",
       meta: {
         apiField: "bol",
         filterable: true,
@@ -85,7 +85,7 @@ export function getColumns(t: TranslateFn): ColumnDef<OrderRow>[] {
       header: () => <div className="text-right">{t("Total")}</div>,
       cell: ({ row }) => {
         const { totalAmount, currencyCode } = row.original;
-        if (totalAmount == null) return <div className="text-right">-</div>;
+        if (totalAmount == null) return <div className="text-right">—</div>;
         return (
           <div className="text-right tabular-nums">
             {formatCurrency(Number(totalAmount), currencyCode || "USD")}

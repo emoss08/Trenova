@@ -149,7 +149,7 @@ export function Home() {
         onCustomize={() => (editing ? void save() : startEditing())}
       />
 
-      <div className="flex flex-col gap-3 p-4">
+      <div className="flex flex-col gap-4 p-4">
         {!editing && layout.source === "USER" && (
           <DivergenceChip
             presetName={layout.presetName}

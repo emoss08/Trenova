@@ -228,13 +228,13 @@ export function PlanReviewDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col">
+      <DialogContent size="lg" className="flex max-h-[80vh] flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-1.5 text-sm">
+          <DialogTitle className="flex items-center gap-1.5">
             <AssistMark className="text-brand size-4" aria-hidden />
             {t("Auto-assign proposal")}
           </DialogTitle>
-          <DialogDescription className="flex flex-wrap items-center gap-x-1.5 text-xs">
+          <DialogDescription className="flex flex-wrap items-center gap-x-1.5">
             <span className="text-foreground font-medium tabular-nums">
               {t("{0, plural, one {# pairing} other {# pairings}}", plan.assignments.length)}
             </span>
@@ -286,12 +286,11 @@ export function PlanReviewDialog({
         </ScrollArea>
 
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             {nothingToApply ? t("Close") : t("Discard plan")}
           </Button>
           {!nothingToApply && (
             <Button
-              size="sm"
               disabled={selected.length === 0 || isAssigning}
               onClick={apply}
               isLoading={isAssigning}

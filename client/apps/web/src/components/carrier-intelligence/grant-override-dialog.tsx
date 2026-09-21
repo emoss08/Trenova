@@ -120,7 +120,7 @@ export function GrantOverrideDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Grant override")}</DialogTitle>
           <DialogDescription>
@@ -140,6 +140,7 @@ export function GrantOverrideDialog({
         ) : null}
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             aria-label={t("Grant override")}
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
@@ -147,7 +148,7 @@ export function GrantOverrideDialog({
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup cols={1} className="pb-2">
+            <FormGroup cols={1}>
               <FormControl>
                 <TextareaField<OverrideFormValues>
                   control={control}

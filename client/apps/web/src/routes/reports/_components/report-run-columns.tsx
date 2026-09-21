@@ -15,7 +15,7 @@ const runStatusChoices = Object.entries(REPORT_RUN_STATUS_LABELS).map(([value, l
 }));
 
 function formatDuration(durationMs: number): string {
-  if (durationMs <= 0) return "-";
+  if (durationMs <= 0) return "—";
   if (durationMs < 1000) return `${durationMs}ms`;
   const seconds = durationMs / 1000;
   if (seconds < 60) return `${seconds.toFixed(1)}s`;
@@ -109,7 +109,7 @@ export function getReportRunColumns(t: TranslateFn): ColumnDef<ReportRun>[] {
       cell: ({ row }) => {
         const run = row.original;
         if (run.status !== "succeeded" && run.status !== "expired") {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
         return (
           <p>
@@ -135,7 +135,7 @@ export function getReportRunColumns(t: TranslateFn): ColumnDef<ReportRun>[] {
         row.original.byteSize > 0 ? (
           <p>{formatFileSize(row.original.byteSize)}</p>
         ) : (
-          <p className="text-muted-foreground">-</p>
+          <p className="text-muted-foreground">—</p>
         ),
       size: 100,
       minSize: 80,
@@ -184,7 +184,7 @@ export function getReportRunColumns(t: TranslateFn): ColumnDef<ReportRun>[] {
         row.original.artifactExpiresAt ? (
           <HoverCardTimestamp className="shrink-0" timestamp={row.original.artifactExpiresAt} />
         ) : (
-          <p className="text-muted-foreground">-</p>
+          <p className="text-muted-foreground">—</p>
         ),
       size: 170,
       minSize: 140,

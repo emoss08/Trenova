@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -81,14 +82,14 @@ export function OffCycleInvoiceDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-2">
-          <div className="flex items-start gap-2 rounded-lg border border-warning-border bg-warning-subtle/60 p-3 dark:border-warning-border dark:bg-warning-subtle/30">
-            <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
-            <p className="text-xs text-warning-foreground">
+          <Alert variant="warning" size="sm">
+            <TriangleAlertIcon />
+            <AlertDescription>
               {t(
                 "This freight will not appear on the customer's next statement. Their cycle does not change — everything else still bills on schedule.",
               )}
-            </p>
-          </div>
+            </AlertDescription>
+          </Alert>
           <Textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}

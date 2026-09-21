@@ -7,7 +7,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { ptoTypeChoices } from "@/lib/choices";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import {
   PTO_ACCRUAL_METHOD_LABELS,
   PTO_TERMINATION_ACTION_LABELS,
@@ -69,11 +69,10 @@ export function PTOPolicyForm({
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-3">
-        <SectionTitle
-          title={t("General")}
-          hint={t("Name and code identify the policy on worker records and reports.")}
-        />
+      <FormSection
+        title={t("General")}
+        description={t("Name and code identify the policy on worker records and reports.")}
+      >
         <FormGroup cols={2}>
           <FormControl>
             <InputField
@@ -131,13 +130,14 @@ export function PTOPolicyForm({
             />
           </FormControl>
         </FormGroup>
-      </section>
+      </FormSection>
 
-      <section className="flex flex-col gap-3">
-        <SectionTitle
-          title={t("Year & counting")}
-          hint={t("Controls when the policy year rolls over and how request days are counted.")}
-        />
+      <FormSection
+        title={t("Year & counting")}
+        description={t(
+          "Controls when the policy year rolls over and how request days are counted.",
+        )}
+      >
         <FormGroup cols={2}>
           <FormControl>
             <SelectField
@@ -178,16 +178,14 @@ export function PTOPolicyForm({
             />
           </FormControl>
         </FormGroup>
-      </section>
+      </FormSection>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-2">
-          <SectionTitle
-            title={t("Accrual rules")}
-            hint={t(
-              "One rule per PTO type. Types without a rule are still requestable but are not tracked against a balance.",
-            )}
-          />
+      <FormSection
+        title={t("Accrual rules")}
+        description={t(
+          "One rule per PTO type. Types without a rule are still requestable but are not tracked against a balance.",
+        )}
+        action={
           <Button
             type="button"
             size="sm"
@@ -208,7 +206,8 @@ export function PTOPolicyForm({
             <PlusIcon className="size-3.5" />
             {t("Add type")}
           </Button>
-        </div>
+        }
+      >
         <Alert variant="default">
           <InfoIcon className="size-4" />
           <AlertTitle>{t("Rule changes apply going forward")}</AlertTitle>
@@ -227,15 +226,14 @@ export function PTOPolicyForm({
             />
           ))}
         </div>
-      </section>
+      </FormSection>
 
-      <section className="flex flex-col gap-3">
-        <SectionTitle
-          title={t("Enforcement")}
-          hint={t(
-            "Whether requests are blocked when a balance runs out, and whether dispatch must approve them.",
-          )}
-        />
+      <FormSection
+        title={t("Enforcement")}
+        description={t(
+          "Whether requests are blocked when a balance runs out, and whether dispatch must approve them.",
+        )}
+      >
         <FormGroup cols={2}>
           <FormControl>
             <SwitchField
@@ -279,7 +277,7 @@ export function PTOPolicyForm({
             </FormControl>
           ) : null}
         </FormGroup>
-      </section>
+      </FormSection>
     </div>
   );
 }
@@ -295,9 +293,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
   return (
     <div className="bg-muted/30 rounded-lg border p-3">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-muted-foreground text-xs font-medium">
-          {t("Rule {0}", index + 1)}
-        </p>
+        <p className="text-muted-foreground text-xs font-medium">{t("Rule {0}", index + 1)}</p>
         {onRemove ? (
           <Button
             type="button"
@@ -469,15 +465,6 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
           </div>
         ) : null}
       </div>
-    </div>
-  );
-}
-
-function SectionTitle({ title, hint }: { title: string; hint: string }) {
-  return (
-    <div>
-      <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="text-muted-foreground text-xs">{hint}</p>
     </div>
   );
 }

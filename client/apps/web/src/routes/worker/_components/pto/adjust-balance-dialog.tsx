@@ -119,13 +119,14 @@ export function AdjustBalanceDialog({
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
               void handleSubmit(onSubmit)(e);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               <FormControl>
                 <SelectField<AdjustPTOBalanceFormValues>
                   control={control}

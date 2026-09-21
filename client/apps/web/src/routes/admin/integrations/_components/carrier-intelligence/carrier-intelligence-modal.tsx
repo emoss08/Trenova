@@ -83,7 +83,7 @@ export function CarrierIntelligenceModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden sm:max-w-4xl">
+      <DialogContent size="xl" className="flex max-h-[90vh] flex-col overflow-hidden">
         <DialogHeader className="flex flex-row items-center gap-3 pr-8">
           {logo ? (
             <LazyImage
@@ -107,7 +107,7 @@ export function CarrierIntelligenceModal({
           onValueChange={(value) => setActiveTab(value as ModalTab)}
           className="flex min-h-0 flex-1 flex-col"
         >
-          <TabsList className="w-full">
+          <TabsList variant="underline">
             <TabsTab value="connection">{t("Connection")}</TabsTab>
             {settingsTabs.map((tab) => (
               <TabsTab key={tab.value} value={tab.value} disabled={!canRead}>

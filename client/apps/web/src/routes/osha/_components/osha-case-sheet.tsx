@@ -5,6 +5,7 @@ import { workerRecordHref } from "@/lib/route-utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import {
   Sheet,
   SheetContent,
@@ -139,15 +140,15 @@ function CaseDetail({
 
         <Section title={t("What happened")}>
           <p className="text-xs leading-relaxed">{t(entry.description)}</p>
-          <dl className="mt-2 text-xs">
+          <DescriptionList layout="split" className="mt-2">
             <Row label={t("Where")}>{entry.location?.trim() || null}</Row>
             <Row label={t("Body part")}>{entry.bodyPart?.trim() || null}</Row>
             <Row label={t("Object or substance")}>{entry.harmfulAgent?.trim() || null}</Row>
-          </dl>
+          </DescriptionList>
         </Section>
 
         <Section title={t("Outcome")}>
-          <dl className="text-xs">
+          <DescriptionList layout="split">
             <Row label={t("Log column")}>
               {column ? (
                 <span className="inline-flex items-center gap-1.5">
@@ -183,7 +184,7 @@ function CaseDetail({
             <Row label={t("Status")}>
               {entry.status === "Open" ? t("Open, days may still accrue") : t("Closed")}
             </Row>
-          </dl>
+          </DescriptionList>
           {capped ? (
             <p className="text-muted-foreground mt-2 text-2xs">
               {t("Counting stopped at {0} days, as the log requires.", MAX_COUNTED_DAYS)}
@@ -195,7 +196,7 @@ function CaseDetail({
           {entry.claimStatus === "NotFiled" ? (
             <p className="text-muted-foreground text-xs">{t("No claim has been filed.")}</p>
           ) : (
-            <dl className="text-xs">
+            <DescriptionList layout="split">
               <Row label={t("Status")}>
                 <Badge variant={claimStatusTone(entry.claimStatus)}>
                   {claimStatusLabel(entry.claimStatus)}
@@ -209,7 +210,7 @@ function CaseDetail({
               <Row label={t("Closed")}>
                 {entry.claimClosedAt ? formatUnixDateMedium(entry.claimClosedAt) : null}
               </Row>
-            </dl>
+            </DescriptionList>
           )}
         </Section>
 
@@ -260,11 +261,8 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   const t = useT();
 
   return (
-    <div className="border-border/60 flex items-center justify-between gap-3 border-b py-1.5 last:border-0">
-      <dt className="text-muted-foreground shrink-0">{label}</dt>
-      <dd className="min-w-0 truncate text-right font-medium tabular-nums">
-        {children ?? <span className="text-muted-foreground/70 font-normal">{t("Not given")}</span>}
-      </dd>
-    </div>
+    <DescriptionItem label={label} numeric>
+      {children ?? <span className="text-foreground-subtle">{t("Not given")}</span>}
+    </DescriptionItem>
   );
 }

@@ -202,7 +202,7 @@ function TemplateEditDialog({
       queryKey="templates"
       title={t("EDI Template")}
       fieldKey="name"
-      className="sm:max-w-120"
+      size="md"
       formComponent={<CreateTemplateForm mode="edit" />}
       transformValues={(values): UpdateEDITemplateRequest => {
         return {

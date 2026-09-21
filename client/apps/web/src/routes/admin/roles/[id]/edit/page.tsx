@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@trenova/shared/components/ui/card";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -111,8 +112,8 @@ export function RoleEditPage() {
           <Skeleton className="h-8 w-48" />
         </header>
         <div className="mx-auto w-full max-w-5xl space-y-6 px-6 py-8">
-          <Skeleton className="h-48 w-full rounded-xl" />
-          <Skeleton className="h-96 w-full rounded-xl" />
+          <Skeleton className="h-48 w-full rounded-lg" />
+          <Skeleton className="h-96 w-full rounded-lg" />
         </div>
       </div>
     );
@@ -128,12 +129,12 @@ export function RoleEditPage() {
 
   const systemRoleBanner = role.isSystem ? (
     <div className="mx-auto w-full max-w-5xl px-6 pt-8">
-      <div className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 p-3">
-        <AlertTriangleIcon className="size-4 shrink-0 text-warning-foreground" />
-        <p className="text-xs text-warning-foreground">
+      <Alert variant="warning" size="sm">
+        <AlertTriangleIcon />
+        <AlertDescription>
           {t("This is a system role. Some properties may be restricted.")}
-        </p>
-      </div>
+        </AlertDescription>
+      </Alert>
     </div>
   ) : undefined;
 

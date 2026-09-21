@@ -272,20 +272,21 @@ export function CredentialFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t(copy.title)}</DialogTitle>
           <DialogDescription>{t(copy.description)}</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
               event.stopPropagation();
               void handleSubmit(onSubmit)(event);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               <FormControl cols="full">
                 <WorkerCredentialTypeAutocompleteField<CredentialFormValues>
                   control={control}

@@ -7,7 +7,7 @@ import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { driverTypeChoices, statusChoices } from "@/lib/choices";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import {
   CREDENTIAL_CATEGORY_LABELS,
   credentialCategorySchema,
@@ -41,15 +41,14 @@ export function CredentialTypeForm({
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-3">
-        <SectionTitle
-          title={t("General")}
-          hint={
-            isSystem
-              ? "System types ship with Trenova. Their code is fixed; everything else is yours to tune."
-              : "Name and code identify the credential on worker records and reports."
-          }
-        />
+      <FormSection
+        title={t("General")}
+        description={
+          isSystem
+            ? "System types ship with Trenova. Their code is fixed; everything else is yours to tune."
+            : "Name and code identify the credential on worker records and reports."
+        }
+      >
         <FormGroup cols={2}>
           <FormControl>
             <InputField
@@ -114,15 +113,14 @@ export function CredentialTypeForm({
             />
           </FormControl>
         </FormGroup>
-      </section>
+      </FormSection>
 
-      <section className="flex flex-col gap-3">
-        <SectionTitle
-          title={t("Compliance")}
-          hint={t(
-            "Required types appear as slots on every matching worker; a missing or expired one makes the worker non-compliant.",
-          )}
-        />
+      <FormSection
+        title={t("Compliance")}
+        description={t(
+          "Required types appear as slots on every matching worker; a missing or expired one makes the worker non-compliant.",
+        )}
+      >
         <Alert variant="default">
           <InfoIcon className="size-4" />
           <AlertTitle>{t("One active credential per worker")}</AlertTitle>
@@ -197,16 +195,7 @@ export function CredentialTypeForm({
             />
           </FormControl>
         </FormGroup>
-      </section>
-    </div>
-  );
-}
-
-function SectionTitle({ title, hint }: { title: string; hint: string }) {
-  return (
-    <div>
-      <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="text-muted-foreground text-xs">{hint}</p>
+      </FormSection>
     </div>
   );
 }

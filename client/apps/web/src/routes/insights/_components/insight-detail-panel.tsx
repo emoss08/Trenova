@@ -105,10 +105,12 @@ function DetailBody({
       <SheetHeader>
         <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
           <Badge variant={SEVERITY_TONE[insight.severity]}>{insight.severity}</Badge>
-          <Badge variant="neutral" appearance="outline">{t(CATEGORY_LABELS[insight.category])}</Badge>
+          <Badge variant="neutral" appearance="outline">
+            {t(CATEGORY_LABELS[insight.category])}
+          </Badge>
           {insight.status !== "Active" && <Badge variant="neutral">{insight.status}</Badge>}
         </div>
-        <SheetTitle className="text-base leading-snug">{insight.headline}</SheetTitle>
+        <SheetTitle className="leading-snug">{insight.headline}</SheetTitle>
         {insight.subject !== "" && <SheetDescription>{insight.subject}</SheetDescription>}
       </SheetHeader>
 

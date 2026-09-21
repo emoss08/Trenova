@@ -22,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -158,64 +159,59 @@ export function LateChargesPage() {
           </Button>
         ) : undefined,
       }}
-      className="p-0 px-4 pt-2"
     >
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="w-65">
-            <CustomerAutocompleteField
-              control={filterForm.control}
-              name="customerId"
-              label={t("Customer")}
-              placeholder={t("All customers")}
-              clearable
-            />
-          </div>
-          <div className="w-45">
-            <AutoCompleteDateField
-              control={filterForm.control}
-              name="asOfDate"
-              label={t("As of")}
-              placeholder={t("Today")}
-              clearable
-            />
-          </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="w-65">
+          <CustomerAutocompleteField
+            control={filterForm.control}
+            name="customerId"
+            label={t("Customer")}
+            placeholder={t("All customers")}
+            clearable
+          />
         </div>
+        <div className="w-45">
+          <AutoCompleteDateField
+            control={filterForm.control}
+            name="asOfDate"
+            label={t("As of")}
+            placeholder={t("Today")}
+            clearable
+          />
+        </div>
+      </div>
 
-        {controlQuery.isLoading ? null : (
-          <div
-            className={
-              notice.tone === "warning"
-                ? "flex gap-2 rounded-md border border-warning-border bg-warning-subtle/60 p-3 text-sm text-warning-foreground dark:border-warning-border dark:bg-warning-subtle/30 dark:text-warning-foreground"
-                : "flex gap-2 rounded-md border border-info-border bg-info-subtle/60 p-3 text-sm text-info-foreground dark:border-info-border dark:bg-info-subtle/30 dark:text-info-foreground"
-            }
-          >
-            <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" />
+      {controlQuery.isLoading ? null : (
+        <Alert variant={notice.tone} size="sm">
+          <AlertTriangleIcon />
+          <AlertDescription>
             <span>
               {notice.text}{" "}
               <Link to="/billing/configuration-files/billing-control" className="underline">
                 {t("Billing control")}
               </Link>
             </span>
-          </div>
-        )}
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {previewQuery.isLoading && !result ? (
-          <Skeleton className="h-64 w-full rounded-md" />
-        ) : previewQuery.isError && !result ? (
-          <div className="rounded-lg border border-danger-border bg-danger-subtle p-4 text-sm text-danger-foreground dark:border-danger-border dark:bg-danger-subtle dark:text-danger-foreground">
+      {previewQuery.isLoading && !result ? (
+        <Skeleton className="h-64 w-full rounded-md" />
+      ) : previewQuery.isError && !result ? (
+        <Alert variant="destructive" size="sm">
+          <AlertDescription>
             {t("Failed to load the late charge preview. Try refreshing the page.")}
-          </div>
-        ) : result ? (
-          <LateChargePreviewTable
-            result={result}
-            selected={selected}
-            onSelectedChange={setSelected}
-            hasActiveFilters={Boolean(customerId || asOfValue)}
-            onClearFilters={() => filterForm.reset()}
-          />
-        ) : null}
-      </div>
+          </AlertDescription>
+        </Alert>
+      ) : result ? (
+        <LateChargePreviewTable
+          result={result}
+          selected={selected}
+          onSelectedChange={setSelected}
+          hasActiveFilters={Boolean(customerId || asOfValue)}
+          onClearFilters={() => filterForm.reset()}
+        />
+      ) : null}
 
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>

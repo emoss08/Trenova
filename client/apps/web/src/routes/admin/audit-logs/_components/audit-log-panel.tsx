@@ -3,6 +3,11 @@ import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import {
+  DescriptionEmpty,
+  DescriptionItem,
+  DescriptionList,
+} from "@trenova/shared/components/ui/description-list";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { AuditEntryRow } from "@/lib/graphql/audit-log-table";
@@ -41,15 +46,6 @@ function Section({
   );
 }
 
-function EntryDetailRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="border-border/60 grid grid-cols-[140px_1fr] gap-2 border-b py-2 last:border-b-0">
-      <dt className="text-muted-foreground text-sm font-medium">{label}</dt>
-      <dd className="text-foreground min-w-0 text-sm">{value}</dd>
-    </div>
-  );
-}
-
 function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
   const t = useT();
 
@@ -83,7 +79,9 @@ function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Badge variant="neutral" appearance="outline">{summary}</Badge>
+        <Badge variant="neutral" appearance="outline">
+          {summary}
+        </Badge>
         <Button
           type="button"
           variant="ghost"
@@ -125,16 +123,12 @@ function ChangeRow({
         </div>
       </div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-        <div className="space-y-1 rounded-md border border-danger/20 bg-danger/8 p-2.5">
-          <p className="text-muted-foreground text-xs font-medium">
-            {t("Previous Value")}
-          </p>
+        <div className="space-y-1 rounded-md border border-danger-border bg-danger-subtle p-2.5">
+          <p className="text-muted-foreground text-xs font-medium">{t("Previous Value")}</p>
           <AuditValueCell value={from} path={`${path}.from`} />
         </div>
-        <div className="space-y-1 rounded-md border border-success/20 bg-success/8 p-2.5">
-          <p className="text-muted-foreground text-xs font-medium">
-            {t("Current Value")}
-          </p>
+        <div className="space-y-1 rounded-md border border-success-border bg-success-subtle p-2.5">
+          <p className="text-muted-foreground text-xs font-medium">{t("Current Value")}</p>
           <AuditValueCell value={to} path={`${path}.to`} />
         </div>
       </div>
@@ -174,33 +168,39 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
           title={t("Entry Details")}
           description={t("Detailed information about this audit event")}
         >
-          <dl className="border-border/70 rounded-md border px-3">
-            <EntryDetailRow
-              label={t("Event ID")}
-              value={<span className="font-mono text-xs break-all">{row.id}</span>}
-            />
-            <EntryDetailRow
-              label={t("Resource ID")}
-              value={<span className="font-mono text-xs break-all">{row.resourceId}</span>}
-            />
-            <EntryDetailRow label={t("Operation")} value={operationLabel(row.operation)} />
-            <EntryDetailRow label={t("Resource")} value={resourceLabel(row.resource)} />
-            <EntryDetailRow
-              label={t("User")}
-              value={row.user?.name || row.user?.emailAddress || "Unknown user"}
-            />
-            <EntryDetailRow label={t("Critical")} value={row.critical ? "Yes" : "No"} />
-            <EntryDetailRow label={t("IP Address")} value={row.ipAddress || "-"} />
-            <EntryDetailRow label={t("Category")} value={row.category || "-"} />
-            <EntryDetailRow
-              label={t("Timestamp")}
-              value={formatToUserTimezone(row.timestamp, {
+          <DescriptionList layout="inline" className="rounded-md border p-3">
+            <DescriptionItem label={t("Event ID")} valueClassName="font-mono text-xs break-all">
+              {row.id}
+            </DescriptionItem>
+            <DescriptionItem label={t("Resource ID")} valueClassName="font-mono text-xs break-all">
+              {row.resourceId}
+            </DescriptionItem>
+            <DescriptionItem label={t("Operation")}>
+              {operationLabel(row.operation)}
+            </DescriptionItem>
+            <DescriptionItem label={t("Resource")}>{resourceLabel(row.resource)}</DescriptionItem>
+            <DescriptionItem label={t("User")}>
+              {row.user?.name || row.user?.emailAddress || "Unknown user"}
+            </DescriptionItem>
+            <DescriptionItem label={t("Critical")}>{row.critical ? "Yes" : "No"}</DescriptionItem>
+            <DescriptionItem label={t("IP Address")} numeric>
+              {row.ipAddress || <DescriptionEmpty />}
+            </DescriptionItem>
+            <DescriptionItem label={t("Category")}>
+              {row.category || <DescriptionEmpty />}
+            </DescriptionItem>
+            <DescriptionItem label={t("Timestamp")} numeric>
+              {formatToUserTimezone(row.timestamp, {
                 showTimeZone: true,
               })}
-            />
-            <EntryDetailRow label={t("Correlation ID")} value={row.correlationId || "-"} />
-            <EntryDetailRow label={t("User Agent")} value={row.userAgent || "-"} />
-          </dl>
+            </DescriptionItem>
+            <DescriptionItem label={t("Correlation ID")}>
+              {row.correlationId || <DescriptionEmpty />}
+            </DescriptionItem>
+            <DescriptionItem label={t("User Agent")}>
+              {row.userAgent || <DescriptionEmpty />}
+            </DescriptionItem>
+          </DescriptionList>
         </Section>
 
         <Section title={t("Changes")} description={t("Field-level before/after values")}>

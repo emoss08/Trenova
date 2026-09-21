@@ -78,7 +78,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
       description={`${detail.direction} · control number ${detail.interchangeControlNumber || "—"}`}
       size="lg"
       footer={
-        <div className="flex w-full items-center justify-end gap-2">
+        <>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t("Close")}
           </Button>
@@ -102,7 +102,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
               {t("Retry Delivery")}
             </Button>
           )}
-        </div>
+        </>
       }
     >
       <div className="flex min-h-0 flex-col gap-3">

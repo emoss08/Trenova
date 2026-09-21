@@ -12,9 +12,11 @@ import {
   DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
-import { Form } from "@trenova/shared/components/ui/form";
+import { Form, FormSection } from "@trenova/shared/components/ui/form";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
@@ -45,7 +47,6 @@ const COPY_FEEDBACK_MS = 3000;
 const CANDIDATE_SEARCH_DEBOUNCE_MS = 200;
 const EMPTY_FORM: ShareInvoiceFormValues = { userIds: [], note: "" };
 
-const SECTION_CARD = "flex min-w-0 flex-col gap-5 rounded-xl border bg-background p-5";
 const FIELD = "h-9 w-full min-w-0 rounded-lg bg-background text-sm";
 
 export function InvoiceShareDialog({ invoice }: { invoice: Invoice }) {
@@ -74,43 +75,19 @@ function InvoiceShareDialogContent({ invoice }: { invoice: Invoice }) {
   };
 
   return (
-    <DialogContent
-      showCloseButton={false}
-      className="max-h-[calc(100dvh-2rem)] gap-6 overflow-y-auto p-5 sm:max-w-[560px]"
-    >
-      <section className={SECTION_CARD}>
-        <div className="relative flex flex-col gap-1 pr-8">
-          <DialogTitle className="text-lg font-semibold">
-            {t("Share invoice {0}", invoice.number)}
-          </DialogTitle>
-          <DialogDescription>
-            {t("Send teammates a link to this invoice. Sharing doesn't change who can see it.")}
-          </DialogDescription>
-          <DialogClose
-            render={
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="absolute -top-1 -right-1"
-                aria-label={t("Close")}
-              >
-                <XIcon className="size-4" />
-              </Button>
-            }
-          />
-        </div>
-
-        <div className="bg-muted/40 flex min-w-0 flex-col gap-4 rounded-xl border p-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <h3 className="text-sm font-semibold">{t("Direct link")}</h3>
-              <p className="text-muted-foreground text-sm">
-                {t("Anyone whose role lets them view invoices can open it.")}
-              </p>
-            </div>
-            <AccessLabel />
-          </div>
+    <DialogContent size="md" className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>{t("Share invoice {0}", invoice.number)}</DialogTitle>
+        <DialogDescription>
+          {t("Send teammates a link to this invoice. Sharing doesn't change who can see it.")}
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex min-w-0 flex-col gap-6">
+        <FormSection
+          title={t("Direct link")}
+          description={t("Anyone whose role lets them view invoices can open it.")}
+          action={<AccessLabel />}
+        >
           <Input
             readOnly
             value={link}
@@ -123,43 +100,29 @@ function InvoiceShareDialogContent({ invoice }: { invoice: Invoice }) {
               <button
                 type="button"
                 onClick={copyLink}
- className="ui-focus-ring text-muted-foreground hover:text-foreground mr-1 flex h-7 items-center gap-1 rounded-md px-2 text-sm transition-colors"
+                className="ui-focus-ring text-muted-foreground hover:text-foreground mr-1 flex h-7 items-center gap-1 rounded-md px-2 text-sm transition-colors"
               >
                 {isCopied ? <CheckIcon className="size-3.5 text-success-foreground" /> : null}
                 {isCopied ? t("Copied") : t("Copy")}
               </button>
             }
           />
-        </div>
-      </section>
-
-      <section className={cn(SECTION_CARD)}>
-        <div className="flex flex-col gap-0.5">
-          <h3 className="text-lg font-semibold">{t("Invite teammates")}</h3>
-          <p className="text-muted-foreground text-sm">
-            {t("Add teammates by name, username, or email.")}
-          </p>
-        </div>
-        <InviteForm invoice={invoice} tab={tab} />
-        <SharedWithList invoiceId={invoice.id} />
-      </section>
-
-      <div className="flex items-center justify-between gap-3">
-        <Button type="button" variant="outline" className="h-9 rounded-lg px-3" onClick={copyLink}>
+        </FormSection>
+        <FormSection
+          title={t("Invite teammates")}
+          description={t("Add teammates by name, username, or email.")}
+        >
+          <InviteForm invoice={invoice} tab={tab} />
+          <SharedWithList invoiceId={invoice.id} />
+        </FormSection>
+      </div>
+      <DialogFooter className="sm:justify-between">
+        <Button type="button" variant="ghost" onClick={copyLink}>
           {isCopied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
           {isCopied ? t("Copied") : t("Copy link")}
         </Button>
-        <DialogClose
-          render={
-            <Button
-              type="button"
-              className="bg-foreground text-background hover:bg-foreground/90 h-9 rounded-lg px-4"
-            >
-              {t("Done")}
-            </Button>
-          }
-        />
-      </div>
+        <DialogClose render={<Button type="button">{t("Done")}</Button>} />
+      </DialogFooter>
     </DialogContent>
   );
 }

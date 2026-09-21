@@ -36,7 +36,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RateZoneRow>[] {
     {
       accessorKey: "code",
       header: t("Code"),
-      cell: ({ row }) => <span className="font-mono text-xs">{row.original.code}</span>,
+      cell: ({ row }) => <span className="font-mono">{row.original.code}</span>,
       size: 120,
       minSize: 100,
       maxSize: 160,

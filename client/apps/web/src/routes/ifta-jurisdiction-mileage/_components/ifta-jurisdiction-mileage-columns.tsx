@@ -55,7 +55,7 @@ export function getColumns(
         const { tractor } = row.original;
 
         if (!tractor) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return (
@@ -152,7 +152,7 @@ export function getColumns(
       accessorKey: "notes",
       header: t("Notes"),
       cell: ({ row }) => (
-        <span className="block max-w-[28ch] truncate text-xs" title={row.original.notes ?? ""}>
+        <span className="block max-w-[28ch] truncate" title={row.original.notes ?? ""}>
           {row.original.notes ?? "—"}
         </span>
       ),

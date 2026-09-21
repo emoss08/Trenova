@@ -2,14 +2,22 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
+import { SectionPanel } from "@/components/section-panel";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
+import {
+  DescriptionEmpty,
+  DescriptionItem,
+  DescriptionList,
+} from "@trenova/shared/components/ui/description-list";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { BankReceipt } from "@/types/bank-receipt";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftIcon, CheckCircle2Icon, FileWarningIcon, UploadCloudIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import { formatUnixDateMedium, formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 
@@ -29,35 +37,6 @@ function formatDate(unix: number): string {
   return formatUnixDateMedium(unix);
 }
 
-function SummaryCard({
-  label,
-  count,
-  amount,
-  icon: Icon,
-  colorClass,
-}: {
-  label: string;
-  count: number;
-  amount: number;
-  icon: React.ComponentType<{ className?: string }>;
-  colorClass?: string;
-}) {
-  return (
-    <div className="bg-card rounded-lg border px-4 py-3">
-      <div className="flex items-center gap-2">
-        <Icon className={`size-4 ${colorClass ?? "text-muted-foreground"}`} />
-        <p className="text-muted-foreground text-xs font-medium">
-          {label}
-        </p>
-      </div>
-      <p className="mt-1.5 text-2xl font-semibold tabular-nums">{count}</p>
-      <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">
-        {formatCurrency(amount / 100)}
-      </p>
-    </div>
-  );
-}
-
 export function BankReceiptBatchDetailPage() {
   const t = useT();
 
@@ -72,6 +51,17 @@ export function BankReceiptBatchDetailPage() {
   const batch = data?.batch;
   const receipts = data?.receipts ?? [];
 
+  const backButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => void navigate("/accounting/reconciliation/import-batches")}
+    >
+      <ArrowLeftIcon className="size-3.5" />
+      {t("Back to Batches")}
+    </Button>
+  );
+
   if (isLoading) {
     return (
       <PageLayout
@@ -80,15 +70,9 @@ export function BankReceiptBatchDetailPage() {
           description: t("Loading..."),
         }}
       >
-        <div className="mx-4 mt-3 space-y-4">
-          <Skeleton className="h-8 w-48" />
-          <div className="grid gap-2.5 md:grid-cols-3">
-            <Skeleton className="h-24 rounded-lg" />
-            <Skeleton className="h-24 rounded-lg" />
-            <Skeleton className="h-24 rounded-lg" />
-          </div>
-          <Skeleton className="h-64 w-full rounded-lg" />
-        </div>
+        <Skeleton className="h-20 w-full rounded-lg" />
+        <Skeleton className="h-24 w-full rounded-lg" />
+        <Skeleton className="h-64 w-full rounded-lg" />
       </PageLayout>
     );
   }
@@ -99,24 +83,16 @@ export function BankReceiptBatchDetailPage() {
         pageHeaderProps={{
           title: t("Import Batch"),
           description: t("Failed to load batch details."),
+          actions: backButton,
         }}
       >
-        <div className="mx-4 mt-3">
-          <div className="rounded-lg border border-danger-border bg-danger-subtle p-4 text-sm text-danger-foreground dark:border-danger-border dark:bg-danger-subtle dark:text-danger-foreground">
+        <Alert variant="destructive" size="sm">
+          <AlertDescription>
             {t(
               "Could not load this import batch. It may have been deleted or you may not have permission.",
             )}
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-3"
-            onClick={() => void navigate("/accounting/reconciliation/import-batches")}
-          >
-            <ArrowLeftIcon className="mr-1.5 size-3.5" />
-            {t("Back to Batches")}
-          </Button>
-        </div>
+          </AlertDescription>
+        </Alert>
       </PageLayout>
     );
   }
@@ -126,125 +102,89 @@ export function BankReceiptBatchDetailPage() {
       pageHeaderProps={{
         title: batch.reference || "Import Batch",
         description: `Source: ${batch.source}`,
+        context: <AccountingStatusBadge status={batch.status} />,
+        actions: backButton,
       }}
     >
-      <div className="mx-4 mt-3 mb-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => void navigate("/accounting/reconciliation/import-batches")}
-          >
-            <ArrowLeftIcon className="mr-1.5 size-3.5" />
-            {t("Back to Batches")}
-          </Button>
-          <AccountingStatusBadge status={batch.status} />
-        </div>
+      <KpiStrip aria-label={t("Batch totals")}>
+        <KpiStripItem
+          label={t("Imported")}
+          value={batch.importedCount}
+          sub={formatCurrency(batch.importedAmountMinor / 100)}
+        />
+        <KpiStripItem
+          label={t("Matched")}
+          value={batch.matchedCount}
+          sub={formatCurrency(batch.matchedAmountMinor / 100)}
+          tone="success"
+        />
+        <KpiStripItem
+          label={t("Exceptions")}
+          value={batch.exceptionCount}
+          sub={formatCurrency(batch.exceptionAmountMinor / 100)}
+          tone="danger"
+        />
+      </KpiStrip>
 
-        <div className="grid gap-2.5 md:grid-cols-3">
-          <SummaryCard
-            label={t("Imported")}
-            count={batch.importedCount}
-            amount={batch.importedAmountMinor}
-            icon={UploadCloudIcon}
+      <SectionPanel title={t("Batch info")}>
+        <DescriptionList columns={4} className="p-3">
+          <DescriptionItem label={t("Source")}>{batch.source}</DescriptionItem>
+          <DescriptionItem label={t("Reference")} valueClassName="font-mono">
+            {batch.reference || <DescriptionEmpty />}
+          </DescriptionItem>
+          <DescriptionItem label={t("Status")}>
+            <AccountingStatusBadge status={batch.status} />
+          </DescriptionItem>
+          <DescriptionItem label={t("Created")}>
+            {formatTimestamp(batch.createdAt ?? 0)}
+          </DescriptionItem>
+        </DescriptionList>
+      </SectionPanel>
+
+      <SectionPanel title={t("Receipts")} count={receipts.length}>
+        {receipts.length === 0 ? (
+          <EmptyTable
+            title={t("No receipts in this batch")}
+            description={t(
+              "The file imported with nothing in it, or every line was rejected. Import it again once it has rows.",
+            )}
+            columns={RECEIPT_COLUMNS}
           />
-          <SummaryCard
-            label={t("Matched")}
-            count={batch.matchedCount}
-            amount={batch.matchedAmountMinor}
-            icon={CheckCircle2Icon}
-            colorClass="text-success-foreground"
-          />
-          <SummaryCard
-            label={t("Exceptions")}
-            count={batch.exceptionCount}
-            amount={batch.exceptionAmountMinor}
-            icon={FileWarningIcon}
-            colorClass="text-danger-foreground"
-          />
-        </div>
-
-        <div className="bg-card rounded-lg border p-4">
-          <h3 className="mb-3 text-sm font-semibold">{t("Batch Info")}</h3>
-          <div className="grid gap-4 sm:grid-cols-4">
-            <div>
-              <p className="text-2xs text-muted-foreground font-medium">{t("Source")}</p>
-              <p className="text-xs font-medium">{batch.source}</p>
-            </div>
-            <div>
-              <p className="text-2xs text-muted-foreground font-medium">{t("Reference")}</p>
-              <p className="font-mono text-xs font-medium">{batch.reference || "\u2014"}</p>
-            </div>
-            <div>
-              <p className="text-2xs text-muted-foreground font-medium">{t("Status")}</p>
-              <div className="mt-0.5">
-                <AccountingStatusBadge status={batch.status} />
-              </div>
-            </div>
-            <div>
-              <p className="text-2xs text-muted-foreground font-medium">{t("Created")}</p>
-              <p className="text-xs">{formatTimestamp(batch.createdAt ?? 0)}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-lg border">
-          <div className="flex items-center justify-between border-b px-4 py-3">
-            <h3 className="text-sm font-semibold">
-              {t("Receipts")}
-              <span className="text-muted-foreground ml-1.5 text-xs font-normal">
-                ({receipts.length})
-              </span>
-            </h3>
-          </div>
-
-          {receipts.length === 0 ? (
-            <EmptyTable
-              title={t("No receipts in this batch")}
-              description={t(
-                "The file imported with nothing in it, or every line was rejected. Import it again once it has rows.",
-              )}
-              columns={RECEIPT_COLUMNS}
-            />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-muted-foreground text-left">
-                  <tr>
-                    <th className="px-4 py-2.5 text-xs font-medium">{t("Reference #")}</th>
-                    <th className="px-4 py-2.5 text-xs font-medium">{t("Date")}</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-medium">{t("Amount")}</th>
-                    <th className="px-4 py-2.5 text-xs font-medium">{t("Status")}</th>
-                    <th className="px-4 py-2.5 text-xs font-medium">{t("Memo")}</th>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-muted-foreground text-left">
+                <tr>
+                  <th className="px-4 py-2.5 text-xs font-medium">{t("Reference #")}</th>
+                  <th className="px-4 py-2.5 text-xs font-medium">{t("Date")}</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-medium">{t("Amount")}</th>
+                  <th className="px-4 py-2.5 text-xs font-medium">{t("Status")}</th>
+                  <th className="px-4 py-2.5 text-xs font-medium">{t("Memo")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {receipts.map((receipt: BankReceipt) => (
+                  <tr key={receipt.id} className="border-t">
+                    <td className="px-4 py-2.5 font-mono text-xs font-medium">
+                      {receipt.referenceNumber}
+                    </td>
+                    <td className="px-4 py-2.5 text-xs">{formatDate(receipt.receiptDate)}</td>
+                    <td className="px-4 py-2.5 text-right">
+                      <AmountDisplay value={receipt.amountMinor} className="text-xs font-medium" />
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <AccountingStatusBadge status={receipt.status} />
+                    </td>
+                    <td className="text-muted-foreground px-4 py-2.5 text-xs">
+                      {receipt.memo || "\u2014"}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {receipts.map((receipt: BankReceipt) => (
-                    <tr key={receipt.id} className="border-t">
-                      <td className="px-4 py-2.5 font-mono text-xs font-medium">
-                        {receipt.referenceNumber}
-                      </td>
-                      <td className="px-4 py-2.5 text-xs">{formatDate(receipt.receiptDate)}</td>
-                      <td className="px-4 py-2.5 text-right">
-                        <AmountDisplay
-                          value={receipt.amountMinor}
-                          className="text-xs font-medium"
-                        />
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <AccountingStatusBadge status={receipt.status} />
-                      </td>
-                      <td className="text-muted-foreground px-4 py-2.5 text-xs">
-                        {receipt.memo || "\u2014"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionPanel>
     </PageLayout>
   );
 }

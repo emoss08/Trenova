@@ -73,6 +73,7 @@ export function CancelFuelCardDialog({
       <AlertDialogContent>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
               event.stopPropagation();
@@ -95,7 +96,7 @@ export function CancelFuelCardDialog({
                 )}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <FormGroup cols={1} className="mt-4">
+            <FormGroup cols={1}>
               <FormControl cols="full">
                 <TextareaField
                   control={control}
@@ -110,7 +111,7 @@ export function CancelFuelCardDialog({
                 />
               </FormControl>
             </FormGroup>
-            <AlertDialogFooter className="mt-4">
+            <AlertDialogFooter>
               <AlertDialogCancel type="button" disabled={isPending}>
                 {t("Keep card")}
               </AlertDialogCancel>

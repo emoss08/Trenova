@@ -88,9 +88,7 @@ function Section({
       {(title || action) && (
         <div className="mb-2.5 flex items-center justify-between gap-2">
           {title ? (
-            <h3 className="text-xs text-muted-foreground font-medium">
-              {title}
-            </h3>
+            <h3 className="text-xs text-muted-foreground font-medium">{title}</h3>
           ) : (
             <span />
           )}
@@ -178,9 +176,7 @@ function CollectabilityPanel({ collectability }: { collectability: Collectabilit
                 <p className="text-xs">{t(factor.label)}</p>
                 {factor.detail && <p className="text-2xs text-muted-foreground">{factor.detail}</p>}
                 {!full && factor.remedy && (
-                  <p className="text-2xs mt-0.5 text-warning-foreground">
-                    {factor.remedy}
-                  </p>
+                  <p className="text-2xs mt-0.5 text-warning-foreground">{factor.remedy}</p>
                 )}
               </div>
               <span
@@ -333,7 +329,10 @@ function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogP
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
-          <Form onSubmit={handleSubmit((values) => mutateAsync(values))}>
+          <Form
+            className="flex flex-col gap-4"
+            onSubmit={handleSubmit((values) => mutateAsync(values))}
+          >
             <FormGroup cols={1}>
               <FormControl>
                 <SelectField
@@ -359,7 +358,7 @@ function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogP
                 />
               </FormControl>
             </FormGroup>
-            <DialogFooter className="mt-4">
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 {t("Cancel")}
               </Button>
@@ -414,7 +413,10 @@ function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialo
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
-          <Form onSubmit={handleSubmit((values) => mutateAsync(values))}>
+          <Form
+            className="flex flex-col gap-4"
+            onSubmit={handleSubmit((values) => mutateAsync(values))}
+          >
             <FormGroup cols={1}>
               <FormControl>
                 <TextareaField
@@ -431,7 +433,7 @@ function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialo
                 />
               </FormControl>
             </FormGroup>
-            <DialogFooter className="mt-4">
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 {t("Cancel")}
               </Button>
@@ -610,7 +612,7 @@ export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: Occurrence
 
   return (
     <Sheet open={Boolean(occurrenceId)} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-[540px]">
+      <SheetContent className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
         {isLoading || !detail || !occurrence ? (
           <DetailSkeleton />
         ) : (

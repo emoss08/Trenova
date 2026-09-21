@@ -58,7 +58,7 @@ export function PTOLiabilityDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[85vh] flex-col gap-0 sm:max-w-3xl">
+      <DialogContent size="xl" className="flex max-h-[85vh] flex-col gap-0">
         <DialogHeader>
           <DialogTitle>{t("PTO liability")}</DialogTitle>
           <DialogDescription>
@@ -135,7 +135,8 @@ export function PTOLiabilityDialog({
                         </TableCell>
                         <TableCell>
                           <Badge
-                            variant="neutral" appearance="outline"
+                            variant="neutral"
+                            appearance="outline"
                             className={cn(
                               "px-1.5 py-0 text-2xs",
                               row.onTermination === "PayOut"

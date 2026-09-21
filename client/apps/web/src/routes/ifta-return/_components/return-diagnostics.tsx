@@ -73,9 +73,7 @@ function CountFigure({
 
   return (
     <div className="bg-muted/30 rounded-lg border p-3" title={hint}>
-      <p className="text-muted-foreground text-xs font-medium">
-        {label}
-      </p>
+      <p className="text-muted-foreground text-xs font-medium">{label}</p>
       <p className="mt-1 text-sm font-semibold tabular-nums">
         {count} {pluralize("move", count)}
       </p>
@@ -201,7 +199,7 @@ export function BackfillMilesDialog({ open, onOpenChange, ret }: BackfillMilesDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Backfill jurisdiction miles")}</DialogTitle>
           <DialogDescription>
@@ -292,7 +290,7 @@ function BackfillSession({
           </div>
         )}
       </div>
-      <DialogFooter className="mt-4">
+      <DialogFooter>
         <Button
           type="button"
           variant="outline"

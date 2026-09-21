@@ -25,7 +25,7 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementBatchRow>[] {
     {
       accessorKey: "name",
       header: t("Batch"),
-      cell: ({ row }) => <span className="text-xs font-medium">{row.original.name}</span>,
+      cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
       size: 220,
       meta: { apiField: "name" },
     },
@@ -33,7 +33,7 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementBatchRow>[] {
       accessorKey: "periodStart",
       header: t("Period"),
       cell: ({ row }) => (
-        <span className="text-xs">
+        <span>
           {formatDate(row.original.periodStart)} – {formatDate(row.original.periodEnd)}
         </span>
       ),
@@ -43,7 +43,7 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementBatchRow>[] {
     {
       accessorKey: "payDate",
       header: t("Pay Date"),
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.payDate)}</span>,
+      cell: ({ row }) => <span>{formatDate(row.original.payDate)}</span>,
       size: 110,
       meta: { apiField: "payDate" },
     },
@@ -51,7 +51,7 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementBatchRow>[] {
       accessorKey: "settlementCount",
       header: () => <div className="text-right">{t("Settlements")}</div>,
       cell: ({ row }) => (
-        <div className="text-right text-xs tabular-nums">{row.original.settlementCount}</div>
+        <div className="text-right tabular-nums">{row.original.settlementCount}</div>
       ),
       size: 100,
       meta: { apiField: "settlementCount" },
@@ -60,8 +60,10 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementBatchRow>[] {
       accessorKey: "exceptionCount",
       header: () => <div className="text-right">{t("Exceptions")}</div>,
       cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-1 text-xs tabular-nums">
-          {row.original.exceptionCount > 0 && <TriangleAlert className="size-3.5 text-warning-foreground" />}
+        <div className="flex items-center justify-end gap-1 tabular-nums">
+          {row.original.exceptionCount > 0 && (
+            <TriangleAlert className="size-3.5 text-warning-foreground" />
+          )}
           {row.original.exceptionCount}
         </div>
       ),

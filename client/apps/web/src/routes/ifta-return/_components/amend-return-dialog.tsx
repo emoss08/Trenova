@@ -80,9 +80,10 @@ export function AmendReturnDialog({ open, onOpenChange, ret, period }: AmendRetu
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
               event.stopPropagation();
@@ -98,7 +99,7 @@ export function AmendReturnDialog({ open, onOpenChange, ret, period }: AmendRetu
                 )}
               </DialogDescription>
             </DialogHeader>
-            <FormGroup cols={1} className="mt-4">
+            <FormGroup cols={1}>
               <FormControl cols="full">
                 <TextareaField
                   control={control}
@@ -113,7 +114,7 @@ export function AmendReturnDialog({ open, onOpenChange, ret, period }: AmendRetu
                 />
               </FormControl>
             </FormGroup>
-            <DialogFooter className="mt-4">
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"

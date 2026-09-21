@@ -33,7 +33,7 @@ export function OrderForm({ mode }: OrderFormProps) {
   const hasLegs = (order?.legs.length ?? 0) > 0;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <FormSection
         title={t("General Information")}
         description={t("The customer, ownership, and reference numbers that identify this order")}
@@ -113,7 +113,6 @@ export function OrderForm({ mode }: OrderFormProps) {
       <FormSection
         title={t("Commercial")}
         description={t("The quoted price and currency the order is billed in")}
-        className="border-border border-t pt-4"
       >
         <FormGroup cols={2}>
           <FormControl>

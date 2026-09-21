@@ -7,7 +7,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { statusChoices } from "@/lib/choices";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { ReviewTemplateFormValues } from "@trenova/shared/types/performance-review";
 import { InfoIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useMemo } from "react";
@@ -31,11 +31,10 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-3">
-        <SectionTitle
-          title={t("General")}
-          hint={t("Name and code identify the template when someone starts a review.")}
-        />
+      <FormSection
+        title={t("General")}
+        description={t("Name and code identify the template when someone starts a review.")}
+      >
         <FormGroup cols={2}>
           <FormControl>
             <InputField
@@ -106,14 +105,12 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
             />
           </FormControl>
         </FormGroup>
-      </section>
+      </FormSection>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-2">
-          <SectionTitle
-            title={t("Rating items")}
-            hint={`Each item is scored 1–5. Weights decide the share of the overall score — currently ${totalWeight} in total.`}
-          />
+      <FormSection
+        title={t("Rating items")}
+        description={`Each item is scored 1–5. Weights decide the share of the overall score — currently ${totalWeight} in total.`}
+        action={
           <Button
             type="button"
             size="sm"
@@ -123,7 +120,8 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
             <PlusIcon className="size-3.5" />
             {t("Add item")}
           </Button>
-        </div>
+        }
+      >
         <Alert variant="default">
           <InfoIcon className="size-4" />
           <AlertTitle>{t("Items are copied when a review starts")}</AlertTitle>
@@ -203,16 +201,7 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
             </div>
           ))}
         </div>
-      </section>
-    </div>
-  );
-}
-
-function SectionTitle({ title, hint }: { title: string; hint: string }) {
-  return (
-    <div>
-      <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="text-muted-foreground text-xs">{hint}</p>
+      </FormSection>
     </div>
   );
 }

@@ -156,7 +156,7 @@ export function EntityRefCell<TEntity, TParent extends Record<string, any>>(
   const { entity, config, parent } = props;
 
   if (!entity) {
-    return <p className="text-muted-foreground">-</p>;
+    return <p className="text-muted-foreground">—</p>;
   }
 
   const id = config.getId(entity);
@@ -211,7 +211,7 @@ export function NestedEntityRefCell<TEntity, TParent extends Record<string, any>
   const entity = getValue();
 
   if (!entity) {
-    return <p className="text-muted-foreground">-</p>;
+    return <p className="text-muted-foreground">—</p>;
   }
 
   const id = config.getId(entity);

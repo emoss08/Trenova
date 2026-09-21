@@ -89,7 +89,7 @@ export function FeedRunDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
+      <DialogContent size="xl" className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {batch ? t("{0} run", batch.provider) : t("Run")}
@@ -113,7 +113,7 @@ export function FeedRunDetailDialog({
           <ImportReviewTable batch={batch} filter={filter} onFilterChange={setFilter} showFilters />
         ) : null}
 
-        <DialogFooter className="flex flex-row items-center sm:justify-between">
+        <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t("Close")}
           </Button>

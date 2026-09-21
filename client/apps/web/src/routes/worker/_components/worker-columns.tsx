@@ -214,7 +214,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
       cell: ({ row }) => {
         const { fleetCode } = row.original;
         if (!fleetCode) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return (
@@ -248,7 +248,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
       cell: ({ row }) => {
         const { state } = row.original;
         if (!state) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return (
@@ -279,7 +279,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
       cell: ({ row }) => {
         const complianceStatus = row.original.profile?.complianceStatus;
         if (!complianceStatus) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return <StatusBadge status={complianceStatus} />;
@@ -303,7 +303,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
       cell: ({ row }) => {
         const health = row.original.profile?.trainingHealth;
         if (!health) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
         return <TrainingHealthBadge health={health} />;
       },
@@ -326,7 +326,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
       cell: ({ row }) => {
         const profile = row.original.profile;
         if (!profile) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
         const meta = safetyRatingMeta(profile.safetyRating);
         return (
@@ -357,7 +357,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
       cell: ({ row }) => {
         const status = row.original.profile?.drugAlcoholStatus;
         if (!status) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
         const meta = drugAlcoholStatusMeta(status);
         return (

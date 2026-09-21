@@ -25,7 +25,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomerPaymentRow>[] {
       accessorKey: "referenceNumber",
       header: t("Reference"),
       cell: ({ row }) => (
-        <span className="font-mono text-xs font-medium">{row.original.referenceNumber || "—"}</span>
+        <span className="font-mono font-medium">{row.original.referenceNumber || "—"}</span>
       ),
       size: 140,
       meta: { apiField: "referenceNumber" },
@@ -34,7 +34,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomerPaymentRow>[] {
       id: "customer",
       header: t("Customer"),
       cell: ({ row }) => (
-        <span className="text-xs font-medium">
+        <span className="font-medium">
           {row.original.customer
             ? `${row.original.customer.code} - ${row.original.customer.name}`
             : "—"}
@@ -45,21 +45,21 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomerPaymentRow>[] {
     {
       accessorKey: "paymentMethod",
       header: t("Method"),
-      cell: ({ row }) => <span className="text-xs">{row.original.paymentMethod}</span>,
+      cell: ({ row }) => <span>{row.original.paymentMethod}</span>,
       size: 90,
       meta: { apiField: "paymentMethod" },
     },
     {
       accessorKey: "paymentDate",
       header: t("Payment Date"),
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.paymentDate)}</span>,
+      cell: ({ row }) => <span>{formatDate(row.original.paymentDate)}</span>,
       size: 120,
       meta: { apiField: "paymentDate" },
     },
     {
       accessorKey: "accountingDate",
       header: t("Accounting Date"),
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.accountingDate)}</span>,
+      cell: ({ row }) => <span>{formatDate(row.original.accountingDate)}</span>,
       size: 120,
       meta: { apiField: "accountingDate" },
     },
@@ -68,7 +68,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomerPaymentRow>[] {
       header: () => <div className="text-right">{t("Amount")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
-          <AmountDisplay value={row.original.amountMinor} className="text-xs font-semibold" />
+          <AmountDisplay value={row.original.amountMinor} className="font-medium" />
         </div>
       ),
       size: 110,

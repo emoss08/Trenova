@@ -59,7 +59,7 @@ export function RawPayloadDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent size="xl">
         <DialogHeader>
           <DialogTitle>{t("Raw provider payload")}</DialogTitle>
           <DialogDescription>

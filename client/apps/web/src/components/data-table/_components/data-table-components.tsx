@@ -102,6 +102,6 @@ type DataTablePlaceholderProps = {
   className?: string;
 };
 
-export function DataTablePlaceholder({ text = "-", className }: DataTablePlaceholderProps) {
+export function DataTablePlaceholder({ text = "—", className }: DataTablePlaceholderProps) {
   return <span className={cn("text-muted-foreground", className)}>{text}</span>;
 }

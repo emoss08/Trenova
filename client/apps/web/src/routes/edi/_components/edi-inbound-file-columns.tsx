@@ -68,7 +68,11 @@ export function getInboundFileColumns(t: TranslateFn): ColumnDef<EDIInboundFileR
     {
       accessorKey: "method",
       header: t("Method"),
-      cell: ({ row }) => <Badge variant="neutral" appearance="outline">{row.original.method}</Badge>,
+      cell: ({ row }) => (
+        <Badge variant="neutral" appearance="outline">
+          {row.original.method}
+        </Badge>
+      ),
       size: 110,
       meta: {
         label: t("Method"),
@@ -102,7 +106,7 @@ export function getInboundFileColumns(t: TranslateFn): ColumnDef<EDIInboundFileR
       header: t("Control Number"),
       cell: ({ row }) =>
         row.original.interchangeControlNumber ? (
-          <span className="font-mono text-xs">{row.original.interchangeControlNumber}</span>
+          <span className="font-mono">{row.original.interchangeControlNumber}</span>
         ) : (
           <DataTablePlaceholder />
         ),

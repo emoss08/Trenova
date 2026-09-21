@@ -189,7 +189,7 @@ function CarrierSheetBody({
   return (
     <>
       <header className="flex flex-col gap-1 border-b px-5 pt-5 pb-4 pr-12">
-        <SheetTitle className="truncate text-base font-medium">{name}</SheetTitle>
+        <SheetTitle className="truncate">{name}</SheetTitle>
         {identity?.dbaName && identity.dbaName !== name ? (
           <p className="text-muted-foreground truncate text-sm">{identity.dbaName}</p>
         ) : null}

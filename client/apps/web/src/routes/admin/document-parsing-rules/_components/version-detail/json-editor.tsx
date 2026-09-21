@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
@@ -177,10 +178,10 @@ export function JsonEditor() {
       </div>
 
       {parseError && (
-        <div className="border-destructive/50 bg-destructive/10 flex items-start gap-2 rounded-md border p-2.5">
-          <AlertTriangleIcon className="text-destructive mt-0.5 size-3.5 shrink-0" />
-          <p className="text-destructive text-xs">{parseError}</p>
-        </div>
+        <Alert variant="destructive" size="sm">
+          <AlertTriangleIcon />
+          <AlertDescription>{parseError}</AlertDescription>
+        </Alert>
       )}
 
       <div className={cn("overflow-hidden rounded-md border", parseError && "border-destructive")}>

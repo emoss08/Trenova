@@ -208,7 +208,7 @@ export function VerifyEquipmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[640px]">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{t("Verify equipment")}</DialogTitle>
           <DialogDescription>

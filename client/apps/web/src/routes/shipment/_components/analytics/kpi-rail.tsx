@@ -2,17 +2,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { analytics } from "@/lib/queries/analytics";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
-  AlertTriangleIcon,
-  BoltIcon,
-  CheckIcon,
-  ClockIcon,
-  DollarSignIcon,
-  FlagIcon,
-  RouteIcon,
-  ShieldIcon,
-  TruckIcon,
-} from "lucide-react";
-import {
   type DeepPartial,
   type ShipmentAnalyticsData,
   mergeShipmentAnalyticsWithDefaults,
@@ -21,10 +10,9 @@ import { KpiGoalBar } from "@/components/kpi/kpi-goal-bar";
 import { KpiHero } from "@/components/kpi/kpi-hero";
 import { KpiInfoPopover } from "@/components/kpi/kpi-info-popover";
 import { KpiRing } from "@/components/kpi/kpi-ring";
-import { KpiStat } from "@/components/kpi/kpi-stat";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiWatchlist } from "@/components/kpi/kpi-watchlist";
 
-const ICON_PROPS = { className: "size-[11px]" } as const;
 const KPI_INFO = {
   revenueToday: {
     title: "Revenue today",
@@ -167,135 +155,129 @@ export default function KpiRail() {
   const breakdown = merged.activeShipments.breakdown;
 
   return (
-    <div className="grid grid-cols-12 gap-2 pt-1">
-      <KpiHero
-        label={t("Revenue today")}
-        value={`$${formatCompact(merged.revenueToday.total)}`}
-        delta={merged.revenueToday.deltaPct}
-        deltaLabel="%"
-        deltaTone="success"
-        sub={profitabilitySub(merged)}
-        sparkData={revenueSparkline}
-        sparkColor="var(--success)"
-        icon={<DollarSignIcon {...ICON_PROPS} />}
-        info={<KpiInfoPopover {...KPI_INFO.revenueToday} />}
-        span={3}
-      />
-      <KpiHero
-        label={t("Active shipments")}
-        value={String(merged.activeShipments.count)}
-        delta={merged.activeShipments.changeFromYesterday}
-        deltaTone="success"
-        sparkData={activeSparkline}
-        sparkColor="var(--brand)"
-        icon={<TruckIcon {...ICON_PROPS} />}
-        info={<KpiInfoPopover {...KPI_INFO.activeShipments} />}
-        breakdown={[
-          { label: t("In-transit"), value: breakdown.inTransit, color: "var(--brand)" },
-          { label: t("At-risk"), value: breakdown.atRisk, color: "var(--destructive)" },
-          { label: t("Loading"), value: breakdown.loading, color: "var(--info)" },
-          { label: t("Done"), value: breakdown.done, color: "var(--success)" },
-        ]}
-        span={3}
-      />
-      <KpiRing
-        label={t("On-time")}
-        value={merged.onTimePercent.percent.toFixed(1)}
-        unit="%"
-        target={merged.onTimePercent.target}
-        ringValue={merged.onTimePercent.percent}
-        delta={merged.onTimePercent.deltaPp}
-        deltaLabel="pp"
-        deltaTone={merged.onTimePercent.deltaPp >= 0 ? "success" : "danger"}
-        sub={`Target ${merged.onTimePercent.target}%  ·  7-day ${merged.onTimePercent.sevenDayPercent.toFixed(1)}%`}
-        icon={<ClockIcon {...ICON_PROPS} />}
-        info={<KpiInfoPopover {...KPI_INFO.onTimePercent} />}
-        span={2}
-      />
-      <KpiGoalBar
-        label={t("Empty mile %")}
-        value={merged.emptyMilePercent.percent.toFixed(1)}
-        unit="%"
-        target={merged.emptyMilePercent.target}
-        actual={merged.emptyMilePercent.percent}
-        max={20}
-        delta={merged.emptyMilePercent.deltaPp}
-        deltaLabel="pp"
-        deltaTone={merged.emptyMilePercent.deltaPp <= 0 ? "success" : "danger"}
-        sub={`${merged.emptyMilePercent.emptyMiles.toLocaleString()} deadhead miles · goal <${merged.emptyMilePercent.target}%`}
-        icon={<RouteIcon {...ICON_PROPS} />}
-        info={<KpiInfoPopover {...KPI_INFO.emptyMilePercent} />}
-        span={2}
-      />
-      <KpiRing
-        label={t("Tender accept")}
-        value={merged.tenderAccept.percent.toFixed(1)}
-        unit="%"
-        target={merged.tenderAccept.target}
-        ringValue={merged.tenderAccept.percent}
-        delta={merged.tenderAccept.deltaPp}
-        deltaLabel="pp"
-        deltaTone={merged.tenderAccept.deltaPp >= 0 ? "success" : "danger"}
-        sub={`${merged.tenderAccept.accepted} accepted · ${merged.tenderAccept.declined} declined`}
-        icon={<CheckIcon {...ICON_PROPS} />}
-        info={<KpiInfoPopover {...KPI_INFO.tenderAccept} />}
-        span={2}
-      />
+    <div className="flex flex-col gap-2 pt-1">
+      <KpiStrip minItemWidth="13rem">
+        <KpiHero
+          label={t("Revenue today")}
+          value={`$${formatCompact(merged.revenueToday.total)}`}
+          delta={merged.revenueToday.deltaPct}
+          deltaLabel="%"
+          deltaTone="success"
+          sub={profitabilitySub(merged)}
+          sparkData={revenueSparkline}
+          sparkColor="var(--success)"
+          info={<KpiInfoPopover {...KPI_INFO.revenueToday} />}
+          span={3}
+        />
+        <KpiHero
+          label={t("Active shipments")}
+          value={String(merged.activeShipments.count)}
+          delta={merged.activeShipments.changeFromYesterday}
+          deltaTone="success"
+          sparkData={activeSparkline}
+          sparkColor="var(--brand)"
+          info={<KpiInfoPopover {...KPI_INFO.activeShipments} />}
+          breakdown={[
+            { label: t("In-transit"), value: breakdown.inTransit, color: "var(--brand)" },
+            { label: t("At-risk"), value: breakdown.atRisk, color: "var(--destructive)" },
+            { label: t("Loading"), value: breakdown.loading, color: "var(--info)" },
+            { label: t("Done"), value: breakdown.done, color: "var(--success)" },
+          ]}
+          span={3}
+        />
+        <KpiRing
+          label={t("On-time")}
+          value={merged.onTimePercent.percent.toFixed(1)}
+          unit="%"
+          target={merged.onTimePercent.target}
+          ringValue={merged.onTimePercent.percent}
+          delta={merged.onTimePercent.deltaPp}
+          deltaLabel="pp"
+          deltaTone={merged.onTimePercent.deltaPp >= 0 ? "success" : "danger"}
+          sub={`Target ${merged.onTimePercent.target}%  ·  7-day ${merged.onTimePercent.sevenDayPercent.toFixed(1)}%`}
+          info={<KpiInfoPopover {...KPI_INFO.onTimePercent} />}
+          span={2}
+        />
+        <KpiGoalBar
+          label={t("Empty mile %")}
+          value={merged.emptyMilePercent.percent.toFixed(1)}
+          unit="%"
+          target={merged.emptyMilePercent.target}
+          actual={merged.emptyMilePercent.percent}
+          max={20}
+          delta={merged.emptyMilePercent.deltaPp}
+          deltaLabel="pp"
+          deltaTone={merged.emptyMilePercent.deltaPp <= 0 ? "success" : "danger"}
+          sub={`${merged.emptyMilePercent.emptyMiles.toLocaleString()} deadhead miles · goal <${merged.emptyMilePercent.target}%`}
+          info={<KpiInfoPopover {...KPI_INFO.emptyMilePercent} />}
+          span={2}
+        />
+        <KpiRing
+          label={t("Tender accept")}
+          value={merged.tenderAccept.percent.toFixed(1)}
+          unit="%"
+          target={merged.tenderAccept.target}
+          ringValue={merged.tenderAccept.percent}
+          delta={merged.tenderAccept.deltaPp}
+          deltaLabel="pp"
+          deltaTone={merged.tenderAccept.deltaPp >= 0 ? "success" : "danger"}
+          sub={`${merged.tenderAccept.accepted} accepted · ${merged.tenderAccept.declined} declined`}
+          info={<KpiInfoPopover {...KPI_INFO.tenderAccept} />}
+          span={2}
+        />
+      </KpiStrip>
 
-      <KpiStat
-        label={t("At-risk")}
-        value={String(merged.atRisk.count)}
-        delta={merged.atRisk.delta}
-        tone="danger"
-        sub={`${merged.atRisk.etaSlip} ETA slip · ${merged.atRisk.weather} weather · ${merged.atRisk.reefer} reefer`}
-        icon={<AlertTriangleIcon {...ICON_PROPS} />}
-        info={<KpiInfoPopover {...KPI_INFO.atRisk} />}
-        span={2}
-      />
-      <KpiStat
-        label={t("Unassigned")}
-        value={String(merged.unassigned.count)}
-        delta={merged.unassigned.delta}
-        tone="warning"
-        sub={`$${merged.unassigned.revenueWaiting.toLocaleString()} revenue waiting`}
-        icon={<FlagIcon {...ICON_PROPS} />}
-        info={<KpiInfoPopover {...KPI_INFO.unassigned} />}
-        span={2}
-      />
-      <KpiStat
-        label={t("Ready to dispatch")}
-        value={String(merged.readyToDispatch.count)}
-        delta={merged.readyToDispatch.delta}
-        tone="brand"
-        sub={`${merged.readyToDispatch.unassigned} unassigned · ${merged.readyToDispatch.driverReady} driver-ready`}
-        icon={<BoltIcon {...ICON_PROPS} />}
-        info={<KpiInfoPopover {...KPI_INFO.readyToDispatch} />}
-        span={2}
-      />
-      <KpiWatchlist
-        label={t("HOS near limit")}
-        items={merged.hosNearLimit.items.map((item) => ({
-          id: item.driverId,
-          who: `${item.driverId} ${item.name}`,
-          meta: item.hoursLeftLabel,
-          tone: item.tone,
-        }))}
-        icon={<ShieldIcon {...ICON_PROPS} />}
-        info={<KpiInfoPopover {...KPI_INFO.hosNearLimit} />}
-        span={3}
-      />
-      <KpiWatchlist
-        label={t("Detention dwell > 2h")}
-        items={merged.detentionWatchlist.items.map((item) => ({
-          id: item.shipmentId,
-          who: `${item.shipmentId} ${item.customer}`,
-          meta: item.dwellLabel,
-          tone: item.tone,
-        }))}
-        icon={<ClockIcon {...ICON_PROPS} />}
-        info={<KpiInfoPopover {...KPI_INFO.detentionWatchlist} />}
-        span={3}
-      />
+      <KpiStrip minItemWidth="13rem">
+        <KpiStripItem
+          label={t("At-risk")}
+          value={String(merged.atRisk.count)}
+          delta={merged.atRisk.delta}
+          tone="danger"
+          sub={`${merged.atRisk.etaSlip} ETA slip · ${merged.atRisk.weather} weather · ${merged.atRisk.reefer} reefer`}
+          info={<KpiInfoPopover {...KPI_INFO.atRisk} />}
+          span={2}
+        />
+        <KpiStripItem
+          label={t("Unassigned")}
+          value={String(merged.unassigned.count)}
+          delta={merged.unassigned.delta}
+          tone="warning"
+          sub={`$${merged.unassigned.revenueWaiting.toLocaleString()} revenue waiting`}
+          info={<KpiInfoPopover {...KPI_INFO.unassigned} />}
+          span={2}
+        />
+        <KpiStripItem
+          label={t("Ready to dispatch")}
+          value={String(merged.readyToDispatch.count)}
+          delta={merged.readyToDispatch.delta}
+          tone="brand"
+          sub={`${merged.readyToDispatch.unassigned} unassigned · ${merged.readyToDispatch.driverReady} driver-ready`}
+          info={<KpiInfoPopover {...KPI_INFO.readyToDispatch} />}
+          span={2}
+        />
+        <KpiWatchlist
+          label={t("HOS near limit")}
+          items={merged.hosNearLimit.items.map((item) => ({
+            id: item.driverId,
+            who: `${item.driverId} ${item.name}`,
+            meta: item.hoursLeftLabel,
+            tone: item.tone,
+          }))}
+          info={<KpiInfoPopover {...KPI_INFO.hosNearLimit} />}
+          span={3}
+        />
+        <KpiWatchlist
+          label={t("Detention dwell > 2h")}
+          items={merged.detentionWatchlist.items.map((item) => ({
+            id: item.shipmentId,
+            who: `${item.shipmentId} ${item.customer}`,
+            meta: item.dwellLabel,
+            tone: item.tone,
+          }))}
+          info={<KpiInfoPopover {...KPI_INFO.detentionWatchlist} />}
+          span={3}
+        />
+      </KpiStrip>
     </div>
   );
 }

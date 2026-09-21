@@ -1,7 +1,14 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentShipmentDraftReviewDialog } from "@/components/documents/document-shipment-draft-review-dialog";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +30,7 @@ import type {
   DocumentShipmentDraft,
 } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, LoaderCircleIcon, RefreshCcwIcon } from "lucide-react";
+import { AlertCircleIcon, CircleCheckIcon, LoaderCircleIcon, RefreshCcwIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -180,7 +187,9 @@ function ConflictSection({ conflicts }: { conflicts: DocumentIntelligenceConflic
                 {conflict.label || conflict.key || t("Conflict")}
               </span>
               {conflict.pageNumbers.length > 0 ? (
-                <Badge variant="neutral" appearance="outline">{t("Pages {0}", conflict.pageNumbers.join(", "))}</Badge>
+                <Badge variant="neutral" appearance="outline">
+                  {t("Pages {0}", conflict.pageNumbers.join(", "))}
+                </Badge>
               ) : null}
             </div>
             {conflict.values.length > 0 ? (
@@ -238,28 +247,22 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
                   {formatConfidence(stop.confidence)}
                 </Badge>
               ) : null}
-              {stop.reviewRequired ? <Badge variant="neutral" appearance="outline">{t("Review")}</Badge> : null}
+              {stop.reviewRequired ? (
+                <Badge variant="neutral" appearance="outline">
+                  {t("Review")}
+                </Badge>
+              ) : null}
               {stop.pageNumber ? (
                 <Badge variant="neutral">{t("Page {0}", stop.pageNumber)}</Badge>
               ) : null}
             </div>
           </div>
-          <div className="mt-3 grid gap-2 md:grid-cols-2">
-            <div className="bg-muted/20 rounded-md p-2">
-              <div className="text-muted-foreground text-xs font-medium">
-                {t("Address")}
-              </div>
-              <div className="mt-1 text-sm">{formatStopSummary(stop)}</div>
-            </div>
-            <div className="bg-muted/20 rounded-md p-2">
-              <div className="text-muted-foreground text-xs font-medium">
-                {t("Timing")}
-              </div>
-              <div className="mt-1 text-sm">
-                {[stop.date, stop.timeWindow].filter(Boolean).join(" · ") || t("Not extracted")}
-              </div>
-            </div>
-          </div>
+          <DescriptionList className="mt-3">
+            <DescriptionItem label={t("Address")}>{formatStopSummary(stop)}</DescriptionItem>
+            <DescriptionItem label={t("Timing")}>
+              {[stop.date, stop.timeWindow].filter(Boolean).join(" · ") || t("Not extracted")}
+            </DescriptionItem>
+          </DescriptionList>
           {stop.evidenceExcerpt ? (
             <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-xs whitespace-pre-wrap">
               {stop.evidenceExcerpt}
@@ -283,58 +286,33 @@ function IntelligenceSummary({
   const t = useT();
 
   return (
-    <div className="grid gap-3 md:grid-cols-6">
-      <div className="rounded-lg border p-3">
-        <div className="text-muted-foreground text-xs font-medium">
-          {t("Classification")}
-        </div>
-        <div className="mt-1 text-sm">{intelligence?.kind || fallbackKind || t("Other")}</div>
-      </div>
-      <div className="rounded-lg border p-3">
-        <div className="text-muted-foreground text-xs font-medium">
-          {t("Confidence")}
-        </div>
-        <div className="mt-1 text-sm">
-          {formatConfidence(intelligence?.overallConfidence ?? fallbackConfidence)}
-        </div>
-      </div>
-      <div className="rounded-lg border p-3">
-        <div className="text-muted-foreground text-xs font-medium">
-          {t("Review Status")}
-        </div>
-        <div className="mt-1 text-sm">{intelligence?.reviewStatus || t("NeedsReview")}</div>
-      </div>
-      <div className="rounded-lg border p-3">
-        <div className="text-muted-foreground text-xs font-medium">
-          {t("Classifier Source")}
-        </div>
-        <div className="mt-1 text-sm">{intelligence?.classifierSource || "deterministic"}</div>
-      </div>
-      <div className="rounded-lg border p-3">
-        <div className="text-muted-foreground text-xs font-medium">
-          {t("Provider Fingerprint")}
-        </div>
-        <div className="mt-1 text-sm">{intelligence?.providerFingerprint || t("None")}</div>
-      </div>
-      <div className="rounded-lg border p-3">
-        <div className="text-muted-foreground text-xs font-medium">
-          {t("Missing Critical Fields")}
-        </div>
-        <div className="mt-1 text-sm">
-          {intelligence?.missingFields?.length === 0
-            ? t("None")
-            : (intelligence?.missingFields?.length ?? t("Not scored"))}
-        </div>
-      </div>
+    <DescriptionList columns={3} className="rounded-lg border p-3">
+      <DescriptionItem label={t("Classification")}>
+        {intelligence?.kind || fallbackKind || t("Other")}
+      </DescriptionItem>
+      <DescriptionItem label={t("Confidence")} numeric>
+        {formatConfidence(intelligence?.overallConfidence ?? fallbackConfidence)}
+      </DescriptionItem>
+      <DescriptionItem label={t("Review Status")}>
+        {intelligence?.reviewStatus || t("NeedsReview")}
+      </DescriptionItem>
+      <DescriptionItem label={t("Classifier Source")}>
+        {intelligence?.classifierSource || "deterministic"}
+      </DescriptionItem>
+      <DescriptionItem label={t("Provider Fingerprint")}>
+        {intelligence?.providerFingerprint || t("None")}
+      </DescriptionItem>
+      <DescriptionItem label={t("Missing Critical Fields")}>
+        {intelligence?.missingFields?.length === 0
+          ? t("None")
+          : (intelligence?.missingFields?.length ?? t("Not scored"))}
+      </DescriptionItem>
       {intelligence?.classificationReason ? (
-        <div className="rounded-lg border p-3 md:col-span-6">
-          <div className="text-muted-foreground text-xs font-medium">
-            {t("Classification Reason")}
-          </div>
-          <div className="mt-1 text-sm">{intelligence.classificationReason}</div>
-        </div>
+        <DescriptionItem label={t("Classification Reason")} span="full">
+          {intelligence.classificationReason}
+        </DescriptionItem>
       ) : null}
-    </div>
+    </DescriptionList>
   );
 }
 
@@ -361,9 +339,7 @@ function AnalysisSnapshotCard({
     <div className="rounded-lg border p-3">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <div className="text-muted-foreground text-xs font-medium">
-            {title}
-          </div>
+          <div className="text-muted-foreground text-xs font-medium">{title}</div>
           <div className="mt-1 text-sm font-medium">{analysis.kind || t("Other")}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -377,26 +353,17 @@ function AnalysisSnapshotCard({
           ) : null}
         </div>
       </div>
-      <div className="grid gap-2 md:grid-cols-3">
-        <div className="bg-muted/20 rounded-md p-2">
-          <div className="text-muted-foreground text-xs font-medium">
-            {t("Fields")}
-          </div>
-          <div className="mt-1 text-sm">{fieldCount}</div>
-        </div>
-        <div className="bg-muted/20 rounded-md p-2">
-          <div className="text-muted-foreground text-xs font-medium">
-            {t("Stops")}
-          </div>
-          <div className="mt-1 text-sm">{analysis.stops?.length ?? 0}</div>
-        </div>
-        <div className="bg-muted/20 rounded-md p-2">
-          <div className="text-muted-foreground text-xs font-medium">
-            {t("Source")}
-          </div>
-          <div className="mt-1 text-sm">{analysis.classifierSource || t("Unknown")}</div>
-        </div>
-      </div>
+      <DescriptionList columns={3}>
+        <DescriptionItem label={t("Fields")} numeric>
+          {fieldCount}
+        </DescriptionItem>
+        <DescriptionItem label={t("Stops")} numeric>
+          {analysis.stops?.length ?? 0}
+        </DescriptionItem>
+        <DescriptionItem label={t("Source")}>
+          {analysis.classifierSource || t("Unknown")}
+        </DescriptionItem>
+      </DescriptionList>
       {analysis.missingFields?.length ? (
         <div className="mt-3">
           <div className="text-muted-foreground mb-1 text-xs font-medium">
@@ -413,9 +380,7 @@ function AnalysisSnapshotCard({
       ) : null}
       {analysis.stops?.length ? (
         <div className="mt-3">
-          <div className="text-muted-foreground mb-1 text-xs font-medium">
-            {t("Stops")}
-          </div>
+          <div className="text-muted-foreground mb-1 text-xs font-medium">{t("Stops")}</div>
           <StopsSection stops={analysis.stops.slice(0, 3)} />
         </div>
       ) : null}
@@ -444,29 +409,21 @@ function AIDiagnosticsSection({
           )}
         </p>
       </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        <div className="rounded-lg border p-3">
-          <div className="text-muted-foreground text-xs font-medium">
-            {t("AI Outcome")}
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+      <DescriptionList className="rounded-lg border p-3">
+        <DescriptionItem label={t("AI Outcome")}>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
             <Badge variant={aiAcceptanceVariant(diagnostics.acceptanceStatus)}>
               {formatAIAcceptanceStatus(diagnostics.acceptanceStatus)}
             </Badge>
             {diagnostics.rejectionReason ? (
-              <Badge variant="neutral">
-                {formatDiagnosticReason(diagnostics.rejectionReason)}
-              </Badge>
+              <Badge variant="neutral">{formatDiagnosticReason(diagnostics.rejectionReason)}</Badge>
             ) : null}
           </div>
-        </div>
-        <div className="rounded-lg border p-3">
-          <div className="text-muted-foreground text-xs font-medium">
-            {t("Rejection Reason")}
-          </div>
-          <div className="mt-1 text-sm">{formatDiagnosticReason(diagnostics.rejectionReason)}</div>
-        </div>
-      </div>
+        </DescriptionItem>
+        <DescriptionItem label={t("Rejection Reason")}>
+          {formatDiagnosticReason(diagnostics.rejectionReason)}
+        </DescriptionItem>
+      </DescriptionList>
       <div className="grid gap-3 lg:grid-cols-2">
         <AnalysisSnapshotCard
           title={t("Fallback Analysis")}
@@ -519,46 +476,32 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
 
   return (
     <div className="grid gap-2">
-      <div className="grid gap-3 md:grid-cols-3">
-        <div className="rounded-lg border p-3">
-          <div className="text-muted-foreground text-xs font-medium">
-            {t("Draft Confidence")}
-          </div>
-          <div className="mt-1 text-sm font-medium">
-            {formatConfidence(draft.draftData?.overallConfidence ?? draft.confidence)}
-          </div>
-        </div>
-        <div className="rounded-lg border p-3">
-          <div className="text-muted-foreground text-xs font-medium">
-            {t("Review Status")}
-          </div>
-          <div className="mt-1 text-sm">{draft.draftData?.reviewStatus || t("NeedsReview")}</div>
-        </div>
-        <div className="rounded-lg border p-3">
-          <div className="text-muted-foreground text-xs font-medium">
-            {t("Missing Critical Fields")}
-          </div>
-          <div className="mt-1 text-sm">
-            {missingFields.length === 0 ? t("None") : missingFields.length}
-          </div>
-        </div>
-      </div>
+      <DescriptionList columns={3} className="rounded-lg border p-3">
+        <DescriptionItem label={t("Draft Confidence")} numeric>
+          {formatConfidence(draft.draftData?.overallConfidence ?? draft.confidence)}
+        </DescriptionItem>
+        <DescriptionItem label={t("Review Status")}>
+          {draft.draftData?.reviewStatus || t("NeedsReview")}
+        </DescriptionItem>
+        <DescriptionItem label={t("Missing Critical Fields")}>
+          {missingFields.length === 0 ? t("None") : missingFields.length}
+        </DescriptionItem>
+      </DescriptionList>
 
       {draft.attachedShipmentId ? (
-        <div className="rounded-lg border border-success-border bg-success-subtle/70 p-3 text-sm text-success-foreground">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="font-medium">
-                {t("This document is already attached to a shipment.")}
-              </div>
-              <div className="mt-1 text-success-foreground/80">
-                {t(
-                  "Shipment {0} attached {1} .",
-                  draft.attachedShipmentId,
-                  formatUnixTimestamp(draft.attachedAt),
-                )}
-              </div>
-            </div>
+        <Alert variant="success" size="sm">
+          <CircleCheckIcon />
+          <AlertTitle>
+            {t("This document is already attached to a shipment.")}
+          </AlertTitle>
+          <AlertDescription>
+            {t(
+              "Shipment {0} attached {1} .",
+              draft.attachedShipmentId,
+              formatUnixTimestamp(draft.attachedAt),
+            )}
+          </AlertDescription>
+          <AlertAction>
             <Button
               variant="outline"
               size="sm"
@@ -566,8 +509,8 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
             >
               {t("Open Shipments")}
             </Button>
-          </div>
-        </div>
+          </AlertAction>
+        </Alert>
       ) : null}
 
       {signals.length > 0 ? (
@@ -605,26 +548,30 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
       <ConflictSection conflicts={conflicts} />
 
       <div className="grid gap-2">
-        <div className="text-muted-foreground text-xs font-medium">
-          {t("Extracted Stops")}
-        </div>
+        <div className="text-muted-foreground text-xs font-medium">{t("Extracted Stops")}</div>
         <StopsSection stops={stops} />
       </div>
 
       {entries.map(({ key, field }) => (
         <div key={key} className="rounded-lg border p-3">
           <div className="flex items-start justify-between gap-3">
-            <div className="text-muted-foreground text-xs font-medium">
-              {field.label || key}
-            </div>
+            <div className="text-muted-foreground text-xs font-medium">{field.label || key}</div>
             <div className="flex flex-wrap items-center gap-2">
               {field.confidence != null ? (
                 <Badge variant={confidenceVariant(field.confidence)}>
                   {formatConfidence(field.confidence)}
                 </Badge>
               ) : null}
-              {field.reviewRequired ? <Badge variant="neutral" appearance="outline">{t("Review")}</Badge> : null}
-              {field.conflict ? <Badge variant="neutral" appearance="outline">{t("Conflict")}</Badge> : null}
+              {field.reviewRequired ? (
+                <Badge variant="neutral" appearance="outline">
+                  {t("Review")}
+                </Badge>
+              ) : null}
+              {field.conflict ? (
+                <Badge variant="neutral" appearance="outline">
+                  {t("Conflict")}
+                </Badge>
+              ) : null}
             </div>
           </div>
           <div className="mt-2 text-sm whitespace-pre-wrap">{formatValue(field.value)}</div>
@@ -671,7 +618,9 @@ function ContentSection({
                 {formatConfidence(intelligence.overallConfidence)}
               </Badge>
               {intelligence.reviewStatus !== "Ready" ? (
-                <Badge variant="neutral" appearance="outline">{t("Review")}</Badge>
+                <Badge variant="neutral" appearance="outline">
+                  {t("Review")}
+                </Badge>
               ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
@@ -689,9 +638,7 @@ function ContentSection({
         <AIDiagnosticsSection diagnostics={aiDiagnostics} />
 
         <div className="grid gap-2">
-          <div className="text-muted-foreground text-xs font-medium">
-            {t("Canonical Stops")}
-          </div>
+          <div className="text-muted-foreground text-xs font-medium">{t("Canonical Stops")}</div>
           <StopsSection stops={intelligence?.stops ?? []} />
         </div>
 
@@ -711,7 +658,9 @@ function ContentSection({
                   <div className="flex items-center gap-2">
                     <Badge variant="neutral">{page.sourceKind}</Badge>
                     {page.preprocessingApplied ? (
-                      <Badge variant="neutral" appearance="outline">{t("Preprocessed")}</Badge>
+                      <Badge variant="neutral" appearance="outline">
+                        {t("Preprocessed")}
+                      </Badge>
                     ) : null}
                   </div>
                 </div>
@@ -879,24 +828,14 @@ export function DocumentIntelligenceDialog({
                         fallbackKind={content?.detectedDocumentKind || document.detectedKind}
                         fallbackConfidence={content?.classificationConfidence}
                       />
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <div className="rounded-lg border p-3">
-                          <div className="text-muted-foreground text-xs font-medium">
-                            {t("Extraction Source")}
-                          </div>
-                          <div className="mt-1 text-sm">
-                            {content?.sourceKind || t("Not available")}
-                          </div>
-                        </div>
-                        <div className="rounded-lg border p-3">
-                          <div className="text-muted-foreground text-xs font-medium">
-                            {t("Pages")}
-                          </div>
-                          <div className="mt-1 text-sm">
-                            {content?.pageCount ?? t("Not available")}
-                          </div>
-                        </div>
-                      </div>
+                      <DescriptionList className="rounded-lg border p-3">
+                        <DescriptionItem label={t("Extraction Source")}>
+                          {content?.sourceKind || t("Not available")}
+                        </DescriptionItem>
+                        <DescriptionItem label={t("Pages")} numeric>
+                          {content?.pageCount ?? t("Not available")}
+                        </DescriptionItem>
+                      </DescriptionList>
                     </div>
                   </section>
 

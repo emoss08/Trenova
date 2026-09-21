@@ -1,8 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
-import { Badge } from "@trenova/shared/components/ui/badge";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { cn } from "@trenova/shared/lib/utils";
 import type { FormulaTemplateReview } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -10,12 +9,12 @@ import { HistoryIcon } from "lucide-react";
 import { useMemo } from "react";
 import { describeReviewDecision, groupReviewRounds, type ReviewRound } from "./review-rounds";
 
-const TONE_CLASSES: Record<ReturnType<typeof describeReviewDecision>["tone"], string> = {
-  neutral: "bg-accent-sky/15 text-accent-sky-on-subtle",
-  positive: "bg-success/15 text-success-foreground",
-  negative: "bg-destructive/15 text-destructive",
-  warning: "bg-warning/15 text-warning-foreground",
-  muted: "bg-muted text-muted-foreground",
+const TONE_VARIANTS: Record<ReturnType<typeof describeReviewDecision>["tone"], BadgeVariant> = {
+  neutral: "accent-sky",
+  positive: "success",
+  negative: "danger",
+  warning: "warning",
+  muted: "neutral",
 };
 
 function actorName(review: FormulaTemplateReview): string {
@@ -32,10 +31,7 @@ function ReviewEntry({ review }: { review: FormulaTemplateReview }) {
     <li className="flex items-start justify-between gap-3 px-3 py-1.5 text-xs">
       <div className="min-w-0 space-y-0.5">
         <div className="flex items-center gap-1.5">
-          <Badge
-            variant="neutral" appearance="outline"
-            className={cn("text-2xs border-transparent px-1 py-0", TONE_CLASSES[decision.tone])}
-          >
+          <Badge variant={TONE_VARIANTS[decision.tone]} className="text-2xs px-1 py-0">
             {t(decision.label)}
           </Badge>
           <span className="font-medium">{actorName(review)}</span>

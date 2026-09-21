@@ -62,9 +62,9 @@ export function getColumns(t: TranslateFn): ColumnDef<FiscalYearRow>[] {
       header: t("Date Range"),
       cell: ({ row }) => {
         const { startDate, endDate } = row.original;
-        if (!startDate || !endDate) return "-";
+        if (!startDate || !endDate) return "—";
         return (
-          <span className="font-mono text-xs whitespace-nowrap">
+          <span className="font-mono whitespace-nowrap">
             {formatToUserTimezone(
               startDate,
               { showTime: false, showDate: true },

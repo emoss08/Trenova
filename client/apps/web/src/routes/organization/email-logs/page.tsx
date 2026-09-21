@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
@@ -10,14 +11,13 @@ export function EmailLogsPage() {
   const logs = logsQuery.data?.results ?? [];
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4">
-      <div>
-        <h1 className="text-lg font-semibold">{t("Email Logs")}</h1>
-        <p className="text-muted-foreground text-sm">
-          {t("Transactional email send and delivery history.")}
-        </p>
-      </div>
-      <section className="overflow-hidden rounded-md border">
+    <PageLayout
+      pageHeaderProps={{
+        title: t("Email Logs"),
+        description: t("Transactional email send and delivery history."),
+      }}
+    >
+      <section className="bg-card overflow-hidden rounded-lg border">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-muted-foreground border-b text-left text-xs">
             <tr>
@@ -39,7 +39,7 @@ export function EmailLogsPage() {
                 <td className="px-3 py-2">{log.purpose}</td>
                 <td className="px-3 py-2">{log.toRecipients.join(", ")}</td>
                 <td className="px-3 py-2">
-                  <span className="rounded border px-2 py-1 text-xs">{log.status}</span>
+                  <span className="rounded-md border px-2 py-1 text-xs">{log.status}</span>
                 </td>
                 <td className="px-3 py-2">{log.attempts}</td>
                 <td className="px-3 py-2">{formatUnixDateTime(log.createdAt)}</td>
@@ -55,6 +55,6 @@ export function EmailLogsPage() {
           </tbody>
         </table>
       </section>
-    </div>
+    </PageLayout>
   );
 }

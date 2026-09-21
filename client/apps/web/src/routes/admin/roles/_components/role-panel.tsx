@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -263,10 +264,12 @@ function RoleEditPanel({ open, onOpenChange, row }: RoleEditPanelProps) {
       ) : (
         <div className="flex flex-col gap-6">
           {isSystemRole && (
-            <div className="flex items-center gap-2 rounded-md border border-warning-border bg-warning-subtle p-3 text-sm text-warning-foreground dark:border-warning-border dark:bg-warning-subtle dark:text-warning-foreground">
-              <AlertTriangleIcon className="size-4 shrink-0" />
-              <span>{t("This is a system role and cannot be modified.")}</span>
-            </div>
+            <Alert variant="warning" size="sm">
+              <AlertTriangleIcon />
+              <AlertDescription>
+                {t("This is a system role and cannot be modified.")}
+              </AlertDescription>
+            </Alert>
           )}
           <FormProvider {...form}>
             <Form id="role-edit-form" onSubmit={handleSubmit(onSubmit)}>

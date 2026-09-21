@@ -123,17 +123,13 @@ function dwellSegments(result: PreviewResult, suppressed: boolean): Segment[] {
     {
       key: "billed",
       minutes: billed,
-      className: suppressed
-        ? "bg-danger/60"
-        : "bg-success",
+      className: suppressed ? "bg-danger/60" : "bg-success",
       legend: "Billed",
     },
     {
       key: "rounding",
       minutes: uplift,
-      className: suppressed
-        ? "bg-danger/30"
-        : "bg-success/45",
+      className: suppressed ? "bg-danger/30" : "bg-success/45",
       legend: "Rounding",
     },
     {
@@ -254,9 +250,7 @@ function ScenarioResult({
             </p>
           </div>
           <div className="shrink-0 text-right">
-            <p className="text-xs text-muted-foreground font-medium">
-              {t("Net margin")}
-            </p>
+            <p className="text-xs text-muted-foreground font-medium">{t("Net margin")}</p>
             <p
               className={cn(
                 "mt-0.5 text-sm font-medium tabular-nums",
@@ -346,10 +340,7 @@ function LiveIndicator({ pricing }: { pricing: boolean }) {
   return (
     <div className="flex shrink-0 items-center gap-1.5">
       <m.span
-        className={cn(
-          "size-1.5 rounded-full",
-          pricing ? "bg-warning" : "bg-success",
-        )}
+        className={cn("size-1.5 rounded-full", pricing ? "bg-warning" : "bg-success")}
         animate={pricing ? { opacity: [1, 0.3, 1] } : { opacity: 1 }}
         transition={pricing ? { duration: 1.1, repeat: Infinity, ease: "easeInOut" } : undefined}
       />
@@ -423,9 +414,7 @@ export function DetentionPolicyPreview() {
     <div ref={rootRef} className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-xs text-muted-foreground font-semibold">
-            {t("Live preview")}
-          </h3>
+          <h3 className="text-sm font-semibold">{t("Live preview")}</h3>
           <p className="text-muted-foreground mt-1 text-xs">
             {t("Worked examples priced by the same engine that bills real shipments.")}
           </p>

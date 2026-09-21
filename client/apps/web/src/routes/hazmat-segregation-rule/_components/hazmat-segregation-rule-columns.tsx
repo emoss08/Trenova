@@ -140,7 +140,7 @@ export function getColumns(t: TranslateFn): ColumnDef<HazmatSegregationRule>[] {
       header: t("Min Distance"),
       cell: ({ row }) => {
         if (typeof row.original.minimumDistance !== "number") {
-          return "-";
+          return "—";
         }
 
         const unit = segregationDistanceUnitChoices.find(

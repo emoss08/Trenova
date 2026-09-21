@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { describeApiError } from "@/lib/api-error-message";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -13,7 +14,7 @@ import {
   SheetTitle,
 } from "@trenova/shared/components/ui/sheet";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import type {
   FormulaTemplateType,
   GenerateFormulaResponse,
@@ -21,12 +22,7 @@ import type {
   VariableDefinition,
 } from "@trenova/shared/types/formula-template";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertTriangleIcon,
-  CheckCircle2Icon,
-  CheckIcon,
-  PlusIcon,
-} from "lucide-react";
+import { AlertTriangleIcon, CheckCircle2Icon, CheckIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { acceptableScenarios, scenarioToTestCaseInput } from "./proposed-scenarios";
@@ -197,9 +193,7 @@ export function AiGeneratePanel({
 
             {!data && !isPending && (
               <div className="space-y-1.5">
-                <p className="text-muted-foreground text-xs font-medium">
-                  {t("Try one of these")}
-                </p>
+                <p className="text-muted-foreground text-xs font-medium">{t("Try one of these")}</p>
                 {SUGGESTED_PROMPTS.map((prompt) => (
                   <button
                     key={prompt}
@@ -214,9 +208,11 @@ export function AiGeneratePanel({
             )}
 
             {error && (
-              <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-xs">
-                {error.message || t("Formula generation failed. Try again.")}
-              </div>
+              <Alert variant="destructive" size="sm">
+                <AlertDescription>
+                  {error.message || t("Formula generation failed. Try again.")}
+                </AlertDescription>
+              </Alert>
             )}
 
             {data && (
@@ -261,36 +257,25 @@ export function AiGeneratePanel({
 
                 {data.explanation && (
                   <div className="space-y-1.5">
-                    <p className="text-muted-foreground text-xs font-medium">
-                      {t("How it works")}
-                    </p>
+                    <p className="text-muted-foreground text-xs font-medium">{t("How it works")}</p>
                     <p className="text-sm leading-relaxed">{data.explanation}</p>
                   </div>
                 )}
 
                 {validation && (
-                  <div
-                    className={cn(
-                      "flex items-center gap-2 rounded-md border px-3 py-2 text-xs",
-                      validation.valid
-                        ? "border-success/30 bg-success/10 text-success-foreground"
-                        : "border-warning/40 bg-warning/10 text-warning-foreground",
-                    )}
-                  >
-                    {validation.valid ? (
-                      <CheckCircle2Icon className="size-3.5 shrink-0" />
-                    ) : (
-                      <AlertTriangleIcon className="size-3.5 shrink-0" />
-                    )}
-                    {validation.valid
-                      ? t(
-                          "Validated against sample data{0}",
-                          typeof validation.result === "number"
-                            ? ` ${t("— result {0}", formatCurrency(validation.result))}`
-                            : "",
-                        )
-                      : t("Validation warning: {0}", validation.error || validation.message)}
-                  </div>
+                  <Alert variant={validation.valid ? "success" : "warning"} size="sm">
+                    {validation.valid ? <CheckCircle2Icon /> : <AlertTriangleIcon />}
+                    <AlertDescription>
+                      {validation.valid
+                        ? t(
+                            "Validated against sample data{0}",
+                            typeof validation.result === "number"
+                              ? ` ${t("— result {0}", formatCurrency(validation.result))}`
+                              : "",
+                          )
+                        : t("Validation warning: {0}", validation.error || validation.message)}
+                    </AlertDescription>
+                  </Alert>
                 )}
 
                 {data.scenarios.length > 0 && (

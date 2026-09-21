@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { createCroppedWebPFile, loadImageFromFile } from "@/lib/images/crop-image";
-import { cn } from "@trenova/shared/lib/utils";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop";
@@ -134,7 +133,7 @@ export function ImageCropUploadDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && !isSubmitting && onClose()}>
-      <DialogContent className={cn("sm:max-w-3xl", className)}>
+      <DialogContent size="xl" className={className}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>

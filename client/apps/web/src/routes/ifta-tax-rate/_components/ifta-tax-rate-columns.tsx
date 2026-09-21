@@ -135,12 +135,12 @@ export function getColumns(
             href={row.original.sourceUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-xs underline-offset-2 hover:underline"
+            className="underline-offset-2 hover:underline"
           >
             {row.original.sourceNote || row.original.sourceUrl}
           </a>
         ) : (
-          <span className="text-xs">{row.original.sourceNote || "—"}</span>
+          <span>{row.original.sourceNote || "—"}</span>
         ),
       enableSorting: false,
       meta: {

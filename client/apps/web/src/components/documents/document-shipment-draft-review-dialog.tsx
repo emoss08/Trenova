@@ -1,6 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +23,7 @@ import type {
 import { shipmentCreateSchema, type ShipmentCreateInput } from "@trenova/shared/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, LoaderCircleIcon } from "lucide-react";
+import { AlertCircleIcon, CircleCheckIcon, LoaderCircleIcon } from "lucide-react";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Link } from "react-router";
@@ -300,41 +302,36 @@ export function DocumentShipmentDraftReviewDialog({
               ) : null}
             </div>
             <div className="rounded-lg border p-3">
-              <div className="text-muted-foreground text-xs font-medium">
-                {t("Draft Summary")}
-              </div>
-              <div className="mt-3 grid gap-2 text-sm">
-                <div>
-                  <span className="text-muted-foreground">{t("Shipper:")}</span>{" "}
+              <div className="text-muted-foreground text-xs font-medium">{t("Draft Summary")}</div>
+              <DescriptionList layout="inline" className="mt-3">
+                <DescriptionItem label={t("Shipper:")}>
                   {renderField(draft?.draftData?.fields?.shipper)}
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t("Consignee:")}</span>{" "}
+                </DescriptionItem>
+                <DescriptionItem label={t("Consignee:")}>
                   {renderField(draft?.draftData?.fields?.consignee)}
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t("Reference:")}</span>{" "}
+                </DescriptionItem>
+                <DescriptionItem label={t("Reference:")}>
                   {renderField(
                     draft?.draftData?.fields?.reference ?? draft?.draftData?.fields?.loadNumber,
                   )}
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t("Rate:")}</span>{" "}
+                </DescriptionItem>
+                <DescriptionItem label={t("Rate:")} numeric>
                   {renderField(draft?.draftData?.fields?.rate)}
-                </div>
-              </div>
+                </DescriptionItem>
+              </DescriptionList>
             </div>
             {isAttached ? (
-              <div className="rounded-lg border border-success-border bg-success-subtle/70 p-3 text-sm text-success-foreground">
-                <div className="font-medium">{t("This source document is already attached.")}</div>
-                <div className="mt-1 text-success-foreground/80">
+              <Alert variant="success" size="sm">
+                <CircleCheckIcon />
+                <AlertTitle>
+                  {t("This source document is already attached.")}
+                </AlertTitle>
+                <AlertDescription>
                   {t(
                     "Shipment {0} attached {1}.",
                     draft?.attachedShipmentId,
                     formatUnixTimestamp(draft?.attachedAt),
                   )}
-                </div>
-                <div className="mt-3">
                   <Button
                     variant="outline"
                     size="sm"
@@ -342,8 +339,8 @@ export function DocumentShipmentDraftReviewDialog({
                   >
                     {t("Open Shipments")}
                   </Button>
-                </div>
-              </div>
+                </AlertDescription>
+              </Alert>
             ) : null}
             {signals.length > 0 ? (
               <div className="rounded-lg border p-3">
@@ -395,7 +392,9 @@ export function DocumentShipmentDraftReviewDialog({
                           {stop.role === "delivery" ? t("Delivery") : t("Pickup")} #{stop.sequence}
                         </div>
                         {stop.pageNumber ? (
-                          <Badge variant="neutral" appearance="outline">{t("Page {0}", stop.pageNumber)}</Badge>
+                          <Badge variant="neutral" appearance="outline">
+                            {t("Page {0}", stop.pageNumber)}
+                          </Badge>
                         ) : null}
                       </div>
                       <div className="text-muted-foreground mt-1 text-xs">

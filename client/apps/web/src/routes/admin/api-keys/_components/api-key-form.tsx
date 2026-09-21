@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { useFormContext } from "react-hook-form";
 import type { ApiKeyPanelFormValues } from "./api-key-panel";
 
@@ -11,16 +11,12 @@ export function APIKeyForm() {
   const { control } = useFormContext<ApiKeyPanelFormValues>();
 
   return (
-    <section className="space-y-4">
-      <div className="space-y-1">
-        <h3 className="text-sm font-semibold">{t("Key Details")}</h3>
-        <p className="text-muted-foreground text-sm">
-          {t(
-            "Name the credential, document its intended use, and define an expiration if the integration should rotate automatically.",
-          )}
-        </p>
-      </div>
-
+    <FormSection
+      title={t("Key Details")}
+      description={t(
+        "Name the credential, document its intended use, and define an expiration if the integration should rotate automatically.",
+      )}
+    >
       <FormGroup cols={2}>
         <FormControl>
           <InputField
@@ -52,6 +48,6 @@ export function APIKeyForm() {
           />
         </FormControl>
       </FormGroup>
-    </section>
+    </FormSection>
   );
 }

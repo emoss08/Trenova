@@ -147,7 +147,7 @@ export default function TemplateDesignerAside() {
         queryKey="templates"
         form={createTemplateForm}
         formComponent={<CreateTemplateForm />}
-        className="sm:max-w-120"
+        size="md"
         submitText="Create Template"
         loadingText={t("Creating...")}
         onSuccess={handleTemplateCreated}

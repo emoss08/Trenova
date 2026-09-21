@@ -235,7 +235,7 @@ function ToggleChip({
       className={cn(
         "inline-flex h-6 items-center gap-1 rounded-md border px-2 text-xs font-medium",
         "transition-[border-color,background-color,color] duration-150",
-"ui-focus-ring",
+        "ui-focus-ring",
         active
           ? "border-info bg-info/10 text-info-foreground"
           : "border-input text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground",
@@ -367,11 +367,7 @@ function AlertConditionFields({
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="text-xs text-muted-foreground font-semibold">
-      {children}
-    </span>
-  );
+  return <span className="text-xs text-muted-foreground font-semibold">{children}</span>;
 }
 
 const DAY_OF_MONTH_OPTIONS: { value: string; label: string }[] = Array.from(
@@ -805,9 +801,7 @@ function ScheduleRow({
       <div
         className={cn(
           "flex size-8 shrink-0 items-center justify-center rounded-md",
-          schedule.enabled
-            ? "bg-info/10 text-info-foreground"
-            : "bg-muted text-muted-foreground",
+          schedule.enabled ? "bg-info/10 text-info-foreground" : "bg-muted text-muted-foreground",
         )}
       >
         <CalendarClockIcon className="size-4" strokeWidth={1.75} />
@@ -970,7 +964,7 @@ export function ReportSchedulesDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{t("Schedules{0}", definition ? ` — ${definition.name}` : "")}</DialogTitle>
           <DialogDescription>

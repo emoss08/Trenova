@@ -238,7 +238,7 @@ export function AssignmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent className="sm:max-w-150">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>
             {driverAssignmentBlocked
@@ -376,12 +376,13 @@ export function AssignmentDialog({
               </Alert>
             )}
             <Form
+              className="flex flex-col gap-4"
               onSubmit={(e) => {
                 e.stopPropagation();
                 void handleSubmit(onSubmit)(e);
               }}
             >
-              <FormGroup cols={2} className="pb-4">
+              <FormGroup cols={2}>
                 <FormControl>
                   <TractorAutocompleteField
                     control={control}
@@ -570,13 +571,14 @@ function CarrierAssignmentTab({
 
   return (
     <Form
+      className="flex flex-col gap-4"
       onSubmit={(e) => {
         e.stopPropagation();
         void handleSubmit(onSubmit)(e);
       }}
     >
       <ScrollArea className="max-h-[60vh] pr-2">
-        <div className="flex flex-col gap-3 pb-4">
+        <div className="flex flex-col gap-3">
           <CarrierEligibilityAlerts
             control={control}
             eligibility={carrierId ? eligibility : undefined}

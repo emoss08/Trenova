@@ -51,7 +51,7 @@ const EDI_QUEUE_REFETCH_INTERVAL_MS = 30_000;
 
 export default function EdiTable({ kind }: { kind: EDIPageKind }) {
   return (
-    <div className="fle flex-col gap-1">
+    <div className="flex flex-col gap-1">
       {kind === "overview" && <EDIOverview />}
       {kind === "partners" && <PartnersWorkspace />}
       {kind === "communication-profiles" && <CommunicationProfilesWorkspace />}
@@ -70,7 +70,7 @@ function PartnersWorkspace() {
   const columns = useMemo(() => getPartnerColumns(t), [t]);
 
   return (
-    <div className="flex flex-col gap-4 px-3 pt-3">
+    <div className="flex flex-col gap-4">
       <PendingConnectionsPanel />
       <DataTable<EDIPartner>
         name="EDI Connection"
@@ -403,5 +403,5 @@ function TestCasesWorkspace() {
 }
 
 function Outer({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-col px-3 pt-3">{children}</div>;
+  return <div className="flex flex-col">{children}</div>;
 }

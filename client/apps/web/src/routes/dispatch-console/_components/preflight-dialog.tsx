@@ -34,7 +34,6 @@ import {
   formatMinutesToPickup,
   hosStrategyMeta,
   verdictMeta,
-  workerInitials,
 } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
 import { ScoreBreakdown } from "./score-breakdown";
@@ -118,9 +117,7 @@ function Stat({ value, label, tone }: { value: string; label: string; tone?: "la
       >
         {value}
       </span>
-      <span className="text-muted-foreground text-2xs font-medium">
-        {label}
-      </span>
+      <span className="text-muted-foreground text-2xs font-medium">{label}</span>
     </div>
   );
 }
@@ -183,32 +180,24 @@ export function PreflightDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="max-w-lg gap-0 p-0 overflow-hidden">
-        <DialogHeader className="border-border gap-3 border-b px-5 pt-5 pb-4">
-          <div className="flex items-center gap-3">
-            <span
-              aria-hidden
-              className="bg-brand/10 text-brand flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-            >
-              {workerInitials(driver.firstName, driver.lastName)}
-            </span>
-            <div className="flex min-w-0 flex-col gap-1">
-              <DialogTitle className="truncate text-sm leading-none font-semibold">
-                {move.isCovered ? t("Reassign") : t("Assign")} {driver.firstName} {driver.lastName}
-              </DialogTitle>
-              <div className="text-muted-foreground flex items-center gap-1.5 text-xs leading-none">
-                {tractorId ? (
-                  <span className="font-mono">{driver.tractorCode || tractorId}</span>
-                ) : (
-                  <span className="text-danger-foreground">{t("No tractor assigned")}</span>
-                )}
-                {data?.trailerId ? (
-                  <>
-                    <span aria-hidden>·</span>
-                    <span>{t("trailer continues")}</span>
-                  </>
-                ) : null}
-              </div>
+      <DialogContent size="md" className="gap-0 overflow-hidden p-0">
+        <DialogHeader className="border-border border-b px-4 py-3">
+          <div className="flex min-w-0 flex-col gap-1 pr-8">
+            <DialogTitle className="truncate">
+              {move.isCovered ? t("Reassign") : t("Assign")} {driver.firstName} {driver.lastName}
+            </DialogTitle>
+            <div className="text-muted-foreground flex items-center gap-1.5 text-xs leading-none">
+              {tractorId ? (
+                <span className="font-mono">{driver.tractorCode || tractorId}</span>
+              ) : (
+                <span className="text-danger-foreground">{t("No tractor assigned")}</span>
+              )}
+              {data?.trailerId ? (
+                <>
+                  <span aria-hidden>·</span>
+                  <span>{t("trailer continues")}</span>
+                </>
+              ) : null}
             </div>
           </div>
 
@@ -226,9 +215,7 @@ export function PreflightDialog({
                 <span
                   className={cn(
                     "shrink-0 font-medium tabular-nums",
-                    minutesToPickup < 0
-                      ? "text-danger-foreground"
-                      : "text-muted-foreground",
+                    minutesToPickup < 0 ? "text-danger-foreground" : "text-muted-foreground",
                   )}
                 >
                   {t("pickup {0}", formatMinutesToPickup(minutesToPickup))}
@@ -287,9 +274,7 @@ export function PreflightDialog({
                     <span className={cn("text-xs leading-none font-semibold", banner.iconClass)}>
                       {t(verdict.label)}
                     </span>
-                    <span className="text-foreground/80 text-xs leading-snug">
-                      {lead.message}
-                    </span>
+                    <span className="text-foreground/80 text-xs leading-snug">{lead.message}</span>
                   </div>
                 </motion.div>
               ) : null}
@@ -328,7 +313,7 @@ export function PreflightDialog({
             </div>
           </ScrollArea>
         )}
-        <DialogFooter className="pb-7 px-8">
+        <DialogFooter className="m-0">
           <Button variant="outline" onClick={onCancel}>
             {t("Cancel")}
           </Button>

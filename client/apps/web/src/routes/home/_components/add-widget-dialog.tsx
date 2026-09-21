@@ -100,7 +100,8 @@ export function AddWidgetDialog({ open, onOpenChange, ...gallery }: AddWidgetDia
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="flex h-[min(40rem,88vh)] w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl"
+        size="xl"
+        className="flex h-[min(40rem,88vh)] w-full flex-col gap-0 overflow-hidden p-0"
         showCloseButton={false}
       >
         {/* The body holds the search term and the open category. It lives one
@@ -332,10 +333,10 @@ function GalleryHeader({ used, max, onClose }: { used: number; max: number; onCl
   const t = useT();
 
   return (
-    <DialogHeader className="border-border/70 flex-row items-start gap-4 border-b px-4 py-3">
+    <DialogHeader className="border-border flex-row items-start gap-4 border-b px-4 py-3">
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <DialogTitle>{t("Add a widget")}</DialogTitle>
-        <DialogDescription className="text-xs">
+        <DialogDescription>
           {t(
             "Pick what this home screen opens on. Everything here is already scoped to what you are allowed to see.",
           )}
@@ -472,7 +473,7 @@ function WidgetCard({
             onKeyDown={handleKeyDown}
             className={cn(
               "group/widget-card border-border bg-card relative flex flex-col gap-2 rounded-lg border p-2.5 text-left transition-all",
-"ui-focus-ring",
+              "ui-focus-ring",
               disabled
                 ? "cursor-not-allowed opacity-45"
                 : "hover:border-brand/45 hover:bg-accent/30",
@@ -495,7 +496,8 @@ function WidgetCard({
               <span className="min-w-0 flex-1 truncate text-xs font-medium">{t(option.label)}</span>
               {onCanvas > 0 && (
                 <Badge
-                  variant="neutral" appearance="outline"
+                  variant="neutral"
+                  appearance="outline"
                   className="border-border/70 h-4 shrink-0 border px-1 text-3xs"
                 >
                   {onCanvas > 1 ? t("{0}× on canvas", onCanvas) : t("On canvas")}

@@ -1,4 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { EmptyState } from "@/components/empty-state";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
+import { ConstructionIcon } from "lucide-react";
 import { useLocation } from "react-router";
 
 export function PlaceholderPage() {
@@ -7,15 +10,20 @@ export function PlaceholderPage() {
   const location = useLocation();
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
-      <div className="text-center">
-        <h1 className="text-foreground text-2xl font-semibold">
-          {formatPathToTitle(location.pathname)}
-        </h1>
-        <p className="text-muted-foreground mt-2">{t("This page is under construction")}</p>
-        <code className="bg-muted mt-4 block rounded px-3 py-1.5 text-sm">{location.pathname}</code>
+    <PageLayout
+      pageHeaderProps={{
+        title: formatPathToTitle(location.pathname),
+        description: t("This page is under construction"),
+      }}
+    >
+      <div className="flex flex-1 items-center justify-center">
+        <EmptyState
+          title={t("This page is under construction")}
+          description={location.pathname}
+          icons={[ConstructionIcon]}
+        />
       </div>
-    </div>
+    </PageLayout>
   );
 }
 

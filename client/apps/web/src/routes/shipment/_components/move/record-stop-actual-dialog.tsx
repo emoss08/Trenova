@@ -75,7 +75,7 @@ export function RecordStopActualDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t(copy.title)}</DialogTitle>
           <DialogDescription>

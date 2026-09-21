@@ -188,14 +188,14 @@ export function DocumentUploadSection({
 
   if (!resourceId) {
     return (
-      <FormSection title={t("Documents")} className="border-t pt-2">
+      <FormSection title={t("Documents")}>
         <p className="text-muted-foreground text-sm">{t("Save the record to upload documents.")}</p>
       </FormSection>
     );
   }
 
   return (
-    <FormSection title={t("Documents")} className="border-t pt-2">
+    <FormSection title={t("Documents")}>
       <div className="space-y-4">
         <div
           onClick={handleClick}

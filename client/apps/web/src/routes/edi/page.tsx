@@ -79,10 +79,9 @@ function EDIPage({ kind }: { kind: EDIPageKind }) {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: pageTitles[kind],
-        description: pageDescriptions[kind],
+        title: t(pageTitles[kind]),
+        description: t(pageDescriptions[kind]),
       }}
-      className="p-0"
     >
       <DataTableLazyComponent
         fallback={

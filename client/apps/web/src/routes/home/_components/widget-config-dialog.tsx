@@ -39,7 +39,6 @@ import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { cn } from "@trenova/shared/lib/utils";
 import { SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { widgetVisualFor } from "./widget-gallery-visuals";
 
 const MAX_METRIC_ROW = 6;
 const MAX_ANNOUNCEMENT = 2000;
@@ -68,7 +67,6 @@ export function WidgetConfigDialog({
 
   const [draft, setDraft] = useState<HomeWidget>(widget);
   const kind = option?.configKind ?? "none";
-  const { icon: Icon } = widgetVisualFor(widget.key);
 
   const patchConfig = (patch: Partial<HomeWidget["config"]>) =>
     setDraft((prev) => ({ ...prev, config: { ...prev.config, ...patch } }));
@@ -77,15 +75,13 @@ export function WidgetConfigDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="flex max-h-[88vh] w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
-        <DialogHeader className="border-border/70 flex-row items-start gap-2.5 border-b px-4 py-3">
-          <span className="bg-brand/10 text-brand mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md">
-            <Icon className="size-4" />
-          </span>
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <DialogTitle>{option?.label ?? t("Widget")}</DialogTitle>
-            <DialogDescription className="text-xs">{option?.description}</DialogDescription>
-          </div>
+      <DialogContent
+        size="md"
+        className="flex max-h-[88vh] w-full flex-col gap-0 overflow-hidden p-0"
+      >
+        <DialogHeader className="border-border border-b px-4 py-3">
+          <DialogTitle>{option?.label ?? t("Widget")}</DialogTitle>
+          <DialogDescription>{option?.description}</DialogDescription>
         </DialogHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-3.5">
@@ -179,7 +175,7 @@ export function WidgetConfigDialog({
           )}
         </div>
 
-        <DialogFooter className="mx-0 mb-0 items-center">
+        <DialogFooter className="m-0 items-center">
           <p className="text-2xs text-muted-foreground mr-auto hidden min-w-0 flex-1 text-left sm:block">
             {blocker}
           </p>

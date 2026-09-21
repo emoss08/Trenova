@@ -16,9 +16,7 @@ export function DispatchControlPage() {
       }}
     >
       <SuspenseLoader>
-        <div className="p-4">
-          <DispatchControlForm />
-        </div>
+        <DispatchControlForm />
       </SuspenseLoader>
     </PageLayout>
   );

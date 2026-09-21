@@ -118,7 +118,7 @@ export function ApplyCreditMemoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[640px]">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{t("Apply {0} to invoices", creditMemo.number)}</DialogTitle>
           <DialogDescription>

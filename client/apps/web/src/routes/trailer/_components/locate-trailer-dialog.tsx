@@ -86,7 +86,7 @@ export function LocateTrailerDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent className="sm:max-w-125">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Locate Trailer")}</DialogTitle>
           <DialogDescription>
@@ -96,12 +96,13 @@ export function LocateTrailerDialog({
           </DialogDescription>
         </DialogHeader>
         <Form
+          className="flex flex-col gap-4"
           onSubmit={(e) => {
             e.stopPropagation();
             void handleSubmit(onSubmit)(e);
           }}
         >
-          <FormGroup cols={1} className="pb-4">
+          <FormGroup cols={1}>
             <FormControl>
               <LocationAutocompleteField
                 control={control}

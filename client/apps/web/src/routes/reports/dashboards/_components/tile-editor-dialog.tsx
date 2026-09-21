@@ -109,7 +109,7 @@ export function TileEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[88vh] sm:max-w-md">
+      <DialogContent className="max-h-[88vh]">
         <DialogHeader>
           <DialogTitle>{t("Tile")}</DialogTitle>
           <DialogDescription>

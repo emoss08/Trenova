@@ -5,7 +5,7 @@ import { OpenWeatherMapForm } from "./openweathermap-integration-form";
 export function OpenWeatherMapIntegrationModal({ open, onOpenChange }: TableSheetProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <OpenWeatherMapForm open={open} onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>

@@ -178,9 +178,7 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
         <div className="px-4 py-3.5">
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs text-muted-foreground font-medium">
-                {t("Revenue change")}
-              </p>
+              <p className="text-xs text-muted-foreground font-medium">{t("Revenue change")}</p>
               <p
                 className={cn(
                   "mt-1 text-3xl leading-none font-semibold tracking-tight tabular-nums",
@@ -308,9 +306,7 @@ export function DetentionBacktest() {
   return (
     <div className="flex flex-col gap-3">
       <div className="min-w-0">
-        <h3 className="text-xs text-muted-foreground font-semibold">
-          {t("Backtest")}
-        </h3>
+        <h3 className="text-sm font-semibold">{t("Backtest")}</h3>
         <p className="text-muted-foreground mt-1 text-xs">
           {t(
             "Re-price settled history under these terms. The engine is the same one that bills live shipments, so the projection is exact rather than estimated.",

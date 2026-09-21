@@ -101,7 +101,7 @@ export function getColumns(t: TranslateFn): ColumnDef<HazardousMaterial>[] {
         const pgLabel = packingGroupChoices.find(
           (c) => c.value === row.original.packingGroup,
         )?.label;
-        return <span>{pgLabel || row.original.packingGroup || "-"}</span>;
+        return <span>{pgLabel || row.original.packingGroup || "—"}</span>;
       },
       size: 160,
       minSize: 120,

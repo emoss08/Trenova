@@ -112,7 +112,7 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{t("Log a Clearinghouse query")}</DialogTitle>
           <DialogDescription>
@@ -123,13 +123,14 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               <FormControl>
                 <SelectField<ClearinghouseQueryFormValues>
                   control={control}
@@ -283,7 +284,7 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Record the Clearinghouse answer")}</DialogTitle>
           <DialogDescription>
@@ -292,13 +293,14 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               <FormControl>
                 <SelectField<ClearinghouseAnswerFormValues>
                   control={control}

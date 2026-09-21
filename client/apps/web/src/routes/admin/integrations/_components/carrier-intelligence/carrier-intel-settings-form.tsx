@@ -212,7 +212,7 @@ export function CarrierIntelSettingsForm({
           </TabsPanel>
         </div>
         {isSettingsTab ? (
-          <DialogFooter className="mx-0 mb-0 flex flex-row items-center sm:justify-between">
+          <DialogFooter className="sm:items-center sm:justify-between">
             <span className="text-muted-foreground text-xs">
               {readOnly
                 ? t("You can view these settings but not change them.")
@@ -220,8 +220,8 @@ export function CarrierIntelSettingsForm({
                   ? t("You have unsaved changes.")
                   : t("Policy version {0}", savedControl.policyVersion)}
             </span>
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={onClose}>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+              <Button type="button" variant="outline" onClick={onClose}>
                 {t("Close")}
               </Button>
               {canManage ? (
@@ -229,7 +229,6 @@ export function CarrierIntelSettingsForm({
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     disabled={!formState.isDirty || saveMutation.isPending}
                     onClick={() => reset(defaultValues)}
                   >
@@ -237,7 +236,6 @@ export function CarrierIntelSettingsForm({
                   </Button>
                   <Button
                     type="submit"
-                    size="sm"
                     disabled={!formState.isDirty}
                     isLoading={saveMutation.isPending || isEstimating}
                     loadingText={isEstimating ? t("Estimating...") : t("Saving...")}

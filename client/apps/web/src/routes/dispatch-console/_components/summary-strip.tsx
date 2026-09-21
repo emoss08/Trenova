@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KpiStrip } from "@/components/kpi/kpi-strip";
+import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
 import { StatTile } from "@/components/stat-tile";
 import type { DispatchBoardSummary } from "@/lib/graphql/dispatch-console";
-import { SummaryStripSkeleton } from "./console-skeletons";
 import { formatMiles } from "./dispatch-vocabulary";
 import type { CapacityFilter, UrgencyBucket } from "./dispatch-vocabulary";
 
@@ -21,16 +22,16 @@ export function SummaryStrip({
   const t = useT();
 
   if (isLoading || !summary) {
-    return <SummaryStripSkeleton />;
+    return <KpiStripSkeleton count={6} />;
   }
 
   const toggleFocus = (bucket: UrgencyBucket) =>
     onUrgencyFocus(urgencyFocus === bucket ? null : bucket);
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+    <KpiStrip>
       <StatTile
-        label={t("Needs Coverage")}
+        label={t("Needs coverage")}
         hint={t("Moves in the window with no driver — click to show every urgency bucket.")}
         tone={summary.uncoveredMoves > 0 ? "warn" : undefined}
         clickable
@@ -50,7 +51,7 @@ export function SummaryStrip({
         sub={<span>{t("past the pickup window")}</span>}
       />
       <StatTile
-        label={t("At Risk")}
+        label={t("At risk")}
         hint={t("Uncovered with a pickup inside 4 hours — click to focus the Next 4 Hours lane.")}
         tone={summary.atRiskMoves > 0 ? "warn" : undefined}
         clickable={summary.atRiskMoves > 0}
@@ -60,7 +61,7 @@ export function SummaryStrip({
         sub={<span>{t("pickup inside 4 hours")}</span>}
       />
       <StatTile
-        label={t("Open Drivers")}
+        label={t("Open drivers")}
         hint={t("Available drivers holding no work — click to filter the capacity rail to them.")}
         tone={summary.unseatedDrivers > 0 ? "info" : undefined}
         clickable={summary.unseatedDrivers > 0}
@@ -77,11 +78,11 @@ export function SummaryStrip({
         sub={<span>{t("{0} avg deadhead", formatMiles(summary.averageDeadheadMiles))}</span>}
       />
       <StatTile
-        label={t("Assigned Today")}
+        label={t("Assigned today")}
         hint={t("Assignments created since midnight.")}
         value={<span className="tabular-nums">{summary.assignedToday.toLocaleString()}</span>}
         sub={<span>{t("across the fleet")}</span>}
       />
-    </div>
+    </KpiStrip>
   );
 }

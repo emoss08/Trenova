@@ -16,11 +16,10 @@ export function CommodityForm() {
   const { control } = useFormContext<Commodity>();
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <FormSection
         title={t("General Information")}
         description={t("Basic identification for this commodity.")}
-        className="border-b pb-4"
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -60,7 +59,6 @@ export function CommodityForm() {
       <FormSection
         title={t("Classification")}
         description={t("Freight classification and hazardous material linkage.")}
-        className="border-b pb-4"
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -89,7 +87,6 @@ export function CommodityForm() {
       <FormSection
         title={t("Temperature")}
         description={t("Temperature range requirements for shipping.")}
-        className="border-b pb-4"
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -117,7 +114,6 @@ export function CommodityForm() {
       <FormSection
         title={t("Physical Properties")}
         description={t("Weight, dimensions, and quantity constraints.")}
-        className="border-b pb-4"
       >
         <FormGroup cols={2}>
           <FormControl>

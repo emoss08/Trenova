@@ -215,11 +215,10 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <FormSection
         title={t("General Information")}
         description={t("Basic identification for this hazardous material.")}
-        className="border-b pb-4"
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -277,7 +276,6 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
         description={t(
           "Hazard class, packing group, and regulatory identifiers per 49 CFR 172.101.",
         )}
-        className="border-b pb-4"
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -368,7 +366,6 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
         description={t(
           "Regulatory indicators that affect placarding, reporting, and special handling.",
         )}
-        className="border-b pb-4"
       >
         <FormGroup cols={2}>
           <FormControl>

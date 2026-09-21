@@ -232,7 +232,7 @@ export function InjuryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Edit case") : t("Record an injury or illness")}</DialogTitle>
           <DialogDescription>
@@ -243,13 +243,14 @@ export function InjuryDialog({
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               <FormControl>
                 <AutoCompleteDateField<InjuryFormValues>
                   control={control}

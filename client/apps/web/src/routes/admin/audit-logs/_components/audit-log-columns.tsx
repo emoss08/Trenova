@@ -31,7 +31,7 @@ export function getColumns(t: TranslateFn): ColumnDef<AuditEntryRow>[] {
     {
       accessorKey: "comment",
       header: t("Description"),
-      cell: ({ row }) => row.original.comment || "-",
+      cell: ({ row }) => row.original.comment || "—",
       size: 360,
       minSize: 300,
       maxSize: 480,

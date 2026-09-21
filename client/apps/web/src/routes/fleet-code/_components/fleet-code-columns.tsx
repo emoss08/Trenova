@@ -96,7 +96,7 @@ export function getColumns(t: TranslateFn): ColumnDef<FleetCodeRow>[] {
       header: t("Manager"),
       cell: ({ row }) => {
         const { manager } = row.original;
-        if (!manager) return <p className="text-muted-foreground">-</p>;
+        if (!manager) return <p className="text-muted-foreground">—</p>;
         return <p>{manager.name}</p>;
       },
       size: 200,

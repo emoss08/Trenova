@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -228,12 +229,9 @@ export function ApprovalActionDialog({
         </div>
 
         {serverError && (
-          <div
-            role="alert"
-            className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-xs"
-          >
-            {serverError}
-          </div>
+          <Alert variant="destructive" size="sm">
+            <AlertDescription>{serverError}</AlertDescription>
+          </Alert>
         )}
 
         <DialogFooter>

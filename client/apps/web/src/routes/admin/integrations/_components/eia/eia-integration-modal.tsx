@@ -5,7 +5,7 @@ import { EIAFuelPricesForm } from "./eia-integration-form";
 export function EIAFuelPricesIntegrationModal({ open, onOpenChange }: TableSheetProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <EIAFuelPricesForm open={open} onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>

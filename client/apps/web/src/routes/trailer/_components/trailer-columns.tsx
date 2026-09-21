@@ -109,7 +109,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TrailerRow>[] {
         const { equipmentType } = row.original;
 
         if (!equipmentType) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return (
@@ -143,7 +143,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TrailerRow>[] {
       cell: ({ row }) => {
         const { equipmentManufacturer } = row.original;
         if (!equipmentManufacturer) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return (
@@ -166,7 +166,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TrailerRow>[] {
       cell: ({ row }) => {
         const { fleetCode } = row.original;
         if (!fleetCode) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         return (
@@ -192,7 +192,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TrailerRow>[] {
       cell: ({ row }) => {
         const { lastKnownLocationId, lastKnownLocationName } = row.original;
         if (!lastKnownLocationId || !lastKnownLocationName) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
 
         const locationRef = {

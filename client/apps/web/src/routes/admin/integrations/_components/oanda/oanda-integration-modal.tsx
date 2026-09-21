@@ -5,7 +5,7 @@ import { OANDAExchangeRatesForm } from "./oanda-integration-form";
 export function OANDAExchangeRatesIntegrationModal({ open, onOpenChange }: TableSheetProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <OANDAExchangeRatesForm open={open} onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>

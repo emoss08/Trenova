@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { KpiStrip } from "@/components/kpi/kpi-strip";
 import { StatTile } from "@/components/stat-tile";
 import type { CarrierSettlementWorkspaceSummary } from "@/lib/graphql/carrier-settlement";
 import type { ReactNode } from "react";
@@ -38,9 +39,9 @@ export function WorkspaceSummaryStrip({
         </p>
         {actions}
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+      <KpiStrip>
         <StatTile
-          label={t("In Pipeline")}
+          label={t("In pipeline")}
           hint={t(
             "Carrier settlements created for this period, across every status except voided.",
           )}
@@ -57,7 +58,7 @@ export function WorkspaceSummaryStrip({
           }
         />
         <StatTile
-          label={t("Posted / Paid")}
+          label={t("Posted / paid")}
           hint={t("Settlements posted to the GL and settlements already remitted.")}
           value={
             <span className="tabular-nums">
@@ -67,7 +68,7 @@ export function WorkspaceSummaryStrip({
           sub={<span>{t("posted · paid")}</span>}
         />
         <StatTile
-          label={t("Period Net Payable")}
+          label={t("Period net payable")}
           hint={t("Total net payable across every non-voided settlement in this period.")}
           value={<AmountDisplay value={summary.totalNetMinor} currency="USD" />}
           sub={
@@ -77,7 +78,7 @@ export function WorkspaceSummaryStrip({
           }
         />
         <StatTile
-          label={t("Unsettled Cost")}
+          label={t("Unsettled cost")}
           tone={summary.pendingEventCount > 0 ? "info" : undefined}
           hint={t("Accrued purchased-transportation cost not yet on a settlement.")}
           value={<AmountDisplay value={summary.pendingAmountMinor} currency="USD" />}
@@ -92,14 +93,14 @@ export function WorkspaceSummaryStrip({
           }
         />
         <StatTile
-          label={t("Open Batch")}
+          label={t("Open batch")}
           hint={t("Whether an AP run for this period is already open.")}
           value={<span>{summary.openBatchId ? t("Open") : t("None")}</span>}
           sub={
             <span>{summary.openBatchId ? t("generation tops it up") : t("generate to start")}</span>
           }
         />
-      </div>
+      </KpiStrip>
     </div>
   );
 }

@@ -14,11 +14,10 @@ export function CarrierRemittanceForm() {
   const { control } = useFormContext<Carrier>();
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <FormSection
         title={t("Payment Terms")}
         description={t("How and when this carrier is paid for completed loads.")}
-        className="border-b"
       >
         <FormGroup cols={2}>
           <FormControl>

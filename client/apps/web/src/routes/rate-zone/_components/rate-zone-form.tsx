@@ -14,11 +14,10 @@ export function RateZoneForm() {
   const { control } = useFormContext<RateZone>();
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <FormSection
         title={t("General Information")}
         description={t("How this zone is identified and whether it is live.")}
-        className="border-b pb-4"
       >
         <FormGroup cols={2}>
           <FormControl>

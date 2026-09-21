@@ -1,17 +1,14 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
-import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
+import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
+import { KPI_VALUE_CLASS, KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { eventTotals, ratingSegments } from "@/lib/fleet-safety-console";
 import type { FleetSafetySummary } from "@/lib/graphql/fleet-safety";
 import NumberFlow from "@number-flow/react";
 import { CompositionBar } from "@trenova/shared/components/ui/composition-bar";
 import { RingGauge } from "@trenova/shared/components/ui/ring-gauge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { cn } from "@trenova/shared/lib/utils";
-import { AlertTriangleIcon, GaugeIcon, SirenIcon, UsersIcon } from "lucide-react";
 import { useMemo } from "react";
-
-const VALUE_CLASS = "text-2xl leading-none font-semibold tabular-nums";
 
 type FleetSafetyOverviewProps = {
   summary: FleetSafetySummary | undefined;
@@ -31,10 +28,9 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
   const flagged = (summary?.atRisk ?? 0) + (summary?.watch ?? 0);
 
   return (
-    <div className="grid grid-cols-4 gap-3 lg:grid-cols-8">
+    <KpiStrip>
       <KpiCard span={2}>
         <KpiHeader
-          icon={<UsersIcon className="size-[11px]" />}
           label={t("Drivers")}
           info={
             <InfoPopover title={t("Drivers")}>
@@ -45,9 +41,13 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
           }
         />
         {summary ? (
-          <NumberFlow value={summary.workers} className={VALUE_CLASS} aria-label={t("Drivers")} />
+          <NumberFlow
+            value={summary.workers}
+            className={KPI_VALUE_CLASS}
+            aria-label={t("Drivers")}
+          />
         ) : (
-          <Skeleton className="h-6.5 w-10" />
+          <Skeleton className="h-6 w-10" />
         )}
         <CompositionBar
           size="sm"
@@ -61,100 +61,86 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
         />
       </KpiCard>
 
-      <KpiCard span={2}>
-        <KpiHeader
-          icon={<GaugeIcon className="size-[11px]" />}
-          label={t("Average score")}
-          info={
-            <InfoPopover title={t("Average score")}>
-              {t(
-                "Mean safety score across those drivers, out of 100. At risk and watch are the two ratings that need a look.",
-              )}
-            </InfoPopover>
-          }
-        />
-        {summary ? (
-          <div className="flex items-center gap-2.5">
-            <RingGauge
-              value={summary.averageScore / 100}
-              size={40}
-              strokeWidth={4}
-              tone="brand"
-              aria-label={t("Average safety score out of 100")}
-            />
-            <div className="flex items-baseline gap-1">
-              <NumberFlow
-                value={summary.averageScore}
-                className={VALUE_CLASS}
-                aria-label={t("Average score")}
+      <KpiStripItem
+        label={t("Average score")}
+        info={
+          <InfoPopover title={t("Average score")}>
+            {t(
+              "Mean safety score across those drivers, out of 100. At risk and watch are the two ratings that need a look.",
+            )}
+          </InfoPopover>
+        }
+        value={
+          summary ? (
+            <span className="flex items-center gap-2">
+              <RingGauge
+                value={summary.averageScore / 100}
+                size={24}
+                strokeWidth={3}
+                tone="brand"
+                aria-label={t("Average safety score out of 100")}
               />
-              <span className="text-muted-foreground font-mono text-xs">/ 100</span>
-            </div>
-          </div>
-        ) : (
-          <Skeleton className="h-10 w-24" />
-        )}
-        <KpiSub>
-          {summary
+              <span className="flex items-baseline gap-1">
+                <NumberFlow value={summary.averageScore} aria-label={t("Average score")} />
+                <span className="text-muted-foreground text-xs font-normal">/ 100</span>
+              </span>
+            </span>
+          ) : (
+            <Skeleton className="h-6 w-24" />
+          )
+        }
+        sub={
+          summary
             ? flagged > 0
               ? t("{0} at risk · {1} on watch", summary.atRisk, summary.watch)
               : t("Nobody at risk or on watch")
-            : t("Across every active driver")}
-        </KpiSub>
-      </KpiCard>
+            : t("Across every active driver")
+        }
+      />
 
-      <KpiCard span={2}>
-        <KpiHeader
-          icon={<AlertTriangleIcon className="size-[11px]" />}
-          label={t("Events in window")}
-          info={
-            <InfoPopover title={t("Events in window")}>
-              {t(
-                "Safety events dated inside the counting window: accidents, inspections, citations and the rest. Open and preventable are counted separately.",
-              )}
-            </InfoPopover>
-          }
-        />
-        {summary ? (
-          <NumberFlow
-            value={summary.totalEvents}
-            className={VALUE_CLASS}
-            aria-label={t("Events in window")}
-          />
-        ) : (
-          <Skeleton className="h-6.5 w-10" />
-        )}
-        <KpiSub>{summary ? describeEvents(summary.openEvents, totals.preventable) : ""}</KpiSub>
-      </KpiCard>
+      <KpiStripItem
+        label={t("Events in window")}
+        info={
+          <InfoPopover title={t("Events in window")}>
+            {t(
+              "Safety events dated inside the counting window: accidents, inspections, citations and the rest. Open and preventable are counted separately.",
+            )}
+          </InfoPopover>
+        }
+        value={
+          summary ? (
+            <NumberFlow value={summary.totalEvents} aria-label={t("Events in window")} />
+          ) : (
+            <Skeleton className="h-6 w-10" />
+          )
+        }
+        sub={summary ? describeEvents(summary.openEvents, totals.preventable) : ""}
+      />
 
-      <KpiCard span={2}>
-        <KpiHeader
-          icon={<SirenIcon className="size-[11px]" />}
-          label={t("Out of service")}
-          info={
-            <InfoPopover title={t("Out of service")}>
-              {t("Roadside orders in the window that took a driver or vehicle off the road.")}
-            </InfoPopover>
-          }
-        />
-        {summary ? (
-          <NumberFlow
-            value={summary.outOfServiceOrders}
-            className={cn(VALUE_CLASS, summary.outOfServiceOrders > 0 && "text-destructive")}
-            aria-label={t("Out of service")}
-          />
-        ) : (
-          <Skeleton className="h-6.5 w-10" />
-        )}
-        <KpiSub>
-          {summary
+      <KpiStripItem
+        label={t("Out of service")}
+        tone={summary && summary.outOfServiceOrders > 0 ? "danger" : undefined}
+        info={
+          <InfoPopover title={t("Out of service")}>
+            {t("Roadside orders in the window that took a driver or vehicle off the road.")}
+          </InfoPopover>
+        }
+        value={
+          summary ? (
+            <NumberFlow value={summary.outOfServiceOrders} aria-label={t("Out of service")} />
+          ) : (
+            <Skeleton className="h-6 w-10" />
+          )
+        }
+        sub={
+          summary
             ? summary.outOfServiceOrders > 0
               ? t("{0} points carried across the fleet", summary.totalPoints)
               : t("No order has taken anybody off the road")
-            : ""}
-        </KpiSub>
-      </KpiCard>
-    </div>
+            : ""
+        }
+      />
+    </KpiStrip>
   );
 }
 

@@ -79,7 +79,6 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
     <FormSection
       title={t("Provider Policy")}
       description={t("PC*Miler dataset, geography, route type, units, and stop matching policy.")}
-      className="border-t py-2"
     >
       <FormGroup cols={2}>
         <FormControl>
@@ -176,7 +175,6 @@ function RouteBehaviorSection({ control }: { control: Control<DistanceProfile> }
       description={t(
         "Road restrictions and supplemental reporting options sent with mileage requests.",
       )}
-      className="border-t py-2"
     >
       <FormGroup cols={2}>
         <FormControl>
@@ -224,7 +222,7 @@ export function DistanceProfileForm() {
   const { control } = useFormContext<DistanceProfile>();
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-6">
       <ProfileDetailsSection control={control} />
       <ProviderPolicySection control={control} />
       <RouteBehaviorSection control={control} />

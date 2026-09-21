@@ -4,9 +4,10 @@ import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profi
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import type { ShipmentProfitabilityQuery } from "@trenova/graphql/generated/graphql";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
-import { Separator } from "@trenova/shared/components/ui/separator";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatCurrency, formatPercent, formatPerMile } from "@trenova/shared/lib/utils";
 import { AlertTriangle } from "lucide-react";
@@ -18,25 +19,6 @@ const sourceBadges: Record<string, { label: string; className: string }> = {
   GLActual: { label: "GL Actual", className: "text-2xs" },
   LiveIndex: { label: "Live Fuel", className: "text-2xs" },
 };
-
-function DetailRow({
-  label,
-  value,
-  valueStyle,
-}: {
-  label: string;
-  value: string;
-  valueStyle?: React.CSSProperties;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 text-xs">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium tabular-nums" style={valueStyle}>
-        {value}
-      </span>
-    </div>
-  );
-}
 
 export function ProfitabilityBreakdownPopover({
   shipmentId,
@@ -109,80 +91,74 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
       </div>
 
       {data.missingDistance && (
-        <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-2 text-xs text-warning-foreground">
-          <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
-          <span>
+        <Alert variant="warning" size="sm">
+          <AlertTriangle />
+          <AlertDescription>
             {t(
               "Some moves are missing distance — the estimate only covers moves with a calculated distance.",
             )}
-          </span>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
 
-      <div className="space-y-1.5">
+      <DescriptionList layout="split">
         {data.breakdown.map((line) => {
           const badge = sourceBadges[line.effectiveSource] ?? sourceBadges.Benchmark;
           return (
-            <div
+            <DescriptionItem
               key={`${line.category}-${line.name}`}
-              className="flex items-center justify-between gap-2 text-xs"
-            >
-              <span className="flex min-w-0 items-center gap-1.5">
-                <span className="text-muted-foreground truncate">{line.name}</span>
-                <Badge variant="neutral" appearance="outline" className={badge.className}>
-                  {t(badge.label)}
-                </Badge>
-              </span>
-              <span className="shrink-0 font-medium tabular-nums">
-                {formatCurrency(parseDecimal(line.amount))}
-                <span className="text-muted-foreground ml-1">
-                  ({formatPerMile(parseDecimal(line.ratePerMile))})
+              numeric
+              label={
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate">{line.name}</span>
+                  <Badge variant="neutral" appearance="outline" className={badge.className}>
+                    {t(badge.label)}
+                  </Badge>
                 </span>
+              }
+            >
+              {formatCurrency(parseDecimal(line.amount))}
+              <span className="text-foreground-subtle ml-1">
+                ({formatPerMile(parseDecimal(line.ratePerMile))})
               </span>
-            </div>
+            </DescriptionItem>
           );
         })}
-      </div>
+      </DescriptionList>
 
-      <Separator />
-
-      <div className="space-y-1.5">
-        <DetailRow
-          label={t("Estimated cost")}
-          value={formatCurrency(parseDecimal(data.estimatedCost))}
-        />
-        <DetailRow label={t("Revenue")} value={formatCurrency(revenue)} />
-        <DetailRow
-          label={t("Profit")}
-          value={formatCurrency(profit)}
-          valueStyle={{ color: toneVar(profitTone) }}
-        />
+      <DescriptionList layout="split">
+        <DescriptionItem label={t("Estimated cost")} numeric>
+          {formatCurrency(parseDecimal(data.estimatedCost))}
+        </DescriptionItem>
+        <DescriptionItem label={t("Revenue")} numeric>
+          {formatCurrency(revenue)}
+        </DescriptionItem>
+        <DescriptionItem label={t("Profit")} numeric>
+          <span style={{ color: toneVar(profitTone) }}>{formatCurrency(profit)}</span>
+        </DescriptionItem>
         {marginPct !== null && (
-          <DetailRow
-            label={t("Margin")}
-            value={formatPercent(marginPct)}
-            valueStyle={{ color: toneVar(getMarginTone(marginPct, targetPct)) }}
-          />
+          <DescriptionItem label={t("Margin")} numeric>
+            <span style={{ color: toneVar(getMarginTone(marginPct, targetPct)) }}>
+              {formatPercent(marginPct)}
+            </span>
+          </DescriptionItem>
         )}
         {data.breakEvenRpm !== null && data.breakEvenRpm !== undefined && (
-          <DetailRow
-            label={t("Break-even RPM")}
-            value={formatPerMile(parseDecimal(data.breakEvenRpm))}
-          />
+          <DescriptionItem label={t("Break-even RPM")} numeric>
+            {formatPerMile(parseDecimal(data.breakEvenRpm))}
+          </DescriptionItem>
         )}
         {data.revenuePerLoadedMile !== null && data.revenuePerLoadedMile !== undefined && (
-          <DetailRow
-            label={t("Actual RPM")}
-            value={formatPerMile(parseDecimal(data.revenuePerLoadedMile))}
-          />
+          <DescriptionItem label={t("Actual RPM")} numeric>
+            {formatPerMile(parseDecimal(data.revenuePerLoadedMile))}
+          </DescriptionItem>
         )}
         {fuel && fuel.source === "LiveIndex" && fuel.pricePerGallon && (
-          <DetailRow
-            label={`Diesel (${fuel.priceDate})`}
-            value={`${formatCurrency(parseDecimal(fuel.pricePerGallon))}/gal ÷ ${parseDecimal(fuel.milesPerGallon)} MPG`}
-          />
+          <DescriptionItem label={`Diesel (${fuel.priceDate})`} numeric>
+            {`${formatCurrency(parseDecimal(fuel.pricePerGallon))}/gal ÷ ${parseDecimal(fuel.milesPerGallon)} MPG`}
+          </DescriptionItem>
         )}
-      </div>
+      </DescriptionList>
 
       <p className="text-2xs text-muted-foreground">
         {t(

@@ -96,7 +96,7 @@ export function AssignFuelCardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {t("Assign card {0}", card ? maskedCardNumber(card.lastFour) : "")}

@@ -113,9 +113,10 @@ export function MarkFiledDialog({ open, onOpenChange, ret, period }: MarkFiledDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
               event.stopPropagation();
@@ -130,7 +131,7 @@ export function MarkFiledDialog({ open, onOpenChange, ret, period }: MarkFiledDi
                 )}
               </DialogDescription>
             </DialogHeader>
-            <FormGroup cols={2} className="mt-4">
+            <FormGroup cols={2}>
               <FormControl>
                 <DateField
                   control={control}
@@ -151,7 +152,7 @@ export function MarkFiledDialog({ open, onOpenChange, ret, period }: MarkFiledDi
                 />
               </FormControl>
             </FormGroup>
-            <DialogFooter className="mt-4">
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"

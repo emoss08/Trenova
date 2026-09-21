@@ -57,9 +57,6 @@ export function BreakdownDefinitionEditor({
     <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
         <div className="flex items-center gap-2">
-          <div className="bg-primary/10 flex size-8 items-center justify-center rounded-lg">
-            <ListTreeIcon className="text-primary size-4" />
-          </div>
           <div>
             <CardTitle className="text-sm font-medium">{t("Charge Breakdown")}</CardTitle>
             <p className="text-muted-foreground text-xs">
@@ -162,7 +159,7 @@ export function BreakdownDefinitionEditor({
                       size="sm"
                       aria-label={t("Remove breakdown item")}
                       onClick={() => remove(index)}
-                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                      className="text-muted-foreground hover:bg-danger-subtle hover:text-danger-foreground size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                     >
                       <Trash2 className="size-4" />
                     </Button>

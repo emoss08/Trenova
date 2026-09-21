@@ -1,3 +1,4 @@
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -27,7 +28,6 @@ import {
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
 import { RefreshCwIcon } from "lucide-react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -309,17 +309,29 @@ function MonitoringFeedStatus({ open, canManage }: { open: boolean; canManage: b
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            <StatTile label={t("Desired")} value={status.enrollmentCounts.desired} />
-            <StatTile label={t("Active")} value={status.enrollmentCounts.active} />
-            <StatTile label={t("Pending")} value={status.enrollmentCounts.pending} />
-            <StatTile
-              label={t("Failed")}
-              value={status.enrollmentCounts.failed}
-              tone={status.enrollmentCounts.failed > 0 ? "critical" : undefined}
+          <KpiStrip minItemWidth="7rem">
+            <KpiStripItem
+              label={t("Desired")}
+              value={status.enrollmentCounts.desired.toLocaleString()}
             />
-            <StatTile label={t("Review queue")} value={status.reviewQueueCount} />
-          </div>
+            <KpiStripItem
+              label={t("Active")}
+              value={status.enrollmentCounts.active.toLocaleString()}
+            />
+            <KpiStripItem
+              label={t("Pending")}
+              value={status.enrollmentCounts.pending.toLocaleString()}
+            />
+            <KpiStripItem
+              label={t("Failed")}
+              value={status.enrollmentCounts.failed.toLocaleString()}
+              tone={status.enrollmentCounts.failed > 0 ? "danger" : undefined}
+            />
+            <KpiStripItem
+              label={t("Review queue")}
+              value={status.reviewQueueCount.toLocaleString()}
+            />
+          </KpiStrip>
           {status.feeds.length === 0 ? (
             <div className="border-border bg-muted/20 text-muted-foreground rounded-md border p-3 text-sm">
               {t(
@@ -389,16 +401,5 @@ function FeedRow({ feed }: { feed: CarrierIntelFeedState }) {
       <TableCell className="text-xs">{formatUnixDateTimeOrDash(feed.nextPollAfter)}</TableCell>
       <TableCell className="text-right text-xs">{feed.failureCount}</TableCell>
     </TableRow>
-  );
-}
-
-function StatTile({ label, value, tone }: { label: string; value: number; tone?: "critical" }) {
-  return (
-    <div className="border-border rounded-md border p-2">
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <p className={cn("text-lg font-semibold", tone === "critical" && "text-destructive")}>
-        {value.toLocaleString()}
-      </p>
-    </div>
   );
 }

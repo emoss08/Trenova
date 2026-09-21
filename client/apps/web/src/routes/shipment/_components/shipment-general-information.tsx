@@ -22,7 +22,6 @@ function Inner({ children }: { children: React.ReactNode }) {
     <FormSection
       title={t("General Information")}
       description={t("Basic information about the shipment")}
-      className="border-border border-t pt-4"
     >
       {children}
     </FormSection>

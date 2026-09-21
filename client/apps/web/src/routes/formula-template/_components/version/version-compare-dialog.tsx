@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Badge } from "@trenova/shared/components/ui/badge";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,6 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { cn } from "@trenova/shared/lib/utils";
 import { queries } from "@/lib/queries";
 import type { FieldChange } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
@@ -101,16 +100,16 @@ function ChangeItem({ path, change }: ChangeItemProps) {
     }
   };
 
-  const getChangeBadgeVariant = () => {
+  const getChangeBadgeVariant = (): BadgeVariant => {
     switch (change.type) {
       case "created":
-        return "bg-success-subtle text-success-foreground dark:bg-success-subtle/30 dark:text-success-foreground";
+        return "success";
       case "deleted":
-        return "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle/30 dark:text-danger-foreground";
+        return "danger";
       case "updated":
-        return "bg-info-subtle text-info-foreground dark:bg-info-subtle/30 dark:text-info-foreground";
+        return "info";
       default:
-        return "bg-muted text-muted-foreground";
+        return "neutral";
     }
   };
 
@@ -140,7 +139,9 @@ function ChangeItem({ path, change }: ChangeItemProps) {
       <div className="bg-muted/50 flex items-center gap-2 border-b px-3 py-2">
         {getChangeIcon()}
         <span className="font-mono text-sm font-medium">{formattedPath}</span>
-        <Badge className={cn("ml-auto text-xs", getChangeBadgeVariant())}>{change.type}</Badge>
+        <Badge variant={getChangeBadgeVariant()} className="ml-auto text-xs">
+          {change.type}
+        </Badge>
       </div>
 
       <div className="p-3">
@@ -152,7 +153,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
               <span className="text-muted-foreground mb-1 block text-xs font-medium">
                 {t("Before")}
               </span>
-              <pre className="overflow-x-auto rounded bg-danger-subtle p-2 font-mono text-xs whitespace-pre-wrap text-danger-foreground dark:bg-danger-subtle/20 dark:text-danger-foreground">
+              <pre className="overflow-x-auto rounded-md bg-danger-subtle p-2 font-mono text-xs whitespace-pre-wrap text-danger-subtle-foreground">
                 {formatValue(change.from)}
               </pre>
             </div>
@@ -160,7 +161,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
               <span className="text-muted-foreground mb-1 block text-xs font-medium">
                 {t("After")}
               </span>
-              <pre className="overflow-x-auto rounded bg-success-subtle p-2 font-mono text-xs whitespace-pre-wrap text-success-foreground dark:bg-success-subtle/20 dark:text-success-foreground">
+              <pre className="overflow-x-auto rounded-md bg-success-subtle p-2 font-mono text-xs whitespace-pre-wrap text-success-subtle-foreground">
                 {formatValue(change.to)}
               </pre>
             </div>
@@ -170,7 +171,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
             <span className="text-muted-foreground mb-1 block text-xs font-medium">
               {t("Added")}
             </span>
-            <pre className="overflow-x-auto rounded bg-success-subtle p-2 font-mono text-xs whitespace-pre-wrap text-success-foreground dark:bg-success-subtle/20 dark:text-success-foreground">
+            <pre className="overflow-x-auto rounded-md bg-success-subtle p-2 font-mono text-xs whitespace-pre-wrap text-success-subtle-foreground">
               {formatValue(change.to)}
             </pre>
           </div>
@@ -179,7 +180,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
             <span className="text-muted-foreground mb-1 block text-xs font-medium">
               {t("Removed")}
             </span>
-            <pre className="overflow-x-auto rounded bg-danger-subtle p-2 font-mono text-xs whitespace-pre-wrap text-danger-foreground dark:bg-danger-subtle/20 dark:text-danger-foreground">
+            <pre className="overflow-x-auto rounded-md bg-danger-subtle p-2 font-mono text-xs whitespace-pre-wrap text-danger-subtle-foreground">
               {formatValue(change.from)}
             </pre>
           </div>
@@ -195,7 +196,7 @@ function ComparisonSkeleton() {
       {[...Array(3)].map((_, i) => (
         <div key={i} className="overflow-hidden rounded-lg border">
           <div className="bg-muted/50 flex items-center gap-2 border-b px-3 py-2">
-            <Skeleton className="size-4 rounded" />
+            <Skeleton className="size-4 rounded-md" />
             <Skeleton className="h-4 w-32" />
             <Skeleton className="ml-auto h-5 w-16" />
           </div>

@@ -15,11 +15,10 @@ export function CarrierForm() {
   const { control } = useFormContext<Carrier>();
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <FormSection
         title={t("General Information")}
         description={t("Core identifiers used across the system to reference this carrier.")}
-        className="border-b"
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -92,7 +91,6 @@ export function CarrierForm() {
       <FormSection
         title={t("Operating Authority")}
         description={t("Federal identifiers used for safety lookups and compliance monitoring.")}
-        className="border-b"
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -135,7 +133,6 @@ export function CarrierForm() {
       <FormSection
         title={t("Address & Contact")}
         description={t("Primary business address and contact details for this carrier.")}
-        className="border-b"
       >
         <FormGroup cols={2}>
           <FormControl cols="full">

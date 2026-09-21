@@ -7,7 +7,12 @@ import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import { DialogFooter } from "@trenova/shared/components/ui/dialog";
+import {
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import {
   Popover,
@@ -165,12 +170,11 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
             />
           </FormControl>
         </FormGroup>
-        <DialogFooter className="flex flex-row items-center sm:justify-between">
+        <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             {t("Cancel")}
           </Button>
           <Button
-            size="sm"
             type="submit"
             isLoading={saveMutation.isPending}
             loadingText={t("Saving...")}
@@ -264,7 +268,7 @@ function PostmarkFormHeader() {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center gap-4">
         <LazyImage src={trenovaLogo} className="size-8" />
         <div className="flex items-center justify-center gap-1">
           <div className="bg-muted-foreground size-1 rounded-full" />
@@ -273,17 +277,15 @@ function PostmarkFormHeader() {
         </div>
         <LazyImage src={postmarkLogo} alt={t("Postmark")} className="h-8 w-28 object-contain" />
       </div>
-      <div className="flex flex-col gap-2 text-center">
-        <h3 className="text-lg font-semibold">{t("Connect with Postmark")}</h3>
-        <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">
-            {t("Create a server token and webhook in")}
-          </p>
-          <ExternalLink href="https://account.postmarkapp.com/servers" className="text-xs">
+      <DialogHeader>
+        <DialogTitle>{t("Connect with Postmark")}</DialogTitle>
+        <DialogDescription>
+          {t("Create a server token and webhook in")}{" "}
+          <ExternalLink href="https://account.postmarkapp.com/servers">
             {t("Postmark.")}
           </ExternalLink>
-        </div>
-      </div>
+        </DialogDescription>
+      </DialogHeader>
     </div>
   );
 }

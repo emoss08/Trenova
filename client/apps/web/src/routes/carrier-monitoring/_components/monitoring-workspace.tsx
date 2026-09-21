@@ -1,6 +1,8 @@
-import { StatStrip, type StatStripItem } from "@/components/carrier-intelligence/stat-strip";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
+import type { Tone } from "@/components/kpi/tone";
 import { StatusDot } from "@/components/carrier-intelligence/status-dot";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
 import { spendCapProgress } from "@/lib/carrier-intel-usage";
 import { formatOptionalDecimalCurrency } from "@/lib/carrier-intelligence";
@@ -83,12 +85,21 @@ function Notice({ children, action }: { children: ReactNode; action?: ReactNode 
 function MonitoringLoading() {
   return (
     <div className="flex flex-col gap-4">
-      <Skeleton className="h-20 w-full" />
+      <KpiStripSkeleton count={3} />
       <Skeleton className="h-8 w-80" />
       <Skeleton className="h-[28rem] w-full" />
     </div>
   );
 }
+
+type MonitoringStat = {
+  id: string;
+  label: string;
+  value: ReactNode;
+  sub?: string;
+  tone?: Tone;
+  onClick: () => void;
+};
 
 type MonitoringBodyProps = {
   status: CarrierIntelMonitoringStatus;
@@ -121,13 +132,13 @@ function MonitoringBody({ status, canUpdate, canManage }: MonitoringBodyProps) {
     status.eventCounts.bySeverity.find((entry) => entry.severity === "Critical")?.count ?? 0;
   const { enrollmentCounts } = status;
 
-  const stats: StatStripItem[] = [
+  const stats: MonitoringStat[] = [
     {
       id: "attention",
       label: t("Needs attention"),
       value: status.eventCounts.open.toLocaleString(),
-      tone: criticalOpen > 0 ? "critical" : undefined,
-      hint:
+      tone: criticalOpen > 0 ? "danger" : undefined,
+      sub:
         criticalOpen > 0
           ? t("{0, plural, one {# critical} other {# critical}}", criticalOpen)
           : status.eventCounts.acknowledged > 0
@@ -145,7 +156,7 @@ function MonitoringBody({ status, canUpdate, canManage }: MonitoringBodyProps) {
       id: "monitored",
       label: t("Monitored carriers"),
       value: enrollmentCounts.active.toLocaleString(),
-      hint:
+      sub:
         enrollmentCounts.pending > 0 || enrollmentCounts.failed > 0
           ? [
               enrollmentCounts.pending > 0
@@ -175,15 +186,15 @@ function MonitoringBody({ status, canUpdate, canManage }: MonitoringBodyProps) {
       ) : usageQuery.isError ? (
         "—"
       ) : (
-        <Skeleton className="mt-1 h-6 w-20" />
+        <Skeleton className="h-6 w-20" />
       ),
       tone:
         progress?.state === "exceeded"
-          ? "critical"
+          ? "danger"
           : progress?.state === "soft"
-            ? "medium"
+            ? "warning"
             : undefined,
-      hint:
+      sub:
         usage && progress && progress.state !== "uncapped"
           ? t("of {0} cap", formatOptionalDecimalCurrency(usage.cap) ?? "—")
           : undefined,
@@ -228,7 +239,18 @@ function MonitoringBody({ status, canUpdate, canManage }: MonitoringBodyProps) {
         </Notice>
       ) : null}
 
-      <StatStrip items={stats} />
+      <KpiStrip>
+        {stats.map((stat) => (
+          <KpiStripItem
+            key={stat.id}
+            label={stat.label}
+            value={stat.value}
+            sub={stat.sub}
+            tone={stat.tone}
+            onClick={stat.onClick}
+          />
+        ))}
+      </KpiStrip>
 
       <Tabs
         value={tab}
@@ -356,13 +378,14 @@ export function MonitoringWorkspace() {
   }
 
   return (
-    <>
-      <PageHeader
-        title={t("Carrier Monitoring")}
-        description={t("Authority, insurance and safety changes on the carriers you watch.")}
-        actions={status ? <ProviderStatus status={status} canManage={canManage} /> : null}
-      />
-      <div className="flex flex-col gap-4 p-4">{body}</div>
-    </>
+    <PageLayout
+      pageHeaderProps={{
+        title: t("Carrier Monitoring"),
+        description: t("Authority, insurance and safety changes on the carriers you watch."),
+        actions: status ? <ProviderStatus status={status} canManage={canManage} /> : null,
+      }}
+    >
+      {body}
+    </PageLayout>
   );
 }

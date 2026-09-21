@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
-import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
+import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
+import { KPI_VALUE_CLASS, KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import type {
   BenefitCostRow,
   BenefitEnrollmentListRow,
@@ -11,10 +12,7 @@ import NumberFlow from "@number-flow/react";
 import { CompositionBar } from "@trenova/shared/components/ui/composition-bar";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatMinor } from "@trenova/shared/lib/benefits";
-import { BanknoteIcon, HeartHandshakeIcon, LayersIcon, UsersIcon } from "lucide-react";
 import { useMemo } from "react";
-
-const VALUE_CLASS = "text-2xl leading-none font-semibold tabular-nums";
 
 type BenefitsOverviewProps = {
   plans: readonly BenefitPlanRow[] | undefined;
@@ -55,64 +53,53 @@ export function BenefitsOverview({
   );
 
   return (
-    <div className="grid grid-cols-4 gap-3 lg:grid-cols-8">
-      <KpiCard span={2}>
-        <KpiHeader
-          icon={<UsersIcon className="size-[11px]" />}
-          label={t("People covered")}
-          info={
-            <InfoPopover title={t("People covered")}>
-              {t(
-                "Active enrolments in the selected plan year, summed across plans. Somebody on two plans counts twice.",
-              )}
-            </InfoPopover>
-          }
-        />
-        {costs ? (
-          <NumberFlow
-            value={totals.enrolled}
-            className={VALUE_CLASS}
-            aria-label={t("People covered")}
-          />
-        ) : (
-          <Skeleton className="h-6.5 w-10" />
-        )}
-        <KpiSub>{describeCovered(totals.waived, starting, ending)}</KpiSub>
-      </KpiCard>
+    <KpiStrip>
+      <KpiStripItem
+        label={t("People covered")}
+        info={
+          <InfoPopover title={t("People covered")}>
+            {t(
+              "Active enrolments in the selected plan year, summed across plans. Somebody on two plans counts twice.",
+            )}
+          </InfoPopover>
+        }
+        value={
+          costs ? (
+            <NumberFlow value={totals.enrolled} aria-label={t("People covered")} />
+          ) : (
+            <Skeleton className="h-6 w-10" />
+          )
+        }
+        sub={describeCovered(totals.waived, starting, ending)}
+      />
 
-      <KpiCard span={2}>
-        <KpiHeader
-          icon={<LayersIcon className="size-[11px]" />}
-          label={t("Plans on offer")}
-          info={
-            <InfoPopover title={t("Plans on offer")}>
-              {t(
-                "Plans in the year still open to enrolment. Archived plans keep their enrolments but are not counted.",
-              )}
-            </InfoPopover>
-          }
-        />
-        {plans ? (
-          <NumberFlow
-            value={activePlans}
-            className={VALUE_CLASS}
-            aria-label={t("Plans on offer")}
-          />
-        ) : (
-          <Skeleton className="h-6.5 w-10" />
-        )}
-        <KpiSub>
-          {planYear === null
+      <KpiStripItem
+        label={t("Plans on offer")}
+        info={
+          <InfoPopover title={t("Plans on offer")}>
+            {t(
+              "Plans in the year still open to enrolment. Archived plans keep their enrolments but are not counted.",
+            )}
+          </InfoPopover>
+        }
+        value={
+          plans ? (
+            <NumberFlow value={activePlans} aria-label={t("Plans on offer")} />
+          ) : (
+            <Skeleton className="h-6 w-10" />
+          )
+        }
+        sub={
+          planYear === null
             ? t("Nothing on file yet")
             : archivedPlans > 0
               ? t("For {0} · {1} archived", planYear, archivedPlans)
-              : t("For {0}", planYear)}
-        </KpiSub>
-      </KpiCard>
+              : t("For {0}", planYear)
+        }
+      />
 
       <KpiCard span={2}>
         <KpiHeader
-          icon={<HeartHandshakeIcon className="size-[11px]" />}
           label={t("Employer puts in")}
           info={
             <InfoPopover title={t("Employer puts in")}>
@@ -123,11 +110,11 @@ export function BenefitsOverview({
           }
         />
         {costs ? (
-          <span className={VALUE_CLASS} aria-label={t("Employer puts in")}>
+          <span className={KPI_VALUE_CLASS} aria-label={t("Employer puts in")}>
             {formatMinor(totals.employerMinor)}
           </span>
         ) : (
-          <Skeleton className="h-6.5 w-24" />
+          <Skeleton className="h-6 w-24" />
         )}
         <CompositionBar
           size="sm"
@@ -141,28 +128,23 @@ export function BenefitsOverview({
         />
       </KpiCard>
 
-      <KpiCard span={2}>
-        <KpiHeader
-          icon={<BanknoteIcon className="size-[11px]" />}
-          label={t("Off settlements")}
-          info={
-            <InfoPopover title={t("Off settlements")}>
-              {t(
-                "The employee share across the same enrolments, deducted from driver settlements.",
-              )}
-            </InfoPopover>
-          }
-        />
-        {costs ? (
-          <span className={VALUE_CLASS} aria-label={t("Off settlements")}>
-            {formatMinor(totals.employeeMinor)}
-          </span>
-        ) : (
-          <Skeleton className="h-6.5 w-24" />
-        )}
-        <KpiSub>{t("Per settlement period, taken as ordinary deductions")}</KpiSub>
-      </KpiCard>
-    </div>
+      <KpiStripItem
+        label={t("Off settlements")}
+        info={
+          <InfoPopover title={t("Off settlements")}>
+            {t("The employee share across the same enrolments, deducted from driver settlements.")}
+          </InfoPopover>
+        }
+        value={
+          costs ? (
+            <span aria-label={t("Off settlements")}>{formatMinor(totals.employeeMinor)}</span>
+          ) : (
+            <Skeleton className="h-6 w-24" />
+          )
+        }
+        sub={t("Per settlement period, taken as ordinary deductions")}
+      />
+    </KpiStrip>
   );
 }
 

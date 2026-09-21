@@ -119,7 +119,7 @@ export function ViolationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Correct the violation") : t("Cite a violation")}</DialogTitle>
           <DialogDescription>
@@ -130,13 +130,14 @@ export function ViolationDialog({
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               <FormControl cols="full">
                 <SelectField<SafetyViolationFormValues>
                   control={control}

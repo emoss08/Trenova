@@ -53,8 +53,8 @@ export function AccessorialScheduleEditor() {
         const autoApplies = Boolean(row?.autoApply);
 
         return (
-          <div key={field.id} className="bg-card rounded-md border p-4">
-            <div className="mb-3 flex items-center justify-between">
+          <div key={field.id} className="bg-card flex flex-col gap-4 rounded-md border p-4">
+            <div className="flex items-center justify-between">
               <p className="text-sm font-medium">
                 {t("Accessorial")} {index + 1}
                 {row?.waived && (
@@ -125,7 +125,7 @@ export function AccessorialScheduleEditor() {
             </FormGroup>
 
             {isPerUnit && (
-              <FormGroup cols={3} className="mt-3">
+              <FormGroup cols={3}>
                 <FormControl>
                   <NumberField
                     control={control}
@@ -162,7 +162,7 @@ export function AccessorialScheduleEditor() {
               </FormGroup>
             )}
 
-            <FormGroup cols={2} className="mt-3">
+            <FormGroup cols={2}>
               <FormControl>
                 <SwitchField
                   control={control}
@@ -188,7 +188,7 @@ export function AccessorialScheduleEditor() {
             </FormGroup>
 
             {autoApplies && (
-              <FormGroup cols={1} className="mt-3">
+              <FormGroup cols={1}>
                 <FormControl cols="full">
                   <InputField
                     control={control}

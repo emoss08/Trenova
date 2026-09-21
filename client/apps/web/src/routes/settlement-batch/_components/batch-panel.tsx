@@ -90,9 +90,7 @@ function GenerateBatchPanel({
       notice={
         period ? (
           <div className="bg-muted/30 rounded-lg border p-3 text-sm">
-            <p className="text-muted-foreground text-xs font-medium">
-              {t("Current Pay Period")}
-            </p>
+            <p className="text-muted-foreground text-xs font-medium">{t("Current Pay Period")}</p>
             <p className="mt-1 font-medium">
               {formatDate(period.periodStart)} – {formatDate(period.periodEnd)}
             </p>
@@ -103,7 +101,7 @@ function GenerateBatchPanel({
         ) : undefined
       }
       formComponent={
-        <FormGroup cols={1} className="pt-2">
+        <FormGroup cols={1}>
           <FormControl>
             <InputField
               control={control}
@@ -215,32 +213,26 @@ function BatchDetail({ batchId }: { batchId: string }) {
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium">
-            {t("Settlements")}
-          </p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Settlements")}</p>
           <p className="mt-1 text-sm font-semibold tabular-nums">{data.settlementCount}</p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium">
-            {t("Exceptions")}
-          </p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Exceptions")}</p>
           <p className="mt-1 flex items-center gap-1 text-sm font-semibold tabular-nums">
-            {data.exceptionCount > 0 && <TriangleAlert className="size-3.5 text-warning-foreground" />}
+            {data.exceptionCount > 0 && (
+              <TriangleAlert className="size-3.5 text-warning-foreground" />
+            )}
             {data.exceptionCount}
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium">
-            {t("Total Gross")}
-          </p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Total Gross")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={data.totalGrossMinor} currency={data.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium">
-            {t("Total Net")}
-          </p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Total Net")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay
               value={data.totalNetMinor}

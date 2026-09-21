@@ -227,7 +227,7 @@ function MatchingCard() {
           )}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-2">
         <FormGroup cols={2}>
           <FormControl>
             <NumberField
@@ -243,7 +243,7 @@ function MatchingCard() {
             />
           </FormControl>
         </FormGroup>
-        <FormGroup cols={2} className="mt-2">
+        <FormGroup cols={2}>
           <FormControl>
             <SwitchField
               control={control}

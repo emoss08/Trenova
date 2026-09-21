@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useHomeLayoutPreset } from "@/hooks/use-home-layout";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Link, useParams } from "react-router";
@@ -15,26 +16,33 @@ export function EditHomeLayoutPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-3 p-6">
+      <PageLayout pageHeaderProps={{ title: t("Home Screens"), description: t("Loading...") }}>
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-48 rounded-lg" />
-      </div>
+      </PageLayout>
     );
   }
 
   if (isError || !preset) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-24 text-center">
-        <p className="text-sm font-medium">{t("That home screen no longer exists")}</p>
-        <p className="text-muted-foreground max-w-sm text-xs">
-          {t("It may have been deleted by another administrator.")}
-        </p>
-        <Link to="/admin/home-layouts" className="pt-1">
-          <Button variant="outline" size="sm">
-            {t("Back to home screens")}
-          </Button>
-        </Link>
-      </div>
+      <PageLayout
+        pageHeaderProps={{
+          title: t("Home Screens"),
+          description: t("It may have been deleted by another administrator."),
+        }}
+      >
+        <div className="border-border flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
+          <p className="text-sm font-medium">{t("That home screen no longer exists")}</p>
+          <p className="text-muted-foreground max-w-sm text-xs">
+            {t("It may have been deleted by another administrator.")}
+          </p>
+          <Link to="/admin/home-layouts" className="pt-1">
+            <Button variant="outline" size="sm">
+              {t("Back to home screens")}
+            </Button>
+          </Link>
+        </div>
+      </PageLayout>
     );
   }
 

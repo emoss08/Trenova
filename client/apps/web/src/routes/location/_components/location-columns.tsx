@@ -83,7 +83,7 @@ export function getColumns(t: TranslateFn): ColumnDef<LocationRow>[] {
     {
       accessorKey: "city",
       header: t("City"),
-      cell: ({ row }) => <span>{row.original.city || "-"}</span>,
+      cell: ({ row }) => <span>{row.original.city || "—"}</span>,
       size: 150,
       minSize: 100,
       maxSize: 200,
@@ -98,7 +98,7 @@ export function getColumns(t: TranslateFn): ColumnDef<LocationRow>[] {
     {
       accessorKey: "postalCode",
       header: t("Postal Code"),
-      cell: ({ row }) => <span>{row.original.postalCode || "-"}</span>,
+      cell: ({ row }) => <span>{row.original.postalCode || "—"}</span>,
       size: 120,
       minSize: 80,
       maxSize: 150,

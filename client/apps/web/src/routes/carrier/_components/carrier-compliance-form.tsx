@@ -153,11 +153,10 @@ export function CarrierComplianceForm() {
   const complianceStatus = useWatch({ control, name: "complianceStatus" });
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <FormSection
         title={t("Compliance Status")}
         description={t("Qualification standing and FMCSA safety rating for this carrier.")}
-        className="border-b"
       >
         <FormGroup cols={2}>
           <FormControl>

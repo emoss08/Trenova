@@ -77,7 +77,7 @@ export function SaveReportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{isNew ? t("Save Report") : t("Save Changes")}</DialogTitle>
           <DialogDescription>

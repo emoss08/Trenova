@@ -265,9 +265,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium">
-            {t("Interest Rate")}
-          </p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Interest Rate")}</p>
           <p className="mt-1 text-sm font-semibold tabular-nums">
             {Number(account.annualInterestRate) > 0
               ? t("{0}% / yr", Number(account.annualInterestRate).toFixed(2))
@@ -277,9 +275,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
       </div>
 
       <div>
-        <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
-          {t("Transaction Ledger")}
-        </h4>
+        <h3 className="mb-2 text-sm font-semibold">{t("Transaction Ledger")}</h3>
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-xs">
             <thead className="bg-muted/50 text-left">

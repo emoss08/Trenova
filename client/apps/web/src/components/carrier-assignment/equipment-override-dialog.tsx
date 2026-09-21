@@ -75,7 +75,7 @@ export function EquipmentOverrideDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Override verification")}</DialogTitle>
           <DialogDescription>
@@ -95,6 +95,7 @@ export function EquipmentOverrideDialog({
         ) : null}
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             aria-label={t("Override verification")}
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
@@ -102,7 +103,7 @@ export function EquipmentOverrideDialog({
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup cols={1} className="pb-2">
+            <FormGroup cols={1}>
               <FormControl>
                 <TextareaField<EquipmentOverrideFormValues>
                   control={control}

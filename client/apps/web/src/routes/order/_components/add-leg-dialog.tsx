@@ -77,14 +77,14 @@ export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLeg
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent className="sm:max-w-100">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Add Legs")}</DialogTitle>
           <DialogDescription>
             {t("Attach one or more shipments to this order as additional legs.")}
           </DialogDescription>
         </DialogHeader>
-        <FormGroup cols={1} className="pb-4">
+        <FormGroup cols={1}>
           <FormControl>
             <ControlledShipmentAutocompleteField
               value={pickerValue}

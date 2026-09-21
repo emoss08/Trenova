@@ -8,7 +8,6 @@ import { queries } from "@/lib/queries";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { HandCoinsIcon } from "lucide-react";
-import { m } from "motion/react";
 import { Link } from "react-router";
 import { AccountingDashboardEmpty } from "./_components/accounting-dashboard-empty";
 import { AccountingQuickLinks } from "./_components/accounting-quick-links";
@@ -19,27 +18,6 @@ import { CollectionsPerformanceCard } from "./_components/collections-performanc
 import { CollectionsWorklistCard } from "./_components/collections-worklist-card";
 import { DsoTrendCard } from "./_components/dso-trend-card";
 import { TopOverdueCustomersCard } from "./_components/top-overdue-customers-card";
-
-function Section({
-  index,
-  children,
-  className,
-}: {
-  index: number;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <m.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: 0.05 + index * 0.07, ease: "easeOut" }}
-      className={className}
-    >
-      {children}
-    </m.div>
-  );
-}
 
 export function AccountingDashboardPage() {
   const t = useT();
@@ -69,44 +47,38 @@ export function AccountingDashboardPage() {
       }}
     >
       {neverInvoiced ? (
-        <div className="mx-4 mt-3 mb-4">
-          <AccountingDashboardEmpty
-            title={t("Nothing on the books yet")}
-            description={
-              "Receivables begin when the first invoice posts from billing. Once one does, the " +
-              "balance, days sales outstanding, aging and collections figures fill in here."
-            }
-          />
-        </div>
+        <AccountingDashboardEmpty
+          title={t("Nothing on the books yet")}
+          description={
+            "Receivables begin when the first invoice posts from billing. Once one does, the " +
+            "balance, days sales outstanding, aging and collections figures fill in here."
+          }
+        />
       ) : (
-        <div className="mx-4 mt-3 mb-4 space-y-4">
+        <>
           <ARKpiRow />
 
-          <Section index={1} className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 xl:grid-cols-2">
             <DsoTrendCard />
             <CashFlowForecastCard />
-          </Section>
+          </div>
 
-          <Section index={2} className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 xl:grid-cols-2">
             <AgingCard />
             <CollectionsPerformanceCard />
-          </Section>
+          </div>
 
-          <Section index={3} className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 xl:grid-cols-2">
             <TopOverdueCustomersCard />
             <CollectionsWorklistCard />
-          </Section>
+          </div>
 
           {/* Findings about money earned and not collected belong beside the
               worklist that collects it, not on a page of their own. */}
-          <Section index={4}>
-            <PageInsightsCard surface="Accounting" title={t("Cash insights")} />
-          </Section>
+          <PageInsightsCard surface="Accounting" title={t("Cash insights")} />
 
-          <Section index={5}>
-            <AccountingQuickLinks />
-          </Section>
-        </div>
+          <AccountingQuickLinks />
+        </>
       )}
     </PageLayout>
   );

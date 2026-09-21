@@ -79,18 +79,19 @@ export function ShipmentTransferOwnershipDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent className="sm:max-w-100">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Transfer Ownership")}</DialogTitle>
           <DialogDescription>{t("Transfer this shipment to a different user.")}</DialogDescription>
         </DialogHeader>
         <Form
+          className="flex flex-col gap-4"
           onSubmit={(e) => {
             e.stopPropagation();
             void handleSubmit(onSubmit)(e);
           }}
         >
-          <FormGroup cols={1} className="pb-4">
+          <FormGroup cols={1}>
             <FormControl>
               <UserAutocompleteField
                 control={control}

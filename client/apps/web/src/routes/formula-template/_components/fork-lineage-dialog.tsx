@@ -52,7 +52,7 @@ function LineageNode({
         <div
           className={`flex items-center gap-2 rounded-md border px-3 py-2 ${
             isCurrent
-              ? "border-primary bg-primary/5"
+              ? "border-brand bg-surface-selected"
               : "border-border hover:border-muted-foreground/50"
           } ${onNavigateToTemplate && !isCurrent ? "cursor-pointer" : ""}`}
           role={onNavigateToTemplate && !isCurrent ? "button" : undefined}

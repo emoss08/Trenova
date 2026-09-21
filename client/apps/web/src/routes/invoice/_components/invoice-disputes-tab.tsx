@@ -275,7 +275,7 @@ function OpenDisputeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Open a dispute on {0}", invoice.number)}</DialogTitle>
           <DialogDescription>
@@ -388,7 +388,7 @@ function ResolveDisputeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Resolve dispute")}</DialogTitle>
           <DialogDescription>
@@ -475,7 +475,7 @@ function WithdrawDisputeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Withdraw dispute")}</DialogTitle>
           <DialogDescription>

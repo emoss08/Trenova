@@ -369,7 +369,7 @@ function AddPermissionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Add Permission")}</DialogTitle>
         </DialogHeader>
@@ -745,7 +745,7 @@ function CreateAddPermissionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Add Permission")}</DialogTitle>
         </DialogHeader>

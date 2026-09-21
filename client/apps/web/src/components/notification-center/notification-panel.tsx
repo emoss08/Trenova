@@ -156,7 +156,7 @@ export default function NotificationPanel({
     <>
       <div className="flex items-center justify-between gap-2 py-3 pr-11 pl-4">
         <div className="flex items-center gap-2">
-          <SheetTitle className="text-sm font-semibold">{t("Notifications")}</SheetTitle>
+          <SheetTitle>{t("Notifications")}</SheetTitle>
           {unreadCount > 0 && (
             <Badge variant="info" className="text-2xs h-4.5 tabular-nums">
               {t("{0} new", unreadCount)}

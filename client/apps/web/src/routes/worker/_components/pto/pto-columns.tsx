@@ -259,7 +259,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerPTORow>[] {
         defaultFilterOperator: "daterange",
       },
       cell: ({ row }) => {
-        if (!row.original.createdAt) return "-";
+        if (!row.original.createdAt) return "—";
 
         return (
           <HoverCardTimestamp

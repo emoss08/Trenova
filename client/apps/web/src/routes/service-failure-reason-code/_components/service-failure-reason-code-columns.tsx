@@ -125,7 +125,7 @@ export function getColumns(t: TranslateFn): ColumnDef<ServiceFailureReasonCodeRo
     {
       accessorKey: "defaultStatusCode",
       header: t("X12 Status"),
-      cell: ({ row }) => row.original.defaultStatusCode || "-",
+      cell: ({ row }) => row.original.defaultStatusCode || "—",
       size: 120,
       minSize: 100,
       maxSize: 140,
@@ -141,7 +141,7 @@ export function getColumns(t: TranslateFn): ColumnDef<ServiceFailureReasonCodeRo
     {
       accessorKey: "defaultReasonCode",
       header: t("X12 Reason"),
-      cell: ({ row }) => row.original.defaultReasonCode || "-",
+      cell: ({ row }) => row.original.defaultReasonCode || "—",
       size: 120,
       minSize: 100,
       maxSize: 140,

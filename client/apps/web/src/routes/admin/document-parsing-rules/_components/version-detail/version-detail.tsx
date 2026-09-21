@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { FormSaveDock } from "@/components/form-save-dock";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -228,47 +229,40 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
           </div>
 
           {isReadOnly && (
-            <div className="border-info/50 bg-info/10 flex items-start gap-2.5 rounded-md border p-3">
-              <LockIcon className="text-info mt-0.5 size-4 shrink-0" />
-              <div className="text-info text-sm">
-                <p className="font-medium">{t("Read-only version")}</p>
-                <p className="mt-0.5 text-xs opacity-80">
-                  {version.status === "Published"
-                    ? t(
-                        "Published versions cannot be modified. Create a new version to make changes.",
-                      )
-                    : t("Archived versions are frozen snapshots of previously published rules.")}
-                </p>
-              </div>
-            </div>
+            <Alert variant="info">
+              <LockIcon />
+              <AlertTitle>{t("Read-only version")}</AlertTitle>
+              <AlertDescription>
+                {version.status === "Published"
+                  ? t(
+                      "Published versions cannot be modified. Create a new version to make changes.",
+                    )
+                  : t("Archived versions are frozen snapshots of previously published rules.")}
+              </AlertDescription>
+            </Alert>
           )}
 
           {hasValidationIssues && (
-            <div className="border-destructive/50 bg-destructive/10 rounded-md border p-3">
-              <div className="mb-1.5 flex items-center gap-1.5">
-                <AlertTriangleIcon className="text-destructive size-4" />
-                <p className="text-destructive text-sm font-medium">{t("Validation Issues")}</p>
-              </div>
-              {fixtureCount !== null && (
-                <p className="text-destructive/80 mb-1 text-xs">
-                  {t("{0, plural, one {# fixture} other {# fixtures}} tested", fixtureCount)}
-                </p>
-              )}
-              {fixtureFailures.length > 0 && (
-                <ul className="space-y-1">
-                  {fixtureFailures.map((failure, idx) => (
-                    <li
-                      key={idx}
-                      className="bg-destructive/5 text-destructive rounded px-2 py-1 text-xs"
-                    >
-                      <span className="font-medium">{failure.name}</span>
-                      <span className="text-destructive/50 mx-1.5">&mdash;</span>
-                      <span>{failure.error}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <Alert variant="destructive">
+              <AlertTriangleIcon />
+              <AlertTitle>{t("Validation Issues")}</AlertTitle>
+              <AlertDescription>
+                {fixtureCount !== null && (
+                  <p>{t("{0, plural, one {# fixture} other {# fixtures}} tested", fixtureCount)}</p>
+                )}
+                {fixtureFailures.length > 0 && (
+                  <ul className="space-y-1">
+                    {fixtureFailures.map((failure, idx) => (
+                      <li key={idx}>
+                        <span className="font-medium">{failure.name}</span>
+                        <span className="mx-1.5 opacity-50">&mdash;</span>
+                        <span>{failure.error}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </AlertDescription>
+            </Alert>
           )}
 
           {/* Version settings */}

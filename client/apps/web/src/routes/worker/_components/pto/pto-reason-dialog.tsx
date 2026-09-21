@@ -212,13 +212,14 @@ export function PTOReasonDialog({
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
               void handleSubmit(onSubmit)(e);
             }}
           >
-            <FormGroup className="pb-2" cols={1}>
+            <FormGroup cols={1}>
               <FormControl cols="full">
                 <TextareaField
                   control={control}

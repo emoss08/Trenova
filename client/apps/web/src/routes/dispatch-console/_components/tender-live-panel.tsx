@@ -78,7 +78,7 @@ function TenderCancelDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent className="sm:max-w-[440px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Cancel Tender")}</DialogTitle>
           <DialogDescription>
@@ -143,7 +143,7 @@ function RecordResponseDialog({
 
   return (
     <Dialog open onOpenChange={(nextOpen) => !nextOpen && onOpenChange(false)}>
-      <DialogContent className="sm:max-w-[440px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Record Carrier Response")}</DialogTitle>
           <DialogDescription>
@@ -227,7 +227,11 @@ function OfferRow({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
-          <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded px-1 text-3xs tabular-nums">
+          <Badge
+            variant="neutral"
+            appearance="outline"
+            className="h-4 shrink-0 rounded px-1 text-3xs tabular-nums"
+          >
             #{offer.rank}
           </Badge>
           <span className="truncate text-xs font-medium">
@@ -241,12 +245,7 @@ function OfferRow({
         <span className="tabular-nums">{formatOfferRate(offer.rate, offer.rateMethod)}</span>
         <span>· {TENDER_CHANNEL_LABEL[offer.channel]}</span>
         {countdown && (
-          <span
-            className={cn(
-              "tabular-nums",
-              countdown === "expired" && "text-danger-foreground",
-            )}
-          >
+          <span className={cn("tabular-nums", countdown === "expired" && "text-danger-foreground")}>
             · {countdown}
           </span>
         )}

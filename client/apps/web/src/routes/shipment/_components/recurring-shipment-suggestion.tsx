@@ -1,4 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { usePermissions } from "@/hooks/use-permission";
 import { describeCron } from "@/lib/cron";
@@ -96,11 +102,13 @@ function MatchBanner({ series, onDismiss }: { series: RecurringShipment; onDismi
   };
 
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-info/30 bg-info/5 p-3">
-      <CalendarSyncIcon className="mt-0.5 size-4 shrink-0 text-info-foreground" />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="text-sm font-medium">{t("A recurring shipment already covers this lane")}</p>
-        <p className="text-muted-foreground text-xs">
+    <Alert variant="info">
+      <CalendarSyncIcon />
+      <AlertTitle>
+        {t("A recurring shipment already covers this lane")}
+      </AlertTitle>
+      <AlertDescription>
+        <p>
           {t(
             "{0} {1} . You can generate the next occurrence from it instead of entering this shipment manually.",
             t(
@@ -126,16 +134,18 @@ function MatchBanner({ series, onDismiss }: { series: RecurringShipment; onDismi
             {t("Continue manual entry")}
           </Button>
         </div>
-      </div>
-      <button
-        type="button"
-        aria-label={t("Dismiss suggestion")}
-        onClick={onDismiss}
-        className="text-muted-foreground hover:text-foreground"
-      >
-        <XIcon className="size-4" />
-      </button>
-    </div>
+      </AlertDescription>
+      <AlertAction>
+        <button
+          type="button"
+          aria-label={t("Dismiss suggestion")}
+          onClick={onDismiss}
+          className="ui-focus-ring rounded-md text-current/70 hover:text-current"
+        >
+          <XIcon className="size-4" />
+        </button>
+      </AlertAction>
+    </Alert>
   );
 }
 

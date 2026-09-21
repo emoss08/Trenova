@@ -233,13 +233,14 @@ function RecordSheet({
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
               event.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(event);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               {kind === "Terminated" ? (
                 <FormControl cols="full">
                   <Alert variant="destructive" className="py-2">
@@ -472,6 +473,7 @@ function AmendSheet({
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
@@ -525,7 +527,7 @@ function AmendSheet({
                 />
               </FormControl>
             </FormGroup>
-            <DialogFooter className="border-border border-t pt-3">
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 {t("Cancel")}
               </Button>

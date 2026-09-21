@@ -1,15 +1,13 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
+import { KPI_VALUE_CLASS, KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import type { OshaLog } from "@/lib/graphql/worker-injury";
 import { daysLost, LOG_COLUMNS } from "@/lib/osha-log";
 import NumberFlow from "@number-flow/react";
 import { CompositionBar } from "@trenova/shared/components/ui/composition-bar";
 import { formatRate } from "@trenova/shared/lib/injury";
-import { ActivityIcon, BedIcon, ClipboardListIcon, GaugeIcon } from "lucide-react";
 import { useMemo } from "react";
-
-const VALUE_CLASS = "text-2xl leading-none font-semibold tabular-nums";
 
 type OshaOverviewProps = {
   log: OshaLog;
@@ -38,10 +36,9 @@ export function OshaOverview({ log }: OshaOverviewProps) {
   );
 
   return (
-    <div className="grid grid-cols-4 gap-3 lg:grid-cols-8">
+    <KpiStrip>
       <KpiCard span={2}>
         <KpiHeader
-          icon={<ClipboardListIcon className="size-[11px]" />}
           label={t("Recordable cases")}
           info={
             <InfoPopover title={t("Recordable cases")}>
@@ -53,7 +50,7 @@ export function OshaOverview({ log }: OshaOverviewProps) {
         />
         <NumberFlow
           value={totals.totalRecordableCases}
-          className={VALUE_CLASS}
+          className={KPI_VALUE_CLASS}
           aria-label={t("Recordable cases")}
         />
         <CompositionBar
@@ -66,56 +63,47 @@ export function OshaOverview({ log }: OshaOverviewProps) {
         <KpiSub>{describeCases(log.cases.length, totals.openCases, offTheLog)}</KpiSub>
       </KpiCard>
 
-      <KpiCard span={2}>
-        <KpiHeader
-          icon={<GaugeIcon className="size-[11px]" />}
-          label={t("Incident rate")}
-          info={
-            <InfoPopover title={t("Incident rate")}>
-              {t(
-                "Recordable cases times 200,000, divided by the hours worked from the 300A figures: the rate per 100 full-time workers OSHA and insurers compare fleets on.",
-              )}
-            </InfoPopover>
-          }
-        />
-        <span className={VALUE_CLASS} aria-label={t("Incident rate")}>
-          {formatRate(log.totalRecordableIncidentRate)}
-        </span>
-        <KpiSub>
-          {log.totalRecordableIncidentRate === null
+      <KpiStripItem
+        label={t("Incident rate")}
+        info={
+          <InfoPopover title={t("Incident rate")}>
+            {t(
+              "Recordable cases times 200,000, divided by the hours worked from the 300A figures: the rate per 100 full-time workers OSHA and insurers compare fleets on.",
+            )}
+          </InfoPopover>
+        }
+        value={
+          <span aria-label={t("Incident rate")}>{formatRate(log.totalRecordableIncidentRate)}</span>
+        }
+        sub={
+          log.totalRecordableIncidentRate === null
             ? t("Needs the hours worked from the 300A figures")
             : t(
                 "Recordable cases per 100 full-time workers, over {0} hours",
                 hours.toLocaleString("en-US"),
-              )}
-        </KpiSub>
-      </KpiCard>
+              )
+        }
+      />
 
-      <KpiCard span={2}>
-        <KpiHeader
-          icon={<ActivityIcon className="size-[11px]" />}
-          label={t("DART rate")}
-          info={
-            <InfoPopover title={t("DART rate")}>
-              {t(
-                "Cases with days away, restricted duty or job transfer, on the same 200,000-hour basis. It is the rate most workers' compensation carriers price on.",
-              )}
-            </InfoPopover>
-          }
-        />
-        <span className={VALUE_CLASS} aria-label={t("DART rate")}>
-          {formatRate(log.daysAwayRestrictedRate)}
-        </span>
-        <KpiSub>
-          {log.daysAwayRestrictedRate === null
+      <KpiStripItem
+        label={t("DART rate")}
+        info={
+          <InfoPopover title={t("DART rate")}>
+            {t(
+              "Cases with days away, restricted duty or job transfer, on the same 200,000-hour basis. It is the rate most workers' compensation carriers price on.",
+            )}
+          </InfoPopover>
+        }
+        value={<span aria-label={t("DART rate")}>{formatRate(log.daysAwayRestrictedRate)}</span>}
+        sub={
+          log.daysAwayRestrictedRate === null
             ? t("Needs the hours worked from the 300A figures")
-            : t("Cases with days away, restriction or transfer, per 100 full-time workers")}
-        </KpiSub>
-      </KpiCard>
+            : t("Cases with days away, restriction or transfer, per 100 full-time workers")
+        }
+      />
 
       <KpiCard span={2}>
         <KpiHeader
-          icon={<BedIcon className="size-[11px]" />}
           label={t("Days lost")}
           info={
             <InfoPopover title={t("Days lost")}>
@@ -125,7 +113,7 @@ export function OshaOverview({ log }: OshaOverviewProps) {
             </InfoPopover>
           }
         />
-        <NumberFlow value={lost.total} className={VALUE_CLASS} aria-label={t("Days lost")} />
+        <NumberFlow value={lost.total} className={KPI_VALUE_CLASS} aria-label={t("Days lost")} />
         <CompositionBar
           size="sm"
           showLegend={false}
@@ -146,7 +134,7 @@ export function OshaOverview({ log }: OshaOverviewProps) {
               )}
         </KpiSub>
       </KpiCard>
-    </div>
+    </KpiStrip>
   );
 }
 

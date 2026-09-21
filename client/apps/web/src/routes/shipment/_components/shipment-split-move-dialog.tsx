@@ -12,9 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Separator } from "@trenova/shared/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatSplitDateTime } from "@trenova/shared/lib/date";
 import { apiService } from "@/services/api";
@@ -155,10 +154,8 @@ function CurrentMovePreview({ move }: { move: ShipmentMove }) {
       : null;
 
   return (
-    <div>
-      <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
-        {t("Current Move")}
-      </h4>
+    <div className="flex flex-col gap-2">
+      <h3 className="text-sm font-semibold">{t("Current Move")}</h3>
       <div className="bg-muted/50 rounded-lg border p-3">
         <MiniStopRow
           locationId={pickup.locationId}
@@ -207,10 +204,8 @@ function AfterSplitPreview({
   const hasAssignment = !!move.assignment?.id;
 
   return (
-    <div>
-      <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
-        {t("After Split")}
-      </h4>
+    <div className="flex flex-col gap-2">
+      <h3 className="text-sm font-semibold">{t("After Split")}</h3>
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-muted/50 rounded-lg border p-3">
           <div className="mb-2 flex items-center gap-2">
@@ -334,8 +329,8 @@ export function SplitMoveDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent className="gap-2 overflow-hidden p-0 sm:max-w-3xl">
-        <DialogHeader className="border-border gap-0 border-b p-4">
+      <DialogContent size="xl" className="gap-0 overflow-hidden p-0">
+        <DialogHeader className="border-border border-b px-4 py-3">
           <DialogTitle>{t("Split Move")}</DialogTitle>
           <DialogDescription>
             {t(
@@ -350,7 +345,7 @@ export function SplitMoveDialog({
           }}
         >
           <ScrollArea className="flex max-h-[calc(100vh-14rem)] flex-col px-4 [&_[data-slot=scroll-area-viewport]>div]:block!">
-            <div className="space-y-5 px-1 pb-4">
+            <div className="flex flex-col gap-6 px-1 py-4">
               {hasAssignment && (
                 <div className="flex shrink-0 items-start gap-2 rounded-lg border border-info-border bg-info-subtle p-3 dark:border-info-border dark:bg-info-subtle/50">
                   <InfoIcon className="mt-0.5 size-4 shrink-0 text-info-foreground" />
@@ -362,13 +357,7 @@ export function SplitMoveDialog({
                 </div>
               )}
               <CurrentMovePreview move={currentMove} />
-
-              <Separator />
-
-              <div>
-                <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
-                  {t("New Destination")}
-                </h4>
+              <FormSection title={t("New Destination")}>
                 <FormGroup cols={1}>
                   <FormControl>
                     <LocationAutocompleteField
@@ -380,11 +369,10 @@ export function SplitMoveDialog({
                     />
                   </FormControl>
                 </FormGroup>
-              </div>
+              </FormSection>
               <AfterSplitPreview move={currentMove} formValues={formValues} />
-              <Separator />
-              <Section
-                label={t("Handoff Pickup Times")}
+              <FormSection
+                title={t("Handoff Pickup Times")}
                 description={t(
                   "Pre-filled from the original delivery. The new carrier picks up at the same location, so these times should match or follow the original delivery.",
                 )}
@@ -408,9 +396,9 @@ export function SplitMoveDialog({
                     />
                   </FormControl>
                 </FormGroup>
-              </Section>
-              <Section
-                label={t("New Delivery Times")}
+              </FormSection>
+              <FormSection
+                title={t("New Delivery Times")}
                 description={t(
                   "When the new move arrives at the final destination. These should be after the handoff pickup departure above.",
                 )}
@@ -434,8 +422,8 @@ export function SplitMoveDialog({
                     />
                   </FormControl>
                 </FormGroup>
-              </Section>
-              <Section label={t("Cargo (Optional)")}>
+              </FormSection>
+              <FormSection title={t("Cargo (Optional)")}>
                 <FormGroup cols={2}>
                   <FormControl>
                     <NumberField
@@ -454,7 +442,7 @@ export function SplitMoveDialog({
                     />
                   </FormControl>
                 </FormGroup>
-              </Section>
+              </FormSection>
             </div>
           </ScrollArea>
           <DialogFooter className="m-0">
@@ -468,23 +456,5 @@ export function SplitMoveDialog({
         </Form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function Section({
-  label,
-  description,
-  children,
-}: {
-  label: string;
-  description?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <h4 className="text-foreground text-xs font-semibold">{label}</h4>
-      {description && <p className="text-2xs text-muted-foreground mb-2">{description}</p>}
-      {children}
-    </div>
   );
 }

@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -140,13 +140,14 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
               event.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(event);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               <FormControl cols="full">
                 <PerformanceReviewTemplateAutocompleteField<CreateReviewFormValues>
                   control={control}
@@ -301,7 +302,7 @@ function EditDraft({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[85vh] flex-col gap-0 sm:max-w-2xl">
+      <DialogContent size="lg" className="flex max-h-[85vh] flex-col">
         <DialogHeader>
           <DialogTitle>{t(review.title)}</DialogTitle>
           <DialogDescription>
@@ -312,16 +313,16 @@ function EditDraft({
         </DialogHeader>
         <FormProvider {...form}>
           <Form
-            className="flex min-h-0 flex-1 flex-col"
+            className="flex min-h-0 flex-1 flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
               event.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(event);
             }}
           >
-            <div className="min-h-0 flex-1 overflow-y-auto px-1">
+            <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-1">
               <RatingsSection />
-              <FormGroup className="pb-2" cols={1}>
+              <FormGroup cols={1}>
                 <FormControl cols="full">
                   <TextareaField<ReviewDraftFormValues>
                     control={control}
@@ -357,7 +358,7 @@ function EditDraft({
               </FormGroup>
               <GoalsSection />
             </div>
-            <DialogFooter className="border-border border-t pt-3">
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 {t("Cancel")}
               </Button>
@@ -383,18 +384,15 @@ function RatingsSection() {
   );
 
   return (
-    <section className="flex flex-col gap-2 py-2">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold">{t("Ratings")}</h3>
-          <p className="text-muted-foreground text-xs">
-            {t("Weighted by the template; the score updates as you go.")}
-          </p>
-        </div>
+    <FormSection
+      title={t("Ratings")}
+      description={t("Weighted by the template; the score updates as you go.")}
+      action={
         <span className="text-lg font-semibold tabular-nums">
           {score == null ? "—" : score.toFixed(2)}
         </span>
-      </div>
+      }
+    >
       <div className="flex flex-col gap-2">
         {(ratings ?? []).map((rating, index) => (
           <RatingRow
@@ -405,7 +403,7 @@ function RatingsSection() {
           />
         ))}
       </div>
-    </section>
+    </FormSection>
   );
 }
 
@@ -420,9 +418,7 @@ function RatingRow({ index, label, weight }: { index: number; label: string; wei
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">
           {label}
-          <span className="text-muted-foreground ml-1.5 text-xs">
-            {t("weight {0}", weight)}
-          </span>
+          <span className="text-muted-foreground ml-1.5 text-xs">{t("weight {0}", weight)}</span>
         </p>
         <div className="flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((mark) => (
@@ -470,14 +466,10 @@ function GoalsSection() {
   const goals = useFieldArray({ control, name: "goals" });
 
   return (
-    <section className="flex flex-col gap-2 py-2">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold">{t("Goals")}</h3>
-          <p className="text-muted-foreground text-xs">
-            {t("What the worker is aiming at before the next review.")}
-          </p>
-        </div>
+    <FormSection
+      title={t("Goals")}
+      description={t("What the worker is aiming at before the next review.")}
+      action={
         <Button
           type="button"
           size="sm"
@@ -487,7 +479,8 @@ function GoalsSection() {
           <PlusIcon className="size-3.5" />
           {t("Add goal")}
         </Button>
-      </div>
+      }
+    >
       {goals.fields.map((field, index) => (
         <div
           key={field.id}
@@ -527,6 +520,6 @@ function GoalsSection() {
           </Button>
         </div>
       ))}
-    </section>
+    </FormSection>
   );
 }

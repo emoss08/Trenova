@@ -1,13 +1,9 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { SectionPanel } from "@/components/section-panel";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
@@ -83,24 +79,24 @@ export function InvoiceReconciliationPage() {
         ),
       }}
       toolbar={
-        <div className="mx-4 mt-3 grid gap-3 md:grid-cols-4">
-          <SummaryCard
-            label={t("Open Exceptions")}
+        <KpiStrip aria-label={t("Exception totals")}>
+          <KpiStripItem
+            label={t("Open exceptions")}
             value={String(summaryQuery.data?.reconciliationPending ?? 0)}
           />
-          <SummaryCard
-            label={t("Pending Approvals")}
+          <KpiStripItem
+            label={t("Pending approvals")}
             value={String(summaryQuery.data?.approvalsPending ?? 0)}
           />
-          <SummaryCard
-            label={t("Write-Offs")}
+          <KpiStripItem
+            label={t("Write-offs")}
             value={String(summaryQuery.data?.writeOffPending ?? 0)}
           />
-          <SummaryCard
-            label={t("Batches In Flight")}
+          <KpiStripItem
+            label={t("Batches in flight")}
             value={String(summaryQuery.data?.batchesInFlight ?? 0)}
           />
-        </div>
+        </KpiStrip>
       }
       sidebar={
         <div className="flex h-full flex-col">
@@ -171,9 +167,7 @@ export function InvoiceReconciliationPage() {
                       <p className="text-sm font-medium">{row.originalInvoiceNumber}</p>
                       <p className="text-muted-foreground text-xs">{row.customerName}</p>
                     </div>
-                    <span className="rounded-full border px-2 py-0.5 text-xs">
-                      {row.status}
-                    </span>
+                    <span className="rounded-full border px-2 py-0.5 text-xs">{row.status}</span>
                   </div>
                   <p className="mt-3 text-sm">{row.reason}</p>
                   <p className="text-muted-foreground mt-2 text-xs">
@@ -202,43 +196,38 @@ export function InvoiceReconciliationPage() {
             </div>
           ) : (
             <div className="space-y-4 p-4">
-              <Card>
-                <CardHeader className="border-b">
-                  <CardTitle>{selectedRow.reason}</CardTitle>
-                  <CardDescription>{selectedRow.customerName}</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-3 pt-4 md:grid-cols-2">
-                  <Metric label={t("Status")} value={selectedRow.status} />
-                  <Metric label={t("Amount")} value={formatCurrency(Number(selectedRow.amount))} />
-                  <Metric label={t("Adjustment Kind")} value={selectedRow.adjustmentKind} />
-                  <Metric label={t("Adjustment Status")} value={selectedRow.adjustmentStatus} />
-                  <Metric
-                    label={t("Requested By")}
-                    value={selectedRow.submittedByName || selectedRow.submittedById || "Unknown"}
-                  />
-                  <Metric
-                    label={t("Submitted At")}
-                    value={formatTimestamp(selectedRow.submittedAt)}
-                  />
-                  <Metric
-                    label={t("Policy Source")}
-                    value={selectedRow.policySource || "Policy-controlled"}
-                  />
-                  <Metric
-                    label={t("Finance Notes")}
-                    value={selectedRow.financeNotes || "No finance notes recorded"}
-                  />
-                </CardContent>
-              </Card>
+              <SectionPanel title={selectedRow.reason} hint={selectedRow.customerName}>
+                <DescriptionList columns={2} className="p-3">
+                  <DescriptionItem label={t("Status")}>{selectedRow.status}</DescriptionItem>
+                  <DescriptionItem label={t("Amount")}>
+                    {formatCurrency(Number(selectedRow.amount))}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Adjustment Kind")}>
+                    {selectedRow.adjustmentKind}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Adjustment Status")}>
+                    {selectedRow.adjustmentStatus}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Requested By")}>
+                    {selectedRow.submittedByName || selectedRow.submittedById || "Unknown"}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Submitted At")}>
+                    {formatTimestamp(selectedRow.submittedAt)}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Policy Source")}>
+                    {selectedRow.policySource || "Policy-controlled"}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Finance Notes")}>
+                    {selectedRow.financeNotes || "No finance notes recorded"}
+                  </DescriptionItem>
+                </DescriptionList>
+              </SectionPanel>
 
-              <Card>
-                <CardHeader className="border-b">
-                  <CardTitle>{t("Linked Artifacts")}</CardTitle>
-                  <CardDescription>
-                    {t("Jump directly into the related billing and invoice surfaces.")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-2 pt-4">
+              <SectionPanel
+                title={t("Linked artifacts")}
+                help={t("Jump directly into the related billing and invoice surfaces.")}
+              >
+                <div className="flex flex-wrap gap-2 p-3">
                   <LinkButton to={`/billing/invoices?item=${selectedRow.originalInvoiceId}`}>
                     {t("Original Invoice")}
                   </LinkButton>
@@ -259,70 +248,45 @@ export function InvoiceReconciliationPage() {
                       {t("Rebill Queue Item")}
                     </LinkButton>
                   ) : null}
-                </CardContent>
-              </Card>
+                </div>
+              </SectionPanel>
 
-              <Card>
-                <CardHeader className="border-b">
-                  <CardTitle>{t("Adjustment Detail")}</CardTitle>
-                  <CardDescription>
-                    {t("Line-level credit and rebill values that created the exception.")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="overflow-hidden rounded-xl border">
-                    <table className="w-full text-sm">
-                      <thead className="bg-muted/40 text-muted-foreground text-left">
-                        <tr>
-                          <th className="px-4 py-3">{t("Line")}</th>
-                          <th className="px-4 py-3">{t("Description")}</th>
-                          <th className="px-4 py-3 text-right">{t("Credit")}</th>
-                          <th className="px-4 py-3 text-right">{t("Rebill")}</th>
+              <SectionPanel
+                title={t("Adjustment detail")}
+                help={t("Line-level credit and rebill values that created the exception.")}
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/40 text-muted-foreground text-left">
+                      <tr>
+                        <th className="px-4 py-3">{t("Line")}</th>
+                        <th className="px-4 py-3">{t("Description")}</th>
+                        <th className="px-4 py-3 text-right">{t("Credit")}</th>
+                        <th className="px-4 py-3 text-right">{t("Rebill")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detailQuery.data.lines.map((line) => (
+                        <tr key={line.id} className="border-t">
+                          <td className="px-4 py-3 font-mono text-xs">{line.lineNumber}</td>
+                          <td className="px-4 py-3">{t(line.description)}</td>
+                          <td className="px-4 py-3 text-right">
+                            {formatCurrency(Number(line.creditAmount))}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            {formatCurrency(Number(line.rebillAmount))}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {detailQuery.data.lines.map((line) => (
-                          <tr key={line.id} className="border-t">
-                            <td className="px-4 py-3 font-mono text-xs">{line.lineNumber}</td>
-                            <td className="px-4 py-3">{t(line.description)}</td>
-                            <td className="px-4 py-3 text-right">
-                              {formatCurrency(Number(line.creditAmount))}
-                            </td>
-                            <td className="px-4 py-3 text-right">
-                              {formatCurrency(Number(line.rebillAmount))}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </SectionPanel>
             </div>
           )}
         </ScrollArea>
       }
     />
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Card className="shadow-none">
-      <CardContent className="px-4 py-3">
-        <p className="text-muted-foreground text-xs">{label}</p>
-        <p className="mt-1 text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-background rounded-lg border px-3 py-2">
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <p className="mt-1 text-sm font-medium">{value}</p>
-    </div>
   );
 }
 

@@ -2,8 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Form } from "@trenova/shared/components/ui/form";
-import { Separator } from "@trenova/shared/components/ui/separator";
+import { Form, FormSection } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -186,46 +185,44 @@ function ReversalDetailPanel({
       description={`Reversal for entry ${reversal.originalJournalEntryId}`}
       headerActions={<AccountingStatusBadge status={reversal.status} />}
     >
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-        <div>
-          <dt className="text-2xs text-muted-foreground font-medium">{t("Original Entry")}</dt>
-          <dd className="mt-0.5 font-mono text-xs">{reversal.originalJournalEntryId}</dd>
-        </div>
-        <div>
-          <dt className="text-2xs text-muted-foreground font-medium">{t("Reason Code")}</dt>
-          <dd className="mt-0.5 text-xs font-medium">{reversal.reasonCode}</dd>
-        </div>
-        <div className="col-span-2">
-          <dt className="text-2xs text-muted-foreground font-medium">{t("Reason")}</dt>
-          <dd className="mt-0.5 text-xs">{reversal.reasonText}</dd>
-        </div>
-        {reversal.reversalJournalEntryId ? (
+      <div className="flex flex-col gap-6">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
           <div>
-            <dt className="text-2xs text-muted-foreground font-medium">{t("Reversal Entry")}</dt>
-            <dd className="mt-0.5 font-mono text-xs">{reversal.reversalJournalEntryId}</dd>
+            <dt className="text-2xs text-muted-foreground font-medium">{t("Original Entry")}</dt>
+            <dd className="mt-0.5 font-mono text-xs">{reversal.originalJournalEntryId}</dd>
           </div>
-        ) : null}
-        {reversal.rejectionReason ? (
+          <div>
+            <dt className="text-2xs text-muted-foreground font-medium">{t("Reason Code")}</dt>
+            <dd className="mt-0.5 text-xs font-medium">{reversal.reasonCode}</dd>
+          </div>
           <div className="col-span-2">
-            <dt className="text-2xs text-muted-foreground font-medium">{t("Rejection Reason")}</dt>
-            <dd className="mt-0.5 text-xs text-danger-foreground">
-              {reversal.rejectionReason}
-            </dd>
+            <dt className="text-2xs text-muted-foreground font-medium">{t("Reason")}</dt>
+            <dd className="mt-0.5 text-xs">{reversal.reasonText}</dd>
           </div>
-        ) : null}
-        {reversal.cancelReason ? (
-          <div className="col-span-2">
-            <dt className="text-2xs text-muted-foreground font-medium">{t("Cancel Reason")}</dt>
-            <dd className="mt-0.5 text-xs">{reversal.cancelReason}</dd>
-          </div>
-        ) : null}
-      </dl>
+          {reversal.reversalJournalEntryId ? (
+            <div>
+              <dt className="text-2xs text-muted-foreground font-medium">{t("Reversal Entry")}</dt>
+              <dd className="mt-0.5 font-mono text-xs">{reversal.reversalJournalEntryId}</dd>
+            </div>
+          ) : null}
+          {reversal.rejectionReason ? (
+            <div className="col-span-2">
+              <dt className="text-2xs text-muted-foreground font-medium">
+                {t("Rejection Reason")}
+              </dt>
+              <dd className="mt-0.5 text-xs text-danger-foreground">{reversal.rejectionReason}</dd>
+            </div>
+          ) : null}
+          {reversal.cancelReason ? (
+            <div className="col-span-2">
+              <dt className="text-2xs text-muted-foreground font-medium">{t("Cancel Reason")}</dt>
+              <dd className="mt-0.5 text-xs">{reversal.cancelReason}</dd>
+            </div>
+          ) : null}
+        </dl>
 
-      {reversal.status === "PendingApproval" || reversal.status === "Approved" || canCancel ? (
-        <>
-          <Separator />
-          <div className="space-y-3">
-            <h4 className="text-xs font-semibold">{t("Actions")}</h4>
+        {reversal.status === "PendingApproval" || reversal.status === "Approved" || canCancel ? (
+          <FormSection title={t("Actions")}>
             <div className="flex flex-wrap items-center gap-2">
               {reversal.status === "PendingApproval" ? (
                 <>
@@ -325,9 +322,9 @@ function ReversalDetailPanel({
                 </div>
               </div>
             ) : null}
-          </div>
-        </>
-      ) : null}
+          </FormSection>
+        ) : null}
+      </div>
     </DataTablePanelContainer>
   );
 }

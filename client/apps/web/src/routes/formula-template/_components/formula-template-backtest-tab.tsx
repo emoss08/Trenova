@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { EntityRedirectLink } from "@/components/link";
+import { KpiStrip } from "@/components/kpi/kpi-strip";
 import { DeltaValue, StatTile } from "@/components/metric-tiles";
 import { downloadCsv, exportFilename } from "@/lib/data-table-export";
 import { queries } from "@/lib/queries";
@@ -77,7 +78,7 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+      <KpiStrip minItemWidth="7rem">
         <StatTile
           label={t("Shipments")}
           value={`${summary.evaluatedCount}/${summary.shipmentCount}`}
@@ -103,7 +104,7 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
           value={String(summary.errorCount)}
           tone={summary.errorCount > 0 ? "text-destructive" : undefined}
         />
-      </div>
+      </KpiStrip>
 
       {summary.errorCount > 0 && (
         <p className="text-muted-foreground text-xs">
@@ -182,9 +183,7 @@ function BacktestResultRow({ result }: { result: BacktestResult }) {
         <div className="flex items-center justify-end gap-1.5">
           {result.guardrailApplied && (
             <Tooltip>
-              <TooltipTrigger
-                render={<ShieldIcon className="size-3.5 text-info-foreground" />}
-              />
+              <TooltipTrigger render={<ShieldIcon className="size-3.5 text-info-foreground" />} />
               <TooltipContent side="left" className="text-xs">
                 {t("Guardrail clamped the candidate amount")}
               </TooltipContent>
@@ -316,7 +315,7 @@ export default function FormulaTemplateBacktestTab({
               className={cn(
                 "rounded-lg border p-2 text-left transition-colors",
                 source === option.value
-                  ? "border-primary bg-primary/5"
+                  ? "border-brand bg-surface-selected"
                   : "border-border bg-background hover:bg-muted/50",
               )}
             >

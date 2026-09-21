@@ -68,7 +68,6 @@ export function WorkersPage() {
 
   return (
     <PageLayout
-      className="gap-y-2"
       pageHeaderProps={{
         title: t("Workers"),
         description: t("Manage and track workers along with their compliance and paid time off"),

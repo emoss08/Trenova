@@ -26,9 +26,8 @@ export function IncomeStatementPage() {
         title: t("Income Statement"),
         description: t("Revenue, expenses, and net income for a fiscal period."),
       }}
-      className="p-0"
     >
-      <div className="mx-4 mt-3 mb-4 space-y-4">
+      <>
         <FiscalPeriodSelector value={periodId} onChange={setPeriodId} />
 
         {!periodId ? (
@@ -71,7 +70,7 @@ export function IncomeStatementPage() {
             </div>
           </div>
         ) : null}
-      </div>
+      </>
     </PageLayout>
   );
 }

@@ -77,7 +77,7 @@ export function ShipmentCancelDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent className="sm:max-w-100">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Cancel Shipment")}</DialogTitle>
           <DialogDescription>
@@ -87,12 +87,13 @@ export function ShipmentCancelDialog({
           </DialogDescription>
         </DialogHeader>
         <Form
+          className="flex flex-col gap-4"
           onSubmit={(e) => {
             e.stopPropagation();
             void handleSubmit(onSubmit)(e);
           }}
         >
-          <FormGroup cols={1} className="pb-4">
+          <FormGroup cols={1}>
             <FormControl>
               <TextareaField
                 control={control}

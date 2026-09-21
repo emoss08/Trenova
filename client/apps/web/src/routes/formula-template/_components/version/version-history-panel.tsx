@@ -1,4 +1,5 @@
 import { translate } from "@trenova/shared/i18n/runtime";
+import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DateTimePicker } from "@/components/fields/date-field/datetime-picker";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -201,25 +202,29 @@ export function VersionHistoryPanel({
 
           <div className="flex h-[calc(100%-80px)] flex-col">
             {compareMode && selectedForCompare !== null && (
-              <div className="border-primary/50 bg-primary/10 m-2 flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <GitCompareArrowsIcon className="text-primary size-4" />
-                  <span className="text-foreground">
+              <Alert variant="info" size="sm" className="m-2 w-auto">
+                <GitCompareArrowsIcon />
+                <AlertDescription>
+                  <p>
                     {t("Select another version to compare with")}{" "}
                     <span className="font-mono font-semibold">{t("v{0}", selectedForCompare)}</span>
-                  </span>
-                </div>
-                <Button variant="ghost" size="icon-xs" onClick={handleCancelCompareMode}>
-                  <XIcon className="size-4" />
-                </Button>
-              </div>
+                  </p>
+                </AlertDescription>
+                <AlertAction>
+                  <Button variant="ghost" size="icon-xs" onClick={handleCancelCompareMode}>
+                    <XIcon className="size-4" />
+                  </Button>
+                </AlertAction>
+              </Alert>
             )}
 
             {template?.sourceTemplateId && (
-              <div className="m-2 flex items-center gap-2 rounded-sm border border-warning bg-warning/20 p-1 text-sm text-warning-foreground">
-                <GitBranchIcon className="size-4" />
-                <p>{t("Forked from version {0}", template.sourceVersionNumber)}</p>
-              </div>
+              <Alert variant="info" size="sm" className="m-2 w-auto">
+                <GitBranchIcon />
+                <AlertDescription>
+                  {t("Forked from version {0}", template.sourceVersionNumber)}
+                </AlertDescription>
+              </Alert>
             )}
 
             <ScrollArea className="flex max-h-[calc(100vh-5rem)] flex-col p-2 transition-all hover:pr-3">
@@ -348,7 +353,7 @@ function getChangeBadges(
   if (hasExpression) {
     badges.push({
       label: translate("Expr"),
-      color: "bg-info-subtle text-info-foreground dark:bg-info-subtle/40 dark:text-info-foreground",
+      color: "bg-info-subtle text-info-subtle-foreground",
       tooltip: translate("Expression changed"),
     });
   }
@@ -356,7 +361,7 @@ function getChangeBadges(
   if (variableChanges.length > 0) {
     badges.push({
       label: `Vars${variableChanges.length > 1 ? ` (${variableChanges.length})` : ""}`,
-      color: "bg-accent-violet-subtle text-accent-violet-on-subtle dark:bg-accent-violet-subtle/40 dark:text-accent-violet-on-subtle",
+      color: "bg-accent-violet-subtle text-accent-violet-on-subtle",
       tooltip: `${variableChanges.length} variable change${variableChanges.length > 1 ? "s" : ""}`,
     });
   }
@@ -364,7 +369,7 @@ function getChangeBadges(
   if (hasStatus) {
     badges.push({
       label: translate("Status"),
-      color: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle/40 dark:text-warning-foreground",
+      color: "bg-warning-subtle text-warning-subtle-foreground",
       tooltip: translate("Status changed"),
     });
   }
@@ -484,9 +489,9 @@ function VersionItem({
       <div
         className={cn(
           "group bg-card hover:bg-sidebar relative rounded-lg border p-3 transition-all",
-          isCurrent && "border-primary/50 bg-primary/5",
-          isSelectedForCompare && "ring-primary ring-2 ring-offset-2",
-          canCompareWith && "hover:border-primary/50 cursor-pointer",
+          isCurrent && "border-brand-border bg-surface-selected",
+          isSelectedForCompare && "ring-brand ring-2 ring-offset-2",
+          canCompareWith && "hover:border-brand-border cursor-pointer",
         )}
         role={canCompareWith ? "button" : undefined}
         tabIndex={canCompareWith ? 0 : undefined}
@@ -511,7 +516,11 @@ function VersionItem({
                 </Badge>
               )}
               {isSelectedForCompare && (
-                <Badge variant="neutral" appearance="outline" className="border-primary text-primary text-xs">
+                <Badge
+                  variant="neutral"
+                  appearance="outline"
+                  className="border-primary text-primary text-xs"
+                >
                   {t("Selected")}
                 </Badge>
               )}
@@ -531,7 +540,7 @@ function VersionItem({
                           render={
                             <span
                               className={cn(
-                                "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-medium",
+                                "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-2xs font-medium",
                                 tagOption?.color ?? "bg-muted text-muted-foreground",
                               )}
                             >
@@ -558,7 +567,7 @@ function VersionItem({
                       render={
                         <span
                           className={cn(
-                            "inline-flex items-center rounded px-1.5 py-0.5 text-2xs font-medium",
+                            "inline-flex items-center rounded-md px-1.5 py-0.5 text-2xs font-medium",
                             badge.color,
                           )}
                         >
@@ -790,7 +799,7 @@ function VersionItem({
                 >
                   <span
                     className={cn(
-                      "inline-flex w-fit items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium",
+                      "inline-flex w-fit items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium",
                       option.color,
                     )}
                   >

@@ -16,9 +16,7 @@ export function HazmatSegregationRulesPage() {
       }}
     >
       <DataTableLazyComponent>
-        <div className="px-4">
-          <Table />
-        </div>
+        <Table />
       </DataTableLazyComponent>
     </PageLayout>
   );

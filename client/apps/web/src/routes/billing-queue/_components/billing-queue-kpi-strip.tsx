@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 
@@ -34,7 +34,7 @@ export function BillingQueueKPIStrip({
     },
     {
       key: "InReview",
-      label: t("In Review"),
+      label: t("In review"),
       value: stats?.inReview ?? 0,
     },
     {
@@ -44,31 +44,22 @@ export function BillingQueueKPIStrip({
     },
     {
       key: "Approved",
-      label: includePosted ? "Approved Drafts" : "Approved",
+      label: includePosted ? "Approved drafts" : "Approved",
       value: stats?.approved ?? 0,
     },
   ];
 
   return (
-    <div className="mx-4 mt-3">
-      <div className="bg-card flex items-center rounded-lg border">
-        {metrics.map((metric, index) => (
-          <button
-            key={metric.key}
-            type="button"
-            onClick={() => toggle(metric.key)}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2.5 text-left transition-colors",
-              "hover:bg-muted/50",
-              index > 0 && "border-l",
-              statusFilter === metric.key && "bg-muted",
-            )}
-          >
-            <span className="text-muted-foreground text-xs">{t(metric.label)}</span>
-            <span className="text-sm font-semibold tabular-nums">{metric.value}</span>
-          </button>
-        ))}
-      </div>
-    </div>
+    <KpiStrip>
+      {metrics.map((metric) => (
+        <KpiStripItem
+          key={metric.key}
+          label={t(metric.label)}
+          value={metric.value}
+          active={statusFilter === metric.key}
+          onClick={() => toggle(metric.key)}
+        />
+      ))}
+    </KpiStrip>
   );
 }

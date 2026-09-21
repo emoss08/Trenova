@@ -83,7 +83,6 @@ export function OrderChargesSection() {
       description={t(
         "Order-level charges not tied to a single leg (e.g. customs brokerage). These roll into the total and are billed exactly once on the first grouped invoice.",
       )}
-      className="border-border border-t pt-4"
       action={
         charges.length > 0 &&
         !chargesLocked && (

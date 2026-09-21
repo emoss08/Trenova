@@ -123,7 +123,7 @@ export function RecordEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {entry ? t("Correct the entry") : t("Record hours")}
@@ -158,9 +158,7 @@ export function RecordEntryDialog({
             </span>
           </div>
           <div className="text-right">
-            <p className="text-muted-foreground text-xs font-medium">
-              {t("Would be paid")}
-            </p>
+            <p className="text-muted-foreground text-xs font-medium">{t("Would be paid")}</p>
             <p className="font-mono text-xl leading-none font-semibold tabular-nums">
               {formatHours(paidMinutes)}
             </p>
@@ -169,13 +167,14 @@ export function RecordEntryDialog({
 
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               <FormControl>
                 <AutoCompleteDateTimeField<RecordTimeEntryFormValues>
                   control={control}

@@ -174,7 +174,7 @@ function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
       }}
       titleNode={<DialogTitle>{t("Create new location")}</DialogTitle>}
       descriptionNode={
-        <DialogDescription className="text-muted-foreground text-xs">
+        <DialogDescription>
           {t("Fill out the form below to create a new Location.")}
         </DialogDescription>
       }
@@ -322,9 +322,7 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
       }
       descriptionNode={
         lastUpdatedDescription ? (
-          <DialogDescription className="text-muted-foreground text-xs">
-            {lastUpdatedDescription}
-          </DialogDescription>
+          <DialogDescription>{lastUpdatedDescription}</DialogDescription>
         ) : null
       }
       footer={
@@ -378,7 +376,8 @@ function DialogShell({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="grid h-[80vh] max-h-200 w-[90vw] grid-cols-1 gap-0 overflow-hidden p-0 sm:max-w-275 lg:grid-cols-[minmax(0,440px)_1fr]"
+        size="2xl"
+        className="grid h-[80vh] max-h-200 w-[90vw] grid-cols-1 gap-0 overflow-hidden p-0 lg:grid-cols-[minmax(0,440px)_1fr]"
       >
         <FormProvider {...form}>
           <Form

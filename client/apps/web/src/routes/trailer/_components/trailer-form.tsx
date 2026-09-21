@@ -21,7 +21,7 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
   const t = useT();
 
   return (
-    <FormGroup cols={2} className="pb-2">
+    <FormGroup cols={2}>
       <FormControl>
         <SelectField
           control={control}
@@ -134,7 +134,7 @@ function RegistrationInformationSecond({ control }: { control: Control<Trailer> 
   const t = useT();
 
   return (
-    <FormSection title={t("Registration Information")} className="border-t py-2">
+    <FormSection title={t("Registration Information")}>
       <FormGroup cols={2}>
         <FormControl>
           <InputField
@@ -214,10 +214,10 @@ export function TrailerForm() {
   const { control } = useFormContext<Trailer>();
 
   return (
-    <>
+    <div className="flex flex-col gap-6">
       <GeneralInformationSection control={control} />
       <RegistrationInformationSecond control={control} />
       <CustomFieldsSection resourceType="trailer" control={control} />
-    </>
+    </div>
   );
 }

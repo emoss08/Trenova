@@ -39,9 +39,8 @@ export function TrialBalancePage() {
         title: t("Trial Balance"),
         description: t("View account balances for a fiscal period."),
       }}
-      className="p-0"
     >
-      <div className="mx-4 mt-3 mb-4 space-y-4">
+      <>
         <FiscalPeriodSelector value={periodId} onChange={setPeriodId} />
 
         {!periodId ? (
@@ -129,7 +128,7 @@ export function TrialBalancePage() {
             </table>
           </div>
         )}
-      </div>
+      </>
     </PageLayout>
   );
 }

@@ -18,9 +18,7 @@ export function LeaveControlPage() {
       }}
     >
       <SuspenseLoader>
-        <div className="p-4">
-          <LeaveControlForm />
-        </div>
+        <LeaveControlForm />
       </SuspenseLoader>
     </PageLayout>
   );

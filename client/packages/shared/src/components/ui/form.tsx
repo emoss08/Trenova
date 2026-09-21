@@ -1,3 +1,4 @@
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { cn } from "@trenova/shared/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
@@ -73,15 +74,9 @@ export const FormRootError = React.memo(({ className }: { className?: string }) 
   }
 
   return (
-    <div
-      role="alert"
-      className={cn(
-        "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive",
-        className,
-      )}
-    >
-      {message}
-    </div>
+    <Alert variant="destructive" size="sm" className={className}>
+      <AlertDescription>{message}</AlertDescription>
+    </Alert>
   );
 });
 

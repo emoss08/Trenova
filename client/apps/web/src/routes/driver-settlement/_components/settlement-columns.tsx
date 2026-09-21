@@ -28,7 +28,10 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
         <div className="flex items-center gap-1.5">
           <DriverSettlementStatusBadge status={row.original.status as DriverSettlementStatus} />
           {row.original.hasExceptions && (
-            <TriangleAlert className="size-3.5 text-warning-foreground" aria-label={t("Has exceptions")} />
+            <TriangleAlert
+              className="size-3.5 text-warning-foreground"
+              aria-label={t("Has exceptions")}
+            />
           )}
         </div>
       ),
@@ -39,7 +42,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
       accessorKey: "settlementNumber",
       header: t("Settlement #"),
       cell: ({ row }) => (
-        <span className="font-mono text-xs font-medium">{row.original.settlementNumber}</span>
+        <span className="font-mono font-medium">{row.original.settlementNumber}</span>
       ),
       size: 150,
       meta: { apiField: "settlementNumber", label: t("Settlement Number") },
@@ -47,7 +50,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
     {
       id: "worker",
       header: t("Driver"),
-      cell: ({ row }) => <span className="text-xs font-medium">{workerName(row.original)}</span>,
+      cell: ({ row }) => <span className="font-medium">{workerName(row.original)}</span>,
       size: 180,
     },
     {
@@ -64,14 +67,14 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
     {
       accessorKey: "periodEnd",
       header: t("Period End"),
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.periodEnd)}</span>,
+      cell: ({ row }) => <span>{formatDate(row.original.periodEnd)}</span>,
       size: 110,
       meta: { apiField: "periodEnd", label: t("Period End") },
     },
     {
       accessorKey: "payDate",
       header: t("Pay Date"),
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.payDate)}</span>,
+      cell: ({ row }) => <span>{formatDate(row.original.payDate)}</span>,
       size: 110,
       meta: { apiField: "payDate", label: t("Pay Date") },
     },
@@ -79,7 +82,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
       accessorKey: "shipmentCount",
       header: () => <div className="text-right">{t("Loads")}</div>,
       cell: ({ row }) => (
-        <div className="text-right text-xs tabular-nums">{row.original.shipmentCount}</div>
+        <div className="text-right tabular-nums">{row.original.shipmentCount}</div>
       ),
       size: 70,
       meta: { apiField: "shipmentCount", label: t("Shipment Count") },

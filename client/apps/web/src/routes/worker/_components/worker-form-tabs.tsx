@@ -30,11 +30,10 @@ export function GeneralTab() {
   const { control } = useFormContext<Worker>();
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <FormSection
         title={t("General Information")}
         description={t("General information for the worker.")}
-        className="border-b"
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -135,7 +134,6 @@ export function GeneralTab() {
       <FormSection
         title={t("Address Information")}
         description={t("Address information for the worker's residence.")}
-        className="border-b"
       >
         <FormGroup cols={2}>
           <FormControl cols="full">
@@ -253,11 +251,10 @@ export function EmploymentTab() {
   const requiresHazmatExpiry = endorsement === "H" || endorsement === "X";
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <FormSection
         title={t("Employment Information")}
         description={t("Employment information for the worker.")}
-        className="border-b"
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -296,7 +293,6 @@ export function EmploymentTab() {
       <FormSection
         title={t("License Details")}
         description={t("License information for the worker.")}
-        className="border-b"
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -431,11 +427,10 @@ export function ComplianceTab() {
   const { control } = useFormContext<Worker>();
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <FormSection
         title={t("Compliance Status")}
         description={t("Compliance status information for the worker.")}
-        className="border-b"
       >
         <FormGroup cols={2}>
           <FormControl>

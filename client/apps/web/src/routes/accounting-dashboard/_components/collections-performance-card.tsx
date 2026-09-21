@@ -1,12 +1,11 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { SectionPanel } from "@/components/section-panel";
 import { AR_CEI_HEALTHY_THRESHOLD, AR_CEI_WARNING_THRESHOLD } from "@/lib/accounting-constants";
 import type { ARCollectionPerformance } from "@/lib/graphql/accounts-receivable";
 import { queries } from "@/lib/queries";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { m } from "motion/react";
 
 export function CollectionsPerformanceCard() {
   const t = useT();
@@ -14,19 +13,15 @@ export function CollectionsPerformanceCard() {
   const { data: performance, isLoading } = useQuery(queries.ar.collectionPerformance());
 
   return (
-    <Card className="gap-0 p-0">
-      <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <CardTitle className="text-sm font-medium">{t("Collections performance")}</CardTitle>
-        <span className="text-muted-foreground text-xs">{t("trailing 91 days")}</span>
-      </CardHeader>
-      <CardContent className="p-4">
+    <SectionPanel title={t("Collections performance")} hint={t("trailing 91 days")}>
+      <div className="p-4">
         {isLoading || !performance ? (
           <Skeleton className="h-56 w-full" />
         ) : (
           <PerformanceBody performance={performance} />
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </SectionPanel>
   );
 }
 
@@ -55,26 +50,22 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
     <div className="flex h-56 flex-col justify-between">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="text-muted-foreground text-xs font-semibold">
-            {t("Collection Effectiveness")}
+          <p className="text-muted-foreground text-xs font-medium">
+            {t("Collection effectiveness")}
           </p>
-          <p className={cn("mt-1 text-3xl font-semibold tracking-tight tabular-nums", ceiClass)}>
+          <p className={cn("mt-1 text-2xl font-semibold tabular-nums", ceiClass)}>
             {performance.cei.toFixed(0)}%
           </p>
           <div className="bg-muted mt-2 h-1.5 w-full overflow-hidden rounded-full">
-            <m.div
+            <div
               className={cn("h-full rounded-full", ceiBarClass)}
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min(performance.cei, 100)}%` }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              style={{ width: `${Math.min(performance.cei, 100)}%` }}
             />
           </div>
         </div>
         <div>
-          <p className="text-muted-foreground text-xs font-semibold">
-            {t("Avg Days to Pay")}
-          </p>
-          <p className="mt-1 text-3xl font-semibold tracking-tight tabular-nums">
+          <p className="text-muted-foreground text-xs font-medium">{t("Avg days to pay")}</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums">
             {t("{0}d", totals.avgDaysToPay.toFixed(1))}
           </p>
           <p className="text-muted-foreground mt-2 text-xs tabular-nums">
@@ -92,12 +83,7 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
           </span>
         </div>
         <div className="bg-muted mt-1.5 h-1.5 w-full overflow-hidden rounded-full">
-          <m.div
-            className="h-full rounded-full bg-success"
-            initial={{ width: 0 }}
-            animate={{ width: `${collectedShare}%` }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          />
+          <div className="bg-success h-full rounded-full" style={{ width: `${collectedShare}%` }} />
         </div>
       </div>
 
@@ -138,9 +124,7 @@ function RateStat({
 }) {
   return (
     <div className="px-3 py-2.5">
-      <p className="text-muted-foreground text-xs font-semibold">
-        {label}
-      </p>
+      <p className="text-muted-foreground text-xs font-medium">{label}</p>
       <p
         className={cn(
           "mt-0.5 text-lg font-semibold tabular-nums",

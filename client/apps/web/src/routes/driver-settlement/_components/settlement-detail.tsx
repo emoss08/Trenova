@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import {
   DriverSettlementStatusBadge,
   PayeeClassificationBadge,
@@ -240,14 +241,10 @@ function SummaryTile({
     <div
       className={cn(
         "rounded-lg border p-3",
-        highlight
-          ? "border-success-border bg-success-subtle/50 dark:border-success-border dark:bg-success-subtle/30"
-          : "bg-muted/30",
+        highlight ? "border-success-border bg-success-subtle" : "bg-muted/30",
       )}
     >
-      <p className="text-muted-foreground text-xs font-medium">
-        {label}
-      </p>
+      <p className="text-muted-foreground text-xs font-medium">{label}</p>
       <div className="mt-1 text-sm font-semibold">{children}</div>
     </div>
   );
@@ -257,29 +254,29 @@ function ExceptionsBanner({ settlement }: { settlement: SettlementDetailData }) 
   const t = useT();
 
   return (
-    <div className="rounded-lg border border-warning-border bg-warning-subtle/60 p-3 dark:border-warning-border dark:bg-warning-subtle/30">
-      <div className="flex items-center gap-2 text-sm font-medium text-warning-foreground">
-        <TriangleAlert className="size-4" />
-        {t("Review required before approval")}
-      </div>
-      <ul className="mt-2 flex flex-col gap-1">
-        {(settlement.exceptions ?? []).map((exception) => (
-          <li key={exception.code} className="flex items-start gap-2 text-xs">
-            <span
-              className={cn(
-                "mt-0.5 inline-flex rounded-full px-1.5 py-px text-2xs font-medium",
-                exception.severity === "Critical"
-                  ? "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground"
-                  : "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
-              )}
-            >
-              {exception.severity}
-            </span>
-            <span className="text-warning-foreground">{exception.message}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Alert variant="warning">
+      <TriangleAlert />
+      <AlertTitle>{t("Review required before approval")}</AlertTitle>
+      <AlertDescription>
+        <ul className="flex flex-col gap-1">
+          {(settlement.exceptions ?? []).map((exception) => (
+            <li key={exception.code} className="flex items-start gap-2 text-xs">
+              <span
+                className={cn(
+                  "mt-0.5 inline-flex rounded-full px-1.5 py-px text-2xs font-medium",
+                  exception.severity === "Critical"
+                    ? "bg-danger-subtle text-danger-subtle-foreground"
+                    : "bg-warning-subtle text-warning-subtle-foreground",
+                )}
+              >
+                {exception.severity}
+              </span>
+              <span>{exception.message}</span>
+            </li>
+          ))}
+        </ul>
+      </AlertDescription>
+    </Alert>
   );
 }
 
@@ -834,9 +831,7 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
 
   return (
     <div className="border-t pt-3">
-      <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
-        {t("History")}
-      </h4>
+      <h4 className="text-muted-foreground mb-2 text-xs font-semibold">{t("History")}</h4>
       <ol className="flex flex-col gap-1">
         {events.map((event) => (
           <li key={event.label} className="flex justify-between text-xs">

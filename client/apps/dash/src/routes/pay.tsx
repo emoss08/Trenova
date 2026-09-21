@@ -38,7 +38,7 @@ export function DashPayPage() {
         </div>
       ) : settlements.data && settlements.data.items.length > 0 ? (
         <ul className="flex flex-col gap-3">
-          {settlements.data.items.map((settlement, index) => (
+          {settlements.data.items.map((settlement) => (
             <m.li
               key={settlement.id}
               initial={{ opacity: 0, y: 10 }}
@@ -46,7 +46,6 @@ export function DashPayPage() {
               transition={{
                 duration: 0.22,
                 ease: "easeOut",
-                delay: Math.min(index * 0.04, 0.24),
               }}
             >
               <Link to={`/dash/pay/${settlement.id}`} className="block">

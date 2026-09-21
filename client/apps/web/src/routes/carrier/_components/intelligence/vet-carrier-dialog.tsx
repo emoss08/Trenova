@@ -98,7 +98,7 @@ export function VetCarrierDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Vet carrier")}</DialogTitle>
           <DialogDescription>

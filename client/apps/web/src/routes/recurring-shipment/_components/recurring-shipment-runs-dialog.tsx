@@ -28,7 +28,11 @@ function RunRow({ run }: { run: RecurringShipmentRun }) {
     <div className="border-border flex flex-col gap-1 rounded-md border p-2.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Badge variant="neutral" appearance="outline" className={cn("font-medium", runStatusStyles[run.status])}>
+          <Badge
+            variant="neutral"
+            appearance="outline"
+            className={cn("font-medium", runStatusStyles[run.status])}
+          >
             {run.status}
           </Badge>
           <span className="text-2xs text-muted-foreground">{run.trigger}</span>
@@ -69,7 +73,7 @@ export function RecurringShipmentRunsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Generation History")}</DialogTitle>
           <DialogDescription>

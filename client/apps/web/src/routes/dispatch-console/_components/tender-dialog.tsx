@@ -95,7 +95,11 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
           className="bg-muted/30 flex items-center justify-between gap-2 rounded border px-2 py-1"
         >
           <div className="flex min-w-0 items-center gap-1.5">
-            <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded px-1 text-3xs tabular-nums">
+            <Badge
+              variant="neutral"
+              appearance="outline"
+              className="h-4 shrink-0 rounded px-1 text-3xs tabular-nums"
+            >
               #{entry.rank}
             </Badge>
             <span className="truncate text-xs font-medium">
@@ -155,9 +159,7 @@ function ScreeningAlert({ screening }: { screening: GuideScreeningSummary }) {
         )}
         {hasWarned && (
           <div className="mt-1 flex flex-col gap-0.5">
-            <span className="text-muted-foreground text-xs">
-              {t("Offered with warnings")}
-            </span>
+            <span className="text-muted-foreground text-xs">{t("Offered with warnings")}</span>
             <ul className="flex flex-col gap-0.5">
               {screening.warned.map((entry) => (
                 <li key={`warned-${entry.rank}-${entry.carrierName}`} className="text-xs">
@@ -251,9 +253,7 @@ function WaterfallTab({
       )}
 
       <div className="flex flex-col gap-1">
-        <span className="text-muted-foreground text-xs">
-          {t("Override guide")}
-        </span>
+        <span className="text-muted-foreground text-xs">{t("Override guide")}</span>
         <Select
           value={overrideGuideId}
           onValueChange={(value) => setOverrideGuideId(!value || value === "auto" ? "" : value)}
@@ -517,7 +517,7 @@ export function TenderDialog({
 
   return (
     <Dialog open onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[680px]">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{liveTender ? t("Live Tender") : t("Tender to Carriers")}</DialogTitle>
           <DialogDescription>
@@ -543,7 +543,7 @@ export function TenderDialog({
             />
           ) : (
             <Tabs defaultValue="waterfall">
-              <TabsList className="mb-3">
+              <TabsList variant="underline" className="mb-3">
                 <TabsTrigger value="waterfall">{t("Waterfall")}</TabsTrigger>
                 <TabsTrigger value="spot">{t("Spot")}</TabsTrigger>
               </TabsList>

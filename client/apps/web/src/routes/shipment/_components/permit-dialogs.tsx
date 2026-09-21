@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { DocumentUploadSection } from "@/components/document-upload-section";
 import { DateField } from "@/components/fields/date-field/date-field";
@@ -139,7 +140,7 @@ export function PermitRecordDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Edit Permit") : t("Record Permit")}</DialogTitle>
           <DialogDescription>
@@ -311,7 +312,7 @@ export function PermitWaiveDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Waive Requirement")}</DialogTitle>
           <DialogDescription>
@@ -319,14 +320,14 @@ export function PermitWaiveDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3">
-          <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
-          <p className="text-muted-foreground text-xs">
+        <Alert variant="warning" size="sm">
+          <TriangleAlertIcon />
+          <AlertDescription>
             {t(
               "Waiving does not make the movement legal. It records that your organization accepts the compliance risk and releases the dispatch block. Your reason is the audit trail if the load is stopped.",
             )}
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
 
         <FormProvider {...form}>
           <FormGroup cols={1}>

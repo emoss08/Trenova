@@ -218,7 +218,7 @@ export function DocumentVersionDialog({
             ) : (
               <>
                 {currentVersion && (
-                  <div className="border-primary/20 bg-primary/5 rounded-lg border p-4">
+                  <div className="border-brand-border bg-surface-selected rounded-lg border p-4">
                     <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">{currentVersion.originalName}</span>
@@ -256,9 +256,7 @@ export function DocumentVersionDialog({
                             >
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="font-medium">{version.originalName}</span>
-                                <Badge variant="neutral">
-                                  {t("v{0}", version.versionNumber)}
-                                </Badge>
+                                <Badge variant="neutral">{t("v{0}", version.versionNumber)}</Badge>
                                 <ChevronDownIcon
                                   className={`text-muted-foreground size-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                                 />

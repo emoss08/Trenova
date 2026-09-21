@@ -60,9 +60,7 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementDisputeRow>[] {
       accessorKey: "category",
       header: t("Category"),
       cell: ({ row }) => (
-        <span className="text-xs">
-          {disputeCategoryLabels[row.original.category] ?? row.original.category}
-        </span>
+        <span>{disputeCategoryLabels[row.original.category] ?? row.original.category}</span>
       ),
       size: 150,
       meta: { apiField: "category" },
@@ -73,7 +71,7 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementDisputeRow>[] {
       cell: ({ row }) =>
         row.original.settlement ? (
           <div className="flex flex-col">
-            <span className="font-mono text-xs font-medium">
+            <span className="font-mono font-medium">
               {row.original.settlement.settlementNumber}
             </span>
             <span className="text-muted-foreground text-xs">
@@ -104,7 +102,7 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementDisputeRow>[] {
     {
       accessorKey: "createdAt",
       header: t("Submitted"),
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.createdAt)}</span>,
+      cell: ({ row }) => <span>{formatDate(row.original.createdAt)}</span>,
       size: 110,
       meta: { apiField: "createdAt", label: t("Submitted") },
     },
@@ -114,7 +112,7 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementDisputeRow>[] {
       cell: ({ row }) =>
         row.original.resolvedAt ? (
           <div className="flex flex-col">
-            <span className="text-xs">{formatDate(row.original.resolvedAt)}</span>
+            <span>{formatDate(row.original.resolvedAt)}</span>
             {row.original.resolvedBy ? (
               <span className="text-muted-foreground text-xs">{row.original.resolvedBy.name}</span>
             ) : null}

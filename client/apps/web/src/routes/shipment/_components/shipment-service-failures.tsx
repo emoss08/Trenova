@@ -283,7 +283,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
         open={!!evaluationSummary}
         onOpenChange={(open) => !open && setEvaluationSummary(null)}
       >
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>{t("Service Failure Evaluation")}</DialogTitle>
             <DialogDescription>
@@ -424,7 +424,11 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
       <Badge variant={blocked ? "danger" : available || ready ? "success" : "neutral"}>
         {label}
       </Badge>
-      {readiness.mandatory && <Badge variant="neutral" appearance="outline">{t("Mandatory")}</Badge>}
+      {readiness.mandatory && (
+        <Badge variant="neutral" appearance="outline">
+          {t("Mandatory")}
+        </Badge>
+      )}
       {readiness.messageId && (
         <span className="font-mono text-xs">{t("Message {0}", readiness.messageId)}</span>
       )}
@@ -432,9 +436,15 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
         <span className="font-mono text-xs">{t("Last {0}", ediStatus.lastMessageId)}</span>
       )}
       {ediStatus?.deliveryStatus && (
-        <Badge variant="neutral" appearance="outline">{t("Delivery {0}", ediStatus.deliveryStatus)}</Badge>
+        <Badge variant="neutral" appearance="outline">
+          {t("Delivery {0}", ediStatus.deliveryStatus)}
+        </Badge>
       )}
-      {ediStatus?.ackStatus && <Badge variant="neutral" appearance="outline">{t("ACK {0}", ediStatus.ackStatus)}</Badge>}
+      {ediStatus?.ackStatus && (
+        <Badge variant="neutral" appearance="outline">
+          {t("ACK {0}", ediStatus.ackStatus)}
+        </Badge>
+      )}
       {diagnostic && <span className="min-w-0 flex-1 truncate">{diagnostic}</span>}
       {!diagnostic && ediStatus?.lastDiagnostic && (
         <span className="min-w-0 flex-1 truncate">{ediStatus.lastDiagnostic}</span>

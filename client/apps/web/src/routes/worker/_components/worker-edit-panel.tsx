@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Form } from "@trenova/shared/components/ui/form";
+import { Form, FormSection } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { OverflowTabsList } from "@trenova/shared/components/ui/overflow-tabs-list";
@@ -366,45 +366,47 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <GeneralTab />
                     </TabsContent>
                     <TabsContent value="employment" className="p-4">
-                      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <h3 className="text-sm font-semibold">{t("Employment")}</h3>
-                          <p className="text-muted-foreground text-xs">
-                            {employmentView === "details"
-                              ? t("Dates, licence and medical details on the record.")
-                              : t(
-                                  "Every hire, transfer, leave and termination, with who recorded it.",
-                                )}
-                          </p>
-                        </div>
-                        <SegmentedControl<EmploymentView>
-                          items={EMPLOYMENT_VIEWS}
-                          value={employmentView}
-                          onValueChange={showEmploymentView}
-                          aria-label={t("Employment view")}
-                        />
-                      </div>
-                      {employmentView === "details" ? (
-                        <EmploymentTab />
-                      ) : (
-                        <Suspense
-                          fallback={
-                            <div className="flex items-center justify-center py-12">
-                              <ComponentLoader message={t("Loading...")} />
-                            </div>
-                          }
-                        >
-                          <WorkerTimelineTab
-                            workerId={row?.id as string}
-                            worker={{
-                              fleetCodeId: row?.fleetCodeId ?? null,
-                              driverType: row?.driverType ?? "",
-                              type: row?.type ?? "",
-                              status: row?.status ?? "",
-                            }}
+                      <FormSection
+                        className="gap-4"
+                        title={t("Employment")}
+                        description={
+                          employmentView === "details"
+                            ? t("Dates, licence and medical details on the record.")
+                            : t(
+                                "Every hire, transfer, leave and termination, with who recorded it.",
+                              )
+                        }
+                        action={
+                          <SegmentedControl<EmploymentView>
+                            items={EMPLOYMENT_VIEWS}
+                            value={employmentView}
+                            onValueChange={showEmploymentView}
+                            aria-label={t("Employment view")}
                           />
-                        </Suspense>
-                      )}
+                        }
+                      >
+                        {employmentView === "details" ? (
+                          <EmploymentTab />
+                        ) : (
+                          <Suspense
+                            fallback={
+                              <div className="flex items-center justify-center py-12">
+                                <ComponentLoader message={t("Loading...")} />
+                              </div>
+                            }
+                          >
+                            <WorkerTimelineTab
+                              workerId={row?.id as string}
+                              worker={{
+                                fleetCodeId: row?.fleetCodeId ?? null,
+                                driverType: row?.driverType ?? "",
+                                type: row?.type ?? "",
+                                status: row?.status ?? "",
+                              }}
+                            />
+                          </Suspense>
+                        )}
+                      </FormSection>
                     </TabsContent>
                     <TabsContent value="compliance" className="p-4">
                       <ComplianceTab />

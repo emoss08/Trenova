@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -39,10 +40,7 @@ const STATUS_LABELS: Record<WorkItemStatus, string> = {
   Dismissed: "Dismissed",
 };
 
-const STATUS_VARIANTS: Record<
-  WorkItemStatus,
-  "neutral" | "warning" | "info" | "success"
-> = {
+const STATUS_VARIANTS: Record<WorkItemStatus, "neutral" | "warning" | "info" | "success"> = {
   Open: "neutral",
   Assigned: "info",
   InReview: "warning",
@@ -189,10 +187,9 @@ export function BankReceiptQueuePage() {
         title: t("Bank Receipt Work Queue"),
         description: t("Review and resolve bank receipt exceptions requiring attention."),
       }}
-      className="p-0 gap-y-2"
       toolbar={
-        <div className="mx-4 mt-3 grid gap-2.5 md:grid-cols-4">
-          <SummaryCard
+        <KpiStrip aria-label={t("Work queue totals")}>
+          <KpiStripItem
             label={t("Open")}
             value={String(
               (summaryQuery.data?.activeWorkItemCount ?? 0) -
@@ -200,19 +197,19 @@ export function BankReceiptQueuePage() {
                 (summaryQuery.data?.inReviewWorkItemCount ?? 0),
             )}
           />
-          <SummaryCard
+          <KpiStripItem
             label={t("Assigned")}
             value={String(summaryQuery.data?.assignedWorkItemCount ?? 0)}
           />
-          <SummaryCard
-            label={t("In Review")}
+          <KpiStripItem
+            label={t("In review")}
             value={String(summaryQuery.data?.inReviewWorkItemCount ?? 0)}
           />
-          <SummaryCard
+          <KpiStripItem
             label={t("Exceptions")}
             value={String(summaryQuery.data?.exceptionCount ?? 0)}
           />
-        </div>
+        </KpiStrip>
       }
       sidebar={
         <div className="flex h-full flex-col">
@@ -634,17 +631,6 @@ function WorkItemDetail({
           ) : null}
         </div>
       </div>
-    </div>
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-card rounded-lg border px-3 py-2.5">
-      <p className="text-muted-foreground text-xs font-medium">
-        {label}
-      </p>
-      <p className="mt-1 text-2xl font-semibold">{value}</p>
     </div>
   );
 }

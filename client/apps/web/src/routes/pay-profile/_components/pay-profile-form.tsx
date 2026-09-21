@@ -5,7 +5,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { Button } from "@trenova/shared/components/ui/button";
-import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import {
   payCalcMethodChoices,
   payComponentKindChoices,
@@ -24,7 +24,7 @@ export function PayProfileForm() {
   const componentsArray = useFieldArray({ control, name: "components" });
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <FormGroup cols={2}>
         <FormControl>
           <SelectField
@@ -97,46 +97,46 @@ export function PayProfileForm() {
         </FormControl>
       </FormGroup>
 
-      <div className="flex items-center justify-between border-t pt-4">
-        <div>
-          <h3 className="text-sm font-semibold">{t("Pay Components")}</h3>
-          <p className="text-muted-foreground text-xs">
-            {t("Each component computes pay per completed move; team splits apply on top.")}
-          </p>
+      <FormSection
+        title={t("Pay Components")}
+        description={t("Each component computes pay per completed move; team splits apply on top.")}
+        action={
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              componentsArray.append({
+                kind: "StopPay",
+                method: "PerStop",
+                description: "",
+                rate: "",
+                revenueBasis: null,
+                bands: [],
+                freeTimeMinutes: 120,
+                minAmount: null,
+                maxAmount: null,
+                isActive: true,
+              })
+            }
+          >
+            <Plus className="size-3.5" />
+            {t("Add Component")}
+          </Button>
+        }
+      >
+        <div className="flex flex-col gap-3">
+          {componentsArray.fields.map((field, index) => (
+            <ComponentEditor
+              key={field.id}
+              index={index}
+              onRemove={
+                componentsArray.fields.length > 1 ? () => componentsArray.remove(index) : undefined
+              }
+            />
+          ))}
         </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() =>
-            componentsArray.append({
-              kind: "StopPay",
-              method: "PerStop",
-              description: "",
-              rate: "",
-              revenueBasis: null,
-              bands: [],
-              freeTimeMinutes: 120,
-              minAmount: null,
-              maxAmount: null,
-              isActive: true,
-            })
-          }
-        >
-          <Plus className="size-3.5" />
-          {t("Add Component")}
-        </Button>
-      </div>
-
-      {componentsArray.fields.map((field, index) => (
-        <ComponentEditor
-          key={field.id}
-          index={index}
-          onRemove={
-            componentsArray.fields.length > 1 ? () => componentsArray.remove(index) : undefined
-          }
-        />
-      ))}
+      </FormSection>
     </div>
   );
 }

@@ -45,7 +45,7 @@ type KpiHeaderProps = {
 export function KpiHeader({ icon, label, info, right }: KpiHeaderProps) {
   return (
     <div className="flex min-h-[14px] items-center justify-between">
-      <div className="cc-label flex items-center gap-1.5">
+      <div className="text-foreground-subtle flex min-w-0 items-center gap-1.5 text-xs font-medium">
         {icon}
         <span>{label}</span>
         {info}

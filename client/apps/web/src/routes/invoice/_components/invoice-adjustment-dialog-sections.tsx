@@ -3,6 +3,8 @@ import { DocumentMultiSelectAutocompleteField } from "@/components/autocomplete-
 import { DocumentUploadSection } from "@/components/document-upload-section";
 import { NumberInput } from "@/components/fields/number-input";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { Invoice } from "@trenova/shared/types/invoice";
@@ -120,7 +122,7 @@ export function InvoiceAdjustmentTypeSelector({
               className={cn(
                 "flex w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-all duration-150",
                 isSelected
-                  ? "border-brand bg-brand/5 ring-brand/20 ring-1"
+                  ? "border-brand bg-surface-selected"
                   : "border-border bg-background hover:border-muted-foreground/30 hover:bg-muted/40",
               )}
               onClick={() => {
@@ -129,23 +131,16 @@ export function InvoiceAdjustmentTypeSelector({
                 onSelectionChange?.();
               }}
             >
-              <div
+              <span
                 className={cn(
-                  "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md transition-colors",
-                  isSelected ? "bg-brand/10 text-brand" : "bg-muted text-muted-foreground",
+                  "mt-0.5 shrink-0 transition-colors",
+                  isSelected ? "text-brand" : "text-muted-foreground",
                 )}
               >
                 {type.icon}
-              </div>
+              </span>
               <div className="min-w-0 flex-1">
-                <p
-                  className={cn(
-                    "text-sm font-medium",
-                    isSelected ? "text-foreground" : "text-foreground",
-                  )}
-                >
-                  {t(type.label)}
-                </p>
+                <p className="text-foreground text-sm font-medium">{t(type.label)}</p>
                 <p className="text-muted-foreground text-xs">{t(type.description)}</p>
               </div>
               <div
@@ -154,7 +149,9 @@ export function InvoiceAdjustmentTypeSelector({
                   isSelected ? "border-brand bg-brand" : "border-muted-foreground/30",
                 )}
               >
-                {isSelected ? <div className="size-1.5 rounded-full bg-foreground-on-solid" /> : null}
+                {isSelected ? (
+                  <div className="size-1.5 rounded-full bg-foreground-on-solid" />
+                ) : null}
               </div>
             </button>
           );
@@ -331,12 +328,12 @@ function InvoiceAdjustmentLineEditorRow({
     <div
       className={cn(
         "grid grid-cols-[1fr_120px_120px] items-start gap-3 px-4 py-3 transition-colors",
-        hasError ? "bg-destructive/5" : "bg-background",
+        hasError ? "bg-danger-subtle" : "bg-background",
       )}
     >
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <span className="bg-muted text-2xs text-muted-foreground inline-flex size-5 shrink-0 items-center justify-center rounded font-medium">
+          <span className="bg-muted text-2xs text-muted-foreground inline-flex size-5 shrink-0 items-center justify-center rounded-md font-medium">
             {previewLine?.lineNumber ?? index + 1}
           </span>
           <p className="truncate text-sm font-medium">{t(line.description)}</p>
@@ -427,54 +424,54 @@ export function InvoiceAdjustmentPreviewPanel({
         <div className="border-border bg-muted/40 border-b px-4 py-2">
           <p className="text-muted-foreground text-xs font-medium">{t("Adjustment Summary")}</p>
         </div>
-        <div className="divide-border divide-y">
-          <PreviewRow
-            label={t("Credit Total")}
-            value={formatCurrency(Number(preview.creditTotalAmount))}
-          />
-          <PreviewRow
-            label={t("Rebill Total")}
-            value={formatCurrency(Number(preview.rebillTotalAmount))}
-          />
-          <PreviewRow
-            label={t("Net Delta")}
-            value={formatCurrency(Number(preview.netDeltaAmount))}
-            highlight
-          />
-          <PreviewRow
-            label={t("Accounting Date")}
-            value={formatUnixDate(preview.accountingDate)}
-            icon={<CalendarIcon className="size-3" />}
-          />
-        </div>
+        <DescriptionList layout="split" className="px-4">
+          <DescriptionItem label={t("Credit Total")} numeric>
+            {formatCurrency(Number(preview.creditTotalAmount))}
+          </DescriptionItem>
+          <DescriptionItem label={t("Rebill Total")} numeric>
+            {formatCurrency(Number(preview.rebillTotalAmount))}
+          </DescriptionItem>
+          <DescriptionItem label={t("Net Delta")} numeric valueClassName="font-semibold">
+            {formatCurrency(Number(preview.netDeltaAmount))}
+          </DescriptionItem>
+          <DescriptionItem
+            label={
+              <span className="inline-flex items-center gap-1.5">
+                <CalendarIcon className="size-3" />
+                {t("Accounting Date")}
+              </span>
+            }
+            numeric
+          >
+            {formatUnixDate(preview.accountingDate)}
+          </DescriptionItem>
+        </DescriptionList>
       </div>
 
       {preview.requiresApproval ||
       preview.requiresReconciliationException ||
       preview.requiresReplacementInvoiceReview ||
       preview.wouldCreateUnappliedCredit ? (
-        <div className="rounded-lg border border-warning/20 bg-warning/5 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <ShieldAlertIcon className="size-3.5 text-warning-foreground" />
-            <p className="text-xs font-medium text-warning-foreground">
-              {t("Policy Implications")}
-            </p>
-          </div>
-          <div className="mt-2 space-y-1.5">
-            {preview.requiresApproval ? (
-              <PolicyItem text={t("Approval required before financial mutation")} />
-            ) : null}
-            {preview.requiresReconciliationException ? (
-              <PolicyItem text={t("Creates a reconciliation exception for finance follow-up")} />
-            ) : null}
-            {preview.requiresReplacementInvoiceReview ? (
-              <PolicyItem text={t("Replacement invoice requires billing review")} />
-            ) : null}
-            {preview.wouldCreateUnappliedCredit ? (
-              <PolicyItem text={t("Creates unapplied customer credit based on settlement state")} />
-            ) : null}
-          </div>
-        </div>
+        <Alert variant="warning">
+          <ShieldAlertIcon />
+          <AlertTitle>{t("Policy Implications")}</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc pl-4">
+              {preview.requiresApproval ? (
+                <li>{t("Approval required before financial mutation")}</li>
+              ) : null}
+              {preview.requiresReconciliationException ? (
+                <li>{t("Creates a reconciliation exception for finance follow-up")}</li>
+              ) : null}
+              {preview.requiresReplacementInvoiceReview ? (
+                <li>{t("Replacement invoice requires billing review")}</li>
+              ) : null}
+              {preview.wouldCreateUnappliedCredit ? (
+                <li>{t("Creates unapplied customer credit based on settlement state")}</li>
+              ) : null}
+            </ul>
+          </AlertDescription>
+        </Alert>
       ) : null}
 
       {preview.warnings.length > 0 ? (
@@ -494,84 +491,29 @@ export function InvoiceAdjustmentPreviewPanel({
       ) : null}
 
       {hasIssues ? (
-        <div className="border-destructive/20 bg-destructive/5 rounded-lg border px-4 py-3">
-          <div className="flex items-center gap-2">
-            <AlertTriangleIcon className="text-destructive size-3.5" />
-            <p className="text-destructive text-xs font-medium">{t("Issues Found")}</p>
-          </div>
-          <div className="mt-2 space-y-2">
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>{t("Issues Found")}</AlertTitle>
+          <AlertDescription>
             {eligibilityIssues.map((line) => (
-              <p key={line.originalLineId} className="text-destructive text-xs">
-                {line.eligibilityMessage}
-              </p>
+              <p key={line.originalLineId}>{line.eligibilityMessage}</p>
             ))}
             {previewErrors.map(([field, messages]) => (
               <div key={field}>
-                <p className="text-xs text-destructive/70 font-medium">
-                  {field}
-                </p>
+                <p className="font-medium">{field}</p>
                 {messages.map((message) => (
-                  <p key={message} className="text-destructive text-xs">
-                    {message}
-                  </p>
+                  <p key={message}>{message}</p>
                 ))}
               </div>
             ))}
-          </div>
-        </div>
-      ) : !hasIssues ? (
-        <div className="flex items-center gap-2 rounded-lg border border-success/20 bg-success/5 px-4 py-2.5">
-          <CheckCircle2Icon className="size-3.5 text-success-foreground" />
-          <p className="text-xs font-medium text-success-foreground">
-            {t("Preview passed validation")}
-          </p>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function PreviewRow({
-  label,
-  value,
-  highlight,
-  icon,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <div
-      className={cn("flex items-center justify-between px-4 py-2.5", highlight && "bg-muted/30")}
-    >
-      <span
-        className={cn(
-          "flex items-center gap-1.5 text-xs",
-          highlight ? "text-foreground font-medium" : "text-muted-foreground",
-        )}
-      >
-        {icon}
-        {label}
-      </span>
-      <span
-        className={cn(
-          "text-sm tabular-nums",
-          highlight ? "text-foreground font-semibold" : "text-foreground font-medium",
-        )}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function PolicyItem({ text }: { text: string }) {
-  return (
-    <div className="flex items-start gap-2">
-      <div className="mt-1 size-1 shrink-0 rounded-full bg-warning" />
-      <p className="text-xs text-warning-foreground">{text}</p>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert variant="success" size="sm">
+          <CheckCircle2Icon />
+          <AlertTitle>{t("Preview passed validation")}</AlertTitle>
+        </Alert>
+      )}
     </div>
   );
 }

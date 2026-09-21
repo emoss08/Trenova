@@ -24,9 +24,10 @@ import {
   detentionUnnotifiedBehaviorChoices,
   stopTypeChoices,
 } from "@/lib/choices";
-import { Badge } from "@trenova/shared/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { DetentionPolicy } from "@trenova/shared/types/detention";
+import { TriangleAlertIcon } from "lucide-react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { DetentionTierEditor } from "./detention-tier-editor";
 
@@ -297,16 +298,15 @@ export function DetentionPolicyForm() {
         </FormGroup>
 
         {lateArrivalRule === "Forfeit" && (
-          <div className="mt-3 rounded-md border border-warning/40 bg-warning/10 p-3">
-            <Badge className="border-none bg-warning/20 text-warning-foreground">
-              {t("Check the contract")}
-            </Badge>
-            <p className="mt-2 text-sm">
+          <Alert variant="warning" size="sm" className="mt-3">
+            <TriangleAlertIcon />
+            <AlertTitle>{t("Check the contract")}</AlertTitle>
+            <AlertDescription>
               {t(
                 "Forfeit voids detention entirely on a late arrival, even by one minute. Only select this when the rate confirmation says so.",
               )}
-            </p>
-          </div>
+            </AlertDescription>
+          </Alert>
         )}
       </FormSection>
 

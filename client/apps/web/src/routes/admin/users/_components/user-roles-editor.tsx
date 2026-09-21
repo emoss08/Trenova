@@ -269,12 +269,13 @@ function AssignRoleDialog({
           <DialogTitle>{t("Assign Role")}</DialogTitle>
         </DialogHeader>
         <Form
+          className="flex flex-col gap-4"
           onSubmit={(event) => {
             event.stopPropagation();
             void handleSubmit(onSubmit)(event);
           }}
         >
-          <FormGroup cols={1} className="pb-4">
+          <FormGroup cols={1}>
             <FormControl>
               <RoleSelectAutocompleteField<AssignRoleFormValues>
                 control={control}

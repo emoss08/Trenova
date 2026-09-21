@@ -1,5 +1,6 @@
 import type React from "react";
 import { Delta, KpiCard, KpiHeader, KpiSub } from "./kpi-card";
+import { KPI_VALUE_CLASS, KPI_VALUE_LG_CLASS, useInKpiStrip } from "./kpi-strip";
 import { type DeltaTone, toneVar } from "./tone";
 
 type KpiStatProps = {
@@ -23,24 +24,26 @@ export function KpiStat({
   deltaLabel,
   deltaTone,
   sub,
-  tone = "brand",
+  tone,
   icon,
   info,
   span = 2,
   className,
 }: KpiStatProps) {
-  const dot = toneVar(tone);
+  const inStrip = useInKpiStrip();
 
   return (
     <KpiCard span={span} density="compact" className={className}>
       <KpiHeader
         icon={
           <span className="inline-flex items-center gap-1.5">
-            <span
-              aria-hidden
-              className="size-1.5 shrink-0 rounded-full"
-              style={{ background: dot }}
-            />
+            {tone ? (
+              <span
+                aria-hidden
+                className="size-1.5 shrink-0 rounded-full"
+                style={{ background: toneVar(tone) }}
+              />
+            ) : null}
             {icon}
           </span>
         }
@@ -48,9 +51,7 @@ export function KpiStat({
         info={info}
         right={<Delta delta={delta} deltaLabel={deltaLabel} deltaTone={deltaTone} />}
       />
-      <span className="text-2xl leading-none font-semibold tabular-nums">
-        {value}
-      </span>
+      <span className={inStrip ? KPI_VALUE_CLASS : KPI_VALUE_LG_CLASS}>{value}</span>
       <KpiSub>{sub}</KpiSub>
     </KpiCard>
   );

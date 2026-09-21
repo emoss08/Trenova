@@ -3,6 +3,7 @@ import { InfoPopover } from "@/components/info-popover";
 import type { SafetyScorecard } from "@/lib/graphql/worker-safety";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { safetyRatingMeta, summariseInspections } from "@trenova/shared/lib/safety";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -125,28 +126,37 @@ export function SafetyScorecardCard({
         />
       </div>
 
-      <dl className="flex flex-wrap gap-x-6 gap-y-2 rounded-lg border px-4 py-3 text-xs">
-        <Count label={t("Accidents")} value={scorecard.accidents} />
-        <Count label={t("Preventable")} value={scorecard.preventableAccidents} />
-        <Count label={t("Citations")} value={scorecard.citations} />
-        <Count label={t("Out of service")} value={scorecard.outOfServiceOrders} />
-        <Count label={t("Open")} value={scorecard.openEvents} />
-        <Count label={t("Recognition")} value={scorecard.recognitions} />
+      <DescriptionList className="flex flex-wrap gap-y-2 rounded-lg border px-4 py-3">
+        <DescriptionItem label={t("Accidents")} numeric>
+          {scorecard.accidents}
+        </DescriptionItem>
+        <DescriptionItem label={t("Preventable")} numeric>
+          {scorecard.preventableAccidents}
+        </DescriptionItem>
+        <DescriptionItem label={t("Citations")} numeric>
+          {scorecard.citations}
+        </DescriptionItem>
+        <DescriptionItem label={t("Out of service")} numeric>
+          {scorecard.outOfServiceOrders}
+        </DescriptionItem>
+        <DescriptionItem label={t("Open")} numeric>
+          {scorecard.openEvents}
+        </DescriptionItem>
+        <DescriptionItem label={t("Recognition")} numeric>
+          {scorecard.recognitions}
+        </DescriptionItem>
         {scorecard.highestDiscipline ? (
-          <div className="ml-auto flex flex-col">
-            <dt className="text-xs text-muted-foreground">{t("Discipline")}</dt>
-            <dd className="font-medium tabular-nums">
-              {t(
-                "{0} active, highest {1}",
-                scorecard.activeDiscipline,
-                DISCIPLINARY_LEVEL_LABELS[
-                  scorecard.highestDiscipline as DisciplinaryLevel
-                ]?.toLowerCase() ?? scorecard.highestDiscipline,
-              )}
-            </dd>
-          </div>
+          <DescriptionItem label={t("Discipline")} numeric className="ml-auto">
+            {t(
+              "{0} active, highest {1}",
+              scorecard.activeDiscipline,
+              DISCIPLINARY_LEVEL_LABELS[
+                scorecard.highestDiscipline as DisciplinaryLevel
+              ]?.toLowerCase() ?? scorecard.highestDiscipline,
+            )}
+          </DescriptionItem>
         ) : null}
-      </dl>
+      </DescriptionList>
     </div>
   );
 }
@@ -173,9 +183,7 @@ function Metric({
   return (
     <div className="border-border/80 flex min-w-0 flex-col gap-2 rounded-lg border p-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground truncate text-xs font-semibold">
-          {label}
-        </span>
+        <span className="text-muted-foreground truncate text-xs font-semibold">{label}</span>
         <span className="bg-accent inline-flex size-6 shrink-0 items-center justify-center rounded-md">
           <Icon className="size-3.5" />
         </span>
@@ -217,15 +225,6 @@ function ThresholdBar({ value, watch, atRisk }: { value: number; watch: number; 
         style={{ left: `calc(${watchAt}% - 1px)` }}
         title={`Watch at ${watch}`}
       />
-    </div>
-  );
-}
-
-function Count({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex flex-col">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="font-medium tabular-nums">{value}</dd>
     </div>
   );
 }

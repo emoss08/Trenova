@@ -226,7 +226,8 @@ function TestCaseEditPanel({
             {testCase && canDelete && (
               <Button
                 type="button"
-                variant="destructive"
+                variant="ghost"
+                className="text-danger-foreground mr-auto"
                 onClick={() => deleteMutation.mutate()}
                 isLoading={deleteMutation.isPending}
               >

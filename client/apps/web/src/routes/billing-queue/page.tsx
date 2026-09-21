@@ -209,7 +209,6 @@ export function BillingQueuePage() {
           ),
           actions: headerActions,
         }}
-        className="gap-y-2 p-0"
         toolbar={<StatementKPIStrip statements={statements} nowSeconds={nowSeconds} />}
         sidebar={
           <StatementSidebar
@@ -241,7 +240,6 @@ export function BillingQueuePage() {
           description: t("Review and approve shipments before invoicing"),
           actions: headerActions,
         }}
-        className="gap-y-2 p-0"
         toolbar={
           <BillingQueueKPIStrip
             statusFilter={statusFilter}

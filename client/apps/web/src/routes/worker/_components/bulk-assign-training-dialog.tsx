@@ -113,7 +113,7 @@ export function BulkAssignTrainingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{t("Assign training")}</DialogTitle>
           <DialogDescription>
@@ -126,13 +126,14 @@ export function BulkAssignTrainingDialog({
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
+            <FormGroup cols={2}>
               <FormControl cols="full">
                 <div className="flex flex-col gap-1.5">
                   <span className="text-sm font-medium">{t("Courses")}</span>

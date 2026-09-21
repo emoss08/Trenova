@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { KpiStrip } from "@/components/kpi/kpi-strip";
 import { DeltaValue, StatTile } from "@/components/metric-tiles";
 import { apiService } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -356,7 +357,7 @@ function SimulationReading({ simulation }: { readonly simulation: RateSimulation
 
       {finished && measuredAnything(simulation) && summary && (
         <>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <KpiStrip minItemWidth="7rem">
             <StatTile label={t("Shipments")} value={String(summary.evaluatedCount)} />
             <StatTile label={t("Changed")} value={String(summary.changedCount)} />
             <StatTile
@@ -374,7 +375,7 @@ function SimulationReading({ simulation }: { readonly simulation: RateSimulation
               value={String(summary.errorCount)}
               tone={summary.errorCount > 0 ? "text-destructive" : undefined}
             />
-          </div>
+          </KpiStrip>
 
           <div className="bg-muted/30 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm">
             <span className="text-muted-foreground">{t("Total")}</span>

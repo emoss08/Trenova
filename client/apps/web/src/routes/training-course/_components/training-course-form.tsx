@@ -6,7 +6,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { driverTypeChoices, statusChoices } from "@/lib/choices";
-import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import {
   TRAINING_CATEGORY_LABELS,
   TRAINING_DELIVERY_HINTS,
@@ -45,11 +45,10 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-3">
-        <SectionTitle
-          title={t("General")}
-          hint={t("Name and code identify the course on worker records and in Dash.")}
-        />
+      <FormSection
+        title={t("General")}
+        description={t("Name and code identify the course on worker records and in Dash.")}
+      >
         <FormGroup cols={2}>
           <FormControl>
             <InputField
@@ -108,13 +107,12 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
             />
           </FormControl>
         </FormGroup>
-      </section>
+      </FormSection>
 
-      <section className="flex flex-col gap-3">
-        <SectionTitle
-          title={t("Delivery")}
-          hint={t("How a worker takes the course and what it takes to pass.")}
-        />
+      <FormSection
+        title={t("Delivery")}
+        description={t("How a worker takes the course and what it takes to pass.")}
+      >
         <FormGroup cols={2}>
           <FormControl>
             <SelectField
@@ -179,15 +177,14 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
             />
           </FormControl>
         </FormGroup>
-      </section>
+      </FormSection>
 
-      <section className="flex flex-col gap-3">
-        <SectionTitle
-          title={t("Requirement & validity")}
-          hint={t(
-            "Required courses appear as slots on every matching worker; an overdue, failed or lapsed one leaves the worker unqualified.",
-          )}
-        />
+      <FormSection
+        title={t("Requirement & validity")}
+        description={t(
+          "Required courses appear as slots on every matching worker; an overdue, failed or lapsed one leaves the worker unqualified.",
+        )}
+      >
         <FormGroup cols={2}>
           <FormControl className="col-span-2">
             <SwitchField
@@ -248,16 +245,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
             />
           </FormControl>
         </FormGroup>
-      </section>
-    </div>
-  );
-}
-
-function SectionTitle({ title, hint }: { title: string; hint: string }) {
-  return (
-    <div>
-      <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="text-muted-foreground text-xs">{hint}</p>
+      </FormSection>
     </div>
   );
 }

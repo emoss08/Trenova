@@ -82,7 +82,7 @@ export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntr
 
   return (
     <Dialog open={entry !== null} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Remove this entry")}</DialogTitle>
           <DialogDescription>
@@ -104,13 +104,14 @@ export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntr
         </Alert>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup className="pb-2" cols={1}>
+            <FormGroup cols={1}>
               <FormControl cols="full">
                 <InputField<RemoveTimeEntryFormValues>
                   control={control}

@@ -159,7 +159,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent size="xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Edit the shift") : t("Add a shift")}</DialogTitle>
           <DialogDescription>
@@ -179,6 +179,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
         ) : null}
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
@@ -186,7 +187,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
             }}
           >
             <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_240px]">
-              <FormGroup className="pb-2" cols={2}>
+              <FormGroup cols={2}>
                 <FormControl>
                   <InputField<ShiftTemplateFormValues>
                     control={control}

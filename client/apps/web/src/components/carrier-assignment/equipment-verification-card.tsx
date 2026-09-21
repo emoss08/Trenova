@@ -8,6 +8,7 @@ import type {
   CarrierIntelUnitType,
 } from "@trenova/graphql/generated/graphql";
 import { Button } from "@trenova/shared/components/ui/button";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -90,12 +91,7 @@ function Detail({ label, value }: { label: string; value: string | number | null
   if (value === null || value === undefined || value === "") {
     return null;
   }
-  return (
-    <>
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 break-words">{value}</dd>
-    </>
-  );
+  return <DescriptionItem label={label}>{value}</DescriptionItem>;
 }
 
 export function EquipmentVerificationCard({
@@ -158,7 +154,7 @@ export function EquipmentVerificationCard({
         ) : null}
       </div>
 
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pl-6 text-xs">
+      <DescriptionList layout="inline" className="pl-6">
         <Detail label={t("Expected DOT")} value={verification.expectedDotNumber} />
         <Detail
           label={t("Registered DOT")}
@@ -191,7 +187,7 @@ export function EquipmentVerificationCard({
           label={t("Provider")}
           value={verification.provider ? carrierIntelProviderLabel(verification.provider) : null}
         />
-      </dl>
+      </DescriptionList>
 
       {verification.overriddenAt ? (
         <p className="text-muted-foreground pl-6 text-xs">

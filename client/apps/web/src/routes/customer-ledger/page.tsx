@@ -133,9 +133,8 @@ export function CustomerLedgerPage() {
           </div>
         ) : undefined,
       }}
-      className="p-0"
     >
-      <div className="mx-4 mt-3 mb-4 space-y-4">
+      <>
         <div className="w-75">
           <label className="text-2xs text-muted-foreground mb-1 block font-medium">
             {t("Customer")}
@@ -179,7 +178,7 @@ export function CustomerLedgerPage() {
             )}
           </>
         )}
-      </div>
+      </>
     </PageLayout>
   );
 }

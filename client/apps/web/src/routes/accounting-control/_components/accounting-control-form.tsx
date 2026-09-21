@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@trenova/shared/components/ui/card";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { Label } from "@trenova/shared/components/ui/label";
 import { usePermissions } from "@/hooks/use-permission";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
@@ -649,7 +649,7 @@ function CurrencyAndAccountsCard() {
             )}
           </CardDescription>
         </CardHeader>
-        <CardContent className="max-w-prose">
+        <CardContent className="flex max-w-prose flex-col gap-6">
           <FormGroup cols={1}>
             {isMultiCurrency ? (
               <OANDAReadinessPanel
@@ -686,16 +686,15 @@ function CurrencyAndAccountsCard() {
                 rules={{ required: true }}
               />
             </FormControl>
-            {isMultiCurrency && showCurrencyPolicy && (
-              <>
-                <div className="flex flex-col gap-1 border-t pt-4">
-                  <h3 className="text-sm font-medium">{t("Currency Policy")}</h3>
-                  <p className="text-muted-foreground text-sm">
-                    {t(
-                      "Configure exchange-rate date selection, override handling, and realized FX accounts.",
-                    )}
-                  </p>
-                </div>
+          </FormGroup>
+          {isMultiCurrency && showCurrencyPolicy && (
+            <FormSection
+              title={t("Currency Policy")}
+              description={t(
+                "Configure exchange-rate date selection, override handling, and realized FX accounts.",
+              )}
+            >
+              <FormGroup cols={1}>
                 <FormControl className="max-w-[420px]">
                   <SelectField
                     control={control}
@@ -744,9 +743,9 @@ function CurrencyAndAccountsCard() {
                     clearable
                   />
                 </FormControl>
-              </>
-            )}
-          </FormGroup>
+              </FormGroup>
+            </FormSection>
+          )}
         </CardContent>
       </Card>
       <OANDAExchangeRatesIntegrationModal

@@ -15,6 +15,11 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Avatar, AvatarFallback } from "@trenova/shared/components/ui/avatar";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
+import {
+  DescriptionEmpty,
+  DescriptionItem,
+  DescriptionList,
+} from "@trenova/shared/components/ui/description-list";
 import { Progress } from "@trenova/shared/components/ui/progress";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDate } from "@trenova/shared/lib/date";
@@ -125,21 +130,18 @@ function Identity({ overview }: { overview: WorkerOverview }) {
           <p className="mt-1 text-xs">{meta.blurb}</p>
         </div>
       </div>
-      <dl className="grid shrink-0 grid-cols-2 gap-x-6 gap-y-1 text-xs">
-        <Fact label={t("Status")} value={worker.status} />
-        <Fact label={t("Dispatch")} value={worker.canBeAssigned ? "Assignable" : "Held"} />
-        <Fact label={t("Compliance")} value={worker.profile?.complianceStatus ?? "—"} />
-        <Fact label={t("Qualified")} value={worker.profile?.isQualified ? "Yes" : "No"} />
-      </dl>
-    </div>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="font-medium">{value}</dd>
+      <DescriptionList className="shrink-0 gap-y-1">
+        <DescriptionItem label={t("Status")}>{worker.status}</DescriptionItem>
+        <DescriptionItem label={t("Dispatch")}>
+          {worker.canBeAssigned ? "Assignable" : "Held"}
+        </DescriptionItem>
+        <DescriptionItem label={t("Compliance")}>
+          {worker.profile?.complianceStatus ?? <DescriptionEmpty />}
+        </DescriptionItem>
+        <DescriptionItem label={t("Qualified")}>
+          {worker.profile?.isQualified ? "Yes" : "No"}
+        </DescriptionItem>
+      </DescriptionList>
     </div>
   );
 }
@@ -538,26 +540,25 @@ function AtAGlance({ overview }: { overview: WorkerOverview }) {
 
   const { worker } = overview;
   const profile = worker.profile;
-  const rows: [string, string][] = [
+  const rows: [string, string | null][] = [
     ["Worker type", worker.type],
     ["Driver type", worker.driverType],
-    ["Fleet", worker.fleetCode?.code ?? "—"],
-    ["Hired", profile?.hireDate ? formatUnixDate(profile.hireDate) : "—"],
-    ["Terminated", profile?.terminationDate ? formatUnixDate(profile.terminationDate) : "—"],
+    ["Fleet", worker.fleetCode?.code ?? null],
+    ["Hired", profile?.hireDate ? formatUnixDate(profile.hireDate) : null],
+    ["Terminated", profile?.terminationDate ? formatUnixDate(profile.terminationDate) : null],
     ["As of", formatUnixDate(overview.asOf)],
   ];
 
   return (
     <section className="flex flex-col gap-2">
       <SectionHeading>{t("At a glance")}</SectionHeading>
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg border p-3 text-xs sm:grid-cols-3">
+      <DescriptionList columns={3} className="rounded-lg border p-3">
         {rows.map(([label, value]) => (
-          <div key={label} className="flex flex-col">
-            <dt className="text-xs text-muted-foreground">{label}</dt>
-            <dd className="font-medium">{value}</dd>
-          </div>
+          <DescriptionItem key={label} label={label}>
+            {value ?? <DescriptionEmpty />}
+          </DescriptionItem>
         ))}
-      </dl>
+      </DescriptionList>
     </section>
   );
 }

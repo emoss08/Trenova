@@ -1,4 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@trenova/shared/components/ui/alert";
 import { ControlledShipmentAutocompleteField } from "@/components/autocomplete-fields";
 import { TestDataEditor } from "@/components/formula-editor/test-data-editor";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -57,17 +63,17 @@ function GuardrailNotice({ guardrail }: { guardrail: GuardrailResult }) {
   const limit = guardrail.bound === "min" ? guardrail.minCharge : guardrail.maxCharge;
 
   return (
-    <div className="mt-2 flex items-start gap-1.5 rounded-md border border-warning/40 bg-warning/10 px-2 py-1.5 text-xs text-warning-foreground">
-      <ShieldIcon className="mt-0.5 size-3 shrink-0" />
-      <span>
+    <Alert variant="warning" size="sm" className="mt-2">
+      <ShieldIcon />
+      <AlertDescription>
         {t(
           "The formula produced {0} and was clamped to the {1} charge{2}.",
           formatCurrency(guardrail.rawAmount),
           bound,
           limit != null ? ` ${t("of {0}", formatCurrency(limit))}` : "",
         )}
-      </span>
-    </div>
+      </AlertDescription>
+    </Alert>
   );
 }
 
@@ -123,26 +129,23 @@ function NullableWarnings({ warnings }: { warnings: ExpressionWarning[] }) {
       </div>
       <div className="space-y-1.5">
         {warnings.map((warning) => (
-          <div
-            key={`${warning.scope}:${warning.field}`}
-            className="flex items-start justify-between gap-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-foreground"
-          >
-            <div className="min-w-0 space-y-0.5">
+          <Alert key={`${warning.scope}:${warning.field}`} variant="warning" size="sm">
+            <AlertDescription>
               <p>{warning.message}</p>
-              {warning.scope !== "expression" && (
-                <p className="text-2xs opacity-80">{t("In {0}", warning.scope)}</p>
-              )}
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="xs"
-              className="shrink-0 font-mono"
-              onClick={() => applyFix(warning)}
-            >
-              {t("Use {0}", warning.suggestion)}
-            </Button>
-          </div>
+              {warning.scope !== "expression" && <p>{t("In {0}", warning.scope)}</p>}
+            </AlertDescription>
+            <AlertAction>
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                className="shrink-0 font-mono"
+                onClick={() => applyFix(warning)}
+              >
+                {t("Use {0}", warning.suggestion)}
+              </Button>
+            </AlertAction>
+          </Alert>
         ))}
       </div>
     </div>
@@ -242,16 +245,16 @@ function BreakdownResultTable({
         )}
       </div>
       {reconciliation?.clampMismatch && (
-        <div className="flex items-start gap-1.5 rounded-md border border-warning/40 bg-warning/10 px-2 py-1.5 text-xs text-warning-foreground">
-          <ShieldIcon className="mt-0.5 size-3 shrink-0" />
-          <span>
+        <Alert variant="warning" size="sm">
+          <ShieldIcon />
+          <AlertDescription>
             {t(
               "A guardrail moved the total to {0}, but the lines still add up to the raw {1}. An invoice built from these lines would not match the charge.",
               formatCurrency(total ?? 0),
               formatCurrency(rawAmount ?? 0),
             )}
-          </span>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );
@@ -441,23 +444,18 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
           )}
 
           {requestError && (
-            <div
-              role="alert"
-              className="border-destructive/40 bg-destructive/10 flex items-start justify-between gap-3 rounded-lg border px-3 py-2 text-xs"
-            >
-              <div className="space-y-0.5">
-                <p className="text-destructive font-medium">{t("Preview could not run")}</p>
-                <p className="text-muted-foreground">{requestError}</p>
-                {hasResult && (
-                  <p className="text-muted-foreground text-2xs">
-                    {t("The result below is from the last successful run.")}
-                  </p>
-                )}
-              </div>
-              <Button type="button" variant="outline" size="xs" onClick={runNow}>
-                {t("Retry")}
-              </Button>
-            </div>
+            <Alert variant="destructive" size="sm">
+              <AlertTitle>{t("Preview could not run")}</AlertTitle>
+              <AlertDescription>
+                <p>{requestError}</p>
+                {hasResult && <p>{t("The result below is from the last successful run.")}</p>}
+              </AlertDescription>
+              <AlertAction>
+                <Button type="button" variant="outline" size="xs" onClick={runNow}>
+                  {t("Retry")}
+                </Button>
+              </AlertAction>
+            </Alert>
           )}
 
           {!hasResult && !requestError && (
@@ -472,9 +470,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
               aria-busy={isPending}
               className={cn(
                 "overflow-hidden rounded-lg border transition-opacity",
-                isValid
-                  ? "border-success/30 bg-success/5"
-                  : "border-destructive/30 bg-destructive/5",
+                isValid ? "border-success-border" : "border-danger-border",
                 (isPending || requestError) && "opacity-60",
               )}
             >
@@ -482,21 +478,19 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                 className={cn(
                   "flex items-center gap-2 border-b px-4 py-2",
                   isValid
-                    ? "border-success/20 bg-success/10"
-                    : "border-destructive/20 bg-destructive/10",
+                    ? "border-success-border bg-success-subtle"
+                    : "border-danger-border bg-danger-subtle",
                 )}
               >
                 {isValid ? (
-                  <CheckCircle2 className="size-4 text-success-foreground" />
+                  <CheckCircle2 className="size-4 text-success-subtle-foreground" />
                 ) : (
-                  <XCircle className="text-destructive size-4" />
+                  <XCircle className="size-4 text-danger-subtle-foreground" />
                 )}
                 <span
                   className={cn(
                     "text-sm font-medium",
-                    isValid
-                      ? "text-success-foreground"
-                      : "text-danger-foreground",
+                    isValid ? "text-success-subtle-foreground" : "text-danger-subtle-foreground",
                   )}
                 >
                   {isValid ? t("Expression Valid") : t("Expression Invalid")}
@@ -547,7 +541,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                     <div className="text-muted-foreground text-xs font-medium">
                       {t("Error Details")}
                     </div>
-                    <pre className="border-destructive/10 bg-background/50 text-destructive overflow-x-auto rounded-md border p-3 font-mono text-sm wrap-break-word whitespace-pre-wrap">
+                    <pre className="border-danger-border bg-danger-subtle text-danger-subtle-foreground overflow-x-auto rounded-md border p-3 font-mono text-sm wrap-break-word whitespace-pre-wrap">
                       {result.error}
                     </pre>
                   </div>

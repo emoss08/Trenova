@@ -34,7 +34,7 @@ export function NotificationPanelSkeleton() {
   return (
     <>
       <div className="flex items-center justify-between gap-2 py-3 pr-11 pl-4">
-        <SheetTitle className="text-sm font-semibold">{t("Notifications")}</SheetTitle>
+        <SheetTitle>{t("Notifications")}</SheetTitle>
       </div>
       <div className="border-border flex items-center gap-3 border-b pr-3 pl-4">
         <Skeleton className="my-2 h-4 w-12 rounded" />

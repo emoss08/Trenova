@@ -29,7 +29,7 @@ export function KeyboardShortcutsDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Keyboard Shortcuts")}</DialogTitle>
           <DialogDescription>
@@ -40,9 +40,7 @@ export function KeyboardShortcutsDialog() {
           <div className="flex flex-col gap-4">
             {keybindGroups.map((group) => (
               <div key={group.id} className="flex flex-col gap-2">
-                <h3 className="text-muted-foreground text-xs font-medium">
-                  {t(group.label)}
-                </h3>
+                <h3 className="text-muted-foreground text-xs font-medium">{t(group.label)}</h3>
                 <div className="flex flex-col">
                   {group.keybinds.map((keybind) => (
                     <div

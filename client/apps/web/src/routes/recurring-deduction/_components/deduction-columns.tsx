@@ -66,7 +66,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RecurringDeductionRow>[] {
       id: "worker",
       header: t("Driver"),
       cell: ({ row }) => (
-        <span className="text-xs font-medium">
+        <span className="font-medium">
           {row.original.worker
             ? `${row.original.worker.firstName} ${row.original.worker.lastName}`.trim()
             : "—"}
@@ -78,7 +78,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RecurringDeductionRow>[] {
       id: "payCode",
       header: t("Code"),
       cell: ({ row }) => (
-        <span className="text-xs">
+        <span>
           <span className="font-mono font-medium">{row.original.payCode?.code ?? "—"}</span>
           {row.original.payCode?.name && (
             <span className="text-muted-foreground ml-1.5">{row.original.payCode.name}</span>
@@ -90,7 +90,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RecurringDeductionRow>[] {
     {
       accessorKey: "description",
       header: t("Description"),
-      cell: ({ row }) => <span className="text-xs">{t(row.original.description)}</span>,
+      cell: ({ row }) => <span>{t(row.original.description)}</span>,
       size: 220,
       meta: { apiField: "description" },
     },
@@ -98,7 +98,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RecurringDeductionRow>[] {
       accessorKey: "frequency",
       header: t("Frequency"),
       cell: ({ row }) => (
-        <span className="text-xs">
+        <span>
           {row.original.frequency === "EverySettlement" ? t("Every settlement") : t("Monthly")}
         </span>
       ),
@@ -122,7 +122,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RecurringDeductionRow>[] {
       cell: ({ row }) => {
         const cap = row.original.totalCapMinor;
         return (
-          <div className="text-right text-xs tabular-nums">
+          <div className="text-right tabular-nums">
             <AmountDisplay
               value={row.original.deductedToDateMinor}
               currency={row.original.currencyCode}

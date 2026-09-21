@@ -13,7 +13,7 @@ import { Switch } from "@trenova/shared/components/ui/switch";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useCreateReportView, useDeleteReportView, useReportViews } from "@/hooks/use-reports";
-import { BookmarkIcon, TrashIcon, XIcon } from "lucide-react";
+import { BookmarkIcon, StarIcon, TrashIcon, XIcon } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -54,10 +54,11 @@ export function SavedViewField({
 
   const choices = useMemo(
     () => [
-      { value: NO_VIEW, label: t("No saved view") },
+      { value: NO_VIEW, label: t("No saved view"), pinned: false },
       ...(views ?? []).map((view) => ({
         value: view.id,
-        label: view.pinned ? `★ ${view.name}` : view.name,
+        label: view.name,
+        pinned: Boolean(view.pinned),
       })),
     ],
     [views, t],
@@ -145,11 +146,19 @@ export function SavedViewField({
           disabled={isLoading}
         >
           <SelectTrigger className="w-full" id="report-run-view">
-            <SelectValue placeholder={t("No saved view")} />
+            <SelectValue placeholder={t("No saved view")}>
+              {selected?.pinned ? (
+                <>
+                  <StarIcon className="size-3.5" aria-hidden />
+                  {selected.name}
+                </>
+              ) : undefined}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {choices.map((choice) => (
               <SelectItem key={choice.value} value={choice.value}>
+                {choice.pinned ? <StarIcon className="size-3.5" aria-hidden /> : null}
                 {t(choice.label)}
               </SelectItem>
             ))}

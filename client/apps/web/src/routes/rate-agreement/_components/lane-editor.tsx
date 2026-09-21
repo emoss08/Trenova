@@ -170,8 +170,8 @@ function LaneRow({
   const storedLaneKey = rule ? laneKeyPreview(rule) : null;
 
   return (
-    <div className="bg-card rounded-md border p-4">
-      <div className="mb-3 flex items-start justify-between gap-2">
+    <div className="bg-card flex flex-col gap-4 rounded-md border p-4">
+      <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium">
             {rule ? laneDisplayLabel(rule, index) : t("Lane {0}", index + 1)}
@@ -208,7 +208,7 @@ function LaneRow({
       </div>
 
       {issue && (
-        <p className="bg-destructive/10 text-destructive mb-3 rounded-sm p-2 text-xs">{issue}</p>
+        <p className="bg-destructive/10 text-destructive rounded-sm p-2 text-xs">{issue}</p>
       )}
 
       <FormGroup cols={2}>
@@ -233,22 +233,18 @@ function LaneRow({
         </FormControl>
       </FormGroup>
 
-      <div className="mt-3 grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2">
         <div className="bg-muted/30 rounded-md border p-3">
-          <p className="text-muted-foreground mb-2 text-xs font-medium">
-            {t("Origin")}
-          </p>
+          <p className="text-muted-foreground mb-2 text-xs font-medium">{t("Origin")}</p>
           <LaneScopeFields control={control} side="origin" namePrefix={`rules.${index}.`} />
         </div>
         <div className="bg-muted/30 rounded-md border p-3">
-          <p className="text-muted-foreground mb-2 text-xs font-medium">
-            {t("Destination")}
-          </p>
+          <p className="text-muted-foreground mb-2 text-xs font-medium">{t("Destination")}</p>
           <LaneScopeFields control={control} side="destination" namePrefix={`rules.${index}.`} />
         </div>
       </div>
 
-      <FormGroup cols={3} className="mt-3">
+      <FormGroup cols={3}>
         {!usesMatrix && (
           <FormControl>
             <FormulaTemplateAutocompleteField
@@ -295,7 +291,7 @@ function LaneRow({
         )}
       </FormGroup>
 
-      <FormGroup cols={4} className="mt-3">
+      <FormGroup cols={4}>
         <FormControl>
           <NumberField
             control={control}

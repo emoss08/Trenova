@@ -24,12 +24,12 @@ export function BillingWorkspaceLayout({
       {toolbar}
       <div
         className={cn(
-          "mx-4 mt-3 mb-4 grid h-[calc(100vh-220px)] gap-0 overflow-hidden rounded-lg border",
+          "border-border bg-card grid h-[calc(100vh-220px)] min-h-96 gap-0 overflow-hidden rounded-lg border",
           preview ? "grid-cols-[300px_1fr_1fr]" : "grid-cols-[320px_1fr]",
         )}
       >
-        <div className="overflow-hidden border-r">{sidebar}</div>
-        <div className={cn("overflow-hidden", preview && "border-r")}>{detail}</div>
+        <div className="border-border overflow-hidden border-r">{sidebar}</div>
+        <div className={cn("overflow-hidden", preview && "border-border border-r")}>{detail}</div>
         {preview ? <div className="overflow-hidden">{preview}</div> : null}
       </div>
     </PageLayout>

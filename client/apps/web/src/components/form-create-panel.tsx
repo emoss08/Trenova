@@ -201,20 +201,22 @@ export function FormCreatePanel<
         )
       }
     >
-      {notice}
-      <FormProvider {...form}>
-        <Form id="panel-create-form" onSubmit={handleSubmit(handleFormSubmit)}>
-          {formComponent}
-          {useDock && (
-            <FormSaveDock
-              splitButton={splitButtonConfig}
-              formId="panel-create-form"
-              position="right"
-              showReset={false}
-            />
-          )}
-        </Form>
-      </FormProvider>
+      <div className="flex flex-col gap-4">
+        {notice}
+        <FormProvider {...form}>
+          <Form id="panel-create-form" onSubmit={handleSubmit(handleFormSubmit)}>
+            {formComponent}
+            {useDock && (
+              <FormSaveDock
+                splitButton={splitButtonConfig}
+                formId="panel-create-form"
+                position="right"
+                showReset={false}
+              />
+            )}
+          </Form>
+        </FormProvider>
+      </div>
     </DataTablePanelContainer>
   );
 }

@@ -51,7 +51,7 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
       cell: ({ row }) => (
         <Link
           to={invoicePanelPath(row.original.id)}
-          className="font-mono text-xs font-medium hover:underline"
+          className="font-mono font-medium hover:underline"
           onClick={(event) => event.stopPropagation()}
         >
           {row.original.number}
@@ -101,7 +101,7 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
       header: t("Bill To"),
       cell: ({ row }) => (
         <div className="flex flex-col">
-          <span className="truncate text-xs font-medium">{row.original.billToName}</span>
+          <span className="truncate font-medium">{row.original.billToName}</span>
           {row.original.billToCode ? (
             <span className="text-muted-foreground text-2xs">{row.original.billToCode}</span>
           ) : null}
@@ -121,7 +121,7 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
       cell: ({ row }) => {
         const name = shipperName(row.original);
         return name ? (
-          <span className="text-xs">{name}</span>
+          <span>{name}</span>
         ) : (
           <span className="text-muted-foreground text-xs">—</span>
         );
@@ -137,7 +137,7 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
       id: "invoiceDate",
       accessorKey: "invoiceDate",
       header: t("Invoice Date"),
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.invoiceDate)}</span>,
+      cell: ({ row }) => <span>{formatDate(row.original.invoiceDate)}</span>,
       meta: {
         apiField: "invoiceDate",
         filterable: true,
@@ -149,7 +149,7 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
       id: "dueDate",
       accessorKey: "dueDate",
       header: t("Due Date"),
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.dueDate)}</span>,
+      cell: ({ row }) => <span>{formatDate(row.original.dueDate)}</span>,
       meta: {
         apiField: "dueDate",
         filterable: true,
@@ -162,7 +162,7 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
       accessorKey: "totalAmount",
       header: t("Total"),
       cell: ({ row }) => (
-        <span className="block text-right text-xs font-medium tabular-nums">
+        <span className="block text-right font-medium tabular-nums">
           {formatCurrency(Number(row.original.totalAmount ?? 0), row.original.currencyCode)}
         </span>
       ),

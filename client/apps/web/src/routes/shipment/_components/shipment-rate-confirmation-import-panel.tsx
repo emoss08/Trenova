@@ -3,8 +3,10 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentShipmentDraftReviewDialog } from "@/components/documents/document-shipment-draft-review-dialog";
 import { DocumentUploadZone, type RejectedFile } from "@/components/documents/document-upload-zone";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import {
   Card,
   CardContent,
@@ -23,12 +25,7 @@ import { Progress } from "@trenova/shared/components/ui/progress";
 import { apiService } from "@/services/api";
 import type { Document, DocumentShipmentDraft } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertCircleIcon,
-  CheckCircle2Icon,
-  FileUpIcon,
-  LoaderCircleIcon,
-} from "lucide-react";
+import { AlertCircleIcon, CheckCircle2Icon, FileUpIcon, LoaderCircleIcon } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -430,9 +427,9 @@ export function ShipmentRateConfirmationImportPanel({
                   size="sm"
                   className={
                     isActive
-                      ? "ring-primary/30"
+                      ? "ring-brand-border"
                       : isComplete
-                        ? "bg-success-subtle/40 ring-success/20"
+                        ? "bg-success-subtle ring-success-border"
                         : "bg-muted/20"
                   }
                 >
@@ -500,10 +497,10 @@ export function ShipmentRateConfirmationImportPanel({
                         showLabel
                       />
                       {currentUpload.error ? (
-                        <div className="border-destructive/20 bg-destructive/5 text-destructive flex items-start gap-2 rounded-md border p-3 text-sm">
-                          <AlertCircleIcon className="mt-0.5 size-4 shrink-0" />
-                          <div>{currentUpload.error}</div>
-                        </div>
+                        <Alert variant="destructive" size="sm">
+                          <AlertCircleIcon />
+                          <AlertDescription>{currentUpload.error}</AlertDescription>
+                        </Alert>
                       ) : null}
                       <div className="flex flex-wrap gap-2">
                         {currentUpload.status === "error" ? (
@@ -546,61 +543,42 @@ export function ShipmentRateConfirmationImportPanel({
                   variant={processStatus.variant}
                   showLabel
                 />
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="rounded-lg border p-3">
-                    <div className="text-muted-foreground text-xs font-medium">
-                      {t("Uploaded File")}
-                    </div>
-                    <div className="mt-1 text-sm">
-                      {importedDocument?.originalName ?? currentUpload?.file.name ?? t("Waiting")}
-                    </div>
-                  </div>
-                  <div className="rounded-lg border p-3">
-                    <div className="text-muted-foreground text-xs font-medium">
-                      {t("Content Status")}
-                    </div>
-                    <div className="mt-1 text-sm">
-                      {importedDocument?.contentStatus ?? t("Uploading")}
-                    </div>
-                  </div>
-                  <div className="rounded-lg border p-3">
-                    <div className="text-muted-foreground text-xs font-medium">
-                      {t("Draft Status")}
-                    </div>
-                    <div className="mt-1 text-sm">
-                      {importedDocument?.shipmentDraftStatus ?? t("Waiting")}
-                    </div>
-                  </div>
-                </div>
+                <DescriptionList columns={3} className="rounded-lg border p-3">
+                  <DescriptionItem label={t("Uploaded File")}>
+                    {importedDocument?.originalName ?? currentUpload?.file.name ?? t("Waiting")}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Content Status")}>
+                    {importedDocument?.contentStatus ?? t("Uploading")}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Draft Status")}>
+                    {importedDocument?.shipmentDraftStatus ?? t("Waiting")}
+                  </DescriptionItem>
+                </DescriptionList>
                 {processingFailure ? (
-                  <div className="border-destructive/20 bg-destructive/5 rounded-lg border p-4">
-                    <div className="flex items-start gap-3">
-                      <AlertCircleIcon className="text-destructive mt-0.5 size-4 shrink-0" />
-                      <div className="grid gap-3">
-                        <div>
-                          <div className="text-destructive font-medium">{t("Import failed")}</div>
-                          <div className="text-destructive/80 text-sm">{processingFailure}</div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {uploadedDocumentId ? (
-                            <Button
-                              variant="outline"
-                              onClick={() => retryExtraction.mutate()}
-                              disabled={retryExtraction.isPending}
-                            >
-                              {retryExtraction.isPending ? (
-                                <LoaderCircleIcon className="size-4 animate-spin" />
-                              ) : null}
-                              {t("Retry Extraction")}
-                            </Button>
-                          ) : null}
-                          <Button variant="outline" onClick={handleReplaceFile}>
-                            {t("Replace File")}
+                  <Alert variant="destructive">
+                    <AlertCircleIcon />
+                    <AlertTitle>{t("Import failed")}</AlertTitle>
+                    <AlertDescription>
+                      {processingFailure}
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {uploadedDocumentId ? (
+                          <Button
+                            variant="outline"
+                            onClick={() => retryExtraction.mutate()}
+                            disabled={retryExtraction.isPending}
+                          >
+                            {retryExtraction.isPending ? (
+                              <LoaderCircleIcon className="size-4 animate-spin" />
+                            ) : null}
+                            {t("Retry Extraction")}
                           </Button>
-                        </div>
+                        ) : null}
+                        <Button variant="outline" onClick={handleReplaceFile}>
+                          {t("Replace File")}
+                        </Button>
                       </div>
-                    </div>
-                  </div>
+                    </AlertDescription>
+                  </Alert>
                 ) : (
                   <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
                     {t(
@@ -641,7 +619,7 @@ export function ShipmentRateConfirmationImportPanel({
 
         {currentStep === "success" ? (
           <div className="grid gap-6 p-6">
-            <Card className="border-success-border bg-success-subtle/60">
+            <Card className="border-success-border bg-success-subtle">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <CheckCircle2Icon className="size-5 text-success-foreground" />
@@ -652,23 +630,31 @@ export function ShipmentRateConfirmationImportPanel({
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <div className="bg-background/80 rounded-lg border border-success-border p-4">
-                  <div className="text-muted-foreground text-xs font-medium">
-                    {t("Shipment ID")}
-                  </div>
-                  <div className="mt-1 text-sm font-medium">{createdShipmentId}</div>
-                </div>
+                <DescriptionList
+                  columns={1}
+                  className="bg-card rounded-lg border border-success-border p-4"
+                >
+                  <DescriptionItem label={t("Shipment ID")} valueClassName="font-mono">
+                    {createdShipmentId}
+                  </DescriptionItem>
+                </DescriptionList>
                 {attachErrorMessage ? (
-                  <div className="rounded-lg border border-warning-border bg-warning-subtle p-4 text-sm text-warning-foreground">
-                    {t(
-                      "Shipment creation succeeded, but the source document could not be attached.",
-                    )}
-                    <div className="mt-1 text-warning-foreground/80">{attachErrorMessage}</div>
-                  </div>
+                  <Alert variant="warning" size="sm">
+                    <AlertCircleIcon />
+                    <AlertTitle>
+                      {t(
+                        "Shipment creation succeeded, but the source document could not be attached.",
+                      )}
+                    </AlertTitle>
+                    <AlertDescription>{attachErrorMessage}</AlertDescription>
+                  </Alert>
                 ) : (
-                  <div className="bg-background/80 rounded-lg border border-success-border p-4 text-sm text-success-foreground">
-                    {t("The source document was attached to the new shipment successfully.")}
-                  </div>
+                  <Alert variant="success" size="sm" className="bg-card">
+                    <CheckCircle2Icon />
+                    <AlertDescription>
+                      {t("The source document was attached to the new shipment successfully.")}
+                    </AlertDescription>
+                  </Alert>
                 )}
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline" render={<Link to="/shipment-management/shipments" />}>

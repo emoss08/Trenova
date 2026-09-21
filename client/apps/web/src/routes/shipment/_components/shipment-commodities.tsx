@@ -176,7 +176,7 @@ function CommodityDialog({
         if (!isOpen) onCancel();
       }}
     >
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{isEditing ? t("Edit Commodity") : t("Add Commodity")}</DialogTitle>
           <DialogDescription>
@@ -299,7 +299,6 @@ export default function CommoditiesSection() {
         title={t("Commodities")}
         titleCount={commodities.length}
         description={t("Cargo items, weights, and hazardous material compliance")}
-        className="border-border border-t pt-4"
         action={
           fields.length > 0 && (
             <Button type="button" variant="outline" size="xxs" onClick={handleAdd}>

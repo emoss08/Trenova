@@ -1,7 +1,12 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import {
+  DescriptionEmpty,
+  DescriptionItem,
+  DescriptionList,
+} from "@trenova/shared/components/ui/description-list";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Separator } from "@trenova/shared/components/ui/separator";
 import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { invoicePanelPath } from "@/lib/invoice-links";
 import { invoiceBillingPeriod, invoiceBillsSingleShipment } from "@/lib/invoice-scope";
@@ -45,19 +50,13 @@ export function InvoiceOverviewTab({
           latestAdjustmentDetail={latestAdjustmentDetail}
         />
         {invoice.offCycleReason ? (
-          <div className="rounded-lg border border-warning-border bg-warning-subtle/60 p-3 dark:border-warning-border dark:bg-warning-subtle/30">
-            <div className="flex items-start gap-2">
-              <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
-              <div>
-                <p className="text-xs font-medium text-warning-foreground">
-                  {t("Billed outside this customer's statement")}
-                </p>
-                <p className="mt-0.5 text-xs text-warning-foreground/80">
-                  {invoice.offCycleReason}
-                </p>
-              </div>
-            </div>
-          </div>
+          <Alert variant="warning" size="sm">
+            <TriangleAlertIcon />
+            <AlertTitle>
+              {t("Billed outside this customer's statement")}
+            </AlertTitle>
+            <AlertDescription>{invoice.offCycleReason}</AlertDescription>
+          </Alert>
         ) : null}
         <div className="grid gap-5 xl:grid-cols-2">
           <div className="flex flex-col gap-5">
@@ -87,121 +86,101 @@ export function InvoiceOverviewTab({
 
             <div className="bg-card rounded-lg border p-3">
               <SectionLabel>{t("Charge Summary")}</SectionLabel>
-              <div className="mt-2 space-y-2">
-                <ChargeSummaryRow
-                  label={t("Freight Charges")}
-                  value={formatCurrency(Number(invoice.subtotalAmount ?? 0), invoice.currencyCode)}
-                />
-                <ChargeSummaryRow
-                  label={t("Other Charges")}
-                  value={formatCurrency(Number(invoice.otherAmount ?? 0), invoice.currencyCode)}
-                />
-                <Separator />
-                <ChargeSummaryRow
+              <DescriptionList layout="split" className="mt-1">
+                <DescriptionItem label={t("Freight Charges")} numeric>
+                  {formatCurrency(Number(invoice.subtotalAmount ?? 0), invoice.currencyCode)}
+                </DescriptionItem>
+                <DescriptionItem label={t("Other Charges")} numeric>
+                  {formatCurrency(Number(invoice.otherAmount ?? 0), invoice.currencyCode)}
+                </DescriptionItem>
+                <DescriptionItem
                   label={t("Total")}
-                  value={formatCurrency(Number(invoice.totalAmount ?? 0), invoice.currencyCode)}
-                  bold
-                />
-              </div>
+                  numeric
+                  valueClassName="text-base font-semibold"
+                >
+                  {formatCurrency(Number(invoice.totalAmount ?? 0), invoice.currencyCode)}
+                </DescriptionItem>
+              </DescriptionList>
             </div>
 
             <div className="bg-card rounded-lg border p-3">
               <SectionLabel>{t("References")}</SectionLabel>
-              <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
+              <DescriptionList className="mt-2">
                 {billsSingleShipment && invoice.shipmentId ? (
-                  <PropertyCell label={t("Shipment")}>
+                  <DescriptionItem label={t("Shipment")}>
                     <Link
                       to={shipmentPanelPath(invoice.shipmentId)}
-                      className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
+                      className="inline-flex items-center gap-1 hover:underline"
                     >
                       {invoice.shipmentProNumber || invoice.shipmentId.slice(0, 12)}
                       <ExternalLinkIcon className="size-2.5" />
                     </Link>
-                  </PropertyCell>
+                  </DescriptionItem>
                 ) : null}
                 {invoice.orderId ? (
-                  <PropertyCell label={t("Order")}>
+                  <DescriptionItem label={t("Order")}>
                     <Link
                       to={`/shipment-management/orders?panelType=edit&panelEntityId=${invoice.orderId}`}
-                      className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
+                      className="inline-flex items-center gap-1 hover:underline"
                     >
                       {invoice.orderNumber || invoice.orderId.slice(0, 12)}
                       <ExternalLinkIcon className="size-2.5" />
                     </Link>
-                  </PropertyCell>
+                  </DescriptionItem>
                 ) : null}
                 {billsSingleShipment ? (
-                  <PropertyCell label={t("Billing Queue")}>
+                  <DescriptionItem label={t("Billing Queue")}>
                     <Link
                       to={`/billing/queue?item=${invoice.billingQueueItemId}&includePosted=true`}
-                      className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
+                      className="inline-flex items-center gap-1 hover:underline"
                     >
                       {t("Queue Item")}
                       <ExternalLinkIcon className="size-2.5" />
                     </Link>
-                  </PropertyCell>
+                  </DescriptionItem>
                 ) : (
-                  <PropertyCell label={t("Shipments")}>
-                    <span className="text-xs font-medium">
-                      {t(
-                        "{0, plural, one {# shipment} other {# shipments}}",
-                        invoice.shipmentCount,
-                      )}
-                    </span>
-                  </PropertyCell>
+                  <DescriptionItem label={t("Shipments")}>
+                    {t("{0, plural, one {# shipment} other {# shipments}}", invoice.shipmentCount)}
+                  </DescriptionItem>
                 )}
                 {billsSingleShipment && invoice.shipmentBol ? (
-                  <PropertyCell label={t("BOL")}>
-                    <span className="text-xs font-medium">{invoice.shipmentBol}</span>
-                  </PropertyCell>
+                  <DescriptionItem label={t("BOL")}>{invoice.shipmentBol}</DescriptionItem>
                 ) : null}
                 {originLocation && destinationLocation ? (
-                  <PropertyCell label={t("Route")}>
-                    <span className="text-xs font-medium">
-                      {originLocation.city}, {originLocation.state?.abbreviation} →{" "}
-                      {destinationLocation.city}, {destinationLocation.state?.abbreviation}
-                    </span>
-                  </PropertyCell>
+                  <DescriptionItem label={t("Route")}>
+                    {originLocation.city}, {originLocation.state?.abbreviation} →{" "}
+                    {destinationLocation.city}, {destinationLocation.state?.abbreviation}
+                  </DescriptionItem>
                 ) : null}
-              </div>
+              </DescriptionList>
             </div>
           </div>
 
           <div className="flex flex-col gap-5">
             <div className="bg-card rounded-lg border p-3">
               <SectionLabel>{t("Invoice Details")}</SectionLabel>
-              <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
+              <DescriptionList className="mt-2">
                 {billingPeriod ? (
-                  <PropertyCell label={t("Billing Period")}>
-                    <span className="text-xs font-medium">{billingPeriod}</span>
-                  </PropertyCell>
+                  <DescriptionItem label={t("Billing Period")}>{billingPeriod}</DescriptionItem>
                 ) : (
-                  <PropertyCell label={t("Service Date")}>
-                    <span className="text-xs font-medium">
-                      {formatUnixDate(invoice.serviceDate)}
-                    </span>
-                  </PropertyCell>
+                  <DescriptionItem label={t("Service Date")}>
+                    {formatUnixDate(invoice.serviceDate)}
+                  </DescriptionItem>
                 )}
-                <PropertyCell label={t("Currency")}>
-                  <span className="text-xs font-medium">{invoice.currencyCode}</span>
-                </PropertyCell>
-                <PropertyCell label={t("Posted")}>
-                  <span className="text-xs font-medium">
-                    {invoice.status === "Posted"
-                      ? formatUnixDateTime(invoice.postedAt)
-                      : t("Not yet")}
-                  </span>
-                </PropertyCell>
-                <PropertyCell label={t("Lineage")}>
-                  <span className="text-xs font-medium">
-                    {invoice.isAdjustmentArtifact
-                      ? isCurrentVersion
-                        ? t("Current artifact")
-                        : t("Historical artifact")
-                      : t("Root invoice")}
-                  </span>
-                </PropertyCell>
-              </div>
+                <DescriptionItem label={t("Currency")}>{invoice.currencyCode}</DescriptionItem>
+                <DescriptionItem label={t("Posted")}>
+                  {invoice.status === "Posted"
+                    ? formatUnixDateTime(invoice.postedAt)
+                    : t("Not yet")}
+                </DescriptionItem>
+                <DescriptionItem label={t("Lineage")}>
+                  {invoice.isAdjustmentArtifact
+                    ? isCurrentVersion
+                      ? t("Current artifact")
+                      : t("Historical artifact")
+                    : t("Root invoice")}
+                </DescriptionItem>
+              </DescriptionList>
             </div>
 
             <div className="bg-card rounded-lg border p-3">
@@ -285,43 +264,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="text-muted-foreground text-xs font-medium">{children}</p>;
 }
 
-function PropertyCell({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <p className="text-2xs text-muted-foreground">{label}</p>
-      {children}
-    </div>
-  );
-}
-
-function ChargeSummaryRow({
-  label,
-  value,
-  bold = false,
-}: {
-  label: string;
-  value: string;
-  bold?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <span
-        className={cn("text-sm", bold ? "text-foreground font-medium" : "text-muted-foreground")}
-      >
-        {label}
-      </span>
-      <span
-        className={cn(
-          "tracking-tight tabular-nums",
-          bold ? "text-foreground text-base font-semibold" : "text-muted-foreground text-sm",
-        )}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
 function LifecycleStep({
   label,
   active,
@@ -338,7 +280,7 @@ function LifecycleStep({
   isLast?: boolean;
 }) {
   const dot = tone === "danger" ? "bg-danger" : "bg-success";
-  const line = tone === "danger" ? "bg-danger/30" : "bg-success/30";
+  const line = tone === "danger" ? "bg-danger-border" : "bg-success-border";
   return (
     <div className="relative flex gap-3">
       <div className="flex flex-col items-center">
@@ -376,29 +318,26 @@ function MemoDetailsCard({ invoice }: { invoice: Invoice }) {
   return (
     <div className="bg-card rounded-lg border p-3" data-testid="invoice-memo-details">
       <SectionLabel>{t("Memo")}</SectionLabel>
-      <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
-        <PropertyCell label={t("Kind")}>
-          <span className="text-xs font-medium">
-            {invoice.memoKind === "LateCharge" ? t("Late charge") : t("Manual")}
-          </span>
-        </PropertyCell>
+      <DescriptionList className="mt-2">
+        <DescriptionItem label={t("Kind")}>
+          {invoice.memoKind === "LateCharge" ? t("Late charge") : t("Manual")}
+        </DescriptionItem>
         {invoice.referenceInvoiceId ? (
-          <PropertyCell label={t("Referenced invoice")}>
+          <DescriptionItem label={t("Referenced invoice")}>
             <Link
               to={invoicePanelPath(invoice.referenceInvoiceId)}
-              className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
+              className="inline-flex items-center gap-1 hover:underline"
               aria-label={t("Referenced invoice")}
             >
               {t("Open invoice")}
               <ExternalLinkIcon className="size-2.5" />
             </Link>
-          </PropertyCell>
+          </DescriptionItem>
         ) : null}
-        <div className="col-span-2">
-          <p className="text-2xs text-muted-foreground">{t("Reason")}</p>
-          <p className="text-xs whitespace-pre-line">{invoice.memoReason || "—"}</p>
-        </div>
-      </div>
+        <DescriptionItem label={t("Reason")} span="full" valueClassName="whitespace-pre-line">
+          {invoice.memoReason || <DescriptionEmpty />}
+        </DescriptionItem>
+      </DescriptionList>
     </div>
   );
 }

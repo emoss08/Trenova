@@ -16,9 +16,7 @@ export function DashControlPage() {
       }}
     >
       <SuspenseLoader>
-        <div className="p-4">
-          <DashControlForm />
-        </div>
+        <DashControlForm />
       </SuspenseLoader>
     </PageLayout>
   );

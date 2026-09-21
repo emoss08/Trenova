@@ -102,12 +102,14 @@ export function ReadinessPanel({
       <div
         className={cn(
           "flex items-center justify-between gap-2 border-b px-3 py-2 text-xs font-semibold",
-          ready ? "bg-success/10" : "bg-destructive/10",
+          ready
+            ? "bg-success-subtle text-success-subtle-foreground"
+            : "bg-danger-subtle text-danger-subtle-foreground",
         )}
       >
         <span>{ready ? `${t("Ready to")} ` + step : `${t("Not ready to")} ` + step}</span>
         {failing.length > 0 && (
-          <span className="text-destructive font-normal">
+          <span className="font-normal">
             {t("{0} blocking {1}", failing.length, failing.length === 1 ? "issue" : "issues")}
           </span>
         )}

@@ -85,7 +85,7 @@ export function JurisdictionRuleVerifyDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Verify Jurisdiction Rule")}</DialogTitle>
           <DialogDescription>

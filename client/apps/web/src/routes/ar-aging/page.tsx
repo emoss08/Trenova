@@ -133,9 +133,8 @@ export function ARAgingPage() {
           </Button>
         ),
       }}
-      className="p-0"
     >
-      <div className="mx-4 mt-3 mb-4 space-y-4">
+      <>
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-65">
             <CustomerAutocompleteField
@@ -175,7 +174,7 @@ export function ARAgingPage() {
         ) : filteredTotals ? (
           <AgingTable totals={filteredTotals} rows={filteredRows} />
         ) : null}
-      </div>
+      </>
     </PageLayout>
   );
 }

@@ -128,7 +128,7 @@ export function getColumns(
         row.original.expirationRequired ? (
           <span>{t("{0}d", row.original.expirationWarningDays)}</span>
         ) : (
-          <span className="text-muted-foreground">-</span>
+          <span className="text-muted-foreground">—</span>
         ),
       size: 120,
       minSize: 90,

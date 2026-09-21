@@ -29,7 +29,7 @@ export function OverviewTab() {
   const method = useWatch({ control, name: "method" });
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-6">
       <FormSection title={t("Profile Identity")}>
         <FormGroup cols={2}>
           <FormControl>
@@ -84,7 +84,7 @@ export function OverviewTab() {
         </FormGroup>
       </FormSection>
       {method === "Internal" && (
-        <FormSection title={t("Internal Routing")} className="bg-muted/20 rounded-md border p-3">
+        <FormSection title={t("Internal Routing")}>
           <FormGroup cols={2}>
             <FormControl>
               <EDIConnectionAutocompleteField
@@ -119,7 +119,7 @@ export function TransportTab() {
   const authMode = useWatch({ control, name: "config.authMode" });
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-6">
       <TransportProfileFields control={control} method={method} authMode={authMode} />
     </div>
   );
@@ -132,7 +132,7 @@ export function EnvelopeTab() {
   const method = useWatch({ control, name: "method" });
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-6">
       {method === "Internal" ? (
         <EDIEmptyState
           message={t(
@@ -152,7 +152,7 @@ export function SecretsTab({ profile }: { profile: EDICommunicationProfileRow | 
   const authMode = useWatch({ control, name: "config.authMode" });
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-6">
       <SecretProfileFields
         control={control}
         method={method}

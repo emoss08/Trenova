@@ -51,7 +51,7 @@ export function CreateTemplateForm({
   };
 
   return (
-    <FormGroup cols={2} className="pb-2">
+    <FormGroup cols={2}>
       {mode === "create" ? (
         <FormControl cols="full">
           <EDIDocumentTypeAutocompleteField<TemplateFormValues>

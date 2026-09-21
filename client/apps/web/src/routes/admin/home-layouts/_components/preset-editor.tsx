@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { PageHeader } from "@/components/page-header";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import {
   useCreateHomeLayoutPreset,
   useHomeLayoutPreview,
@@ -148,193 +148,188 @@ export function PresetEditor({ preset }: PresetEditorProps) {
   };
 
   return (
-    <div className="flex flex-col p-6">
-      <PageHeader
-        title={preset ? draft.name || "Home screen" : "New home screen"}
-        description={t("Arrange the widgets, then choose who lands on them.")}
-        className="p-0 py-4"
-        actions={
+    <PageLayout
+      pageHeaderProps={{
+        title: preset ? draft.name || t("Home screen") : t("New home screen"),
+        description: t("Arrange the widgets, then choose who lands on them."),
+        actions: (
           <Button variant="ghost" size="sm" onClick={() => void navigate("/admin/home-layouts")}>
             {t("Back")}
           </Button>
-        }
-      />
-
-      <div className="flex flex-col gap-4 pt-2">
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="flex flex-col gap-3 lg:col-span-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="preset-name">{t("Name")}</Label>
-              <Input
-                id="preset-name"
-                value={draft.name}
-                placeholder={t("Dispatch Home")}
-                onChange={(event) => patch({ name: event.target.value })}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="preset-description">{t("Description")}</Label>
-              <Textarea
-                id="preset-description"
-                rows={2}
-                value={draft.description}
-                placeholder={t("What this home screen is for.")}
-                onChange={(event) => patch({ description: event.target.value })}
-              />
-            </div>
+        ),
+      }}
+    >
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="flex flex-col gap-3 lg:col-span-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="preset-name">{t("Name")}</Label>
+            <Input
+              id="preset-name"
+              value={draft.name}
+              placeholder={t("Dispatch Home")}
+              onChange={(event) => patch({ name: event.target.value })}
+            />
           </div>
-
-          <div className="border-border/80 bg-card flex flex-col gap-3 rounded-lg border p-3">
-            <Toggle
-              id="preset-org-default"
-              label={t("Organization default")}
-              hint={t(
-                "Where anyone without a role assignment lands. Only one preset can hold this.",
-              )}
-              checked={draft.isOrgDefault}
-              onChange={(isOrgDefault) => patch({ isOrgDefault })}
-            />
-            <Toggle
-              id="preset-locked"
-              label={t("Lock this home screen")}
-              hint={t(
-                "People assigned it cannot rearrange it. Anything they saved earlier is kept and returns if you unlock.",
-              )}
-              checked={draft.locked}
-              onChange={(locked) => patch({ locked })}
-            />
-            <ConfigNumberField
-              id="preset-priority"
-              label={t("Priority")}
-              value={draft.priority}
-              min={0}
-              max={MAX_PRIORITY}
-              hint={t("When someone matches more than one home screen, the highest priority wins.")}
-              onChange={(priority) => patch({ priority: priority ?? 0 })}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="preset-description">{t("Description")}</Label>
+            <Textarea
+              id="preset-description"
+              rows={2}
+              value={draft.description}
+              placeholder={t("What this home screen is for.")}
+              onChange={(event) => patch({ description: event.target.value })}
             />
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="border-border/80 bg-card flex flex-col gap-2 rounded-lg border p-3">
-            <Label>{t("Assign to roles")}</Label>
-            {roles.isLoading ? (
-              <p className="text-muted-foreground text-xs">{t("Loading roles…")}</p>
-            ) : (
-              <div className="grid max-h-48 gap-1 overflow-y-auto sm:grid-cols-2">
-                {(roles.data ?? []).map((role) => (
-                  <label
-                    key={role.id}
-                    className="border-border hover:bg-muted/40 flex items-center gap-2 rounded border px-2 py-1.5 text-xs transition-colors"
-                  >
-                    <Checkbox
-                      checked={draft.roleIds.includes(role.id)}
-                      onCheckedChange={() => toggleRole(role.id)}
-                    />
-                    <span className="truncate">{role.name}</span>
-                  </label>
-                ))}
-              </div>
+        <div className="border-border/80 bg-card flex flex-col gap-3 rounded-lg border p-3">
+          <Toggle
+            id="preset-org-default"
+            label={t("Organization default")}
+            hint={t("Where anyone without a role assignment lands. Only one preset can hold this.")}
+            checked={draft.isOrgDefault}
+            onChange={(isOrgDefault) => patch({ isOrgDefault })}
+          />
+          <Toggle
+            id="preset-locked"
+            label={t("Lock this home screen")}
+            hint={t(
+              "People assigned it cannot rearrange it. Anything they saved earlier is kept and returns if you unlock.",
             )}
-          </div>
+            checked={draft.locked}
+            onChange={(locked) => patch({ locked })}
+          />
+          <ConfigNumberField
+            id="preset-priority"
+            label={t("Priority")}
+            value={draft.priority}
+            min={0}
+            max={MAX_PRIORITY}
+            hint={t("When someone matches more than one home screen, the highest priority wins.")}
+            onChange={(priority) => patch({ priority: priority ?? 0 })}
+          />
+        </div>
+      </div>
 
-          <div className="border-border/80 bg-card flex flex-col gap-2 rounded-lg border p-3">
-            <Label htmlFor="preset-responsibility">{t("Or assign by job function")}</Label>
-            <Select
-              value={draft.coreResponsibility || NO_RESPONSIBILITY}
-              items={responsibilityItems}
-              onValueChange={(value) =>
-                patch({
-                  coreResponsibility: !value || value === NO_RESPONSIBILITY ? "" : String(value),
-                })
-              }
-            >
-              <SelectTrigger id="preset-responsibility">
-                <SelectValue placeholder={t("No job function")} />
-              </SelectTrigger>
-              <SelectContent>
-                {responsibilityItems.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {t(item.label)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-2xs text-muted-foreground">
-              {t("Reaches every role tagged with that function, including ones added later.")}
-            </p>
-
-            <div className="border-border mt-1 flex flex-col gap-1.5 border-t pt-2">
-              <Label htmlFor="preview-role">{t("Preview as")}</Label>
-              <div className="flex items-center gap-2">
-                <Select
-                  value={previewRoleId ?? NO_RESPONSIBILITY}
-                  items={previewItems}
-                  onValueChange={(value) =>
-                    setPreviewRoleId(!value || value === NO_RESPONSIBILITY ? null : String(value))
-                  }
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="border-border/80 bg-card flex flex-col gap-2 rounded-lg border p-3">
+          <Label>{t("Assign to roles")}</Label>
+          {roles.isLoading ? (
+            <p className="text-muted-foreground text-xs">{t("Loading roles…")}</p>
+          ) : (
+            <div className="grid max-h-48 gap-1 overflow-y-auto sm:grid-cols-2">
+              {(roles.data ?? []).map((role) => (
+                <label
+                  key={role.id}
+                  className="border-border hover:bg-muted/40 flex items-center gap-2 rounded border px-2 py-1.5 text-xs transition-colors"
                 >
-                  <SelectTrigger id="preview-role" className="flex-1">
-                    <SelectValue placeholder={t("Nobody")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {previewItems.map((item) => (
-                      <SelectItem key={item.value} value={item.value}>
-                        {t(item.label)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {previewing && (
-                  <Button variant="ghost" size="sm" onClick={() => setPreviewRoleId(null)}>
-                    <EyeOffIcon className="size-3.5" />
-                    {t("Stop")}
-                  </Button>
-                )}
-              </div>
-              <p className="text-2xs text-muted-foreground">
-                {t(
-                  "Shows what a member of that role resolves to today. Unsaved edits are not included.",
-                )}
-              </p>
+                  <Checkbox
+                    checked={draft.roleIds.includes(role.id)}
+                    onCheckedChange={() => toggleRole(role.id)}
+                  />
+                  <span className="truncate">{role.name}</span>
+                </label>
+              ))}
             </div>
-          </div>
+          )}
         </div>
 
-        {previewing ? (
-          <div className="flex flex-col gap-2">
-            <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-              <EyeIcon className="size-3.5" />
-              {t("Previewing — widgets are read-only and drawn against your own permissions.")}
+        <div className="border-border/80 bg-card flex flex-col gap-2 rounded-lg border p-3">
+          <Label htmlFor="preset-responsibility">{t("Or assign by job function")}</Label>
+          <Select
+            value={draft.coreResponsibility || NO_RESPONSIBILITY}
+            items={responsibilityItems}
+            onValueChange={(value) =>
+              patch({
+                coreResponsibility: !value || value === NO_RESPONSIBILITY ? "" : String(value),
+              })
+            }
+          >
+            <SelectTrigger id="preset-responsibility">
+              <SelectValue placeholder={t("No job function")} />
+            </SelectTrigger>
+            <SelectContent>
+              {responsibilityItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {t(item.label)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-2xs text-muted-foreground">
+            {t("Reaches every role tagged with that function, including ones added later.")}
+          </p>
+
+          <div className="border-border mt-1 flex flex-col gap-1.5 border-t pt-2">
+            <Label htmlFor="preview-role">{t("Preview as")}</Label>
+            <div className="flex items-center gap-2">
+              <Select
+                value={previewRoleId ?? NO_RESPONSIBILITY}
+                items={previewItems}
+                onValueChange={(value) =>
+                  setPreviewRoleId(!value || value === NO_RESPONSIBILITY ? null : String(value))
+                }
+              >
+                <SelectTrigger id="preview-role" className="flex-1">
+                  <SelectValue placeholder={t("Nobody")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {previewItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {t(item.label)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {previewing && (
+                <Button variant="ghost" size="sm" onClick={() => setPreviewRoleId(null)}>
+                  <EyeOffIcon className="size-3.5" />
+                  {t("Stop")}
+                </Button>
+              )}
+            </div>
+            <p className="text-2xs text-muted-foreground">
+              {t(
+                "Shows what a member of that role resolves to today. Unsaved edits are not included.",
+              )}
             </p>
-            <HomeCanvas
-              widgets={shownWidgets}
-              data={data}
-              catalog={catalog.data}
-              catalogLoading={catalog.isLoading}
-              editing={false}
-              onChange={() => undefined}
-            />
           </div>
-        ) : (
+        </div>
+      </div>
+
+      {previewing ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+            <EyeIcon className="size-3.5" />
+            {t("Previewing — widgets are read-only and drawn against your own permissions.")}
+          </p>
           <HomeCanvas
-            widgets={draft.widgets}
+            widgets={shownWidgets}
             data={data}
             catalog={catalog.data}
             catalogLoading={catalog.isLoading}
-            editing
-            onChange={(widgets) => patch({ widgets })}
-            dock={{
-              dirty,
-              saving,
-              saveLabel: preset ? "Save" : "Create",
-              onSave: () => void save(),
-              onDiscard: () => setDraft(toDraft(preset)),
-            }}
+            editing={false}
+            onChange={() => undefined}
           />
-        )}
-      </div>
-    </div>
+        </div>
+      ) : (
+        <HomeCanvas
+          widgets={draft.widgets}
+          data={data}
+          catalog={catalog.data}
+          catalogLoading={catalog.isLoading}
+          editing
+          onChange={(widgets) => patch({ widgets })}
+          dock={{
+            dirty,
+            saving,
+            saveLabel: preset ? "Save" : "Create",
+            onSave: () => void save(),
+            onDiscard: () => setDraft(toDraft(preset)),
+          }}
+        />
+      )}
+    </PageLayout>
   );
 }
 

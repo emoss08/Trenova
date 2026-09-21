@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import AuditTab from "@/components/audit-tab";
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { EmptyState } from "@/components/empty-state";
@@ -11,6 +12,7 @@ import {
 import { formatFileSize } from "@/components/documents/document-upload-zone";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import {
   HoverCard,
   HoverCardContent,
@@ -186,27 +188,35 @@ export default function InvoiceDetailPane({
           <span className="text-muted-foreground text-sm">{customerName}</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
-          <MetadataCell label={t("Invoice Date")} value={formatUnixDate(invoice.invoiceDate)} />
-          <MetadataCell label={t("Due Date")} value={formatUnixDate(invoice.dueDate)} />
-          <MetadataCell label={t("Payment Terms")} value={invoice.paymentTerm} />
-          <MetadataCell label={t("Bill Type")} value={invoice.billType} />
+        <DescriptionList columns={4}>
+          <DescriptionItem label={t("Invoice Date")} numeric>
+            {formatUnixDate(invoice.invoiceDate)}
+          </DescriptionItem>
+          <DescriptionItem label={t("Due Date")} numeric>
+            {formatUnixDate(invoice.dueDate)}
+          </DescriptionItem>
+          <DescriptionItem label={t("Payment Terms")}>{invoice.paymentTerm}</DescriptionItem>
+          <DescriptionItem label={t("Bill Type")}>{invoice.billType}</DescriptionItem>
           {daysPastDue !== null && daysPastDue > 0 ? (
-            <MetadataCell label={t("Days past due")} value={String(daysPastDue)} />
+            <DescriptionItem label={t("Days past due")} numeric>
+              {String(daysPastDue)}
+            </DescriptionItem>
           ) : null}
           {billingPeriod ? (
-            <MetadataCell label={t("Billing Period")} value={billingPeriod} />
+            <DescriptionItem label={t("Billing Period")}>{billingPeriod}</DescriptionItem>
           ) : null}
           {billedShipmentCount > 1 || !billsSingleShipment ? (
-            <MetadataCell label={t("Shipments")} value={String(billedShipmentCount)} />
+            <DescriptionItem label={t("Shipments")} numeric>
+              {String(billedShipmentCount)}
+            </DescriptionItem>
           ) : null}
           {billedShipmentCount <= 1 && billsSingleShipment && invoice.shipmentProNumber ? (
-            <MetadataCell label={t("PRO Number")} value={invoice.shipmentProNumber} />
+            <DescriptionItem label={t("PRO Number")}>{invoice.shipmentProNumber}</DescriptionItem>
           ) : null}
           {billedShipmentCount <= 1 && billsSingleShipment && invoice.shipmentBol ? (
-            <MetadataCell label={t("BOL")} value={invoice.shipmentBol} />
+            <DescriptionItem label={t("BOL")}>{invoice.shipmentBol}</DescriptionItem>
           ) : null}
-        </div>
+        </DescriptionList>
       </div>
 
       {shipment?.moves && shipment.moves.length > 0 ? (
@@ -318,23 +328,19 @@ function VoidedNotice({ invoice }: { invoice: Invoice }) {
   const t = useT();
 
   return (
-    <div className="flex gap-3 rounded-md border border-danger-border bg-danger-subtle/60 p-3 dark:border-danger-border dark:bg-danger-subtle/30">
-      <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-danger-foreground" />
-      <div className="min-w-0 text-sm">
-        <p className="font-medium text-danger-foreground">
-          <span>{t("Voided {0}", formatUnixDateTime(invoice.voidedAt))}</span>
-          <span className="mx-1">·</span>
-          <span>
-            {invoice.voidDisposition === "Rebill"
-              ? t("Released for rebilling")
-              : t("Freight retired, not rebilled")}
-          </span>
-        </p>
-        {invoice.voidReason ? (
-          <p className="mt-0.5 text-danger-foreground/80">{invoice.voidReason}</p>
-        ) : null}
-      </div>
-    </div>
+    <Alert variant="destructive" size="sm">
+      <AlertTriangleIcon />
+      <AlertTitle>
+        <span>{t("Voided {0}", formatUnixDateTime(invoice.voidedAt))}</span>
+        <span className="mx-1">·</span>
+        <span>
+          {invoice.voidDisposition === "Rebill"
+            ? t("Released for rebilling")
+            : t("Freight retired, not rebilled")}
+        </span>
+      </AlertTitle>
+      {invoice.voidReason ? <AlertDescription>{invoice.voidReason}</AlertDescription> : null}
+    </Alert>
   );
 }
 
@@ -508,41 +514,23 @@ function SendPlanSummary({ sendPlan }: { sendPlan: InvoiceSendPlan }) {
   const linkCount = getSendPlanLinkCount(sendPlan);
 
   return (
-    <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-      <SendPlanSummaryCell label={t("To recipients")}>
+    <DescriptionList columns={4}>
+      <DescriptionItem label={t("To recipients")}>
         <RecipientPreview recipients={sendPlan.recipients.to} />
-      </SendPlanSummaryCell>
-      <SendPlanSummaryCell label={t("Provider limit")}>
+      </DescriptionItem>
+      <DescriptionItem label={t("Provider limit")} numeric>
         {formatFileSize(sendPlan.providerLimitBytes)}
-      </SendPlanSummaryCell>
-      <SendPlanSummaryCell label={t("Body size")}>
+      </DescriptionItem>
+      <DescriptionItem label={t("Body size")} numeric>
         {formatFileSize(sendPlan.estimatedBodyBytes)}
-      </SendPlanSummaryCell>
-      <SendPlanSummaryCell
-        label={t("Email parts")}
-        detail={formatPackageBreakdown(attachmentCount, linkCount)}
-      >
+      </DescriptionItem>
+      <DescriptionItem label={t("Email parts")} numeric>
         {formatCount(sendPlan.parts.length, "part")}
-      </SendPlanSummaryCell>
-    </div>
-  );
-}
-
-function SendPlanSummaryCell({
-  label,
-  detail,
-  children,
-}: {
-  label: string;
-  detail?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="bg-muted/20 min-w-0 rounded-md border p-2.5">
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <div className="mt-1 min-w-0 text-sm font-medium">{children}</div>
-      {detail ? <p className="text-muted-foreground mt-1 truncate text-xs">{detail}</p> : null}
-    </div>
+        <p className="text-foreground-subtle truncate text-xs">
+          {formatPackageBreakdown(attachmentCount, linkCount)}
+        </p>
+      </DescriptionItem>
+    </DescriptionList>
   );
 }
 
@@ -567,7 +555,7 @@ function RecipientPreview({ recipients }: { recipients: string[] }) {
           render={
             <button
               type="button"
- className="ui-focus-ring shrink-0 rounded-sm text-xs font-medium text-info-foreground underline-offset-2 hover:underline dark:text-info-foreground"
+              className="ui-focus-ring shrink-0 rounded-sm text-xs font-medium text-info-foreground underline-offset-2 hover:underline"
               aria-label={`Show ${recipients.length} To recipients`}
             >
               {t("+{0} more", remainingCount)}
@@ -619,18 +607,17 @@ function MessagePreview({ sendPlan }: { sendPlan: InvoiceSendPlan }) {
           </Badge>
         </span>
       </div>
-      <div className="mt-3 space-y-2">
-        <div className="min-w-0">
-          <p className="text-muted-foreground text-xs font-medium">{t("Subject")}</p>
-          <p className="truncate text-sm font-semibold">{sendPlan.subject || t("No subject")}</p>
-        </div>
-        <div>
-          <p className="text-muted-foreground text-xs font-medium">{t("Body")}</p>
-          <p className="text-muted-foreground line-clamp-4 text-sm whitespace-pre-line">
-            {sendPlan.body || t("No body content")}
-          </p>
-        </div>
-      </div>
+      <DescriptionList columns={1} className="mt-3 gap-y-2">
+        <DescriptionItem label={t("Subject")} valueClassName="truncate">
+          {sendPlan.subject || t("No subject")}
+        </DescriptionItem>
+        <DescriptionItem
+          label={t("Body")}
+          valueClassName="text-foreground-muted line-clamp-4 whitespace-pre-line"
+        >
+          {sendPlan.body || t("No body content")}
+        </DescriptionItem>
+      </DescriptionList>
     </div>
   );
 }
@@ -656,23 +643,24 @@ function DeliveryPackageList({ parts }: { parts: InvoiceSendPlan["parts"] }) {
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
                 <span className="text-sm font-semibold">{t("Part {0}", part.partNumber)}</span>
-                <Badge variant="neutral" appearance="outline">{formatFileSize(part.estimatedSizeBytes)}</Badge>
+                <Badge variant="neutral" appearance="outline">
+                  {formatFileSize(part.estimatedSizeBytes)}
+                </Badge>
               </div>
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
                 <Badge variant="neutral" appearance="outline">
                   {formatCount(part.attachments.length, "attachment")}
                 </Badge>
-                <Badge variant="neutral" appearance="outline">{formatCount(part.links.length, "link")}</Badge>
+                <Badge variant="neutral" appearance="outline">
+                  {formatCount(part.links.length, "link")}
+                </Badge>
               </div>
             </div>
 
             {part.warnings.length > 0 ? (
               <div className="mt-2 space-y-1">
                 {part.warnings.map((warning) => (
-                  <div
-                    key={warning}
-                    className="flex gap-1.5 text-xs text-warning-foreground"
-                  >
+                  <div key={warning} className="flex gap-1.5 text-xs text-warning-foreground">
                     <AlertTriangleIcon className="mt-0.5 size-3 shrink-0" />
                     <span>{warning}</span>
                   </div>
@@ -818,9 +806,10 @@ function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {
             <Skeleton className="h-28 w-full" />
           </div>
         ) : query.isError ? (
-          <p className="rounded-md border border-danger/30 bg-danger/10 p-3 text-sm text-danger-foreground">
-            {t("Send history could not be loaded.")}
-          </p>
+          <Alert variant="destructive" size="sm">
+            <AlertTriangleIcon />
+            <AlertDescription>{t("Send history could not be loaded.")}</AlertDescription>
+          </Alert>
         ) : attempts.length === 0 ? (
           <p className="text-muted-foreground text-sm">{t("No email attempts recorded.")}</p>
         ) : (
@@ -930,25 +919,10 @@ function invoiceAttemptDisplayError(attempt: InvoiceEmailAttempt): string | null
 
 function DeliveryNotice({ tone, message }: { tone: "error" | "warning"; message: string }) {
   return (
-    <div
-      className={
-        tone === "error"
-          ? "mt-3 flex gap-2 rounded-md border border-danger/30 bg-danger/10 p-2 text-sm text-danger-foreground"
-          : "mt-3 flex gap-2 rounded-md border border-warning/30 bg-warning/10 p-2 text-sm text-warning-foreground"
-      }
-    >
-      <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0" />
-      <span>{message}</span>
-    </div>
-  );
-}
-
-function MetadataCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <p className="text-sm font-medium">{value}</p>
-    </div>
+    <Alert variant={tone === "error" ? "destructive" : "warning"} size="sm" className="mt-3">
+      <AlertTriangleIcon />
+      <AlertDescription>{message}</AlertDescription>
+    </Alert>
   );
 }
 

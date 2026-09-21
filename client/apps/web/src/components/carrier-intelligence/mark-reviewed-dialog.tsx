@@ -71,7 +71,7 @@ export function MarkReviewedDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Mark reviewed")}</DialogTitle>
           <DialogDescription>
@@ -85,13 +85,14 @@ export function MarkReviewedDialog({
         </DialogHeader>
         <FormProvider {...form}>
           <Form
+            className="flex flex-col gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
               submitEvent.stopPropagation();
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup cols={1} className="pb-2">
+            <FormGroup cols={1}>
               <FormControl>
                 <TextareaField<ReviewNoteFormValues>
                   control={control}

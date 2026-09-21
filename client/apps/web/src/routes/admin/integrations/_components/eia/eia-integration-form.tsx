@@ -9,7 +9,12 @@ import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
-import { DialogFooter } from "@trenova/shared/components/ui/dialog";
+import {
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
@@ -137,24 +142,22 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
             />
           </FormControl>
         </FormGroup>
-        <DialogFooter className="flex flex-row items-center sm:justify-between">
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t("Cancel")}
+        <DialogFooter className="sm:justify-between">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => testConnectionMutation.mutateAsync()}
+            isLoading={testConnectionMutation.isPending}
+            loadingText={t("Testing...")}
+            disabled={configQuery.isLoading || saveMutation.isPending}
+          >
+            {t("Test Connection")}
           </Button>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => testConnectionMutation.mutateAsync()}
-              isLoading={testConnectionMutation.isPending}
-              loadingText={t("Testing...")}
-              disabled={configQuery.isLoading || saveMutation.isPending}
-            >
-              {t("Test Connection")}
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
+            <Button type="button" variant="outline" onClick={onClose}>
+              {t("Cancel")}
             </Button>
             <Button
-              size="sm"
               type="submit"
               isLoading={saveMutation.isPending}
               loadingText={t("Saving...")}
@@ -177,7 +180,7 @@ function EIAFuelPricesFormHeader() {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center gap-4">
         <LazyImage src={trenovaLogo} className="size-8" />
         <div className="flex items-center justify-center gap-1">
           <div className="bg-muted-foreground size-1 rounded-full" />
@@ -186,17 +189,13 @@ function EIAFuelPricesFormHeader() {
         </div>
         <LazyImage src={logo} alt={t("EIA Logo")} className="h-8 max-w-24 object-contain" />
       </div>
-      <div className="flex flex-col gap-2 text-center">
-        <h3 className="text-lg font-semibold">{t("Connect with EIA Fuel Prices")}</h3>
-        <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">
-            {t("Free API key powers weekly DOE diesel price ingestion.")}
-          </p>
-          <ExternalLink href="https://www.eia.gov/opendata/" className="text-xs">
-            {t("Get a key")}
-          </ExternalLink>
-        </div>
-      </div>
+      <DialogHeader>
+        <DialogTitle>{t("Connect with EIA Fuel Prices")}</DialogTitle>
+        <DialogDescription>
+          {t("Free API key powers weekly DOE diesel price ingestion.")}{" "}
+          <ExternalLink href="https://www.eia.gov/opendata/">{t("Get a key")}</ExternalLink>
+        </DialogDescription>
+      </DialogHeader>
     </div>
   );
 }

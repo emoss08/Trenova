@@ -134,7 +134,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent size="xl" className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("Import IFTA Tax Rates")}</DialogTitle>
           <DialogDescription>

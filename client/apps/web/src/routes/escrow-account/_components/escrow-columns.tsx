@@ -25,7 +25,7 @@ export function getColumns(t: TranslateFn): ColumnDef<EscrowAccountRow>[] {
       id: "worker",
       header: t("Driver"),
       cell: ({ row }) => (
-        <span className="text-xs font-medium">
+        <span className="font-medium">
           {row.original.worker
             ? `${row.original.worker.firstName} ${row.original.worker.lastName}`.trim()
             : "—"}
@@ -74,7 +74,7 @@ export function getColumns(t: TranslateFn): ColumnDef<EscrowAccountRow>[] {
             <div className="bg-muted h-1.5 w-16 overflow-hidden rounded-full">
               <div className="h-full rounded-full bg-success" style={{ width: `${pct}%` }} />
             </div>
-            <span className="text-xs tabular-nums">{pct}%</span>
+            <span className="tabular-nums">{pct}%</span>
           </div>
         );
       },
@@ -84,7 +84,7 @@ export function getColumns(t: TranslateFn): ColumnDef<EscrowAccountRow>[] {
       accessorKey: "annualInterestRate",
       header: () => <div className="text-right">{t("Interest")}</div>,
       cell: ({ row }) => (
-        <div className="text-right text-xs tabular-nums">
+        <div className="text-right tabular-nums">
           {Number(row.original.annualInterestRate) > 0
             ? `${Number(row.original.annualInterestRate).toFixed(2)}%`
             : "—"}
@@ -96,16 +96,14 @@ export function getColumns(t: TranslateFn): ColumnDef<EscrowAccountRow>[] {
     {
       accessorKey: "openedDate",
       header: t("Opened"),
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.openedDate)}</span>,
+      cell: ({ row }) => <span>{formatDate(row.original.openedDate)}</span>,
       size: 110,
       meta: { apiField: "openedDate" },
     },
     {
       accessorKey: "lastInterestAccrualDate",
       header: t("Last Interest"),
-      cell: ({ row }) => (
-        <span className="text-xs">{formatDate(row.original.lastInterestAccrualDate)}</span>
-      ),
+      cell: ({ row }) => <span>{formatDate(row.original.lastInterestAccrualDate)}</span>,
       size: 110,
       meta: { apiField: "lastInterestAccrualDate" },
     },

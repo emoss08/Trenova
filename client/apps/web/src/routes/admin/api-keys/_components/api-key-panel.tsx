@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -379,12 +380,12 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
           ) : (
             <>
               {isRevoked && (
-                <div className="border-destructive/30 bg-destructive/10 flex items-center gap-3 rounded-lg border px-4 py-3">
-                  <ShieldAlertIcon className="text-destructive size-4 shrink-0" />
-                  <p className="text-destructive text-sm">
+                <Alert variant="destructive" size="sm">
+                  <ShieldAlertIcon />
+                  <AlertDescription>
                     {t("This API key has been revoked. All fields are read-only.")}
-                  </p>
-                </div>
+                  </AlertDescription>
+                </Alert>
               )}
               <FormProvider {...form}>
                 <Form id="api-key-edit-form" onSubmit={form.handleSubmit(onSubmit)}>
@@ -466,12 +467,12 @@ function TokenSuccessDialog({
         <pre className="border-border/70 bg-muted/30 overflow-x-auto rounded-md border p-4 font-mono text-xs">
           {token}
         </pre>
-        <div className="flex items-center gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3">
-          <AlertTriangleIcon className="size-4 shrink-0 text-warning-foreground" />
-          <p className="text-sm text-warning-foreground">
+        <Alert variant="warning" size="sm">
+          <AlertTriangleIcon />
+          <AlertDescription>
             {t("Store this key securely. It will not be displayed again.")}
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t("Close")}

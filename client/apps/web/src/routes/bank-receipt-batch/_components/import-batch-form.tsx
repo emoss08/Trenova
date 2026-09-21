@@ -84,7 +84,6 @@ export function ImportBatchForm() {
         title={t("Receipt Lines")}
         description={t("Individual bank receipts to import in this batch")}
         titleCount={fields.length}
-        className="border-border border-t pt-4"
       >
         <div className="overflow-hidden rounded-md border">
           <table className="w-full text-sm">

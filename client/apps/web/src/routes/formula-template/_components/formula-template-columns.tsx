@@ -94,7 +94,7 @@ export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
       accessorKey: "currentVersionNumber",
       header: t("Version"),
       cell: ({ row }) => (
-        <Badge variant="neutral" appearance="outline" className="font-mono text-xs">
+        <Badge variant="neutral" appearance="outline" className="font-mono">
           {row.original.currentVersionNumber ? t("v{0}", row.original.currentVersionNumber) : "—"}
         </Badge>
       ),
@@ -115,7 +115,7 @@ export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
       cell: ({ row }) => {
         const count = row.original.usageCount ?? 0;
         return count > 0 ? (
-          <Badge variant="info" className="font-mono text-xs">
+          <Badge variant="info" className="font-mono">
             {count}
           </Badge>
         ) : (
@@ -139,7 +139,7 @@ export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
       cell: ({ row }) => {
         const count = row.original.scenarioCount ?? 0;
         return count > 0 ? (
-          <Badge variant="neutral" appearance="outline" className="font-mono text-xs">
+          <Badge variant="neutral" appearance="outline" className="font-mono">
             {count}
           </Badge>
         ) : (
