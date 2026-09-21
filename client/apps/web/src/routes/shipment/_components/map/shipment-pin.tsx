@@ -28,7 +28,7 @@ export function ShipmentEndpointPin({ position, dimmed = false, title }: Endpoin
           height: 9,
           background: "var(--card)",
           border: "1.5px solid var(--muted-foreground)",
-          boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+          boxShadow: "0 0 0 1px rgba(255,255,255,0.85)",
           opacity: dimmed ? 0.25 : 1,
         }}
       />
@@ -87,7 +87,7 @@ export function ShipmentCurrentPin({
           style={{
             background: color,
             border: highlighted ? "2px solid var(--card)" : "1.5px solid var(--card)",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+            boxShadow: "0 0 0 1px rgba(255,255,255,0.85)",
           }}
         />
       </div>

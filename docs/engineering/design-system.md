@@ -569,7 +569,7 @@ is deliberately visible in review; a silent exception is how the last set eroded
 ## Checking your work
 
 ```bash
-pnpm lint:design      # the six rules, with the token to use instead
+pnpm lint:design      # the seven rules, with the token to use instead
 node scripts/tw-probe.mjs bleed:px-3 text-warning   # does this class emit, and as what?
 pnpm lint             # oxlint
 pnpm typecheck        # Badge variants and status phases are typed

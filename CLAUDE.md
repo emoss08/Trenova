@@ -211,10 +211,10 @@ Tokens live in `client/packages/shared/src/styles/tokens.css`; components consum
 define no colour, size or elevation of their own. **Read
 [docs/engineering/design-system.md](docs/engineering/design-system.md) before writing styles.**
 
-`pnpm lint:design` runs in CI and fails on the six ways the old set was bypassed: raw
+`pnpm lint:design` runs in CI and fails on the seven ways the old set was bypassed: raw
 Tailwind palette classes (`bg-red-500`), arbitrary font sizes (`text-[11px]` — `text-xs` *is*
 11px and brings a line-height), hex colours in `className`/`style`, hand-rolled focus rings
-(`focus-visible:ring-*` — use `ui-focus-ring`), any `shadow-*` that draws a shadow, and
+(`focus-visible:ring-*` — use `ui-focus-ring`), any `shadow-*` class or inline `boxShadow` that draws a shadow, and
 retired Badge variants. Each message
 names the token to use instead.
 

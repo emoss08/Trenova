@@ -2,7 +2,7 @@
 /**
  * Fails the build on styling that bypasses the design tokens.
  *
- * These six rules are the ones the codebase actually broke. Before the token
+ * These seven rules are the ones the codebase actually broke. Before the token
  * layer was rebuilt there were 1,914 raw palette classes, 961 arbitrary font
  * sizes and 253 hand-written line-height patches across 267 files, and nothing
  * stopped any of them landing. Tokens alone do not hold; the check does.
@@ -76,6 +76,15 @@ const RULES = [
       /(?<![\w-])(?:[a-z0-9-]+:)*shadow-(?:2xs|xs|sm|md|lg|xl|2xl|raised|overlay|modal|black|white|foreground|brand)(?:\/\d+)?(?![\w-])/g,
     message: (m) =>
       `\`${m}\` draws a shadow, and Trenova draws none. Separate a surface with a border or \`ring-1 ring-foreground/10\`; a floating surface is already inverted. See the Elevation section of docs/engineering/design-system.md.`,
+  },
+  {
+    id: "inline-shadow",
+    // An inline style is invisible to the class rule above. Two lengths and then
+    // a non-zero third is a blur; `0 0 0 1px` is a zero-blur outline and passes.
+    pattern:
+      /boxShadow\s*:\s*["'`](?:[^"'`]*,)?\s*(?:inset\s+)?-?\d*\.?\d+(?:px)?\s+-?\d*\.?\d+(?:px)?\s+0*[1-9]\d*(?:\.\d+)?px/g,
+    message: () =>
+      `an inline boxShadow with a blur draws a shadow, and Trenova draws none. Use a border, or a zero-blur outline (\`0 0 0 1px …\`) where a mark has to separate from imagery.`,
   },
   {
     id: "legacy-badge-variant",

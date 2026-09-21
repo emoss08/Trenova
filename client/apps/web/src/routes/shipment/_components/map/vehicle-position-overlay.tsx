@@ -158,7 +158,7 @@ function VehicleMarker({
           style={{
             background: color,
             border: active ? "2px solid var(--card)" : "1.5px solid var(--card)",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+            boxShadow: "0 0 0 1px rgba(255,255,255,0.85)",
           }}
         >
           <TruckIcon className="size-3" style={{ color: "var(--brand-foreground)" }} />

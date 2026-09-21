@@ -109,7 +109,6 @@ export const lightTheme = EditorView.theme(
       backgroundColor: "var(--popover)",
       border: "1px solid var(--border)",
       borderRadius: "8px",
-      boxShadow: "0 4px 12px var(--shadow-md)",
       overflow: "hidden",
     },
     ".cm-tooltip.cm-tooltip-autocomplete": {
@@ -269,7 +268,6 @@ export const darkTheme = EditorView.theme(
       backgroundColor: "var(--popover)",
       border: "1px solid var(--border)",
       borderRadius: "8px",
-      boxShadow: "0 4px 12px var(--shadow-md)",
       overflow: "hidden",
     },
     ".cm-tooltip.cm-tooltip-autocomplete": {
