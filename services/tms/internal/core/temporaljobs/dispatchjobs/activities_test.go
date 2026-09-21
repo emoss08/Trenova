@@ -394,3 +394,10 @@ func (s *stubProposalRepo) SkipPendingByPlan(
 ) (int, error) {
 	return 0, nil
 }
+
+func (s *stubProposalRepo) ListByRun(
+	context.Context,
+	repositories.ListAgentProposalsByRunRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}

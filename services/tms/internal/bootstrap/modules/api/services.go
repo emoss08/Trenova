@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdefinitionservice"
+	"github.com/emoss08/trenova/internal/core/services/agentevaluationservice"
 	"github.com/emoss08/trenova/internal/core/services/agentevents"
 	"github.com/emoss08/trenova/internal/core/services/agentexceptionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentmemoryservice"
@@ -295,6 +296,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentmemoryservice.NewLabeler,
 	agentmemoryservice.New,
 	agentbudgetservice.New,
+	agentevaluationservice.New,
 	assignmentservice.New,
 	fx.Annotate(
 		dispatchautoassignservice.New,

@@ -21,6 +21,27 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+func (r *agentEvaluationResolver) SubjectType(ctx context.Context, obj *agent.Evaluation) (string, error) {
+	return string(obj.SubjectType), nil
+}
+
+func (r *agentEvaluationResolver) Actions(ctx context.Context, obj *agent.Evaluation) ([]map[string]any, error) {
+	out := make([]map[string]any, 0, len(obj.Actions))
+	for i := range obj.Actions {
+		out = append(out, jsonutils.MustToJSON(&obj.Actions[i]))
+	}
+
+	return out, nil
+}
+
+func (r *agentEvaluationResolver) Comparison(ctx context.Context, obj *agent.Evaluation) (map[string]any, error) {
+	if obj.Comparison == nil {
+		return nil, nil
+	}
+
+	return jsonutils.MustToJSON(obj.Comparison), nil
+}
+
 func (r *agentProposalResolver) Confidence(ctx context.Context, obj *agent.AgentProposal) (float64, error) {
 	return obj.Confidence.InexactFloat64(), nil
 }
@@ -68,6 +89,23 @@ func (r *mutationResolver) DecideAgentPlan(ctx context.Context, id string, input
 		PlanID:     planID,
 		Decision:   input.Decision,
 		ReasonCode: input.ReasonCode,
+		TenantInfo: tenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *mutationResolver) ReplayAgentRun(ctx context.Context, runID string) (*agent.Evaluation, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentRun, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(runID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.agentEvaluationService.Replay(ctx, &services.ReplayAgentRunRequest{
+		RunID:      id,
 		TenantInfo: tenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 }
@@ -357,6 +395,49 @@ func (r *queryResolver) AgentMemories(ctx context.Context, input gqlmodel.DataTa
 	return agentMemoryConnectionToModel(result)
 }
 
+func (r *queryResolver) AgentEvaluations(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentEvaluationConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentRun, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	tableInput, err := dataTableConnectionFromGraphQL(ctx, &input, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.agentEvaluationService.ListConnection(
+		ctx,
+		&repositories.ListAgentEvaluationConnectionRequest{
+			Filter:  tableInput.Filter,
+			Cursor:  tableInput.Cursor,
+			Columns: agentEvaluationColumns(ctx, "edges.node"),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return agentEvaluationConnectionToModel(result)
+}
+
+func (r *queryResolver) AgentEvaluation(ctx context.Context, id string) (*agent.Evaluation, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentRun, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	evaluationID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.agentEvaluationService.GetByID(ctx, repositories.GetAgentEvaluationByIDRequest{
+		ID:         evaluationID,
+		TenantInfo: tenantInfo(authCtx),
+	})
+}
+
 func (r *queryResolver) AgentMemory(ctx context.Context, id string) (*agent.Memory, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentMemory, permission.OpRead)
 	if err != nil {
@@ -435,6 +516,13 @@ func (r *queryResolver) AgentControl(ctx context.Context) (*tenant.AgentControl,
 	return r.agentControlService.Get(ctx, tenantInfo(authCtx))
 }
 
+func (r *Resolver) AgentEvaluation() generated.AgentEvaluationResolver {
+	return &agentEvaluationResolver{r}
+}
+
 func (r *Resolver) AgentProposal() generated.AgentProposalResolver { return &agentProposalResolver{r} }
 
-type agentProposalResolver struct{ *Resolver }
+type (
+	agentEvaluationResolver struct{ *Resolver }
+	agentProposalResolver   struct{ *Resolver }
+)

@@ -117,6 +117,12 @@ export type AgentDecisionType =
   | 'Modified'
   | 'Rejected';
 
+export type AgentEvaluationStatus =
+  | 'Completed'
+  | 'Failed'
+  | 'Pending'
+  | 'Running';
+
 export type AgentExceptionCategory =
   | 'AccessorialDispute'
   | 'ConfidenceBelowThreshold'
@@ -5929,6 +5935,30 @@ export type AgentProposalCountQueryVariables = Exact<{
 
 
 export type AgentProposalCountQuery = { agentProposals: { totalCount: number | null } };
+
+export type AgentEvaluationTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentDefinitionId: string, sourceRunId: string, status: AgentEvaluationStatus, trigger: AgentRunTrigger, subjectType: string, subjectId: string, model: string, reply: string, comparison: unknown, originalProposals: number, toolCallsUsed: number, errorMessage: string, requestedByUserId: string | null, startedAt: number | null, completedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentEvaluationTableRowFieldsFragment' };
+
+export type AgentEvaluationTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AgentEvaluationTableQuery = { agentEvaluations: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentEvaluationTableRowFieldsFragment': AgentEvaluationTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AgentEvaluationDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentEvaluationDetailQuery = { agentEvaluation: { id: string, agentDefinitionId: string, sourceRunId: string, status: AgentEvaluationStatus, trigger: AgentRunTrigger, subjectType: string, subjectId: string, input: string, definitionVersion: number, promptVersion: string, model: string, providerId: string, reply: string, actions: Array<unknown>, comparison: unknown, originalProposals: number, toolCallsUsed: number, errorMessage: string, startedAt: number | null, completedAt: number | null, createdAt: number } | null };
+
+export type ReplayAgentRunMutationVariables = Exact<{
+  runId: string | number;
+}>;
+
+
+export type ReplayAgentRunMutation = { replayAgentRun: { ' $fragmentRefs'?: { 'AgentEvaluationTableRowFieldsFragment': AgentEvaluationTableRowFieldsFragment } } };
 
 export type AgentExceptionTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, category: AgentExceptionCategory, severity: AgentSeverity, subjectType: AgentSubjectType, subjectId: string, attemptSummary: string, blastRadius: number, resolutionState: AgentResolutionState, resolutionNotes: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentExceptionTableRowFieldsFragment' };
 
@@ -11931,6 +11961,31 @@ export const AgentDefinitionCardFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AgentDefinitionCardFields"}) as unknown as TypedDocumentString<AgentDefinitionCardFieldsFragment, unknown>;
+export const AgentEvaluationTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentEvaluationTableRowFields on AgentEvaluation {
+  id
+  organizationId
+  businessUnitId
+  agentDefinitionId
+  sourceRunId
+  status
+  trigger
+  subjectType
+  subjectId
+  model
+  reply
+  comparison
+  originalProposals
+  toolCallsUsed
+  errorMessage
+  requestedByUserId
+  startedAt
+  completedAt
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"AgentEvaluationTableRowFields"}) as unknown as TypedDocumentString<AgentEvaluationTableRowFieldsFragment, unknown>;
 export const AgentExceptionTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentExceptionTableRowFields on AgentException {
   id
@@ -18507,6 +18562,9 @@ export const AgentDefinitionCardsDocument = {"__meta__":{"kind":"query","name":"
 export const AgentDefinitionCountDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCount","hash":"sha256:daacf568820fcf8bddb93d6841d154a39ae37f4f40aab47e3e127efda1270831"}} as unknown as TypedDocumentString<AgentDefinitionCountQuery, AgentDefinitionCountQueryVariables>;
 export const AgentRunCountDocument = {"__meta__":{"kind":"query","name":"AgentRunCount","hash":"sha256:e5f44d80150fa3a53684e90b45779a0d12a9c75150f2ed16c1b816d22edb905e"}} as unknown as TypedDocumentString<AgentRunCountQuery, AgentRunCountQueryVariables>;
 export const AgentProposalCountDocument = {"__meta__":{"kind":"query","name":"AgentProposalCount","hash":"sha256:2eded728747d5256e64b681abdec7d5ec92e8868262c03bea6249352bc3deb28"}} as unknown as TypedDocumentString<AgentProposalCountQuery, AgentProposalCountQueryVariables>;
+export const AgentEvaluationTableDocument = {"__meta__":{"kind":"query","name":"AgentEvaluationTable","hash":"sha256:0be9cb6fd865efed333148edbc1d0c6a2c6b805588bfcec4fee1b3eeec463366"}} as unknown as TypedDocumentString<AgentEvaluationTableQuery, AgentEvaluationTableQueryVariables>;
+export const AgentEvaluationDetailDocument = {"__meta__":{"kind":"query","name":"AgentEvaluationDetail","hash":"sha256:b4c42d1fab671fe95ec03ec6141352f0fe894e1f3c5d6c91bf4e950608bafef1"}} as unknown as TypedDocumentString<AgentEvaluationDetailQuery, AgentEvaluationDetailQueryVariables>;
+export const ReplayAgentRunDocument = {"__meta__":{"kind":"mutation","name":"ReplayAgentRun","hash":"sha256:f0275315246f7b642fb91c2cf0e4b7ada7e6b84fa916aaeb4dda6755895f5037"}} as unknown as TypedDocumentString<ReplayAgentRunMutation, ReplayAgentRunMutationVariables>;
 export const AgentExceptionTableDocument = {"__meta__":{"kind":"query","name":"AgentExceptionTable","hash":"sha256:25ab7e258b1999dd80da81ecf0ad0c5b956991f6fc73cf33a2cd45def0a97b41"}} as unknown as TypedDocumentString<AgentExceptionTableQuery, AgentExceptionTableQueryVariables>;
 export const AgentExceptionDetailDocument = {"__meta__":{"kind":"query","name":"AgentExceptionDetail","hash":"sha256:a5f862a28f545ff7151df8c5e238d4c4ea80f137f9c237f2de408fa670227069"}} as unknown as TypedDocumentString<AgentExceptionDetailQuery, AgentExceptionDetailQueryVariables>;
 export const ResolveAgentExceptionDocument = {"__meta__":{"kind":"mutation","name":"ResolveAgentException","hash":"sha256:7560a022b9583caf64b19551a5703e3d4717a7ee8297e5359121c469f4357010"}} as unknown as TypedDocumentString<ResolveAgentExceptionMutation, ResolveAgentExceptionMutationVariables>;

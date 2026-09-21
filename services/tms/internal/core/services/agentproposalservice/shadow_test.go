@@ -259,3 +259,52 @@ func TestGetByID_LiveDefinition_ReturnsProposal(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, proposal)
 }
+
+func (r *fakeProposalRepo) CountExecutedTool(
+	context.Context,
+	repositories.CountExecutedToolRequest,
+) (int, error) {
+	return 0, nil
+}
+
+func (r *fakeProposalRepo) RecordSimulation(
+	context.Context,
+	repositories.RecordAgentProposalSimulationRequest,
+) (*agent.AgentProposal, error) {
+	return nil, nil
+}
+
+func (r *fakeProposalRepo) ListByRun(
+	context.Context,
+	repositories.ListAgentProposalsByRunRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
+func (r *fakeProposalRepo) ListByPlan(
+	context.Context,
+	repositories.ListAgentProposalsByPlanRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
+func (r *fakeProposalRepo) SkipPendingByPlan(
+	context.Context,
+	repositories.SkipPendingByPlanRequest,
+) (int, error) {
+	return 0, nil
+}
+
+func (r *fakeProposalRepo) ListPendingForReminder(
+	context.Context,
+	repositories.ListPendingProposalsForReminderRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
+func (r *fakeProposalRepo) MarkReminded(
+	context.Context,
+	repositories.MarkProposalsRemindedRequest,
+) (int, error) {
+	return 0, nil
+}

@@ -614,6 +614,64 @@ type AgentDefinitionEdge {
   node: AgentDefinition!
 }
 
+"""
+A recorded run replayed against its agent as it is now, with every write
+simulated, and compared with what the original proposed and how people
+decided on it.
+"""
+type AgentEvaluation {
+  """
+  What the replay would have done: tool, parameters and preview, in order.
+  """
+  actions: [JSON!]!
+  agentDefinitionId: ID!
+  businessUnitId: ID!
+  """Each original proposal against the replay, with counts and a score."""
+  comparison: JSON
+  completedAt: Timestamp
+  createdAt: Timestamp!
+  """The agent's version at the time of the replay."""
+  definitionVersion: Int!
+  errorMessage: String!
+  id: ID!
+  """What the replay was asked, as the original was."""
+  input: String!
+  model: String!
+  organizationId: ID!
+  originalProposals: Int!
+  promptVersion: String!
+  providerId: ID!
+  reply: String!
+  requestedByUserId: ID
+  sourceRunId: ID!
+  startedAt: Timestamp
+  status: AgentEvaluationStatus!
+  subjectId: ID!
+  subjectType: String!
+  toolCallsUsed: Int!
+  trigger: AgentRunTrigger!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type AgentEvaluationConnection {
+  edges: [AgentEvaluationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AgentEvaluationEdge {
+  cursor: String!
+  node: AgentEvaluation!
+}
+
+enum AgentEvaluationStatus {
+  Completed
+  Failed
+  Pending
+  Running
+}
+
 type AgentEvidenceRef {
   id: String!
   note: String!
@@ -10511,6 +10569,10 @@ type Mutation {
   reopenPerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
   reopenWorkerChecklistItem(id: ID!, version: Int): WorkerChecklist!
   reopenWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
+  """
+  Replays a recorded run against its agent as it is now; every write is simulated.
+  """
+  replayAgentRun(runId: ID!): AgentEvaluation!
   requestLeaveCertification(caseId: ID!, dueAt: Timestamp): WorkerLeaveCase!
   requestMyPto(input: RequestMyPtoInput!): PortalPto!
   rescindDisciplinaryAction(input: RescindDisciplinaryActionInput!): WorkerDisciplinaryAction!
@@ -12320,6 +12382,8 @@ type Query {
   agentControl: AgentControl!
   agentDefinition(id: ID!): AgentDefinition
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
+  agentEvaluation(id: ID!): AgentEvaluation
+  agentEvaluations(input: DataTableConnectionInput!): AgentEvaluationConnection!
   agentException(id: ID!): AgentException
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentMemories(input: DataTableConnectionInput!): AgentMemoryConnection!

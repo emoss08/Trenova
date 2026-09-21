@@ -48,6 +48,7 @@ describe("buildRailItems", () => {
       "runs",
       "proposals",
       "plans",
+      "evaluations",
       "exceptions",
     ]);
   });
@@ -78,7 +79,12 @@ describe("buildRailItems", () => {
     );
 
     expect(items.map((item) => item.tab)).toEqual(["overview", "agents", "activity"]);
-    expect(items[2].children.map((child) => child.view)).toEqual(["runs", "proposals", "plans"]);
+    expect(items[2].children.map((child) => child.view)).toEqual([
+      "runs",
+      "proposals",
+      "plans",
+      "evaluations",
+    ]);
   });
 
   // A plan is decided under the same right as the proposals it groups, so
@@ -86,7 +92,11 @@ describe("buildRailItems", () => {
   it("lists plans only where proposals may be read", () => {
     const items = buildRailItems(counts, { ...all, proposals: false }, t);
 
-    expect(items[4].children.map((child) => child.view)).toEqual(["runs", "exceptions"]);
+    expect(items[4].children.map((child) => child.view)).toEqual([
+      "runs",
+      "evaluations",
+      "exceptions",
+    ]);
   });
 
   // An empty memory is worth saying: the section exists so someone records

@@ -1295,6 +1295,329 @@ var AgentRunFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// Evaluation — table "agent_evaluations", alias "aeval"
+// ---------------------------------------------------------------------------
+
+// EvaluationTable holds the table name, alias, and primary key columns
+// for the "agent_evaluations" table. The alias "aeval" is used in all generated
+// SQL fragments (e.g. "aeval.id = ?").
+var EvaluationTable = TableInfo{
+	Name:       "agent_evaluations",
+	Alias:      "aeval",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// EvaluationColumns provides type-safe column references for the "agent_evaluations" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(EvaluationColumns.ID.String())
+//	// SELECT aeval.id FROM agent_evaluations AS aeval
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(EvaluationColumns.ID.Eq(), id)           // WHERE aeval.id = ?
+//	q.Order(EvaluationColumns.CreatedAt.OrderDesc())  // ORDER BY aeval.created_at DESC
+var EvaluationColumns = struct {
+	ID                Column // "id" → qualified: "aeval.id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "aeval.business_unit_id"
+	OrganizationID    Column // "organization_id" → qualified: "aeval.organization_id"
+	AgentDefinitionID Column // "agent_definition_id" → qualified: "aeval.agent_definition_id"
+	SourceRunID       Column // "source_run_id" → qualified: "aeval.source_run_id"
+	Status            Column // "status" → qualified: "aeval.status"
+	Trigger           Column // "trigger" → qualified: "aeval.trigger"
+	SubjectType       Column // "subject_type" → qualified: "aeval.subject_type"
+	SubjectID         Column // "subject_id" → qualified: "aeval.subject_id"
+	Input             Column // "input" → qualified: "aeval.input"
+	DefinitionVersion Column // "definition_version" → qualified: "aeval.definition_version"
+	PromptVersion     Column // "prompt_version" → qualified: "aeval.prompt_version"
+	Model             Column // "model" → qualified: "aeval.model"
+	ProviderID        Column // "provider_id" → qualified: "aeval.provider_id"
+	Reply             Column // "reply" → qualified: "aeval.reply"
+	Actions           Column // "actions" → qualified: "aeval.actions"
+	Comparison        Column // "comparison" → qualified: "aeval.comparison"
+	OriginalProposals Column // "original_proposals" → qualified: "aeval.original_proposals"
+	ToolCallsUsed     Column // "tool_calls_used" → qualified: "aeval.tool_calls_used"
+	WorkflowID        Column // "workflow_id" → qualified: "aeval.workflow_id"
+	ErrorMessage      Column // "error_message" → qualified: "aeval.error_message"
+	RequestedByUserID Column // "requested_by_user_id" → qualified: "aeval.requested_by_user_id"
+	StartedAt         Column // "started_at" → qualified: "aeval.started_at"
+	CompletedAt       Column // "completed_at" → qualified: "aeval.completed_at"
+	Version           Column // "version" → qualified: "aeval.version"
+	CreatedAt         Column // "created_at" → qualified: "aeval.created_at"
+	UpdatedAt         Column // "updated_at" → qualified: "aeval.updated_at"
+}{
+	ID:                NewColumn("id", "aeval"),
+	BusinessUnitID:    NewColumn("business_unit_id", "aeval"),
+	OrganizationID:    NewColumn("organization_id", "aeval"),
+	AgentDefinitionID: NewColumn("agent_definition_id", "aeval"),
+	SourceRunID:       NewColumn("source_run_id", "aeval"),
+	Status:            NewColumn("status", "aeval"),
+	Trigger:           NewColumn("trigger", "aeval"),
+	SubjectType:       NewColumn("subject_type", "aeval"),
+	SubjectID:         NewColumn("subject_id", "aeval"),
+	Input:             NewColumn("input", "aeval"),
+	DefinitionVersion: NewColumn("definition_version", "aeval"),
+	PromptVersion:     NewColumn("prompt_version", "aeval"),
+	Model:             NewColumn("model", "aeval"),
+	ProviderID:        NewColumn("provider_id", "aeval"),
+	Reply:             NewColumn("reply", "aeval"),
+	Actions:           NewColumn("actions", "aeval"),
+	Comparison:        NewColumn("comparison", "aeval"),
+	OriginalProposals: NewColumn("original_proposals", "aeval"),
+	ToolCallsUsed:     NewColumn("tool_calls_used", "aeval"),
+	WorkflowID:        NewColumn("workflow_id", "aeval"),
+	ErrorMessage:      NewColumn("error_message", "aeval"),
+	RequestedByUserID: NewColumn("requested_by_user_id", "aeval"),
+	StartedAt:         NewColumn("started_at", "aeval"),
+	CompletedAt:       NewColumn("completed_at", "aeval"),
+	Version:           NewColumn("version", "aeval"),
+	CreatedAt:         NewColumn("created_at", "aeval"),
+	UpdatedAt:         NewColumn("updated_at", "aeval"),
+}
+
+// EvaluationFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Evaluation.GetStaticFieldMap().
+var EvaluationFieldMap = map[string]string{
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"agentDefinitionId": "agent_definition_id",
+	"sourceRunId":       "source_run_id",
+	"status":            "status",
+	"trigger":           "trigger",
+	"subjectType":       "subject_type",
+	"subjectId":         "subject_id",
+	"input":             "input",
+	"definitionVersion": "definition_version",
+	"promptVersion":     "prompt_version",
+	"model":             "model",
+	"providerId":        "provider_id",
+	"reply":             "reply",
+	"actions":           "actions",
+	"comparison":        "comparison",
+	"originalProposals": "original_proposals",
+	"toolCallsUsed":     "tool_calls_used",
+	"workflowId":        "workflow_id",
+	"errorMessage":      "error_message",
+	"requestedByUserId": "requested_by_user_id",
+	"startedAt":         "started_at",
+	"completedAt":       "completed_at",
+	"version":           "version",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
+}
+
+// EvaluationInsertableColumns lists column names suitable for INSERT statements on the "agent_evaluations" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var EvaluationInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"agent_definition_id",
+	"source_run_id",
+	"status",
+	"trigger",
+	"subject_type",
+	"subject_id",
+	"input",
+	"definition_version",
+	"prompt_version",
+	"model",
+	"provider_id",
+	"reply",
+	"actions",
+	"comparison",
+	"original_proposals",
+	"tool_calls_used",
+	"workflow_id",
+	"error_message",
+	"requested_by_user_id",
+	"started_at",
+	"completed_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// EvaluationRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(EvaluationRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var EvaluationRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// EvaluationScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE aeval.organization_id = ? AND aeval.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.EvaluationScopeTenant(sq, ti).
+//		Where(buncolgen.EvaluationColumns.ID.Eq(), id)
+func EvaluationScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, EvaluationColumns.OrganizationID, EvaluationColumns.BusinessUnitID, ti)
+}
+
+// EvaluationScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.EvaluationScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.EvaluationColumns.ID.In(), bun.List(ids))
+//	})
+func EvaluationScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, EvaluationColumns.OrganizationID, EvaluationColumns.BusinessUnitID, ti)
+}
+
+// EvaluationScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.EvaluationScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.EvaluationColumns.ID.Eq(), id)
+//	})
+func EvaluationScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, EvaluationColumns.OrganizationID, EvaluationColumns.BusinessUnitID, ti)
+}
+
+// EvaluationApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.EvaluationApplyTenant(tenantInfo))
+func EvaluationApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(EvaluationColumns.OrganizationID, EvaluationColumns.BusinessUnitID, ti)
+}
+
+// EvaluationFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_evaluations" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	EvaluationFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var EvaluationFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	SourceRunID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceRunId" → DB: "source_run_id"
+	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Trigger           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trigger" → DB: "trigger"
+	SubjectType       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
+	SubjectID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
+	Input             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "input" → DB: "input"
+	DefinitionVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "definitionVersion" → DB: "definition_version"
+	PromptVersion     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "promptVersion" → DB: "prompt_version"
+	Model             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
+	ProviderID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
+	Reply             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reply" → DB: "reply"
+	Actions           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actions" → DB: "actions"
+	Comparison        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comparison" → DB: "comparison"
+	OriginalProposals func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "originalProposals" → DB: "original_proposals"
+	ToolCallsUsed     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCallsUsed" → DB: "tool_calls_used"
+	WorkflowID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workflowId" → DB: "workflow_id"
+	ErrorMessage      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
+	RequestedByUserID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedByUserId" → DB: "requested_by_user_id"
+	StartedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
+	CompletedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "completedAt" → DB: "completed_at"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentDefinitionId", op, value)
+	},
+	SourceRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceRunId", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	Trigger: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("trigger", op, value)
+	},
+	SubjectType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("subjectType", op, value)
+	},
+	SubjectID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("subjectId", op, value)
+	},
+	Input: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("input", op, value)
+	},
+	DefinitionVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("definitionVersion", op, value)
+	},
+	PromptVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("promptVersion", op, value)
+	},
+	Model: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("model", op, value)
+	},
+	ProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerId", op, value)
+	},
+	Reply: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reply", op, value)
+	},
+	Actions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("actions", op, value)
+	},
+	Comparison: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("comparison", op, value)
+	},
+	OriginalProposals: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("originalProposals", op, value)
+	},
+	ToolCallsUsed: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("toolCallsUsed", op, value)
+	},
+	WorkflowID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("workflowId", op, value)
+	},
+	ErrorMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("errorMessage", op, value)
+	},
+	RequestedByUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requestedByUserId", op, value)
+	},
+	StartedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("startedAt", op, value)
+	},
+	CompletedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("completedAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // Memory — table "agent_memories", alias "amem"
 // ---------------------------------------------------------------------------
 

@@ -2,6 +2,7 @@ package agentdecisionrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -68,4 +69,32 @@ func (r *repository) Create(
 	}
 
 	return entity, nil
+}
+
+func (r *repository) ListByProposals(
+	ctx context.Context,
+	req repositories.ListAgentDecisionsByProposalsRequest,
+) ([]*agent.AgentDecision, error) {
+	if len(req.ProposalIDs) == 0 {
+		return []*agent.AgentDecision{}, nil
+	}
+
+	cols := buncolgen.AgentDecisionColumns
+	rows := make([]*agent.AgentDecision, 0, len(req.ProposalIDs))
+
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&rows).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.AgentDecisionScopeTenant(sq, req.TenantInfo).
+				Where(cols.ProposalID.In(), bun.In(req.ProposalIDs))
+		}).
+		OrderExpr(cols.CreatedAt.OrderDesc()).
+		Scan(ctx); err != nil {
+		r.l.Error("failed to list decisions by proposals", zap.Error(err))
+
+		return nil, fmt.Errorf("list decisions by proposals: %w", err)
+	}
+
+	return rows, nil
 }

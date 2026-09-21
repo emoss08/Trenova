@@ -15,7 +15,7 @@ export const aiControlTabParser = parseAsStringLiteral(aiControlTabValues)
   .withOptions({ history: "push", shallow: true })
   .withDefault("overview");
 
-export const activityViews = ["runs", "proposals", "plans", "exceptions"] as const;
+export const activityViews = ["runs", "proposals", "plans", "evaluations", "exceptions"] as const;
 
 export const ACTIVITY_VIEW_PARAM = "activity";
 

@@ -3544,6 +3544,15 @@
       "domain/worker"
     ]
   },
+  "A person approved this and the replay no longer proposes it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A person holds one position, so this replaces any title they hold now.": {
     "sites": 1,
     "scope": [
@@ -3551,6 +3560,24 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "A person rejected this and the replay no longer proposes it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A person rejected this and the replay proposes it again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "A plan": {
@@ -4471,6 +4498,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "A run to replay is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "A satisfied requirement must name the permit that satisfies it": {
@@ -10162,11 +10198,12 @@
     ]
   },
   "Added": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/formula-template"
     ]
   },
@@ -11186,7 +11223,7 @@
     ]
   },
   "Agent is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -11265,6 +11302,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Agent version {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Agent {0} is disabled and cannot be used": {
@@ -11385,6 +11431,15 @@
     ],
     "areas": [
       "routes/customer-statement"
+    ]
+  },
+  "Agreed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Agreed Rate": {
@@ -24075,7 +24130,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 108,
+    "sites": 109,
     "scope": [
       "go"
     ],
@@ -27941,11 +27996,12 @@
     ]
   },
   "Changed": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/formula-template",
       "routes/rate-agreement"
     ]
@@ -33089,7 +33145,7 @@
     ]
   },
   "Completed": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "ts"
     ],
@@ -57399,6 +57455,15 @@
       "routes/worker"
     ]
   },
+  "Evaluations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Even ranges": {
     "sites": 1,
     "scope": [
@@ -61646,7 +61711,7 @@
     ]
   },
   "Failed": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -73378,6 +73443,15 @@
     "areas": [
       "routes/formula-template",
       "routes/fuel-purchase"
+    ]
+  },
+  "Improved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Improving": {
@@ -89356,7 +89430,7 @@
     ]
   },
   "Model": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -97527,6 +97601,15 @@
       "routes/fleet-safety"
     ]
   },
+  "Nobody decided on the original, so this says nothing yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nobody has been put on this plan yet.": {
     "sites": 1,
     "scope": [
@@ -98193,6 +98276,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "Not finished yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Not found": {
@@ -99478,6 +99570,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "Nothing to compare": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Nothing to count yet": {
@@ -103831,6 +103932,15 @@
       "routes/worker"
     ]
   },
+  "Open comparison": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Open course": {
     "sites": 1,
     "scope": [
@@ -105933,7 +106043,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 107,
+    "sites": 108,
     "scope": [
       "go"
     ],
@@ -106334,6 +106444,15 @@
       "routes/shipment"
     ]
   },
+  "Original against replay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Original entry": {
     "sites": 1,
     "scope": [
@@ -106428,6 +106547,24 @@
       "domain/document",
       "domain/documentsearchprojection",
       "domain/documentupload"
+    ]
+  },
+  "Original run": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Original started by": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Other": {
@@ -106765,12 +106902,13 @@
     ]
   },
   "Outcome": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/billing-queue",
       "routes/jurisdiction-rule",
       "routes/osha",
@@ -118496,13 +118634,14 @@
     ]
   },
   "Queued": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "packages/shared/components",
+      "routes/agent-control",
       "routes/invoice-adjustment-batch"
     ]
   },
@@ -124444,6 +124583,15 @@
       "routes/trailer"
     ]
   },
+  "Regressed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Regular": {
     "sites": 3,
     "scope": [
@@ -126100,6 +126248,15 @@
       "routes/accept.tsx"
     ]
   },
+  "Repeated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Repeats": {
     "sites": 1,
     "scope": [
@@ -126279,6 +126436,24 @@
       "go/other"
     ]
   },
+  "Replay a recorded agent run against the agent as it is now, writes simulated, and compare the outcome": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Replay against the current agent": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Replay delivery": {
     "sites": 1,
     "scope": [
@@ -126304,6 +126479,42 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Replay said": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Replay started": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Replayed": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Replaying": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Replays of a proposed contract against freight that already moved, and what it would have charged": {
@@ -147428,7 +147639,7 @@
     ]
   },
   "Status": {
-    "sites": 228,
+    "sites": 230,
     "scope": [
       "go",
       "ts"
@@ -147583,7 +147794,7 @@
     ]
   },
   "Status is required": {
-    "sites": 120,
+    "sites": 121,
     "scope": [
       "go"
     ],
@@ -148570,7 +148781,7 @@
     ]
   },
   "Subject id is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -148601,7 +148812,7 @@
     ]
   },
   "Subject type is required": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -152844,6 +153055,15 @@
       "domain/documenttemplate"
     ]
   },
+  "The agents could not be loaded, so nothing can be sent yet. Refresh to try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The agreed fuel surcharge amount.": {
     "sites": 1,
     "scope": [
@@ -154032,6 +154252,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "The comparison appears under Evaluations when it finishes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The complete workforce management suite, sellable without any transportation management feature.": {
@@ -158215,6 +158444,42 @@
       "domain/permission"
     ]
   },
+  "The replay did not finish.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The replay proposes the same change with different parameters.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The replay proposes this again, as a person approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The replay proposes this; the original did not.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The reply ended before it was finished.": {
     "sites": 1,
     "scope": [
@@ -160084,11 +160349,12 @@
     ]
   },
   "The workflow engine is not available": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "service/agentevaluationservice",
       "service/agentrunservice"
     ]
   },
@@ -162640,6 +162906,15 @@
     ],
     "areas": [
       "domain/modeprofile"
+    ]
+  },
+  "This run was not made by a configured agent, so there is nothing to replay it against": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentevaluationservice"
     ]
   },
   "This scenario could not be priced": {
@@ -166778,7 +167053,7 @@
     ]
   },
   "Trigger is required": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -168178,6 +168453,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Undecided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Undeclared parameter \"{0}\"": {
@@ -175640,6 +175924,15 @@
       "routes/agent-control"
     ]
   },
+  "What it was asked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What made up the rate": {
     "sites": 1,
     "scope": [
@@ -175723,6 +176016,15 @@
   },
   "What the agent tried": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "What the agent, as it is now, would have done with the same run. Every write was simulated; nothing was changed.": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -175908,6 +176210,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "What the replay said": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "What the report shows.": {
@@ -187472,6 +187783,15 @@
       "routes/worker"
     ]
   },
+  "{0} added": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} advance": {
     "sites": 1,
     "scope": [
@@ -187479,6 +187799,15 @@
     ],
     "areas": [
       "routes/money.tsx"
+    ]
+  },
+  "{0} agreed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} already covered": {
@@ -187749,6 +188078,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} charge guardrail applied. The formula produced {1} and was clamped to {2} .": {
@@ -188348,6 +188686,15 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "{0} improved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} in it": {
@@ -189755,6 +190102,15 @@
       "service/carrierintelservice"
     ]
   },
+  "{0} regressed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} rejected the API key. Update the key in Integrations": {
     "sites": 1,
     "scope": [
@@ -189789,6 +190145,15 @@
     ],
     "areas": [
       "template/notification.dash.credential_expiring"
+    ]
+  },
+  "{0} repeated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} replied to your comment": {
@@ -190268,6 +190633,15 @@
     ],
     "areas": [
       "template/notification.dash.training_due"
+    ]
+  },
+  "{0} undecided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} unresolved": {

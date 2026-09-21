@@ -5,6 +5,7 @@ import type { ActivityView } from "../rail-items";
 const AgentRunTable = lazy(() => import("./agent-run-table"));
 const AgentProposalTable = lazy(() => import("./agent-proposal-table"));
 const AgentPlanTable = lazy(() => import("./agent-plan-table"));
+const AgentEvaluationTable = lazy(() => import("./agent-evaluation-table"));
 const AgentExceptionTable = lazy(() => import("./agent-exception-table"));
 
 /**
@@ -18,6 +19,7 @@ export default function ActivityTab({ view }: { view: ActivityView }) {
       {view === "runs" && <AgentRunTable />}
       {view === "proposals" && <AgentProposalTable />}
       {view === "plans" && <AgentPlanTable />}
+      {view === "evaluations" && <AgentEvaluationTable />}
       {view === "exceptions" && <AgentExceptionTable />}
     </DataTableLazyComponent>
   );

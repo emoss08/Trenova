@@ -1,0 +1,69 @@
+fragment AgentEvaluationTableRowFields on AgentEvaluation {
+  id
+  organizationId
+  businessUnitId
+  agentDefinitionId
+  sourceRunId
+  status
+  trigger
+  subjectType
+  subjectId
+  model
+  reply
+  comparison
+  originalProposals
+  toolCallsUsed
+  errorMessage
+  requestedByUserId
+  startedAt
+  completedAt
+  version
+  createdAt
+  updatedAt
+}
+
+query AgentEvaluationTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  agentEvaluations(input: $input) {
+    edges {
+      node {
+        ...AgentEvaluationTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentEvaluationDetail($id: ID!) {
+  agentEvaluation(id: $id) {
+    id
+    agentDefinitionId
+    sourceRunId
+    status
+    trigger
+    subjectType
+    subjectId
+    input
+    definitionVersion
+    promptVersion
+    model
+    providerId
+    reply
+    actions
+    comparison
+    originalProposals
+    toolCallsUsed
+    errorMessage
+    startedAt
+    completedAt
+    createdAt
+  }
+}
+
+mutation ReplayAgentRun($runId: ID!) {
+  replayAgentRun(runId: $runId) {
+    ...AgentEvaluationTableRowFields
+  }
+}

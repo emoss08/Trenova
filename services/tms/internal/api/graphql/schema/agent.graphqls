@@ -347,6 +347,62 @@ input AgentMemoryInput {
   version: Int
 }
 
+enum AgentEvaluationStatus {
+  Pending
+  Running
+  Completed
+  Failed
+}
+
+"""
+A recorded run replayed against its agent as it is now, with every write
+simulated, and compared with what the original proposed and how people
+decided on it.
+"""
+type AgentEvaluation {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  agentDefinitionId: ID!
+  sourceRunId: ID!
+  status: AgentEvaluationStatus!
+  trigger: AgentRunTrigger!
+  subjectType: String!
+  subjectId: ID!
+  "What the replay was asked, as the original was."
+  input: String!
+  "The agent's version at the time of the replay."
+  definitionVersion: Int!
+  promptVersion: String!
+  model: String!
+  providerId: ID!
+  reply: String!
+  "What the replay would have done: tool, parameters and preview, in order."
+  actions: [JSON!]!
+  "Each original proposal against the replay, with counts and a score."
+  comparison: JSON
+  originalProposals: Int!
+  toolCallsUsed: Int!
+  errorMessage: String!
+  requestedByUserId: ID
+  startedAt: Timestamp
+  completedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AgentEvaluationEdge {
+  node: AgentEvaluation!
+  cursor: String!
+}
+
+type AgentEvaluationConnection {
+  edges: [AgentEvaluationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
 type AgentExceptionEdge {
   node: AgentException!
   cursor: String!
@@ -395,6 +451,8 @@ extend type Query {
   agentPlans(input: DataTableConnectionInput!): AgentPlanConnection!
   agentPlan(id: ID!): AgentPlan
   agentMemories(input: DataTableConnectionInput!): AgentMemoryConnection!
+  agentEvaluations(input: DataTableConnectionInput!): AgentEvaluationConnection!
+  agentEvaluation(id: ID!): AgentEvaluation
   agentMemory(id: ID!): AgentMemory
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentException(id: ID!): AgentException
@@ -404,6 +462,8 @@ extend type Query {
 extend type Mutation {
   decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
   decideAgentPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
+  "Replays a recorded run against its agent as it is now; every write is simulated."
+  replayAgentRun(runId: ID!): AgentEvaluation!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
   "Retires or restores a memory; a retired one is kept and no longer read."

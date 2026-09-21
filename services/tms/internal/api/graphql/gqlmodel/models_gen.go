@@ -193,6 +193,17 @@ type AgentDefinitionEdge struct {
 	Cursor string                      `json:"cursor"`
 }
 
+type AgentEvaluationConnection struct {
+	Edges      []*AgentEvaluationEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+}
+
+type AgentEvaluationEdge struct {
+	Node   *agent.Evaluation `json:"node"`
+	Cursor string            `json:"cursor"`
+}
+
 type AgentExceptionConnection struct {
 	Edges      []*AgentExceptionEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`

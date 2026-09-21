@@ -474,3 +474,29 @@ func (r *repository) SkipPendingByPlan(
 
 	return int(affected), nil
 }
+
+func (r *repository) ListByRun(
+	ctx context.Context,
+	req repositories.ListAgentProposalsByRunRequest,
+) ([]*agent.AgentProposal, error) {
+	cols := buncolgen.AgentProposalColumns
+	rows := make([]*agent.AgentProposal, 0, 8)
+
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&rows).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo).
+				Where(cols.RunID.Eq(), req.RunID)
+		}).
+		OrderExpr(cols.CreatedAt.OrderAsc()).
+		OrderExpr(cols.ID.OrderAsc()).
+		Scan(ctx); err != nil {
+		r.l.Error("failed to list proposals by run",
+			zap.String("runId", req.RunID.String()), zap.Error(err))
+
+		return nil, fmt.Errorf("list proposals by run: %w", err)
+	}
+
+	return rows, nil
+}

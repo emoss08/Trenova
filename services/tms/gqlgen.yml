@@ -1901,6 +1901,12 @@ models:
   AgentMemory:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.Memory
+  AgentEvaluationStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.EvaluationStatus
+  AgentEvaluation:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.Evaluation
   AgentAutonomyTier:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyTier

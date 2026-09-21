@@ -16,6 +16,8 @@ var AgentDecisionSpec TypeSpec
 
 var AgentDefinitionSpec TypeSpec
 
+var AgentEvaluationSpec TypeSpec
+
 var AgentExceptionSpec TypeSpec
 
 var AgentMemorySpec TypeSpec
@@ -1032,6 +1034,121 @@ func init() {
 			{
 				Name:    "openRuns",
 				Special: "openRuns",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentEvaluationSpec = TypeSpec{
+		TypeName: "AgentEvaluation",
+		FieldMap: buncolgen.EvaluationFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "agentDefinitionId",
+				FieldMapKey: "agentDefinitionId",
+			},
+			{
+				Name:        "sourceRunId",
+				FieldMapKey: "sourceRunId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "trigger",
+				FieldMapKey: "trigger",
+			},
+			{
+				Name:        "subjectType",
+				FieldMapKey: "subjectType",
+			},
+			{
+				Name:        "subjectId",
+				FieldMapKey: "subjectId",
+			},
+			{
+				Name:        "input",
+				FieldMapKey: "input",
+			},
+			{
+				Name:        "definitionVersion",
+				FieldMapKey: "definitionVersion",
+			},
+			{
+				Name:        "promptVersion",
+				FieldMapKey: "promptVersion",
+			},
+			{
+				Name:        "model",
+				FieldMapKey: "model",
+			},
+			{
+				Name:        "providerId",
+				FieldMapKey: "providerId",
+			},
+			{
+				Name:        "reply",
+				FieldMapKey: "reply",
+			},
+			{
+				Name:        "actions",
+				FieldMapKey: "actions",
+			},
+			{
+				Name:        "comparison",
+				FieldMapKey: "comparison",
+			},
+			{
+				Name:        "originalProposals",
+				FieldMapKey: "originalProposals",
+			},
+			{
+				Name:        "toolCallsUsed",
+				FieldMapKey: "toolCallsUsed",
+			},
+			{
+				Name:        "errorMessage",
+				FieldMapKey: "errorMessage",
+			},
+			{
+				Name:        "requestedByUserId",
+				FieldMapKey: "requestedByUserId",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
 			},
 			{
 				Name:        "version",

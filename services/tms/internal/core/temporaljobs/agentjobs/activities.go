@@ -32,53 +32,62 @@ const (
 type ActivitiesParams struct {
 	fx.In
 
-	Logger       *zap.Logger
-	Definitions  repositories.AgentDefinitionRepository
-	Controls     repositories.AgentControlRepository
-	RunRepo      repositories.AgentRunRepository
-	ProposalRepo repositories.AgentProposalRepository
-	Runs         serviceports.AgentRunService
-	Runtime      serviceports.AgentRuntime
-	Contexts     serviceports.RuntimeContextBuilder
-	Recorder     *proposalrecorder.Service
-	BillingQueue serviceports.BillingQueueService
-	Shipment     serviceports.ShipmentService
-	Console      repositories.DispatchConsoleRepository `optional:"true"`
-	Notifier     serviceports.AgentProposalNotifier     `optional:"true"`
-	Content      serviceports.DocumentContentService    `optional:"true"`
-	Plans        repositories.AgentPlanRepository       `optional:"true"`
+	Logger        *zap.Logger
+	Definitions   repositories.AgentDefinitionRepository
+	Controls      repositories.AgentControlRepository
+	RunRepo       repositories.AgentRunRepository
+	ProposalRepo  repositories.AgentProposalRepository
+	Runs          serviceports.AgentRunService
+	Runtime       serviceports.AgentRuntime
+	Contexts      serviceports.RuntimeContextBuilder
+	Recorder      *proposalrecorder.Service
+	BillingQueue  serviceports.BillingQueueService
+	Shipment      serviceports.ShipmentService
+	Console       repositories.DispatchConsoleRepository `optional:"true"`
+	Notifier      serviceports.AgentProposalNotifier     `optional:"true"`
+	Content       serviceports.DocumentContentService    `optional:"true"`
+	Plans         repositories.AgentPlanRepository       `optional:"true"`
+	Evaluations   repositories.AgentEvaluationRepository
+	Decisions     repositories.AgentDecisionRepository
+	Conversations repositories.ConversationRepository `optional:"true"`
 }
 
 type Activities struct {
-	logger       *zap.Logger
-	definitions  repositories.AgentDefinitionRepository
-	controls     repositories.AgentControlRepository
-	runRepo      repositories.AgentRunRepository
-	proposalRepo repositories.AgentProposalRepository
-	runs         serviceports.AgentRunService
-	runtime      serviceports.AgentRuntime
-	contexts     serviceports.RuntimeContextBuilder
-	recorder     *proposalrecorder.Service
-	notifier     serviceports.AgentProposalNotifier
-	plans        repositories.AgentPlanRepository
-	subjects     *SubjectContext
+	logger        *zap.Logger
+	definitions   repositories.AgentDefinitionRepository
+	controls      repositories.AgentControlRepository
+	runRepo       repositories.AgentRunRepository
+	proposalRepo  repositories.AgentProposalRepository
+	runs          serviceports.AgentRunService
+	runtime       serviceports.AgentRuntime
+	contexts      serviceports.RuntimeContextBuilder
+	recorder      *proposalrecorder.Service
+	notifier      serviceports.AgentProposalNotifier
+	plans         repositories.AgentPlanRepository
+	evaluations   repositories.AgentEvaluationRepository
+	decisions     repositories.AgentDecisionRepository
+	conversations repositories.ConversationRepository
+	subjects      *SubjectContext
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	logger := p.Logger.Named("agent-activities")
 
 	return &Activities{
-		logger:       logger,
-		definitions:  p.Definitions,
-		controls:     p.Controls,
-		runRepo:      p.RunRepo,
-		proposalRepo: p.ProposalRepo,
-		runs:         p.Runs,
-		runtime:      p.Runtime,
-		contexts:     p.Contexts,
-		recorder:     p.Recorder,
-		notifier:     p.Notifier,
-		plans:        p.Plans,
+		logger:        logger,
+		definitions:   p.Definitions,
+		controls:      p.Controls,
+		runRepo:       p.RunRepo,
+		proposalRepo:  p.ProposalRepo,
+		runs:          p.Runs,
+		runtime:       p.Runtime,
+		contexts:      p.Contexts,
+		recorder:      p.Recorder,
+		notifier:      p.Notifier,
+		plans:         p.Plans,
+		evaluations:   p.Evaluations,
+		decisions:     p.Decisions,
+		conversations: p.Conversations,
 		subjects: &SubjectContext{
 			content:      p.Content,
 			billingQueue: p.BillingQueue,

@@ -2,6 +2,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type {
   AgentAutonomyTier,
+  AgentEvaluationStatus,
   AgentMemoryKind,
   AgentMemorySource,
   AgentMemoryStatus,
@@ -47,6 +48,23 @@ const PLAN_STATUS: Record<AgentPlanStatus, { label: string; variant: Variant }> 
   Failed: { label: "Stopped", variant: "danger" },
   Rejected: { label: "Rejected", variant: "danger" },
   Expired: { label: "Expired", variant: "neutral" },
+};
+
+const EVALUATION_STATUS: Record<AgentEvaluationStatus, { label: string; variant: Variant }> = {
+  Pending: { label: "Queued", variant: "neutral" },
+  Running: { label: "Replaying", variant: "info" },
+  Completed: { label: "Completed", variant: "success" },
+  Failed: { label: "Failed", variant: "danger" },
+};
+
+const VERDICT: Record<string, { label: string; variant: Variant }> = {
+  Agreed: { label: "Agreed", variant: "success" },
+  Improved: { label: "Improved", variant: "success" },
+  Regressed: { label: "Regressed", variant: "danger" },
+  Repeated: { label: "Repeated", variant: "danger" },
+  Changed: { label: "Changed", variant: "warning" },
+  Undecided: { label: "Undecided", variant: "neutral" },
+  Added: { label: "Added", variant: "info" },
 };
 
 const MEMORY_KIND: Record<AgentMemoryKind, { label: string; variant: Variant }> = {
@@ -127,6 +145,16 @@ export const ProposalStatusBadge = ({
 export const PlanStatusBadge = ({ value, t }: { value: AgentPlanStatus; t: TranslateFn }) => (
   <Labelled entry={PLAN_STATUS[value]} t={t} />
 );
+export const EvaluationStatusBadge = ({
+  value,
+  t,
+}: {
+  value: AgentEvaluationStatus;
+  t: TranslateFn;
+}) => <Labelled entry={EVALUATION_STATUS[value]} t={t} />;
+export const VerdictBadge = ({ value, t }: { value: string; t: TranslateFn }) => (
+  <Labelled entry={VERDICT[value]} t={t} />
+);
 export const MemoryKindBadge = ({ value, t }: { value: AgentMemoryKind; t: TranslateFn }) => (
   <Labelled entry={MEMORY_KIND[value]} t={t} />
 );
@@ -162,6 +190,10 @@ export const proposalStatusChoices = Object.entries(PROPOSAL_STATUS).map(([value
   label: entry.label,
 }));
 export const planStatusChoices = Object.entries(PLAN_STATUS).map(([value, entry]) => ({
+  value,
+  label: entry.label,
+}));
+export const evaluationStatusChoices = Object.entries(EVALUATION_STATUS).map(([value, entry]) => ({
   value,
   label: entry.label,
 }));

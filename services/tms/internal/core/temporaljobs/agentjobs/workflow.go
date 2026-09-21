@@ -20,6 +20,9 @@ const (
 	sweepStartTimeout  = time.Minute
 	sweepListTimeout   = time.Minute
 	runActivityRetries = 2
+	// evaluationTimeoutSeconds bounds a replay the way the longest run is
+	// bounded: an hour, the ceiling a definition may set.
+	evaluationTimeoutSeconds = 3600
 	// reminderAfter is how long a proposal waits before its deciders are told
 	// a second time. Long enough that a busy morning does not nag; short
 	// enough that a proposal is not stale by the time anyone hears twice.
@@ -72,6 +75,12 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Fn:          AgentRunWorkflow,
 			TaskQueue:   temporaltype.TaskQueueAgent.String(),
 			Description: "Run one agent definition against its subject and wait for decisions on what it proposes",
+		},
+		{
+			Name:        AgentEvaluationWorkflowName,
+			Fn:          AgentEvaluationWorkflow,
+			TaskQueue:   temporaltype.TaskQueueAgent.String(),
+			Description: "Replay a recorded agent run against the agent as it is now, writes simulated, and compare the outcome",
 		},
 		{
 			Name:        AgentSweepWorkflowName,
@@ -170,6 +179,38 @@ func AgentRunWorkflow(ctx workflow.Context, payload *AgentRunPayload) error {
 	}
 
 	return completeRun(ctx, a, payload.RunID, agent.RunStatusCompleted, tenant)
+}
+
+// AgentEvaluationWorkflow replays one run. The replay is a single activity
+// the size of a run; a failure marks the evaluation failed rather than
+// leaving it Running for ever.
+func AgentEvaluationWorkflow(ctx workflow.Context, payload *AgentEvaluationPayload) error {
+	var a *Activities
+
+	replayCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		StartToCloseTimeout: runTimeout(evaluationTimeoutSeconds),
+		HeartbeatTimeout:    prepareTimeout,
+		RetryPolicy: &temporal.RetryPolicy{
+			InitialInterval:    2 * time.Second,
+			BackoffCoefficient: 2.0,
+			MaximumInterval:    time.Minute,
+			MaximumAttempts:    runActivityRetries,
+		},
+	})
+	var outcome ReplayRunResult
+	if err := workflow.ExecuteActivity(replayCtx, a.ReplayRunActivity, payload).
+		Get(replayCtx, &outcome); err != nil {
+		failCtx := workflow.WithActivityOptions(ctx, persistActivityOptions)
+		_ = workflow.ExecuteActivity(failCtx, a.FailEvaluationActivity, &FailEvaluationInput{
+			EvaluationID: payload.EvaluationID,
+			Error:        err.Error(),
+			TenantInfo:   payload.tenantInfo(),
+		}).Get(failCtx, nil)
+
+		return err
+	}
+
+	return nil
 }
 
 func AgentSweepWorkflow(ctx workflow.Context) (*SweepResult, error) {

@@ -73,6 +73,13 @@ type ListAgentProposalsByThreadRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
+// ListAgentProposalsByRunRequest reads every proposal one run raised, in
+// the order it raised them.
+type ListAgentProposalsByRunRequest struct {
+	RunID      pulid.ID              `json:"runId"`
+	TenantInfo pagination.TenantInfo `json:"-"`
+}
+
 type ExpireAgentProposalsByRunRequest struct {
 	RunID      pulid.ID              `json:"runId"`
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -138,6 +145,7 @@ type AgentProposalRepository interface {
 	) ([]*agent.AgentProposal, error)
 	MarkReminded(ctx context.Context, req MarkProposalsRemindedRequest) (int, error)
 	ListByPlan(ctx context.Context, req ListAgentProposalsByPlanRequest) ([]*agent.AgentProposal, error)
+	ListByRun(ctx context.Context, req ListAgentProposalsByRunRequest) ([]*agent.AgentProposal, error)
 	SkipPendingByPlan(ctx context.Context, req SkipPendingByPlanRequest) (int, error)
 	RecordExecution(
 		ctx context.Context,
