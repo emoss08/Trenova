@@ -1,5 +1,6 @@
 import { AGENT_ACCENTS, resolveAgentIdentity } from "@/components/agent-identity/agent-identity";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
+import { WorkingDot } from "@/components/assistant/voice/working-dot";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
@@ -37,7 +38,7 @@ import { Outlet, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ArtifactsPane } from "./artifacts/artifacts-pane";
 import { DeskDirectory } from "./desk-directory";
-import { DeskColumns, DeskShell, WorkingDot } from "./desk-shell";
+import { DeskColumns, DeskShell } from "./desk-shell";
 import { DeskTitleField } from "./desk-title-field";
 import { DeskWorkspaceEmpty } from "./desk-workspace-empty";
 

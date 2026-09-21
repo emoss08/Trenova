@@ -1,11 +1,11 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { BorderBeam } from "@trenova/shared/components/ui/border-beam";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
 import { m, useReducedMotion } from "motion/react";
 import { useState } from "react";
-import { ASSISTANT_SURFACE_ID } from "./assistant-surface";
 import { AssistantMark } from "./assistant-mark";
+import { ASSISTANT_SURFACE_ID } from "./assistant-surface";
 
 type AssistantLauncherProps = {
   pendingCount: number;
@@ -16,14 +16,21 @@ type AssistantLauncherProps = {
  * The corner mark. At rest it does nothing at all: it is on every page in the
  * product, so anything that moves would be movement a person cannot escape.
  *
- * It reacts on hover, and it carries a slow beam only while a change waits on
- * someone's decision, because that is the one thing worth pulling them back for.
+ * When decisions are waiting it grows into a pill and says how many.
+ *
+ * It used to say the same thing with a beam travelling its border and a
+ * numbered dot in the corner, and that was two devices for one fact, one of
+ * them a loop running on every screen in the product for as long as anything
+ * was pending. A shape that changes is a stronger signal than a shape that
+ * moves, and it can carry a word: "3 waiting" is read at a glance, where a
+ * beam has to be interpreted and a bare 3 could be anything.
  */
 export function AssistantLauncher({ pendingCount, onClick }: AssistantLauncherProps) {
   const t = useT();
   const reduceMotion = useReducedMotion();
   const [hovered, setHovered] = useState(false);
   const hasPending = pendingCount > 0;
+  const shown = pendingCount > 99 ? "99+" : String(pendingCount);
 
   return (
     <Tooltip>
@@ -46,24 +53,23 @@ export function AssistantLauncher({ pendingCount, onClick }: AssistantLauncherPr
                 ? t("Open the assistant, {0} changes await your decision", pendingCount)
                 : t("Open the assistant")
             }
- className="ui-focus-ring bg-foreground text-background ring-foreground/10 fixed right-5 bottom-5 z-50 flex size-12 items-center justify-center ring-1 outline-none transition-shadow"
+            className={cn(
+              "ui-focus-ring bg-foreground text-background ring-foreground/10",
+              "fixed right-5 bottom-5 z-50 flex h-12 items-center justify-center ring-1 outline-none",
+              hasPending ? "gap-2 pr-3.5 pl-3" : "w-12",
+            )}
           />
         }
       >
-        <AssistantMark className="size-5" animated={hovered && !reduceMotion} />
+        <AssistantMark className="size-5 shrink-0" animated={hovered && !reduceMotion} />
         {hasPending && (
-          <>
-            <BorderBeam
-              className="assistant-beam"
-              duration={9}
-              borderWidth={2}
-              colorFrom="var(--warning)"
-              colorTo="color-mix(in oklch, var(--warning) 8%, transparent)"
-            />
-            <span className="bg-warning text-warning-on-solid ring-background absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold tabular-nums ring-2">
-              {pendingCount > 99 ? "99+" : pendingCount}
-            </span>
-          </>
+          <span className="flex items-baseline gap-1 text-sm whitespace-nowrap">
+            {/* The count is the only warm thing on the mark, and it is warm
+                because it is the only part that is a claim on someone's
+                time. */}
+            <span className="text-warning font-semibold tabular-nums">{shown}</span>
+            <span className="text-background/70">{t("waiting")}</span>
+          </span>
         )}
       </TooltipTrigger>
       <TooltipContent side="left" sideOffset={8} className="flex items-center gap-2">

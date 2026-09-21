@@ -936,9 +936,4 @@
   .assistant-caret {
     animation: none;
   }
-
-  /* BorderBeam sets its animation name inline, so only a forced rule reaches it. */
-  .assistant-beam {
-    animation: none !important;
-  }
 }

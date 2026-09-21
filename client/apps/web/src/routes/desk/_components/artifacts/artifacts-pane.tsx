@@ -1,4 +1,8 @@
-import { ArtifactChrome, ArtifactKindIcon, ARTIFACT_KINDS } from "@/components/assistant/voice/artifact-chrome";
+import {
+  ArtifactChrome,
+  ArtifactKindIcon,
+  ARTIFACT_KINDS,
+} from "@/components/assistant/voice/artifact-chrome";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -89,7 +93,9 @@ export function ArtifactsPane({
     if (!newestLive) {
       return;
     }
-    void queryClient.invalidateQueries({ queryKey: queries.assistant.artifacts(threadId).queryKey });
+    void queryClient.invalidateQueries({
+      queryKey: queries.assistant.artifacts(threadId).queryKey,
+    });
     setActiveArtifact(threadId, newestLive);
   }, [newestLive, queryClient, setActiveArtifact, threadId]);
 
@@ -110,7 +116,7 @@ export function ArtifactsPane({
     <aside
       data-slot="artifacts-pane"
       aria-label={t("Artifacts")}
-      className={cn("bg-sunken flex min-h-0 min-w-0 flex-col", className)}
+      className={cn("bg-desk-canvas flex min-h-0 min-w-0 flex-col", className)}
     >
       <div className="flex h-11 shrink-0 items-center gap-2 pr-1.5 pl-3">
         <span className="text-sm font-medium">{t("Artifacts")}</span>
@@ -158,15 +164,19 @@ export function ArtifactsPane({
         <>
           <div className="scrollbar-overlay shrink-0 overflow-x-auto">
             <div role="tablist" aria-label={t("Artifacts")} className="flex gap-1 px-3 pb-2">
-              {artifacts.map((artifact) => (
+              {artifacts.map((artifact, index) => (
                 <button
                   key={artifact.id}
                   type="button"
                   role="tab"
                   aria-selected={artifact.id === activeId}
                   onClick={() => open(artifact.id)}
+                  // Staggered so a conversation's output reads as a row
+                  // being dealt rather than a block appearing.
+                  style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
                   className={cn(
-                    "ui-focus-ring flex h-7 max-w-56 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs transition-colors",
+                    "animate-land ui-focus-ring flex h-7 max-w-56 shrink-0 items-center gap-1.5",
+                    "rounded-full px-2.5 text-xs transition-colors",
                     artifact.id === activeId
                       ? "bg-foreground text-background"
                       : "bg-card text-muted-foreground hover:text-foreground ring-foreground/10 ring-1",
@@ -183,13 +193,17 @@ export function ArtifactsPane({
           <div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
             {active && (
               <ArtifactChrome
+                // Keyed on the artifact so opening one replays the arrival:
+                // it comes in from the conversation that made it rather than
+                // fading in where it stands, which is what makes the two
+                // columns read as one motion instead of two panes.
                 key={active.id}
                 kind={active.kind}
                 title={active.title}
                 status={active.status}
                 pinned={active.pinned}
                 onPin={(pinned) => pinMutation.mutate({ id: active.id, pinned })}
-                className="min-h-0 flex-1"
+                className="animate-materialise min-h-0 flex-1"
               >
                 <ArtifactBody artifact={active} />
               </ArtifactChrome>
@@ -203,5 +217,8 @@ export function ArtifactsPane({
 
 /** The kinds the pane can render, for a chip that promises to open one. */
 export function isRenderableArtifactKind(kind: AssistantArtifact["kind"]): boolean {
-  return kind in ARTIFACT_KINDS && ["report_preview", "report_run", "email_draft", "plan", "entity_card"].includes(kind);
+  return (
+    kind in ARTIFACT_KINDS &&
+    ["report_preview", "report_run", "email_draft", "plan", "entity_card"].includes(kind)
+  );
 }

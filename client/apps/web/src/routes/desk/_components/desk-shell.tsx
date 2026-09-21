@@ -125,28 +125,3 @@ export function DeskColumns({
     </div>
   );
 }
-
-/**
- * The live indicator: one dot in the agent's accent that breathes while
- * work is running and is simply absent when it is not.
- *
- * This is the only looping animation in the product, and it earns the
- * exception the same way a heartbeat monitor does — it loops because the
- * thing it describes is still going, and it stops the moment that stops.
- */
-export function WorkingDot({ working, className }: { working: boolean; className?: string }) {
-  if (!working) {
-    return null;
-  }
-
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "animate-breathe size-1.5 rounded-full",
-        "bg-[var(--agent-accent,var(--brand))]",
-        className,
-      )}
-    />
-  );
-}
