@@ -5,22 +5,28 @@ import { cn } from "@trenova/shared/lib/utils";
 import { queries } from "@/lib/queries";
 import { useAssistantStore } from "@/stores/assistant-store";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
-import type { AssistantThread } from "@/types/assistant";
+import type { AssistantPageContext, AssistantThread } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { ArrowRightIcon, XIcon } from "lucide-react";
+import { m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AssistantAgentProvider } from "@/components/agent-identity/agent-context";
 import { Composer } from "./composer";
 import {
   AgentAvatar,
   AssistantEntry,
-  DeclinedBubble,
+  DayDivider,
+  DeclinedTurn,
+  PageContextChip,
   RefusalNotice,
-  UserBubble,
+  UserTurn,
 } from "./message-items";
 import { ProposalCard } from "./proposal-card";
 import { groupProposalsByMessage } from "./proposal-state";
 import { StreamingTurn } from "./streaming-turn";
-import { suggestionsFor } from "./suggestions";
+import { suggestionsFor, type Suggestion } from "./suggestions";
+import { arrivedSince, highestSequence, withDayMarkers } from "./thread-rows";
 import { groupThread } from "./thread-view";
 import { useAssistantTurn } from "./use-assistant-turn";
 import { usePageContext } from "./use-page-context";
@@ -44,9 +50,31 @@ export function MessageThread({
   const t = useT();
   const dismissed = useAssistantStore((state) => state.dismissedSuggestions);
   const dismissSuggestion = useAssistantStore((state) => state.dismissSuggestion);
+  const draft = useAssistantStore((state) => state.drafts[thread.id] ?? "");
+  const setDraft = useAssistantStore((state) => state.setDraft);
+  const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
+  const onDraftChange = useCallback(
+    (value: string) => setDraft(thread.id, value),
+    [setDraft, thread.id],
+  );
 
   const history = useThreadHistory(thread.id);
   const { messages } = history;
+
+  // What the thread held when it was opened. Only a message numbered past it
+  // is an arrival to this reader, and only arrivals rise into place: a page
+  // of older history or a row scrolling back into the window does not.
+  const openedAt = useRef<number | null>(null);
+  if (openedAt.current === null && !history.isLoading) {
+    openedAt.current = highestSequence(messages);
+  }
+  const arrivals = useMemo(
+    () => arrivedSince(openedAt.current ?? Number.POSITIVE_INFINITY, messages),
+    [messages],
+  );
+  // Read once per mount: day markers are relative to when the thread was
+  // opened, and a clock read during render would make every render impure.
+  const [now] = useState(() => Math.floor(Date.now() / 1000));
 
   // Proposals are fetched rather than taken from the send response: they outlive
   // the turn that raised them, so reopening a thread has to show what is still
@@ -139,40 +167,60 @@ export function MessageThread({
   const agentUnavailable = agent === null;
   const threadFull = history.length.state === "full";
   const isEmpty = !history.isLoading && entries.length === 0 && turn === null;
+  // The starter questions are listed on an empty thread and behind a slash
+  // in the composer at any time; a dismissed one stays dismissed in both.
   const suggestions = useMemo(
     () =>
-      isEmpty && agent
+      agent
         ? suggestionsFor(agent.template).filter((item) => !dismissed.includes(item.prompt))
         : [],
-    [agent, dismissed, isEmpty],
+    [agent, dismissed],
   );
 
   // Every row is a closure over its entry, keyed by the message it shows, so
   // the window can measure and place it without knowing what it is.
   const rows = useMemo<VirtualThreadRow[]>(() => {
-    const list: VirtualThreadRow[] = entries.map((entry) => ({
-      key: entry.message.id,
-      render: () =>
-        entry.kind === "user" ? (
-          <UserBubble
-            content={entry.message.content}
-            sentAt={entry.message.createdAt}
-            pageContext={entry.message.pageContext}
-          />
-        ) : entry.kind === "declined" ? (
-          <DeclinedBubble content={entry.message.content} sentAt={entry.message.createdAt} />
-        ) : entry.kind === "refusal" ? (
-          <RefusalNotice message={entry.message.content} />
-        ) : (
-          <AssistantEntry
-            entry={entry}
-            proposals={proposalsByMessage.get(entry.message.id) ?? []}
-            threadId={thread.id}
-            latestUserSequence={latestUserSequence}
-            onAnswer={answer}
-          />
+    const list: VirtualThreadRow[] = withDayMarkers(entries, now, timezone).map((item) => {
+      if (item.kind === "day") {
+        return {
+          key: item.key,
+          render: () => <DayDivider at={item.at} daysAgo={item.daysAgo} />,
+        };
+      }
+      const { entry } = item;
+      const arrived = arrivals.has(entry.message.id);
+      return {
+        key: entry.message.id,
+        render: () => (
+          <div className={cn(arrived && "animate-rise")}>
+            {entry.kind === "user" ? (
+              <UserTurn
+                content={entry.message.content}
+                sentAt={entry.message.createdAt}
+                pageContext={entry.message.pageContext}
+                onResend={
+                  entry.message.sequence === latestUserSequence
+                    ? () => void send(entry.message.content, undefined, providerId)
+                    : undefined
+                }
+              />
+            ) : entry.kind === "declined" ? (
+              <DeclinedTurn content={entry.message.content} sentAt={entry.message.createdAt} />
+            ) : entry.kind === "refusal" ? (
+              <RefusalNotice message={entry.message.content} />
+            ) : (
+              <AssistantEntry
+                entry={entry}
+                proposals={proposalsByMessage.get(entry.message.id) ?? []}
+                threadId={thread.id}
+                latestUserSequence={latestUserSequence}
+                onAnswer={answer}
+              />
+            )}
+          </div>
         ),
-    }));
+      };
+    });
 
     // A proposal whose turn is no longer in the visible thread is shown here
     // rather than dropped: a pending change nobody can see is worse than one
@@ -188,7 +236,9 @@ export function MessageThread({
       list.push({
         key: "turn-in-progress",
         render: () => (
-          <StreamingTurn turn={turn} onRetry={retry} onDismiss={dismiss} onAnswer={answer} />
+          <div className="animate-rise">
+            <StreamingTurn turn={turn} onRetry={retry} onDismiss={dismiss} onAnswer={answer} />
+          </div>
         ),
       });
     }
@@ -196,13 +246,18 @@ export function MessageThread({
     return list;
   }, [
     answer,
+    arrivals,
     dismiss,
     entries,
     latestUserSequence,
     looseProposals,
+    now,
     proposalsByMessage,
+    providerId,
     retry,
+    send,
     thread.id,
+    timezone,
     turn,
   ]);
 
@@ -217,7 +272,13 @@ export function MessageThread({
           </div>
         ) : isEmpty ? (
           <div className="flex min-h-0 flex-1 flex-col" style={{ paddingBottom: composerHeight }}>
-            <EmptyThread agent={agent} />
+            <EmptyThread
+              agent={agent}
+              suggestions={suggestions}
+              pageContext={contextIncluded ? pageContext : null}
+              onPick={(prompt) => void send(prompt, undefined, providerId)}
+              onDismiss={dismissSuggestion}
+            />
           </div>
         ) : (
           <VirtualThread
@@ -267,7 +328,8 @@ export function MessageThread({
           providerId={providerId}
           onPickProvider={setProviderId}
           suggestions={suggestions}
-          onDismissSuggestion={dismissSuggestion}
+          draft={draft}
+          onDraftChange={onDraftChange}
           compact={!expanded}
         />
       </div>
@@ -276,26 +338,84 @@ export function MessageThread({
 }
 
 /**
- * The first thing a reader sees in a new conversation: what this agent is for.
- * The opening questions sit on the composer, where they can be sent or closed.
+ * The first thing a reader sees in a new conversation: what this agent is
+ * for, what it can see, and a few questions it is good at. The questions are
+ * a list, not chips: each is a sentence a person can read and choose, and
+ * closing one is a decision that is remembered.
  */
-function EmptyThread({ agent }: { agent: AgentDefinitionRow | null }) {
+function EmptyThread({
+  agent,
+  suggestions,
+  pageContext,
+  onPick,
+  onDismiss,
+}: {
+  agent: AgentDefinitionRow | null;
+  suggestions: readonly Suggestion[];
+  pageContext: AssistantPageContext | null;
+  onPick: (prompt: string) => void;
+  onDismiss: (prompt: string) => void;
+}) {
   const t = useT();
+  const reduceMotion = useReducedMotion();
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 py-10 text-center">
-      <AgentAvatar size="xl" />
-      <div className="flex flex-col gap-1 px-4">
-        <p className="text-sm font-semibold">
-          {agent ? t("Talking to {0}", agent.name) : t("Start a conversation")}
+    <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-end gap-5 px-4 py-6">
+      <m.div
+        initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className="flex flex-col gap-2"
+      >
+        <AgentAvatar size="lg" />
+        <p className="text-base font-semibold">
+          {agent ? t("What do you need from {0}?", agent.name) : t("Start a conversation")}
         </p>
-        <p className="text-muted-foreground max-w-sm text-xs">
+        <p className="text-muted-foreground text-sm leading-relaxed">
           {agent?.description ||
             t(
               "Ask about a shipment, a driver, or how to do something in Trenova. The assistant can look records up and propose changes for you to approve.",
             )}
         </p>
-      </div>
+        {pageContext && (pageContext.title !== "" || pageContext.entityType !== "") && (
+          <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+            {t("Can see")}
+            <PageContextChip context={pageContext} />
+          </p>
+        )}
+      </m.div>
+
+      {suggestions.length > 0 && (
+        <ul className="flex flex-col gap-1">
+          {suggestions.map((suggestion, index) => (
+            <m.li
+              key={suggestion.prompt}
+              initial={reduceMotion ? false : { opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.18, delay: 0.05 + index * 0.04 }}
+              className="group/suggestion flex items-center gap-1"
+            >
+              <button
+                type="button"
+                onClick={() => onPick(suggestion.prompt)}
+                className="hover:bg-surface-hover ui-focus-ring flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors"
+              >
+                <ArrowRightIcon className="text-muted-foreground size-3.5 shrink-0 transition-transform group-hover/suggestion:translate-x-0.5" />
+                <span className="min-w-0 flex-1 truncate">{t(suggestion.label)}</span>
+              </button>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label={t("Dismiss suggestion")}
+                className="text-muted-foreground hover:text-foreground opacity-0 transition-opacity group-hover/suggestion:opacity-100 focus-visible:opacity-100"
+                onClick={() => onDismiss(suggestion.prompt)}
+              >
+                <XIcon className="size-3" />
+              </Button>
+            </m.li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

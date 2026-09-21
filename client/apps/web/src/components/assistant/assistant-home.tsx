@@ -48,7 +48,7 @@ export function AssistantHome({
   if (!isLoading && agents.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-10 text-center">
-        <span className="bg-muted text-muted-foreground flex size-12 items-center justify-center rounded-2xl">
+        <span className="bg-sunken text-muted-foreground flex size-12 items-center justify-center rounded-lg">
           <BotIcon className="size-6" />
         </span>
         <div className="flex flex-col gap-1">
@@ -118,7 +118,7 @@ export function AssistantHome({
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: 0.04 * index }}
- className="ui-focus-ring border-border/70 bg-card hover:border-border hover:bg-muted/40 hover:bg-muted/40 group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors outline-none disabled:opacity-60"
+                  className="ui-focus-ring ui-press border-border hover:bg-surface-hover group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors outline-none disabled:opacity-60"
                 >
                   <AgentTile agent={agent} size="lg" />
                   <span className="flex min-w-0 flex-1 flex-col">
@@ -156,7 +156,7 @@ export function AssistantHome({
                     key={thread.id}
                     type="button"
                     onClick={() => onSelectThread(thread.id)}
-                    className="hover:bg-muted/60 flex items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors"
+                    className="hover:bg-surface-hover ui-focus-ring flex items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors"
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm">

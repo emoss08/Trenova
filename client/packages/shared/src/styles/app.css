@@ -871,24 +871,6 @@
   animation: assistant-caret 900ms steps(2, start) infinite;
 }
 
-/* The stop control while a reply streams: a slow breath rather than a spinner,
-   so the one control in the composer reads as live without competing with the
-   text arriving above it. */
-@keyframes assistant-stop {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.6;
-  }
-}
-
-.assistant-stop {
-  animation: assistant-stop 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
-}
-
 /* The scrollbar every chat surface uses, matched to ScrollArea's own
    (components/ui/scroll-area.tsx, ScrollBar): a 10px track that stays out of
    the way until the pointer is over the list, and a rounded thumb in --border.
@@ -941,31 +923,9 @@
   }
 }
 
-/* The composer's focus ring draws on rather than appearing, which is the one
-   moment the accent is allowed to move. */
-@keyframes assistant-focus-ring {
-  from {
-    box-shadow: 0 0 0 0 color-mix(in oklch, var(--brand) 0%, transparent);
-  }
-
-  to {
-    box-shadow: 0 0 0 4px color-mix(in oklch, var(--brand) 18%, transparent);
-  }
-}
-
-.assistant-focus-ring:focus-within {
-  animation: assistant-focus-ring 180ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .assistant-caret,
-  .assistant-stop,
-  .assistant-focus-ring:focus-within {
+  .assistant-caret {
     animation: none;
-  }
-
-  .assistant-focus-ring:focus-within {
-    box-shadow: 0 0 0 4px color-mix(in oklch, var(--brand) 18%, transparent);
   }
 
   /* BorderBeam sets its animation name inline, so only a forced rule reaches it. */

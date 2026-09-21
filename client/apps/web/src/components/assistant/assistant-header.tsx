@@ -8,8 +8,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatSecondsAgo } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -17,10 +15,12 @@ import {
   Maximize2Icon,
   Minimize2Icon,
   PlusIcon,
-  Trash2Icon,
   XIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
+import { useMemo, useState } from "react";
+import { groupThreadsByRecency } from "./thread-grouping";
+import { ThreadList } from "./thread-sidebar";
 
 type AssistantHeaderProps = {
   agents: AgentDefinitionRow[];
@@ -38,6 +38,15 @@ type AssistantHeaderProps = {
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 
+/**
+ * One slim bar: who is being talked to on the left, the panel's controls on
+ * the right.
+ *
+ * The conversation's title used to sit here too. It is the first question
+ * asked, which is already the first line of the thread below, and a long one
+ * pushed the controls off the edge. The history list and the sidebar are
+ * where titles belong.
+ */
 export function AssistantHeader({
   agents,
   activeAgent,
@@ -52,42 +61,47 @@ export function AssistantHeader({
   onClose,
 }: AssistantHeaderProps) {
   const t = useT();
+  const reduceMotion = useReducedMotion();
   const [agentMenuOpen, setAgentMenuOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [now] = useState(nowInSeconds);
 
-  const title = activeAgent?.name ?? t("Assistant");
-  const subtitle = activeThread
-    ? activeThread.title || t("Untitled conversation")
-    : t("Ask about anything you can see in Trenova");
+  const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
+  const groups = useMemo(() => groupThreadsByRecency(threads, now), [now, threads]);
 
   return (
-    <div className="border-border/70 flex justify-between items-center gap-2 border-b px-3 py-2">
+    <div className="border-border flex h-11 shrink-0 items-center justify-between gap-2 border-b pr-1.5 pl-2">
       <Popover open={agentMenuOpen} onOpenChange={setAgentMenuOpen}>
         <PopoverTrigger
           render={
             <button
               type="button"
-              // min-w-0 is what lets a flex item shrink below its content. Without
-              // it the first question, which becomes the thread's title, set the
-              // button's width and pushed the controls off the right edge; the
-              // truncate classes inside never got the chance to act.
-              className="hover:bg-muted/60 flex min-w-0 max-w-fit items-center gap-2 rounded-md p-2 text-left transition-colors"
+              className="hover:bg-surface-hover ui-focus-ring flex h-8 min-w-0 max-w-full items-center gap-2 rounded-md px-1.5 text-left transition-colors"
               aria-label={t("Choose an agent")}
               disabled={agents.length === 0}
             />
           }
         >
-          <AgentTile agent={activeAgent} size="lg" />
-          <span className="flex min-w-0 flex-1 flex-col leading-tight">
-            <span className="flex items-center gap-1 text-sm font-semibold">
-              <span className="truncate">{title}</span>
-              {agents.length > 1 && (
-                <ChevronDownIcon className="text-muted-foreground size-3.5 shrink-0" />
-              )}
-            </span>
-            <span className="text-muted-foreground truncate text-xs">{subtitle}</span>
+          {/* The tile crossfades when the agent changes: the one thing in the
+              bar that answers a choice. */}
+          <AnimatePresence mode="popLayout" initial={false}>
+            <m.span
+              key={activeAgent?.id ?? "none"}
+              initial={reduceMotion ? false : { opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              transition={{ duration: 0.14 }}
+              className="flex shrink-0"
+            >
+              <AgentTile agent={activeAgent} size="md" />
+            </m.span>
+          </AnimatePresence>
+          <span className="truncate text-sm font-semibold">
+            {activeAgent?.name ?? t("Assistant")}
           </span>
+          {agents.length > 1 && (
+            <ChevronDownIcon className="text-muted-foreground size-3.5 shrink-0" />
+          )}
         </PopoverTrigger>
         <PopoverContent align="start" className="w-80 p-1.5">
           <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
@@ -104,7 +118,7 @@ export function AssistantHeader({
                     setAgentMenuOpen(false);
                     onStart(agent.id);
                   }}
-                  className="hover:bg-muted flex items-start gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors disabled:opacity-60"
+                  className="hover:bg-surface-hover ui-focus-ring flex items-start gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors disabled:opacity-60"
                 >
                   <AgentTile agent={agent} size="md" className="mt-0.5" />
                   <span className="flex min-w-0 flex-1 flex-col">
@@ -123,7 +137,7 @@ export function AssistantHeader({
                     )}
                   </span>
                   {activeAgent?.id === agent.id && (
-                    <CheckIcon className="text-primary mt-1 size-4 shrink-0" />
+                    <CheckIcon className="text-foreground mt-1 size-4 shrink-0" />
                   )}
                 </button>
               ))}
@@ -154,62 +168,24 @@ export function AssistantHeader({
               </TooltipTrigger>
               <TooltipContent>{t("Conversations")}</TooltipContent>
             </Tooltip>
-            <PopoverContent align="end" className="w-80 p-1.5">
-              <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
-                {t("Recent conversations")}
-              </p>
-              {threads.length === 0 ? (
-                <p className="text-muted-foreground px-2 py-4 text-center text-xs">
-                  {t("No conversations yet.")}
-                </p>
-              ) : (
-                <ScrollArea className="max-h-72">
-                  <div className="flex flex-col gap-0.5">
-                    {threads.map((thread) => {
-                      const touched =
-                        thread.lastMessageAt > 0 ? thread.lastMessageAt : thread.createdAt;
-                      const active = thread.id === activeThread?.id;
-                      return (
-                        <div
-                          key={thread.id}
-                          className={cn(
-                            "group flex items-center gap-1 rounded-md px-2 py-1.5 transition-colors",
-                            active ? "bg-muted" : "hover:bg-muted/60",
-                          )}
-                        >
-                          <button
-                            type="button"
-                            className="min-w-0 flex-1 text-left"
-                            onClick={() => {
-                              setHistoryOpen(false);
-                              onSelectThread(thread.id);
-                            }}
-                          >
-                            <span className="block truncate text-sm">
-                              {thread.title || t("Untitled conversation")}
-                            </span>
-                            <span className="text-muted-foreground block text-xs">
-                              {formatSecondsAgo(now - touched)}
-                            </span>
-                          </button>
-                          <Button
-                            variant="ghost"
-                            size="icon-xxs"
-                            aria-label={t("Delete conversation")}
-                            className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-                            onClick={() => {
-                              setHistoryOpen(false);
-                              onDeleteThread(thread);
-                            }}
-                          >
-                            <Trash2Icon className="size-3.5" />
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              )}
+            <PopoverContent align="end" className="w-80 p-0">
+              <ScrollArea className="max-h-80">
+                <ThreadList
+                  groups={groups}
+                  agentsById={agentsById}
+                  activeThreadId={activeThread?.id ?? null}
+                  now={now}
+                  emptyText={t("No conversations yet.")}
+                  onSelect={(id) => {
+                    setHistoryOpen(false);
+                    onSelectThread(id);
+                  }}
+                  onDelete={(thread) => {
+                    setHistoryOpen(false);
+                    onDeleteThread(thread);
+                  }}
+                />
+              </ScrollArea>
             </PopoverContent>
           </Popover>
         )}

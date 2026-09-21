@@ -51,22 +51,25 @@ export function ToolTimeline({ steps, live = false }: { steps: ToolStep[]; live?
 
   return (
     <Collapsible open={expanded} onOpenChange={setOpen} className="min-w-0">
-      <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex w-full items-center gap-1.5 py-0.5 text-left text-xs transition-colors">
+      {/* One receipt line for the whole lookup, opened on request. The line
+          reads as a fact about the answer, not as a log of the machine. */}
+      <CollapsibleTrigger className="text-muted-foreground hover:text-foreground ui-focus-ring flex w-fit max-w-full items-center gap-1.5 rounded-control py-0.5 text-left text-xs transition-colors">
         {running > 0 ? (
           <Spinner className="size-3 shrink-0" />
         ) : failed > 0 ? (
           <CircleAlertIcon className="text-destructive size-3 shrink-0" />
-        ) : null}
-        <span className="min-w-0 flex-1 truncate">{summary}</span>
-        <ChevronRightIcon
-          className={cn(
-            "size-3 shrink-0 transition-transform duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
-            expanded && "rotate-90",
-          )}
-        />
+        ) : (
+          <ChevronRightIcon
+            className={cn(
+              "size-3 shrink-0 transition-transform duration-150",
+              expanded && "rotate-90",
+            )}
+          />
+        )}
+        <span className="min-w-0 truncate">{summary}</span>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <ol className="border-border/70 mt-1 ml-1 flex flex-col gap-1.5 border-l pl-3">
+        <ol className="mt-1.5 flex flex-col gap-1.5 pl-4.5">
           {steps.map((step) => (
             <ToolStepRow key={step.id} step={step} live={live} />
           ))}
@@ -128,9 +131,7 @@ function ToolStepDetails({ step }: { step: ToolStep }) {
     <div className="mt-1.5 flex flex-col gap-2 text-xs">
       {rows.length > 0 && (
         <section className="flex flex-col gap-1">
-          <h4 className="text-muted-foreground text-xs font-medium">
-            {t("Asked for")}
-          </h4>
+          <h4 className="text-muted-foreground text-xs font-medium">{t("Asked for")}</h4>
           <div className="flex flex-wrap gap-1">
             {rows.map((row) => (
               <span

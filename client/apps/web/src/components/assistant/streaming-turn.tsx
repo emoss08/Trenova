@@ -4,11 +4,11 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { CircleAlertIcon } from "lucide-react";
 import {
-  AssistantFrame,
   AssistantProse,
+  AssistantTurn,
   ReasoningDisclosure,
   RefusalNotice,
-  UserBubble,
+  UserTurn,
 } from "./message-items";
 import { askRequestsFromSteps } from "./ask-requests";
 import { ChoicePrompt } from "./choice-prompt";
@@ -52,15 +52,15 @@ export function StreamingTurn({
   const showFrame = hasBody || turn.status === "guarding" || turn.status === "working";
 
   return (
-    <>
-      <UserBubble content={turn.userContent} pageContext={turn.pageContext} />
+    <div className="flex flex-col gap-4">
+      <UserTurn content={turn.userContent} pageContext={turn.pageContext} />
 
       {turn.status === "refused" && turn.refusal && (
         <RefusalNotice message={turn.refusal.message} />
       )}
 
       {showFrame && turn.status !== "refused" && (
-        <AssistantFrame>
+        <AssistantTurn>
           {groupSegments(turn).map((group, index) => {
             if (group.kind === "reasoning") {
               return (
@@ -89,12 +89,12 @@ export function StreamingTurn({
             <ChoicePrompt key={ask.callId} request={ask} answered={false} onAnswer={onAnswer} />
           ))}
           <StatusLine turn={turn} />
-        </AssistantFrame>
+        </AssistantTurn>
       )}
 
       {turn.status === "error" && (
-        <AssistantFrame>
-          <Alert variant="destructive" className="">
+        <AssistantTurn>
+          <Alert variant="destructive" size="sm">
             <CircleAlertIcon className="size-4" />
             <AlertTitle>{t("The assistant could not finish")}</AlertTitle>
             <AlertDescription className="flex flex-col gap-2">
@@ -111,9 +111,9 @@ export function StreamingTurn({
               </div>
             </AlertDescription>
           </Alert>
-        </AssistantFrame>
+        </AssistantTurn>
       )}
-    </>
+    </div>
   );
 }
 

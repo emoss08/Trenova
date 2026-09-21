@@ -1,5 +1,5 @@
+import { calendarDaysAgo } from "@/lib/calendar-days";
 import type { AssistantThread } from "@/types/assistant";
-import { toUserWallClock } from "@trenova/shared/lib/date";
 
 export type ThreadGroupLabel = "Today" | "Yesterday" | "Previous 7 days" | "Older";
 
@@ -9,25 +9,10 @@ export type ThreadGroup = {
 };
 
 const SHELVES: ThreadGroupLabel[] = ["Today", "Yesterday", "Previous 7 days", "Older"];
-const DAY_SECONDS = 24 * 60 * 60;
 
 /** When a thread was last touched: its last message, or its creation. */
 function touchedAt(thread: AssistantThread): number {
   return thread.lastMessageAt > 0 ? thread.lastMessageAt : thread.createdAt;
-}
-
-/**
- * Days between two instants as the reader's calendar counts them, so a
- * conversation from 23:50 last night is "Yesterday" and not "Today" because it
- * was fewer than 24 hours ago.
- */
-function calendarDaysAgo(at: number, now: number, timezone: string): number {
-  const startOfDay = (unix: number) => {
-    const local = toUserWallClock(unix, timezone) ?? new Date(unix * 1000);
-    return Date.UTC(local.getFullYear(), local.getMonth(), local.getDate());
-  };
-
-  return Math.round((startOfDay(now) - startOfDay(at)) / (DAY_SECONDS * 1000));
 }
 
 function shelfFor(daysAgo: number): ThreadGroupLabel {
