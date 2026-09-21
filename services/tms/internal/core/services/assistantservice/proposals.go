@@ -12,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -88,12 +90,43 @@ func (s *Service) persistProposals(
 		return nil, err
 	}
 
+	// The definition that just proposed is in hand, so the hold is decided
+	// from it rather than read back through the run. A card that appears
+	// with buttons and loses them on the next refresh would be worse than
+	// one that arrives on hold.
+	verdict, err := s.shadow.ForDefinition(ctx, tenantOf(params.Actor), params.Definition)
+	if err != nil {
+		return nil, err
+	}
+	hold := holdFor(verdict)
+
 	persisted := make([]services.AssistantProposal, 0, len(recorded.Proposals))
 	for _, proposal := range recorded.Proposals {
-		persisted = append(persisted, toAssistantProposal(proposal))
+		persisted = append(persisted, toAssistantProposal(proposal, hold))
 	}
 
 	return persisted, nil
+}
+
+func tenantOf(actor *services.RequestActor) pagination.TenantInfo {
+	return pagination.TenantInfo{
+		OrgID:  actor.OrganizationID,
+		BuID:   actor.BusinessUnitID,
+		UserID: actor.UserID,
+	}
+}
+
+// holdFor turns a shadow verdict into what the card shows. Nothing is held
+// by a live verdict.
+func holdFor(verdict agentshadow.Verdict) *services.ProposalHold {
+	if !verdict.Shadow() {
+		return nil
+	}
+
+	return &services.ProposalHold{
+		Reason:    string(verdict.Cause),
+		AgentName: verdict.AgentName,
+	}
 }
 
 // hashChatContext fingerprints what the model was asked, so two runs can be
@@ -195,15 +228,31 @@ func (s *Service) ListThreadProposals(
 		return nil, err
 	}
 
+	// Only a pending proposal can be held; a decided one is history whatever
+	// the switches say now, and reading its run would be work for nothing.
+	runIDs := make([]pulid.ID, 0, len(stored))
+	for _, proposal := range stored {
+		if proposal.Status == agent.ProposalStatusPending {
+			runIDs = append(runIDs, proposal.RunID)
+		}
+	}
+	verdicts, err := s.shadow.ForRuns(ctx, req.TenantInfo, runIDs)
+	if err != nil {
+		return nil, err
+	}
+
 	proposals := make([]services.AssistantProposal, 0, len(stored))
 	for _, proposal := range stored {
-		proposals = append(proposals, toAssistantProposal(proposal))
+		proposals = append(proposals, toAssistantProposal(proposal, holdFor(verdicts[proposal.RunID])))
 	}
 
 	return proposals, nil
 }
 
-func toAssistantProposal(proposal *agent.AgentProposal) services.AssistantProposal {
+func toAssistantProposal(
+	proposal *agent.AgentProposal,
+	hold *services.ProposalHold,
+) services.AssistantProposal {
 	return services.AssistantProposal{
 		ID:              proposal.ID,
 		RunID:           proposal.RunID,
@@ -217,5 +266,6 @@ func toAssistantProposal(proposal *agent.AgentProposal) services.AssistantPropos
 		ExecutedAt:      proposal.ExecutedAt,
 		ExecutionError:  proposal.ExecutionError,
 		ExpiresAt:       proposal.ExpiresAt,
+		Hold:            hold,
 	}
 }

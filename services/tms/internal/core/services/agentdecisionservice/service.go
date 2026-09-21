@@ -85,14 +85,12 @@ func (s *Service) Decide(
 		return nil, err
 	}
 
-	shadow, err := s.shadow.ForRun(ctx, req.TenantInfo, proposal.RunID)
+	verdict, err := s.shadow.ForRun(ctx, req.TenantInfo, proposal.RunID)
 	if err != nil {
 		return nil, err
 	}
-	if shadow {
-		return nil, errortypes.NewBusinessError(
-			"Agent proposals cannot be actioned while the agent is in shadow mode",
-		)
+	if verdict.Shadow() {
+		return nil, shadowRefusal(verdict)
 	}
 
 	decision := &agent.AgentDecision{
@@ -155,6 +153,28 @@ func (s *Service) Decide(
 	}
 
 	return created, nil
+}
+
+// shadowRefusal names the switch that is on and where it lives.
+//
+// The old message said "the agent is in shadow mode" whichever switch it was,
+// and the organization-wide pause is on from the day an organization is
+// created. People turned shadow off on every agent they had, read the same
+// message again, and had no way to learn that the switch they needed was on
+// the overview tab under a different name.
+func shadowRefusal(verdict agentshadow.Verdict) error {
+	if verdict.Cause == agentshadow.CauseDefinition {
+		return errortypes.NewBusinessError(
+			"Proposals from {0} cannot be actioned while it is in shadow mode. "+
+				"Turn off shadow mode on that agent in AI Control, then decide again",
+			verdict.AgentName,
+		)
+	}
+
+	return errortypes.NewBusinessError(
+		"Proposals cannot be actioned while all agents are paused. " +
+			"Turn off \"Pause all agents\" on the AI Control overview, then decide again",
+	)
 }
 
 // decidable refuses a proposal that is no longer waiting on anyone.

@@ -78,6 +78,30 @@ describe("ProposalCard", () => {
     expect(screen.getByRole("button", { name: /reject/i })).toBeInTheDocument();
   });
 
+  // While the organization's pause or the agent's own shadow switch is on the
+  // server refuses every decision. The card says so and names the switch, so
+  // nobody clicks Approve to learn it, or turns shadow off on the agent when
+  // the pause is what is on.
+  it("names the organization pause instead of offering a decision it will refuse", () => {
+    renderCard(proposal({ hold: { reason: "OrganizationPaused", agentName: "" } }));
+
+    expect(screen.queryByRole("button", { name: /approve/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /reject/i })).not.toBeInTheDocument();
+    expect(screen.getByText("On hold: all agents are paused in AI Control.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Record a missing BOL case for a person to resolve."),
+    ).toBeInTheDocument();
+  });
+
+  it("names the agent whose own shadow switch is on", () => {
+    renderCard(proposal({ hold: { reason: "AgentShadow", agentName: "Dispatch desk" } }));
+
+    expect(screen.queryByRole("button", { name: /approve/i })).not.toBeInTheDocument();
+    expect(
+      screen.getByText("On hold: Dispatch desk is in shadow mode in AI Control."),
+    ).toBeInTheDocument();
+  });
+
   it("collapses to one line once a decision has been made", () => {
     renderCard(proposal({ status: "Rejected" }));
 

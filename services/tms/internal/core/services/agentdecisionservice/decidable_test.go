@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -57,4 +58,26 @@ func TestDecidable_AllowsAPendingProposalWithNoExpiry(t *testing.T) {
 	t.Parallel()
 
 	assert.NoError(t, decidable(&agent.AgentProposal{Status: agent.ProposalStatusPending, ExpiresAt: 0}))
+}
+
+// The old message said "the agent is in shadow mode" whichever switch was on.
+// The organization-wide pause is on from the day an organization is created,
+// under a different name on a different tab, so people turned shadow off on
+// every agent and read the same refusal again.
+func TestShadowRefusal_NamesTheSwitchThatIsOn(t *testing.T) {
+	t.Parallel()
+
+	paused := shadowRefusal(agentshadow.Verdict{Cause: agentshadow.CauseOrganization})
+	require.True(t, errortypes.IsBusinessError(paused))
+	assert.Contains(t, paused.Error(), "Pause all agents")
+	assert.Contains(t, paused.Error(), "AI Control overview")
+
+	agentSwitch := shadowRefusal(agentshadow.Verdict{
+		Cause:     agentshadow.CauseDefinition,
+		AgentName: "Dispatch desk",
+	})
+	require.True(t, errortypes.IsBusinessError(agentSwitch))
+	assert.Contains(t, agentSwitch.Error(), "Dispatch desk")
+	assert.Contains(t, agentSwitch.Error(), "shadow mode")
+	assert.NotContains(t, agentSwitch.Error(), "Pause all agents")
 }

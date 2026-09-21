@@ -8,9 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,8 +22,66 @@ import (
 )
 
 type stubRunRepo struct {
+	repositories.AgentRunRepository
+
 	created []*agent.AgentRun
 	err     error
+	// byID serves reads for runs this stub did not create; reads counts them.
+	byID  map[pulid.ID]*agent.AgentRun
+	reads int
+}
+
+func (r *stubRunRepo) GetByID(
+	_ context.Context,
+	req repositories.GetAgentRunByIDRequest,
+) (*agent.AgentRun, error) {
+	r.reads++
+	if run, ok := r.byID[req.ID]; ok {
+		return run, nil
+	}
+	for _, run := range r.created {
+		if run.ID == req.ID {
+			return run, nil
+		}
+	}
+
+	return nil, errortypes.NewNotFoundError("Agent run not found")
+}
+
+type stubControlRepo struct {
+	repositories.AgentControlRepository
+
+	paused bool
+}
+
+func (r stubControlRepo) GetOrCreate(
+	context.Context,
+	pagination.TenantInfo,
+) (*tenant.AgentControl, error) {
+	return &tenant.AgentControl{ShadowMode: r.paused}, nil
+}
+
+type stubDefinitionRepo struct {
+	repositories.AgentDefinitionRepository
+
+	definition *agentdefinition.Definition
+}
+
+func (r stubDefinitionRepo) GetByID(
+	_ context.Context,
+	req repositories.GetAgentDefinitionByIDRequest,
+) (*agentdefinition.Definition, error) {
+	if r.definition == nil || r.definition.ID != req.ID {
+		return nil, errortypes.NewNotFoundError("Agent definition not found")
+	}
+
+	return r.definition, nil
+}
+
+// shadowSwitches is the pair of switches a proposal can be held behind.
+type shadowSwitches struct {
+	organizationPaused bool
+	definition         *agentdefinition.Definition
 }
 
 func (r *stubRunRepo) Create(
@@ -96,11 +158,25 @@ func newProposalService(
 	proposals *stubProposalRepo,
 	conversations *stubConversationRepo,
 ) *Service {
+	return newProposalServiceBehind(runs, proposals, conversations, shadowSwitches{})
+}
+
+func newProposalServiceBehind(
+	runs *stubRunRepo,
+	proposals *stubProposalRepo,
+	conversations *stubConversationRepo,
+	switches shadowSwitches,
+) *Service {
 	return &Service{
 		logger:        zap.NewNop(),
 		recorder:      proposalrecorder.NewWithStores(zap.NewNop(), runs, proposals),
 		proposals:     proposals,
 		conversations: conversations,
+		shadow: agentshadow.New(agentshadow.Params{
+			Control:     stubControlRepo{paused: switches.organizationPaused},
+			Runs:        runs,
+			Definitions: stubDefinitionRepo{definition: switches.definition},
+		}),
 	}
 }
 
@@ -389,4 +465,88 @@ func TestListThreadProposals_RefusesAThreadTheReaderCannotSee(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Empty(t, proposals.lastList.ThreadID, "the proposal query must not run at all")
+}
+
+// A proposal made while the organization's pause is on arrives on hold, naming
+// the pause, so the card never offers an approval the server will refuse.
+func TestPersistProposals_HoldsAProposalBehindTheOrganizationPause(t *testing.T) {
+	t.Parallel()
+
+	svc := newProposalServiceBehind(&stubRunRepo{}, &stubProposalRepo{}, &stubConversationRepo{},
+		shadowSwitches{organizationPaused: true})
+
+	saved, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
+		{ToolName: "reassign_move", Arguments: map[string]any{"moveId": "mv_1"}, Rationale: "Driver is out of hours"},
+	}, nil))
+	require.NoError(t, err)
+
+	require.Len(t, saved, 1)
+	require.NotNil(t, saved[0].Hold)
+	assert.Equal(t, string(agentshadow.CauseOrganization), saved[0].Hold.Reason)
+	assert.Empty(t, saved[0].Hold.AgentName)
+}
+
+// The agent's own switch names the agent, because that is where to go to
+// change it.
+func TestPersistProposals_HoldsAProposalBehindTheAgentSwitch(t *testing.T) {
+	t.Parallel()
+
+	params := proposalTestParams([]serviceports.PendingAction{
+		{ToolName: "reassign_move", Arguments: map[string]any{"moveId": "mv_1"}, Rationale: "Driver is out of hours"},
+	}, nil)
+	params.Definition.ShadowMode = true
+	svc := newProposalServiceBehind(&stubRunRepo{}, &stubProposalRepo{}, &stubConversationRepo{},
+		shadowSwitches{})
+
+	saved, err := svc.persistProposals(t.Context(), params)
+	require.NoError(t, err)
+
+	require.Len(t, saved, 1)
+	require.NotNil(t, saved[0].Hold)
+	assert.Equal(t, string(agentshadow.CauseDefinition), saved[0].Hold.Reason)
+	assert.Equal(t, "Dispatch helper", saved[0].Hold.AgentName)
+}
+
+func TestPersistProposals_LeavesALiveProposalUnheld(t *testing.T) {
+	t.Parallel()
+
+	svc := newProposalService(&stubRunRepo{}, &stubProposalRepo{}, &stubConversationRepo{})
+
+	saved, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
+		{ToolName: "reassign_move", Arguments: map[string]any{"moveId": "mv_1"}, Rationale: "Driver is out of hours"},
+	}, nil))
+	require.NoError(t, err)
+
+	require.Len(t, saved, 1)
+	assert.Nil(t, saved[0].Hold)
+}
+
+// Reading the thread back decides the hold from the run's agent as it is now,
+// not as it was when the proposal was made: turning the switch off is what
+// releases the card. A proposal already decided is history and is never held,
+// and its run is not even read.
+func TestListThreadProposals_HoldsOnlyWhatIsStillPending(t *testing.T) {
+	t.Parallel()
+
+	def := &agentdefinition.Definition{ID: pulid.MustNew("agd_"), Name: "Dispatch desk", ShadowMode: true}
+	heldRun := &agent.AgentRun{ID: pulid.MustNew("ar_"), AgentDefinitionID: def.ID}
+	decidedRun := &agent.AgentRun{ID: pulid.MustNew("ar_"), AgentDefinitionID: def.ID}
+	runs := &stubRunRepo{byID: map[pulid.ID]*agent.AgentRun{heldRun.ID: heldRun, decidedRun.ID: decidedRun}}
+	threadID := pulid.MustNew("thr_")
+	proposals := &stubProposalRepo{byThread: []*agent.AgentProposal{
+		{ID: pulid.MustNew("ap_"), RunID: heldRun.ID, ToolName: "reassign_move", Status: agent.ProposalStatusPending},
+		{ID: pulid.MustNew("ap_"), RunID: decidedRun.ID, ToolName: "hold_shipment", Status: agent.ProposalStatusRejected},
+	}}
+	svc := newProposalServiceBehind(runs, proposals, &stubConversationRepo{thread: &conversation.Thread{ID: threadID}},
+		shadowSwitches{definition: def})
+
+	result, err := svc.ListThreadProposals(t.Context(), repositories.GetThreadRequest{ID: threadID})
+	require.NoError(t, err)
+
+	require.Len(t, result, 2)
+	require.NotNil(t, result[0].Hold)
+	assert.Equal(t, string(agentshadow.CauseDefinition), result[0].Hold.Reason)
+	assert.Equal(t, "Dispatch desk", result[0].Hold.AgentName)
+	assert.Nil(t, result[1].Hold, "a decided proposal is never held")
+	assert.Equal(t, 1, runs.reads, "only the pending proposal's run is read")
 }
