@@ -480,3 +480,24 @@ func capturedToolCallExtra(t *testing.T, body map[string]any) any {
 
 	return nil
 }
+
+// A call Gemini did not sign — made by another provider before the thread
+// switched model, or stored before signatures were kept — is sent with
+// Google's documented bypass value, so an old thread is not refused on its
+// first turn after the switch. Any other model gets nothing added.
+func TestOpenAIChatAdapter_SendsGeminiTheBypassForAnUnsignedCall(t *testing.T) {
+	t.Parallel()
+
+	history := []Message{
+		{Role: RoleUser, Content: "Where is S1?"},
+		{Role: RoleAssistant, ToolCalls: []ToolCall{{ID: "call_1", Name: "lookup_shipment", Arguments: map[string]any{"number": "S1"}}}},
+		{Role: RoleTool, ToolCallID: "call_1", ToolName: "lookup_shipment", Content: "{}"},
+	}
+
+	gemini := toChatMessages("", history, pulid.MustNew("aip_"), "gemini-3.8-flash")
+	require.Len(t, gemini[1].ToolCalls, 1)
+	assert.Equal(t, geminiUnsignedCall, gemini[1].ToolCalls[0].ExtraContent)
+
+	other := toChatMessages("", history, pulid.MustNew("aip_"), "qwen3:32b")
+	assert.Nil(t, other[1].ToolCalls[0].ExtraContent)
+}

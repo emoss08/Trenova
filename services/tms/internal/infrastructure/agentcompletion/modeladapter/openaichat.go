@@ -114,9 +114,11 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 	body := chatRequest{
 		Model:     call.Provider.Model,
 		MaxTokens: call.Request.MaxTokens,
-		Messages:  toChatMessages(call.Request.System, call.Request.Messages, call.Provider.ID),
-		Tools:     toChatTools(call.Request.Tools),
-		Stream:    false,
+		Messages: toChatMessages(
+			call.Request.System, call.Request.Messages, call.Provider.ID, call.Provider.Model,
+		),
+		Tools:  toChatTools(call.Request.Tools),
+		Stream: false,
 	}
 	body.ResponseFormat = chatResponseFormatFor(call)
 	body.ReasoningEffort = call.reasoning().Wire()
@@ -197,9 +199,11 @@ func (a openAIChatAdapter) Stream(
 	sink StreamSink,
 ) (*Response, error) {
 	body := chatRequest{
-		Model:         call.Provider.Model,
-		MaxTokens:     call.Request.MaxTokens,
-		Messages:      toChatMessages(call.Request.System, call.Request.Messages, call.Provider.ID),
+		Model:     call.Provider.Model,
+		MaxTokens: call.Request.MaxTokens,
+		Messages: toChatMessages(
+			call.Request.System, call.Request.Messages, call.Provider.ID, call.Provider.Model,
+		),
 		Tools:         toChatTools(call.Request.Tools),
 		Stream:        true,
 		StreamOptions: &chatStreamOptions{IncludeUsage: true},
@@ -323,7 +327,12 @@ func (a openAIChatAdapter) Stream(
 // toChatMessages puts the conversation on the wire. providerID is who the
 // request goes to: a call's provider data is sent back to the provider that
 // produced it and withheld from any other, which would refuse the field.
-func toChatMessages(system string, messages []Message, providerID pulid.ID) []chatMessage {
+func toChatMessages(
+	system string,
+	messages []Message,
+	providerID pulid.ID,
+	model string,
+) []chatMessage {
 	out := make([]chatMessage, 0, len(messages)+1)
 	if strings.TrimSpace(system) != "" {
 		out = append(out, chatMessage{Role: "system", Content: system})
@@ -341,7 +350,7 @@ func toChatMessages(system string, messages []Message, providerID pulid.ID) []ch
 			out = append(out, chatMessage{
 				Role:      "assistant",
 				Content:   msg.Content,
-				ToolCalls: toChatToolCalls(msg.ToolCalls, providerID),
+				ToolCalls: toChatToolCalls(msg.ToolCalls, providerID, model),
 			})
 		default:
 			out = append(out, chatMessage{Role: "user", Content: msg.Content})
@@ -351,7 +360,21 @@ func toChatMessages(system string, messages []Message, providerID pulid.ID) []ch
 	return out
 }
 
-func toChatToolCalls(calls []ToolCall, providerID pulid.ID) []chatToolCall {
+// geminiUnsignedCall is what Gemini 3 accepts in place of a thought
+// signature on a call it did not sign: one made by another provider before
+// the thread switched model, or one stored before signatures were kept.
+// The value is Google's documented bypass for exactly that history, and it
+// is sent only to a Gemini model.
+var geminiUnsignedCall = map[string]any{
+	"google": map[string]any{"thought_signature": "skip_thought_signature_validator"},
+}
+
+// geminiModel reports a model that validates thought signatures.
+func geminiModel(model string) bool {
+	return strings.HasPrefix(strings.ToLower(strings.TrimSpace(model)), "gemini")
+}
+
+func toChatToolCalls(calls []ToolCall, providerID pulid.ID, model string) []chatToolCall {
 	if len(calls) == 0 {
 		return nil
 	}
@@ -367,8 +390,11 @@ func toChatToolCalls(calls []ToolCall, providerID pulid.ID) []chatToolCall {
 			Type:     "function",
 			Function: chatToolCallFunc{Name: call.Name, Arguments: string(encoded)},
 		}
-		if len(call.ProviderData) > 0 && call.ProviderID.IsNotNil() && call.ProviderID == providerID {
+		switch {
+		case len(call.ProviderData) > 0 && call.ProviderID.IsNotNil() && call.ProviderID == providerID:
 			wire.ExtraContent = call.ProviderData
+		case geminiModel(model):
+			wire.ExtraContent = geminiUnsignedCall
 		}
 		out = append(out, wire)
 	}
