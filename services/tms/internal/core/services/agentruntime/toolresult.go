@@ -122,6 +122,15 @@ func wholeNumber(value any) (int64, bool) {
 // case of the get_ family, so there is no single struct to annotate. Doing it
 // here means a tool added later inherits readable dates without knowing this
 // exists, which is the only version of this that stays true.
+//
+// The round trip has one cost that has to be paid back here. Going through a
+// map loses the struct's field order, and sonic's default marshaller emits map
+// keys in whatever order it finds them — so the same rows re-serialised on a
+// later turn came out as a different byte string. That makes a tool result
+// unreadable to a person comparing two turns, and it defeats prompt caching
+// outright, because a cache is keyed on a prefix that is now different for no
+// reason. ConfigStd sorts the keys, which is what the repeat guard and the
+// transcript exporter already do for the same reason.
 func encodeToolResult(data any, now int64, timezone string) (string, error) {
 	encoded, err := sonic.Marshal(data)
 	if err != nil {
@@ -133,7 +142,7 @@ func encodeToolResult(data any, now int64, timezone string) (string, error) {
 		return "", err
 	}
 
-	humanized, err := sonic.Marshal(humanizeDates(document, now, timezone))
+	humanized, err := sonic.ConfigStd.Marshal(humanizeDates(document, now, timezone))
 	if err != nil {
 		return "", err
 	}

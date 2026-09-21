@@ -16,6 +16,12 @@ type AIProvider {
   createdAt: Timestamp!
   description: String!
   enabled: Boolean!
+  """
+  Vendor request fields this endpoint takes that the protocol does not
+  define, merged under the fields this system sets. Null when the endpoint
+  needs none.
+  """
+  extraBody: JSON
   hasApiKey: Boolean!
   id: ID!
   """
@@ -1687,6 +1693,91 @@ type BillingTransferValidation {
   code: String!
   field: String!
   message: String!
+}
+
+"""
+One role's morning for one organization. The figures are computed first and
+the wording written second; a briefing nobody narrated is a complete
+briefing that simply reads plainer.
+"""
+type Briefing {
+  """The organization's local day, as YYYY-MM-DD."""
+  briefingDate: String!
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  emailedAt: Timestamp
+  headline: String!
+  id: ID!
+  """True when a model's wording was accepted for any part of the page."""
+  narrated: Boolean!
+  organizationId: ID!
+  readAt: Timestamp
+  roleKey: BriefingRoleKey!
+  sections: [BriefingSection!]!
+  status: BriefingStatus!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""
+One line of a section: a figure, what it counts, and the page that shows it.
+"""
+type BriefingItem {
+  label: String!
+  path: String
+  """
+  Already rendered, because the figure a person reads and the figure the guard checked must be the same string.
+  """
+  value: String!
+}
+
+"""
+Who a briefing is written for. The same morning reads differently to a dispatcher and a biller.
+"""
+enum BriefingRoleKey {
+  Billing
+  Compliance
+  Dispatch
+  General
+  Leadership
+}
+
+type BriefingSection {
+  """
+  The model's sentence, where it was written and survived the number guard.
+  """
+  body: String
+  items: [BriefingItem!]!
+  key: BriefingSectionKey!
+  path: String
+  """
+  What a person reads: the model's sentence when there is one, the computed wording otherwise.
+  """
+  read: String!
+  """The computed wording, which is always true and always present."""
+  summary: String!
+  title: String!
+}
+
+"""
+A block of the page. The keys are fixed, so a model cannot invent a section nothing computed.
+"""
+enum BriefingSectionKey {
+  Attention
+  Billing
+  Cash
+  Compliance
+  Coverage
+  Decisions
+  Exceptions
+  Today
+}
+
+"""How far the morning's writing got."""
+enum BriefingStatus {
+  Failed
+  Pending
+  Ready
 }
 
 input BulkAssignTrainingInput {
@@ -8221,6 +8312,13 @@ input GrantCarrierIntelOverrideInput {
   ruleCode: String!
 }
 
+input HandOffWatchtowerItemInput {
+  """
+  Start this agent on the item's subject; omit to publish the item's event to whoever subscribes.
+  """
+  agentDefinitionId: ID
+}
+
 enum HazardousClass {
   HazardClass1
   HazardClass1And1
@@ -10063,6 +10161,11 @@ type LeaveWindow {
   through: Timestamp!
 }
 
+input ListBriefingsInput {
+  first: Int = 14
+  roleKey: BriefingRoleKey
+}
+
 input LocateTractorInput {
   newLocationId: ID!
   tractorId: ID!
@@ -10529,6 +10632,8 @@ type Mutation {
   discardFuelPurchaseImport(id: ID!, reason: String, version: Int!): FuelPurchaseImportBatch!
   dismissMyNotifications(ids: [ID!]!): Boolean!
   dismissNotifications(ids: [ID!]!): Boolean!
+  """Takes an item off the feed without touching the record behind it."""
+  dismissWatchtowerItem(id: ID!): WatchtowerItem!
   dispatchAssignMoveToCarrier(input: DispatchAssignMoveToCarrierInput!): CarrierAssignment!
   dispatchAssignMoves(input: [DispatchAssignMoveInput!]!): DispatchBulkAssignResult!
   dispatchCancelCarrierAssignment(moveId: ID!, reason: String!): Boolean!
@@ -10558,6 +10663,8 @@ type Mutation {
   generateSettlementBatch(input: GenerateSettlementBatchInput!): SettlementBatch!
   giveWorkerRecognition(input: WorkerRecognitionInput!): WorkerRecognition!
   grantCarrierIntelOverride(input: GrantCarrierIntelOverrideInput!): CarrierIntelOverride!
+  """Hands an item to an agent, or to whoever subscribes to its event."""
+  handOffWatchtowerItem(id: ID!, input: HandOffWatchtowerItemInput!): WatchtowerHandOffResult!
   """
   Defer an accrued pay event so it skips settlement generation until released.
   """
@@ -10576,6 +10683,7 @@ type Mutation {
   """
   markAllMyNotificationsRead: Boolean!
   markAllNotificationsRead: Boolean!
+  markBriefingRead(id: ID!): Briefing!
   markCarrierIntelReviewed(carrierId: ID!, note: String!): Boolean!
   markCarrierSettlementPaid(input: MarkCarrierSettlementPaidInput!): CarrierSettlement!
   markDriverSettlementPaid(input: MarkDriverSettlementPaidInput!): DriverSettlement!
@@ -10590,6 +10698,10 @@ type Mutation {
   markMyNotificationsUnread(ids: [ID!]!): Boolean!
   markNotificationsRead(ids: [ID!]!): Boolean!
   markNotificationsUnread(ids: [ID!]!): Boolean!
+  """
+  Moves this reader's cursor, so what is already read stops counting as unseen.
+  """
+  markWatchtowerSeen(seenAt: Timestamp): WatchtowerCounts!
   markWorkerChecklistItemNotApplicable(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   openEscrowAccount(input: OpenEscrowAccountInput!): EscrowAccount!
   """
@@ -10652,6 +10764,10 @@ type Mutation {
   recordTimeEntry(input: RecordTimeEntryInput!): TimeClockEntry!
   recordWorkerEmploymentEvent(input: RecordWorkerEmploymentEventInput!): RecordWorkerEmploymentEventPayload!
   recordWorkerInjury(input: RecordWorkerInjuryInput!): WorkerInjury!
+  """
+  Writes today's page again from current figures, replacing what was there.
+  """
+  regenerateBriefing(input: TodaysBriefingInput!): Briefing!
   rejectCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
   rejectCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   rejectDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
@@ -12584,6 +12700,9 @@ type Query {
   benefitPlans(activeOnly: Boolean, planYear: Int): [BenefitPlan!]!
   billingTransferRun(id: ID!): BillingTransferRun!
   billingTransferRunItems(filter: BillingTransferRunItemsFilterInput, input: DataTableConnectionInput!, runId: ID!): BillingTransferRunItemConnection!
+  briefing(id: ID!): Briefing!
+  """Recent mornings, newest day first."""
+  briefings(input: ListBriefingsInput!): [Briefing!]!
   cannedReports: [CannedReport!]!
   carrier(id: ID!): Carrier
   carrierCostEvents(input: DataTableConnectionInput!): CarrierCostEventConnection!
@@ -13056,6 +13175,8 @@ type Query {
   timeClockEntries(from: Timestamp, limit: Int, to: Timestamp, workerId: ID!): [TimeClockEntry!]!
   timesheet(id: ID!): Timesheet!
   timesheets(filter: TimesheetFilterInput): [Timesheet!]!
+  """This morning's page, or null when it has not been written yet."""
+  todaysBriefing(input: TodaysBriefingInput!): Briefing
   tractor(id: ID!): Tractor
   tractors(includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, includeWorkerDetails: Boolean = false, input: DataTableConnectionInput!, status: EquipmentStatus): TractorConnection!
   trailer(id: ID!): Trailer
@@ -13078,6 +13199,11 @@ type Query {
   users(input: DataTableConnectionInput!): UserConnection!
   vehicleInspections(limit: Int, since: Timestamp, tractorId: ID, workerId: ID): [VehicleInspection!]!
   vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
+  watchtowerCounts: WatchtowerCounts!
+  """
+  What needs attention, newest first, filtered to what this reader may see.
+  """
+  watchtowerItems(input: WatchtowerItemsInput!): WatchtowerItemConnection!
   workerAvailabilityPreferences(workerId: ID!): [WorkerAvailabilityPreference!]!
   workerBenefitEnrollments(openOnly: Boolean, workerId: ID!): [WorkerBenefitEnrollment!]!
   workerChecklist(id: ID!): WorkerChecklist!
@@ -17537,6 +17663,13 @@ Unix epoch (1970-01-01T00:00:00Z), UTC. Serialized as a JSON number.
 """
 scalar Timestamp
 
+input TodaysBriefingInput {
+  """An organization-local day, as YYYY-MM-DD; omitted is today."""
+  briefingDate: String
+  """Whose morning to read; omitted reads the one written for everybody."""
+  roleKey: BriefingRoleKey
+}
+
 """
 What a job is actually worth: what was paid, what the employer put in on top,
 and what the worker paid for cover. The employee's own contributions are
@@ -18453,6 +18586,132 @@ input WaiveWorkerTrainingInput {
   id: ID!
   reason: String!
   version: Int
+}
+
+"""The feed in numbers, for a badge and a set of filter chips."""
+type WatchtowerCounts {
+  byKind: [WatchtowerKindSummary!]!
+  critical: Int!
+  seenAt: Timestamp!
+  unresolved: Int!
+  unseen: Int!
+  unseenCritical: Int!
+}
+
+"""
+What a hand-off did. With a run, an agent is already working on the item;
+with subscribers, the event went to them; with neither, the candidates are
+the agents that could take it, for the person to choose from.
+"""
+type WatchtowerHandOffResult {
+  candidates: [AgentDefinition!]!
+  item: WatchtowerItem!
+  run: AgentRun
+  subscribers: [AgentDefinition!]!
+  """
+  Templates that handle this item's event, for an organization with no such agent yet.
+  """
+  templates: [String!]!
+}
+
+"""
+One thing worth a person's attention, drawn from the record that raised it.
+Every item a reader is shown is one whose source they could open themselves.
+"""
+type WatchtowerItem {
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  """
+  The event a hand-off publishes; absent when no agent can take this kind.
+  """
+  eventKind: String
+  id: ID!
+  """The kind in the reader's words, for a filter chip."""
+  kindLabel: String!
+  occurredAt: Timestamp!
+  organizationId: ID!
+  """
+  An application path that opens the source record; blank when the source has no page of its own.
+  """
+  path: String!
+  """When the source closed; absent while the item is still open."""
+  resolvedAt: Timestamp
+  """
+  Whether this reader had already been shown the item, from their own cursor.
+  """
+  seen: Boolean!
+  severity: WatchtowerSeverity!
+  """The id of the record this stands for, in that source's own terms."""
+  sourceId: String!
+  sourceKind: WatchtowerSourceKind!
+  subjectId: ID
+  """The record an agent would work on if this item were handed to one."""
+  subjectType: AgentSubjectType
+  summary: String!
+  title: String!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type WatchtowerItemConnection {
+  edges: [WatchtowerItemEdge!]!
+  pageInfo: PageInfo!
+  """
+  Where this reader's eye last was, so a client can draw the unseen line.
+  """
+  seenAt: Timestamp!
+}
+
+type WatchtowerItemEdge {
+  cursor: String!
+  node: WatchtowerItem!
+}
+
+input WatchtowerItemsInput {
+  after: String
+  first: Int = 25
+  """Only these kinds; empty is every kind the reader may see."""
+  kinds: [WatchtowerSourceKind!]
+  """Only these severities; empty is all three."""
+  severities: [WatchtowerSeverity!]
+  """Only what occurred at or after this instant."""
+  since: Timestamp
+  """Leave out what has already resolved."""
+  unresolvedOnly: Boolean = true
+}
+
+type WatchtowerKindSummary {
+  count: Int!
+  kind: WatchtowerSourceKind!
+  label: String!
+}
+
+"""How loudly an item asks to be looked at."""
+enum WatchtowerSeverity {
+  Critical
+  Info
+  Warning
+}
+
+"""
+The record an item stands in for. The source stays authoritative: an item
+is a projection of it, keyed by kind and id, and resolves when the source
+does.
+"""
+enum WatchtowerSourceKind {
+  AgentException
+  AgentPlan
+  AgentProposal
+  AgentRunFailed
+  BillingException
+  CarrierIntelEvent
+  DetentionOccurrence
+  EDIInboundQuarantined
+  HOSViolation
+  InboundMessage
+  Insight
+  ServiceFailure
+  WeatherAlert
 }
 
 input WithdrawInvoiceDisputeInput {

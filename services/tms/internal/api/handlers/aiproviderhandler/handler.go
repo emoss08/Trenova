@@ -121,6 +121,7 @@ type saveProviderRequest struct {
 	AllowPrivateNetwork  bool                            `json:"allowPrivateNetwork"`
 	StructuredOutputMode aiprovider.StructuredOutputMode `json:"structuredOutputMode"`
 	ReasoningEffort      aiprovider.ReasoningEffort      `json:"reasoningEffort"`
+	ExtraBody            map[string]any                  `json:"extraBody"`
 	InputCostPerMillion  *decimal.Decimal                `json:"inputCostPerMillion"`
 	OutputCostPerMillion *decimal.Decimal                `json:"outputCostPerMillion"`
 	MaxTokens            int                             `json:"maxTokens"`
@@ -146,6 +147,7 @@ func (r *saveProviderRequest) toServiceRequest(
 		AllowPrivateNetwork:  r.AllowPrivateNetwork,
 		StructuredOutputMode: r.StructuredOutputMode,
 		ReasoningEffort:      r.ReasoningEffort,
+		ExtraBody:            r.ExtraBody,
 		InputCostPerMillion:  r.InputCostPerMillion,
 		OutputCostPerMillion: r.OutputCostPerMillion,
 		MaxTokens:            r.MaxTokens,

@@ -25,6 +25,9 @@ type SaveAIProviderRequest struct {
 	AllowPrivateNetwork  bool
 	StructuredOutputMode aiprovider.StructuredOutputMode
 	ReasoningEffort      aiprovider.ReasoningEffort
+	// ExtraBody carries the vendor request fields this endpoint needs that
+	// the protocol does not define.
+	ExtraBody            map[string]any
 	InputCostPerMillion  *decimal.Decimal
 	OutputCostPerMillion *decimal.Decimal
 	MaxTokens            int

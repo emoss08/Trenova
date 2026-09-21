@@ -16,6 +16,7 @@ function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormVa
     allowPrivateNetwork: true,
     structuredOutputMode: "Prompted",
     reasoningEffort: "Off",
+    extraBodyText: "",
     inputCostPerMillion: null,
     outputCostPerMillion: null,
     maxTokens: 8192,
@@ -130,5 +131,39 @@ describe("buildSavePayload field mapping", () => {
       enabled: true,
       version: 7,
     });
+  });
+});
+
+describe("extra request fields", () => {
+  it("sends the vendor fields the endpoint needs, parsed from what was typed", () => {
+    // The body from NVIDIA's own example for a Nemotron model: thinking is
+    // switched on through the chat template and the reasoning budget is its
+    // own field, neither of which the protocol defines.
+    const payload = buildSavePayload(
+      formValues({
+        extraBodyText: '{"chat_template_kwargs":{"enable_thinking":true},"reasoning_budget":16384}',
+      }),
+      false,
+    );
+
+    expect(payload.extraBody).toEqual({
+      chat_template_kwargs: { enable_thinking: true },
+      reasoning_budget: 16384,
+    });
+  });
+
+  it("sends nothing rather than an empty object when the box is blank", () => {
+    expect(buildSavePayload(formValues({ extraBodyText: "" }), false).extraBody).toBeNull();
+    expect(buildSavePayload(formValues({ extraBodyText: "   " }), false).extraBody).toBeNull();
+    expect(buildSavePayload(formValues({ extraBodyText: "{}" }), false).extraBody).toBeNull();
+  });
+
+  it("sends nothing for a value the form's validation would have refused", () => {
+    // An array or a bare number is not a set of request fields. The schema
+    // refuses both before a save; if one reaches here it means validation
+    // was bypassed, and no vendor fields is the safe reading.
+    expect(buildSavePayload(formValues({ extraBodyText: "[1,2]" }), false).extraBody).toBeNull();
+    expect(buildSavePayload(formValues({ extraBodyText: "7" }), false).extraBody).toBeNull();
+    expect(buildSavePayload(formValues({ extraBodyText: "{oops" }), false).extraBody).toBeNull();
   });
 });

@@ -32,6 +32,10 @@ type Request struct {
 	// once confuses most endpoints, so callers set one or the other.
 	Tools     []ToolSpec
 	MaxTokens int
+	// Sampling is how adventurously the model may pick its next token. An
+	// empty value leaves the endpoint's own defaults alone, which is what
+	// every call used to do.
+	Sampling Sampling
 }
 
 // Response is a normalized reply. Text is the raw model output; the router is
@@ -98,9 +102,12 @@ func (c *Call) think(delta string) {
 	}
 }
 
-// reasoning is how hard this call asks the model to think, from the provider.
+// reasoning is how hard this call asks the model to think, from the
+// provider. An unset effort is off: the column defaults to Off and most
+// providers never name it, so treating the empty string as anything else
+// would have a provider nobody configured to think counted as thinking.
 func (c *Call) reasoning() aiprovider.ReasoningEffort {
-	if c.Provider == nil {
+	if c.Provider == nil || c.Provider.ReasoningEffort == "" {
 		return aiprovider.ReasoningOff
 	}
 

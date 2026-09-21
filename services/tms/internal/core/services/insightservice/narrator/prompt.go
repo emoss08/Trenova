@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
+	"github.com/emoss08/trenova/shared/numberguard"
 )
 
 // systemPrompt tells the model what job it has, which is smaller than it might
@@ -72,7 +73,7 @@ func writeFinding(builder *strings.Builder, finding detector.Finding) {
 		builder.WriteString("  - ")
 		builder.WriteString(metric.Label)
 		builder.WriteString(": ")
-		builder.WriteString(FormatForPrompt(metric.Value))
+		builder.WriteString(numberguard.FormatForPrompt(metric.Value))
 		builder.WriteString(" ")
 		builder.WriteString(metric.Unit.String())
 
@@ -80,7 +81,7 @@ func writeFinding(builder *strings.Builder, finding detector.Finding) {
 			builder.WriteString(" (")
 			builder.WriteString(metric.BaselineLabel)
 			builder.WriteString(": ")
-			builder.WriteString(FormatForPrompt(*metric.Baseline))
+			builder.WriteString(numberguard.FormatForPrompt(*metric.Baseline))
 			builder.WriteString(")")
 		}
 

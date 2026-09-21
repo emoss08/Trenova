@@ -41,7 +41,27 @@ type GetCreditMemoApplicationRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
+// SumPaymentsReceivedRequest asks what came in over a span, by payment
+// date. Reversed payments are left out: money that came back is not money
+// received.
+type SumPaymentsReceivedRequest struct {
+	TenantInfo pagination.TenantInfo
+	From       int64
+	To         int64
+}
+
+// PaymentsReceived is what came in over a span, in one currency. A tenant
+// billing in several currencies gets a row per currency rather than a sum
+// that adds dollars to euros.
+type PaymentsReceived struct {
+	CurrencyCode string `bun:"currency_code"`
+	AmountMinor  int64  `bun:"amount_minor"`
+	Count        int    `bun:"count"`
+}
+
 type CustomerPaymentRepository interface {
+	// SumReceived totals posted payments by currency over a span.
+	SumReceived(ctx context.Context, req SumPaymentsReceivedRequest) ([]*PaymentsReceived, error)
 	List(
 		ctx context.Context,
 		req *ListCustomerPaymentsRequest,

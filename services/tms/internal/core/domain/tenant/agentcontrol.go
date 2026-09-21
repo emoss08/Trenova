@@ -31,6 +31,14 @@ type AgentControl struct {
 	EarnedAutonomy     bool `json:"earnedAutonomy"     bun:"earned_autonomy,type:BOOLEAN,notnull"`
 	PromotionThreshold int  `json:"promotionThreshold" bun:"promotion_threshold,type:INTEGER,notnull"`
 
+	// BriefingEnabled turns the morning briefing on, and BriefingHourLocal
+	// is the hour it is written in the organization's own timezone. The
+	// hour is local rather than UTC because a briefing is read at the
+	// start of a working day, and a company with offices in two timezones
+	// would otherwise get one of them yesterday's page.
+	BriefingEnabled   bool `json:"briefingEnabled"   bun:"briefing_enabled,type:BOOLEAN,notnull,default:true"`
+	BriefingHourLocal int  `json:"briefingHourLocal" bun:"briefing_hour_local,type:INTEGER,notnull,default:6"`
+
 	BillingAgentEnabled    bool `json:"billingAgentEnabled"    bun:"-"`
 	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds" bun:"-"`
 
@@ -46,6 +54,11 @@ const (
 	DefaultPromotionThreshold = 10
 	minPromotionThreshold     = 1
 	maxPromotionThreshold     = 1000
+	// DefaultBriefingHourLocal is six in the morning: early enough that
+	// the page is waiting when the first dispatcher opens it, late enough
+	// that the night's work is in the numbers.
+	DefaultBriefingHourLocal = 6
+	maxBriefingHour          = 23
 )
 
 func (ac *AgentControl) Validate(multiErr *errortypes.MultiError) {
@@ -54,6 +67,13 @@ func (ac *AgentControl) Validate(multiErr *errortypes.MultiError) {
 			"promotionThreshold",
 			errortypes.ErrInvalid,
 			"Promotion threshold must be between 1 and 1000 approvals",
+		)
+	}
+	if ac.BriefingHourLocal < 0 || ac.BriefingHourLocal > maxBriefingHour {
+		multiErr.Add(
+			"briefingHourLocal",
+			errortypes.ErrInvalid,
+			"The briefing hour must be between 0 and 23",
 		)
 	}
 }

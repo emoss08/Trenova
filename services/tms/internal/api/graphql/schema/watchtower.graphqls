@@ -1,0 +1,135 @@
+"""
+The record an item stands in for. The source stays authoritative: an item
+is a projection of it, keyed by kind and id, and resolves when the source
+does.
+"""
+enum WatchtowerSourceKind {
+  Insight
+  AgentProposal
+  AgentPlan
+  AgentRunFailed
+  AgentException
+  ServiceFailure
+  CarrierIntelEvent
+  HOSViolation
+  WeatherAlert
+  EDIInboundQuarantined
+  BillingException
+  DetentionOccurrence
+  InboundMessage
+}
+
+"How loudly an item asks to be looked at."
+enum WatchtowerSeverity {
+  Info
+  Warning
+  Critical
+}
+
+"""
+One thing worth a person's attention, drawn from the record that raised it.
+Every item a reader is shown is one whose source they could open themselves.
+"""
+type WatchtowerItem {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  sourceKind: WatchtowerSourceKind!
+  "The id of the record this stands for, in that source's own terms."
+  sourceId: String!
+  severity: WatchtowerSeverity!
+  title: String!
+  summary: String!
+  "The record an agent would work on if this item were handed to one."
+  subjectType: AgentSubjectType
+  subjectId: ID
+  "The event a hand-off publishes; absent when no agent can take this kind."
+  eventKind: String
+  "An application path that opens the source record; blank when the source has no page of its own."
+  path: String!
+  occurredAt: Timestamp!
+  "When the source closed; absent while the item is still open."
+  resolvedAt: Timestamp
+  "Whether this reader had already been shown the item, from their own cursor."
+  seen: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  "The kind in the reader's words, for a filter chip."
+  kindLabel: String!
+}
+
+type WatchtowerItemEdge {
+  node: WatchtowerItem!
+  cursor: String!
+}
+
+type WatchtowerItemConnection {
+  edges: [WatchtowerItemEdge!]!
+  pageInfo: PageInfo!
+  "Where this reader's eye last was, so a client can draw the unseen line."
+  seenAt: Timestamp!
+}
+
+input WatchtowerItemsInput {
+  first: Int = 25
+  after: String
+  "Only these kinds; empty is every kind the reader may see."
+  kinds: [WatchtowerSourceKind!]
+  "Only these severities; empty is all three."
+  severities: [WatchtowerSeverity!]
+  "Leave out what has already resolved."
+  unresolvedOnly: Boolean = true
+  "Only what occurred at or after this instant."
+  since: Timestamp
+}
+
+type WatchtowerKindSummary {
+  kind: WatchtowerSourceKind!
+  label: String!
+  count: Int!
+}
+
+"The feed in numbers, for a badge and a set of filter chips."
+type WatchtowerCounts {
+  unresolved: Int!
+  critical: Int!
+  unseen: Int!
+  unseenCritical: Int!
+  byKind: [WatchtowerKindSummary!]!
+  seenAt: Timestamp!
+}
+
+"""
+What a hand-off did. With a run, an agent is already working on the item;
+with subscribers, the event went to them; with neither, the candidates are
+the agents that could take it, for the person to choose from.
+"""
+type WatchtowerHandOffResult {
+  item: WatchtowerItem!
+  run: AgentRun
+  subscribers: [AgentDefinition!]!
+  candidates: [AgentDefinition!]!
+  "Templates that handle this item's event, for an organization with no such agent yet."
+  templates: [String!]!
+}
+
+input HandOffWatchtowerItemInput {
+  "Start this agent on the item's subject; omit to publish the item's event to whoever subscribes."
+  agentDefinitionId: ID
+}
+
+extend type Query {
+  "What needs attention, newest first, filtered to what this reader may see."
+  watchtowerItems(input: WatchtowerItemsInput!): WatchtowerItemConnection!
+  watchtowerCounts: WatchtowerCounts!
+}
+
+extend type Mutation {
+  "Moves this reader's cursor, so what is already read stops counting as unseen."
+  markWatchtowerSeen(seenAt: Timestamp): WatchtowerCounts!
+  "Takes an item off the feed without touching the record behind it."
+  dismissWatchtowerItem(id: ID!): WatchtowerItem!
+  "Hands an item to an agent, or to whoever subscribes to its event."
+  handOffWatchtowerItem(id: ID!, input: HandOffWatchtowerItemInput!): WatchtowerHandOffResult!
+}

@@ -317,6 +317,21 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
             />
           </FormControl>
 
+          <FormControl cols="full">
+            <TextareaField
+              name="extraBodyText"
+              control={control}
+              label={t("Extra request fields")}
+              rows={5}
+              placeholder={
+                '{\n  "chat_template_kwargs": { "enable_thinking": true },\n  "reasoning_budget": 16384\n}'
+              }
+              description={t(
+                "JSON merged into every request to this endpoint, for the fields its server takes that the protocol does not define. Copy them from the provider's own example. What this system sets — the model, the messages, the tools, the schema and whether the call streams — cannot be overridden here.",
+              )}
+            />
+          </FormControl>
+
           <FormControl>
             <NumberField
               name="inputCostPerMillion"

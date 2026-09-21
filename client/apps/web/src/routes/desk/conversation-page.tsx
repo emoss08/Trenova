@@ -51,8 +51,6 @@ export function DeskConversationPage() {
       agent={agent}
       agentsUnavailable={desk.agentsUnavailable}
       onStartNew={agent && !desk.isStarting ? () => desk.start(agent.id) : undefined}
-      onDelete={desk.remove}
-      onTogglePin={desk.togglePin}
     />
   );
 }

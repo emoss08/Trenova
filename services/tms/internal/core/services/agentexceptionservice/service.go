@@ -5,9 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -21,19 +23,24 @@ type Params struct {
 	Logger       *zap.Logger
 	Repo         repositories.AgentExceptionRepository
 	AuditService services.AuditService
+	// Watchtower puts an exception on the feed and takes it off when it is
+	// resolved.
+	Watchtower services.WatchtowerProjector `optional:"true"`
 }
 
 type Service struct {
-	l     *zap.Logger
-	repo  repositories.AgentExceptionRepository
-	audit services.AuditService
+	l          *zap.Logger
+	repo       repositories.AgentExceptionRepository
+	audit      services.AuditService
+	watchtower services.WatchtowerProjector
 }
 
 func New(p Params) services.AgentExceptionService {
 	return &Service{
-		l:     p.Logger.Named("service.agentexception"),
-		repo:  p.Repo,
-		audit: p.AuditService,
+		l:          p.Logger.Named("service.agentexception"),
+		repo:       p.Repo,
+		audit:      p.AuditService,
+		watchtower: p.Watchtower,
 	}
 }
 
@@ -68,6 +75,9 @@ func (s *Service) Flag(
 	}
 
 	s.logAction(actor, permission.OpCreate, created, nil, "Agent exception raised")
+	if s.watchtower != nil {
+		s.watchtower.Upsert(ctx, watchtowersources.DescribeException(created))
+	}
 
 	return created, nil
 }
@@ -117,6 +127,9 @@ func (s *Service) Resolve(
 	}
 
 	s.logAction(actor, permission.OpUpdate, updated, nil, "Agent exception resolved")
+	if s.watchtower != nil && updated.ResolutionState != agent.ResolutionStateOpen {
+		s.watchtower.Resolve(ctx, req.TenantInfo, watchtower.SourceAgentException, updated.ID.String())
+	}
 
 	return updated, nil
 }

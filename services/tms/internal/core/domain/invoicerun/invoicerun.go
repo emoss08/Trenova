@@ -65,7 +65,7 @@ type InvoiceRun struct {
 	// why a month has two invoices without going hunting for it.
 	OffCycleReason string `json:"offCycleReason" bun:"off_cycle_reason,type:TEXT,nullzero"`
 
-	BuiltByID pulid.ID `json:"builtById" bun:"built_by_id,type:VARCHAR(100),nullzero"`
+	BuiltByID     pulid.ID `json:"builtById" bun:"built_by_id,type:VARCHAR(100),nullzero"`
 	BuiltAt       *int64   `json:"builtAt"       bun:"built_at,type:BIGINT,nullzero"`
 	CommittedByID pulid.ID `json:"committedById" bun:"committed_by_id,type:VARCHAR(100),nullzero"`
 	CommittedAt   *int64   `json:"committedAt"   bun:"committed_at,type:BIGINT,nullzero"`

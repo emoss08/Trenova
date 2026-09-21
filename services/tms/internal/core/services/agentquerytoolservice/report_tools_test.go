@@ -254,8 +254,7 @@ func TestListReports_NamesTheCatalogAndItsParameters(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "ar_aging_by_customer", rows[0].Key)
 	assert.Equal(t, "Accounting", rows[0].Category)
-	require.Len(t, rows[0].Parameters, 2)
-	assert.True(t, rows[0].Parameters[0].Required)
+	require.Len(t, rows[0].Takes, 2, "the listing names them; describe_report shapes them")
 }
 
 // The catalog named the report's key "key" and run_report took it as

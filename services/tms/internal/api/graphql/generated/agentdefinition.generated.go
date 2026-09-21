@@ -1722,6 +1722,22 @@ func (ec *executionContext) marshalNAgentContextProvider2ᚕgithubᚗcomᚋemoss
 	return ret
 }
 
+func (ec *executionContext) marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinitionᚄ(ctx context.Context, sel ast.SelectionSet, v []*agentdefinition.Definition) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinition(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinition(ctx context.Context, sel ast.SelectionSet, v *agentdefinition.Definition) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {

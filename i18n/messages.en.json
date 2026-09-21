@@ -1458,6 +1458,15 @@
       "domain/worker"
     ]
   },
+  "A briefing carries at most {0} sections": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/briefing"
+    ]
+  },
   "A budget cannot be negative": {
     "sites": 1,
     "scope": [
@@ -11313,6 +11322,15 @@
       "routes/agent-control"
     ]
   },
+  "Agent exception": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
+    ]
+  },
   "Agent exceptions raised for human review": {
     "sites": 1,
     "scope": [
@@ -11375,6 +11393,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Agent run failed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
     ]
   },
   "Agent runs, proposals, and exception handling.": {
@@ -11450,6 +11477,15 @@
       "apps/web/components",
       "routes/agent-control",
       "routes/desk"
+    ]
+  },
+  "Agents cannot be started on this deployment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/watchtowerservice"
     ]
   },
   "Agents keep running and keep recording what they would do, but nothing they propose is offered for a decision and nothing they propose can be executed. Each agent also has its own shadow switch.": {
@@ -14184,6 +14220,15 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "An extra field needs a name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
     ]
   },
   "An imported bank receipt could not be matched to a customer payment on its own and is waiting in the reconciliation queue.": {
@@ -17419,6 +17464,15 @@
       "routes/desk"
     ]
   },
+  "Ask on the left and what comes back opens on this side, whole: a table you can sort and download, a message you can edit before it sends, a plan whose steps tick off as they run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Ask the assistant": {
     "sites": 1,
     "scope": [
@@ -18737,6 +18791,15 @@
       "routes/invoice"
     ]
   },
+  "At most {0} extra request fields": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
   "At most {0} quick actions can be selected": {
     "sites": 1,
     "scope": [
@@ -18756,8 +18819,9 @@
     ]
   },
   "At risk": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -18766,7 +18830,8 @@
       "routes/dispatch-console",
       "routes/home",
       "routes/shipment",
-      "routes/worker"
+      "routes/worker",
+      "service/briefingservice"
     ]
   },
   "At the agent's ceiling; raise it to let this tool earn more.": {
@@ -20914,6 +20979,15 @@
       "routes/worker"
     ]
   },
+  "Back to Trenova": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Back to batches": {
     "sites": 1,
     "scope": [
@@ -22711,13 +22785,15 @@
     ]
   },
   "Billing": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "apps/web/types",
+      "domain/briefing",
       "packages/shared/lib",
       "routes/admin",
       "routes/shipment"
@@ -22889,6 +22965,15 @@
       "domain/distancecontrol"
     ]
   },
+  "Billing exception": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
+    ]
+  },
   "Billing exception agent": {
     "sites": 1,
     "scope": [
@@ -23044,14 +23129,16 @@
     ]
   },
   "Billing queue": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/config",
       "routes/billing-queue",
-      "routes/invoice"
+      "routes/invoice",
+      "service/briefingservice"
     ]
   },
   "Billing queue item ID is required": {
@@ -24000,6 +24087,42 @@
       "apps/web/components"
     ]
   },
+  "Briefing date is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/briefing"
+    ]
+  },
+  "Briefing date must be YYYY-MM-DD": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/briefing"
+    ]
+  },
+  "Briefing date must be a calendar day": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/briefing"
+    ]
+  },
+  "Briefing not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Briefly explain when to use this reason": {
     "sites": 1,
     "scope": [
@@ -24430,7 +24553,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 110,
+    "sites": 112,
     "scope": [
       "go"
     ],
@@ -24442,6 +24565,7 @@
       "domain/apikey",
       "domain/assistantartifact",
       "domain/billingtransfer",
+      "domain/briefing",
       "domain/conversation",
       "domain/costingcontrol",
       "domain/customer",
@@ -24480,6 +24604,7 @@
       "domain/tablechangealert",
       "domain/telematics",
       "domain/tenant",
+      "domain/watchtower",
       "domain/weatheralert",
       "domain/worker",
       "service/distanceprofileservice",
@@ -26587,11 +26712,13 @@
     ]
   },
   "Carrier change": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/watchtower",
       "routes/carrier-monitoring"
     ]
   },
@@ -27651,6 +27778,15 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
+    ]
+  },
+  "Cash received yesterday": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/briefingservice"
     ]
   },
   "Cash-flow forecast — 90 days": {
@@ -33651,13 +33787,15 @@
     ]
   },
   "Compliance": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "apps/web/types",
+      "domain/briefing",
       "packages/shared/lib",
       "routes/carrier",
       "routes/worker",
@@ -36441,12 +36579,13 @@
     ]
   },
   "Conversations": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Conversations will work, but the tasks below have no enabled provider assigned and will fail when something needs them.": {
@@ -37004,6 +37143,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Correct every organization's watchtower against its sources": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Correct or close a case": {
@@ -38371,6 +38519,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Covered moves": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/briefingservice"
     ]
   },
   "Covering": {
@@ -39812,13 +39969,15 @@
     ]
   },
   "Credentials": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
-      "routes/worker"
+      "routes/worker",
+      "service/briefingservice"
     ]
   },
   "Credentials could not be loaded. Try again in a moment.": {
@@ -40098,8 +40257,9 @@
     ]
   },
   "Critical": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -40107,7 +40267,8 @@
       "routes/admin",
       "routes/agent-control",
       "routes/shipment",
-      "routes/table-change-alert"
+      "routes/table-change-alert",
+      "service/briefingservice"
     ]
   },
   "Critical financial configuration": {
@@ -40772,14 +40933,15 @@
     ]
   },
   "Cursor is invalid": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
       "api/graphql",
       "go/other",
-      "service/agentdecisionqueueservice"
+      "service/agentdecisionqueueservice",
+      "service/watchtowerservice"
     ]
   },
   "Cursor sort does not match request sort": {
@@ -41988,6 +42150,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Daily briefing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Daily cost": {
@@ -46890,7 +47061,7 @@
     ]
   },
   "Desk": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -47234,12 +47405,14 @@
     ]
   },
   "Detention": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/watchtower",
       "routes/shipment"
     ]
   },
@@ -48473,11 +48646,13 @@
     ]
   },
   "Dispatch": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/briefing",
       "packages/shared/lib",
       "routes/worker"
     ]
@@ -51778,6 +51953,15 @@
       "routes/pay-profile"
     ]
   },
+  "Drivers available": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/briefingservice"
+    ]
+  },
   "Drivers by rating": {
     "sites": 1,
     "scope": [
@@ -53133,6 +53317,15 @@
     ],
     "areas": [
       "domain/platformcatalog"
+    ]
+  },
+  "EDI quarantined": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
     ]
   },
   "EDI template": {
@@ -58045,6 +58238,15 @@
       "domain/telematics"
     ]
   },
+  "Event kind is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
+    ]
+  },
   "Event kind is required": {
     "sites": 1,
     "scope": [
@@ -59168,11 +59370,13 @@
     ]
   },
   "Everyone": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/briefing",
       "packages/shared/lib",
       "routes/my-team",
       "routes/policies"
@@ -60657,6 +60861,15 @@
       "routes/worker"
     ]
   },
+  "Expiring within a month": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/briefingservice"
+    ]
+  },
   "Expiry date": {
     "sites": 1,
     "scope": [
@@ -61851,6 +62064,33 @@
       "domain/iam"
     ]
   },
+  "Extra fields cannot exceed {0} characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
+  "Extra fields must be JSON": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
+  "Extra fields must be a JSON object, like {\"top_k\": 40}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Extra labelled detail for this party.": {
     "sites": 1,
     "scope": [
@@ -61858,6 +62098,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Extra request fields": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Extract and classify document content": {
@@ -64779,6 +65028,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Fill a watchtower from what the sources report open": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Fill gap": {
@@ -70873,6 +71131,15 @@
       "domain/insight"
     ]
   },
+  "Headline is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/briefing"
+    ]
+  },
   "Headset": {
     "sites": 1,
     "scope": [
@@ -71177,6 +71444,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Hide the workspace": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "High": {
@@ -71718,7 +71994,7 @@
     ]
   },
   "Home": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -71726,7 +72002,6 @@
       "apps/dash/_components",
       "apps/web/components",
       "apps/web/config",
-      "routes/desk",
       "routes/home"
     ]
   },
@@ -71975,11 +72250,13 @@
     ]
   },
   "Hours of service": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/watchtower",
       "routes/home.tsx",
       "routes/hos.tsx"
     ]
@@ -74476,6 +74753,15 @@
       "routes/edi"
     ]
   },
+  "Inbound message": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
+    ]
+  },
   "Inbound message is required": {
     "sites": 1,
     "scope": [
@@ -75279,12 +75565,13 @@
     ]
   },
   "Insight": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/homelayout",
+      "domain/watchtower",
       "service/agentsubjectservice"
     ]
   },
@@ -78954,6 +79241,15 @@
       "routes/edi"
     ]
   },
+  "JSON merged into every request to this endpoint, for the fields its server takes that the protocol does not define. Copy them from the provider's own example. What this system sets — the model, the messages, the tools, the schema and whether the call streams — cannot be overridden here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "JSON object stored with this partner and sent unchanged to EDI processing services.": {
     "sites": 1,
     "scope": [
@@ -81492,12 +81788,14 @@
     ]
   },
   "Leadership": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "domain/briefing"
     ]
   },
   "Leading literal text included in every generated value.": {
@@ -86942,6 +87240,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Mark the feed seen, dismiss an item, or hand one to an agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Mark the {0} return filed": {
@@ -92625,8 +92932,9 @@
     ]
   },
   "Needs attention": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -92639,7 +92947,8 @@
       "routes/ifta-tax-rate",
       "routes/my-team",
       "routes/reports",
-      "routes/worker"
+      "routes/worker",
+      "service/briefingservice"
     ]
   },
   "Needs coverage": {
@@ -93172,13 +93481,12 @@
     ]
   },
   "New conversation": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/desk"
+      "apps/web/components"
     ]
   },
   "New credit memo": {
@@ -94332,6 +94640,15 @@
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk"
+    ]
+  },
+  "No agents are available to talk to yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/desk"
     ]
   },
@@ -101302,7 +101619,7 @@
     ]
   },
   "Occurred at is required": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -101310,7 +101627,17 @@
       "domain/email",
       "domain/iam",
       "domain/shipmentevent",
-      "domain/telematics"
+      "domain/telematics",
+      "domain/watchtower"
+    ]
+  },
+  "Occurred at must be a timestamp": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
     ]
   },
   "Occurred at must be a valid timestamp": {
@@ -102924,6 +103251,15 @@
     ],
     "areas": [
       "service/agentmemoryservice"
+    ]
+  },
+  "Only a person has a place in the watchtower": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/watchtowerservice"
     ]
   },
   "Only a policy in force can be signed; a retired one is kept so old signatures still point at something.": {
@@ -106823,7 +107159,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 109,
+    "sites": 111,
     "scope": [
       "go"
     ],
@@ -106835,6 +107171,7 @@
       "domain/apikey",
       "domain/assistantartifact",
       "domain/billingtransfer",
+      "domain/briefing",
       "domain/conversation",
       "domain/costingcontrol",
       "domain/customer",
@@ -106873,6 +107210,7 @@
       "domain/tablechangealert",
       "domain/telematics",
       "domain/tenant",
+      "domain/watchtower",
       "domain/weatheralert",
       "domain/worker",
       "service/distanceprofileservice",
@@ -110083,6 +110421,15 @@
       "routes/invoice-register"
     ]
   },
+  "Past expiry": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/briefingservice"
+    ]
+  },
   "Past free time and billing by the minute": {
     "sites": 1,
     "scope": [
@@ -110240,21 +110587,25 @@
     ]
   },
   "Path is too long": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/agent"
+      "domain/agent",
+      "domain/briefing",
+      "domain/watchtower"
     ]
   },
   "Path must be an application path": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/agent"
+      "domain/agent",
+      "domain/briefing",
+      "domain/watchtower"
     ]
   },
   "Path truthy": {
@@ -114078,12 +114429,14 @@
     ]
   },
   "Plan": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "domain/watchtower",
       "routes/admin",
       "routes/agent-control",
       "routes/benefits",
@@ -117754,6 +118107,15 @@
     ],
     "areas": [
       "domain/dothazmatreference"
+    ]
+  },
+  "Proposal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
     ]
   },
   "Proposal listed twice": {
@@ -121707,6 +122069,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Read the daily briefing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Read transactions on a schedule and post the ones that resolve.": {
@@ -126377,6 +126748,15 @@
       "routes/formula-template"
     ]
   },
+  "Remove briefings older than the window a reader can page back through": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Remove carriers from the provider watchlist that Trenova did not enroll.": {
     "sites": 1,
     "scope": [
@@ -126756,6 +127136,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Remove watchtower items resolved more than a month ago": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Remove {0}": {
@@ -132249,11 +132638,12 @@
     ]
   },
   "Role is required": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/briefing",
       "domain/conversation",
       "domain/iam",
       "domain/permission"
@@ -133924,6 +134314,15 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "Running late": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/briefingservice"
     ]
   },
   "Running the readiness check and transferring...": {
@@ -137458,6 +137857,15 @@
       "routes/admin"
     ]
   },
+  "Section is not one this page has": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/briefing"
+    ]
+  },
   "Section names": {
     "sites": 2,
     "scope": [
@@ -137465,6 +137873,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Section title is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/briefing"
     ]
   },
   "Section {0}": {
@@ -141289,12 +141706,14 @@
     ]
   },
   "Service failure": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "domain/watchtower"
     ]
   },
   "Service failure 214": {
@@ -142608,7 +143027,7 @@
     ]
   },
   "Severity is required": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go"
     ],
@@ -142619,6 +143038,7 @@
       "domain/insight",
       "domain/shipment",
       "domain/shipmentevent",
+      "domain/watchtower",
       "domain/worker",
       "go/other"
     ]
@@ -144887,15 +145307,6 @@
       "routes/dash-control"
     ]
   },
-  "Show artifacts": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Show balance due on invoice": {
     "sites": 1,
     "scope": [
@@ -145085,6 +145496,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Show the workspace": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Show this keyboard shortcuts dialog": {
@@ -146853,6 +147273,24 @@
       "routes/edi"
     ]
   },
+  "Source identifier is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
+    ]
+  },
+  "Source identifier is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
+    ]
+  },
   "Source invoice is required": {
     "sites": 1,
     "scope": [
@@ -146900,13 +147338,14 @@
     ]
   },
   "Source kind is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/documentcontent",
-      "domain/edi"
+      "domain/edi",
+      "domain/watchtower"
     ]
   },
   "Source label": {
@@ -148873,7 +149312,7 @@
     ]
   },
   "Status is required": {
-    "sites": 122,
+    "sites": 123,
     "scope": [
       "go"
     ],
@@ -148883,6 +149322,7 @@
       "domain/apikey",
       "domain/assistantartifact",
       "domain/billingtransfer",
+      "domain/briefing",
       "domain/carrier",
       "domain/carrierintel",
       "domain/conversation",
@@ -149947,6 +150387,15 @@
       "domain/carrierintel"
     ]
   },
+  "Subject type is required with a subject": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
+    ]
+  },
   "Submission age": {
     "sites": 1,
     "scope": [
@@ -150548,6 +150997,15 @@
       "domain/carrierintel",
       "domain/detention",
       "domain/shipmentevent"
+    ]
+  },
+  "Summary is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
     ]
   },
   "Summary of work-related injuries and illnesses, {0}": {
@@ -154625,6 +155083,15 @@
       "routes/worker"
     ]
   },
+  "The briefing hour must be between 0 and 23": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/tenant"
+    ]
+  },
   "The broker surety bond or trust fund on file is below the requirement.": {
     "sites": 1,
     "scope": [
@@ -155822,6 +156289,15 @@
       "routes/order"
     ]
   },
+  "The daily briefing written for a role from the day's figures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "The daily limit of {0} full carrier profiles has been reached. Lighter lookups remain available": {
     "sites": 1,
     "scope": [
@@ -156623,6 +157099,15 @@
     ],
     "areas": [
       "domain/ratesimulation"
+    ]
+  },
+  "The endpoint did not answer in time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
     ]
   },
   "The endpoint replied with no content": {
@@ -157885,6 +158370,15 @@
       "routes/worker"
     ]
   },
+  "The live feed of what needs attention across the operation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "The load is back in the unassigned lane.": {
     "sites": 1,
     "scope": [
@@ -158405,6 +158899,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "The next day": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/briefingservice"
     ]
   },
   "The next page didn't load": {
@@ -161493,6 +161996,15 @@
       "routes/policies"
     ]
   },
+  "The work lands here": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The worker becomes inactive, their PTO and pay assignments close on the effective date, and any time off starting after it is cancelled.": {
     "sites": 1,
     "scope": [
@@ -163280,6 +163792,15 @@
       "routes/fleet-safety"
     ]
   },
+  "This is not valid JSON": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This is the current fiscal year.": {
     "sites": 1,
     "scope": [
@@ -163305,6 +163826,15 @@
     ],
     "areas": [
       "service/workerchecklistservice"
+    ]
+  },
+  "This item is not about a record an agent can work on": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/watchtowerservice"
     ]
   },
   "This item will be removed from the billing queue.": {
@@ -165770,7 +166300,7 @@
     ]
   },
   "Title is required": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -165778,17 +166308,19 @@
       "domain/agent",
       "domain/assistantartifact",
       "domain/notification",
+      "domain/watchtower",
       "domain/worker",
       "go/other"
     ]
   },
   "Title is too long": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/agent"
+      "domain/agent",
+      "domain/watchtower"
     ]
   },
   "Title must be at most 100 characters": {
@@ -165921,8 +166453,9 @@
     ]
   },
   "Today": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -165932,11 +166465,13 @@
       "routes/ar-aging",
       "routes/ar-open-items",
       "routes/carrier-monitoring",
+      "routes/desk",
       "routes/dispatch-console",
       "routes/late-charges",
       "routes/scheduling",
       "routes/shipment",
-      "routes/worker"
+      "routes/worker",
+      "service/briefingservice"
     ]
   },
   "Today is outside the weeks shown": {
@@ -165946,6 +166481,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Today's briefing could not be written": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/briefingservice"
     ]
   },
   "Together AI": {
@@ -169829,6 +170373,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Uncovered moves": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/briefingservice"
+    ]
+  },
   "Uncovered with a pickup inside 4 hours — click to focus the Next 4 Hours lane.": {
     "sites": 1,
     "scope": [
@@ -170534,6 +171087,15 @@
       "domain/carrierintel"
     ]
   },
+  "Unknown severity": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/watchtowerservice"
+    ]
+  },
   "Unknown sidebar section: {0}": {
     "sites": 1,
     "scope": [
@@ -170578,6 +171140,15 @@
     "areas": [
       "routes/admin",
       "routes/invoice"
+    ]
+  },
+  "Unknown watchtower kind": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/watchtowerservice"
     ]
   },
   "Unknown widget configuration kind \"{0}\"": {
@@ -175125,6 +175696,15 @@
       "domain/permission"
     ]
   },
+  "View the watchtower feed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "View timesheets and punches": {
     "sites": 1,
     "scope": [
@@ -175893,6 +176473,15 @@
       "packages/shared/lib"
     ]
   },
+  "Waiting on you": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/briefingservice"
+    ]
+  },
   "Waiting period": {
     "sites": 1,
     "scope": [
@@ -176277,6 +176866,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Watchtower item not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Waterfall": {
     "sites": 1,
     "scope": [
@@ -176458,12 +177056,14 @@
     ]
   },
   "Weather": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/watchtower",
       "routes/shipment"
     ]
   },
@@ -181410,6 +182010,33 @@
       "api/handlers"
     ]
   },
+  "Write the morning briefing for every organization whose hour has come": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Write the morning page from figures that were already gathered.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Write today's briefing again from current figures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Write what the agent is for, choose the tools it may call and how much it may do on its own, and decide when it runs.": {
     "sites": 1,
     "scope": [
@@ -181975,6 +182602,15 @@
       "routes/admin"
     ]
   },
+  "You cannot see this watchtower item": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/watchtowerservice"
+    ]
+  },
   "You cannot share an invoice with yourself": {
     "sites": 2,
     "scope": [
@@ -182065,6 +182701,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "You do not have permission to {0} briefings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/briefingservice"
     ]
   },
   "You don't have access to this. Ask an administrator for carrier intelligence access.": {
@@ -182571,15 +183216,6 @@
     ],
     "areas": [
       "apps/dash/_components"
-    ]
-  },
-  "Your conversations with the agents, what they produced, and what they are asking you to decide.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Your conversations with the agents, what they produced, and what they ask you to decide": {
@@ -188055,6 +188691,15 @@
       "service/reporting"
     ]
   },
+  "{ \"chat_template_kwargs\": { \"enable_thinking\": true }, \"reasoning_budget\": 16384 }": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{\"LTL\":\"M\"}": {
     "sites": 1,
     "scope": [
@@ -190799,6 +191444,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "{0} is set by this system and cannot be overridden": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
     ]
   },
   "{0} is the primary carrier intelligence provider.": {

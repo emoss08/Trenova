@@ -285,6 +285,13 @@ func taskDescriptors() []TaskDescriptor {
 				"severity, so it is safe to route to whatever is cheapest.",
 		},
 		{
+			Task:        aiprovider.TaskDailyBriefing,
+			Label:       "Daily briefing",
+			Description: "Write the morning page from figures that were already gathered.",
+			VolumeGuidance: "A handful of calls once a day. Like insights it writes only " +
+				"wording, so the cheapest model that writes clean English will do.",
+		},
+		{
 			Task:           aiprovider.TaskGeneral,
 			Label:          "General",
 			Description:    "Anything not routed to a more specific task.",

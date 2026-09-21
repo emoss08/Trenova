@@ -95,8 +95,9 @@ func TestListReports_IncludesSavedReportsWithTheirDefinitionID(t *testing.T) {
 	assert.True(t, rows[1].Editable, "the owner may change it")
 	assert.Equal(t, "custom", rows[1].Kind)
 	assert.Equal(t, "private", rows[1].Visibility)
-	require.Len(t, rows[1].Parameters, 1)
-	assert.Equal(t, "windowDays", rows[1].Parameters[0].Name)
+	// A listing names the parameters; describe_report carries their shape
+	// and allowed values.
+	assert.Equal(t, []string{"windowDays"}, rows[1].Takes)
 
 	assert.Equal(t, theirs.ID.String(), rows[2].DefinitionID)
 	assert.False(t, rows[2].Editable, "someone else's report is theirs to change")
@@ -367,8 +368,16 @@ func TestDescribeReportDataset_NamesFieldsAndWhatTheActorMayReadOfThem(t *testin
 	description, ok := result.(datasetDescription)
 	require.True(t, ok)
 	assert.Equal(t, "shipment", description.Dataset)
-	assert.Equal(t, len(description.Fields), description.FieldCount)
+	assert.Equal(t, len(description.Fields), description.Shown)
+	assert.GreaterOrEqual(t, description.FieldCount, description.Shown,
+		"the count is the dataset's, the shown count is this result's")
+	assert.LessOrEqual(t, description.Shown, maxDatasetFieldsDescribed)
 	assert.Contains(t, description.Note, "{\"path\": [\"<edge>\"], \"field\": \"<key>\"}")
+	if description.Shown < description.FieldCount {
+		// A description that stops short has to say so, or the model
+		// reports that a field it never saw does not exist.
+		assert.Contains(t, description.Note, "call this again with query")
+	}
 
 	fields := make(map[string]datasetFieldRow, len(description.Fields))
 	for _, field := range description.Fields {

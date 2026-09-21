@@ -102,6 +102,7 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 				aiprovider.TaskScopeClassification,
 				aiprovider.TaskDocumentClassification,
 				aiprovider.TaskOperationalInsights,
+				aiprovider.TaskDailyBriefing,
 				aiprovider.TaskGeneral,
 			},
 			Priority: 10,

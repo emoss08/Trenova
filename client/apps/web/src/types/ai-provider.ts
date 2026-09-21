@@ -22,6 +22,17 @@ export const structuredOutputModeSchema = z.enum(["JSONSchema", "JSONMode", "Pro
 export const reasoningEffortSchema = z.enum(["Off", "Low", "Medium", "High"]);
 
 /**
+ * Vendor request fields the endpoint takes that the protocol does not
+ * define. The server stores JSONB and sends null when there are none; an
+ * absent object and an empty one mean the same thing here, so both become
+ * null.
+ */
+export const extraBodySchema = z
+  .record(z.string(), z.unknown())
+  .nullish()
+  .transform((value) => (value && Object.keys(value).length > 0 ? value : null));
+
+/**
  * A price in USD per million tokens. The server stores a decimal and sends it
  * as a string; the form edits a number; either shape is accepted and both
  * become a number or null, since null is what "unknown" means here.
@@ -72,6 +83,7 @@ export const aiProviderSchema = z.object({
   allowPrivateNetwork: z.boolean().default(false),
   structuredOutputMode: structuredOutputModeSchema,
   reasoningEffort: reasoningEffortSchema.default("Off"),
+  extraBody: extraBodySchema,
   inputCostPerMillion: pricePerMillionSchema,
   outputCostPerMillion: pricePerMillionSchema,
   maxTokens: z.number().default(8192),
@@ -100,6 +112,7 @@ export const saveAIProviderRequestSchema = z.object({
   allowPrivateNetwork: z.boolean().default(false),
   structuredOutputMode: structuredOutputModeSchema,
   reasoningEffort: reasoningEffortSchema.default("Off"),
+  extraBody: extraBodySchema,
   inputCostPerMillion: z.number().min(0).nullable().default(null),
   outputCostPerMillion: z.number().min(0).nullable().default(null),
   maxTokens: z.number().min(256).max(200000).default(8192),

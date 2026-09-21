@@ -12,11 +12,11 @@ const InsightRefreshWorkflowName = "InsightRefreshWorkflow"
 
 // InsightRefreshResult reports the sweep across every tenant.
 type InsightRefreshResult struct {
-	OrganizationsProcessed int      `json:"organizationsProcessed"`
-	InsightsCreated        int      `json:"insightsCreated"`
-	InsightsResolved       int      `json:"insightsResolved"`
-	InsightsSuppressed     int      `json:"insightsSuppressed"`
-	InsightsNarrated       int      `json:"insightsNarrated"`
+	OrganizationsProcessed int `json:"organizationsProcessed"`
+	InsightsCreated        int `json:"insightsCreated"`
+	InsightsResolved       int `json:"insightsResolved"`
+	InsightsSuppressed     int `json:"insightsSuppressed"`
+	InsightsNarrated       int `json:"insightsNarrated"`
 	// FailedOrganizations names tenants whose refresh could not complete. The
 	// sweep still succeeds: one organization's broken data must not stop every
 	// other organization's insights from updating.

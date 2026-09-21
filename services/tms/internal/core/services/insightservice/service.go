@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/narrator"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -51,6 +52,9 @@ type Params struct {
 	// agent subscribed to insight.detected can act on it. It is optional
 	// because the refresh is worth running with no agent to hear about it.
 	Events services.AgentEventPublisher `optional:"true"`
+	// Watchtower puts each finding on the one feed a person reads. Optional
+	// for the same reason: the refresh is worth running without it.
+	Watchtower services.WatchtowerProjector `optional:"true"`
 }
 
 // permissionChecker is the slice of PermissionEngine this service uses. It asks
@@ -69,6 +73,7 @@ type Service struct {
 	narrator    *narrator.Service
 	permissions permissionChecker
 	events      services.AgentEventPublisher
+	watchtower  services.WatchtowerProjector
 }
 
 func New(p Params) *Service {
@@ -79,6 +84,7 @@ func New(p Params) *Service {
 		narrator:    p.Narrator,
 		permissions: p.Permissions,
 		events:      p.Events,
+		watchtower:  p.Watchtower,
 	}
 }
 
@@ -211,6 +217,7 @@ func (s *Service) refreshDetector(ctx context.Context, p refreshParams) {
 	p.result.Suppressed += stored.Suppressed
 
 	s.announce(ctx, p.params.TenantInfo, stored.Detected)
+	s.project(ctx, stored.Detected)
 }
 
 // announce publishes insight.detected for each finding that appeared in this
@@ -235,6 +242,22 @@ func (s *Service) announce(
 			SubjectID:  entity.ID,
 			TenantInfo: tenant,
 		})
+	}
+}
+
+// project puts the findings on the watchtower as they are detected. A
+// finding that resolves on a later refresh is closed by the nightly
+// reconcile, which reads what is still active.
+func (s *Service) project(ctx context.Context, detected []*insight.Insight) {
+	if s.watchtower == nil {
+		return
+	}
+
+	for _, entity := range detected {
+		if entity == nil || entity.ID.IsNil() {
+			continue
+		}
+		s.watchtower.Upsert(ctx, watchtowersources.DescribeInsight(entity))
 	}
 }
 

@@ -25,6 +25,8 @@ type Params struct {
 	Realtime        services.RealtimeService
 	OrderDerivation services.OrderDerivationService `optional:"true"`
 	Publisher       services.AgentEventPublisher    `optional:"true"`
+	// Watchtower puts an open failure on the feed a person reads.
+	Watchtower services.WatchtowerProjector `optional:"true"`
 }
 
 type EDIServiceSetter interface {
@@ -43,6 +45,7 @@ type service struct {
 	ediService     services.EDIService
 	delayedMarker  delayedShipmentMarker
 	publisher      services.AgentEventPublisher
+	watchtower     services.WatchtowerProjector
 }
 
 func New(p Params) *service {
@@ -56,6 +59,7 @@ func New(p Params) *service {
 		auditService:   p.AuditService,
 		realtime:       p.Realtime,
 		publisher:      p.Publisher,
+		watchtower:     p.Watchtower,
 	}
 	s.delayedMarker = newDelayedShipmentMarker(delayedShipmentMarkerParams{
 		logger:          s.l,

@@ -79,6 +79,10 @@ func (l *Loader) Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to load config files: %w", err)
 	}
 
+	if err := l.rejectRetiredSections(); err != nil {
+		return nil, err
+	}
+
 	config := &Config{}
 	if err := l.viper.UnmarshalExact(config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
@@ -93,6 +97,34 @@ func (l *Loader) Load() (*Config, error) {
 	}
 
 	return config, nil
+}
+
+// retiredSections names a section that has moved, and where it went. An
+// exact unmarshal already refuses an unknown key, but its message says only
+// that the key is unknown — which reads as a typo when the truth is that
+// the settings were moved and are now being ignored.
+var retiredSections = map[string]string{
+	"documentIntelligence": "its settings now live under ai: " +
+		"enableAI is ai.documentExtraction, aiTimeout is ai.timeout, " +
+		"aiCompletionTimeout is ai.completionTimeout, " +
+		"aiStreamIdleTimeout is ai.streamIdleTimeout, " +
+		"aiMaxRetries is ai.maxRetries, aiMaxInputChars is ai.maxInputChars, " +
+		"aiExtractionMaxTokens is ai.extractionMaxTokens, and the OCR keys " +
+		"keep their names",
+}
+
+func (l *Loader) rejectRetiredSections() error {
+	for section, guidance := range retiredSections {
+		if l.viper.IsSet(section) {
+			return fmt.Errorf(
+				"configuration section %q has been removed: %s",
+				section,
+				guidance,
+			)
+		}
+	}
+
+	return nil
 }
 
 // determineEnvironment determines the current environment
@@ -269,18 +301,23 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("search.meilisearch.indexes.workers", "workers")
 	l.viper.SetDefault("search.meilisearch.indexes.documents", "documents")
 
-	// Document intelligence defaults
-	l.viper.SetDefault("documentIntelligence.enableOCRPreprocessing", true)
-	l.viper.SetDefault("documentIntelligence.ocrPreprocessingMode", "standard")
-	l.viper.SetDefault("documentIntelligence.ocrMaxImageDimension", 2400)
-	l.viper.SetDefault("documentIntelligence.enabled", true)
-	l.viper.SetDefault("documentIntelligence.ocrCommand", "tesseract")
-	l.viper.SetDefault("documentIntelligence.ocrLanguage", "eng")
-	l.viper.SetDefault("documentIntelligence.ocrTimeout", "45s")
-	l.viper.SetDefault("documentIntelligence.maxOCRPages", 25)
-	l.viper.SetDefault("documentIntelligence.maxExtractedChars", 200000)
-	l.viper.SetDefault("documentIntelligence.reconcileBatchSize", 100)
-	l.viper.SetDefault("documentIntelligence.maxConcurrentActivities", 2)
+	// AI defaults, including the OCR pipeline that feeds extraction.
+	l.viper.SetDefault("ai.timeout", "20s")
+	l.viper.SetDefault("ai.probeTimeout", "45s")
+	l.viper.SetDefault("ai.completionTimeout", "5m")
+	l.viper.SetDefault("ai.streamIdleTimeout", "5m")
+	l.viper.SetDefault("ai.maxRetries", 2)
+	l.viper.SetDefault("ai.maxInputChars", 24000)
+	l.viper.SetDefault("ai.enableOcrPreprocessing", true)
+	l.viper.SetDefault("ai.ocrPreprocessingMode", "standard")
+	l.viper.SetDefault("ai.ocrMaxImageDimension", 2400)
+	l.viper.SetDefault("ai.ocrCommand", "tesseract")
+	l.viper.SetDefault("ai.ocrLanguage", "eng")
+	l.viper.SetDefault("ai.ocrTimeout", "45s")
+	l.viper.SetDefault("ai.maxOcrPages", 25)
+	l.viper.SetDefault("ai.maxExtractedChars", 200000)
+	l.viper.SetDefault("ai.reconcileBatchSize", 100)
+	l.viper.SetDefault("ai.maxConcurrentActivities", 2)
 
 	// Platform defaults
 	l.viper.SetDefault("platform.mode", string(PlatformModeSelfHosted))

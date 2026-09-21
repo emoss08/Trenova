@@ -42,12 +42,9 @@ type Params struct {
 
 type Service struct {
 	logger *zap.Logger
-	// ai gates every model-backed feature. cfg keeps the document-intelligence
-	// timeouts and retry budget the router still reads; the two were one field
-	// until the switch named after document intelligence was found to be
-	// turning off the assistant.
+	// ai is the whole AI section: the master switch the router gates on,
+	// and the timeouts and retry budget it calls with.
 	ai         *config.AIConfig
-	cfg        *config.DocumentIntelligenceConfig
 	repo       repositories.AIProviderRepository
 	encryption *encryptionservice.Service
 	adapters   *modeladapter.Registry
@@ -74,7 +71,6 @@ func New(p Params) serviceports.CompletionService {
 	return &Service{
 		logger:        p.Logger.Named("service.completion-router"),
 		ai:            p.Config.GetAIConfig(),
-		cfg:           p.Config.GetDocumentIntelligenceConfig(),
 		repo:          p.Repo,
 		encryption:    p.Encryption,
 		usage:         p.Usage,
@@ -359,6 +355,7 @@ func (s *Service) callFor(
 			OutputSchema: req.Schema,
 			SchemaName:   req.SchemaName,
 			MaxTokens:    maxTokens,
+			Sampling:     modeladapter.SamplingForTask(req.Task),
 		},
 	}
 }
@@ -417,7 +414,7 @@ func (s *Service) retryWait(err error, attempt int, waited time.Duration) (time.
 		return 0, false
 	}
 
-	limit := max(1, s.cfg.GetAIMaxRetries())
+	limit := max(1, s.ai.GetMaxRetries())
 	busy := unavailability(err)
 	if busy {
 		limit = max(limit, maxBusyAttempts)
@@ -536,8 +533,8 @@ func (s *Service) clientFor(provider *aiprovider.Provider) *http.Client {
 	// self-hosted model — fail at twenty seconds with a transport error,
 	// which reads as an outage rather than as a busy endpoint.
 	policy := s.egressPolicy(allowPrivate)
-	policy.ResponseHeaderTimeout = s.cfg.GetAICompletionTimeout()
-	client := httpsafe.NewClientWithPolicy(s.cfg.GetAICompletionTimeout(), policy)
+	policy.ResponseHeaderTimeout = s.ai.GetCompletionTimeout()
+	client := httpsafe.NewClientWithPolicy(s.ai.GetCompletionTimeout(), policy)
 	s.clients[allowPrivate] = client
 
 	return client
@@ -569,7 +566,7 @@ func (s *Service) streamClientFor(provider *aiprovider.Provider) *http.Client {
 	// body, not by the probe timeout: an endpoint that holds the headers until
 	// it has something to say is slow, not down.
 	policy := s.egressPolicy(allowPrivate)
-	policy.ResponseHeaderTimeout = s.cfg.GetAIStreamIdleTimeout()
+	policy.ResponseHeaderTimeout = s.ai.GetStreamIdleTimeout()
 	client := httpsafe.NewStreamingClientWithPolicy(policy)
 	s.streamClients[allowPrivate] = client
 
@@ -586,7 +583,7 @@ func (s *Service) egressPolicy(allowPrivate bool) httpsafe.Policy {
 		// A self-hosted model holds the connection open while it generates and
 		// sends nothing until the first token, which on a loaded GPU outlasts the
 		// transport default.
-		ResponseHeaderTimeout: s.cfg.GetAICompletionTimeout(),
+		ResponseHeaderTimeout: s.ai.GetCompletionTimeout(),
 	}
 }
 

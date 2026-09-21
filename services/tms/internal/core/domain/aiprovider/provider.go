@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -24,6 +25,8 @@ const (
 	maxModelLength        = 200
 	minMaxTokens          = 256
 	maxMaxTokens          = 200000
+	maxExtraBodyKeys      = 24
+	maxExtraBodyBytes     = 8192
 	defaultMaxTokens      = 8192
 )
 
@@ -66,6 +69,25 @@ type Provider struct {
 	// ReasoningEffort asks a model that can think to do so before answering.
 	// Off is the default: the parameter is refused by models without it.
 	ReasoningEffort ReasoningEffort `json:"reasoningEffort" bun:"reasoning_effort,type:VARCHAR(50),notnull,nullzero,default:'Off'"`
+
+	// ExtraBody is merged into the request an OpenAI-compatible endpoint
+	// receives, for the fields that are the server's own rather than the
+	// protocol's.
+	//
+	// Every serving stack has some. NVIDIA's NIM takes chat_template_kwargs
+	// and reasoning_budget to steer a Nemotron model's thinking, and reads
+	// max_tokens where this system sends max_completion_tokens; vLLM takes
+	// top_k and repetition_penalty; OpenRouter takes provider routing. None
+	// of them belong in a typed request struct, because the next stack will
+	// want different ones again, and without a way through, a model that
+	// needs one simply cannot be used.
+	//
+	// It is merged under the fields this system sets rather than over them:
+	// a provider cannot redirect a call to another model, turn streaming on
+	// or off, or replace the tools and schema a caller asked for. What is
+	// left to it is sampling, vendor switches, and the fields this system
+	// has no opinion about.
+	ExtraBody map[string]any `json:"extraBody" bun:"extra_body,type:JSONB,nullzero"`
 
 	// InputCostPerMillion and OutputCostPerMillion are what the provider
 	// charges, in USD per million tokens, entered by the operator from the
@@ -294,6 +316,74 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 
 	p.validateTasks(multiErr)
 	p.validateEndpoint(multiErr)
+	p.validateExtraBody(multiErr)
+}
+
+// reservedBodyKeys are the request fields this system owns. A provider that
+// could set them could send a call to a different model, silently disable
+// the tools a caller passed, or turn a blocking call into a stream nothing
+// is reading.
+var reservedBodyKeys = map[string]struct{}{
+	"model":              {},
+	"messages":           {},
+	"stream":             {},
+	"stream_options":     {},
+	"tools":              {},
+	"tool_choice":        {},
+	"response_format":    {},
+	"input":              {},
+	"contents":           {},
+	"prompt":             {},
+	"system":             {},
+	"system_instruction": {},
+}
+
+func (p *Provider) validateExtraBody(multiErr *errortypes.MultiError) {
+	if len(p.ExtraBody) == 0 {
+		return
+	}
+	if len(p.ExtraBody) > maxExtraBodyKeys {
+		multiErr.Add(
+			"extraBody",
+			errortypes.ErrInvalid,
+			"At most {0} extra request fields",
+			maxExtraBodyKeys,
+		)
+
+		return
+	}
+
+	for key := range p.ExtraBody {
+		trimmed := strings.TrimSpace(key)
+		if trimmed == "" {
+			multiErr.Add("extraBody", errortypes.ErrInvalid, "An extra field needs a name")
+
+			continue
+		}
+		if _, reserved := reservedBodyKeys[strings.ToLower(trimmed)]; reserved {
+			multiErr.Add(
+				"extraBody",
+				errortypes.ErrInvalid,
+				"{0} is set by this system and cannot be overridden",
+				trimmed,
+			)
+		}
+	}
+
+	encoded, err := sonic.Marshal(p.ExtraBody)
+	if err != nil {
+		multiErr.Add("extraBody", errortypes.ErrInvalid, "Extra fields must be JSON")
+
+		return
+	}
+	if len(encoded) > maxExtraBodyBytes {
+		multiErr.Add(
+			"extraBody",
+			errortypes.ErrInvalid,
+			"Extra fields cannot exceed {0} characters",
+			maxExtraBodyBytes,
+		)
+	}
 }
 
 // applyDefaults fills the fields whose absence means "the ordinary thing"

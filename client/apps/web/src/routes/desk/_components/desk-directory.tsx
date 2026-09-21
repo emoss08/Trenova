@@ -6,10 +6,8 @@ import type { AssistantThread } from "@/types/assistant";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
@@ -29,7 +27,7 @@ import { groupDeskThreads, matchesThreadSearch, type DeskThreadGroup } from "./d
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 
-export type DeskRailProps = {
+export type DeskDirectoryProps = {
   threads: AssistantThread[];
   agents: AgentDefinitionRow[];
   activeThreadId: string | null;
@@ -38,16 +36,23 @@ export type DeskRailProps = {
   onStart: (agentId: string) => void;
   onDelete: (thread: AssistantThread) => void;
   onTogglePin: (thread: AssistantThread) => void;
+  /** Called when a row is followed, so the surface holding this can close. */
+  onNavigate?: () => void;
   className?: string;
 };
 
 /**
- * The Desk's left edge: where to go (home, decisions), a way to start a
- * conversation with any agent, a search, and the conversations shelved by
- * pin and by agent. It is the one part of the Desk that stays put while
- * the middle changes.
+ * Everywhere the Desk can go: home, the decisions queue, a new conversation
+ * with any agent, and every conversation there is.
+ *
+ * This used to be a 260px column nailed to the left edge, and it was the
+ * wrong shape for what it holds. A person picks a conversation perhaps twice
+ * an hour and then reads and writes in it for the rest of the hour, so the
+ * list was renting a permanent tenth of the window to answer a question
+ * that is asked twice. It is a switcher, so it lives behind one now and the
+ * width goes to the work.
  */
-export function DeskRail({
+export function DeskDirectory({
   threads,
   agents,
   activeThreadId,
@@ -56,8 +61,9 @@ export function DeskRail({
   onStart,
   onDelete,
   onTogglePin,
+  onNavigate,
   className,
-}: DeskRailProps) {
+}: DeskDirectoryProps) {
   const t = useT();
   const [query, setQuery] = useState("");
   const [now] = useState(nowInSeconds);
@@ -82,17 +88,28 @@ export function DeskRail({
   );
 
   return (
-    <nav
-      aria-label={t("Desk")}
-      className={cn("bg-sunken flex min-h-0 w-full min-w-0 flex-col", className)}
-    >
-      <div className="flex flex-col gap-0.5 px-2 pt-2">
-        <RailLink to="/desk" end icon={HomeIcon} label={t("Home")} />
+    <div className={cn("flex min-h-0 w-full min-w-0 flex-col", className)}>
+      <div className="border-border/60 flex items-center gap-1.5 border-b px-2 py-2">
+        <Input
+          autoFocus
+          inputContainerClassName="w-full"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t("Search conversations")}
+          className="h-8 text-sm"
+          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          aria-label={t("Search conversations")}
+        />
+      </div>
+
+      <div className="flex flex-col gap-0.5 p-2">
+        <DirectoryLink to="/desk" end icon={HomeIcon} label={t("Today")} onNavigate={onNavigate} />
         {canDecide && (
-          <RailLink
+          <DirectoryLink
             to="/desk/decisions"
             icon={InboxIcon}
             label={t("Decisions")}
+            onNavigate={onNavigate}
             trailing={
               decisions > 0 ? (
                 <Badge variant="warning" className="h-4 px-1.5 text-2xs tabular-nums">
@@ -104,20 +121,15 @@ export function DeskRail({
         )}
       </div>
 
-      <div className="flex items-center gap-1 px-2 pt-3 pb-1">
-        <Input
-          inputContainerClassName="w-full"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t("Search conversations")}
-          className="h-7 text-xs"
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
-          aria-label={t("Search conversations")}
-        />
-        <NewConversationMenu agents={agents} disabled={isStarting} onStart={onStart} />
+      <div className="border-border/60 border-t px-2 py-2">
+        <AgentPicker agents={agents} disabled={isStarting} onStart={onStart} />
       </div>
 
-      <ScrollArea className="min-h-0 flex-1" maskHeight={16}>
+      <ScrollArea
+        className="min-h-0 flex-1"
+        viewportClassName="max-h-[min(26rem,50vh)]"
+        maskHeight={16}
+      >
         {isLoading ? (
           <div className="space-y-2 p-3">
             <Skeleton className="h-10" />
@@ -134,7 +146,7 @@ export function DeskRail({
         ) : (
           <div className="flex flex-col gap-3 p-2">
             {groups.map((group) => (
-              <RailGroup
+              <DirectoryGroup
                 key={group.kind === "pinned" ? "pinned" : `agent-${group.agentId}`}
                 group={group}
                 agentsById={agentsById}
@@ -142,32 +154,36 @@ export function DeskRail({
                 now={now}
                 onDelete={onDelete}
                 onTogglePin={onTogglePin}
+                onNavigate={onNavigate}
               />
             ))}
           </div>
         )}
       </ScrollArea>
-    </nav>
+    </div>
   );
 }
 
-function RailLink({
+function DirectoryLink({
   to,
   end,
   icon: Icon,
   label,
   trailing,
+  onNavigate,
 }: {
   to: string;
   end?: boolean;
   icon: typeof HomeIcon;
   label: string;
   trailing?: React.ReactNode;
+  onNavigate?: () => void;
 }) {
   return (
     <NavLink
       to={to}
       end={end}
+      onClick={onNavigate}
       className={({ isActive }) =>
         cn(
           "ui-focus-ring flex h-8 items-center gap-2 rounded-md px-2 text-sm transition-colors",
@@ -182,7 +198,12 @@ function RailLink({
   );
 }
 
-function NewConversationMenu({
+/**
+ * Which agent to talk to. Shown open rather than behind a second menu: from
+ * inside a switcher, one more click to reach the thing the switcher exists
+ * to start is a click too many.
+ */
+function AgentPicker({
   agents,
   disabled,
   onStart,
@@ -192,64 +213,50 @@ function NewConversationMenu({
   onStart: (agentId: string) => void;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
+
+  if (agents.length === 0) {
+    return (
+      <p className="text-muted-foreground px-2 py-1.5 text-xs">
+        {t("No agents are available to talk to yet.")}
+      </p>
+    );
+  }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <PopoverTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="shrink-0"
-                  disabled={disabled || agents.length === 0}
-                  aria-label={t("New conversation")}
-                />
-              }
-            />
-          }
-        >
-          <PlusIcon className="size-4" />
-        </TooltipTrigger>
-        <TooltipContent>{t("New conversation")}</TooltipContent>
-      </Tooltip>
-      <PopoverContent align="start" className="w-72 p-1.5">
-        <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
-          {t("Start a conversation with")}
-        </p>
-        <ScrollArea viewportClassName="max-h-72">
-          <div className="flex flex-col gap-0.5">
-            {agents.map((agent) => (
-              <button
-                key={agent.id}
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  onStart(agent.id);
-                }}
-                className="hover:bg-surface-hover ui-focus-ring flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors"
-              >
-                <AgentTile agent={agent} size="sm" />
-                <span className="min-w-0 flex-1 truncate text-sm">{agent.name}</span>
-              </button>
-            ))}
-          </div>
-        </ScrollArea>
-      </PopoverContent>
-    </Popover>
+    <>
+      <p className="text-muted-foreground flex items-center gap-1.5 px-2 pb-1.5 text-xs">
+        <PlusIcon className="size-3" />
+        {t("Start a conversation with")}
+      </p>
+      <div className="flex flex-wrap gap-1">
+        {agents.map((agent) => (
+          <button
+            key={agent.id}
+            type="button"
+            disabled={disabled}
+            onClick={() => onStart(agent.id)}
+            className={cn(
+              "hover:bg-surface-hover ui-focus-ring flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1",
+              "ring-foreground/10 text-sm ring-1 transition-colors disabled:opacity-50",
+            )}
+          >
+            <AgentTile agent={agent} size="xs" />
+            <span className="max-w-40 truncate">{agent.name}</span>
+          </button>
+        ))}
+      </div>
+    </>
   );
 }
 
-function RailGroup({
+function DirectoryGroup({
   group,
   agentsById,
   activeThreadId,
   now,
   onDelete,
   onTogglePin,
+  onNavigate,
 }: {
   group: DeskThreadGroup;
   agentsById: Map<string, AgentDefinitionRow>;
@@ -257,6 +264,7 @@ function RailGroup({
   now: number;
   onDelete: (thread: AssistantThread) => void;
   onTogglePin: (thread: AssistantThread) => void;
+  onNavigate?: () => void;
 }) {
   const t = useT();
   const agent = group.agentId ? (agentsById.get(group.agentId) ?? null) : null;
@@ -277,7 +285,7 @@ function RailGroup({
         )}
       </h3>
       {group.threads.map((thread) => (
-        <RailRow
+        <DirectoryRow
           key={thread.id}
           thread={thread}
           showAgent={group.kind === "pinned"}
@@ -286,13 +294,14 @@ function RailGroup({
           now={now}
           onDelete={() => onDelete(thread)}
           onTogglePin={() => onTogglePin(thread)}
+          onNavigate={onNavigate}
         />
       ))}
     </section>
   );
 }
 
-function RailRow({
+function DirectoryRow({
   thread,
   showAgent,
   agentName,
@@ -300,6 +309,7 @@ function RailRow({
   now,
   onDelete,
   onTogglePin,
+  onNavigate,
 }: {
   thread: AssistantThread;
   showAgent: boolean;
@@ -308,6 +318,7 @@ function RailRow({
   now: number;
   onDelete: () => void;
   onTogglePin: () => void;
+  onNavigate?: () => void;
 }) {
   const t = useT();
   const touched = thread.lastMessageAt > 0 ? thread.lastMessageAt : thread.createdAt;
@@ -322,6 +333,7 @@ function RailRow({
       <NavLink
         to={`/desk/t/${thread.id}`}
         data-thread-row
+        onClick={onNavigate}
         className="ui-focus-ring min-w-0 flex-1 rounded-md py-1.5 text-left"
         aria-current={active ? "page" : undefined}
       >

@@ -214,9 +214,9 @@ func (a *Activities) SubmitAndAwaitDocumentAIExtractionActivity( //nolint:funlen
 				FileName:   doc.OriginalName,
 				Text: stringutils.TruncateAndTrim(
 					content.ContentText,
-					a.cfg.GetAIMaxInputChars(),
+					a.cfg.GetMaxInputChars(),
 				),
-				Pages: toAIDocumentPages(pages, a.cfg.GetAIMaxInputChars()),
+				Pages: toAIDocumentPages(pages, a.cfg.GetMaxInputChars()),
 			},
 		)
 		if submitErr != nil {

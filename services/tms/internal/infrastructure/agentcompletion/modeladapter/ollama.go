@@ -150,15 +150,17 @@ func (a ollamaAdapter) Stream(
 		return nil, err
 	}
 
+	reply, reasoning := mergeInlineThinking(text.String(), textReasoning(thinking.String()))
+
 	return &Response{
-		Text:            text.String(),
+		Text:            reply,
 		ToolCalls:       fromOllamaToolCalls(calls),
 		ModelIdentifier: stringutils.FirstNonEmpty(final.Model, call.Provider.Model),
 		InputTokens:     final.PromptEvalCount,
 		OutputTokens:    final.EvalCount,
 		Refused:         false,
 		Truncated:       final.DoneReason == "length",
-		Reasoning:       textReasoning(thinking.String()),
+		Reasoning:       reasoning,
 	}, nil
 }
 
@@ -198,8 +200,13 @@ func (a ollamaAdapter) Complete(ctx context.Context, call *Call) (*Response, err
 		return nil, err
 	}
 
+	reply, reasoning := mergeInlineThinking(
+		envelope.Message.Content,
+		textReasoning(envelope.Message.Thinking),
+	)
+
 	return &Response{
-		Text:            envelope.Message.Content,
+		Text:            reply,
 		ToolCalls:       fromOllamaToolCalls(envelope.Message.ToolCalls),
 		ModelIdentifier: stringutils.FirstNonEmpty(envelope.Model, call.Provider.Model),
 		InputTokens:     envelope.PromptEvalCount,
@@ -208,7 +215,7 @@ func (a ollamaAdapter) Complete(ctx context.Context, call *Call) (*Response, err
 		// as a transport error instead.
 		Refused:   false,
 		Truncated: envelope.DoneReason == "length",
-		Reasoning: textReasoning(envelope.Message.Thinking),
+		Reasoning: reasoning,
 	}, nil
 }
 

@@ -7,8 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -40,6 +42,9 @@ type Params struct {
 	Templates         services.DocumentTemplateResolver
 	ContextBuilder    *ContextBuilder
 	AuditService      services.AuditService
+	// Watchtower puts a running detention clock on the feed and takes it
+	// off once the occurrence closes.
+	Watchtower services.WatchtowerProjector `optional:"true"`
 }
 
 type Service struct {
@@ -63,6 +68,7 @@ type Service struct {
 	templates         services.DocumentTemplateResolver
 	contextBuilder    *ContextBuilder
 	auditService      services.AuditService
+	watchtower        services.WatchtowerProjector
 	now               func() int64
 }
 
@@ -89,6 +95,7 @@ func New(p Params) *Service {
 		workflowStarter:   p.WorkflowStarter,
 		templates:         p.Templates,
 		contextBuilder:    p.ContextBuilder,
+		watchtower:        p.Watchtower,
 		auditService:      p.AuditService,
 		now:               timeutils.NowUnix,
 	}
@@ -325,6 +332,7 @@ func (s *Service) computeStop(
 		previous:   p.existing,
 		stop:       p.stop,
 	})
+	s.projectToWatchtower(ctx, saved, p)
 
 	return saved, nil
 }
@@ -540,4 +548,42 @@ func (s *Service) tenantLocation(ctx context.Context, orgID pulid.ID) *time.Loca
 	}
 
 	return loc
+}
+
+// projectToWatchtower puts a running detention clock on the feed and takes
+// it off once the occurrence closes. The names come from what the
+// recalculation already loaded, so the live item reads the same as the one
+// the nightly snapshot would write without a second round of queries.
+func (s *Service) projectToWatchtower(
+	ctx context.Context,
+	saved *detention.DetentionOccurrence,
+	p computeStopParams,
+) {
+	if s.watchtower == nil || saved == nil {
+		return
+	}
+
+	if !saved.IsOpen {
+		s.watchtower.Resolve(
+			ctx,
+			p.tenantInfo,
+			watchtower.SourceDetentionOccurrence,
+			saved.ID.String(),
+		)
+
+		return
+	}
+
+	described := *saved
+	if described.ShipmentProNumber == "" && p.shipment != nil {
+		described.ShipmentProNumber = p.shipment.ProNumber
+	}
+	if described.CustomerName == "" && p.shipment != nil && p.shipment.Customer != nil {
+		described.CustomerName = p.shipment.Customer.Name
+	}
+	if described.LocationName == "" && p.stop != nil && p.stop.Location != nil {
+		described.LocationName = p.stop.Location.Name
+	}
+
+	s.watchtower.Upsert(ctx, watchtowersources.DescribeDetentionOccurrence(&described))
 }

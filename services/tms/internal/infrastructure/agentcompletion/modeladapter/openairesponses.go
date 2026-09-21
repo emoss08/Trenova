@@ -565,10 +565,25 @@ func splitResponsesOutput(resp *responsesEnvelope) (string, []ToolCall, bool) {
 			continue
 		}
 
+		// Only a message item carries the answer. A reasoning item shares
+		// the same content shape, and reasoning always precedes the message
+		// in the output, so reading every item meant the chain of thought
+		// became the reply — and because the first non-empty part wins, the
+		// real answer that followed was dropped entirely. The trace is read
+		// separately, from the reasoning item's own summary.
+		if item.Type != "" && item.Type != "message" {
+			continue
+		}
+
 		for partIdx := range item.Content {
 			part := &item.Content[partIdx]
 			if strings.TrimSpace(part.Refusal) != "" {
 				return "", nil, true
+			}
+			// output_text is the answer. A part of any other type — a
+			// reasoning_text carried on a message item, say — is not.
+			if part.Type != "" && part.Type != "output_text" {
+				continue
 			}
 			if text == "" && strings.TrimSpace(part.Text) != "" {
 				text = part.Text

@@ -157,25 +157,29 @@ ai:
   enabled: true # Set false to stop all AI at once
   verdictCacheTtl: 24h # How long a scope verdict is shared between replicas; the same question is classified once, not once per replica
 
-documentIntelligence:
-  enabled: true # Enable async extraction/classification
+  # Timeouts. A probe and a completion wait on different things: a probe asks
+  # for a short generation, a blocking completion sends nothing until the model
+  # has finished, and a stream is bounded by silence rather than by length.
+  timeout: 20s # Plain reachability check against an endpoint
+  probeTimeout: 45s # Test Connection, which waits on a real generation; keep under server.requestTimeout
+  completionTimeout: 5m # One blocking call to a model, including the wait before it answers
+  streamIdleTimeout: 5m # How long a streamed reply may go silent; reasoning models think for minutes before their first token
+  maxRetries: 2 # Retries for transient failures
+
+  # Reading uploaded documents with a model, and the OCR pipeline that feeds it.
+  documentExtraction: false # Let a model classify and extract uploaded documents
+  maxInputChars: 24000 # Max extracted text sent to a model
+  extractionMaxTokens: 5000 # Output ceiling for one extraction
   ocrCommand: tesseract # OCR binary path
   ocrLanguage: eng # OCR language pack
   ocrTimeout: 45s # Hard timeout per OCR process
-  enableAI: false # Let document intelligence classify and extract with a model
-  aiTimeout: 20s # Hard timeout for reachability probes against a provider
-  aiProbeTimeout: 45s # Hard timeout for a Test Connection probe, which waits on a real generation
-  aiCompletionTimeout: 5m # Hard timeout for one blocking call to a model
-  aiStreamIdleTimeout: 5m # How long a streaming reply may go silent before it is abandoned; reasoning models can think for minutes before their first token
-  aiMaxInputChars: 24000 # Max extracted text sent to AI
-  aiMaxRetries: 2 # Retry count for transient AI failures
-  enableOCRPreprocessing: true # Preprocess scanned images before OCR
+  enableOcrPreprocessing: true # Preprocess scanned images before OCR
   ocrPreprocessingMode: standard # standard preprocessing pipeline
   ocrMaxImageDimension: 2400 # Max width/height for preprocessed OCR images
-  maxOCRPages: 25 # Max scanned pages OCR will attempt per document
+  maxOcrPages: 25 # Max scanned pages OCR will attempt per document
   maxExtractedChars: 200000 # Max stored extracted text
   reconcileBatchSize: 100 # Batch size for stale-job reconciliation
-  maxConcurrentActivities: 2 # Dedicated document-intelligence worker concurrency
+  maxConcurrentActivities: 2 # Dedicated document worker concurrency
 
 # Security configuration
 security:

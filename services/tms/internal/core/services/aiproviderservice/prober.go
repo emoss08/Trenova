@@ -30,7 +30,7 @@ import (
 // better than discovering it from a malformed billing diagnosis weeks later.
 type Prober struct {
 	logger   *zap.Logger
-	cfg      *config.DocumentIntelligenceConfig
+	cfg      *config.AIConfig
 	adapters *modeladapter.Registry
 
 	clientsMu sync.Mutex
@@ -47,7 +47,7 @@ type ProberParams struct {
 func NewProber(p ProberParams) *Prober {
 	return &Prober{
 		logger:   p.Logger.Named("service.aiprovider.prober"),
-		cfg:      p.Config.GetDocumentIntelligenceConfig(),
+		cfg:      p.Config.GetAIConfig(),
 		adapters: modeladapter.NewRegistry(),
 		clients:  make(map[bool]*http.Client, 2),
 	}
@@ -118,7 +118,7 @@ func (p *Prober) Probe(
 	// The probe gets its own deadline rather than inheriting the request's,
 	// so a slow endpoint returns a verdict a person can read instead of the
 	// handler timing out underneath it.
-	ctx, cancel := context.WithTimeout(ctx, p.cfg.GetAIProbeTimeout())
+	ctx, cancel := context.WithTimeout(ctx, p.cfg.GetProbeTimeout())
 	defer cancel()
 
 	started := time.Now()
@@ -170,8 +170,8 @@ func (p *Prober) unreachable(err error, latency int64) *services.TestAIProviderR
 				"No response within %s. The test asks the model for a short reply, so a "+
 					"queued free tier or a model still loading can exceed it while the "+
 					"endpoint is perfectly healthy. Try again, or raise "+
-					"documentIntelligence.aiProbeTimeout. Underlying error: %s",
-				p.cfg.GetAIProbeTimeout(), err.Error(),
+					"ai.probeTimeout. Underlying error: %s",
+				p.cfg.GetProbeTimeout(), err.Error(),
 			),
 		}
 	}
@@ -298,7 +298,7 @@ func (p *Prober) clientFor(provider *aiprovider.Provider) *http.Client {
 	// Both budgets are the probe's own. A response-header timeout sized for
 	// a reachability check cuts off a queued endpoint before it has begun
 	// answering, which is the one failure mode this test must not invent.
-	timeout := p.cfg.GetAIProbeTimeout()
+	timeout := p.cfg.GetProbeTimeout()
 	client := httpsafe.NewClientWithPolicy(timeout, httpsafe.Policy{
 		AllowPrivateNetworks:  allowPrivate,
 		ResponseHeaderTimeout: timeout,

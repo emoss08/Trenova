@@ -22,11 +22,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/runstepledger"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/briefingjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carrierintelligencejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carriersettlementjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
@@ -57,6 +59,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/telematicsjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/watchtowerjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/weatheralertjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
 	carrierintelinfra "github.com/emoss08/trenova/internal/infrastructure/carrierintel"
@@ -128,6 +131,7 @@ func Options() fx.Option {
 		agentguard.Module,
 		agentruntime.Module,
 		runstepledger.Module,
+		watchtowersources.Module,
 		proposalrecorder.Module,
 		fx.Provide(assistantservice.New),
 		completionrouter.Module,
@@ -137,6 +141,8 @@ func Options() fx.Option {
 		tenderjobs.Module,
 		compliancejobs.Module,
 		insightjobs.Module,
+		watchtowerjobs.Module,
+		briefingjobs.Module,
 		iftajobs.Module,
 		dispatchjobs.Module,
 		weatheralertjobs.Module,

@@ -34,7 +34,7 @@ type Params struct {
 
 type Service struct {
 	logger     *zap.Logger
-	cfg        *config.DocumentIntelligenceConfig
+	cfg        *config.AIConfig
 	metrics    *metrics.Registry
 	completion serviceports.CompletionService
 	aiLogRepo  repositories.AILogRepository
@@ -43,7 +43,7 @@ type Service struct {
 func New(p Params) serviceports.AIDocumentService {
 	return &Service{
 		logger:     p.Logger.Named("service.ai-document"),
-		cfg:        p.Config.GetDocumentIntelligenceConfig(),
+		cfg:        p.Config.GetAIConfig(),
 		metrics:    p.Metrics,
 		completion: p.Completion,
 		aiLogRepo:  p.AILogRepo,
@@ -56,7 +56,7 @@ func (s *Service) RouteDocument(
 	ctx context.Context,
 	req *serviceports.AIRouteRequest,
 ) (*serviceports.AIRouteResult, error) {
-	if !s.cfg.AIEnabled() {
+	if !s.cfg.DocumentExtractionEnabled() {
 		return nil, errDisabled
 	}
 
@@ -93,7 +93,7 @@ func (s *Service) ExtractRateConfirmation(
 	ctx context.Context,
 	req *serviceports.AIExtractRequest,
 ) (*serviceports.AIExtractResult, error) {
-	if !s.cfg.AIEnabled() {
+	if !s.cfg.DocumentExtractionEnabled() {
 		return nil, errDisabled
 	}
 
@@ -137,7 +137,7 @@ func (s *Service) SubmitRateConfirmationBackgroundExtraction(
 	ctx context.Context,
 	req *serviceports.AIExtractRequest,
 ) (*serviceports.AIBackgroundExtractSubmission, error) {
-	if !s.cfg.AIEnabled() {
+	if !s.cfg.DocumentExtractionEnabled() {
 		return nil, errDisabled
 	}
 
@@ -145,7 +145,7 @@ func (s *Service) SubmitRateConfirmationBackgroundExtraction(
 	call.metric = "extract_background_submit"
 
 	request := call.request()
-	request.MaxTokens = s.cfg.GetAIExtractionMaxTokens()
+	request.MaxTokens = s.cfg.GetExtractionMaxTokens()
 
 	submission, err := s.completion.SubmitBackground(ctx, request)
 	if err != nil {
@@ -192,7 +192,7 @@ func (s *Service) PollRateConfirmationBackgroundExtraction(
 	ctx context.Context,
 	req *serviceports.AIBackgroundExtractPollRequest,
 ) (*serviceports.AIBackgroundExtractPollResult, error) {
-	if !s.cfg.AIEnabled() {
+	if !s.cfg.DocumentExtractionEnabled() {
 		return nil, errDisabled
 	}
 

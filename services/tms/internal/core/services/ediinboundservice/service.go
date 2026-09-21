@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -45,6 +46,8 @@ type Params struct {
 	Transport           services.EDITransportDispatcher
 	WorkflowStarter     services.WorkflowStarter
 	Metrics             *metrics.Registry `optional:"true"`
+	// Watchtower puts a held-back file on the feed a person reads.
+	Watchtower services.WatchtowerProjector `optional:"true"`
 }
 
 type Service struct {
@@ -64,6 +67,7 @@ type Service struct {
 	transport           services.EDITransportDispatcher
 	workflowStarter     services.WorkflowStarter
 	metrics             *metrics.EDI
+	watchtower          services.WatchtowerProjector
 }
 
 func New(p Params) *Service {
@@ -74,6 +78,7 @@ func New(p Params) *Service {
 	return &Service{
 		l:                   p.Logger.Named("service.edi-inbound"),
 		metrics:             ediMetrics,
+		watchtower:          p.Watchtower,
 		inboundFileRepo:     p.InboundFileRepo,
 		profileRepo:         p.ProfileRepo,
 		partnerRepo:         p.PartnerRepo,
@@ -433,6 +438,10 @@ func (s *Service) quarantineFile(
 }
 
 func (s *Service) notifyQuarantinedFile(ctx context.Context, file *edi.EDIInboundFile) {
+	if s.watchtower != nil {
+		s.watchtower.Upsert(ctx, watchtowersources.DescribeQuarantinedFile(file))
+	}
+
 	s.ediService.NotifyOperationalFailure(ctx, &ediservice.EDIOperationalAlert{
 		OrganizationID: file.OrganizationID,
 		BusinessUnitID: file.BusinessUnitID,

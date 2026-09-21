@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
@@ -170,7 +171,7 @@ func (s *Service) applyNarrations(params applyParams) {
 			" ",
 		)
 
-		if check := CheckNumbers(prose, supported); !check.OK {
+		if check := numberguard.CheckNumbers(prose, supported); !check.OK {
 			s.l.Warn("rejected insight narration citing figures no detector computed",
 				zap.String("detector", finding.DedupeKey),
 				zap.String("model", params.completion.ModelIdentifier),
@@ -230,7 +231,7 @@ func supportedFor(finding detector.Finding, windowDays int) []decimal.Decimal {
 
 	// The window length is a number the prose is encouraged to state and the
 	// detector did not put in a metric, so it is vouched for explicitly.
-	return SupportedValues(
+	return numberguard.SupportedValues(
 		metricValues,
 		baselines,
 		decimal.NewFromInt(int64(windowDays)),

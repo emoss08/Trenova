@@ -1992,6 +1992,43 @@ models:
   AgentException:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentException
+  Briefing:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/briefing.Briefing
+  BriefingRoleKey:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/briefing.RoleKey
+  BriefingStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/briefing.Status
+  BriefingSectionKey:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/briefing.SectionKey
+  BriefingSection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/briefing.Section
+    fields:
+      read:
+        resolver: true
+  BriefingItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/briefing.Item
+  WatchtowerItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/watchtower.Item
+    fields:
+      subjectType:
+        resolver: true
+      subjectId:
+        resolver: true
+      eventKind:
+        resolver: true
+  WatchtowerSourceKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/watchtower.SourceKind
+  WatchtowerSeverity:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/watchtower.Severity
   AgentDecision:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentDecision

@@ -64,7 +64,7 @@ type ActivitiesParams struct {
 
 type Activities struct {
 	logger              *zap.Logger
-	cfg                 *config.DocumentIntelligenceConfig
+	cfg                 *config.AIConfig
 	metrics             *metrics.Registry
 	documentRepo        repositories.DocumentRepository
 	documentControlRepo repositories.DocumentControlRepository
@@ -106,7 +106,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 	return &Activities{
 		logger:              p.Logger.Named("temporal.document-intelligence"),
-		cfg:                 p.Config.GetDocumentIntelligenceConfig(),
+		cfg:                 p.Config.GetAIConfig(),
 		metrics:             p.Metrics,
 		documentRepo:        p.DocumentRepo,
 		documentControlRepo: p.DocumentControlRepo,
@@ -901,7 +901,7 @@ func (a *Activities) enrichWithAI(
 			PageNumber: page.PageNumber,
 			Text: stringutils.TruncateAndTrim(
 				page.Text,
-				a.cfg.GetAIMaxInputChars()/max(len(payload.Extracted.Pages), 1),
+				a.cfg.GetMaxInputChars()/max(len(payload.Extracted.Pages), 1),
 			),
 		})
 	}
@@ -915,7 +915,7 @@ func (a *Activities) enrichWithAI(
 			FileName:   payload.Document.OriginalName,
 			Text: stringutils.TruncateAndTrim(
 				payload.Extracted.Text,
-				a.cfg.GetAIMaxInputChars(),
+				a.cfg.GetMaxInputChars(),
 			),
 			Pages: pages,
 			Features: &services.AIDocumentFeatureSet{

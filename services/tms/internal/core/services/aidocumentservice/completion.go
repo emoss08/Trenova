@@ -44,7 +44,7 @@ func (s *Service) runStructured(
 	out any,
 ) (*serviceports.StructuredCompletionResult, error) {
 	request := call.request()
-	request.MaxTokens = s.cfg.GetAIExtractionMaxTokens()
+	request.MaxTokens = s.cfg.GetExtractionMaxTokens()
 
 	result, err := s.completion.CompleteStructured(ctx, request)
 	if err != nil {

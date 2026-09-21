@@ -611,14 +611,18 @@ func (c *SearchConfig) GetDefaultLimit() int {
 	return c.DefaultLimit
 }
 
-// AIConfig is the master switch for model-backed features: the assistant,
-// agents, insight narration, the formula assistant and document intelligence
-// all run through the completion router, and this is what the router asks.
+// AIConfig is everything model-backed, in one section.
 //
-// It exists because that gate used to be documentIntelligence.enableAI, which
-// ships false. Configuring a provider in the UI then produced "AI features are
-// disabled" from a key named after a different feature, with nothing in the
-// message to say which one.
+// The assistant, the agents, insight narration, the formula assistant and
+// document extraction all run through the same completion router, so they
+// share a master switch, the same timeouts and the same retry budget.
+// Splitting them across a second section named after one feature is what
+// produced the original confusion: the gate used to be
+// documentIntelligence.enableAI, which ships false, so configuring a
+// provider under AI Control produced "AI features are disabled" from a key
+// named after a feature the operator was not using. The OCR settings live
+// here too, because every one of them exists to feed the extraction above
+// them.
 type AIConfig struct {
 	// Enabled is a pointer so an absent key means enabled rather than
 	// disabled. Leaving it out is the common case and must not turn the
@@ -631,6 +635,38 @@ type AIConfig struct {
 	// bounded so a change to the classifier's prompt reaches every replica
 	// within a day rather than never.
 	VerdictCacheTTL time.Duration `mapstructure:"verdictCacheTtl" validate:"omitempty,min=0"`
+
+	// Timeout bounds a plain reachability check against an endpoint.
+	Timeout time.Duration `mapstructure:"timeout"`
+	// ProbeTimeout bounds the Test Connection probe, which waits on a real
+	// generation rather than only on a connection.
+	ProbeTimeout time.Duration `mapstructure:"probeTimeout"`
+	// CompletionTimeout bounds one blocking call to a model, including the
+	// wait before it says anything.
+	CompletionTimeout time.Duration `mapstructure:"completionTimeout"`
+	// StreamIdleTimeout is how long a streaming reply may go silent.
+	StreamIdleTimeout time.Duration `mapstructure:"streamIdleTimeout"`
+	MaxRetries        int           `mapstructure:"maxRetries"        validate:"omitempty,min=0,max=10"`
+
+	// DocumentExtraction lets a model classify and extract uploaded
+	// documents. Off by default; the OCR pipeline below runs either way.
+	DocumentExtraction  bool `mapstructure:"documentExtraction"`
+	MaxInputChars       int  `mapstructure:"maxInputChars"      validate:"omitempty,min=1000,max=500000"`
+	ExtractionMaxTokens int  `mapstructure:"extractionMaxTokens" validate:"omitempty,min=256,max=32768"`
+
+	// The OCR pipeline that turns a scan into the text a model reads. It
+	// lives here rather than in a section of its own because every one of
+	// these settings exists to feed the extraction above it.
+	OCRCommand              string        `mapstructure:"ocrCommand"`
+	OCRLanguage             string        `mapstructure:"ocrLanguage"`
+	OCRTimeout              time.Duration `mapstructure:"ocrTimeout"`
+	EnableOCRPreprocessing  bool          `mapstructure:"enableOcrPreprocessing"`
+	OCRPreprocessingMode    string        `mapstructure:"ocrPreprocessingMode"`
+	OCRMaxImageDimension    int           `mapstructure:"ocrMaxImageDimension"    validate:"omitempty,min=512,max=12000"`
+	MaxOCRPages             int           `mapstructure:"maxOcrPages"             validate:"omitempty,min=1,max=500"`
+	MaxExtractedChars       int           `mapstructure:"maxExtractedChars"       validate:"omitempty,min=1000,max=1000000"`
+	ReconcileBatchSize      int           `mapstructure:"reconcileBatchSize"      validate:"omitempty,min=1,max=1000"`
+	MaxConcurrentActivities int           `mapstructure:"maxConcurrentActivities" validate:"omitempty,min=1,max=64"`
 }
 
 const defaultVerdictCacheTTL = 24 * time.Hour
@@ -658,29 +694,7 @@ func (c *AIConfig) AIEnabled() bool {
 	return c == nil || c.Enabled == nil || *c.Enabled
 }
 
-type DocumentIntelligenceConfig struct {
-	Enabled                 bool          `mapstructure:"enabled"`
-	OCRCommand              string        `mapstructure:"ocrCommand"`
-	OCRLanguage             string        `mapstructure:"ocrLanguage"`
-	OCRTimeout              time.Duration `mapstructure:"ocrTimeout"`
-	EnableAI                bool          `mapstructure:"enableAI"`
-	AITimeout               time.Duration `mapstructure:"aiTimeout"`
-	AIProbeTimeout          time.Duration `mapstructure:"aiProbeTimeout"`
-	AIStreamIdleTimeout     time.Duration `mapstructure:"aiStreamIdleTimeout"`
-	AICompletionTimeout     time.Duration `mapstructure:"aiCompletionTimeout"`
-	AIMaxInputChars         int           `mapstructure:"aiMaxInputChars"         validate:"omitempty,min=1000,max=500000"`
-	AIExtractionMaxTokens   int           `mapstructure:"aiExtractionMaxTokens"   validate:"omitempty,min=256,max=32768"`
-	AIMaxRetries            int           `mapstructure:"aiMaxRetries"            validate:"omitempty,min=0,max=10"`
-	EnableOCRPreprocessing  bool          `mapstructure:"enableOCRPreprocessing"`
-	OCRPreprocessingMode    string        `mapstructure:"ocrPreprocessingMode"`
-	OCRMaxImageDimension    int           `mapstructure:"ocrMaxImageDimension"    validate:"omitempty,min=512,max=12000"`
-	MaxOCRPages             int           `mapstructure:"maxOCRPages"             validate:"omitempty,min=1,max=500"`
-	MaxExtractedChars       int           `mapstructure:"maxExtractedChars"       validate:"omitempty,min=1000,max=1000000"`
-	ReconcileBatchSize      int           `mapstructure:"reconcileBatchSize"      validate:"omitempty,min=1,max=1000"`
-	MaxConcurrentActivities int           `mapstructure:"maxConcurrentActivities" validate:"omitempty,min=1,max=64"`
-}
-
-func (c *DocumentIntelligenceConfig) GetOCRCommand() string {
+func (c *AIConfig) GetOCRCommand() string {
 	if c.OCRCommand == "" {
 		return "tesseract"
 	}
@@ -688,7 +702,7 @@ func (c *DocumentIntelligenceConfig) GetOCRCommand() string {
 	return c.OCRCommand
 }
 
-func (c *DocumentIntelligenceConfig) GetOCRLanguage() string {
+func (c *AIConfig) GetOCRLanguage() string {
 	if c.OCRLanguage == "" {
 		return "eng"
 	}
@@ -696,7 +710,7 @@ func (c *DocumentIntelligenceConfig) GetOCRLanguage() string {
 	return c.OCRLanguage
 }
 
-func (c *DocumentIntelligenceConfig) GetOCRTimeout() time.Duration {
+func (c *AIConfig) GetOCRTimeout() time.Duration {
 	if c.OCRTimeout <= 0 {
 		return 45 * time.Second
 	}
@@ -704,19 +718,24 @@ func (c *DocumentIntelligenceConfig) GetOCRTimeout() time.Duration {
 	return c.OCRTimeout
 }
 
-func (c *DocumentIntelligenceConfig) AIEnabled() bool {
-	return c.EnableAI
+// DocumentExtractionEnabled says whether a model may read uploaded
+// documents. It is separate from the master switch on purpose: reading a
+// customer's paperwork with a model is a decision an operator makes on its
+// own terms, and it ships off, while the assistant an organization has
+// configured a provider for ships on.
+func (c *AIConfig) DocumentExtractionEnabled() bool {
+	return c != nil && c.DocumentExtraction
 }
 
-func (c *DocumentIntelligenceConfig) GetAITimeout() time.Duration {
-	if c.AITimeout <= 0 {
+func (c *AIConfig) GetTimeout() time.Duration {
+	if c.Timeout <= 0 {
 		return 20 * time.Second
 	}
 
-	return c.AITimeout
+	return c.Timeout
 }
 
-// GetAIProbeTimeout bounds the Test Connection call against a provider.
+// GetProbeTimeout bounds the Test Connection call against a provider.
 //
 // A probe is not a reachability check: it asks the model to emit a two-field
 // JSON object, because what the test is really for is finding out whether the
@@ -726,74 +745,74 @@ func (c *DocumentIntelligenceConfig) GetAITimeout() time.Duration {
 // those providers with "could not reach the endpoint" when the endpoint was
 // fine and merely busy. The ceiling is kept under the server's own request
 // timeout so a slow probe returns a verdict rather than a 504.
-func (c *DocumentIntelligenceConfig) GetAIProbeTimeout() time.Duration {
-	if c.AIProbeTimeout <= 0 {
+func (c *AIConfig) GetProbeTimeout() time.Duration {
+	if c.ProbeTimeout <= 0 {
 		return 45 * time.Second
 	}
 
-	return c.AIProbeTimeout
+	return c.ProbeTimeout
 }
 
-// GetAICompletionTimeout bounds one blocking call to a model.
+// GetCompletionTimeout bounds one blocking call to a model.
 //
-// Separate from GetAITimeout, which is sized for a reachability probe: asking
+// Separate from GetTimeout, which is sized for a reachability probe: asking
 // whether an endpoint answers is a second or two of work, while asking a model
 // to read a prompt and write an answer is minutes on a loaded or self-hosted
 // one. Sharing the probe's budget made a long answer fail outright on providers
 // that do not stream, which looks to the reader exactly like an outage.
-func (c *DocumentIntelligenceConfig) GetAICompletionTimeout() time.Duration {
-	if c.AICompletionTimeout <= 0 {
+func (c *AIConfig) GetCompletionTimeout() time.Duration {
+	if c.CompletionTimeout <= 0 {
 		return 5 * time.Minute
 	}
 
-	return c.AICompletionTimeout
+	return c.CompletionTimeout
 }
 
-// GetAIStreamIdleTimeout is how long a streaming reply may go silent.
+// GetStreamIdleTimeout is how long a streaming reply may go silent.
 //
-// A stream cannot use GetAITimeout: that one bounds a whole request, and
+// A stream cannot use GetTimeout: that one bounds a whole request, and
 // http.Client applies it to reading the body, so a long answer arriving
 // perfectly well would be severed partway through. What a stream needs bounded
 // is silence, measured between reads, which is long by default because the gap
 // before the first token of a considered answer is ordinary rather than a
 // fault.
-func (c *DocumentIntelligenceConfig) GetAIStreamIdleTimeout() time.Duration {
-	if c.AIStreamIdleTimeout <= 0 {
+func (c *AIConfig) GetStreamIdleTimeout() time.Duration {
+	if c.StreamIdleTimeout <= 0 {
 		return 5 * time.Minute
 	}
 
-	return c.AIStreamIdleTimeout
+	return c.StreamIdleTimeout
 }
 
-func (c *DocumentIntelligenceConfig) GetAIMaxInputChars() int {
-	if c.AIMaxInputChars <= 0 {
+func (c *AIConfig) GetMaxInputChars() int {
+	if c.MaxInputChars <= 0 {
 		return 24000
 	}
 
-	return c.AIMaxInputChars
+	return c.MaxInputChars
 }
 
-func (c *DocumentIntelligenceConfig) GetAIExtractionMaxTokens() int {
-	if c.AIExtractionMaxTokens <= 0 {
+func (c *AIConfig) GetExtractionMaxTokens() int {
+	if c.ExtractionMaxTokens <= 0 {
 		return 5000
 	}
 
-	return c.AIExtractionMaxTokens
+	return c.ExtractionMaxTokens
 }
 
-func (c *DocumentIntelligenceConfig) GetAIMaxRetries() int {
-	if c.AIMaxRetries <= 0 {
+func (c *AIConfig) GetMaxRetries() int {
+	if c.MaxRetries <= 0 {
 		return 2
 	}
 
-	return c.AIMaxRetries
+	return c.MaxRetries
 }
 
-func (c *DocumentIntelligenceConfig) OCRPreprocessingEnabled() bool {
+func (c *AIConfig) OCRPreprocessingEnabled() bool {
 	return c.EnableOCRPreprocessing
 }
 
-func (c *DocumentIntelligenceConfig) GetOCRPreprocessingMode() string {
+func (c *AIConfig) GetOCRPreprocessingMode() string {
 	if c.OCRPreprocessingMode == "" {
 		return "standard"
 	}
@@ -801,7 +820,7 @@ func (c *DocumentIntelligenceConfig) GetOCRPreprocessingMode() string {
 	return c.OCRPreprocessingMode
 }
 
-func (c *DocumentIntelligenceConfig) GetOCRMaxImageDimension() int {
+func (c *AIConfig) GetOCRMaxImageDimension() int {
 	if c.OCRMaxImageDimension <= 0 {
 		return 2400
 	}
@@ -809,7 +828,7 @@ func (c *DocumentIntelligenceConfig) GetOCRMaxImageDimension() int {
 	return c.OCRMaxImageDimension
 }
 
-func (c *DocumentIntelligenceConfig) GetMaxOCRPages() int {
+func (c *AIConfig) GetMaxOCRPages() int {
 	if c.MaxOCRPages <= 0 {
 		return 25
 	}
@@ -817,7 +836,7 @@ func (c *DocumentIntelligenceConfig) GetMaxOCRPages() int {
 	return c.MaxOCRPages
 }
 
-func (c *DocumentIntelligenceConfig) GetMaxConcurrentActivities() int {
+func (c *AIConfig) GetMaxConcurrentActivities() int {
 	if c.MaxConcurrentActivities <= 0 {
 		return 2
 	}
@@ -825,7 +844,7 @@ func (c *DocumentIntelligenceConfig) GetMaxConcurrentActivities() int {
 	return c.MaxConcurrentActivities
 }
 
-func (c *DocumentIntelligenceConfig) GetMaxExtractedChars() int {
+func (c *AIConfig) GetMaxExtractedChars() int {
 	if c.MaxExtractedChars <= 0 {
 		return 200000
 	}
@@ -833,7 +852,7 @@ func (c *DocumentIntelligenceConfig) GetMaxExtractedChars() int {
 	return c.MaxExtractedChars
 }
 
-func (c *DocumentIntelligenceConfig) GetReconcileBatchSize() int {
+func (c *AIConfig) GetReconcileBatchSize() int {
 	if c.ReconcileBatchSize <= 0 {
 		return 100
 	}
@@ -1603,30 +1622,29 @@ func (c NetworkPulseConfig) GetCacheTTL() time.Duration {
 }
 
 type Config struct {
-	App                  AppConfig                  `mapstructure:"app"                  validate:"required"`
-	Database             DatabaseConfig             `mapstructure:"database"             validate:"required"`
-	Monitoring           MonitoringConfig           `mapstructure:"monitoring"           validate:"required"`
-	Cache                CacheConfig                `mapstructure:"cache"                validate:"required"`
-	Server               ServerConfig               `mapstructure:"server"               validate:"required"`
-	Security             SecurityConfig             `mapstructure:"security"             validate:"required"`
-	Logging              LoggingConfig              `mapstructure:"logging"              validate:"required"`
-	Temporal             TemporalConfig             `mapstructure:"temporal"             validate:"required"`
-	Storage              StorageConfig              `mapstructure:"storage"              validate:"required"`
-	System               SystemConfig               `mapstructure:"system"               validate:"required"`
-	Foony                FoonyConfig                `mapstructure:"foony"                validate:"required"`
-	Search               SearchConfig               `mapstructure:"search"`
-	AI                   AIConfig                   `mapstructure:"ai"`
-	DocumentIntelligence DocumentIntelligenceConfig `mapstructure:"documentIntelligence"`
-	Audit                AuditConfig                `mapstructure:"audit"`
-	Update               UpdateConfig               `mapstructure:"update"`
-	Twilio               TwilioConfig               `mapstructure:"twilio"`
-	Platform             PlatformConfig             `mapstructure:"platform"`
-	Reporting            ReportingConfig            `mapstructure:"reporting"`
-	Renderer             RendererConfig             `mapstructure:"renderer"`
-	Portal               PortalConfig               `mapstructure:"portal"`
-	Push                 PushConfig                 `mapstructure:"push"`
-	Tendering            TenderingConfig            `mapstructure:"tendering"`
-	CarrierIntelligence  CarrierIntelligenceConfig  `mapstructure:"carrierIntelligence"`
+	App                 AppConfig                 `mapstructure:"app"                  validate:"required"`
+	Database            DatabaseConfig            `mapstructure:"database"             validate:"required"`
+	Monitoring          MonitoringConfig          `mapstructure:"monitoring"           validate:"required"`
+	Cache               CacheConfig               `mapstructure:"cache"                validate:"required"`
+	Server              ServerConfig              `mapstructure:"server"               validate:"required"`
+	Security            SecurityConfig            `mapstructure:"security"             validate:"required"`
+	Logging             LoggingConfig             `mapstructure:"logging"              validate:"required"`
+	Temporal            TemporalConfig            `mapstructure:"temporal"             validate:"required"`
+	Storage             StorageConfig             `mapstructure:"storage"              validate:"required"`
+	System              SystemConfig              `mapstructure:"system"               validate:"required"`
+	Foony               FoonyConfig               `mapstructure:"foony"                validate:"required"`
+	Search              SearchConfig              `mapstructure:"search"`
+	AI                  AIConfig                  `mapstructure:"ai"`
+	Audit               AuditConfig               `mapstructure:"audit"`
+	Update              UpdateConfig              `mapstructure:"update"`
+	Twilio              TwilioConfig              `mapstructure:"twilio"`
+	Platform            PlatformConfig            `mapstructure:"platform"`
+	Reporting           ReportingConfig           `mapstructure:"reporting"`
+	Renderer            RendererConfig            `mapstructure:"renderer"`
+	Portal              PortalConfig              `mapstructure:"portal"`
+	Push                PushConfig                `mapstructure:"push"`
+	Tendering           TenderingConfig           `mapstructure:"tendering"`
+	CarrierIntelligence CarrierIntelligenceConfig `mapstructure:"carrierIntelligence"`
 }
 
 type CarrierIntelligenceConfig struct {
@@ -1695,10 +1713,6 @@ func (c *PortalConfig) GetBaseURL() string {
 func (c *Config) GetCacheConfig() *CacheConfig { return &c.Cache }
 
 func (c *Config) GetSearchConfig() *SearchConfig { return &c.Search }
-
-func (c *Config) GetDocumentIntelligenceConfig() *DocumentIntelligenceConfig {
-	return &c.DocumentIntelligence
-}
 
 func (c *Config) GetAIConfig() *AIConfig { return &c.AI }
 

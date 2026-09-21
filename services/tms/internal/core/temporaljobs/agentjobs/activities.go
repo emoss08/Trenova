@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -50,6 +51,9 @@ type ActivitiesParams struct {
 	Evaluations   repositories.AgentEvaluationRepository
 	Decisions     repositories.AgentDecisionRepository
 	Conversations repositories.ConversationRepository `optional:"true"`
+	// Watchtower puts a run that could not finish on the feed, so a
+	// failure nobody was watching for still reaches someone.
+	Watchtower serviceports.WatchtowerProjector `optional:"true"`
 }
 
 type Activities struct {
@@ -70,6 +74,7 @@ type Activities struct {
 	conversations repositories.ConversationRepository
 	subjects      serviceports.AgentSubjectDescriber
 	activity      serviceports.AgentActivityPublisher
+	watchtower    serviceports.WatchtowerProjector
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -93,6 +98,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		conversations: p.Conversations,
 		subjects:      p.Subjects,
 		activity:      p.Activity,
+		watchtower:    p.Watchtower,
 	}
 }
 
@@ -247,14 +253,51 @@ func (a *Activities) RunAgentActivity(
 }
 
 func (a *Activities) CompleteRunActivity(ctx context.Context, input *CompleteRunInput) error {
-	return a.updateRun(ctx, input.TenantInfo, input.RunID, func(run *agent.AgentRun) {
+	var completed *agent.AgentRun
+	err := a.updateRun(ctx, input.TenantInfo, input.RunID, func(run *agent.AgentRun) {
 		run.Status = input.Status
 		if input.Error != "" {
 			run.ErrorMessage = stringutils.Ellipsize(input.Error, maxSummaryChars)
 		}
 		completedAt := timeutils.NowUnix()
 		run.CompletedAt = &completedAt
+		completed = run
 	})
+	if err != nil {
+		return err
+	}
+
+	a.projectFailedRun(ctx, input.TenantInfo, completed)
+
+	return nil
+}
+
+// projectFailedRun puts a run that could not finish on the watchtower. A
+// run that ended any other way was either watched or uneventful, and the
+// feed only carries what somebody has to look at.
+func (a *Activities) projectFailedRun(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	run *agent.AgentRun,
+) {
+	if a.watchtower == nil || run == nil || run.Status != agent.RunStatusFailed {
+		return
+	}
+
+	name := ""
+	if run.AgentDefinitionID.IsNotNil() {
+		definition, err := a.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+			ID:         run.AgentDefinitionID,
+			TenantInfo: tenant,
+		})
+		if err != nil {
+			a.logger.Warn("failed to name the agent behind a failed run", zap.Error(err))
+		} else {
+			name = definition.Name
+		}
+	}
+
+	a.watchtower.Upsert(ctx, watchtowersources.DescribeFailedRun(run, name))
 }
 
 func (a *Activities) ExpireProposalsActivity(

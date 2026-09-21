@@ -72,11 +72,8 @@ func newTestService(t *testing.T, providers ...*aiprovider.Provider) *Service {
 	t.Helper()
 
 	return &Service{
-		logger: zap.NewNop(),
-		cfg: &config.DocumentIntelligenceConfig{
-			EnableAI:     true,
-			AIMaxRetries: 1,
-		},
+		logger:     zap.NewNop(),
+		ai:         &config.AIConfig{MaxRetries: 1},
 		repo:       &fakeRepo{providers: providers},
 		encryption: encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager("k")),
 		adapters:   modeladapter.NewRegistry(),
@@ -265,13 +262,13 @@ func TestCompleteStructured_DisabledGlobally(t *testing.T) {
 		"a refusal that does not name the key leaves the operator searching")
 }
 
-// Document intelligence keeps its own switch for its own extraction and
-// classification, and turning that off must not take the assistant with it.
-func TestCompleteStructured_IsNotGatedByDocumentIntelligence(t *testing.T) {
+// Reading documents with a model keeps its own switch, and turning that
+// off must not take the assistant with it.
+func TestCompleteStructured_IsNotGatedByDocumentExtraction(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(t)
-	svc.cfg = &config.DocumentIntelligenceConfig{EnableAI: false}
+	svc.ai = &config.AIConfig{DocumentExtraction: false}
 
 	_, err := svc.CompleteStructured(t.Context(), generalRequest())
 

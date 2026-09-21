@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
@@ -89,17 +90,7 @@ type Link struct {
 // is enforced at validation so a bad path cannot be stored rather than merely
 // not rendered.
 func (l Link) IsSafe() bool {
-	if !strings.HasPrefix(l.Path, "/") {
-		return false
-	}
-
-	// "//evil.example" is protocol-relative and leaves the application despite
-	// starting with a slash.
-	if strings.HasPrefix(l.Path, "//") {
-		return false
-	}
-
-	return !strings.ContainsAny(l.Path, "\\\r\n")
+	return stringutils.IsSafeAppPath(l.Path)
 }
 
 type Insight struct {

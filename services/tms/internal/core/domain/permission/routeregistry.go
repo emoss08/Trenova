@@ -1229,6 +1229,17 @@ func (rr *RouteRegistry) registerDeskRoutes() {
 		Category:    "Desk",
 		ParentRoute: "/desk",
 	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/desk/watchtower",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceWatchtower, Operation: OpRead},
+		},
+		DisplayName: "Watchtower",
+		Category:    "Desk",
+		ParentRoute: "/desk",
+	})
 }
 
 func (rr *RouteRegistry) registerReportingRoutes() {

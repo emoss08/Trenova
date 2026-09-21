@@ -61,6 +61,12 @@ type AIProvider {
   allowPrivateNetwork: Boolean!
   structuredOutputMode: AIStructuredOutputMode!
   reasoningEffort: AIReasoningEffort!
+  """
+  Vendor request fields this endpoint takes that the protocol does not
+  define, merged under the fields this system sets. Null when the endpoint
+  needs none.
+  """
+  extraBody: JSON
   "USD per million input tokens, from the provider price list; null means unknown."
   inputCostPerMillion: Decimal
   "USD per million output tokens; null means unknown."
