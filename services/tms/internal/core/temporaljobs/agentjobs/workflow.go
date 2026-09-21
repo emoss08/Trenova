@@ -13,13 +13,20 @@ import (
 )
 
 const (
-	sweepDueLimit      = 200
-	minRunTimeout      = 60 * time.Second
-	prepareTimeout     = 2 * time.Minute
-	persistTimeout     = 2 * time.Minute
-	sweepStartTimeout  = time.Minute
-	sweepListTimeout   = time.Minute
-	runActivityRetries = 2
+	sweepDueLimit     = 200
+	minRunTimeout     = 60 * time.Second
+	prepareTimeout    = 2 * time.Minute
+	persistTimeout    = 2 * time.Minute
+	sweepStartTimeout = time.Minute
+	sweepListTimeout  = time.Minute
+	// runActivityRetries is how many times a run may be attempted.
+	//
+	// Two was the old ceiling, and it was low because a retry was dangerous:
+	// the second attempt re-ran every write the first had made. With the step
+	// ledger claiming each tool call before it runs, a retry redoes the
+	// reasoning and none of the writing, so a transient failure is worth
+	// another try rather than a failed run somebody has to notice.
+	runActivityRetries = 3
 	// evaluationTimeoutSeconds bounds a replay the way the longest run is
 	// bounded: an hour, the ceiling a definition may set.
 	evaluationTimeoutSeconds = 3600
