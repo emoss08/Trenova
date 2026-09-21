@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -158,8 +159,19 @@ func (f *fakePermissions) Check(
 ) (*serviceports.PermissionCheckResult, error) {
 	f.captured = req
 
+	allowed := f.allowed
+	switch {
+	case req.PrincipalType == serviceports.PrincipalTypeAgent:
+		// The engine answers an agent principal from the platform allow-list
+		// before any role applies; the fake answers the same way.
+		allowed = permission.IsAgentAllowed(permission.Resource(req.Resource), req.Operation)
+	case f.readable != nil:
+		detail, ok := f.readable[req.Resource]
+		allowed = ok && slices.Contains(detail.Operations, req.Operation)
+	}
+
 	return &serviceports.PermissionCheckResult{
-		Allowed: f.allowed,
+		Allowed: allowed,
 		Reason:  "not permitted",
 	}, nil
 }

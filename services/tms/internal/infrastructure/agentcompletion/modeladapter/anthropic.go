@@ -305,7 +305,7 @@ func (a anthropicAdapter) Stream(
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, interrupted(err, model)
 	}
 
 	content := make([]anthropicBlock, 0, len(order))

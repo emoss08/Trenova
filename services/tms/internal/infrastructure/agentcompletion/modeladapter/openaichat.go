@@ -279,7 +279,7 @@ func (a openAIChatAdapter) Stream(
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, interrupted(err, model)
 	}
 
 	toolCalls := make([]ToolCall, 0, len(order))

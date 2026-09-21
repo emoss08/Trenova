@@ -176,8 +176,9 @@ func closingNotice(err error, ranAnything bool) string {
 }
 
 // interruptedTurn is what a failed run leaves behind: everything that ran,
-// closed with a note. Nil when nothing ran at all, since a turn with no user
-// message in it is not a turn.
+// closed with a note. A run that came back with nothing, or did not come
+// back at all, still leaves the question and the note, so the thread shows
+// what the person asked and that nothing answered it.
 //
 // Keeping it is not optional. A tool that executed before the failure changed
 // something, and the thread is the only place a person can see that it did;
@@ -189,16 +190,18 @@ func interruptedTurn(
 	run *serviceports.RunResult,
 	err error,
 ) *TurnResult {
-	if run == nil || len(run.Messages) == 0 {
-		return nil
+	if run == nil {
+		run = &serviceports.RunResult{}
 	}
 
 	// The first message is the question; anything after it is what ran.
 	notice := closingNotice(err, len(run.Messages) > 1)
 
-	messages := make([]conversation.Message, 0, len(run.Messages)+1)
-	messages = append(messages, run.Messages...)
-	messages[0] = scopedMessage(conversation.RoleUser, req.Input, decision, false)
+	messages := make([]conversation.Message, 0, len(run.Messages)+2)
+	messages = append(messages, scopedMessage(conversation.RoleUser, req.Input, decision, false))
+	if len(run.Messages) > 1 {
+		messages = append(messages, run.Messages[1:]...)
+	}
 	messages = append(messages, conversation.Message{
 		Role:       conversation.RoleAssistant,
 		Content:    notice,

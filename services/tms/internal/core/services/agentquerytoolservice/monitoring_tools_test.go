@@ -241,7 +241,7 @@ func TestListVehiclePositions_NarrowsToTheTractorsAskedFor(t *testing.T) {
 		},
 		{TractorID: pulid.MustNew("trc_"), RecordedAt: 1_790_000_000},
 	}}
-	tool := newListVehiclePositionsTool(feed)
+	tool := newListVehiclePositionsTool(feed, &fakePermissions{allowed: true})
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{
 		"tractorIds":    []any{wanted.String()},
@@ -557,7 +557,7 @@ func TestMonitoringTools_RejectAMismatchedActor(t *testing.T) {
 
 	tools := []serviceports.AgentQueryTool{
 		newGetShipmentTrackingTool(&fakeTrackingShipments{}, &fakeBoardMoves{}, &fakeTelematics{}),
-		newListVehiclePositionsTool(&fakeTelematics{}),
+		newListVehiclePositionsTool(&fakeTelematics{}, &fakePermissions{}),
 		newGetWorkerHOSTool(&fakeTelematics{}),
 		newGetDispatchBoardTool(&fakeBoard{}),
 		newListServiceFailureReasonCodesTool(&fakeReasonCodes{}),
@@ -570,4 +570,53 @@ func TestMonitoringTools_RejectAMismatchedActor(t *testing.T) {
 		_, err := tool.Query(t.Context(), params)
 		require.ErrorIs(t, err, ErrTenantMismatch, tool.Name())
 	}
+}
+
+// A position is a tractor's, and the tool is gated on tractors; the name of
+// the person driving it is a worker's, and a reader who may not open workers
+// does not learn who is where from the fleet map either. An agent principal
+// reads workers within the platform's allow-list, so it still sees the name.
+func TestListVehiclePositions_NamesTheDriverOnlyToAReaderOfWorkers(t *testing.T) {
+	t.Parallel()
+
+	feed := &fakeTelematics{positions: []*telematics.VehiclePosition{{
+		TractorID: pulid.MustNew("trc_"), RecordedAt: 1_790_000_000,
+		Tractor: &tractor.Tractor{Code: "T-104", PrimaryWorker: &worker.Worker{FirstName: "Maria", LastName: "Ortiz"}},
+	}}}
+	noWorkers := &fakePermissions{readable: map[string]*serviceports.ResourcePermissionDetail{
+		permission.ResourceTractor.String(): {Operations: []permission.Operation{permission.OpRead}},
+	}}
+
+	rows := vehicleRows(t, newListVehiclePositionsTool(feed, noWorkers), testParams(map[string]any{}))
+	require.Len(t, rows, 1)
+	assert.Equal(t, "T-104", rows[0].Tractor)
+	assert.Empty(t, rows[0].Driver, "a reader without worker access is not told who is driving")
+
+	agentParams := testParams(map[string]any{})
+	agentParams.Actor = &serviceports.RequestActor{
+		PrincipalType:  serviceports.PrincipalTypeAgent,
+		PrincipalID:    pulid.MustNew("agd_"),
+		OrganizationID: agentParams.OrganizationID,
+		BusinessUnitID: agentParams.BusinessUnitID,
+	}
+	rows = vehicleRows(t, newListVehiclePositionsTool(feed, noWorkers), agentParams)
+	require.Len(t, rows, 1)
+	assert.Equal(t, "Maria Ortiz", rows[0].Driver)
+}
+
+func vehicleRows(
+	t *testing.T,
+	tool serviceports.AgentQueryTool,
+	params serviceports.QueryToolParams,
+) []vehiclePositionRow {
+	t.Helper()
+
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+	outcome, ok := result.(searchOutcome)
+	require.True(t, ok)
+	rows, ok := outcome.Items.([]vehiclePositionRow)
+	require.True(t, ok)
+
+	return rows
 }

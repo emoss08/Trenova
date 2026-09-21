@@ -77,17 +77,17 @@ func (l *proposalLedger) noteCalls(msg conversation.Message) {
 
 // currentContent is the tool result as it stands now: the proposal's
 // present state when the result recorded one, the stored text otherwise.
-func (l *proposalLedger) currentContent(msg conversation.Message) string {
+func (l *proposalLedger) currentContent(msg conversation.Message) (string, bool) {
 	call, ok := l.calls[msg.ToolCallID]
 	if !ok {
-		return msg.Content
+		return msg.Content, false
 	}
 	outcomes := l.bySource[call.messageID][call.toolName]
 	if call.ordinal >= len(outcomes) {
-		return msg.Content
+		return msg.Content, false
 	}
 
-	return proposalOutcomeText(msg.ToolName, outcomes[call.ordinal])
+	return proposalOutcomeText(msg.ToolName, outcomes[call.ordinal]), true
 }
 
 // proposalOutcomeText says what became of a proposal, in words the model

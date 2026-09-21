@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -92,4 +93,15 @@ func TestRequestMissingDocsSchemaDeclaresEveryTemplateInput(t *testing.T) {
 	// additionalProperties is false, so an undeclared parameter is rejected
 	// outright rather than silently dropped.
 	assert.Equal(t, false, schema["additionalProperties"])
+}
+
+// Asking an outside party for paperwork is an email to that party, so it is
+// gated on sending customer communications, not on working the billing queue.
+func TestRequestMissingDocs_IsGatedOnCustomerCommunication(t *testing.T) {
+	t.Parallel()
+
+	tool := &requestMissingDocsTool{}
+	assert.Equal(t, permission.ResourceCustomerCommunication, tool.PermissionResource())
+	assert.Equal(t, permission.OpCreate, tool.PermissionOperation())
+	assert.True(t, permission.IsAgentAllowed(tool.PermissionResource(), tool.PermissionOperation()))
 }

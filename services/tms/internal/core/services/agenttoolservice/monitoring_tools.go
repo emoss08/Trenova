@@ -312,11 +312,11 @@ func (t *notifyDriverTool) ParamSchema() map[string]any {
 func (t *notifyDriverTool) Reversible() bool { return false }
 
 func (t *notifyDriverTool) PermissionResource() permission.Resource {
-	return permission.ResourceWorker
+	return permission.ResourceDriverMessage
 }
 
 func (t *notifyDriverTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
+	return permission.OpCreate
 }
 
 func (t *notifyDriverTool) RequiresIdempotencyKey() bool { return false }
@@ -467,11 +467,11 @@ func (t *emailCustomerTool) ParamSchema() map[string]any {
 func (t *emailCustomerTool) Reversible() bool { return false }
 
 func (t *emailCustomerTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipment
+	return permission.ResourceCustomerCommunication
 }
 
 func (t *emailCustomerTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
+	return permission.OpCreate
 }
 
 func (t *emailCustomerTool) RequiresIdempotencyKey() bool { return true }
@@ -681,11 +681,11 @@ func (t *sendDetentionNoticeTool) ParamSchema() map[string]any {
 func (t *sendDetentionNoticeTool) Reversible() bool { return false }
 
 func (t *sendDetentionNoticeTool) PermissionResource() permission.Resource {
-	return permission.ResourceDetentionPolicy
+	return permission.ResourceCustomerCommunication
 }
 
 func (t *sendDetentionNoticeTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
+	return permission.OpCreate
 }
 
 func (t *sendDetentionNoticeTool) RequiresIdempotencyKey() bool { return false }

@@ -412,7 +412,14 @@ func (h *Handler) sendMessageStream(c *gin.Context) {
 	}
 	defer stream.Close()
 
-	emit := func(event serviceports.StreamEvent) { stream.Emit(event.Event, event.Data) }
+	emit := func(event serviceports.StreamEvent) {
+		if emitErr := stream.Emit(event.Event, event.Data); emitErr != nil {
+			h.logger.Error("assistant stream event lost",
+				zap.String("event", event.Event),
+				zap.Error(emitErr),
+			)
+		}
+	}
 
 	actor := requestActorFromAuthContext(authCtx)
 	providerID, providerChosen := body.provider()

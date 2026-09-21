@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -99,14 +100,42 @@ func OpenEventStream(c *gin.Context, opts EventStreamOptions) (*EventStream, err
 	return stream, nil
 }
 
-// Emit writes one event. A value that cannot be encoded is dropped rather than
-// written half-formed: a broken frame would take every later event with it.
-func (s *EventStream) Emit(event string, data any) {
+// Emit writes one event. A value that cannot be encoded is never written
+// half-formed, since a broken frame would take every later event with it; the
+// reader is sent an error event naming the one that was lost instead, and
+// the caller gets the encoding error to log.
+func (s *EventStream) Emit(event string, data any) error {
 	encoded, err := sonic.Marshal(data)
 	if err != nil {
-		return
+		s.write(lostEventName, lostEventFrame(event))
+
+		return fmt.Errorf("encode %q event: %w", event, err)
 	}
 
+	s.write(event, encoded)
+
+	return nil
+}
+
+// lostEventName is the event a reader receives in place of one that could
+// not be encoded.
+const lostEventName = "error"
+
+// lostEventFrame is the error payload for an event that could not be sent.
+// It is built from strings alone, so encoding it cannot fail the same way.
+func lostEventFrame(event string) []byte {
+	encoded, err := sonic.Marshal(map[string]string{
+		"message": "The " + event + " event could not be sent.",
+		"event":   event,
+	})
+	if err != nil {
+		return []byte(`{"message":"An event could not be sent."}`)
+	}
+
+	return encoded
+}
+
+func (s *EventStream) write(event string, encoded []byte) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.closed {

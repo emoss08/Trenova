@@ -385,7 +385,7 @@ func (a openAIResponsesAdapter) Stream(
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, interrupted(err, model)
 	}
 
 	if completed == nil {

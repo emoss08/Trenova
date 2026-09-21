@@ -332,10 +332,14 @@ type vehiclePositionRow struct {
 
 type listVehiclePositionsTool struct {
 	telematics telematicsReader
+	access     fieldAccess
 }
 
-func newListVehiclePositionsTool(telematics telematicsReader) serviceports.AgentQueryTool {
-	return &listVehiclePositionsTool{telematics: telematics}
+func newListVehiclePositionsTool(
+	telematics telematicsReader,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
+	return &listVehiclePositionsTool{telematics: telematics, access: newFieldAccess(permissions)}
 }
 
 func (t *listVehiclePositionsTool) Name() string { return "list_vehicle_positions" }
@@ -412,12 +416,20 @@ func (t *listVehiclePositionsTool) Query(
 	}
 
 	now := clockFor(params).now
+	// The map is a tractor's; who is driving it is a worker's, and a reader
+	// who may not open workers is not told who is where from the map instead.
+	nameDrivers := t.access.mayRead(ctx, params, permission.ResourceWorker)
+
 	rows := make([]vehiclePositionRow, 0, len(positions))
 	for _, position := range positions {
 		if position == nil || (len(wanted) > 0 && !wanted[position.TractorID]) {
 			continue
 		}
-		rows = append(rows, toVehiclePositionRow(position, now, params.Timezone))
+		row := toVehiclePositionRow(position, now, params.Timezone)
+		if !nameDrivers {
+			row.Driver = ""
+		}
+		rows = append(rows, row)
 	}
 
 	return criteria.result(rows, len(rows)), nil

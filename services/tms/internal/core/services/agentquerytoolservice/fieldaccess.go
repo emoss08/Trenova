@@ -64,3 +64,32 @@ func (a fieldAccess) visible(
 
 	return ceiling.CanAccess(sensitivity)
 }
+
+// mayRead reports whether the actor may read a resource other than the one
+// the tool is gated on, for a row that joins two: a tractor's position
+// carries its driver's name, and the name is the worker's to show. The
+// question goes to the engine as the tool guard's own would, so an agent
+// principal, a person and an API key are each answered by their own rules.
+func (a fieldAccess) mayRead(
+	ctx context.Context,
+	params serviceports.QueryToolParams,
+	resource permission.Resource,
+) bool {
+	actor := params.Actor
+	if actor == nil || a.permissions == nil {
+		return false
+	}
+
+	result, err := a.permissions.Check(ctx, &serviceports.PermissionCheckRequest{
+		PrincipalType:  actor.PrincipalType,
+		PrincipalID:    actor.PrincipalID,
+		UserID:         actor.UserID,
+		APIKeyID:       actor.APIKeyID,
+		BusinessUnitID: actor.BusinessUnitID,
+		OrganizationID: actor.OrganizationID,
+		Resource:       resource.String(),
+		Operation:      permission.OpRead,
+	})
+
+	return err == nil && result != nil && result.Allowed
+}

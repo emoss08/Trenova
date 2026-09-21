@@ -3,6 +3,7 @@ package agentruntime
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -45,6 +46,16 @@ func fromToolCallRecords(records []conversation.ToolCallRecord) []serviceports.T
 	return calls
 }
 
+// recentToolTurns is how many of the newest user turns keep their tool
+// results whole in the replay. Older results are cut to their opening: they
+// are the bulk of a long thread, they are stale by the time the thread is
+// long, and the model can call the tool again for the current answer.
+const recentToolTurns = 3
+
+// compactedToolResultChars is how much of an older tool result survives.
+// Enough to see what the call returned; not enough to carry a listing.
+const compactedToolResultChars = 320
+
 func toAdapterMessages(
 	history []conversation.Message,
 	outcomes []serviceports.ProposalOutcome,
@@ -61,24 +72,55 @@ func toAdapterMessages(
 	for start < len(history) && history[start].Role != conversation.RoleUser {
 		start++
 	}
+	history = history[start:]
 
-	for _, msg := range history[start:] {
+	recentFrom := recentTurnStart(history, recentToolTurns)
+
+	// A call and its result are replayed together or not at all. A refused
+	// assistant turn is left out, so a result answering one of its calls
+	// would be an orphan; a turn that died between the call and its result
+	// leaves a call nothing answers. A provider rejects either.
+	answered := answeredCalls(history)
+	open := make(map[string]struct{})
+
+	for idx, msg := range history {
 		switch msg.Role {
 		case conversation.RoleAssistant:
 			if msg.Refused {
 				continue
 			}
+			calls := make([]conversation.ToolCallRecord, 0, len(msg.ToolCalls))
+			for _, call := range msg.ToolCalls {
+				if _, ok := answered[call.ID]; !ok {
+					continue
+				}
+				open[call.ID] = struct{}{}
+				calls = append(calls, call)
+			}
+			if len(calls) == 0 && strings.TrimSpace(msg.Content) == "" {
+				continue
+			}
+			// The ledger counts the calls as they were made, so a proposal's
+			// ordinal is not shifted by a call that was left out.
 			ledger.noteCalls(msg)
 			messages = append(messages, serviceports.Message{
 				Role:      serviceports.RoleAssistant,
 				Content:   msg.Content,
-				ToolCalls: fromToolCallRecords(msg.ToolCalls),
+				ToolCalls: fromToolCallRecords(calls),
 				Reasoning: msg.Reasoning,
 			})
 		case conversation.RoleTool:
+			if _, answers := open[msg.ToolCallID]; !answers {
+				continue
+			}
+			delete(open, msg.ToolCallID)
+			content, current := ledger.currentContent(msg)
+			if !current && idx < recentFrom {
+				content = compactToolResult(content)
+			}
 			messages = append(messages, serviceports.Message{
 				Role:       serviceports.RoleTool,
-				Content:    ledger.currentContent(msg),
+				Content:    content,
 				ToolCallID: msg.ToolCallID,
 				ToolName:   msg.ToolName,
 				IsError:    msg.ToolFailed,
@@ -95,6 +137,55 @@ func toAdapterMessages(
 	}
 
 	return messages
+}
+
+// answeredCalls is the set of tool call ids a recorded result answers.
+func answeredCalls(history []conversation.Message) map[string]struct{} {
+	answered := make(map[string]struct{})
+	for _, msg := range history {
+		if msg.Role == conversation.RoleTool && msg.ToolCallID != "" {
+			answered[msg.ToolCallID] = struct{}{}
+		}
+	}
+
+	return answered
+}
+
+// recentTurnStart is the index of the user message that opens the newest
+// turns-many turns, or zero when the history holds fewer.
+func recentTurnStart(history []conversation.Message, turns int) int {
+	seen := 0
+	for idx := len(history) - 1; idx >= 0; idx-- {
+		if history[idx].Role != conversation.RoleUser || history[idx].Refused {
+			continue
+		}
+		seen++
+		if seen == turns {
+			return idx
+		}
+	}
+
+	return 0
+}
+
+// compactToolResult cuts an older result to its opening and says what was
+// left out. A result already short enough is returned as it is: the note
+// would be longer than what it replaced.
+func compactToolResult(content string) string {
+	if len(content) <= compactedToolResultChars {
+		return content
+	}
+
+	cut := compactedToolResultChars
+	for cut > 0 && !utf8.RuneStart(content[cut]) {
+		cut--
+	}
+
+	return fmt.Sprintf(
+		"%s\n[%d more characters from earlier in the conversation elided; "+
+			"call the tool again if the current details matter]",
+		content[:cut], len(content)-cut,
+	)
 }
 
 // rationaleInput is everything the runtime knows about why a tool was

@@ -17,6 +17,7 @@ import { ArrowRightIcon, InfoIcon, XIcon } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AssistantAgentProvider } from "@/components/agent-identity/agent-context";
+import { useCalendarNow } from "@/hooks/use-calendar-now";
 import { Composer } from "./composer";
 import {
   AgentAvatar,
@@ -95,9 +96,9 @@ export function MessageThread({
     () => arrivedSince(openedAt.current ?? Number.POSITIVE_INFINITY, messages),
     [messages],
   );
-  // Read once per mount: day markers are relative to when the thread was
-  // opened, and a clock read during render would make every render impure.
-  const [now] = useState(() => Math.floor(Date.now() / 1000));
+  // Day markers are relative to today, and today changes while a thread is
+  // open; the clock moves only when the reader's date does.
+  const now = useCalendarNow(timezone);
 
   // Proposals are fetched rather than taken from the send response: they outlive
   // the turn that raised them, so reopening a thread has to show what is still

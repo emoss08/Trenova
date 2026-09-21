@@ -209,6 +209,10 @@ export const Resource = {
   // Reporting
   Report: "report",
   Dashboard: "dashboard",
+
+  // Communications
+  DriverMessage: "driver_message",
+  CustomerCommunication: "customer_communication",
 } as const;
 
 export type ResourceType = (typeof Resource)[keyof typeof Resource];

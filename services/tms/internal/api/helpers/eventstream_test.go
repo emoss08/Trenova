@@ -127,3 +127,29 @@ func TestEventStream_StopsHeartbeatingOnceClosed(t *testing.T) {
 
 	assert.Zero(t, strings.Count(body, ": keepalive"), "nothing is written after Close")
 }
+
+// A value that cannot be encoded is not written half-formed, since a broken
+// frame would take every later event with it. But it is not dropped in
+// silence either: the reader is told the stream lost an event, and the
+// handler is told so it can log which one.
+func TestEventStream_ReportsAValueItCannotEncode(t *testing.T) {
+	var emitErr error
+	url := serve(t, 0, func(c *gin.Context) {
+		stream, err := helpers.OpenEventStream(c, helpers.EventStreamOptions{Heartbeat: -1})
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+		defer stream.Close()
+
+		emitErr = stream.Emit("delta", map[string]any{"ch": make(chan int)})
+		_ = stream.Emit("done", map[string]string{})
+	})
+
+	body := readAll(t, url)
+
+	require.Error(t, emitErr)
+	assert.NotContains(t, body, "event: delta")
+	assert.Contains(t, body, "event: error")
+	assert.Contains(t, body, "event: done", "the stream carries on after the lost event")
+}

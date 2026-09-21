@@ -17,6 +17,14 @@ import (
 func dyingStreamServer(t *testing.T, chunks []string) *httptest.Server {
 	t.Helper()
 
+	return dyingNamedModelServer(t, "", chunks)
+}
+
+// dyingNamedModelServer is a dying stream whose chunks name the model that
+// served them, as a real endpoint's do.
+func dyingNamedModelServer(t *testing.T, model string, chunks []string) *httptest.Server {
+	t.Helper()
+
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.WriteHeader(http.StatusOK)
@@ -25,7 +33,7 @@ func dyingStreamServer(t *testing.T, chunks []string) *httptest.Server {
 		require.True(t, ok)
 
 		for _, chunk := range chunks {
-			payload := `{"choices":[{"delta":{"content":"` + chunk + `"}}]}`
+			payload := `{"model":"` + model + `","choices":[{"delta":{"content":"` + chunk + `"}}]}`
 			_, _ = w.Write([]byte("data: " + payload + "\n\n"))
 			flusher.Flush()
 		}
@@ -217,4 +225,23 @@ func TestStreamChat_APinOnAMissingProviderUsesTheOrder(t *testing.T) {
 	result, err := service.StreamChat(t.Context(), request, func(string) {})
 	require.NoError(t, err)
 	assert.Equal(t, "Answered.", result.Text)
+}
+
+// A cut-off reply is recorded under the model that actually served it. The
+// configured identifier is an alias on some endpoints, and a turn logged under
+// the alias when every finished turn is logged under the served name made the
+// usage log disagree with itself about which model a person was talking to.
+func TestStreamChat_ACutOffReplyNamesTheModelThatServedIt(t *testing.T) {
+	t.Parallel()
+
+	server := dyingNamedModelServer(t, "served-model-2026-09", []string{"Sarah Williams - "})
+	provider := chatProvider("flaky", server.URL, 10)
+	service := newTestService(t, provider)
+
+	result, err := service.StreamChat(t.Context(), chatRequest(pulid.Nil), func(string) {})
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.True(t, result.Truncated)
+	assert.Equal(t, "served-model-2026-09", result.ModelIdentifier)
 }

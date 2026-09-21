@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -171,4 +172,16 @@ func TestListExpiringCredentials_RejectsAMismatchedActor(t *testing.T) {
 	_, err := tool.Query(t.Context(), params)
 	require.ErrorIs(t, err, ErrTenantMismatch)
 	assert.Nil(t, repo.captured)
+}
+
+// A credential is its own resource, with its own sensitivities, and the
+// application gates the credential pages on it. The tool that lists them is
+// gated the same way, so a person who may read workers but not their
+// credentials is not shown expiry dates in the chat that the page refuses.
+func TestListExpiringCredentials_IsGatedOnTheCredentialNotTheWorker(t *testing.T) {
+	t.Parallel()
+
+	tool := newListExpiringCredentialsTool(&fakeCredentialRepo{})
+	assert.Equal(t, permission.ResourceWorkerCredential, tool.PermissionResource())
+	assert.True(t, permission.IsAgentAllowed(tool.PermissionResource(), permission.OpRead))
 }

@@ -418,7 +418,8 @@ func TestEmailCustomer_IsAProposalThatNeedsAnIdempotencyKey(t *testing.T) {
 	tool, mailer, _, _, _ := customerEmailFixture()
 	assert.Equal(t, agent.TierPropose, tool.DefaultAutonomyTier())
 	assert.True(t, tool.RequiresIdempotencyKey())
-	assert.Equal(t, permission.ResourceShipment, tool.PermissionResource())
+	assert.Equal(t, permission.ResourceCustomerCommunication, tool.PermissionResource())
+	assert.Equal(t, permission.OpCreate, tool.PermissionOperation())
 
 	err := tool.Execute(t.Context(), executeParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
@@ -542,5 +543,31 @@ func TestMonitoringActionTools_RejectAMismatchedActor(t *testing.T) {
 		params := executeParams(map[string]any{})
 		params.Actor.BusinessUnitID = pulid.MustNew("bu_")
 		require.ErrorIs(t, candidate.Execute(t.Context(), params), ErrTenantMismatch, candidate.Name())
+	}
+}
+
+// Reaching outside the organization is its own permission. A dispatcher who
+// may edit a shipment does not thereby get to email its customer, and one
+// who may read a driver's record does not thereby get to page their phone:
+// each outbound tool is gated on the communication it sends, not on the
+// record it is about.
+func TestOutboundTools_AreGatedOnTheCommunicationTheySend(t *testing.T) {
+	t.Parallel()
+
+	customerTool, _, _, _, _ := customerEmailFixture()
+	tools := []struct {
+		tool     serviceports.AgentTool
+		resource permission.Resource
+	}{
+		{newNotifyDriverTool(&fakeDriverNotifier{}), permission.ResourceDriverMessage},
+		{customerTool, permission.ResourceCustomerCommunication},
+		{newSendDetentionNoticeTool(&fakeDetention{}), permission.ResourceCustomerCommunication},
+	}
+	for _, entry := range tools {
+		assert.Equal(t, entry.resource, entry.tool.PermissionResource(), entry.tool.Name())
+		assert.Equal(t, permission.OpCreate, entry.tool.PermissionOperation(), entry.tool.Name())
+		assert.True(t,
+			permission.IsAgentAllowed(entry.tool.PermissionResource(), entry.tool.PermissionOperation()),
+			"%s must be reachable by an agent principal", entry.tool.Name())
 	}
 }

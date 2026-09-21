@@ -87,11 +87,11 @@ func (t *requestMissingDocsTool) ParamSchema() map[string]any {
 func (t *requestMissingDocsTool) Reversible() bool { return false }
 
 func (t *requestMissingDocsTool) PermissionResource() permission.Resource {
-	return permission.ResourceBillingQueue
+	return permission.ResourceCustomerCommunication
 }
 
 func (t *requestMissingDocsTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
+	return permission.OpCreate
 }
 
 func (t *requestMissingDocsTool) RequiresIdempotencyKey() bool { return true }

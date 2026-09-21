@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type Params struct {
@@ -32,6 +33,7 @@ type Params struct {
 	ErrorHandler           *helpers.ErrorHandler
 	PermissionMiddleware   *middleware.PermissionMiddleware
 	Config                 *config.Config `optional:"true"`
+	Logger                 *zap.Logger
 }
 
 type Handler struct {
@@ -42,6 +44,7 @@ type Handler struct {
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
 	storageConfig   config.StorageConfig
+	logger          *zap.Logger
 }
 
 func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
@@ -71,6 +74,7 @@ func New(p Params) *Handler {
 		eh:              p.ErrorHandler,
 		pm:              p.PermissionMiddleware,
 		storageConfig:   storageConfig,
+		logger:          p.Logger,
 	}
 }
 
@@ -129,6 +133,7 @@ func NewTestHandlerWithConfig(
 		eh:              eh,
 		pm:              pm,
 		storageConfig:   storageConfig,
+		logger:          zap.NewNop(),
 	}
 }
 
@@ -1426,10 +1431,17 @@ func (h *Handler) importAssistantChatStream(c *gin.Context) {
 	}
 	defer stream.Close()
 
-	emit := func(event serviceports.StreamEvent) { stream.Emit(event.Event, event.Data) }
+	emit := func(event serviceports.StreamEvent) {
+		if emitErr := stream.Emit(event.Event, event.Data); emitErr != nil {
+			h.logger.Error("import assistant stream event lost",
+				zap.String("event", event.Event),
+				zap.Error(emitErr),
+			)
+		}
+	}
 
 	if err = h.importAssistant.ChatStream(c.Request.Context(), &body, emit); err != nil {
-		stream.Emit("error", map[string]string{"message": err.Error()})
+		emit(serviceports.StreamEvent{Event: "error", Data: map[string]string{"message": err.Error()}})
 	}
 }
 

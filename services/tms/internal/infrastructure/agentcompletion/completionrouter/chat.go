@@ -154,7 +154,7 @@ func (s *Service) runChat(
 
 			return &serviceports.ChatCompletionResult{
 				Text:            emitted,
-				ModelIdentifier: provider.Model,
+				ModelIdentifier: modeladapter.ServedModel(attemptErr, provider.Model),
 				ProviderID:      provider.ID,
 				ProviderKind:    provider.Kind,
 				Truncated:       true,

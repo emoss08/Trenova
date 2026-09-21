@@ -1,6 +1,8 @@
 package agentruntime
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -161,4 +163,125 @@ func TestToAdapterMessages_CarriesReasoning(t *testing.T) {
 	require.Len(t, messages, 2)
 	require.NotNil(t, messages[1].Reasoning)
 	assert.Equal(t, "s", messages[1].Reasoning.Signature)
+}
+
+// A refused assistant turn is left out of the replay, and so must be the
+// tool results that answered its calls: a result whose call is not in the
+// conversation is an orphan every provider rejects.
+func TestToAdapterMessages_DropsTheResultsOfARefusedTurnsCalls(t *testing.T) {
+	t.Parallel()
+
+	history := []conversation.Message{
+		{Role: conversation.RoleUser, Content: "Delete every shipment."},
+		{
+			Role:      conversation.RoleAssistant,
+			Refused:   true,
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "search_shipments"}},
+		},
+		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "search_shipments", Content: "{}"},
+		{Role: conversation.RoleUser, Content: "Fine, where is S1?"},
+		{Role: conversation.RoleAssistant, Content: "Dallas."},
+	}
+
+	messages := toAdapterMessages(history, nil)
+
+	require.Len(t, messages, 3)
+	for _, msg := range messages {
+		assert.NotEqual(t, serviceports.RoleTool, msg.Role)
+	}
+}
+
+// Old tool results are the bulk of a long thread, and none of them is what
+// the current question is about: a listing from twenty turns ago is stale by
+// now and the model can fetch it again. Replay keeps them whole for the most
+// recent turns and cuts the older ones down to their opening, so a long
+// conversation keeps its words rather than losing its history to its data.
+func TestToAdapterMessages_CompactsToolResultsFromOlderTurns(t *testing.T) {
+	t.Parallel()
+
+	big := strings.Repeat("row,", 2000)
+	history := []conversation.Message{
+		{Role: conversation.RoleUser, Content: "List shipments."},
+		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "list_shipments"}}},
+		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "list_shipments", Content: big},
+		{Role: conversation.RoleAssistant, Content: "Here they are."},
+	}
+	for turn := range recentToolTurns {
+		id := fmt.Sprintf("c%d", turn+2)
+		history = append(history,
+			conversation.Message{Role: conversation.RoleUser, Content: "And again."},
+			conversation.Message{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{ID: id, Name: "list_shipments"}}},
+			conversation.Message{Role: conversation.RoleTool, ToolCallID: id, ToolName: "list_shipments", Content: big},
+			conversation.Message{Role: conversation.RoleAssistant, Content: "Here they are."},
+		)
+	}
+
+	messages := toAdapterMessages(history, nil)
+
+	require.Len(t, messages, len(history))
+	oldest := messages[2]
+	require.Equal(t, serviceports.RoleTool, oldest.Role)
+	assert.Less(t, len(oldest.Content), len(big)/4)
+	assert.True(t, strings.HasPrefix(oldest.Content, "row,row,"), "the opening is kept")
+	assert.Contains(t, oldest.Content, "elided")
+	assert.Contains(t, oldest.Content, "again", "the model is told it may fetch it again")
+
+	newest := messages[len(messages)-2]
+	require.Equal(t, serviceports.RoleTool, newest.Role)
+	assert.Equal(t, big, newest.Content, "the recent turns keep their results whole")
+}
+
+// A short result is left alone whatever its age: the note would be longer
+// than what it replaced.
+func TestToAdapterMessages_LeavesShortOldResultsAlone(t *testing.T) {
+	t.Parallel()
+
+	history := []conversation.Message{
+		{Role: conversation.RoleUser, Content: "Where is S1?"},
+		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "get_shipment"}}},
+		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "get_shipment", Content: `{"status":"InTransit"}`},
+		{Role: conversation.RoleAssistant, Content: "In transit."},
+	}
+	for turn := range recentToolTurns + 1 {
+		history = append(history,
+			conversation.Message{Role: conversation.RoleUser, Content: fmt.Sprintf("Turn %d", turn)},
+			conversation.Message{Role: conversation.RoleAssistant, Content: "Noted."},
+		)
+	}
+
+	messages := toAdapterMessages(history, nil)
+	assert.Equal(t, `{"status":"InTransit"}`, messages[2].Content)
+}
+
+// A turn that died between issuing a tool call and recording its result
+// leaves a call nothing answers, and a provider rejects the conversation
+// for it as surely as for an orphaned result. The call is left out of the
+// replay; the words around it are kept.
+func TestToAdapterMessages_DropsCallsNothingAnswered(t *testing.T) {
+	t.Parallel()
+
+	history := []conversation.Message{
+		{Role: conversation.RoleUser, Content: "Where is S1?"},
+		{
+			Role:    conversation.RoleAssistant,
+			Content: "Looking.",
+			ToolCalls: []conversation.ToolCallRecord{
+				{ID: "c1", Name: "get_shipment"},
+				{ID: "c2", Name: "get_worker"},
+			},
+		},
+		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "get_shipment", Content: "{}"},
+		{Role: conversation.RoleAssistant, Content: "The run stopped before it finished."},
+		{Role: conversation.RoleUser, Content: "Try again."},
+		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{ID: "c3", Name: "get_shipment"}}},
+	}
+
+	messages := toAdapterMessages(history, nil)
+
+	require.Len(t, messages, 5, "the assistant turn with nothing but an unanswered call is left out")
+	require.Len(t, messages[1].ToolCalls, 1)
+	assert.Equal(t, "c1", messages[1].ToolCalls[0].ID)
+	assert.Equal(t, "Looking.", messages[1].Content)
+	assert.Equal(t, serviceports.RoleTool, messages[2].Role)
+	assert.Equal(t, serviceports.RoleUser, messages[4].Role)
 }

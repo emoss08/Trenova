@@ -125,3 +125,26 @@ func TestInterruptedTurn_SaysNothingRanWhenNothingDid(t *testing.T) {
 	require.NotNil(t, partial)
 	assert.Contains(t, partial.Reply, "shown above", "with something above, the note points at it")
 }
+
+// A run that failed before it produced anything, even the echo of the
+// question, still leaves a turn: the person asked something and the thread
+// shows the question with the note that nothing ran. Returning nothing
+// dropped the question from the thread as if it had never been sent.
+func TestInterruptedTurn_KeepsTheQuestionWhenNoRunCameBack(t *testing.T) {
+	t.Parallel()
+
+	req := &TurnRequest{Input: "Where is S1?"}
+
+	turn := interruptedTurn(req, agentguard.Decision{Allowed: true}, nil, errors.New("provider down"))
+	require.NotNil(t, turn)
+	require.Len(t, turn.Messages, 2)
+	assert.Equal(t, conversation.RoleUser, turn.Messages[0].Role)
+	assert.Equal(t, "Where is S1?", turn.Messages[0].Content)
+	assert.Equal(t, conversation.RoleAssistant, turn.Messages[1].Role)
+	assert.Contains(t, turn.Reply, "before it started")
+
+	empty := interruptedTurn(req, agentguard.Decision{Allowed: true}, &serviceports.RunResult{}, context.Canceled)
+	require.NotNil(t, empty)
+	require.Len(t, empty.Messages, 2)
+	assert.Contains(t, empty.Reply, "before a reply started")
+}

@@ -27,6 +27,39 @@ func (e *TransportError) Error() string {
 // IsRetryable reports whether err is worth another attempt. An error that is not
 // a TransportError is a transport-level failure (dial, TLS, timeout) and is
 // retried, since those are the failures most likely to be transient.
+// StreamInterrupted is a stream that failed after the provider had named the
+// model serving it. The failure is the wrapped error, so retry decisions read
+// through it; the model is kept so a reply cut off partway is recorded under
+// the model that actually produced it rather than the configured alias.
+type StreamInterrupted struct {
+	Model string
+	Err   error
+}
+
+func (e *StreamInterrupted) Error() string { return e.Err.Error() }
+
+func (e *StreamInterrupted) Unwrap() error { return e.Err }
+
+// interrupted wraps a stream failure with the served model when one is known.
+func interrupted(err error, model string) error {
+	if err == nil || model == "" {
+		return err
+	}
+
+	return &StreamInterrupted{Model: model, Err: err}
+}
+
+// ServedModel is the model a failed stream reported before it died, or the
+// fallback when it never got that far.
+func ServedModel(err error, fallback string) string {
+	var cut *StreamInterrupted
+	if errors.As(err, &cut) && cut.Model != "" {
+		return cut.Model
+	}
+
+	return fallback
+}
+
 func IsRetryable(err error) bool {
 	var te *TransportError
 	if errors.As(err, &te) {

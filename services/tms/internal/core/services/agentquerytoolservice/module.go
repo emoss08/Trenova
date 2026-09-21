@@ -130,8 +130,9 @@ func provideGetShipmentTrackingTool(
 
 func provideListVehiclePositionsTool(
 	telematics *telematicsservice.Service,
+	permissions services.PermissionEngine,
 ) services.AgentQueryTool {
-	return newListVehiclePositionsTool(telematics)
+	return newListVehiclePositionsTool(telematics, permissions)
 }
 
 func provideGetWorkerHOSTool(telematics *telematicsservice.Service) services.AgentQueryTool {

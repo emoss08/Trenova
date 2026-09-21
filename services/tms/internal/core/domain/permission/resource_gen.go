@@ -206,6 +206,10 @@ const (
 	// Reporting
 	ResourceReport    Resource = "report"
 	ResourceDashboard Resource = "dashboard"
+
+	// Communications
+	ResourceDriverMessage         Resource = "driver_message"
+	ResourceCustomerCommunication Resource = "customer_communication"
 )
 
 func (r Resource) String() string {

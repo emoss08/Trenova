@@ -97,7 +97,7 @@ func (t *listExpiringCredentialsTool) ParamSchema() map[string]any {
 }
 
 func (t *listExpiringCredentialsTool) PermissionResource() permission.Resource {
-	return permission.ResourceWorker
+	return permission.ResourceWorkerCredential
 }
 
 func (t *listExpiringCredentialsTool) Query(

@@ -215,6 +215,7 @@ func (r *Registry) registerAll() {
 	r.registerComplianceResources()
 	r.registerReferenceDataResources()
 	r.registerReportingResources()
+	r.registerCommunicationResources()
 }
 
 var standardOps = []OperationDefinition{
@@ -3936,6 +3937,36 @@ func (r *Registry) registerReportingResources() {
 			{Operation: OpRead, DisplayName: "Read", Description: "View dashboards"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create dashboards"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify dashboards"},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+}
+
+func (r *Registry) registerCommunicationResources() {
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceDriverMessage.String(),
+		DisplayName: "Driver Message",
+		Description: "Messages sent to drivers on their phone through the Dash app",
+		Category:    "Communications",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View messages sent to drivers"},
+			{Operation: OpCreate, DisplayName: "Send", Description: "Send a message to a driver"},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceCustomerCommunication.String(),
+		DisplayName: "Customer Communication",
+		Description: "Emails and notices sent to customers and other outside parties",
+		Category:    "Communications",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View what was sent to customers"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Send",
+				Description: "Send emails and notices to customers and outside parties",
+			},
 		},
 		DefaultSensitivity: SensitivityInternal,
 	})
