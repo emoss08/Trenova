@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -527,6 +528,26 @@ func (s *Service) afterIngest(
 	}
 	if len(events) > 0 {
 		s.publish(ctx, in.tenant, "carrier_intel_events", "created", pulid.Nil)
+		s.projectEventsToWatchtower(ctx, events)
+	}
+}
+
+// projectEventsToWatchtower puts the changes worth acting on from this
+// ingest on the feed. A finding that is only part of the record stays on
+// the carrier's page.
+func (s *Service) projectEventsToWatchtower(
+	ctx context.Context,
+	events []*carrierintel.CarrierIntelEvent,
+) {
+	if s.watchtower == nil {
+		return
+	}
+
+	for _, event := range events {
+		if !watchtowersources.CarrierIntelEventOnTower(event) {
+			continue
+		}
+		s.watchtower.Upsert(ctx, watchtowersources.DescribeCarrierIntelEvent(event))
 	}
 }
 

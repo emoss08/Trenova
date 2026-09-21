@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
@@ -146,6 +147,15 @@ func (s *Service) ResolveEvent(
 	}
 
 	s.publish(ctx, req.TenantInfo, "carrier_intel_events", "updated", updated.ID)
+	if s.watchtower != nil {
+		s.watchtower.Resolve(
+			ctx,
+			req.TenantInfo,
+			watchtower.SourceCarrierIntelEvent,
+			updated.ID.String(),
+		)
+	}
+
 	return updated, nil
 }
 

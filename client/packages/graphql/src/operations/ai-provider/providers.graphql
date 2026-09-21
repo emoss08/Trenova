@@ -11,6 +11,7 @@ fragment AIProviderCardFields on AIProvider {
   allowPrivateNetwork
   structuredOutputMode
   reasoningEffort
+  extraBody
   inputCostPerMillion
   outputCostPerMillion
   maxTokens

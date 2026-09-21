@@ -63,9 +63,9 @@ func (r *repository) ListDueBillingSchedules(
 		ColumnExpr(cbp.OrganizationID.Qualified()).
 		ColumnExpr(cbp.BusinessUnitID.Qualified()).
 		ColumnExpr(cbp.CustomerID.Qualified()).
-		ColumnExpr(cus.Name.Qualified() + " AS customer_name").
-		ColumnExpr(cus.Code.Qualified() + " AS customer_code").
-		ColumnExpr(cus.Status.Qualified() + " AS customer_status").
+		ColumnExpr(cus.Name.Qualified()+" AS customer_name").
+		ColumnExpr(cus.Code.Qualified()+" AS customer_code").
+		ColumnExpr(cus.Status.Qualified()+" AS customer_status").
 		ColumnExpr(cbp.BillingCycle.Qualified()).
 		ColumnExpr(cbp.BillingCycleAnchorDay.Qualified()).
 		ColumnExpr(cbp.BillingCycleTimezone.Qualified()).

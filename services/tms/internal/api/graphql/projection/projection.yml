@@ -70,15 +70,23 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  FormSubmissionField:
+    - label
+    - value
   AgentControl:
     - billingAgentEnabled
     - decisionTimeoutSeconds
   AgentProposal:
     - run
+    - parameterFields
+    - modifications
   AgentPlan:
     - run
   AgentRun:
     - definition
+  WatchtowerItem:
+    - seen
+    - kindLabel
   AgentDefinition:
     - pendingProposals
     - openRuns

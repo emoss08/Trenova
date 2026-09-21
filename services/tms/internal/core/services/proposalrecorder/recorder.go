@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -44,6 +45,9 @@ type Params struct {
 	Plans PlanStore `optional:"true"`
 	// Activity tells connected clients a proposal or plan is waiting.
 	Activity serviceports.AgentActivityPublisher `optional:"true"`
+	// Watchtower puts what is waiting on a person onto the one feed they
+	// read; without it the decision still stands, unannounced.
+	Watchtower serviceports.WatchtowerProjector `optional:"true"`
 }
 
 // PlanStore is the one write the recorder makes on plans.
@@ -52,13 +56,14 @@ type PlanStore interface {
 }
 
 type Service struct {
-	logger    *zap.Logger
-	runs      RunOpener
-	proposals ProposalStore
-	plans     PlanStore
-	trust     serviceports.AgentTrustService
-	notifier  serviceports.AgentProposalNotifier
-	activity  serviceports.AgentActivityPublisher
+	logger     *zap.Logger
+	runs       RunOpener
+	proposals  ProposalStore
+	plans      PlanStore
+	trust      serviceports.AgentTrustService
+	notifier   serviceports.AgentProposalNotifier
+	activity   serviceports.AgentActivityPublisher
+	watchtower serviceports.WatchtowerProjector
 }
 
 func New(p Params) *Service {
@@ -67,6 +72,7 @@ func New(p Params) *Service {
 	svc.notifier = p.Notifier
 	svc.plans = p.Plans
 	svc.activity = p.Activity
+	svc.watchtower = p.Watchtower
 
 	return svc
 }
@@ -193,6 +199,7 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 
 	s.notifyPending(ctx, req.Definition, run, proposals)
 	s.announce(ctx, req.Actor, proposals, plan)
+	s.project(ctx, req.Definition, proposals, plan)
 
 	return &RecordResult{Run: run, Proposals: proposals, Plan: plan}, nil
 }
@@ -408,5 +415,32 @@ func (s *Service) announce(
 	}
 	if plan != nil {
 		s.activity.PlanChanged(ctx, plan, auditActor, serviceports.ActivityCreated)
+	}
+}
+
+// project puts what is now waiting on a person onto the watchtower. A step
+// of a plan is not projected on its own: the plan is the decision.
+func (s *Service) project(
+	ctx context.Context,
+	definition *agentdefinition.Definition,
+	proposals []*agent.AgentProposal,
+	plan *agent.AgentPlan,
+) {
+	if s.watchtower == nil {
+		return
+	}
+
+	name := ""
+	if definition != nil {
+		name = definition.Name
+	}
+	if plan != nil {
+		s.watchtower.Upsert(ctx, watchtowersources.DescribePlan(plan, name))
+	}
+	for _, proposal := range proposals {
+		if proposal == nil || proposal.Status != agent.ProposalStatusPending || proposal.PlanID != nil {
+			continue
+		}
+		s.watchtower.Upsert(ctx, watchtowersources.DescribeProposal(proposal, name))
 	}
 }

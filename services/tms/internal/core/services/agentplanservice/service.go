@@ -15,6 +15,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
@@ -63,29 +64,33 @@ type Params struct {
 	Shadow       *agentshadow.Resolver
 	AuditService services.AuditService
 	Activity     services.AgentActivityPublisher `optional:"true"`
+	// Watchtower takes a decided plan off the feed.
+	Watchtower services.WatchtowerProjector `optional:"true"`
 }
 
 type Service struct {
-	l         *zap.Logger
-	plans     repositories.AgentPlanRepository
-	proposals repositories.AgentProposalRepository
-	decisions stepDecider
-	shadow    shadowReader
-	audit     actionLogger
-	activity  services.AgentActivityPublisher
+	l          *zap.Logger
+	plans      repositories.AgentPlanRepository
+	proposals  repositories.AgentProposalRepository
+	decisions  stepDecider
+	shadow     shadowReader
+	audit      actionLogger
+	activity   services.AgentActivityPublisher
+	watchtower services.WatchtowerProjector
 }
 
 func New(p Params) services.AgentPlanService {
 	decider, _ := p.Decisions.(stepDecider)
 
 	return &Service{
-		l:         p.Logger.Named("service.agentplan"),
-		plans:     p.Plans,
-		proposals: p.Proposals,
-		decisions: decider,
-		shadow:    p.Shadow,
-		audit:     p.AuditService,
-		activity:  p.Activity,
+		l:          p.Logger.Named("service.agentplan"),
+		plans:      p.Plans,
+		proposals:  p.Proposals,
+		decisions:  decider,
+		shadow:     p.Shadow,
+		audit:      p.AuditService,
+		activity:   p.Activity,
+		watchtower: p.Watchtower,
 	}
 }
 
@@ -198,6 +203,8 @@ func (s *Service) Decide(
 		return nil, err
 	}
 
+	s.clearFromWatchtower(ctx, plan, req.TenantInfo)
+
 	if req.Decision == agent.DecisionRejected {
 		s.rejectSteps(ctx, req, steps, actor)
 		s.logDecision(plan, actor, "Agent plan rejected")
@@ -211,6 +218,20 @@ func (s *Service) Decide(
 	s.announce(ctx, plan, actor)
 
 	return plan, nil
+}
+
+// clearFromWatchtower takes a decided plan off the feed. Its steps were
+// never on it on their own, so nothing else needs clearing.
+func (s *Service) clearFromWatchtower(
+	ctx context.Context,
+	plan *agent.AgentPlan,
+	tenant pagination.TenantInfo,
+) {
+	if s.watchtower == nil || plan == nil {
+		return
+	}
+
+	s.watchtower.Resolve(ctx, tenant, watchtower.SourceAgentPlan, plan.ID.String())
 }
 
 // announce tells connected clients the plan moved, so the queue drops it

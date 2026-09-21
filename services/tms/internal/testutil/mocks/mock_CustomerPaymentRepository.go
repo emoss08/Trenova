@@ -849,3 +849,72 @@ func (_c *MockCustomerPaymentRepository_Update_Call) RunAndReturn(run func(ctx c
 	_c.Call.Return(run)
 	return _c
 }
+
+// SumReceived provides a mock function for the type MockCustomerPaymentRepository
+func (_mock *MockCustomerPaymentRepository) SumReceived(ctx context.Context, req repositories.SumPaymentsReceivedRequest) ([]*repositories.PaymentsReceived, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SumReceived")
+	}
+
+	var r0 []*repositories.PaymentsReceived
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.SumPaymentsReceivedRequest) ([]*repositories.PaymentsReceived, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.SumPaymentsReceivedRequest) []*repositories.PaymentsReceived); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*repositories.PaymentsReceived)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.SumPaymentsReceivedRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockCustomerPaymentRepository_SumReceived_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SumReceived'
+type MockCustomerPaymentRepository_SumReceived_Call struct {
+	*mock.Call
+}
+
+// SumReceived is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.SumPaymentsReceivedRequest
+func (_e *MockCustomerPaymentRepository_Expecter) SumReceived(ctx any, req any) *MockCustomerPaymentRepository_SumReceived_Call {
+	return &MockCustomerPaymentRepository_SumReceived_Call{Call: _e.mock.On("SumReceived", ctx, req)}
+}
+
+func (_c *MockCustomerPaymentRepository_SumReceived_Call) Run(run func(ctx context.Context, req repositories.SumPaymentsReceivedRequest)) *MockCustomerPaymentRepository_SumReceived_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.SumPaymentsReceivedRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.SumPaymentsReceivedRequest)
+		}
+		run(arg0, arg1)
+	})
+
+	return _c
+}
+
+func (_c *MockCustomerPaymentRepository_SumReceived_Call) Return(paymentsReceiveds []*repositories.PaymentsReceived, err error) *MockCustomerPaymentRepository_SumReceived_Call {
+	_c.Call.Return(paymentsReceiveds, err)
+
+	return _c
+}
+
+func (_c *MockCustomerPaymentRepository_SumReceived_Call) RunAndReturn(run func(ctx context.Context, req repositories.SumPaymentsReceivedRequest) ([]*repositories.PaymentsReceived, error)) *MockCustomerPaymentRepository_SumReceived_Call {
+	_c.Call.Return(run)
+
+	return _c
+}

@@ -268,6 +268,7 @@ func (s *Service) apply(
 	if provider.ReasoningEffort == "" {
 		provider.ReasoningEffort = aiprovider.ReasoningOff
 	}
+	provider.ExtraBody = req.ExtraBody
 	provider.InputCostPerMillion = req.InputCostPerMillion
 	provider.OutputCostPerMillion = req.OutputCostPerMillion
 

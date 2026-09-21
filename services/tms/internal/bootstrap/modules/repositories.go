@@ -34,6 +34,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuefilterpresetrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingtransferrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/briefingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierassignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierintelrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierinvoicematchrepository"
@@ -196,6 +197,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/trailerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/userrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/usstaterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/watchtowerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/weatheralertrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerchecklistrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workercredentialrepository"
@@ -317,6 +319,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	orderrepository.New,
 	servicefailurereasoncoderepository.New,
 	servicefailurerepository.New,
+	watchtowerrepository.New,
+	briefingrepository.New,
 	sequenceconfigrepository.New,
 	shipmentcontrolrepository.New,
 	shipmentadditionalchargerepository.New,

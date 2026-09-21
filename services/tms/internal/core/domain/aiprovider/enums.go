@@ -121,7 +121,12 @@ const (
 	// produces a number, a severity or a link — those are computed before it runs
 	// and checked after it — so it is safe to route to whatever is cheapest.
 	TaskOperationalInsights = Task("OperationalInsights")
-	TaskGeneral             = Task("General")
+	// TaskDailyBriefing writes the morning page from figures already
+	// gathered. Like the insight narration it produces only wording, and
+	// every number it writes is checked against those figures afterwards,
+	// so it is safe to route wherever is cheapest.
+	TaskDailyBriefing = Task("DailyBriefing")
+	TaskGeneral       = Task("General")
 )
 
 func (t Task) IsValid() bool {
@@ -133,6 +138,7 @@ func (t Task) IsValid() bool {
 		TaskScopeClassification,
 		TaskAssistantChat,
 		TaskOperationalInsights,
+		TaskDailyBriefing,
 		TaskGeneral:
 		return true
 	default:
@@ -150,6 +156,7 @@ func AllTasks() []Task {
 		TaskScopeClassification,
 		TaskAssistantChat,
 		TaskOperationalInsights,
+		TaskDailyBriefing,
 		TaskGeneral,
 	}
 }

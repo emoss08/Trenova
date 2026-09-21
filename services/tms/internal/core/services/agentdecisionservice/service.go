@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
@@ -37,6 +38,8 @@ type Params struct {
 	Trust        services.AgentTrustService
 	Memories     services.AgentMemoryService     `optional:"true"`
 	Activity     services.AgentActivityPublisher `optional:"true"`
+	// Watchtower takes a decided proposal off the feed.
+	Watchtower services.WatchtowerProjector `optional:"true"`
 }
 
 type Service struct {
@@ -52,6 +55,7 @@ type Service struct {
 	trust        services.AgentTrustService
 	memories     services.AgentMemoryService
 	activity     services.AgentActivityPublisher
+	watchtower   services.WatchtowerProjector
 }
 
 func New(p Params) services.AgentDecisionService {
@@ -68,6 +72,7 @@ func New(p Params) services.AgentDecisionService {
 		trust:        p.Trust,
 		memories:     p.Memories,
 		activity:     p.Activity,
+		watchtower:   p.Watchtower,
 	}
 }
 
@@ -162,6 +167,8 @@ func (s *Service) DecideWithOutcome(
 	}); err != nil {
 		return nil, err
 	}
+
+	s.clearFromWatchtower(ctx, proposal, req.TenantInfo)
 
 	// A plan signals its run's workflow once, for all its steps; a step
 	// signalling on its own would reach a workflow the first step already
@@ -458,4 +465,19 @@ func (s *Service) announce(
 	}
 
 	s.activity.ProposalChanged(ctx, current, actor, services.ActivityUpdated)
+}
+
+// clearFromWatchtower takes a decided proposal off the feed. It is called
+// after the decision is recorded, whatever the outcome: approved, rejected
+// or modified, it is no longer waiting on anyone.
+func (s *Service) clearFromWatchtower(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+	tenant pagination.TenantInfo,
+) {
+	if s.watchtower == nil || proposal == nil {
+		return
+	}
+
+	s.watchtower.Resolve(ctx, tenant, watchtower.SourceAgentProposal, proposal.ID.String())
 }

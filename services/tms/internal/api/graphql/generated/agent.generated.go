@@ -7627,4 +7627,23 @@ func (ec *executionContext) marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenova
 	return ec._AgentRun(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOAgentSubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐSubjectType(ctx context.Context, v any) (*agent.SubjectType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := agent.SubjectType(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAgentSubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐSubjectType(ctx context.Context, sel ast.SelectionSet, v *agent.SubjectType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
 // endregion ***************************** type.gotpl *****************************

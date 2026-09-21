@@ -1,0 +1,98 @@
+"Who a briefing is written for. The same morning reads differently to a dispatcher and a biller."
+enum BriefingRoleKey {
+  Dispatch
+  Billing
+  Compliance
+  Leadership
+  General
+}
+
+"How far the morning's writing got."
+enum BriefingStatus {
+  Pending
+  Ready
+  Failed
+}
+
+"A block of the page. The keys are fixed, so a model cannot invent a section nothing computed."
+enum BriefingSectionKey {
+  Attention
+  Today
+  Coverage
+  Exceptions
+  Decisions
+  Compliance
+  Billing
+  Cash
+}
+
+"One line of a section: a figure, what it counts, and the page that shows it."
+type BriefingItem {
+  label: String!
+  "Already rendered, because the figure a person reads and the figure the guard checked must be the same string."
+  value: String!
+  path: String
+}
+
+type BriefingSection {
+  key: BriefingSectionKey!
+  title: String!
+  "The computed wording, which is always true and always present."
+  summary: String!
+  "The model's sentence, where it was written and survived the number guard."
+  body: String
+  "What a person reads: the model's sentence when there is one, the computed wording otherwise."
+  read: String!
+  items: [BriefingItem!]!
+  path: String
+}
+
+"""
+One role's morning for one organization. The figures are computed first and
+the wording written second; a briefing nobody narrated is a complete
+briefing that simply reads plainer.
+"""
+type Briefing {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  roleKey: BriefingRoleKey!
+  "The organization's local day, as YYYY-MM-DD."
+  briefingDate: String!
+  status: BriefingStatus!
+  headline: String!
+  sections: [BriefingSection!]!
+  "True when a model's wording was accepted for any part of the page."
+  narrated: Boolean!
+  emailedAt: Timestamp
+  readAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input TodaysBriefingInput {
+  "Whose morning to read; omitted reads the one written for everybody."
+  roleKey: BriefingRoleKey
+  "An organization-local day, as YYYY-MM-DD; omitted is today."
+  briefingDate: String
+}
+
+input ListBriefingsInput {
+  roleKey: BriefingRoleKey
+  first: Int = 14
+}
+
+extend type Query {
+  "This morning's page, or null when it has not been written yet."
+  todaysBriefing(input: TodaysBriefingInput!): Briefing
+  briefing(id: ID!): Briefing!
+  "Recent mornings, newest day first."
+  briefings(input: ListBriefingsInput!): [Briefing!]!
+}
+
+extend type Mutation {
+  markBriefingRead(id: ID!): Briefing!
+  "Writes today's page again from current figures, replacing what was there."
+  regenerateBriefing(input: TodaysBriefingInput!): Briefing!
+}

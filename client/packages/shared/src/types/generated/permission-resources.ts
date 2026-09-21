@@ -132,6 +132,8 @@ export const Resource = {
   AgentMemory: "agent_memory",
   Assistant: "assistant",
   Insight: "insight",
+  Watchtower: "watchtower",
+  Briefing: "briefing",
 
   // Customers
   Customer: "customer",

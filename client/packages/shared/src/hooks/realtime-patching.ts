@@ -17,6 +17,7 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, string[]> = {
   ],
   agent_run: ["agent-run-list", "agent-definitions"],
   assistant_artifact: ["assistant-artifacts"],
+  watchtower: ["watchtower-items", "watchtower-counts", "attention"],
   shipments: [
     "shipment-list",
     "dispatch-board",

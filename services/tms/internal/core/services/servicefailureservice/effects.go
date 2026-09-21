@@ -3,6 +3,8 @@ package servicefailureservice
 import (
 	"context"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/watchtower"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
@@ -61,6 +63,27 @@ func (s *service) afterServiceFailureCreate(
 		SubjectID:  entity.ShipmentID,
 		TenantInfo: serviceFailureTenantInfo(entity),
 	})
+	s.projectToWatchtower(ctx, entity)
+}
+
+// projectToWatchtower keeps the feed in step with the failure: an open one
+// is on it, a resolved or voided one is off it.
+func (s *service) projectToWatchtower(
+	ctx context.Context,
+	entity *servicefailure.ServiceFailure,
+) {
+	if s.watchtower == nil || entity == nil {
+		return
+	}
+
+	tenant := serviceFailureTenantInfo(entity)
+	if entity.Status == servicefailure.StatusOpen {
+		s.watchtower.Upsert(ctx, watchtowersources.DescribeServiceFailure(entity))
+
+		return
+	}
+
+	s.watchtower.Resolve(ctx, tenant, watchtower.SourceServiceFailure, entity.ID.String())
 }
 
 func (s *service) logServiceFailureAction(params serviceFailureActionParams) {

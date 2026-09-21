@@ -274,9 +274,9 @@ func newInvoiceSampleContext() any {
 		ShipmentCount: "2",
 		Period:        "2026-07-01 - 2026-08-01",
 		Subtotal:      "USD 2,001.24",
-		Other:      "USD 337.50",
-		Total:      sampleTotalAmount,
-		BalanceDue: sampleTotalAmount,
+		Other:         "USD 337.50",
+		Total:         sampleTotalAmount,
+		BalanceDue:    sampleTotalAmount,
 		Terms: []string{
 			"Payment due within 30 days of the invoice date.",
 			"Claims must be filed within 9 months of delivery.",

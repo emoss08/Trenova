@@ -44,6 +44,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
+	"github.com/emoss08/trenova/internal/core/services/briefingservice"
+	"github.com/emoss08/trenova/internal/core/services/briefingservice/briefingwriter"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
@@ -184,6 +186,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/userservice"
 	"github.com/emoss08/trenova/internal/core/services/usstateservice"
 	"github.com/emoss08/trenova/internal/core/services/versionservice"
+	"github.com/emoss08/trenova/internal/core/services/watchtowerservice"
 	"github.com/emoss08/trenova/internal/core/services/weatheralertservice"
 	"github.com/emoss08/trenova/internal/core/services/webpushservice"
 	"github.com/emoss08/trenova/internal/core/services/workerchecklistservice"
@@ -295,6 +298,13 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	narrator.New,
 	newDetectorRegistry,
 	insightservice.New,
+	watchtowerservice.New,
+	watchtowerservice.AsProjector,
+	watchtowerservice.AsService,
+	briefingwriter.New,
+	newBriefingSources,
+	briefingservice.New,
+	briefingservice.AsService,
 	agenttrustservice.New,
 	agentproposalnotifier.New,
 	agentdecisionservice.New,

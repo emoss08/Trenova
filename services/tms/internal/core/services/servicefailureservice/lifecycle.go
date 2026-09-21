@@ -104,6 +104,7 @@ func (s *service) Update(
 			metadata: serviceFailureLifecycleMetadata(original, saved, actor),
 		})
 	}
+	s.projectToWatchtower(ctx, saved)
 	return saved, nil
 }
 
@@ -280,6 +281,7 @@ func (s *service) lifecycle(
 		current:  saved,
 		actor:    params.actor,
 	})
+	s.projectToWatchtower(ctx, saved)
 	return saved, nil
 }
 

@@ -32,3 +32,12 @@ func WholeDaysBetween(from, to int64) int64 {
 func FormatDateKeyUTC(ts int64) string {
 	return time.Unix(ts, 0).UTC().Format("20060102")
 }
+
+// IsCalendarDate reports whether a string is a real YYYY-MM-DD day. It
+// parses rather than pattern-matches, so 2026-02-30 is rejected the same
+// way a malformed string is.
+func IsCalendarDate(value string) bool {
+	_, err := time.Parse(ISODateLayout, value)
+
+	return err == nil
+}

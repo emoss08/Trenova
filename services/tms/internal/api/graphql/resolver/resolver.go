@@ -218,6 +218,8 @@ type Params struct {
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
 	AgentDecisionQueueService    services.AgentDecisionQueueService
+	WatchtowerService            services.WatchtowerService
+	BriefingService              services.BriefingService
 	AgentTools                   services.AgentToolRegistry
 	AgentControlService          services.AgentControlService
 	IAMService                   services.IAMService
@@ -368,6 +370,8 @@ type Resolver struct {
 	agentExceptionService        services.AgentExceptionService
 	agentDecisionService         services.AgentDecisionService
 	agentDecisionQueueService    services.AgentDecisionQueueService
+	watchtowerService            services.WatchtowerService
+	briefingService              services.BriefingService
 	agentTools                   services.AgentToolRegistry
 	agentControlService          services.AgentControlService
 	iamService                   services.IAMService
@@ -519,6 +523,8 @@ func New(p Params) *Resolver {
 		agentExceptionService:        p.AgentExceptionService,
 		agentDecisionService:         p.AgentDecisionService,
 		agentDecisionQueueService:    p.AgentDecisionQueueService,
+		watchtowerService:            p.WatchtowerService,
+		briefingService:              p.BriefingService,
 		agentTools:                   p.AgentTools,
 		agentControlService:          p.AgentControlService,
 		iamService:                   p.IAMService,

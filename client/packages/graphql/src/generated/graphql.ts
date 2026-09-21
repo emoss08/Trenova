@@ -6179,7 +6179,7 @@ export type AgentRunDetailQuery = { agentRun: (
     & { ' $fragmentRefs'?: { 'AgentRunTableRowFieldsFragment': AgentRunTableRowFieldsFragment } }
   ) | null };
 
-export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, inputCostPerMillion: string | null, outputCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
+export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
 
 export type AiProviderCardsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -12355,6 +12355,7 @@ export const AiProviderCardFieldsFragmentDoc = new TypedDocumentString(`
   allowPrivateNetwork
   structuredOutputMode
   reasoningEffort
+  extraBody
   inputCostPerMillion
   outputCostPerMillion
   maxTokens
@@ -18770,8 +18771,8 @@ export const AgentProposalDetailDocument = {"__meta__":{"kind":"query","name":"A
 export const DecideAgentProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposal","hash":"sha256:ba06fd0f5bb9168980d5d967514bf0bcbd80382200e836955aa5704c4c9f1836"}} as unknown as TypedDocumentString<DecideAgentProposalMutation, DecideAgentProposalMutationVariables>;
 export const AgentRunTableDocument = {"__meta__":{"kind":"query","name":"AgentRunTable","hash":"sha256:938af4f2a45104c1bf195b3a992b531ebb470f63a2b1dd65dd1b933827662d5d"}} as unknown as TypedDocumentString<AgentRunTableQuery, AgentRunTableQueryVariables>;
 export const AgentRunDetailDocument = {"__meta__":{"kind":"query","name":"AgentRunDetail","hash":"sha256:780230a3bc44a3aed467ed21d5aabd4142c705410579b4bcd855316f808315c5"}} as unknown as TypedDocumentString<AgentRunDetailQuery, AgentRunDetailQueryVariables>;
-export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:a4e5eb6493df0260b793fec2bfe9301479c33100fd3f1e7ca4f430450aa483b8"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
-export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:e159282908d0dffe6494bd300561a6c4c6d53adf19a1ba4a8766452a98491fff"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
+export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:693b4ea7f9308461aef1bdc2eb4d790d04be244875eba4b3dbb4e2a29ee82c3b"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
+export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:110d22f3a73893acd8af73069b45c69ffe6b92369991a171c936e9f46b9d4afb"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
 export const AiUsageSummaryDocument = {"__meta__":{"kind":"query","name":"AIUsageSummary","hash":"sha256:5e9599fa59c13dde1fbde8f32c7942aa7e5ba4359259c6ab67136f9799ce0059"}} as unknown as TypedDocumentString<AiUsageSummaryQuery, AiUsageSummaryQueryVariables>;
 export const ApiKeyTableDocument = {"__meta__":{"kind":"query","name":"ApiKeyTable","hash":"sha256:aeacf34d9ae14863db97c29a2ea928d83c46bba47f49ecd6a05ccdf7d4a33951"}} as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;
 export const AttentionSummaryDocument = {"__meta__":{"kind":"query","name":"AttentionSummary","hash":"sha256:f5497f5bda3b38c5a3875db4677a9a034d1bcc1c4866b6c698351fc2198b1322"}} as unknown as TypedDocumentString<AttentionSummaryQuery, AttentionSummaryQueryVariables>;

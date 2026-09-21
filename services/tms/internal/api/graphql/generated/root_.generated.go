@@ -43,6 +43,7 @@ type ResolverRoot interface {
 	ApiKey() ApiKeyResolver
 	ApprovalDelegation() ApprovalDelegationResolver
 	AuditEntry() AuditEntryResolver
+	BriefingSection() BriefingSectionResolver
 	Carrier() CarrierResolver
 	CarrierAssignment() CarrierAssignmentResolver
 	CarrierAssignmentAccessorial() CarrierAssignmentAccessorialResolver
@@ -166,6 +167,7 @@ type ResolverRoot interface {
 	Trailer() TrailerResolver
 	TrainingCourse() TrainingCourseResolver
 	User() UserResolver
+	WatchtowerItem() WatchtowerItemResolver
 	Worker() WorkerResolver
 	WorkerBenefitEnrollment() WorkerBenefitEnrollmentResolver
 	WorkerChecklist() WorkerChecklistResolver
@@ -209,6 +211,7 @@ type ComplexityRoot struct {
 		CreatedAt            func(childComplexity int) int
 		Description          func(childComplexity int) int
 		Enabled              func(childComplexity int) int
+		ExtraBody            func(childComplexity int) int
 		HasAPIKey            func(childComplexity int) int
 		ID                   func(childComplexity int) int
 		InputCostPerMillion  func(childComplexity int) int
@@ -1121,6 +1124,39 @@ type ComplexityRoot struct {
 		Code    func(childComplexity int) int
 		Field   func(childComplexity int) int
 		Message func(childComplexity int) int
+	}
+
+	Briefing struct {
+		BriefingDate   func(childComplexity int) int
+		BusinessUnitID func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		EmailedAt      func(childComplexity int) int
+		Headline       func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Narrated       func(childComplexity int) int
+		OrganizationID func(childComplexity int) int
+		ReadAt         func(childComplexity int) int
+		RoleKey        func(childComplexity int) int
+		Sections       func(childComplexity int) int
+		Status         func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+		Version        func(childComplexity int) int
+	}
+
+	BriefingItem struct {
+		Label func(childComplexity int) int
+		Path  func(childComplexity int) int
+		Value func(childComplexity int) int
+	}
+
+	BriefingSection struct {
+		Body    func(childComplexity int) int
+		Items   func(childComplexity int) int
+		Key     func(childComplexity int) int
+		Path    func(childComplexity int) int
+		Read    func(childComplexity int) int
+		Summary func(childComplexity int) int
+		Title   func(childComplexity int) int
 	}
 
 	BulkAssignTrainingOutcome struct {
@@ -6222,6 +6258,7 @@ type ComplexityRoot struct {
 		DiscardFuelPurchaseImport             func(childComplexity int, id string, version int, reason *string) int
 		DismissMyNotifications                func(childComplexity int, ids []string) int
 		DismissNotifications                  func(childComplexity int, ids []string) int
+		DismissWatchtowerItem                 func(childComplexity int, id string) int
 		DispatchAssignMoveToCarrier           func(childComplexity int, input gqlmodel.DispatchAssignMoveToCarrierInput) int
 		DispatchAssignMoves                   func(childComplexity int, input []*gqlmodel.DispatchAssignMoveInput) int
 		DispatchCancelCarrierAssignment       func(childComplexity int, moveID string, reason string) int
@@ -6244,6 +6281,7 @@ type ComplexityRoot struct {
 		GenerateSettlementBatch               func(childComplexity int, input gqlmodel.GenerateSettlementBatchInput) int
 		GiveWorkerRecognition                 func(childComplexity int, input gqlmodel.WorkerRecognitionInput) int
 		GrantCarrierIntelOverride             func(childComplexity int, input gqlmodel.GrantCarrierIntelOverrideInput) int
+		HandOffWatchtowerItem                 func(childComplexity int, id string, input gqlmodel.HandOffWatchtowerItemInput) int
 		HoldDriverPayEvent                    func(childComplexity int, input gqlmodel.HoldPayEventInput) int
 		ImportSourcedCarrier                  func(childComplexity int, input gqlmodel.ImportSourcedCarrierInput) int
 		InviteWorkerToPortal                  func(childComplexity int, input gqlmodel.InviteWorkerToPortalInput) int
@@ -6254,6 +6292,7 @@ type ComplexityRoot struct {
 		LocateTrailer                         func(childComplexity int, input gqlmodel.LocateTrailerInput) int
 		MarkAllMyNotificationsRead            func(childComplexity int) int
 		MarkAllNotificationsRead              func(childComplexity int) int
+		MarkBriefingRead                      func(childComplexity int, id string) int
 		MarkCarrierIntelReviewed              func(childComplexity int, carrierID string, note string) int
 		MarkCarrierSettlementPaid             func(childComplexity int, input gqlmodel.MarkCarrierSettlementPaidInput) int
 		MarkDriverSettlementPaid              func(childComplexity int, input gqlmodel.MarkDriverSettlementPaidInput) int
@@ -6263,6 +6302,7 @@ type ComplexityRoot struct {
 		MarkMyNotificationsUnread             func(childComplexity int, ids []string) int
 		MarkNotificationsRead                 func(childComplexity int, ids []string) int
 		MarkNotificationsUnread               func(childComplexity int, ids []string) int
+		MarkWatchtowerSeen                    func(childComplexity int, seenAt *int) int
 		MarkWorkerChecklistItemNotApplicable  func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
 		OpenEscrowAccount                     func(childComplexity int, input gqlmodel.OpenEscrowAccountInput) int
 		OpenInvoiceDispute                    func(childComplexity int, input gqlmodel.OpenInvoiceDisputeInput) int
@@ -6301,6 +6341,7 @@ type ComplexityRoot struct {
 		RecordTimeEntry                       func(childComplexity int, input gqlmodel.RecordTimeEntryInput) int
 		RecordWorkerEmploymentEvent           func(childComplexity int, input gqlmodel.RecordWorkerEmploymentEventInput) int
 		RecordWorkerInjury                    func(childComplexity int, input gqlmodel.RecordWorkerInjuryInput) int
+		RegenerateBriefing                    func(childComplexity int, input gqlmodel.TodaysBriefingInput) int
 		RejectCarrierInvoiceMatch             func(childComplexity int, input gqlmodel.CarrierInvoiceMatchActionInput) int
 		RejectCarrierSettlement               func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
 		RejectDriverSettlement                func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
@@ -7380,6 +7421,8 @@ type ComplexityRoot struct {
 		BenefitPlans                        func(childComplexity int, activeOnly *bool, planYear *int) int
 		BillingTransferRun                  func(childComplexity int, id string) int
 		BillingTransferRunItems             func(childComplexity int, runID string, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.BillingTransferRunItemsFilterInput) int
+		Briefing                            func(childComplexity int, id string) int
+		Briefings                           func(childComplexity int, input gqlmodel.ListBriefingsInput) int
 		CannedReports                       func(childComplexity int) int
 		Carrier                             func(childComplexity int, id string) int
 		CarrierCostEvents                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
@@ -7721,6 +7764,7 @@ type ComplexityRoot struct {
 		TimeClockEntries                    func(childComplexity int, workerID string, from *int, to *int, limit *int) int
 		Timesheet                           func(childComplexity int, id string) int
 		Timesheets                          func(childComplexity int, filter *gqlmodel.TimesheetFilterInput) int
+		TodaysBriefing                      func(childComplexity int, input gqlmodel.TodaysBriefingInput) int
 		Tractor                             func(childComplexity int, id string) int
 		Tractors                            func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) int
 		Trailer                             func(childComplexity int, id string) int
@@ -7735,6 +7779,8 @@ type ComplexityRoot struct {
 		Users                               func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		VehicleInspections                  func(childComplexity int, tractorID *string, workerID *string, since *int, limit *int) int
 		VehiclePositions                    func(childComplexity int, maxAgeSeconds *int) int
+		WatchtowerCounts                    func(childComplexity int) int
+		WatchtowerItems                     func(childComplexity int, input gqlmodel.WatchtowerItemsInput) int
 		WorkerAvailabilityPreferences       func(childComplexity int, workerID string) int
 		WorkerBenefitEnrollments            func(childComplexity int, workerID string, openOnly *bool) int
 		WorkerChecklist                     func(childComplexity int, id string) int
@@ -10468,6 +10514,62 @@ type ComplexityRoot struct {
 		ReleasedQueueItemIDs func(childComplexity int) int
 	}
 
+	WatchtowerCounts struct {
+		ByKind         func(childComplexity int) int
+		Critical       func(childComplexity int) int
+		SeenAt         func(childComplexity int) int
+		Unresolved     func(childComplexity int) int
+		Unseen         func(childComplexity int) int
+		UnseenCritical func(childComplexity int) int
+	}
+
+	WatchtowerHandOffResult struct {
+		Candidates  func(childComplexity int) int
+		Item        func(childComplexity int) int
+		Run         func(childComplexity int) int
+		Subscribers func(childComplexity int) int
+		Templates   func(childComplexity int) int
+	}
+
+	WatchtowerItem struct {
+		BusinessUnitID func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		EventKind      func(childComplexity int) int
+		ID             func(childComplexity int) int
+		KindLabel      func(childComplexity int) int
+		OccurredAt     func(childComplexity int) int
+		OrganizationID func(childComplexity int) int
+		Path           func(childComplexity int) int
+		ResolvedAt     func(childComplexity int) int
+		Seen           func(childComplexity int) int
+		Severity       func(childComplexity int) int
+		SourceID       func(childComplexity int) int
+		SourceKind     func(childComplexity int) int
+		SubjectID      func(childComplexity int) int
+		SubjectType    func(childComplexity int) int
+		Summary        func(childComplexity int) int
+		Title          func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+		Version        func(childComplexity int) int
+	}
+
+	WatchtowerItemConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+		SeenAt   func(childComplexity int) int
+	}
+
+	WatchtowerItemEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	WatchtowerKindSummary struct {
+		Count func(childComplexity int) int
+		Kind  func(childComplexity int) int
+		Label func(childComplexity int) int
+	}
+
 	Worker struct {
 		AddressLine1          func(childComplexity int) int
 		AddressLine2          func(childComplexity int) int
@@ -11564,6 +11666,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AIProvider.Enabled(childComplexity), true
+	case "AIProvider.extraBody":
+		if e.ComplexityRoot.AIProvider.ExtraBody == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.ExtraBody(childComplexity), true
 	case "AIProvider.hasApiKey":
 		if e.ComplexityRoot.AIProvider.HasAPIKey == nil {
 			break
@@ -15727,6 +15835,153 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.BillingTransferValidation.Message(childComplexity), true
+
+	case "Briefing.briefingDate":
+		if e.ComplexityRoot.Briefing.BriefingDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.BriefingDate(childComplexity), true
+	case "Briefing.businessUnitId":
+		if e.ComplexityRoot.Briefing.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.BusinessUnitID(childComplexity), true
+	case "Briefing.createdAt":
+		if e.ComplexityRoot.Briefing.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.CreatedAt(childComplexity), true
+	case "Briefing.emailedAt":
+		if e.ComplexityRoot.Briefing.EmailedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.EmailedAt(childComplexity), true
+	case "Briefing.headline":
+		if e.ComplexityRoot.Briefing.Headline == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.Headline(childComplexity), true
+	case "Briefing.id":
+		if e.ComplexityRoot.Briefing.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.ID(childComplexity), true
+	case "Briefing.narrated":
+		if e.ComplexityRoot.Briefing.Narrated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.Narrated(childComplexity), true
+	case "Briefing.organizationId":
+		if e.ComplexityRoot.Briefing.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.OrganizationID(childComplexity), true
+	case "Briefing.readAt":
+		if e.ComplexityRoot.Briefing.ReadAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.ReadAt(childComplexity), true
+	case "Briefing.roleKey":
+		if e.ComplexityRoot.Briefing.RoleKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.RoleKey(childComplexity), true
+	case "Briefing.sections":
+		if e.ComplexityRoot.Briefing.Sections == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.Sections(childComplexity), true
+	case "Briefing.status":
+		if e.ComplexityRoot.Briefing.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.Status(childComplexity), true
+	case "Briefing.updatedAt":
+		if e.ComplexityRoot.Briefing.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.UpdatedAt(childComplexity), true
+	case "Briefing.version":
+		if e.ComplexityRoot.Briefing.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Briefing.Version(childComplexity), true
+
+	case "BriefingItem.label":
+		if e.ComplexityRoot.BriefingItem.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BriefingItem.Label(childComplexity), true
+	case "BriefingItem.path":
+		if e.ComplexityRoot.BriefingItem.Path == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BriefingItem.Path(childComplexity), true
+	case "BriefingItem.value":
+		if e.ComplexityRoot.BriefingItem.Value == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BriefingItem.Value(childComplexity), true
+
+	case "BriefingSection.body":
+		if e.ComplexityRoot.BriefingSection.Body == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BriefingSection.Body(childComplexity), true
+	case "BriefingSection.items":
+		if e.ComplexityRoot.BriefingSection.Items == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BriefingSection.Items(childComplexity), true
+	case "BriefingSection.key":
+		if e.ComplexityRoot.BriefingSection.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BriefingSection.Key(childComplexity), true
+	case "BriefingSection.path":
+		if e.ComplexityRoot.BriefingSection.Path == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BriefingSection.Path(childComplexity), true
+	case "BriefingSection.read":
+		if e.ComplexityRoot.BriefingSection.Read == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BriefingSection.Read(childComplexity), true
+	case "BriefingSection.summary":
+		if e.ComplexityRoot.BriefingSection.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BriefingSection.Summary(childComplexity), true
+	case "BriefingSection.title":
+		if e.ComplexityRoot.BriefingSection.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BriefingSection.Title(childComplexity), true
 
 	case "BulkAssignTrainingOutcome.courseId":
 		if e.ComplexityRoot.BulkAssignTrainingOutcome.CourseID == nil {
@@ -40646,6 +40901,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DismissNotifications(childComplexity, args["ids"].([]string)), true
+	case "Mutation.dismissWatchtowerItem":
+		if e.ComplexityRoot.Mutation.DismissWatchtowerItem == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_dismissWatchtowerItem_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DismissWatchtowerItem(childComplexity, args["id"].(string)), true
 	case "Mutation.dispatchAssignMoveToCarrier":
 		if e.ComplexityRoot.Mutation.DispatchAssignMoveToCarrier == nil {
 			break
@@ -40888,6 +41154,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.GrantCarrierIntelOverride(childComplexity, args["input"].(gqlmodel.GrantCarrierIntelOverrideInput)), true
+	case "Mutation.handOffWatchtowerItem":
+		if e.ComplexityRoot.Mutation.HandOffWatchtowerItem == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_handOffWatchtowerItem_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.HandOffWatchtowerItem(childComplexity, args["id"].(string), args["input"].(gqlmodel.HandOffWatchtowerItemInput)), true
 	case "Mutation.holdDriverPayEvent":
 		if e.ComplexityRoot.Mutation.HoldDriverPayEvent == nil {
 			break
@@ -40988,6 +41265,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.MarkAllNotificationsRead(childComplexity), true
+	case "Mutation.markBriefingRead":
+		if e.ComplexityRoot.Mutation.MarkBriefingRead == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_markBriefingRead_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.MarkBriefingRead(childComplexity, args["id"].(string)), true
 	case "Mutation.markCarrierIntelReviewed":
 		if e.ComplexityRoot.Mutation.MarkCarrierIntelReviewed == nil {
 			break
@@ -41087,6 +41375,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.MarkNotificationsUnread(childComplexity, args["ids"].([]string)), true
+	case "Mutation.markWatchtowerSeen":
+		if e.ComplexityRoot.Mutation.MarkWatchtowerSeen == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_markWatchtowerSeen_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.MarkWatchtowerSeen(childComplexity, args["seenAt"].(*int)), true
 	case "Mutation.markWorkerChecklistItemNotApplicable":
 		if e.ComplexityRoot.Mutation.MarkWorkerChecklistItemNotApplicable == nil {
 			break
@@ -41505,6 +41804,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RecordWorkerInjury(childComplexity, args["input"].(gqlmodel.RecordWorkerInjuryInput)), true
+	case "Mutation.regenerateBriefing":
+		if e.ComplexityRoot.Mutation.RegenerateBriefing == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_regenerateBriefing_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RegenerateBriefing(childComplexity, args["input"].(gqlmodel.TodaysBriefingInput)), true
 	case "Mutation.rejectCarrierInvoiceMatch":
 		if e.ComplexityRoot.Mutation.RejectCarrierInvoiceMatch == nil {
 			break
@@ -47680,6 +47990,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.BillingTransferRunItems(childComplexity, args["runId"].(string), args["input"].(gqlmodel.DataTableConnectionInput), args["filter"].(*gqlmodel.BillingTransferRunItemsFilterInput)), true
+	case "Query.briefing":
+		if e.ComplexityRoot.Query.Briefing == nil {
+			break
+		}
+
+		args, err := ec.field_Query_briefing_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Briefing(childComplexity, args["id"].(string)), true
+	case "Query.briefings":
+		if e.ComplexityRoot.Query.Briefings == nil {
+			break
+		}
+
+		args, err := ec.field_Query_briefings_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Briefings(childComplexity, args["input"].(gqlmodel.ListBriefingsInput)), true
 	case "Query.cannedReports":
 		if e.ComplexityRoot.Query.CannedReports == nil {
 			break
@@ -51112,6 +51444,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Timesheets(childComplexity, args["filter"].(*gqlmodel.TimesheetFilterInput)), true
+	case "Query.todaysBriefing":
+		if e.ComplexityRoot.Query.TodaysBriefing == nil {
+			break
+		}
+
+		args, err := ec.field_Query_todaysBriefing_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.TodaysBriefing(childComplexity, args["input"].(gqlmodel.TodaysBriefingInput)), true
 	case "Query.tractor":
 		if e.ComplexityRoot.Query.Tractor == nil {
 			break
@@ -51266,6 +51609,23 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.VehiclePositions(childComplexity, args["maxAgeSeconds"].(*int)), true
+	case "Query.watchtowerCounts":
+		if e.ComplexityRoot.Query.WatchtowerCounts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.WatchtowerCounts(childComplexity), true
+	case "Query.watchtowerItems":
+		if e.ComplexityRoot.Query.WatchtowerItems == nil {
+			break
+		}
+
+		args, err := ec.field_Query_watchtowerItems_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.WatchtowerItems(childComplexity, args["input"].(gqlmodel.WatchtowerItemsInput)), true
 	case "Query.workerAvailabilityPreferences":
 		if e.ComplexityRoot.Query.WorkerAvailabilityPreferences == nil {
 			break
@@ -64162,6 +64522,240 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.VoidInvoiceResult.ReleasedQueueItemIDs(childComplexity), true
 
+	case "WatchtowerCounts.byKind":
+		if e.ComplexityRoot.WatchtowerCounts.ByKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerCounts.ByKind(childComplexity), true
+	case "WatchtowerCounts.critical":
+		if e.ComplexityRoot.WatchtowerCounts.Critical == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerCounts.Critical(childComplexity), true
+	case "WatchtowerCounts.seenAt":
+		if e.ComplexityRoot.WatchtowerCounts.SeenAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerCounts.SeenAt(childComplexity), true
+	case "WatchtowerCounts.unresolved":
+		if e.ComplexityRoot.WatchtowerCounts.Unresolved == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerCounts.Unresolved(childComplexity), true
+	case "WatchtowerCounts.unseen":
+		if e.ComplexityRoot.WatchtowerCounts.Unseen == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerCounts.Unseen(childComplexity), true
+	case "WatchtowerCounts.unseenCritical":
+		if e.ComplexityRoot.WatchtowerCounts.UnseenCritical == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerCounts.UnseenCritical(childComplexity), true
+
+	case "WatchtowerHandOffResult.candidates":
+		if e.ComplexityRoot.WatchtowerHandOffResult.Candidates == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerHandOffResult.Candidates(childComplexity), true
+	case "WatchtowerHandOffResult.item":
+		if e.ComplexityRoot.WatchtowerHandOffResult.Item == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerHandOffResult.Item(childComplexity), true
+	case "WatchtowerHandOffResult.run":
+		if e.ComplexityRoot.WatchtowerHandOffResult.Run == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerHandOffResult.Run(childComplexity), true
+	case "WatchtowerHandOffResult.subscribers":
+		if e.ComplexityRoot.WatchtowerHandOffResult.Subscribers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerHandOffResult.Subscribers(childComplexity), true
+	case "WatchtowerHandOffResult.templates":
+		if e.ComplexityRoot.WatchtowerHandOffResult.Templates == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerHandOffResult.Templates(childComplexity), true
+
+	case "WatchtowerItem.businessUnitId":
+		if e.ComplexityRoot.WatchtowerItem.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.BusinessUnitID(childComplexity), true
+	case "WatchtowerItem.createdAt":
+		if e.ComplexityRoot.WatchtowerItem.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.CreatedAt(childComplexity), true
+	case "WatchtowerItem.eventKind":
+		if e.ComplexityRoot.WatchtowerItem.EventKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.EventKind(childComplexity), true
+	case "WatchtowerItem.id":
+		if e.ComplexityRoot.WatchtowerItem.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.ID(childComplexity), true
+	case "WatchtowerItem.kindLabel":
+		if e.ComplexityRoot.WatchtowerItem.KindLabel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.KindLabel(childComplexity), true
+	case "WatchtowerItem.occurredAt":
+		if e.ComplexityRoot.WatchtowerItem.OccurredAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.OccurredAt(childComplexity), true
+	case "WatchtowerItem.organizationId":
+		if e.ComplexityRoot.WatchtowerItem.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.OrganizationID(childComplexity), true
+	case "WatchtowerItem.path":
+		if e.ComplexityRoot.WatchtowerItem.Path == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.Path(childComplexity), true
+	case "WatchtowerItem.resolvedAt":
+		if e.ComplexityRoot.WatchtowerItem.ResolvedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.ResolvedAt(childComplexity), true
+	case "WatchtowerItem.seen":
+		if e.ComplexityRoot.WatchtowerItem.Seen == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.Seen(childComplexity), true
+	case "WatchtowerItem.severity":
+		if e.ComplexityRoot.WatchtowerItem.Severity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.Severity(childComplexity), true
+	case "WatchtowerItem.sourceId":
+		if e.ComplexityRoot.WatchtowerItem.SourceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.SourceID(childComplexity), true
+	case "WatchtowerItem.sourceKind":
+		if e.ComplexityRoot.WatchtowerItem.SourceKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.SourceKind(childComplexity), true
+	case "WatchtowerItem.subjectId":
+		if e.ComplexityRoot.WatchtowerItem.SubjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.SubjectID(childComplexity), true
+	case "WatchtowerItem.subjectType":
+		if e.ComplexityRoot.WatchtowerItem.SubjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.SubjectType(childComplexity), true
+	case "WatchtowerItem.summary":
+		if e.ComplexityRoot.WatchtowerItem.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.Summary(childComplexity), true
+	case "WatchtowerItem.title":
+		if e.ComplexityRoot.WatchtowerItem.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.Title(childComplexity), true
+	case "WatchtowerItem.updatedAt":
+		if e.ComplexityRoot.WatchtowerItem.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.UpdatedAt(childComplexity), true
+	case "WatchtowerItem.version":
+		if e.ComplexityRoot.WatchtowerItem.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItem.Version(childComplexity), true
+
+	case "WatchtowerItemConnection.edges":
+		if e.ComplexityRoot.WatchtowerItemConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItemConnection.Edges(childComplexity), true
+	case "WatchtowerItemConnection.pageInfo":
+		if e.ComplexityRoot.WatchtowerItemConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItemConnection.PageInfo(childComplexity), true
+	case "WatchtowerItemConnection.seenAt":
+		if e.ComplexityRoot.WatchtowerItemConnection.SeenAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItemConnection.SeenAt(childComplexity), true
+
+	case "WatchtowerItemEdge.cursor":
+		if e.ComplexityRoot.WatchtowerItemEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItemEdge.Cursor(childComplexity), true
+	case "WatchtowerItemEdge.node":
+		if e.ComplexityRoot.WatchtowerItemEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerItemEdge.Node(childComplexity), true
+
+	case "WatchtowerKindSummary.count":
+		if e.ComplexityRoot.WatchtowerKindSummary.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerKindSummary.Count(childComplexity), true
+	case "WatchtowerKindSummary.kind":
+		if e.ComplexityRoot.WatchtowerKindSummary.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerKindSummary.Kind(childComplexity), true
+	case "WatchtowerKindSummary.label":
+		if e.ComplexityRoot.WatchtowerKindSummary.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WatchtowerKindSummary.Label(childComplexity), true
+
 	case "Worker.addressLine1":
 		if e.ComplexityRoot.Worker.AddressLine1 == nil {
 			break
@@ -69531,6 +70125,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGeneratePayrollExportInput,
 		ec.unmarshalInputGenerateSettlementBatchInput,
 		ec.unmarshalInputGrantCarrierIntelOverrideInput,
+		ec.unmarshalInputHandOffWatchtowerItemInput,
 		ec.unmarshalInputHoldPayEventInput,
 		ec.unmarshalInputHomeLayoutInput,
 		ec.unmarshalInputHomeWidgetConfigInput,
@@ -69548,6 +70143,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputIssuePayAdvanceInput,
 		ec.unmarshalInputJobPositionInput,
 		ec.unmarshalInputLateChargeAssessmentInput,
+		ec.unmarshalInputListBriefingsInput,
 		ec.unmarshalInputLocateTractorInput,
 		ec.unmarshalInputLocateTrailerInput,
 		ec.unmarshalInputMarkCarrierSettlementPaidInput,
@@ -69681,6 +70277,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputTableConfigurationPatchInput,
 		ec.unmarshalInputTelematicsFormMappingItemInput,
 		ec.unmarshalInputTimesheetFilterInput,
+		ec.unmarshalInputTodaysBriefingInput,
 		ec.unmarshalInputTractorInput,
 		ec.unmarshalInputTractorPatchInput,
 		ec.unmarshalInputTrailerInput,
@@ -69726,6 +70323,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputVoidInvoiceInput,
 		ec.unmarshalInputVoidPayrollExportInput,
 		ec.unmarshalInputWaiveWorkerTrainingInput,
+		ec.unmarshalInputWatchtowerItemsInput,
 		ec.unmarshalInputWithdrawInvoiceDisputeInput,
 		ec.unmarshalInputWorkerChecklistItemActionInput,
 		ec.unmarshalInputWorkerChecklistTemplateInput,
@@ -70812,6 +71410,12 @@ type AIProvider {
   allowPrivateNetwork: Boolean!
   structuredOutputMode: AIStructuredOutputMode!
   reasoningEffort: AIReasoningEffort!
+  """
+  Vendor request fields this endpoint takes that the protocol does not
+  define, merged under the fields this system sets. Null when the endpoint
+  needs none.
+  """
+  extraBody: JSON
   "USD per million input tokens, from the provider price list; null means unknown."
   inputCostPerMillion: Decimal
   "USD per million output tokens; null means unknown."
@@ -71384,6 +71988,105 @@ extend type Mutation {
   cancelBillingTransferRun(id: ID!): BillingTransferRun!
   "Starts a fresh transfer over the shipments a second attempt could still move."
   retryBillingTransferRun(id: ID!): BillingTransferRun!
+}
+`, BuiltIn: false},
+	{Name: "../schema/briefing.graphqls", Input: `"Who a briefing is written for. The same morning reads differently to a dispatcher and a biller."
+enum BriefingRoleKey {
+  Dispatch
+  Billing
+  Compliance
+  Leadership
+  General
+}
+
+"How far the morning's writing got."
+enum BriefingStatus {
+  Pending
+  Ready
+  Failed
+}
+
+"A block of the page. The keys are fixed, so a model cannot invent a section nothing computed."
+enum BriefingSectionKey {
+  Attention
+  Today
+  Coverage
+  Exceptions
+  Decisions
+  Compliance
+  Billing
+  Cash
+}
+
+"One line of a section: a figure, what it counts, and the page that shows it."
+type BriefingItem {
+  label: String!
+  "Already rendered, because the figure a person reads and the figure the guard checked must be the same string."
+  value: String!
+  path: String
+}
+
+type BriefingSection {
+  key: BriefingSectionKey!
+  title: String!
+  "The computed wording, which is always true and always present."
+  summary: String!
+  "The model's sentence, where it was written and survived the number guard."
+  body: String
+  "What a person reads: the model's sentence when there is one, the computed wording otherwise."
+  read: String!
+  items: [BriefingItem!]!
+  path: String
+}
+
+"""
+One role's morning for one organization. The figures are computed first and
+the wording written second; a briefing nobody narrated is a complete
+briefing that simply reads plainer.
+"""
+type Briefing {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  roleKey: BriefingRoleKey!
+  "The organization's local day, as YYYY-MM-DD."
+  briefingDate: String!
+  status: BriefingStatus!
+  headline: String!
+  sections: [BriefingSection!]!
+  "True when a model's wording was accepted for any part of the page."
+  narrated: Boolean!
+  emailedAt: Timestamp
+  readAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input TodaysBriefingInput {
+  "Whose morning to read; omitted reads the one written for everybody."
+  roleKey: BriefingRoleKey
+  "An organization-local day, as YYYY-MM-DD; omitted is today."
+  briefingDate: String
+}
+
+input ListBriefingsInput {
+  roleKey: BriefingRoleKey
+  first: Int = 14
+}
+
+extend type Query {
+  "This morning's page, or null when it has not been written yet."
+  todaysBriefing(input: TodaysBriefingInput!): Briefing
+  briefing(id: ID!): Briefing!
+  "Recent mornings, newest day first."
+  briefings(input: ListBriefingsInput!): [Briefing!]!
+}
+
+extend type Mutation {
+  markBriefingRead(id: ID!): Briefing!
+  "Writes today's page again from current figures, replacing what was there."
+  regenerateBriefing(input: TodaysBriefingInput!): Briefing!
 }
 `, BuiltIn: false},
 	{Name: "../schema/carrier.graphqls", Input: `enum CarrierStatus {
@@ -87632,6 +88335,142 @@ extend type Query {
   user(id: ID!): User
 }
 `, BuiltIn: false},
+	{Name: "../schema/watchtower.graphqls", Input: `"""
+The record an item stands in for. The source stays authoritative: an item
+is a projection of it, keyed by kind and id, and resolves when the source
+does.
+"""
+enum WatchtowerSourceKind {
+  Insight
+  AgentProposal
+  AgentPlan
+  AgentRunFailed
+  AgentException
+  ServiceFailure
+  CarrierIntelEvent
+  HOSViolation
+  WeatherAlert
+  EDIInboundQuarantined
+  BillingException
+  DetentionOccurrence
+  InboundMessage
+}
+
+"How loudly an item asks to be looked at."
+enum WatchtowerSeverity {
+  Info
+  Warning
+  Critical
+}
+
+"""
+One thing worth a person's attention, drawn from the record that raised it.
+Every item a reader is shown is one whose source they could open themselves.
+"""
+type WatchtowerItem {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  sourceKind: WatchtowerSourceKind!
+  "The id of the record this stands for, in that source's own terms."
+  sourceId: String!
+  severity: WatchtowerSeverity!
+  title: String!
+  summary: String!
+  "The record an agent would work on if this item were handed to one."
+  subjectType: AgentSubjectType
+  subjectId: ID
+  "The event a hand-off publishes; absent when no agent can take this kind."
+  eventKind: String
+  "An application path that opens the source record; blank when the source has no page of its own."
+  path: String!
+  occurredAt: Timestamp!
+  "When the source closed; absent while the item is still open."
+  resolvedAt: Timestamp
+  "Whether this reader had already been shown the item, from their own cursor."
+  seen: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  "The kind in the reader's words, for a filter chip."
+  kindLabel: String!
+}
+
+type WatchtowerItemEdge {
+  node: WatchtowerItem!
+  cursor: String!
+}
+
+type WatchtowerItemConnection {
+  edges: [WatchtowerItemEdge!]!
+  pageInfo: PageInfo!
+  "Where this reader's eye last was, so a client can draw the unseen line."
+  seenAt: Timestamp!
+}
+
+input WatchtowerItemsInput {
+  first: Int = 25
+  after: String
+  "Only these kinds; empty is every kind the reader may see."
+  kinds: [WatchtowerSourceKind!]
+  "Only these severities; empty is all three."
+  severities: [WatchtowerSeverity!]
+  "Leave out what has already resolved."
+  unresolvedOnly: Boolean = true
+  "Only what occurred at or after this instant."
+  since: Timestamp
+}
+
+type WatchtowerKindSummary {
+  kind: WatchtowerSourceKind!
+  label: String!
+  count: Int!
+}
+
+"The feed in numbers, for a badge and a set of filter chips."
+type WatchtowerCounts {
+  unresolved: Int!
+  critical: Int!
+  unseen: Int!
+  unseenCritical: Int!
+  byKind: [WatchtowerKindSummary!]!
+  seenAt: Timestamp!
+}
+
+"""
+What a hand-off did. With a run, an agent is already working on the item;
+with subscribers, the event went to them; with neither, the candidates are
+the agents that could take it, for the person to choose from.
+"""
+type WatchtowerHandOffResult {
+  item: WatchtowerItem!
+  run: AgentRun
+  subscribers: [AgentDefinition!]!
+  candidates: [AgentDefinition!]!
+  "Templates that handle this item's event, for an organization with no such agent yet."
+  templates: [String!]!
+}
+
+input HandOffWatchtowerItemInput {
+  "Start this agent on the item's subject; omit to publish the item's event to whoever subscribes."
+  agentDefinitionId: ID
+}
+
+extend type Query {
+  "What needs attention, newest first, filtered to what this reader may see."
+  watchtowerItems(input: WatchtowerItemsInput!): WatchtowerItemConnection!
+  watchtowerCounts: WatchtowerCounts!
+}
+
+extend type Mutation {
+  "Moves this reader's cursor, so what is already read stops counting as unseen."
+  markWatchtowerSeen(seenAt: Timestamp): WatchtowerCounts!
+  "Takes an item off the feed without touching the record behind it."
+  dismissWatchtowerItem(id: ID!): WatchtowerItem!
+  "Hands an item to an agent, or to whoever subscribes to its event."
+  handOffWatchtowerItem(id: ID!, input: HandOffWatchtowerItemInput!): WatchtowerHandOffResult!
+}
+`, BuiltIn: false},
 	{Name: "../schema/worker.graphqls", Input: `enum WorkerType {
   Employee
   Contractor
@@ -90525,6 +91364,8 @@ func (ec *executionContext) childFields_AIProvider(ctx context.Context, field gr
 		return ec.fieldContext_AIProvider_structuredOutputMode(ctx, field)
 	case "reasoningEffort":
 		return ec.fieldContext_AIProvider_reasoningEffort(ctx, field)
+	case "extraBody":
+		return ec.fieldContext_AIProvider_extraBody(ctx, field)
 	case "inputCostPerMillion":
 		return ec.fieldContext_AIProvider_inputCostPerMillion(ctx, field)
 	case "outputCostPerMillion":
@@ -92339,6 +93180,72 @@ func (ec *executionContext) childFields_BillingTransferValidation(ctx context.Co
 		return ec.fieldContext_BillingTransferValidation_message(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type BillingTransferValidation", field.Name)
+}
+
+func (ec *executionContext) childFields_Briefing(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_Briefing_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_Briefing_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_Briefing_organizationId(ctx, field)
+	case "roleKey":
+		return ec.fieldContext_Briefing_roleKey(ctx, field)
+	case "briefingDate":
+		return ec.fieldContext_Briefing_briefingDate(ctx, field)
+	case "status":
+		return ec.fieldContext_Briefing_status(ctx, field)
+	case "headline":
+		return ec.fieldContext_Briefing_headline(ctx, field)
+	case "sections":
+		return ec.fieldContext_Briefing_sections(ctx, field)
+	case "narrated":
+		return ec.fieldContext_Briefing_narrated(ctx, field)
+	case "emailedAt":
+		return ec.fieldContext_Briefing_emailedAt(ctx, field)
+	case "readAt":
+		return ec.fieldContext_Briefing_readAt(ctx, field)
+	case "version":
+		return ec.fieldContext_Briefing_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_Briefing_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_Briefing_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Briefing", field.Name)
+}
+
+func (ec *executionContext) childFields_BriefingItem(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "label":
+		return ec.fieldContext_BriefingItem_label(ctx, field)
+	case "value":
+		return ec.fieldContext_BriefingItem_value(ctx, field)
+	case "path":
+		return ec.fieldContext_BriefingItem_path(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BriefingItem", field.Name)
+}
+
+func (ec *executionContext) childFields_BriefingSection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_BriefingSection_key(ctx, field)
+	case "title":
+		return ec.fieldContext_BriefingSection_title(ctx, field)
+	case "summary":
+		return ec.fieldContext_BriefingSection_summary(ctx, field)
+	case "body":
+		return ec.fieldContext_BriefingSection_body(ctx, field)
+	case "read":
+		return ec.fieldContext_BriefingSection_read(ctx, field)
+	case "items":
+		return ec.fieldContext_BriefingSection_items(ctx, field)
+	case "path":
+		return ec.fieldContext_BriefingSection_path(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BriefingSection", field.Name)
 }
 
 func (ec *executionContext) childFields_BulkAssignTrainingOutcome(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -108873,6 +109780,118 @@ func (ec *executionContext) childFields_VoidInvoiceResult(ctx context.Context, f
 		return ec.fieldContext_VoidInvoiceResult_releasedQueueItemIds(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type VoidInvoiceResult", field.Name)
+}
+
+func (ec *executionContext) childFields_WatchtowerCounts(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "unresolved":
+		return ec.fieldContext_WatchtowerCounts_unresolved(ctx, field)
+	case "critical":
+		return ec.fieldContext_WatchtowerCounts_critical(ctx, field)
+	case "unseen":
+		return ec.fieldContext_WatchtowerCounts_unseen(ctx, field)
+	case "unseenCritical":
+		return ec.fieldContext_WatchtowerCounts_unseenCritical(ctx, field)
+	case "byKind":
+		return ec.fieldContext_WatchtowerCounts_byKind(ctx, field)
+	case "seenAt":
+		return ec.fieldContext_WatchtowerCounts_seenAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type WatchtowerCounts", field.Name)
+}
+
+func (ec *executionContext) childFields_WatchtowerHandOffResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "item":
+		return ec.fieldContext_WatchtowerHandOffResult_item(ctx, field)
+	case "run":
+		return ec.fieldContext_WatchtowerHandOffResult_run(ctx, field)
+	case "subscribers":
+		return ec.fieldContext_WatchtowerHandOffResult_subscribers(ctx, field)
+	case "candidates":
+		return ec.fieldContext_WatchtowerHandOffResult_candidates(ctx, field)
+	case "templates":
+		return ec.fieldContext_WatchtowerHandOffResult_templates(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type WatchtowerHandOffResult", field.Name)
+}
+
+func (ec *executionContext) childFields_WatchtowerItem(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_WatchtowerItem_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_WatchtowerItem_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_WatchtowerItem_organizationId(ctx, field)
+	case "sourceKind":
+		return ec.fieldContext_WatchtowerItem_sourceKind(ctx, field)
+	case "sourceId":
+		return ec.fieldContext_WatchtowerItem_sourceId(ctx, field)
+	case "severity":
+		return ec.fieldContext_WatchtowerItem_severity(ctx, field)
+	case "title":
+		return ec.fieldContext_WatchtowerItem_title(ctx, field)
+	case "summary":
+		return ec.fieldContext_WatchtowerItem_summary(ctx, field)
+	case "subjectType":
+		return ec.fieldContext_WatchtowerItem_subjectType(ctx, field)
+	case "subjectId":
+		return ec.fieldContext_WatchtowerItem_subjectId(ctx, field)
+	case "eventKind":
+		return ec.fieldContext_WatchtowerItem_eventKind(ctx, field)
+	case "path":
+		return ec.fieldContext_WatchtowerItem_path(ctx, field)
+	case "occurredAt":
+		return ec.fieldContext_WatchtowerItem_occurredAt(ctx, field)
+	case "resolvedAt":
+		return ec.fieldContext_WatchtowerItem_resolvedAt(ctx, field)
+	case "seen":
+		return ec.fieldContext_WatchtowerItem_seen(ctx, field)
+	case "version":
+		return ec.fieldContext_WatchtowerItem_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_WatchtowerItem_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_WatchtowerItem_updatedAt(ctx, field)
+	case "kindLabel":
+		return ec.fieldContext_WatchtowerItem_kindLabel(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type WatchtowerItem", field.Name)
+}
+
+func (ec *executionContext) childFields_WatchtowerItemConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_WatchtowerItemConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_WatchtowerItemConnection_pageInfo(ctx, field)
+	case "seenAt":
+		return ec.fieldContext_WatchtowerItemConnection_seenAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type WatchtowerItemConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_WatchtowerItemEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_WatchtowerItemEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_WatchtowerItemEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type WatchtowerItemEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_WatchtowerKindSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "kind":
+		return ec.fieldContext_WatchtowerKindSummary_kind(ctx, field)
+	case "label":
+		return ec.fieldContext_WatchtowerKindSummary_label(ctx, field)
+	case "count":
+		return ec.fieldContext_WatchtowerKindSummary_count(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type WatchtowerKindSummary", field.Name)
 }
 
 func (ec *executionContext) childFields_Worker(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

@@ -42,6 +42,8 @@ var BillingTransferRunSpec TypeSpec
 
 var BillingTransferRunItemSpec TypeSpec
 
+var BriefingSpec TypeSpec
+
 var BusinessUnitSpec TypeSpec
 
 var CarrierSpec TypeSpec
@@ -199,6 +201,8 @@ var FiscalPeriodSpec TypeSpec
 var FiscalYearSpec TypeSpec
 
 var FleetCodeSpec TypeSpec
+
+var FormSubmissionFieldSpec TypeSpec
 
 var FormulaTemplateSpec TypeSpec
 
@@ -436,6 +440,8 @@ var VehicleInspectionSpec TypeSpec
 
 var VehiclePositionSpec TypeSpec
 
+var WatchtowerItemSpec TypeSpec
+
 var WorkerSpec TypeSpec
 
 var WorkerAvailabilityPreferenceSpec TypeSpec
@@ -567,6 +573,10 @@ func init() {
 			{
 				Name:        "reasoningEffort",
 				FieldMapKey: "reasoningEffort",
+			},
+			{
+				Name:        "extraBody",
+				FieldMapKey: "extraBody",
 			},
 			{
 				Name:        "inputCostPerMillion",
@@ -1419,6 +1429,10 @@ func init() {
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
 			},
+			{
+				Name:    "run",
+				Special: "run",
+			},
 		},
 	}
 
@@ -1491,6 +1505,14 @@ func init() {
 				FieldMapKey: "simulation",
 			},
 			{
+				Name:    "parameterFields",
+				Special: "parameterFields",
+			},
+			{
+				Name:    "modifications",
+				Special: "modifications",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -1501,6 +1523,10 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "run",
+				Special: "run",
 			},
 		},
 	}
@@ -1592,6 +1618,10 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "definition",
+				Special: "definition",
 			},
 		},
 	}
@@ -2305,6 +2335,73 @@ func init() {
 			{
 				Name:        "createdAt",
 				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	BriefingSpec = TypeSpec{
+		TypeName: "Briefing",
+		FieldMap: buncolgen.BriefingFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "roleKey",
+				FieldMapKey: "roleKey",
+			},
+			{
+				Name:        "briefingDate",
+				FieldMapKey: "briefingDate",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "headline",
+				FieldMapKey: "headline",
+			},
+			{
+				Name:        "sections",
+				FieldMapKey: "sections",
+			},
+			{
+				Name:        "narrated",
+				FieldMapKey: "narrated",
+			},
+			{
+				Name:        "emailedAt",
+				FieldMapKey: "emailedAt",
+			},
+			{
+				Name:        "readAt",
+				FieldMapKey: "readAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}
@@ -9304,6 +9401,25 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
+			},
+		},
+	}
+
+	FormSubmissionFieldSpec = TypeSpec{
+		TypeName: "FormSubmissionField",
+		FieldMap: buncolgen.ItemFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:    "label",
+				Special: "label",
+			},
+			{
+				Name:    "value",
+				Special: "value",
 			},
 		},
 	}
@@ -20148,6 +20264,93 @@ func init() {
 			{
 				Name:    "primaryWorkerName",
 				Special: "primaryWorkerName",
+			},
+		},
+	}
+
+	WatchtowerItemSpec = TypeSpec{
+		TypeName: "WatchtowerItem",
+		FieldMap: buncolgen.ItemFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "sourceKind",
+				FieldMapKey: "sourceKind",
+			},
+			{
+				Name:        "sourceId",
+				FieldMapKey: "sourceId",
+			},
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "title",
+				FieldMapKey: "title",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "subjectType",
+				FieldMapKey: "subjectType",
+			},
+			{
+				Name:        "subjectId",
+				FieldMapKey: "subjectId",
+			},
+			{
+				Name:        "eventKind",
+				FieldMapKey: "eventKind",
+			},
+			{
+				Name:        "path",
+				FieldMapKey: "path",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "resolvedAt",
+				FieldMapKey: "resolvedAt",
+			},
+			{
+				Name:    "seen",
+				Special: "seen",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "kindLabel",
+				Special: "kindLabel",
 			},
 		},
 	}

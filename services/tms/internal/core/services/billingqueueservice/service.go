@@ -3,6 +3,8 @@ package billingqueueservice
 import (
 	"context"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/watchtower"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
@@ -48,6 +50,8 @@ type Params struct {
 	Validator            *Validator
 	OrderDerivation      services.OrderDerivationService
 	AgentEvents          services.AgentEventPublisher `optional:"true"`
+	// Watchtower puts an item that cannot be invoiced on the feed.
+	Watchtower services.WatchtowerProjector `optional:"true"`
 }
 
 type service struct {
@@ -70,6 +74,7 @@ type service struct {
 	validator            *Validator
 	orderDerivation      services.OrderDerivationService
 	agentEvents          services.AgentEventPublisher
+	watchtower           services.WatchtowerProjector
 }
 
 //nolint:gocritic // dependency injection
@@ -94,6 +99,7 @@ func New(p Params) services.BillingQueueService {
 		validator:            p.Validator,
 		orderDerivation:      p.OrderDerivation,
 		agentEvents:          p.AgentEvents,
+		watchtower:           p.Watchtower,
 	}
 }
 
@@ -669,6 +675,7 @@ func (s *service) UpdateStatus(
 	)
 	s.publishInvalidation(ctx, updated, auditActor, "updated", updated)
 	s.publishStatusAgentEvent(ctx, updated)
+	s.projectToWatchtower(ctx, updated)
 
 	return updated, nil
 }
@@ -695,6 +702,26 @@ func (s *service) publishStatusAgentEvent(
 			BuID:  item.BusinessUnitID,
 		},
 	})
+}
+
+// projectToWatchtower puts an item in exception on the feed and takes it
+// off once it has moved on, whatever it moved to.
+func (s *service) projectToWatchtower(
+	ctx context.Context,
+	item *billingqueue.BillingQueueItem,
+) {
+	if s.watchtower == nil || item == nil {
+		return
+	}
+
+	tenant := pagination.TenantInfo{OrgID: item.OrganizationID, BuID: item.BusinessUnitID}
+	if item.Status == billingqueue.StatusException {
+		s.watchtower.Upsert(ctx, watchtowersources.DescribeBillingException(item))
+
+		return
+	}
+
+	s.watchtower.Resolve(ctx, tenant, watchtower.SourceBillingException, item.ID.String())
 }
 
 func (s *service) completeReplacementReview(

@@ -123,13 +123,18 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 	body.ResponseFormat = chatResponseFormatFor(call)
 	body.ReasoningEffort = call.reasoning().Wire()
 
+	payload, err := mergeExtraBody(body, call.Provider)
+	if err != nil {
+		return nil, err
+	}
+
 	var envelope chatResponse
-	err := postJSON(
+	err = postJSON(
 		ctx,
 		call.Client,
 		call.Provider.ResolvedBaseURL()+"/chat/completions",
 		map[string]string{"Authorization": bearer(call.APIKey)},
-		body,
+		payload,
 		&envelope,
 	)
 	if err != nil {
@@ -211,12 +216,17 @@ func (a openAIChatAdapter) Stream(
 	body.ResponseFormat = chatResponseFormatFor(call)
 	body.ReasoningEffort = call.reasoning().Wire()
 
+	payload, err := mergeExtraBody(body, call.Provider)
+	if err != nil {
+		return nil, err
+	}
+
 	stream, err := postStream(
 		ctx,
 		call,
 		call.Provider.ResolvedBaseURL()+"/chat/completions",
 		map[string]string{"Authorization": bearer(call.APIKey)},
-		body,
+		payload,
 	)
 	if err != nil {
 		return nil, err

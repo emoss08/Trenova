@@ -1,9 +1,9 @@
-package narrator_test
+package numberguard_test
 
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/services/insightservice/narrator"
+	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +21,7 @@ func values(numbers ...float64) []decimal.Decimal {
 func TestCheckNumbers_AcceptsProseThatCitesWhatWasComputed(t *testing.T) {
 	t.Parallel()
 
-	check := narrator.CheckNumbers(
+	check := numberguard.CheckNumbers(
 		"On-time delivery for Acme Foods was 82.4%, down from 93.1%.",
 		values(82.4, 93.1),
 	)
@@ -35,7 +35,7 @@ func TestCheckNumbers_AcceptsProseThatCitesWhatWasComputed(t *testing.T) {
 func TestCheckNumbers_RejectsAFigureNobodyComputed(t *testing.T) {
 	t.Parallel()
 
-	check := narrator.CheckNumbers(
+	check := numberguard.CheckNumbers(
 		"Detention at the Dallas yard is costing you $48,000 a month.",
 		values(12400),
 	)
@@ -47,7 +47,7 @@ func TestCheckNumbers_RejectsAFigureNobodyComputed(t *testing.T) {
 func TestCheckNumbers_AcceptsProseWithNoFiguresAtAll(t *testing.T) {
 	t.Parallel()
 
-	check := narrator.CheckNumbers(
+	check := numberguard.CheckNumbers(
 		"Service to this customer has slipped materially since last month.",
 		values(82.4),
 	)
@@ -66,15 +66,15 @@ func TestCheckNumbers_AllowsRoundingOfAComputedFigure(t *testing.T) {
 		"On-time delivery is 82.4%.",
 		"Detention cost roughly $12,400 over the window.",
 	} {
-		assert.True(t, narrator.CheckNumbers(prose, values(82.4, 12437.19)).OK, prose)
+		assert.True(t, numberguard.CheckNumbers(prose, values(82.4, 12437.19)).OK, prose)
 	}
 }
 
 func TestCheckNumbers_ReadsThousandsAndMillionsShorthand(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, narrator.CheckNumbers("That is $12.4k of exposure.", values(12400)).OK)
-	assert.True(t, narrator.CheckNumbers("Roughly 1.2M miles run empty.", values(1_200_000)).OK)
+	assert.True(t, numberguard.CheckNumbers("That is $12.4k of exposure.", values(12400)).OK)
+	assert.True(t, numberguard.CheckNumbers("Roughly 1.2M miles run empty.", values(1_200_000)).OK)
 }
 
 // "12.4" against a computed 12,400 is the same claim written in thousands, and
@@ -82,7 +82,7 @@ func TestCheckNumbers_ReadsThousandsAndMillionsShorthand(t *testing.T) {
 func TestCheckNumbers_ReadsABareFigureInThousands(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, narrator.CheckNumbers("Exposure reached 12.4 thousand.", values(12400)).OK)
+	assert.True(t, numberguard.CheckNumbers("Exposure reached 12.4 thousand.", values(12400)).OK)
 }
 
 // Small numbers are sentence furniture. Demanding a detector compute a 3 to
@@ -90,7 +90,7 @@ func TestCheckNumbers_ReadsABareFigureInThousands(t *testing.T) {
 func TestCheckNumbers_TreatsSmallNumbersAsOrdinaryProse(t *testing.T) {
 	t.Parallel()
 
-	check := narrator.CheckNumbers(
+	check := numberguard.CheckNumbers(
 		"The top 3 customers account for most of it, across 2 lanes and 11 stops.",
 		values(82.4),
 	)
@@ -103,7 +103,7 @@ func TestCheckNumbers_TreatsSmallNumbersAsOrdinaryProse(t *testing.T) {
 func TestCheckNumbers_StillCatchesAFabricationAboveTheSmallNumberCeiling(t *testing.T) {
 	t.Parallel()
 
-	check := narrator.CheckNumbers("On-time delivery collapsed to 40%.", values(82.4))
+	check := numberguard.CheckNumbers("On-time delivery collapsed to 40%.", values(82.4))
 
 	require.False(t, check.OK)
 	assert.Contains(t, check.Unsupported, "40")
@@ -112,7 +112,7 @@ func TestCheckNumbers_StillCatchesAFabricationAboveTheSmallNumberCeiling(t *test
 func TestCheckNumbers_ReportsEveryUnsupportedFigureNotJustTheFirst(t *testing.T) {
 	t.Parallel()
 
-	check := narrator.CheckNumbers(
+	check := numberguard.CheckNumbers(
 		"Detention cost $48,000 across 310 stops.",
 		values(12400),
 	)
@@ -124,20 +124,20 @@ func TestCheckNumbers_ReportsEveryUnsupportedFigureNotJustTheFirst(t *testing.T)
 func TestCheckNumbers_HandlesTrailingPunctuation(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, narrator.CheckNumbers("Exposure reached 12,400.", values(12400)).OK)
-	assert.True(t, narrator.CheckNumbers("Was 93.1, now 82.4.", values(93.1, 82.4)).OK)
+	assert.True(t, numberguard.CheckNumbers("Exposure reached 12,400.", values(12400)).OK)
+	assert.True(t, numberguard.CheckNumbers("Was 93.1, now 82.4.", values(93.1, 82.4)).OK)
 }
 
 func TestSupportedValues_CoversMetricsBaselinesAndExtras(t *testing.T) {
 	t.Parallel()
 
-	supported := narrator.SupportedValues(
+	supported := numberguard.SupportedValues(
 		values(82.4),
 		values(93.1),
 		decimal.NewFromInt(30),
 	)
 
-	assert.True(t, narrator.CheckNumbers("82.4% over 30 days, down from 93.1%.", supported).OK)
+	assert.True(t, numberguard.CheckNumbers("82.4% over 30 days, down from 93.1%.", supported).OK)
 }
 
 // "Fell 11 points" is the sentence worth reading, and it is arithmetic on two
@@ -145,18 +145,18 @@ func TestSupportedValues_CoversMetricsBaselinesAndExtras(t *testing.T) {
 func TestSupportedValues_AdmitsTheChangeBetweenAValueAndItsBaseline(t *testing.T) {
 	t.Parallel()
 
-	supported := narrator.SupportedValues(values(82.1), values(93.1))
+	supported := numberguard.SupportedValues(values(82.1), values(93.1))
 
-	assert.True(t, narrator.CheckNumbers("On-time fell 11 points this month.", supported).OK)
+	assert.True(t, numberguard.CheckNumbers("On-time fell 11 points this month.", supported).OK)
 }
 
 func TestFormatForPrompt_RendersNumbersTheWayTheGuardReadsThem(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "30", narrator.FormatForPrompt(decimal.NewFromInt(30)))
-	assert.Equal(t, "82.4", narrator.FormatForPrompt(decimal.NewFromFloat(82.4)))
-	assert.Equal(t, "12437.19", narrator.FormatForPrompt(decimal.NewFromFloat(12437.19)))
-	assert.Equal(t, "12437.19", narrator.FormatForPrompt(decimal.NewFromFloat(12437.1856)))
+	assert.Equal(t, "30", numberguard.FormatForPrompt(decimal.NewFromInt(30)))
+	assert.Equal(t, "82.4", numberguard.FormatForPrompt(decimal.NewFromFloat(82.4)))
+	assert.Equal(t, "12437.19", numberguard.FormatForPrompt(decimal.NewFromFloat(12437.19)))
+	assert.Equal(t, "12437.19", numberguard.FormatForPrompt(decimal.NewFromFloat(12437.1856)))
 }
 
 // Whatever the prompt shows, the guard must accept back. If these two ever
@@ -165,11 +165,11 @@ func TestFormatForPrompt_RoundTripsThroughTheGuard(t *testing.T) {
 	t.Parallel()
 
 	for _, value := range values(82.4, 12437.19, 1_200_000, 0.5, 93) {
-		prose := "The figure is " + narrator.FormatForPrompt(value) + " exactly."
+		prose := "The figure is " + numberguard.FormatForPrompt(value) + " exactly."
 
 		assert.True(
 			t,
-			narrator.CheckNumbers(prose, []decimal.Decimal{value}).OK,
+			numberguard.CheckNumbers(prose, []decimal.Decimal{value}).OK,
 			prose,
 		)
 	}

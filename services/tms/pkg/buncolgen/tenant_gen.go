@@ -514,6 +514,8 @@ var AgentControlColumns = struct {
 	ShadowMode         Column // "shadow_mode" → qualified: "agc.shadow_mode"
 	EarnedAutonomy     Column // "earned_autonomy" → qualified: "agc.earned_autonomy"
 	PromotionThreshold Column // "promotion_threshold" → qualified: "agc.promotion_threshold"
+	BriefingEnabled    Column // "briefing_enabled" → qualified: "agc.briefing_enabled"
+	BriefingHourLocal  Column // "briefing_hour_local" → qualified: "agc.briefing_hour_local"
 	Version            Column // "version" → qualified: "agc.version"
 	CreatedAt          Column // "created_at" → qualified: "agc.created_at"
 	UpdatedAt          Column // "updated_at" → qualified: "agc.updated_at"
@@ -524,6 +526,8 @@ var AgentControlColumns = struct {
 	ShadowMode:         NewColumn("shadow_mode", "agc"),
 	EarnedAutonomy:     NewColumn("earned_autonomy", "agc"),
 	PromotionThreshold: NewColumn("promotion_threshold", "agc"),
+	BriefingEnabled:    NewColumn("briefing_enabled", "agc"),
+	BriefingHourLocal:  NewColumn("briefing_hour_local", "agc"),
 	Version:            NewColumn("version", "agc"),
 	CreatedAt:          NewColumn("created_at", "agc"),
 	UpdatedAt:          NewColumn("updated_at", "agc"),
@@ -540,6 +544,8 @@ var AgentControlFieldMap = map[string]string{
 	"shadowMode":         "shadow_mode",
 	"earnedAutonomy":     "earned_autonomy",
 	"promotionThreshold": "promotion_threshold",
+	"briefingEnabled":    "briefing_enabled",
+	"briefingHourLocal":  "briefing_hour_local",
 	"version":            "version",
 	"createdAt":          "created_at",
 	"updatedAt":          "updated_at",
@@ -554,6 +560,8 @@ var AgentControlInsertableColumns = []string{
 	"shadow_mode",
 	"earned_autonomy",
 	"promotion_threshold",
+	"briefing_enabled",
+	"briefing_hour_local",
 	"version",
 	"created_at",
 	"updated_at",
@@ -628,6 +636,8 @@ var AgentControlFilter = struct {
 	ShadowMode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shadowMode" → DB: "shadow_mode"
 	EarnedAutonomy     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "earnedAutonomy" → DB: "earned_autonomy"
 	PromotionThreshold func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "promotionThreshold" → DB: "promotion_threshold"
+	BriefingEnabled    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "briefingEnabled" → DB: "briefing_enabled"
+	BriefingHourLocal  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "briefingHourLocal" → DB: "briefing_hour_local"
 	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -649,6 +659,12 @@ var AgentControlFilter = struct {
 	},
 	PromotionThreshold: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("promotionThreshold", op, value)
+	},
+	BriefingEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("briefingEnabled", op, value)
+	},
+	BriefingHourLocal: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("briefingHourLocal", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

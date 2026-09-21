@@ -331,3 +331,37 @@ func assignApplicationFields(entity *customerpayment.Payment) {
 		app.LineNumber = idx + 1
 	}
 }
+
+// SumReceived totals posted payments by currency over a span, by payment
+// date. Reversed payments are excluded by their status: money that came
+// back is not money received, and counting it would overstate a morning
+// briefing's cash line.
+func (r *repository) SumReceived(
+	ctx context.Context,
+	req repositories.SumPaymentsReceivedRequest,
+) ([]*repositories.PaymentsReceived, error) {
+	cols := buncolgen.PaymentColumns
+	rows := make([]*repositories.PaymentsReceived, 0, 4)
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*customerpayment.Payment)(nil)).
+		ColumnExpr(cols.CurrencyCode.Qualified()+" AS currency_code").
+		ColumnExpr("COALESCE(SUM("+cols.AmountMinor.Qualified()+"), 0) AS amount_minor").
+		ColumnExpr("COUNT(*) AS count").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.PaymentScopeTenant(sq, req.TenantInfo).
+				Where(cols.Status.Eq(), customerpayment.StatusPosted).
+				Where(cols.PaymentDate.Gte(), req.From).
+				Where(cols.PaymentDate.Lte(), req.To)
+		}).
+		GroupExpr(cols.CurrencyCode.Qualified()).
+		Scan(ctx, &rows)
+	if err != nil {
+		r.l.Error("failed to sum payments received", zap.Error(err))
+
+		return nil, fmt.Errorf("sum payments received: %w", err)
+	}
+
+	return rows, nil
+}

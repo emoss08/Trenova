@@ -129,6 +129,8 @@ const (
 	ResourceAgentMemory     Resource = "agent_memory"
 	ResourceAssistant       Resource = "assistant"
 	ResourceInsight         Resource = "insight"
+	ResourceWatchtower      Resource = "watchtower"
+	ResourceBriefing        Resource = "briefing"
 
 	// Customers
 	ResourceCustomer        Resource = "customer"

@@ -53,6 +53,9 @@ type Params struct {
 	Notifications  *notificationservice.Service
 	AuditService   services.AuditService
 	Realtime       services.RealtimeService
+	// Watchtower puts a change on a carrier's authority, insurance or
+	// safety record on the feed and takes it off once it is resolved.
+	Watchtower services.WatchtowerProjector `optional:"true"`
 }
 
 type Service struct {
@@ -78,6 +81,7 @@ type Service struct {
 	notifications   NotificationSender
 	auditService    services.AuditService
 	realtime        services.RealtimeService
+	watchtower      services.WatchtowerProjector
 	interactiveWait time.Duration
 	breaker         *circuitBreaker
 	now             func() int64
@@ -119,6 +123,7 @@ func New(p Params) *Service {
 		notifications:   p.Notifications,
 		auditService:    p.AuditService,
 		realtime:        p.Realtime,
+		watchtower:      p.Watchtower,
 		interactiveWait: p.Config.CarrierIntelligence.GetInteractiveWait(),
 		breaker:         newCircuitBreaker(),
 		now:             nowUnix,

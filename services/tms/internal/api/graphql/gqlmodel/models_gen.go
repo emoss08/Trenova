@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
@@ -69,6 +70,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
+	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -3156,6 +3158,11 @@ type GrantCarrierIntelOverrideInput struct {
 	ExpiresAt *int   `json:"expiresAt,omitempty"`
 }
 
+type HandOffWatchtowerItemInput struct {
+	// Start this agent on the item's subject; omit to publish the item's event to whoever subscribes.
+	AgentDefinitionID *string `json:"agentDefinitionId,omitempty"`
+}
+
 type HazardousMaterialConnection struct {
 	Edges      []*HazardousMaterialEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
@@ -3556,6 +3563,11 @@ type LateChargeAssessmentInput struct {
 	CustomerIds []string `json:"customerIds,omitempty"`
 	// Defaults to now.
 	AsOfDate *int `json:"asOfDate,omitempty"`
+}
+
+type ListBriefingsInput struct {
+	RoleKey *briefing.RoleKey `json:"roleKey,omitempty"`
+	First   *int              `json:"first,omitempty"`
 }
 
 type LocateTractorInput struct {
@@ -7179,6 +7191,13 @@ type TimesheetFilterInput struct {
 	Limit          *int  `json:"limit,omitempty"`
 }
 
+type TodaysBriefingInput struct {
+	// Whose morning to read; omitted reads the one written for everybody.
+	RoleKey *briefing.RoleKey `json:"roleKey,omitempty"`
+	// An organization-local day, as YYYY-MM-DD; omitted is today.
+	BriefingDate *string `json:"briefingDate,omitempty"`
+}
+
 type TractorConnection struct {
 	Edges      []*TractorEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
@@ -7879,6 +7898,59 @@ type WaiveWorkerTrainingInput struct {
 	ID      string `json:"id"`
 	Reason  string `json:"reason"`
 	Version *int   `json:"version,omitempty"`
+}
+
+// The feed in numbers, for a badge and a set of filter chips.
+type WatchtowerCounts struct {
+	Unresolved     int                      `json:"unresolved"`
+	Critical       int                      `json:"critical"`
+	Unseen         int                      `json:"unseen"`
+	UnseenCritical int                      `json:"unseenCritical"`
+	ByKind         []*WatchtowerKindSummary `json:"byKind"`
+	SeenAt         int                      `json:"seenAt"`
+}
+
+// What a hand-off did. With a run, an agent is already working on the item;
+// with subscribers, the event went to them; with neither, the candidates are
+// the agents that could take it, for the person to choose from.
+type WatchtowerHandOffResult struct {
+	Item        *watchtower.Item              `json:"item"`
+	Run         *agent.AgentRun               `json:"run,omitempty"`
+	Subscribers []*agentdefinition.Definition `json:"subscribers"`
+	Candidates  []*agentdefinition.Definition `json:"candidates"`
+	// Templates that handle this item's event, for an organization with no such agent yet.
+	Templates []string `json:"templates"`
+}
+
+type WatchtowerItemConnection struct {
+	Edges    []*WatchtowerItemEdge `json:"edges"`
+	PageInfo *PageInfo             `json:"pageInfo"`
+	// Where this reader's eye last was, so a client can draw the unseen line.
+	SeenAt int `json:"seenAt"`
+}
+
+type WatchtowerItemEdge struct {
+	Node   *watchtower.Item `json:"node"`
+	Cursor string           `json:"cursor"`
+}
+
+type WatchtowerItemsInput struct {
+	First *int    `json:"first,omitempty"`
+	After *string `json:"after,omitempty"`
+	// Only these kinds; empty is every kind the reader may see.
+	Kinds []watchtower.SourceKind `json:"kinds,omitempty"`
+	// Only these severities; empty is all three.
+	Severities []watchtower.Severity `json:"severities,omitempty"`
+	// Leave out what has already resolved.
+	UnresolvedOnly *bool `json:"unresolvedOnly,omitempty"`
+	// Only what occurred at or after this instant.
+	Since *int `json:"since,omitempty"`
+}
+
+type WatchtowerKindSummary struct {
+	Kind  watchtower.SourceKind `json:"kind"`
+	Label string                `json:"label"`
+	Count int                   `json:"count"`
 }
 
 type WithdrawInvoiceDisputeInput struct {

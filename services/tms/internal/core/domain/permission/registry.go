@@ -2219,6 +2219,44 @@ func (r *Registry) registerBillingResources() {
 		DefaultSensitivity: SensitivityInternal,
 	})
 
+	// The watchtower is a feed over records a reader may already be allowed to
+	// see: every item is filtered again by the permission on the source it came
+	// from, so this one decides only whether a person gets the feed at all.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceWatchtower.String(),
+		DisplayName: "Watchtower",
+		Description: "The live feed of what needs attention across the operation",
+		Category:    "Platform",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View the watchtower feed"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Mark the feed seen, dismiss an item, or hand one to an agent",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	// A briefing gathers the morning's figures across dispatch, billing and
+	// compliance into one page, which is a wider disclosure than any single
+	// screen it draws on.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceBriefing.String(),
+		DisplayName: "Briefing",
+		Description: "The daily briefing written for a role from the day's figures",
+		Category:    "Platform",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "Read the daily briefing"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Write today's briefing again from current figures",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
 	// Configuring a provider decides which endpoint an organization's freight and
 	// billing data is sent to, and whether that endpoint may be on the local
 	// network, so it is held at the same sensitivity as credential management.
