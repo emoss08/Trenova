@@ -150,3 +150,10 @@ func TestClassifyError(t *testing.T) {
 	assert.Equal(t, "timeout", classifyError(netTimeout))
 	assert.Equal(t, "provider_error", classifyError(errors.New("bad request")))
 }
+
+func (f *fakeUsage) CostByDefinition(
+	context.Context,
+	repositories.AIUsageCostRequest,
+) (*repositories.AIUsageCost, error) {
+	return &repositories.AIUsageCost{}, nil
+}

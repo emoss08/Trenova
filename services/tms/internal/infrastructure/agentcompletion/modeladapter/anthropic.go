@@ -371,7 +371,7 @@ func anthropicReasoning(blocks []anthropicBlock) *ReasoningTrace {
 // Anthropic refuses a tool result whose preceding thinking is missing, so the
 // signed block goes back exactly as it came, redacted blocks included.
 func replayThinking(trace *ReasoningTrace) []anthropicBlock {
-	if trace == nil {
+	if !trace.ReplayableBy(string(aiprovider.KindAnthropicMessages)) {
 		return nil
 	}
 	blocks := make([]anthropicBlock, 0, len(trace.Redacted)+1)

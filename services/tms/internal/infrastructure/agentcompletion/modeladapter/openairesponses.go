@@ -456,7 +456,7 @@ func responsesReasoningOf(envelope *responsesEnvelope) *ReasoningTrace {
 // replayReasoning is the reasoning item a previous assistant turn's function
 // calls must follow. Without it the calls are refused as orphans.
 func replayReasoning(trace *ReasoningTrace) []responsesItem {
-	if trace == nil || trace.Signature == "" {
+	if !trace.ReplayableBy(string(aiprovider.KindOpenAIResponses)) || trace.Signature == "" {
 		return nil
 	}
 

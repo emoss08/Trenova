@@ -280,3 +280,39 @@ func TestSendMessageStream_RefusesATurnOnAFullThread(t *testing.T) {
 	assert.Contains(t, err.Error(), "new conversation")
 	assert.Zero(t, conversations.appendCalls, "nothing ran and nothing was saved")
 }
+
+// The picker's choice is saved on the thread. A later send that says nothing
+// about the model used to wipe it, because "no field" and "automatic" read
+// the same; now only a choice replaces a choice, and the person's own model
+// is pinned on the turn rather than merely tried first.
+func TestSendMessageStream_KeepsTheSavedModelUnlessTheSendChoosesOne(t *testing.T) {
+	t.Parallel()
+
+	chosen := pulid.MustNew("aiprv_")
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{textTurn("ok")}}
+	svc, conversations := newConversationService(completion, testDefinition())
+	conversations.thread.PreferredProviderID = chosen
+	actor := testActor()
+
+	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+		ThreadID:   conversations.thread.ID,
+		Content:    "hello",
+		TenantInfo: actor.TenantInfo(),
+	}, actor, nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, chosen, conversations.thread.PreferredProviderID, "a send with no choice keeps the saved one")
+	require.NotNil(t, completion.LastReq)
+	assert.Equal(t, chosen, completion.LastReq.PreferredProviderID)
+	assert.True(t, completion.LastReq.PinPreferred, "the person's own choice is the model they get")
+
+	_, err = svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+		ThreadID:       conversations.thread.ID,
+		Content:        "hello again",
+		TenantInfo:     actor.TenantInfo(),
+		ProviderChosen: true,
+	}, actor, nil)
+	require.NoError(t, err)
+	assert.True(t, conversations.thread.PreferredProviderID.IsNil(), "choosing automatic clears the saved model")
+	assert.False(t, completion.LastReq.PinPreferred)
+}

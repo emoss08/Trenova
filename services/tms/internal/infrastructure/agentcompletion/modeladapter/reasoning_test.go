@@ -261,3 +261,24 @@ func TestOllamaAdapter_ReadsThinkingAndAsksForItWhenConfigured(t *testing.T) {
 	assert.Equal(t, "Weighing the options.", resp.Reasoning.Text)
 	assert.Equal(t, true, (*captured)["think"])
 }
+
+// A thread can change model between turns. A signature Anthropic issued
+// means nothing to the Responses API and the other way round, and each
+// refuses the other's with a 400, so a trace is replayed only by the kind
+// that produced it. A trace from before kinds were recorded is replayed as
+// it always was.
+func TestReplay_SendsATraceOnlyToTheProtocolThatProducedIt(t *testing.T) {
+	t.Parallel()
+
+	fromResponses := &ReasoningTrace{Text: "t", Signature: "rs_1", Encrypted: "enc", ProviderKind: string(aiprovider.KindOpenAIResponses)}
+	fromAnthropic := &ReasoningTrace{Text: "t", Signature: "sig_1", ProviderKind: string(aiprovider.KindAnthropicMessages)}
+	untagged := &ReasoningTrace{Text: "t", Signature: "sig_0"}
+
+	assert.Empty(t, replayThinking(fromResponses))
+	assert.Len(t, replayThinking(fromAnthropic), 1)
+	assert.Len(t, replayThinking(untagged), 1)
+
+	assert.Empty(t, replayReasoning(fromAnthropic))
+	assert.Len(t, replayReasoning(fromResponses), 1)
+	assert.Len(t, replayReasoning(untagged), 1)
+}

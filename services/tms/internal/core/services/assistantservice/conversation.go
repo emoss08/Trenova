@@ -274,13 +274,17 @@ func (s *Service) SendMessageStream(
 	// kept on the thread so the picker still shows it after a reload. A choice
 	// that no longer resolves is cleared rather than carried, so the stored
 	// preference and the model that answers cannot drift apart.
-	if chosen := s.resolvePreference(ctx, req.PreferredProviderID, *actor); chosen != thread.PreferredProviderID {
-		thread.PreferredProviderID = chosen
-		if _, uErr := s.conversations.UpdateThread(ctx, thread); uErr != nil {
-			s.logger.Warn("could not save the chosen model on the thread",
-				zap.String("thread", thread.ID.String()),
-				zap.Error(uErr),
-			)
+	// A send that says nothing about the model keeps the thread's saved
+	// choice; only a choice, including the choice of "automatic", replaces it.
+	if req.ProviderChosen {
+		if chosen := s.resolvePreference(ctx, req.PreferredProviderID, *actor); chosen != thread.PreferredProviderID {
+			thread.PreferredProviderID = chosen
+			if _, uErr := s.conversations.UpdateThread(ctx, thread); uErr != nil {
+				s.logger.Warn("could not save the chosen model on the thread",
+					zap.String("thread", thread.ID.String()),
+					zap.Error(uErr),
+				)
+			}
 		}
 	}
 

@@ -32,6 +32,10 @@ type SendMessageRequest struct {
 	// unusable preference on the thread would show the wrong model in the
 	// picker forever.
 	PreferredProviderID pulid.ID
+	// ProviderChosen says the request carried a choice at all, empty meaning
+	// "the organization's order". A request that says nothing about the
+	// model leaves the thread's saved choice as it is.
+	ProviderChosen bool
 }
 
 // SendMessageResult is what the turn produced and saved.
@@ -126,8 +130,18 @@ const (
 	AssistantEventMessage      = "message"
 	AssistantEventToolStarted  = "tool_started"
 	AssistantEventToolFinished = "tool_finished"
+	AssistantEventRetrying     = "retrying"
 	AssistantEventDone         = "done"
 )
+
+// AssistantRetryingEvent says the model died partway through its reply and
+// the turn is starting over, on another model when one is configured. Text
+// streamed before it is discarded; what follows is the whole reply.
+type AssistantRetryingEvent struct {
+	Attempt  int    `json:"attempt"`
+	Provider string `json:"provider,omitempty"`
+	Reason   string `json:"reason,omitempty"`
+}
 
 // AssistantAcceptedEvent says the question passed the scope guard and a model is
 // being asked. It carries what the guard decided so a client can show the

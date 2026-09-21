@@ -64,6 +64,9 @@ type RunRequest struct {
 	// default for their own conversation, so the more specific choice applies.
 	// Empty falls back to the definition, and then to priority order.
 	PreferredProviderID pulid.ID
+	// PinProvider restricts the turn to PreferredProviderID rather than
+	// trying it first: set when a person chose the model themselves.
+	PinProvider bool
 	// Proposals is what became of the writes earlier turns of this
 	// conversation proposed, so the model reads the current state of each
 	// rather than the "awaiting review" it was told at the time, and does not

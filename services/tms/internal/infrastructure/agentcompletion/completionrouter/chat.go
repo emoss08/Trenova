@@ -75,9 +75,15 @@ func (s *Service) runChat(
 	}
 
 	usable = preferFirst(usable, req.PreferredProviderID)
+	if req.PinPreferred {
+		usable = pinPreferred(usable, req.PreferredProviderID)
+	}
 
 	var lastErr error
-	for _, provider := range usable {
+	queue := append(make([]*aiprovider.Provider, 0, len(usable)+maxMidReplyRetries), usable...)
+	midReplyRetries := 0
+	for idx := 0; idx < len(queue); idx++ {
+		provider := queue[idx]
 		started := time.Now()
 		result, emitted, attemptErr := s.attemptChat(ctx, provider, req, sink)
 		latency := time.Since(started)
@@ -104,16 +110,42 @@ func (s *Service) runChat(
 			return nil, errortypes.NewBusinessError("The model declined this request")
 		}
 
-		// Once a provider has started answering, the reader has seen its words.
-		// Handing the same question to the next provider would splice a second
-		// answer onto the first, so this turn ends here.
-		//
-		// It ends with what arrived rather than with an error. The reader
-		// watched a reply appear; discarding it leaves them with nothing and no
-		// way to tell whether the half they read was right. The result says it
-		// was cut off, and everything downstream treats it as a finished turn
-		// with a truncated answer.
+		// A provider that died partway through a reply gets replaced, not
+		// spliced: the reader is told the reply is starting over and the words
+		// that arrived are discarded, because half an answer followed by a
+		// second model's whole one reads as neither. The retries are bounded,
+		// and a person who pressed Stop is not retried at all.
 		if emitted != "" {
+			if ctx.Err() == nil && midReplyRetries < maxMidReplyRetries {
+				midReplyRetries++
+				if idx == len(queue)-1 && modeladapter.IsRetryable(attemptErr) {
+					queue = append(queue, provider)
+				}
+				if idx < len(queue)-1 {
+					s.logger.Warn("chat provider stopped partway through a reply; starting over",
+						zap.String("provider", provider.Name),
+						zap.Int("characters", len(emitted)),
+						zap.Int("retry", midReplyRetries),
+						zap.Error(attemptErr),
+					)
+					if req.RetrySink != nil {
+						req.RetrySink(serviceports.ChatRetryNotice{
+							Attempt:  midReplyRetries,
+							Provider: queue[idx+1].Name,
+							Reason:   attemptErr.Error(),
+						})
+					}
+					lastErr = attemptErr
+
+					continue
+				}
+			}
+
+			// Nothing left to try. What arrived is kept rather than thrown
+			// away: the reader watched it appear, and the half that arrived
+			// is usually the half that answered. The result says it was cut
+			// off, and everything downstream treats it as a finished turn
+			// with a truncated answer.
 			s.logger.Warn("chat provider stopped partway through a reply",
 				zap.String("provider", provider.Name),
 				zap.Int("characters", len(emitted)),
@@ -267,6 +299,29 @@ func (s *Service) executeStreamWithRetry(
 	}
 
 	return nil, emittedText(), lastErr
+}
+
+// maxMidReplyRetries bounds how many times a turn starts over after a
+// provider died with words already on the reader's screen. Two is enough to
+// get past one bad provider and one bad moment; more is a reader watching
+// the same question asked and abandoned again and again.
+const maxMidReplyRetries = 2
+
+// pinPreferred keeps only the preferred provider when it is among the
+// usable ones. A preference that is not usable leaves the order alone, so a
+// deleted or disabled choice degrades to the organization's order rather
+// than to nothing.
+func pinPreferred(providers []*aiprovider.Provider, preferred pulid.ID) []*aiprovider.Provider {
+	if preferred.IsNil() {
+		return providers
+	}
+	for _, provider := range providers {
+		if provider.ID == preferred {
+			return []*aiprovider.Provider{provider}
+		}
+	}
+
+	return providers
 }
 
 func preferFirst(providers []*aiprovider.Provider, preferred pulid.ID) []*aiprovider.Provider {

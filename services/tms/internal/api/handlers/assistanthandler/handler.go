@@ -326,7 +326,15 @@ type sendMessageRequest struct {
 	// the choice to the organization's priority order. It is resolved against
 	// the providers this organization has assigned to the assistant before it
 	// is used or stored, so an unknown id is dropped rather than trusted.
-	ProviderID pulid.ID `json:"providerId"`
+	ProviderID *pulid.ID `json:"providerId"`
+}
+
+func (r *sendMessageRequest) provider() (pulid.ID, bool) {
+	if r.ProviderID == nil {
+		return pulid.Nil, false
+	}
+
+	return *r.ProviderID, true
 }
 
 func (r *sendMessageRequest) page() *agent.PageContext {
@@ -358,12 +366,14 @@ func (h *Handler) sendMessage(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
+	providerID, providerChosen := body.provider()
 	result, err := h.service.SendMessage(c.Request.Context(), &serviceports.SendMessageRequest{
 		ThreadID:            threadID,
 		Content:             body.Content,
 		Page:                body.page(),
 		TenantInfo:          tenantFromAuthContext(authCtx),
-		PreferredProviderID: body.ProviderID,
+		PreferredProviderID: providerID,
+		ProviderChosen:      providerChosen,
 	}, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -405,12 +415,14 @@ func (h *Handler) sendMessageStream(c *gin.Context) {
 	emit := func(event serviceports.StreamEvent) { stream.Emit(event.Event, event.Data) }
 
 	actor := requestActorFromAuthContext(authCtx)
+	providerID, providerChosen := body.provider()
 	result, err := h.service.SendMessageStream(c.Request.Context(), &serviceports.SendMessageRequest{
 		ThreadID:            threadID,
 		Content:             body.Content,
 		Page:                body.page(),
 		TenantInfo:          tenantFromAuthContext(authCtx),
-		PreferredProviderID: body.ProviderID,
+		PreferredProviderID: providerID,
+		ProviderChosen:      providerChosen,
 	}, &actor, emit)
 	if err != nil {
 		emit(serviceports.StreamEvent{

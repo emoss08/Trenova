@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -64,8 +65,12 @@ func TestStreamChat_KeepsWhatArrivedWhenTheStreamDies(t *testing.T) {
 	provider := chatProvider("flaky", server.URL, 10)
 	service := newTestService(t, provider)
 
+	// Each retry tells the reader to discard what they saw, so what they are
+	// looking at when the turn ends is only the last attempt's text.
 	var streamed strings.Builder
-	result, err := service.StreamChat(t.Context(), chatRequest(pulid.Nil), func(delta string) {
+	request := chatRequest(pulid.Nil)
+	request.RetrySink = func(serviceports.ChatRetryNotice) { streamed.Reset() }
+	result, err := service.StreamChat(t.Context(), request, func(delta string) {
 		streamed.WriteString(delta)
 	})
 
@@ -119,4 +124,97 @@ func completeStreamServer(t *testing.T, content string) *httptest.Server {
 		_, _ = w.Write([]byte("data: [DONE]\n\n"))
 		flusher.Flush()
 	}))
+}
+
+/*
+A reply that dies partway is started over on the next provider.
+
+The reader watched a free-tier model answer half a question and stop, and
+was left with "cut off, ask again". With another provider configured there
+is no reason to leave them there: the turn starts over on it, the reader is
+told the reply is restarting so the half they saw is discarded, and what
+they end with is one whole answer from one model.
+*/
+func TestStreamChat_StartsOverOnTheNextProviderWhenAReplyDies(t *testing.T) {
+	t.Parallel()
+
+	dying := dyingStreamServer(t, []string{"Sarah Williams - ", "endorsement X."})
+	good := completeStreamServer(t, "Sarah Williams holds endorsement X; Jane Doe holds H.")
+	service := newTestService(t,
+		chatProvider("dies-midway", dying.URL, 10),
+		chatProvider("finishes", good.URL, 20),
+	)
+
+	var notices []serviceports.ChatRetryNotice
+	request := chatRequest(pulid.Nil)
+	request.RetrySink = func(notice serviceports.ChatRetryNotice) { notices = append(notices, notice) }
+
+	var streamed strings.Builder
+	result, err := service.StreamChat(t.Context(), request, func(delta string) { streamed.WriteString(delta) })
+	require.NoError(t, err)
+
+	assert.False(t, result.Truncated)
+	assert.Equal(t, "Sarah Williams holds endorsement X; Jane Doe holds H.", result.Text)
+	require.Len(t, notices, 1)
+	assert.Equal(t, 1, notices[0].Attempt)
+	assert.Equal(t, "finishes", notices[0].Provider)
+	assert.Contains(t, streamed.String(), "endorsement X.", "the partial text did reach the sink before the retry")
+}
+
+// With nowhere else to go, the retries are spent on the same provider and
+// then the partial reply is kept as before rather than lost.
+func TestStreamChat_KeepsThePartialReplyOnceTheRetriesAreSpent(t *testing.T) {
+	t.Parallel()
+
+	dying := dyingStreamServer(t, []string{"Half an answer"})
+	service := newTestService(t, chatProvider("only-one", dying.URL, 10))
+
+	retries := 0
+	request := chatRequest(pulid.Nil)
+	request.RetrySink = func(serviceports.ChatRetryNotice) { retries++ }
+
+	result, err := service.StreamChat(t.Context(), request, func(string) {})
+	require.NoError(t, err)
+
+	assert.True(t, result.Truncated)
+	assert.Equal(t, "Half an answer", result.Text)
+	assert.Equal(t, maxMidReplyRetries, retries)
+}
+
+// A model the person picked is the model they get. Pinned, the turn does
+// not fall through to another provider when that one fails outright.
+func TestStreamChat_APinnedPreferenceNeverFallsThrough(t *testing.T) {
+	t.Parallel()
+
+	dead := dyingStreamServer(t, nil)
+	good := completeStreamServer(t, "Answered by the other provider.")
+	pinned := chatProvider("chosen", dead.URL, 20)
+	service := newTestService(t, chatProvider("fallback", good.URL, 10), pinned)
+
+	request := chatRequest(pinned.ID)
+	request.PinPreferred = true
+
+	_, err := service.StreamChat(t.Context(), request, func(string) {})
+	require.Error(t, err, "the chosen model failed; nothing else may answer in its name")
+
+	request.PinPreferred = false
+	result, err := service.StreamChat(t.Context(), request, func(string) {})
+	require.NoError(t, err)
+	assert.Contains(t, result.Text, "other provider")
+}
+
+// A pin on a provider that is no longer offered degrades to the order, so a
+// deleted choice never strands a conversation.
+func TestStreamChat_APinOnAMissingProviderUsesTheOrder(t *testing.T) {
+	t.Parallel()
+
+	good := completeStreamServer(t, "Answered.")
+	service := newTestService(t, chatProvider("only", good.URL, 10))
+
+	request := chatRequest(pulid.MustNew("aiprv_"))
+	request.PinPreferred = true
+
+	result, err := service.StreamChat(t.Context(), request, func(string) {})
+	require.NoError(t, err)
+	assert.Equal(t, "Answered.", result.Text)
 }

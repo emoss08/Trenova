@@ -93,6 +93,20 @@ type ReasoningTrace struct {
 	Encrypted string `json:"encrypted,omitempty"`
 	// Redacted holds Anthropic's redacted_thinking blocks, replayed verbatim.
 	Redacted []string `json:"redacted,omitempty"`
+	// ProviderKind names the protocol that produced the trace. A signature
+	// only means something to the provider that signed it, and a thread can
+	// change model between turns, so an adapter replays only its own.
+	ProviderKind string `json:"providerKind,omitempty"`
+}
+
+// ReplayableBy reports whether an adapter of the given kind may send this
+// trace back. A trace from before kinds were recorded is replayed as before.
+func (t *ReasoningTrace) ReplayableBy(kind string) bool {
+	if t == nil {
+		return false
+	}
+
+	return t.ProviderKind == "" || t.ProviderKind == kind
 }
 
 // Readable reports whether there is anything a person could be shown.

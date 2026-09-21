@@ -88,8 +88,11 @@ func (s *Service) RunObserved(
 		Input:               req.Input,
 		Emit:                emit,
 		PreferredProviderID: req.PreferredProviderID,
-		ThreadID:            req.ThreadID,
-		Proposals:           req.Proposals,
+		// A model the person picked is the model they get; an administrator's
+		// default on the agent is only where the order starts.
+		PinProvider: !req.PreferredProviderID.IsNil(),
+		ThreadID:    req.ThreadID,
+		Proposals:   req.Proposals,
 	})
 	if err != nil {
 		return interruptedTurn(req, decision, run, err), err

@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -823,4 +824,80 @@ func TestRun_KeepsLatencyAndCostOnTheTurn(t *testing.T) {
 	// And the call said who it was for.
 	assert.Equal(t, testDefinition().ID, completion.LastReq.Attribution.AgentDefinitionID)
 	assert.False(t, completion.LastReq.Attribution.ThreadID.IsNil())
+}
+
+// The router's retry notice reaches the reader as a stream event, so the
+// half reply they watched is discarded on screen before the whole one
+// arrives, and the person's own model choice is pinned on the request.
+func TestRun_ForwardsARetryNoticeAndThePin(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{textTurn("Whole answer.")}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	provider := pulid.MustNew("aiprv_")
+
+	var events []serviceports.StreamEvent
+	_, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition:          testDefinition(),
+		Actor:               testActor(),
+		Input:               "hello",
+		PreferredProviderID: provider,
+		PinProvider:         true,
+		Emit:                func(event serviceports.StreamEvent) { events = append(events, event) },
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, completion.LastReq)
+	assert.True(t, completion.LastReq.PinPreferred)
+	assert.Equal(t, provider, completion.LastReq.PreferredProviderID)
+	require.NotNil(t, completion.LastReq.RetrySink)
+
+	completion.LastReq.RetrySink(serviceports.ChatRetryNotice{Attempt: 1, Provider: "second", Reason: "stream died"})
+	var retrying *serviceports.AssistantRetryingEvent
+	for _, event := range events {
+		if event.Event == serviceports.AssistantEventRetrying {
+			data := event.Data.(serviceports.AssistantRetryingEvent)
+			retrying = &data
+		}
+	}
+	require.NotNil(t, retrying)
+	assert.Equal(t, 1, retrying.Attempt)
+	assert.Equal(t, "second", retrying.Provider)
+}
+
+func TestRun_DoesNotPinAnAdministratorsDefault(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{textTurn("ok")}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	definition := testDefinition()
+	definition.PreferredProviderID = pulid.MustNew("aiprv_")
+
+	_, err := rt.Run(t.Context(), &serviceports.RunRequest{Definition: definition, Actor: testActor(), Input: "hi"})
+	require.NoError(t, err)
+	assert.Equal(t, definition.PreferredProviderID, completion.LastReq.PreferredProviderID)
+	assert.False(t, completion.LastReq.PinPreferred)
+}
+
+// A signature only means something to the provider that signed it. The
+// trace is tagged with the protocol that produced it, so an adapter of
+// another kind, after the person switches models, leaves it out.
+func TestRun_TagsReasoningWithTheProviderThatProducedIt(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{{
+		Text:            "Done.",
+		ModelIdentifier: "claude",
+		ProviderKind:    aiprovider.KindAnthropicMessages,
+		Reasoning:       &conversation.ReasoningTrace{Text: "thinking", Signature: "sig"},
+	}}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{Definition: testDefinition(), Actor: testActor(), Input: "hi"})
+	require.NoError(t, err)
+
+	require.NotNil(t, result.Messages[1].Reasoning)
+	assert.Equal(t, string(aiprovider.KindAnthropicMessages), result.Messages[1].Reasoning.ProviderKind)
+	assert.True(t, result.Messages[1].Reasoning.ReplayableBy(string(aiprovider.KindAnthropicMessages)))
+	assert.False(t, result.Messages[1].Reasoning.ReplayableBy(string(aiprovider.KindOpenAIResponses)))
 }

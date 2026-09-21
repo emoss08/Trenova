@@ -116,7 +116,18 @@ func (s *Service) Run(
 			Messages:            messages,
 			Tools:               tools.specs,
 			PreferredProviderID: preferredProvider(req, definition),
+			PinPreferred:        req.PinProvider && !req.PreferredProviderID.IsNil(),
 			ReasoningSink:       reasoningSink,
+			RetrySink: func(notice serviceports.ChatRetryNotice) {
+				emit(serviceports.StreamEvent{
+					Event: serviceports.AssistantEventRetrying,
+					Data: serviceports.AssistantRetryingEvent{
+						Attempt:  notice.Attempt,
+						Provider: notice.Provider,
+						Reason:   notice.Reason,
+					},
+				})
+			},
 			Attribution: serviceports.AIUsageAttribution{
 				UserID:            req.Actor.UserID,
 				AgentDefinitionID: definition.ID,
@@ -134,6 +145,7 @@ func (s *Service) Run(
 
 		result.Model = completion.ModelIdentifier
 		result.ProviderID = completion.ProviderID
+		tagReasoning(completion)
 
 		if len(completion.ToolCalls) == 0 {
 			return s.finish(result, completion, emit), nil
@@ -422,4 +434,12 @@ func preferredProvider(
 	}
 
 	return definition.PreferredProviderID
+}
+
+// tagReasoning records which protocol produced a trace, so an adapter of
+// another kind knows not to send it back as its own.
+func tagReasoning(completion *serviceports.ChatCompletionResult) {
+	if completion.Reasoning != nil && completion.Reasoning.ProviderKind == "" {
+		completion.Reasoning.ProviderKind = string(completion.ProviderKind)
+	}
 }
