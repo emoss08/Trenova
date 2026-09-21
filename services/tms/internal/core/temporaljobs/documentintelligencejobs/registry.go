@@ -32,7 +32,7 @@ type RegistryParams struct {
 
 func NewRegistry(p RegistryParams) registry.WorkerRegistry {
 	workerConfig := registry.DefaultWorkerConfig()
-	workerConfig.MaxConcurrentActivityExecutionSize = p.Config.GetDocumentIntelligenceConfig().
+	workerConfig.MaxConcurrentActivityExecutionSize = p.Config.GetAIConfig().
 		GetMaxConcurrentActivities()
 	workerConfig.MaxConcurrentWorkflowTaskExecutionSize = max(
 		2, workerConfig.MaxConcurrentActivityExecutionSize,

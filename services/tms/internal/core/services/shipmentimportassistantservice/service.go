@@ -55,7 +55,7 @@ type Params struct {
 
 type Service struct {
 	logger               *zap.Logger
-	cfg                  *config.DocumentIntelligenceConfig
+	cfg                  *config.AIConfig
 	db                   *postgres.Connection
 	completion           serviceports.CompletionService
 	aiLogRepo            repositories.AILogRepository
@@ -78,7 +78,7 @@ func New(
 ) serviceports.ShipmentImportAssistantService {
 	return &Service{
 		logger:               p.Logger.Named("service.shipment-import-assistant"),
-		cfg:                  p.Config.GetDocumentIntelligenceConfig(),
+		cfg:                  p.Config.GetAIConfig(),
 		db:                   p.DB,
 		completion:           p.Completion,
 		aiLogRepo:            p.AILogRepo,

@@ -212,7 +212,7 @@ func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipm
 
 	activities := &Activities{
 		logger:              zap.NewNop(),
-		cfg:                 &config.DocumentIntelligenceConfig{},
+		cfg:                 &config.AIConfig{},
 		metrics:             metricsRegistry,
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,
@@ -341,7 +341,7 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 
 	activities := &Activities{
 		logger:              zap.NewNop(),
-		cfg:                 &config.DocumentIntelligenceConfig{},
+		cfg:                 &config.AIConfig{},
 		metrics:             metricsRegistry,
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,
@@ -463,7 +463,7 @@ func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByNam
 
 	activities := &Activities{
 		logger:              zap.NewNop(),
-		cfg:                 &config.DocumentIntelligenceConfig{},
+		cfg:                 &config.AIConfig{},
 		metrics:             metricsRegistry,
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,
@@ -579,7 +579,7 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 
 	activities := &Activities{
 		logger: zap.NewNop(),
-		cfg:    &config.DocumentIntelligenceConfig{EnableAI: true},
+		cfg:    &config.AIConfig{DocumentExtraction: true},
 		metrics: &metrics.Registry{
 			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},

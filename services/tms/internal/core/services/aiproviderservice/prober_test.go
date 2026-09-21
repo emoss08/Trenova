@@ -70,7 +70,7 @@ func TestIsTimeout_ReadsTheShapesATransportActuallyReturns(t *testing.T) {
 func TestUnreachable_SeparatesABusyEndpointFromAMissingOne(t *testing.T) {
 	prober := &Prober{
 		logger: zap.NewNop(),
-		cfg:    &config.DocumentIntelligenceConfig{},
+		cfg:    &config.AIConfig{},
 	}
 
 	timedOut := prober.unreachable(
@@ -81,7 +81,7 @@ func TestUnreachable_SeparatesABusyEndpointFromAMissingOne(t *testing.T) {
 	assert.Equal(t, "The endpoint did not answer in time", timedOut.Message)
 	// The remedy names the setting rather than sending somebody to re-check
 	// a base URL that was right all along.
-	assert.Contains(t, timedOut.Detail, "aiProbeTimeout")
+	assert.Contains(t, timedOut.Detail, "ai.probeTimeout")
 	assert.Contains(t, timedOut.Detail, "45s")
 
 	refused := prober.unreachable(errors.New("connection refused"), 12)
@@ -95,13 +95,13 @@ func TestUnreachable_SeparatesABusyEndpointFromAMissingOne(t *testing.T) {
 // a verdict, which is the failure this whole change is about.
 const serverRequestTimeout = 55 * time.Second
 
-func TestGetAIProbeTimeout_OutlastsAQueuedFreeTier(t *testing.T) {
-	cfg := &config.DocumentIntelligenceConfig{}
+func TestGetProbeTimeout_OutlastsAQueuedFreeTier(t *testing.T) {
+	cfg := &config.AIConfig{}
 	// The probe waits on a real generation, so it must not inherit the
 	// reachability budget that failed NVIDIA's queued endpoints at twenty
 	// seconds. It must still fit inside the server's own request timeout.
-	assert.Greater(t, cfg.GetAIProbeTimeout(), cfg.GetAITimeout())
-	assert.Less(t, cfg.GetAIProbeTimeout(), serverRequestTimeout)
+	assert.Greater(t, cfg.GetProbeTimeout(), cfg.GetTimeout())
+	assert.Less(t, cfg.GetProbeTimeout(), serverRequestTimeout)
 }
 
 func TestEmptyReplyAdvice_NamesTheReasoningBudgetRatherThanTheEndpoint(t *testing.T) {

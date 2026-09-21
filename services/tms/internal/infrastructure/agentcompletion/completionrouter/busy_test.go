@@ -119,7 +119,7 @@ func TestRetryWait_UsesTheConfiguredAttemptsForOtherRetryableFailures(t *testing
 	t.Parallel()
 
 	service := newTestService(t)
-	service.cfg.AIMaxRetries = 2
+	service.ai.MaxRetries = 2
 
 	wait, again := service.retryWait(context.DeadlineExceeded, 0, 0)
 	assert.True(t, again, "a timeout is the provider being busy")

@@ -105,13 +105,11 @@ func newTestService(t *testing.T, completion *stubCompletion) (*Service, *logged
 		Return(&ailog.Log{}, nil).
 		Maybe()
 
-	cfg := &config.Config{
-		DocumentIntelligence: config.DocumentIntelligenceConfig{EnableAI: true},
-	}
+	cfg := &config.Config{AI: config.AIConfig{DocumentExtraction: true}}
 
 	return &Service{
 		logger:     zap.NewNop(),
-		cfg:        cfg.GetDocumentIntelligenceConfig(),
+		cfg:        cfg.GetAIConfig(),
 		metrics:    registry,
 		completion: completion,
 		aiLogRepo:  logRepo,
@@ -494,7 +492,7 @@ func TestService_RefusesEveryCallWhenAIIsDisabled(t *testing.T) {
 
 	completion := &stubCompletion{}
 	service, _ := newTestService(t, completion)
-	service.cfg = (&config.Config{}).GetDocumentIntelligenceConfig()
+	service.cfg = (&config.Config{}).GetAIConfig()
 
 	_, routeErr := service.RouteDocument(t.Context(), routeRequest())
 	_, extractErr := service.ExtractRateConfirmation(t.Context(), extractRequest())

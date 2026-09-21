@@ -165,7 +165,7 @@ func (s *Service) PollBackground(
 		APIKey:       apiKey,
 		Client:       s.clientFor(provider),
 		StreamClient: s.streamClientFor(provider),
-		StreamIdle:   s.cfg.GetAIStreamIdleTimeout(),
+		StreamIdle:   s.ai.GetStreamIdleTimeout(),
 	}, handle)
 	if err != nil {
 		return nil, err

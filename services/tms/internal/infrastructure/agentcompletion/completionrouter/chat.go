@@ -208,7 +208,7 @@ func (s *Service) attemptChat(
 		APIKey:       apiKey,
 		Client:       s.clientFor(provider),
 		StreamClient: s.streamClientFor(provider),
-		StreamIdle:   s.cfg.GetAIStreamIdleTimeout(),
+		StreamIdle:   s.ai.GetStreamIdleTimeout(),
 		Request: &modeladapter.Request{
 			System:    req.System,
 			Messages:  req.Messages,

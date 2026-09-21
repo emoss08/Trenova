@@ -24,7 +24,7 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		DocumentIntelligence: config.DocumentIntelligenceConfig{Enabled: true},
+		AI: config.AIConfig{},
 	}
 	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
 	require.NoError(t, err)
@@ -125,7 +125,7 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		DocumentIntelligence: config.DocumentIntelligenceConfig{Enabled: true},
+		AI: config.AIConfig{},
 	}
 	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
 	require.NoError(t, err)
@@ -167,7 +167,7 @@ func TestEnqueueExtractionSkipsWhenProcessingProfileIsNone(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		DocumentIntelligence: config.DocumentIntelligenceConfig{Enabled: true},
+		AI: config.AIConfig{},
 	}
 	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
 	require.NoError(t, err)
@@ -196,7 +196,7 @@ func TestReextractRejectsDocumentsWithoutTargetedProcessing(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		DocumentIntelligence: config.DocumentIntelligenceConfig{Enabled: true},
+		AI: config.AIConfig{},
 	}
 	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
 	require.NoError(t, err)
