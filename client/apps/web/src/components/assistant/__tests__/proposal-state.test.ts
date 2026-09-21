@@ -20,6 +20,7 @@ function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal
     sourceMessageId: "amsg_1",
     executedAt: null,
     executionError: "",
+    expiresAt: 0,
     ...overrides,
   };
 }

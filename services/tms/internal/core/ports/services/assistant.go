@@ -85,6 +85,7 @@ const (
 	AssistantEventAccepted     = "accepted"
 	AssistantEventRefused      = "refused"
 	AssistantEventDelta        = "delta"
+	AssistantEventReasoning    = "reasoning"
 	AssistantEventMessage      = "message"
 	AssistantEventToolStarted  = "tool_started"
 	AssistantEventToolFinished = "tool_finished"
@@ -111,6 +112,12 @@ type AssistantRefusedEvent struct {
 
 // AssistantDeltaEvent is a piece of the reply the model is composing.
 type AssistantDeltaEvent struct {
+	Text string `json:"text"`
+}
+
+// AssistantReasoningEvent is a piece of the model's thinking, streamed before
+// the reply so a heavy model's silence has something to show for it.
+type AssistantReasoningEvent struct {
 	Text string `json:"text"`
 }
 

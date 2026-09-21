@@ -96,6 +96,7 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			Model:                "qwen2.5:14b",
 			AllowPrivateNetwork:  true,
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			ReasoningEffort:      aiprovider.ReasoningOff,
 			MaxTokens:            8192,
 			Tasks: []aiprovider.Task{
 				aiprovider.TaskScopeClassification,
@@ -117,6 +118,7 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			Model:                "meta-llama/Llama-3.3-70B-Instruct",
 			AllowPrivateNetwork:  true,
 			StructuredOutputMode: aiprovider.StructuredOutputJSONMode,
+			ReasoningEffort:      aiprovider.ReasoningOff,
 			MaxTokens:            16384,
 			Tasks: []aiprovider.Task{
 				aiprovider.TaskAssistantChat,
@@ -137,6 +139,7 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			Kind:                 aiprovider.KindAnthropicMessages,
 			Model:                "claude-sonnet-5",
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			ReasoningEffort:      aiprovider.ReasoningOff,
 			MaxTokens:            16384,
 			Tasks: []aiprovider.Task{
 				aiprovider.TaskBillingDiagnosis,

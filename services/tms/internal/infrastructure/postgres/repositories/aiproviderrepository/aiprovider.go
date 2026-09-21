@@ -267,6 +267,7 @@ func (r *repository) Update(
 		Set(cols.APIKey.Set(), entity.APIKey).
 		Set(cols.AllowPrivateNetwork.Set(), entity.AllowPrivateNetwork).
 		Set(cols.StructuredOutputMode.Set(), entity.StructuredOutputMode).
+		Set(cols.ReasoningEffort.Set(), entity.ReasoningEffort).
 		Set(cols.MaxTokens.Set(), entity.MaxTokens).
 		Set(cols.Tasks.Set(), dbhelper.TextArray(entity.Tasks)).
 		Set(cols.Priority.Set(), entity.Priority).

@@ -61,6 +61,7 @@ var ProviderColumns = struct {
 	AllowPrivateNetwork  Column // "allow_private_network" → qualified: "aiprv.allow_private_network"
 	StructuredOutputMode Column // "structured_output_mode" → qualified: "aiprv.structured_output_mode"
 	MaxTokens            Column // "max_tokens" → qualified: "aiprv.max_tokens"
+	ReasoningEffort      Column // "reasoning_effort" → qualified: "aiprv.reasoning_effort"
 	Tasks                Column // "tasks" → qualified: "aiprv.tasks"
 	Priority             Column // "priority" → qualified: "aiprv.priority"
 	Trusted              Column // "trusted" → qualified: "aiprv.trusted"
@@ -82,6 +83,7 @@ var ProviderColumns = struct {
 	AllowPrivateNetwork:  NewColumn("allow_private_network", "aiprv"),
 	StructuredOutputMode: NewColumn("structured_output_mode", "aiprv"),
 	MaxTokens:            NewColumn("max_tokens", "aiprv"),
+	ReasoningEffort:      NewColumn("reasoning_effort", "aiprv"),
 	Tasks:                NewColumn("tasks", "aiprv"),
 	Priority:             NewColumn("priority", "aiprv"),
 	Trusted:              NewColumn("trusted", "aiprv"),
@@ -108,6 +110,7 @@ var ProviderFieldMap = map[string]string{
 	"allowPrivateNetwork":  "allow_private_network",
 	"structuredOutputMode": "structured_output_mode",
 	"maxTokens":            "max_tokens",
+	"reasoningEffort":      "reasoning_effort",
 	"tasks":                "tasks",
 	"priority":             "priority",
 	"trusted":              "trusted",
@@ -133,6 +136,7 @@ var ProviderInsertableColumns = []string{
 	"allow_private_network",
 	"structured_output_mode",
 	"max_tokens",
+	"reasoning_effort",
 	"tasks",
 	"priority",
 	"trusted",
@@ -217,6 +221,7 @@ var ProviderFilter = struct {
 	AllowPrivateNetwork  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowPrivateNetwork" → DB: "allow_private_network"
 	StructuredOutputMode func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "structuredOutputMode" → DB: "structured_output_mode"
 	MaxTokens            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxTokens" → DB: "max_tokens"
+	ReasoningEffort      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoningEffort" → DB: "reasoning_effort"
 	Tasks                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tasks" → DB: "tasks"
 	Priority             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "priority" → DB: "priority"
 	Trusted              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trusted" → DB: "trusted"
@@ -258,6 +263,9 @@ var ProviderFilter = struct {
 	},
 	MaxTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("maxTokens", op, value)
+	},
+	ReasoningEffort: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reasoningEffort", op, value)
 	},
 	Tasks: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("tasks", op, value)

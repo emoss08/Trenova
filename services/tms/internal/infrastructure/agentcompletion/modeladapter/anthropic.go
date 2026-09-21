@@ -31,7 +31,31 @@ type anthropicRequest struct {
 	Tools        []anthropicTool        `json:"tools,omitempty"`
 	OutputConfig *anthropicOutputConfig `json:"output_config,omitempty"`
 	Stream       bool                   `json:"stream,omitempty"`
+	Thinking     *anthropicThinking     `json:"thinking,omitempty"`
 }
+
+// anthropicThinking turns extended thinking on with a token budget. The
+// budget must be below max_tokens, which the request builder guarantees.
+type anthropicThinking struct {
+	Type         string `json:"type"`
+	BudgetTokens int    `json:"budget_tokens"`
+}
+
+// applyThinking asks for extended thinking at the provider's effort and
+// raises the reply ceiling so the budget fits under it with room to answer.
+func (r *anthropicRequest) applyThinking(call *Call) {
+	budget := call.reasoning().ThinkingBudget()
+	if budget == 0 {
+		return
+	}
+	r.Thinking = &anthropicThinking{Type: "enabled", BudgetTokens: budget}
+	if floor := budget + thinkingAnswerRoom; r.MaxTokens < floor {
+		r.MaxTokens = floor
+	}
+}
+
+// thinkingAnswerRoom is what the answer keeps after the thinking budget.
+const thinkingAnswerRoom = 2048
 
 // anthropicMessage carries content as blocks rather than a string, since tool
 // use and tool results are block types rather than roles.
@@ -55,6 +79,12 @@ type anthropicBlock struct {
 	// tool_result
 	ToolUseID string `json:"tool_use_id,omitempty"`
 	Content   string `json:"content,omitempty"`
+
+	// thinking and redacted_thinking. The signature is the provider's proof
+	// that the block is its own; a tool result replayed without it is refused.
+	Thinking  string `json:"thinking,omitempty"`
+	Signature string `json:"signature,omitempty"`
+	Data      string `json:"data,omitempty"`
 	IsError   bool   `json:"is_error,omitempty"`
 }
 
@@ -105,6 +135,7 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 		Messages:  toAnthropicMessages(call.Request.Messages),
 		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
 	}
+	body.applyThinking(call)
 
 	if schema := call.Request.OutputSchema; schema != nil &&
 		len(call.Request.Tools) == 0 &&
@@ -140,6 +171,7 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 		OutputTokens:    envelope.Usage.OutputTokens,
 		Refused:         envelope.StopReason == "refusal",
 		Truncated:       envelope.StopReason == "max_tokens",
+		Reasoning:       anthropicReasoning(envelope.Content),
 	}, nil
 }
 
@@ -159,6 +191,8 @@ type anthropicStreamEvent struct {
 		Text        string `json:"text"`
 		PartialJSON string `json:"partial_json"`
 		StopReason  string `json:"stop_reason"`
+		Thinking    string `json:"thinking"`
+		Signature   string `json:"signature"`
 	} `json:"delta"`
 	Usage *anthropicUsage `json:"usage"`
 	Error *struct {
@@ -171,9 +205,10 @@ type anthropicStreamEvent struct {
 // grows by text_delta; a tool_use block's input arrives as fragments of one
 // JSON document that is only parseable once the block stops.
 type anthropicStreamBlock struct {
-	block anthropicBlock
-	text  strings.Builder
-	input strings.Builder
+	block    anthropicBlock
+	text     strings.Builder
+	input    strings.Builder
+	thinking strings.Builder
 }
 
 func (a anthropicAdapter) Stream(
@@ -189,6 +224,7 @@ func (a anthropicAdapter) Stream(
 		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
 		Stream:    true,
 	}
+	body.applyThinking(call)
 
 	stream, err := postStream(
 		ctx,
@@ -246,6 +282,11 @@ func (a anthropicAdapter) Stream(
 				}
 			case "input_json_delta":
 				block.input.WriteString(event.Delta.PartialJSON)
+			case "thinking_delta":
+				block.thinking.WriteString(event.Delta.Thinking)
+				call.think(event.Delta.Thinking)
+			case "signature_delta":
+				block.block.Signature += event.Delta.Signature
 			}
 		case "message_delta":
 			if event.Delta != nil {
@@ -274,6 +315,8 @@ func (a anthropicAdapter) Stream(
 		switch block.Type {
 		case "text":
 			block.Text = streamed.text.String()
+		case "thinking":
+			block.Thinking = streamed.thinking.String()
 		case "tool_use":
 			if raw := streamed.input.String(); strings.TrimSpace(raw) != "" {
 				block.Input, block.InputError = decodeArguments(raw)
@@ -295,7 +338,55 @@ func (a anthropicAdapter) Stream(
 		OutputTokens:    usage.OutputTokens,
 		Refused:         stopReason == "refusal",
 		Truncated:       stopReason == "max_tokens",
+		Reasoning:       anthropicReasoning(content),
 	}, nil
+}
+
+// anthropicReasoning gathers the thinking blocks of a reply into one trace.
+// Redacted blocks carry nothing readable and are kept only to be replayed.
+func anthropicReasoning(blocks []anthropicBlock) *ReasoningTrace {
+	var trace ReasoningTrace
+	var text strings.Builder
+	found := false
+	for _, block := range blocks {
+		switch block.Type {
+		case "thinking":
+			found = true
+			text.WriteString(block.Thinking)
+			trace.Signature = stringutils.FirstNonEmpty(trace.Signature, block.Signature)
+		case "redacted_thinking":
+			found = true
+			trace.Redacted = append(trace.Redacted, block.Data)
+		}
+	}
+	if !found {
+		return nil
+	}
+	trace.Text = text.String()
+
+	return &trace
+}
+
+// replayThinking is the thinking a previous assistant turn must open with.
+// Anthropic refuses a tool result whose preceding thinking is missing, so the
+// signed block goes back exactly as it came, redacted blocks included.
+func replayThinking(trace *ReasoningTrace) []anthropicBlock {
+	if trace == nil {
+		return nil
+	}
+	blocks := make([]anthropicBlock, 0, len(trace.Redacted)+1)
+	if trace.Signature != "" {
+		blocks = append(blocks, anthropicBlock{
+			Type:      "thinking",
+			Thinking:  trace.Text,
+			Signature: trace.Signature,
+		})
+	}
+	for _, data := range trace.Redacted {
+		blocks = append(blocks, anthropicBlock{Type: "redacted_thinking", Data: data})
+	}
+
+	return blocks
 }
 
 func toAnthropicMessages(messages []Message) []anthropicMessage {
@@ -316,7 +407,8 @@ func toAnthropicMessages(messages []Message) []anthropicMessage {
 				}},
 			})
 		case RoleAssistant:
-			blocks := make([]anthropicBlock, 0, len(msg.ToolCalls)+1)
+			blocks := make([]anthropicBlock, 0, len(msg.ToolCalls)+2)
+			blocks = append(blocks, replayThinking(msg.Reasoning)...)
 			if strings.TrimSpace(msg.Content) != "" {
 				blocks = append(blocks, anthropicBlock{Type: "text", Text: msg.Content})
 			}

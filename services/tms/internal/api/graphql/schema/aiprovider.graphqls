@@ -11,6 +11,17 @@ enum AIStructuredOutputMode {
   Prompted
 }
 
+"""
+How hard a model is asked to think before it answers. Off sends no reasoning
+parameter, which models without reasoning reject outright.
+"""
+enum AIReasoningEffort {
+  Off
+  Low
+  Medium
+  High
+}
+
 enum AITask {
   DocumentClassification
   DocumentExtraction
@@ -49,6 +60,7 @@ type AIProvider {
   hasApiKey: Boolean!
   allowPrivateNetwork: Boolean!
   structuredOutputMode: AIStructuredOutputMode!
+  reasoningEffort: AIReasoningEffort!
   maxTokens: Int!
   tasks: [AITask!]!
   priority: Int!

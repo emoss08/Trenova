@@ -213,6 +213,7 @@ type ComplexityRoot struct {
 		Name                 func(childComplexity int) int
 		OrganizationID       func(childComplexity int) int
 		Priority             func(childComplexity int) int
+		ReasoningEffort      func(childComplexity int) int
 		StructuredOutputMode func(childComplexity int) int
 		Tasks                func(childComplexity int) int
 		Trusted              func(childComplexity int) int
@@ -11383,6 +11384,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AIProvider.Priority(childComplexity), true
+	case "AIProvider.reasoningEffort":
+		if e.ComplexityRoot.AIProvider.ReasoningEffort == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.ReasoningEffort(childComplexity), true
 	case "AIProvider.structuredOutputMode":
 		if e.ComplexityRoot.AIProvider.StructuredOutputMode == nil {
 			break
@@ -69132,6 +69139,17 @@ enum AIStructuredOutputMode {
   Prompted
 }
 
+"""
+How hard a model is asked to think before it answers. Off sends no reasoning
+parameter, which models without reasoning reject outright.
+"""
+enum AIReasoningEffort {
+  Off
+  Low
+  Medium
+  High
+}
+
 enum AITask {
   DocumentClassification
   DocumentExtraction
@@ -69170,6 +69188,7 @@ type AIProvider {
   hasApiKey: Boolean!
   allowPrivateNetwork: Boolean!
   structuredOutputMode: AIStructuredOutputMode!
+  reasoningEffort: AIReasoningEffort!
   maxTokens: Int!
   tasks: [AITask!]!
   priority: Int!
@@ -88721,6 +88740,8 @@ func (ec *executionContext) childFields_AIProvider(ctx context.Context, field gr
 		return ec.fieldContext_AIProvider_allowPrivateNetwork(ctx, field)
 	case "structuredOutputMode":
 		return ec.fieldContext_AIProvider_structuredOutputMode(ctx, field)
+	case "reasoningEffort":
+		return ec.fieldContext_AIProvider_reasoningEffort(ctx, field)
 	case "maxTokens":
 		return ec.fieldContext_AIProvider_maxTokens(ctx, field)
 	case "tasks":

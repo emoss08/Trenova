@@ -707,3 +707,57 @@ func TestRun_HandsQueryToolsTheOrganizationsTimezone(t *testing.T) {
 
 	assert.Equal(t, "America/Chicago", tool.LastParams.Timezone)
 }
+
+// A heavy model's silence before its first token is where a person gives up.
+// What the model thinks is streamed as its own event, kept on the saved turn,
+// and handed back on the next call, since two of the four protocols refuse a
+// tool result whose reasoning is missing.
+func TestRun_StreamsKeepsAndReplaysReasoning(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("get_shipment", map[string]any{"proNumber": "S1"}, nil)
+	trace := &conversation.ReasoningTrace{Text: "I should look it up.", Signature: "sig_1"}
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		{
+			ToolCalls:       []serviceports.ToolCall{{ID: "c1", Name: "get_shipment", Arguments: map[string]any{"id": "S1"}}},
+			Reasoning:       trace,
+			ModelIdentifier: "test-model",
+		},
+		{Text: "It is in Dallas.", Reasoning: &conversation.ReasoningTrace{Text: "Dallas, then."}, ModelIdentifier: "test-model"},
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []serviceports.AgentQueryTool{tool}}, &stubActionRegistry{}, nil)
+
+	var thoughts []string
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("get_shipment"),
+		Actor:      testActor(),
+		Input:      "Where is S1?",
+		Emit: func(event serviceports.StreamEvent) {
+			if event.Event == serviceports.AssistantEventReasoning {
+				thoughts = append(thoughts, event.Data.(serviceports.AssistantReasoningEvent).Text)
+			}
+		},
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"I should look it up.", "Dallas, then."}, thoughts)
+
+	// user, assistant tool call, tool result, final answer
+	require.Len(t, result.Messages, 4)
+	require.NotNil(t, result.Messages[1].Reasoning)
+	assert.Equal(t, "sig_1", result.Messages[1].Reasoning.Signature)
+	require.NotNil(t, result.Messages[3].Reasoning)
+	assert.Equal(t, "Dallas, then.", result.Messages[3].Reasoning.Text)
+
+	// The second call saw the first turn's reasoning, so the provider can
+	// verify the tool result against it.
+	require.Equal(t, 2, completion.CallCount)
+	replayed := completion.LastReq.Messages
+	var found bool
+	for _, message := range replayed {
+		if message.Role == serviceports.RoleAssistant && message.Reasoning != nil {
+			found = message.Reasoning.Signature == "sig_1"
+		}
+	}
+	assert.True(t, found, "the signed reasoning travels with the tool calls it produced")
+}

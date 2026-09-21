@@ -30,6 +30,9 @@ type chatRequest struct {
 	Tools          []chatTool          `json:"tools,omitempty"`
 	Stream         bool                `json:"stream"`
 	StreamOptions  *chatStreamOptions  `json:"stream_options,omitempty"`
+	// ReasoningEffort is sent only when the provider is configured to reason;
+	// a model without reasoning rejects the parameter with a 400.
+	ReasoningEffort string `json:"reasoning_effort,omitempty"`
 }
 
 // chatStreamOptions asks for a final usage chunk. Without it a streamed reply
@@ -42,6 +45,9 @@ type chatMessage struct {
 	Role      string         `json:"role"`
 	Content   string         `json:"content"`
 	ToolCalls []chatToolCall `json:"tool_calls,omitempty"`
+	// ReasoningContent is read, never sent: DeepSeek-shaped servers return the
+	// chain of thought here and reject a request that echoes it back.
+	ReasoningContent string `json:"reasoning_content,omitempty"`
 	// ToolCallID pairs a tool-role message with the call it answers.
 	ToolCallID string `json:"tool_call_id,omitempty"`
 }
@@ -106,6 +112,7 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 		Stream:    false,
 	}
 	body.ResponseFormat = chatResponseFormatFor(call)
+	body.ReasoningEffort = call.reasoning().Wire()
 
 	var envelope chatResponse
 	err := postJSON(
@@ -130,7 +137,19 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 		OutputTokens:    envelope.Usage.CompletionTokens,
 		Refused:         refused,
 		Truncated:       truncated,
+		Reasoning:       firstChatReasoning(&envelope),
 	}, nil
+}
+
+// firstChatReasoning reads the chain of thought off the first usable choice.
+func firstChatReasoning(resp *chatResponse) *ReasoningTrace {
+	for idx := range resp.Choices {
+		if trace := textReasoning(resp.Choices[idx].Message.ReasoningContent); trace != nil {
+			return trace
+		}
+	}
+
+	return nil
 }
 
 // chatStreamChunk is one streamed delta. Tool calls arrive as fragments keyed by
@@ -141,8 +160,9 @@ type chatStreamChunk struct {
 	Choices []struct {
 		FinishReason string `json:"finish_reason"`
 		Delta        struct {
-			Content   string `json:"content"`
-			ToolCalls []struct {
+			Content          string `json:"content"`
+			ReasoningContent string `json:"reasoning_content"`
+			ToolCalls        []struct {
 				Index    int    `json:"index"`
 				ID       string `json:"id"`
 				Function struct {
@@ -175,6 +195,7 @@ func (a openAIChatAdapter) Stream(
 		StreamOptions: &chatStreamOptions{IncludeUsage: true},
 	}
 	body.ResponseFormat = chatResponseFormatFor(call)
+	body.ReasoningEffort = call.reasoning().Wire()
 
 	stream, err := postStream(
 		ctx,
@@ -190,6 +211,7 @@ func (a openAIChatAdapter) Stream(
 
 	var (
 		text      strings.Builder
+		thinking  strings.Builder
 		model     string
 		usage     chatUsage
 		refused   bool
@@ -226,6 +248,10 @@ func (a openAIChatAdapter) Stream(
 				refused = true
 			case "length":
 				truncated = true
+			}
+			if choice.Delta.ReasoningContent != "" {
+				thinking.WriteString(choice.Delta.ReasoningContent)
+				call.think(choice.Delta.ReasoningContent)
 			}
 			if choice.Delta.Content != "" {
 				text.WriteString(choice.Delta.Content)
@@ -275,6 +301,7 @@ func (a openAIChatAdapter) Stream(
 		OutputTokens:    usage.CompletionTokens,
 		Refused:         refused,
 		Truncated:       truncated,
+		Reasoning:       textReasoning(thinking.String()),
 	}, nil
 }
 

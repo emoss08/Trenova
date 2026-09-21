@@ -29,16 +29,50 @@ type responsesRequest struct {
 	Tools           []responsesTool      `json:"tools,omitempty"`
 	MaxOutputTokens int                  `json:"max_output_tokens,omitempty"`
 	Stream          bool                 `json:"stream,omitempty"`
-	Background      bool                 `json:"background,omitempty"`
-	Store           bool                 `json:"store,omitempty"`
+	// Reasoning is sent only when the provider is configured to reason. The
+	// summary is what a person gets to read; the chain itself never leaves
+	// OpenAI in the clear, only encrypted, and only when asked for by Include.
+	Reasoning  *responsesReasoning `json:"reasoning,omitempty"`
+	Include    []string            `json:"include,omitempty"`
+	Background bool                `json:"background,omitempty"`
+	Store      bool                `json:"store,omitempty"`
 }
 
 // responsesItem is both a message and a function call or its output: this
 // protocol carries tool traffic as input items rather than as message roles.
+type responsesReasoning struct {
+	Effort  string `json:"effort"`
+	Summary string `json:"summary"`
+}
+
+// applyReasoning asks for reasoning at the provider's effort, with a summary
+// to show and the encrypted chain to replay on the next call.
+func (r *responsesRequest) applyReasoning(call *Call) {
+	effort := call.reasoning().Wire()
+	if effort == "" {
+		return
+	}
+	r.Reasoning = &responsesReasoning{Effort: effort, Summary: "auto"}
+	r.Include = []string{"reasoning.encrypted_content"}
+}
+
+// responsesSummaryPart is one readable piece of a reasoning item's summary.
+type responsesSummaryPart struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
 type responsesItem struct {
 	Type    string                 `json:"type,omitempty"`
 	Role    string                 `json:"role,omitempty"`
 	Content []responsesMessagePart `json:"content,omitempty"`
+
+	// reasoning. A function call is refused when replayed without the
+	// reasoning item that produced it, so the id and encrypted content go
+	// back ahead of the calls exactly as they came.
+	ID               string                 `json:"id,omitempty"`
+	Summary          []responsesSummaryPart `json:"summary,omitempty"`
+	EncryptedContent string                 `json:"encrypted_content,omitempty"`
 
 	// function_call
 	CallID    string `json:"call_id,omitempty"`
@@ -101,6 +135,7 @@ func (a openAIResponsesAdapter) requestFor(call *Call) responsesRequest {
 		Input:           toResponsesInput(call.Request.System, call.Request.Messages),
 		Tools:           toResponsesTools(call.Request.Tools),
 	}
+	body.applyReasoning(call)
 
 	if schema := call.Request.OutputSchema; schema != nil &&
 		len(call.Request.Tools) == 0 &&
@@ -146,6 +181,7 @@ func (a openAIResponsesAdapter) responseFrom(call *Call, envelope *responsesEnve
 		OutputTokens:    envelope.Usage.OutputTokens,
 		Refused:         refused,
 		Truncated:       responsesTruncated(envelope),
+		Reasoning:       responsesReasoningOf(envelope),
 	}
 }
 
@@ -280,6 +316,7 @@ func (a openAIResponsesAdapter) Stream(
 		Tools:           toResponsesTools(call.Request.Tools),
 		Stream:          true,
 	}
+	body.applyReasoning(call)
 
 	stream, err := postStream(
 		ctx,
@@ -294,6 +331,7 @@ func (a openAIResponsesAdapter) Stream(
 	defer func() { _ = stream.Close() }()
 
 	var (
+		thinking  strings.Builder
 		text      strings.Builder
 		completed *responsesEnvelope
 		model     string
@@ -315,6 +353,11 @@ func (a openAIResponsesAdapter) Stream(
 			if event.Delta != "" {
 				text.WriteString(event.Delta)
 				sink(event.Delta)
+			}
+		case "response.reasoning_summary_text.delta":
+			if event.Delta != "" {
+				thinking.WriteString(event.Delta)
+				call.think(event.Delta)
 			}
 		case "response.refusal.delta":
 			refused = true
@@ -349,10 +392,15 @@ func (a openAIResponsesAdapter) Stream(
 			Text:            text.String(),
 			ModelIdentifier: stringutils.FirstNonEmpty(model, call.Provider.Model),
 			Refused:         refused,
+			Reasoning:       textReasoning(thinking.String()),
 		}, nil
 	}
 
 	finalText, toolCalls, finalRefused := splitResponsesOutput(completed)
+	reasoning := responsesReasoningOf(completed)
+	if reasoning == nil {
+		reasoning = textReasoning(thinking.String())
+	}
 
 	return &Response{
 		Text:            stringutils.FirstNonEmpty(finalText, text.String()),
@@ -362,7 +410,57 @@ func (a openAIResponsesAdapter) Stream(
 		OutputTokens:    completed.Usage.OutputTokens,
 		Refused:         refused || finalRefused,
 		Truncated:       responsesTruncated(completed),
+		Reasoning:       reasoning,
 	}, nil
+}
+
+// responsesReasoningOf gathers a response's reasoning items into one trace:
+// the summaries to read, the first item's id and encrypted content to replay.
+func responsesReasoningOf(envelope *responsesEnvelope) *ReasoningTrace {
+	if envelope == nil {
+		return nil
+	}
+	var trace ReasoningTrace
+	var text strings.Builder
+	found := false
+	for idx := range envelope.Output {
+		item := &envelope.Output[idx]
+		if item.Type != "reasoning" {
+			continue
+		}
+		found = true
+		for _, part := range item.Summary {
+			if text.Len() > 0 && part.Text != "" {
+				text.WriteString("\n\n")
+			}
+			text.WriteString(part.Text)
+		}
+		if trace.Signature == "" {
+			trace.Signature = item.ID
+			trace.Encrypted = item.EncryptedContent
+		}
+	}
+	if !found {
+		return nil
+	}
+	trace.Text = text.String()
+
+	return &trace
+}
+
+// replayReasoning is the reasoning item a previous assistant turn's function
+// calls must follow. Without it the calls are refused as orphans.
+func replayReasoning(trace *ReasoningTrace) []responsesItem {
+	if trace == nil || trace.Signature == "" {
+		return nil
+	}
+
+	return []responsesItem{{
+		Type:             "reasoning",
+		ID:               trace.Signature,
+		EncryptedContent: trace.Encrypted,
+		Summary:          []responsesSummaryPart{},
+	}}
 }
 
 // responsesTruncated reads the Responses API's two ways of saying the output
@@ -396,6 +494,7 @@ func toResponsesInput(system string, messages []Message) []responsesItem {
 				Output: msg.Content,
 			})
 		case RoleAssistant:
+			items = append(items, replayReasoning(msg.Reasoning)...)
 			if strings.TrimSpace(msg.Content) != "" {
 				items = append(items, responsesItem{
 					Role:    "assistant",

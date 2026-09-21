@@ -1,5 +1,9 @@
 package services
 
+import (
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
+)
+
 // Role identifies who produced a message in a conversation.
 type Role string
 
@@ -26,6 +30,9 @@ type Message struct {
 	// IsError marks a tool result that failed, so the model can recover rather
 	// than treating the message as data.
 	IsError bool
+	// Reasoning is the thinking behind an assistant turn, replayed so a
+	// provider that signs or references its reasoning can continue it.
+	Reasoning *conversation.ReasoningTrace
 }
 
 // ToolSpec describes a tool to the model.

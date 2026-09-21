@@ -25,6 +25,7 @@ type AIProvider {
   name: String!
   organizationId: ID!
   priority: Int!
+  reasoningEffort: AIReasoningEffort!
   structuredOutputMode: AIStructuredOutputMode!
   tasks: [AITask!]!
   trusted: Boolean!
@@ -59,6 +60,17 @@ type AIProviderTestOutcome {
   schemaHonoured: Boolean!
   success: Boolean!
   testedAt: Timestamp!
+}
+
+"""
+How hard a model is asked to think before it answers. Off sends no reasoning
+parameter, which models without reasoning reject outright.
+"""
+enum AIReasoningEffort {
+  High
+  Low
+  Medium
+  Off
 }
 
 enum AIStructuredOutputMode {

@@ -5,7 +5,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { toneVar } from "@/components/kpi/tone";
+import { accentVar, toneVar } from "@/components/kpi/tone";
 import { queries } from "@/lib/queries";
 import type { AIProviderPreset } from "@/types/ai-provider";
 import { useQuery } from "@tanstack/react-query";
@@ -290,6 +290,30 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
               control={control}
               label={t("Max tokens")}
               description={t("Ceiling for a single reply.")}
+            />
+          </FormControl>
+
+          <FormControl cols="full">
+            <SelectField
+              name="reasoningEffort"
+              control={control}
+              label={t("Reasoning")}
+              // Off is the safe default: the reasoning parameter is refused by
+              // models without it. The levels are a categorical scale of
+              // effort, not severities, so they take one accent.
+              options={[
+                {
+                  label: t("Off — answer directly"),
+                  value: "Off",
+                  color: toneVar("muted"),
+                },
+                { label: t("Low"), value: "Low", color: accentVar("teal") },
+                { label: t("Medium"), value: "Medium", color: accentVar("teal") },
+                { label: t("High"), value: "High", color: accentVar("teal") },
+              ]}
+              description={t(
+                "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Turn it on only for a model that reasons; others reject the request.",
+              )}
             />
           </FormControl>
 

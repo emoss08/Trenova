@@ -157,6 +157,10 @@ func (s *Service) attemptChat(
 		},
 	}
 
+	if req.ReasoningSink != nil {
+		call.Reasoning = modeladapter.StreamSink(req.ReasoningSink)
+	}
+
 	var (
 		resp    *modeladapter.Response
 		emitted string
@@ -193,6 +197,7 @@ func (s *Service) attemptChat(
 		ProviderID:      provider.ID,
 		ProviderKind:    provider.Kind,
 		Truncated:       resp.Truncated,
+		Reasoning:       resp.Reasoning,
 	}, emitted, nil
 }
 
