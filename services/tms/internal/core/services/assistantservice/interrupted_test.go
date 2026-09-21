@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -91,4 +92,36 @@ func TestSendMessageStream_SavesTheTurnOnACancelledRequest(t *testing.T) {
 
 	require.Equal(t, 1, conversations.appendCalls, "the turn is saved")
 	assert.NoError(t, conversations.appendCtxErr, "on a context the cancellation cannot reach")
+}
+
+// A turn stopped before the model said or did anything used to close with
+// "What is shown above is what had happened by then" under a question with
+// nothing above it but the question. The note now says what happened.
+func TestInterruptedTurn_SaysNothingRanWhenNothingDid(t *testing.T) {
+	t.Parallel()
+
+	req := &TurnRequest{Input: "Where is S1?"}
+	nothingRan := &serviceports.RunResult{
+		Messages: []conversation.Message{{Role: conversation.RoleUser, Content: "Where is S1?"}},
+	}
+
+	stopped := interruptedTurn(req, agentguard.Decision{Allowed: true}, nothingRan, context.Canceled)
+	require.NotNil(t, stopped, "the question is kept")
+	require.Len(t, stopped.Messages, 2)
+	assert.NotContains(t, stopped.Reply, "shown above")
+	assert.Contains(t, stopped.Reply, "before a reply started")
+
+	failed := interruptedTurn(req, agentguard.Decision{Allowed: true}, nothingRan, errors.New("provider down"))
+	require.NotNil(t, failed)
+	assert.NotContains(t, failed.Reply, "shown above")
+	assert.Contains(t, failed.Reply, "before it started")
+	assert.Contains(t, failed.Reply, "Ask again")
+
+	ran := &serviceports.RunResult{Messages: []conversation.Message{
+		{Role: conversation.RoleUser, Content: "Where is S1?"},
+		{Role: conversation.RoleAssistant, Content: "Looking it up."},
+	}}
+	partial := interruptedTurn(req, agentguard.Decision{Allowed: true}, ran, context.Canceled)
+	require.NotNil(t, partial)
+	assert.Contains(t, partial.Reply, "shown above", "with something above, the note points at it")
 }

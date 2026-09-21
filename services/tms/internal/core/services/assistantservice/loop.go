@@ -143,6 +143,30 @@ const interruptedNotice = "_This reply was interrupted before it finished. " +
 // stoppedNotice is the same, for a turn the person ended themselves.
 const stoppedNotice = "_Stopped here. What is shown above is what had happened by then._"
 
+// The same two notes for a turn that ended before the model said or did
+// anything. "What is shown above" under a question with nothing above it but
+// the question read as a reply that had been lost.
+const (
+	failedBeforeStartNotice  = "_This reply failed before it started. Ask again to continue._"
+	stoppedBeforeStartNotice = "_Stopped before a reply started. Ask again to continue._"
+)
+
+// closingNotice picks the note for how the turn ended and whether anything
+// had happened by then.
+func closingNotice(err error, ranAnything bool) string {
+	stopped := errors.Is(err, context.Canceled)
+	switch {
+	case stopped && ranAnything:
+		return stoppedNotice
+	case stopped:
+		return stoppedBeforeStartNotice
+	case ranAnything:
+		return interruptedNotice
+	default:
+		return failedBeforeStartNotice
+	}
+}
+
 // interruptedTurn is what a failed run leaves behind: everything that ran,
 // closed with a note. Nil when nothing ran at all, since a turn with no user
 // message in it is not a turn.
@@ -161,10 +185,8 @@ func interruptedTurn(
 		return nil
 	}
 
-	notice := interruptedNotice
-	if errors.Is(err, context.Canceled) {
-		notice = stoppedNotice
-	}
+	// The first message is the question; anything after it is what ran.
+	notice := closingNotice(err, len(run.Messages) > 1)
 
 	messages := make([]conversation.Message, 0, len(run.Messages)+1)
 	messages = append(messages, run.Messages...)
