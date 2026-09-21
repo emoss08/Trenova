@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
@@ -14,13 +15,14 @@ import (
 	"github.com/fatih/color"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
-	"golang.org/x/tools/imports"
 )
 
 var (
 	seedDev  bool
 	seedTest bool
 )
+
+var seedNamePattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]*$`)
 
 var createSeedCmd = &cobra.Command{
 	Use:   "create-seed <name>",
@@ -36,6 +38,12 @@ func init() {
 
 func runCreateSeed(cmd *cobra.Command, args []string) error {
 	seedName := args[0]
+	if !seedNamePattern.MatchString(seedName) {
+		return fmt.Errorf(
+			"invalid seed name %q: must start with a letter and contain only letters, digits and underscores",
+			seedName,
+		)
+	}
 
 	var targetDir string
 	var environments string
@@ -74,13 +82,7 @@ func runCreateSeed(cmd *cobra.Command, args []string) error {
 
 	formatted, err := format.Source([]byte(content))
 	if err != nil {
-		formatted, err = imports.Process(filepath, []byte(content), nil)
-		if err != nil {
-			color.Yellow("⚠ Could not format seed file: %v", err)
-			formatted = []byte(content)
-		}
-	} else {
-		formatted, _ = imports.Process(filepath, formatted, nil)
+		return fmt.Errorf("format seed content: %w", err)
 	}
 
 	if err := os.WriteFile(filepath, formatted, 0o644); err != nil {

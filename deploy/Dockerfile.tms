@@ -17,7 +17,7 @@ COPY services/tms/ ./services/tms/
 
 WORKDIR /build/services/tms
 ENV CGO_ENABLED=1
-RUN go build -tags musl -ldflags="-s -w" -o /build/trenova ./cmd/cli
+RUN go build -tags musl,nomsgpack -ldflags="-s -w" -o /build/trenova ./cmd/cli
 
 FROM alpine:3.21
 

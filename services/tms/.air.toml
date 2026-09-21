@@ -2,7 +2,16 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "go build -tags nofitz -o ./tmp/trenova-cli.exe ./cmd/cli"
+# -N -l (no optimisation, no inlining) takes a resolver-edit reload from ~25s
+# to ~17s. It is scoped to first-party packages rather than `all=` so the
+# stdlib and runtime stay optimised, and it applies only here -- `task
+# build-cli`, CI and the release image are all unaffected.
+#
+# Two costs: the reloaded server runs unoptimised code, so do not benchmark
+# against it, and these flags key a separate build cache, so the first reload
+# after adopting them rebuilds every first-party package once (~160s).
+# Drop the -gcflags argument to revert.
+cmd = "go build -tags nofitz,nomsgpack -gcflags='github.com/emoss08/trenova/...=-N -l' -o ./tmp/trenova-cli.exe ./cmd/cli"
 bin = "./tmp/trenova-cli"
 delay = 100
 exclude_dir = ["assets", "tmp", "vendor", "ui", "platform", "microservices"]
