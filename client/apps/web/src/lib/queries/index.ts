@@ -1,6 +1,7 @@
 import { mergeQueryKeys } from "@lukemorales/query-key-factory";
 import { accountingControl } from "./accounting-control";
 import { attention } from "./attention";
+import { watchtower } from "./watchtower";
 import { accountingReport } from "./accounting-report";
 import { ar } from "./ar";
 import { bankReceipt } from "./bank-receipt";
@@ -10,6 +11,7 @@ import { journalEntry } from "./journal-entry";
 import { journalReversal } from "./journal-reversal";
 import { manualJournal } from "./manual-journal";
 import { audit } from "./audit";
+import { briefing } from "./briefing";
 import { billingControl } from "./billing-control";
 import { billingQueue } from "./billing-queue";
 import { customer } from "./customer";
@@ -114,6 +116,7 @@ const workspaceQueries = mergeQueryKeys(
   homeLayout,
   sidebarPreferences,
   user,
+  watchtower,
   worker,
   organization,
   integration,
@@ -123,6 +126,7 @@ const workspaceQueries = mergeQueryKeys(
   carrierIntelSettings,
   attention,
   audit,
+  briefing,
   notification,
   tableChangeAlert,
   reports,

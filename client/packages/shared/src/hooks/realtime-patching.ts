@@ -17,7 +17,11 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, string[]> = {
   ],
   agent_run: ["agent-run-list", "agent-definitions"],
   assistant_artifact: ["assistant-artifacts"],
-  watchtower: ["watchtower-items", "watchtower-counts", "attention"],
+  // The feed and its counts live under one key root from the query factory
+  // (createQueryKeys("watchtower")), so invalidating the root catches both the
+  // list and every filtered variant of it.
+  watchtower: ["watchtower", "attention"],
+  briefings: ["briefing"],
   shipments: [
     "shipment-list",
     "dispatch-board",
