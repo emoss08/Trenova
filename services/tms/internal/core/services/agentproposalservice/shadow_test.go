@@ -103,6 +103,13 @@ func (f *fakeProposalRepo) RecordExecution(
 	return nil, nil
 }
 
+func (f *fakeProposalRepo) ListByIDs(
+	context.Context,
+	repositories.ListAgentProposalsByIDsRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
 func (f *fakeProposalRepo) ListByThread(
 	context.Context,
 	repositories.ListAgentProposalsByThreadRequest,
