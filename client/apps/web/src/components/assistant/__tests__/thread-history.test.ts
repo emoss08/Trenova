@@ -2,6 +2,7 @@ import type { AssistantMessage, AssistantMessagePage } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import {
   appendToHistory,
+  continuesHistory,
   flattenHistory,
   hasOlderPages,
   oldestSequence,
@@ -95,6 +96,43 @@ describe("appendToHistory", () => {
     expect(appendToHistory(undefined, [message(1)])).toBeUndefined();
     const empty = { pages: [], pageParams: [] };
     expect(appendToHistory(empty, [message(1)])).toBe(empty);
+  });
+});
+
+describe("continuesHistory", () => {
+  // A turn answered while the previous one was still streaming aborts that
+  // stream; the server keeps what ran, the client never fetched it, and
+  // appending the next turn on top would hide the gap for good. The
+  // sequence numbers say whether the newest page is still continuous.
+  it("accepts a turn that picks up where the page left off", () => {
+    const history = { pages: [page([4, 5], false, 6)], pageParams: [] };
+
+    expect(continuesHistory(history, [message(6), message(7)])).toBe(true);
+  });
+
+  it("refuses a turn that skips messages the page never saw", () => {
+    const history = { pages: [page([4, 5], false, 6)], pageParams: [] };
+
+    expect(continuesHistory(history, [message(9)])).toBe(false);
+  });
+
+  it("ignores messages the page already holds when judging continuity", () => {
+    const history = { pages: [page([4, 5], false, 6)], pageParams: [] };
+
+    expect(continuesHistory(history, [message(5), message(6)])).toBe(true);
+    expect(continuesHistory(history, [message(5)])).toBe(true);
+  });
+
+  it("starts an empty thread at its first message and nowhere else", () => {
+    const empty = { pages: [page([], false, 0)], pageParams: [] };
+
+    expect(continuesHistory(empty, [message(0), message(1)])).toBe(true);
+    expect(continuesHistory(empty, [message(3)])).toBe(false);
+  });
+
+  it("cannot vouch for a history that was never fetched", () => {
+    expect(continuesHistory(undefined, [message(0)])).toBe(false);
+    expect(continuesHistory({ pages: [], pageParams: [] }, [message(0)])).toBe(false);
   });
 });
 

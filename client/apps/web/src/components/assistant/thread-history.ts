@@ -102,6 +102,46 @@ export function appendToHistory(
   };
 }
 
+/**
+ * Whether a finished turn picks up exactly where the newest page ends.
+ *
+ * A turn sent while the previous one was still streaming aborts that stream.
+ * The server keeps what had run, the client never fetched it, and appending
+ * the next turn on top would hide the gap for good: the question that was
+ * answered, and the answer, gone from the thread until a full reload. The
+ * sequence numbers say whether the page is still continuous; when they do
+ * not, the caller fetches instead of appending.
+ */
+export function continuesHistory(
+  history: ThreadHistory | undefined,
+  messages: readonly AssistantMessage[],
+): boolean {
+  if (!history || history.pages.length === 0) {
+    return false;
+  }
+  const newest = history.pages[0];
+  const known = new Set(newest.results.map((message) => message.id));
+  const fresh = messages.filter((message) => !known.has(message.id));
+  if (fresh.length === 0) {
+    return true;
+  }
+
+  let highest = -1;
+  for (const message of newest.results) {
+    if (message.sequence > highest) {
+      highest = message.sequence;
+    }
+  }
+  let first = Number.POSITIVE_INFINITY;
+  for (const message of fresh) {
+    if (message.sequence < first) {
+      first = message.sequence;
+    }
+  }
+
+  return first === highest + 1;
+}
+
 export type ThreadLengthState = "open" | "long" | "full";
 
 /** The fraction of the limit at which a conversation starts to be called long. */

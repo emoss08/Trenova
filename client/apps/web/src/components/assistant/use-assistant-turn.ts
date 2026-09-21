@@ -10,7 +10,7 @@ import type {
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { appendToHistory, type ThreadHistory } from "./thread-history";
+import { appendToHistory, continuesHistory, type ThreadHistory } from "./thread-history";
 import { initialTurnState, isTurnActive, reduceTurn, type TurnState } from "./turn-stream";
 
 /**
@@ -44,12 +44,15 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
   // A finished turn is appended to the history the thread already holds
   // rather than refetched: the result carries the rows the server wrote, and a
   // thread with several pages loaded would otherwise fetch every one of them
-  // after each reply. Only when nothing is cached does the query fetch fresh.
+  // after each reply. It is appended only when it continues the page: a turn
+  // whose numbers skip ahead means something was saved that the client never
+  // saw, an aborted turn most often, and that is fetched rather than papered
+  // over. Nothing cached also fetches fresh.
   const absorbTurn = useCallback(
     async (result: SendMessageResult | null) => {
       const key = queries.assistant.messages(threadId).queryKey;
       const cached = queryClient.getQueryData<ThreadHistory>(key);
-      if (result && cached && cached.pages.length > 0) {
+      if (result && continuesHistory(cached, result.messages)) {
         queryClient.setQueryData<ThreadHistory>(key, (history) =>
           appendToHistory(history, result.messages),
         );
@@ -82,7 +85,14 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
 
   const send = useCallback(
     async (content: string, context?: AssistantPageContext | null, providerId = "") => {
+      // Sending over a reply still arriving cuts it off. The server keeps
+      // what had run by then, so the thread is refetched to show it rather
+      // than the cut-off turn vanishing under the new question.
+      const interrupted = abortRef.current !== null && !abortRef.current.signal.aborted;
       abortRef.current?.abort();
+      if (interrupted) {
+        void refreshThread();
+      }
       const controller = new AbortController();
       abortRef.current = controller;
 
@@ -165,6 +175,9 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
+    // The server saves what had run when the stream was cut; the refetch
+    // shows it under the notice rather than leaving it to the next turn.
+    void refreshThread();
     setTurn((state) =>
       state && isTurnActive(state)
         ? {
@@ -174,7 +187,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           }
         : state,
     );
-  }, [t]);
+  }, [refreshThread, t]);
 
   const dismiss = useCallback(async () => {
     await refreshThread();
