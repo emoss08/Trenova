@@ -47,6 +47,9 @@ type RunRequest struct {
 	// scheduled agent. Tools that put a question to a person are withheld,
 	// since a question nobody will answer only ends the run on it.
 	Unattended bool
+	// ThreadID is the conversation a chat turn belongs to, for attributing
+	// what the turn cost. Empty for a background run.
+	ThreadID pulid.ID
 	// History is the conversation so far, oldest first, excluding Input.
 	History []conversation.Message
 	Input   string

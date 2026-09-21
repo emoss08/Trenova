@@ -1,6 +1,7 @@
 package aiproviderhandler
 
 import (
+	"github.com/shopspring/decimal"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -120,6 +121,8 @@ type saveProviderRequest struct {
 	AllowPrivateNetwork  bool                            `json:"allowPrivateNetwork"`
 	StructuredOutputMode aiprovider.StructuredOutputMode `json:"structuredOutputMode"`
 	ReasoningEffort      aiprovider.ReasoningEffort      `json:"reasoningEffort"`
+	InputCostPerMillion  *decimal.Decimal                `json:"inputCostPerMillion"`
+	OutputCostPerMillion *decimal.Decimal                `json:"outputCostPerMillion"`
 	MaxTokens            int                             `json:"maxTokens"`
 	Tasks                []aiprovider.Task               `json:"tasks"`
 	Priority             int                             `json:"priority"`
@@ -143,6 +146,8 @@ func (r *saveProviderRequest) toServiceRequest(
 		AllowPrivateNetwork:  r.AllowPrivateNetwork,
 		StructuredOutputMode: r.StructuredOutputMode,
 		ReasoningEffort:      r.ReasoningEffort,
+		InputCostPerMillion:  r.InputCostPerMillion,
+		OutputCostPerMillion: r.OutputCostPerMillion,
 		MaxTokens:            r.MaxTokens,
 		Tasks:                r.Tasks,
 		Priority:             r.Priority,

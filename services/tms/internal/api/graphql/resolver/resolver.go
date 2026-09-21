@@ -210,6 +210,7 @@ type Params struct {
 	AgentRunService              services.AgentRunService
 	AgentDefinitionService       services.AgentDefinitionService
 	AIProviderService            services.AIProviderService
+	AIUsageService               services.AIUsageService
 	AgentProposalService         services.AgentProposalService
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
@@ -354,6 +355,7 @@ type Resolver struct {
 	agentRunService              services.AgentRunService
 	agentDefinitionService       services.AgentDefinitionService
 	aiProviderService            services.AIProviderService
+	aiUsageService               services.AIUsageService
 	agentProposalService         services.AgentProposalService
 	agentExceptionService        services.AgentExceptionService
 	agentDecisionService         services.AgentDecisionService
@@ -499,6 +501,7 @@ func New(p Params) *Resolver {
 		agentRunService:              p.AgentRunService,
 		agentDefinitionService:       p.AgentDefinitionService,
 		aiProviderService:            p.AIProviderService,
+		aiUsageService:               p.AIUsageService,
 		agentProposalService:         p.AgentProposalService,
 		agentExceptionService:        p.AgentExceptionService,
 		agentDecisionService:         p.AgentDecisionService,

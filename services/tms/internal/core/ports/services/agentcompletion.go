@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/shopspring/decimal"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -42,6 +43,8 @@ type StructuredCompletionRequest struct {
 	// only when that provider is enabled and serves the task; otherwise the usual
 	// priority order applies, so a deleted preference never strands a caller.
 	PreferredProviderID pulid.ID
+	// Attribution says who the call is for, so its cost lands somewhere.
+	Attribution AIUsageAttribution
 }
 
 type StructuredCompletionResult struct {
@@ -54,6 +57,8 @@ type StructuredCompletionResult struct {
 	// several are configured.
 	ProviderID   pulid.ID
 	ProviderKind aiprovider.Kind
+	LatencyMs    int64
+	CostUSD      *decimal.Decimal
 }
 
 // ChatCompletionRequest is one turn of a tool-using conversation. Unlike the
@@ -68,6 +73,8 @@ type ChatCompletionRequest struct {
 	// only when that provider is enabled and serves the task; otherwise the usual
 	// priority order applies, so a deleted preference never strands an agent.
 	PreferredProviderID pulid.ID
+	// Attribution says who the call is for, so its cost lands somewhere.
+	Attribution AIUsageAttribution
 	// ReasoningSink receives the model's thinking as it streams, when the
 	// provider lets it through. Optional, and separate from the text sink
 	// because thinking is not the reply: it is shown differently and never
@@ -92,6 +99,16 @@ type ChatCompletionResult struct {
 	Truncated bool
 	// Reasoning is the model's thinking, when the provider produced any.
 	Reasoning *conversation.ReasoningTrace
+	// ReasoningTokens is the thinking's share of OutputTokens, where the
+	// protocol reports one.
+	ReasoningTokens int
+	// LatencyMs is how long the answering call took, from request to the last
+	// byte. Attempts that fell through to another provider are not counted
+	// here; the usage record has them.
+	LatencyMs int64
+	// CostUSD is what the answering call cost at the provider's configured
+	// price, nil when the provider carries none.
+	CostUSD *decimal.Decimal
 }
 
 // ChatStreamSink receives reply text as the model produces it. It is a preview

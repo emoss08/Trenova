@@ -1,0 +1,28 @@
+query AIUsageSummary($since: Timestamp) {
+  aiUsageSummary(since: $since) {
+    since
+    calls
+    failed
+    inputTokens
+    outputTokens
+    reasoningTokens
+    costUsd
+    pricedCalls
+    latencyP50Ms
+    latencyP95Ms
+    byProvider {
+      providerId
+      providerName
+      model
+      calls
+      failed
+      inputTokens
+      outputTokens
+      reasoningTokens
+      costUsd
+      pricedCalls
+      latencyP50Ms
+      latencyP95Ms
+    }
+  }
+}

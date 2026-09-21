@@ -21,6 +21,22 @@ export const structuredOutputModeSchema = z.enum(["JSONSchema", "JSONMode", "Pro
  */
 export const reasoningEffortSchema = z.enum(["Off", "Low", "Medium", "High"]);
 
+/**
+ * A price in USD per million tokens. The server stores a decimal and sends it
+ * as a string; the form edits a number; either shape is accepted and both
+ * become a number or null, since null is what "unknown" means here.
+ */
+export const pricePerMillionSchema = z
+  .union([z.number(), z.string()])
+  .nullish()
+  .transform((value) => {
+    if (value === null || value === undefined || value === "") {
+      return null;
+    }
+    const parsed = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  });
+
 export const aiTaskSchema = z.enum([
   "DocumentClassification",
   "DocumentExtraction",
@@ -56,6 +72,8 @@ export const aiProviderSchema = z.object({
   allowPrivateNetwork: z.boolean().default(false),
   structuredOutputMode: structuredOutputModeSchema,
   reasoningEffort: reasoningEffortSchema.default("Off"),
+  inputCostPerMillion: pricePerMillionSchema,
+  outputCostPerMillion: pricePerMillionSchema,
   maxTokens: z.number().default(8192),
   /** `[]Task` with nullzero on the server: a provider with no tasks arrives as null. */
   tasks: z.preprocess((value) => value ?? [], z.array(aiTaskSchema)),
@@ -82,6 +100,8 @@ export const saveAIProviderRequestSchema = z.object({
   allowPrivateNetwork: z.boolean().default(false),
   structuredOutputMode: structuredOutputModeSchema,
   reasoningEffort: reasoningEffortSchema.default("Off"),
+  inputCostPerMillion: z.number().min(0).nullable().default(null),
+  outputCostPerMillion: z.number().min(0).nullable().default(null),
   maxTokens: z.number().min(256).max(200000).default(8192),
   tasks: z.array(aiTaskSchema).default([]),
   priority: z.number().min(0).default(100),

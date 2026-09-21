@@ -210,6 +210,9 @@ export const assistantMessageSchema = z.object({
   inputTokens: z.number().default(0),
   outputTokens: z.number().default(0),
   reasoning: reasoningTraceSchema.nullish(),
+  /** How long the model took, and what the turn cost where the provider is priced. */
+  latencyMs: z.number().nullish(),
+  costUsd: z.union([z.string(), z.number()]).nullish(),
   createdAt: z.number(),
 });
 

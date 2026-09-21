@@ -3229,6 +3229,12 @@ models:
   ARAgingSummary:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.ARAgingSummary
+  AIUsageSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIUsageSummary
+  AIUsageProviderSlice:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIUsageProviderSlice
   AROpenItem:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.AROpenItem

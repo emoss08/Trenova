@@ -1,3 +1,4 @@
+import { formatLatency, formatUsd } from "@/lib/ai-usage-format";
 import { cn } from "@trenova/shared/lib/utils";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import {
@@ -311,6 +312,16 @@ export function AssistantEntry({
                 <span>
                   {t("{0} in, {1} out", message.inputTokens, message.outputTokens)} · {t("tokens")}
                 </span>
+                {(message.latencyMs ?? 0) > 0 || formatUsd(message.costUsd) ? (
+                  <span>
+                    {[
+                      (message.latencyMs ?? 0) > 0 ? formatLatency(message.latencyMs ?? 0) : null,
+                      formatUsd(message.costUsd),
+                    ]
+                      .filter((part): part is string => part !== null)
+                      .join(" · ")}
+                  </span>
+                ) : null}
               </TooltipContent>
             </Tooltip>
           )}

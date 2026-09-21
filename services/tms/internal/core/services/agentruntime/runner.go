@@ -112,6 +112,12 @@ func (s *Service) Run(
 			Tools:               tools.specs,
 			PreferredProviderID: preferredProvider(req, definition),
 			ReasoningSink:       reasoningSink,
+			Attribution: serviceports.AIUsageAttribution{
+				UserID:            req.Actor.UserID,
+				AgentDefinitionID: definition.ID,
+				ThreadID:          req.ThreadID,
+				RunID:             req.RunID,
+			},
 		}, sink)
 		if err != nil {
 			// What ran travels with the error. The caller decides whether to
@@ -137,6 +143,8 @@ func (s *Service) Run(
 			ProviderID:   completion.ProviderID,
 			InputTokens:  completion.InputTokens,
 			OutputTokens: completion.OutputTokens,
+			LatencyMs:    completion.LatencyMs,
+			CostUSD:      completion.CostUSD,
 		}
 		result.Messages = append(result.Messages, assistantTurn)
 		// The thinking goes back with the calls it produced. Anthropic and the
@@ -345,6 +353,8 @@ func (s *Service) finish(
 		ProviderID:   completion.ProviderID,
 		InputTokens:  completion.InputTokens,
 		OutputTokens: completion.OutputTokens,
+		LatencyMs:    completion.LatencyMs,
+		CostUSD:      completion.CostUSD,
 	})
 
 	return result

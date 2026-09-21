@@ -61,6 +61,10 @@ type AIProvider {
   allowPrivateNetwork: Boolean!
   structuredOutputMode: AIStructuredOutputMode!
   reasoningEffort: AIReasoningEffort!
+  "USD per million input tokens, from the provider price list; null means unknown."
+  inputCostPerMillion: Decimal
+  "USD per million output tokens; null means unknown."
+  outputCostPerMillion: Decimal
   maxTokens: Int!
   tasks: [AITask!]!
   priority: Int!

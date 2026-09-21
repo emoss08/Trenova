@@ -24,6 +24,8 @@ export const providerFormDefaults: ProviderFormValues = {
   allowPrivateNetwork: false,
   structuredOutputMode: "JSONSchema",
   reasoningEffort: "Off",
+  inputCostPerMillion: null,
+  outputCostPerMillion: null,
   maxTokens: 8192,
   tasks: null,
   priority: 100,
@@ -56,6 +58,8 @@ export function toProviderPanelRow(provider: AIProviderRow): ProviderPanelRow {
     allowPrivateNetwork: provider.allowPrivateNetwork,
     structuredOutputMode: provider.structuredOutputMode,
     reasoningEffort: provider.reasoningEffort,
+    inputCostPerMillion: decimalToNumber(provider.inputCostPerMillion),
+    outputCostPerMillion: decimalToNumber(provider.outputCostPerMillion),
     maxTokens: provider.maxTokens,
     tasks: provider.tasks.length > 0 ? [...provider.tasks] : null,
     priority: provider.priority,
@@ -63,4 +67,13 @@ export function toProviderPanelRow(provider: AIProviderRow): ProviderPanelRow {
     enabled: provider.enabled,
     version: provider.version,
   };
+}
+
+/** The GraphQL Decimal scalar is a string; the form edits a number. */
+function decimalToNumber(value: string | null | undefined): number | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }

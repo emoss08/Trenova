@@ -7,6 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
+	"github.com/shopspring/decimal"
 	"net/http"
 	"strings"
 	"sync"
@@ -33,6 +35,9 @@ type Params struct {
 	Config     *config.Config
 	Repo       repositories.AIProviderRepository
 	Encryption *encryptionservice.Service
+	// Usage records every attempt. Optional so a router built without a
+	// database still answers; without it nothing is counted.
+	Usage repositories.AIUsageRepository `optional:"true"`
 }
 
 type Service struct {
@@ -46,6 +51,7 @@ type Service struct {
 	repo       repositories.AIProviderRepository
 	encryption *encryptionservice.Service
 	adapters   *modeladapter.Registry
+	usage      repositories.AIUsageRepository
 
 	// clients are cached per egress policy. Building one per call would discard
 	// connection reuse, and the policy must stay bound to the client so a
@@ -65,6 +71,7 @@ func New(p Params) serviceports.CompletionService {
 		cfg:           p.Config.GetDocumentIntelligenceConfig(),
 		repo:          p.Repo,
 		encryption:    p.Encryption,
+		usage:         p.Usage,
 		adapters:      modeladapter.NewRegistry(),
 		clients:       make(map[bool]*http.Client, 2),
 		streamClients: make(map[bool]*http.Client, 2),
@@ -93,6 +100,7 @@ func (s *Service) CompleteStructured(
 		SchemaName:          req.SchemaName,
 		MaxTokens:           req.MaxTokens,
 		PreferredProviderID: req.PreferredProviderID,
+		Attribution:         req.Attribution,
 	})
 	if err != nil {
 		return nil, err
@@ -103,6 +111,8 @@ func (s *Service) CompleteStructured(
 		ModelIdentifier: outcome.Model,
 		InputTokens:     outcome.InputTokens,
 		OutputTokens:    outcome.OutputTokens,
+		LatencyMs:       outcome.LatencyMs,
+		CostUSD:         outcome.CostUSD,
 		ProviderID:      outcome.ProviderID,
 		ProviderKind:    outcome.ProviderKind,
 	}, nil
@@ -119,15 +129,19 @@ type runRequest struct {
 	// PreferredProviderID asks for one configured provider first, subject to the
 	// same task and trust checks as any other candidate.
 	PreferredProviderID pulid.ID
+	Attribution         serviceports.AIUsageAttribution
 }
 
 type runOutcome struct {
-	Text         string
-	Model        string
-	InputTokens  int
-	OutputTokens int
-	ProviderID   pulid.ID
-	ProviderKind aiprovider.Kind
+	Text            string
+	Model           string
+	InputTokens     int
+	OutputTokens    int
+	ReasoningTokens int
+	ProviderID      pulid.ID
+	ProviderKind    aiprovider.Kind
+	LatencyMs       int64
+	CostUSD         *decimal.Decimal
 }
 
 // candidatesFor resolves the providers allowed to serve a task, in the order
@@ -182,8 +196,23 @@ func (s *Service) runAmong(
 ) (*runOutcome, error) {
 	var lastErr error
 	for _, provider := range usable {
+		started := time.Now()
 		outcome, attemptErr := s.attempt(ctx, provider, req)
+		latency := time.Since(started)
+		s.record(ctx, usageAttempt{
+			provider:    provider,
+			task:        req.Task,
+			surface:     aiusage.SurfaceStructured,
+			attribution: req.Attribution,
+			tenant:      req.TenantInfo,
+			latency:     latency,
+			outcome:     outcome,
+			err:         attemptErr,
+		})
 		if attemptErr == nil {
+			outcome.LatencyMs = latency.Milliseconds()
+			outcome.CostUSD = provider.CostFor(outcome.InputTokens, outcome.OutputTokens)
+
 			return outcome, nil
 		}
 
@@ -242,12 +271,13 @@ func (s *Service) attempt(
 	}
 
 	return &runOutcome{
-		Text:         resp.Text,
-		Model:        resp.ModelIdentifier,
-		InputTokens:  resp.InputTokens,
-		OutputTokens: resp.OutputTokens,
-		ProviderID:   provider.ID,
-		ProviderKind: provider.Kind,
+		Text:            resp.Text,
+		Model:           resp.ModelIdentifier,
+		InputTokens:     resp.InputTokens,
+		OutputTokens:    resp.OutputTokens,
+		ReasoningTokens: resp.ReasoningTokens,
+		ProviderID:      provider.ID,
+		ProviderKind:    provider.Kind,
 	}, nil
 }
 

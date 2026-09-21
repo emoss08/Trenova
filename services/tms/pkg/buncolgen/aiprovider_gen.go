@@ -62,6 +62,8 @@ var ProviderColumns = struct {
 	StructuredOutputMode Column // "structured_output_mode" → qualified: "aiprv.structured_output_mode"
 	MaxTokens            Column // "max_tokens" → qualified: "aiprv.max_tokens"
 	ReasoningEffort      Column // "reasoning_effort" → qualified: "aiprv.reasoning_effort"
+	InputCostPerMillion  Column // "input_cost_per_million" → qualified: "aiprv.input_cost_per_million"
+	OutputCostPerMillion Column // "output_cost_per_million" → qualified: "aiprv.output_cost_per_million"
 	Tasks                Column // "tasks" → qualified: "aiprv.tasks"
 	Priority             Column // "priority" → qualified: "aiprv.priority"
 	Trusted              Column // "trusted" → qualified: "aiprv.trusted"
@@ -84,6 +86,8 @@ var ProviderColumns = struct {
 	StructuredOutputMode: NewColumn("structured_output_mode", "aiprv"),
 	MaxTokens:            NewColumn("max_tokens", "aiprv"),
 	ReasoningEffort:      NewColumn("reasoning_effort", "aiprv"),
+	InputCostPerMillion:  NewColumn("input_cost_per_million", "aiprv"),
+	OutputCostPerMillion: NewColumn("output_cost_per_million", "aiprv"),
 	Tasks:                NewColumn("tasks", "aiprv"),
 	Priority:             NewColumn("priority", "aiprv"),
 	Trusted:              NewColumn("trusted", "aiprv"),
@@ -111,6 +115,8 @@ var ProviderFieldMap = map[string]string{
 	"structuredOutputMode": "structured_output_mode",
 	"maxTokens":            "max_tokens",
 	"reasoningEffort":      "reasoning_effort",
+	"inputCostPerMillion":  "input_cost_per_million",
+	"outputCostPerMillion": "output_cost_per_million",
 	"tasks":                "tasks",
 	"priority":             "priority",
 	"trusted":              "trusted",
@@ -137,6 +143,8 @@ var ProviderInsertableColumns = []string{
 	"structured_output_mode",
 	"max_tokens",
 	"reasoning_effort",
+	"input_cost_per_million",
+	"output_cost_per_million",
 	"tasks",
 	"priority",
 	"trusted",
@@ -222,6 +230,8 @@ var ProviderFilter = struct {
 	StructuredOutputMode func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "structuredOutputMode" → DB: "structured_output_mode"
 	MaxTokens            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxTokens" → DB: "max_tokens"
 	ReasoningEffort      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoningEffort" → DB: "reasoning_effort"
+	InputCostPerMillion  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputCostPerMillion" → DB: "input_cost_per_million"
+	OutputCostPerMillion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputCostPerMillion" → DB: "output_cost_per_million"
 	Tasks                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tasks" → DB: "tasks"
 	Priority             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "priority" → DB: "priority"
 	Trusted              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trusted" → DB: "trusted"
@@ -266,6 +276,12 @@ var ProviderFilter = struct {
 	},
 	ReasoningEffort: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("reasoningEffort", op, value)
+	},
+	InputCostPerMillion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("inputCostPerMillion", op, value)
+	},
+	OutputCostPerMillion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("outputCostPerMillion", op, value)
 	},
 	Tasks: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("tasks", op, value)

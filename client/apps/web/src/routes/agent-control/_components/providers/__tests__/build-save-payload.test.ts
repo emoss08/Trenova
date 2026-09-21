@@ -16,6 +16,8 @@ function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormVa
     allowPrivateNetwork: true,
     structuredOutputMode: "Prompted",
     reasoningEffort: "Off",
+    inputCostPerMillion: null,
+    outputCostPerMillion: null,
     maxTokens: 8192,
     tasks: null,
     priority: 100,

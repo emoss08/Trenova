@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/shopspring/decimal"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -760,4 +761,33 @@ func TestRun_StreamsKeepsAndReplaysReasoning(t *testing.T) {
 		}
 	}
 	assert.True(t, found, "the signed reasoning travels with the tool calls it produced")
+}
+
+// What a turn cost and how long it took are kept on the saved turn, so the
+// footer can say so without another lookup.
+func TestRun_KeepsLatencyAndCostOnTheTurn(t *testing.T) {
+	t.Parallel()
+
+	cost := decimal.RequireFromString("0.0042")
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		{Text: "Dallas.", ModelIdentifier: "test-model", LatencyMs: 1840, CostUSD: &cost},
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition(),
+		Actor:      testActor(),
+		Input:      "Where?",
+		ThreadID:   pulid.MustNew("athr_"),
+	})
+	require.NoError(t, err)
+
+	reply := result.Messages[len(result.Messages)-1]
+	assert.Equal(t, int64(1840), reply.LatencyMs)
+	require.NotNil(t, reply.CostUSD)
+	assert.True(t, reply.CostUSD.Equal(cost))
+
+	// And the call said who it was for.
+	assert.Equal(t, testDefinition().ID, completion.LastReq.Attribution.AgentDefinitionID)
+	assert.False(t, completion.LastReq.Attribution.ThreadID.IsNil())
 }

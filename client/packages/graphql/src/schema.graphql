@@ -18,12 +18,18 @@ type AIProvider {
   enabled: Boolean!
   hasApiKey: Boolean!
   id: ID!
+  """
+  USD per million input tokens, from the provider price list; null means unknown.
+  """
+  inputCostPerMillion: Decimal
   kind: AIProviderKind!
   lastTest: AIProviderTestOutcome
   maxTokens: Int!
   model: String!
   name: String!
   organizationId: ID!
+  """USD per million output tokens; null means unknown."""
+  outputCostPerMillion: Decimal
   priority: Int!
   reasoningEffort: AIReasoningEffort!
   structuredOutputMode: AIStructuredOutputMode!
@@ -88,6 +94,45 @@ enum AITask {
   General
   OperationalInsights
   ScopeClassification
+}
+
+"""One provider and model's share of a usage window."""
+type AIUsageProviderSlice {
+  calls: Int!
+  """Sum over the calls that carried a price; see pricedCalls."""
+  costUsd: Decimal!
+  failed: Int!
+  inputTokens: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+  model: String!
+  outputTokens: Int!
+  pricedCalls: Int!
+  providerId: ID!
+  providerName: String!
+  reasoningTokens: Int!
+}
+
+"""
+What the organization's models did over a window: how many calls, how many
+failed, what they consumed, what it cost where the price is known, and how
+long a person waited. Latency percentiles are over successful calls only.
+"""
+type AIUsageSummary {
+  byProvider: [AIUsageProviderSlice!]!
+  calls: Int!
+  costUsd: Decimal!
+  failed: Int!
+  inputTokens: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+  outputTokens: Int!
+  """
+  How many of the calls carried a price. Below calls, the cost is partial.
+  """
+  pricedCalls: Int!
+  reasoningTokens: Int!
+  since: Timestamp!
 }
 
 type ARAgingBucketTotals {
@@ -12100,6 +12145,10 @@ type Query {
   agentRuns(input: DataTableConnectionInput!): AgentRunConnection!
   aiProvider(id: ID!): AIProvider
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
+  """
+  Model usage since the given instant, defaulting to the last seven days.
+  """
+  aiUsageSummary(since: Timestamp): AIUsageSummary!
   apiKey(id: ID!): ApiKey
   apiKeys(input: DataTableConnectionInput!): ApiKeyConnection!
   """
