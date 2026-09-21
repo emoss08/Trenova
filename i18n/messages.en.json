@@ -27493,6 +27493,15 @@
       "domain/permission"
     ]
   },
+  "Change a report": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Change approved": {
     "sites": 1,
     "scope": [
@@ -35861,6 +35870,15 @@
       "domain/permission"
     ]
   },
+  "Copy a report": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Copy control numbers": {
     "sites": 1,
     "scope": [
@@ -37744,6 +37762,15 @@
     ]
   },
   "Create a rate matrix": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Create a report": {
     "sites": 1,
     "scope": [
       "ts"
@@ -45725,7 +45752,7 @@
     ]
   },
   "Description": {
-    "sites": 140,
+    "sites": 141,
     "scope": [
       "go",
       "ts"
@@ -49746,6 +49773,15 @@
     ],
     "areas": [
       "template/report.delivery.email"
+    ]
+  },
+  "Download transcript": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Download version snapshot": {
@@ -113563,15 +113599,6 @@
       "routes/admin"
     ]
   },
-  "PostGIS spatial queries": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Postal Code": {
     "sites": 1,
     "scope": [
@@ -113739,24 +113766,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "PostgreSQL": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Postgres full-text search": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Posting accounts": {
@@ -132179,15 +132188,6 @@
       "routes/edi"
     ]
   },
-  "SELECT ... FOR UPDATE row locking": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "SFTP Host": {
     "sites": 1,
     "scope": [
@@ -132276,15 +132276,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "SQLite": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "SSN": {
@@ -180194,15 +180185,6 @@
       "apps/web/components"
     ]
   },
-  "advisory locks": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "against approved v{0}": {
     "sites": 1,
     "scope": [
@@ -180471,15 +180453,6 @@
       "template/report.delivery.email"
     ]
   },
-  "concurrent index creation": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "confirmed by {0}": {
     "sites": 1,
     "scope": [
@@ -180552,15 +180525,6 @@
       "go/other"
     ]
   },
-  "database session diagnostics": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "date range cannot exceed 366 days": {
     "sites": 1,
     "scope": [
@@ -180595,15 +180559,6 @@
     ],
     "areas": [
       "routes/recurring-shipment"
-    ]
-  },
-  "declarative table partitioning": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "did not apply.": {
@@ -182712,15 +182667,6 @@
       "routes/agent-control"
     ]
   },
-  "exact decimal arithmetic": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "example.com, subsidiary.com": {
     "sites": 1,
     "scope": [
@@ -182755,15 +182701,6 @@
     ],
     "areas": [
       "routes/invoice"
-    ]
-  },
-  "exclusion constraints": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "external EDI connections can be configured but are not accepted through invite flow": {
@@ -183172,15 +183109,6 @@
       "service/samsarasyncservice"
     ]
   },
-  "logical-replication change data capture": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "mapped Samsara driver is deactivated": {
     "sites": 1,
     "scope": [
@@ -183206,15 +183134,6 @@
     ],
     "areas": [
       "routes/rate-agreement"
-    ]
-  },
-  "materialized views": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "maximum active api keys reached": {
@@ -184457,15 +184376,6 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
-    ]
-  },
-  "trigram similarity search": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "type must be one of: all, Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity": {

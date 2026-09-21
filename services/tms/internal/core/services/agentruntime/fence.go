@@ -59,3 +59,29 @@ func truncateToolResult(payload string) string {
 
 	return builder.String()
 }
+
+// UnfenceToolResult reads a stored tool result back out of its fence: the
+// tool it came from and the payload as the tool returned it, with a close
+// tag the payload carried restored. Content that is not a fenced result,
+// such as the failure line a tool that errored leaves, is reported as not
+// fenced and left to the caller.
+func UnfenceToolResult(content string) (toolName, payload string, ok bool) {
+	const prefix = "Result from "
+
+	if !strings.HasPrefix(content, prefix) {
+		return "", "", false
+	}
+	rest := content[len(prefix):]
+	nameEnd := strings.Index(rest, ":\n"+untrustedOpenTag+"\n")
+	if nameEnd < 0 {
+		return "", "", false
+	}
+	toolName = rest[:nameEnd]
+	body := rest[nameEnd+len(":\n"+untrustedOpenTag+"\n"):]
+	if !strings.HasSuffix(body, "\n"+untrustedCloseTag) {
+		return "", "", false
+	}
+	body = strings.TrimSuffix(body, "\n"+untrustedCloseTag)
+
+	return toolName, stringutils.RestoreCloseTag(body, untrustedCloseTag), true
+}

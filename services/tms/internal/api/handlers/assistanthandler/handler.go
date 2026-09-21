@@ -1,8 +1,10 @@
 package assistanthandler
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"fmt"
 	"net/http"
+
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
@@ -63,6 +65,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/threads/:threadID/messages/",
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.listMessages,
+	)
+	api.GET(
+		"/threads/:threadID/transcript/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.downloadTranscript,
 	)
 	api.POST(
 		"/threads/:threadID/messages/",
@@ -261,6 +268,27 @@ func (h *Handler) listMessages(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, page)
+}
+
+// downloadTranscript hands the conversation over as a Markdown file. It is a
+// download rather than a JSON body because what it is for is reading away
+// from the panel: a text file opens anywhere and pastes anywhere.
+func (h *Handler) downloadTranscript(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	transcript, err := h.service.Transcript(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", transcript.FileName))
+	c.Header("Cache-Control", "no-store")
+	c.Data(http.StatusOK, "text/markdown; charset=utf-8", []byte(transcript.Body))
 }
 
 type pageContextRequest struct {

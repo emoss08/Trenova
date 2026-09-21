@@ -37,6 +37,7 @@ import {
 import { queries } from "@/lib/queries";
 import { reportDefinitionsInfiniteQuery } from "@/lib/queries/reports";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { downloadFromUrl } from "@trenova/shared/lib/utils";
 import {
   useInfiniteQuery,
   useMutation,
@@ -471,10 +472,5 @@ export function useDeleteReportView() {
 }
 
 export function downloadReportRun(run: Pick<ReportRun, "id">): void {
-  const link = document.createElement("a");
-  link.href = reportRunDownloadUrl(run.id);
-  link.rel = "noopener";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  downloadFromUrl(reportRunDownloadUrl(run.id));
 }

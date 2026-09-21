@@ -2,6 +2,7 @@ import { api, withCsrfHeader } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { readEventStream } from "@trenova/shared/lib/sse";
+import { downloadFromUrl } from "@trenova/shared/lib/utils";
 import {
   agentDefinitionSchema,
   agentEventListSchema,
@@ -24,6 +25,19 @@ import {
   type ProposalDecision,
   type SaveAgentDefinitionRequest,
 } from "@/types/assistant";
+
+/**
+ * Where a conversation's transcript is served: the whole thread as a Markdown
+ * file, named by the server. Same-origin, so the session cookie authenticates
+ * it and a plain link downloads it.
+ */
+export function assistantTranscriptUrl(threadId: AssistantThread["id"]): string {
+  return `${API_BASE_URL}/assistant/threads/${encodeURIComponent(threadId)}/transcript/`;
+}
+
+export function downloadAssistantTranscript(threadId: AssistantThread["id"]): void {
+  downloadFromUrl(assistantTranscriptUrl(threadId));
+}
 
 /** Where a stream that never opened went wrong, for the reader. */
 export class AssistantStreamError extends Error {

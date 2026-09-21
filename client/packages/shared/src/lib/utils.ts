@@ -305,14 +305,26 @@ export const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(_stor
  */
 export function downloadBlob(blob: Blob, fileName: string): void {
   const url = URL.createObjectURL(blob);
+  downloadFromUrl(url, fileName);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Downloads what a URL serves, through a synthetic click on a link the page
+ * never shows. The server names the file with a Content-Disposition header
+ * when `fileName` is left out; a same-origin link takes the session cookie
+ * with it, so an authenticated download needs no fetch and no blob.
+ */
+export function downloadFromUrl(url: string, fileName?: string): void {
   const link = document.createElement("a");
   link.href = url;
-  link.download = fileName;
+  if (fileName !== undefined) {
+    link.download = fileName;
+  }
   link.rel = "noopener";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 }
 
 export function blankToNull(value: string | null | undefined): string | null {

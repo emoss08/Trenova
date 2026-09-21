@@ -14,6 +14,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
+import { downloadAssistantTranscript } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
 import type { AssistantThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -97,6 +98,7 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
         onStart={(agentId) => startMutation.mutate(agentId)}
         onSelectThread={setActiveThreadId}
         onDeleteThread={setDeleting}
+        onDownloadTranscript={(thread) => downloadAssistantTranscript(thread.id)}
         onToggleExpanded={onToggleExpanded}
         onClose={onClose}
       />

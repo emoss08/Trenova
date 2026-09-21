@@ -177,6 +177,13 @@ type ListThreadMessagesRequest struct {
 // ThreadMessagesPage is one page of a thread in reading order, with what a
 // client needs to ask for the page above it and to say how long the
 // conversation has become.
+// ThreadTranscript is a conversation rendered as Markdown, with the name the
+// file should be saved under.
+type ThreadTranscript struct {
+	FileName string
+	Body     string
+}
+
 type ThreadMessagesPage struct {
 	Results []conversation.Message `json:"results"`
 	// HasMore says there are messages above the first one here.
@@ -216,6 +223,12 @@ type AssistantService interface {
 		ctx context.Context,
 		req ListThreadMessagesRequest,
 	) (*ThreadMessagesPage, error)
+	// Transcript renders the whole conversation as a document a person can
+	// read away from the panel and hand to someone else.
+	Transcript(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+	) (*ThreadTranscript, error)
 	DeleteThread(ctx context.Context, req repositories.GetThreadRequest) error
 	// SendMessage runs a guarded turn and persists it.
 	SendMessage(

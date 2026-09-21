@@ -11,6 +11,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CheckIcon,
   ChevronDownIcon,
+  DownloadIcon,
   HistoryIcon,
   Maximize2Icon,
   Minimize2Icon,
@@ -32,6 +33,8 @@ type AssistantHeaderProps = {
   onStart: (agentId: string) => void;
   onSelectThread: (id: string) => void;
   onDeleteThread: (thread: AssistantThread) => void;
+  /** Saves the open conversation as a file. Offered only while one is open. */
+  onDownloadTranscript: (thread: AssistantThread) => void;
   onToggleExpanded: () => void;
   onClose: () => void;
 };
@@ -57,6 +60,7 @@ export function AssistantHeader({
   onStart,
   onSelectThread,
   onDeleteThread,
+  onDownloadTranscript,
   onToggleExpanded,
   onClose,
 }: AssistantHeaderProps) {
@@ -188,6 +192,25 @@ export function AssistantHeader({
               </ScrollArea>
             </PopoverContent>
           </Popover>
+        )}
+
+        {activeThread && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t("Download transcript")}
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => onDownloadTranscript(activeThread)}
+                />
+              }
+            >
+              <DownloadIcon className="size-4" />
+            </TooltipTrigger>
+            <TooltipContent>{t("Download transcript")}</TooltipContent>
+          </Tooltip>
         )}
 
         <Tooltip>

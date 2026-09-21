@@ -7,7 +7,7 @@ vi.mock("@trenova/shared/lib/api", () => ({
   withCsrfHeader: vi.fn(),
 }));
 
-import { AssistantService } from "./assistant";
+import { AssistantService, assistantTranscriptUrl } from "./assistant";
 
 describe("AssistantService.listProviders", () => {
   beforeEach(() => {
@@ -46,5 +46,21 @@ describe("AssistantService.listProviders", () => {
   it("returns an array, not a promise property, when the list is empty", async () => {
     mocks.get.mockResolvedValue({ results: [] });
     await expect(new AssistantService().listProviders()).resolves.toEqual([]);
+  });
+});
+
+/**
+ * The transcript is a file the server names and serves, so the client needs
+ * only the address: a same-origin link carries the session with it.
+ */
+describe("assistantTranscriptUrl", () => {
+  it("points at the thread's transcript on the API", () => {
+    expect(assistantTranscriptUrl("athr_01M3034Q2N7JD99RA1D8DGH1ZF")).toMatch(
+      /\/assistant\/threads\/athr_01M3034Q2N7JD99RA1D8DGH1ZF\/transcript\/$/u,
+    );
+  });
+
+  it("escapes an id that is not a plain identifier", () => {
+    expect(assistantTranscriptUrl("a/b")).toContain("/threads/a%2Fb/transcript/");
   });
 });
