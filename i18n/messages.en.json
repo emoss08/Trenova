@@ -1440,6 +1440,15 @@
       "domain/worker"
     ]
   },
+  "A budget cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "A bulk action may target at most 500 records": {
     "sites": 1,
     "scope": [
@@ -2231,6 +2240,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "A daily tool limit must be between 0 and 10000": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "A dashboard holds at most {0} tiles": {
@@ -7801,6 +7819,15 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "Across every run and conversation of this agent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Across the board": {
@@ -23827,6 +23854,15 @@
     ],
     "areas": [
       "service/tenantprovisioningservice"
+    ]
+  },
+  "Budget": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Build EDI 214 payload": {
@@ -41515,6 +41551,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Daily limit for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Daily limit per change tool": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Daily logs": {
@@ -68692,6 +68746,15 @@
       "routes/ifta-return"
     ]
   },
+  "Give the agent a change tool to set a daily limit on it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Give the card a label": {
     "sites": 1,
     "scope": [
@@ -71739,6 +71802,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "How many times each change may run in a day; empty means no limit.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "How many violations the Clearinghouse reported.": {
@@ -78121,6 +78193,24 @@
     ]
   },
   "Its own tools": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Its writes are previewed and recorded as what they would have changed, never made. Approvals still count.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Its writes are previewed and recorded, never made": {
     "sites": 1,
     "scope": [
       "ts"
@@ -90030,6 +90120,24 @@
       "routes/recurring-earning"
     ]
   },
+  "Monthly budget": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Monthly budget spent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Monthly percentage applied to the overdue balance after the grace period expires.": {
     "sites": 1,
     "scope": [
@@ -93702,12 +93810,13 @@
     ]
   },
   "No cap": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control",
       "routes/detention-policy",
       "routes/fuel-management"
     ]
@@ -95244,12 +95353,13 @@
     ]
   },
   "No limit": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control",
       "routes/dispatch-control",
       "routes/fuel-management"
     ]
@@ -132735,6 +132845,24 @@
       "routes/admin"
     ]
   },
+  "Runs per day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Runs per day must be between 0 and 10000; 0 means no limit": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Runs sent": {
     "sites": 1,
     "scope": [
@@ -132742,6 +132870,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Runs today": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Runs until switched off": {
@@ -144255,14 +144392,33 @@
       "apps/dash/_components"
     ]
   },
+  "Simulated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Simulated: approved, and nothing was changed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Simulation": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "routes/admin",
+      "routes/agent-control",
       "routes/rate-agreement"
     ]
   },
@@ -161822,13 +161978,14 @@
     ]
   },
   "This month": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/types",
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/agent-control"
     ]
   },
   "This move already has a driver assignment. Unassign the driver before brokering the move to an external carrier.": {
@@ -167351,11 +167508,12 @@
     ]
   },
   "USD": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/billing-queue",
       "routes/carrier-settlement-control",
       "routes/customer-payments",
@@ -175554,6 +175712,15 @@
       "domain/documenttemplate"
     ]
   },
+  "What the agent may spend and do on its own. A cap that is reached stops it until the month or the day rolls over.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What the agent tried": {
     "sites": 2,
     "scope": [
@@ -176784,6 +176951,15 @@
     ]
   },
   "Where requests go and how they are authenticated.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Where the agent stands against its caps could not be read.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -179267,6 +179443,15 @@
       "routes/formula-template"
     ]
   },
+  "Would record a memory every later run of every agent reads.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Wrap": {
     "sites": 1,
     "scope": [
@@ -181143,6 +181328,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Zero means no cap.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Zero the rate and flag for review": {
@@ -184732,6 +184926,15 @@
       "routes/scheduling"
     ]
   },
+  "per day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "per mile": {
     "sites": 1,
     "scope": [
@@ -187476,6 +187679,15 @@
       "routes/formula-template"
     ]
   },
+  "{0} calls unpriced": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} can't search by name": {
     "sites": 1,
     "scope": [
@@ -189061,12 +189273,13 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control",
       "routes/dispatch-console",
       "routes/scheduling",
       "routes/time-attendance"
@@ -189206,6 +189419,15 @@
     ],
     "areas": [
       "service/formulatemplateservice"
+    ]
+  },
+  "{0} of {1} today": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} of {1} weeks": {
@@ -189865,6 +190087,15 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "{0} spent, no cap": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} still to sign.": {
@@ -190800,6 +191031,15 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "{0}, no cap": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0}, up to {1}": {

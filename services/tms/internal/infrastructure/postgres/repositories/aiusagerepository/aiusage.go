@@ -3,6 +3,7 @@ package aiusagerepository
 import (
 	"context"
 	"fmt"
+	"github.com/shopspring/decimal"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -140,4 +141,43 @@ func (r *repository) Summary(
 	}
 
 	return summary, nil
+}
+
+// CostByDefinition sums what one agent's calls cost since an instant. Calls
+// without a price are counted, not summed: a budget check that read them as
+// free would let an agent on an unpriced provider run without end.
+func (r *repository) CostByDefinition(
+	ctx context.Context,
+	req repositories.AIUsageCostRequest,
+) (*repositories.AIUsageCost, error) {
+	cols := buncolgen.AIUsageRecordColumns
+
+	var row struct {
+		CostUSD       string `bun:"cost_usd"`
+		Calls         int    `bun:"calls"`
+		UnpricedCalls int    `bun:"unpriced_calls"`
+	}
+	if err := r.db.DBForContext(ctx).NewSelect().
+		Model((*aiusage.AIUsageRecord)(nil)).
+		ColumnExpr("COALESCE(SUM("+cols.CostUSD.Qualified()+"), 0)::text AS cost_usd").
+		ColumnExpr("COUNT(*) AS calls").
+		ColumnExpr("COUNT(*) FILTER (WHERE "+cols.CostUSD.Qualified()+" IS NULL) AS unpriced_calls").
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where(cols.AgentDefinitionID.Eq(), req.DefinitionID).
+		Where(cols.CreatedAt.Gte(), req.Since).
+		Scan(ctx, &row); err != nil {
+		return nil, fmt.Errorf("sum ai usage cost: %w", err)
+	}
+
+	cost, err := decimal.NewFromString(row.CostUSD)
+	if err != nil {
+		return nil, fmt.Errorf("read ai usage cost %q: %w", row.CostUSD, err)
+	}
+
+	return &repositories.AIUsageCost{
+		CostUSD:       cost,
+		Calls:         row.Calls,
+		UnpricedCalls: row.UnpricedCalls,
+	}, nil
 }

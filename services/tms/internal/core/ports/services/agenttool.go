@@ -22,6 +22,13 @@ type ToolExecuteParams struct {
 	Params map[string]any
 }
 
+// ToolSimulator is a tool that can say what it would change without
+// changing it. The runtime and the executor use it when the agent is in
+// simulation; a tool without it is described by its name and parameters.
+type ToolSimulator interface {
+	Simulate(ctx context.Context, params ToolExecuteParams) (*agent.ToolSimulation, error)
+}
+
 type AgentTool interface {
 	Name() string
 	Description() string

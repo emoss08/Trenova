@@ -83,6 +83,10 @@ type AssistantProposal struct {
 	// decided as a whole; the client groups such proposals under the plan.
 	PlanID   pulid.ID `json:"planId"`
 	PlanStep int      `json:"planStep"`
+	// SimulatedAt and Simulation report a write previewed instead of made,
+	// because the agent was in simulation when it was cleared.
+	SimulatedAt *int64                `json:"simulatedAt"`
+	Simulation  *agent.ToolSimulation `json:"simulation"`
 }
 
 // AssistantPlan is several of a turn's proposals as one decision, as the

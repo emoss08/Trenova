@@ -9,7 +9,14 @@ import { classifyProposal, type ProposalPresentation } from "./proposal-state";
 export type PlanPresentation = ProposalPresentation;
 
 /** What one step of a plan shows beside its number. */
-export type PlanStepState = "waiting" | "running" | "done" | "failed" | "skipped" | "declined";
+export type PlanStepState =
+  | "waiting"
+  | "running"
+  | "done"
+  | "failed"
+  | "skipped"
+  | "declined"
+  | "simulated";
 
 export type PlanGroup = {
   plan: AssistantPlan;
@@ -64,6 +71,8 @@ export function planStepState(step: AssistantProposal): PlanStepState {
       return "running";
     case "declined":
       return "declined";
+    case "simulated":
+      return "simulated";
     default:
       return "waiting";
   }

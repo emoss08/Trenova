@@ -24,6 +24,7 @@ type Params struct {
 	Plans         repositories.AgentPlanRepository `optional:"true"`
 	AIProviders   repositories.AIProviderRepository
 	Shadow        *agentshadow.Resolver
+	Budgets       serviceports.AgentBudgetService `optional:"true"`
 }
 
 type Service struct {
@@ -38,6 +39,7 @@ type Service struct {
 	plans         chatPlanStore
 	providers     repositories.AIProviderRepository
 	shadow        *agentshadow.Resolver
+	budgets       serviceports.AgentBudgetService
 }
 
 func New(p Params) serviceports.AssistantService {
@@ -53,5 +55,6 @@ func New(p Params) serviceports.AssistantService {
 		proposals:     p.Proposals,
 		plans:         planStoreOrNil(p.Plans),
 		shadow:        p.Shadow,
+		budgets:       p.Budgets,
 	}
 }

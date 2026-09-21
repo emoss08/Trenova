@@ -548,6 +548,8 @@ type AgentDefinition {
   createdAt: Timestamp!
   cronExpression: String!
   cronTimezone: String!
+  """Runs the agent may start in a day; 0 for no cap."""
+  dailyRunLimit: Int!
   decisionTimeoutSeconds: Int!
   description: String!
   enabled: Boolean!
@@ -564,6 +566,10 @@ type AgentDefinition {
   lastRunAt: Timestamp
   maxConcurrentRuns: Int!
   maxToolCalls: Int!
+  """
+  Cost cap for a calendar month across the agent's runs; absent for none.
+  """
+  monthlyBudgetUsd: Decimal
   name: String!
   nextRunAt: Timestamp
   """Runs of this agent that have not finished."""
@@ -575,6 +581,8 @@ type AgentDefinition {
   preferredProviderId: ID!
   runTimeoutSeconds: Int!
   shadowMode: Boolean!
+  """Writes are previewed and recorded, never made."""
+  simulationMode: Boolean!
   """
   Set on the agents the platform itself creates and fires; they cannot be deleted.
   """
@@ -583,6 +591,8 @@ type AgentDefinition {
   The starter this agent was created from, if any. It carries no restriction.
   """
   template: AgentTemplate
+  """Executions per tool per day, keyed by tool name."""
+  toolDailyLimits: JSON!
   toolNames: [String!]!
   """
   Per-tool autonomy overrides, keyed by tool name; each capped by autonomyCeiling.
@@ -820,6 +830,12 @@ type AgentProposal {
   planStep: Int!
   rationale: String!
   runId: ID!
+  """
+  When the write was previewed instead of made, for an agent in simulation.
+  """
+  simulatedAt: Timestamp
+  """What the write would have changed: a summary and field changes."""
+  simulation: JSON
   status: AgentProposalStatus!
   toolName: String!
   """
@@ -855,6 +871,10 @@ enum AgentProposalStatus {
   Modified
   Pending
   Rejected
+  """
+  Cleared while the agent was in simulation: previewed and recorded, never made.
+  """
+  Simulated
   Skipped
   Superseded
 }

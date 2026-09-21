@@ -344,6 +344,8 @@ func toAssistantProposal(
 		ExpiresAt:       proposal.ExpiresAt,
 		Hold:            hold,
 		PlanStep:        proposal.PlanStep,
+		SimulatedAt:     proposal.SimulatedAt,
+		Simulation:      proposal.Simulation,
 	}
 	if proposal.PlanID != nil {
 		out.PlanID = *proposal.PlanID

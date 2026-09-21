@@ -45,6 +45,26 @@ type RecordAgentProposalExecutionRequest struct {
 	TenantInfo     pagination.TenantInfo `json:"-"`
 }
 
+// RecordAgentProposalSimulationRequest stores what a write would have
+// changed, in place of an execution, for a proposal cleared while its agent
+// was in simulation.
+type RecordAgentProposalSimulationRequest struct {
+	ID          pulid.ID
+	TenantInfo  pagination.TenantInfo
+	SimulatedAt int64
+	Simulation  *agent.ToolSimulation
+}
+
+// CountExecutedToolRequest counts how many times one agent has executed one
+// tool since an instant, for the daily tool cap. The agent is reached through
+// the run, since a proposal carries only its run.
+type CountExecutedToolRequest struct {
+	TenantInfo   pagination.TenantInfo
+	DefinitionID pulid.ID
+	ToolName     string
+	Since        int64
+}
+
 // ListAgentProposalsByThreadRequest fetches every proposal raised during one
 // assistant conversation, so reopening a thread shows what is still waiting on a
 // decision rather than only what the last turn returned.
@@ -123,4 +143,9 @@ type AgentProposalRepository interface {
 		ctx context.Context,
 		req RecordAgentProposalExecutionRequest,
 	) (*agent.AgentProposal, error)
+	RecordSimulation(
+		ctx context.Context,
+		req RecordAgentProposalSimulationRequest,
+	) (*agent.AgentProposal, error)
+	CountExecutedTool(ctx context.Context, req CountExecutedToolRequest) (int, error)
 }

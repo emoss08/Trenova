@@ -43,6 +43,24 @@ func (r *agentDefinitionResolver) EventKinds(ctx context.Context, obj *agentdefi
 	return kinds, nil
 }
 
+func (r *agentDefinitionResolver) MonthlyBudgetUsd(ctx context.Context, obj *agentdefinition.Definition) (*string, error) {
+	if obj.MonthlyBudgetUSD == nil {
+		return nil, nil
+	}
+	budget := obj.MonthlyBudgetUSD.String()
+
+	return &budget, nil
+}
+
+func (r *agentDefinitionResolver) ToolDailyLimits(ctx context.Context, obj *agentdefinition.Definition) (map[string]any, error) {
+	out := make(map[string]any, len(obj.ToolDailyLimits))
+	for tool, limit := range obj.ToolDailyLimits {
+		out[tool] = limit
+	}
+
+	return out, nil
+}
+
 func (r *agentDefinitionResolver) PendingProposals(ctx context.Context, obj *agentdefinition.Definition) (int, error) {
 	stats, err := agentDefinitionStats(ctx, obj)
 	if err != nil {

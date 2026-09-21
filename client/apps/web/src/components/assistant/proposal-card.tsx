@@ -13,6 +13,7 @@ import {
   CircleAlertIcon,
   CircleCheckIcon,
   CircleSlashIcon,
+  FlaskConicalIcon,
   LoaderIcon,
   PauseCircleIcon,
   TriangleAlertIcon,
@@ -230,6 +231,8 @@ export function OutcomeIcon({ state }: { state: ProposalPresentation }) {
       return <CircleCheckIcon className={className} style={{ color: toneVar("success") }} />;
     case "running":
       return <LoaderIcon className={cn(className, "animate-spin")} />;
+    case "simulated":
+      return <FlaskConicalIcon className={className} style={{ color: toneVar("info") }} />;
     default:
       return <CircleSlashIcon className={className} />;
   }
@@ -272,7 +275,35 @@ function OutcomeLine({
       return <span className="block">{t("Approved. Waiting for it to run.")}</span>;
     case "declined":
       return <span className="block">{t("Rejected. Nothing was changed.")}</span>;
+    case "simulated":
+      return <SimulationLine simulation={proposal.simulation} />;
     default:
       return <span className="block">{t("Expired without a decision.")}</span>;
   }
+}
+
+/**
+ * What a simulated write would have changed. The approver cleared it and it
+ * did not happen, on purpose, so the line says both and shows the preview
+ * rather than a success.
+ */
+export function SimulationLine({ simulation }: { simulation: AssistantProposal["simulation"] }) {
+  const t = useT();
+
+  return (
+    <span className="block">
+      <span className="block">{t("Simulated: approved, and nothing was changed.")}</span>
+      {simulation?.summary ? <span className="block">{simulation.summary}</span> : null}
+      {simulation && simulation.changes.length > 0 && (
+        <ul className="mt-1 flex flex-col gap-0.5">
+          {simulation.changes.map((change) => (
+            <li key={change.field} className="tabular-nums">
+              {change.field}: {change.from !== "" ? `${change.from} → ` : ""}
+              {change.to}
+            </li>
+          ))}
+        </ul>
+      )}
+    </span>
+  );
 }

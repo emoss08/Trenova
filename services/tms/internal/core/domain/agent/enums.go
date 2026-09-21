@@ -121,6 +121,9 @@ const (
 	// ProposalStatusSkipped is a plan step that never ran because a step
 	// before it failed. Nobody decided against it and it did not expire.
 	ProposalStatusSkipped = ProposalStatus("Skipped")
+	// ProposalStatusSimulated is a write that was cleared to run while its
+	// agent was in simulation: previewed and recorded, never made.
+	ProposalStatusSimulated = ProposalStatus("Simulated")
 )
 
 func (s ProposalStatus) IsValid() bool {
@@ -133,7 +136,8 @@ func (s ProposalStatus) IsValid() bool {
 		ProposalStatusSuperseded,
 		ProposalStatusExecuted,
 		ProposalStatusExecutionFailed,
-		ProposalStatusSkipped:
+		ProposalStatusSkipped,
+		ProposalStatusSimulated:
 		return true
 	default:
 		return false

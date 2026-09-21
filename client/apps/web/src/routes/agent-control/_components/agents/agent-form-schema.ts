@@ -45,6 +45,16 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
     }
 
     const selected = new Set(values.toolNames);
+    for (const tool of Object.keys(values.toolDailyLimits)) {
+      if (!selected.has(tool)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["toolDailyLimits"],
+          message: `${tool} has a daily limit but is not one of this agent's tools`,
+        });
+        break;
+      }
+    }
     for (const [tool, tier] of Object.entries(values.toolTiers)) {
       if (!selected.has(tool)) {
         ctx.addIssue({
@@ -90,6 +100,10 @@ export const agentFormDefaults: AgentFormValues = {
   maxConcurrentRuns: 1,
   runTimeoutSeconds: 600,
   maxToolCalls: 12,
+  monthlyBudgetUsd: null,
+  dailyRunLimit: 0,
+  toolDailyLimits: {},
+  simulationMode: false,
   contextProviders: [],
   outputMode: "Conversational",
   preferredProviderId: "",
@@ -106,6 +120,13 @@ export function toSaveRequest(values: AgentFormValues): SaveAgentDefinitionReque
   const toolTiers = Object.fromEntries(
     Object.entries(values.toolTiers).filter(([tool]) => selected.has(tool)),
   );
+  // A limit of zero is no limit, and a limit on a tool the agent no longer
+  // holds is a leftover; neither goes over the wire.
+  const toolDailyLimits = Object.fromEntries(
+    Object.entries(values.toolDailyLimits).filter(
+      ([tool, limit]) => selected.has(tool) && limit > 0,
+    ),
+  );
   const scheduled = values.triggerMode === "Scheduled";
   const event = values.triggerMode === "Event";
   const continuous = values.triggerMode === "Continuous";
@@ -114,6 +135,7 @@ export function toSaveRequest(values: AgentFormValues): SaveAgentDefinitionReque
     ...values,
     name: values.name.trim(),
     toolTiers,
+    toolDailyLimits,
     cronExpression: scheduled ? values.cronExpression.trim() : "",
     cronTimezone: scheduled ? values.cronTimezone : "",
     eventKinds: event ? values.eventKinds : [],
@@ -128,6 +150,19 @@ export type AgentPanelRow = AgentFormValues & {
   updatedAt: number;
   systemKey: string;
 };
+
+function limitsOf(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object") return {};
+  const parsed = z.record(z.string(), z.number().int().nonnegative()).safeParse(value);
+  return parsed.success ? parsed.data : {};
+}
+
+/** The server writes a decimal as a string; the form edits dollars as a number. */
+function moneyOf(value: string | null | undefined): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 function tiersOf(value: unknown): Record<string, AutonomyTier> {
   if (!value || typeof value !== "object") return {};
@@ -162,6 +197,10 @@ export function toAgentPanelRow(agent: AgentDefinitionRow): AgentPanelRow {
     maxConcurrentRuns: agent.maxConcurrentRuns,
     runTimeoutSeconds: agent.runTimeoutSeconds,
     maxToolCalls: agent.maxToolCalls,
+    monthlyBudgetUsd: moneyOf(agent.monthlyBudgetUsd),
+    dailyRunLimit: agent.dailyRunLimit,
+    toolDailyLimits: limitsOf(agent.toolDailyLimits),
+    simulationMode: agent.simulationMode,
     contextProviders: [...agent.contextProviders],
     outputMode: agent.outputMode,
     preferredProviderId: agent.preferredProviderId,

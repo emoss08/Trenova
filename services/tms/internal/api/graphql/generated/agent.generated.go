@@ -21,6 +21,8 @@ import (
 
 type AgentProposalResolver interface {
 	Confidence(ctx context.Context, obj *agent.AgentProposal) (float64, error)
+
+	Simulation(ctx context.Context, obj *agent.AgentProposal) (map[string]any, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -2660,6 +2662,52 @@ func (ec *executionContext) fieldContext_AgentProposal_planStep(_ context.Contex
 	return graphql.NewScalarFieldContext("AgentProposal", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _AgentProposal_simulatedAt(ctx context.Context, field graphql.CollectedField, obj *agent.AgentProposal) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentProposal_simulatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SimulatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentProposal_simulatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentProposal", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AgentProposal_simulation(ctx context.Context, field graphql.CollectedField, obj *agent.AgentProposal) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentProposal_simulation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AgentProposal().Simulation(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentProposal_simulation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentProposal", field, true, true, errors.New("field of type JSON does not have child fields"))
+}
+
 func (ec *executionContext) _AgentProposal_version(ctx context.Context, field graphql.CollectedField, obj *agent.AgentProposal) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4724,6 +4772,49 @@ func (ec *executionContext) _AgentProposal(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "simulatedAt":
+			out.Values[i] = ec._AgentProposal_simulatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "simulation":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AgentProposal_simulation(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "version":
 			out.Values[i] = ec._AgentProposal_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

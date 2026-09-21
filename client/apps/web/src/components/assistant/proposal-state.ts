@@ -9,6 +9,7 @@ import type { AssistantMessage, AssistantProposal } from "@/types/assistant";
  * - `done` — the tool ran
  * - `failed` — approved, and the tool refused or errored
  * - `declined` — a person rejected it
+ * - `simulated` — cleared while the agent was in simulation: previewed, never made
  * - `closed` — it stopped being actionable without anyone deciding
  */
 export type ProposalPresentation =
@@ -18,6 +19,7 @@ export type ProposalPresentation =
   | "done"
   | "failed"
   | "declined"
+  | "simulated"
   | "closed";
 
 /**
@@ -54,6 +56,13 @@ export function classifyProposal(
 
   if (proposal.status === "ExecutionFailed") {
     return "failed";
+  }
+
+  // A simulation is neither done nor running: the approval happened and the
+  // change did not, on purpose. It is read before the timestamp checks
+  // because a simulated proposal never carries an execution.
+  if (proposal.status === "Simulated" || (proposal.simulatedAt ?? 0) > 0) {
+    return "simulated";
   }
 
   if (proposal.status === "Executed" || (proposal.executedAt ?? 0) > 0) {

@@ -6,6 +6,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -66,6 +67,28 @@ func (s *Service) StartThread(
 	}
 
 	return s.conversations.CreateThread(ctx, thread)
+}
+
+// assertWithinBudget refuses a turn once the agent's monthly budget is
+// spent. The person asking is told which cap, because the alternative is a
+// conversation that stops answering without saying why.
+func (s *Service) assertWithinBudget(
+	ctx context.Context,
+	definition *agentdefinition.Definition,
+) error {
+	if s.budgets == nil {
+		return nil
+	}
+
+	refusal, err := s.budgets.CheckRun(ctx, definition)
+	if err != nil {
+		return err
+	}
+	if refusal.Refused() {
+		return errortypes.NewBusinessError(refusal.Message(definition.Name))
+	}
+
+	return nil
 }
 
 func (s *Service) ListThreads(
@@ -228,6 +251,10 @@ func (s *Service) SendMessageStream(
 		return nil, errortypes.NewBusinessError(
 			"Agent {0} is disabled and cannot be used", definition.Name,
 		)
+	}
+
+	if err = s.assertWithinBudget(ctx, definition); err != nil {
+		return nil, err
 	}
 
 	if err = s.assertRoom(ctx, thread, req.TenantInfo); err != nil {

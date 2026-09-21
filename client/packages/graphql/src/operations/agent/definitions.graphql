@@ -24,6 +24,10 @@ fragment AgentDefinitionCardFields on AgentDefinition {
   maxConcurrentRuns
   runTimeoutSeconds
   maxToolCalls
+  monthlyBudgetUsd
+  dailyRunLimit
+  toolDailyLimits
+  simulationMode
   contextProviders
   outputMode
   preferredProviderId

@@ -42,6 +42,8 @@ enum AgentProposalStatus {
   Executed
   ExecutionFailed
   Skipped
+  "Cleared while the agent was in simulation: previewed and recorded, never made."
+  Simulated
 }
 
 enum AgentPlanStatus {
@@ -146,6 +148,10 @@ type AgentProposal {
   planId: ID
   "Position in the plan, from one; zero outside a plan."
   planStep: Int!
+  "When the write was previewed instead of made, for an agent in simulation."
+  simulatedAt: Timestamp
+  "What the write would have changed: a summary and field changes."
+  simulation: JSON
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!

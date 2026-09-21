@@ -60,6 +60,14 @@ type AgentDefinition {
   maxConcurrentRuns: Int!
   runTimeoutSeconds: Int!
   maxToolCalls: Int!
+  "Cost cap for a calendar month across the agent's runs; absent for none."
+  monthlyBudgetUsd: Decimal
+  "Runs the agent may start in a day; 0 for no cap."
+  dailyRunLimit: Int!
+  "Executions per tool per day, keyed by tool name."
+  toolDailyLimits: JSON!
+  "Writes are previewed and recorded, never made."
+  simulationMode: Boolean!
   contextProviders: [AgentContextProvider!]!
   outputMode: AgentOutputMode!
   "Chosen icon name; empty falls back to the icon the starter template implies."

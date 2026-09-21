@@ -298,6 +298,10 @@ func apply(definition *agentdefinition.Definition, req *services.SaveAgentDefini
 	definition.MaxConcurrentRuns = req.MaxConcurrentRuns
 	definition.RunTimeoutSeconds = req.RunTimeoutSeconds
 	definition.MaxToolCalls = req.MaxToolCalls
+	definition.MonthlyBudgetUSD = req.MonthlyBudgetUSD
+	definition.DailyRunLimit = req.DailyRunLimit
+	definition.ToolDailyLimits = copyLimits(req.ToolDailyLimits)
+	definition.SimulationMode = req.SimulationMode
 	definition.Icon = strings.TrimSpace(req.Icon)
 	definition.Accent = strings.TrimSpace(req.Accent)
 	definition.ContextProviders = req.ContextProviders
@@ -314,6 +318,24 @@ func apply(definition *agentdefinition.Definition, req *services.SaveAgentDefini
 	if definition.TriggerMode != agentdefinition.TriggerContinuous {
 		definition.IntervalSeconds = 0
 	}
+}
+
+// copyLimits keeps only the caps that mean something, so a cleared field
+// does not linger as a zero.
+func copyLimits(limits map[string]int) map[string]int {
+	out := make(map[string]int, len(limits))
+	for tool, limit := range limits {
+		tool = strings.TrimSpace(tool)
+		if tool == "" || limit <= 0 {
+			continue
+		}
+		out[tool] = limit
+	}
+	if len(out) == 0 {
+		return nil
+	}
+
+	return out
 }
 
 func trimAll(values []string) []string {

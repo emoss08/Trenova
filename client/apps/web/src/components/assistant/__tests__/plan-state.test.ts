@@ -104,6 +104,7 @@ describe("planStepState", () => {
     expect(planStepState(proposal({ status: "Skipped" }))).toBe("skipped");
     expect(planStepState(proposal({ status: "Rejected" }))).toBe("declined");
     expect(planStepState(proposal({ status: "Pending" }))).toBe("waiting");
+    expect(planStepState(proposal({ status: "Simulated", simulatedAt: 5 }))).toBe("simulated");
   });
 });
 

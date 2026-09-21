@@ -366,3 +366,31 @@ func TestHorizonPlanSweepActivity_PropagatesTenantLookupFailure(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, result)
 }
+
+func (s *stubProposalRepo) RecordSimulation(
+	context.Context,
+	repositories.RecordAgentProposalSimulationRequest,
+) (*agent.AgentProposal, error) {
+	return nil, nil
+}
+
+func (s *stubProposalRepo) CountExecutedTool(
+	context.Context,
+	repositories.CountExecutedToolRequest,
+) (int, error) {
+	return 0, nil
+}
+
+func (s *stubProposalRepo) ListByPlan(
+	context.Context,
+	repositories.ListAgentProposalsByPlanRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
+func (s *stubProposalRepo) SkipPendingByPlan(
+	context.Context,
+	repositories.SkipPendingByPlanRequest,
+) (int, error) {
+	return 0, nil
+}

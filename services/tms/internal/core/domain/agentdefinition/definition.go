@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -74,6 +75,16 @@ type Definition struct {
 	MaxConcurrentRuns int               `json:"maxConcurrentRuns" bun:"max_concurrent_runs,type:INTEGER,notnull"`
 	RunTimeoutSeconds int               `json:"runTimeoutSeconds" bun:"run_timeout_seconds,type:INTEGER,notnull"`
 	MaxToolCalls      int               `json:"maxToolCalls"      bun:"max_tool_calls,type:INTEGER,notnull"`
+
+	// MonthlyBudgetUSD caps what the agent's runs may cost in a calendar
+	// month; nil is no cap. DailyRunLimit caps how many runs it may start in
+	// a day and ToolDailyLimits how many times it may execute each tool in a
+	// day; zero is no cap. SimulationMode keeps its writes from happening at
+	// all: each is previewed and recorded as what it would have changed.
+	MonthlyBudgetUSD *decimal.Decimal `json:"monthlyBudgetUsd" bun:"monthly_budget_usd,type:NUMERIC(14,6),nullzero"`
+	DailyRunLimit    int              `json:"dailyRunLimit"    bun:"daily_run_limit,type:INTEGER,notnull"`
+	ToolDailyLimits  map[string]int   `json:"toolDailyLimits"  bun:"tool_daily_limits,type:JSONB,nullzero"`
+	SimulationMode   bool             `json:"simulationMode"   bun:"simulation_mode,type:BOOLEAN,notnull"`
 
 	Icon   string `json:"icon"   bun:"icon,type:VARCHAR(40),nullzero"`
 	Accent string `json:"accent" bun:"accent,type:VARCHAR(20),nullzero"`
@@ -334,6 +345,50 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 	d.validateTools(multiErr)
 	d.validateTrigger(multiErr)
 	d.validateContextProviders(multiErr)
+	d.validateBudget(multiErr)
+}
+
+const maxDailyRunLimit = 10000
+
+func (d *Definition) validateBudget(multiErr *errortypes.MultiError) {
+	if d.MonthlyBudgetUSD != nil && d.MonthlyBudgetUSD.IsNegative() {
+		multiErr.Add("monthlyBudgetUsd", errortypes.ErrInvalid, "A budget cannot be negative")
+	}
+	if d.DailyRunLimit < 0 || d.DailyRunLimit > maxDailyRunLimit {
+		multiErr.Add(
+			"dailyRunLimit",
+			errortypes.ErrInvalid,
+			"Runs per day must be between 0 and 10000; 0 means no limit",
+		)
+	}
+
+	held := make(map[string]struct{}, len(d.ToolNames))
+	for _, name := range d.ToolNames {
+		held[strings.TrimSpace(name)] = struct{}{}
+	}
+	for tool, limit := range d.ToolDailyLimits {
+		field := "toolDailyLimits." + tool
+		if _, ok := held[tool]; !ok {
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalid,
+				fmt.Sprintf("%q is not one of this agent's tools", tool),
+			)
+			continue
+		}
+		if limit < 0 || limit > maxDailyRunLimit {
+			multiErr.Add(field, errortypes.ErrInvalid, "A daily tool limit must be between 0 and 10000")
+		}
+	}
+}
+
+// ToolDailyLimit is the cap on a tool's executions per day, or zero for none.
+func (d *Definition) ToolDailyLimit(tool string) int {
+	if d.ToolDailyLimits == nil {
+		return 0
+	}
+
+	return d.ToolDailyLimits[tool]
 }
 
 func (d *Definition) validateGuardrails(multiErr *errortypes.MultiError) {

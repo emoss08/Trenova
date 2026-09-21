@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 )
 
@@ -22,6 +23,7 @@ type Params struct {
 
 	Service              serviceports.AgentDefinitionService
 	Trust                serviceports.AgentTrustService
+	Budgets              serviceports.AgentBudgetService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
@@ -29,6 +31,7 @@ type Params struct {
 type Handler struct {
 	service serviceports.AgentDefinitionService
 	trust   serviceports.AgentTrustService
+	budgets serviceports.AgentBudgetService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -37,6 +40,7 @@ func New(p Params) *Handler {
 	return &Handler{
 		service: p.Service,
 		trust:   p.Trust,
+		budgets: p.Budgets,
 		eh:      p.ErrorHandler,
 		pm:      p.PermissionMiddleware,
 	}
@@ -54,6 +58,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/system/:systemKey/", h.pm.RequirePermission(resource, permission.OpRead), h.getBySystemKey)
 	api.GET("/:agentID/", h.pm.RequirePermission(resource, permission.OpRead), h.get)
 	api.GET("/:agentID/trust/", h.pm.RequirePermission(resource, permission.OpRead), h.trustLedger)
+	api.GET("/:agentID/budget/", h.pm.RequirePermission(resource, permission.OpRead), h.budget)
 	api.POST("/", h.pm.RequirePermission(resource, permission.OpCreate), h.create)
 	api.PUT("/:agentID/", h.pm.RequirePermission(resource, permission.OpUpdate), h.update)
 	api.DELETE("/:agentID/", h.pm.RequirePermission(resource, permission.OpDelete), h.remove)
@@ -200,6 +205,10 @@ type saveAgentRequest struct {
 	MaxConcurrentRuns      int                               `json:"maxConcurrentRuns"`
 	RunTimeoutSeconds      int                               `json:"runTimeoutSeconds"`
 	MaxToolCalls           int                               `json:"maxToolCalls"`
+	MonthlyBudgetUSD       *decimal.Decimal                  `json:"monthlyBudgetUsd"`
+	DailyRunLimit          int                               `json:"dailyRunLimit"`
+	ToolDailyLimits        map[string]int                    `json:"toolDailyLimits"`
+	SimulationMode         bool                              `json:"simulationMode"`
 	ContextProviders       []agentdefinition.ContextProvider `json:"contextProviders"`
 	OutputMode             agentdefinition.OutputMode        `json:"outputMode"`
 	PreferredProviderID    pulid.ID                          `json:"preferredProviderId"`
@@ -234,6 +243,10 @@ func (r *saveAgentRequest) toServiceRequest(
 		MaxConcurrentRuns:      r.MaxConcurrentRuns,
 		RunTimeoutSeconds:      r.RunTimeoutSeconds,
 		MaxToolCalls:           r.MaxToolCalls,
+		MonthlyBudgetUSD:       r.MonthlyBudgetUSD,
+		DailyRunLimit:          r.DailyRunLimit,
+		ToolDailyLimits:        r.ToolDailyLimits,
+		SimulationMode:         r.SimulationMode,
 		ContextProviders:       r.ContextProviders,
 		OutputMode:             r.OutputMode,
 		PreferredProviderID:    r.PreferredProviderID,
@@ -335,4 +348,33 @@ func (h *Handler) remove(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// budget answers where the agent stands against its caps this month and
+// today, for the form that sets them.
+func (h *Handler) budget(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	agentID, err := pulid.Parse(c.Param("agentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	definition, err := h.service.GetByID(c.Request.Context(), repositories.GetAgentDefinitionByIDRequest{
+		ID:         agentID,
+		TenantInfo: tenantFromAuthContext(authCtx),
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	status, err := h.budgets.Status(c.Request.Context(), definition)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, status)
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 // AIUsageSummaryRequest bounds a summary to a tenant and a window.
@@ -44,7 +45,23 @@ type AIUsageSummary struct {
 	ByProvider []AIUsageProviderTotals
 }
 
+// AIUsageCostRequest asks what one agent's calls have cost since an instant.
+type AIUsageCostRequest struct {
+	TenantInfo   pagination.TenantInfo
+	DefinitionID pulid.ID
+	Since        int64
+}
+
+// AIUsageCost is the answer: the sum over priced calls, and how many calls
+// carried no price so the sum can be labelled as partial.
+type AIUsageCost struct {
+	CostUSD       decimal.Decimal
+	Calls         int
+	UnpricedCalls int
+}
+
 type AIUsageRepository interface {
 	Create(ctx context.Context, record *aiusage.AIUsageRecord) error
 	Summary(ctx context.Context, req AIUsageSummaryRequest) (*AIUsageSummary, error)
+	CostByDefinition(ctx context.Context, req AIUsageCostRequest) (*AIUsageCost, error)
 }

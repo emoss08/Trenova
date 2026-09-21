@@ -2,6 +2,7 @@ package agentproposalrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -94,4 +95,80 @@ func (r *repository) ListByThread(
 	}
 
 	return entities, nil
+}
+
+// RecordSimulation stores a preview in place of an execution. The proposal
+// moves to Simulated whatever it was, because the decision that cleared it
+// has been made and this is what came of it.
+func (r *repository) RecordSimulation(
+	ctx context.Context,
+	req repositories.RecordAgentProposalSimulationRequest,
+) (*agent.AgentProposal, error) {
+	entity := new(agent.AgentProposal)
+	cols := buncolgen.AgentProposalColumns
+
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model(entity).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		}).
+		Set(cols.Status.Set(), agent.ProposalStatusSimulated).
+		Set(cols.SimulatedAt.Set(), req.SimulatedAt).
+		Set(cols.Simulation.Set(), req.Simulation).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to record proposal simulation",
+			zap.String("id", req.ID.String()), zap.Error(err))
+
+		return nil, fmt.Errorf("record proposal simulation: %w", err)
+	}
+
+	if err = dberror.CheckRowsAffected(results, "AgentProposal", req.ID.String()); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+// CountExecutedTool counts one agent's executions of one tool since an
+// instant, through the run that made each proposal.
+func (r *repository) CountExecutedTool(
+	ctx context.Context,
+	req repositories.CountExecutedToolRequest,
+) (int, error) {
+	proposals := buncolgen.AgentProposalColumns
+	runs := buncolgen.AgentRunColumns
+
+	count, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*agent.AgentProposal)(nil)).
+		Join("JOIN ? AS ? ON ? = ? AND ? = ? AND ? = ?",
+			bun.Ident(buncolgen.AgentRunTable.Name),
+			bun.Ident(buncolgen.AgentRunTable.Alias),
+			bun.Safe(runs.ID.Qualified()),
+			bun.Safe(proposals.RunID.Qualified()),
+			bun.Safe(runs.OrganizationID.Qualified()),
+			bun.Safe(proposals.OrganizationID.Qualified()),
+			bun.Safe(runs.BusinessUnitID.Qualified()),
+			bun.Safe(proposals.BusinessUnitID.Qualified()),
+		).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo).
+				Where(runs.AgentDefinitionID.Eq(), req.DefinitionID).
+				Where(proposals.ToolName.Eq(), req.ToolName).
+				Where(proposals.ExecutedAt.Gte(), req.Since).
+				Where(proposals.ExecutionError.IsNull())
+		}).
+		Count(ctx)
+	if err != nil {
+		r.l.Error("failed to count executed tool proposals", zap.Error(err))
+
+		return 0, fmt.Errorf("count executed tool proposals: %w", err)
+	}
+
+	return count, nil
 }

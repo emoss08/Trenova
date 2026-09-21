@@ -69,6 +69,17 @@ describe("classifyProposal", () => {
 
   // An approval that failed must never read as an approval that worked: that is
   // the difference between "your instruction was carried out" and "it was not".
+  // A simulation is an approval that changed nothing on purpose. Reading it
+  // as done would tell the approver the write happened; as running, that it
+  // still might.
+  it("reports a simulated proposal as simulated, never as done", () => {
+    expect(classifyProposal(proposal({ status: "Simulated" }))).toBe("simulated");
+    expect(classifyProposal(proposal({ status: "Accepted", simulatedAt: 1700000000 }))).toBe(
+      "simulated",
+    );
+    expect(isDecidable(proposal({ status: "Simulated" }))).toBe(false);
+  });
+
   it("shows a failed execution as failed even while the status still says accepted", () => {
     expect(
       classifyProposal(

@@ -29,6 +29,14 @@ type CountOpenAgentRunsRequest struct {
 	SubjectID    pulid.ID
 }
 
+// CountAgentRunsSinceRequest counts an agent's runs started at or after an
+// instant, whatever became of them; a run that failed still spent its start.
+type CountAgentRunsSinceRequest struct {
+	TenantInfo   pagination.TenantInfo
+	DefinitionID pulid.ID
+	Since        int64
+}
+
 type AgentRunRepository interface {
 	List(
 		ctx context.Context,
@@ -42,4 +50,5 @@ type AgentRunRepository interface {
 	Create(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 	Update(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 	CountOpen(ctx context.Context, req CountOpenAgentRunsRequest) (int, error)
+	CountSince(ctx context.Context, req CountAgentRunsSinceRequest) (int, error)
 }

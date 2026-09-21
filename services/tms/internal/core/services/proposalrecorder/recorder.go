@@ -209,7 +209,7 @@ func (s *Service) openPlan(
 	pending := 0
 	rationale := ""
 	for _, action := range req.Actions {
-		if action.Executed {
+		if action.Executed || action.Simulated {
 			continue
 		}
 		pending++
@@ -326,6 +326,15 @@ func (s *Service) openRun(ctx context.Context, req *RecordRequest) (*agent.Agent
 }
 
 func applyExecution(proposal *agent.AgentProposal, action serviceports.PendingAction, now int64) {
+	if action.Simulated {
+		simulatedAt := now
+		proposal.SimulatedAt = &simulatedAt
+		proposal.Simulation = action.Simulation
+		proposal.Status = agent.ProposalStatusSimulated
+
+		return
+	}
+
 	if !action.Executed {
 		return
 	}

@@ -72,6 +72,10 @@ var DefinitionColumns = struct {
 	MaxConcurrentRuns      Column // "max_concurrent_runs" → qualified: "agdef.max_concurrent_runs"
 	RunTimeoutSeconds      Column // "run_timeout_seconds" → qualified: "agdef.run_timeout_seconds"
 	MaxToolCalls           Column // "max_tool_calls" → qualified: "agdef.max_tool_calls"
+	MonthlyBudgetUSD       Column // "monthly_budget_usd" → qualified: "agdef.monthly_budget_usd"
+	DailyRunLimit          Column // "daily_run_limit" → qualified: "agdef.daily_run_limit"
+	ToolDailyLimits        Column // "tool_daily_limits" → qualified: "agdef.tool_daily_limits"
+	SimulationMode         Column // "simulation_mode" → qualified: "agdef.simulation_mode"
 	Icon                   Column // "icon" → qualified: "agdef.icon"
 	Accent                 Column // "accent" → qualified: "agdef.accent"
 	ContextProviders       Column // "context_providers" → qualified: "agdef.context_providers"
@@ -107,6 +111,10 @@ var DefinitionColumns = struct {
 	MaxConcurrentRuns:      NewColumn("max_concurrent_runs", "agdef"),
 	RunTimeoutSeconds:      NewColumn("run_timeout_seconds", "agdef"),
 	MaxToolCalls:           NewColumn("max_tool_calls", "agdef"),
+	MonthlyBudgetUSD:       NewColumn("monthly_budget_usd", "agdef"),
+	DailyRunLimit:          NewColumn("daily_run_limit", "agdef"),
+	ToolDailyLimits:        NewColumn("tool_daily_limits", "agdef"),
+	SimulationMode:         NewColumn("simulation_mode", "agdef"),
 	Icon:                   NewColumn("icon", "agdef"),
 	Accent:                 NewColumn("accent", "agdef"),
 	ContextProviders:       NewColumn("context_providers", "agdef"),
@@ -148,6 +156,10 @@ var DefinitionFieldMap = map[string]string{
 	"maxConcurrentRuns":      "max_concurrent_runs",
 	"runTimeoutSeconds":      "run_timeout_seconds",
 	"maxToolCalls":           "max_tool_calls",
+	"monthlyBudgetUsd":       "monthly_budget_usd",
+	"dailyRunLimit":          "daily_run_limit",
+	"toolDailyLimits":        "tool_daily_limits",
+	"simulationMode":         "simulation_mode",
 	"icon":                   "icon",
 	"accent":                 "accent",
 	"contextProviders":       "context_providers",
@@ -187,6 +199,10 @@ var DefinitionInsertableColumns = []string{
 	"max_concurrent_runs",
 	"run_timeout_seconds",
 	"max_tool_calls",
+	"monthly_budget_usd",
+	"daily_run_limit",
+	"tool_daily_limits",
+	"simulation_mode",
 	"icon",
 	"accent",
 	"context_providers",
@@ -286,6 +302,10 @@ var DefinitionFilter = struct {
 	MaxConcurrentRuns      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxConcurrentRuns" → DB: "max_concurrent_runs"
 	RunTimeoutSeconds      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runTimeoutSeconds" → DB: "run_timeout_seconds"
 	MaxToolCalls           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxToolCalls" → DB: "max_tool_calls"
+	MonthlyBudgetUSD       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "monthlyBudgetUsd" → DB: "monthly_budget_usd"
+	DailyRunLimit          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dailyRunLimit" → DB: "daily_run_limit"
+	ToolDailyLimits        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolDailyLimits" → DB: "tool_daily_limits"
+	SimulationMode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "simulationMode" → DB: "simulation_mode"
 	Icon                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "icon" → DB: "icon"
 	Accent                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accent" → DB: "accent"
 	ContextProviders       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextProviders" → DB: "context_providers"
@@ -366,6 +386,18 @@ var DefinitionFilter = struct {
 	},
 	MaxToolCalls: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("maxToolCalls", op, value)
+	},
+	MonthlyBudgetUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("monthlyBudgetUsd", op, value)
+	},
+	DailyRunLimit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("dailyRunLimit", op, value)
+	},
+	ToolDailyLimits: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("toolDailyLimits", op, value)
+	},
+	SimulationMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("simulationMode", op, value)
 	},
 	Icon: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("icon", op, value)

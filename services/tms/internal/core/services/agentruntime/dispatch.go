@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/toolsimulation"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
@@ -74,16 +75,83 @@ func (s *Service) dispatch(
 	if tier != agent.TierAutoExecute {
 		action.Target = s.snapshotTarget(ctx, req, tool, call)
 
-		return toolOutcome{
-			content: fmt.Sprintf(
-				"Recorded a proposal to run %q. It is awaiting a person's review at the %s tier and has not run.",
-				call.Name, tier,
-			),
-			action: action,
+		content := fmt.Sprintf(
+			"Recorded a proposal to run %q. It is awaiting a person's review at the %s tier and has not run.",
+			call.Name, tier,
+		)
+		if req.Definition.SimulationMode {
+			content += " This agent is in simulation: an approval will preview the change, not make it."
 		}
+
+		return toolOutcome{content: content, action: action}
+	}
+
+	// An automatic write in simulation is previewed where it would have run,
+	// and recorded as such, so a person can read what the agent would have
+	// done at full reach before it is given any.
+	if req.Definition.SimulationMode {
+		return s.simulateAction(ctx, req, tool, call, action)
+	}
+
+	if outcome, refused := s.withinBudget(ctx, req, call.Name); refused {
+		return outcome
 	}
 
 	return s.executeAction(ctx, req, tool, call, action)
+}
+
+// withinBudget refuses an automatic write past its tool's daily cap. The
+// model is told which cap and to say so, rather than left to try again.
+func (s *Service) withinBudget(
+	ctx context.Context,
+	req *serviceports.RunRequest,
+	toolName string,
+) (toolOutcome, bool) {
+	if s.budgets == nil {
+		return toolOutcome{}, false
+	}
+
+	refusal, err := s.budgets.CheckTool(ctx, req.Definition, toolName)
+	if err != nil {
+		s.logger.Error("agent tool budget check failed",
+			zap.String("tool", toolName), zap.Error(err))
+
+		return failedOutcome("Tool %q was not run: its budget could not be checked. Try again later.", toolName), true
+	}
+	if !refusal.Refused() {
+		return toolOutcome{}, false
+	}
+
+	return failedOutcome("Tool %q was not run. %s Tell the person, and do not retry it.",
+		toolName, refusal.Message(req.Definition.Name)), true
+}
+
+func (s *Service) simulateAction(
+	ctx context.Context,
+	req *serviceports.RunRequest,
+	tool serviceports.AgentTool,
+	call serviceports.ToolCall,
+	action *serviceports.PendingAction,
+) toolOutcome {
+	action.Simulated = true
+	action.Simulation = toolsimulation.Simulate(ctx, tool, serviceports.ToolExecuteParams{
+		OrganizationID: req.Actor.OrganizationID,
+		BusinessUnitID: req.Actor.BusinessUnitID,
+		Actor:          req.Actor,
+		IdempotencyKey: call.ID,
+		RunID:          req.RunID,
+		Params:         call.Arguments,
+	})
+
+	return toolOutcome{
+		content: fmt.Sprintf(
+			"Simulated %q: nothing was changed, because this agent is in simulation. "+
+				"What it would have done:\n%s\nCarry on as if it had run, and say in your "+
+				"reply that the change was simulated.",
+			call.Name, action.Simulation.Describe(),
+		),
+		action: action,
+	}
 }
 
 func (s *Service) authorize(

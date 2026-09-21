@@ -41,6 +41,7 @@ type Params struct {
 	Workflows    services.WorkflowStarter
 	Validator    *Validator
 	AuditService services.AuditService
+	Budgets      services.AgentBudgetService `optional:"true"`
 }
 
 type Service struct {
@@ -50,6 +51,7 @@ type Service struct {
 	validator   *Validator
 	workflows   services.WorkflowStarter
 	audit       services.AuditService
+	budgets     services.AgentBudgetService
 }
 
 func New(p Params) services.AgentRunService {
@@ -60,6 +62,7 @@ func New(p Params) services.AgentRunService {
 		validator:   p.Validator,
 		workflows:   p.Workflows,
 		audit:       p.AuditService,
+		budgets:     p.Budgets,
 	}
 }
 func (s *Service) StartForDefinition(
@@ -79,6 +82,10 @@ func (s *Service) StartForDefinition(
 		return nil, errortypes.NewBusinessError(
 			"Agent {0} is disabled and cannot run", definition.Name,
 		)
+	}
+
+	if err = s.assertWithinBudget(ctx, definition); err != nil {
+		return nil, err
 	}
 
 	subjectType := req.SubjectType
@@ -152,6 +159,28 @@ func (s *Service) StartForDefinition(
 	s.logStart(updated, actor, fmt.Sprintf("Run of agent %s started (%s)", definition.Name, trigger))
 
 	return updated, nil
+}
+
+// assertWithinBudget refuses a run past the agent's monthly cost or daily
+// run cap. The refusal names the cap, so the scheduler's log and the person
+// pressing Run both learn what to change.
+func (s *Service) assertWithinBudget(
+	ctx context.Context,
+	definition *agentdefinition.Definition,
+) error {
+	if s.budgets == nil {
+		return nil
+	}
+
+	refusal, err := s.budgets.CheckRun(ctx, definition)
+	if err != nil {
+		return err
+	}
+	if refusal.Refused() {
+		return errortypes.NewBusinessError(refusal.Message(definition.Name))
+	}
+
+	return nil
 }
 
 func (s *Service) resolveDefinition(

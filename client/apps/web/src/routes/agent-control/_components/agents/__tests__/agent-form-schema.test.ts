@@ -24,6 +24,24 @@ describe("agentFormSchema", () => {
     expect(issuesOf(values({}))).toEqual({});
   });
 
+  // The server refuses a daily limit on a tool the agent does not hold; the
+  // form says so, and drops a zero or a leftover limit before sending.
+  it("keeps daily tool limits to the agent's own tools and drops empty ones", () => {
+    expect(
+      issuesOf(values({ toolNames: ["assign_move"], toolDailyLimits: { cancel_shipment: 3 } })),
+    ).toHaveProperty("toolDailyLimits");
+
+    const sent = toSaveRequest({
+      ...agentFormDefaults,
+      name: "Night desk",
+      toolNames: ["assign_move"],
+      toolDailyLimits: { assign_move: 4, cancel_shipment: 2, remember: 0 },
+      monthlyBudgetUsd: 25,
+    });
+    expect(sent.toolDailyLimits).toEqual({ assign_move: 4 });
+    expect(sent.monthlyBudgetUsd).toBe(25);
+  });
+
   it("requires a cron expression for a scheduled agent", () => {
     expect(issuesOf(values({ triggerMode: "Scheduled", cronExpression: "" }))).toHaveProperty(
       "cronExpression",

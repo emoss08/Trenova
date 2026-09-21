@@ -2,6 +2,7 @@ package agentrunrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -252,6 +253,30 @@ func (r *repository) CountOpen(
 	if err != nil {
 		r.l.Error("failed to count open agent runs", zap.Error(err))
 		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *repository) CountSince(
+	ctx context.Context,
+	req repositories.CountAgentRunsSinceRequest,
+) (int, error) {
+	cols := buncolgen.AgentRunColumns
+
+	count, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*agent.AgentRun)(nil)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.AgentRunScopeTenant(sq, req.TenantInfo).
+				Where(cols.AgentDefinitionID.Eq(), req.DefinitionID).
+				Where(cols.CreatedAt.Gte(), req.Since)
+		}).
+		Count(ctx)
+	if err != nil {
+		r.l.Error("failed to count agent runs since", zap.Error(err))
+
+		return 0, fmt.Errorf("count agent runs since: %w", err)
 	}
 
 	return count, nil

@@ -48,6 +48,17 @@ const nullableList = <T extends z.ZodType>(item: T) =>
 const nullableEnum = <T extends z.ZodType>(item: T) =>
   z.preprocess((value) => (value === "" || value == null ? null : value), item.nullable());
 
+/** A decimal the server writes as a string, read as a number of dollars; null for no cap. */
+const nullableMoney = z.preprocess(
+  (value) => (value === null || value === undefined || value === "" ? null : Number(value)),
+  z.number().min(0).nullable(),
+);
+
+const toolLimitsSchema = z.preprocess(
+  (value) => value ?? {},
+  z.record(z.string(), z.number().int().nonnegative()),
+);
+
 const toolTiersSchema = z.preprocess(
   (value) => value ?? {},
   z.record(z.string(), autonomyTierSchema),
@@ -82,6 +93,26 @@ export const toolTrustListSchema = z.object({
   results: z.array(toolTrustSchema),
 });
 
+/** Where an agent stands against its caps this month and today. */
+export const agentBudgetStatusSchema = z.object({
+  monthStart: z.number(),
+  dayStart: z.number(),
+  spentUsd: z.string(),
+  monthlyBudgetUsd: z.string().nullish(),
+  monthCalls: z.number().default(0),
+  unpricedCalls: z.number().default(0),
+  runsToday: z.number().default(0),
+  dailyRunLimit: z.number().default(0),
+  tools: nullableList(
+    z.object({
+      tool: z.string(),
+      used: z.number().default(0),
+      limit: z.number().default(0),
+    }),
+  ),
+  simulationMode: z.boolean().default(false),
+});
+
 export const agentDefinitionSchema = z.object({
   id: z.string(),
   businessUnitId: z.string(),
@@ -112,6 +143,10 @@ export const agentDefinitionSchema = z.object({
   maxConcurrentRuns: z.number().default(1),
   runTimeoutSeconds: z.number().default(600),
   maxToolCalls: z.number().default(12),
+  monthlyBudgetUsd: nullableMoney,
+  dailyRunLimit: z.number().int().nonnegative().default(0),
+  toolDailyLimits: toolLimitsSchema,
+  simulationMode: z.boolean().default(false),
   contextProviders: nullableList(contextProviderSchema),
   outputMode: outputModeSchema.default("Conversational"),
   preferredProviderId: optionalIdSchema,
@@ -199,6 +234,13 @@ export const saveAgentDefinitionRequestSchema = z.object({
   maxConcurrentRuns: z.number().min(1).max(10).default(1),
   runTimeoutSeconds: z.number().min(60).max(3600).default(600),
   maxToolCalls: z.number().min(1).max(64).default(12),
+  /** Dollars per calendar month across the agent's runs; null for no cap. */
+  monthlyBudgetUsd: z.number().min(0).nullable().default(null),
+  /** Runs per day; 0 for no cap. */
+  dailyRunLimit: z.number().int().min(0).max(10000).default(0),
+  /** Executions per tool per day, keyed by tool name; absent for no cap. */
+  toolDailyLimits: z.record(z.string(), z.number().int().min(0).max(10000)).default({}),
+  simulationMode: z.boolean().default(false),
   contextProviders: z.array(contextProviderSchema).default([]),
   outputMode: outputModeSchema.default("Conversational"),
   preferredProviderId: optionalIdSchema,
@@ -316,7 +358,21 @@ export const proposalStatusSchema = z.enum([
   "Executed",
   "ExecutionFailed",
   "Skipped",
+  "Simulated",
 ]);
+
+/** What a write would have changed, produced instead of the write for an agent in simulation. */
+export const toolSimulationSchema = z.object({
+  summary: z.string().optional().default(""),
+  changes: nullableList(
+    z.object({
+      field: z.string(),
+      from: z.string().optional().default(""),
+      to: z.string().optional().default(""),
+    }),
+  ),
+  previewed: z.boolean().default(false),
+});
 
 export const proposalDecisionSchema = z.enum(["Accepted", "Rejected", "Modified"]);
 
@@ -375,6 +431,9 @@ export const assistantProposalSchema = z.object({
   planId: optionalIdSchema,
   /** The step's position in its plan, from 1; 0 for a proposal outside any plan. */
   planStep: z.number().int().nonnegative().default(0),
+  /** Set when the write was previewed instead of made, because the agent was in simulation. */
+  simulatedAt: z.number().nullish(),
+  simulation: toolSimulationSchema.nullish(),
 });
 
 export const assistantProposalListSchema = z.object({
@@ -517,6 +576,8 @@ export type AgentDefinition = z.infer<typeof agentDefinitionSchema>;
 export type AgentTemplate = z.infer<typeof agentTemplateSchema>;
 export type ToolCatalogEntry = z.infer<typeof toolCatalogEntrySchema>;
 export type ToolTrust = z.infer<typeof toolTrustSchema>;
+export type AgentBudgetStatus = z.infer<typeof agentBudgetStatusSchema>;
+export type ToolSimulation = z.infer<typeof toolSimulationSchema>;
 export type AgentEventDescriptor = z.infer<typeof agentEventDescriptorSchema>;
 export type SaveAgentDefinitionRequest = z.infer<typeof saveAgentDefinitionRequestSchema>;
 export type AssistantThread = z.infer<typeof assistantThreadSchema>;

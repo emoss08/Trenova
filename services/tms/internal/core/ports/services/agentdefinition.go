@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/shopspring/decimal"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -33,6 +34,10 @@ type SaveAgentDefinitionRequest struct {
 	MaxConcurrentRuns      int
 	RunTimeoutSeconds      int
 	MaxToolCalls           int
+	MonthlyBudgetUSD       *decimal.Decimal
+	DailyRunLimit          int
+	ToolDailyLimits        map[string]int
+	SimulationMode         bool
 	Icon                   string
 	Accent                 string
 	ContextProviders       []agentdefinition.ContextProvider

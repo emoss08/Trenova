@@ -580,6 +580,7 @@ type ComplexityRoot struct {
 		CreatedAt              func(childComplexity int) int
 		CronExpression         func(childComplexity int) int
 		CronTimezone           func(childComplexity int) int
+		DailyRunLimit          func(childComplexity int) int
 		DecisionTimeoutSeconds func(childComplexity int) int
 		Description            func(childComplexity int) int
 		Enabled                func(childComplexity int) int
@@ -593,6 +594,7 @@ type ComplexityRoot struct {
 		LastRunAt              func(childComplexity int) int
 		MaxConcurrentRuns      func(childComplexity int) int
 		MaxToolCalls           func(childComplexity int) int
+		MonthlyBudgetUsd       func(childComplexity int) int
 		Name                   func(childComplexity int) int
 		NextRunAt              func(childComplexity int) int
 		OpenRuns               func(childComplexity int) int
@@ -602,8 +604,10 @@ type ComplexityRoot struct {
 		PreferredProviderID    func(childComplexity int) int
 		RunTimeoutSeconds      func(childComplexity int) int
 		ShadowMode             func(childComplexity int) int
+		SimulationMode         func(childComplexity int) int
 		SystemKey              func(childComplexity int) int
 		Template               func(childComplexity int) int
+		ToolDailyLimits        func(childComplexity int) int
 		ToolNames              func(childComplexity int) int
 		ToolTiers              func(childComplexity int) int
 		TriggerMode            func(childComplexity int) int
@@ -738,6 +742,8 @@ type ComplexityRoot struct {
 		PlanStep       func(childComplexity int) int
 		Rationale      func(childComplexity int) int
 		RunID          func(childComplexity int) int
+		SimulatedAt    func(childComplexity int) int
+		Simulation     func(childComplexity int) int
 		Status         func(childComplexity int) int
 		ToolName       func(childComplexity int) int
 		ToolParams     func(childComplexity int) int
@@ -13110,6 +13116,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDefinition.CronTimezone(childComplexity), true
+	case "AgentDefinition.dailyRunLimit":
+		if e.ComplexityRoot.AgentDefinition.DailyRunLimit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.DailyRunLimit(childComplexity), true
 	case "AgentDefinition.decisionTimeoutSeconds":
 		if e.ComplexityRoot.AgentDefinition.DecisionTimeoutSeconds == nil {
 			break
@@ -13188,6 +13200,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDefinition.MaxToolCalls(childComplexity), true
+	case "AgentDefinition.monthlyBudgetUsd":
+		if e.ComplexityRoot.AgentDefinition.MonthlyBudgetUsd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.MonthlyBudgetUsd(childComplexity), true
 	case "AgentDefinition.name":
 		if e.ComplexityRoot.AgentDefinition.Name == nil {
 			break
@@ -13242,6 +13260,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDefinition.ShadowMode(childComplexity), true
+	case "AgentDefinition.simulationMode":
+		if e.ComplexityRoot.AgentDefinition.SimulationMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.SimulationMode(childComplexity), true
 	case "AgentDefinition.systemKey":
 		if e.ComplexityRoot.AgentDefinition.SystemKey == nil {
 			break
@@ -13254,6 +13278,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDefinition.Template(childComplexity), true
+	case "AgentDefinition.toolDailyLimits":
+		if e.ComplexityRoot.AgentDefinition.ToolDailyLimits == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.ToolDailyLimits(childComplexity), true
 	case "AgentDefinition.toolNames":
 		if e.ComplexityRoot.AgentDefinition.ToolNames == nil {
 			break
@@ -13837,6 +13867,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposal.RunID(childComplexity), true
+	case "AgentProposal.simulatedAt":
+		if e.ComplexityRoot.AgentProposal.SimulatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposal.SimulatedAt(childComplexity), true
+	case "AgentProposal.simulation":
+		if e.ComplexityRoot.AgentProposal.Simulation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposal.Simulation(childComplexity), true
 	case "AgentProposal.status":
 		if e.ComplexityRoot.AgentProposal.Status == nil {
 			break
@@ -69516,6 +69558,8 @@ enum AgentProposalStatus {
   Executed
   ExecutionFailed
   Skipped
+  "Cleared while the agent was in simulation: previewed and recorded, never made."
+  Simulated
 }
 
 enum AgentPlanStatus {
@@ -69620,6 +69664,10 @@ type AgentProposal {
   planId: ID
   "Position in the plan, from one; zero outside a plan."
   planStep: Int!
+  "When the write was previewed instead of made, for an agent in simulation."
+  simulatedAt: Timestamp
+  "What the write would have changed: a summary and field changes."
+  simulation: JSON
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -69942,6 +69990,14 @@ type AgentDefinition {
   maxConcurrentRuns: Int!
   runTimeoutSeconds: Int!
   maxToolCalls: Int!
+  "Cost cap for a calendar month across the agent's runs; absent for none."
+  monthlyBudgetUsd: Decimal
+  "Runs the agent may start in a day; 0 for no cap."
+  dailyRunLimit: Int!
+  "Executions per tool per day, keyed by tool name."
+  toolDailyLimits: JSON!
+  "Writes are previewed and recorded, never made."
+  simulationMode: Boolean!
   contextProviders: [AgentContextProvider!]!
   outputMode: AgentOutputMode!
   "Chosen icon name; empty falls back to the icon the starter template implies."
@@ -90410,6 +90466,14 @@ func (ec *executionContext) childFields_AgentDefinition(ctx context.Context, fie
 		return ec.fieldContext_AgentDefinition_runTimeoutSeconds(ctx, field)
 	case "maxToolCalls":
 		return ec.fieldContext_AgentDefinition_maxToolCalls(ctx, field)
+	case "monthlyBudgetUsd":
+		return ec.fieldContext_AgentDefinition_monthlyBudgetUsd(ctx, field)
+	case "dailyRunLimit":
+		return ec.fieldContext_AgentDefinition_dailyRunLimit(ctx, field)
+	case "toolDailyLimits":
+		return ec.fieldContext_AgentDefinition_toolDailyLimits(ctx, field)
+	case "simulationMode":
+		return ec.fieldContext_AgentDefinition_simulationMode(ctx, field)
 	case "contextProviders":
 		return ec.fieldContext_AgentDefinition_contextProviders(ctx, field)
 	case "outputMode":
@@ -90698,6 +90762,10 @@ func (ec *executionContext) childFields_AgentProposal(ctx context.Context, field
 		return ec.fieldContext_AgentProposal_planId(ctx, field)
 	case "planStep":
 		return ec.fieldContext_AgentProposal_planStep(ctx, field)
+	case "simulatedAt":
+		return ec.fieldContext_AgentProposal_simulatedAt(ctx, field)
+	case "simulation":
+		return ec.fieldContext_AgentProposal_simulation(ctx, field)
 	case "version":
 		return ec.fieldContext_AgentProposal_version(ctx, field)
 	case "createdAt":

@@ -37,6 +37,7 @@ import { applyTemplateStarter } from "./template-fill";
 import { TemplatePicker } from "./template-picker";
 import { ToolSummary } from "./tool-summary";
 import { TrackRecordSection } from "./track-record";
+import { BudgetStatusSection, ToolLimitsField } from "./budget";
 
 type AgentFormProps = {
   mode: "create" | "edit";
@@ -328,6 +329,18 @@ export function AgentForm({ mode, agentId = "", systemKey = "" }: AgentFormProps
               position="left"
             />
           </FormControl>
+          <FormControl cols="full">
+            <SwitchField
+              name="simulationMode"
+              control={control}
+              label={t("Simulation")}
+              description={t(
+                "Its writes are previewed and recorded as what they would have changed, never made. Approvals still count.",
+              )}
+              outlined
+              position="left"
+            />
+          </FormControl>
         </FormGroup>
         {ceiling === "AutoExecute" && !shadowMode && (
           <Alert variant="warning" size="sm">
@@ -340,6 +353,49 @@ export function AgentForm({ mode, agentId = "", systemKey = "" }: AgentFormProps
             </AlertDescription>
           </Alert>
         )}
+      </FormSection>
+
+      <FormSection
+        title={t("Budget")}
+        description={t(
+          "What the agent may spend and do on its own. A cap that is reached stops it until the month or the day rolls over.",
+        )}
+      >
+        <FormGroup cols={2}>
+          <FormControl>
+            <NumberField
+              name="monthlyBudgetUsd"
+              control={control}
+              label={t("Monthly budget")}
+              sideText={t("USD")}
+              min={0}
+              decimalScale={2}
+              step={5}
+              placeholder={t("No cap")}
+              description={t("Across every run and conversation of this agent.")}
+            />
+          </FormControl>
+          <FormControl>
+            <NumberField
+              name="dailyRunLimit"
+              control={control}
+              label={t("Runs per day")}
+              min={0}
+              max={10000}
+              placeholder={t("No cap")}
+              description={t("Zero means no cap.")}
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <FieldWrapper
+              label={t("Daily limit per change tool")}
+              description={t("How many times each change may run in a day; empty means no limit.")}
+            >
+              <ToolLimitsField toolNames={toolNames} tools={catalogQuery.data?.tools ?? []} />
+            </FieldWrapper>
+          </FormControl>
+        </FormGroup>
+        {mode === "edit" && agentId !== "" && <BudgetStatusSection agentId={agentId} />}
       </FormSection>
 
       {mode === "edit" && agentId !== "" && (

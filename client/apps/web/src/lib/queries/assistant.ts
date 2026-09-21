@@ -55,6 +55,11 @@ export const assistant = createQueryKeys("assistant", {
     queryKey: ["agent-definition", id],
     queryFn: () => apiService.agentDefinitionService.get(id),
   }),
+  agentBudget: (id: string) => ({
+    queryKey: ["agent-budget", id],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.agentDefinitionService.budget(id, { signal }),
+  }),
   agentTrust: (id: string) => ({
     queryKey: ["agent-trust", id],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>

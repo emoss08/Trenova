@@ -11,6 +11,7 @@ import {
   toolCatalogSchema,
   toolTrustListSchema,
   assistantMessagePageSchema,
+  agentBudgetStatusSchema,
   assistantPlanListSchema,
   assistantProposalListSchema,
   assistantProviderListSchema,
@@ -261,6 +262,12 @@ export class AgentDefinitionService {
   public async get(id: AgentDefinition["id"]) {
     const response = await api.get(`/agent-definitions/${id}/`);
     return safeParse(agentDefinitionSchema, response, "Agent");
+  }
+
+  /** Where the agent stands against its caps, for the form that sets them. */
+  public async budget(id: AgentDefinition["id"], options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/agent-definitions/${id}/budget/`, { signal: options?.signal });
+    return safeParse(agentBudgetStatusSchema, response, "Agent Budget");
   }
 
   public async trust(id: AgentDefinition["id"], options?: { signal?: AbortSignal }) {

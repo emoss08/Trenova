@@ -37,6 +37,7 @@ const PROPOSAL_STATUS: Record<AgentProposalStatus, { label: string; variant: Var
   Executed: { label: "Done", variant: "success" },
   ExecutionFailed: { label: "Did not run", variant: "danger" },
   Skipped: { label: "Skipped", variant: "neutral" },
+  Simulated: { label: "Simulated", variant: "accent-violet" },
 };
 
 const PLAN_STATUS: Record<AgentPlanStatus, { label: string; variant: Variant }> = {

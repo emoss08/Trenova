@@ -54,6 +54,12 @@ type AgentProposal struct {
 	// gone and the judgement with it.
 	ExpiresAt int64 `json:"expiresAt" bun:"expires_at,type:BIGINT,nullzero"`
 
+	// SimulatedAt and Simulation are set instead of an execution when the
+	// agent was in simulation: what the write would have changed, and when
+	// that was worked out.
+	SimulatedAt *int64          `json:"simulatedAt" bun:"simulated_at,type:BIGINT,nullzero"`
+	Simulation  *ToolSimulation `json:"simulation"  bun:"simulation,type:JSONB,nullzero"`
+
 	// PlanID and PlanStep tie a proposal to the plan it is a step of and say
 	// where in the order it sits. A proposal decided on its own has neither.
 	PlanID   *pulid.ID `json:"planId"   bun:"plan_id,type:VARCHAR(100),nullzero"`

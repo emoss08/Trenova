@@ -13,6 +13,7 @@ import {
   CircleAlertIcon,
   CircleCheckIcon,
   CircleSlashIcon,
+  FlaskConicalIcon,
   ListChecksIcon,
   LoaderIcon,
   TriangleAlertIcon,
@@ -192,6 +193,9 @@ function StepList({ steps, settled }: { steps: AssistantProposal[]; settled: boo
                   {step.executionError}
                 </span>
               )}
+              {settled && stepState === "simulated" && step.simulation?.summary && (
+                <span className="text-muted-foreground block">{step.simulation.summary}</span>
+              )}
             </span>
           </li>
         );
@@ -210,6 +214,8 @@ function StepIcon({ state }: { state: PlanStepState }) {
       return <CircleCheckIcon className={className} style={{ color: toneVar("success") }} />;
     case "running":
       return <LoaderIcon className={cn(className, "animate-spin")} />;
+    case "simulated":
+      return <FlaskConicalIcon className={className} style={{ color: toneVar("info") }} />;
     default:
       return <CircleSlashIcon className={cn(className, "text-muted-foreground")} />;
   }

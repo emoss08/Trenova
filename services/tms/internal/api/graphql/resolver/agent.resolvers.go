@@ -17,11 +17,20 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (r *agentProposalResolver) Confidence(ctx context.Context, obj *agent.AgentProposal) (float64, error) {
 	return obj.Confidence.InexactFloat64(), nil
+}
+
+func (r *agentProposalResolver) Simulation(ctx context.Context, obj *agent.AgentProposal) (map[string]any, error) {
+	if obj.Simulation == nil {
+		return nil, nil
+	}
+
+	return jsonutils.MustToJSON(obj.Simulation), nil
 }
 
 func (r *mutationResolver) DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error) {

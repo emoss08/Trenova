@@ -63,7 +63,8 @@ type recordedExecution struct {
 }
 
 type fakeProposalRepo struct {
-	recorded []recordedExecution
+	recorded  []recordedExecution
+	simulated []repositories.RecordAgentProposalSimulationRequest
 }
 
 func (r *fakeProposalRepo) RecordExecution(
@@ -330,4 +331,13 @@ func TestExecute_RecordsFailureWhenTheToolNoLongerExists(t *testing.T) {
 
 	require.Len(t, repo.recorded, 1)
 	assert.Equal(t, agent.ProposalStatusExecutionFailed, repo.recorded[0].status)
+}
+
+func (r *fakeProposalRepo) RecordSimulation(
+	_ context.Context,
+	req repositories.RecordAgentProposalSimulationRequest,
+) (*agent.AgentProposal, error) {
+	r.simulated = append(r.simulated, req)
+
+	return &agent.AgentProposal{ID: req.ID, Status: agent.ProposalStatusSimulated}, nil
 }

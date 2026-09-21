@@ -9,6 +9,7 @@ import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { AgentTemplate } from "@/types/assistant";
 import {
   EyeOffIcon,
+  FlaskConicalIcon,
   InboxIcon,
   LockIcon,
   PencilIcon,
@@ -130,6 +131,21 @@ export function AgentRow({
               />
               <TooltipContent>
                 {t("Runs, but its proposals are recorded rather than offered")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {agent.simulationMode && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Badge variant="accent-violet" appearance="outline" className="gap-1">
+                    <FlaskConicalIcon className="size-3" />
+                    {t("Simulation")}
+                  </Badge>
+                }
+              />
+              <TooltipContent>
+                {t("Its writes are previewed and recorded, never made")}
               </TooltipContent>
             </Tooltip>
           )}

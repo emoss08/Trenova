@@ -13,13 +13,16 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/toolsimulation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -48,6 +51,20 @@ type proposalOutcomeRecorder interface {
 		ctx context.Context,
 		req repositories.RecordAgentProposalExecutionRequest,
 	) (*agent.AgentProposal, error)
+	RecordSimulation(
+		ctx context.Context,
+		req repositories.RecordAgentProposalSimulationRequest,
+	) (*agent.AgentProposal, error)
+}
+
+// definitionResolver finds the agent behind a proposal, through its run,
+// so the executor can read the agent's simulation switch and its caps.
+type definitionResolver interface {
+	ForRun(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		runID pulid.ID,
+	) (*agentdefinition.Definition, error)
 }
 
 type Params struct {
@@ -60,6 +77,11 @@ type Params struct {
 	AuditService services.AuditService
 	// Versions is optional; without it a pinned proposal executes unchecked.
 	Versions services.RecordVersionReader `optional:"true"`
+	// Budgets is optional; without it a tool's daily cap is not enforced on
+	// approval.
+	Budgets     services.AgentBudgetService `optional:"true"`
+	Runs        repositories.AgentRunRepository
+	Definitions repositories.AgentDefinitionRepository
 }
 
 type Service struct {
@@ -69,6 +91,8 @@ type Service struct {
 	permissions  permissionChecker
 	versions     services.RecordVersionReader
 	audit        actionLogger
+	budgets      services.AgentBudgetService
+	definitions  definitionResolver
 }
 
 func New(p Params) *Service {
@@ -79,7 +103,49 @@ func New(p Params) *Service {
 		permissions:  p.Permissions,
 		versions:     p.Versions,
 		audit:        p.AuditService,
+		budgets:      p.Budgets,
+		definitions:  runDefinitions{runs: p.Runs, definitions: p.Definitions},
 	}
+}
+
+// runDefinitions reads a run and then its agent. A run without an agent, or
+// an agent since deleted, resolves to nil: the proposal still executes, with
+// no switch and no caps to read.
+type runDefinitions struct {
+	runs        repositories.AgentRunRepository
+	definitions repositories.AgentDefinitionRepository
+}
+
+func (r runDefinitions) ForRun(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	runID pulid.ID,
+) (*agentdefinition.Definition, error) {
+	if r.runs == nil || r.definitions == nil || runID.IsNil() {
+		return nil, nil
+	}
+
+	run, err := r.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{ID: runID, TenantInfo: &tenant})
+	if err != nil {
+		return nil, err
+	}
+	if run.AgentDefinitionID.IsNil() {
+		return nil, nil
+	}
+
+	definition, err := r.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+		ID:         run.AgentDefinitionID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return definition, nil
 }
 
 // ErrToolMissing reports a proposal naming a tool the registry no longer has.
@@ -126,14 +192,36 @@ func (s *Service) Execute(
 	// The proposal id is the idempotency key. It is stable across retries of the
 	// same approval and distinct between proposals, which is exactly what a tool
 	// guarding against double execution needs.
-	err := tool.Execute(ctx, services.ToolExecuteParams{
+	execParams := services.ToolExecuteParams{
 		OrganizationID: proposal.OrganizationID,
 		BusinessUnitID: proposal.BusinessUnitID,
 		Actor:          actor,
 		IdempotencyKey: proposal.ID.String(),
 		RunID:          proposal.RunID,
 		Params:         params,
-	})
+	}
+
+	definition, err := s.definitionFor(ctx, proposal)
+	if err != nil {
+		s.recordFailure(ctx, proposal, err)
+
+		return err
+	}
+
+	// An agent in simulation gets a preview in place of the write, however
+	// the proposal was decided: the approval is real and recorded, the
+	// change is not.
+	if definition != nil && definition.SimulationMode {
+		return s.simulate(ctx, tool, proposal, execParams, actor)
+	}
+
+	if err = s.assertWithinBudget(ctx, definition, tool.Name()); err != nil {
+		s.recordFailure(ctx, proposal, err)
+
+		return err
+	}
+
+	err = tool.Execute(ctx, execParams)
 	if err != nil {
 		s.l.Error("approved proposal failed to execute",
 			zap.String("proposal", proposal.ID.String()),
@@ -146,6 +234,89 @@ func (s *Service) Execute(
 	}
 
 	s.recordSuccess(ctx, proposal, actor, params)
+
+	return nil
+}
+
+func (s *Service) definitionFor(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+) (*agentdefinition.Definition, error) {
+	if s.definitions == nil {
+		return nil, nil
+	}
+
+	return s.definitions.ForRun(ctx, pagination.TenantInfo{
+		OrgID: proposal.OrganizationID,
+		BuID:  proposal.BusinessUnitID,
+	}, proposal.RunID)
+}
+
+// ErrBudgetSpent reports a tool past its agent's daily cap. It is a business
+// outcome the approver has to hear: the change they cleared did not happen.
+var ErrBudgetSpent = errors.New("the agent's budget for this tool is spent")
+
+func (s *Service) assertWithinBudget(
+	ctx context.Context,
+	definition *agentdefinition.Definition,
+	toolName string,
+) error {
+	if s.budgets == nil || definition == nil {
+		return nil
+	}
+
+	refusal, err := s.budgets.CheckTool(ctx, definition, toolName)
+	if err != nil {
+		return err
+	}
+	if refusal.Refused() {
+		return fmt.Errorf("%w: %s", ErrBudgetSpent, refusal.Message(definition.Name))
+	}
+
+	return nil
+}
+
+func (s *Service) simulate(
+	ctx context.Context,
+	tool services.AgentTool,
+	proposal *agent.AgentProposal,
+	params services.ToolExecuteParams,
+	actor *services.RequestActor,
+) error {
+	preview := toolsimulation.Simulate(ctx, tool, params)
+	now := timeutils.NowUnix()
+
+	if _, err := s.proposalRepo.RecordSimulation(ctx, repositories.RecordAgentProposalSimulationRequest{
+		ID:          proposal.ID,
+		TenantInfo:  pagination.TenantInfo{OrgID: proposal.OrganizationID, BuID: proposal.BusinessUnitID},
+		SimulatedAt: now,
+		Simulation:  preview,
+	}); err != nil {
+		s.l.Error("failed to record proposal simulation",
+			zap.String("proposal", proposal.ID.String()), zap.Error(err))
+
+		return err
+	}
+
+	auditActor := actor.AuditActor()
+	if err := s.audit.LogAction(&services.LogActionParams{
+		Resource:      permission.ResourceAgentProposal,
+		ResourceID:    proposal.ID.String(),
+		Operation:     permission.OpUpdate,
+		UserID:        auditActor.UserID,
+		PrincipalType: auditActor.PrincipalType,
+		PrincipalID:   auditActor.PrincipalID,
+		APIKeyID:      auditActor.APIKeyID,
+		CurrentState: jsonutils.MustToJSON(map[string]any{
+			"tool":       tool.Name(),
+			"params":     params.Params,
+			"simulation": preview,
+		}),
+		OrganizationID: proposal.OrganizationID,
+		BusinessUnitID: proposal.BusinessUnitID,
+	}, auditservice.WithComment("Agent proposal simulated: the agent is in simulation, nothing was changed")); err != nil {
+		s.l.Error("failed to log proposal simulation audit", zap.Error(err))
+	}
 
 	return nil
 }

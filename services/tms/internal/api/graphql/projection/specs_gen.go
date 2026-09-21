@@ -978,6 +978,22 @@ func init() {
 				FieldMapKey: "maxToolCalls",
 			},
 			{
+				Name:        "monthlyBudgetUsd",
+				FieldMapKey: "monthlyBudgetUsd",
+			},
+			{
+				Name:        "dailyRunLimit",
+				FieldMapKey: "dailyRunLimit",
+			},
+			{
+				Name:        "toolDailyLimits",
+				FieldMapKey: "toolDailyLimits",
+			},
+			{
+				Name:        "simulationMode",
+				FieldMapKey: "simulationMode",
+			},
+			{
 				Name:        "contextProviders",
 				FieldMapKey: "contextProviders",
 			},
@@ -1348,6 +1364,14 @@ func init() {
 			{
 				Name:        "planStep",
 				FieldMapKey: "planStep",
+			},
+			{
+				Name:        "simulatedAt",
+				FieldMapKey: "simulatedAt",
+			},
+			{
+				Name:        "simulation",
+				FieldMapKey: "simulation",
 			},
 			{
 				Name:        "version",

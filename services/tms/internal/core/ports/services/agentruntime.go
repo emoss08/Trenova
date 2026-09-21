@@ -21,6 +21,10 @@ type PendingAction struct {
 	// action is still recorded so the failure is visible next to the decision it
 	// would otherwise have needed.
 	ExecutionError string `json:"executionError"`
+	// Simulated is set when the agent was in simulation and the write was
+	// previewed instead of made; Simulation is the preview.
+	Simulated  bool                  `json:"simulated"`
+	Simulation *agent.ToolSimulation `json:"simulation,omitempty"`
 	// Target is the record this action would change and its version as of the
 	// proposal, when the tool names one. Nil means the tool has no single
 	// target, or its version could not be read; either way the proposal is

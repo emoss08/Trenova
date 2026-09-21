@@ -29,6 +29,9 @@ type Params struct {
 	// the record pinned; with it the executor can refuse a change to a record
 	// that moved on since the proposal.
 	Versions serviceports.RecordVersionReader `optional:"true"`
+	// Budgets is optional. With it an automatic write past its tool's daily
+	// cap is refused before it runs.
+	Budgets serviceports.AgentBudgetService `optional:"true"`
 }
 
 type Service struct {
@@ -39,6 +42,7 @@ type Service struct {
 	permissions serviceports.PermissionEngine
 	catalog     *agenttoolcatalog.Catalog
 	versions    serviceports.RecordVersionReader
+	budgets     serviceports.AgentBudgetService
 }
 
 func New(p Params) serviceports.AgentRuntime {
@@ -50,6 +54,7 @@ func New(p Params) serviceports.AgentRuntime {
 		permissions: p.Permissions,
 		catalog:     p.Catalog,
 		versions:    p.Versions,
+		budgets:     p.Budgets,
 	}
 }
 
