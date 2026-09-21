@@ -10,7 +10,7 @@ import {
   type DriverSettlementRow,
 } from "@/lib/graphql/driver-settlement";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { RefreshCcw, Sparkles, Zap } from "lucide-react";
+import { RefreshCcw, Zap } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { SettlementQueue, type QueueFilter } from "./settlement-queue";
 import { InstantPayDialog } from "./instant-pay-dialog";
 import { UnsettledDriversDialog } from "./unsettled-drivers-dialog";
 import { WorkspaceSummaryStrip } from "./workspace-summary";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 export function invalidateWorkspace(queryClient: QueryClient) {
   const prefixes = [
@@ -197,7 +198,7 @@ export default function Workspace() {
                   : `Build one settlement per driver from ${summary.unsettledEventCount} unsettled pay events`
               }
             >
-              <Sparkles className="size-3.5" />
+              <AssistMark className="size-3.5" />
               {t("Generate Settlements")}
             </Button>
           </div>

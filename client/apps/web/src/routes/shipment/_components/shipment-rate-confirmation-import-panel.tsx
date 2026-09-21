@@ -28,12 +28,12 @@ import {
   CheckCircle2Icon,
   FileUpIcon,
   LoaderCircleIcon,
-  SparklesIcon,
 } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 type ShipmentRateConfirmationImportPanelProps = {
   open: boolean;
@@ -535,7 +535,7 @@ export function ShipmentRateConfirmationImportPanel({
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <SparklesIcon className="size-4" />
+                  <AssistMark className="size-4" />
                   <CardTitle>{t(processStatus.title)}</CardTitle>
                 </div>
                 <CardDescription>{t(processStatus.description)}</CardDescription>

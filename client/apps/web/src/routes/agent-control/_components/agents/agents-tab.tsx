@@ -21,12 +21,13 @@ import { apiService } from "@/services/api";
 import type { PanelMode } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangleIcon, BotIcon, PlusIcon, SparklesIcon, WrenchIcon } from "lucide-react";
+import { AlertTriangleIcon, BotIcon, PlusIcon, WrenchIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { AgentCard } from "./agent-cards";
 import { toAgentPanelRow, toSaveRequest, type AgentPanelRow } from "./agent-form-schema";
 import { AgentPanel } from "./agent-panel";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 type PanelState = { open: boolean; mode: PanelMode; row: AgentPanelRow | null };
 
@@ -129,7 +130,7 @@ export default function AgentsTab() {
       ) : agents.length === 0 ? (
         <div className="flex justify-center py-6">
           <EmptyState
-            icons={[BotIcon, SparklesIcon, WrenchIcon]}
+            icons={[BotIcon, AssistMark, WrenchIcon]}
             title={t("No agents yet")}
             description={t(
               "An agent is a set of instructions, a choice of tools and a trigger. Build one from a template in a minute, or write exactly the agent your operation needs.",

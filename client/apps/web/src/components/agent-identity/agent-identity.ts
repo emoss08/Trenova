@@ -13,10 +13,10 @@ import {
   RouteIcon,
   SearchIcon,
   ShieldCheckIcon,
-  SparklesIcon,
   TruckIcon,
   WalletCardsIcon,
 } from "lucide-react";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 /** The icons an organization can give an agent. Mirrors the Go registry. */
 export const AGENT_ICONS = {
@@ -35,7 +35,7 @@ export const AGENT_ICONS = {
   file: FileInputIcon,
   search: SearchIcon,
   bell: BellIcon,
-  sparkle: SparklesIcon,
+  sparkle: AssistMark,
 } as const satisfies Record<string, LucideIcon>;
 
 export type AgentIconName = keyof typeof AGENT_ICONS;

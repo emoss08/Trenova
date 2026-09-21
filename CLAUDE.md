@@ -242,6 +242,8 @@ names the token to use instead.
   takes `fieldTriggerClass` and an invalid one `fieldInvalidClass`, both from
   `@trenova/shared/lib/variants/field`. Never hand-write `border-input bg-muted` or a
   `data-pressed:ring-*` on a field.
+- Machine suggestions are marked with `AssistMark` from `@trenova/shared/components/ui/assist-mark`
+  (a real `LucideIcon`). Never import `Sparkles`, `WandSparkles` or `Wand2`.
 - Two radii: `--radius-control` (6px) for controls, `--radius-surface` (8px) for containers.
   The whole `rounded-*` scale points at them; a badge is `rounded-full`.
 - Weight means something: 400 body, 500 label, 600 heading. A value in a cell takes no

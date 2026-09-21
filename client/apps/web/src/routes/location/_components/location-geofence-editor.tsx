@@ -23,15 +23,16 @@ import {
   Rectangle,
   useMap,
 } from "@vis.gl/react-google-maps";
-import { Circle as CircleIcon, PenTool, PlusIcon, Sparkles, Square } from "lucide-react";
+import { Circle as CircleIcon, PenTool, PlusIcon, Square } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFormContext, useFormState, useWatch, type Path, type PathValue } from "react-hook-form";
 import { useNavigate } from "react-router";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const DEFAULT_GEOFENCE_RADIUS_METERS = 50;
 const LOCATION_ZOOM = 18;
 const GEOFENCE_TYPE_ICONS: Record<LocationGeofenceType, typeof CircleIcon> = {
-  auto: Sparkles,
+  auto: AssistMark,
   circle: CircleIcon,
   rectangle: Square,
   draw: PenTool,

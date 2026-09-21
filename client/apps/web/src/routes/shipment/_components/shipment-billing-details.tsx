@@ -40,7 +40,6 @@ import {
   ReceiptTextIcon,
   ShieldAlertIcon,
   ShieldIcon,
-  SparklesIcon,
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
@@ -55,6 +54,7 @@ import { BillingByPayerCard } from "./billing-by-payer-card";
 import { PreviousRatesButton } from "./previous-rates-dialog";
 import { ProfitabilitySummary } from "./profitability/profitability-summary";
 import { WhyThisRate } from "./why-this-rate";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 function Inner({ children }: { children: React.ReactNode }) {
   const t = useT();
@@ -367,7 +367,7 @@ function ContractRateAppliedAlert({
 
   return (
     <Alert variant="info" className="mb-3">
-      <SparklesIcon className="size-4" />
+      <AssistMark className="size-4" />
       <AlertTitle>
         {t(
           "Rated from {0}{1}",

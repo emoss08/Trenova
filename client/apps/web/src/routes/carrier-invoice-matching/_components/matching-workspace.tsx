@@ -39,13 +39,13 @@ import {
   FileTextIcon,
   LinkIcon,
   ScaleIcon,
-  SparklesIcon,
   XIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { LinkCarrierDialog } from "./link-carrier-dialog";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 type QueueTab = "invoices" | "matches";
 
@@ -727,7 +727,7 @@ function InvoiceDetail({
                 disabled={suggestMutation.isPending}
                 onClick={() => suggestMutation.mutate()}
               >
-                <SparklesIcon className="size-3.5" />
+                <AssistMark className="size-3.5" />
                 {t("Suggest Carrier")}
               </Button>
               <Button size="sm" variant="outline" onClick={() => setLinkOpen(true)}>

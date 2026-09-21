@@ -342,6 +342,20 @@ build, a test or a type check. This happened once. `pnpm lint:design` now
 compiles the real file and asserts every declared `@utility` reaches the output,
 so it cannot happen quietly again.
 
+## The assist mark
+
+Anything the system suggests, drafts or fills in on its own is marked with
+`AssistMark` (`@trenova/shared/components/ui/assist-mark`): the diamond of an
+advisory road sign with a point at its centre. On the road that shape means "take
+this into account", which is the standing a machine's suggestion has with a
+dispatcher. It is a real `LucideIcon`, so it takes `size`, `strokeWidth` and
+`className` and fits any `icon:` slot.
+
+Do not import `Sparkles`, `WandSparkles` or `Wand2` from lucide. Sparkles says
+magic, which is the wrong promise for a rate or a settlement, and it is the glyph
+every generated interface spends. The assistant's launcher uses `AssistantMark`,
+the same diamond with a centre point that breathes on hover.
+
 ## Badge
 
 Two axes, neither of them a colour.

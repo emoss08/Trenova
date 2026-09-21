@@ -26,12 +26,11 @@ import {
   CheckCircle2Icon,
   CheckIcon,
   PlusIcon,
-  SparklesIcon,
-  WandSparklesIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { acceptableScenarios, scenarioToTestCaseInput } from "./proposed-scenarios";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const SUGGESTED_PROMPTS = [
   "Per mile rate with an 18% fuel surcharge on top",
@@ -156,7 +155,7 @@ export function AiGeneratePanel({
       >
         <SheetHeader className="border-b pb-3">
           <SheetTitle className="flex items-center gap-2">
-            <WandSparklesIcon className="size-4" />
+            <AssistMark className="size-4" />
             {t("Generate Formula")}
           </SheetTitle>
           <SheetDescription>
@@ -190,7 +189,7 @@ export function AiGeneratePanel({
                   disabled={!instruction.trim()}
                   className="gap-1.5"
                 >
-                  <SparklesIcon className="size-3.5" />
+                  <AssistMark className="size-3.5" />
                   {t("Generate")}
                 </Button>
               </div>

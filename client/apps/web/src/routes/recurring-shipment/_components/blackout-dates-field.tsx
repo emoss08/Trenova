@@ -18,9 +18,10 @@ import { cn } from "@trenova/shared/lib/utils";
 import { FieldWrapper } from "@/components/fields/field-components";
 import type { RecurringShipment } from "@/types/recurring-shipment";
 import { format } from "date-fns";
-import { CalendarPlusIcon, ChevronDownIcon, SparklesIcon, XIcon } from "lucide-react";
+import { CalendarPlusIcon, ChevronDownIcon, XIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useController, useFormContext } from "react-hook-form";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 /** Mirrors `recurringshipment.MaxBlackoutDates` on the server. */
 const MAX_BLACKOUT_DATES = 100;
@@ -214,7 +215,7 @@ export function BlackoutDatesField() {
                   className="h-7"
                   disabled={atCapacity}
                 >
-                  <SparklesIcon className="size-3.5" />
+                  <AssistMark className="size-3.5" />
                   {t("Holidays")}
                   <ChevronDownIcon className="text-muted-foreground size-3.5" />
                 </Button>

@@ -19,8 +19,9 @@ import {
   type FormulaTestCaseInput,
   type VariableDefinitionInput,
 } from "@trenova/shared/types/formula-template";
-import { FlaskConicalIcon, SparklesIcon } from "lucide-react";
+import { FlaskConicalIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 export type ScenarioDraft = {
   name: string;
@@ -224,7 +225,7 @@ export function ScenarioDialog({
                 onClick={handleUseCurrentSample}
                 className="gap-1.5"
               >
-                <SparklesIcon className="size-3" />
+                <AssistMark className="size-3" />
                 {t(
                   "Use current sample data {0}",
                   currentSample.result != null && ` (${formatCurrency(currentSample.result)})`,

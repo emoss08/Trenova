@@ -23,11 +23,12 @@ import type {
   DocumentShipmentDraft,
 } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, LoaderCircleIcon, RefreshCcwIcon, SparklesIcon } from "lucide-react";
+import { AlertCircleIcon, LoaderCircleIcon, RefreshCcwIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 interface DocumentIntelligenceDialogProps {
   open: boolean;
@@ -572,7 +573,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
       {signals.length > 0 ? (
         <div className="rounded-lg border p-3">
           <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium">
-            <SparklesIcon className="size-3.5" />
+            <AssistMark className="size-3.5" />
             {t("Classification Signals")}
           </div>
           <div className="flex flex-wrap gap-2">

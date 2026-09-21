@@ -22,10 +22,11 @@ import {
   type UnsettledWorkerSummary,
 } from "@/lib/graphql/driver-settlement";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { PauseCircle, Sparkles, Zap } from "lucide-react";
+import { PauseCircle, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { InstantPayDialog } from "./instant-pay-dialog";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 export function UnsettledDriversDialog({
   open,
@@ -226,7 +227,7 @@ export function UnsettledDriversDialog({
               onClick={() => generateAllMutation.mutate()}
               title={t("Create draft settlements for every driver listed here in one pass")}
             >
-              <Sparkles className="size-3.5" />
+              <AssistMark className="size-3.5" />
               {t("Generate for all ({0})", settleable.length)}
             </Button>
           </DialogFooter>

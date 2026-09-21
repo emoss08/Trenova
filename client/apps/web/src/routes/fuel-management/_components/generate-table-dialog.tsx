@@ -15,10 +15,11 @@ import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useQuery } from "@tanstack/react-query";
-import { LoaderCircle, TriangleAlert, Wand2 } from "lucide-react";
+import { LoaderCircle, TriangleAlert } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { NumericFormat } from "react-number-format";
 import { toast } from "sonner";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 export type GenerateValueMeta = {
   label: string;
@@ -183,7 +184,7 @@ export function GenerateTableDialog({
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Wand2 className="size-4" />
+            <AssistMark className="size-4" />
             {t("Generate Price Bands")}
           </DialogTitle>
           <DialogDescription>

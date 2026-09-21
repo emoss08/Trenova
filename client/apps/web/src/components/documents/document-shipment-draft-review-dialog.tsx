@@ -21,12 +21,13 @@ import type {
 import { shipmentCreateSchema, type ShipmentCreateInput } from "@trenova/shared/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, LoaderCircleIcon, SparklesIcon } from "lucide-react";
+import { AlertCircleIcon, LoaderCircleIcon } from "lucide-react";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 interface DocumentShipmentDraftReviewDialogProps {
   open: boolean;
@@ -347,7 +348,7 @@ export function DocumentShipmentDraftReviewDialog({
             {signals.length > 0 ? (
               <div className="rounded-lg border p-3">
                 <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium">
-                  <SparklesIcon className="size-3.5" />
+                  <AssistMark className="size-3.5" />
                   {t("Draft Signals")}
                 </div>
                 <div className="flex flex-wrap gap-2">

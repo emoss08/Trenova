@@ -5,7 +5,7 @@ import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { m, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import { ASSISTANT_SURFACE_ID } from "./assistant-surface";
-import { TrenovaSpark } from "./trenova-spark";
+import { AssistantMark } from "./assistant-mark";
 
 type AssistantLauncherProps = {
   pendingCount: number;
@@ -50,7 +50,7 @@ export function AssistantLauncher({ pendingCount, onClick }: AssistantLauncherPr
           />
         }
       >
-        <TrenovaSpark className="size-5" animated={hovered && !reduceMotion} />
+        <AssistantMark className="size-5" animated={hovered && !reduceMotion} />
         {hasPending && (
           <>
             <BorderBeam
