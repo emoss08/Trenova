@@ -214,7 +214,26 @@ const (
 	// answered on, before the turn begins, so the reader can keep it even
 	// when the answer fails partway.
 	AssistantEventThread = "thread"
+	// AssistantEventError ends a turn that could not finish. It was written
+	// as a literal in the two handlers that emit it for as long as the stream
+	// was the handler's own; once the events travel through a relay, the name
+	// has to be one thing both ends agree on.
+	AssistantEventError = "error"
 )
+
+// TerminalAssistantEvent reports an event that ends a turn.
+//
+// A relay reading a turn's events needs to know when to stop without
+// understanding any of them, and a reader who rejoins needs to know whether
+// what they are watching is still running. Both ask this.
+func TerminalAssistantEvent(event string) bool {
+	switch event {
+	case AssistantEventDone, AssistantEventError:
+		return true
+	default:
+		return false
+	}
+}
 
 // AssistantRetryingEvent says the model died partway through its reply and
 // the turn is starting over, on another model when one is configured. Text

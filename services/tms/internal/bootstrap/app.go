@@ -69,6 +69,7 @@ import (
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
 	telematicsinfra "github.com/emoss08/trenova/internal/infrastructure/telematics"
+	"github.com/emoss08/trenova/internal/infrastructure/turnstream"
 	"go.uber.org/fx"
 )
 
@@ -131,6 +132,7 @@ func Options() fx.Option {
 		agentguard.Module,
 		agentruntime.Module,
 		runstepledger.Module,
+		turnstream.Module,
 		watchtowersources.Module,
 		proposalrecorder.Module,
 		fx.Provide(assistantservice.New),

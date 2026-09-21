@@ -648,6 +648,24 @@ type AIConfig struct {
 	StreamIdleTimeout time.Duration `mapstructure:"streamIdleTimeout"`
 	MaxRetries        int           `mapstructure:"maxRetries"        validate:"omitempty,min=0,max=10"`
 
+	// TurnStreamKeyPrefix names the redis streams a turn's events are
+	// published to, one per turn. They are a tail buffer a reader can rejoin,
+	// never the transcript: that is in postgres and outlives all of this.
+	TurnStreamKeyPrefix string `mapstructure:"turnStreamKeyPrefix" validate:"omitempty,max=64"`
+	// TurnStreamMaxLen bounds one turn's stream. A turn that somehow produced
+	// more events than this loses its oldest, which costs a reader who
+	// reattaches the beginning of a reply they already watched arrive.
+	TurnStreamMaxLen int64 `mapstructure:"turnStreamMaxLen" validate:"omitempty,min=100,max=1000000"`
+	// TurnStreamTTL is how long a turn's events outlive the turn itself, for
+	// a reader whose tab slept. Past it they read the saved conversation
+	// instead, which is the real record anyway.
+	TurnStreamTTL time.Duration `mapstructure:"turnStreamTtl"`
+	// TurnStreamBlockTimeout is how long one read waits for the next event.
+	// It bounds how quickly the relay notices a worker that died without
+	// closing its stream, so it is short; the cost of a wake-up is one redis
+	// round trip on an idle connection.
+	TurnStreamBlockTimeout time.Duration `mapstructure:"turnStreamBlockTimeout"`
+
 	// DocumentExtraction lets a model classify and extract uploaded
 	// documents. Off by default; the OCR pipeline below runs either way.
 	DocumentExtraction  bool `mapstructure:"documentExtraction"`
@@ -782,6 +800,44 @@ func (c *AIConfig) GetStreamIdleTimeout() time.Duration {
 	}
 
 	return c.StreamIdleTimeout
+}
+
+// GetTurnStreamKeyPrefix names the redis key space a turn's events live in.
+func (c *AIConfig) GetTurnStreamKeyPrefix() string {
+	if c == nil || c.TurnStreamKeyPrefix == "" {
+		return "assistant:turn"
+	}
+
+	return c.TurnStreamKeyPrefix
+}
+
+func (c *AIConfig) GetTurnStreamMaxLen() int64 {
+	if c == nil || c.TurnStreamMaxLen <= 0 {
+		return 10000
+	}
+
+	return c.TurnStreamMaxLen
+}
+
+func (c *AIConfig) GetTurnStreamTTL() time.Duration {
+	if c == nil || c.TurnStreamTTL <= 0 {
+		return time.Hour
+	}
+
+	return c.TurnStreamTTL
+}
+
+// GetTurnStreamBlockTimeout bounds one blocking read.
+//
+// It is deliberately shorter than the SSE keepalive, so a relay waiting on a
+// silent turn wakes, writes its heartbeat and checks whether the turn is still
+// alive, rather than sitting on a read until a proxy gives up on the reader.
+func (c *AIConfig) GetTurnStreamBlockTimeout() time.Duration {
+	if c == nil || c.TurnStreamBlockTimeout <= 0 {
+		return 5 * time.Second
+	}
+
+	return c.TurnStreamBlockTimeout
 }
 
 func (c *AIConfig) GetMaxInputChars() int {
