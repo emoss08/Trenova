@@ -1,6 +1,21 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+/**
+ * A question asked on the front page, waiting for the conversation it
+ * started to open and send it.
+ *
+ * Starting a thread and sending its first message are two requests, and the
+ * navigation between them happens in the middle. This carries the question
+ * across that gap so a person who types at the Desk's front door lands in a
+ * conversation that is already answering, rather than one with their words
+ * sitting unsent in the box.
+ */
+export type AssistantOpeningQuestion = {
+  threadId: string;
+  text: string;
+};
+
 interface AssistantState {
   /** Whether the floating panel is showing. */
   open: boolean;
@@ -11,6 +26,10 @@ interface AssistantState {
   dismissedSuggestions: string[];
   /** What was typed but not sent, per conversation, so switching loses nothing. */
   drafts: Record<string, string>;
+  /** The agent this person last started a conversation with, on either surface. */
+  lastAgentId: string | null;
+  /** A question asked before its conversation existed. Never persisted. */
+  openingQuestion: AssistantOpeningQuestion | null;
 
   openWidget: () => void;
   closeWidget: () => void;
@@ -20,6 +39,8 @@ interface AssistantState {
   setActiveThreadId: (id: string | null) => void;
   dismissSuggestion: (prompt: string) => void;
   setDraft: (threadId: string, draft: string) => void;
+  setLastAgentId: (agentId: string | null) => void;
+  setOpeningQuestion: (question: AssistantOpeningQuestion | null) => void;
 }
 
 const MAX_DISMISSED = 50;
@@ -58,6 +79,8 @@ export const useAssistantStore = create<AssistantState>()(
       expanded: false,
       activeThreadId: null,
       dismissedSuggestions: [],
+      lastAgentId: null,
+      openingQuestion: null,
       drafts: {},
 
       openWidget: () => set({ open: true }),
@@ -76,6 +99,8 @@ export const useAssistantStore = create<AssistantState>()(
         ),
       setDraft: (threadId, draft) =>
         set((state) => ({ drafts: rememberDraft(state.drafts, threadId, draft) })),
+      setLastAgentId: (agentId) => set({ lastAgentId: agentId }),
+      setOpeningQuestion: (question) => set({ openingQuestion: question }),
     }),
     {
       name: "trenova-assistant",
@@ -84,6 +109,7 @@ export const useAssistantStore = create<AssistantState>()(
         activeThreadId: state.activeThreadId,
         dismissedSuggestions: state.dismissedSuggestions,
         drafts: state.drafts,
+        lastAgentId: state.lastAgentId,
       }),
     },
   ),

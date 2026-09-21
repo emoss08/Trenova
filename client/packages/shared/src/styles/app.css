@@ -141,7 +141,9 @@
      utility. A field marked invalid with `border-danger` then keeps its red
      hairline on hover and while open, instead of losing to this rule on
      specificity. */
-  &:where(:hover:not(:focus-visible, :focus-within, :disabled, [data-disabled], [aria-invalid="true"])) {
+  &:where(
+    :hover:not(:focus-visible, :focus-within, :disabled, [data-disabled], [aria-invalid="true"])
+  ) {
     border-color: var(--border-strong);
   }
 
@@ -851,9 +853,16 @@
 .agent-tile {
   --agent-tile-color: var(--agent-slate);
 
-  background-color: color-mix(in oklch, var(--agent-tile-color) 14%, transparent);
+  background-color: color-mix(in oklch, var(--agent-tile-color) 12%, transparent);
   color: var(--agent-tile-color);
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--agent-tile-color) 24%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--agent-tile-color) 26%, transparent);
+}
+
+/* The sigil sits outside the glyph's contrast budget: it is an identifier a
+   person compares, never one they read, so it is drawn at about half the
+   weight of the mark it rings. */
+.agent-tile .agent-sigil {
+  color: color-mix(in oklch, var(--agent-tile-color) 55%, transparent);
 }
 
 @keyframes assistant-caret {
@@ -926,10 +935,5 @@
 @media (prefers-reduced-motion: reduce) {
   .assistant-caret {
     animation: none;
-  }
-
-  /* BorderBeam sets its animation name inline, so only a forced rule reaches it. */
-  .assistant-beam {
-    animation: none !important;
   }
 }

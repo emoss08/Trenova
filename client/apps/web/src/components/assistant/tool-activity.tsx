@@ -7,12 +7,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@trenova/shared/components/ui/collapsible";
-import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { cn } from "@trenova/shared/lib/utils";
 import { ChevronRightIcon, CircleAlertIcon, CodeIcon } from "lucide-react";
 import { m } from "motion/react";
 import { useMemo, useState } from "react";
 import { argumentRows } from "./proposal-state";
+import { WorkingDot } from "./voice/working-dot";
 import { describeToolCall, parseToolResult, type ParsedToolResult } from "./tool-presentation";
 
 export type ToolActivityStatus = "running" | "done" | "failed" | "proposed";
@@ -55,7 +55,9 @@ export function ToolTimeline({ steps, live = false }: { steps: ToolStep[]; live?
           reads as a fact about the answer, not as a log of the machine. */}
       <CollapsibleTrigger className="text-muted-foreground hover:text-foreground ui-focus-ring flex w-fit max-w-full items-center gap-1.5 rounded-control py-0.5 text-left text-xs transition-colors">
         {running > 0 ? (
-          <Spinner className="size-3 shrink-0" />
+          // One vocabulary for "still going": the same dot the Desk's header
+          // breathes, rather than a spinner here and a pulse there.
+          <WorkingDot working className="mx-0.75" />
         ) : failed > 0 ? (
           <CircleAlertIcon className="text-destructive size-3 shrink-0" />
         ) : (
@@ -89,8 +91,11 @@ function ToolStepRow({ step, live }: { step: ToolStep; live: boolean }) {
 
   return (
     <m.li
-      initial={live ? { opacity: 0, y: 2 } : false}
-      animate={{ opacity: 1, y: 0 }}
+      // A step arrives from the agent's side of the column rather than
+      // fading in where it lands: the motion says where the work came from.
+      initial={live ? { opacity: 0, x: -4 } : false}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.2 }}
       className="min-w-0"
     >
       <button

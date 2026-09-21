@@ -2,6 +2,7 @@ import { MessageThread } from "@/components/assistant/message-thread";
 import { queries } from "@/lib/queries";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
+import { useOpeningQuestion } from "@/components/assistant/use-opening-question";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useDesk } from "./desk-layout";
@@ -32,6 +33,7 @@ export function DeskConversation({
   onStartNew,
 }: DeskConversationProps) {
   const desk = useDesk();
+  const opening = useOpeningQuestion(thread.id);
   const artifactsQuery = useQuery(queries.assistant.artifacts(thread.id));
   const artifacts = useMemo(() => artifactsQuery.data?.results ?? [], [artifactsQuery.data]);
 
@@ -52,7 +54,9 @@ export function DeskConversation({
       onOpenArtifact={openArtifact}
       onLiveArtifact={desk.noteLiveArtifact}
       onWorkingChange={desk.setWorking}
-      spine
+      openingQuestion={opening.openingQuestion}
+      onOpeningQuestionSent={opening.onOpeningQuestionSent}
+      agentAccent
     />
   );
 }

@@ -1,10 +1,12 @@
 import { AGENT_ACCENTS, resolveAgentIdentity } from "@/components/agent-identity/agent-identity";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
+import { WorkingDot } from "@/components/assistant/voice/working-dot";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
+import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -36,7 +38,7 @@ import { Outlet, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ArtifactsPane } from "./artifacts/artifacts-pane";
 import { DeskDirectory } from "./desk-directory";
-import { DeskColumns, DeskShell, WorkingDot } from "./desk-shell";
+import { DeskColumns, DeskShell } from "./desk-shell";
 import { DeskTitleField } from "./desk-title-field";
 import { DeskWorkspaceEmpty } from "./desk-workspace-empty";
 
@@ -47,7 +49,8 @@ export type DeskContextValue = {
   agentsUnavailable: boolean;
   isLoading: boolean;
   isStarting: boolean;
-  start: (agentId: string) => void;
+  /** Opens a conversation, optionally with the question that prompted it. */
+  start: (agentId: string, question?: string) => void;
   remove: (thread: AssistantThread) => void;
   togglePin: (thread: AssistantThread) => void;
   /** Told while a turn is running, so the room can light up for it. */
@@ -86,7 +89,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const t = useT();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const setLastAgentId = useDeskStore((state) => state.setLastAgentId);
+  const setLastAgentId = useAssistantStore((state) => state.setLastAgentId);
+  const setOpeningQuestion = useAssistantStore((state) => state.setOpeningQuestion);
   const pane = useDeskStore((state) => state.pane);
   const setPane = useDeskStore((state) => state.setPane);
   const togglePane = useDeskStore((state) => state.togglePane);
@@ -128,10 +132,16 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   );
 
   const startMutation = useApiMutation({
-    mutationFn: (agentId: string) =>
+    mutationFn: ({ agentId }: { agentId: string; question?: string }) =>
       apiService.assistantService.startThread(agentId, { origin: "Desk" }),
-    onSuccess: async (thread, agentId) => {
+    onSuccess: async (thread, { agentId, question }) => {
       setLastAgentId(agentId);
+      // Handed over rather than sent here: the conversation is the only
+      // place that knows the thread is empty and that history has loaded,
+      // which is what keeps a reload from asking the same question twice.
+      if (question !== undefined && question !== "") {
+        setOpeningQuestion({ threadId: thread.id, text: question });
+      }
       await refreshThreads();
       void navigate(`/desk/t/${thread.id}`);
     },
@@ -191,7 +201,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       agentsUnavailable: agentsQuery.isError,
       isLoading: threadsQuery.isLoading || agentsQuery.isLoading,
       isStarting: startMutation.isPending,
-      start: (agentId) => startMutation.mutate(agentId),
+      start: (agentId, question) => startMutation.mutate({ agentId, question }),
       remove: setDeleting,
       togglePin: (thread) => pinMutation.mutate(thread),
       setWorking,
@@ -268,7 +278,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
               activeThreadId={activeThreadId}
               isLoading={threadsQuery.isLoading || agentsQuery.isLoading}
               isStarting={startMutation.isPending}
-              onStart={(agentId) => startMutation.mutate(agentId)}
+              onStart={(agentId) => startMutation.mutate({ agentId })}
               onDelete={setDeleting}
               onTogglePin={(thread) => pinMutation.mutate(thread)}
             />

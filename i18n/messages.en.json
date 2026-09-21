@@ -11469,14 +11469,12 @@
     ]
   },
   "Agents": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/agent-control",
-      "routes/desk"
+      "routes/agent-control"
     ]
   },
   "Agents cannot be started on this deployment": {
@@ -14880,7 +14878,7 @@
     ]
   },
   "Answers only": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -16492,15 +16490,6 @@
       "routes/desk"
     ]
   },
-  "Approve, change or reject what the agents proposed, one at a time or as a batch.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Approve, deny, designate and close a leave case": {
     "sites": 1,
     "scope": [
@@ -17384,11 +17373,12 @@
     ]
   },
   "Ask": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin"
     ]
   },
@@ -17455,7 +17445,7 @@
       "apps/web/components"
     ]
   },
-  "Ask any agent about the work in front of you, read what it produces beside the conversation, and decide what the agents have proposed.": {
+  "Ask an agent about the work in front of you. What it makes opens beside you.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -17489,6 +17479,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Ask {0} anything about your operation": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Ask: {0}": {
@@ -28505,7 +28504,7 @@
     ]
   },
   "Changes an agent proposes will queue here for your approval.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -100197,8 +100196,26 @@
       "routes/worker"
     ]
   },
+  "Nothing is running here yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing is waiting on you": {
-    "sites": 2,
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Nothing is waiting on you.": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -105063,15 +105080,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Open decisions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Open designer": {
@@ -113822,13 +113830,12 @@
     ]
   },
   "Pick up where you left off": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/desk"
+      "apps/web/components"
     ]
   },
   "Pick what is covered": {
@@ -154397,6 +154404,15 @@
       "routes/customer"
     ]
   },
+  "The Desk comes alive once an agent is enabled.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The EDI document type that seeds the template direction and transaction set.": {
     "sites": 1,
     "scope": [
@@ -176482,6 +176498,15 @@
       "service/briefingservice"
     ]
   },
+  "Waiting on your decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Waiting period": {
     "sites": 1,
     "scope": [
@@ -179255,15 +179280,6 @@
       "apps/web/components"
     ]
   },
-  "Where a shipment is, who is free, what is holding an invoice, how to do something.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Where and when": {
     "sites": 1,
     "scope": [
@@ -179595,6 +179611,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "Where you left off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Where {0} stands": {
@@ -180397,6 +180422,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Who you can ask": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Who's out": {
@@ -183225,15 +183259,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "Your desk": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Your disputes on this statement": {
@@ -189058,15 +189083,6 @@
       "routes/late-charges"
     ]
   },
-  "{0, plural, one {# decision waiting} other {# decisions waiting}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "{0, plural, one {# doc} other {# docs}}": {
     "sites": 1,
     "scope": [
@@ -189734,7 +189750,7 @@
     ]
   },
   "{0, plural, one {# tool} other {# tools}}": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -189832,6 +189848,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {One decision is waiting on you.} other {# decisions are waiting on you.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {Transfer all # shipment that matches the current search and status?} other {Transfer all # shipments that match the current search and status?}}": {

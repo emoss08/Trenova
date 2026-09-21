@@ -95,7 +95,71 @@ export type AgentIdentityInput = {
 export type AgentIdentity = {
   icon: AgentIconName;
   accent: AgentAccentName;
+  /**
+   * Whether the icon is the agent's own — chosen, or implied by its starter —
+   * rather than the generic fallback. A mark with nothing behind it is better
+   * drawn as the agent's initials than as the same robot every other
+   * unconfigured agent gets.
+   */
+  iconChosen: boolean;
+  /**
+   * Which of the sigil variants this agent wears. See agentSigil.
+   */
+  sigil: AgentSigil;
 };
+
+/** One arc around the mark: where it starts and how far it runs. */
+export type AgentSigil = {
+  /** Degrees clockwise from the top. */
+  rotation: number;
+  /** Arc length as a percentage of the circumference. */
+  length: number;
+};
+
+const SIGIL_ROTATIONS = [0, 45, 90, 135, 180, 225, 270, 315];
+const SIGIL_LENGTHS = [14, 22, 30];
+
+/**
+ * A short arc around the agent's mark, derived from its id.
+ *
+ * Sixteen icons and eight accents sounds like plenty until you notice that
+ * both are assigned by hashing when an organization does not choose, and that
+ * an agent with no starter gets the same robot as every other one. Two desks
+ * then wear the identical mark, which is the one thing a mark may not do.
+ *
+ * The arc adds twenty-four variants that cost nothing to read: it is a line,
+ * at one weight, in the accent already there, and a person does not have to
+ * decode it — they only have to notice that two marks are not the same. It is
+ * derived from the id rather than the name, so renaming an agent leaves its
+ * face alone.
+ */
+export function agentSigil(seed: string): AgentSigil {
+  const value = hash(seed);
+
+  return {
+    rotation: SIGIL_ROTATIONS[value % SIGIL_ROTATIONS.length],
+    length: SIGIL_LENGTHS[Math.floor(value / SIGIL_ROTATIONS.length) % SIGIL_LENGTHS.length],
+  };
+}
+
+/**
+ * The letters an agent's mark falls back to: the initials of the first two
+ * words of its name, or the first two letters of a single-word name.
+ */
+export function agentMonogram(name: string | null | undefined): string {
+  const words = (name ?? "")
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word !== "");
+  if (words.length === 0) {
+    return "";
+  }
+  if (words.length === 1) {
+    return words[0].slice(0, 2).toUpperCase();
+  }
+
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
 
 /**
  * What an agent looks like: its own choice first, then what its starter implies,
@@ -107,17 +171,22 @@ export type AgentIdentity = {
  * honest thing for a value that is not saved.
  */
 export function resolveAgentIdentity(agent: AgentIdentityInput): AgentIdentity {
-  const icon: AgentIconName = isAgentIconName(agent.icon)
-    ? agent.icon
-    : (TEMPLATE_ICON[agent.template ?? ""] ?? "bot");
+  const templateIcon = TEMPLATE_ICON[agent.template ?? ""];
+  const chosen = isAgentIconName(agent.icon) ? agent.icon : templateIcon;
+  const icon: AgentIconName = chosen ?? "bot";
+  const seed = (agent.id ?? "").trim() || (agent.name ?? "").trim();
+  const sigil = agentSigil(seed);
 
   if (isAgentAccentName(agent.accent)) {
-    return { icon, accent: agent.accent };
+    return { icon, accent: agent.accent, iconChosen: chosen !== undefined, sigil };
   }
 
-  const seed = (agent.id ?? "").trim() || (agent.name ?? "").trim();
-
-  return { icon, accent: AGENT_ACCENT_ORDER[hash(seed) % AGENT_ACCENT_ORDER.length] };
+  return {
+    icon,
+    accent: AGENT_ACCENT_ORDER[hash(seed) % AGENT_ACCENT_ORDER.length],
+    iconChosen: chosen !== undefined,
+    sigil,
+  };
 }
 
 /** FNV-1a, matching the Go side so a face never changes across the wire. */
