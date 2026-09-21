@@ -86,6 +86,44 @@ describe("describeToolCall", () => {
       subject: "ar_aging_by_customer",
     });
   });
+
+  it("names a saved report by its definition id and a dataset by its key", () => {
+    expect(describeToolCall("describe_report", { definitionId: "rdef_1" })).toEqual({
+      title: "Read report",
+      subject: "rdef_1",
+    });
+    expect(
+      describeToolCall("describe_report_dataset", { dataset: "shipment", query: "revenue" }),
+    ).toEqual({
+      title: "Read dataset",
+      subject: "shipment",
+    });
+  });
+
+  /**
+   * A preview or a new report carries its whole question inside the definition
+   * object, which no scalar argument names, so the dataset it is built on is
+   * the subject rather than nothing.
+   */
+  it("names the dataset a definition is built on", () => {
+    expect(
+      describeToolCall("preview_report", {
+        definition: { entity: "shipment", columns: [] },
+      }),
+    ).toEqual({
+      title: "Preview report",
+      subject: "shipment",
+    });
+    expect(
+      describeToolCall("create_report", {
+        name: "Revenue by customer",
+        definition: { entity: "shipment", columns: [] },
+      }),
+    ).toEqual({
+      title: "Create report",
+      subject: "Revenue by customer",
+    });
+  });
 });
 
 /**

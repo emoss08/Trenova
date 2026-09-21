@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // reportRunner is the slice of the reporting service these tools need.
@@ -24,6 +26,15 @@ type reportRunner interface {
 	GetCanned(key string) (*canned.Entry, error)
 	RunReport(ctx context.Context, req *reporting.RunReportRequest) (*report.ReportRun, error)
 	GetRun(ctx context.Context, req *reporting.GetRunRequest) (*report.ReportRun, error)
+	GetDefinition(
+		ctx context.Context,
+		req *reporting.GetDefinitionRequest,
+	) (*report.ReportDefinition, error)
+	ListDefinitions(
+		ctx context.Context,
+		req *reporting.ListDefinitionsRequest,
+	) ([]*report.ReportDefinition, error)
+	Preview(ctx context.Context, req *reporting.PreviewRequest) (*reporting.PreviewResult, error)
 }
 
 type reportParameterRow struct {
@@ -43,12 +54,20 @@ type reportParameterRow struct {
 // that read the one and wrote the other was refused for a parameter it had
 // supplied.
 type reportCatalogRow struct {
-	Key         string               `json:"reportKey"`
-	Name        string               `json:"name"`
-	Description string               `json:"description,omitempty"`
-	Category    string               `json:"category,omitempty"`
-	Format      string               `json:"defaultFormat,omitempty"`
-	Parameters  []reportParameterRow `json:"parameters,omitempty"`
+	Key string `json:"reportKey,omitempty"`
+	// DefinitionID names a report someone in this organization saved, from
+	// the builder or from create_report. It is what run_report, describe_report
+	// and update_report take for a saved report, where a canned one has a key.
+	DefinitionID string               `json:"definitionId,omitempty"`
+	Name         string               `json:"name"`
+	Description  string               `json:"description,omitempty"`
+	Category     string               `json:"category,omitempty"`
+	Kind         string               `json:"kind"`
+	Visibility   string               `json:"visibility,omitempty"`
+	Status       string               `json:"status,omitempty"`
+	Editable     bool                 `json:"editable,omitempty"`
+	Format       string               `json:"defaultFormat,omitempty"`
+	Parameters   []reportParameterRow `json:"parameters,omitempty"`
 }
 
 type listReportsTool struct {
@@ -63,9 +82,12 @@ func (t *listReportsTool) Name() string { return "list_reports" }
 
 func (t *listReportsTool) Description() string {
 	return "List the reports this organization can run, with the parameters each one " +
-		"takes. Call this before run_report so you name a real report and supply the " +
-		"parameters it needs, rather than guessing a key. Narrow with category when " +
-		"the question is clearly about one area, such as Accounting or Fleet."
+		"takes: the built-in catalog (each with a reportKey) and the reports people " +
+		"here have saved in the report builder (each with a definitionId). Call this " +
+		"before run_report so you name a real report and supply the parameters it " +
+		"needs, rather than guessing. Narrow with category when the question is " +
+		"clearly about one area, such as Accounting or Fleet. A saved report marked " +
+		"editable is one you may adjust with update_report."
 }
 
 func (t *listReportsTool) ParamSchema() map[string]any {
@@ -91,7 +113,7 @@ func (t *listReportsTool) PermissionResource() permission.Resource {
 }
 
 func (t *listReportsTool) Query(
-	_ context.Context,
+	ctx context.Context,
 	params serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
@@ -106,43 +128,94 @@ func (t *listReportsTool) Query(
 	criteria.field("category", category)
 
 	entries := t.reports.ListCanned()
-	rows := make([]reportCatalogRow, 0, len(entries))
+	saved, err := t.reports.ListDefinitions(ctx, &reporting.ListDefinitionsRequest{
+		Request:  reportingRequestFor(params),
+		Statuses: listableDefinitionStatuses,
+		Limit:    maxSavedReportsListed,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	rows := make([]reportCatalogRow, 0, len(entries)+len(saved))
 	for _, entry := range entries {
 		if category != "" && !strings.EqualFold(entry.Category, category) {
 			continue
 		}
-		if query != "" && !matchesReportText(entry, query) {
+		if query != "" && !matchesReportText(entry.Name, entry.Description, query) {
 			continue
 		}
 		rows = append(rows, toCatalogRow(entry))
+	}
+	for _, definition := range saved {
+		if category != "" && !strings.EqualFold(definition.Category, category) {
+			continue
+		}
+		if query != "" && !matchesReportText(definition.Name, definition.Description, query) {
+			continue
+		}
+		rows = append(rows, toSavedRow(definition, params.Actor.UserID))
 	}
 
 	return criteria.result(rows, len(rows)), nil
 }
 
-func matchesReportText(entry *canned.Entry, query string) bool {
+// listableDefinitionStatuses are the saved reports worth naming: an active
+// one runs, a draft previews and can be finished. Archived ones and ones
+// whose fields have gone are left to the Reports page, where the repair
+// tools are.
+var listableDefinitionStatuses = []report.DefinitionStatus{
+	report.DefinitionStatusActive,
+	report.DefinitionStatusDraft,
+}
+
+// maxSavedReportsListed bounds the saved reports one listing carries. The
+// catalog is thirty-odd rows and each saved report costs the model the same
+// again, so an organization with hundreds gets the newest and a hint to narrow.
+const maxSavedReportsListed = 100
+
+func matchesReportText(name, description, query string) bool {
 	needle := strings.ToLower(query)
 
-	return strings.Contains(strings.ToLower(entry.Name), needle) ||
-		strings.Contains(strings.ToLower(entry.Description), needle)
+	return strings.Contains(strings.ToLower(name), needle) ||
+		strings.Contains(strings.ToLower(description), needle)
 }
 
 func toCatalogRow(entry *canned.Entry) reportCatalogRow {
-	row := reportCatalogRow{
+	return reportCatalogRow{
 		Key:         entry.Key,
 		Name:        entry.Name,
 		Description: entry.Description,
 		Category:    entry.Category,
+		Kind:        "canned",
 		Format:      string(entry.DefaultFormat),
+		Parameters:  parameterRows(entry.Definition),
+	}
+}
+
+func toSavedRow(definition *report.ReportDefinition, actor pulid.ID) reportCatalogRow {
+	return reportCatalogRow{
+		DefinitionID: definition.ID.String(),
+		Name:         definition.Name,
+		Description:  definition.Description,
+		Category:     definition.Category,
+		Kind:         string(definition.Kind),
+		Visibility:   string(definition.Visibility),
+		Status:       string(definition.Status),
+		Editable:     definition.OwnerID == actor,
+		Format:       string(definition.DefaultFormat),
+		Parameters:   parameterRows(definition.Definition),
+	}
+}
+
+func parameterRows(definition *report.Definition) []reportParameterRow {
+	if definition == nil || len(definition.Parameters) == 0 {
+		return nil
 	}
 
-	if entry.Definition == nil {
-		return row
-	}
-
-	row.Parameters = make([]reportParameterRow, 0, len(entry.Definition.Parameters))
-	for _, parameter := range entry.Definition.Parameters {
-		row.Parameters = append(row.Parameters, reportParameterRow{
+	rows := make([]reportParameterRow, 0, len(definition.Parameters))
+	for _, parameter := range definition.Parameters {
+		rows = append(rows, reportParameterRow{
 			Name:          parameter.Name,
 			Label:         parameter.Label,
 			Required:      parameter.Required,
@@ -151,15 +224,17 @@ func toCatalogRow(entry *canned.Entry) reportCatalogRow {
 		})
 	}
 
-	return row
+	return rows
 }
 
 // reportRunStatus is what both run_report and get_report_run answer with, so a
 // model that started a run and a model that checked on one read the same shape.
 type reportRunStatus struct {
-	RunID     string `json:"runId"`
-	ReportKey string `json:"reportKey,omitempty"`
-	Status    string `json:"status"`
+	RunID        string `json:"runId"`
+	ReportKey    string `json:"reportKey,omitempty"`
+	DefinitionID string `json:"definitionId,omitempty"`
+	ReportName   string `json:"reportName,omitempty"`
+	Status       string `json:"status"`
 	// Finished separates "nothing to report yet" from "this is the outcome".
 	// Deriving it from the status string is exactly the inference a model gets
 	// wrong when it wants there to be an answer.
@@ -185,22 +260,44 @@ func reportKeyOf(params map[string]any) (string, error) {
 	return "", err
 }
 
+// A run is asynchronous by design, and most take long enough that the tool
+// answers "started" and the conversation follows the run. A small report on a
+// warm cache finishes in under a second, though, and then the answer was
+// wrong before the model had finished writing it: the card above it already
+// read "finished with 9 rows" while the sentence said the run was queued. So
+// the tool waits a moment for a run that is about to finish, and answers with
+// the outcome when it does. runSettleWindow bounds the wait; a run still
+// going after it is answered as started, exactly as before.
+const (
+	runSettleWindow = 3 * time.Second
+	runSettlePoll   = 250 * time.Millisecond
+)
+
 type runReportTool struct {
 	reports     reportRunner
 	permissions serviceports.PermissionEngine
+
+	settleWindow time.Duration
+	settlePoll   time.Duration
 }
 
 func newRunReportTool(
 	reports reportRunner,
 	permissions serviceports.PermissionEngine,
 ) serviceports.AgentQueryTool {
-	return &runReportTool{reports: reports, permissions: permissions}
+	return &runReportTool{
+		reports:      reports,
+		permissions:  permissions,
+		settleWindow: runSettleWindow,
+		settlePoll:   runSettlePoll,
+	}
 }
 
 func (t *runReportTool) Name() string { return "run_report" }
 
 func (t *runReportTool) Description() string {
-	return "Start one of the reports from list_reports. Take every parameter you can " +
+	return "Start one of the reports from list_reports: a built-in one by reportKey or " +
+		"a saved one by definitionId. Take every parameter you can " +
 		"from what the person already said — a request naming a window, a date range " +
 		"or a customer has supplied it — and ask_user for the rest, offering the " +
 		"allowed values list_reports gave rather than choices you made up. Reports " +
@@ -217,7 +314,15 @@ func (t *runReportTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"reportKey": map[string]any{
 				"type":        "string",
-				"description": "The reportKey of a report from list_reports.",
+				"description": "The reportKey of a built-in report from list_reports.",
+			},
+			"key": map[string]any{
+				"type":        "string",
+				"description": "Accepted as an alias of reportKey; prefer reportKey.",
+			},
+			"definitionId": map[string]any{
+				"type":        "string",
+				"description": "The definitionId of a saved report from list_reports.",
 			},
 			"parameters": map[string]any{
 				"type": "object",
@@ -233,7 +338,6 @@ func (t *runReportTool) ParamSchema() map[string]any {
 				"description": "Optional output format. Defaults to the report's own.",
 			},
 		},
-		"required":             []string{"reportKey"},
 		"additionalProperties": false,
 	}
 }
@@ -250,17 +354,9 @@ func (t *runReportTool) Query(
 		return nil, err
 	}
 
-	key, err := reportKeyOf(params.Params)
+	source, err := resolveReportSource(ctx, t.reports, params)
 	if err != nil {
 		return nil, err
-	}
-
-	entry, err := t.reports.GetCanned(key)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"there is no report with the key %q; call list_reports for the keys that exist",
-			key,
-		)
 	}
 
 	// The runtime authorizes a query tool as report:read, because a query tool
@@ -271,38 +367,90 @@ func (t *runReportTool) Query(
 		return nil, err
 	}
 
-	values := normalizeReportParameters(entry, optionalObject(params.Params, "parameters"))
-	if err = requireReportParameters(entry, values); err != nil {
+	values := normalizeReportParameters(
+		source.Definition,
+		optionalObject(params.Params, "parameters"),
+	)
+	if err = requireReportParameters(source.Name, source.Definition, values); err != nil {
 		return nil, err
 	}
 
-	format := entry.DefaultFormat
+	format := source.DefaultFormat
 	if requested := report.Format(optionalString(params.Params, "format")); requested.IsValid() {
 		format = requested
 	}
 
 	run, err := t.reports.RunReport(ctx, &reporting.RunReportRequest{
-		Request:   reportingRequestFor(params),
-		CannedKey: entry.Key,
-		Format:    format,
-		Params:    values,
-		Trigger:   report.RunTriggerManual,
+		Request:      reportingRequestFor(params),
+		DefinitionID: source.DefinitionID,
+		CannedKey:    source.Key,
+		Format:       format,
+		Params:       values,
+		Trigger:      report.RunTriggerManual,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	status := toRunStatus(run)
-	status.ReportKey = entry.Key
-	status.Note = fmt.Sprintf(
-		"%q has been queued and is not finished. Tell the person it is running and "+
-			"that the result will appear here with a download button when it is done. "+
-			"Do not call get_report_run to poll it and do not send them to the Reports "+
-			"page; the conversation is already showing run %s.",
-		entry.Name, run.ID.String(),
-	)
+	run = t.settle(ctx, params, run)
+
+	var status reportRunStatus
+	if run.Status.IsTerminal() {
+		status = describeRun(run)
+	} else {
+		status = toRunStatus(run)
+		status.Note = fmt.Sprintf(
+			"%q has been queued and is not finished. Tell the person it is running and "+
+				"that the result will appear here with a download button when it is done. "+
+				"Do not call get_report_run to poll it and do not send them to the Reports "+
+				"page; the conversation is already showing run %s.",
+			source.Name, run.ID.String(),
+		)
+	}
+	status.ReportName = source.Name
 
 	return status, nil
+}
+
+// settle waits up to the settle window for the run to reach a terminal
+// state, reading it back at each poll. It never fails the call: a read that
+// errors, or a window that closes first, hands back the run as last seen,
+// and the conversation's own card takes it from there.
+func (t *runReportTool) settle(
+	ctx context.Context,
+	params serviceports.QueryToolParams,
+	run *report.ReportRun,
+) *report.ReportRun {
+	if t.settleWindow <= 0 || t.settlePoll <= 0 || run.Status.IsTerminal() {
+		return run
+	}
+
+	deadline := time.NewTimer(t.settleWindow)
+	defer deadline.Stop()
+	ticker := time.NewTicker(t.settlePoll)
+	defer ticker.Stop()
+
+	request := reportingRequestFor(params)
+	for {
+		select {
+		case <-ctx.Done():
+			return run
+		case <-deadline.C:
+			return run
+		case <-ticker.C:
+			latest, err := t.reports.GetRun(ctx, &reporting.GetRunRequest{
+				Request: request,
+				RunID:   run.ID,
+			})
+			if err != nil || latest == nil {
+				return run
+			}
+			run = latest
+			if run.Status.IsTerminal() {
+				return run
+			}
+		}
+	}
 }
 
 func (t *runReportTool) authorizeExport(
@@ -345,13 +493,17 @@ func (t *runReportTool) authorizeExport(
 // "common choices are 7, 14 or 30" from nothing, and a reader retyping one of
 // them. Where the values are constrained these are the real ones, so the
 // question cannot offer a choice the report would then reject.
-func requireReportParameters(entry *canned.Entry, values map[string]any) error {
-	if entry.Definition == nil {
+func requireReportParameters(
+	name string,
+	definition *report.Definition,
+	values map[string]any,
+) error {
+	if definition == nil {
 		return nil
 	}
 
-	missing := make([]string, 0, len(entry.Definition.Parameters))
-	for _, parameter := range entry.Definition.Parameters {
+	missing := make([]string, 0, len(definition.Parameters))
+	for _, parameter := range definition.Parameters {
 		if !parameter.Required {
 			continue
 		}
@@ -373,7 +525,7 @@ func requireReportParameters(entry *canned.Entry, values map[string]any) error {
 			"says what to use, use that. Otherwise call ask_user with the values "+
 			"above as the options — do not invent choices, and do not pick one "+
 			"yourself",
-		entry.Name, strings.Join(missing, "; "),
+		name, strings.Join(missing, "; "),
 	)
 }
 
@@ -486,7 +638,7 @@ func describeRun(run *report.ReportRun) reportRunStatus {
 }
 
 func toRunStatus(run *report.ReportRun) reportRunStatus {
-	return reportRunStatus{
+	status := reportRunStatus{
 		RunID:     run.ID.String(),
 		ReportKey: run.CannedKey,
 		Status:    string(run.Status),
@@ -495,6 +647,14 @@ func toRunStatus(run *report.ReportRun) reportRunStatus {
 		RowCount:  run.RowCount,
 		Truncated: run.Truncated,
 	}
+	if !run.DefinitionID.IsNil() {
+		status.DefinitionID = run.DefinitionID.String()
+	}
+	if run.ReportDefinition != nil {
+		status.ReportName = run.ReportDefinition.Name
+	}
+
+	return status
 }
 
 func reportingRequestFor(params serviceports.QueryToolParams) reporting.Request {

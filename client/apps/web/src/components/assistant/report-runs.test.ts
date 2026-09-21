@@ -53,7 +53,41 @@ describe("reportRunsFrom", () => {
     ]);
 
     expect(runs).toEqual([
-      { runId: "rrun_01M3034Q2N7JD99RA1D8DGH1ZF", reportKey: "expiring-worker-credentials" },
+      {
+        runId: "rrun_01M3034Q2N7JD99RA1D8DGH1ZF",
+        reportKey: "expiring-worker-credentials",
+        reportName: "",
+      },
+    ]);
+  });
+
+  /**
+   * A saved report has no canned key, only an id and a name. The tool answers
+   * with the name so the card can read "Revenue by customer" rather than
+   * "Report", which is what a key-less run used to be called.
+   */
+  it("carries the report's name when the tool gives one", () => {
+    const runs = reportRunsFrom([
+      exchange(
+        "run_report",
+        fenced(
+          JSON.stringify({
+            runId: "rrun_01M3034Q2N7JD99RA1D8DGH1ZF",
+            definitionId: "rdef_01M3034Q2N7JD99RA1D8DGH1ZF",
+            reportName: "Revenue by customer",
+            status: "queued",
+            finished: false,
+          }),
+        ),
+      ),
+    ]);
+
+    expect(runs).toEqual([
+      {
+        runId: "rrun_01M3034Q2N7JD99RA1D8DGH1ZF",
+        reportKey: "",
+        reportName: "Revenue by customer",
+      },
     ]);
   });
 

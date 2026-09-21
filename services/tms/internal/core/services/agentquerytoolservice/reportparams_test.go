@@ -26,7 +26,7 @@ func unbilledEntry() *canned.Entry {
 func TestNormalizeReportParameters_UnwrapsTheShapeAModelInvents(t *testing.T) {
 	t.Parallel()
 
-	normalized := normalizeReportParameters(unbilledEntry(), map[string]any{
+	normalized := normalizeReportParameters(unbilledEntry().Definition, map[string]any{
 		"windowDays": "90",
 		"statuses": map[string]any{
 			"item": []any{"Completed", "ReadyToInvoice", "PartiallyCompleted"},
@@ -55,7 +55,7 @@ func TestNormalizeReportParameters_AcceptsTheOtherWrappersAndAScalar(t *testing.
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			normalized := normalizeReportParameters(
-				unbilledEntry(),
+				unbilledEntry().Definition,
 				map[string]any{"statuses": value},
 			)
 			list, ok := normalized["statuses"].([]any)
@@ -68,7 +68,7 @@ func TestNormalizeReportParameters_AcceptsTheOtherWrappersAndAScalar(t *testing.
 func TestNormalizeReportParameters_LeavesAProperListAlone(t *testing.T) {
 	t.Parallel()
 
-	normalized := normalizeReportParameters(unbilledEntry(), map[string]any{
+	normalized := normalizeReportParameters(unbilledEntry().Definition, map[string]any{
 		"statuses": []any{"Completed", "Invoiced"},
 	})
 
@@ -81,7 +81,7 @@ func TestNormalizeReportParameters_WillNotReachIntoARealObject(t *testing.T) {
 	t.Parallel()
 
 	value := map[string]any{"item": []any{"Completed"}, "mode": "any"}
-	normalized := normalizeReportParameters(unbilledEntry(), map[string]any{"statuses": value})
+	normalized := normalizeReportParameters(unbilledEntry().Definition, map[string]any{"statuses": value})
 
 	assert.Equal(t, value, normalized["statuses"])
 }
@@ -90,7 +90,7 @@ func TestNormalizeReportParameters_WillNotReachIntoARealObject(t *testing.T) {
 func TestNormalizeReportParameters_UnwrapsAOneItemListForASingleValue(t *testing.T) {
 	t.Parallel()
 
-	normalized := normalizeReportParameters(unbilledEntry(), map[string]any{
+	normalized := normalizeReportParameters(unbilledEntry().Definition, map[string]any{
 		"windowDays": []any{90},
 	})
 
@@ -102,7 +102,7 @@ func TestNormalizeReportParameters_UnwrapsAOneItemListForASingleValue(t *testing
 func TestNormalizeReportParameters_AddsNothing(t *testing.T) {
 	t.Parallel()
 
-	normalized := normalizeReportParameters(unbilledEntry(), map[string]any{"windowDays": 90})
+	normalized := normalizeReportParameters(unbilledEntry().Definition, map[string]any{"windowDays": 90})
 
 	assert.NotContains(t, normalized, "statuses")
 	assert.Len(t, normalized, 1)
@@ -112,7 +112,7 @@ func TestNormalizeReportParameters_SurvivesAReportWithNoDefinition(t *testing.T)
 	t.Parallel()
 
 	values := map[string]any{"statuses": "Completed"}
-	assert.Equal(t, values, normalizeReportParameters(&canned.Entry{}, values))
+	assert.Equal(t, values, normalizeReportParameters(&report.Definition{}, values))
 	assert.Equal(t, values, normalizeReportParameters(nil, values))
 }
 

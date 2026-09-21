@@ -5,6 +5,8 @@ import type { ToolExchange } from "./thread-view";
 export type ThreadReportRun = {
   runId: string;
   reportKey: string;
+  /** The report's own name, when the tool knew it; a saved report has no key. */
+  reportName: string;
 };
 
 /** The tools whose results name a run worth following. */
@@ -65,12 +67,16 @@ function parseRunResult(content: string): ThreadReportRun | null {
     return null;
   }
 
-  const { runId, reportKey } = payload as Record<string, unknown>;
+  const { runId, reportKey, reportName } = payload as Record<string, unknown>;
   if (typeof runId !== "string" || runId === "") {
     return null;
   }
 
-  return { runId, reportKey: typeof reportKey === "string" ? reportKey : "" };
+  return {
+    runId,
+    reportKey: typeof reportKey === "string" ? reportKey : "",
+    reportName: typeof reportName === "string" ? reportName.trim() : "",
+  };
 }
 
 /**

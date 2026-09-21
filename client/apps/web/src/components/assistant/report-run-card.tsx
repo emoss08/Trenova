@@ -67,11 +67,14 @@ export function ReportRunCard({ run }: { run: ThreadReportRun }) {
 }
 
 /**
- * The report's own name is not in the run record — the run carries the canned
- * key it was compiled from — so the key is shown as a name rather than left as
- * a slug nobody set.
+ * The tool names the report when it can. Failing that, the run carries the
+ * canned key it was compiled from, so the key is shown as a name rather than
+ * left as a slug nobody set.
  */
 function reportLabel(run: ThreadReportRun, t: ReturnType<typeof useT>): string {
+  if (run.reportName !== "") {
+    return run.reportName;
+  }
   if (run.reportKey === "") {
     return t("Report");
   }

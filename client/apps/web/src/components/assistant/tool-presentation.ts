@@ -44,6 +44,13 @@ const TOOL_TITLES: Record<string, string> = {
   list_reports: "Browse reports",
   run_report: "Start report",
   get_report_run: "Check report run",
+  describe_report: "Read report",
+  list_report_datasets: "Browse datasets",
+  describe_report_dataset: "Read dataset",
+  preview_report: "Preview report",
+  create_report: "Create report",
+  update_report: "Change report",
+  fork_report: "Copy report",
   flag_for_manual_review: "Flag for manual review",
   request_missing_docs: "Request missing documents",
   attach_document_to_bqi: "Attach document to billing item",
@@ -67,9 +74,11 @@ const SUBJECT_KEYS = [
   "moveId",
   "proNumber",
   "reportKey",
+  "definitionId",
   "runId",
   "workerNumber",
   "ptoId",
+  "dataset",
   "query",
   "search",
   "shipmentId",
@@ -184,8 +193,24 @@ export function describeToolCall(
   const firstScalar = Object.values(values).find(
     (value) => typeof value === "string" && value.trim() !== "",
   );
+  if (typeof firstScalar === "string") {
+    return { title, subject: firstScalar };
+  }
 
-  return { title, subject: typeof firstScalar === "string" ? firstScalar : "" };
+  return { title, subject: definitionDataset(values.definition) };
+}
+
+/**
+ * A report definition names no record; its whole question is the object. The
+ * dataset it is built on is the one word that says what it is about.
+ */
+function definitionDataset(definition: unknown): string {
+  if (typeof definition !== "object" || definition === null) {
+    return "";
+  }
+  const entity = (definition as { entity?: unknown }).entity;
+
+  return typeof entity === "string" ? entity.trim() : "";
 }
 
 export type ParsedToolResult =

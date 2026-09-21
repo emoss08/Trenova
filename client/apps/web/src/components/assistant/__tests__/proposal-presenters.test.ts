@@ -240,6 +240,112 @@ describe("presentProposal", () => {
   });
 });
 
+/**
+ * A report the model wrote is a definition object nobody should have to read on
+ * a card. The presenter says what it would save — the name, the dataset and how
+ * many columns — and keeps the definition itself off the face.
+ */
+describe("presentProposal for report tools", () => {
+  const definition = {
+    entity: "shipment",
+    columns: [
+      { id: "c1", ref: { path: ["customer"], field: "name" }, kind: "dimension" },
+      { id: "c2", ref: { field: "totalChargeAmount" }, kind: "measure", agg: "sum" },
+    ],
+    filters: {
+      op: "and",
+      filters: [{ ref: { field: "status" }, operator: "eq", value: "Completed" }],
+    },
+    parameters: [{ name: "windowDays", type: "int", required: true }],
+  };
+
+  it("describes a new report by name, dataset and shape", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "create_report",
+        arguments: {
+          name: "Revenue by customer",
+          description: "Completed revenue per customer.",
+          category: "Accounting",
+          visibility: "shared",
+          definition,
+        },
+      }),
+    );
+
+    expect(view.title).toBe("Create a report");
+    expect(view.summary).toBe(
+      "Save “Revenue by customer” as a new shared report on the shipment dataset.",
+    );
+    expect(view.highlights).toEqual([
+      { label: "Columns", value: "customer.name, sum of totalChargeAmount" },
+      { label: "Filters", value: "1 filter" },
+      { label: "Parameters", value: "windowDays" },
+      { label: "Category", value: "Accounting" },
+      { label: "Description", value: "Completed revenue per customer." },
+    ]);
+    expect(view.reversible).toBe(true);
+  });
+
+  it("describes a change to a saved report by what it touches", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "update_report",
+        arguments: {
+          definitionId: "rdef_01M3034Q2N7JD99RA1D8DGH1ZF",
+          name: "Revenue by customer, completed",
+          definition,
+        },
+      }),
+    );
+
+    expect(view.title).toBe("Change a report");
+    expect(view.summary).toBe("Change this report's name and definition.");
+    expect(view.highlights).toEqual([
+      { label: "Name", value: "Revenue by customer, completed" },
+      { label: "Columns", value: "customer.name, sum of totalChargeAmount" },
+      { label: "Filters", value: "1 filter" },
+      { label: "Parameters", value: "windowDays" },
+    ]);
+    expect(view.reversible).toBe(true);
+  });
+
+  it("describes a metadata-only change without inventing a definition", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "update_report",
+        arguments: {
+          definitionId: "rdef_01M3034Q2N7JD99RA1D8DGH1ZF",
+          visibility: "shared",
+          status: "archived",
+        },
+      }),
+    );
+
+    expect(view.summary).toBe("Change this report's visibility and status.");
+    expect(view.highlights).toEqual([
+      { label: "Visibility", value: "Shared" },
+      { label: "Status", value: "Archived" },
+    ]);
+  });
+
+  it("describes a fork as a copy of the built-in report", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "fork_report",
+        arguments: { reportKey: "ar_aging_by_customer", name: "AR aging, 60-day buckets" },
+      }),
+    );
+
+    expect(view.title).toBe("Copy a report");
+    expect(view.summary).toBe(
+      "Make a copy of the built-in ar_aging_by_customer report named “AR aging, 60-day buckets”.",
+    );
+    expect(view.highlights).toEqual([]);
+    expect(view.reversible).toBe(true);
+  });
+});
+
 describe("shortRef", () => {
   it("shortens a PULID and leaves a human reference alone", () => {
     expect(shortRef("shp_01M2PRNXAMQNKK9HK9V5B817QE")).toBe("…B817QE");

@@ -113,7 +113,179 @@ function severityOf(value: string): { label: string; tone: Tone } | null {
   }
 }
 
+type DefinitionColumn = {
+  ref?: { path?: unknown; field?: unknown };
+  agg?: unknown;
+  label?: unknown;
+};
+
+/**
+ * A report definition on a card, in the words an approver can check: the
+ * dataset, the columns as "sum of revenue" and a count of filters. The object
+ * itself stays off the face; the columns and filters are what the person is
+ * approving, and a reader can no more audit a filter tree than a PULID.
+ */
+function definitionFacts(definition: unknown): ProposalFact[] {
+  if (typeof definition !== "object" || definition === null) {
+    return [];
+  }
+  const shape = definition as {
+    columns?: unknown;
+    filters?: { filters?: unknown; groups?: unknown };
+    parameters?: unknown;
+  };
+
+  const columns = Array.isArray(shape.columns)
+    ? shape.columns.map((column) => columnText((column ?? {}) as DefinitionColumn))
+    : [];
+  const filterCount = countFilters(shape.filters);
+  const parameters = Array.isArray(shape.parameters)
+    ? shape.parameters.map((parameter) => text((parameter as { name?: unknown })?.name))
+    : [];
+
+  return facts(
+    fact("Columns", columns.filter((column) => column !== "").join(", ")),
+    filterCount > 0 ? fact("Filters", plural(filterCount, "filter", "filters")) : null,
+    fact("Parameters", parameters.filter((name) => name !== "").join(", ")),
+  );
+}
+
+function columnText(column: DefinitionColumn): string {
+  const path = Array.isArray(column.ref?.path) ? column.ref.path.map(text) : [];
+  const field = [...path, text(column.ref?.field)].filter((part) => part !== "").join(".");
+  const label = text(column.label);
+  const agg = text(column.agg);
+
+  if (field === "") {
+    return label;
+  }
+  if (agg === "") {
+    return field;
+  }
+  return `${agg.replaceAll("_", " ")} of ${field}`;
+}
+
+function countFilters(group: { filters?: unknown; groups?: unknown } | undefined): number {
+  if (typeof group !== "object" || group === null) {
+    return 0;
+  }
+  const own = Array.isArray(group.filters) ? group.filters.length : 0;
+  const nested = Array.isArray(group.groups)
+    ? group.groups.reduce(
+        (sum: number, child) => sum + countFilters(child as { filters?: unknown }),
+        0,
+      )
+    : 0;
+
+  return own + nested;
+}
+
+const REPORT_METADATA_KEYS = [
+  "name",
+  "description",
+  "category",
+  "tags",
+  "visibility",
+  "defaultFormat",
+  "status",
+] as const;
+
+const REPORT_METADATA_LABELS: Record<(typeof REPORT_METADATA_KEYS)[number], string> = {
+  name: "Name",
+  description: "Description",
+  category: "Category",
+  tags: "Tags",
+  visibility: "Visibility",
+  defaultFormat: "Format",
+  status: "Status",
+};
+
+/** "needs_attention" reads as "Needs attention"; a file format reads as its acronym. */
+function reportMetadataValue(key: (typeof REPORT_METADATA_KEYS)[number], value: unknown): string {
+  const raw = text(value);
+  switch (key) {
+    case "tags":
+      return list(value).join(", ");
+    case "defaultFormat":
+      return raw.toUpperCase();
+    case "visibility":
+    case "status": {
+      const words = raw.replaceAll("_", " ").toLowerCase();
+      return words === "" ? "" : words[0].toUpperCase() + words.slice(1);
+    }
+    default:
+      return raw;
+  }
+}
+
 const PRESENTERS: Record<string, Presenter> = {
+  create_report: (args) => {
+    const name = text(args.name);
+    const dataset = text((args.definition as { entity?: unknown } | undefined)?.entity);
+    const visibility = text(args.visibility).toLowerCase();
+
+    return {
+      title: "Create a report",
+      summary: `Save ${name ? `“${name}”` : "a new report"} as a new ${
+        visibility === "shared" ? "shared " : ""
+      }report${dataset ? ` on the ${dataset} dataset` : ""}.`,
+      highlights: facts(
+        ...definitionFacts(args.definition),
+        fact("Category", text(args.category)),
+        fact("Tags", list(args.tags).join(", ")),
+        fact("Format", reportMetadataValue("defaultFormat", args.defaultFormat)),
+        fact("Description", text(args.description)),
+      ),
+      covered: [...REPORT_METADATA_KEYS, "definition"],
+      reversible: true,
+    };
+  },
+
+  update_report: (args) => {
+    const changed = REPORT_METADATA_KEYS.filter((key) => args[key] !== undefined).map((key) =>
+      REPORT_METADATA_LABELS[key].toLowerCase(),
+    );
+    if (args.definition !== undefined) {
+      changed.push("definition");
+    }
+    const what =
+      changed.length === 0
+        ? "settings"
+        : changed.length === 1
+          ? changed[0]
+          : `${changed.slice(0, -1).join(", ")} and ${changed[changed.length - 1]}`;
+
+    return {
+      title: "Change a report",
+      summary: `Change this report's ${what}.`,
+      highlights: facts(
+        ...REPORT_METADATA_KEYS.map((key) =>
+          args[key] === undefined
+            ? null
+            : fact(REPORT_METADATA_LABELS[key], reportMetadataValue(key, args[key])),
+        ),
+        ...definitionFacts(args.definition),
+      ),
+      covered: ["definitionId", ...REPORT_METADATA_KEYS, "definition"],
+      reversible: true,
+    };
+  },
+
+  fork_report: (args) => {
+    const key = text(args.reportKey);
+    const name = text(args.name);
+
+    return {
+      title: "Copy a report",
+      summary: `Make a copy of the built-in ${key || "report"} report${
+        name ? ` named “${name}”` : ""
+      }.`,
+      highlights: [],
+      covered: ["reportKey", "name"],
+      reversible: true,
+    };
+  },
+
   request_missing_docs: (args) => {
     const to = list(args.to);
     const documents = list(args.requestedDocuments);

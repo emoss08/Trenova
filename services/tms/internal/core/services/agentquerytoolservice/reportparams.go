@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
 )
 
 // listWrapperKeys are the shapes a model reaches for when it has to produce a
@@ -30,8 +29,11 @@ var listWrapperKeys = []string{"item", "items", "value", "values", "list"}
 // report does not accept, a window that is not a number — is still rejected by
 // the compiler, in the compiler's own words, because a tool that quietly
 // reinterpreted those would run a report nobody asked for.
-func normalizeReportParameters(entry *canned.Entry, values map[string]any) map[string]any {
-	if entry == nil || entry.Definition == nil || len(values) == 0 {
+func normalizeReportParameters(
+	definition *report.Definition,
+	values map[string]any,
+) map[string]any {
+	if definition == nil || len(values) == 0 {
 		return values
 	}
 
@@ -40,8 +42,8 @@ func normalizeReportParameters(entry *canned.Entry, values map[string]any) map[s
 		normalized[key] = value
 	}
 
-	for i := range entry.Definition.Parameters {
-		parameter := &entry.Definition.Parameters[i]
+	for i := range definition.Parameters {
+		parameter := &definition.Parameters[i]
 		value, ok := normalized[parameter.Name]
 		if !ok || value == nil {
 			continue

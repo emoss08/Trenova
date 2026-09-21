@@ -11,7 +11,7 @@ vi.mock("@/hooks/use-reports", () => ({
 
 import { ReportRunCard } from "./report-run-card";
 
-const run = { runId: "rrun_1", reportKey: "expiring-worker-credentials" };
+const run = { runId: "rrun_1", reportKey: "expiring-worker-credentials", reportName: "" };
 
 describe("ReportRunCard", () => {
   beforeEach(() => {
@@ -26,6 +26,14 @@ describe("ReportRunCard", () => {
     expect(screen.getByText("Expiring Worker Credentials")).toBeInTheDocument();
     expect(screen.getByText("Queued — waiting to start.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /download/i })).not.toBeInTheDocument();
+  });
+
+  it("prefers the report's own name to a key read as one", () => {
+    mocks.useReportRun.mockReturnValue({ data: { status: "queued" }, isPending: false });
+
+    render(<ReportRunCard run={{ ...run, reportKey: "", reportName: "Revenue by customer" }} />);
+
+    expect(screen.getByText("Revenue by customer")).toBeInTheDocument();
   });
 
   it("offers the download once the run has succeeded", () => {

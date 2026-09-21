@@ -2,6 +2,7 @@ package agenttoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
 	"go.uber.org/fx"
@@ -26,6 +27,9 @@ var Module = fx.Module("agent-tool-service",
 		fx.Annotate(provideApproveWorkerPTOTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideRejectWorkerPTOTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideCancelWorkerPTOTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideCreateReportTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideUpdateReportTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideForkReportTool, fx.ResultTags(`group:"agent_tools"`)),
 		NewRegistry,
 	),
 )
@@ -58,4 +62,16 @@ func provideRejectWorkerPTOTool(pto services.WorkerPTOService) services.AgentToo
 
 func provideCancelWorkerPTOTool(pto services.WorkerPTOService) services.AgentTool {
 	return newCancelWorkerPTOTool(pto)
+}
+
+func provideCreateReportTool(reports *reporting.Service) services.AgentTool {
+	return newCreateReportTool(reports)
+}
+
+func provideUpdateReportTool(reports *reporting.Service) services.AgentTool {
+	return newUpdateReportTool(reports)
+}
+
+func provideForkReportTool(reports *reporting.Service) services.AgentTool {
+	return newForkReportTool(reports)
 }

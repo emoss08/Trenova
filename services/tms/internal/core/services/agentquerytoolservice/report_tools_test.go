@@ -2,9 +2,11 @@ package agentquerytoolservice
 
 import (
 	"context"
-	"github.com/bytedance/sonic"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/bytedance/sonic"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -18,12 +20,21 @@ import (
 )
 
 type fakeReporting struct {
-	entries []*canned.Entry
-	run     *report.ReportRun
-	runErr  error
+	entries     []*canned.Entry
+	definitions []*report.ReportDefinition
+	run         *report.ReportRun
+	runErr      error
+	// settled is what GetRun answers after RunReport, when a test wants the
+	// run to have moved on; nil answers run again.
+	settled    *report.ReportRun
+	polls      int
+	preview    *reporting.PreviewResult
+	previewErr error
 
 	submitted *reporting.RunReportRequest
 	fetched   *reporting.GetRunRequest
+	listed    *reporting.ListDefinitionsRequest
+	previewed *reporting.PreviewRequest
 }
 
 func (f *fakeReporting) ListCanned() []*canned.Entry { return f.entries }
@@ -55,8 +66,61 @@ func (f *fakeReporting) GetRun(
 	req *reporting.GetRunRequest,
 ) (*report.ReportRun, error) {
 	f.fetched = req
+	f.polls++
+	if f.settled != nil {
+		return f.settled, nil
+	}
 
 	return f.run, nil
+}
+
+func (f *fakeReporting) GetDefinition(
+	_ context.Context,
+	req *reporting.GetDefinitionRequest,
+) (*report.ReportDefinition, error) {
+	for _, definition := range f.definitions {
+		if definition.ID != req.DefinitionID {
+			continue
+		}
+		if definition.Visibility == report.VisibilityShared ||
+			definition.OwnerID == req.TenantInfo.UserID {
+			return definition, nil
+		}
+	}
+
+	return nil, errortypes.NewNotFoundError("ReportDefinition not found")
+}
+
+func (f *fakeReporting) ListDefinitions(
+	_ context.Context,
+	req *reporting.ListDefinitionsRequest,
+) ([]*report.ReportDefinition, error) {
+	f.listed = req
+
+	visible := make([]*report.ReportDefinition, 0, len(f.definitions))
+	for _, definition := range f.definitions {
+		if definition.Visibility == report.VisibilityShared ||
+			definition.OwnerID == req.TenantInfo.UserID {
+			visible = append(visible, definition)
+		}
+	}
+
+	return visible, nil
+}
+
+func (f *fakeReporting) Preview(
+	_ context.Context,
+	req *reporting.PreviewRequest,
+) (*reporting.PreviewResult, error) {
+	f.previewed = req
+	if f.previewErr != nil {
+		return nil, f.previewErr
+	}
+	if f.preview == nil {
+		return &reporting.PreviewResult{}, nil
+	}
+
+	return f.preview, nil
 }
 
 type fakePermissions struct {
@@ -64,6 +128,28 @@ type fakePermissions struct {
 
 	allowed  bool
 	captured *serviceports.PermissionCheckRequest
+	// readable names the resources the actor may read from the report
+	// catalog; nil means every resource, at full sensitivity.
+	readable map[string]*serviceports.ResourcePermissionDetail
+}
+
+func (f *fakePermissions) GetResourcePermissions(
+	_ context.Context,
+	_, _ pulid.ID,
+	resource string,
+) (*serviceports.ResourcePermissionDetail, error) {
+	if f.readable == nil {
+		return &serviceports.ResourcePermissionDetail{
+			Resource:       resource,
+			Operations:     []permission.Operation{permission.OpRead},
+			MaxSensitivity: permission.SensitivityConfidential,
+		}, nil
+	}
+	if detail, ok := f.readable[resource]; ok {
+		return detail, nil
+	}
+
+	return &serviceports.ResourcePermissionDetail{Resource: resource}, nil
 }
 
 func (f *fakePermissions) Check(
@@ -111,11 +197,23 @@ func reportingTools(
 	}
 	permissions := &fakePermissions{allowed: true}
 
+	runner, ok := newRunReportTool(service, permissions).(*runReportTool)
+	require.True(t, ok)
+	// The settle window is real time; a test that wants "still running" waits
+	// this long, so it is short, and one that wants "finished" returns at the
+	// first poll.
+	runner.settleWindow = 40 * time.Millisecond
+	runner.settlePoll = 2 * time.Millisecond
+
 	tools := map[string]serviceports.AgentQueryTool{}
 	for _, tool := range []serviceports.AgentQueryTool{
 		newListReportsTool(service),
-		newRunReportTool(service, permissions),
+		runner,
 		newGetReportRunTool(service),
+		newDescribeReportTool(service),
+		newListReportDatasetsTool(permissions),
+		newDescribeReportDatasetTool(permissions),
+		newPreviewReportTool(service),
 	} {
 		tools[tool.Name()] = tool
 	}
@@ -412,7 +510,7 @@ func TestRequireReportParameters_NamesTheChoicesAndSaysToAsk(t *testing.T) {
 		},
 	}
 
-	err := requireReportParameters(entry, map[string]any{})
+	err := requireReportParameters(entry.Name, entry.Definition, map[string]any{})
 
 	require.Error(t, err)
 	message := err.Error()
@@ -435,5 +533,102 @@ func TestRequireReportParameters_SaysNothingWhenEveryValueIsSupplied(t *testing.
 		},
 	}
 
-	assert.NoError(t, requireReportParameters(entry, map[string]any{"windowDays": 30}))
+	assert.NoError(t, requireReportParameters(
+		entry.Name, entry.Definition, map[string]any{"windowDays": 30},
+	))
+}
+
+/*
+The catalog and the tool disagreed on the key's name once already, and the
+schema is what a model reads first. It declares the alias too, so a model that
+writes "key" is right by the schema's own account and the argument survives
+whatever the runtime prunes.
+*/
+func TestRunReport_DeclaresTheKeyAliasInItsSchema(t *testing.T) {
+	t.Parallel()
+
+	_, _, tools := reportingTools(t)
+
+	properties, ok := tools["run_report"].ParamSchema()["properties"].(map[string]any)
+	require.True(t, ok)
+	assert.Contains(t, properties, "reportKey")
+	assert.Contains(t, properties, "key")
+	assert.Contains(t, properties, "definitionId")
+	assert.NotContains(t, tools["run_report"].ParamSchema(), "required",
+		"a saved report has no key and a built-in one has no definition id")
+}
+
+/*
+A report that finishes at once used to be announced as queued: the card above
+the sentence read "finished with 9 rows" while the sentence said to wait. The
+tool now waits a moment for exactly that run and answers with the outcome.
+*/
+func TestRunReport_AnswersWithTheOutcomeWhenTheRunFinishesAtOnce(t *testing.T) {
+	t.Parallel()
+
+	service, _, tools := reportingTools(t)
+	service.settled = &report.ReportRun{
+		ID:        service.run.ID,
+		CannedKey: service.run.CannedKey,
+		Status:    report.RunStatusSucceeded,
+		Format:    report.FormatXLSX,
+		RowCount:  9,
+	}
+
+	result, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+		"reportKey":  "ar_aging_by_customer",
+		"parameters": map[string]any{"asOf": "2026-03-01"},
+	}))
+	require.NoError(t, err)
+
+	status, ok := result.(reportRunStatus)
+	require.True(t, ok)
+	assert.True(t, status.Finished)
+	assert.Equal(t, string(report.RunStatusSucceeded), status.Status)
+	assert.EqualValues(t, 9, status.RowCount)
+	assert.Equal(t, "AR Aging by Customer", status.ReportName)
+	assert.Contains(t, status.Note, "finished with 9 rows")
+	assert.NotContains(t, status.Note, "queued")
+	assert.Equal(t, service.run.ID, service.fetched.RunID)
+}
+
+func TestRunReport_StillSaysStartedWhenTheRunOutlastsTheWait(t *testing.T) {
+	t.Parallel()
+
+	service, _, tools := reportingTools(t)
+
+	result, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+		"reportKey":  "ar_aging_by_customer",
+		"parameters": map[string]any{"asOf": "2026-03-01"},
+	}))
+	require.NoError(t, err)
+
+	status, ok := result.(reportRunStatus)
+	require.True(t, ok)
+	assert.False(t, status.Finished)
+	assert.Contains(t, status.Note, "queued")
+	assert.Positive(t, service.polls, "the run was read back while the window was open")
+}
+
+func TestRunReport_ReportsAFailureItSawWhileWaiting(t *testing.T) {
+	t.Parallel()
+
+	service, _, tools := reportingTools(t)
+	service.settled = &report.ReportRun{
+		ID:     service.run.ID,
+		Status: report.RunStatusFailed,
+		Error:  &report.RunError{Message: "the dataset timed out"},
+	}
+
+	result, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+		"reportKey":  "ar_aging_by_customer",
+		"parameters": map[string]any{"asOf": "2026-03-01"},
+	}))
+	require.NoError(t, err)
+
+	status, ok := result.(reportRunStatus)
+	require.True(t, ok)
+	assert.True(t, status.Finished)
+	assert.Contains(t, status.Note, "did not finish")
+	assert.Contains(t, status.Note, "the dataset timed out")
 }

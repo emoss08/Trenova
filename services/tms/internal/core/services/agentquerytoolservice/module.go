@@ -40,6 +40,10 @@ var Module = fx.Module("agent-query-tool-service",
 		fx.Annotate(provideListReportsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideRunReportTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideGetReportRunTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideDescribeReportTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideListReportDatasetsTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideDescribeReportDatasetTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(providePreviewReportTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		NewRegistry,
 	),
 )
@@ -61,6 +65,24 @@ func provideRunReportTool(
 
 func provideGetReportRunTool(reports *reporting.Service) services.AgentQueryTool {
 	return newGetReportRunTool(reports)
+}
+
+func provideDescribeReportTool(reports *reporting.Service) services.AgentQueryTool {
+	return newDescribeReportTool(reports)
+}
+
+func provideListReportDatasetsTool(permissions services.PermissionEngine) services.AgentQueryTool {
+	return newListReportDatasetsTool(permissions)
+}
+
+func provideDescribeReportDatasetTool(
+	permissions services.PermissionEngine,
+) services.AgentQueryTool {
+	return newDescribeReportDatasetTool(permissions)
+}
+
+func providePreviewReportTool(reports *reporting.Service) services.AgentQueryTool {
+	return newPreviewReportTool(reports)
 }
 
 func provideListTimeOffTool(pto services.WorkerPTOService) services.AgentQueryTool {
