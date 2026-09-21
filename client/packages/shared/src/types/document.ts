@@ -35,7 +35,11 @@ export const documentShipmentDraftStatusSchema = z.enum([
 export type DocumentContentStatus = z.infer<typeof documentContentStatusSchema>;
 export type DocumentShipmentDraftStatus = z.infer<typeof documentShipmentDraftStatusSchema>;
 
-export const documentProcessingProfileSchema = z.enum(["none", "rate_confirmation_import"]);
+export const documentProcessingProfileSchema = z.enum([
+  "none",
+  "rate_confirmation_import",
+  "assistant_attachment",
+]);
 
 export type DocumentProcessingProfile = z.infer<typeof documentProcessingProfileSchema>;
 

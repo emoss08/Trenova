@@ -35,6 +35,10 @@ type TurnRequest struct {
 	// ToolObserver sees each tool result as it lands, for the artifacts the
 	// turn produces.
 	ToolObserver serviceports.ToolObserver
+	// Attachments and Mentions are what the person handed over with the
+	// message: files, and records named from the composer.
+	Attachments []agentdefinition.RuntimeAttachment
+	Mentions    []agentdefinition.RuntimeMention
 }
 
 type TurnResult struct {
@@ -133,29 +137,30 @@ func (s *Service) buildContext(
 	ctx context.Context,
 	req *TurnRequest,
 ) agentdefinition.RuntimeContext {
+	bare := agentdefinition.RuntimeContext{
+		Trigger:     agent.RunTriggerChat,
+		Page:        req.Page,
+		Subject:     req.Subject,
+		Attachments: req.Attachments,
+		Mentions:    req.Mentions,
+	}
 	if s.contexts == nil {
-		return agentdefinition.RuntimeContext{
-			Trigger: agent.RunTriggerChat,
-			Page:    req.Page,
-			Subject: req.Subject,
-		}
+		return bare
 	}
 
 	runtimeContext, err := s.contexts.Build(ctx, &serviceports.RuntimeContextRequest{
-		Definition: req.Definition,
-		Actor:      req.Actor,
-		Trigger:    agent.RunTriggerChat,
-		Subject:    req.Subject,
-		Page:       req.Page,
+		Definition:  req.Definition,
+		Actor:       req.Actor,
+		Trigger:     agent.RunTriggerChat,
+		Subject:     req.Subject,
+		Page:        req.Page,
+		Attachments: req.Attachments,
+		Mentions:    req.Mentions,
 	})
 	if err != nil {
 		s.logger.Warn("assistant context could not be built", zap.Error(err))
 
-		return agentdefinition.RuntimeContext{
-			Trigger: agent.RunTriggerChat,
-			Page:    req.Page,
-			Subject: req.Subject,
-		}
+		return bare
 	}
 
 	return runtimeContext

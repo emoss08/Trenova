@@ -11,6 +11,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
@@ -516,6 +517,32 @@ func (a *Activities) ExpireStaleProposalsActivity(
 	}
 
 	return &ExpireStaleProposalsResult{Expired: expired}, nil
+}
+
+// DeleteStaleAskThreadsActivity removes one batch of unkept quick questions
+// older than the cut-off. It reports how many went, so the workflow knows
+// whether to ask again.
+func (a *Activities) DeleteStaleAskThreadsActivity(
+	ctx context.Context,
+	input *DeleteStaleAskThreadsInput,
+) (*DeleteStaleAskThreadsResult, error) {
+	if a.conversations == nil {
+		return &DeleteStaleAskThreadsResult{}, nil
+	}
+
+	deleted, err := a.conversations.DeleteStaleThreads(ctx, repositories.DeleteStaleThreadsRequest{
+		Origin: conversation.ThreadOriginAsk,
+		Before: input.Before,
+		Limit:  deleteStaleAskBatch,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("delete stale ask threads: %w", err)
+	}
+	if deleted > 0 {
+		a.logger.Info("removed quick questions nobody kept", zap.Int("deleted", deleted))
+	}
+
+	return &DeleteStaleAskThreadsResult{Deleted: deleted}, nil
 }
 
 // RemindPendingProposalsActivity brings proposals that have waited past the

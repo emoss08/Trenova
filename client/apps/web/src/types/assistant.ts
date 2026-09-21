@@ -277,12 +277,64 @@ export const toolCallRecordSchema = z.object({
   arguments: z.record(z.string(), z.unknown()).nullish(),
 });
 
+/** One filter as a table carries it, in the shape the list tools take. */
+export const pageViewFilterSchema = z.object({
+  field: z.string(),
+  operator: z.string(),
+  value: z.unknown().optional(),
+});
+
+export const pageViewSortSchema = z.object({
+  field: z.string(),
+  direction: z.string(),
+});
+
+/** One figure above a table, as the person read it. */
+export const pageViewKpiSchema = z.object({
+  label: z.string(),
+  value: z.string(),
+  sub: z.string().optional(),
+});
+
+/**
+ * The table the page was showing: its filters, sort, selection and figures,
+ * so "these rows" can be re-run as a query. Mirrors the server's PageView,
+ * which bounds every list and validates the resource and the operators.
+ */
+export const pageViewSchema = z.object({
+  resource: z.string(),
+  query: z.string().optional(),
+  fieldFilters: z.array(pageViewFilterSchema).optional(),
+  filterGroups: z.array(z.object({ filters: z.array(pageViewFilterSchema) })).optional(),
+  sort: z.array(pageViewSortSchema).optional(),
+  selection: z.object({ count: z.number(), ids: z.array(z.string()).optional() }).optional(),
+  kpis: z.array(pageViewKpiSchema).optional(),
+  visibleColumns: z.array(z.string()).optional(),
+  rowCount: z.number().nullish(),
+});
+
 /** What the person was looking at when they asked; mirrors the server's PageContext. */
 export const pageContextSchema = z.object({
   path: z.string(),
   entityType: z.string().optional().default(""),
   entityId: z.string().optional().default(""),
   title: z.string().optional().default(""),
+  view: pageViewSchema.nullish(),
+});
+
+/** A record the person named from the composer; mirrors the server's EntityRef. */
+export const entityRefSchema = z.object({
+  type: z.string(),
+  id: z.string(),
+  label: z.string().optional().default(""),
+});
+
+/** A file on a user turn: the document it became and enough to draw a chip. */
+export const messageAttachmentSchema = z.object({
+  documentId: z.string(),
+  fileName: z.string(),
+  contentType: z.string().optional(),
+  fileSize: z.number().optional(),
 });
 
 /**
@@ -310,6 +362,8 @@ export const assistantMessageSchema = z.object({
   scopeReason: z.string().optional().default(""),
   refused: z.boolean().default(false),
   pageContext: pageContextSchema.nullish(),
+  attachments: z.array(messageAttachmentSchema).nullish(),
+  mentions: z.array(entityRefSchema).nullish(),
   model: z.string().optional().default(""),
   inputTokens: z.number().default(0),
   outputTokens: z.number().default(0),
@@ -657,6 +711,7 @@ export type AssistantStreamEvent =
   | { event: "tool_finished"; data: z.infer<typeof assistantToolFinishedEventSchema> }
   | { event: "retrying"; data: z.infer<typeof assistantRetryingEventSchema> }
   | { event: "artifact"; data: z.infer<typeof assistantArtifactEventSchema> }
+  | { event: "thread"; data: AssistantThread }
   | { event: "done"; data: SendMessageResult }
   | { event: "error"; data: z.infer<typeof assistantErrorEventSchema> };
 
@@ -687,6 +742,8 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
       return { event, data: assistantRetryingEventSchema.parse(data) };
     case "artifact":
       return { event, data: assistantArtifactEventSchema.parse(data) };
+    case "thread":
+      return { event, data: assistantThreadSchema.parse(data) };
     case "done":
       return { event, data: sendMessageResultSchema.parse(data) };
     case "error":
@@ -719,6 +776,11 @@ export type AssistantProviderOption = z.infer<typeof assistantProviderOptionSche
 export type AssistantMessage = z.infer<typeof assistantMessageSchema>;
 export type AssistantMessagePage = z.infer<typeof assistantMessagePageSchema>;
 export type AssistantPageContext = z.infer<typeof pageContextSchema>;
+export type AssistantPageView = z.infer<typeof pageViewSchema>;
+export type AssistantPageViewFilter = z.infer<typeof pageViewFilterSchema>;
+export type AssistantPageViewKpi = z.infer<typeof pageViewKpiSchema>;
+export type AssistantEntityRef = z.infer<typeof entityRefSchema>;
+export type AssistantMessageAttachment = z.infer<typeof messageAttachmentSchema>;
 export type SendMessageResult = z.infer<typeof sendMessageResultSchema>;
 export type AssistantProposal = z.infer<typeof assistantProposalSchema>;
 export type ProposalStatus = z.infer<typeof proposalStatusSchema>;

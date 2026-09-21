@@ -409,3 +409,38 @@ describe("reduceTurn artifacts", () => {
     expect(parsed?.event).toBe("artifact");
   });
 });
+
+describe("a turn's context", () => {
+  it("starts with what the person handed over, shown on their provisional turn", () => {
+    const state = initialTurnState("Read this", null, {
+      attachments: [{ documentId: "doc_1", fileName: "rate-con.pdf" }],
+      mentions: [{ type: "customer", id: "cust_1", label: "Acme" }],
+    });
+
+    expect(state.attachments).toEqual([{ documentId: "doc_1", fileName: "rate-con.pdf" }]);
+    expect(state.mentions).toEqual([{ type: "customer", id: "cust_1", label: "Acme" }]);
+    expect(initialTurnState("Plain").attachments).toEqual([]);
+  });
+
+  it("keeps the thread a quick question was answered on", () => {
+    const thread = parseAssistantStreamEvent(
+      "thread",
+      JSON.stringify({
+        id: "athr_1",
+        businessUnitId: "bu_1",
+        organizationId: "org_1",
+        userId: "usr_1",
+        agentDefinitionId: "agdef_1",
+        status: "Active",
+        origin: "Ask",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    expect(thread?.event).toBe("thread");
+
+    const state = run([thread!, accepted]);
+    expect(state.thread?.id).toBe("athr_1");
+    expect(state.status).toBe("working");
+  });
+});

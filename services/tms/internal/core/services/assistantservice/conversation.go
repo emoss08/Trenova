@@ -5,7 +5,6 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -273,6 +272,7 @@ func (s *Service) SendMessageStream(
 	if page != nil {
 		page.Validate("context", multiErr)
 	}
+	mentions := validateMentions(req.Mentions, multiErr)
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
@@ -284,6 +284,19 @@ func (s *Service) SendMessageStream(
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	attachments, runtimeAttachments, err := s.resolveAttachments(
+		ctx, thread, req.AttachmentDocumentIDs, actor, req.TenantInfo,
+	)
+	if err != nil {
+		return nil, err
+	}
+	turnCtx := turnContext{
+		page:        page,
+		attachments: attachments,
+		runtime:     runtimeAttachments,
+		mentions:    mentions,
 	}
 
 	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
@@ -354,11 +367,13 @@ func (s *Service) SendMessageStream(
 		Proposals:           s.proposalOutcomes(ctx, thread, req.TenantInfo),
 		Subject:             s.describeSubject(ctx, thread, req.TenantInfo),
 		ToolObserver:        artifacts.observer(),
+		Attachments:         runtimeAttachments,
+		Mentions:            mentions,
 	}, emit)
 
 	if runErr != nil {
 		if turn != nil {
-			attachPageContext(turn.Messages, page)
+			attachTurnContext(turn.Messages, turnCtx)
 			saved, saveErr := s.conversations.AppendTurn(keep, repositories.AppendTurnRequest{
 				ThreadID:   thread.ID,
 				TenantInfo: req.TenantInfo,
@@ -377,7 +392,7 @@ func (s *Service) SendMessageStream(
 		return nil, runErr
 	}
 
-	attachPageContext(turn.Messages, page)
+	attachTurnContext(turn.Messages, turnCtx)
 
 	saved, err := s.conversations.AppendTurn(keep, repositories.AppendTurnRequest{
 		ThreadID:   thread.ID,
@@ -444,19 +459,4 @@ func truncateRunes(s string, limit int) string {
 	runes := []rune(s)
 
 	return strings.TrimSpace(string(runes[:limit])) + "…"
-}
-
-// attachPageContext records the page on the person's turn only: the assistant
-// and tool messages that follow are about the same page, but the fact worth
-// keeping is what the person was looking at when they asked.
-func attachPageContext(messages []conversation.Message, page *agent.PageContext) {
-	if page == nil {
-		return
-	}
-	for i := range messages {
-		if messages[i].Role == conversation.RoleUser {
-			messages[i].PageContext = page
-			return
-		}
-	}
 }

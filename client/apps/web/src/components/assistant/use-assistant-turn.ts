@@ -16,6 +16,7 @@ import {
   initialTurnState,
   isTurnActive,
   reduceTurn,
+  type TurnContext,
   type TurnFailureCause,
   type TurnFailureKind,
   type TurnState,
@@ -39,6 +40,9 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
   // The model the last send asked for, so a retry asks the same one rather
   // than silently falling back to automatic.
   const lastProviderRef = useRef("");
+  // What the last send handed over, so a retry carries the same files and
+  // records.
+  const lastContextExtrasRef = useRef<TurnContext>({});
 
   const failureMessage = useCallback(
     (kind: TurnFailureKind) => {
@@ -159,7 +163,12 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
   );
 
   const send = useCallback(
-    async (content: string, context?: AssistantPageContext | null, providerId = "") => {
+    async (
+      content: string,
+      context?: AssistantPageContext | null,
+      providerId = "",
+      extras: TurnContext = {},
+    ) => {
       // Sending over a reply still arriving cuts it off. The server keeps
       // what had run by then, so the thread is refetched to show it rather
       // than the cut-off turn vanishing under the new question.
@@ -182,10 +191,11 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       const pageContext = context === undefined ? (getContext?.() ?? null) : context;
       lastContextRef.current = pageContext;
       lastProviderRef.current = providerId;
+      lastContextExtrasRef.current = extras;
 
       let terminal = false;
       let done: SendMessageResult | null = null;
-      setTurn(initialTurnState(content, pageContext));
+      setTurn(initialTurnState(content, pageContext, extras));
 
       const onEvent = (event: AssistantStreamEvent) => {
         setTurn((state) => (state ? reduceTurn(state, event) : state));
@@ -203,8 +213,12 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           content,
           onEvent,
           controller.signal,
-          pageContext,
-          providerId,
+          {
+            context: pageContext,
+            providerId,
+            attachmentDocumentIds: (extras.attachments ?? []).map((item) => item.documentId),
+            mentions: extras.mentions ?? [],
+          },
         );
       } catch (error) {
         if (controller.signal.aborted) {
@@ -277,7 +291,13 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
     stop,
     dismiss,
     retry: turn
-      ? () => send(turn.userContent, lastContextRef.current, lastProviderRef.current)
+      ? () =>
+          send(
+            turn.userContent,
+            lastContextRef.current,
+            lastProviderRef.current,
+            lastContextExtrasRef.current,
+          )
       : undefined,
   };
 }

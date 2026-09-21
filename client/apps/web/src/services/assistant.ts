@@ -24,6 +24,7 @@ import {
   sendMessageResultSchema,
   type AgentDefinition,
   type AssistantArtifact,
+  type AssistantEntityRef,
   type AssistantPageContext,
   type ThreadOrigin,
   type AssistantPlan,
@@ -65,6 +66,22 @@ export type StartThreadOptions = {
   origin?: ThreadOrigin;
   subjectType?: string;
   subjectId?: string;
+};
+
+/** What rides with a message besides the words. */
+export type SendMessageOptions = {
+  context?: AssistantPageContext | null;
+  providerId?: string;
+  /** Documents uploaded to this thread for this message. */
+  attachmentDocumentIds?: readonly string[];
+  /** Records named from the composer. */
+  mentions?: readonly AssistantEntityRef[];
+};
+
+/** A quick question from anywhere: no thread yet, the answer makes one. */
+export type AskOptions = {
+  context?: AssistantPageContext | null;
+  mentions?: readonly AssistantEntityRef[];
 };
 
 /** What a person may change about their own conversation. */
@@ -171,14 +188,12 @@ export class AssistantService {
   public async sendMessage(
     threadId: AssistantThread["id"],
     content: string,
-    context: AssistantPageContext | null = null,
-    providerId = "",
+    options: SendMessageOptions = {},
   ) {
-    const response = await api.post(`/assistant/threads/${threadId}/messages/`, {
-      content,
-      context,
-      providerId,
-    });
+    const response = await api.post(
+      `/assistant/threads/${threadId}/messages/`,
+      messageBody(content, options),
+    );
     return safeParse(sendMessageResultSchema, response, "Assistant Reply");
   }
 
@@ -192,10 +207,45 @@ export class AssistantService {
     content: string,
     onEvent: (event: AssistantStreamEvent) => void,
     signal?: AbortSignal,
-    context: AssistantPageContext | null = null,
-    providerId = "",
+    options: SendMessageOptions = {},
   ): Promise<void> {
-    const path = `/assistant/threads/${threadId}/messages/stream/`;
+    await this.stream(
+      `/assistant/threads/${threadId}/messages/stream/`,
+      messageBody(content, options),
+      onEvent,
+      signal,
+    );
+  }
+
+  /**
+   * A quick question from the palette. The server names the thread it
+   * answers on before the answer, as a `thread` event, so the reader can
+   * keep the conversation even when the answer fails partway.
+   */
+  public async ask(
+    content: string,
+    onEvent: (event: AssistantStreamEvent) => void,
+    signal?: AbortSignal,
+    options: AskOptions = {},
+  ): Promise<void> {
+    await this.stream(
+      "/assistant/ask/",
+      {
+        content,
+        context: options.context ?? null,
+        mentions: options.mentions ?? [],
+      },
+      onEvent,
+      signal,
+    );
+  }
+
+  private async stream(
+    path: string,
+    body: Record<string, unknown>,
+    onEvent: (event: AssistantStreamEvent) => void,
+    signal?: AbortSignal,
+  ): Promise<void> {
     const response = await fetch(`${API_BASE_URL}${path}`, {
       method: "POST",
       headers: await withCsrfHeader(
@@ -203,7 +253,7 @@ export class AssistantService {
         { "Content-Type": "application/json", Accept: "text/event-stream" },
         path,
       ),
-      body: JSON.stringify({ content, context, providerId }),
+      body: JSON.stringify(body),
       credentials: "include",
       signal,
     });
@@ -269,6 +319,16 @@ export class AssistantService {
       modifications: modifications ?? {},
     });
   }
+}
+
+function messageBody(content: string, options: SendMessageOptions): Record<string, unknown> {
+  return {
+    content,
+    context: options.context ?? null,
+    providerId: options.providerId ?? "",
+    attachmentDocumentIds: options.attachmentDocumentIds ?? [],
+    mentions: options.mentions ?? [],
+  };
 }
 
 /**

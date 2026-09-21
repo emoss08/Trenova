@@ -45,11 +45,13 @@ func (b *ContextBuilder) Build(
 ) (agentdefinition.RuntimeContext, error) {
 	definition := req.Definition
 	rc := agentdefinition.RuntimeContext{
-		Now:     timeutils.NowUnix(),
-		Trigger: req.Trigger,
-		Subject: req.Subject,
-		Page:    req.Page,
-		Tools:   b.runtime.ToolSummaries(definition),
+		Now:         timeutils.NowUnix(),
+		Trigger:     req.Trigger,
+		Subject:     req.Subject,
+		Page:        req.Page,
+		Attachments: req.Attachments,
+		Mentions:    req.Mentions,
+		Tools:       b.runtime.ToolSummaries(definition),
 	}
 
 	tenant := req.Actor.TenantInfo()

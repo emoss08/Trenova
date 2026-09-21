@@ -348,3 +348,77 @@ func (r *repository) AppendTurn(
 
 	return saved, nil
 }
+
+// DeleteStaleThreads removes unkept conversations of one origin whose last
+// activity is older than the cut-off. Threads are picked first, bounded by
+// the limit, then their messages and the threads go in one transaction;
+// artifacts follow the thread by cascade.
+func (r *repository) DeleteStaleThreads(
+	ctx context.Context,
+	req repositories.DeleteStaleThreadsRequest,
+) (int, error) {
+	if req.Origin == "" || req.Before <= 0 {
+		return 0, nil
+	}
+	limit := req.Limit
+	if limit <= 0 || limit > defaultThreadLimit*10 {
+		limit = defaultThreadLimit * 10
+	}
+
+	cols := buncolgen.ThreadColumns
+
+	deleted := 0
+	err := r.db.DB().RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+		var stale []conversation.Thread
+		if err := tx.NewSelect().
+			Model(&stale).
+			Column(cols.ID.Bare(), cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
+			Where(cols.Origin.Eq(), req.Origin).
+			Where(cols.LastMessageAt.Lt(), req.Before).
+			Where(cols.CreatedAt.Lt(), req.Before).
+			Order(cols.LastMessageAt.OrderAsc()).
+			Limit(limit).
+			Scan(txCtx); err != nil {
+			return err
+		}
+		if len(stale) == 0 {
+			return nil
+		}
+
+		for i := range stale {
+			thread := &stale[i]
+			if _, err := tx.NewDelete().
+				Model((*conversation.Message)(nil)).
+				Where(buncolgen.MessageColumns.ThreadID.Eq(), thread.ID).
+				Where(buncolgen.MessageColumns.OrganizationID.Eq(), thread.OrganizationID).
+				Where(buncolgen.MessageColumns.BusinessUnitID.Eq(), thread.BusinessUnitID).
+				Exec(txCtx); err != nil {
+				return err
+			}
+			res, err := tx.NewDelete().
+				Model((*conversation.Thread)(nil)).
+				Where(cols.ID.Eq(), thread.ID).
+				Where(cols.OrganizationID.Eq(), thread.OrganizationID).
+				Where(cols.BusinessUnitID.Eq(), thread.BusinessUnitID).
+				Exec(txCtx)
+			if err != nil {
+				return err
+			}
+			if affected, _ := res.RowsAffected(); affected > 0 {
+				deleted++
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		r.l.Error("failed to delete stale threads",
+			zap.String("origin", string(req.Origin)),
+			zap.Error(err),
+		)
+
+		return 0, err
+	}
+
+	return deleted, nil
+}

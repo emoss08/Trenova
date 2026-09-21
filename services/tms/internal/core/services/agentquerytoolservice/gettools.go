@@ -180,6 +180,8 @@ func getCatalogSpecs() []getSpec {
 		specOfGet(newGetTractorTool(nil)),
 		specOfGet(newGetTrailerTool(nil)),
 		specOfGet(newGetInvoiceTool(nil)),
+		specOfGet(newGetDetentionOccurrenceTool(nil)),
+		specOfGet(newGetServiceFailureTool(nil)),
 	}
 }
 

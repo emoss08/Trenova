@@ -26,7 +26,8 @@ interface UseDocumentUploadOptions {
   processingProfile?: DocumentProcessingProfile;
   uploadMetadata?: Record<string, string>;
   invalidateQueryKey?: readonly unknown[];
-  onSuccess?: (document: Document) => void;
+  /** Told the document each upload became, with the upload it came from. */
+  onSuccess?: (document: Document, upload: UploadState) => void;
   onError?: (error: Error, file: File) => void;
 }
 
@@ -447,7 +448,7 @@ export function useDocumentUpload({
             queryKey: invalidateQueryKey || ["documents", resourceType, resourceId],
           });
 
-          onSuccess?.(document);
+          onSuccess?.(document, uploadState);
           return;
         }
 
@@ -509,7 +510,7 @@ export function useDocumentUpload({
           queryKey: invalidateQueryKey || ["documents", resourceType, resourceId],
         });
 
-        onSuccess?.(document);
+        onSuccess?.(document, uploadState);
       } catch (error) {
         if (isAbortError(error)) {
           await discardSession(uploadState.id);

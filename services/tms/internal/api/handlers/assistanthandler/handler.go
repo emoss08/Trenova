@@ -56,6 +56,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/providers/", h.pm.RequirePermission(resource, permission.OpRead), h.listProviders)
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
 	api.POST("/threads/", h.pm.RequirePermission(resource, permission.OpCreate), h.startThread)
+	// A quick question makes a thread of its own, so it needs what starting
+	// one needs.
+	api.POST("/ask/", h.pm.RequirePermission(resource, permission.OpCreate), h.ask)
 	api.GET("/threads/:threadID/", h.pm.RequirePermission(resource, permission.OpRead), h.getThread)
 	api.PATCH(
 		"/threads/:threadID/",
@@ -436,6 +439,22 @@ type pageContextRequest struct {
 	EntityType string `json:"entityType"`
 	EntityID   string `json:"entityId"`
 	Title      string `json:"title"`
+	// View is the table the page was showing, when it was one.
+	View *agent.PageView `json:"view"`
+}
+
+func (r *pageContextRequest) page() *agent.PageContext {
+	if r == nil {
+		return nil
+	}
+
+	return &agent.PageContext{
+		Path:       r.Path,
+		EntityType: r.EntityType,
+		EntityID:   r.EntityID,
+		Title:      r.Title,
+		View:       r.View,
+	}
 }
 
 type sendMessageRequest struct {
@@ -446,6 +465,18 @@ type sendMessageRequest struct {
 	// the providers this organization has assigned to the assistant before it
 	// is used or stored, so an unknown id is dropped rather than trusted.
 	ProviderID *pulid.ID `json:"providerId"`
+	// AttachmentDocumentIDs are the files uploaded for this message, and
+	// Mentions the records named from the composer.
+	AttachmentDocumentIDs []pulid.ID        `json:"attachmentDocumentIds"`
+	Mentions              []agent.EntityRef `json:"mentions"`
+}
+
+// askRequest is a quick question from anywhere: the words, the page, and the
+// records named. There is no thread yet; the answer makes one.
+type askRequest struct {
+	Content  string              `json:"content"`
+	Context  *pageContextRequest `json:"context"`
+	Mentions []agent.EntityRef   `json:"mentions"`
 }
 
 func (r *sendMessageRequest) provider() (pulid.ID, bool) {
@@ -457,16 +488,7 @@ func (r *sendMessageRequest) provider() (pulid.ID, bool) {
 }
 
 func (r *sendMessageRequest) page() *agent.PageContext {
-	if r.Context == nil {
-		return nil
-	}
-
-	return &agent.PageContext{
-		Path:       r.Context.Path,
-		EntityType: r.Context.EntityType,
-		EntityID:   r.Context.EntityID,
-		Title:      r.Context.Title,
-	}
+	return r.Context.page()
 }
 
 func (h *Handler) sendMessage(c *gin.Context) {
@@ -487,12 +509,14 @@ func (h *Handler) sendMessage(c *gin.Context) {
 	actor := requestActorFromAuthContext(authCtx)
 	providerID, providerChosen := body.provider()
 	result, err := h.service.SendMessage(c.Request.Context(), &serviceports.SendMessageRequest{
-		ThreadID:            threadID,
-		Content:             body.Content,
-		Page:                body.page(),
-		TenantInfo:          tenantFromAuthContext(authCtx),
-		PreferredProviderID: providerID,
-		ProviderChosen:      providerChosen,
+		ThreadID:              threadID,
+		Content:               body.Content,
+		Page:                  body.page(),
+		TenantInfo:            tenantFromAuthContext(authCtx),
+		PreferredProviderID:   providerID,
+		ProviderChosen:        providerChosen,
+		AttachmentDocumentIDs: body.AttachmentDocumentIDs,
+		Mentions:              body.Mentions,
 	}, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -543,12 +567,60 @@ func (h *Handler) sendMessageStream(c *gin.Context) {
 	actor := requestActorFromAuthContext(authCtx)
 	providerID, providerChosen := body.provider()
 	result, err := h.service.SendMessageStream(c.Request.Context(), &serviceports.SendMessageRequest{
-		ThreadID:            threadID,
-		Content:             body.Content,
-		Page:                body.page(),
-		TenantInfo:          tenantFromAuthContext(authCtx),
-		PreferredProviderID: providerID,
-		ProviderChosen:      providerChosen,
+		ThreadID:              threadID,
+		Content:               body.Content,
+		Page:                  body.page(),
+		TenantInfo:            tenantFromAuthContext(authCtx),
+		PreferredProviderID:   providerID,
+		ProviderChosen:        providerChosen,
+		AttachmentDocumentIDs: body.AttachmentDocumentIDs,
+		Mentions:              body.Mentions,
+	}, &actor, emit)
+	if err != nil {
+		emit(serviceports.StreamEvent{
+			Event: "error",
+			Data:  gin.H{"message": h.streamErrorMessage(err)},
+		})
+		return
+	}
+
+	emit(serviceports.StreamEvent{Event: serviceports.AssistantEventDone, Data: result})
+}
+
+// ask streams a quick question's answer. The thread it runs on is announced
+// first, so the reader can open it in the Desk even if the answer fails; the
+// rest of the stream is the same as a message on a thread.
+func (h *Handler) ask(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var body askRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	stream, err := helpers.OpenEventStream(c, helpers.EventStreamOptions{})
+	if err != nil {
+		h.eh.HandleError(c, errortypes.NewBusinessError("Streaming is not supported"))
+		return
+	}
+	defer stream.Close()
+
+	emit := func(event serviceports.StreamEvent) {
+		if emitErr := stream.Emit(event.Event, event.Data); emitErr != nil {
+			h.logger.Error("assistant ask event lost",
+				zap.String("event", event.Event),
+				zap.Error(emitErr),
+			)
+		}
+	}
+
+	actor := requestActorFromAuthContext(authCtx)
+	result, err := h.service.Ask(c.Request.Context(), &serviceports.AskRequest{
+		Content:    body.Content,
+		Page:       body.Context.page(),
+		Mentions:   body.Mentions,
+		TenantInfo: tenantFromAuthContext(authCtx),
 	}, &actor, emit)
 	if err != nil {
 		emit(serviceports.StreamEvent{

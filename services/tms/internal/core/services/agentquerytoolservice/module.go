@@ -44,6 +44,11 @@ var Module = fx.Module("agent-query-tool-service",
 		fx.Annotate(newGetTractorTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newGetTrailerTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newGetInvoiceTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(newGetDetentionOccurrenceTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(newGetCarrierIntelEventTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(newGetAgentRunTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(newGetServiceFailureTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideGetWorkerCredentialTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideListTimeOffTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideListReportsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideRunReportTool, fx.ResultTags(`group:"agent_query_tools"`)),
@@ -62,6 +67,7 @@ var Module = fx.Module("agent-query-tool-service",
 		fx.Annotate(provideListWeatherAlertsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideListEmailProfilesTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideGetShipmentDraftTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideGetDocumentSummaryTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideQuoteShipmentTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideShopCarriersTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideRankMoveCandidatesTool, fx.ResultTags(`group:"agent_query_tools"`)),
@@ -167,6 +173,13 @@ func provideListEmailProfilesTool(profiles *emailservice.Service) services.Agent
 	return newListEmailProfilesTool(profiles)
 }
 
+func provideGetDocumentSummaryTool(
+	documents repositories.DocumentRepository,
+	content services.DocumentContentService,
+) services.AgentQueryTool {
+	return newGetDocumentSummaryTool(documents, content)
+}
+
 func provideGetShipmentDraftTool(content services.DocumentContentService) services.AgentQueryTool {
 	return newGetShipmentDraftTool(content)
 }
@@ -214,6 +227,13 @@ func provideGetBankReceiptTool(
 
 func provideListCustomerPaymentsTool(payments services.CustomerPaymentService) services.AgentQueryTool {
 	return newListCustomerPaymentsTool(payments)
+}
+
+func provideGetWorkerCredentialTool(
+	repo repositories.WorkerCredentialRepository,
+	permissions services.PermissionEngine,
+) services.AgentQueryTool {
+	return newGetWorkerCredentialTool(repo, permissions)
 }
 
 func provideGetWorkerTool(

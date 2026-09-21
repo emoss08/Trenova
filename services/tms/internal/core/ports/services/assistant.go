@@ -45,6 +45,12 @@ type SendMessageRequest struct {
 	// sent it. It is validated and stored with the user turn.
 	Page       *agent.PageContext
 	TenantInfo pagination.TenantInfo
+	// AttachmentDocumentIDs are files the person uploaded for this message.
+	// Each must be a document they uploaded to this thread; anything else is
+	// refused rather than read.
+	AttachmentDocumentIDs []pulid.ID
+	// Mentions are the records the person named from the composer.
+	Mentions []agent.EntityRef
 	// PreferredProviderID is the model the person picked in the composer. It is
 	// validated against the providers this organization has assigned to the
 	// assistant before it is stored, so a stale or foreign id is dropped rather
@@ -56,6 +62,16 @@ type SendMessageRequest struct {
 	// "the organization's order". A request that says nothing about the
 	// model leaves the thread's saved choice as it is.
 	ProviderChosen bool
+}
+
+// AskRequest is a quick question from anywhere in the application. It runs
+// as an ordinary turn on a hidden thread bound to the organization's general
+// assistant, so the answer can be kept as a conversation afterwards.
+type AskRequest struct {
+	Content    string
+	Page       *agent.PageContext
+	Mentions   []agent.EntityRef
+	TenantInfo pagination.TenantInfo
 }
 
 // SendMessageResult is what the turn produced and saved.
@@ -194,6 +210,10 @@ const (
 	AssistantEventRetrying     = "retrying"
 	AssistantEventArtifact     = "artifact"
 	AssistantEventDone         = "done"
+	// AssistantEventThread names the conversation a quick question was
+	// answered on, before the turn begins, so the reader can keep it even
+	// when the answer fails partway.
+	AssistantEventThread = "thread"
 )
 
 // AssistantRetryingEvent says the model died partway through its reply and
@@ -367,6 +387,15 @@ type AssistantService interface {
 	SendMessageStream(
 		ctx context.Context,
 		req *SendMessageRequest,
+		actor *RequestActor,
+		emit AssistantStreamEmitter,
+	) (*SendMessageResult, error)
+	// Ask answers a quick question on a hidden thread, streamed like any
+	// turn. The thread is created for the question and listed only when the
+	// person keeps it.
+	Ask(
+		ctx context.Context,
+		req *AskRequest,
 		actor *RequestActor,
 		emit AssistantStreamEmitter,
 	) (*SendMessageResult, error)

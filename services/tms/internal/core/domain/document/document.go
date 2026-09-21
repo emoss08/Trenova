@@ -61,6 +61,7 @@ const (
 const (
 	ProcessingProfileNone                   ProcessingProfile = "none"
 	ProcessingProfileRateConfirmationImport ProcessingProfile = "rate_confirmation_import"
+	ProcessingProfileAssistantAttachment    ProcessingProfile = "assistant_attachment"
 )
 
 func (s Status) String() string {
@@ -117,7 +118,9 @@ func (s ShipmentDraftStatus) IsValid() bool {
 
 func (p ProcessingProfile) IsValid() bool {
 	switch p {
-	case ProcessingProfileNone, ProcessingProfileRateConfirmationImport:
+	case ProcessingProfileNone,
+		ProcessingProfileRateConfirmationImport,
+		ProcessingProfileAssistantAttachment:
 		return true
 	}
 	return false
@@ -135,7 +138,7 @@ func NormalizeProcessingProfile(raw string) (ProcessingProfile, error) {
 }
 
 func (p ProcessingProfile) SupportsIntelligence() bool {
-	return p == ProcessingProfileRateConfirmationImport
+	return p == ProcessingProfileRateConfirmationImport || p == ProcessingProfileAssistantAttachment
 }
 
 func SupportsPreview(fileType string) bool {

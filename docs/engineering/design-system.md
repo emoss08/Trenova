@@ -594,6 +594,15 @@ bar is a floating, inverted surface (it is a popover in all but name), and a bat
 one tool at a time because an approver reads the tool once. The keys are shown as `Kbd`
 next to the buttons they mirror, not explained in prose.
 
+**The composer carries context, not chrome.** What a person hands over with their words
+rides as chips inside the box: a file as a `rounded-full` chip with its name and progress, a
+named record as a chip with the at-sign mark, and the page as the existing pin chip, which
+also says how many rows or filters it carries. A slash lists commands ahead of the agent's
+questions; a command with slots is filled in the box, its empty slots shown as a hint row
+under the text in `font-mono`, never as a form. An at-sign opens a listbox over the
+organization's records in the same style as the command list. The dictation control is a
+plain icon button that turns `text-danger-foreground` while listening; nothing pulses.
+
 **The launcher is a signal.** The corner mark moves for exactly one thing: a decision
 waiting on someone. Its count is the attention summary's `agentDecisions`, the same number
 the sidebar and the Desk show, never a second query. The border beam is spent only on

@@ -9,13 +9,15 @@ import (
 )
 
 const (
-	AgentRunWorkflowName             = "AgentRunWorkflow"
-	AgentEvaluationWorkflowName      = "AgentEvaluationWorkflow"
-	AgentSweepWorkflowName           = "AgentSweepWorkflow"
-	ExpireStaleProposalsWorkflowName = "ExpireStaleAgentProposalsWorkflow"
-	ExpireStaleProposalsScheduleID   = "agent-proposal-expiry"
-	AgentDecisionSignalName          = "agent-decision"
-	SweepScheduleID                  = "agent-definition-sweep"
+	AgentRunWorkflowName              = "AgentRunWorkflow"
+	AgentEvaluationWorkflowName       = "AgentEvaluationWorkflow"
+	AgentSweepWorkflowName            = "AgentSweepWorkflow"
+	ExpireStaleProposalsWorkflowName  = "ExpireStaleAgentProposalsWorkflow"
+	ExpireStaleProposalsScheduleID    = "agent-proposal-expiry"
+	DeleteStaleAskThreadsWorkflowName = "DeleteStaleAskThreadsWorkflow"
+	DeleteStaleAskThreadsScheduleID   = "assistant-ask-thread-retention"
+	AgentDecisionSignalName           = "agent-decision"
+	SweepScheduleID                   = "agent-definition-sweep"
 )
 
 type AgentRunPayload struct {
@@ -117,6 +119,17 @@ type ExpireStaleProposalsResult struct {
 // deterministic with respect to the workflow that ran it.
 type ExpireStaleProposalsInput struct {
 	Now int64 `json:"now"`
+}
+
+// DeleteStaleAskThreadsInput names the cut-off: quick questions with no
+// activity since Before, and never kept, are removed.
+type DeleteStaleAskThreadsInput struct {
+	Before int64 `json:"before"`
+}
+
+// DeleteStaleAskThreadsResult is what one retention sweep removed.
+type DeleteStaleAskThreadsResult struct {
+	Deleted int `json:"deleted"`
 }
 
 // RemindPendingProposalsInput says how long a proposal may wait before its

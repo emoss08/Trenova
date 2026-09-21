@@ -55,6 +55,12 @@ type Message struct {
 	// turn, kept so an answer can be reviewed against the page it was about.
 	PageContext *agent.PageContext `json:"pageContext" bun:"page_context,type:JSONB,nullzero"`
 
+	// Attachments are the files the person handed over with a user turn, and
+	// Mentions the records they named. Both are kept on the turn so an
+	// answer can be read against what it was given.
+	Attachments []MessageAttachment `json:"attachments" bun:"attachments,type:JSONB,nullzero"`
+	Mentions    []agent.EntityRef   `json:"mentions"    bun:"mentions,type:JSONB,nullzero"`
+
 	// Reasoning is what the model thought before it answered, as much as the
 	// provider lets through, plus whatever the provider needs handed back to
 	// continue the same line of thought on the next call. Nil when the model
@@ -73,6 +79,15 @@ type Message struct {
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Thread *Thread `json:"thread,omitempty" bun:"rel:belongs-to,join:thread_id=id"`
+}
+
+// MessageAttachment is one file on a user turn: the document it became, and
+// enough about it to draw a chip without reading the document back.
+type MessageAttachment struct {
+	DocumentID  pulid.ID `json:"documentId"`
+	FileName    string   `json:"fileName"`
+	ContentType string   `json:"contentType,omitempty"`
+	FileSize    int64    `json:"fileSize,omitempty"`
 }
 
 // ReasoningTrace is a model's thinking, kept in two parts.

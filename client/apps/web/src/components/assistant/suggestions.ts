@@ -1,4 +1,4 @@
-import type { AgentTemplateKind } from "@/types/assistant";
+import type { AgentTemplateKind, AssistantPageContext } from "@/types/assistant";
 
 export type Suggestion = {
   label: string;
@@ -69,6 +69,63 @@ const DEFAULT_SUGGESTIONS: Suggestion[] = [
   { label: "What needs attention?", prompt: "What needs my attention today?" },
 ];
 
-export function suggestionsFor(template: AgentTemplateKind | null | undefined): Suggestion[] {
-  return (template && SUGGESTIONS[template]) || DEFAULT_SUGGESTIONS;
+/**
+ * Questions about the page itself, ahead of the agent's own: a filtered
+ * table, an open record, figures on screen. Each is answerable from the
+ * page context the message carries, so the first click on a busy page asks
+ * about what is in front of the person.
+ */
+export function pageSuggestions(page: AssistantPageContext | null | undefined): Suggestion[] {
+  if (!page) {
+    return [];
+  }
+  const suggestions: Suggestion[] = [];
+  const view = page.view ?? null;
+  const filtered =
+    view !== null &&
+    ((view.fieldFilters?.length ?? 0) > 0 ||
+      (view.filterGroups?.length ?? 0) > 0 ||
+      (view.query ?? "").trim() !== "");
+  if (filtered) {
+    suggestions.push({
+      label: "Explain these filters",
+      prompt: "Explain what this table is filtered to and what the rows have in common.",
+    });
+  }
+  if (page.entityType !== "" && page.entityId !== "") {
+    const kind = page.entityType.replaceAll("_", " ");
+    suggestions.push(
+      {
+        label: `Why is this ${kind} flagged?`,
+        prompt: `Look at the ${kind} I have open and tell me whether anything about it needs attention, and why.`,
+      },
+      {
+        label: `Summarize this ${kind}`,
+        prompt: `Summarize the ${kind} I have open: what it is, where it stands, and what happens next.`,
+      },
+    );
+  }
+  if ((view?.kpis?.length ?? 0) > 0) {
+    suggestions.push({
+      label: "What stands out in these figures?",
+      prompt: "Look at the figures on this page and tell me which ones stand out and why.",
+    });
+  }
+  if ((view?.selection?.count ?? 0) > 0) {
+    suggestions.push({
+      label: "What do the selected rows have in common?",
+      prompt: "Look at the rows I have selected and tell me what they have in common.",
+    });
+  }
+
+  return suggestions;
+}
+
+export function suggestionsFor(
+  template: AgentTemplateKind | null | undefined,
+  page?: AssistantPageContext | null,
+): Suggestion[] {
+  const own = (template && SUGGESTIONS[template]) || DEFAULT_SUGGESTIONS;
+
+  return [...pageSuggestions(page), ...own];
 }

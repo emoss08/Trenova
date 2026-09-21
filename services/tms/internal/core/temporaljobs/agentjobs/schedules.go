@@ -37,5 +37,16 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 				"purpose": ExpireStaleProposalsScheduleID,
 			},
 		},
+		{
+			ID:            DeleteStaleAskThreadsScheduleID,
+			Description:   "Remove quick questions nobody kept once they have gone quiet for a month",
+			Spec:          schedule.Cron("30 4 * * *"),
+			Workflow:      DeleteStaleAskThreadsWorkflow,
+			TaskQueue:     temporaltype.TaskQueueAgent.String(),
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": DeleteStaleAskThreadsScheduleID,
+			},
+		},
 	}
 }

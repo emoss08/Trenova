@@ -5,6 +5,7 @@ import { useDataTableFilterSync } from "@/hooks/data-table/use-data-table-filter
 import { useDataTableLiveRefresh } from "@/hooks/data-table/use-data-table-live-refresh";
 import { useDataTableQuery } from "@/hooks/data-table/use-data-table-query";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import { usePageViewRegistration } from "@/hooks/data-table/use-page-view-registration";
 import { useGuardedRowActions } from "@/hooks/use-pending-actions";
 import { usePermissions } from "@/hooks/use-permission";
 import {
@@ -649,6 +650,19 @@ export function DataTable<TData extends Record<string, any>>({
     [table, liveColumnVisibility, liveColumnOrder],
   );
   const defaultCreate = resolvedAddRecordActions.find((action) => action.id === "default-create");
+
+  usePageViewRegistration({
+    resource: resource ?? name,
+    query,
+    fieldFilters,
+    filterGroups,
+    sort: effectiveSort,
+    rowSelection,
+    selectionCount: selectedCount,
+    columnVisibility: liveColumnVisibility,
+    columnIds: table.getAllLeafColumns().map((column) => column.id),
+    rowCount: totalCount,
+  });
 
   return (
     <DataTableProvider

@@ -1,6 +1,7 @@
+import { usePageViewStore } from "@/stores/page-view-store";
 import { cn } from "@trenova/shared/lib/utils";
 import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useId } from "react";
 import { Link } from "react-router";
 import type React from "react";
 import type { Tone } from "./tone";
@@ -35,6 +36,34 @@ type KpiStripProps = {
   className?: string;
   "aria-label"?: string;
 };
+
+/** The text of a figure's part, when it is text the assistant could read. */
+function readable(node: React.ReactNode): string {
+  return typeof node === "string" || typeof node === "number" ? String(node) : "";
+}
+
+/**
+ * Registers a figure with the page view while it is on screen, so a question
+ * about "these figures" carries them. A figure whose label or value is not
+ * plain text is left out: the assistant reads words, not elements.
+ */
+export function usePageKpi(label: React.ReactNode, value: React.ReactNode, sub?: React.ReactNode) {
+  const id = useId();
+  const setKpi = usePageViewStore((state) => state.setKpi);
+  const removeKpi = usePageViewStore((state) => state.removeKpi);
+  const labelText = readable(label);
+  const valueText = readable(value);
+  const subText = readable(sub);
+
+  useEffect(() => {
+    if (labelText === "" || valueText === "") {
+      return;
+    }
+    setKpi({ id, label: labelText, value: valueText, sub: subText });
+
+    return () => removeKpi(id);
+  }, [id, labelText, removeKpi, setKpi, subText, valueText]);
+}
 
 export function KpiStrip({
   children,
@@ -108,6 +137,7 @@ export function KpiStripItem({
   className,
 }: KpiStripItemProps) {
   const cellClass = useInKpiStrip() ? KPI_STRIP_CELL_CLASS : KPI_LONE_CELL_CLASS;
+  usePageKpi(label, value, sub);
   const body = (
     <>
       <div className="text-foreground-subtle flex min-w-0 items-center gap-1.5 text-xs font-medium">

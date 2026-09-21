@@ -34,6 +34,10 @@ type Params struct {
 	Artifacts repositories.AssistantArtifactRepository `optional:"true"`
 	Subjects  serviceports.AgentSubjectDescriber       `optional:"true"`
 	Activity  serviceports.AgentActivityPublisher      `optional:"true"`
+	// Documents checks that an attached file is the person's own; Contents
+	// reads what document intelligence made of it.
+	Documents repositories.DocumentRepository     `optional:"true"`
+	Contents  serviceports.DocumentContentService `optional:"true"`
 }
 
 type Service struct {
@@ -54,6 +58,8 @@ type Service struct {
 	artifacts     repositories.AssistantArtifactRepository
 	subjects      serviceports.AgentSubjectDescriber
 	activity      serviceports.AgentActivityPublisher
+	documents     repositories.DocumentRepository
+	contents      serviceports.DocumentContentService
 }
 
 func New(p Params) serviceports.AssistantService {
@@ -75,5 +81,7 @@ func New(p Params) serviceports.AssistantService {
 		artifacts:     p.Artifacts,
 		subjects:      p.Subjects,
 		activity:      p.Activity,
+		documents:     p.Documents,
+		contents:      p.Contents,
 	}
 }

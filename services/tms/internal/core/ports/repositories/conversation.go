@@ -54,6 +54,15 @@ type AppendTurnRequest struct {
 	Messages   []conversation.Message
 }
 
+// DeleteStaleThreadsRequest names the unkept conversations to remove: those
+// of one origin whose last activity is older than Before, at most Limit at a
+// time so a sweep never holds a long transaction.
+type DeleteStaleThreadsRequest struct {
+	Origin conversation.ThreadOrigin
+	Before int64
+	Limit  int
+}
+
 type ConversationRepository interface {
 	CreateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
 	GetThread(ctx context.Context, req GetThreadRequest) (*conversation.Thread, error)
@@ -63,6 +72,9 @@ type ConversationRepository interface {
 	) (*pagination.ListResult[*conversation.Thread], error)
 	UpdateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
 	DeleteThread(ctx context.Context, req GetThreadRequest) error
+	// DeleteStaleThreads removes unkept conversations of an origin, with their
+	// messages, across every tenant. It reports how many threads went.
+	DeleteStaleThreads(ctx context.Context, req DeleteStaleThreadsRequest) (int, error)
 	ListMessages(ctx context.Context, req ListMessagesRequest) ([]conversation.Message, error)
 	CountMessages(ctx context.Context, req CountMessagesRequest) (int, error)
 	// AppendTurn allocates sequence numbers and writes the messages atomically,

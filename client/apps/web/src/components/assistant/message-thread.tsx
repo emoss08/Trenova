@@ -44,6 +44,7 @@ import { arrivedSince, highestSequence, withDayMarkers } from "./thread-rows";
 import { composerBlock } from "./thread-guard";
 import { groupThread } from "./thread-view";
 import { useAssistantTurn } from "./use-assistant-turn";
+import { useComposerContext } from "./use-composer-context";
 import { usePageContext } from "./use-page-context";
 import { useThreadHistory } from "./use-thread-history";
 import { VirtualThread, type VirtualThreadRow } from "./virtual-thread";
@@ -281,10 +282,17 @@ export function MessageThread({
   const suggestions = useMemo(
     () =>
       agent
-        ? suggestionsFor(agent.template).filter((item) => !dismissed.includes(item.prompt))
+        ? suggestionsFor(agent.template, contextIncluded ? pageContext : null).filter(
+            (item) => !dismissed.includes(item.prompt),
+          )
         : [],
-    [agent, dismissed],
+    [agent, contextIncluded, dismissed, pageContext],
   );
+
+  // The files and records a message carries live beside the draft: uploaded
+  // to this thread as they are picked, named from the search as they are
+  // typed, and sent as ids the server checks against the thread.
+  const composerContext = useComposerContext(thread.id);
 
   // Every row is a closure over its entry, keyed by the message it shows, so
   // the window can measure and place it without knowing what it is.
@@ -307,6 +315,8 @@ export function MessageThread({
                 content={entry.message.content}
                 sentAt={entry.message.createdAt}
                 pageContext={entry.message.pageContext}
+                attachments={entry.message.attachments}
+                mentions={entry.message.mentions}
                 onResend={
                   entry.message.sequence === latestUserSequence
                     ? () => void send(entry.message.content, undefined, providerId)
@@ -416,7 +426,10 @@ export function MessageThread({
 
       <Composer
         ref={composerRef}
-        onSend={(content) => void send(content, undefined, providerId)}
+        onSend={(content, payload) => {
+          composerContext.clear();
+          void send(content, undefined, providerId, payload);
+        }}
         onStop={stop}
         active={isActive}
         disabled={block !== null}
@@ -455,6 +468,12 @@ export function MessageThread({
         providerId={providerId}
         onPickProvider={setProviderId}
         suggestions={suggestions}
+        attachments={composerContext.attachments}
+        onAttachFiles={composerContext.attachFiles}
+        onRemoveAttachment={composerContext.removeAttachment}
+        mentions={composerContext.mentions}
+        onMentionsChange={composerContext.setMentions}
+        onSearchMentions={composerContext.searchMentions}
         draft={draft}
         onDraftChange={onDraftChange}
         compact={!expanded}

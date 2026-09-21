@@ -286,3 +286,50 @@ func (s *AgentSweepWorkflowTestSuite) TestNothingDueIsANoop() {
 func TestAgentSweepWorkflowTestSuite(t *testing.T) {
 	suite.Run(t, new(AgentSweepWorkflowTestSuite))
 }
+
+type DeleteStaleAskThreadsWorkflowTestSuite struct {
+	suite.Suite
+	testsuite.WorkflowTestSuite
+
+	env *testsuite.TestWorkflowEnvironment
+}
+
+func (s *DeleteStaleAskThreadsWorkflowTestSuite) SetupTest() {
+	s.env = s.NewTestWorkflowEnvironment()
+}
+
+// The sweep removes a batch at a time and keeps going while batches come
+// back full, so one quiet night clears a backlog without one long
+// transaction. The cut-off is a month before the workflow's own clock.
+func (s *DeleteStaleAskThreadsWorkflowTestSuite) TestSweepsInBatchesUntilShort() {
+	var a *Activities
+	calls := 0
+	var cutoffs []int64
+
+	s.env.OnActivity(a.DeleteStaleAskThreadsActivity, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, input *DeleteStaleAskThreadsInput) (*DeleteStaleAskThreadsResult, error) {
+			calls++
+			cutoffs = append(cutoffs, input.Before)
+			if calls == 1 {
+				return &DeleteStaleAskThreadsResult{Deleted: deleteStaleAskBatch}, nil
+			}
+			return &DeleteStaleAskThreadsResult{Deleted: 3}, nil
+		})
+
+	s.env.ExecuteWorkflow(DeleteStaleAskThreadsWorkflow)
+
+	s.True(s.env.IsWorkflowCompleted())
+	s.NoError(s.env.GetWorkflowError())
+
+	var result *DeleteStaleAskThreadsResult
+	s.Require().NoError(s.env.GetWorkflowResult(&result))
+	s.Equal(deleteStaleAskBatch+3, result.Deleted)
+	s.Equal(2, calls)
+	s.Require().Len(cutoffs, 2)
+	s.Equal(cutoffs[0], cutoffs[1], "one cut-off for the whole sweep")
+	s.Less(cutoffs[0], time.Now().Add(-29*24*time.Hour).Unix())
+}
+
+func TestDeleteStaleAskThreadsWorkflowTestSuite(t *testing.T) {
+	suite.Run(t, new(DeleteStaleAskThreadsWorkflowTestSuite))
+}

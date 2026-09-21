@@ -161,4 +161,8 @@ type RuntimeContextRequest struct {
 	Trigger    agent.RunTrigger
 	Subject    *agentdefinition.RuntimeSubject
 	Page       *agentdefinition.PageContext
+	// Attachments and Mentions are what the person handed over with the
+	// message that started this turn.
+	Attachments []agentdefinition.RuntimeAttachment
+	Mentions    []agentdefinition.RuntimeMention
 }

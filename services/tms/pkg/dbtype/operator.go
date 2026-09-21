@@ -38,3 +38,51 @@ const (
 	OpCountGte           = Operator("countgte")
 	OpCountLte           = Operator("countlte")
 )
+
+var knownOperators = map[Operator]struct{}{
+	OpEqual:              {},
+	OpNotEqual:           {},
+	OpGreaterThan:        {},
+	OpGreaterThanOrEqual: {},
+	OpLessThan:           {},
+	OpLessThanOrEqual:    {},
+	OpContains:           {},
+	OpStartsWith:         {},
+	OpEndsWith:           {},
+	OpLike:               {},
+	OpILike:              {},
+	OpIn:                 {},
+	OpNotIn:              {},
+	OpIsNull:             {},
+	OpIsNotNull:          {},
+	OpDateRange:          {},
+	OpLastNDays:          {},
+	OpNextNDays:          {},
+	OpToday:              {},
+	OpYesterday:          {},
+	OpTomorrow:           {},
+	OpThisWeek:           {},
+	OpLastWeek:           {},
+	OpThisMonth:          {},
+	OpLastMonth:          {},
+	OpThisQuarter:        {},
+	OpLastQuarter:        {},
+	OpThisYear:           {},
+	OpLastYear:           {},
+	OpCountGt:            {},
+	OpCountLt:            {},
+	OpCountEq:            {},
+	OpCountGte:           {},
+	OpCountLte:           {},
+}
+
+func (o Operator) IsValid() bool {
+	_, ok := knownOperators[o]
+	return ok
+}
+
+func (o Operator) String() string { return string(o) }
+
+func (d SortDirection) IsValid() bool {
+	return d == SortDirectionAsc || d == SortDirectionDesc
+}

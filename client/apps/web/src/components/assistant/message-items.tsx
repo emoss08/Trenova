@@ -18,7 +18,9 @@ import { useAssistantAgent } from "@/components/agent-identity/agent-context";
 import { AgentTile, type AgentTileSize } from "@/components/agent-identity/agent-tile";
 import type {
   AssistantArtifact,
+  AssistantEntityRef,
   AssistantMessage,
+  AssistantMessageAttachment,
   AssistantPageContext,
   AssistantProposal,
 } from "@/types/assistant";
@@ -27,6 +29,8 @@ import {
   CheckIcon,
   ChevronRightIcon,
   CopyIcon,
+  AtSignIcon,
+  FileIcon,
   MapPinIcon,
   RotateCcwIcon,
   ShieldAlertIcon,
@@ -100,6 +104,49 @@ export function PageContextChip({ context }: { context: AssistantPageContext | n
 }
 
 /**
+ * What a person handed over with their words: the files, and the records
+ * they named. Drawn as chips under the message so an answer can be read
+ * against what it was given.
+ */
+export function TurnContextChips({
+  attachments,
+  mentions,
+}: {
+  attachments?: readonly AssistantMessageAttachment[] | null;
+  mentions?: readonly AssistantEntityRef[] | null;
+}) {
+  const files = attachments ?? [];
+  const records = mentions ?? [];
+  if (files.length === 0 && records.length === 0) {
+    return null;
+  }
+
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {files.map((file) => (
+        <li
+          key={file.documentId}
+          className="border-border bg-surface inline-flex h-6 max-w-[16rem] items-center gap-1.5 rounded-full border px-2 text-xs"
+        >
+          <FileIcon className="text-muted-foreground size-3 shrink-0" />
+          <span className="min-w-0 truncate">{file.fileName}</span>
+        </li>
+      ))}
+      {records.map((record) => (
+        <li
+          key={`${record.type}:${record.id}`}
+          className="border-border bg-surface inline-flex h-6 max-w-[16rem] items-center gap-1.5 rounded-full border px-2 text-xs"
+          title={`${record.type.replaceAll("_", " ")} ${record.id}`}
+        >
+          <AtSignIcon className="text-muted-foreground size-3 shrink-0" />
+          <span className="min-w-0 truncate">{record.label || record.id}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
  * One turn of the ledger: who spoke in a narrow gutter, then what they said
  * running the full width.
  *
@@ -155,11 +202,15 @@ export function UserTurn({
   content,
   sentAt,
   pageContext,
+  attachments,
+  mentions,
   onResend,
 }: {
   content: string;
   sentAt?: number;
   pageContext?: AssistantPageContext | null;
+  attachments?: readonly AssistantMessageAttachment[] | null;
+  mentions?: readonly AssistantEntityRef[] | null;
   /** Asks the same thing again, for a reply that went wrong or went stale. */
   onResend?: () => void;
 }) {
@@ -186,6 +237,7 @@ export function UserTurn({
       }
     >
       <p className="text-sm leading-relaxed font-medium whitespace-pre-wrap">{content}</p>
+      <TurnContextChips attachments={attachments} mentions={mentions} />
     </Turn>
   );
 }

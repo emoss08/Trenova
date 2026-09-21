@@ -1,7 +1,10 @@
 import type {
   AssistantArtifactEvent,
+  AssistantEntityRef,
+  AssistantMessageAttachment,
   AssistantPageContext,
   AssistantStreamEvent,
+  AssistantThread,
   SendMessageResult,
   RetryKind,
 } from "@/types/assistant";
@@ -67,11 +70,23 @@ export type TurnState = {
   retrying: { attempt: number; provider: string; kind: RetryKind; waitSeconds: number } | null;
   /** What the turn has produced so far, as announced, so the pane can open it early. */
   artifacts: AssistantArtifactEvent[];
+  /** The files and records the person handed over, shown on their provisional turn. */
+  attachments: AssistantMessageAttachment[];
+  mentions: AssistantEntityRef[];
+  /** The thread a quick question was answered on, once the server names it. */
+  thread: AssistantThread | null;
+};
+
+/** What a person hands over with a message besides the words. */
+export type TurnContext = {
+  attachments?: AssistantMessageAttachment[];
+  mentions?: AssistantEntityRef[];
 };
 
 export function initialTurnState(
   userContent: string,
   pageContext: AssistantPageContext | null = null,
+  context: TurnContext = {},
 ): TurnState {
   return {
     status: "guarding",
@@ -83,6 +98,9 @@ export function initialTurnState(
     result: null,
     retrying: null,
     artifacts: [],
+    attachments: context.attachments ?? [],
+    mentions: context.mentions ?? [],
+    thread: null,
   };
 }
 
@@ -214,6 +232,9 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
           : state.artifacts.map((artifact, index) => (index === known ? event.data : artifact));
       return { ...state, artifacts };
     }
+
+    case "thread":
+      return { ...state, thread: event.data };
 
     case "done":
       // A refusal is complete in itself; done after it only says the turn

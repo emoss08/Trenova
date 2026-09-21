@@ -94,6 +94,42 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.TaskQueueAgent.String(),
 			Description: "Mark pending agent proposals whose decision window has closed as expired",
 		},
+		{
+			Name:        DeleteStaleAskThreadsWorkflowName,
+			Fn:          DeleteStaleAskThreadsWorkflow,
+			TaskQueue:   temporaltype.TaskQueueAgent.String(),
+			Description: "Remove quick questions nobody kept once they have gone quiet for a month",
+		},
+	}
+}
+
+// askThreadRetention is how long an unkept quick question stays. A person
+// who wants one keeps it, which lists it; the rest are noise the rail
+// already hides and the database need not carry.
+const askThreadRetention = 30 * 24 * time.Hour
+
+// deleteStaleAskBatch bounds one activity call, so the sweep never holds a
+// long transaction; the workflow loops until a batch comes back short.
+const deleteStaleAskBatch = 200
+
+// DeleteStaleAskThreadsWorkflow removes quick questions nobody kept.
+func DeleteStaleAskThreadsWorkflow(ctx workflow.Context) (*DeleteStaleAskThreadsResult, error) {
+	var a *Activities
+	result := &DeleteStaleAskThreadsResult{}
+
+	before := workflow.Now(ctx).Add(-askThreadRetention).Unix()
+	deleteCtx := workflow.WithActivityOptions(ctx, sweepListOptions)
+	for {
+		var batch DeleteStaleAskThreadsResult
+		if err := workflow.ExecuteActivity(deleteCtx, a.DeleteStaleAskThreadsActivity, &DeleteStaleAskThreadsInput{
+			Before: before,
+		}).Get(deleteCtx, &batch); err != nil {
+			return nil, err
+		}
+		result.Deleted += batch.Deleted
+		if batch.Deleted < deleteStaleAskBatch {
+			return result, nil
+		}
 	}
 }
 

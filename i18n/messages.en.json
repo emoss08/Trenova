@@ -17402,7 +17402,7 @@
     ]
   },
   "Ask again": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -17419,6 +17419,15 @@
       "routes/desk"
     ]
   },
+  "Ask the assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Ask the recipient's email client to send a delivery/read confirmation. Note: many email clients and corporate mail servers silently ignore read receipt requests.": {
     "sites": 1,
     "scope": [
@@ -17426,6 +17435,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Ask: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Asked for": {
@@ -18842,6 +18860,15 @@
       "routes/policies"
     ]
   },
+  "Attach a file": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Attach files": {
     "sites": 1,
     "scope": [
@@ -18916,6 +18943,15 @@
       "routes/policies"
     ]
   },
+  "Attached files": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Attached is the rate confirmation for shipment {0} ({1}).": {
     "sites": 2,
     "scope": [
@@ -18970,6 +19006,15 @@
       "service/emailservice"
     ]
   },
+  "Attachment does not belong to this conversation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "Attachment file name is required": {
     "sites": 1,
     "scope": [
@@ -18988,6 +19033,15 @@
       "routes/customer"
     ]
   },
+  "Attachment identifier is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "Attachment name cannot be longer than 255 characters": {
     "sites": 1,
     "scope": [
@@ -18997,6 +19051,15 @@
       "domain/customer"
     ]
   },
+  "Attachment was not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "Attachments & content": {
     "sites": 1,
     "scope": [
@@ -19004,6 +19067,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Attachments are not available on this deployment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
     ]
   },
   "Attachments must be uploaded against this shipment before they can be attached to a comment": {
@@ -26663,11 +26735,12 @@
     ]
   },
   "Carrier intelligence event not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "service/agentquerytoolservice",
       "service/carrierintelservice"
     ]
   },
@@ -28295,15 +28368,6 @@
       "routes/rate-agreement"
     ]
   },
-  "Changes an agent proposed that are waiting on a person": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/config"
-    ]
-  },
   "Changes an agent proposes will queue here for your approval.": {
     "sites": 2,
     "scope": [
@@ -29137,7 +29201,7 @@
     ]
   },
   "Checking the question…": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -32708,6 +32772,15 @@
       "routes/reports"
     ]
   },
+  "Column name is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Column names": {
     "sites": 1,
     "scope": [
@@ -35710,6 +35783,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Continue the conversation with room for what it produces.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Continue to Dash": {
@@ -47653,6 +47735,15 @@
       "routes/edi"
     ]
   },
+  "Dictate": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Did not run": {
     "sites": 1,
     "scope": [
@@ -56390,7 +56481,7 @@
     ]
   },
   "Enter": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -60697,6 +60788,24 @@
       "routes/settlement-dispute"
     ]
   },
+  "Explain these filters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Explain what is on this page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Explain who this package is for and any negotiated terms so future admins know when to apply it.": {
     "sites": 1,
     "scope": [
@@ -62144,7 +62253,7 @@
     ]
   },
   "Failed": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -64329,6 +64438,42 @@
       "routes/admin"
     ]
   },
+  "Figure label is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Figure label is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Figure note is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Figure value is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "File": {
     "sites": 3,
     "scope": [
@@ -64756,6 +64901,15 @@
       "apps/web/components"
     ]
   },
+  "Filter field is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Filter group operator must be and/or": {
     "sites": 1,
     "scope": [
@@ -64763,6 +64917,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "Filter operator is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Filter preset deleted": {
@@ -64817,6 +64980,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "Filter value is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Filter {0}…": {
@@ -80134,6 +80306,15 @@
       "packages/shared/types"
     ]
   },
+  "Label is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Label must be between 1 and 100 characters": {
     "sites": 2,
     "scope": [
@@ -94244,6 +94425,15 @@
       "routes/edi"
     ]
   },
+  "No assistant is enabled for quick questions. Enable a chat agent in AI Control.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "No attachments or links in this part.": {
     "sites": 1,
     "scope": [
@@ -104648,7 +104838,7 @@
     ]
   },
   "Open in Desk": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -108525,6 +108715,15 @@
       "routes/billing-queue",
       "routes/invoice",
       "routes/shipment"
+    ]
+  },
+  "PRO or shipment number": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "PRO tracking number": {
@@ -119239,6 +119438,15 @@
       "apps/dash/_components"
     ]
   },
+  "Question cannot be empty": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "Questions about your pay? Flag it on the statement or call your fleet manager.": {
     "sites": 1,
     "scope": [
@@ -123656,7 +123864,25 @@
       "apps/web/components"
     ]
   },
+  "Record identifier is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Record identifier is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Record is mentioned twice": {
     "sites": 1,
     "scope": [
       "go"
@@ -124268,6 +124494,15 @@
       "routes/ifta-return",
       "routes/jurisdiction-rule",
       "routes/shipment"
+    ]
+  },
+  "Records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Records a cash or money-code advance recovered from the driver's future settlements.": {
@@ -126378,6 +126613,15 @@
       "routes/agent-control"
     ]
   },
+  "Remove quick questions nobody kept once they have gone quiet for a month": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Remove range": {
     "sites": 1,
     "scope": [
@@ -126515,11 +126759,12 @@
     ]
   },
   "Remove {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -132888,11 +133133,12 @@
     ]
   },
   "Row count cannot be negative": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agent",
       "domain/report"
     ]
   },
@@ -133257,6 +133503,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Run a saved report and show the results": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Run a simulation against historical shipments": {
@@ -136869,6 +137124,15 @@
       "routes/admin"
     ]
   },
+  "Search routes, commands, or records… or ask a question?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Search rule sets...": {
     "sites": 1,
     "scope": [
@@ -136957,6 +137221,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Search text is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Search the detention desk": {
@@ -139714,6 +139987,15 @@
       "routes/shipment"
     ]
   },
+  "Selected identifier is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Selected this year": {
     "sites": 3,
     "scope": [
@@ -139739,6 +140021,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Selection count cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Selection count is below the identifiers sent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Selection failed": {
@@ -146247,6 +146547,15 @@
       "routes/carrier-sourcing"
     ]
   },
+  "Sort direction is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Sort direction is not supported": {
     "sites": 1,
     "scope": [
@@ -146263,6 +146572,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "Sort field is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Sort field is not supported": {
@@ -148873,7 +149191,7 @@
     ]
   },
   "Stop": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -148931,6 +149249,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Stop dictating": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Stop field": {
@@ -149162,6 +149489,15 @@
     ]
   },
   "Stopped before a reply started.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Stopped.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -149403,7 +149739,7 @@
     ]
   },
   "Streaming is not supported": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -155136,7 +155472,7 @@
     ]
   },
   "The connection to the assistant was lost.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -159368,6 +159704,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The reply was cut off before it finished.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The reply was cut off before it finished. What arrived has been kept.": {
@@ -165871,6 +166216,15 @@
       "routes/tender-offer-public"
     ]
   },
+  "Too many columns": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Too many dimensions ({0} > {1})": {
     "sites": 1,
     "scope": [
@@ -165880,6 +166234,15 @@
       "service/reporting"
     ]
   },
+  "Too many figures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Too many files in upload request": {
     "sites": 1,
     "scope": [
@@ -165887,6 +166250,33 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "Too many filter groups": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Too many filters": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Too many mentioned records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Too many moves in a single assignment request": {
@@ -165914,6 +166304,24 @@
     ],
     "areas": [
       "api/middleware"
+    ]
+  },
+  "Too many selected identifiers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Too many sort fields": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Tool": {
@@ -170091,7 +170499,7 @@
     ]
   },
   "Unknown record type": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -170133,6 +170541,15 @@
     ],
     "areas": [
       "domain/sidebarpreference"
+    ]
+  },
+  "Unknown table resource": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Unknown template status: {0}": {
@@ -170820,6 +171237,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "Up to {0} files per message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Upcoming approved days": {
@@ -175386,6 +175812,15 @@
       "apps/web/components"
     ]
   },
+  "Waiting for the files to finish uploading": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Waiting for the result…": {
     "sites": 1,
     "scope": [
@@ -176684,6 +177119,15 @@
       "domain/homelayout"
     ]
   },
+  "What do the selected rows have in common?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "What do you need from {0}?": {
     "sites": 1,
     "scope": [
@@ -177016,6 +177460,15 @@
     ],
     "areas": [
       "routes/rate-zone"
+    ]
+  },
+  "What stands out in these figures?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "What that means": {
@@ -177520,6 +177973,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "What we would charge for a lane": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "What you checked": {
@@ -178182,6 +178644,15 @@
       "routes/fuel-purchase",
       "routes/osha",
       "routes/worker"
+    ]
+  },
+  "Where a shipment is and what is holding it up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Where a shipment is, who is free, what is holding an invoice, how to do something.": {
@@ -180648,6 +181119,15 @@
     ],
     "areas": [
       "routes/fuel-feed-run"
+    ]
+  },
+  "Working…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Worksheet can still change": {
@@ -183321,6 +183801,15 @@
       "routes/recurring-shipment"
     ]
   },
+  "destination city": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "did not apply.": {
     "sites": 1,
     "scope": [
@@ -185544,6 +186033,15 @@
       "routes/shipment"
     ]
   },
+  "for commands": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "for it.": {
     "sites": 1,
     "scope": [
@@ -185551,15 +186049,6 @@
     ],
     "areas": [
       "routes/dispatch-console"
-    ]
-  },
-  "for starter questions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "for tractor {0}": {
@@ -186260,6 +186749,15 @@
       "go/other"
     ]
   },
+  "origin city": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "origin → destination · {0} loads": {
     "sites": 1,
     "scope": [
@@ -186503,6 +187001,15 @@
     ],
     "areas": [
       "routes/organization"
+    ]
+  },
+  "report name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "request ID is required for deterministic API usage idempotency": {
@@ -187021,6 +187528,24 @@
       "routes/home"
     ]
   },
+  "to ask": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "to ask the assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "to close": {
     "sites": 1,
     "scope": [
@@ -187031,6 +187556,15 @@
     ]
   },
   "to jump anywhere": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "to name a record": {
     "sites": 1,
     "scope": [
       "ts"
@@ -188638,7 +189172,7 @@
     ]
   },
   "{0, plural, one {Looked up # record} other {Looked up # records}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -193360,11 +193894,12 @@
     ]
   },
   "· {0, plural, one {# filter} other {# filters}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/reports"
     ]
   },
@@ -193393,6 +193928,24 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "· {0, plural, one {# row} other {# rows}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "· {0, plural, one {# selected} other {# selected}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "· {0, plural, one {# violation} other {# violations}}": {

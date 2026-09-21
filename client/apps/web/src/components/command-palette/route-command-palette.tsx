@@ -10,6 +10,8 @@ import {
 import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { navigationConfig } from "@/config/navigation.config";
 import type { QuickActionKind } from "@/config/navigation.types";
+import { useAsk } from "@/components/assistant/use-ask";
+import { usePageContext } from "@/components/assistant/use-page-context";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useAccessibleAdminLinks } from "@/hooks/use-accessible-admin-links";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
@@ -33,8 +35,27 @@ import {
   stripMentionToken,
   type SearchableEntityType,
 } from "./search-entity-filter";
+import { AskAnswerCard } from "./ask-answer-card";
 import { SearchResultItem } from "./search-result-items";
 import { SearchEmpty, SearchError, SearchKeepTyping, SearchLoading } from "./search-states";
+
+/**
+ * A palette entry that is a question rather than a search: it ends with a
+ * question mark, or opens with a chevron for people who prefer a prefix.
+ */
+export function askQuestion(value: string): string | null {
+  const trimmed = value.trim();
+  if (trimmed.startsWith(">")) {
+    const question = trimmed.slice(1).trim();
+
+    return question === "" ? null : question;
+  }
+  if (trimmed.endsWith("?") && trimmed.length > 3) {
+    return trimmed;
+  }
+
+  return null;
+}
 
 export function RouteCommandPalette() {
   const t = useT();
@@ -67,6 +88,10 @@ export function RouteCommandPalette() {
     [capabilities, hasPermission, routeGroups],
   );
   const hasQuery = searchValue.trim().length > 0;
+  const question = askQuestion(searchValue);
+  const askMode = question !== null && !recordEntityFilter;
+  const getPageContext = usePageContext();
+  const { turn: askTurn, ask, stop: stopAsk, reset: resetAsk, keep: keepAsk } = useAsk();
   const activeEntityOption = useMemo(
     () => getSearchEntityOption(recordEntityFilter),
     [recordEntityFilter],
@@ -113,8 +138,24 @@ export function RouteCommandPalette() {
     setMentionText("");
     setMentionIndex(0);
     setPreviewId(undefined);
+    resetAsk();
     setOpen(false);
     void navigate(href);
+  };
+
+  const handleAsk = () => {
+    if (question === null) {
+      return;
+    }
+    void ask(question, { context: getPageContext() });
+  };
+
+  const handleOpenInDesk = () => {
+    void keepAsk().then((threadId) => {
+      if (threadId !== null) {
+        handleNavigate(`/desk/t/${threadId}`);
+      }
+    });
   };
 
   const handleSelectEntityFilter = (entityType: SearchableEntityType) => {
@@ -157,7 +198,8 @@ export function RouteCommandPalette() {
     setMentionText("");
     setMentionIndex(0);
     setPreviewId(undefined);
-  }, [location.pathname, location.search, location.hash]);
+    resetAsk();
+  }, [location.pathname, location.search, location.hash, resetAsk]);
 
   const handleShipmentPreview = useCallback((id: string) => {
     setPreviewId(id);
@@ -227,6 +269,7 @@ export function RouteCommandPalette() {
           setMentionText("");
           setMentionIndex(0);
           setPreviewId(undefined);
+          resetAsk();
         }
       }}
       title={t("Command palette")}
@@ -258,11 +301,17 @@ export function RouteCommandPalette() {
             placeholder={
               activeEntityOption
                 ? `Search ${activeEntityOption.label.toLowerCase()}...`
-                : "Search routes, commands, or records..."
+                : t("Search routes, commands, or records… or ask a question?")
             }
             value={searchValue}
             onValueChange={handleSearchValueChange}
             onKeyDown={(event) => {
+              if (askMode && event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                event.stopPropagation();
+                handleAsk();
+                return;
+              }
               if (!mentionOpen || filteredEntityOptions.length === 0) {
                 return;
               }
@@ -352,6 +401,15 @@ export function RouteCommandPalette() {
           )}
         >
           <div className="overflow-y-auto" ref={listRef}>
+            {askMode && question !== null && (
+              <AskAnswerCard
+                question={question}
+                turn={askTurn}
+                onAsk={handleAsk}
+                onStop={stopAsk}
+                onOpenInDesk={handleOpenInDesk}
+              />
+            )}
             <CommandList className="max-h-none">
               {!recordEntityFilter && (
                 <>
@@ -443,6 +501,12 @@ export function RouteCommandPalette() {
             <Kbd>{t("Esc")}</Kbd>
             <span>{t("to close")}</span>
           </div>
+          {!askMode && (
+            <div className="ml-auto hidden items-center gap-2 sm:flex">
+              <Kbd>?</Kbd>
+              <span>{t("to ask the assistant")}</span>
+            </div>
+          )}
         </div>
       </div>
     </CommandDialog>
