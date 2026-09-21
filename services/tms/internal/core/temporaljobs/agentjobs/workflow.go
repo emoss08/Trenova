@@ -75,39 +75,71 @@ var sweepStartOptions = workflow.ActivityOptions{
 	},
 }
 
-func RegisterWorkflows() []temporaltype.WorkflowDefinition {
+// RegisterBackgroundWorkflows names the work that runs without anybody
+// watching: the runs themselves and the periodic sweeps.
+func RegisterBackgroundWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
 			Name:        AgentRunWorkflowName,
 			Fn:          AgentRunWorkflow,
-			TaskQueue:   temporaltype.TaskQueueAgent.String(),
+			TaskQueue:   temporaltype.TaskQueueAgentBackground.String(),
 			Description: "Run one agent definition against its subject and wait for decisions on what it proposes",
-		},
-		{
-			Name:        AgentEvaluationWorkflowName,
-			Fn:          AgentEvaluationWorkflow,
-			TaskQueue:   temporaltype.TaskQueueAgent.String(),
-			Description: "Replay a recorded agent run against the agent as it is now, writes simulated, and compare the outcome",
 		},
 		{
 			Name:        AgentSweepWorkflowName,
 			Fn:          AgentSweepWorkflow,
-			TaskQueue:   temporaltype.TaskQueueAgent.String(),
+			TaskQueue:   temporaltype.TaskQueueAgentBackground.String(),
 			Description: "Start every scheduled or continuous agent whose slot has come",
 		},
 		{
 			Name:        ExpireStaleProposalsWorkflowName,
 			Fn:          ExpireStaleProposalsWorkflow,
-			TaskQueue:   temporaltype.TaskQueueAgent.String(),
+			TaskQueue:   temporaltype.TaskQueueAgentBackground.String(),
 			Description: "Mark pending agent proposals whose decision window has closed as expired",
 		},
 		{
 			Name:        DeleteStaleAskThreadsWorkflowName,
 			Fn:          DeleteStaleAskThreadsWorkflow,
-			TaskQueue:   temporaltype.TaskQueueAgent.String(),
+			TaskQueue:   temporaltype.TaskQueueAgentBackground.String(),
 			Description: "Remove quick questions nobody kept once they have gone quiet for a month",
 		},
 	}
+}
+
+// RegisterHeavyWorkflows names the work that costs as much as a run and is
+// never urgent, kept apart so an evaluation sweep cannot fill the queue a
+// scheduled run needs.
+func RegisterHeavyWorkflows() []temporaltype.WorkflowDefinition {
+	return []temporaltype.WorkflowDefinition{
+		{
+			Name:        AgentEvaluationWorkflowName,
+			Fn:          AgentEvaluationWorkflow,
+			TaskQueue:   temporaltype.TaskQueueAgentHeavy.String(),
+			Description: "Replay a recorded agent run against the agent as it is now, writes simulated, and compare the outcome",
+		},
+	}
+}
+
+// RegisterDrainWorkflows is the same set, on the queue everything used before
+// the split.
+//
+// A workflow's task queue is fixed when it starts, so every run and evaluation
+// already in flight when this deploys still dispatches to agent-queue. Without
+// a worker polling it they would hang until their timeouts fired. This goes
+// away a release after the split, once Temporal shows no open executions
+// there.
+func RegisterDrainWorkflows() []temporaltype.WorkflowDefinition {
+	drained := make([]temporaltype.WorkflowDefinition, 0, 5)
+	for _, definition := range RegisterBackgroundWorkflows() {
+		definition.TaskQueue = temporaltype.TaskQueueAgent.String()
+		drained = append(drained, definition)
+	}
+	for _, definition := range RegisterHeavyWorkflows() {
+		definition.TaskQueue = temporaltype.TaskQueueAgent.String()
+		drained = append(drained, definition)
+	}
+
+	return drained
 }
 
 // askThreadRetention is how long an unkept quick question stays. A person

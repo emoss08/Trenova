@@ -35,8 +35,16 @@ var workerRunCmd = &cobra.Command{
 	Long: `Run the worker service.
 
 Examples:
-  trenova worker run                        # Run all task queues
-  trenova worker run --queues=report-queue  # Run only the listed task queues`,
+  trenova worker run                                   # Run all task queues
+  trenova worker run --queues=report-queue             # Run only the listed task queues
+  trenova worker run --queues=agent-chat-queue         # Interactive assistant turns
+  trenova worker run --queues=agent-background-queue   # Scheduled and event-driven agent runs
+  trenova worker run --queues=agent-heavy-queue        # Agent run replays
+
+The agent's work is split across queues so one class cannot starve another:
+a research run that takes ten minutes must not hold the slot a person's
+question is waiting in. Running each on its own deployment is what makes the
+split mean anything; a worker given no --queues polls them all.`,
 	RunE: runWorker,
 }
 
