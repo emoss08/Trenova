@@ -13,8 +13,9 @@
  *   - hairlines are actually visible against the surface they divide
  *   - every value is inside sRGB, so a browser does not gamut-map it somewhere
  *     other than where it was placed
- *   - danger, brand and warning stay far enough apart in hue that a primary
- *     action cannot be mistaken for a destructive one
+ *   - the blue arc (info, sky, brand, indigo) and the warm arc (danger, warning,
+ *     amber) each stay far enough apart in hue that a link cannot be mistaken
+ *     for a status, or a warning for a destructive action
  *
  * There is no build step: tokens.css stays the file people edit, and this reads
  * what they wrote.
@@ -123,9 +124,17 @@ function auditTheme(theme, p) {
     pair(`${t}-subtle-foreground`, `${t}-subtle`, 4.5, `the ${t} soft badge`);
     // --brand-foreground is the ink ON the brand fill, not brand-coloured text.
     if (t !== "brand") pair(`${t}-foreground`, "card", 4.5, `${t} text on a panel`);
-    const ink = t === "brand" ? "brand-foreground" : "foreground-on-solid";
+    // Warning's solid is a true amber, so the ink on it is dark in both themes.
+    const ink =
+      t === "brand" ? "brand-foreground" : t === "warning" ? "warning-on-solid" : "foreground-on-solid";
     pair(ink, t, 4.5, `the solid ${t} fill`);
   }
+
+  pair("ink-foreground", "ink", 7, "the primary button");
+  pair("ink-foreground", "ink-hover", 7, "the primary button, hovered");
+  pair("brand", "card", 4.5, "a link on a panel");
+  pair("brand", "canvas", 4.5, "a link on the page ground");
+  pair("nav-active-foreground", "nav-active", 4.5, "the active nav row");
 
   for (const a of ACCENTS) {
     pair(`accent-${a}-on-subtle`, `accent-${a}-subtle`, 4.5, `the ${a} category chip`);
@@ -161,28 +170,30 @@ function auditTheme(theme, p) {
 }
 
 /**
- * Copper sits between red and amber, so four things crowd the same arc: the
- * destructive action, the primary action, the warning tone and the amber
- * category. Without a floor they converge into one orange and the colour stops
- * carrying the difference.
+ * Two arcs are crowded, and in each the colour has to carry the difference.
+ *
+ * Cobalt lives in the blue arc with the info tone and the sky and indigo
+ * categories. A link and an "In transit" badge share a row in nearly every
+ * table, so brand keeps 30 degrees from info and 20 from each category.
+ *
+ * The warm arc holds the destructive action, the warning tone and the amber
+ * category. Without a floor they converge into one orange.
  */
 function auditHueSeparation(p, hues) {
-  const MIN = 20;
-  const arc = [
-    ["danger", p.danger?.[2]],
-    ["brand", hues["--hue-brand"]],
-    ["warning", p.warning?.[2]],
-    ["the amber category accent", hues["--hue-amber"]],
+  const floors = [
+    ["info", hues["--hue-info"], "brand", hues["--hue-brand"], 30],
+    ["the sky category accent", hues["--hue-sky"], "brand", hues["--hue-brand"], 20],
+    ["brand", hues["--hue-brand"], "the indigo category accent", hues["--hue-indigo"], 20],
+    ["danger", p.danger?.[2], "warning", p.warning?.[2], 20],
+    ["warning", p.warning?.[2], "the amber category accent", hues["--hue-amber"], 20],
   ];
   const out = [];
-  for (let i = 1; i < arc.length; i++) {
-    const [a, ah] = arc[i - 1];
-    const [b, bh] = arc[i];
+  for (const [a, ah, b, bh, min] of floors) {
     if (ah === undefined || bh === undefined) continue;
     const gap = Math.abs(ah - bh);
-    if (gap < MIN) {
+    if (gap < min) {
       out.push(
-        `hues: ${a} (${ah}°) and ${b} (${bh}°) are ${gap}° apart, under the ${MIN}° floor. At that distance they read as the same orange, and the colour stops telling them apart.`,
+        `hues: ${a} (${ah}°) and ${b} (${bh}°) are ${gap}° apart, under the ${min}° floor. At that distance they read as the same colour, and the hue stops telling them apart.`,
       );
     }
   }

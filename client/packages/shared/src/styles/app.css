@@ -24,14 +24,136 @@
     @apply font-sans;
   }
 
-  body {
-    @apply bg-background text-foreground;
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
+    scrollbar-color: var(--border-strong) transparent;
   }
 
-  ::selection {
-    color: var(--color-highlight-foreground);
-    background: var(--color-highlight);
+  body {
+    @apply bg-background text-foreground;
+    font-variant-numeric: tabular-nums;
   }
+
+  /* Selection is cobalt, the same colour that marks a selected row: both say
+     "this is what you have hold of". The ink stays the ink, so selected text
+     reads at the contrast it had. */
+  ::selection {
+    color: inherit;
+    background: color-mix(in oklch, var(--brand) 24%, transparent);
+  }
+
+  /* A link is the one piece of running text that carries the brand colour. */
+  :where(p, li, dd, td, span) > a:not([class]) {
+    color: var(--brand);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklch, var(--brand) 35%, transparent);
+    text-underline-offset: 2px;
+    transition: text-decoration-color 140ms var(--ease-swift);
+  }
+
+  :where(p, li, dd, td, span) > a:not([class]):hover {
+    text-decoration-color: currentColor;
+  }
+
+  /* Anything that still animates on its own stops; transitions that answer an
+     action collapse to a cut rather than being removed, so state still changes. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* The keyframes behind --animate-rise, --animate-confirm and --animate-shimmer.
+   They live here rather than in the theme block so they are always emitted. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes confirm {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* A filled control pressed by the pointer gives by a hair. One utility so the
+   button, the toggle and the icon button all give the same amount. */
+@utility ui-press {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-duration: 140ms;
+  transition-timing-function: var(--ease-swift);
+
+  &:active:not(:disabled, [aria-disabled="true"], [data-disabled]) {
+    transform: scale(0.975);
+    transition-duration: 60ms;
+  }
+}
+
+/* The surface of a form control. An input, a textarea, a select trigger and a
+   number field all spend this, so the four of them are one control family:
+   same ground, same hairline, same hover, same disabled state. Focus is still
+   ui-focus-ring or ui-container-focus-ring; this only draws the resting box. */
+@utility ui-field {
+  background-color: var(--field);
+  border: 1px solid var(--input);
+  border-radius: var(--radius-control);
+  box-shadow: var(--elevation-field);
+  transition-property: border-color, box-shadow, background-color;
+  transition-duration: 140ms;
+  transition-timing-function: var(--ease-swift);
+
+  &:hover:not(:focus-visible, :focus-within, :disabled, [data-disabled], [aria-invalid="true"]) {
+    border-color: var(--border-strong);
+  }
+
+  &:disabled,
+  &[data-disabled] {
+    background-color: var(--sunken);
+    box-shadow: none;
+  }
+}
+
+/* The loading sweep. The band is the hover fill crossing the sunken fill, so a
+   skeleton is drawn in the two surfaces it will be replaced by. */
+@utility ui-shimmer {
+  background-color: var(--sunken);
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in oklch, var(--card) 70%, transparent) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
 }
 
 @layer utilities {
@@ -92,13 +214,9 @@
   background-image: linear-gradient(
     90deg,
     var(--brand),
-    var(--chart-4),
-    var(--chart-7),
-    var(--chart-3),
+    var(--accent-sky),
     var(--brand),
-    var(--chart-4),
-    var(--chart-7),
-    var(--chart-3),
+    var(--accent-sky),
     var(--brand)
   );
   animation: nav-progress-flow 2.4s linear infinite;
@@ -289,7 +407,7 @@
 }
 
 .tiptap a {
-  color: var(--info-foreground);
+  color: var(--brand);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
