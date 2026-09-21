@@ -130,6 +130,7 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
               key={activeThread.id}
               thread={activeThread}
               agent={activeAgent}
+              agentsUnavailable={agentsQuery.isError}
               expanded={expanded}
               onStartNew={
                 activeAgent && !startMutation.isPending

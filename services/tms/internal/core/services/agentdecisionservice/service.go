@@ -119,7 +119,7 @@ func (s *Service) DecideWithOutcome(
 		DecidedByUserID: actor.UserID,
 		Decision:        req.Decision,
 		Modifications:   req.Modifications,
-		ReasonCode:      req.ReasonCode,
+		ReasonCode:      reasonCodeFor(req.Decision, req.ReasonCode),
 	}
 
 	me := errortypes.NewMultiError()
@@ -346,6 +346,25 @@ func (s *Service) signalWorkflow(
 			DecidedByUserID: decision.DecidedByUserID,
 			ReasonCode:      decision.ReasonCode,
 		})
+}
+
+// reasonCodeFor fills in a code when the decision came without one. The
+// chat card asks for a click, not a reason, and a decision refused for the
+// lack of a reason nobody was asked for is a button that does nothing. A
+// filled-in code is a code, not a reason: memory ignores it as such.
+func reasonCodeFor(decision agent.DecisionType, reason string) string {
+	if trimmed := strings.TrimSpace(reason); trimmed != "" {
+		return trimmed
+	}
+
+	switch decision {
+	case agent.DecisionAccepted:
+		return "approved_without_reason"
+	case agent.DecisionModified:
+		return "modified_without_reason"
+	default:
+		return "rejected_without_reason"
+	}
 }
 
 func proposalStatusFor(decision agent.DecisionType) agent.ProposalStatus {

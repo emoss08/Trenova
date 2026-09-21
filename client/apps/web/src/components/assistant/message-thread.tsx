@@ -29,6 +29,7 @@ import { groupProposalsByMessage } from "./proposal-state";
 import { StreamingTurn } from "./streaming-turn";
 import { suggestionsFor, type Suggestion } from "./suggestions";
 import { arrivedSince, highestSequence, withDayMarkers } from "./thread-rows";
+import { composerBlock } from "./thread-guard";
 import { groupThread } from "./thread-view";
 import { useAssistantTurn } from "./use-assistant-turn";
 import { usePageContext } from "./use-page-context";
@@ -45,12 +46,15 @@ const COMPOSER_CLEARANCE = 16;
 export function MessageThread({
   thread,
   agent,
+  agentsUnavailable = false,
   expanded,
   onPickAgent,
   onStartNew,
 }: {
   thread: AssistantThread;
   agent: AgentDefinitionRow | null;
+  /** The list of chat agents could not be read, so a missing agent is unknown, not disabled. */
+  agentsUnavailable?: boolean;
   expanded: boolean;
   onPickAgent?: () => void;
   /** Starts a fresh conversation with the same agent; offered when this one is full. */
@@ -181,8 +185,8 @@ export function MessageThread({
     return () => observer.disconnect();
   }, []);
 
-  const agentUnavailable = agent === null;
   const threadFull = history.length.state === "full";
+  const block = composerBlock({ agent, agentsUnavailable, threadFull });
   const isEmpty = !history.isLoading && entries.length === 0 && turn === null;
   // The starter questions are listed on an empty thread and behind a slash
   // in the composer at any time; a dismissed one stays dismissed in both.
@@ -324,11 +328,15 @@ export function MessageThread({
           onSend={(content) => void send(content, undefined, providerId)}
           onStop={stop}
           active={isActive}
-          disabled={agentUnavailable || threadFull}
+          disabled={block !== null}
           disabledReason={
-            threadFull
+            block === "full"
               ? t("This conversation is full. Start a new one to continue.")
-              : t("This agent has been disabled, so the conversation cannot continue.")
+              : block === "agents-unavailable"
+                ? t(
+                    "The agents could not be loaded, so nothing can be sent yet. Refresh to try again.",
+                  )
+                : t("This agent has been disabled, so the conversation cannot continue.")
           }
           notice={
             history.length.state !== "open" ? (
