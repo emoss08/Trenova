@@ -231,9 +231,13 @@ names the token to use instead.
 - Labels are sentence case; no `uppercase tracking-wider` on section labels, column heads
   or badges. Form controls spend `ui-field`, filled controls `ui-press`, skeletons
   `ui-shimmer`. Motion answers an action — nothing loops on a working screen.
-- **No shadows, anywhere.** The `--elevation-*` tokens are all flat and must stay that way;
-  separate surfaces with a border or `ring-1 ring-foreground/10`. Zero-blur outlines
-  (`shadow-[0_0_0_1px_var(--brand)]`) and the focus ring are lines, not shadows, and are fine.
+- **Nothing that sits *in* the page draws a shadow.** The `--elevation-*` tokens are all
+  flat and must stay that way; separate surfaces with a border or `ring-1
+  ring-foreground/10`. Zero-blur outlines (`shadow-[0_0_0_1px_var(--brand)]`) and the focus
+  ring are lines, not shadows, and are fine. The few things that float *above* the page — a
+  floating composer, a card in flight, a menu — spend `ui-lift-whisper` / `ui-lift` /
+  `ui-lift-float`, named by where they are allowed rather than by size. A table row with a
+  lift is still the defect the rule was written against.
 - Everything that floats from a trigger (menus, selects, popovers, hover cards, tooltips) is
   inverted — dark in light mode. The primitives set `dark` on the positioner; never write it
   by hand, and build popover content from tokens only. Dialogs and sheets follow the theme.
