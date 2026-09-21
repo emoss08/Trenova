@@ -151,6 +151,13 @@ func TestClassifyError(t *testing.T) {
 	assert.Equal(t, "provider_error", classifyError(errors.New("bad request")))
 }
 
+func (f *fakeUsage) RecentFailures(
+	context.Context,
+	repositories.AIUsageFailuresRequest,
+) ([]repositories.AIUsageFailure, error) {
+	return nil, nil
+}
+
 func (f *fakeUsage) CostByDefinition(
 	context.Context,
 	repositories.AIUsageCostRequest,

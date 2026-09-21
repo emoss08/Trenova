@@ -20,9 +20,11 @@ func toToolCallRecords(calls []serviceports.ToolCall) []conversation.ToolCallRec
 	records := make([]conversation.ToolCallRecord, 0, len(calls))
 	for _, call := range calls {
 		records = append(records, conversation.ToolCallRecord{
-			ID:        call.ID,
-			Name:      call.Name,
-			Arguments: call.Arguments,
+			ID:           call.ID,
+			Name:         call.Name,
+			Arguments:    call.Arguments,
+			ProviderData: call.ProviderData,
+			ProviderID:   call.ProviderID,
 		})
 	}
 
@@ -37,9 +39,11 @@ func fromToolCallRecords(records []conversation.ToolCallRecord) []serviceports.T
 	calls := make([]serviceports.ToolCall, 0, len(records))
 	for _, record := range records {
 		calls = append(calls, serviceports.ToolCall{
-			ID:        record.ID,
-			Name:      record.Name,
-			Arguments: record.Arguments,
+			ID:           record.ID,
+			Name:         record.Name,
+			Arguments:    record.Arguments,
+			ProviderData: record.ProviderData,
+			ProviderID:   record.ProviderID,
 		})
 	}
 

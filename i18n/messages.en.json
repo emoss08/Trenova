@@ -3792,6 +3792,15 @@
       "service/workeremploymentservice"
     ]
   },
+  "A proposal can only be decided within the decider's own organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentdecisionservice"
+    ]
+  },
   "A proposal nobody decides on in this time expires and its run is closed.": {
     "sites": 1,
     "scope": [
@@ -25347,7 +25356,7 @@
     ]
   },
   "Cancelled": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -25357,6 +25366,7 @@
       "apps/web/lib",
       "domain/fuelpurchase",
       "packages/shared/components",
+      "routes/agent-control",
       "routes/driver-expense",
       "routes/worker"
     ]
@@ -37021,6 +37031,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Could not connect": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Could not decide the case": {
@@ -54661,6 +54680,15 @@
       "routes/detention-policy"
     ]
   },
+  "Emails and notices sent to customers and other outside parties": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Emails this user a single-use link to choose their own password. Their current password keeps working until they use it, and you never see the new one.": {
     "sites": 1,
     "scope": [
@@ -57775,6 +57803,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Every AI provider is paused after repeated failures; the first is back in {0} seconds": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Every AI task has a provider": {
@@ -61756,7 +61793,7 @@
     ]
   },
   "Failed": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -88272,6 +88309,15 @@
       "apps/web/config"
     ]
   },
+  "Messages sent to drivers on their phone through the Dash app": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Metadata": {
     "sites": 2,
     "scope": [
@@ -89530,6 +89576,15 @@
     "areas": [
       "domain/ailog",
       "domain/aiprovider"
+    ]
+  },
+  "Model declined": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Model endpoints, including self-hosted servers, and their task routing": {
@@ -117603,6 +117658,15 @@
       "domain/telematics"
     ]
   },
+  "Provider unavailable": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Provider upload id cannot be longer than 255 characters": {
     "sites": 1,
     "scope": [
@@ -122128,6 +122192,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Recent model failures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Recent pay activity": {
@@ -127244,6 +127317,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Request rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Request sent — you'll get a notification when it's reviewed.": {
@@ -139185,6 +139267,15 @@
       "apps/web/components"
     ]
   },
+  "Send a message to a driver": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Send a rate agreement back for revision": {
     "sites": 1,
     "scope": [
@@ -139265,6 +139356,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Send emails and notices to customers and outside parties": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Send for approval": {
@@ -157299,6 +157399,15 @@
       "routes/worker"
     ]
   },
+  "The newest failed calls, with the provider's own message.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The next business day's pickup windows with driver coverage": {
     "sites": 1,
     "scope": [
@@ -164266,6 +164375,15 @@
       "routes/dash-control"
     ]
   },
+  "Timed out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Timeline": {
     "sites": 3,
     "scope": [
@@ -169188,6 +169306,15 @@
       "domain/worker"
     ]
   },
+  "Unknown provider": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Unknown quick action: {0}": {
     "sites": 1,
     "scope": [
@@ -173335,6 +173462,15 @@
       "domain/permission"
     ]
   },
+  "View messages sent to drivers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "View mileage entries": {
     "sites": 1,
     "scope": [
@@ -173851,6 +173987,15 @@
     ]
   },
   "View what agents remember": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "View what was sent to customers": {
     "sites": 1,
     "scope": [
       "go"
@@ -189131,6 +189276,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "{0} is paused for {1} seconds after repeated failures. Try again then, or pick another model": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} is permanently closed, so entry {1} cannot be reversed and the year cannot be reopened.": {

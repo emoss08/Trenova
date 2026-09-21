@@ -6,6 +6,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -180,7 +181,7 @@ func TestToChatMessages_NeverReplaysReasoning(t *testing.T) {
 
 	messages := toChatMessages("", []Message{
 		{Role: RoleAssistant, Content: "Friday.", Reasoning: &ReasoningTrace{Text: "thought"}},
-	})
+	}, pulid.Nil)
 
 	encoded, err := sonic.Marshal(messages)
 	require.NoError(t, err)

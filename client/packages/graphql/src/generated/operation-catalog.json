@@ -882,7 +882,7 @@
       "kind": "query",
       "domain": "ai-provider",
       "sourceFile": "src/operations/ai-provider/usage-summary.graphql",
-      "hash": "sha256:12d7b83bb1d42522d43c080ca399012b494262f83f908df397ff91f287ab9aa1",
+      "hash": "sha256:5e9599fa59c13dde1fbde8f32c7942aa7e5ba4359259c6ab67136f9799ce0059",
       "rootFields": [
         "aiUsageSummary"
       ],
@@ -895,7 +895,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "query AIUsageSummary($since: Timestamp) {\n  aiUsageSummary(since: $since) {\n    since\n    calls\n    failed\n    inputTokens\n    outputTokens\n    reasoningTokens\n    costUsd\n    pricedCalls\n    latencyP50Ms\n    latencyP95Ms\n    byProvider {\n      providerId\n      providerName\n      model\n      calls\n      failed\n      inputTokens\n      outputTokens\n      reasoningTokens\n      costUsd\n      pricedCalls\n      latencyP50Ms\n      latencyP95Ms\n    }\n  }\n}"
+      "sdl": "query AIUsageSummary($since: Timestamp) {\n  aiUsageSummary(since: $since) {\n    since\n    calls\n    failed\n    inputTokens\n    outputTokens\n    reasoningTokens\n    costUsd\n    pricedCalls\n    latencyP50Ms\n    latencyP95Ms\n    byProvider {\n      providerId\n      providerName\n      model\n      calls\n      failed\n      inputTokens\n      outputTokens\n      reasoningTokens\n      costUsd\n      pricedCalls\n      latencyP50Ms\n      latencyP95Ms\n    }\n    recentFailures {\n      providerId\n      providerName\n      model\n      task\n      errorClass\n      message\n      at\n    }\n  }\n}"
     },
     {
       "name": "AmendIftaReturn",

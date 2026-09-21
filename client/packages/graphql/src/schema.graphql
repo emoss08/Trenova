@@ -96,6 +96,21 @@ enum AITask {
   ScopeClassification
 }
 
+"""
+One failed model call: which provider and model, what kind of failure, and
+what the provider said. The class is one of a handful of words; the message
+is the provider's, cut to fit.
+"""
+type AIUsageFailure {
+  at: Timestamp!
+  errorClass: String!
+  message: String!
+  model: String!
+  providerId: ID!
+  providerName: String!
+  task: String!
+}
+
 """One provider and model's share of a usage window."""
 type AIUsageProviderSlice {
   calls: Int!
@@ -132,6 +147,10 @@ type AIUsageSummary {
   """
   pricedCalls: Int!
   reasoningTokens: Int!
+  """
+  The newest failed calls in the window, with the provider's own message.
+  """
+  recentFailures: [AIUsageFailure!]!
   since: Timestamp!
 }
 

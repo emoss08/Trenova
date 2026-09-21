@@ -63,6 +63,7 @@ var AIUsageRecordColumns = struct {
 	RunID             Column // "run_id" → qualified: "aiu.run_id"
 	Succeeded         Column // "succeeded" → qualified: "aiu.succeeded"
 	ErrorClass        Column // "error_class" → qualified: "aiu.error_class"
+	ErrorMessage      Column // "error_message" → qualified: "aiu.error_message"
 	Streamed          Column // "streamed" → qualified: "aiu.streamed"
 	LatencyMs         Column // "latency_ms" → qualified: "aiu.latency_ms"
 	InputTokens       Column // "input_tokens" → qualified: "aiu.input_tokens"
@@ -85,6 +86,7 @@ var AIUsageRecordColumns = struct {
 	RunID:             NewColumn("run_id", "aiu"),
 	Succeeded:         NewColumn("succeeded", "aiu"),
 	ErrorClass:        NewColumn("error_class", "aiu"),
+	ErrorMessage:      NewColumn("error_message", "aiu"),
 	Streamed:          NewColumn("streamed", "aiu"),
 	LatencyMs:         NewColumn("latency_ms", "aiu"),
 	InputTokens:       NewColumn("input_tokens", "aiu"),
@@ -113,6 +115,7 @@ var AIUsageRecordFieldMap = map[string]string{
 	"runId":             "run_id",
 	"succeeded":         "succeeded",
 	"errorClass":        "error_class",
+	"errorMessage":      "error_message",
 	"streamed":          "streamed",
 	"latencyMs":         "latency_ms",
 	"inputTokens":       "input_tokens",
@@ -139,6 +142,7 @@ var AIUsageRecordInsertableColumns = []string{
 	"run_id",
 	"succeeded",
 	"error_class",
+	"error_message",
 	"streamed",
 	"latency_ms",
 	"input_tokens",
@@ -212,6 +216,7 @@ var AIUsageRecordFilter = struct {
 	RunID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
 	Succeeded         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "succeeded" → DB: "succeeded"
 	ErrorClass        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorClass" → DB: "error_class"
+	ErrorMessage      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
 	Streamed          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "streamed" → DB: "streamed"
 	LatencyMs         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latencyMs" → DB: "latency_ms"
 	InputTokens       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
@@ -261,6 +266,9 @@ var AIUsageRecordFilter = struct {
 	},
 	ErrorClass: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("errorClass", op, value)
+	},
+	ErrorMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("errorMessage", op, value)
 	},
 	Streamed: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("streamed", op, value)

@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // Role identifies who produced a message in a conversation.
@@ -54,6 +55,14 @@ type ToolCall struct {
 	// The runtime refuses such a call rather than running the tool on the
 	// empty map that used to stand in for it.
 	ArgumentsError string `json:"argumentsError,omitempty"`
+	// ProviderData is what the provider attached to the call besides its
+	// name and arguments and wants back with it. Gemini signs each function
+	// call with a thought signature that the OpenAI-compatible protocol
+	// carries under extra_content, and it rejects a follow-up request that
+	// replays the call without it. The data is opaque and is replayed only
+	// to the provider that produced it, named by ProviderID.
+	ProviderData map[string]any `json:"providerData,omitempty"`
+	ProviderID   pulid.ID       `json:"providerId,omitempty"`
 }
 
 // UserMessage is the common single-turn case.

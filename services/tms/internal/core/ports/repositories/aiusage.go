@@ -41,8 +41,9 @@ type AIUsageProviderTotals struct {
 }
 
 type AIUsageSummary struct {
-	Totals     AIUsageTotals
-	ByProvider []AIUsageProviderTotals
+	Totals         AIUsageTotals
+	ByProvider     []AIUsageProviderTotals
+	RecentFailures []AIUsageFailure
 }
 
 // AIUsageCostRequest asks what one agent's calls have cost since an instant.
@@ -60,8 +61,28 @@ type AIUsageCost struct {
 	UnpricedCalls int
 }
 
+// AIUsageFailuresRequest asks for the newest failed attempts in a window.
+type AIUsageFailuresRequest struct {
+	TenantInfo pagination.TenantInfo
+	Since      int64
+	Limit      int
+}
+
+// AIUsageFailure is one failed attempt: which provider and model, what kind
+// of failure, and the provider's own words for it.
+type AIUsageFailure struct {
+	ProviderID   pulid.ID
+	ProviderName string
+	Model        string
+	Task         string
+	ErrorClass   string
+	Message      string
+	At           int64
+}
+
 type AIUsageRepository interface {
 	Create(ctx context.Context, record *aiusage.AIUsageRecord) error
 	Summary(ctx context.Context, req AIUsageSummaryRequest) (*AIUsageSummary, error)
+	RecentFailures(ctx context.Context, req AIUsageFailuresRequest) ([]AIUsageFailure, error)
 	CostByDefinition(ctx context.Context, req AIUsageCostRequest) (*AIUsageCost, error)
 }

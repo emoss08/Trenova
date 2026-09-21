@@ -3262,6 +3262,9 @@ models:
   AIUsageProviderSlice:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AIUsageProviderSlice
+  AIUsageFailure:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIUsageFailure
   AROpenItem:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.AROpenItem

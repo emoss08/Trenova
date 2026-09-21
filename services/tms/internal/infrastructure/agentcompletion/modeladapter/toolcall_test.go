@@ -8,6 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -396,4 +397,86 @@ func TestAdapters_OmitToolFieldsWhenNoToolsOffered(t *testing.T) {
 			assert.NotContains(t, *captured, "tools")
 		})
 	}
+}
+
+// Gemini 3 signs each function call with a thought signature that the
+// OpenAI-compatible protocol carries under extra_content, and it rejects the
+// follow-up request outright when the call is replayed without it. The
+// signature is opaque and belongs to the provider that produced it: it is
+// kept on the call, sent back to that provider, and never sent to another,
+// since a strict endpoint refuses a field it does not know.
+func TestOpenAIChatAdapter_ReplaysProviderDataOnlyToTheProviderThatMadeTheCall(t *testing.T) {
+	t.Parallel()
+
+	signature := map[string]any{"google": map[string]any{"thought_signature": "sig-1"}}
+	server, captured := captureServer(t, map[string]any{
+		"model": "gemini-3.8-flash",
+		"choices": []map[string]any{{
+			"finish_reason": "tool_calls",
+			"message": map[string]any{
+				"role":    "assistant",
+				"content": "",
+				"tool_calls": []map[string]any{{
+					"id":            "call_1",
+					"type":          "function",
+					"function":      map[string]any{"name": "lookup_shipment", "arguments": `{"number":"S1"}`},
+					"extra_content": signature,
+				}},
+			},
+		}},
+	})
+
+	gemini := callFor(aiprovider.KindOpenAIChat, server.URL, &Request{
+		Messages: UserMessage("Where is S1?"), Tools: lookupTool(),
+	})
+	gemini.Provider.ID = pulid.MustNew("aip_")
+
+	resp, err := NewOpenAIChatAdapter().Complete(t.Context(), gemini)
+	require.NoError(t, err)
+	require.Len(t, resp.ToolCalls, 1)
+	assert.Equal(t, signature, resp.ToolCalls[0].ProviderData)
+
+	call := resp.ToolCalls[0]
+	call.ProviderID = gemini.Provider.ID
+	followUp := []Message{
+		{Role: RoleUser, Content: "Where is S1?"},
+		{Role: RoleAssistant, ToolCalls: []ToolCall{call}},
+		{Role: RoleTool, ToolCallID: "call_1", ToolName: "lookup_shipment", Content: `{"status":"InTransit"}`},
+	}
+
+	gemini.Request = &Request{Messages: followUp, Tools: lookupTool()}
+	_, err = NewOpenAIChatAdapter().Complete(t.Context(), gemini)
+	require.NoError(t, err)
+	assert.Equal(t, signature, capturedToolCallExtra(t, *captured),
+		"the provider that signed the call gets its signature back")
+
+	other := callFor(aiprovider.KindOpenAIChat, server.URL, &Request{Messages: followUp, Tools: lookupTool()})
+	other.Provider.ID = pulid.MustNew("aip_")
+	_, err = NewOpenAIChatAdapter().Complete(t.Context(), other)
+	require.NoError(t, err)
+	assert.Nil(t, capturedToolCallExtra(t, *captured),
+		"another provider is not sent a field only the first understands")
+}
+
+func capturedToolCallExtra(t *testing.T, body map[string]any) any {
+	t.Helper()
+
+	messages, ok := body["messages"].([]any)
+	require.True(t, ok)
+	for _, raw := range messages {
+		message, isMap := raw.(map[string]any)
+		if !isMap || message["role"] != "assistant" {
+			continue
+		}
+		calls, hasCalls := message["tool_calls"].([]any)
+		if !hasCalls || len(calls) == 0 {
+			continue
+		}
+		first, isCall := calls[0].(map[string]any)
+		require.True(t, isCall)
+
+		return first["extra_content"]
+	}
+
+	return nil
 }

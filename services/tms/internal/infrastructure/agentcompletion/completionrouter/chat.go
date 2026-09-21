@@ -78,6 +78,13 @@ func (s *Service) runChat(
 	if req.PinPreferred {
 		usable = pinPreferred(usable, req.PreferredProviderID)
 	}
+	// A pinned provider that is resting is not tried anyway: the person
+	// chose it, but a choice of a provider that is down is a wait, not a
+	// reply, and the error names the wait.
+	usable, err = s.awake(usable)
+	if err != nil {
+		return nil, err
+	}
 
 	var lastErr error
 	queue := append(make([]*aiprovider.Provider, 0, len(usable)+maxMidReplyRetries), usable...)
@@ -87,6 +94,7 @@ func (s *Service) runChat(
 		started := time.Now()
 		result, emitted, attemptErr := s.attemptChat(ctx, provider, req, sink)
 		latency := time.Since(started)
+		s.health.Observe(provider.ID, attemptErr)
 		s.record(ctx, usageAttempt{
 			provider:    provider,
 			task:        aiprovider.TaskAssistantChat,

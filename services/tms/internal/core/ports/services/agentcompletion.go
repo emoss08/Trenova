@@ -16,6 +16,9 @@ var (
 	// ErrNoProviderConfigured reports that no enabled provider is assigned to the
 	// requested task. It is distinct from a call failure: nothing was attempted.
 	ErrNoProviderConfigured = errors.New("no AI provider is configured for this task")
+	// ErrProvidersResting reports that every provider the request could use
+	// is paused after repeated failures, so nothing was attempted.
+	ErrProvidersResting = errors.New("every usable AI provider is resting after repeated failures")
 )
 
 type ContextSection struct {
@@ -211,4 +214,16 @@ type CompletionService interface {
 		ctx context.Context,
 		req *BackgroundPollRequest,
 	) (*BackgroundOutcome, error)
+}
+
+// ProviderFailure is an error that carries a provider's own verdict on a
+// request: the status it answered with, and whether the failure is the
+// provider being unavailable rather than the request being wrong. Adapters
+// implement it on their transport errors; the assistant reads it to tell the
+// person whether their request was refused or the provider could not be
+// reached, which are different things to do something about.
+type ProviderFailure interface {
+	error
+	ProviderStatus() int
+	ProviderRetryable() bool
 }

@@ -119,6 +119,12 @@ type ToolCallRecord struct {
 	ID        string         `json:"id"`
 	Name      string         `json:"name"`
 	Arguments map[string]any `json:"arguments"`
+	// ProviderData and ProviderID keep what the provider attached to the
+	// call and which provider that was, so a later turn on the same provider
+	// can send it back. Gemini refuses a replayed call without its thought
+	// signature; another provider would refuse the field itself.
+	ProviderData map[string]any `json:"providerData,omitempty"`
+	ProviderID   pulid.ID       `json:"providerId,omitempty"`
 }
 
 func (m *Message) BeforeAppendModel(_ context.Context, query bun.Query) error {

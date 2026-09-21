@@ -24,5 +24,14 @@ query AIUsageSummary($since: Timestamp) {
       latencyP50Ms
       latencyP95Ms
     }
+    recentFailures {
+      providerId
+      providerName
+      model
+      task
+      errorClass
+      message
+      at
+    }
   }
 }

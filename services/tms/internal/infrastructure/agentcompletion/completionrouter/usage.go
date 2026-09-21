@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
@@ -11,6 +12,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
 )
 
@@ -59,6 +61,7 @@ func (s *Service) record(ctx context.Context, attempt usageAttempt) {
 		RunID:             attempt.attribution.RunID,
 		Succeeded:         attempt.err == nil,
 		ErrorClass:        classifyError(attempt.err),
+		ErrorMessage:      failureMessage(attempt.err),
 		Streamed:          attempt.streamed,
 		LatencyMs:         attempt.latency.Milliseconds(),
 	}
@@ -114,6 +117,22 @@ func classifyError(err error) string {
 	}
 
 	return "provider_error"
+}
+
+// maxFailureMessageChars is how much of a provider's error is kept on the
+// usage row: the reason, not the stack.
+const maxFailureMessageChars = 500
+
+// failureMessage is the provider's own account of a failed attempt. The
+// class already says what kind of failure it was; the message says why,
+// which is the difference between "the provider is down" and "the provider
+// refuses this request" when both show as a failed call.
+func failureMessage(err error) string {
+	if err == nil {
+		return ""
+	}
+
+	return stringutils.TruncateRunes(strings.TrimSpace(err.Error()), maxFailureMessageChars)
 }
 
 func firstNonEmpty(values ...string) string {

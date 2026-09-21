@@ -275,3 +275,28 @@ func TestReadSSE_JoinsMultiLineDataAndIgnoresComments(t *testing.T) {
 
 	assert.Equal(t, [][2]string{{"ping", "{\"a\":\n1}"}, {"", "solo"}}, seen)
 }
+
+// A streamed call carries the provider's extra content on one of its
+// fragments, and it has to survive the reassembly like the id and the name.
+func TestOpenAIChatAdapter_StreamKeepsProviderDataOnTheCall(t *testing.T) {
+	t.Parallel()
+
+	server, _ := streamServer(t, "text/event-stream", sse(
+		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"lookup_shipment","arguments":"{\"num"},"extra_content":{"google":{"thought_signature":"sig-9"}}}]},"finish_reason":null}]}`},
+		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"ber\":\"S1\"}"}}]},"finish_reason":null}]}`},
+		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}`},
+		[2]string{"", `[DONE]`},
+	))
+
+	resp, _ := streamWith(t, NewOpenAIChatAdapter(), callFor(
+		aiprovider.KindOpenAIChat, server.URL,
+		&Request{Messages: UserMessage("Where is S1?"), Tools: lookupTool()},
+	))
+
+	require.Len(t, resp.ToolCalls, 1)
+	assert.Equal(t, "S1", resp.ToolCalls[0].Arguments["number"])
+	assert.Equal(t,
+		map[string]any{"google": map[string]any{"thought_signature": "sig-9"}},
+		resp.ToolCalls[0].ProviderData,
+	)
+}

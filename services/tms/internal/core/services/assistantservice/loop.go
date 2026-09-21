@@ -3,6 +3,8 @@ package assistantservice
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -169,10 +171,51 @@ func closingNotice(err error, ranAnything bool) string {
 	case stopped:
 		return stoppedBeforeStartNotice
 	case ranAnything:
-		return interruptedNotice
+		return withReason(interruptedNotice, err)
 	default:
-		return failedBeforeStartNotice
+		return withReason(failedBeforeStartNotice, err)
 	}
+}
+
+// withReason adds why the turn failed, when the failure is one the person
+// can do something about. A request the provider refused is not fixed by
+// asking again; a provider that could not be reached usually is. The notice
+// is italic markdown, so the reason goes inside the closing underscore.
+func withReason(notice string, err error) string {
+	reason := failureReason(err)
+	if reason == "" {
+		return notice
+	}
+
+	return strings.TrimSuffix(notice, "_") + " " + reason + "_"
+}
+
+// failureReason names the kind of failure in a sentence, without the
+// provider's own message: that message is for the administrator and is
+// kept with the usage record in AI Control.
+func failureReason(err error) string {
+	var failure serviceports.ProviderFailure
+	if errors.As(err, &failure) {
+		if failure.ProviderRetryable() {
+			return fmt.Sprintf(
+				"The model provider was unavailable (status %d).", failure.ProviderStatus(),
+			)
+		}
+
+		return fmt.Sprintf(
+			"The model provider rejected the request (status %d); an administrator "+
+				"can see its reason under AI Control.",
+			failure.ProviderStatus(),
+		)
+	}
+	if errors.Is(err, serviceports.ErrProvidersResting) {
+		return "Every model provider is paused after repeated failures."
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return "The model provider did not answer in time."
+	}
+
+	return ""
 }
 
 // interruptedTurn is what a failed run leaves behind: everything that ran,

@@ -3,6 +3,8 @@ package assistantservice
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -147,4 +149,41 @@ func TestInterruptedTurn_KeepsTheQuestionWhenNoRunCameBack(t *testing.T) {
 	require.NotNil(t, empty)
 	require.Len(t, empty.Messages, 2)
 	assert.Contains(t, empty.Reply, "before a reply started")
+}
+
+type fakeProviderFailure struct {
+	status    int
+	retryable bool
+}
+
+func (f fakeProviderFailure) Error() string           { return "provider failed" }
+func (f fakeProviderFailure) ProviderStatus() int     { return f.status }
+func (f fakeProviderFailure) ProviderRetryable() bool { return f.retryable }
+
+// "Ask again" is the wrong advice for a request the provider refused: asking
+// again sends the same request. The note says which kind of failure it was,
+// so a refusal sends the person to an administrator and an outage tells
+// them to wait, and neither has to guess from a note that said only that
+// the reply failed.
+func TestClosingNotice_SaysWhetherTheProviderRefusedOrWasUnavailable(t *testing.T) {
+	t.Parallel()
+
+	refused := closingNotice(
+		fmt.Errorf("chat: %w", fakeProviderFailure{status: 400, retryable: false}), true,
+	)
+	assert.Contains(t, refused, "rejected the request (status 400)")
+	assert.Contains(t, refused, "AI Control")
+	assert.True(t, strings.HasSuffix(refused, "_"), "the note stays one italic span: %q", refused)
+
+	unavailable := closingNotice(
+		fmt.Errorf("chat: %w", fakeProviderFailure{status: 503, retryable: true}), false,
+	)
+	assert.Contains(t, unavailable, "unavailable (status 503)")
+	assert.Contains(t, unavailable, "before it started")
+
+	resting := closingNotice(fmt.Errorf("chat: %w", serviceports.ErrProvidersResting), false)
+	assert.Contains(t, resting, "paused after repeated failures")
+
+	plain := closingNotice(errors.New("something else"), false)
+	assert.Equal(t, failedBeforeStartNotice, plain, "an unclassified failure adds nothing")
 }

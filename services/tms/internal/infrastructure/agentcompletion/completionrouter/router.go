@@ -52,6 +52,9 @@ type Service struct {
 	encryption *encryptionservice.Service
 	adapters   *modeladapter.Registry
 	usage      repositories.AIUsageRepository
+	// health rests a provider that keeps failing, so a turn does not pay for
+	// attempts on a provider that is down before reaching one that is up.
+	health *providerHealth
 
 	// clients are cached per egress policy. Building one per call would discard
 	// connection reuse, and the policy must stay bound to the client so a
@@ -73,6 +76,7 @@ func New(p Params) serviceports.CompletionService {
 		encryption:    p.Encryption,
 		usage:         p.Usage,
 		adapters:      modeladapter.NewRegistry(),
+		health:        newProviderHealth(nil),
 		clients:       make(map[bool]*http.Client, 2),
 		streamClients: make(map[bool]*http.Client, 2),
 	}
@@ -177,7 +181,47 @@ func (s *Service) candidatesFor(
 		).WithInternal(serviceports.ErrNoProviderConfigured)
 	}
 
-	return preferFirst(usable, req.PreferredProviderID), nil
+	ready, err := s.awake(usable)
+	if err != nil {
+		return nil, err
+	}
+
+	return preferFirst(ready, req.PreferredProviderID), nil
+}
+
+// awake drops the providers resting after repeated failures. When every one
+// of them is resting the caller is told so, with when the first is due back,
+// rather than sent through a list that will fail at each step.
+func (s *Service) awake(usable []*aiprovider.Provider) ([]*aiprovider.Provider, error) {
+	ready, resting, until := s.health.rested(usable)
+	for _, provider := range resting {
+		s.logger.Debug("skipping provider resting after repeated failures",
+			zap.String("provider", provider.Name),
+			zap.Time("until", until),
+		)
+	}
+	if len(ready) == 0 {
+		return nil, restingError(resting, until.Sub(s.health.now()))
+	}
+
+	return ready, nil
+}
+
+// restingError says which providers are resting and how long until the
+// first is back.
+func restingError(resting []*aiprovider.Provider, wait time.Duration) error {
+	seconds := max(1, int(wait.Round(time.Second).Seconds()))
+	if len(resting) == 1 {
+		return errortypes.NewBusinessError(
+			"{0} is paused for {1} seconds after repeated failures. Try again then, or pick another model",
+			resting[0].Name, seconds,
+		).WithInternal(serviceports.ErrProvidersResting)
+	}
+
+	return errortypes.NewBusinessError(
+		"Every AI provider is paused after repeated failures; the first is back in {0} seconds",
+		seconds,
+	).WithInternal(serviceports.ErrProvidersResting)
 }
 
 func (s *Service) run(ctx context.Context, req *runRequest) (*runOutcome, error) {
@@ -199,6 +243,7 @@ func (s *Service) runAmong(
 		started := time.Now()
 		outcome, attemptErr := s.attempt(ctx, provider, req)
 		latency := time.Since(started)
+		s.health.Observe(provider.ID, attemptErr)
 		s.record(ctx, usageAttempt{
 			provider:    provider,
 			task:        req.Task,

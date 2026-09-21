@@ -35,6 +35,23 @@ type AIUsageSummary {
   latencyP50Ms: Int!
   latencyP95Ms: Int!
   byProvider: [AIUsageProviderSlice!]!
+  "The newest failed calls in the window, with the provider's own message."
+  recentFailures: [AIUsageFailure!]!
+}
+
+"""
+One failed model call: which provider and model, what kind of failure, and
+what the provider said. The class is one of a handful of words; the message
+is the provider's, cut to fit.
+"""
+type AIUsageFailure {
+  providerId: ID!
+  providerName: String!
+  model: String!
+  task: String!
+  errorClass: String!
+  message: String!
+  at: Timestamp!
 }
 
 extend type Query {

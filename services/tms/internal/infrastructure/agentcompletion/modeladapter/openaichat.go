@@ -7,6 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -67,6 +68,9 @@ type chatToolCall struct {
 	ID       string           `json:"id"`
 	Type     string           `json:"type"`
 	Function chatToolCallFunc `json:"function"`
+	// ExtraContent is provider-specific data on the call. Gemini puts its
+	// thought signature here and requires it back on the next request.
+	ExtraContent map[string]any `json:"extra_content,omitempty"`
 }
 
 // chatToolCallFunc carries arguments as a JSON-encoded string rather than an
@@ -110,7 +114,7 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 	body := chatRequest{
 		Model:     call.Provider.Model,
 		MaxTokens: call.Request.MaxTokens,
-		Messages:  toChatMessages(call.Request.System, call.Request.Messages),
+		Messages:  toChatMessages(call.Request.System, call.Request.Messages, call.Provider.ID),
 		Tools:     toChatTools(call.Request.Tools),
 		Stream:    false,
 	}
@@ -173,6 +177,7 @@ type chatStreamChunk struct {
 					Name      string `json:"name"`
 					Arguments string `json:"arguments"`
 				} `json:"function"`
+				ExtraContent map[string]any `json:"extra_content"`
 			} `json:"tool_calls"`
 		} `json:"delta"`
 	} `json:"choices"`
@@ -183,6 +188,7 @@ type chatToolCallBuffer struct {
 	id        string
 	name      string
 	arguments strings.Builder
+	extra     map[string]any
 }
 
 func (a openAIChatAdapter) Stream(
@@ -193,7 +199,7 @@ func (a openAIChatAdapter) Stream(
 	body := chatRequest{
 		Model:         call.Provider.Model,
 		MaxTokens:     call.Request.MaxTokens,
-		Messages:      toChatMessages(call.Request.System, call.Request.Messages),
+		Messages:      toChatMessages(call.Request.System, call.Request.Messages, call.Provider.ID),
 		Tools:         toChatTools(call.Request.Tools),
 		Stream:        true,
 		StreamOptions: &chatStreamOptions{IncludeUsage: true},
@@ -273,6 +279,9 @@ func (a openAIChatAdapter) Stream(
 				buffer.id = stringutils.FirstNonEmpty(buffer.id, fragment.ID)
 				buffer.name = stringutils.FirstNonEmpty(buffer.name, fragment.Function.Name)
 				buffer.arguments.WriteString(fragment.Function.Arguments)
+				if len(fragment.ExtraContent) > 0 {
+					buffer.extra = fragment.ExtraContent
+				}
 			}
 		}
 
@@ -291,6 +300,7 @@ func (a openAIChatAdapter) Stream(
 			Name:           buffer.name,
 			Arguments:      arguments,
 			ArgumentsError: argumentsErr,
+			ProviderData:   buffer.extra,
 		})
 	}
 	if len(toolCalls) == 0 {
@@ -310,7 +320,10 @@ func (a openAIChatAdapter) Stream(
 	}, nil
 }
 
-func toChatMessages(system string, messages []Message) []chatMessage {
+// toChatMessages puts the conversation on the wire. providerID is who the
+// request goes to: a call's provider data is sent back to the provider that
+// produced it and withheld from any other, which would refuse the field.
+func toChatMessages(system string, messages []Message, providerID pulid.ID) []chatMessage {
 	out := make([]chatMessage, 0, len(messages)+1)
 	if strings.TrimSpace(system) != "" {
 		out = append(out, chatMessage{Role: "system", Content: system})
@@ -328,7 +341,7 @@ func toChatMessages(system string, messages []Message) []chatMessage {
 			out = append(out, chatMessage{
 				Role:      "assistant",
 				Content:   msg.Content,
-				ToolCalls: toChatToolCalls(msg.ToolCalls),
+				ToolCalls: toChatToolCalls(msg.ToolCalls, providerID),
 			})
 		default:
 			out = append(out, chatMessage{Role: "user", Content: msg.Content})
@@ -338,7 +351,7 @@ func toChatMessages(system string, messages []Message) []chatMessage {
 	return out
 }
 
-func toChatToolCalls(calls []ToolCall) []chatToolCall {
+func toChatToolCalls(calls []ToolCall, providerID pulid.ID) []chatToolCall {
 	if len(calls) == 0 {
 		return nil
 	}
@@ -349,11 +362,15 @@ func toChatToolCalls(calls []ToolCall) []chatToolCall {
 		if err != nil {
 			encoded = []byte("{}")
 		}
-		out = append(out, chatToolCall{
+		wire := chatToolCall{
 			ID:       call.ID,
 			Type:     "function",
 			Function: chatToolCallFunc{Name: call.Name, Arguments: string(encoded)},
-		})
+		}
+		if len(call.ProviderData) > 0 && call.ProviderID.IsNotNil() && call.ProviderID == providerID {
+			wire.ExtraContent = call.ProviderData
+		}
+		out = append(out, wire)
 	}
 
 	return out
@@ -443,6 +460,7 @@ func fromChatToolCalls(calls []chatToolCall) []ToolCall {
 			Name:           call.Function.Name,
 			Arguments:      args,
 			ArgumentsError: argsErr,
+			ProviderData:   call.ExtraContent,
 		})
 	}
 

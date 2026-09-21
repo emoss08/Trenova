@@ -25,6 +25,167 @@ import (
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _AIUsageFailure_providerId(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFailure) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFailure_providerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProviderID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFailure_providerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFailure", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFailure_providerName(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFailure) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFailure_providerName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProviderName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFailure_providerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFailure", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFailure_model(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFailure) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFailure_model(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Model, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFailure_model(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFailure", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFailure_task(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFailure) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFailure_task(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Task, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFailure_task(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFailure", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFailure_errorClass(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFailure) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFailure_errorClass(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ErrorClass, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFailure_errorClass(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFailure", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFailure_message(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFailure) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFailure_message(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFailure_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFailure", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFailure_at(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFailure) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFailure_at(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.At, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFailure_at(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFailure", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
 func (ec *executionContext) _AIUsageProviderSlice_providerId(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageProviderSlice) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -563,6 +724,38 @@ func (ec *executionContext) fieldContext_AIUsageSummary_byProvider(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _AIUsageSummary_recentFailures(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageSummary_recentFailures(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RecentFailures, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []services.AIUsageFailure) graphql.Marshaler {
+			return ec.marshalNAIUsageFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFailureᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageSummary_recentFailures(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIUsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIUsageFailure(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 // endregion **************************** field.gotpl *****************************
 
 // region    **************************** input.gotpl *****************************
@@ -574,6 +767,74 @@ func (ec *executionContext) fieldContext_AIUsageSummary_byProvider(_ context.Con
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var aIUsageFailureImplementors = []string{"AIUsageFailure"}
+
+func (ec *executionContext) _AIUsageFailure(ctx context.Context, sel ast.SelectionSet, obj *services.AIUsageFailure) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aIUsageFailureImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AIUsageFailure")
+		case "providerId":
+			out.Values[i] = ec._AIUsageFailure_providerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "providerName":
+			out.Values[i] = ec._AIUsageFailure_providerName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "model":
+			out.Values[i] = ec._AIUsageFailure_model(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "task":
+			out.Values[i] = ec._AIUsageFailure_task(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "errorClass":
+			out.Values[i] = ec._AIUsageFailure_errorClass(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._AIUsageFailure_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "at":
+			out.Values[i] = ec._AIUsageFailure_at(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
 
 var aIUsageProviderSliceImplementors = []string{"AIUsageProviderSlice"}
 
@@ -735,6 +996,11 @@ func (ec *executionContext) _AIUsageSummary(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "recentFailures":
+			out.Values[i] = ec._AIUsageSummary_recentFailures(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -759,6 +1025,26 @@ func (ec *executionContext) _AIUsageSummary(ctx context.Context, sel ast.Selecti
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) marshalNAIUsageFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFailure(ctx context.Context, sel ast.SelectionSet, v services.AIUsageFailure) graphql.Marshaler {
+	return ec._AIUsageFailure(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAIUsageFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFailureᚄ(ctx context.Context, sel ast.SelectionSet, v []services.AIUsageFailure) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAIUsageFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFailure(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
 
 func (ec *executionContext) marshalNAIUsageProviderSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageProviderSlice(ctx context.Context, sel ast.SelectionSet, v services.AIUsageProviderSlice) graphql.Marshaler {
 	return ec._AIUsageProviderSlice(ctx, sel, &v)

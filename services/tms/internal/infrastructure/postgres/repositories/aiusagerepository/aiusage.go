@@ -143,6 +143,72 @@ func (r *repository) Summary(
 	return summary, nil
 }
 
+// RecentFailures lists the newest failed attempts in a window, with the
+// provider's own message, so the reason behind a failure count is readable
+// where the count is shown.
+func (r *repository) RecentFailures(
+	ctx context.Context,
+	req repositories.AIUsageFailuresRequest,
+) ([]repositories.AIUsageFailure, error) {
+	cols := buncolgen.AIUsageRecordColumns
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 5
+	}
+
+	var rows []failureRow
+	if err := r.db.DBForContext(ctx).NewSelect().
+		Model((*aiusage.AIUsageRecord)(nil)).
+		ColumnExpr("COALESCE(aiu.provider_id, '') AS provider_id").
+		ColumnExpr("COALESCE(aiprv.name, '') AS provider_name").
+		ColumnExpr("aiu.model AS model").
+		ColumnExpr("aiu.task AS task").
+		ColumnExpr("COALESCE(aiu.error_class, '') AS error_class").
+		ColumnExpr("COALESCE(aiu.error_message, '') AS error_message").
+		ColumnExpr("aiu.created_at AS created_at").
+		Join("LEFT JOIN ai_providers AS aiprv ON aiprv.id = aiu.provider_id "+
+			"AND aiprv.organization_id = aiu.organization_id "+
+			"AND aiprv.business_unit_id = aiu.business_unit_id").
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where(cols.CreatedAt.Gte(), req.Since).
+		Where(cols.Succeeded.Eq(), false).
+		OrderExpr("aiu.created_at DESC").
+		Limit(limit).
+		Scan(ctx, &rows); err != nil {
+		return nil, fmt.Errorf("list ai usage failures: %w", err)
+	}
+
+	failures := make([]repositories.AIUsageFailure, 0, len(rows))
+	for i := range rows {
+		row := &rows[i]
+		failure := repositories.AIUsageFailure{
+			ProviderName: row.ProviderName,
+			Model:        row.Model,
+			Task:         row.Task,
+			ErrorClass:   row.ErrorClass,
+			Message:      row.ErrorMessage,
+			At:           row.CreatedAt,
+		}
+		if row.ProviderID != "" {
+			failure.ProviderID = pulidFrom(row.ProviderID)
+		}
+		failures = append(failures, failure)
+	}
+
+	return failures, nil
+}
+
+type failureRow struct {
+	ProviderID   string `bun:"provider_id"`
+	ProviderName string `bun:"provider_name"`
+	Model        string `bun:"model"`
+	Task         string `bun:"task"`
+	ErrorClass   string `bun:"error_class"`
+	ErrorMessage string `bun:"error_message"`
+	CreatedAt    int64  `bun:"created_at"`
+}
+
 // CostByDefinition sums what one agent's calls cost since an instant. Calls
 // without a price are counted, not summed: a budget check that read them as
 // free would let an agent on an unpriced provider run without end.

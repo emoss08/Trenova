@@ -46,7 +46,11 @@ type AIUsageRecord struct {
 
 	Succeeded  bool   `json:"succeeded"  bun:"succeeded,type:BOOLEAN,notnull"`
 	ErrorClass string `json:"errorClass" bun:"error_class,type:VARCHAR(50),nullzero"`
-	Streamed   bool   `json:"streamed"   bun:"streamed,type:BOOLEAN,notnull,default:false"`
+	// ErrorMessage is the provider's own words for a failed attempt, cut to
+	// fit. The class says what kind of failure it was; this says why, which
+	// is what an administrator needs when a provider refuses every request.
+	ErrorMessage string `json:"errorMessage" bun:"error_message,type:VARCHAR(500),nullzero"`
+	Streamed     bool   `json:"streamed"     bun:"streamed,type:BOOLEAN,notnull,default:false"`
 
 	LatencyMs       int64 `json:"latencyMs"       bun:"latency_ms,type:BIGINT,notnull"`
 	InputTokens     int   `json:"inputTokens"     bun:"input_tokens,type:INTEGER,notnull,default:0"`

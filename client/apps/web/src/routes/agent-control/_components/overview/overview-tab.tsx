@@ -7,6 +7,7 @@ import { lazy } from "react";
 import type { ActivityView } from "../rail-items";
 import { AIReadinessBanner } from "../ai-readiness-banner";
 import { AgentsGlance } from "./agents-glance";
+import { RecentFailures } from "./recent-failures";
 import { useAIControlStats } from "./use-ai-control-stats";
 
 const AgentControlForm = lazy(() => import("../agent-control-form"));
@@ -140,6 +141,8 @@ export default function OverviewTab({
 
         <AgentsGlance onOpenAgents={onOpenAgents} onOpenActivity={onOpenActivity} />
       </div>
+
+      <RecentFailures failures={usage?.recentFailures ?? []} />
     </div>
   );
 }

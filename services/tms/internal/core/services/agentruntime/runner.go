@@ -151,6 +151,7 @@ func (s *Service) Run(
 		result.Model = completion.ModelIdentifier
 		result.ProviderID = completion.ProviderID
 		tagReasoning(completion)
+		tagToolCalls(completion)
 
 		if len(completion.ToolCalls) == 0 {
 			return s.finish(result, completion, emit), nil
@@ -443,6 +444,14 @@ func preferredProvider(
 
 // tagReasoning records which protocol produced a trace, so an adapter of
 // another kind knows not to send it back as its own.
+// tagToolCalls names the provider on each call it made, so what the
+// provider attached to the call is replayed to it and to nobody else.
+func tagToolCalls(completion *serviceports.ChatCompletionResult) {
+	for idx := range completion.ToolCalls {
+		completion.ToolCalls[idx].ProviderID = completion.ProviderID
+	}
+}
+
 func tagReasoning(completion *serviceports.ChatCompletionResult) {
 	if completion.Reasoning != nil && completion.Reasoning.ProviderKind == "" {
 		completion.Reasoning.ProviderKind = string(completion.ProviderKind)

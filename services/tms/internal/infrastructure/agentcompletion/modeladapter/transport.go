@@ -24,6 +24,10 @@ func (e *TransportError) Error() string {
 	return fmt.Sprintf("provider request failed (status %d): %s", e.StatusCode, e.Message)
 }
 
+func (e *TransportError) ProviderStatus() int { return e.StatusCode }
+
+func (e *TransportError) ProviderRetryable() bool { return e.Retryable }
+
 // IsRetryable reports whether err is worth another attempt. An error that is not
 // a TransportError is a transport-level failure (dial, TLS, timeout) and is
 // retried, since those are the failures most likely to be transient.

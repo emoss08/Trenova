@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -284,4 +285,30 @@ func TestToAdapterMessages_DropsCallsNothingAnswered(t *testing.T) {
 	assert.Equal(t, "Looking.", messages[1].Content)
 	assert.Equal(t, serviceports.RoleTool, messages[2].Role)
 	assert.Equal(t, serviceports.RoleUser, messages[4].Role)
+}
+
+// What a provider attached to a call is stored with the call and replayed
+// with it, along with which provider it came from, so a later turn on the
+// same provider can continue and one on another provider is not handed a
+// field it does not understand.
+func TestToolCallRecords_KeepTheProvidersOwnData(t *testing.T) {
+	t.Parallel()
+
+	providerID := pulid.MustNew("aip_")
+	calls := []serviceports.ToolCall{{
+		ID:           "c1",
+		Name:         "get_shipment",
+		Arguments:    map[string]any{"id": "S1"},
+		ProviderData: map[string]any{"google": map[string]any{"thought_signature": "sig"}},
+		ProviderID:   providerID,
+	}}
+
+	records := toToolCallRecords(calls)
+	require.Len(t, records, 1)
+	assert.Equal(t, calls[0].ProviderData, records[0].ProviderData)
+	assert.Equal(t, providerID, records[0].ProviderID)
+
+	replayed := fromToolCallRecords(records)
+	require.Len(t, replayed, 1)
+	assert.Equal(t, calls[0], replayed[0])
 }

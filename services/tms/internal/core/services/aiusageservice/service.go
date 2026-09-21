@@ -28,6 +28,10 @@ func New(p Params) services.AIUsageService {
 // time, and a window nobody asked for is a scan nobody wants.
 const maxWindow = 366 * 24 * 60 * 60
 
+// recentFailuresShown is how many failed calls the overview lists. Enough to
+// see a pattern; few enough to read.
+const recentFailuresShown = 5
+
 func (s *Service) Summary(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
@@ -44,6 +48,15 @@ func (s *Service) Summary(
 	summary, err := s.usage.Summary(ctx, repositories.AIUsageSummaryRequest{
 		TenantInfo: tenant,
 		Since:      since,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	summary.RecentFailures, err = s.usage.RecentFailures(ctx, repositories.AIUsageFailuresRequest{
+		TenantInfo: tenant,
+		Since:      since,
+		Limit:      recentFailuresShown,
 	})
 	if err != nil {
 		return nil, err

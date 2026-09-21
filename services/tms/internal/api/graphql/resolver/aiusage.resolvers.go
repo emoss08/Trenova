@@ -7,8 +7,8 @@ package resolver
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 )
 

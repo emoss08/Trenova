@@ -48,6 +48,21 @@ type AIUsageSummary struct {
 	LatencyP50Ms    int64                  `json:"latencyP50Ms"`
 	LatencyP95Ms    int64                  `json:"latencyP95Ms"`
 	ByProvider      []AIUsageProviderSlice `json:"byProvider"`
+	// RecentFailures are the newest failed calls in the window, so the
+	// reason a provider keeps failing is on the screen that counts the
+	// failures rather than only in the server log.
+	RecentFailures []AIUsageFailure `json:"recentFailures"`
+}
+
+// AIUsageFailure is one failed model call as the overview shows it.
+type AIUsageFailure struct {
+	ProviderID   pulid.ID `json:"providerId"`
+	ProviderName string   `json:"providerName"`
+	Model        string   `json:"model"`
+	Task         string   `json:"task"`
+	ErrorClass   string   `json:"errorClass"`
+	Message      string   `json:"message"`
+	At           int64    `json:"at"`
 }
 
 type AIUsageService interface {
@@ -68,6 +83,18 @@ func SummaryFromRepository(since int64, summary *repositories.AIUsageSummary) *A
 		LatencyP50Ms:    summary.Totals.LatencyP50,
 		LatencyP95Ms:    summary.Totals.LatencyP95,
 		ByProvider:      make([]AIUsageProviderSlice, 0, len(summary.ByProvider)),
+		RecentFailures:  make([]AIUsageFailure, 0, len(summary.RecentFailures)),
+	}
+	for _, failure := range summary.RecentFailures {
+		out.RecentFailures = append(out.RecentFailures, AIUsageFailure{
+			ProviderID:   failure.ProviderID,
+			ProviderName: failure.ProviderName,
+			Model:        failure.Model,
+			Task:         failure.Task,
+			ErrorClass:   failure.ErrorClass,
+			Message:      failure.Message,
+			At:           failure.At,
+		})
 	}
 	for _, slice := range summary.ByProvider {
 		out.ByProvider = append(out.ByProvider, AIUsageProviderSlice{

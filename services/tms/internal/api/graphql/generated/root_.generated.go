@@ -247,6 +247,16 @@ type ComplexityRoot struct {
 		TestedAt        func(childComplexity int) int
 	}
 
+	AIUsageFailure struct {
+		At           func(childComplexity int) int
+		ErrorClass   func(childComplexity int) int
+		Message      func(childComplexity int) int
+		Model        func(childComplexity int) int
+		ProviderID   func(childComplexity int) int
+		ProviderName func(childComplexity int) int
+		Task         func(childComplexity int) int
+	}
+
 	AIUsageProviderSlice struct {
 		Calls           func(childComplexity int) int
 		CostUSD         func(childComplexity int) int
@@ -273,6 +283,7 @@ type ComplexityRoot struct {
 		OutputTokens    func(childComplexity int) int
 		PricedCalls     func(childComplexity int) int
 		ReasoningTokens func(childComplexity int) int
+		RecentFailures  func(childComplexity int) int
 		Since           func(childComplexity int) int
 	}
 
@@ -11672,6 +11683,49 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AIProviderTestOutcome.TestedAt(childComplexity), true
 
+	case "AIUsageFailure.at":
+		if e.ComplexityRoot.AIUsageFailure.At == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFailure.At(childComplexity), true
+	case "AIUsageFailure.errorClass":
+		if e.ComplexityRoot.AIUsageFailure.ErrorClass == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFailure.ErrorClass(childComplexity), true
+	case "AIUsageFailure.message":
+		if e.ComplexityRoot.AIUsageFailure.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFailure.Message(childComplexity), true
+	case "AIUsageFailure.model":
+		if e.ComplexityRoot.AIUsageFailure.Model == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFailure.Model(childComplexity), true
+	case "AIUsageFailure.providerId":
+		if e.ComplexityRoot.AIUsageFailure.ProviderID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFailure.ProviderID(childComplexity), true
+	case "AIUsageFailure.providerName":
+		if e.ComplexityRoot.AIUsageFailure.ProviderName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFailure.ProviderName(childComplexity), true
+	case "AIUsageFailure.task":
+		if e.ComplexityRoot.AIUsageFailure.Task == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFailure.Task(childComplexity), true
+
 	case "AIUsageProviderSlice.calls":
 		if e.ComplexityRoot.AIUsageProviderSlice.Calls == nil {
 			break
@@ -11805,6 +11859,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AIUsageSummary.ReasoningTokens(childComplexity), true
+	case "AIUsageSummary.recentFailures":
+		if e.ComplexityRoot.AIUsageSummary.RecentFailures == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageSummary.RecentFailures(childComplexity), true
 	case "AIUsageSummary.since":
 		if e.ComplexityRoot.AIUsageSummary.Since == nil {
 			break
@@ -70496,6 +70556,23 @@ type AIUsageSummary {
   latencyP50Ms: Int!
   latencyP95Ms: Int!
   byProvider: [AIUsageProviderSlice!]!
+  "The newest failed calls in the window, with the provider's own message."
+  recentFailures: [AIUsageFailure!]!
+}
+
+"""
+One failed model call: which provider and model, what kind of failure, and
+what the provider said. The class is one of a handful of words; the message
+is the provider's, cut to fit.
+"""
+type AIUsageFailure {
+  providerId: ID!
+  providerName: String!
+  model: String!
+  task: String!
+  errorClass: String!
+  message: String!
+  at: Timestamp!
 }
 
 extend type Query {
@@ -90097,6 +90174,26 @@ func (ec *executionContext) childFields_AIProviderTestOutcome(ctx context.Contex
 	return nil, fmt.Errorf("no field named %q was found under type AIProviderTestOutcome", field.Name)
 }
 
+func (ec *executionContext) childFields_AIUsageFailure(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "providerId":
+		return ec.fieldContext_AIUsageFailure_providerId(ctx, field)
+	case "providerName":
+		return ec.fieldContext_AIUsageFailure_providerName(ctx, field)
+	case "model":
+		return ec.fieldContext_AIUsageFailure_model(ctx, field)
+	case "task":
+		return ec.fieldContext_AIUsageFailure_task(ctx, field)
+	case "errorClass":
+		return ec.fieldContext_AIUsageFailure_errorClass(ctx, field)
+	case "message":
+		return ec.fieldContext_AIUsageFailure_message(ctx, field)
+	case "at":
+		return ec.fieldContext_AIUsageFailure_at(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIUsageFailure", field.Name)
+}
+
 func (ec *executionContext) childFields_AIUsageProviderSlice(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "providerId":
@@ -90151,6 +90248,8 @@ func (ec *executionContext) childFields_AIUsageSummary(ctx context.Context, fiel
 		return ec.fieldContext_AIUsageSummary_latencyP95Ms(ctx, field)
 	case "byProvider":
 		return ec.fieldContext_AIUsageSummary_byProvider(ctx, field)
+	case "recentFailures":
+		return ec.fieldContext_AIUsageSummary_recentFailures(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AIUsageSummary", field.Name)
 }
