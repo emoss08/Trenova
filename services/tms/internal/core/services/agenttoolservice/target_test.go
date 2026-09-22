@@ -65,6 +65,11 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 		{&correctChargeCodeTool{}, "billingQueueItemId", permission.ResourceBillingQueue},
 		{&addDashboardTileTool{}, "dashboardId", permission.ResourceDashboard},
 		{&scheduleReportTool{}, "definitionId", permission.ResourceReport},
+		{&linkInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
+		{&markInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
+		// The message, not a new record: a reply to a message somebody has
+		// since settled or relinked must be refused as stale.
+		{&replyToInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
 	}
 
 	for _, tc := range cases {

@@ -298,6 +298,7 @@ export type AgentTemplate =
   | 'DispatchAssistant'
   | 'GeneralAssistant'
   | 'ImportAssistant'
+  | 'IntakeDesk'
   | 'LoadMonitor'
   | 'ShipmentIntake';
 

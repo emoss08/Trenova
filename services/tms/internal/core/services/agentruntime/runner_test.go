@@ -905,3 +905,79 @@ func TestRun_TagsReasoningWithTheProviderThatProducedIt(t *testing.T) {
 	assert.True(t, result.Messages[1].Reasoning.ReplayableBy(string(aiprovider.KindAnthropicMessages)))
 	assert.False(t, result.Messages[1].Reasoning.ReplayableBy(string(aiprovider.KindOpenAIResponses)))
 }
+
+type limitedActionTool struct {
+	*agentruntimetest.StubActionTool
+
+	limit agent.AutonomyTier
+	asked serviceports.ToolExecuteParams
+}
+
+func (t *limitedActionTool) TierLimit(
+	_ context.Context,
+	params serviceports.ToolExecuteParams,
+) agent.AutonomyTier {
+	t.asked = params
+
+	return t.limit
+}
+
+/*
+Earned autonomy is the agent's record; a tool's own record can still say no.
+An inbox message on a mailbox that sends everything to a person must not be
+answered unattended because the desk answered a hundred others well, so the
+limit a tool reports holds the call at a proposal whatever the definition
+allows — and a limit above the earned tier grants nothing.
+*/
+func TestRun_AToolsOwnLimitHoldsAnEarnedTierDown(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		limit    agent.AutonomyTier
+		want     agent.AutonomyTier
+		executed bool
+	}{
+		{name: "held to a proposal", limit: agent.TierPropose, want: agent.TierPropose},
+		{
+			name:     "a limit above the earned tier grants nothing more",
+			limit:    agent.TierAutoExecute,
+			want:     agent.TierAutoExecute,
+			executed: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			action := &limitedActionTool{
+				StubActionTool: actionTool("reply_to_inbound_message", agent.TierPropose, nil),
+				limit:          tc.limit,
+			}
+			completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+				toolTurn("reply_to_inbound_message", map[string]any{"messageId": "imsg_1"}),
+				textTurn("Done."),
+			}}
+			rt := newRuntime(completion, &stubQueryRegistry{},
+				&stubActionRegistry{Tools: []serviceports.AgentTool{action}}, nil)
+			definition := testDefinition("reply_to_inbound_message")
+			definition.AutonomyCeiling = agent.TierAutoExecute
+			definition.ToolTiers = map[string]agent.AutonomyTier{
+				"reply_to_inbound_message": agent.TierAutoExecute,
+			}
+
+			result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+				Definition: definition,
+				Actor:      testActor(),
+				Input:      "Answer imsg_1",
+			})
+			require.NoError(t, err)
+
+			require.Len(t, result.Actions, 1)
+			assert.Equal(t, tc.want, result.Actions[0].Tier)
+			assert.Equal(t, tc.executed, result.Actions[0].Executed)
+			assert.Equal(t, "imsg_1", action.asked.Params["messageId"])
+		})
+	}
+}

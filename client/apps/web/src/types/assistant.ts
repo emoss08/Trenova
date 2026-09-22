@@ -17,6 +17,7 @@ export const agentTemplateKindSchema = z.enum([
   "CredentialDesk",
   "CustomerUpdateDesk",
   "CarrierRiskDesk",
+  "IntakeDesk",
 ]);
 
 export const autonomyTierSchema = z.enum(["Propose", "ActWithApproval", "AutoExecute"]);

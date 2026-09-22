@@ -9,6 +9,7 @@ import {
   FileInputIcon,
   GaugeIcon,
   HeadsetIcon,
+  InboxIcon,
   type LucideIcon,
   ReceiptTextIcon,
   RouteIcon,
@@ -40,6 +41,7 @@ export const TEMPLATE_ICONS: Record<AgentTemplateKind, LucideIcon> = {
   CredentialDesk: ClipboardCheckIcon,
   CustomerUpdateDesk: BellIcon,
   CarrierRiskDesk: SearchIcon,
+  IntakeDesk: InboxIcon,
 };
 
 type TemplatePickerProps = {

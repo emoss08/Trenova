@@ -75,6 +75,18 @@ func newAgentEmailSampleContext() any {
 	}
 }
 
+func newAgentInboundReplySampleContext() any {
+	return AgentEmailContext{
+		AgentSubject:      "Re: Where is " + sampleProNumber + "?",
+		AgentBody:         "The load is on schedule and due at the consignee tomorrow before noon. We will write again if that changes.",
+		CompanyName:       sampleCompanyName,
+		CustomerName:      sampleCustomerName,
+		ShipmentProNumber: sampleProNumber,
+		//nolint:gosec // A compile-time constant data: URI; see the field's doc comment.
+		LogoDataURI: template.URL(sampleLogoDataURI),
+	}
+}
+
 // ProposalReminderLine is one proposal still waiting, as the reminder lists it.
 type ProposalReminderLine struct {
 	Tool      string
@@ -219,6 +231,40 @@ func (r *Registry) registerAgentKinds() {
 				Path:        "RequestedDocuments",
 				Type:        VariableStringList,
 				Description: "Optional points to list under the update, such as documents still needed. Usually empty.",
+			},
+			logoVariable(),
+		},
+	})
+	_ = r.Register(&KindDefinition{
+		Kind:        KindAgentInboundReplyEmail,
+		DisplayName: "Inbox Reply",
+		Description: "Wraps an answer an agent composed to a message that arrived on one of " +
+			"your monitored addresses — a status question, a missing detail — in your own " +
+			"letterhead, sent back to whoever wrote in the same thread.",
+		Category:       "Agent",
+		Channels:       []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
+		CustomerScoped: true,
+		sampleFactory:  newAgentInboundReplySampleContext,
+		Variables: []VariableDefinition{
+			{
+				Path:        "AgentSubject",
+				Type:        VariableString,
+				Required:    true,
+				Description: "The reply's subject, the original's with Re: in front. Required on the subject channel: a changed subject starts a new thread in the sender's mail.",
+			},
+			{
+				Path:        "AgentBody",
+				Type:        VariableString,
+				Required:    true,
+				Description: "The answer the agent composed. Required: this is the substance of the message.",
+			},
+			companyNameVariable(),
+			customerNameVariable(false, "The customer the sender belongs to, when the message was matched to one."),
+			proNumberVariable(false, "The shipment the message is about, when it was matched to one."),
+			{
+				Path:        "RequestedDocuments",
+				Type:        VariableStringList,
+				Description: "Optional points to list under the answer. The inbox reply leaves it empty; it is there for a template shared with the other agent emails.",
 			},
 			logoVariable(),
 		},

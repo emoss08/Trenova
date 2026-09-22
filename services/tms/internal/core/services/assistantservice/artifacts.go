@@ -51,6 +51,9 @@ type draftSpec struct {
 var draftSpecs = map[string]draftSpec{
 	"email_customer":        {title: "Customer update", subjectKey: "subject", bodyKey: "body"},
 	"send_detention_notice": {title: "Detention notice"},
+	// The reply's subject and recipient come from the message it answers,
+	// not from the proposal, so the draft carries the body alone.
+	"reply_to_inbound_message": {title: "Inbox reply", bodyKey: "body"},
 	"request_missing_docs": {
 		title:      "Document request",
 		subjectKey: "subject",

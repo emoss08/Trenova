@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
@@ -50,6 +51,9 @@ var Module = fx.Module("agent-tool-service",
 		fx.Annotate(provideResolveServiceFailureTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideNotifyDriverTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(newEmailCustomerTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideLinkInboundMessageTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideMarkInboundMessageTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(newReplyToInboundMessageTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideSendDetentionNoticeTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideWaiveDetentionTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideCreateShipmentTool, fx.ResultTags(`group:"agent_tools"`)),
@@ -218,4 +222,12 @@ func provideResolveCarrierIntelEventTool(intel *carrierintelservice.Service) ser
 // document stack; fx holds the concrete service, so the widening happens here.
 func provideAttachDocumentTool(documents *documentservice.Service) services.AgentTool {
 	return newAttachDocumentTool(documents)
+}
+
+func provideLinkInboundMessageTool(inbox *inboundmessageservice.Service) services.AgentTool {
+	return newLinkInboundMessageTool(inbox)
+}
+
+func provideMarkInboundMessageTool(inbox *inboundmessageservice.Service) services.AgentTool {
+	return newMarkInboundMessageTool(inbox)
 }

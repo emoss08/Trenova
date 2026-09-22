@@ -234,6 +234,15 @@ func (t AutonomyTier) Rank() int {
 // Above reports whether t lets an agent do more on its own than other.
 func (t AutonomyTier) Above(other AutonomyTier) bool { return t.Rank() > other.Rank() }
 
+// AtMost is t, held down to limit when limit allows less.
+func (t AutonomyTier) AtMost(limit AutonomyTier) AutonomyTier {
+	if t.Above(limit) {
+		return limit
+	}
+
+	return t
+}
+
 // Next is the tier one step up, and false from the top.
 func (t AutonomyTier) Next() (AutonomyTier, bool) {
 	switch t {

@@ -72370,6 +72370,7 @@ extend type Mutation {
   CredentialDesk
   CustomerUpdateDesk
   CarrierRiskDesk
+  IntakeDesk
 }
 
 enum AgentTriggerMode {

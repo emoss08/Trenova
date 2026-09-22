@@ -37,6 +37,14 @@ type ToolValidator interface {
 	Validate(ctx context.Context, params ToolExecuteParams) error
 }
 
+// ToolTierLimiter is a tool whose own record can hold a call below the tier
+// the agent has earned. An inbox message is only as autonomous as the mailbox
+// it arrived on, and a load is never created unattended, whatever an agent's
+// record says. The runtime asks before deciding whether a call runs or waits.
+type ToolTierLimiter interface {
+	TierLimit(ctx context.Context, params ToolExecuteParams) agent.AutonomyTier
+}
+
 type AgentTool interface {
 	Name() string
 	Description() string

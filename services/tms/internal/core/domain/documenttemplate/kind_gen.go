@@ -71,6 +71,10 @@ const (
 	// KindAgentProposalReminderEmail tells the people who can decide an
 	// agent's proposals that some have been waiting for hours.
 	KindAgentProposalReminderEmail Kind = "agent.proposal_reminder.email"
+	// KindAgentInboundReplyEmail wraps an agent-composed answer to a message
+	// that arrived on a monitored address, sent back to its sender in the same
+	// thread.
+	KindAgentInboundReplyEmail Kind = "agent.inbound_reply.email"
 
 	// Notifications.
 	//
@@ -164,6 +168,7 @@ func AllKinds() []Kind {
 		KindAgentRequestMissingDocsEmail,
 		KindAgentCustomerUpdateEmail,
 		KindAgentProposalReminderEmail,
+		KindAgentInboundReplyEmail,
 		KindNotificationLoadAssigned,
 		KindNotificationLoadUnassigned,
 		KindNotificationPTOReviewed,

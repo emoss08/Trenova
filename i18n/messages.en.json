@@ -72100,12 +72100,13 @@
     ]
   },
   "Hello {0},": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "go"
     ],
     "areas": [
       "template/agent.customer_update.email",
+      "template/agent.inbound_reply.email",
       "template/agent.proposal_reminder.email",
       "template/agent.request_missing_docs.email",
       "template/invoice.email",
@@ -72113,12 +72114,13 @@
     ]
   },
   "Hello,": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "go"
     ],
     "areas": [
       "template/agent.customer_update.email",
+      "template/agent.inbound_reply.email",
       "template/agent.proposal_reminder.email",
       "template/agent.request_missing_docs.email",
       "template/invoice.email",
@@ -76896,6 +76898,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Intake desk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Integration": {
@@ -84444,6 +84455,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Linked records cannot be verified on this installation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/inboundmessageservice"
     ]
   },
   "Linking…": {
@@ -99354,6 +99374,15 @@
       "routes/shipment"
     ]
   },
+  "No shipment with that id exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/documentservice"
+    ]
+  },
   "No shipments have been rated with this template yet": {
     "sites": 1,
     "scope": [
@@ -107960,6 +107989,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Optional points to list under the answer. The inbox reply leaves it empty; it is there for a template shared with the other agent emails.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
     ]
   },
   "Optional points to list under the update, such as documents still needed. Usually empty.": {
@@ -146672,12 +146710,13 @@
     ]
   },
   "Shipment {0}": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go"
     ],
     "areas": [
       "template/agent.customer_update.email",
+      "template/agent.inbound_reply.email",
       "template/agent.request_missing_docs.email",
       "template/invoice.email"
     ]
@@ -146807,6 +146846,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Shipments cannot be verified on this installation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/documentservice"
     ]
   },
   "Shipments executing this order": {
@@ -156849,6 +156897,15 @@
       "routes/inbox"
     ]
   },
+  "The answer the agent composed. Required: this is the substance of the message.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
+    ]
+  },
   "The applied total exceeds the payment amount.": {
     "sites": 1,
     "scope": [
@@ -162407,6 +162464,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The reply's subject, the original's with Re: in front. Required on the subject channel: a changed subject starts a new thread in the sender's mail.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
     ]
   },
   "The report artifact could not be prepared for download — try again shortly": {
@@ -184381,6 +184447,15 @@
     ]
   },
   "Wraps an agent-composed request in your own letterhead and signature, so prose written automatically still goes out looking like your organization.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
+    ]
+  },
+  "Wraps an answer an agent composed to a message that arrived on one of your monitored addresses — a status question, a missing detail — in your own letterhead, sent back to whoever wrote in the same thread.": {
     "sites": 1,
     "scope": [
       "go"

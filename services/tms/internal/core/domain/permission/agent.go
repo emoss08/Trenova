@@ -203,6 +203,13 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 	ResourceCustomerCommunication: {
 		OpCreate: {},
 	},
+	// The intake desk reads the inbox, files a message against its records
+	// and settles it. Mailboxes stay closed: their addresses, tokens and
+	// signing secrets are an administrator's.
+	ResourceInboundMessage: {
+		OpRead:   {},
+		OpUpdate: {},
+	},
 }
 
 func IsAgentAllowed(resource Resource, operation Operation) bool {

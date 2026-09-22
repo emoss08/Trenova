@@ -188,6 +188,15 @@ func TestDraftArtifact_ViewsAnOutboundMessageOverItsProposal(t *testing.T) {
 	require.NotNil(t, notice)
 	assert.Equal(t, "Detention notice", notice.Title)
 
+	reply := draftArtifact(&agent.AgentProposal{
+		ID:         pulid.MustNew("ap_"),
+		ToolName:   "reply_to_inbound_message",
+		ToolParams: map[string]any{"messageId": "imsg_1", "body": "It delivers tomorrow."},
+	})
+	require.NotNil(t, reply, "an inbox reply is a message waiting to go")
+	assert.Equal(t, "Inbox reply", reply.Title)
+	assert.Equal(t, "It delivers tomorrow.", reply.Payload["body"])
+
 	assert.Nil(t, draftArtifact(&agent.AgentProposal{ToolName: "assign_move"}))
 }
 

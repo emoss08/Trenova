@@ -63,6 +63,16 @@ func (s *Service) dispatch(
 
 	tier := req.Definition.EffectiveTier(call.Name, tool.DefaultAutonomyTier())
 	call.Arguments = declaredArguments(tool.ParamSchema(), call.Arguments)
+	if limiter, limits := tool.(serviceports.ToolTierLimiter); limits {
+		tier = tier.AtMost(limiter.TierLimit(ctx, serviceports.ToolExecuteParams{
+			OrganizationID: req.Actor.OrganizationID,
+			BusinessUnitID: req.Actor.BusinessUnitID,
+			Actor:          req.Actor,
+			IdempotencyKey: call.ID,
+			RunID:          req.RunID,
+			Params:         call.Arguments,
+		}))
+	}
 	action := &serviceports.PendingAction{
 		ToolName:  call.Name,
 		Arguments: call.Arguments,
