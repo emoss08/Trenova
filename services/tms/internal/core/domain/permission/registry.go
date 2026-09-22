@@ -1626,6 +1626,26 @@ func (r *Registry) registerOperationsResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceWorkerDispatchHold.String(),
+		DisplayName: "Driver Dispatch Hold",
+		Description: "Whether a driver can be given new freight. Held apart from the " +
+			"worker record on purpose: taking somebody off the board until a paper is " +
+			"renewed is a dispatch decision, and it is not the same permission as " +
+			"editing their employment, their pay or their profile.",
+		Category:       "Operations",
+		ParentResource: ResourceWorker.String(),
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "See who is held off dispatch"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Take a driver off dispatch, and put them back",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:       ResourceShipmentHold.String(),
 		DisplayName:    "Shipment Hold",
 		Description:    "Shipment hold management",

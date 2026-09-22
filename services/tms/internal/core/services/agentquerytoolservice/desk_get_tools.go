@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -248,4 +249,57 @@ func workerCredentialDetailFrom(
 	}
 
 	return detail
+}
+
+// newGetCustomerUpdatePreferencesTool answers the one question the customer
+// update desk has to ask before it writes anything: does this customer want
+// to be told, and who is on the list.
+//
+// It is deliberately narrow. get_customer returns the whole record, and a
+// model reading a whole customer to find one field reads thirty others it
+// does not need — including the billing addresses, which are not who asked
+// for status updates.
+func newGetCustomerUpdatePreferencesTool(
+	repo repositories.CustomerRepository,
+) serviceports.AgentQueryTool {
+	return newGetTool(getSpec{
+		name:     "get_customer_update_preferences",
+		entity:   "customer update preferences",
+		resource: permission.ResourceCustomer,
+		summary: "Retrieve what a customer asked to be told as their freight moves: " +
+			"whether they want arrivals, departures, both or nothing, and who receives " +
+			"them. A customer set to None is not to be emailed about a stop at all. " +
+			"When the recipient list is empty the notice profile's own recipients are " +
+			"the fallback. Call this before writing any status update.",
+		paramName: "customerId",
+		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
+			entity, err := repo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+				ID:         id,
+				TenantInfo: tenant,
+				CustomerFilterOptions: repositories.CustomerFilterOptions{
+					IncludeEmailProfile: true,
+				},
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			out := map[string]any{
+				"customerId":             entity.ID.String(),
+				"customerName":           entity.Name,
+				"statusUpdatePreference": entity.StatusUpdatePreference,
+				"wantsArrivals":          entity.StatusUpdatePreference.WantsArrivals(),
+				"wantsDepartures":        entity.StatusUpdatePreference.WantsDepartures(),
+				"statusUpdateRecipients": entity.StatusUpdateRecipients,
+			}
+			if entity.StatusUpdatePreference == customer.StatusUpdateNone {
+				out["warning"] = "This customer has not asked for status updates; do not email them about a stop."
+			}
+			if entity.StatusUpdateRecipients == "" && entity.EmailProfile != nil {
+				out["fallbackRecipients"] = entity.EmailProfile.ToRecipients
+			}
+
+			return out, nil
+		},
+	})
 }

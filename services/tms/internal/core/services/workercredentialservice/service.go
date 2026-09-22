@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -42,6 +43,9 @@ type Params struct {
 	DocumentRepo repositories.DocumentRepository
 	AuditService services.AuditService
 	Realtime     services.RealtimeService `optional:"true"`
+	// DriverNotify carries a renewal ask to the driver, in the wording the
+	// organization's own template gives it.
+	DriverNotify *drivernotificationservice.Service `optional:"true"`
 }
 
 type Service struct {
@@ -51,6 +55,7 @@ type Service struct {
 	documentRepo  repositories.DocumentRepository
 	auditService  services.AuditService
 	realtime      services.RealtimeService
+	driverNotify  *drivernotificationservice.Service
 	seededTenants sync.Map
 }
 
@@ -62,6 +67,7 @@ func New(p Params) *Service {
 		documentRepo: p.DocumentRepo,
 		auditService: p.AuditService,
 		realtime:     p.Realtime,
+		driverNotify: p.DriverNotify,
 	}
 }
 

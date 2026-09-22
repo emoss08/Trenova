@@ -291,6 +291,55 @@ func (s *Service) Dispute(
 	return saved, nil
 }
 
+// EscalateParams names the clock being handed over and why.
+type EscalateParams struct {
+	OccurrenceID pulid.ID
+	TenantInfo   pagination.TenantInfo
+	Reason       string
+	UserID       pulid.ID
+}
+
+// Escalate hands a detention clock to a person without touching the money.
+// It is what the desk reaches for when the notice window has closed, a gate
+// is holding the notice back, or the customer has nobody on file to send it
+// to: the charge stands, and somebody has to decide what happens to it.
+func (s *Service) Escalate(
+	ctx context.Context,
+	p EscalateParams,
+) (*detention.DetentionOccurrence, error) {
+	occurrence, err := s.occurrenceRepo.GetByID(
+		ctx,
+		&repositories.GetDetentionOccurrenceByIDRequest{
+			OccurrenceID: p.OccurrenceID,
+			TenantInfo:   p.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	original := *occurrence
+	now := s.now()
+
+	if eErr := occurrence.Escalate(now); eErr != nil {
+		return nil, errortypes.NewValidationError(
+			"status", errortypes.ErrInvalidOperation, eErr.Error())
+	}
+
+	saved, err := s.occurrenceRepo.Update(ctx, occurrence)
+	if err != nil {
+		return nil, err
+	}
+
+	s.appendEvidence(ctx, saved, detention.EvidenceKindStatusChange,
+		detention.EvidenceSourceManual,
+		"Escalated to a person: "+p.Reason, now)
+
+	s.audit(&original, saved, p.UserID, "Detention escalated: "+p.Reason)
+
+	return saved, nil
+}
+
 // DisputePacket is the assembled claim file: the terms that governed the
 // charge, how the number was derived, what proves it, and where the evidence
 // is thin. It is the artifact that turns a 45-minute argument into an

@@ -279,16 +279,15 @@ func (t Template) StarterInstructions() string {
 			"which gives you the rule, the severity, the summary and whether the finding " +
 			"bears on eligibility at all. A finding that does not affect eligibility — a " +
 			"changed address, a new contact — gets acknowledge_carrier_intel_event and " +
-			"nothing more. A finding that does, and that the record confirms, gets " +
-			"set_carrier_tender_block with the rule and a reason a dispatcher can read: " +
-			"revoked authority, lapsed insurance, an out-of-service order. Check the " +
-			"carrier with get_carrier before blocking, because a finding can arrive after " +
-			"the carrier has already fixed it, and a block on a carrier mid-load strands " +
-			"freight. When the record shows the problem resolved, use " +
-			"resolve_carrier_intel_event and say what changed. Never block on a finding " +
-			"the catalogue does not mark as bearing on eligibility, and never block on " +
-			"severity alone. Report the carrier, the finding, and whether they can be " +
-			"tendered."
+			"nothing more. A finding that does is closed with " +
+			"resolve_carrier_intel_event, saying what came of it: CarrierUpdated when " +
+			"the record now shows it fixed, CarrierBlocked when they are not to be used, " +
+			"FalsePositive when the finding itself was wrong. The eligibility gate " +
+			"already refuses a disqualified carrier, so closing the finding records the " +
+			"outcome rather than causing it. Check the carrier with get_carrier first, " +
+			"because a finding can arrive after the carrier has already fixed it. Never " +
+			"close a finding that is still true: that hides it from the people who need " +
+			"it. Report the carrier, the finding, and whether they can be tendered."
 	default:
 		return ""
 	}
@@ -402,7 +401,6 @@ func (t Template) StarterTools() []string {
 	case TemplateDetentionDesk:
 		return []string{
 			"get_detention_occurrence",
-			"list_detention_occurrences",
 			"list_detention_desk",
 			"get_shipment",
 			"get_shipment_tracking",
@@ -451,7 +449,6 @@ func (t Template) StarterTools() []string {
 			"list_carriers",
 			"acknowledge_carrier_intel_event",
 			"resolve_carrier_intel_event",
-			"set_carrier_tender_block",
 			"raise_exception",
 			"flag_for_manual_review",
 			"recall_memory",

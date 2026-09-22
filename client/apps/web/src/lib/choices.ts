@@ -118,6 +118,7 @@ import type {
   InvoiceSectionKey,
   InvoiceSplitKey,
   InvoiceNumberFormat,
+  StatusUpdatePreference,
 } from "@trenova/shared/types/customer";
 import type { PaymentMethod } from "@trenova/shared/types/customer-payment";
 import type { DocumentCategory, DocumentClassification } from "@trenova/shared/types/document-type";
@@ -354,6 +355,18 @@ export const statusChoices = [
   { label: "Active", value: "Active", color: "var(--success)" },
   { label: "Inactive", value: "Inactive", color: "var(--danger)" },
 ] satisfies ReadonlyArray<GenericSelectOption<Status>>;
+
+/**
+ * What a customer asked to be told as their freight moves. The customer
+ * update desk reads this before it writes anything, and a customer set to
+ * None is never emailed about a stop.
+ */
+export const statusUpdatePreferenceChoices = [
+  { label: "Nothing", value: "None" },
+  { label: "Arrivals only", value: "Arrivals" },
+  { label: "Departures only", value: "Departures" },
+  { label: "Arrivals and departures", value: "ArrivalsAndDepartures" },
+] satisfies ReadonlyArray<GenericSelectOption<StatusUpdatePreference>>;
 
 export const carrierStatusChoices = [
   { label: "Active", value: "Active", color: "var(--success)" },

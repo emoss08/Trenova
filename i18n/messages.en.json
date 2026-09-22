@@ -2552,6 +2552,15 @@
       "domain/agent"
     ]
   },
+  "A detention notice's window opened on a policy that leaves sending to a person, so nothing has gone to the customer yet.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "A detention policy with this code already exists in your organization": {
     "sites": 1,
     "scope": [
@@ -2617,6 +2626,15 @@
     ],
     "areas": [
       "service/driversettlementservice"
+    ]
+  },
+  "A driver has one or more credentials expiring inside the compliance horizon, raised once a day however many papers are due.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "A driver pay expense account (company) or purchased transportation account (owner-operator) must be configured before posting settlements": {
@@ -3449,6 +3467,24 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "A move starting inside the coverage window still has nobody on it and the planner could not find a candidate.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "A move this close to its start with nobody on it is raised to the watchtower and handed to the dispatch agent. Shorter than the planning horizon on purpose.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "A multipart upload must record its provider id": {
@@ -5533,6 +5569,15 @@
     ],
     "areas": [
       "service/workeremploymentservice"
+    ]
+  },
+  "A truck went past its free time at a stop and a detention occurrence opened against the shipment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "A unique code for this document type": {
@@ -14292,6 +14337,15 @@
       "routes/rate-zone"
     ]
   },
+  "An inbound EDI file could not be processed and is holding in quarantine rather than becoming shipments or updates.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "An inline sample of the results, so a recipient can see the numbers without opening the file.": {
     "sites": 1,
     "scope": [
@@ -17179,6 +17233,15 @@
       "routes/shipment"
     ]
   },
+  "Arrivals and departures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Arrivals inside this buffer are not treated as late.": {
     "sites": 1,
     "scope": [
@@ -17186,6 +17249,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Arrivals only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Arrive": {
@@ -26758,6 +26830,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Carrier changed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Carrier changes": {
     "sites": 2,
     "scope": [
@@ -26811,6 +26892,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Carrier finding": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentsubjectservice"
     ]
   },
   "Carrier has insurance warnings: {0}. Confirm the override to proceed": {
@@ -27133,6 +27223,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Carrier monitoring opened a finding worth a person's attention: authority, insurance, safety scores or a watch list.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Carrier note:": {
     "sites": 1,
     "scope": [
@@ -27214,6 +27313,15 @@
     ],
     "areas": [
       "routes/money.tsx"
+    ]
+  },
+  "Carrier risk desk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Carrier selection is invalid": {
@@ -33036,6 +33144,15 @@
       "routes/my-team"
     ]
   },
+  "Comma separated. Leave empty to fall back to the notice profile's own recipients.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Comma-separated acceptable values": {
     "sites": 1,
     "scope": [
@@ -38513,6 +38630,15 @@
       "packages/shared/types"
     ]
   },
+  "Coverage at risk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
+    ]
+  },
   "Coverage cannot end before it begins": {
     "sites": 1,
     "scope": [
@@ -38556,6 +38682,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "Coverage risk window (hours)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Coverage type": {
@@ -39912,6 +40047,24 @@
       "domain/iam"
     ]
   },
+  "Credential desk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
+  "Credential expiring": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
+    ]
+  },
   "Credential expiry reminders": {
     "sites": 1,
     "scope": [
@@ -40024,6 +40177,15 @@
       "apps/dash/_components",
       "routes/worker",
       "service/briefingservice"
+    ]
+  },
+  "Credentials coming due": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Credentials could not be loaded. Try again in a moment.": {
@@ -41667,6 +41829,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Customer update desk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Customer was notified within the contractual window": {
@@ -46657,6 +46828,15 @@
       "routes/shipment"
     ]
   },
+  "Departures only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Deployment": {
     "sites": 1,
     "scope": [
@@ -47600,6 +47780,15 @@
       "service/shipmentservice"
     ]
   },
+  "Detention clock started": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Detention components must use the Per Hour method": {
     "sites": 1,
     "scope": [
@@ -47619,11 +47808,13 @@
     ]
   },
   "Detention desk": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/agentdefinition",
       "routes/detention-desk"
     ]
   },
@@ -47673,6 +47864,15 @@
       "routes/shipment-control"
     ]
   },
+  "Detention notice due": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Detention notice for shipment {0} at {1}.": {
     "sites": 3,
     "scope": [
@@ -47708,6 +47908,15 @@
     ],
     "areas": [
       "template/detention.notice.email"
+    ]
+  },
+  "Detention occurrence": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentsubjectservice"
     ]
   },
   "Detention occurrence is required": {
@@ -51306,7 +51515,7 @@
     ]
   },
   "Driver": {
-    "sites": 34,
+    "sites": 35,
     "scope": [
       "go",
       "ts"
@@ -51332,6 +51541,7 @@
       "routes/settlement-dispute",
       "routes/settlement-workspace",
       "routes/shipment",
+      "service/agentsubjectservice",
       "template/rateconfirmation.pdf"
     ]
   },
@@ -53130,6 +53340,24 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "EDI file held back": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "EDI inbound file": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentsubjectservice"
     ]
   },
   "EDI inbound file ID is required": {
@@ -91621,6 +91849,15 @@
       "routes/shipment"
     ]
   },
+  "Move may go uncovered": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Move must be completed before the shipment can reach this status": {
     "sites": 1,
     "scope": [
@@ -92339,6 +92576,15 @@
       "routes/agent-control"
     ]
   },
+  "Name at least one credential to renew": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/workercredentialservice"
+    ]
+  },
   "Name can only contain letters, numbers, spaces, hyphens, ampersands, and periods": {
     "sites": 1,
     "scope": [
@@ -92714,6 +92960,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Name who receives these updates, or set the preference back to None": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
     ]
   },
   "Name, business unit and time zone": {
@@ -100013,11 +100268,12 @@
     ]
   },
   "Nothing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/jurisdiction-rule-override"
     ]
   },
@@ -136379,6 +136635,15 @@
       "service/agentdecisionqueueservice"
     ]
   },
+  "Say why this driver is being held": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/workerservice"
+    ]
+  },
   "Say why this item does not apply": {
     "sites": 1,
     "scope": [
@@ -138160,6 +138425,15 @@
     ]
   },
   "See who is approving in whose place": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "See who is held off dispatch": {
     "sites": 1,
     "scope": [
       "go"
@@ -140969,6 +141243,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Send status updates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Send teammates a link to this invoice. Sharing doesn't change who can see it.": {
@@ -149670,6 +149953,24 @@
       "packages/shared/lib"
     ]
   },
+  "Status update recipients": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
+  "Status update recipients cannot exceed 2000 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/customer"
+    ]
+  },
   "Status updated": {
     "sites": 1,
     "scope": [
@@ -149677,6 +149978,15 @@
     ],
     "areas": [
       "service/shipmenteventservice"
+    ]
+  },
+  "Status updates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Status:": {
@@ -152095,6 +152405,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Take a driver off dispatch, and put them back": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Take it": {
@@ -156417,6 +156736,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "The customer update desk emails these as each stop is reached or left. A customer set to Nothing is never emailed about a stop.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "The customer's billing requirements are not met and the billing policy blocks transfer until they are.": {
@@ -178670,6 +178998,15 @@
       "routes/worker-credential-type"
     ]
   },
+  "What this customer asked to be told as their freight moves, and who hears it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "What this home screen is for.": {
     "sites": 1,
     "scope": [
@@ -179816,6 +180153,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Whether a driver can be given new freight. Held apart from the worker record on purpose: taking somebody off the board until a paper is renewed is a dispatch decision, and it is not the same permission as editing their employment, their pay or their profile.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Whether a placard is required when transporting this material.": {
@@ -187577,6 +187923,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "ops@acme.example, dispatch@acme.example": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "ops@example.com": {

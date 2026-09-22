@@ -1,8 +1,30 @@
 package permission
 
+// agentAllowedPermissions is the whole permission model for an agent
+// principal: there is no role behind it, so an entry missing here is a tool
+// that works for a person and is refused to every agent, at the moment it
+// tries to do the work it was woken for.
+//
+// It is therefore also the ceiling on what any agent can ever do, and it is
+// kept to exactly what the registered tools need — no wider. The coverage
+// test in agenttoolservice reads both halves and fails on either drift.
+//
+// OpApprove is deliberately absent: guardExecute refuses it to an agent
+// principal outright, so approving is a person's, whatever any list says.
 var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
+	// Creating a shipment from a document is the intake desk's whole job.
+	// Editing or cancelling one that already exists is a person's: those
+	// tools are offered in chat, where the actor is the person asking.
 	ResourceShipment: {
-		OpRead: {},
+		OpRead:   {},
+		OpCreate: {},
+	},
+	ResourceShipmentComment: {
+		OpCreate: {},
+	},
+	ResourceShipmentHold: {
+		OpCreate: {},
+		OpUpdate: {},
 	},
 	ResourceShipmentMove: {
 		OpRead:   {},
@@ -12,10 +34,81 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead: {},
 	},
 	ResourceTractor: {
-		OpRead: {},
+		OpRead:   {},
+		OpUpdate: {},
 	},
 	ResourceTrailer: {
+		OpRead:   {},
+		OpUpdate: {},
+	},
+	ResourceWorkerPTO: {
+		OpRead:   {},
+		OpCancel: {},
+		OpReject: {},
+	},
+	ResourceReport: {
+		OpRead:   {},
+		OpCreate: {},
+		OpUpdate: {},
+	},
+	ResourceServiceFailure: {
+		OpRead:   {},
+		OpCreate: {},
+		OpUpdate: {},
+	},
+	ResourceCarrier: {
 		OpRead: {},
+	},
+	ResourceCarrierIntelligence: {
+		OpRead:   {},
+		OpUpdate: {},
+	},
+	// The reference data every list and get tool resolves a name against.
+	ResourceAccessorialCharge: {
+		OpRead: {},
+	},
+	ResourceCommodity: {
+		OpRead: {},
+	},
+	ResourceDocumentType: {
+		OpRead: {},
+	},
+	ResourceEquipmentType: {
+		OpRead: {},
+	},
+	ResourceFleetCode: {
+		OpRead: {},
+	},
+	ResourceHazardousMaterial: {
+		OpRead: {},
+	},
+	ResourceHoldReason: {
+		OpRead: {},
+	},
+	ResourceLocationCategory: {
+		OpRead: {},
+	},
+	ResourceServiceType: {
+		OpRead: {},
+	},
+	ResourceShipmentType: {
+		OpRead: {},
+	},
+	ResourceServiceFailureReasonCode: {
+		OpRead: {},
+	},
+	ResourceDetentionPolicy: {
+		OpRead:   {},
+		OpUpdate: {},
+	},
+	ResourceEmailProfile: {
+		OpRead: {},
+	},
+	ResourceRateQuote: {
+		OpRead: {},
+	},
+	ResourceTender: {
+		OpCreate: {},
 	},
 	ResourceCustomer: {
 		OpRead: {},
@@ -74,14 +167,18 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpUpdate: {},
 	},
 	ResourceWorkerCredential: {
-		OpRead: {},
+		OpRead:   {},
+		OpUpdate: {},
+	},
+	// Holding a driver off the board is a dispatch decision, kept apart
+	// from editing the worker record, which stays closed to an agent.
+	ResourceWorkerDispatchHold: {
+		OpCreate: {},
 	},
 	ResourceDriverMessage: {
-		OpRead:   {},
 		OpCreate: {},
 	},
 	ResourceCustomerCommunication: {
-		OpRead:   {},
 		OpCreate: {},
 	},
 }

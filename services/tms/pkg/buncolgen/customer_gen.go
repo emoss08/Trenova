@@ -67,6 +67,8 @@ var CustomerColumns = struct {
 	ExternalID             Column // "external_id" → qualified: "cus.external_id"
 	DOTNumber              Column // "dot_number" → qualified: "cus.dot_number"
 	MCNumber               Column // "mc_number" → qualified: "cus.mc_number"
+	StatusUpdatePreference Column // "status_update_preference" → qualified: "cus.status_update_preference"
+	StatusUpdateRecipients Column // "status_update_recipients" → qualified: "cus.status_update_recipients"
 	BrokerVettingEnabled   Column // "broker_vetting_enabled" → qualified: "cus.broker_vetting_enabled"
 	Geom                   Column // "geom" → qualified: "cus.geom"
 	AllowConsolidation     Column // "allow_consolidation" → qualified: "cus.allow_consolidation"
@@ -96,6 +98,8 @@ var CustomerColumns = struct {
 	ExternalID:             NewColumn("external_id", "cus"),
 	DOTNumber:              NewColumn("dot_number", "cus"),
 	MCNumber:               NewColumn("mc_number", "cus"),
+	StatusUpdatePreference: NewColumn("status_update_preference", "cus"),
+	StatusUpdateRecipients: NewColumn("status_update_recipients", "cus"),
 	BrokerVettingEnabled:   NewColumn("broker_vetting_enabled", "cus"),
 	Geom:                   NewColumn("geom", "cus"),
 	AllowConsolidation:     NewColumn("allow_consolidation", "cus"),
@@ -131,6 +135,8 @@ var CustomerFieldMap = map[string]string{
 	"externalId":             "external_id",
 	"dotNumber":              "dot_number",
 	"mcNumber":               "mc_number",
+	"statusUpdatePreference": "status_update_preference",
+	"statusUpdateRecipients": "status_update_recipients",
 	"brokerVettingEnabled":   "broker_vetting_enabled",
 	"allowConsolidation":     "allow_consolidation",
 	"exclusiveConsolidation": "exclusive_consolidation",
@@ -161,6 +167,8 @@ var CustomerInsertableColumns = []string{
 	"external_id",
 	"dot_number",
 	"mc_number",
+	"status_update_preference",
+	"status_update_recipients",
 	"broker_vetting_enabled",
 	"allow_consolidation",
 	"exclusive_consolidation",
@@ -257,6 +265,8 @@ var CustomerFilter = struct {
 	ExternalID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalId" → DB: "external_id"
 	DOTNumber              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dotNumber" → DB: "dot_number"
 	MCNumber               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mcNumber" → DB: "mc_number"
+	StatusUpdatePreference func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "statusUpdatePreference" → DB: "status_update_preference"
+	StatusUpdateRecipients func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "statusUpdateRecipients" → DB: "status_update_recipients"
 	BrokerVettingEnabled   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "brokerVettingEnabled" → DB: "broker_vetting_enabled"
 	AllowConsolidation     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowConsolidation" → DB: "allow_consolidation"
 	ExclusiveConsolidation func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exclusiveConsolidation" → DB: "exclusive_consolidation"
@@ -318,6 +328,12 @@ var CustomerFilter = struct {
 	},
 	MCNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("mcNumber", op, value)
+	},
+	StatusUpdatePreference: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("statusUpdatePreference", op, value)
+	},
+	StatusUpdateRecipients: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("statusUpdateRecipients", op, value)
 	},
 	BrokerVettingEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("brokerVettingEnabled", op, value)

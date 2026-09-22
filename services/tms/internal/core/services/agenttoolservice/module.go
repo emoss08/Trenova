@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
@@ -11,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
+	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -53,6 +56,11 @@ var Module = fx.Module("agent-tool-service",
 		fx.Annotate(provideMatchBankReceiptTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(providePostCustomerPaymentTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(provideResolveBankReceiptWorkItemTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideEscalateDetentionTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideRequestCredentialRenewalTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(providePlaceWorkerDispatchHoldTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideAcknowledgeCarrierIntelEventTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideResolveCarrierIntelEventTool, fx.ResultTags(`group:"agent_tools"`)),
 		NewRegistry,
 	),
 )
@@ -174,4 +182,28 @@ func providePostCustomerPaymentTool(
 
 func provideResolveBankReceiptWorkItemTool(items *bankreceiptworkitemservice.Service) services.AgentTool {
 	return newResolveBankReceiptWorkItemTool(items)
+}
+
+func provideEscalateDetentionTool(detention *detentionservice.Service) services.AgentTool {
+	return newEscalateDetentionTool(detention)
+}
+
+func provideRequestCredentialRenewalTool(
+	credentials *workercredentialservice.Service,
+) services.AgentTool {
+	return newRequestCredentialRenewalTool(credentials)
+}
+
+func providePlaceWorkerDispatchHoldTool(workers *workerservice.Service) services.AgentTool {
+	return newPlaceWorkerDispatchHoldTool(workers)
+}
+
+func provideAcknowledgeCarrierIntelEventTool(
+	intel *carrierintelservice.Service,
+) services.AgentTool {
+	return newAcknowledgeCarrierIntelEventTool(intel)
+}
+
+func provideResolveCarrierIntelEventTool(intel *carrierintelservice.Service) services.AgentTool {
+	return newResolveCarrierIntelEventTool(intel)
 }

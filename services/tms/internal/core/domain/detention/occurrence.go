@@ -205,6 +205,31 @@ func (o *DetentionOccurrence) Dispute(note string, now int64) error {
 	return nil
 }
 
+// Escalate hands a clock to a person. The money is untouched: escalating
+// says the charge cannot be worked automatically from here — the notice
+// window has closed, a gate is holding it back, or the customer has no
+// recipients on file — not that the figures are wrong. Whoever picks it up
+// decides whether to waive, approve or dispute.
+func (o *DetentionOccurrence) Escalate(now int64) error {
+	switch o.Status {
+	case OccurrenceStatusWaived:
+		return errors.New("a waived occurrence has nothing left to escalate")
+	case OccurrenceStatusDisputed:
+		return errors.New("a disputed occurrence is already with a person")
+	}
+	if o.RequiresApproval {
+		return errors.New("this occurrence is already waiting on a person")
+	}
+
+	o.RequiresApproval = true
+	if o.NoticeDeadlineAt != nil && *o.NoticeDeadlineAt < now &&
+		o.NotificationStatus == NotificationStatusPending {
+		o.NotificationStatus = NotificationStatusMissed
+	}
+
+	return nil
+}
+
 func (o *DetentionOccurrence) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(o,
 		validation.Field(&o.OrganizationID,

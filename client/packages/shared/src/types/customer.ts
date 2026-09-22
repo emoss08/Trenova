@@ -8,6 +8,22 @@ import {
   tenantInfoSchema,
 } from "./helpers";
 
+/**
+ * What a customer asked to be told as their freight moves.
+ *
+ * It is an opt-in. None is the default because a carrier that starts
+ * emailing every arrival to everyone on file loses the right to email them
+ * at all, and the customer update desk refuses to write to a customer who
+ * never asked.
+ */
+export const statusUpdatePreferenceSchema = z.enum([
+  "None",
+  "Arrivals",
+  "Departures",
+  "ArrivalsAndDepartures",
+]);
+export type StatusUpdatePreference = z.infer<typeof statusUpdatePreferenceSchema>;
+
 /** How many invoices a customer's freight turns into. */
 export const invoiceDeliverySchema = z.enum(["PerShipment", "PerOrder", "Consolidated"]);
 export type InvoiceDelivery = z.infer<typeof invoiceDeliverySchema>;
@@ -219,6 +235,8 @@ export const customerSchema = z
     allowConsolidation: z.boolean().default(true),
     exclusiveConsolidation: z.boolean().default(false),
     consolidationPriority: z.number().int().min(1).default(1),
+    statusUpdatePreference: statusUpdatePreferenceSchema.default("None"),
+    statusUpdateRecipients: nullableStringSchema,
     billingProfile: customerBillingProfileSchema.optional(),
     emailProfile: customerEmailProfileSchema.optional(),
     ediPartner: customerEdiPartnerSchema.nullish(),
@@ -233,6 +251,14 @@ export const customerSchema = z
     {
       path: ["allowConsolidation"],
       message: "Allow consolidation is required when exclusive consolidation is true",
+    },
+  )
+  .refine(
+    (data) =>
+      data.statusUpdatePreference === "None" || (data.statusUpdateRecipients ?? "").trim() !== "",
+    {
+      path: ["statusUpdateRecipients"],
+      message: "Name who receives these updates, or set the preference back to None",
     },
   )
   .refine((data) => !data.brokerVettingEnabled || !!data.dotNumber, {
