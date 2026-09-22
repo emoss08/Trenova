@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -51,6 +52,11 @@ type Params struct {
 	MessageRepo repositories.InboundMessageRepository
 	Storage     storage.Client
 	Encryption  *encryptionservice.Service
+	// Completion is optional so the ingest path still works on an installation
+	// with no provider configured. Mail lands and waits for a person instead of
+	// being classified, which is the behaviour a mailbox on AlwaysReview has
+	// anyway.
+	Completion services.CompletionService `optional:"true"`
 }
 
 type Service struct {
@@ -59,6 +65,7 @@ type Service struct {
 	messageRepo repositories.InboundMessageRepository
 	storage     storage.Client
 	encryption  secretDecryptor
+	completion  services.CompletionService
 }
 
 func New(p Params) *Service {
@@ -68,6 +75,7 @@ func New(p Params) *Service {
 		messageRepo: p.MessageRepo,
 		storage:     p.Storage,
 		encryption:  p.Encryption,
+		completion:  p.Completion,
 	}
 }
 
