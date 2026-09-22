@@ -81,6 +81,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/driverportalservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
@@ -790,7 +791,7 @@ type QueryResolver interface {
 	IFTACurrentPeriod(ctx context.Context) (*ifta.Period, error)
 	InboundMessages(ctx context.Context, input gqlmodel.InboundMessagesInput) (*gqlmodel.InboundMessageConnection, error)
 	InboundMessage(ctx context.Context, id string) (*inboundmessage.InboundMessage, error)
-	InboundMessageCounts(ctx context.Context) (*gqlmodel.InboundMessageCounts, error)
+	InboundMessageCounts(ctx context.Context) (*inboundmessageservice.Counts, error)
 	InboundMailboxes(ctx context.Context) ([]*inboundmessage.Mailbox, error)
 	Invoices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.InvoiceConnection, error)
 	Invoice(ctx context.Context, id string) (*invoice.Invoice, error)
@@ -44032,8 +44033,8 @@ func (ec *executionContext) _Query_inboundMessageCounts(ctx context.Context, fie
 			return ec.Resolvers.Query().InboundMessageCounts(ctx)
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.InboundMessageCounts) graphql.Marshaler {
-			return ec.marshalNInboundMessageCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInboundMessageCounts(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v *inboundmessageservice.Counts) graphql.Marshaler {
+			return ec.marshalNInboundMessageCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐCounts(ctx, selections, v)
 		},
 		true,
 		true,

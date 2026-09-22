@@ -9,6 +9,17 @@ fragment InboundAttachmentFields on InboundAttachment {
   createdAt
 }
 
+fragment InboundShipmentRefFields on InboundShipmentRef {
+  id
+  proNumber
+  bol
+  poNumber
+  originCity
+  originState
+  destinationCity
+  destinationState
+}
+
 fragment InboundMailboxFields on InboundMailbox {
   id
   name
@@ -35,6 +46,16 @@ fragment InboundMessageListFields on InboundMessage {
   matchReason
   needsReview
   failureText
+  preview
+  attachmentCount
+  matchedShipment {
+    ...InboundShipmentRefFields
+  }
+  matchedCustomer {
+    id
+    code
+    name
+  }
 }
 
 fragment InboundMessageDetailFields on InboundMessage {
@@ -88,6 +109,16 @@ query InboundMessageCounts {
     ignored
     quarantined
     total
+    byClassification {
+      classification
+      total
+      waiting
+    }
+    byMailbox {
+      mailboxId
+      total
+      waiting
+    }
   }
 }
 

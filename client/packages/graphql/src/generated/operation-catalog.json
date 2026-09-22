@@ -1,6 +1,6 @@
 {
   "operationCount": 795,
-  "fragmentCount": 207,
+  "fragmentCount": 208,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -8505,7 +8505,7 @@
       "kind": "query",
       "domain": "inbox",
       "sourceFile": "src/operations/inbox/inbox.graphql",
-      "hash": "sha256:480368750a6ab2e7a367cea049107eb72eb1fe1069e2cd6f992d55b3a0a8bfa9",
+      "hash": "sha256:9fec16da519623a0bc7b1143018c0f971ad0f02f7372d75782c72ee2597d24cb",
       "rootFields": [
         "inboundMessage"
       ],
@@ -8520,31 +8520,32 @@
         "InboundAttachmentFields",
         "InboundMailboxFields",
         "InboundMessageDetailFields",
-        "InboundMessageListFields"
+        "InboundMessageListFields",
+        "InboundShipmentRefFields"
       ],
       "usages": [],
-      "sdl": "query InboundMessage($id: ID!) {\n  inboundMessage(id: $id) {\n    ...InboundMessageDetailFields\n  }\n}\n\nfragment InboundAttachmentFields on InboundAttachment {\n  id\n  fileName\n  contentType\n  byteSize\n  kind\n  documentId\n  failureText\n  createdAt\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n}\n\nfragment InboundMessageDetailFields on InboundMessage {\n  ...InboundMessageListFields\n  toAddresses\n  ccAddresses\n  textBody\n  spamScore\n  matchedCarrierId\n  runId\n  reviewedBy\n  reviewedAt\n  reviewNote\n  failureCode\n  version\n  createdAt\n  updatedAt\n  mailbox {\n    ...InboundMailboxFields\n  }\n  attachments {\n    ...InboundAttachmentFields\n  }\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n}"
+      "sdl": "query InboundMessage($id: ID!) {\n  inboundMessage(id: $id) {\n    ...InboundMessageDetailFields\n  }\n}\n\nfragment InboundAttachmentFields on InboundAttachment {\n  id\n  fileName\n  contentType\n  byteSize\n  kind\n  documentId\n  failureText\n  createdAt\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n}\n\nfragment InboundMessageDetailFields on InboundMessage {\n  ...InboundMessageListFields\n  toAddresses\n  ccAddresses\n  textBody\n  spamScore\n  matchedCarrierId\n  runId\n  reviewedBy\n  reviewedAt\n  reviewNote\n  failureCode\n  version\n  createdAt\n  updatedAt\n  mailbox {\n    ...InboundMailboxFields\n  }\n  attachments {\n    ...InboundAttachmentFields\n  }\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n  preview\n  attachmentCount\n  matchedShipment {\n    ...InboundShipmentRefFields\n  }\n  matchedCustomer {\n    id\n    code\n    name\n  }\n}\n\nfragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
     },
     {
       "name": "InboundMessageCounts",
       "kind": "query",
       "domain": "inbox",
       "sourceFile": "src/operations/inbox/inbox.graphql",
-      "hash": "sha256:415c06c8e34decbdee02c97bdc46343a3a03a4bf0efcb14bbceb74214a7157d3",
+      "hash": "sha256:0186e33cceac728a75529ebc6acbce0f61c96012f25f0b3cf1326efab11c6418",
       "rootFields": [
         "inboundMessageCounts"
       ],
       "variables": [],
       "fragments": [],
       "usages": [],
-      "sdl": "query InboundMessageCounts {\n  inboundMessageCounts {\n    waiting\n    handled\n    ignored\n    quarantined\n    total\n  }\n}"
+      "sdl": "query InboundMessageCounts {\n  inboundMessageCounts {\n    waiting\n    handled\n    ignored\n    quarantined\n    total\n    byClassification {\n      classification\n      total\n      waiting\n    }\n    byMailbox {\n      mailboxId\n      total\n      waiting\n    }\n  }\n}"
     },
     {
       "name": "InboundMessages",
       "kind": "query",
       "domain": "inbox",
       "sourceFile": "src/operations/inbox/inbox.graphql",
-      "hash": "sha256:a537541c410e8fe57780d8c664645be30b163bc74c7540478c4d504a6ef8b8e8",
+      "hash": "sha256:f7683dd61b03d3635e618ae7dc12b17ce1aa52d3cf345b63b894169d986e9070",
       "rootFields": [
         "inboundMessages"
       ],
@@ -8556,10 +8557,11 @@
         }
       ],
       "fragments": [
-        "InboundMessageListFields"
+        "InboundMessageListFields",
+        "InboundShipmentRefFields"
       ],
       "usages": [],
-      "sdl": "query InboundMessages($input: InboundMessagesInput!) {\n  inboundMessages(input: $input) {\n    edges {\n      cursor\n      node {\n        ...InboundMessageListFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n}"
+      "sdl": "query InboundMessages($input: InboundMessagesInput!) {\n  inboundMessages(input: $input) {\n    edges {\n      cursor\n      node {\n        ...InboundMessageListFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n  preview\n  attachmentCount\n  matchedShipment {\n    ...InboundShipmentRefFields\n  }\n  matchedCustomer {\n    id\n    code\n    name\n  }\n}\n\nfragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
     },
     {
       "name": "InviteWorkerToPortal",
@@ -9027,7 +9029,7 @@
       "kind": "mutation",
       "domain": "inbox",
       "sourceFile": "src/operations/inbox/inbox.graphql",
-      "hash": "sha256:da9592d08f116bebbcec63a547fa627d82a047b823bc0994adb29f27378a84a5",
+      "hash": "sha256:9da210cf0063857c9767d245fe8600a76f015ddd0a1c6a32b111776ed45c3a78",
       "rootFields": [
         "linkInboundMessage"
       ],
@@ -9047,10 +9049,11 @@
         "InboundAttachmentFields",
         "InboundMailboxFields",
         "InboundMessageDetailFields",
-        "InboundMessageListFields"
+        "InboundMessageListFields",
+        "InboundShipmentRefFields"
       ],
       "usages": [],
-      "sdl": "mutation LinkInboundMessage($id: ID!, $input: LinkInboundMessageInput!) {\n  linkInboundMessage(id: $id, input: $input) {\n    ...InboundMessageDetailFields\n  }\n}\n\nfragment InboundAttachmentFields on InboundAttachment {\n  id\n  fileName\n  contentType\n  byteSize\n  kind\n  documentId\n  failureText\n  createdAt\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n}\n\nfragment InboundMessageDetailFields on InboundMessage {\n  ...InboundMessageListFields\n  toAddresses\n  ccAddresses\n  textBody\n  spamScore\n  matchedCarrierId\n  runId\n  reviewedBy\n  reviewedAt\n  reviewNote\n  failureCode\n  version\n  createdAt\n  updatedAt\n  mailbox {\n    ...InboundMailboxFields\n  }\n  attachments {\n    ...InboundAttachmentFields\n  }\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n}"
+      "sdl": "mutation LinkInboundMessage($id: ID!, $input: LinkInboundMessageInput!) {\n  linkInboundMessage(id: $id, input: $input) {\n    ...InboundMessageDetailFields\n  }\n}\n\nfragment InboundAttachmentFields on InboundAttachment {\n  id\n  fileName\n  contentType\n  byteSize\n  kind\n  documentId\n  failureText\n  createdAt\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n}\n\nfragment InboundMessageDetailFields on InboundMessage {\n  ...InboundMessageListFields\n  toAddresses\n  ccAddresses\n  textBody\n  spamScore\n  matchedCarrierId\n  runId\n  reviewedBy\n  reviewedAt\n  reviewNote\n  failureCode\n  version\n  createdAt\n  updatedAt\n  mailbox {\n    ...InboundMailboxFields\n  }\n  attachments {\n    ...InboundAttachmentFields\n  }\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n  preview\n  attachmentCount\n  matchedShipment {\n    ...InboundShipmentRefFields\n  }\n  matchedCustomer {\n    id\n    code\n    name\n  }\n}\n\nfragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
     },
     {
       "name": "LiveTenderByMove",
@@ -12948,7 +12951,7 @@
       "kind": "mutation",
       "domain": "inbox",
       "sourceFile": "src/operations/inbox/inbox.graphql",
-      "hash": "sha256:8d5b9dd88ec58b984b490d825d53e70dff72cae7e784164540f956f9dc43ec76",
+      "hash": "sha256:dbb5d1421a75b0c0f1c7ae8f8c09a46b818d18535fa9074c43d0912c55fd7462",
       "rootFields": [
         "reviewInboundMessage"
       ],
@@ -12968,10 +12971,11 @@
         "InboundAttachmentFields",
         "InboundMailboxFields",
         "InboundMessageDetailFields",
-        "InboundMessageListFields"
+        "InboundMessageListFields",
+        "InboundShipmentRefFields"
       ],
       "usages": [],
-      "sdl": "mutation ReviewInboundMessage($id: ID!, $input: ReviewInboundMessageInput!) {\n  reviewInboundMessage(id: $id, input: $input) {\n    ...InboundMessageDetailFields\n  }\n}\n\nfragment InboundAttachmentFields on InboundAttachment {\n  id\n  fileName\n  contentType\n  byteSize\n  kind\n  documentId\n  failureText\n  createdAt\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n}\n\nfragment InboundMessageDetailFields on InboundMessage {\n  ...InboundMessageListFields\n  toAddresses\n  ccAddresses\n  textBody\n  spamScore\n  matchedCarrierId\n  runId\n  reviewedBy\n  reviewedAt\n  reviewNote\n  failureCode\n  version\n  createdAt\n  updatedAt\n  mailbox {\n    ...InboundMailboxFields\n  }\n  attachments {\n    ...InboundAttachmentFields\n  }\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n}"
+      "sdl": "mutation ReviewInboundMessage($id: ID!, $input: ReviewInboundMessageInput!) {\n  reviewInboundMessage(id: $id, input: $input) {\n    ...InboundMessageDetailFields\n  }\n}\n\nfragment InboundAttachmentFields on InboundAttachment {\n  id\n  fileName\n  contentType\n  byteSize\n  kind\n  documentId\n  failureText\n  createdAt\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n}\n\nfragment InboundMessageDetailFields on InboundMessage {\n  ...InboundMessageListFields\n  toAddresses\n  ccAddresses\n  textBody\n  spamScore\n  matchedCarrierId\n  runId\n  reviewedBy\n  reviewedAt\n  reviewNote\n  failureCode\n  version\n  createdAt\n  updatedAt\n  mailbox {\n    ...InboundMailboxFields\n  }\n  attachments {\n    ...InboundAttachmentFields\n  }\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n  preview\n  attachmentCount\n  matchedShipment {\n    ...InboundShipmentRefFields\n  }\n  matchedCustomer {\n    id\n    code\n    name\n  }\n}\n\nfragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
     },
     {
       "name": "ReviewWorkerSafetyEvent",
@@ -19714,7 +19718,8 @@
       "fragments": [
         "InboundAttachmentFields",
         "InboundMailboxFields",
-        "InboundMessageListFields"
+        "InboundMessageListFields",
+        "InboundShipmentRefFields"
       ],
       "usedByOperations": [
         "InboundMessage",
@@ -19722,11 +19727,28 @@
         "ReviewInboundMessage"
       ],
       "usages": [],
-      "sdl": "fragment InboundMessageDetailFields on InboundMessage {\n  ...InboundMessageListFields\n  toAddresses\n  ccAddresses\n  textBody\n  spamScore\n  matchedCarrierId\n  runId\n  reviewedBy\n  reviewedAt\n  reviewNote\n  failureCode\n  version\n  createdAt\n  updatedAt\n  mailbox {\n    ...InboundMailboxFields\n  }\n  attachments {\n    ...InboundAttachmentFields\n  }\n}\n\nfragment InboundAttachmentFields on InboundAttachment {\n  id\n  fileName\n  contentType\n  byteSize\n  kind\n  documentId\n  failureText\n  createdAt\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n}"
+      "sdl": "fragment InboundMessageDetailFields on InboundMessage {\n  ...InboundMessageListFields\n  toAddresses\n  ccAddresses\n  textBody\n  spamScore\n  matchedCarrierId\n  runId\n  reviewedBy\n  reviewedAt\n  reviewNote\n  failureCode\n  version\n  createdAt\n  updatedAt\n  mailbox {\n    ...InboundMailboxFields\n  }\n  attachments {\n    ...InboundAttachmentFields\n  }\n}\n\nfragment InboundAttachmentFields on InboundAttachment {\n  id\n  fileName\n  contentType\n  byteSize\n  kind\n  documentId\n  failureText\n  createdAt\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n  preview\n  attachmentCount\n  matchedShipment {\n    ...InboundShipmentRefFields\n  }\n  matchedCustomer {\n    id\n    code\n    name\n  }\n}\n\nfragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
     },
     {
       "name": "InboundMessageListFields",
       "typeCondition": "InboundMessage",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "fragments": [
+        "InboundShipmentRefFields"
+      ],
+      "usedByOperations": [
+        "InboundMessage",
+        "InboundMessages",
+        "LinkInboundMessage",
+        "ReviewInboundMessage"
+      ],
+      "usages": [],
+      "sdl": "fragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n  preview\n  attachmentCount\n  matchedShipment {\n    ...InboundShipmentRefFields\n  }\n  matchedCustomer {\n    id\n    code\n    name\n  }\n}\n\nfragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
+    },
+    {
+      "name": "InboundShipmentRefFields",
+      "typeCondition": "InboundShipmentRef",
       "domain": "inbox",
       "sourceFile": "src/operations/inbox/inbox.graphql",
       "fragments": [],
@@ -19737,7 +19759,7 @@
         "ReviewInboundMessage"
       ],
       "usages": [],
-      "sdl": "fragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n}"
+      "sdl": "fragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
     },
     {
       "name": "InvoiceApprovalQueueItemFields",
@@ -25810,6 +25832,11 @@
           "defaultValue": null
         },
         {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
           "name": "shipmentId",
           "type": "ID",
           "defaultValue": null
@@ -25825,7 +25852,7 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input InboundMessagesInput {\n  after: String\n  classification: InboundClassification\n  first: Int = 25\n  mailboxId: ID\n  shipmentId: ID\n  \"\"\"Only what arrived at or after this instant.\"\"\"\n  since: Timestamp\n  \"\"\"Only these statuses; empty is every status.\"\"\"\n  statuses: [InboundMessageStatus!]\n}"
+      "sdl": "input InboundMessagesInput {\n  after: String\n  classification: InboundClassification\n  first: Int = 25\n  mailboxId: ID\n  \"\"\"Words from the sender's name or address, or from the subject.\"\"\"\n  query: String\n  shipmentId: ID\n  \"\"\"Only what arrived at or after this instant.\"\"\"\n  since: Timestamp\n  \"\"\"Only these statuses; empty is every status.\"\"\"\n  statuses: [InboundMessageStatus!]\n}"
     },
     "InspectionResult": {
       "kind": "enum",

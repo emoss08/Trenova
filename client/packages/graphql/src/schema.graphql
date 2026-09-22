@@ -9246,6 +9246,15 @@ enum InboundClassification {
 }
 
 """
+One kind of mail: how much there is, and how much of it is waiting on a person.
+"""
+type InboundClassificationCount {
+  classification: InboundClassification!
+  total: Int!
+  waiting: Int!
+}
+
+"""
 An address the system listens on.
 
 The webhook token is never returned. It is shown once, when the mailbox is
@@ -9269,6 +9278,13 @@ type InboundMailbox {
   version: Int!
 }
 
+"""One address's share of the inbox."""
+type InboundMailboxCount {
+  mailboxId: ID!
+  total: Int!
+  waiting: Int!
+}
+
 """Whether an address is still listening."""
 enum InboundMailboxStatus {
   Active
@@ -9283,6 +9299,8 @@ matched is still something a person has to look at, and a message dropped
 because it did not classify is a message its sender believes was received.
 """
 type InboundMessage {
+  """How many files came with it. Read for a whole page of rows at once."""
+  attachmentCount: Int!
   attachments: [InboundAttachment!]!
   businessUnitId: ID!
   ccAddresses: [String!]!
@@ -9303,11 +9321,24 @@ type InboundMessage {
   """
   matchReason: String!
   matchedCarrierId: ID
+  """
+  The customer it was matched to. Absent when unmatched or no longer visible.
+  """
+  matchedCustomer: Customer
   matchedCustomerId: ID
+  """
+  The shipment it was matched to, as a list row names it. Absent when unmatched or no longer visible.
+  """
+  matchedShipment: InboundShipmentRef
   matchedShipmentId: ID
   """Whether this message is waiting on a person."""
   needsReview: Boolean!
   organizationId: ID!
+  """
+  A line or two of what the sender wrote, for a list row: whitespace folded,
+  quoted replies and the lines that introduce them left out.
+  """
+  preview: String!
   receivedAt: Timestamp!
   reviewNote: String!
   reviewedAt: Timestamp
@@ -9332,6 +9363,10 @@ type InboundMessageConnection {
 
 """The inbox in numbers, for the lane counts."""
 type InboundMessageCounts {
+  """Every kind, in a stable order, including the ones with no mail."""
+  byClassification: [InboundClassificationCount!]!
+  """Every mailbox that has mail."""
+  byMailbox: [InboundMailboxCount!]!
   handled: Int!
   ignored: Int!
   quarantined: Int!
@@ -9360,6 +9395,8 @@ input InboundMessagesInput {
   classification: InboundClassification
   first: Int = 25
   mailboxId: ID
+  """Words from the sender's name or address, or from the subject."""
+  query: String
   shipmentId: ID
   """Only what arrived at or after this instant."""
   since: Timestamp
@@ -9378,6 +9415,21 @@ enum InboundReviewPolicy {
   AlwaysReview
   AutoHandle
   ReviewBelowConfidence
+}
+
+"""
+A shipment as an inbox row names it: the numbers a sender quotes and the lane.
+Enough to recognise the load without opening it.
+"""
+type InboundShipmentRef {
+  bol: String!
+  destinationCity: String!
+  destinationState: String!
+  id: ID!
+  originCity: String!
+  originState: String!
+  poNumber: String!
+  proNumber: String!
 }
 
 enum InjuryCaseStatus {

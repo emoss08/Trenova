@@ -11,7 +11,10 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -35,6 +38,10 @@ type InboundMessageResolver interface {
 	ReviewedAt(ctx context.Context, obj *inboundmessage.InboundMessage) (*int, error)
 
 	Attachments(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*inboundmessage.InboundAttachment, error)
+	AttachmentCount(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error)
+	Preview(ctx context.Context, obj *inboundmessage.InboundMessage) (string, error)
+	MatchedShipment(ctx context.Context, obj *inboundmessage.InboundMessage) (*repositories.ShipmentSummary, error)
+	MatchedCustomer(ctx context.Context, obj *inboundmessage.InboundMessage) (*customer.Customer, error)
 	NeedsReview(ctx context.Context, obj *inboundmessage.InboundMessage) (bool, error)
 }
 
@@ -228,6 +235,75 @@ func (ec *executionContext) _InboundAttachment_createdAt(ctx context.Context, fi
 }
 func (ec *executionContext) fieldContext_InboundAttachment_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("InboundAttachment", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _InboundClassificationCount_classification(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.ClassificationCount) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundClassificationCount_classification(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Classification, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v inboundmessage.Classification) graphql.Marshaler {
+			return ec.marshalNInboundClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐClassification(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundClassificationCount_classification(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundClassificationCount", field, false, false, errors.New("field of type InboundClassification does not have child fields"))
+}
+
+func (ec *executionContext) _InboundClassificationCount_total(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.ClassificationCount) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundClassificationCount_total(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Total, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundClassificationCount_total(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundClassificationCount", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _InboundClassificationCount_waiting(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.ClassificationCount) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundClassificationCount_waiting(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Waiting, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundClassificationCount_waiting(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundClassificationCount", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _InboundMailbox_id(ctx context.Context, field graphql.CollectedField, obj *inboundmessage.Mailbox) (ret graphql.Marshaler) {
@@ -527,6 +603,75 @@ func (ec *executionContext) _InboundMailbox_updatedAt(ctx context.Context, field
 }
 func (ec *executionContext) fieldContext_InboundMailbox_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("InboundMailbox", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _InboundMailboxCount_mailboxId(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.MailboxCount) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundMailboxCount_mailboxId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MailboxID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundMailboxCount_mailboxId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundMailboxCount", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _InboundMailboxCount_total(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.MailboxCount) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundMailboxCount_total(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Total, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundMailboxCount_total(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundMailboxCount", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _InboundMailboxCount_waiting(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.MailboxCount) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundMailboxCount_waiting(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Waiting, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundMailboxCount_waiting(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundMailboxCount", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _InboundMessage_id(ctx context.Context, field graphql.CollectedField, obj *inboundmessage.InboundMessage) (ret graphql.Marshaler) {
@@ -1168,6 +1313,116 @@ func (ec *executionContext) fieldContext_InboundMessage_attachments(_ context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _InboundMessage_attachmentCount(ctx context.Context, field graphql.CollectedField, obj *inboundmessage.InboundMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundMessage_attachmentCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.InboundMessage().AttachmentCount(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundMessage_attachmentCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundMessage", field, true, true, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _InboundMessage_preview(ctx context.Context, field graphql.CollectedField, obj *inboundmessage.InboundMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundMessage_preview(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.InboundMessage().Preview(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundMessage_preview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundMessage", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _InboundMessage_matchedShipment(ctx context.Context, field graphql.CollectedField, obj *inboundmessage.InboundMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundMessage_matchedShipment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.InboundMessage().MatchedShipment(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *repositories.ShipmentSummary) graphql.Marshaler {
+			return ec.marshalOInboundShipmentRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐShipmentSummary(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_InboundMessage_matchedShipment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InboundMessage",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InboundShipmentRef(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InboundMessage_matchedCustomer(ctx context.Context, field graphql.CollectedField, obj *inboundmessage.InboundMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundMessage_matchedCustomer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.InboundMessage().MatchedCustomer(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
+			return ec.marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_InboundMessage_matchedCustomer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InboundMessage",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Customer(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _InboundMessage_needsReview(ctx context.Context, field graphql.CollectedField, obj *inboundmessage.InboundMessage) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1347,7 +1602,7 @@ func (ec *executionContext) fieldContext_InboundMessageConnection_totalCount(_ c
 	return graphql.NewScalarFieldContext("InboundMessageConnection", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _InboundMessageCounts_waiting(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.InboundMessageCounts) (ret graphql.Marshaler) {
+func (ec *executionContext) _InboundMessageCounts_waiting(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.Counts) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1370,7 +1625,7 @@ func (ec *executionContext) fieldContext_InboundMessageCounts_waiting(_ context.
 	return graphql.NewScalarFieldContext("InboundMessageCounts", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _InboundMessageCounts_handled(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.InboundMessageCounts) (ret graphql.Marshaler) {
+func (ec *executionContext) _InboundMessageCounts_handled(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.Counts) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1393,7 +1648,7 @@ func (ec *executionContext) fieldContext_InboundMessageCounts_handled(_ context.
 	return graphql.NewScalarFieldContext("InboundMessageCounts", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _InboundMessageCounts_ignored(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.InboundMessageCounts) (ret graphql.Marshaler) {
+func (ec *executionContext) _InboundMessageCounts_ignored(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.Counts) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1416,7 +1671,7 @@ func (ec *executionContext) fieldContext_InboundMessageCounts_ignored(_ context.
 	return graphql.NewScalarFieldContext("InboundMessageCounts", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _InboundMessageCounts_quarantined(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.InboundMessageCounts) (ret graphql.Marshaler) {
+func (ec *executionContext) _InboundMessageCounts_quarantined(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.Counts) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1439,7 +1694,7 @@ func (ec *executionContext) fieldContext_InboundMessageCounts_quarantined(_ cont
 	return graphql.NewScalarFieldContext("InboundMessageCounts", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _InboundMessageCounts_total(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.InboundMessageCounts) (ret graphql.Marshaler) {
+func (ec *executionContext) _InboundMessageCounts_total(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.Counts) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1460,6 +1715,70 @@ func (ec *executionContext) _InboundMessageCounts_total(ctx context.Context, fie
 }
 func (ec *executionContext) fieldContext_InboundMessageCounts_total(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("InboundMessageCounts", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _InboundMessageCounts_byClassification(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.Counts) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundMessageCounts_byClassification(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ByClassification, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []inboundmessageservice.ClassificationCount) graphql.Marshaler {
+			return ec.marshalNInboundClassificationCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐClassificationCountᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundMessageCounts_byClassification(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InboundMessageCounts",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InboundClassificationCount(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InboundMessageCounts_byMailbox(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.Counts) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundMessageCounts_byMailbox(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ByMailbox, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []inboundmessageservice.MailboxCount) graphql.Marshaler {
+			return ec.marshalNInboundMailboxCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐMailboxCountᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundMessageCounts_byMailbox(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InboundMessageCounts",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InboundMailboxCount(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _InboundMessageEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.InboundMessageEdge) (ret graphql.Marshaler) {
@@ -1517,6 +1836,190 @@ func (ec *executionContext) fieldContext_InboundMessageEdge_cursor(_ context.Con
 	return graphql.NewScalarFieldContext("InboundMessageEdge", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _InboundShipmentRef_id(ctx context.Context, field graphql.CollectedField, obj *repositories.ShipmentSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundShipmentRef_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundShipmentRef_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundShipmentRef", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _InboundShipmentRef_proNumber(ctx context.Context, field graphql.CollectedField, obj *repositories.ShipmentSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundShipmentRef_proNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundShipmentRef_proNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundShipmentRef", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _InboundShipmentRef_bol(ctx context.Context, field graphql.CollectedField, obj *repositories.ShipmentSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundShipmentRef_bol(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BOL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundShipmentRef_bol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundShipmentRef", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _InboundShipmentRef_poNumber(ctx context.Context, field graphql.CollectedField, obj *repositories.ShipmentSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundShipmentRef_poNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PONumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundShipmentRef_poNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundShipmentRef", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _InboundShipmentRef_originCity(ctx context.Context, field graphql.CollectedField, obj *repositories.ShipmentSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundShipmentRef_originCity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginCity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundShipmentRef_originCity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundShipmentRef", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _InboundShipmentRef_originState(ctx context.Context, field graphql.CollectedField, obj *repositories.ShipmentSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundShipmentRef_originState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundShipmentRef_originState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundShipmentRef", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _InboundShipmentRef_destinationCity(ctx context.Context, field graphql.CollectedField, obj *repositories.ShipmentSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundShipmentRef_destinationCity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationCity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundShipmentRef_destinationCity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundShipmentRef", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _InboundShipmentRef_destinationState(ctx context.Context, field graphql.CollectedField, obj *repositories.ShipmentSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundShipmentRef_destinationState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundShipmentRef_destinationState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundShipmentRef", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 // endregion **************************** field.gotpl *****************************
 
 // region    **************************** input.gotpl *****************************
@@ -1536,7 +2039,7 @@ func (ec *executionContext) unmarshalInputInboundMessagesInput(ctx context.Conte
 		asMap["first"] = 25
 	}
 
-	fieldsInOrder := [...]string{"first", "after", "statuses", "classification", "mailboxId", "shipmentId", "since"}
+	fieldsInOrder := [...]string{"first", "after", "statuses", "classification", "mailboxId", "shipmentId", "since", "query"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -1592,6 +2095,13 @@ func (ec *executionContext) unmarshalInputInboundMessagesInput(ctx context.Conte
 				return it, err
 			}
 			it.Since = data
+		case "query":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Query = data
 		}
 	}
 	return it, nil
@@ -1799,6 +2309,54 @@ func (ec *executionContext) _InboundAttachment(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var inboundClassificationCountImplementors = []string{"InboundClassificationCount"}
+
+func (ec *executionContext) _InboundClassificationCount(ctx context.Context, sel ast.SelectionSet, obj *inboundmessageservice.ClassificationCount) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, inboundClassificationCountImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InboundClassificationCount")
+		case "classification":
+			out.Values[i] = ec._InboundClassificationCount_classification(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "total":
+			out.Values[i] = ec._InboundClassificationCount_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "waiting":
+			out.Values[i] = ec._InboundClassificationCount_waiting(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var inboundMailboxImplementors = []string{"InboundMailbox"}
 
 func (ec *executionContext) _InboundMailbox(ctx context.Context, sel ast.SelectionSet, obj *inboundmessage.Mailbox) graphql.Marshaler {
@@ -1873,6 +2431,54 @@ func (ec *executionContext) _InboundMailbox(ctx context.Context, sel ast.Selecti
 			}
 		case "updatedAt":
 			out.Values[i] = ec._InboundMailbox_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var inboundMailboxCountImplementors = []string{"InboundMailboxCount"}
+
+func (ec *executionContext) _InboundMailboxCount(ctx context.Context, sel ast.SelectionSet, obj *inboundmessageservice.MailboxCount) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, inboundMailboxCountImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InboundMailboxCount")
+		case "mailboxId":
+			out.Values[i] = ec._InboundMailboxCount_mailboxId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "total":
+			out.Values[i] = ec._InboundMailboxCount_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "waiting":
+			out.Values[i] = ec._InboundMailboxCount_waiting(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -2341,6 +2947,158 @@ func (ec *executionContext) _InboundMessage(ctx context.Context, sel ast.Selecti
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "attachmentCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._InboundMessage_attachmentCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "preview":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._InboundMessage_preview(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "matchedShipment":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._InboundMessage_matchedShipment(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "matchedCustomer":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._InboundMessage_matchedCustomer(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "needsReview":
 			field := field
 
@@ -2465,7 +3223,7 @@ func (ec *executionContext) _InboundMessageConnection(ctx context.Context, sel a
 
 var inboundMessageCountsImplementors = []string{"InboundMessageCounts"}
 
-func (ec *executionContext) _InboundMessageCounts(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.InboundMessageCounts) graphql.Marshaler {
+func (ec *executionContext) _InboundMessageCounts(ctx context.Context, sel ast.SelectionSet, obj *inboundmessageservice.Counts) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, inboundMessageCountsImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -2497,6 +3255,16 @@ func (ec *executionContext) _InboundMessageCounts(ctx context.Context, sel ast.S
 			}
 		case "total":
 			out.Values[i] = ec._InboundMessageCounts_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "byClassification":
+			out.Values[i] = ec._InboundMessageCounts_byClassification(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "byMailbox":
+			out.Values[i] = ec._InboundMessageCounts_byMailbox(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -2540,6 +3308,79 @@ func (ec *executionContext) _InboundMessageEdge(ctx context.Context, sel ast.Sel
 			}
 		case "cursor":
 			out.Values[i] = ec._InboundMessageEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var inboundShipmentRefImplementors = []string{"InboundShipmentRef"}
+
+func (ec *executionContext) _InboundShipmentRef(ctx context.Context, sel ast.SelectionSet, obj *repositories.ShipmentSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, inboundShipmentRefImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InboundShipmentRef")
+		case "id":
+			out.Values[i] = ec._InboundShipmentRef_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "proNumber":
+			out.Values[i] = ec._InboundShipmentRef_proNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bol":
+			out.Values[i] = ec._InboundShipmentRef_bol(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "poNumber":
+			out.Values[i] = ec._InboundShipmentRef_poNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "originCity":
+			out.Values[i] = ec._InboundShipmentRef_originCity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "originState":
+			out.Values[i] = ec._InboundShipmentRef_originState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "destinationCity":
+			out.Values[i] = ec._InboundShipmentRef_destinationCity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "destinationState":
+			out.Values[i] = ec._InboundShipmentRef_destinationState(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -2611,6 +3452,43 @@ func (ec *executionContext) marshalNInboundAttachmentKind2githubᚗcomᚋemoss08
 	return res
 }
 
+func (ec *executionContext) unmarshalNInboundClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐClassification(ctx context.Context, v any) (inboundmessage.Classification, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := inboundmessage.Classification(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInboundClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐClassification(ctx context.Context, sel ast.SelectionSet, v inboundmessage.Classification) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNInboundClassificationCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐClassificationCount(ctx context.Context, sel ast.SelectionSet, v inboundmessageservice.ClassificationCount) graphql.Marshaler {
+	return ec._InboundClassificationCount(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNInboundClassificationCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐClassificationCountᚄ(ctx context.Context, sel ast.SelectionSet, v []inboundmessageservice.ClassificationCount) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNInboundClassificationCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐClassificationCount(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNInboundMailbox2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailboxᚄ(ctx context.Context, sel ast.SelectionSet, v []*inboundmessage.Mailbox) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -2635,6 +3513,26 @@ func (ec *executionContext) marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋt
 		return graphql.Null
 	}
 	return ec._InboundMailbox(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNInboundMailboxCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐMailboxCount(ctx context.Context, sel ast.SelectionSet, v inboundmessageservice.MailboxCount) graphql.Marshaler {
+	return ec._InboundMailboxCount(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNInboundMailboxCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐMailboxCountᚄ(ctx context.Context, sel ast.SelectionSet, v []inboundmessageservice.MailboxCount) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNInboundMailboxCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐMailboxCount(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNInboundMailboxStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailboxStatus(ctx context.Context, v any) (inboundmessage.MailboxStatus, error) {
@@ -2674,7 +3572,7 @@ func (ec *executionContext) marshalNInboundMessageConnection2ᚖgithubᚗcomᚋe
 	return ec._InboundMessageConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNInboundMessageCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInboundMessageCounts(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.InboundMessageCounts) graphql.Marshaler {
+func (ec *executionContext) marshalNInboundMessageCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐCounts(ctx context.Context, sel ast.SelectionSet, v *inboundmessageservice.Counts) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -2836,6 +3734,13 @@ func (ec *executionContext) marshalOInboundMessageStatus2ᚕgithubᚗcomᚋemoss
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalOInboundShipmentRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐShipmentSummary(ctx context.Context, sel ast.SelectionSet, v *repositories.ShipmentSummary) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._InboundShipmentRef(ctx, sel, v)
 }
 
 // endregion ***************************** type.gotpl *****************************

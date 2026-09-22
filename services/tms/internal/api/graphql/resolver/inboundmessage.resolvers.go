@@ -11,12 +11,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func (r *inboundAttachmentResolver) DocumentID(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error) {
@@ -79,6 +81,69 @@ func (r *inboundMessageResolver) Attachments(ctx context.Context, obj *inboundme
 	}
 
 	return obj.Attachments, nil
+}
+
+// AttachmentCount answers the paperclip for a whole page of rows in one query.
+// A message read with its attachments already counts them without asking.
+func (r *inboundMessageResolver) AttachmentCount(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error) {
+	if obj.Attachments != nil {
+		return len(obj.Attachments), nil
+	}
+
+	l, err := requestLoaders(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return l.InboundAttachmentCount.Load(ctx, obj.ID.String())
+}
+
+func (r *inboundMessageResolver) Preview(ctx context.Context, obj *inboundmessage.InboundMessage) (string, error) {
+	return stringutils.MailPreview(obj.TextBody, inboundPreviewLength), nil
+}
+
+// MatchedShipment is shown only to a reader who could open the shipment. A
+// match to a load somebody cannot see is left absent rather than leaked.
+func (r *inboundMessageResolver) MatchedShipment(ctx context.Context, obj *inboundmessage.InboundMessage) (*repositories.ShipmentSummary, error) {
+	if obj.MatchedShipmentID.IsNil() {
+		return nil, nil
+	}
+
+	authCtx, err := r.requireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !r.hasPermission(ctx, authCtx, permission.ResourceShipment, permission.OpRead) {
+		return nil, nil
+	}
+
+	l, err := requestLoaders(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return optionalMatch(l.ShipmentSummaryByID.Load(ctx, obj.MatchedShipmentID.String()))
+}
+
+func (r *inboundMessageResolver) MatchedCustomer(ctx context.Context, obj *inboundmessage.InboundMessage) (*customer.Customer, error) {
+	if obj.MatchedCustomerID.IsNil() {
+		return nil, nil
+	}
+
+	authCtx, err := r.requireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !r.hasPermission(ctx, authCtx, permission.ResourceCustomer, permission.OpRead) {
+		return nil, nil
+	}
+
+	l, err := requestLoaders(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return optionalMatch(l.CustomerByID.Load(ctx, obj.MatchedCustomerID.String()))
 }
 
 func (r *inboundMessageResolver) NeedsReview(ctx context.Context, obj *inboundmessage.InboundMessage) (bool, error) {
@@ -173,6 +238,7 @@ func (r *queryResolver) InboundMessages(ctx context.Context, input gqlmodel.Inbo
 			TenantInfo: tenant,
 			Cursor:     cursor,
 			UseCursor:  true,
+			Query:      stringutils.FromPtr(input.Query),
 		},
 		Cursor:   cursor,
 		Statuses: input.Statuses,
@@ -195,7 +261,7 @@ func (r *queryResolver) InboundMessages(ctx context.Context, input gqlmodel.Inbo
 		return nil, err
 	}
 
-	return inboundMessageConnection(result), nil
+	return inboundMessageConnection(result)
 }
 
 func (r *queryResolver) InboundMessage(ctx context.Context, id string) (*inboundmessage.InboundMessage, error) {
@@ -218,7 +284,7 @@ func (r *queryResolver) InboundMessage(ctx context.Context, id string) (*inbound
 	})
 }
 
-func (r *queryResolver) InboundMessageCounts(ctx context.Context) (*gqlmodel.InboundMessageCounts, error) {
+func (r *queryResolver) InboundMessageCounts(ctx context.Context) (*inboundmessageservice.Counts, error) {
 	authCtx, err := r.requirePermission(
 		ctx, permission.ResourceInboundMessage, permission.OpRead,
 	)
@@ -226,18 +292,7 @@ func (r *queryResolver) InboundMessageCounts(ctx context.Context) (*gqlmodel.Inb
 		return nil, err
 	}
 
-	counts, err := r.inboundMessageService.Counts(ctx, tenantInfo(authCtx))
-	if err != nil {
-		return nil, err
-	}
-
-	return &gqlmodel.InboundMessageCounts{
-		Waiting:     counts.Waiting,
-		Handled:     counts.Handled,
-		Ignored:     counts.Ignored,
-		Quarantined: counts.Quarantined,
-		Total:       counts.Total,
-	}, nil
+	return r.inboundMessageService.Counts(ctx, tenantInfo(authCtx))
 }
 
 // InboundMailboxes is read under the mailbox's own permission, not the

@@ -2065,6 +2065,31 @@ models:
         resolver: true
       attachments:
         resolver: true
+      attachmentCount:
+        resolver: true
+      preview:
+        resolver: true
+      matchedShipment:
+        resolver: true
+      matchedCustomer:
+        resolver: true
+  InboundShipmentRef:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ShipmentSummary
+    fields:
+      id:
+        fieldName: ShipmentID
+      poNumber:
+        fieldName: PONumber
+  InboundMessageCounts:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/inboundmessageservice.Counts
+  InboundClassificationCount:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/inboundmessageservice.ClassificationCount
+  InboundMailboxCount:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/inboundmessageservice.MailboxCount
   InboundAttachment:
     model:
       - github.com/emoss08/trenova/internal/core/domain/inboundmessage.InboundAttachment

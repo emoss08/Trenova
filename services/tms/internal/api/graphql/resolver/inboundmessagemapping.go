@@ -1,8 +1,12 @@
 package resolver
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -18,41 +22,52 @@ func inboundOptionalID(id pulid.ID) *string {
 	return &value
 }
 
-// inboundMessageCursor is the edge cursor for one row, on the keyset the list
-// pages by, so a client can resume from any edge it holds rather than only
-// from the end of a page.
-func inboundMessageCursor(message *inboundmessage.InboundMessage) string {
-	encoded, err := pagination.EncodeCursor(pagination.Cursor{
-		CreatedAt: message.CreatedAt,
-		ID:        message.ID,
-	})
-	if err != nil {
-		return ""
-	}
-
-	return encoded
-}
-
 func inboundMessageConnection(
 	result *pagination.CursorListResult[*inboundmessage.InboundMessage],
-) *gqlmodel.InboundMessageConnection {
-	edges := make([]*gqlmodel.InboundMessageEdge, 0, len(result.Items))
-	for _, message := range result.Items {
-		edges = append(edges, &gqlmodel.InboundMessageEdge{
-			Node:   message,
-			Cursor: inboundMessageCursor(message),
-		})
-	}
-
-	pageInfo := &gqlmodel.PageInfo{HasNextPage: result.HasNextPage}
-	if len(edges) > 0 {
-		endCursor := edges[len(edges)-1].Cursor
-		pageInfo.EndCursor = &endCursor
+) (*gqlmodel.InboundMessageConnection, error) {
+	page, err := entityCursorConnection(
+		result,
+		func(node *inboundmessage.InboundMessage, cursor string) *gqlmodel.InboundMessageEdge {
+			return &gqlmodel.InboundMessageEdge{Node: node, Cursor: cursor}
+		},
+		func(edge *gqlmodel.InboundMessageEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return &gqlmodel.InboundMessageConnection{
-		Edges:      edges,
-		PageInfo:   pageInfo,
-		TotalCount: result.TotalCount,
+		Edges:      page.Edges,
+		PageInfo:   page.PageInfo,
+		TotalCount: page.TotalCount,
+	}, nil
+}
+
+// inboundPreviewLength is how much of a body a list row shows: about two lines
+// at the reading pane's narrowest.
+const inboundPreviewLength = 180
+
+// optionalMatch reads a matched record for display. A record that is gone or
+// out of the reader's reach is no match, not a failed inbox; anything else is
+// a real failure and stays one.
+func optionalMatch[T any](value T, err error) (T, error) {
+	if err != nil {
+		var zero T
+		if errortypes.IsNotFoundError(err) {
+			return zero, nil
+		}
+
+		return zero, err
 	}
+
+	return value, nil
+}
+
+func requestLoaders(ctx context.Context) (*loaders.Loaders, error) {
+	l, ok := loaders.FromContext(ctx)
+	if !ok || l == nil {
+		return nil, errortypes.NewDatabaseError("Request loaders are not configured")
+	}
+
+	return l, nil
 }

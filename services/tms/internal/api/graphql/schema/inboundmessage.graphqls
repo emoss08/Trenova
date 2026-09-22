@@ -127,11 +127,37 @@ type InboundMessage {
   failureCode: String!
   failureText: String!
   attachments: [InboundAttachment!]!
+  "How many files came with it. Read for a whole page of rows at once."
+  attachmentCount: Int!
+  """
+  A line or two of what the sender wrote, for a list row: whitespace folded,
+  quoted replies and the lines that introduce them left out.
+  """
+  preview: String!
+  "The shipment it was matched to, as a list row names it. Absent when unmatched or no longer visible."
+  matchedShipment: InboundShipmentRef
+  "The customer it was matched to. Absent when unmatched or no longer visible."
+  matchedCustomer: Customer
   "Whether this message is waiting on a person."
   needsReview: Boolean!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"""
+A shipment as an inbox row names it: the numbers a sender quotes and the lane.
+Enough to recognise the load without opening it.
+"""
+type InboundShipmentRef {
+  id: ID!
+  proNumber: String!
+  bol: String!
+  poNumber: String!
+  originCity: String!
+  originState: String!
+  destinationCity: String!
+  destinationState: String!
 }
 
 type InboundMessageEdge {
@@ -155,6 +181,8 @@ input InboundMessagesInput {
   shipmentId: ID
   "Only what arrived at or after this instant."
   since: Timestamp
+  "Words from the sender's name or address, or from the subject."
+  query: String
 }
 
 "The inbox in numbers, for the lane counts."
@@ -164,6 +192,24 @@ type InboundMessageCounts {
   ignored: Int!
   quarantined: Int!
   total: Int!
+  "Every kind, in a stable order, including the ones with no mail."
+  byClassification: [InboundClassificationCount!]!
+  "Every mailbox that has mail."
+  byMailbox: [InboundMailboxCount!]!
+}
+
+"One kind of mail: how much there is, and how much of it is waiting on a person."
+type InboundClassificationCount {
+  classification: InboundClassification!
+  total: Int!
+  waiting: Int!
+}
+
+"One address's share of the inbox."
+type InboundMailboxCount {
+  mailboxId: ID!
+  total: Int!
+  waiting: Int!
 }
 
 input ReviewInboundMessageInput {

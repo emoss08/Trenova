@@ -91,6 +91,10 @@ virtuals:
     - needsReview
     - mailbox
     - attachments
+    - attachmentCount
+    - preview
+    - matchedShipment
+    - matchedCustomer
   AgentDefinition:
     - pendingProposals
     - openRuns

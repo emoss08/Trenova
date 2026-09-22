@@ -3504,15 +3504,6 @@ type InboundMessageConnection struct {
 	TotalCount *int                  `json:"totalCount,omitempty"`
 }
 
-// The inbox in numbers, for the lane counts.
-type InboundMessageCounts struct {
-	Waiting     int `json:"waiting"`
-	Handled     int `json:"handled"`
-	Ignored     int `json:"ignored"`
-	Quarantined int `json:"quarantined"`
-	Total       int `json:"total"`
-}
-
 type InboundMessageEdge struct {
 	Node   *inboundmessage.InboundMessage `json:"node"`
 	Cursor string                         `json:"cursor"`
@@ -3528,6 +3519,8 @@ type InboundMessagesInput struct {
 	ShipmentID     *string                        `json:"shipmentId,omitempty"`
 	// Only what arrived at or after this instant.
 	Since *int `json:"since,omitempty"`
+	// Words from the sender's name or address, or from the subject.
+	Query *string `json:"query,omitempty"`
 }
 
 type InviteWorkerToPortalInput struct {

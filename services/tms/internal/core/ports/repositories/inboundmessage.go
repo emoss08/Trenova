@@ -57,6 +57,21 @@ type CountInboundMessagesRequest struct {
 	Since      int64                   `json:"since"`
 }
 
+// InboundMessageCount is one cell of the inbox's census: how many messages share
+// a status, a reading and a mailbox. The service folds these into lanes, kinds
+// and mailboxes, so one aggregate answers all three.
+type InboundMessageCount struct {
+	Status         inboundmessage.Status         `bun:"status"`
+	Classification inboundmessage.Classification `bun:"classification"`
+	MailboxID      pulid.ID                      `bun:"mailbox_id"`
+	Count          int                           `bun:"count"`
+}
+
+type CountInboundAttachmentsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	MessageIDs []pulid.ID            `json:"messageIds"`
+}
+
 type ListRecentInboundMessagesForReviewRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	Limit      int                   `json:"limit"`
@@ -128,10 +143,14 @@ type InboundMessageRepository interface {
 		messageID pulid.ID,
 		tenantInfo pagination.TenantInfo,
 	) ([]*inboundmessage.InboundAttachment, error)
-	CountByStatus(
+	CountBreakdown(
 		ctx context.Context,
 		req CountInboundMessagesRequest,
-	) (map[inboundmessage.Status]int, error)
+	) ([]InboundMessageCount, error)
+	CountAttachmentsByMessageIDs(
+		ctx context.Context,
+		req CountInboundAttachmentsRequest,
+	) (map[pulid.ID]int, error)
 	ListRecentForReview(
 		ctx context.Context,
 		req ListRecentInboundMessagesForReviewRequest,

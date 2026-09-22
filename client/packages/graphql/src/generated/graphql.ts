@@ -2758,6 +2758,8 @@ export type InboundMessagesInput = {
   classification?: InboundClassification | null | undefined;
   first?: number | null | undefined;
   mailboxId?: string | number | null | undefined;
+  /** Words from the sender's name or address, or from the subject. */
+  query?: string | null | undefined;
   shipmentId?: string | number | null | undefined;
   /** Only what arrived at or after this instant. */
   since?: number | null | undefined;
@@ -9165,9 +9167,11 @@ export type DeleteIftaTaxRateMutation = { deleteIftaTaxRate: boolean };
 
 export type InboundAttachmentFieldsFragment = { id: string, fileName: string, contentType: string, byteSize: number, kind: InboundAttachmentKind, documentId: string | null, failureText: string, createdAt: number } & { ' $fragmentName'?: 'InboundAttachmentFieldsFragment' };
 
+export type InboundShipmentRefFieldsFragment = { id: string, proNumber: string, bol: string, poNumber: string, originCity: string, originState: string, destinationCity: string, destinationState: string } & { ' $fragmentName'?: 'InboundShipmentRefFieldsFragment' };
+
 export type InboundMailboxFieldsFragment = { id: string, name: string, address: string, provider: InboundProvider, purpose: string, reviewPolicy: InboundReviewPolicy, minConfidence: number, status: InboundMailboxStatus } & { ' $fragmentName'?: 'InboundMailboxFieldsFragment' };
 
-export type InboundMessageListFieldsFragment = { id: string, mailboxId: string, fromAddress: string, fromName: string, subject: string, receivedAt: number, classification: InboundClassification | null, confidence: number, status: InboundMessageStatus, matchedShipmentId: string | null, matchedCustomerId: string | null, matchReason: string, needsReview: boolean, failureText: string } & { ' $fragmentName'?: 'InboundMessageListFieldsFragment' };
+export type InboundMessageListFieldsFragment = { id: string, mailboxId: string, fromAddress: string, fromName: string, subject: string, receivedAt: number, classification: InboundClassification | null, confidence: number, status: InboundMessageStatus, matchedShipmentId: string | null, matchedCustomerId: string | null, matchReason: string, needsReview: boolean, failureText: string, preview: string, attachmentCount: number, matchedShipment: { ' $fragmentRefs'?: { 'InboundShipmentRefFieldsFragment': InboundShipmentRefFieldsFragment } } | null, matchedCustomer: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'InboundMessageListFieldsFragment' };
 
 export type InboundMessageDetailFieldsFragment = (
   { toAddresses: Array<string>, ccAddresses: Array<string>, textBody: string, spamScore: number, matchedCarrierId: string | null, runId: string | null, reviewedBy: string | null, reviewedAt: number | null, reviewNote: string, failureCode: string, version: number, createdAt: number, updatedAt: number, mailbox: { ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } } | null, attachments: Array<{ ' $fragmentRefs'?: { 'InboundAttachmentFieldsFragment': InboundAttachmentFieldsFragment } }> }
@@ -9191,7 +9195,7 @@ export type InboundMessageQuery = { inboundMessage: { ' $fragmentRefs'?: { 'Inbo
 export type InboundMessageCountsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type InboundMessageCountsQuery = { inboundMessageCounts: { waiting: number, handled: number, ignored: number, quarantined: number, total: number } };
+export type InboundMessageCountsQuery = { inboundMessageCounts: { waiting: number, handled: number, ignored: number, quarantined: number, total: number, byClassification: Array<{ classification: InboundClassification, total: number, waiting: number }>, byMailbox: Array<{ mailboxId: string, total: number, waiting: number }> } };
 
 export type InboundMailboxesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -15560,6 +15564,18 @@ export const IftaTaxRateFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"IftaTaxRateFields"}) as unknown as TypedDocumentString<IftaTaxRateFieldsFragment, unknown>;
+export const InboundShipmentRefFieldsFragmentDoc = new TypedDocumentString(`
+    fragment InboundShipmentRefFields on InboundShipmentRef {
+  id
+  proNumber
+  bol
+  poNumber
+  originCity
+  originState
+  destinationCity
+  destinationState
+}
+    `, {"fragmentName":"InboundShipmentRefFields"}) as unknown as TypedDocumentString<InboundShipmentRefFieldsFragment, unknown>;
 export const InboundMessageListFieldsFragmentDoc = new TypedDocumentString(`
     fragment InboundMessageListFields on InboundMessage {
   id
@@ -15576,8 +15592,27 @@ export const InboundMessageListFieldsFragmentDoc = new TypedDocumentString(`
   matchReason
   needsReview
   failureText
+  preview
+  attachmentCount
+  matchedShipment {
+    ...InboundShipmentRefFields
+  }
+  matchedCustomer {
+    id
+    code
+    name
+  }
 }
-    `, {"fragmentName":"InboundMessageListFields"}) as unknown as TypedDocumentString<InboundMessageListFieldsFragment, unknown>;
+    fragment InboundShipmentRefFields on InboundShipmentRef {
+  id
+  proNumber
+  bol
+  poNumber
+  originCity
+  originState
+  destinationCity
+  destinationState
+}`, {"fragmentName":"InboundMessageListFields"}) as unknown as TypedDocumentString<InboundMessageListFieldsFragment, unknown>;
 export const InboundMailboxFieldsFragmentDoc = new TypedDocumentString(`
     fragment InboundMailboxFields on InboundMailbox {
   id
@@ -15635,6 +15670,16 @@ export const InboundMessageDetailFieldsFragmentDoc = new TypedDocumentString(`
   failureText
   createdAt
 }
+fragment InboundShipmentRefFields on InboundShipmentRef {
+  id
+  proNumber
+  bol
+  poNumber
+  originCity
+  originState
+  destinationCity
+  destinationState
+}
 fragment InboundMailboxFields on InboundMailbox {
   id
   name
@@ -15660,6 +15705,16 @@ fragment InboundMessageListFields on InboundMessage {
   matchReason
   needsReview
   failureText
+  preview
+  attachmentCount
+  matchedShipment {
+    ...InboundShipmentRefFields
+  }
+  matchedCustomer {
+    id
+    code
+    name
+  }
 }`, {"fragmentName":"InboundMessageDetailFields"}) as unknown as TypedDocumentString<InboundMessageDetailFieldsFragment, unknown>;
 export const InvoiceApprovalQueueItemFieldsFragmentDoc = new TypedDocumentString(`
     fragment InvoiceApprovalQueueItemFields on InvoiceAdjustmentApprovalQueueItem {
@@ -19635,12 +19690,12 @@ export const BackfillJurisdictionMilesDocument = {"__meta__":{"kind":"mutation",
 export const IftaTaxRateTableDocument = {"__meta__":{"kind":"query","name":"IftaTaxRateTable","hash":"sha256:75d9876e1746a57e7069435584d0c2968945fa0273152ed0c5b0d4ac7c2ca8c3"}} as unknown as TypedDocumentString<IftaTaxRateTableQuery, IftaTaxRateTableQueryVariables>;
 export const UpsertIftaTaxRatesDocument = {"__meta__":{"kind":"mutation","name":"UpsertIftaTaxRates","hash":"sha256:40687ccd074f12591f177689ac65f9ebc0c02b96ee78cbd3a20c61f549c6f28b"}} as unknown as TypedDocumentString<UpsertIftaTaxRatesMutation, UpsertIftaTaxRatesMutationVariables>;
 export const DeleteIftaTaxRateDocument = {"__meta__":{"kind":"mutation","name":"DeleteIftaTaxRate","hash":"sha256:3ea06bea9c4fe480fb22642ac0608f800ac5ce37559751b23103bc25274b2755"}} as unknown as TypedDocumentString<DeleteIftaTaxRateMutation, DeleteIftaTaxRateMutationVariables>;
-export const InboundMessagesDocument = {"__meta__":{"kind":"query","name":"InboundMessages","hash":"sha256:a537541c410e8fe57780d8c664645be30b163bc74c7540478c4d504a6ef8b8e8"}} as unknown as TypedDocumentString<InboundMessagesQuery, InboundMessagesQueryVariables>;
-export const InboundMessageDocument = {"__meta__":{"kind":"query","name":"InboundMessage","hash":"sha256:480368750a6ab2e7a367cea049107eb72eb1fe1069e2cd6f992d55b3a0a8bfa9"}} as unknown as TypedDocumentString<InboundMessageQuery, InboundMessageQueryVariables>;
-export const InboundMessageCountsDocument = {"__meta__":{"kind":"query","name":"InboundMessageCounts","hash":"sha256:415c06c8e34decbdee02c97bdc46343a3a03a4bf0efcb14bbceb74214a7157d3"}} as unknown as TypedDocumentString<InboundMessageCountsQuery, InboundMessageCountsQueryVariables>;
+export const InboundMessagesDocument = {"__meta__":{"kind":"query","name":"InboundMessages","hash":"sha256:f7683dd61b03d3635e618ae7dc12b17ce1aa52d3cf345b63b894169d986e9070"}} as unknown as TypedDocumentString<InboundMessagesQuery, InboundMessagesQueryVariables>;
+export const InboundMessageDocument = {"__meta__":{"kind":"query","name":"InboundMessage","hash":"sha256:9fec16da519623a0bc7b1143018c0f971ad0f02f7372d75782c72ee2597d24cb"}} as unknown as TypedDocumentString<InboundMessageQuery, InboundMessageQueryVariables>;
+export const InboundMessageCountsDocument = {"__meta__":{"kind":"query","name":"InboundMessageCounts","hash":"sha256:0186e33cceac728a75529ebc6acbce0f61c96012f25f0b3cf1326efab11c6418"}} as unknown as TypedDocumentString<InboundMessageCountsQuery, InboundMessageCountsQueryVariables>;
 export const InboundMailboxesDocument = {"__meta__":{"kind":"query","name":"InboundMailboxes","hash":"sha256:fdb705fb2aca3b616901a2b698356283073ab216a901558a5386e611ec9c8b6b"}} as unknown as TypedDocumentString<InboundMailboxesQuery, InboundMailboxesQueryVariables>;
-export const ReviewInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"ReviewInboundMessage","hash":"sha256:8d5b9dd88ec58b984b490d825d53e70dff72cae7e784164540f956f9dc43ec76"}} as unknown as TypedDocumentString<ReviewInboundMessageMutation, ReviewInboundMessageMutationVariables>;
-export const LinkInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"LinkInboundMessage","hash":"sha256:da9592d08f116bebbcec63a547fa627d82a047b823bc0994adb29f27378a84a5"}} as unknown as TypedDocumentString<LinkInboundMessageMutation, LinkInboundMessageMutationVariables>;
+export const ReviewInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"ReviewInboundMessage","hash":"sha256:dbb5d1421a75b0c0f1c7ae8f8c09a46b818d18535fa9074c43d0912c55fd7462"}} as unknown as TypedDocumentString<ReviewInboundMessageMutation, ReviewInboundMessageMutationVariables>;
+export const LinkInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"LinkInboundMessage","hash":"sha256:9da210cf0063857c9767d245fe8600a76f015ddd0a1c6a32b111776ed45c3a78"}} as unknown as TypedDocumentString<LinkInboundMessageMutation, LinkInboundMessageMutationVariables>;
 export const InvoiceAdjustmentApprovalsDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentApprovals","hash":"sha256:051cda2df75986990c40b1ec9cbcaa20d4a398519581fbf58098f79859a2b0f8"}} as unknown as TypedDocumentString<InvoiceAdjustmentApprovalsQuery, InvoiceAdjustmentApprovalsQueryVariables>;
 export const InvoiceAdjustmentApprovalDetailDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentApprovalDetail","hash":"sha256:3faee37cd372092eca2df737c1d885af871a825933f88250bc9c91dc0cb6e59b"}} as unknown as TypedDocumentString<InvoiceAdjustmentApprovalDetailQuery, InvoiceAdjustmentApprovalDetailQueryVariables>;
 export const InvoiceAdjustmentOperationsSummaryDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentOperationsSummary","hash":"sha256:441d3f879bd0cfc9f9aa4483469fc03a694dbdf70ec8831621691b0c8121b5e3"}} as unknown as TypedDocumentString<InvoiceAdjustmentOperationsSummaryQuery, InvoiceAdjustmentOperationsSummaryQueryVariables>;
