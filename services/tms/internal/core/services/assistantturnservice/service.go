@@ -21,28 +21,31 @@ import (
 type Params struct {
 	fx.In
 
-	Logger  *zap.Logger
-	Turns   repositories.AssistantTurnRepository
-	Stream  serviceports.TurnStreamPublisher
-	Reader  serviceports.TurnStreamReader
-	Metrics *metrics.Registry `optional:"true"`
+	Logger     *zap.Logger
+	Turns      repositories.AssistantTurnRepository
+	Stream     serviceports.TurnStreamPublisher
+	Reader     serviceports.TurnStreamReader
+	Metrics    *metrics.Registry                  `optional:"true"`
+	Trajectory serviceports.AgentRunEventRecorder `optional:"true"`
 }
 
 type Service struct {
-	l       *zap.Logger
-	turns   repositories.AssistantTurnRepository
-	stream  serviceports.TurnStreamPublisher
-	reader  serviceports.TurnStreamReader
-	metrics *metrics.Assistant
+	l          *zap.Logger
+	turns      repositories.AssistantTurnRepository
+	stream     serviceports.TurnStreamPublisher
+	reader     serviceports.TurnStreamReader
+	metrics    *metrics.Assistant
+	trajectory serviceports.AgentRunEventRecorder
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:       p.Logger.Named("service.assistantturn"),
-		turns:   p.Turns,
-		stream:  p.Stream,
-		reader:  p.Reader,
-		metrics: assistantMetrics(p.Metrics),
+		l:          p.Logger.Named("service.assistantturn"),
+		turns:      p.Turns,
+		stream:     p.Stream,
+		reader:     p.Reader,
+		metrics:    assistantMetrics(p.Metrics),
+		trajectory: p.Trajectory,
 	}
 }
 
@@ -130,6 +133,11 @@ func (s *Service) Observe(
 	}
 	pub := newPublisher(s.stream, ref, s.l, s.metrics)
 
+	// The same events, kept. The publisher above feeds a screen and its stream
+	// is gone a quarter of an hour after the reply ends; this feeds the record
+	// that answers what the assistant did months later.
+	trajectory := s.trajectoryFor(ctx, ref.TenantInfo, turn)
+
 	// The publish rides a context cancellation cannot reach. The turn's own
 	// context dies the moment the reader closes the tab, which is precisely
 	// when the events are worth keeping: the turn runs on, and somebody may
@@ -153,9 +161,34 @@ func (s *Service) Observe(
 			emit(event)
 		}
 		pub.emit(keep, event)
+		serviceports.RecordTrajectory(trajectory, keep, event)
 	}
 
-	return observed, func(final serviceports.StreamEvent) { pub.close(keep, final) }
+	return observed, func(final serviceports.StreamEvent) {
+		pub.close(keep, final)
+		serviceports.RecordTrajectory(trajectory, keep, final)
+		serviceports.FlushTrajectory(trajectory, keep)
+	}
+}
+
+// trajectoryFor opens the durable writer for a turn, when there is one to open.
+//
+// The recorder is optional: an installation without it still answers questions,
+// it just does not keep an account of how. Every call through the returned
+// writer is nil-safe, so nothing downstream has to know which case it is in.
+func (s *Service) trajectoryFor(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	turn *conversation.AssistantTurn,
+) serviceports.AgentRunEventWriter {
+	if s.trajectory == nil {
+		return nil
+	}
+
+	return s.trajectory.Recorder(ctx, tenantInfo, serviceports.RunStepOwner{
+		Kind: serviceports.RunStepOwnerAssistantTurn,
+		ID:   turn.ID,
+	})
 }
 
 // Complete closes the turn's record.

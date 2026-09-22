@@ -1295,6 +1295,233 @@ var AgentRunFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// AgentRunEvent — table "agent_run_events", alias "are"
+// ---------------------------------------------------------------------------
+
+// AgentRunEventTable holds the table name, alias, and primary key columns
+// for the "agent_run_events" table. The alias "are" is used in all generated
+// SQL fragments (e.g. "are.id = ?").
+var AgentRunEventTable = TableInfo{
+	Name:       "agent_run_events",
+	Alias:      "are",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AgentRunEventColumns provides type-safe column references for the "agent_run_events" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AgentRunEventColumns.ID.String())
+//	// SELECT are.id FROM agent_run_events AS are
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AgentRunEventColumns.ID.Eq(), id)           // WHERE are.id = ?
+//	q.Order(AgentRunEventColumns.CreatedAt.OrderDesc())  // ORDER BY are.created_at DESC
+var AgentRunEventColumns = struct {
+	ID             Column // "id" → qualified: "are.id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "are.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "are.organization_id"
+	OwnerKind      Column // "owner_kind" → qualified: "are.owner_kind"
+	OwnerID        Column // "owner_id" → qualified: "are.owner_id"
+	Sequence       Column // "sequence" → qualified: "are.sequence"
+	Kind           Column // "kind" → qualified: "are.kind"
+	StepKey        Column // "step_key" → qualified: "are.step_key"
+	CallID         Column // "call_id" → qualified: "are.call_id"
+	Payload        Column // "payload" → qualified: "are.payload"
+	Truncated      Column // "truncated" → qualified: "are.truncated"
+	OccurredAt     Column // "occurred_at" → qualified: "are.occurred_at"
+	Version        Column // "version" → qualified: "are.version"
+	CreatedAt      Column // "created_at" → qualified: "are.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "are.updated_at"
+}{
+	ID:             NewColumn("id", "are"),
+	BusinessUnitID: NewColumn("business_unit_id", "are"),
+	OrganizationID: NewColumn("organization_id", "are"),
+	OwnerKind:      NewColumn("owner_kind", "are"),
+	OwnerID:        NewColumn("owner_id", "are"),
+	Sequence:       NewColumn("sequence", "are"),
+	Kind:           NewColumn("kind", "are"),
+	StepKey:        NewColumn("step_key", "are"),
+	CallID:         NewColumn("call_id", "are"),
+	Payload:        NewColumn("payload", "are"),
+	Truncated:      NewColumn("truncated", "are"),
+	OccurredAt:     NewColumn("occurred_at", "are"),
+	Version:        NewColumn("version", "are"),
+	CreatedAt:      NewColumn("created_at", "are"),
+	UpdatedAt:      NewColumn("updated_at", "are"),
+}
+
+// AgentRunEventFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AgentRunEvent.GetStaticFieldMap().
+var AgentRunEventFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"ownerKind":      "owner_kind",
+	"ownerId":        "owner_id",
+	"sequence":       "sequence",
+	"kind":           "kind",
+	"stepKey":        "step_key",
+	"callId":         "call_id",
+	"payload":        "payload",
+	"truncated":      "truncated",
+	"occurredAt":     "occurred_at",
+	"version":        "version",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// AgentRunEventInsertableColumns lists column names suitable for INSERT statements on the "agent_run_events" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AgentRunEventInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"owner_kind",
+	"owner_id",
+	"sequence",
+	"kind",
+	"step_key",
+	"call_id",
+	"payload",
+	"truncated",
+	"occurred_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// AgentRunEventRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(AgentRunEventRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var AgentRunEventRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// AgentRunEventScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE are.organization_id = ? AND are.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.AgentRunEventScopeTenant(sq, ti).
+//		Where(buncolgen.AgentRunEventColumns.ID.Eq(), id)
+func AgentRunEventScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, AgentRunEventColumns.OrganizationID, AgentRunEventColumns.BusinessUnitID, ti)
+}
+
+// AgentRunEventScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.AgentRunEventScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.AgentRunEventColumns.ID.In(), bun.List(ids))
+//	})
+func AgentRunEventScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, AgentRunEventColumns.OrganizationID, AgentRunEventColumns.BusinessUnitID, ti)
+}
+
+// AgentRunEventScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.AgentRunEventScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.AgentRunEventColumns.ID.Eq(), id)
+//	})
+func AgentRunEventScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, AgentRunEventColumns.OrganizationID, AgentRunEventColumns.BusinessUnitID, ti)
+}
+
+// AgentRunEventApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.AgentRunEventApplyTenant(tenantInfo))
+func AgentRunEventApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(AgentRunEventColumns.OrganizationID, AgentRunEventColumns.BusinessUnitID, ti)
+}
+
+// AgentRunEventFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_run_events" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AgentRunEventFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AgentRunEventFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	OwnerKind      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerKind" → DB: "owner_kind"
+	OwnerID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerId" → DB: "owner_id"
+	Sequence       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sequence" → DB: "sequence"
+	Kind           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
+	StepKey        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stepKey" → DB: "step_key"
+	CallID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "callId" → DB: "call_id"
+	Payload        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payload" → DB: "payload"
+	Truncated      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "truncated" → DB: "truncated"
+	OccurredAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "occurredAt" → DB: "occurred_at"
+	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	OwnerKind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ownerKind", op, value)
+	},
+	OwnerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ownerId", op, value)
+	},
+	Sequence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sequence", op, value)
+	},
+	Kind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("kind", op, value)
+	},
+	StepKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("stepKey", op, value)
+	},
+	CallID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("callId", op, value)
+	},
+	Payload: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payload", op, value)
+	},
+	Truncated: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("truncated", op, value)
+	},
+	OccurredAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("occurredAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // AgentRunStep — table "agent_run_steps", alias "ars"
 // ---------------------------------------------------------------------------
 

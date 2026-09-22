@@ -31,14 +31,15 @@ var TurnDurationBuckets = []float64{
 type Assistant struct {
 	Base
 
-	turnDuration   *prometheus.HistogramVec
-	firstEvent     *prometheus.HistogramVec
-	turnTotal      *prometheus.CounterVec
-	turnsStopped   *prometheus.CounterVec
-	stepsReplayed  *prometheus.CounterVec
-	streamPublish  *prometheus.CounterVec
-	streamBytes    *prometheus.CounterVec
-	streamAttached *prometheus.CounterVec
+	turnDuration     *prometheus.HistogramVec
+	firstEvent       *prometheus.HistogramVec
+	turnTotal        *prometheus.CounterVec
+	turnsStopped     *prometheus.CounterVec
+	stepsReplayed    *prometheus.CounterVec
+	streamPublish    *prometheus.CounterVec
+	streamBytes      *prometheus.CounterVec
+	streamAttached   *prometheus.CounterVec
+	trajectoryEvents *prometheus.CounterVec
 }
 
 func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *Assistant {
@@ -130,6 +131,19 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 
 	// The recovery figure: whether coming back to a reply actually works, and
 	// how often a reader arrives to find the stream already gone.
+	// What a trajectory costs and, more usefully, what it loses. A dropped
+	// event is invisible by design — the run carries on — so the only way it
+	// stays visible at all is here.
+	m.trajectoryEvents = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: "assistant",
+			Name:      "trajectory_events_total",
+			Help:      "Trajectory events by owner kind and whether they were stored",
+		},
+		[]string{"owner_kind", "result"},
+	)
+
 	m.streamAttached = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: Namespace,
@@ -149,6 +163,7 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 		m.streamPublish,
 		m.streamBytes,
 		m.streamAttached,
+		m.trajectoryEvents,
 	)
 
 	return m
@@ -228,6 +243,24 @@ func (m *Assistant) RecordStreamPublish(event string, bytes int, err error) {
 	if err == nil {
 		m.streamBytes.WithLabelValues(event).Add(float64(bytes))
 	}
+}
+
+// RecordTrajectoryWritten files events that reached the database.
+func (m *Assistant) RecordTrajectoryWritten(ownerKind string, count int) {
+	if !m.enabled() {
+		return
+	}
+
+	m.trajectoryEvents.WithLabelValues(ownerKind, metricStatusSuccess).Add(float64(count))
+}
+
+// RecordTrajectoryDropped files events that did not.
+func (m *Assistant) RecordTrajectoryDropped(ownerKind string, count int) {
+	if !m.enabled() {
+		return
+	}
+
+	m.trajectoryEvents.WithLabelValues(ownerKind, "dropped").Add(float64(count))
 }
 
 // RecordStreamAttach files a reader arriving at a turn.

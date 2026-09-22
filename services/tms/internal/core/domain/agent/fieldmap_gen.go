@@ -39,6 +39,13 @@ func (e *AgentRun) GetStaticFieldMap() map[string]string {
 	return buncolgen.AgentRunFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AgentRunEvent].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.AgentRunEventFieldMap] instead of parsing struct tags via reflection.
+func (e *AgentRunEvent) GetStaticFieldMap() map[string]string {
+	return buncolgen.AgentRunEventFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AgentRunStep].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.AgentRunStepFieldMap] instead of parsing struct tags via reflection.

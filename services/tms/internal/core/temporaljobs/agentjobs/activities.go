@@ -42,6 +42,7 @@ type ActivitiesParams struct {
 	Runs          serviceports.AgentRunService
 	Runtime       serviceports.AgentRuntime
 	Steps         serviceports.RunStepLedger
+	Trajectory    serviceports.AgentRunEventRecorder `optional:"true"`
 	Contexts      serviceports.RuntimeContextBuilder
 	Recorder      *proposalrecorder.Service
 	Subjects      serviceports.AgentSubjectDescriber
@@ -65,6 +66,7 @@ type Activities struct {
 	runs          serviceports.AgentRunService
 	runtime       serviceports.AgentRuntime
 	steps         serviceports.RunStepLedger
+	trajectory    serviceports.AgentRunEventRecorder
 	contexts      serviceports.RuntimeContextBuilder
 	recorder      *proposalrecorder.Service
 	notifier      serviceports.AgentProposalNotifier
@@ -89,6 +91,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		runs:          p.Runs,
 		runtime:       p.Runtime,
 		steps:         p.Steps,
+		trajectory:    p.Trajectory,
 		contexts:      p.Contexts,
 		recorder:      p.Recorder,
 		notifier:      p.Notifier,
@@ -154,6 +157,26 @@ func (a *Activities) PrepareRunActivity(
 	}, nil
 }
 
+// trajectoryFor opens the durable event writer, when one is configured.
+//
+// Optional, like the metrics collector: an installation without it still runs
+// its agents, it simply keeps no account of how. Every call through the writer
+// is nil-safe.
+func (a *Activities) trajectoryFor(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	runID pulid.ID,
+) serviceports.AgentRunEventWriter {
+	if a.trajectory == nil {
+		return nil
+	}
+
+	return a.trajectory.Recorder(ctx, tenant, serviceports.RunStepOwner{
+		Kind: serviceports.RunStepOwnerAgentRun,
+		ID:   runID,
+	})
+}
+
 func (a *Activities) RunAgentActivity(
 	ctx context.Context,
 	input *RunAgentInput,
@@ -175,6 +198,17 @@ func (a *Activities) RunAgentActivity(
 
 	activity.RecordHeartbeat(ctx, "running")
 
+	// A background run's account of itself used to end here. The runtime emitted
+	// every tool call, refusal and give-up, and the closure below used them as a
+	// heartbeat tick and dropped them — leaving the run's durable record as its
+	// final reply, cut to two thousand characters. Now they are written down.
+	//
+	// The writer rides a context cancellation cannot reach, for the same reason
+	// the chat side does: the events worth keeping are most often the ones
+	// emitted as something is going wrong.
+	keep := context.WithoutCancel(ctx)
+	trajectory := a.trajectoryFor(keep, tenant, payload.RunID)
+
 	outcome, err := a.runtime.Run(ctx, &serviceports.RunRequest{
 		Definition: definition,
 		Actor:      actor,
@@ -192,10 +226,12 @@ func (a *Activities) RunAgentActivity(
 			ID:   payload.RunID,
 		},
 		Attempt: int(activity.GetInfo(ctx).Attempt),
-		Emit: func(serviceports.StreamEvent) {
+		Emit: func(event serviceports.StreamEvent) {
 			activity.RecordHeartbeat(ctx, "working")
+			serviceports.RecordTrajectory(trajectory, keep, event)
 		},
 	})
+	serviceports.FlushTrajectory(trajectory, keep)
 	if err != nil {
 		return nil, err
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/core/services/agentruneventservice"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
@@ -135,6 +136,7 @@ func Options() fx.Option {
 		agentguard.Module,
 		agentruntime.Module,
 		runstepledger.Module,
+		agentruneventservice.Module,
 		turnstream.Module,
 		watchtowersources.Module,
 		proposalrecorder.Module,
