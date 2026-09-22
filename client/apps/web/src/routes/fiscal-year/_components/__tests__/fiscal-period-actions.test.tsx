@@ -160,7 +160,7 @@ describe("fiscal period actions", () => {
     renderForm(fiscalYear([...months, adjustingPeriod()]));
 
     await openMenu(user, "Adjusting Period - FY 2026");
-    await user.click(await screen.findByRole("menuitem", { name: /Open Period/ }));
+    await user.click(await screen.findByRole("menuitem", { name: /Open period/ }));
     const dialog = await screen.findByRole("alertdialog");
     await user.click(within(dialog).getByRole("button", { name: "Open period" }));
 
@@ -174,7 +174,7 @@ describe("fiscal period actions", () => {
     renderForm(fiscalYear([period(1), period(2)]));
 
     await openMenu(user, "Period 1");
-    await user.click(await screen.findByRole("menuitem", { name: /Close Period/ }));
+    await user.click(await screen.findByRole("menuitem", { name: /Close period/ }));
     const dialog = await screen.findByRole("alertdialog");
     const confirm = within(dialog).getByRole("button", { name: "Close period" });
     await vi.waitFor(() => expect(confirm).toBeEnabled());
@@ -212,7 +212,7 @@ describe("fiscal period actions", () => {
     renderForm(fiscalYear([period(1, { status: "Closed" }), period(2)]));
 
     await openMenu(user, "Period 1");
-    await user.click(await screen.findByRole("menuitem", { name: /Reopen Period/ }));
+    await user.click(await screen.findByRole("menuitem", { name: /Reopen period/ }));
     const dialog = await screen.findByRole("alertdialog");
     const confirm = within(dialog).getByRole("button", { name: "Reopen period" });
 
@@ -229,7 +229,7 @@ describe("fiscal period actions", () => {
     renderForm(fiscalYear([period(1, { status: "Closed" }), period(2)]));
 
     await openMenu(user, "Period 2");
-    await user.click(await screen.findByRole("menuitem", { name: /Lock Period/ }));
+    await user.click(await screen.findByRole("menuitem", { name: /Lock period/ }));
     const dialog = await screen.findByRole("alertdialog");
     await user.click(within(dialog).getByRole("button", { name: "Lock period" }));
 
@@ -246,7 +246,7 @@ describe("fiscal period actions", () => {
     await user.type(description, "Audit in progress");
 
     await openMenu(user, "Period 2");
-    await user.click(await screen.findByRole("menuitem", { name: /Lock Period/ }));
+    await user.click(await screen.findByRole("menuitem", { name: /Lock period/ }));
     const dialog = await screen.findByRole("alertdialog");
     await user.click(within(dialog).getByRole("button", { name: "Lock period" }));
 
@@ -259,7 +259,7 @@ describe("fiscal period actions", () => {
     renderForm(fiscalYear([period(1, { status: "Closed" }), period(2, { status: "Closed" })]));
 
     await openMenu(user, "Period 1");
-    const item = await screen.findByRole("menuitem", { name: /Reopen Period/ });
+    const item = await screen.findByRole("menuitem", { name: /Reopen period/ });
 
     expect(item).toHaveAttribute("aria-disabled", "true");
     expect(item).toHaveTextContent("Period 2 is already closed");
@@ -271,7 +271,7 @@ describe("fiscal period actions", () => {
     renderForm(fiscalYear([...months, adjustingPeriod()], { status: "Closed", isCurrent: false }));
 
     await openMenu(user, "Adjusting Period - FY 2026");
-    const item = await screen.findByRole("menuitem", { name: /Open Period/ });
+    const item = await screen.findByRole("menuitem", { name: /Open period/ });
 
     expect(item).toHaveAttribute("aria-disabled", "true");
     expect(item).toHaveTextContent("Reopen the fiscal year first");

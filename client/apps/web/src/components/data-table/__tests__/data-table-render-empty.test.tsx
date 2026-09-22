@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -106,14 +106,15 @@ describe("DataTable empty state", () => {
     const user = userEvent.setup();
     renderTable({ onAddRecord });
 
-    await user.click(screen.getByRole("button", { name: "Add Test record" }));
+    const sheet = screen.getByRole("region", { name: "No test records yet" });
+    await user.click(within(sheet).getByRole("button", { name: "New test record" }));
     expect(onAddRecord).toHaveBeenCalledTimes(1);
   });
 
   it("does not offer to add when creation is switched off", () => {
     renderTable({ onAddRecord: vi.fn(), enableCreateAction: false });
 
-    expect(screen.queryByRole("button", { name: "Add Test record" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "New test record" })).not.toBeInTheDocument();
   });
 
   it("offers to clear a search that emptied the table instead of adding", async () => {
@@ -121,8 +122,10 @@ describe("DataTable empty state", () => {
     const user = userEvent.setup();
     renderTable({ onAddRecord: vi.fn() }, "?query=alice", onUrlUpdate);
 
-    expect(screen.getByRole("heading", { name: "Nothing matches" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Add Test record" })).not.toBeInTheDocument();
+    const sheet = screen.getByRole("region", { name: "Nothing matches" });
+    expect(
+      within(sheet).queryByRole("button", { name: "New test record" }),
+    ).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Clear filters" }));
 
     const last = onUrlUpdate.mock.calls.at(-1)?.[0] as { searchParams: URLSearchParams };

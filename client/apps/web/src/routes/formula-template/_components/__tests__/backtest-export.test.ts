@@ -32,7 +32,7 @@ describe("backtestCsv", () => {
   it("writes one row per shipment with amounts, delta, clamp, and errors", () => {
     const lines = backtestCsv(rows).split("\r\n");
     expect(lines[0]).toBe(
-      "Shipment ID,Pro #,Current,Candidate,Delta,Delta %,Guardrail Clamped,Current Error,Candidate Error",
+      "Shipment ID,Pro #,Current,Candidate,Delta,Delta %,Guardrail clamped,Current error,Candidate error",
     );
     expect(lines[1]).toBe("shp_1,PRO-1,100,150,50,50,Yes,,");
     expect(lines[2]).toBe('shp_2,,0,0,0,0,No,no rating detail,"bad ""lookup"""');

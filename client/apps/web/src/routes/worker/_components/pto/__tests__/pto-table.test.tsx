@@ -238,10 +238,10 @@ describe("PTODataTable bulk actions", () => {
     expect(screen.queryByLabelText("Select row")).not.toBeInTheDocument();
   });
 
-  it("opens the request form from the toolbar Add Record button", async () => {
+  it("opens the request form from the toolbar's New button", async () => {
     renderTable();
 
-    fireEvent.click(await screen.findByRole("button", { name: /add record/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^New /i }));
 
     expect(await screen.findByRole("dialog")).toHaveTextContent("request-pto-form");
   });

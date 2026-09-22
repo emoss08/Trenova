@@ -130,8 +130,8 @@ describe("message archive helpers", () => {
       },
     ]);
 
-    expect(formatted).toContain("B2 - Beginning Segment for Shipment Information");
-    expect(formatted).toContain("B201 Standard Carrier Alpha Code: [empty]");
+    expect(formatted).toContain("B2 - Beginning segment for shipment information");
+    expect(formatted).toContain("B201 Standard carrier alpha code: [empty]");
     expect(formatted).toContain("! Error: Shipment is required");
   });
 

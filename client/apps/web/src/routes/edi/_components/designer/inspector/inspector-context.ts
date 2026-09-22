@@ -46,9 +46,9 @@ export function buildMessageInspectorContext({
     rawX12: message.rawX12,
     rawFilename: buildX12Filename(message),
     controlRows: [
-      ["Interchange Control Number", message.interchangeControlNumber],
-      ["Group Control Number", message.groupControlNumber],
-      ["Transaction Control Number", message.transactionControlNumber],
+      ["Interchange control number", message.interchangeControlNumber],
+      ["Group control number", message.groupControlNumber],
+      ["Transaction control number", message.transactionControlNumber],
       ["Segment Count", String(message.segmentCount)],
     ],
     controlCopyText: controlNumberText({
@@ -121,9 +121,9 @@ export function buildPreviewInspectorContext(preview: EDIDocumentPreview): Inspe
     rawX12: preview.rawX12,
     rawFilename: `edi-preview-${transactionSet || "x12"}-${preview.transactionControlNumber || "provisional"}.x12`,
     controlRows: [
-      ["Interchange Control Number (Provisional)", preview.interchangeControlNumber],
-      ["Group Control Number (Provisional)", preview.groupControlNumber],
-      ["Transaction Control Number (Provisional)", preview.transactionControlNumber],
+      ["Interchange control number (provisional)", preview.interchangeControlNumber],
+      ["Group control number (provisional)", preview.groupControlNumber],
+      ["Transaction control number (provisional)", preview.transactionControlNumber],
       ["Segment Count", String(preview.segmentCount)],
     ],
     controlCopyText: controlNumberText({

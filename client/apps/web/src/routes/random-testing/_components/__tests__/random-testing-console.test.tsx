@@ -208,7 +208,7 @@ describe("RandomTestingConsole", () => {
       "Q4: Not yet",
     ]);
     expect(
-      within(dot).getByText("Drug 8 of 10 · Alcohol 2 of 2 · a round fell short"),
+      within(dot).getByText("Drug 8 of 10 · alcohol 2 of 2 · a round fell short"),
     ).toBeInTheDocument();
     expect(within(dot).getByRole("button", { name: "Run draw" })).toBeInTheDocument();
 

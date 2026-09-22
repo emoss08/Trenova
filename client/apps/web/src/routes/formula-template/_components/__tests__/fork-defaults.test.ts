@@ -6,7 +6,7 @@ describe("forkDefaultsFor", () => {
   it("derives the name and version from the template being forked", () => {
     const template = { name: "Per mile", currentVersionNumber: 4 } as FormulaTemplate;
     expect(forkDefaultsFor(template)).toEqual({
-      newName: "Per Mile (Fork)",
+      newName: "Per mile (Fork)",
       sourceVersion: 4,
       changeMessage: "",
     });

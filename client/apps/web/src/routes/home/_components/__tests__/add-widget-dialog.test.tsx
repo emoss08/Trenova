@@ -169,7 +169,7 @@ describe("AddWidgetDialog", () => {
     const user = userEvent.setup();
     const { onAdd } = renderGallery();
 
-    await user.click(screen.getByRole("button", { name: /Billing Queue/ }));
+    await user.click(screen.getByRole("button", { name: /Billing queue/ }));
 
     expect(onAdd).toHaveBeenCalledTimes(1);
     expect(onAdd.mock.calls[0][0]).toMatchObject({ key: "billing-queue" });
@@ -188,7 +188,7 @@ describe("AddWidgetDialog", () => {
     const { onAdd } = renderGallery({ used: 24, max: 24 });
 
     expect(screen.getByText(/This home screen is full/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /Billing Queue/ }));
+    await user.click(screen.getByRole("button", { name: /Billing queue/ }));
     expect(onAdd).not.toHaveBeenCalled();
   });
 

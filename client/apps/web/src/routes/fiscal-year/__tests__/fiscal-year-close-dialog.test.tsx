@@ -153,7 +153,7 @@ describe("FiscalYearCloseAlertDialogContent", () => {
 
     renderCloseDialog();
 
-    expect(await screen.findByText(/Accounts Receivable \(1110\)/)).toBeInTheDocument();
+    expect(await screen.findByText(/Accounts receivable \(1110\)/)).toBeInTheDocument();
     expect(screen.getByText(/reconciled · \$4,000\.00/)).toBeInTheDocument();
   });
 

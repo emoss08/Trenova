@@ -35,7 +35,7 @@ describe("ShipmentBillingReadinessPanel status hint", () => {
   it("reports the billing queue state once billing holds the shipment", () => {
     renderPanel({ status: "ReadyToInvoice", billingTransferStatus: "SentBackToOps" });
 
-    expect(screen.getByTitle("Billing queue: Sent Back to Ops")).toBeInTheDocument();
+    expect(screen.getByTitle("Billing queue: Sent back to ops")).toBeInTheDocument();
     expect(screen.queryByText("Ready to invoice")).not.toBeInTheDocument();
   });
 

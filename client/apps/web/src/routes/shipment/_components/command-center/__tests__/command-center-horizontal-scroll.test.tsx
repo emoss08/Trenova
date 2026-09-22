@@ -36,10 +36,17 @@ const savedViews = vi.hoisted(() => ({
 
 vi.mock("@/lib/queries", () => ({
   queries: {
+    // The saved-views menu lists every view when it opens; whether it has
+    // rendered by the time a test asserts depends on timing, so the list has
+    // to exist rather than be left out of the mock.
     tableConfiguration: {
       default: () => ({
         queryKey: ["table-config-default"],
         queryFn: async () => savedViews.defaultConfig,
+      }),
+      all: (params: unknown) => ({
+        queryKey: ["table-config-all", params],
+        queryFn: async () => ({ results: [], count: 0 }),
       }),
     },
   },

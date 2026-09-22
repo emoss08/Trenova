@@ -128536,6 +128536,15 @@
       "domain/permission"
     ]
   },
+  "Remove inbound messages settled more than six months ago": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Remove leading and trailing spaces.": {
     "sites": 1,
     "scope": [
@@ -128843,6 +128852,15 @@
     "areas": [
       "apps/web/components",
       "routes/formula-template"
+    ]
+  },
+  "Removes inbound messages settled more than six months ago.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Removes leading and trailing whitespace.": {

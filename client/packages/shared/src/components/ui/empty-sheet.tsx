@@ -1,5 +1,5 @@
 import { cn } from "@trenova/shared/lib/utils";
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 
 type EmptySheetProps = {
   title: string;
@@ -27,8 +27,11 @@ export function EmptySheet({
   className,
   sketchClassName,
 }: EmptySheetProps) {
+  const titleId = useId();
+
   return (
-    <div
+    <section
+      aria-labelledby={titleId}
       className={cn(
         "cc-fade-in flex w-full flex-col items-center gap-5 px-4 py-8 text-center",
         className,
@@ -44,13 +47,15 @@ export function EmptySheet({
         {sketch}
       </div>
       <div className="flex max-w-md flex-col items-center gap-1.5">
-        <h3 className="text-sm font-medium">{title}</h3>
+        <h3 id={titleId} className="text-sm font-medium">
+          {title}
+        </h3>
         <p className="text-muted-foreground text-xs leading-relaxed whitespace-pre-line">
           {description}
         </p>
         {action ? <div className="mt-2">{action}</div> : null}
       </div>
-    </div>
+    </section>
   );
 }
 

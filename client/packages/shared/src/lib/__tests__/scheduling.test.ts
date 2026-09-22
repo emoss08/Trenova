@@ -71,7 +71,7 @@ describe("formatShiftWindow", () => {
 
 describe("describeShiftPattern", () => {
   it("names the working days", () => {
-    expect(describeShiftPattern("0111110", 1)).toBe("Mon–fri");
+    expect(describeShiftPattern("0111110", 1)).toBe("Mon–Fri");
     expect(describeShiftPattern("1000001", 1)).toBe("Sun, Sat");
   });
 
