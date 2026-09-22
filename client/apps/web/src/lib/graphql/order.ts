@@ -28,6 +28,7 @@ import {
   type CreatedInvoice,
 } from "@/lib/graphql/invoice";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { UnmaskFragments } from "@trenova/shared/types/graphql-connection";
 import type { OrderFormValues } from "@trenova/shared/types/order";
 
 // The order's status is derived from its shipment legs, so it is never sent on write.
@@ -77,7 +78,13 @@ export async function updateOrder(id: string, values: OrderFormValues): Promise<
   };
 }
 
-export type OrderDetail = NonNullable<OrderDetailQuery["order"]>;
+/*
+ * Unmasked all the way down. The detail query nests fragments for charges,
+ * their allocations and the created invoice; read off the masked type and
+ * every one of those reads as a type with no properties, which is what the
+ * charge dialog and the legs section were failing on.
+ */
+export type OrderDetail = UnmaskFragments<NonNullable<OrderDetailQuery["order"]>>;
 export type OrderLeg = OrderDetail["legs"][number];
 export type OrderCharge = OrderDetail["charges"][number];
 
@@ -96,7 +103,9 @@ export async function fetchOrderDetail(
     throw new Error("Order not found");
   }
 
-  return data.order;
+  // The masks are resolved at runtime by the transport; this is the type
+  // catching up with what the response already is.
+  return data.order as unknown as OrderDetail;
 }
 
 export async function attachOrderShipments(

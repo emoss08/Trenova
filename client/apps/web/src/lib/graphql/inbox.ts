@@ -19,13 +19,32 @@ import {
   type ReviewInboundMessageInput,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { UnmaskFragments } from "@trenova/shared/types/graphql-connection";
 
-export type InboundMessageRow = InboundMessageListFieldsFragment;
-export type InboundMessageDetail = InboundMessageDetailFieldsFragment;
-export type InboundMailbox = InboundMailboxFieldsFragment;
+/*
+ * Unmasked, because the detail fragment spreads the list fragment and nests the
+ * mailbox and attachment ones. getFragmentData unwraps the outermost mask at
+ * runtime; the type has to be unwrapped all the way down or every field the
+ * inner fragments contribute reads as missing.
+ */
+export type InboundMessageRow = UnmaskFragments<InboundMessageListFieldsFragment>;
+export type InboundMessageDetail = UnmaskFragments<InboundMessageDetailFieldsFragment>;
+export type InboundMailbox = UnmaskFragments<InboundMailboxFieldsFragment>;
 export type { InboundClassification, InboundMessageStatus };
 
 type RequestOptions = { signal?: AbortSignal };
+
+/*
+ * getFragmentData does the runtime unmasking — it hands back the same object
+ * with the mask marker gone — but its return type is still the masked
+ * fragment, and the masked type says nothing about the fields the nested
+ * fragments contribute. The cast is the type catching up with what the call
+ * already did; it is written once, here, rather than at every call site.
+ */
+function unmasked<T>(value: unknown): T {
+  return value as T;
+}
+
 
 export type InboundMessagePage = {
   messages: InboundMessageRow[];
@@ -75,7 +94,9 @@ export async function fetchInboundMessages(
 
   return {
     messages: data.inboundMessages.edges.map((edge) =>
-      getFragmentData(InboundMessageListFieldsFragmentDoc, edge.node),
+      unmasked<InboundMessageRow>(
+        getFragmentData(InboundMessageListFieldsFragmentDoc, edge.node),
+      ),
     ),
     endCursor: data.inboundMessages.pageInfo.endCursor ?? null,
     hasNextPage: data.inboundMessages.pageInfo.hasNextPage,
@@ -93,7 +114,9 @@ export async function fetchInboundMessage(
     signal: options?.signal,
   });
 
-  return getFragmentData(InboundMessageDetailFieldsFragmentDoc, data.inboundMessage);
+  return unmasked<InboundMessageDetail>(
+    getFragmentData(InboundMessageDetailFieldsFragmentDoc, data.inboundMessage),
+  );
 }
 
 export async function fetchInboundMessageCounts(
@@ -120,7 +143,7 @@ export async function fetchInboundMailboxes(
   });
 
   return data.inboundMailboxes.map((mailbox) =>
-    getFragmentData(InboundMailboxFieldsFragmentDoc, mailbox),
+    unmasked<InboundMailbox>(getFragmentData(InboundMailboxFieldsFragmentDoc, mailbox)),
   );
 }
 
@@ -134,7 +157,9 @@ export async function reviewInboundMessage(
     variables: { id, input },
   });
 
-  return getFragmentData(InboundMessageDetailFieldsFragmentDoc, data.reviewInboundMessage);
+  return unmasked<InboundMessageDetail>(
+    getFragmentData(InboundMessageDetailFieldsFragmentDoc, data.reviewInboundMessage),
+  );
 }
 
 export async function linkInboundMessage(
@@ -147,5 +172,7 @@ export async function linkInboundMessage(
     variables: { id, input },
   });
 
-  return getFragmentData(InboundMessageDetailFieldsFragmentDoc, data.linkInboundMessage);
+  return unmasked<InboundMessageDetail>(
+    getFragmentData(InboundMessageDetailFieldsFragmentDoc, data.linkInboundMessage),
+  );
 }
