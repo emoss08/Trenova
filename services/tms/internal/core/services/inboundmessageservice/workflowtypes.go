@@ -34,3 +34,28 @@ type FailInboundMessagePayload struct {
 	Code      string   `json:"code"`
 	Reason    string   `json:"reason"`
 }
+
+// ListInboundAttachmentsResult is the work the attachment pass has left.
+type ListInboundAttachmentsResult struct {
+	Attachments []AttachmentRef `json:"attachments"`
+}
+
+// RecordInboundAttachmentPayload ties a finalized upload to its row, or says
+// why there is no document to tie.
+type RecordInboundAttachmentPayload struct {
+	temporaltype.BasePayload
+
+	Attachment  AttachmentRef `json:"attachment"`
+	DocumentID  pulid.ID      `json:"documentId"`
+	FailureText string        `json:"failureText"`
+}
+
+// PollInboundAttachmentPayload asks how far the document pipeline has got.
+type PollInboundAttachmentPayload struct {
+	temporaltype.BasePayload
+
+	Attachment AttachmentRef `json:"attachment"`
+	// GiveUp turns the poll into a verdict: past the deadline, a document still
+	// at Pending is a failure rather than something still being worked on.
+	GiveUp bool `json:"giveUp"`
+}

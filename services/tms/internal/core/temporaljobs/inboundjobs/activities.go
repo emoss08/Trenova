@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -76,4 +77,67 @@ func (a *Activities) FailInboundMessageActivity(
 		payload.Code,
 		payload.Reason,
 	)
+}
+
+// ListInboundAttachmentsActivity reports the files that still have a document
+// pipeline run owed to them.
+//
+// A file already carrying a document id is left out, so a workflow retry
+// finalizes nothing twice.
+func (a *Activities) ListInboundAttachmentsActivity(
+	ctx context.Context,
+	payload *ProcessInboundMessagePayload,
+) (*ListInboundAttachmentsResult, error) {
+	refs, err := a.inbound.PendingAttachments(ctx, payload.MessageID, tenantOf(payload.BasePayload))
+	if err != nil {
+		return nil, err
+	}
+
+	return &ListInboundAttachmentsResult{Attachments: refs}, nil
+}
+
+// RecordInboundAttachmentActivity writes down what the upload produced.
+func (a *Activities) RecordInboundAttachmentActivity(
+	ctx context.Context,
+	payload *RecordInboundAttachmentPayload,
+) error {
+	return a.inbound.RecordAttachmentDocument(
+		ctx,
+		payload.Attachment,
+		payload.DocumentID,
+		payload.FailureText,
+		tenantOf(payload.BasePayload),
+	)
+}
+
+// PollInboundAttachmentActivity reads how far the document pipeline has got,
+// or records that it ran out of time.
+func (a *Activities) PollInboundAttachmentActivity(
+	ctx context.Context,
+	payload *PollInboundAttachmentPayload,
+) (*AttachmentExtractionState, error) {
+	tenantInfo := tenantOf(payload.BasePayload)
+
+	state, err := a.inbound.PollAttachmentExtraction(ctx, payload.Attachment, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if state.Terminal || !payload.GiveUp {
+		return state, nil
+	}
+
+	if err = a.inbound.GiveUpOnAttachment(
+		ctx, payload.Attachment, state.Status, tenantInfo,
+	); err != nil {
+		a.l.Error("could not record that an attachment ran out of time",
+			zap.String("attachmentId", payload.Attachment.AttachmentID.String()),
+			zap.Error(err))
+	}
+	state.Terminal = true
+
+	return state, nil
+}
+
+func tenantOf(base temporaltype.BasePayload) pagination.TenantInfo {
+	return pagination.TenantInfo{OrgID: base.OrganizationID, BuID: base.BusinessUnitID}
 }

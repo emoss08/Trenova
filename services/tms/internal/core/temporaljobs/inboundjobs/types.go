@@ -16,3 +16,13 @@ type ProcessInboundMessagePayload = inboundmessageservice.ProcessInboundMessageP
 type ProcessInboundMessageResult = inboundmessageservice.ProcessInboundMessageResult
 
 type FailInboundMessagePayload = inboundmessageservice.FailInboundMessagePayload
+
+type AttachmentRef = inboundmessageservice.AttachmentRef
+
+type ListInboundAttachmentsResult = inboundmessageservice.ListInboundAttachmentsResult
+
+type RecordInboundAttachmentPayload = inboundmessageservice.RecordInboundAttachmentPayload
+
+type PollInboundAttachmentPayload = inboundmessageservice.PollInboundAttachmentPayload
+
+type AttachmentExtractionState = inboundmessageservice.AttachmentExtractionState

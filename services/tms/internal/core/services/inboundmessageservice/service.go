@@ -68,6 +68,12 @@ type Params struct {
 	// an unmatched message is still one a person can read and link by hand.
 	Shipments ShipmentFinder `optional:"true"`
 	Parties   PartyFinder    `optional:"true"`
+	// Uploads and Documents carry attachments through the document pipeline.
+	// Without them a message still lands with its attachment rows recorded —
+	// the file names, types and sizes the sender attached — and each row says
+	// it was never read, which is a truthful inbox rather than an empty one.
+	Uploads   services.DocumentUploadService  `optional:"true"`
+	Documents repositories.DocumentRepository `optional:"true"`
 }
 
 type Service struct {
@@ -80,6 +86,8 @@ type Service struct {
 	workflows   services.WorkflowStarter
 	shipments   ShipmentFinder
 	parties     PartyFinder
+	uploads     services.DocumentUploadService
+	documents   repositories.DocumentRepository
 }
 
 func New(p Params) *Service {
@@ -93,6 +101,8 @@ func New(p Params) *Service {
 		workflows:   p.Workflows,
 		shipments:   p.Shipments,
 		parties:     p.Parties,
+		uploads:     p.Uploads,
+		documents:   p.Documents,
 	}
 }
 
@@ -289,6 +299,7 @@ func (s *Service) stage(
 		zap.String("mailboxId", mailbox.ID.String()),
 		zap.Int("attachments", len(attachments)))
 
+	s.stageAttachments(ctx, created, parsed)
 	s.startProcessing(ctx, created)
 
 	return &ReceiveWebhookResult{MessageID: created.ID.String()}, nil
