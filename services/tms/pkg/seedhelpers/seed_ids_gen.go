@@ -15,6 +15,7 @@ const (
 	SeedAgentDefinition SeedID = "AgentDefinition" // from 26_agent_definition.go
 	SeedAssistantConversation SeedID = "AssistantConversation" // from 27_assistant_conversation.go
 	SeedCarrier SeedID = "Carrier" // from 14_carrier.go
+	SeedDesk SeedID = "Desk" // from 30_desk.go
 	SeedDetention SeedID = "Detention" // from 13_detention.go
 	SeedDocumentParsingRuleExample SeedID = "DocumentParsingRuleExample" // from 08_documentparsingruleexample.go
 	SeedDocumentTemplateStarters SeedID = "DocumentTemplateStarters" // from 10_document_template_starters.go
@@ -27,6 +28,7 @@ const (
 	SeedFuelSurcharge SeedID = "FuelSurcharge" // from 10_fuelsurcharge.go
 	SeedGLAccount SeedID = "GLAccount" // from 04_gl_account.go
 	SeedIFTAJurisdictions SeedID = "IFTAJurisdictions" // from 12_ifta_jurisdictions.go
+	SeedInboundMessage SeedID = "InboundMessage" // from 29_inbound_message.go
 	SeedInsight SeedID = "Insight" // from 28_insight.go
 	SeedJurisdictionRulesBaseline SeedID = "JurisdictionRulesBaseline" // from 11_jurisdiction_rules_baseline.go
 	SeedLocation SeedID = "Location" // from 05_location.go
@@ -61,6 +63,7 @@ var AllSeedIDs = []SeedID{
 	SeedAgentDefinition,
 	SeedAssistantConversation,
 	SeedCarrier,
+	SeedDesk,
 	SeedDetention,
 	SeedDocumentParsingRuleExample,
 	SeedDocumentTemplateStarters,
@@ -73,6 +76,7 @@ var AllSeedIDs = []SeedID{
 	SeedFuelSurcharge,
 	SeedGLAccount,
 	SeedIFTAJurisdictions,
+	SeedInboundMessage,
 	SeedInsight,
 	SeedJurisdictionRulesBaseline,
 	SeedLocation,
@@ -123,6 +127,7 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedAgentDefinition,
 	SeedAssistantConversation,
 	SeedCarrier,
+	SeedDesk,
 	SeedDetention,
 	SeedDocumentParsingRuleExample,
 	SeedDriverPay,
@@ -130,6 +135,7 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedFormulaTemplate,
 	SeedFuelSpendIFTA,
 	SeedFuelSurcharge,
+	SeedInboundMessage,
 	SeedInsight,
 	SeedLocation,
 	SeedLocationCategory,

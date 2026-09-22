@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
@@ -43,6 +44,7 @@ const (
 	pathEDIInbound      = "/edi/inbound-files"
 	pathBillingQueue    = "/billing/queue"
 	pathDetentionDesk   = "/detention/desk"
+	pathInbox           = "/inbox"
 )
 
 const (
@@ -523,4 +525,62 @@ func DescribeMoveCoverageRisk(entity UncoveredMove) services.WatchtowerItemInput
 		Path:        pathDispatchConsole,
 		OccurredAt:  entity.StartsAt,
 	}
+}
+
+// DescribeInboundMessage is a piece of mail that is waiting on a person.
+//
+// Only a message in a waiting state reaches the tower. A message the desk
+// answered by itself is work that happened, not work owed, and putting it on
+// the feed would bury the ones that are actually waiting.
+func DescribeInboundMessage(entity *inboundmessage.InboundMessage) services.WatchtowerItemInput {
+	severity := watchtower.SeverityWarning
+	if entity.Status == inboundmessage.StatusQuarantined {
+		severity = watchtower.SeverityCritical
+	}
+
+	return services.WatchtowerItemInput{
+		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		SourceKind:  watchtower.SourceInboundMessage,
+		SourceID:    entity.ID.String(),
+		Severity:    severity,
+		Title:       inboundMessageTitle(entity),
+		Summary:     inboundMessageSummary(entity),
+		SubjectType: agent.SubjectInboundMessage,
+		SubjectID:   entity.ID,
+		EventKind:   agent.EventInboundMessageClassified,
+		Path:        pathInbox + "?message=" + entity.ID.String(),
+		OccurredAt:  firstNonZero(entity.ReceivedAt, entity.CreatedAt),
+	}
+}
+
+// inboundMessageTitle leads with what the message is, because that is what
+// decides who picks it up. An unclassified one says so rather than guessing.
+func inboundMessageTitle(entity *inboundmessage.InboundMessage) string {
+	subject := stringutils.FirstNonEmpty(entity.Subject, "(no subject)")
+	if entity.Classification == "" {
+		return "Message needs review: " + subject
+	}
+
+	return string(entity.Classification) + " needs review: " + subject
+}
+
+// inboundMessageSummary says who it is from and what, if anything, it was
+// matched to — with the reason, because a match nobody can check is a match
+// nobody will trust.
+func inboundMessageSummary(entity *inboundmessage.InboundMessage) string {
+	parts := make([]string, 0, 3)
+	if entity.FromAddress != "" {
+		parts = append(parts, "From "+entity.FromAddress)
+	}
+	if entity.MatchReason != "" {
+		parts = append(parts, entity.MatchReason)
+	}
+	if entity.FailureText != "" {
+		parts = append(parts, entity.FailureText)
+	}
+	if entity.ReviewNote != "" {
+		parts = append(parts, entity.ReviewNote)
+	}
+
+	return strings.Join(parts, " · ")
 }

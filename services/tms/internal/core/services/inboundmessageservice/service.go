@@ -74,6 +74,11 @@ type Params struct {
 	// it was never read, which is a truthful inbox rather than an empty one.
 	Uploads   services.DocumentUploadService  `optional:"true"`
 	Documents repositories.DocumentRepository `optional:"true"`
+	// Watchtower and Events are how a message that needs a person, or a desk,
+	// gets one. Both are optional: without them the inbox still holds every
+	// message and its reason, and nothing else is told about it.
+	Watchtower services.WatchtowerProjector `optional:"true"`
+	Events     services.AgentEventPublisher `optional:"true"`
 }
 
 type Service struct {
@@ -88,6 +93,8 @@ type Service struct {
 	parties     PartyFinder
 	uploads     services.DocumentUploadService
 	documents   repositories.DocumentRepository
+	watchtower  services.WatchtowerProjector
+	events      services.AgentEventPublisher
 }
 
 func New(p Params) *Service {
@@ -103,6 +110,8 @@ func New(p Params) *Service {
 		parties:     p.Parties,
 		uploads:     p.Uploads,
 		documents:   p.Documents,
+		watchtower:  p.Watchtower,
+		events:      p.Events,
 	}
 }
 

@@ -41,6 +41,10 @@ const (
 	SubjectWorker            = SubjectType("Worker")
 	SubjectCarrierIntelEvent = SubjectType("CarrierIntelEvent")
 	SubjectEDIInboundFile    = SubjectType("EDIInboundFile")
+	// SubjectInboundMessage is the message, not the shipment or customer it
+	// turned out to be about: what a desk works on is the piece of mail, and
+	// two messages about one shipment are two things to answer.
+	SubjectInboundMessage = SubjectType("InboundMessage")
 )
 
 type RunTrigger string
@@ -75,7 +79,8 @@ func (s SubjectType) IsValid() bool {
 		SubjectDetentionOccurrence,
 		SubjectWorker,
 		SubjectCarrierIntelEvent,
-		SubjectEDIInboundFile:
+		SubjectEDIInboundFile,
+		SubjectInboundMessage:
 		return true
 	default:
 		return false
@@ -96,6 +101,7 @@ func AllSubjectTypes() []SubjectType {
 		SubjectWorker,
 		SubjectCarrierIntelEvent,
 		SubjectEDIInboundFile,
+		SubjectInboundMessage,
 	}
 }
 

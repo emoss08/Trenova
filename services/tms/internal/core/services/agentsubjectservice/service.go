@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -49,6 +50,7 @@ type Params struct {
 	Credentials  repositories.WorkerCredentialRepository    `optional:"true"`
 	CarrierIntel repositories.CarrierIntelEventRepository   `optional:"true"`
 	EDIFiles     repositories.EDIInboundFileRepository      `optional:"true"`
+	Inbound      repositories.InboundMessageRepository      `optional:"true"`
 }
 
 // Service describes the record an agent run or a conversation is about, so
@@ -67,6 +69,7 @@ type Service struct {
 	credentials  repositories.WorkerCredentialRepository
 	carrierIntel repositories.CarrierIntelEventRepository
 	ediFiles     repositories.EDIInboundFileRepository
+	inbound      repositories.InboundMessageRepository
 	logger       *zap.Logger
 }
 
@@ -84,6 +87,7 @@ func New(p Params) serviceports.AgentSubjectDescriber {
 		credentials:  p.Credentials,
 		carrierIntel: p.CarrierIntel,
 		ediFiles:     p.EDIFiles,
+		inbound:      p.Inbound,
 		logger:       p.Logger.Named("service.agentsubject"),
 	}
 }
@@ -115,6 +119,8 @@ func (s *Service) Describe(
 		return s.carrierIntelEvent(ctx, tenant, subjectID)
 	case agent.SubjectEDIInboundFile:
 		return s.ediInboundFile(ctx, tenant, subjectID)
+	case agent.SubjectInboundMessage:
+		return s.inboundMessage(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
 		return nil, nil
 	default:
@@ -737,4 +743,94 @@ func (s *Service) ediInboundFile(
 	subject.Notes = marshalNotes(notes)
 
 	return subject, nil
+}
+
+// inboundMessage describes a piece of mail that arrived on a monitored
+// address: what it was read as, what it was matched to and why, and what its
+// attachments turned out to be — so a run woken by inbound_message.classified
+// can answer it without opening the mailbox itself.
+//
+// The body is deliberately included as a quoted value rather than as
+// instruction. It is whatever a sender chose to write, so it is evidence about
+// the message, never direction to the run reading it.
+func (s *Service) inboundMessage(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	messageID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectInboundMessage,
+		ID:    messageID.String(),
+		Label: "Inbound message",
+	}
+	if s.inbound == nil {
+		return subject, nil
+	}
+
+	message, err := s.inbound.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
+		ID:                 messageID,
+		TenantInfo:         tenant,
+		IncludeAttachments: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load inbound message: %w", err)
+	}
+
+	subject.Label = "Message: " + stringutils.FirstNonEmpty(message.Subject, "(no subject)")
+	notes := map[string]any{
+		"status":         message.Status,
+		"classification": message.Classification,
+		"confidence":     message.Confidence,
+		"fromAddress":    message.FromAddress,
+		"subject":        message.Subject,
+		"receivedAt":     message.ReceivedAt,
+		"body":           message.TextBody,
+		"needsReview":    message.NeedsReview(),
+	}
+	if message.MatchReason != "" {
+		notes["matchReason"] = message.MatchReason
+	}
+	if message.MatchedShipmentID.IsNotNil() {
+		notes["matchedShipmentId"] = message.MatchedShipmentID.String()
+	}
+	if message.MatchedCustomerID.IsNotNil() {
+		notes["matchedCustomerId"] = message.MatchedCustomerID.String()
+	}
+	if message.MatchedCarrierID.IsNotNil() {
+		notes["matchedCarrierId"] = message.MatchedCarrierID.String()
+	}
+	if message.FailureText != "" {
+		notes["failure"] = message.FailureText
+	}
+	if len(message.Attachments) > 0 {
+		notes["attachments"] = describeAttachments(message.Attachments)
+	}
+	subject.Notes = marshalNotes(notes)
+
+	return subject, nil
+}
+
+// describeAttachments says what each file turned out to be and, where it did
+// not, why. A file that was refused or could not be read is worth more to the
+// run than its absence would be: it is the reason the message may be
+// incomplete.
+func describeAttachments(
+	attachments []*inboundmessage.InboundAttachment,
+) []map[string]any {
+	described := make([]map[string]any, 0, len(attachments))
+	for _, attachment := range attachments {
+		entry := map[string]any{
+			"fileName": attachment.FileName,
+			"kind":     attachment.Kind,
+		}
+		if attachment.DocumentID.IsNotNil() {
+			entry["documentId"] = attachment.DocumentID.String()
+		}
+		if attachment.FailureText != "" {
+			entry["failure"] = attachment.FailureText
+		}
+		described = append(described, entry)
+	}
+
+	return described
 }

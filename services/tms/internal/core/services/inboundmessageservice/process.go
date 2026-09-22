@@ -85,6 +85,9 @@ func (s *Service) ProcessMessage(
 		zap.String("status", string(updated.Status)),
 		zap.Bool("handled", outcome.Handle))
 
+	s.project(ctx, updated)
+	s.announce(ctx, updated)
+
 	return &ProcessResult{
 		MessageID:      updated.ID,
 		Status:         updated.Status,
@@ -123,7 +126,12 @@ func (s *Service) MarkFailed(
 	message.ReviewNote = "This message could not be processed, so it is waiting on a person."
 	message.UpdatedAt = timeutils.NowUnix()
 
-	_, err = s.messageRepo.Update(ctx, message)
+	updated, err := s.messageRepo.Update(ctx, message)
+	if err != nil {
+		return err
+	}
 
-	return err
+	s.project(ctx, updated)
+
+	return nil
 }
