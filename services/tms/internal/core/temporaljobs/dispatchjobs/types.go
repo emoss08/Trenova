@@ -9,6 +9,7 @@ type TenantHorizonPlan struct {
 
 	MovesPlanned   int `json:"movesPlanned"`
 	MovesUncovered int `json:"movesUncovered"`
+	MovesAtRisk    int `json:"movesAtRisk"`
 	ToursBuilt     int `json:"toursBuilt"`
 	ChainedMoves   int `json:"chainedMoves"`
 	TotalScore     int `json:"totalScore"`
@@ -26,6 +27,7 @@ type HorizonPlanSweepResult struct {
 	TenantsFailed  int                  `json:"tenantsFailed"`
 	MovesPlanned   int                  `json:"movesPlanned"`
 	MovesUncovered int                  `json:"movesUncovered"`
+	MovesAtRisk    int                  `json:"movesAtRisk"`
 	ToursBuilt     int                  `json:"toursBuilt"`
 	ChainedMoves   int                  `json:"chainedMoves"`
 	TenantOutcomes []*TenantHorizonPlan `json:"tenantOutcomes,omitempty"`

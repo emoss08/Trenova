@@ -56,6 +56,9 @@ type Params struct {
 	// Watchtower puts a change on a carrier's authority, insurance or
 	// safety record on the feed and takes it off once it is resolved.
 	Watchtower services.WatchtowerProjector `optional:"true"`
+	// Publisher wakes whichever agent covers carrier risk on a finding the
+	// tower would show a person.
+	Publisher services.AgentEventPublisher `optional:"true"`
 }
 
 type Service struct {
@@ -82,6 +85,7 @@ type Service struct {
 	auditService    services.AuditService
 	realtime        services.RealtimeService
 	watchtower      services.WatchtowerProjector
+	publisher       services.AgentEventPublisher
 	interactiveWait time.Duration
 	breaker         *circuitBreaker
 	now             func() int64
@@ -124,6 +128,7 @@ func New(p Params) *Service {
 		auditService:    p.AuditService,
 		realtime:        p.Realtime,
 		watchtower:      p.Watchtower,
+		publisher:       p.Publisher,
 		interactiveWait: p.Config.CarrierIntelligence.GetInteractiveWait(),
 		breaker:         newCircuitBreaker(),
 		now:             nowUnix,

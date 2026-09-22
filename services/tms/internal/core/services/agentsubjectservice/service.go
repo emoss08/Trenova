@@ -3,13 +3,18 @@ package agentsubjectservice
 import (
 	"context"
 	"fmt"
+	"math"
+	"slices"
 	"strings"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
+	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
@@ -39,6 +44,11 @@ type Params struct {
 	Insights     repositories.InsightRepository             `optional:"true"`
 	BankReceipts serviceports.BankReceiptService            `optional:"true"`
 	WorkItems    repositories.BankReceiptWorkItemRepository `optional:"true"`
+	Occurrences  repositories.DetentionOccurrenceRepository `optional:"true"`
+	Workers      repositories.WorkerRepository              `optional:"true"`
+	Credentials  repositories.WorkerCredentialRepository    `optional:"true"`
+	CarrierIntel repositories.CarrierIntelEventRepository   `optional:"true"`
+	EDIFiles     repositories.EDIInboundFileRepository      `optional:"true"`
 }
 
 // Service describes the record an agent run or a conversation is about, so
@@ -52,6 +62,11 @@ type Service struct {
 	insights     repositories.InsightRepository
 	receipts     serviceports.BankReceiptService
 	workItems    repositories.BankReceiptWorkItemRepository
+	occurrences  repositories.DetentionOccurrenceRepository
+	workers      repositories.WorkerRepository
+	credentials  repositories.WorkerCredentialRepository
+	carrierIntel repositories.CarrierIntelEventRepository
+	ediFiles     repositories.EDIInboundFileRepository
 	logger       *zap.Logger
 }
 
@@ -64,6 +79,11 @@ func New(p Params) serviceports.AgentSubjectDescriber {
 		insights:     p.Insights,
 		receipts:     p.BankReceipts,
 		workItems:    p.WorkItems,
+		occurrences:  p.Occurrences,
+		workers:      p.Workers,
+		credentials:  p.Credentials,
+		carrierIntel: p.CarrierIntel,
+		ediFiles:     p.EDIFiles,
 		logger:       p.Logger.Named("service.agentsubject"),
 	}
 }
@@ -87,6 +107,14 @@ func (s *Service) Describe(
 		return s.insight(ctx, tenant, subjectID)
 	case agent.SubjectBankReceipt:
 		return s.bankReceipt(ctx, tenant, subjectID)
+	case agent.SubjectDetentionOccurrence:
+		return s.detentionOccurrence(ctx, tenant, subjectID)
+	case agent.SubjectWorker:
+		return s.worker(ctx, tenant, subjectID)
+	case agent.SubjectCarrierIntelEvent:
+		return s.carrierIntelEvent(ctx, tenant, subjectID)
+	case agent.SubjectEDIInboundFile:
+		return s.ediInboundFile(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
 		return nil, nil
 	default:
@@ -432,6 +460,279 @@ func (s *Service) bankReceipt(
 				"assignedToUserId": item.AssignedToUserID.String(),
 			}
 		}
+	}
+	subject.Notes = marshalNotes(notes)
+
+	return subject, nil
+}
+
+// detentionOccurrence describes one clock at one stop: the times that
+// decide the charge, what has already gone to the customer, and whether
+// anything is holding the notice back. A run woken by
+// detention.occurrence_opened or detention.notice_due starts with the whole
+// countdown in front of it rather than an id.
+func (s *Service) detentionOccurrence(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	occurrenceID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectDetentionOccurrence,
+		ID:    occurrenceID.String(),
+		Label: "Detention occurrence",
+	}
+	if s.occurrences == nil {
+		return subject, nil
+	}
+
+	occurrence, err := s.occurrences.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
+		OccurrenceID:   occurrenceID,
+		TenantInfo:     tenant,
+		IncludeNotices: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load detention occurrence: %w", err)
+	}
+
+	where := stringutils.FirstNonEmpty(occurrence.LocationName, "a stop")
+	subject.Label = "Detention at " + where
+	if occurrence.ShipmentProNumber != "" {
+		subject.Label += " on " + occurrence.ShipmentProNumber
+	}
+
+	notes := map[string]any{
+		"status":             occurrence.Status,
+		"isOpen":             occurrence.IsOpen,
+		"customerName":       occurrence.CustomerName,
+		"shipmentId":         occurrence.ShipmentID.String(),
+		"clockStartAt":       occurrence.ClockStartAt,
+		"clockStopAt":        occurrence.ClockStopAt,
+		"freeTimeExpiresAt":  occurrence.FreeTimeExpiresAt,
+		"noticeDueAt":        occurrence.NoticeDueAt,
+		"noticeDeadlineAt":   occurrence.NoticeDeadlineAt,
+		"noticeSentAt":       occurrence.NoticeSentAt,
+		"notificationStatus": occurrence.NotificationStatus,
+		"billableMinutes":    occurrence.BillableMinutes,
+		"billableAmount":     occurrence.BillableAmount.StringFixed(2),
+		"currency":           occurrence.Currency,
+		"requiresApproval":   occurrence.RequiresApproval,
+		"suppressedByGate":   occurrence.SuppressedByGate,
+	}
+	switch {
+	case !occurrence.IsOpen:
+		notes["warning"] = "This clock has stopped; do not act as if it were still running."
+	case occurrence.IsFrozen():
+		notes["warning"] = "This occurrence is frozen and its figures will not change."
+	case occurrence.NoticeSentAt != nil:
+		notes["warning"] = "A notice has already gone to the customer; do not send a second one."
+	}
+	subject.Notes = marshalNotes(notes)
+
+	return subject, nil
+}
+
+// worker describes a driver by what would stop them driving: the papers on
+// file with their expiry, nearest first. A run woken by
+// worker_credential.expiring starts with every credential in front of it,
+// because one driver with three papers due is one renewal packet.
+func (s *Service) worker(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	workerID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectWorker,
+		ID:    workerID.String(),
+		Label: "Driver",
+	}
+	if s.workers == nil {
+		return subject, nil
+	}
+
+	entity, err := s.workers.GetByID(ctx, repositories.GetWorkerByIDRequest{
+		ID:             workerID,
+		TenantInfo:     tenant,
+		IncludeProfile: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load worker: %w", err)
+	}
+
+	subject.Label = "Driver " + strings.TrimSpace(entity.FirstName+" "+entity.LastName)
+	notes := map[string]any{
+		"status":     entity.Status,
+		"type":       entity.Type,
+		"firstName":  entity.FirstName,
+		"lastName":   entity.LastName,
+		"driverType": entity.DriverType,
+	}
+	if entity.Profile != nil {
+		notes["licenceNumber"] = entity.Profile.LicenseNumber
+		notes["licenceExpiry"] = entity.Profile.LicenseExpiry
+		notes["endorsement"] = entity.Profile.Endorsement
+		notes["physicalDueDate"] = entity.Profile.PhysicalDueDate
+		notes["mvrDueDate"] = entity.Profile.MVRDueDate
+	}
+	if s.credentials != nil {
+		notes["credentials"] = s.workerCredentials(ctx, tenant, workerID)
+	}
+	subject.Notes = marshalNotes(notes)
+
+	return subject, nil
+}
+
+// workerCredentials lists the driver's papers nearest expiry first, so the
+// model reads the urgent one before it runs out of context.
+func (s *Service) workerCredentials(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	workerID pulid.ID,
+) []map[string]any {
+	credentials, err := s.credentials.ListForWorker(ctx, &repositories.ListWorkerCredentialsRequest{
+		TenantInfo:  tenant,
+		WorkerID:    workerID,
+		IncludeType: true,
+	})
+	if err != nil {
+		s.logger.Warn("worker subject: credentials unavailable", zap.Error(err))
+		return nil
+	}
+
+	now := timeutils.NowUnix()
+	rows := make([]map[string]any, 0, len(credentials))
+	for _, credential := range credentials {
+		if credential == nil {
+			continue
+		}
+		row := map[string]any{
+			"id":     credential.ID.String(),
+			"status": credential.Status,
+			"number": credential.Number,
+		}
+		if credential.CredentialType != nil {
+			row["type"] = credential.CredentialType.Name
+			row["required"] = credential.CredentialType.IsRequired
+		}
+		if credential.ExpiresAt != nil {
+			row["expiresAt"] = *credential.ExpiresAt
+			row["daysUntilExpiry"] = worker.DaysUntil(*credential.ExpiresAt, now)
+		}
+		rows = append(rows, row)
+	}
+	slices.SortFunc(rows, func(a, b map[string]any) int {
+		return credentialUrgency(a) - credentialUrgency(b)
+	})
+
+	return rows
+}
+
+// credentialUrgency orders a credential by how soon it expires; one with no
+// expiry sorts last, because nothing about it is due.
+func credentialUrgency(row map[string]any) int {
+	days, ok := row["daysUntilExpiry"].(int64)
+	if !ok {
+		return math.MaxInt32
+	}
+
+	return int(days)
+}
+
+// carrierIntelEvent describes what monitoring found about a carrier and
+// what it does to that carrier's eligibility, so a run woken by
+// carrier_intel.event_opened knows whether the finding blocks a tender
+// before it proposes anything.
+func (s *Service) carrierIntelEvent(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	eventID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectCarrierIntelEvent,
+		ID:    eventID.String(),
+		Label: "Carrier finding",
+	}
+	if s.carrierIntel == nil {
+		return subject, nil
+	}
+
+	events, err := s.carrierIntel.GetByIDs(ctx, tenant, []pulid.ID{eventID})
+	if err != nil {
+		return nil, fmt.Errorf("load carrier intel event: %w", err)
+	}
+	if len(events) == 0 || events[0] == nil {
+		return subject, nil
+	}
+
+	event := events[0]
+	name := stringutils.FirstNonEmpty(event.SubjectName, "DOT "+event.DOTNumber)
+	subject.Label = name + ": " + stringutils.HumanizeSnakeCase(string(event.Category))
+
+	notes := map[string]any{
+		"status":      event.Status,
+		"severity":    event.Severity,
+		"source":      event.Source,
+		"category":    event.Category,
+		"ruleCode":    event.RuleCode,
+		"action":      event.Action,
+		"summary":     event.Summary,
+		"subjectName": event.SubjectName,
+		"dotNumber":   event.DOTNumber,
+		"detectedAt":  event.DetectedAt,
+	}
+	if definition, ok := carrierintel.RuleByCode(event.RuleCode); ok {
+		notes["gateRelevant"] = definition.GateRelevant
+	}
+	if event.CarrierID.IsNotNil() {
+		notes["carrierId"] = event.CarrierID.String()
+	}
+	if event.Status.IsClosed() {
+		notes["warning"] = "This finding is already closed; do not act on it as if it were open."
+	}
+	subject.Notes = marshalNotes(notes)
+
+	return subject, nil
+}
+
+// ediInboundFile describes a file that could not be turned into shipments
+// or updates: why it stopped and what it was meant to be, so a run woken by
+// edi.file_quarantined can say whether a person has to look at it.
+func (s *Service) ediInboundFile(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	fileID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectEDIInboundFile,
+		ID:    fileID.String(),
+		Label: "EDI inbound file",
+	}
+	if s.ediFiles == nil {
+		return subject, nil
+	}
+
+	file, err := s.ediFiles.GetInboundFileByID(ctx, repositories.GetEDIInboundFileByIDRequest{
+		ID:              fileID,
+		TenantInfo:      tenant,
+		IncludeMessages: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load edi inbound file: %w", err)
+	}
+
+	subject.Label = "EDI file " + stringutils.FirstNonEmpty(file.FileName, file.ID.String())
+	notes := map[string]any{
+		"status":            file.Status,
+		"fileName":          file.FileName,
+		"failureReason":     file.FailureReason,
+		"receivedAt":        file.ReceivedAt,
+		"processedAt":       file.ProcessedAt,
+		"transactionsFound": len(file.Messages),
+	}
+	if file.EDIPartnerID.IsNotNil() {
+		notes["ediPartnerId"] = file.EDIPartnerID.String()
+	}
+	if file.Status != edi.InboundFileStatusQuarantined {
+		notes["warning"] = "This file is no longer quarantined; do not act as if it were held back."
 	}
 	subject.Notes = marshalNotes(notes)
 

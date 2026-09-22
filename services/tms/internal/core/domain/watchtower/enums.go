@@ -21,6 +21,8 @@ const (
 	SourceBillingException      = SourceKind("BillingException")
 	SourceDetentionOccurrence   = SourceKind("DetentionOccurrence")
 	SourceInboundMessage        = SourceKind("InboundMessage")
+	SourceWorkerCredential      = SourceKind("WorkerCredential")
+	SourceMoveCoverage          = SourceKind("MoveCoverage")
 )
 
 // readResources is the permission a reader needs to be shown items of each
@@ -40,6 +42,8 @@ var readResources = map[SourceKind]permission.Resource{
 	SourceBillingException:      permission.ResourceBillingQueue,
 	SourceDetentionOccurrence:   permission.ResourceDetentionPolicy,
 	SourceInboundMessage:        permission.ResourceEDI,
+	SourceWorkerCredential:      permission.ResourceWorker,
+	SourceMoveCoverage:          permission.ResourceShipmentMove,
 }
 
 func (k SourceKind) IsValid() bool {
@@ -84,6 +88,10 @@ func (k SourceKind) Label() string {
 		return "Detention"
 	case SourceInboundMessage:
 		return "Inbound message"
+	case SourceWorkerCredential:
+		return "Credential expiring"
+	case SourceMoveCoverage:
+		return "Coverage at risk"
 	default:
 		return string(k)
 	}
@@ -104,6 +112,8 @@ func AllSourceKinds() []SourceKind {
 		SourceBillingException,
 		SourceDetentionOccurrence,
 		SourceInboundMessage,
+		SourceWorkerCredential,
+		SourceMoveCoverage,
 	}
 }
 

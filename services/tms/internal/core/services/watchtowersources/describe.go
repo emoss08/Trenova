@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/weatheralert"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -42,6 +43,14 @@ const (
 	pathEDIInbound      = "/edi/inbound-files"
 	pathBillingQueue    = "/billing/queue"
 	pathDetentionDesk   = "/detention/desk"
+)
+
+const (
+	// A paper with a week or less on it stops being a reminder and starts
+	// being a problem; one already expired is a driver who cannot roll.
+	credentialWarningDays = int64(7)
+	// A move this close to its start has run out of room to plan around.
+	coverageCriticalHours = int64(4)
 )
 
 func panelPath(base string, id string) string {
@@ -235,14 +244,17 @@ func DescribeCarrierIntelEvent(entity *carrierintel.CarrierIntelEvent) services.
 	}
 
 	return services.WatchtowerItemInput{
-		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
-		SourceKind: watchtower.SourceCarrierIntelEvent,
-		SourceID:   entity.ID.String(),
-		Severity:   severity,
-		Title:      name + ": " + stringutils.HumanizeSnakeCase(string(entity.Category)),
-		Summary:    entity.Summary,
-		Path:       pathCarrierMonitor + "?tab=events&event=" + entity.ID.String(),
-		OccurredAt: entity.DetectedAt,
+		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		SourceKind:  watchtower.SourceCarrierIntelEvent,
+		SourceID:    entity.ID.String(),
+		Severity:    severity,
+		Title:       name + ": " + stringutils.HumanizeSnakeCase(string(entity.Category)),
+		Summary:     entity.Summary,
+		SubjectType: agent.SubjectCarrierIntelEvent,
+		SubjectID:   entity.ID,
+		EventKind:   agent.EventCarrierIntelEventOpened,
+		Path:        pathCarrierMonitor + "?tab=events&event=" + entity.ID.String(),
+		OccurredAt:  entity.DetectedAt,
 	}
 }
 
@@ -265,11 +277,13 @@ func DescribeHOSViolation(entity *telematics.WorkerHOSViolation) services.Watcht
 		Severity:   watchtower.SeverityWarning,
 		Title:      who + ": " + stringutils.HumanizeSnakeCase(entity.ViolationType),
 		Summary:    entity.Description,
-		// A worker is not yet a subject an agent runs on, so an hours
-		// violation is read rather than handed off; the path opens the
-		// driver.
-		Path:       panelPath(pathWorkers, entity.WorkerID.String()),
-		OccurredAt: entity.ViolationStartAt,
+		// Nothing is woken by an hours violation, so the item carries its
+		// driver for a conversation to start from rather than an event to
+		// hand off.
+		SubjectType: agent.SubjectWorker,
+		SubjectID:   entity.WorkerID,
+		Path:        panelPath(pathWorkers, entity.WorkerID.String()),
+		OccurredAt:  entity.ViolationStartAt,
 	}
 }
 
@@ -310,14 +324,17 @@ func DescribeWeatherAlert(entity *weatheralert.WeatherAlert) services.Watchtower
 // DescribeQuarantinedFile is an EDI file that could not be processed.
 func DescribeQuarantinedFile(entity *edi.EDIInboundFile) services.WatchtowerItemInput {
 	return services.WatchtowerItemInput{
-		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
-		SourceKind: watchtower.SourceEDIInboundQuarantined,
-		SourceID:   entity.ID.String(),
-		Severity:   watchtower.SeverityWarning,
-		Title:      "EDI file quarantined: " + stringutils.FirstNonEmpty(entity.FileName, entity.ID.String()),
-		Summary:    entity.FailureReason,
-		Path:       panelPath(pathEDIInbound, entity.ID.String()),
-		OccurredAt: firstNonZero(entity.ReceivedAt, entity.CreatedAt),
+		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		SourceKind:  watchtower.SourceEDIInboundQuarantined,
+		SourceID:    entity.ID.String(),
+		Severity:    watchtower.SeverityWarning,
+		Title:       "EDI file quarantined: " + stringutils.FirstNonEmpty(entity.FileName, entity.ID.String()),
+		Summary:     entity.FailureReason,
+		SubjectType: agent.SubjectEDIInboundFile,
+		SubjectID:   entity.ID,
+		EventKind:   agent.EventEDIFileQuarantined,
+		Path:        panelPath(pathEDIInbound, entity.ID.String()),
+		OccurredAt:  firstNonZero(entity.ReceivedAt, entity.CreatedAt),
 	}
 }
 
@@ -373,9 +390,137 @@ func DescribeDetentionOccurrence(entity *detention.DetentionOccurrence) services
 		Severity:    severity,
 		Title:       title,
 		Summary:     summary,
-		SubjectType: agent.SubjectShipment,
-		SubjectID:   entity.ShipmentID,
+		SubjectType: agent.SubjectDetentionOccurrence,
+		SubjectID:   entity.ID,
+		EventKind:   agent.EventDetentionOccurrenceOpened,
 		Path:        pathDetentionDesk + "?occurrence=" + entity.ID.String(),
 		OccurredAt:  entity.ClockStartAt,
+	}
+}
+
+// ExpiringPaper is one credential coming due, in the words the desk uses
+// for it.
+type ExpiringPaper struct {
+	Name     string
+	DaysLeft int64
+}
+
+// ExpiringCredentials is a driver's papers coming due, gathered per driver
+// rather than per paper: three certificates expiring in the same week is
+// one conversation and one renewal packet, not three.
+type ExpiringCredentials struct {
+	TenantInfo pagination.TenantInfo
+	WorkerID   pulid.ID
+	WorkerName string
+	Papers     []ExpiringPaper
+	OccurredAt int64
+}
+
+// DescribeExpiringCredentials is a driver who will stop being able to drive
+// unless something is renewed.
+func DescribeExpiringCredentials(entity ExpiringCredentials) services.WatchtowerItemInput {
+	severity := watchtower.SeverityInfo
+	soonest := int64(0)
+	parts := make([]string, 0, len(entity.Papers))
+	for i, paper := range entity.Papers {
+		if i == 0 || paper.DaysLeft < soonest {
+			soonest = paper.DaysLeft
+		}
+		parts = append(parts, paper.Name+" "+expiryPhrase(paper.DaysLeft))
+	}
+	switch {
+	case soonest < 0:
+		severity = watchtower.SeverityCritical
+	case soonest <= credentialWarningDays:
+		severity = watchtower.SeverityWarning
+	}
+
+	who := entity.WorkerName
+	if who == "" {
+		who = "A driver"
+	}
+
+	return services.WatchtowerItemInput{
+		TenantInfo:  entity.TenantInfo,
+		SourceKind:  watchtower.SourceWorkerCredential,
+		SourceID:    entity.WorkerID.String(),
+		Severity:    severity,
+		Title:       who + ": " + expiryTitle(soonest, len(entity.Papers)),
+		Summary:     strings.Join(parts, ", "),
+		SubjectType: agent.SubjectWorker,
+		SubjectID:   entity.WorkerID,
+		EventKind:   agent.EventWorkerCredentialExpiring,
+		Path:        panelPath(pathWorkers, entity.WorkerID.String()),
+		OccurredAt:  entity.OccurredAt,
+	}
+}
+
+func expiryPhrase(daysLeft int64) string {
+	switch {
+	case daysLeft < 0:
+		return "expired " + strconv.FormatInt(-daysLeft, 10) + "d ago"
+	case daysLeft == 0:
+		return "expires today"
+	case daysLeft == 1:
+		return "expires tomorrow"
+	default:
+		return "expires in " + strconv.FormatInt(daysLeft, 10) + "d"
+	}
+}
+
+func expiryTitle(soonest int64, count int) string {
+	noun := "credential"
+	if count > 1 {
+		noun = strconv.Itoa(count) + " credentials"
+	}
+	if soonest < 0 {
+		return noun + " expired"
+	}
+
+	return noun + " expiring"
+}
+
+// UncoveredMove is a move the planner could not put anybody on, close
+// enough to its start that somebody has to decide.
+type UncoveredMove struct {
+	TenantInfo pagination.TenantInfo
+	MoveID     pulid.ID
+	ProNumber  string
+	Reason     string
+	StartsAt   int64
+	HoursOut   int64
+}
+
+// DescribeMoveCoverageRisk is a load about to leave with nobody on it.
+func DescribeMoveCoverageRisk(entity UncoveredMove) services.WatchtowerItemInput {
+	severity := watchtower.SeverityWarning
+	if entity.HoursOut <= coverageCriticalHours {
+		severity = watchtower.SeverityCritical
+	}
+
+	title := "Move uncovered"
+	if entity.ProNumber != "" {
+		title = "Move uncovered on " + entity.ProNumber
+	}
+	summary := entity.Reason
+	if summary == "" {
+		summary = "No driver or carrier is on this move."
+	}
+	if entity.HoursOut > 0 {
+		summary += " Starts in " + strconv.FormatInt(entity.HoursOut, 10) + "h."
+	}
+
+	return services.WatchtowerItemInput{
+		TenantInfo:  entity.TenantInfo,
+		SourceKind:  watchtower.SourceMoveCoverage,
+		SourceID:    entity.MoveID.String(),
+		Severity:    severity,
+		Title:       title,
+		Summary:     summary,
+		SubjectType: agent.SubjectShipmentMove,
+		SubjectID:   entity.MoveID,
+		EventKind:   agent.EventShipmentMoveCoverageAtRisk,
+		Path:        pathDispatchConsole,
+		OccurredAt:  entity.StartsAt,
 	}
 }

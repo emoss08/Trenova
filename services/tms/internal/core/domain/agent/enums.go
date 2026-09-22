@@ -32,6 +32,15 @@ const (
 	SubjectOrganization     = SubjectType("Organization")
 	SubjectInsight          = SubjectType("Insight")
 	SubjectBankReceipt      = SubjectType("BankReceipt")
+	// SubjectDetentionOccurrence is one clock at one stop: the desk's unit of
+	// work, not the shipment it hangs off, so two clocks on the same shipment
+	// are two subjects and two runs.
+	SubjectDetentionOccurrence = SubjectType("DetentionOccurrence")
+	// SubjectWorker is the person, not the credential, because a driver with
+	// three papers coming due is one conversation with one renewal packet.
+	SubjectWorker            = SubjectType("Worker")
+	SubjectCarrierIntelEvent = SubjectType("CarrierIntelEvent")
+	SubjectEDIInboundFile    = SubjectType("EDIInboundFile")
 )
 
 type RunTrigger string
@@ -62,7 +71,11 @@ func (s SubjectType) IsValid() bool {
 		SubjectDocument,
 		SubjectOrganization,
 		SubjectInsight,
-		SubjectBankReceipt:
+		SubjectBankReceipt,
+		SubjectDetentionOccurrence,
+		SubjectWorker,
+		SubjectCarrierIntelEvent,
+		SubjectEDIInboundFile:
 		return true
 	default:
 		return false
@@ -79,6 +92,10 @@ func AllSubjectTypes() []SubjectType {
 		SubjectOrganization,
 		SubjectInsight,
 		SubjectBankReceipt,
+		SubjectDetentionOccurrence,
+		SubjectWorker,
+		SubjectCarrierIntelEvent,
+		SubjectEDIInboundFile,
 	}
 }
 

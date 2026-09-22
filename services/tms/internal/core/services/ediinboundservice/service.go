@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -48,6 +49,9 @@ type Params struct {
 	Metrics             *metrics.Registry `optional:"true"`
 	// Watchtower puts a held-back file on the feed a person reads.
 	Watchtower services.WatchtowerProjector `optional:"true"`
+	// Publisher wakes whichever agent covers intake on a file that could
+	// not be turned into shipments or updates.
+	Publisher services.AgentEventPublisher `optional:"true"`
 }
 
 type Service struct {
@@ -68,6 +72,7 @@ type Service struct {
 	workflowStarter     services.WorkflowStarter
 	metrics             *metrics.EDI
 	watchtower          services.WatchtowerProjector
+	publisher           services.AgentEventPublisher
 }
 
 func New(p Params) *Service {
@@ -79,6 +84,7 @@ func New(p Params) *Service {
 		l:                   p.Logger.Named("service.edi-inbound"),
 		metrics:             ediMetrics,
 		watchtower:          p.Watchtower,
+		publisher:           p.Publisher,
 		inboundFileRepo:     p.InboundFileRepo,
 		profileRepo:         p.ProfileRepo,
 		partnerRepo:         p.PartnerRepo,
@@ -441,6 +447,15 @@ func (s *Service) notifyQuarantinedFile(ctx context.Context, file *edi.EDIInboun
 	if s.watchtower != nil {
 		s.watchtower.Upsert(ctx, watchtowersources.DescribeQuarantinedFile(file))
 	}
+
+	services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+		Kind:      agent.EventEDIFileQuarantined,
+		SubjectID: file.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: file.OrganizationID,
+			BuID:  file.BusinessUnitID,
+		},
+	})
 
 	s.ediService.NotifyOperationalFailure(ctx, &ediservice.EDIOperationalAlert{
 		OrganizationID: file.OrganizationID,

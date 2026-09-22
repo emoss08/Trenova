@@ -44,9 +44,13 @@ type DispatchTour struct {
 }
 
 type DispatchUncoveredMove struct {
-	MoveID              pulid.ID                      `json:"moveId"`
-	ProNumber           string                        `json:"proNumber"`
-	Reason              string                        `json:"reason"`
+	MoveID    pulid.ID `json:"moveId"`
+	ProNumber string   `json:"proNumber"`
+	Reason    string   `json:"reason"`
+	// StartsAt is the origin window, which is what decides whether an
+	// uncovered move is still a planning problem or has become somebody's
+	// afternoon.
+	StartsAt            int64                         `json:"startsAt"`
 	BestBlockedFindings []dispatcheligibility.Finding `json:"bestBlockedFindings"`
 }
 

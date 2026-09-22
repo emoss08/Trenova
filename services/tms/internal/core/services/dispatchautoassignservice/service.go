@@ -309,6 +309,7 @@ func uncoveredFor(
 		MoveID:              move.MoveID,
 		ProNumber:           move.ProNumber,
 		Reason:              "No eligible driver was available for this move",
+		StartsAt:            move.OriginWindowStart,
 		BestBlockedFindings: []dispatcheligibility.Finding{},
 	}
 

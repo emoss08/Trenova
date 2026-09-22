@@ -71085,6 +71085,10 @@ enum AgentSubjectType {
   Organization
   Insight
   BankReceipt
+  DetentionOccurrence
+  Worker
+  CarrierIntelEvent
+  EDIInboundFile
 }
 
 enum AgentRunTrigger {

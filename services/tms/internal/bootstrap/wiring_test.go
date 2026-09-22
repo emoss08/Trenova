@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/bootstrap"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
 )
@@ -38,4 +39,33 @@ func TestWiring_WorkerGraphResolves(t *testing.T) {
 		bootstrap.Options(),
 		bootstrap.WorkerOptions(),
 	))
+}
+
+/*
+An optional dependency that nothing provides resolves to nil and the service
+carries on without it. That is the point of `optional:"true"` — a projector or
+a publisher is never worth failing a boot over — but it also means a desk can
+be wired to a publisher that was never in the graph and simply never fire,
+with no error anywhere. These assert the two best-effort ports are really
+supplied, in both processes, by asking for them without the optional tag.
+*/
+func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
+	t.Parallel()
+
+	options := map[string]fx.Option{
+		"api":    bootstrap.APIOptions(),
+		"worker": bootstrap.WorkerOptions(),
+	}
+
+	for name, processOptions := range options {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			require.NoError(t, fx.ValidateApp(
+				bootstrap.Options(),
+				processOptions,
+				fx.Invoke(func(services.AgentEventPublisher, services.WatchtowerProjector) {}),
+			))
+		})
+	}
 }
