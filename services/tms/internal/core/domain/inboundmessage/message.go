@@ -29,7 +29,7 @@ const (
 // matched is still the thing a person has to go and look at, and a message
 // that was dropped because it did not classify is a message the customer
 // believes was received.
-type Message struct {
+type InboundMessage struct {
 	bun.BaseModel             `bun:"table:inbound_messages,alias:imsg" json:"-"`
 	pagination.CursorValueSet `bun:",embed"                            json:"-"`
 
@@ -87,10 +87,10 @@ type Message struct {
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Mailbox      *Mailbox             `json:"mailbox,omitempty"      bun:"rel:belongs-to,join:mailbox_id=id"`
-	Attachments  []*Attachment        `json:"attachments,omitempty"  bun:"rel:has-many,join:id=message_id"`
+	Attachments  []*InboundAttachment        `json:"attachments,omitempty"  bun:"rel:has-many,join:id=message_id"`
 }
 
-func (m *Message) Validate(multiErr *errortypes.MultiError) {
+func (m *InboundMessage) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(m,
 		validation.Field(&m.MailboxID, validation.Required.Error("Mailbox is required")),
 		validation.Field(&m.ProviderMessageID,
@@ -115,11 +115,11 @@ func (m *Message) Validate(multiErr *errortypes.MultiError) {
 
 // NeedsReview is whether the message is waiting on a person. It is the lane
 // the inbox splits on, and the one number anybody wants from this table.
-func (m *Message) NeedsReview() bool {
+func (m *InboundMessage) NeedsReview() bool {
 	return m.Status == StatusInReview || m.Status == StatusQuarantined
 }
 
-func (m *Message) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (m *InboundMessage) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
 	switch query.(type) {
@@ -142,12 +142,12 @@ func (m *Message) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
-func (m *Message) GetID() pulid.ID      { return m.ID }
-func (m *Message) GetCreatedAt() int64  { return m.CreatedAt }
-func (m *Message) GetTableName() string { return "inbound_messages" }
+func (m *InboundMessage) GetID() pulid.ID      { return m.ID }
+func (m *InboundMessage) GetCreatedAt() int64  { return m.CreatedAt }
+func (m *InboundMessage) GetTableName() string { return "inbound_messages" }
 
 // Attachment is one file that came with a message, and what became of it.
-type Attachment struct {
+type InboundAttachment struct {
 	bun.BaseModel `bun:"table:inbound_message_attachments,alias:imsga" json:"-"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
@@ -172,7 +172,7 @@ type Attachment struct {
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
-func (a *Attachment) Validate(multiErr *errortypes.MultiError) {
+func (a *InboundAttachment) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(a,
 		validation.Field(&a.MessageID, validation.Required.Error("Message is required")),
 		validation.Field(&a.FileName, validation.Required.Error("File name is required")),
@@ -183,7 +183,7 @@ func (a *Attachment) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
-func (a *Attachment) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (a *InboundAttachment) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
 	switch query.(type) {
@@ -203,6 +203,6 @@ func (a *Attachment) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
-func (a *Attachment) GetID() pulid.ID      { return a.ID }
-func (a *Attachment) GetCreatedAt() int64  { return a.CreatedAt }
-func (a *Attachment) GetTableName() string { return "inbound_message_attachments" }
+func (a *InboundAttachment) GetID() pulid.ID      { return a.ID }
+func (a *InboundAttachment) GetCreatedAt() int64  { return a.CreatedAt }
+func (a *InboundAttachment) GetTableName() string { return "inbound_message_attachments" }

@@ -743,6 +743,7 @@ var ReportRunColumns = struct {
 	Truncated          Column // "truncated" → qualified: "rrun.truncated"
 	Error              Column // "error" → qualified: "rrun.error"
 	ArtifactKey        Column // "artifact_key" → qualified: "rrun.artifact_key"
+	RowsKey            Column // "rows_key" → qualified: "rrun.rows_key"
 	ArtifactExpiresAt  Column // "artifact_expires_at" → qualified: "rrun.artifact_expires_at"
 	CacheHit           Column // "cache_hit" → qualified: "rrun.cache_hit"
 	TemporalWorkflowID Column // "temporal_workflow_id" → qualified: "rrun.temporal_workflow_id"
@@ -773,6 +774,7 @@ var ReportRunColumns = struct {
 	Truncated:          NewColumn("truncated", "rrun"),
 	Error:              NewColumn("error", "rrun"),
 	ArtifactKey:        NewColumn("artifact_key", "rrun"),
+	RowsKey:            NewColumn("rows_key", "rrun"),
 	ArtifactExpiresAt:  NewColumn("artifact_expires_at", "rrun"),
 	CacheHit:           NewColumn("cache_hit", "rrun"),
 	TemporalWorkflowID: NewColumn("temporal_workflow_id", "rrun"),
@@ -809,6 +811,7 @@ var ReportRunFieldMap = map[string]string{
 	"truncated":          "truncated",
 	"error":              "error",
 	"artifactKey":        "artifact_key",
+	"rowsKey":            "rows_key",
 	"artifactExpiresAt":  "artifact_expires_at",
 	"cacheHit":           "cache_hit",
 	"temporalWorkflowId": "temporal_workflow_id",
@@ -843,6 +846,7 @@ var ReportRunInsertableColumns = []string{
 	"truncated",
 	"error",
 	"artifact_key",
+	"rows_key",
 	"artifact_expires_at",
 	"cache_hit",
 	"temporal_workflow_id",
@@ -943,6 +947,7 @@ var ReportRunFilter = struct {
 	Truncated          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "truncated" → DB: "truncated"
 	Error              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "error" → DB: "error"
 	ArtifactKey        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "artifactKey" → DB: "artifact_key"
+	RowsKey            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rowsKey" → DB: "rows_key"
 	ArtifactExpiresAt  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "artifactExpiresAt" → DB: "artifact_expires_at"
 	CacheHit           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheHit" → DB: "cache_hit"
 	TemporalWorkflowID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "temporalWorkflowId" → DB: "temporal_workflow_id"
@@ -1010,6 +1015,9 @@ var ReportRunFilter = struct {
 	},
 	ArtifactKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("artifactKey", op, value)
+	},
+	RowsKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rowsKey", op, value)
 	},
 	ArtifactExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("artifactExpiresAt", op, value)

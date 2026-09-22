@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func message() *inboundmessage.Message {
-	return &inboundmessage.Message{
+func message() *inboundmessage.InboundMessage {
+	return &inboundmessage.InboundMessage{
 		MailboxID:         pulid.MustNew("imbx_"),
 		ProviderMessageID: "pm_1",
 		FromAddress:       "dispatch@shipper.example",
@@ -18,7 +18,7 @@ func message() *inboundmessage.Message {
 	}
 }
 
-func validateMessage(m *inboundmessage.Message) *errortypes.MultiError {
+func validateMessage(m *inboundmessage.InboundMessage) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	m.Validate(multiErr)
 

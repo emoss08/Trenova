@@ -33,7 +33,10 @@ type PreparedRun struct {
 }
 
 type ExecuteResult struct {
-	ArtifactKey       string                 `json:"artifactKey"`
+	ArtifactKey string `json:"artifactKey"`
+	// RowsKey is the JSON rows sidecar. It is empty when the sidecar could not
+	// be written, which costs the run nothing beyond a later comparison.
+	RowsKey           string                 `json:"rowsKey,omitempty"`
 	RowCount          int64                  `json:"rowCount"`
 	ByteSize          int64                  `json:"byteSize"`
 	Truncated         bool                   `json:"truncated"`
@@ -49,6 +52,7 @@ type FinalizePayload struct {
 	Status            report.RunStatus `json:"status"`
 	Error             *report.RunError `json:"error,omitempty"`
 	ArtifactKey       string           `json:"artifactKey,omitempty"`
+	RowsKey           string           `json:"rowsKey,omitempty"`
 	CacheHit          bool             `json:"cacheHit"`
 	ArtifactExpiresAt int64            `json:"artifactExpiresAt,omitempty"`
 	RowCount          int64            `json:"rowCount"`
