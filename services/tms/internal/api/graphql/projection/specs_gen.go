@@ -28,6 +28,10 @@ var AgentProposalSpec TypeSpec
 
 var AgentRunSpec TypeSpec
 
+var AgentRunEventSpec TypeSpec
+
+var AgentToolTrustSpec TypeSpec
+
 var ApiKeySpec TypeSpec
 
 var ApprovalDelegationSpec TypeSpec
@@ -1622,6 +1626,124 @@ func init() {
 			{
 				Name:    "definition",
 				Special: "definition",
+			},
+		},
+	}
+
+	AgentRunEventSpec = TypeSpec{
+		TypeName: "AgentRunEvent",
+		FieldMap: buncolgen.AgentRunEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "ownerKind",
+				FieldMapKey: "ownerKind",
+			},
+			{
+				Name:        "ownerId",
+				FieldMapKey: "ownerId",
+			},
+			{
+				Name:        "sequence",
+				FieldMapKey: "sequence",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "stepKey",
+				FieldMapKey: "stepKey",
+			},
+			{
+				Name:        "callId",
+				FieldMapKey: "callId",
+			},
+			{
+				Name:        "payload",
+				FieldMapKey: "payload",
+			},
+			{
+				Name:        "truncated",
+				FieldMapKey: "truncated",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentToolTrustSpec = TypeSpec{
+		TypeName: "AgentToolTrust",
+		FieldMap: buncolgen.ToolTrustFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "toolName",
+				FieldMapKey: "toolName",
+			},
+			{
+				Name:        "streak",
+				FieldMapKey: "streak",
+			},
+			{
+				Name:        "approvals",
+				FieldMapKey: "approvals",
+			},
+			{
+				Name:        "modifications",
+				FieldMapKey: "modifications",
+			},
+			{
+				Name:        "rejections",
+				FieldMapKey: "rejections",
+			},
+			{
+				Name:        "executionFailures",
+				FieldMapKey: "executionFailures",
+			},
+			{
+				Name:        "earnedTier",
+				FieldMapKey: "earnedTier",
+			},
+			{
+				Name:        "lastDecisionAt",
+				FieldMapKey: "lastDecisionAt",
+			},
+			{
+				Name:        "promotedAt",
+				FieldMapKey: "promotedAt",
+			},
+			{
+				Name:        "demotedAt",
+				FieldMapKey: "demotedAt",
 			},
 		},
 	}
@@ -5036,6 +5158,14 @@ func init() {
 			{
 				Name:        "consolidationPriority",
 				FieldMapKey: "consolidationPriority",
+			},
+			{
+				Name:        "statusUpdatePreference",
+				FieldMapKey: "statusUpdatePreference",
+			},
+			{
+				Name:        "statusUpdateRecipients",
+				FieldMapKey: "statusUpdateRecipients",
 			},
 			{
 				Name:        "version",

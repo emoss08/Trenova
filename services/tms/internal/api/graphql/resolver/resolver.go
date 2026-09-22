@@ -220,6 +220,7 @@ type Params struct {
 	AgentDecisionQueueService    services.AgentDecisionQueueService
 	WatchtowerService            services.WatchtowerService
 	AgentScorecardService        services.AgentScorecardService
+	AgentRunEventRepo            repositories.AgentRunEventRepository
 	BriefingService              services.BriefingService
 	AgentTools                   services.AgentToolRegistry
 	AgentControlService          services.AgentControlService
@@ -373,6 +374,7 @@ type Resolver struct {
 	agentDecisionQueueService    services.AgentDecisionQueueService
 	watchtowerService            services.WatchtowerService
 	agentScorecardService        services.AgentScorecardService
+	agentRunEventRepo            repositories.AgentRunEventRepository
 	briefingService              services.BriefingService
 	agentTools                   services.AgentToolRegistry
 	agentControlService          services.AgentControlService
@@ -527,6 +529,7 @@ func New(p Params) *Resolver {
 		agentDecisionQueueService:    p.AgentDecisionQueueService,
 		watchtowerService:            p.WatchtowerService,
 		agentScorecardService:        p.AgentScorecardService,
+		agentRunEventRepo:            p.AgentRunEventRepo,
 		briefingService:              p.BriefingService,
 		agentTools:                   p.AgentTools,
 		agentControlService:          p.AgentControlService,

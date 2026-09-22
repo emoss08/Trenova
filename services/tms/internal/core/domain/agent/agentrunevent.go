@@ -125,6 +125,13 @@ func (e *AgentRunEvent) GetTableName() string {
 // actually searches by — "show me the refusals", "what did it do with
 // assign_worker" — so those are the fields offered rather than the payload,
 // which is jsonb and would make every search a sequential scan.
+// GetCreatedAt satisfies the cursor contract. Paging keys on creation rather
+// than on sequence because a cursor has to be comparable across owners, and a
+// sequence is only meaningful within one.
+func (e *AgentRunEvent) GetCreatedAt() int64 {
+	return e.CreatedAt
+}
+
 func (e *AgentRunEvent) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "are",
