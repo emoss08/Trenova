@@ -31,6 +31,14 @@ const askUserDescription = "Ask the person to choose a value you need and cannot
 	"one thing, then stop and wait: never guess a value after asking for it, and " +
 	"never ask for something the person has already told you."
 
+// unattendedAskRefusal answers ask_user in a run nobody is watching. The spec
+// is withheld from those runs, but a model that remembers the tool from its
+// instructions can still name it, and a question no one will see used to end
+// the run as though it had been answered.
+const unattendedAskRefusal = "Nobody is watching this run, so there is no one to ask. " +
+	"Decide as your instructions allow, or call raise_exception to hand the question " +
+	"to a person."
+
 // askUserSpec is the second tool the runtime answers itself.
 //
 // Every turn carries it, disclosed or not, because asking for a missing value is

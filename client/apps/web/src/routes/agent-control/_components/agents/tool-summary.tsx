@@ -10,6 +10,7 @@ import {
   TIER_LABEL,
   effectiveTier,
   groupToolsByResource,
+  impliedReads,
   splitCoreTools,
   summarizeSelection,
   toggleTool,
@@ -57,6 +58,7 @@ export function ToolSummary({
     );
   }, [selectable, selected]);
   const chosenCount = summary.reads + summary.changes;
+  const included = useMemo(() => impliedReads(selected, tools), [selected, tools]);
 
   const remove = useCallback(
     (name: string) => {
@@ -159,6 +161,25 @@ export function ToolSummary({
               <li
                 key={tool.name}
                 title={tool.description}
+                className="bg-sunken text-muted-foreground inline-flex h-6 max-w-full items-center rounded-full px-2 text-xs"
+              >
+                <span className="truncate">{toolTitle(tool)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {included.length > 0 && (
+        <div className="border-border flex flex-wrap items-center gap-1.5 border-t px-3 py-2">
+          <span className="text-muted-foreground mr-1 shrink-0 text-xs font-medium">
+            {t("Included with your tools")}
+          </span>
+          <ul aria-label={t("Included with your tools")} className="contents">
+            {included.map(({ tool, neededBy }) => (
+              <li
+                key={tool.name}
+                title={t("Needed by {0}", neededBy.map(toolTitle).join(", "))}
                 className="bg-sunken text-muted-foreground inline-flex h-6 max-w-full items-center rounded-full px-2 text-xs"
               >
                 <span className="truncate">{toolTitle(tool)}</span>

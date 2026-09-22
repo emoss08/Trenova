@@ -50,6 +50,7 @@ function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
     defaultAutonomyTier: "ActWithApproval",
     reversible: true,
     core: false,
+    prerequisites: [],
     ...overrides,
   };
 }

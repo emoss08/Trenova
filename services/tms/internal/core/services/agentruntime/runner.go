@@ -86,7 +86,13 @@ func (s *Service) Run(
 		}},
 	}
 
-	tools := s.newToolSet(ctx, definition, req.Actor, req.Input, req.Unattended)
+	tools := s.newToolSet(ctx, toolSetRequest{
+		definition: definition,
+		actor:      req.Actor,
+		input:      req.Input,
+		history:    req.History,
+		unattended: req.Unattended,
+	})
 	runtimeContext.ToolsDisclosed = tools.disclosed
 	// The prompt describes the set the person may use, not the agent's whole
 	// configuration: a tool named there and refused when called reads as
@@ -228,18 +234,44 @@ func (s *Service) Run(
 			}
 
 			if call.Name == findToolsName {
-				outcome := toolOutcome{content: s.resolveFind(tools, call.Arguments)}
-				result.ToolCallsUsed++
+				tools.findCalls++
+				var outcome toolOutcome
+				if tools.findCalls > maxFindCalls {
+					// Past the cap the search is charged, so a model that
+					// only ever searches still runs out of turn.
+					result.ToolCallsUsed++
+					outcome = failedOutcome(
+						"You have searched for tools %d times this turn. Use what is "+
+							"loaded, or tell the person what you could not find.",
+						maxFindCalls,
+					)
+				} else {
+					outcome = toolOutcome{content: s.resolveFind(tools, call.Arguments)}
+				}
 				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
 				continue
 			}
 
 			if call.Name == askUserName {
 				outcome := toolOutcome{content: resolveAsk(call.Arguments)}
+				if !tools.offers(askUserName) {
+					outcome = failedOutcome("%s", unattendedAskRefusal)
+				}
 				result.ToolCallsUsed++
 				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
 				continue
 			}
+
+			if !s.holds(definition, call.Name) {
+				outcome := failedOutcome("%s", s.unheldRefusal(tools, call.Name))
+				result.ToolCallsUsed++
+				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
+				continue
+			}
+			// A tool the agent holds but was not sent runs anyway — the
+			// configuration is the grant, disclosure only decides what was
+			// shown — and is loaded, so the next request carries its schema.
+			s.load(tools, call.Name)
 
 			if previous, repeated := repeats.seen(call); repeated {
 				outcome := failedOutcome("%s", repeatRefusal(call.Name, previous))
@@ -407,7 +439,7 @@ const truncationNotice = "\n\n_This reply was cut off before it finished. " +
 func (s *Service) ToolSummaries(
 	definition *agentdefinition.Definition,
 ) []agentdefinition.ToolSummary {
-	names := definition.EffectiveToolNames()
+	names := s.heldTools(definition)
 	summaries := make([]agentdefinition.ToolSummary, 0, len(names))
 
 	for _, name := range names {

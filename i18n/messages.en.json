@@ -75982,6 +75982,15 @@
       "packages/shared/components"
     ]
   },
+  "Included with your tools": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Income Statement": {
     "sites": 2,
     "scope": [
@@ -94091,6 +94100,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Needed by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Needed to reach a model server on your own network. Link-local addresses stay blocked either way.": {

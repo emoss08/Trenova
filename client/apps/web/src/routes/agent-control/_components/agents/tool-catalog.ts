@@ -52,6 +52,46 @@ export function splitCoreTools(tools: readonly ToolCatalogEntry[]): {
   return { core, selectable };
 }
 
+export type ImpliedRead = {
+  tool: ToolCatalogEntry;
+  /** The chosen tools that take their arguments from it. */
+  neededBy: ToolCatalogEntry[];
+};
+
+/**
+ * The reads an agent holds because a chosen tool depends on them. The server
+ * grants a read a held tool takes its arguments from — create_dashboard needs
+ * report ids, which only list_reports hands out — so the form shows it rather
+ * than leaving an agent that looks unable to find one. Writes are never
+ * granted this way, and a read chosen outright is not repeated.
+ */
+export function impliedReads(
+  selected: readonly string[],
+  tools: readonly ToolCatalogEntry[],
+): ImpliedRead[] {
+  const byName = new Map(tools.map((tool) => [tool.name, tool]));
+  const chosen = new Set(selected);
+  const implied = new Map<string, ImpliedRead>();
+
+  for (const name of selected) {
+    const tool = byName.get(name);
+    if (!tool) {
+      continue;
+    }
+    for (const prerequisite of tool.prerequisites) {
+      const read = byName.get(prerequisite);
+      if (!read || read.kind !== "query" || read.core || chosen.has(prerequisite)) {
+        continue;
+      }
+      const entry = implied.get(prerequisite) ?? { tool: read, neededBy: [] };
+      entry.neededBy.push(tool);
+      implied.set(prerequisite, entry);
+    }
+  }
+
+  return [...implied.values()];
+}
+
 /** The title an administrator reads for a tool, from the same words the chat uses. */
 export function toolTitle(tool: ToolCatalogEntry): string {
   return describeToolCall(tool.name, null).title;

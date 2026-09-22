@@ -218,6 +218,8 @@ export const toolCatalogEntrySchema = z.object({
   reversible: z.boolean().default(false),
   /** Held by every agent without being chosen: memory, escalation, review. */
   core: z.boolean().default(false),
+  /** Tools this one takes its arguments from; the reads among them come with it. */
+  prerequisites: z.array(z.string()).default([]),
 });
 
 export const toolCatalogSchema = z.object({

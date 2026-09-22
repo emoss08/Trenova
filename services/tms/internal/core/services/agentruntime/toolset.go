@@ -3,14 +3,15 @@ package agentruntime
 import (
 	"context"
 	"fmt"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/shared/stringutils"
-	"go.uber.org/zap"
 	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"go.uber.org/zap"
 )
 
 const (
@@ -68,54 +69,67 @@ func findToolsSpec() serviceports.ToolSpec {
 	}
 }
 
+// maxFindCalls bounds find_tools per turn. A search is not charged against
+// the tool budget — looking for the right tool is not doing work — so a model
+// that searches in a loop has to be stopped by something else.
+const maxFindCalls = 4
+
+// toolSetRequest is what a turn's tool set is built from.
+type toolSetRequest struct {
+	definition *agentdefinition.Definition
+	actor      *serviceports.RequestActor
+	input      string
+	// history is the replayed conversation. The tools the model used or
+	// loaded in its recent turns are loaded again, so a follow-up like "yes,
+	// do it" does not reopen with a toolbox that has forgotten the work.
+	history    []conversation.Message
+	unattended bool
+}
+
 // toolSet is the live set of tools a turn may call. It starts from the agent's
 // configuration and grows when the model asks for more.
 type toolSet struct {
-	specs     []serviceports.ToolSpec
-	loaded    map[string]struct{}
-	allowed   []string
-	disclosed bool
+	specs      []serviceports.ToolSpec
+	loaded     map[string]struct{}
+	allowed    []string
+	disclosed  bool
+	unattended bool
+	findCalls  int
 	// usable answers whether the person may use a tool at all, for naming
 	// what exists beyond the agent's configuration.
 	usable func(name string) bool
 }
 
-func (s *Service) newToolSet(
-	ctx context.Context,
-	definition *agentdefinition.Definition,
-	actor *serviceports.RequestActor,
-	input string,
-	unattended bool,
-) *toolSet {
+func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	// The set a turn may call is the agent's configuration narrowed to what
 	// the person driving it may do. A tool they cannot use was still shown,
 	// ranked and offered, and denied only when called, which taught the
 	// model that the system refuses rather than that this person lacks the
 	// right; the denial also named the resource they lacked.
-	allowed := s.permittedTools(ctx, actor, definition.EffectiveToolNames())
+	allowed := s.permittedTools(ctx, req.actor, s.heldTools(req.definition))
 	selected := agentdefinition.WithoutCoreTools(allowed)
-	configured := s.configuredSpecs(selected)
 
 	set := &toolSet{
-		loaded:  make(map[string]struct{}, len(allowed)),
-		allowed: allowed,
+		loaded:     make(map[string]struct{}, len(allowed)),
+		allowed:    allowed,
+		unattended: req.unattended,
 		usable: func(name string) bool {
-			return len(s.permittedTools(ctx, actor, []string{name})) == 1
+			return len(s.permittedTools(ctx, req.actor, []string{name})) == 1
 		},
 	}
 
 	// The core tools ride on every turn and do not count toward narrowing: a
 	// turn that opened with eight slots would otherwise spend half of them on
 	// memory and escalation before reaching the work it was asked to do.
-	for _, spec := range s.configuredSpecs(coreOf(allowed)) {
-		set.add(spec)
+	for _, name := range coreOf(allowed) {
+		s.load(set, name)
 	}
 
-	if len(configured) <= disclosureThreshold || s.catalog == nil {
-		for _, spec := range configured {
-			set.add(spec)
+	if len(selected) <= disclosureThreshold || s.catalog == nil {
+		for _, name := range selected {
+			s.load(set, name)
 		}
-		if !unattended {
+		if !req.unattended {
 			set.add(askUserSpec())
 		}
 
@@ -123,14 +137,19 @@ func (s *Service) newToolSet(
 	}
 
 	set.disclosed = true
-	for _, descriptor := range s.catalog.Rank(selected, input, preselectedTools) {
-		set.add(toSpec(descriptor))
+	for _, descriptor := range s.catalog.Rank(
+		selected,
+		rankingText(req.input, req.history),
+		preselectedTools,
+	) {
+		s.load(set, descriptor.Name)
 	}
-	set.specs = append(set.specs, findToolsSpec())
+	s.carryOver(set, req.history)
+	set.add(findToolsSpec())
 	// A background run has nobody to ask. Offering the question tool anyway
 	// let an event-driven agent end its run on a question no one would see,
 	// recorded as complete.
-	if !unattended {
+	if !req.unattended {
 		set.add(askUserSpec())
 	}
 
@@ -148,6 +167,83 @@ func (t *toolSet) add(spec serviceports.ToolSpec) bool {
 	return true
 }
 
+// offers reports whether the turn's request carries a tool.
+func (t *toolSet) offers(name string) bool {
+	_, ok := t.loaded[name]
+
+	return ok
+}
+
+// load makes a tool the agent holds callable, with the tools its arguments
+// come from. It reports whether the tool itself was newly loaded.
+//
+// Prerequisites travel with the tool because a model handed create_dashboard
+// without list_reports does not go looking for a report id; it writes one.
+func (s *Service) load(set *toolSet, name string) bool {
+	if !slices.Contains(set.allowed, name) {
+		return false
+	}
+	spec, ok := s.specFor(name)
+	if !ok || !set.add(spec) {
+		return false
+	}
+
+	if s.catalog != nil {
+		for _, prerequisite := range s.catalog.Prerequisites(name) {
+			if !slices.Contains(set.allowed, prerequisite) {
+				continue
+			}
+			if dependency, found := s.specFor(prerequisite); found {
+				set.add(dependency)
+			}
+		}
+	}
+
+	return true
+}
+
+// carryOver reloads what the model worked with in its recent turns: the tools
+// it called, and what its searches found, by running the same search again.
+// The catalog is fixed for the life of the process, so the same need finds
+// the same tools, and nothing about the loaded set has to be stored.
+func (s *Service) carryOver(set *toolSet, history []conversation.Message) {
+	turns := 0
+	for idx := len(history) - 1; idx >= 0 && turns < recentToolTurns; idx-- {
+		message := history[idx]
+		if message.Role == conversation.RoleUser {
+			turns++
+			continue
+		}
+		for _, call := range message.ToolCalls {
+			switch call.Name {
+			case askUserName:
+			case findToolsName:
+				need, _ := call.Arguments["need"].(string)
+				if strings.TrimSpace(need) == "" {
+					continue
+				}
+				for _, descriptor := range s.catalog.Find(set.allowed, need, foundToolsLimit) {
+					s.load(set, descriptor.Name)
+				}
+			default:
+				s.load(set, call.Name)
+			}
+		}
+	}
+}
+
+// rankingText is what preselection ranks against: the request, and the one
+// before it. "Yes, do that" names nothing; the message it answers does.
+func rankingText(input string, history []conversation.Message) string {
+	for idx := len(history) - 1; idx >= 0; idx-- {
+		if history[idx].Role == conversation.RoleUser {
+			return input + "\n" + history[idx].Content
+		}
+	}
+
+	return input
+}
+
 // resolveFind answers a find_tools call and reports what it loaded.
 //
 // The answer names the tools in the same words the model will see them in, so a
@@ -158,13 +254,21 @@ func (s *Service) resolveFind(set *toolSet, arguments map[string]any) string {
 	if strings.TrimSpace(need) == "" {
 		return "Say what you need in a few words — the tools are matched against it."
 	}
+	if s.catalog == nil {
+		return "No other tools are available. Use the ones you have."
+	}
+	// A turn that was sent everything has nothing left to load; the answer
+	// can still say what exists beyond the agent.
+	if !set.disclosed {
+		return s.nothingLoaded(set, need)
+	}
 
 	found := s.catalog.Find(set.allowed, need, foundToolsLimit)
 
 	var b strings.Builder
 	added := 0
 	for _, descriptor := range found {
-		if !set.add(toSpec(descriptor)) {
+		if !s.load(set, descriptor.Name) {
 			continue
 		}
 		added++
@@ -176,6 +280,69 @@ func (s *Service) resolveFind(set *toolSet, arguments map[string]any) string {
 	}
 
 	return fmt.Sprintf("These tools are now callable:\n%s", b.String())
+}
+
+// unheldRefusal answers a call to a tool the agent does not hold.
+//
+// The old answer told the model to call find_tools on turns where find_tools
+// was not offered, and find_tools could not have loaded the tool anyway. This
+// says which of the two it is — not enabled, or no such tool — and hands over
+// the nearest tools the agent does hold, loaded, so the next call can work.
+func (s *Service) unheldRefusal(set *toolSet, name string) string {
+	var b strings.Builder
+	if _, _, exists := s.toolGate(name); exists {
+		fmt.Fprintf(&b, "%q is not enabled for this agent, so it was not run. An "+
+			"administrator can add it to the agent in AI Control.", name)
+	} else {
+		fmt.Fprintf(&b, "There is no tool named %q.", name)
+	}
+
+	var nearest []serviceports.AgentToolDescriptor
+	if s.catalog != nil {
+		nearest = s.catalog.Find(set.allowed, strings.ReplaceAll(name, "_", " "), 3)
+	}
+	if len(nearest) > 0 {
+		b.WriteString(" Tools this agent holds that may do the job, now callable:\n")
+		for _, descriptor := range nearest {
+			s.load(set, descriptor.Name)
+			fmt.Fprintf(&b, "- %s: %s\n", descriptor.Name, firstSentence(descriptor.Description))
+		}
+		return b.String()
+	}
+
+	if set.offers(findToolsName) {
+		b.WriteString(" Call find_tools with what you are trying to do.")
+	} else {
+		b.WriteString(" Use one of the tools you have, or tell the person what is missing.")
+	}
+
+	return b.String()
+}
+
+// heldTools is every tool the agent holds: its core and selected tools, and
+// the reads its tools take their arguments from. A dependency is granted only
+// when it is a read — the agent holding create_dashboard may look reports up,
+// but nothing it holds grants it another write.
+func (s *Service) heldTools(definition *agentdefinition.Definition) []string {
+	names := definition.EffectiveToolNames()
+	if s.catalog == nil {
+		return names
+	}
+
+	held := len(names)
+	for idx := range held {
+		for _, prerequisite := range s.catalog.Prerequisites(names[idx]) {
+			if s.catalog.IsQuery(prerequisite) && !slices.Contains(names, prerequisite) {
+				names = append(names, prerequisite)
+			}
+		}
+	}
+
+	return names
+}
+
+func (s *Service) holds(definition *agentdefinition.Definition, name string) bool {
+	return slices.Contains(s.heldTools(definition), name)
 }
 
 // nothingLoaded explains an empty search without overstating it.
@@ -294,32 +461,23 @@ func (s *Service) toolGate(name string) (permission.Resource, permission.Operati
 	return "", "", false
 }
 
-func (s *Service) configuredSpecs(names []string) []serviceports.ToolSpec {
-	specs := make([]serviceports.ToolSpec, 0, len(names))
-
-	for _, name := range names {
-		if tool, ok := s.queryTools.Get(name); ok {
-			specs = append(specs, serviceports.ToolSpec{
-				Name:        tool.Name(),
-				Description: tool.Description(),
-				Parameters:  tool.ParamSchema(),
-			})
-			continue
-		}
-
-		tool, ok := s.actionTools.Get(name)
-		if !ok {
-			continue
-		}
-
-		specs = append(specs, serviceports.ToolSpec{
+func (s *Service) specFor(name string) (serviceports.ToolSpec, bool) {
+	if tool, ok := s.queryTools.Get(name); ok {
+		return serviceports.ToolSpec{
 			Name:        tool.Name(),
 			Description: tool.Description(),
 			Parameters:  tool.ParamSchema(),
-		})
+		}, true
+	}
+	if tool, ok := s.actionTools.Get(name); ok {
+		return serviceports.ToolSpec{
+			Name:        tool.Name(),
+			Description: tool.Description(),
+			Parameters:  tool.ParamSchema(),
+		}, true
 	}
 
-	return specs
+	return serviceports.ToolSpec{}, false
 }
 
 func coreOf(names []string) []string {

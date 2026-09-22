@@ -117,8 +117,10 @@ func TestRun_AnswersAndRecordsTheTurn(t *testing.T) {
 }
 
 // Read tools are enabled per agent now, the same as write tools. A registered
-// query tool the agent was not given is refused at dispatch, whatever the model
-// was offered.
+// query tool the agent was not given is refused, whatever the model was
+// offered — and the refusal says so plainly. It used to tell the model to call
+// find_tools on a turn that did not offer find_tools, for a tool find_tools
+// could not have loaded.
 func TestRun_RefusesAToolNotEnabledEvenWhenRegistered(t *testing.T) {
 	t.Parallel()
 
@@ -139,7 +141,10 @@ func TestRun_RefusesAToolNotEnabledEvenWhenRegistered(t *testing.T) {
 
 	assert.Zero(t, tool.Calls)
 	assert.True(t, result.Messages[2].ToolFailed)
-	assert.Contains(t, result.Messages[2].Content, "not available to this agent")
+	assert.Contains(t, result.Messages[2].Content, "not enabled for this agent")
+	assert.Contains(t, result.Messages[2].Content, "AI Control")
+	assert.NotContains(t, result.Messages[2].Content, "find_tools",
+		"find_tools was not offered on this turn")
 	offered := make([]string, 0, len(completion.LastReq.Tools))
 	for _, spec := range completion.LastReq.Tools {
 		offered = append(offered, spec.Name)

@@ -4,6 +4,7 @@ import {
   effectiveTier,
   groupToolsByResource,
   resourceLabel,
+  impliedReads,
   splitCoreTools,
   summarizeSelection,
   toggleTool,
@@ -20,6 +21,7 @@ function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
     defaultAutonomyTier: "",
     reversible: false,
     core: false,
+    prerequisites: [],
     ...overrides,
   };
 }
@@ -123,5 +125,43 @@ describe("core tools", () => {
     );
 
     expect(summary).toMatchObject({ reads: 1, changes: 0, unknown: [] });
+  });
+});
+
+/**
+ * A tool whose arguments come from another holds that read with it: the
+ * server grants it, so the form says so rather than leaving the agent looking
+ * like it cannot find a report id.
+ */
+describe("impliedReads", () => {
+  const withDependencies = [
+    tool({ name: "list_reports", resource: "report" }),
+    tool({ name: "delete_report", kind: "action", resource: "report" }),
+    tool({
+      name: "create_dashboard",
+      kind: "action",
+      resource: "report_dashboard",
+      prerequisites: ["list_reports", "delete_report", "missing_tool"],
+    }),
+    tool({
+      name: "add_dashboard_tile",
+      kind: "action",
+      resource: "report_dashboard",
+      prerequisites: ["list_reports"],
+    }),
+  ];
+
+  it("names each read a chosen tool depends on, with every tool that needs it", () => {
+    const implied = impliedReads(["create_dashboard", "add_dashboard_tile"], withDependencies);
+
+    expect(implied.map((entry) => entry.tool.name)).toEqual(["list_reports"]);
+    expect(implied[0].neededBy.map((entry) => entry.name)).toEqual([
+      "create_dashboard",
+      "add_dashboard_tile",
+    ]);
+  });
+
+  it("does not repeat a read that was chosen outright", () => {
+    expect(impliedReads(["create_dashboard", "list_reports"], withDependencies)).toEqual([]);
   });
 });

@@ -32,16 +32,10 @@ func (s *Service) dispatch(
 	completionText string,
 	proposedSoFar []serviceports.PendingAction,
 ) toolOutcome {
-	// A tool the agent holds but has not been sent this turn still resolves
-	// from the registry below: the configured list is the grant, and disclosure
-	// only decides what the model was shown. One it does not hold is refused,
-	// and told where to look rather than left to guess again.
-	if !req.Definition.AllowsTool(call.Name) {
-		return failedOutcome(
-			"Tool %q is not available to this agent. Call find_tools to see what is, "+
-				"or use one of the tools already loaded.",
-			call.Name,
-		)
+	// The loop refuses a tool the agent does not hold before it gets here, with
+	// the nearest tools it does hold; this is the backstop for any other caller.
+	if !s.holds(req.Definition, call.Name) {
+		return failedOutcome("Tool %q is not available to this agent.", call.Name)
 	}
 
 	if tool, ok := s.queryTools.Get(call.Name); ok {

@@ -27,6 +27,7 @@ function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
     defaultAutonomyTier: "",
     reversible: false,
     core: false,
+    prerequisites: [],
     ...overrides,
   };
 }
@@ -36,6 +37,13 @@ const catalog = [
   tool({ name: "cancel_shipment", kind: "action" }),
   tool({ name: "list_workers", resource: "worker" }),
   tool({ name: "recall_memory", resource: "agent_memory", core: true }),
+  tool({ name: "list_reports", resource: "report" }),
+  tool({
+    name: "create_dashboard",
+    kind: "action",
+    resource: "report_dashboard",
+    prerequisites: ["list_reports"],
+  }),
 ];
 
 function renderSummary(selected: string[]) {
@@ -100,6 +108,13 @@ describe("ToolSummary", () => {
     expect(screen.queryByRole("button", { name: /remove recall/i })).not.toBeInTheDocument();
   });
 
+  it("says which reads come with a chosen tool", () => {
+    renderSummary(["create_dashboard"]);
+
+    const included = screen.getByRole("list", { name: /included with your tools/i });
+    expect(included).toHaveTextContent(/browse reports/i);
+  });
+
   it("never offers a core tool as a choice, even through All reads", async () => {
     const { onSelectedChange } = renderSummary([]);
 
@@ -108,6 +123,6 @@ describe("ToolSummary", () => {
     expect(screen.queryByRole("checkbox", { name: /recall/i })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: /all reads/i }));
-    expect(onSelectedChange).toHaveBeenCalledWith(["get_shipment", "list_workers"]);
+    expect(onSelectedChange).toHaveBeenCalledWith(["get_shipment", "list_workers", "list_reports"]);
   });
 });

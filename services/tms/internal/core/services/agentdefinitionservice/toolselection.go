@@ -42,14 +42,15 @@ func buildToolCatalog(
 
 	for _, tool := range queryTools {
 		entries = append(entries, serviceports.ToolCatalogEntry{
-			Name:        tool.Name(),
-			Description: tool.Description(),
-			Parameters:  tool.ParamSchema(),
-			Kind:        serviceports.ToolCatalogKindQuery,
-			Resource:    tool.PermissionResource(),
-			Operation:   permission.OpRead,
-			Reversible:  true,
-			Core:        agentdefinition.IsCoreTool(tool.Name()),
+			Name:          tool.Name(),
+			Description:   tool.Description(),
+			Parameters:    tool.ParamSchema(),
+			Kind:          serviceports.ToolCatalogKindQuery,
+			Resource:      tool.PermissionResource(),
+			Operation:     permission.OpRead,
+			Reversible:    true,
+			Core:          agentdefinition.IsCoreTool(tool.Name()),
+			Prerequisites: prerequisitesOf(tool),
 		})
 	}
 
@@ -64,6 +65,7 @@ func buildToolCatalog(
 			DefaultAutonomyTier: tool.DefaultAutonomyTier(),
 			Reversible:          tool.Reversible(),
 			Core:                agentdefinition.IsCoreTool(tool.Name()),
+			Prerequisites:       prerequisitesOf(tool),
 		})
 	}
 
@@ -76,6 +78,14 @@ func buildToolCatalog(
 	})
 
 	return entries
+}
+
+func prerequisitesOf(tool any) []string {
+	if dependent, ok := tool.(serviceports.PrerequisiteTool); ok {
+		return dependent.Prerequisites()
+	}
+
+	return []string{}
 }
 
 func registeredStarterTools(
