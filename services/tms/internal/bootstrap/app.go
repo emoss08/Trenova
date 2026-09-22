@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
+	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/formula"
@@ -136,6 +137,7 @@ func Options() fx.Option {
 		watchtowersources.Module,
 		proposalrecorder.Module,
 		fx.Provide(assistantservice.New),
+		assistantturnservice.Module,
 		completionrouter.Module,
 		recurringshipmentjobs.Module,
 		settlementjobs.Module,

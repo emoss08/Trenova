@@ -214,12 +214,22 @@ const (
 	// answered on, before the turn begins, so the reader can keep it even
 	// when the answer fails partway.
 	AssistantEventThread = "thread"
+	// AssistantEventTurn names the turn producing a reply, before the reply
+	// begins. A reader keeps it so a dropped connection can be rejoined
+	// rather than restarted.
+	AssistantEventTurn = "turn"
 	// AssistantEventError ends a turn that could not finish. It was written
 	// as a literal in the two handlers that emit it for as long as the stream
 	// was the handler's own; once the events travel through a relay, the name
 	// has to be one thing both ends agree on.
 	AssistantEventError = "error"
 )
+
+// AssistantTurnEvent names the turn a reply is being produced by.
+type AssistantTurnEvent struct {
+	TurnID   pulid.ID `json:"turnId"`
+	ThreadID pulid.ID `json:"threadId"`
+}
 
 // TerminalAssistantEvent reports an event that ends a turn.
 //

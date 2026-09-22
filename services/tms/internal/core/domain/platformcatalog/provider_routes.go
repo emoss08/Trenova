@@ -1069,6 +1069,9 @@ func agentAutomationRouteRefs() []RouteRef {
 			"/api/v1/assistant/threads/",
 			"/api/v1/assistant/threads/:threadID/",
 			"/api/v1/assistant/threads/:threadID/messages/",
+			// Watching a reply arrive is reading the conversation it belongs
+			// to, so it rides with the rest rather than being sold apart.
+			"/api/v1/assistant/turns/:turnID/stream/",
 			// The insights panel rides with this feature rather than becoming a
 			// pack of its own. Its findings are computed without a model and its
 			// narration goes through the same provider configuration as everything
