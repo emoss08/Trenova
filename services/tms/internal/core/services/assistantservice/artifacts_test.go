@@ -402,3 +402,79 @@ func TestArtifactFromObservation_ALongListIsCutToFit(t *testing.T) {
 	// truncation as the answer.
 	assert.Equal(t, float64(400), artifact.Payload["rowCount"])
 }
+
+/*
+A described view and a rate explanation are both answers a person works from
+rather than reads, so both open in the pane.
+
+The view is a link to the live table, not a snapshot: rows pasted into a
+conversation are not sortable, not exportable, not re-checked against
+permissions, and wrong by the time anybody reads them.
+
+The rate is a ledger, because a price read aloud is a wall of figures nobody
+can check against an invoice.
+*/
+func TestArtifactFromObservation_ADescribedViewOpensTheTable(t *testing.T) {
+	t.Parallel()
+
+	artifact := artifactFromObservation(observation("compose_table_view", map[string]any{
+		"entity":      "shipments",
+		"path":        "/shipments?fieldFilters=%5B%5D",
+		"explanation": "shipments where status equals InTransit",
+		"terms":       []any{"status equals InTransit"},
+		"filterCount": float64(1),
+	}))
+
+	require.NotNil(t, artifact)
+	assert.Equal(t, assistantartifact.KindTableView, artifact.Kind)
+	assert.Equal(t, "Shipments", artifact.Title)
+	assert.Equal(t, "/shipments?fieldFilters=%5B%5D", artifact.Payload["path"])
+	assert.Equal(t, []string{"status equals InTransit"}, artifact.Payload["terms"])
+}
+
+// A view with no link is not a view, whatever else the result carries.
+func TestArtifactFromObservation_ADescribedViewWithNoLinkIsNotOne(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, artifactFromObservation(observation("compose_table_view", map[string]any{
+		"entity":      "shipments",
+		"explanation": "shipments where status equals InTransit",
+	})))
+}
+
+func TestArtifactFromObservation_ARateBecomesALedger(t *testing.T) {
+	t.Parallel()
+
+	artifact := artifactFromObservation(observation("explain_rate", map[string]any{
+		"shipmentId": "shp_1",
+		"side":       "Customer",
+		"components": []any{
+			map[string]any{"label": "Linehaul", "basis": "1,240.0 mi @ $2.15/mi"},
+		},
+		"totals":   map[string]any{"total": "2800.00"},
+		"warnings": []any{"fuel index is 6 days stale"},
+	}))
+
+	require.NotNil(t, artifact)
+	assert.Equal(t, assistantartifact.KindRateExplanation, artifact.Kind)
+	assert.Equal(t, "Rate breakdown", artifact.Title)
+	assert.Len(t, artifact.Payload["components"], 1)
+	assert.Equal(t, []string{"fuel index is 6 days stale"}, artifact.Payload["warnings"])
+}
+
+// An unrated shipment has no price to break down. A ledger of zeroes would
+// read as a price of zero, which is a number nobody set.
+func TestArtifactFromObservation_AnUnratedShipmentGetsNoLedger(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, artifactFromObservation(observation("explain_rate", map[string]any{
+		"shipmentId": "shp_1",
+		"note":       "This shipment has no rating on record for that side.",
+		"totals":     map[string]any{"total": "0"},
+	})))
+
+	assert.Nil(t, artifactFromObservation(observation("explain_rate", map[string]any{
+		"shipmentId": "shp_1",
+		"components": []any{},
+	})))
+}

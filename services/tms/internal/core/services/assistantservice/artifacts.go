@@ -28,6 +28,8 @@ const (
 	getToolPrefix     = "get_"
 	listToolPrefix    = "list_"
 	searchToolPrefix  = "search_"
+	toolComposeView   = "compose_table_view"
+	toolExplainRate   = "explain_rate"
 
 	maxArtifactTitleRunes = 120
 	minPreviewRows        = 1
@@ -252,6 +254,10 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 		return runArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, getToolPrefix):
 		return entityCardArtifact(observation.Call.ID, name, result)
+	case name == toolComposeView:
+		return composedViewArtifact(observation.Call.ID, result)
+	case name == toolExplainRate:
+		return rateArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, listToolPrefix), strings.HasPrefix(name, searchToolPrefix):
 		return tableArtifact(observation.Call.ID, name, result)
 	default:
@@ -296,6 +302,78 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 		Kind:             assistantartifact.KindTableView,
 		Status:           assistantartifact.StatusReady,
 		Title:            artifactTitle(stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity))),
+		Payload:          payload,
+		SourceToolCallID: callID,
+	}
+}
+
+// composedViewArtifact is a described view as something to open.
+//
+// The pane shows what it was narrowed to and what could not be, with the link
+// to the live table. It is a table_view like a list result, because to the
+// reader it is the same thing arrived at a different way — except that this
+// one opens rather than being a snapshot.
+func composedViewArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
+	path := stringOf(result["path"])
+	if path == "" {
+		return nil
+	}
+
+	entity := stringOf(result["entity"])
+	payload := map[string]any{
+		"entity":      entity,
+		"path":        path,
+		"explanation": stringOf(result["explanation"]),
+		"terms":       stringsOf(result["terms"]),
+		"filterCount": result["filterCount"],
+		"unresolved":  result["unresolved"],
+	}
+
+	return &assistantartifact.Artifact{
+		Kind:   assistantartifact.KindTableView,
+		Status: assistantartifact.StatusReady,
+		Title: artifactTitle(
+			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)),
+		),
+		Payload:          payload,
+		SourceToolCallID: callID,
+	}
+}
+
+// rateArtifact is the ledger behind a price.
+//
+// A rate explanation read aloud is a wall of figures nobody can check against
+// an invoice. As a ledger — every charge with its arithmetic and a running
+// total, the limits that bit, what it was priced under — it is the thing a
+// person puts next to the invoice line they are disputing.
+func rateArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
+	// Nothing to explain is a sentence, not a ledger of zeroes.
+	if stringOf(result["note"]) != "" {
+		return nil
+	}
+	components, _ := result["components"].([]any)
+	if len(components) == 0 {
+		return nil
+	}
+
+	payload := map[string]any{
+		"shipmentId": stringOf(result["shipmentId"]),
+		"side":       stringOf(result["side"]),
+		"currency":   stringOf(result["currency"]),
+		"winner":     result["winner"],
+		"tieBreak":   stringOf(result["tieBreak"]),
+		"rejected":   result["rejected"],
+		"components": components,
+		"guardrails": result["guardrails"],
+		"totals":     result["totals"],
+		"warnings":   stringsOf(result["warnings"]),
+	}
+	fitRows(payload, "components")
+
+	return &assistantartifact.Artifact{
+		Kind:             assistantartifact.KindRateExplanation,
+		Status:           assistantartifact.StatusReady,
+		Title:            artifactTitle("Rate breakdown"),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
