@@ -71845,6 +71845,9 @@ enum AITask {
   BillingDiagnosis
   FormulaAssistant
   ScopeClassification
+  DailyBriefing
+  QueryCompose
+  InboundClassification
   AssistantChat
   OperationalInsights
   General
@@ -88842,6 +88845,8 @@ enum WatchtowerSourceKind {
   BillingException
   DetentionOccurrence
   InboundMessage
+  WorkerCredential
+  MoveCoverage
 }
 
 "How loudly an item asks to be looked at."

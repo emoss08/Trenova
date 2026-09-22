@@ -43957,6 +43957,15 @@
       "routes/review-template"
     ]
   },
+  "Decide what an email that arrived on a monitored address is.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Decide what an uploaded document is.": {
     "sites": 1,
     "scope": [
@@ -75195,6 +75204,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Inbound mail": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Inbound message": {
@@ -152762,6 +152780,15 @@
       "domain/tablechangealert"
     ]
   },
+  "Table questions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Tag management": {
     "sites": 1,
     "scope": [
@@ -170370,6 +170397,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Turn a sentence into a table's filters and sort.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Turn count cannot be negative": {

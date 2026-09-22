@@ -292,6 +292,24 @@ func taskDescriptors() []TaskDescriptor {
 				"wording, so the cheapest model that writes clean English will do.",
 		},
 		{
+			Task:        aiprovider.TaskQueryCompose,
+			Label:       "Table questions",
+			Description: "Turn a sentence into a table's filters and sort.",
+			VolumeGuidance: "One short call each time somebody asks a table a question. " +
+				"It names fields from a catalogue it is shown and writes no SQL, and " +
+				"everything it names is compiled against that catalogue afterwards, so a " +
+				"cheap model that guesses wrong produces an unresolved line rather than a " +
+				"wrong answer.",
+		},
+		{
+			Task:        aiprovider.TaskInboundClassification,
+			Label:       "Inbound mail",
+			Description: "Decide what an email that arrived on a monitored address is.",
+			VolumeGuidance: "One call per message, so it follows how much mail is " +
+				"forwarded. It answers with a label from a fixed set that is re-checked " +
+				"afterwards, so the cheapest model that reads English reliably will do.",
+		},
+		{
 			Task:           aiprovider.TaskGeneral,
 			Label:          "General",
 			Description:    "Anything not routed to a more specific task.",

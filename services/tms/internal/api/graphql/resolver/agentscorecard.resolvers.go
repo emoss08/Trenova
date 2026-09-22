@@ -16,10 +16,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *queryResolver) AgentScorecard(
-	ctx context.Context,
-	input gqlmodel.AgentScorecardInput,
-) (*gqlmodel.AgentScorecard, error) {
+func (r *queryResolver) AgentScorecard(ctx context.Context, input gqlmodel.AgentScorecardInput) (*gqlmodel.AgentScorecard, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
 	if err != nil {
 		return nil, err

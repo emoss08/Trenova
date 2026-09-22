@@ -62,6 +62,12 @@ const (
 	ProcessingProfileNone                   ProcessingProfile = "none"
 	ProcessingProfileRateConfirmationImport ProcessingProfile = "rate_confirmation_import"
 	ProcessingProfileAssistantAttachment    ProcessingProfile = "assistant_attachment"
+	// ProcessingProfileInboundAttachment is a file that came in on a monitored
+	// mailbox. It is its own profile rather than borrowing the rate-confirmation
+	// one because a POD, an invoice and a tender all arrive this way, and
+	// labelling them all a rate confirmation would be a lie the pipeline then
+	// acts on.
+	ProcessingProfileInboundAttachment ProcessingProfile = "inbound_attachment"
 )
 
 func (s Status) String() string {
@@ -120,7 +126,8 @@ func (p ProcessingProfile) IsValid() bool {
 	switch p {
 	case ProcessingProfileNone,
 		ProcessingProfileRateConfirmationImport,
-		ProcessingProfileAssistantAttachment:
+		ProcessingProfileAssistantAttachment,
+		ProcessingProfileInboundAttachment:
 		return true
 	}
 	return false
@@ -138,7 +145,9 @@ func NormalizeProcessingProfile(raw string) (ProcessingProfile, error) {
 }
 
 func (p ProcessingProfile) SupportsIntelligence() bool {
-	return p == ProcessingProfileRateConfirmationImport || p == ProcessingProfileAssistantAttachment
+	return p == ProcessingProfileRateConfirmationImport ||
+		p == ProcessingProfileAssistantAttachment ||
+		p == ProcessingProfileInboundAttachment
 }
 
 func SupportsPreview(fileType string) bool {
