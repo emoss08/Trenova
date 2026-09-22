@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -133,6 +134,21 @@ func (m *Mailbox) ApplyDefaults() {
 	}
 	if m.Status == "" {
 		m.Status = MailboxActive
+	}
+}
+
+// GetPostgresSearchConfig lets somebody find a mailbox by the address itself,
+// which is how anybody actually refers to one. The token hash is deliberately
+// absent: it is not a thing to search for, and putting it in a tsvector would
+// be putting it somewhere it can be read back.
+func (m *Mailbox) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias: "imbx",
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "address", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{Name: "purpose", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightC},
+		},
 	}
 }
 

@@ -213,6 +213,8 @@ const (
 	// Communications
 	ResourceDriverMessage         Resource = "driver_message"
 	ResourceCustomerCommunication Resource = "customer_communication"
+	ResourceInboundMessage        Resource = "inbound_message"
+	ResourceInboundMailbox        Resource = "inbound_mailbox"
 )
 
 func (r Resource) String() string {

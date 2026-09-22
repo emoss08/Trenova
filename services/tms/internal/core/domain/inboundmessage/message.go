@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,7 +24,7 @@ const (
 	MaxBodyBytes = 32 * 1024
 )
 
-// Message is one email that arrived.
+// InboundMessage is one email that arrived.
 //
 // It is kept whether or not anything could be made of it. A tender nobody
 // matched is still the thing a person has to go and look at, and a message
@@ -87,7 +88,7 @@ type InboundMessage struct {
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Mailbox      *Mailbox             `json:"mailbox,omitempty"      bun:"rel:belongs-to,join:mailbox_id=id"`
-	Attachments  []*InboundAttachment        `json:"attachments,omitempty"  bun:"rel:has-many,join:id=message_id"`
+	Attachments  []*InboundAttachment `json:"attachments,omitempty"  bun:"rel:has-many,join:id=message_id"`
 }
 
 func (m *InboundMessage) Validate(multiErr *errortypes.MultiError) {
@@ -142,11 +143,36 @@ func (m *InboundMessage) BeforeAppendModel(_ context.Context, query bun.Query) e
 	return nil
 }
 
+// GetPostgresSearchConfig covers what a person actually remembers about a
+// message they are hunting for: who sent it and what the subject said. The body
+// is left out on purpose — it is bounded to 32 KB of quoted thread, and
+// indexing that would make every message match every search.
+func (m *InboundMessage) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias: "imsg",
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "subject", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "from_address",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
+			{Name: "from_name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{
+				Name:   "classification",
+				Type:   domaintypes.FieldTypeEnum,
+				Weight: domaintypes.SearchWeightC,
+			},
+			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightC},
+		},
+	}
+}
+
 func (m *InboundMessage) GetID() pulid.ID      { return m.ID }
 func (m *InboundMessage) GetCreatedAt() int64  { return m.CreatedAt }
 func (m *InboundMessage) GetTableName() string { return "inbound_messages" }
 
-// Attachment is one file that came with a message, and what became of it.
+// InboundAttachment is one file that came with a message, and what became of it.
 type InboundAttachment struct {
 	bun.BaseModel `bun:"table:inbound_message_attachments,alias:imsga" json:"-"`
 
