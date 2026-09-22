@@ -197,6 +197,15 @@
       "routes/admin"
     ]
   },
+  "(no subject)": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "(not enforced)": {
     "sites": 2,
     "scope": [
@@ -3458,6 +3467,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A message can be marked handled or ignored, nothing else": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/inboundmessageservice"
+    ]
+  },
+  "A message that arrived on a monitored address was read and turned out to need a decision.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "A metric strip holds at most {0} metrics": {
@@ -17319,11 +17346,13 @@
     ]
   },
   "Arrived": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "routes/inbox",
       "template/detention.notice.email",
       "template/detention.notice.pdf"
     ]
@@ -19297,6 +19326,15 @@
     ],
     "areas": [
       "service/assistantservice"
+    ]
+  },
+  "Attachments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Attachments & content": {
@@ -22272,6 +22310,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Being read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Bell": {
@@ -31949,7 +31996,7 @@
     ]
   },
   "Close": {
-    "sites": 36,
+    "sites": 37,
     "scope": [
       "ts"
     ],
@@ -31970,6 +32017,7 @@
       "routes/fuel-purchase",
       "routes/home",
       "routes/ifta-tax-rate",
+      "routes/inbox",
       "routes/invoice",
       "routes/manual-journal",
       "routes/rate-agreement",
@@ -37696,6 +37744,15 @@
       "routes/formula-template"
     ]
   },
+  "Could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Could not call it back": {
     "sites": 1,
     "scope": [
@@ -41500,7 +41557,7 @@
     ]
   },
   "Customer": {
-    "sites": 39,
+    "sites": 40,
     "scope": [
       "go",
       "ts"
@@ -41520,6 +41577,7 @@
       "routes/detention-policy",
       "routes/distance-override",
       "routes/edi",
+      "routes/inbox",
       "routes/late-charges",
       "routes/order",
       "routes/rate-agreement",
@@ -47922,6 +47980,15 @@
     "areas": [
       "domain/agentdefinition",
       "routes/detention-desk"
+    ]
+  },
+  "Detention dispute": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Detention dwell > 2h": {
@@ -59828,11 +59895,12 @@
     ]
   },
   "Everything": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/inbox",
       "routes/policies",
       "routes/scheduling"
     ]
@@ -71171,6 +71239,15 @@
       "domain/permission"
     ]
   },
+  "Handled": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Handles these tasks": {
     "sites": 1,
     "scope": [
@@ -71662,6 +71739,15 @@
       "routes/fuel-feed-run",
       "routes/home.tsx",
       "routes/osha"
+    ]
+  },
+  "Held back": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Held by": {
@@ -74365,12 +74451,22 @@
     ]
   },
   "Ignore": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/inbox"
+    ]
+  },
+  "Ignored": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Illinois (IL)": {
@@ -75227,12 +75323,13 @@
     ]
   },
   "Inbound message": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/watchtower"
+      "domain/watchtower",
+      "service/agentsubjectservice"
     ]
   },
   "Inbound message is required": {
@@ -75272,13 +75369,15 @@
     ]
   },
   "Inbox": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/carrier-monitoring"
+      "apps/web/config",
+      "routes/carrier-monitoring",
+      "routes/inbox"
     ]
   },
   "Inbox filters": {
@@ -77907,7 +78006,7 @@
     ]
   },
   "Invoice": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -77917,6 +78016,7 @@
       "routes/ar-open-items",
       "routes/customer-payments",
       "routes/customer-statement",
+      "routes/inbox",
       "routes/invoice",
       "routes/invoice-adjustment-batch",
       "routes/late-charges",
@@ -86396,6 +86496,25 @@
       "apps/web/components"
     ]
   },
+  "Mail that arrived on a monitored address, and what was made of it": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/inbox"
+    ]
+  },
+  "Mailbox": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Mailbox ID": {
     "sites": 1,
     "scope": [
@@ -87621,6 +87740,15 @@
       "routes/ifta-return"
     ]
   },
+  "Mark handled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Mark in review": {
     "sites": 2,
     "scope": [
@@ -87822,6 +87950,24 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Marked as handled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Marked as ignored": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Marked false positive": {
@@ -89586,6 +89732,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "Message classified": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Message dispatch...": {
@@ -92790,6 +92945,15 @@
     ],
     "areas": [
       "service/workercredentialservice"
+    ]
+  },
+  "Name at least one record this message is about": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/inboundmessageservice"
     ]
   },
   "Name can only contain letters, numbers, spaces, hyphens, ampersands, and periods": {
@@ -100119,6 +100283,15 @@
       "routes/worker"
     ]
   },
+  "Not read yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Not ready to": {
     "sites": 1,
     "scope": [
@@ -100812,6 +100985,15 @@
       "service/fuelpurchaseservice"
     ]
   },
+  "Nothing in this lane": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Nothing in this period": {
     "sites": 1,
     "scope": [
@@ -101433,6 +101615,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Nothing was matched to this message.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Nothing was returned.": {
@@ -106158,6 +106349,15 @@
       "routes/desk"
     ]
   },
+  "Open the customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Open the document": {
     "sites": 1,
     "scope": [
@@ -106219,6 +106419,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Open the shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Open the table": {
@@ -108384,7 +108593,7 @@
     ]
   },
   "Other": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -108396,6 +108605,7 @@
       "domain/worker",
       "go/other",
       "routes/carrier-settlement",
+      "routes/inbox",
       "routes/shipment",
       "routes/worker",
       "template/invoice.pdf"
@@ -118787,12 +118997,13 @@
     ]
   },
   "Proof of delivery": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/inbox"
     ]
   },
   "Propane (LPG)": {
@@ -121353,12 +121564,13 @@
     ]
   },
   "Rate confirmation": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/inbox",
       "routes/rate-confirmation-public"
     ]
   },
@@ -122683,7 +122895,7 @@
     ]
   },
   "Read": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -122692,7 +122904,8 @@
       "apps/web/lib",
       "packages/shared/lib",
       "routes/agent-control",
-      "routes/fuel-feed-run"
+      "routes/fuel-feed-run",
+      "routes/inbox"
     ]
   },
   "Read Ramp card transactions for fuel spend. Ramp runs on commercial Visa, so its rows carry the merchant and amount but not the gallons an IFTA return needs.": {
@@ -122729,6 +122942,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Read as": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Read each row as: when fuel costs at least “from” and less than “up to”, {0}.": {
@@ -123936,7 +124158,7 @@
     ]
   },
   "Received": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -123945,7 +124167,8 @@
       "apps/web/lib",
       "domain/worker",
       "packages/shared/components",
-      "routes/edi"
+      "routes/edi",
+      "routes/inbox"
     ]
   },
   "Received At": {
@@ -123975,6 +124198,15 @@
     "areas": [
       "domain/edi",
       "domain/telematics"
+    ]
+  },
+  "Received in total": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Receiver id cannot be longer than 20 characters": {
@@ -136889,6 +137121,15 @@
       "routes/worker"
     ]
   },
+  "Say what you did, so the next person does not repeat it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Say when it should run": {
     "sites": 1,
     "scope": [
@@ -137052,6 +137293,15 @@
     ],
     "areas": [
       "service/workerservice"
+    ]
+  },
+  "Say why this is the right record": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/inboundmessageservice"
     ]
   },
   "Say why this item does not apply": {
@@ -144331,7 +144581,7 @@
     ]
   },
   "Shipment": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -144340,6 +144590,7 @@
       "apps/web/lib",
       "routes/admin",
       "routes/edi",
+      "routes/inbox",
       "routes/invoice",
       "routes/reports",
       "routes/service-failure",
@@ -150027,7 +150278,7 @@
     ]
   },
   "Status": {
-    "sites": 230,
+    "sites": 231,
     "scope": [
       "go",
       "ts"
@@ -150069,6 +150320,7 @@
       "routes/hazardous-material",
       "routes/hazmat-segregation-rule",
       "routes/ifta-return",
+      "routes/inbox",
       "routes/invoice",
       "routes/invoice-adjustment-batch",
       "routes/invoice-reconciliation",
@@ -150373,6 +150625,15 @@
     ],
     "areas": [
       "domain/shipmentimportchat"
+    ]
+  },
+  "Status request": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Status update": {
@@ -154174,12 +154435,13 @@
     ]
   },
   "Tender": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/edi",
+      "routes/inbox",
       "routes/shipment"
     ]
   },
@@ -154492,6 +154754,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Tenders, rate confirmations, proofs of delivery and status requests appear here as they arrive, with what the desk made of each one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Tennessee (TN)": {
@@ -159439,6 +159710,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "The message a customer receives with their invoice attached.": {
@@ -165032,6 +165312,24 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "This message could not be opened.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "This message had no text.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "This month": {
@@ -177565,11 +177863,13 @@
     ]
   },
   "Waiting on you": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "routes/inbox",
       "service/briefingservice"
     ]
   },
@@ -179101,12 +179401,13 @@
     ]
   },
   "What it is about": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/inbox"
     ]
   },
   "What it may look up and what it may change. Reads run as soon as the agent asks; a change waits at its own tier, never above the ceiling below.": {
@@ -179602,6 +179903,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "What this is": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "What this lane is called on a rate confirmation and in a trace": {
@@ -181591,13 +181901,14 @@
     ]
   },
   "Why": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
       "routes/desk",
+      "routes/inbox",
       "routes/org-structure",
       "routes/time-attendance",
       "routes/worker"
@@ -191726,6 +192037,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} confident": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} conflicting": {

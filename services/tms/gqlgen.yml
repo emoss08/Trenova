@@ -2041,6 +2041,57 @@ models:
   WatchtowerSeverity:
     model:
       - github.com/emoss08/trenova/internal/core/domain/watchtower.Severity
+  InboundMessage:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/inboundmessage.InboundMessage
+    fields:
+      classification:
+        resolver: true
+      matchedCustomerId:
+        resolver: true
+      matchedCarrierId:
+        resolver: true
+      matchedShipmentId:
+        resolver: true
+      runId:
+        resolver: true
+      reviewedBy:
+        resolver: true
+      reviewedAt:
+        resolver: true
+      needsReview:
+        resolver: true
+      mailbox:
+        resolver: true
+      attachments:
+        resolver: true
+  InboundAttachment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/inboundmessage.InboundAttachment
+    fields:
+      documentId:
+        resolver: true
+  InboundMailbox:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/inboundmessage.Mailbox
+  InboundMessageStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/inboundmessage.Status
+  InboundClassification:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/inboundmessage.Classification
+  InboundAttachmentKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/inboundmessage.AttachmentKind
+  InboundReviewPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/inboundmessage.ReviewPolicy
+  InboundMailboxStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/inboundmessage.MailboxStatus
+  InboundProvider:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/inboundmessage.Provider
   AgentDecision:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentDecision

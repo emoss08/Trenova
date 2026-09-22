@@ -145,6 +145,7 @@ var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 		"decisions.graphqls",
 		"watchtower.graphqls",
 		"briefing.graphqls",
+		"inboundmessage.graphqls",
 	},
 }
 

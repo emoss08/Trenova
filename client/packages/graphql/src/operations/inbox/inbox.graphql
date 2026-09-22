@@ -1,0 +1,110 @@
+fragment InboundAttachmentFields on InboundAttachment {
+  id
+  fileName
+  contentType
+  byteSize
+  kind
+  documentId
+  failureText
+  createdAt
+}
+
+fragment InboundMailboxFields on InboundMailbox {
+  id
+  name
+  address
+  provider
+  purpose
+  reviewPolicy
+  minConfidence
+  status
+}
+
+fragment InboundMessageListFields on InboundMessage {
+  id
+  mailboxId
+  fromAddress
+  fromName
+  subject
+  receivedAt
+  classification
+  confidence
+  status
+  matchedShipmentId
+  matchedCustomerId
+  matchReason
+  needsReview
+  failureText
+}
+
+fragment InboundMessageDetailFields on InboundMessage {
+  ...InboundMessageListFields
+  toAddresses
+  ccAddresses
+  textBody
+  spamScore
+  matchedCarrierId
+  runId
+  reviewedBy
+  reviewedAt
+  reviewNote
+  failureCode
+  version
+  createdAt
+  updatedAt
+  mailbox {
+    ...InboundMailboxFields
+  }
+  attachments {
+    ...InboundAttachmentFields
+  }
+}
+
+query InboundMessages($input: InboundMessagesInput!) {
+  inboundMessages(input: $input) {
+    edges {
+      cursor
+      node {
+        ...InboundMessageListFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query InboundMessage($id: ID!) {
+  inboundMessage(id: $id) {
+    ...InboundMessageDetailFields
+  }
+}
+
+query InboundMessageCounts {
+  inboundMessageCounts {
+    waiting
+    handled
+    ignored
+    quarantined
+    total
+  }
+}
+
+query InboundMailboxes {
+  inboundMailboxes {
+    ...InboundMailboxFields
+  }
+}
+
+mutation ReviewInboundMessage($id: ID!, $input: ReviewInboundMessageInput!) {
+  reviewInboundMessage(id: $id, input: $input) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation LinkInboundMessage($id: ID!, $input: LinkInboundMessageInput!) {
+  linkInboundMessage(id: $id, input: $input) {
+    ...InboundMessageDetailFields
+  }
+}

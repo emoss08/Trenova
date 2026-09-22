@@ -1,0 +1,197 @@
+"What a message turned out to be, once it was read."
+enum InboundClassification {
+  Tender
+  RateConfirmation
+  ProofOfDelivery
+  Invoice
+  StatusRequest
+  DetentionDispute
+  Other
+}
+
+"How far a message has got, and whether it is waiting on anybody."
+enum InboundMessageStatus {
+  Received
+  Processing
+  Classified
+  InReview
+  Actioned
+  Ignored
+  Quarantined
+}
+
+"What a file that came with a message turned out to be."
+enum InboundAttachmentKind {
+  Unknown
+  RateConfirmation
+  ProofOfDelivery
+  Invoice
+  BillOfLading
+  Other
+}
+
+"How much an address is trusted to act without a person."
+enum InboundReviewPolicy {
+  AlwaysReview
+  ReviewBelowConfidence
+  AutoHandle
+}
+
+"Whether an address is still listening."
+enum InboundMailboxStatus {
+  Active
+  Inactive
+}
+
+"Which provider posts this address's mail."
+enum InboundProvider {
+  Postmark
+  Resend
+}
+
+"""
+An address the system listens on.
+
+The webhook token is never returned. It is shown once, when the mailbox is
+created or its token is rotated, and stored only as a hash — so a leaked row
+is a row somebody can read, not an address they can post to.
+"""
+type InboundMailbox {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  address: String!
+  provider: InboundProvider!
+  purpose: String!
+  reviewPolicy: InboundReviewPolicy!
+  "The bar a reading must clear before the desk acts without asking."
+  minConfidence: Float!
+  status: InboundMailboxStatus!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"One file that came with a message, and what became of it."
+type InboundAttachment {
+  id: ID!
+  fileName: String!
+  contentType: String!
+  byteSize: Int!
+  kind: InboundAttachmentKind!
+  "The document this became, once the pipeline had read it."
+  documentId: ID
+  "Why this file was refused or could not be read; blank when it was."
+  failureText: String!
+  createdAt: Timestamp!
+}
+
+"""
+One email that arrived on a monitored address.
+
+It is kept whether or not anything could be made of it: a tender nobody
+matched is still something a person has to look at, and a message dropped
+because it did not classify is a message its sender believes was received.
+"""
+type InboundMessage {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  mailboxId: ID!
+  mailbox: InboundMailbox
+  fromAddress: String!
+  fromName: String!
+  toAddresses: [String!]!
+  ccAddresses: [String!]!
+  subject: String!
+  "The bounded plain text. The whole message is in object storage."
+  textBody: String!
+  receivedAt: Timestamp!
+  spamScore: Float!
+  classification: InboundClassification
+  "The reading's own confidence, between 0 and 1."
+  confidence: Float!
+  status: InboundMessageStatus!
+  matchedCustomerId: ID
+  matchedCarrierId: ID
+  matchedShipmentId: ID
+  "Why the message was matched to those records; a match nobody can check is one nobody will trust."
+  matchReason: String!
+  "The agent run that read it, where one did."
+  runId: ID
+  reviewedBy: ID
+  reviewedAt: Timestamp
+  reviewNote: String!
+  "Why the pipeline gave up, where it did."
+  failureCode: String!
+  failureText: String!
+  attachments: [InboundAttachment!]!
+  "Whether this message is waiting on a person."
+  needsReview: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type InboundMessageEdge {
+  node: InboundMessage!
+  cursor: String!
+}
+
+type InboundMessageConnection {
+  edges: [InboundMessageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input InboundMessagesInput {
+  first: Int = 25
+  after: String
+  "Only these statuses; empty is every status."
+  statuses: [InboundMessageStatus!]
+  classification: InboundClassification
+  mailboxId: ID
+  shipmentId: ID
+  "Only what arrived at or after this instant."
+  since: Timestamp
+}
+
+"The inbox in numbers, for the lane counts."
+type InboundMessageCounts {
+  waiting: Int!
+  handled: Int!
+  ignored: Int!
+  quarantined: Int!
+  total: Int!
+}
+
+input ReviewInboundMessageInput {
+  "Where the message ends up. Only Actioned and Ignored are a person's to choose."
+  status: InboundMessageStatus!
+  note: String
+}
+
+input LinkInboundMessageInput {
+  shipmentId: ID
+  customerId: ID
+  carrierId: ID
+  "Why this is the right record. Stored, because a link nobody can check is one nobody will trust."
+  reason: String!
+}
+
+extend type Query {
+  "Mail that arrived on a monitored address, newest first."
+  inboundMessages(input: InboundMessagesInput!): InboundMessageConnection!
+  inboundMessage(id: ID!): InboundMessage!
+  inboundMessageCounts: InboundMessageCounts!
+  "The addresses this organization listens on."
+  inboundMailboxes: [InboundMailbox!]!
+}
+
+extend type Mutation {
+  "Records a person's decision about a message and takes it off the feed."
+  reviewInboundMessage(id: ID!, input: ReviewInboundMessageInput!): InboundMessage!
+  "Says what a message is about, by hand, when the reading did not work it out."
+  linkInboundMessage(id: ID!, input: LinkInboundMessageInput!): InboundMessage!
+}
