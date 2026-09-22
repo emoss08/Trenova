@@ -10821,6 +10821,15 @@
       "routes/shipment"
     ]
   },
+  "Addresses the system listens on, and how much they are trusted to act alone": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Adds a line to the driver's open settlement (an off-cycle draft is created if none exists).": {
     "sites": 1,
     "scope": [
@@ -55596,6 +55605,15 @@
       "routes/customer"
     ]
   },
+  "Email that arrived on a monitored address, and what was made of it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Email the customer": {
     "sites": 2,
     "scope": [
@@ -83744,6 +83762,15 @@
     ],
     "areas": [
       "routes/commodity"
+    ]
+  },
+  "Link a message to a record, reply to it, or mark it handled": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Link cannot exceed 500 characters": {
@@ -176111,6 +176138,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "View inbound messages and their attachments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "View invoice disputes": {

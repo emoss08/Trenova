@@ -43,7 +43,14 @@ type Mailbox struct {
 	Provider       Provider `json:"provider"       bun:"provider,type:VARCHAR(20),notnull"`
 	// TokenHash is the webhook token as stored. The token itself is shown once,
 	// when the mailbox is created or rotated, and never again.
-	TokenHash     string        `json:"-"             bun:"token_hash,type:VARCHAR(128),notnull"`
+	TokenHash string `json:"-" bun:"token_hash,type:VARCHAR(128),notnull"`
+	// SigningSecret is the provider endpoint's own secret, encrypted at rest.
+	//
+	// It belongs to the mailbox rather than to the outbound email integration
+	// because they are different endpoints with separately rotated secrets, and
+	// borrowing one for the other would mean rotating outbound mail silently
+	// stopped inbound mail from being verified.
+	SigningSecret string        `json:"-"             bun:"signing_secret,type:TEXT,nullzero"`
 	Purpose       string        `json:"purpose"       bun:"purpose,type:VARCHAR(255),nullzero"`
 	ReviewPolicy  ReviewPolicy  `json:"reviewPolicy"  bun:"review_policy,type:VARCHAR(30),notnull"`
 	MinConfidence float64       `json:"minConfidence" bun:"min_confidence,type:NUMERIC(4,3),notnull"`

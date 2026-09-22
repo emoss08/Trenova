@@ -637,6 +637,7 @@ var MailboxColumns = struct {
 	Address        Column // "address" → qualified: "imbx.address"
 	Provider       Column // "provider" → qualified: "imbx.provider"
 	TokenHash      Column // "token_hash" → qualified: "imbx.token_hash"
+	SigningSecret  Column // "signing_secret" → qualified: "imbx.signing_secret"
 	Purpose        Column // "purpose" → qualified: "imbx.purpose"
 	ReviewPolicy   Column // "review_policy" → qualified: "imbx.review_policy"
 	MinConfidence  Column // "min_confidence" → qualified: "imbx.min_confidence"
@@ -652,6 +653,7 @@ var MailboxColumns = struct {
 	Address:        NewColumn("address", "imbx"),
 	Provider:       NewColumn("provider", "imbx"),
 	TokenHash:      NewColumn("token_hash", "imbx"),
+	SigningSecret:  NewColumn("signing_secret", "imbx"),
 	Purpose:        NewColumn("purpose", "imbx"),
 	ReviewPolicy:   NewColumn("review_policy", "imbx"),
 	MinConfidence:  NewColumn("min_confidence", "imbx"),
@@ -691,6 +693,7 @@ var MailboxInsertableColumns = []string{
 	"address",
 	"provider",
 	"token_hash",
+	"signing_secret",
 	"purpose",
 	"review_policy",
 	"min_confidence",
