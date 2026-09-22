@@ -697,6 +697,7 @@ func protectedProductRoutePrefixes() []protectedProductRoutePrefix {
 		{prefix: "/api/v1/shipment-types/", featureKey: FeatureDispatch},
 		{prefix: "/api/v1/shipments/", featureKey: FeatureDispatch},
 		{prefix: "/api/v1/stored-mileages/", featureKey: FeatureDispatch},
+		{prefix: "/api/v1/tables/", featureKey: FeatureAgentAutomation},
 		{prefix: "/api/v1/tca/", featureKey: FeatureTableChangeAlerts},
 		{prefix: "/api/v1/tenders/", featureKey: FeatureDispatch},
 		{prefix: "/api/v1/tractors/", featureKey: FeatureFleetMaintenance},

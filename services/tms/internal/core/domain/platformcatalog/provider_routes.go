@@ -1081,6 +1081,12 @@ func agentAutomationRouteRefs() []RouteRef {
 			"/api/v1/insights/",
 			"/api/v1/insights/browse/",
 			"/api/v1/insights/:insightID/",
+			// Narrowing a table by describing what you want is a model writing
+			// a filter, so it is sold with the rest of the agent work rather
+			// than with the grid it narrows. The catalogue is listed here too:
+			// it says which tables can be asked, which is only meaningful to an
+			// organization that can ask them.
+			"/api/v1/tables/",
 		),
 		routeRefsFor("POST",
 			"/api/v1/agent-exceptions/:exceptionID/resolve/",
@@ -1097,6 +1103,7 @@ func agentAutomationRouteRefs() []RouteRef {
 			"/api/v1/assistant/threads/:threadID/messages/",
 			"/api/v1/assistant/threads/:threadID/turns/",
 			"/api/v1/assistant/turns/:turnID/stop/",
+			"/api/v1/tables/:resource/compose/",
 		),
 		routeRefsFor("PATCH",
 			"/api/v1/assistant/threads/:threadID/",
