@@ -27,26 +27,29 @@ type Params struct {
 
 	Service              serviceports.AssistantService
 	Turns                *assistantturnservice.Service
+	Workflows            serviceports.WorkflowStarter
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
 }
 
 type Handler struct {
-	service serviceports.AssistantService
-	turns   *assistantturnservice.Service
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
-	logger  *zap.Logger
+	service   serviceports.AssistantService
+	turns     *assistantturnservice.Service
+	workflows serviceports.WorkflowStarter
+	eh        *helpers.ErrorHandler
+	pm        *middleware.PermissionMiddleware
+	logger    *zap.Logger
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		turns:   p.Turns,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
-		logger:  p.Logger.Named("assistanthandler"),
+		service:   p.Service,
+		turns:     p.Turns,
+		workflows: p.Workflows,
+		eh:        p.ErrorHandler,
+		pm:        p.PermissionMiddleware,
+		logger:    p.Logger.Named("assistanthandler"),
 	}
 }
 
@@ -117,6 +120,21 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/turns/:turnID/stream/",
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.streamTurn,
+	)
+	// Asking a question durably: the worker answers it, this returns the turn
+	// to watch. Creating a turn is creating a message, so it is gated the same
+	// way as sending one.
+	api.POST(
+		"/threads/:threadID/turns/",
+		h.pm.RequirePermission(resource, permission.OpCreate),
+		h.startTurn,
+	)
+	// Stopping a reply is arranging one's own conversation, like naming or
+	// deleting it, and every turn here is read under the caller's own user id.
+	api.POST(
+		"/turns/:turnID/stop/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.stopTurn,
 	)
 	// Reading a conversation's proposals needs no more than reading the
 	// conversation: they are part of what was said. Acting on one goes through the

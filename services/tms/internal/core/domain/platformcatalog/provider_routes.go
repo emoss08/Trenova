@@ -1094,6 +1094,8 @@ func agentAutomationRouteRefs() []RouteRef {
 			"/api/v1/assistant/ask/",
 			"/api/v1/assistant/threads/",
 			"/api/v1/assistant/threads/:threadID/messages/",
+			"/api/v1/assistant/threads/:threadID/turns/",
+			"/api/v1/assistant/turns/:turnID/stop/",
 		),
 		routeRefsFor("PATCH",
 			"/api/v1/assistant/threads/:threadID/",

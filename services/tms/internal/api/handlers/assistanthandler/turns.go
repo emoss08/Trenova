@@ -109,3 +109,79 @@ func cursorFrom(c *gin.Context) string {
 
 	return c.Query("after")
 }
+
+// startTurnRequest is a question asked of a conversation, answered by a worker.
+type startTurnRequest struct {
+	sendMessageRequest
+}
+
+// startTurn hands a question to a worker and returns immediately.
+//
+// The reply is not on this response. It arrives on the turn's stream, which
+// the caller attaches to with the id returned here — so the answer survives
+// this request ending, whether that is a deploy, a dropped connection or
+// somebody closing the tab.
+func (h *Handler) startTurn(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	threadID, err := pulid.Parse(c.Param("threadID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var body startTurnRequest
+	if err = c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	turn, err := h.turns.StartDurable(
+		c.Request.Context(),
+		assistantturnservice.StartRequest{
+			ThreadID:   threadID,
+			UserID:     authCtx.UserID,
+			TenantInfo: tenantFromAuthContext(authCtx),
+		},
+		h.turnStarter(c, threadID, authCtx, body),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{
+		"turnId":    turn.ID,
+		"threadId":  threadID,
+		"streamUrl": "/api/v1/assistant/turns/" + turn.ID.String() + "/stream/",
+		"status":    turn.Status,
+	})
+}
+
+// stopTurn ends a reply nobody is waiting for any more.
+func (h *Handler) stopTurn(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	turnID, err := pulid.Parse(c.Param("turnID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	turn, err := h.turns.Get(c.Request.Context(), repositories.GetAssistantTurnRequest{
+		ID:         turnID,
+		TenantInfo: tenantFromAuthContext(authCtx),
+		UserID:     authCtx.UserID,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if err = h.turns.Stop(c.Request.Context(), turn, h.cancelTurn(c)); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusAccepted)
+}

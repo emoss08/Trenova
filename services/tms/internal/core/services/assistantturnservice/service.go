@@ -182,3 +182,71 @@ func streamRef(turn *conversation.AssistantTurn) serviceports.TurnStreamRef {
 }
 
 var errRelayStopped = fmt.Errorf("relay stopped")
+
+// StartDurable records a turn and hands it to a worker.
+//
+// The reply is produced somewhere the request cannot reach, which is the whole
+// point: an API restart no longer ends every conversation in flight, and the
+// reader follows the turn's stream rather than holding a connection open for
+// the length of an answer.
+func (s *Service) StartDurable(
+	ctx context.Context,
+	req StartRequest,
+	start func(turn *conversation.AssistantTurn) (string, error),
+) (*conversation.AssistantTurn, error) {
+	turn, err := s.Start(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	workflowID, err := start(turn)
+	if err != nil {
+		// The record must not outlive the failure to start. A turn left
+		// Running with nothing running it would hold the conversation's one
+		// live slot until it expired, and refuse every later question.
+		s.Complete(ctx, turn, conversation.AssistantTurnStatusFailed, err)
+
+		return nil, err
+	}
+
+	if mErr := s.turns.MarkWorkflow(ctx, turn.ID, req.TenantInfo, workflowID); mErr != nil {
+		s.l.Error("could not record the workflow carrying a turn",
+			zap.String("turn", turn.ID.String()),
+			zap.Error(mErr),
+		)
+	}
+	turn.WorkflowID = workflowID
+
+	return turn, nil
+}
+
+// Stop ends a turn somebody is no longer waiting for.
+//
+// Stopping used to be a property of the connection: aborting the request
+// cancelled the context the loop ran on, and that was what stopped the model.
+// With the work on a worker, closing a reader stops nothing — the turn runs
+// on, and bills for it. So stopping is now something asked for explicitly.
+func (s *Service) Stop(
+	ctx context.Context,
+	turn *conversation.AssistantTurn,
+	cancel func(workflowID string) error,
+) error {
+	if turn.Status.Terminal() {
+		// Already over. Saying so beats reporting a failure for something the
+		// person got what they wanted from.
+		return nil
+	}
+
+	if turn.WorkflowID == "" {
+		// A turn still running in the request that asked for it. Its reader
+		// aborting is what stops it, exactly as before, and there is no
+		// execution to cancel.
+		return nil
+	}
+
+	if err := cancel(turn.WorkflowID); err != nil {
+		return fmt.Errorf("stop this reply: %w", err)
+	}
+
+	return nil
+}
