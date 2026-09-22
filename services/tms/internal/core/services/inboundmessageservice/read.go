@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -246,14 +247,8 @@ func (s *Service) Link(
 	ctx context.Context,
 	req LinkRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	reason := strings.TrimSpace(req.Reason)
-	if reason == "" {
-		return nil, errortypes.NewValidationError("reason", errortypes.ErrRequired,
-			"Say why this is the right record")
-	}
-	if req.ShipmentID.IsNil() && req.CustomerID.IsNil() && req.CarrierID.IsNil() {
-		return nil, errortypes.NewValidationError("shipmentId", errortypes.ErrRequired,
-			"Name at least one record this message is about")
+	if err := s.CheckLink(ctx, req); err != nil {
+		return nil, err
 	}
 
 	message, err := s.messageRepo.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
@@ -267,7 +262,7 @@ func (s *Service) Link(
 	message.MatchedShipmentID = req.ShipmentID
 	message.MatchedCustomerID = req.CustomerID
 	message.MatchedCarrierID = req.CarrierID
-	message.MatchReason = reason
+	message.MatchReason = strings.TrimSpace(req.Reason)
 	message.ReviewedBy = req.ReviewerID
 
 	updated, err := s.messageRepo.Update(ctx, message)
@@ -281,4 +276,79 @@ func (s *Service) Link(
 	s.project(ctx, updated)
 
 	return updated, nil
+}
+
+// CheckLink says whether a link would be accepted, without making it. A desk
+// asks before proposing, so a link to a record that is not there is refused
+// while the call can still be fixed rather than after a person approved it.
+func (s *Service) CheckLink(ctx context.Context, req LinkRequest) error {
+	reason := strings.TrimSpace(req.Reason)
+	if reason == "" {
+		return errortypes.NewValidationError("reason", errortypes.ErrRequired,
+			"Say why this is the right record")
+	}
+	if utf8.RuneCountInString(reason) > inboundmessage.MaxMatchReasonLength {
+		return errortypes.NewValidationError("reason", errortypes.ErrInvalid,
+			fmt.Sprintf("A reason may be at most %d characters",
+				inboundmessage.MaxMatchReasonLength))
+	}
+	if req.ShipmentID.IsNil() && req.CustomerID.IsNil() && req.CarrierID.IsNil() {
+		return errortypes.NewValidationError("shipmentId", errortypes.ErrRequired,
+			"Name at least one record this message is about")
+	}
+
+	return s.verifyLinkTargets(ctx, req)
+}
+
+// verifyLinkTargets confirms each record a link names exists in the tenant.
+//
+// The columns carry no foreign key — a message can outlive the load it was
+// about — so this is the only thing standing between a link and an id from
+// another tenant, or one that was never real. A link that cannot be checked is
+// refused rather than stored on trust.
+func (s *Service) verifyLinkTargets(ctx context.Context, req LinkRequest) error {
+	checks := []struct {
+		field  string
+		id     pulid.ID
+		label  string
+		exists func(context.Context, pagination.TenantInfo, pulid.ID) (bool, error)
+	}{
+		{field: "shipmentId", id: req.ShipmentID, label: "shipment"},
+		{field: "customerId", id: req.CustomerID, label: "customer"},
+		{field: "carrierId", id: req.CarrierID, label: "carrier"},
+	}
+	if s.shipments != nil {
+		checks[0].exists = s.shipments.ShipmentExists
+	}
+	if s.parties != nil {
+		checks[1].exists = s.parties.CustomerExists
+		checks[2].exists = s.parties.CarrierExists
+	}
+
+	multiErr := errortypes.NewMultiError()
+	for _, check := range checks {
+		if check.id.IsNil() {
+			continue
+		}
+		if check.exists == nil {
+			return errortypes.NewBusinessError(
+				"Linked records cannot be verified on this installation",
+			)
+		}
+
+		found, err := check.exists(ctx, req.TenantInfo, check.id)
+		if err != nil {
+			return err
+		}
+		if !found {
+			multiErr.Add(check.field, errortypes.ErrInvalid,
+				fmt.Sprintf("No %s with that id exists", check.label))
+		}
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
 }

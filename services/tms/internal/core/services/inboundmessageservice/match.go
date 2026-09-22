@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -31,31 +32,12 @@ var referenceToken = regexp.MustCompile(`\b[A-Za-z0-9]+(?:[-_/][A-Za-z0-9]+)*\b`
 // are not reference numbers; "88213" and "SEED-SHP-001" are.
 var hasDigit = regexp.MustCompile(`[0-9]`)
 
-// ShipmentFinder is the sliver of the shipment repository matching needs.
-//
-// It is a port rather than the repository itself so the matcher can be tested
-// against the reference-extraction rules, which is where the behaviour lives.
-type ShipmentFinder interface {
-	FindByReference(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		reference string,
-	) (pulid.ID, bool, error)
-}
-
-// PartyFinder resolves a sender's address to whoever it belongs to.
-type PartyFinder interface {
-	FindCustomerByEmail(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		address string,
-	) (pulid.ID, bool, error)
-	FindCarrierByEmail(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		address string,
-	) (pulid.ID, bool, error)
-}
+// ShipmentFinder and PartyFinder are the lookups matching and linking need.
+// They are the repository ports under the names this package reads them by.
+type (
+	ShipmentFinder = repositories.InboundShipmentFinder
+	PartyFinder    = repositories.InboundPartyFinder
+)
 
 // Match is what the message turned out to be about, and why.
 //

@@ -2,6 +2,7 @@ package inboundmessage
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -16,6 +17,9 @@ import (
 
 const (
 	maxSubjectLength = 500
+	// MaxMatchReasonLength is the match_reason column's width, checked before
+	// the write so a long reason is a field error rather than a database error.
+	MaxMatchReasonLength = 500
 	// MaxBodyBytes is how much of a message body is kept in the row.
 	//
 	// A quoted thread can run to megabytes, and the classifier reads the top
@@ -99,6 +103,9 @@ func (m *InboundMessage) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&m.FromAddress, validation.Required.Error("Sender is required")),
 		validation.Field(&m.Subject, validation.Length(0, maxSubjectLength)),
+		validation.Field(&m.MatchReason, validation.Length(0, MaxMatchReasonLength).Error(
+			fmt.Sprintf("A match reason may be at most %d characters", MaxMatchReasonLength),
+		)),
 		validation.Field(&m.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[Status]("Status is not a known one"),

@@ -15,8 +15,15 @@ import (
 
 type stubShipments struct {
 	byReference map[string]pulid.ID
+	existing    map[pulid.ID]bool
 	err         error
 	asked       []string
+}
+
+func (s *stubShipments) ShipmentExists(
+	_ context.Context, _ pagination.TenantInfo, id pulid.ID,
+) (bool, error) {
+	return s.existing[id], s.err
 }
 
 func (s *stubShipments) FindByReference(
@@ -34,7 +41,20 @@ func (s *stubShipments) FindByReference(
 type stubParties struct {
 	customers map[string]pulid.ID
 	carriers  map[string]pulid.ID
+	existing  map[pulid.ID]bool
 	err       error
+}
+
+func (s *stubParties) CustomerExists(
+	_ context.Context, _ pagination.TenantInfo, id pulid.ID,
+) (bool, error) {
+	return s.existing[id], s.err
+}
+
+func (s *stubParties) CarrierExists(
+	_ context.Context, _ pagination.TenantInfo, id pulid.ID,
+) (bool, error) {
+	return s.existing[id], s.err
 }
 
 func (s *stubParties) FindCustomerByEmail(

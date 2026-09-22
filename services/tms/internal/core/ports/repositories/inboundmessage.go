@@ -160,3 +160,33 @@ type InboundMessageRepository interface {
 		req DeleteInboundMessagesBeforeRequest,
 	) (int64, error)
 }
+
+// InboundShipmentFinder resolves what a message names to a shipment.
+//
+// A reference that names two shipments is not a match: a message about two
+// loads is one a person should read, not one the finder should pick for.
+type InboundShipmentFinder interface {
+	FindByReference(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		reference string,
+	) (pulid.ID, bool, error)
+	ShipmentExists(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) (bool, error)
+}
+
+// InboundPartyFinder resolves a sender's address to the customer or carrier it
+// belongs to, and confirms a record a person or desk links by hand is real.
+type InboundPartyFinder interface {
+	FindCustomerByEmail(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		address string,
+	) (pulid.ID, bool, error)
+	FindCarrierByEmail(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		address string,
+	) (pulid.ID, bool, error)
+	CustomerExists(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) (bool, error)
+	CarrierExists(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) (bool, error)
+}
