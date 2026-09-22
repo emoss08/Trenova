@@ -4,6 +4,7 @@ import { AccountingReportService } from "./accounting-report";
 import { AccountTypeService } from "./account-type";
 import { AIProviderService } from "./ai-provider";
 import { AgentDefinitionService, AssistantService } from "./assistant";
+import { TableQueryService } from "./table-query";
 import { AgentRunService } from "@/services/agent-run";
 import { InsightService } from "./insight";
 export type { BrowseInsightsParams } from "./insight";
@@ -162,6 +163,7 @@ class APIService {
   public apiKeyService: APIKeyService;
   public aiProviderService: AIProviderService;
   public assistantService: AssistantService;
+  public tableQueryService: TableQueryService;
   public insightService: InsightService;
   public agentDefinitionService: AgentDefinitionService;
   public agentRunService: AgentRunService;
@@ -255,6 +257,7 @@ class APIService {
     this.apiKeyService = new APIKeyService();
     this.aiProviderService = new AIProviderService();
     this.assistantService = new AssistantService();
+    this.tableQueryService = new TableQueryService();
     this.insightService = new InsightService();
     this.agentDefinitionService = new AgentDefinitionService();
     this.agentRunService = new AgentRunService();

@@ -17464,7 +17464,7 @@
     ]
   },
   "Ask": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -17554,6 +17554,15 @@
       "routes/desk"
     ]
   },
+  "Ask for what you want": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Ask on the left and what comes back opens on this side, whole: a table you can sort and download, a message you can edit before it sends, a plan whose steps tick off as they run.": {
     "sites": 1,
     "scope": [
@@ -17561,6 +17570,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Ask something else": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Ask the assistant": {
@@ -31374,7 +31392,7 @@
     ]
   },
   "Clear": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -100286,6 +100304,15 @@
       "routes/home"
     ]
   },
+  "Nothing applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Nothing applied — the full amount is unapplied cash": {
     "sites": 1,
     "scope": [
@@ -136498,6 +136525,15 @@
       "routes/formula-template"
     ]
   },
+  "Say what to narrow the table to.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/tablequeryservice"
+    ]
+  },
   "Say what was done about it — coaching, a repair, a dismissed citation. Points already recorded stay on the scorecard until they roll off.": {
     "sites": 1,
     "scope": [
@@ -160371,6 +160407,15 @@
       "routes/worker"
     ]
   },
+  "The question could not be turned into filters. Try wording it differently.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/tablequeryservice"
+    ]
+  },
   "The quoted price and currency the order is billed in": {
     "sites": 1,
     "scope": [
@@ -165175,6 +165220,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "This request has no actor.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/tablequeryservice"
     ]
   },
   "This resolution needs the adjustment that settled it": {
@@ -178260,6 +178314,15 @@
       "domain/homelayout"
     ]
   },
+  "What could not be": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "What do the selected rows have in common?": {
     "sites": 1,
     "scope": [
@@ -179069,6 +179132,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "What was applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "What was bought and what it cost. The total follows quantity × price until you change it.": {
@@ -184960,6 +185032,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "current_view": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/tablequeryservice"
+    ]
+  },
   "d avg": {
     "sites": 1,
     "scope": [
@@ -187081,6 +187162,15 @@
       "routes/detention-desk"
     ]
   },
+  "entity": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/tablequeryservice"
+    ]
+  },
   "every day": {
     "sites": 2,
     "scope": [
@@ -188133,6 +188223,15 @@
     ],
     "areas": [
       "service/realtimeservice"
+    ]
+  },
+  "question": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/tablequeryservice"
     ]
   },
   "qwen3:32b": {
@@ -189768,6 +189867,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0, plural, one {# filter} other {# filters}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# fixture} other {# fixtures}}": {
@@ -192358,6 +192466,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} missed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} missing": {
