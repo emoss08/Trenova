@@ -298,7 +298,12 @@ function DocumentChips({ item }: { item: BillingTransferRunItem }) {
         <div className="flex flex-wrap items-center gap-1">
           <span className="text-muted-foreground text-xs">{t("Missing documents:")}</span>
           {item.missingRequirements.map((requirement) => (
-            <Badge key={requirement.documentTypeId} variant="outline" className="max-h-5 text-2xs">
+            <Badge
+              key={requirement.documentTypeId}
+              variant="neutral"
+              appearance="outline"
+              className="max-h-5 text-2xs"
+            >
               {requirement.documentTypeName}
             </Badge>
           ))}

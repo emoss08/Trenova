@@ -18,6 +18,7 @@ enum AgentSubjectType {
   Worker
   CarrierIntelEvent
   EDIInboundFile
+  InboundMessage
 }
 
 enum AgentRunTrigger {

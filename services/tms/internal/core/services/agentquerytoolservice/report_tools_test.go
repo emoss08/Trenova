@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,10 +33,19 @@ type fakeReporting struct {
 	preview    *reporting.PreviewResult
 	previewErr error
 
-	submitted *reporting.RunReportRequest
-	fetched   *reporting.GetRunRequest
-	listed    *reporting.ListDefinitionsRequest
-	previewed *reporting.PreviewRequest
+	// runs is what ListRuns answers, and rows maps a run id to the stored rows
+	// a comparison reads back. A run absent from rows is a run whose rows were
+	// never stored, which is a state the tool has to report rather than crash
+	// on.
+	runs    []*report.ReportRun
+	rows    map[pulid.ID]*reportrows.Envelope
+	rowsErr map[pulid.ID]error
+
+	submitted  *reporting.RunReportRequest
+	fetched    *reporting.GetRunRequest
+	listed     *reporting.ListDefinitionsRequest
+	listedRuns *reporting.ListRunsRequest
+	previewed  *reporting.PreviewRequest
 }
 
 func (f *fakeReporting) ListCanned() []*canned.Entry { return f.entries }
@@ -68,11 +78,47 @@ func (f *fakeReporting) GetRun(
 ) (*report.ReportRun, error) {
 	f.fetched = req
 	f.polls++
+
+	// A test that seeded several runs is asking about one of them by id; the
+	// single-run tests never seed runs and keep the old behaviour.
+	for _, run := range f.runs {
+		if run.ID == req.RunID {
+			return run, nil
+		}
+	}
+
 	if f.settled != nil {
 		return f.settled, nil
 	}
 
 	return f.run, nil
+}
+
+func (f *fakeReporting) ListRuns(
+	_ context.Context,
+	req *reporting.ListRunsRequest,
+) ([]*report.ReportRun, error) {
+	f.listedRuns = req
+
+	return f.runs, nil
+}
+
+func (f *fakeReporting) ReadRunRows(
+	_ context.Context,
+	req *reporting.GetRunRequest,
+) (*reportrows.Envelope, error) {
+	if err, failed := f.rowsErr[req.RunID]; failed {
+		return nil, err
+	}
+	rows, stored := f.rows[req.RunID]
+	if !stored {
+		return nil, errortypes.NewBusinessError(
+			"This report run was generated before its rows were stored, " +
+				"so it cannot be compared",
+		)
+	}
+
+	return rows, nil
 }
 
 func (f *fakeReporting) GetDefinition(
@@ -226,6 +272,8 @@ func reportingTools(
 		newListReportDatasetsTool(permissions),
 		newDescribeReportDatasetTool(permissions),
 		newPreviewReportTool(service),
+		newListReportRunsTool(service),
+		newCompareReportRunsTool(service),
 	} {
 		tools[tool.Name()] = tool
 	}

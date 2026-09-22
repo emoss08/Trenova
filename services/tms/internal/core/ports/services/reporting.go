@@ -155,7 +155,11 @@ func (d *ReportDigest) IsEmpty() bool {
 }
 
 type ReportCacheEntry struct {
-	ArtifactKey       string        `json:"artifactKey"`
+	ArtifactKey string `json:"artifactKey"`
+	// RowsKey rides in the cache entry because a cache hit skips rendering
+	// entirely: without it, every reused result would lose its sidecar and
+	// become the one run in a pair that cannot be compared.
+	RowsKey           string        `json:"rowsKey,omitempty"`
 	RowCount          int64         `json:"rowCount"`
 	ByteSize          int64         `json:"byteSize"`
 	Truncated         bool          `json:"truncated"`

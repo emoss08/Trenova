@@ -48,6 +48,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
+	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
@@ -3508,6 +3509,42 @@ type ImportSourcedCarrierInput struct {
 	EnrollMonitoring *bool   `json:"enrollMonitoring,omitempty"`
 }
 
+type InboundMailboxInput struct {
+	Name         string                      `json:"name"`
+	Address      string                      `json:"address"`
+	Provider     inboundmessage.Provider     `json:"provider"`
+	Purpose      *string                     `json:"purpose,omitempty"`
+	ReviewPolicy inboundmessage.ReviewPolicy `json:"reviewPolicy"`
+	// The bar a reading must clear to be acted on alone; read only by ReviewBelowConfidence.
+	MinConfidence float64                      `json:"minConfidence"`
+	Status        inboundmessage.MailboxStatus `json:"status"`
+}
+
+type InboundMessageConnection struct {
+	Edges      []*InboundMessageEdge `json:"edges"`
+	PageInfo   *PageInfo             `json:"pageInfo"`
+	TotalCount *int                  `json:"totalCount,omitempty"`
+}
+
+type InboundMessageEdge struct {
+	Node   *inboundmessage.InboundMessage `json:"node"`
+	Cursor string                         `json:"cursor"`
+}
+
+type InboundMessagesInput struct {
+	First *int    `json:"first,omitempty"`
+	After *string `json:"after,omitempty"`
+	// Only these statuses; empty is every status.
+	Statuses       []inboundmessage.Status        `json:"statuses,omitempty"`
+	Classification *inboundmessage.Classification `json:"classification,omitempty"`
+	MailboxID      *string                        `json:"mailboxId,omitempty"`
+	ShipmentID     *string                        `json:"shipmentId,omitempty"`
+	// Only what arrived at or after this instant.
+	Since *int `json:"since,omitempty"`
+	// Words from the sender's name or address, or from the subject.
+	Query *string `json:"query,omitempty"`
+}
+
 type InviteWorkerToPortalInput struct {
 	WorkerID string `json:"workerId"`
 	// Overrides the email on the worker record when provided.
@@ -3635,6 +3672,14 @@ type LateChargeAssessmentInput struct {
 	CustomerIds []string `json:"customerIds,omitempty"`
 	// Defaults to now.
 	AsOfDate *int `json:"asOfDate,omitempty"`
+}
+
+type LinkInboundMessageInput struct {
+	ShipmentID *string `json:"shipmentId,omitempty"`
+	CustomerID *string `json:"customerId,omitempty"`
+	CarrierID  *string `json:"carrierId,omitempty"`
+	// Why this is the right record. Stored, because a link nobody can check is one nobody will trust.
+	Reason string `json:"reason"`
 }
 
 type ListBriefingsInput struct {
@@ -5069,6 +5114,12 @@ type ReviewGoalInput struct {
 	Title  string                   `json:"title"`
 	DueAt  *int                     `json:"dueAt,omitempty"`
 	Status *worker.ReviewGoalStatus `json:"status,omitempty"`
+}
+
+type ReviewInboundMessageInput struct {
+	// Where the message ends up. Only Actioned and Ignored are a person's to choose.
+	Status inboundmessage.Status `json:"status"`
+	Note   *string               `json:"note,omitempty"`
 }
 
 type ReviewItemInput struct {

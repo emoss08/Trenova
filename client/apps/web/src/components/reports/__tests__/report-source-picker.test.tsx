@@ -199,7 +199,7 @@ describe("ReportSourcePicker", () => {
       "aria-checked",
       "true",
     );
-    expect(await screen.findByRole("option", { name: /AR Aging/ })).toHaveAttribute(
+    expect(await screen.findByRole("option", { name: /AR aging/ })).toHaveAttribute(
       "aria-selected",
       "true",
     );
@@ -213,7 +213,7 @@ describe("ReportSourcePicker", () => {
     await user.type(screen.getByLabelText("Search the report gallery"), "receivables");
 
     await waitFor(() => expect(screen.queryByRole("option", { name: /On-Time/ })).toBeNull());
-    expect(screen.getByRole("option", { name: /AR Aging/ })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /AR aging/ })).toBeInTheDocument();
   });
 
   it("says nothing matches rather than showing an empty box", async () => {

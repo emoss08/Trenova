@@ -288,6 +288,13 @@ func (r *fakeProposalRepo) ListByRun(
 	return nil, nil
 }
 
+func (r *fakeProposalRepo) ListByIDs(
+	context.Context,
+	repositories.ListAgentProposalsByIDsRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
 func (r *fakeProposalRepo) ListByPlan(
 	context.Context,
 	repositories.ListAgentProposalsByPlanRequest,

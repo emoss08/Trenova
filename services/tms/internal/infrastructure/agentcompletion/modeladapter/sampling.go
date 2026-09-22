@@ -30,7 +30,14 @@ type Sampling struct {
 func SamplingForTask(task aiprovider.Task) Sampling {
 	temperature := 0.3
 	switch task {
-	case aiprovider.TaskScopeClassification, aiprovider.TaskDocumentClassification:
+	case aiprovider.TaskScopeClassification,
+		aiprovider.TaskDocumentClassification,
+		aiprovider.TaskInboundClassification,
+		// Compiling a sentence into a table's filters is the same kind of work:
+		// the answer is a structure checked against a catalogue afterwards, and
+		// the same question giving two different sets of filters is a defect
+		// nobody can reproduce.
+		aiprovider.TaskQueryCompose:
 		// A yes-or-no with a category. There is nothing to be imaginative
 		// about, and a reclassification that changes between two identical
 		// questions is a bug a person cannot reproduce.

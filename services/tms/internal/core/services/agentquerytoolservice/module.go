@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/emailservice"
+	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
 	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
@@ -21,6 +22,9 @@ var Module = fx.Module("agent-query-tool-service",
 		fx.Annotate(newSearchWorkerTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newListExpiringCredentialsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newRecallMemoryTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(newComposeTableViewTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(newExplainRateTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(newListDashboardsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newListWorkersTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newListShipmentsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(newListTractorsTool, fx.ResultTags(`group:"agent_query_tools"`)),
@@ -54,6 +58,8 @@ var Module = fx.Module("agent-query-tool-service",
 		fx.Annotate(provideListReportsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideRunReportTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideGetReportRunTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideListReportRunsTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideCompareReportRunsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideDescribeReportTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideListReportDatasetsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideDescribeReportDatasetTool, fx.ResultTags(`group:"agent_query_tools"`)),
@@ -78,6 +84,8 @@ var Module = fx.Module("agent-query-tool-service",
 		fx.Annotate(provideListBankReceiptExceptionsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideGetBankReceiptTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideListCustomerPaymentsTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideGetInboundMessageTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideListInboundMessagesTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		NewRegistry,
 	),
 )
@@ -99,6 +107,14 @@ func provideRunReportTool(
 
 func provideGetReportRunTool(reports *reporting.Service) services.AgentQueryTool {
 	return newGetReportRunTool(reports)
+}
+
+func provideListReportRunsTool(reports *reporting.Service) services.AgentQueryTool {
+	return newListReportRunsTool(reports)
+}
+
+func provideCompareReportRunsTool(reports *reporting.Service) services.AgentQueryTool {
+	return newCompareReportRunsTool(reports)
 }
 
 func provideDescribeReportTool(reports *reporting.Service) services.AgentQueryTool {
@@ -242,4 +258,16 @@ func provideGetWorkerTool(
 	permissions services.PermissionEngine,
 ) services.AgentQueryTool {
 	return newGetWorkerTool(repo, permissions)
+}
+
+func provideGetInboundMessageTool(
+	messages *inboundmessageservice.Service,
+) services.AgentQueryTool {
+	return newGetInboundMessageTool(messages)
+}
+
+func provideListInboundMessagesTool(
+	messages *inboundmessageservice.Service,
+) services.AgentQueryTool {
+	return newListInboundMessagesTool(messages)
 }

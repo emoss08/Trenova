@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ButtonGroup } from "@trenova/shared/components/ui/button-group";
 import {
@@ -7,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 
 export type SplitButtonOption<T extends string = string> = {
@@ -49,6 +49,7 @@ export function SplitButton<T extends string = string>({
         isLoading={isLoading}
         loadingText={loadingText}
         disabled={disabled}
+        variant="ghostInvert"
         className="border-r border-r-brand-foreground/10"
       >
         {selected?.label}
@@ -57,12 +58,12 @@ export function SplitButton<T extends string = string>({
         <DropdownMenuTrigger
           disabled={disabled || isLoading}
           render={
-            <Button type="button" disabled={disabled || isLoading}>
+            <Button variant="ghostInvert" type="button" disabled={disabled || isLoading}>
               <ChevronDownIcon className="size-4" />
             </Button>
           }
         />
-        <DropdownMenuContent align="end" sideOffset={4}>
+        <DropdownMenuContent align="end" sideOffset={8}>
           {otherOptions.map((option) => (
             <DropdownMenuItem
               key={option.id}

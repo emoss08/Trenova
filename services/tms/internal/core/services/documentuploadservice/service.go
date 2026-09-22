@@ -717,6 +717,11 @@ func (s *Service) runSynchronousFinalization(
 		UploadedByID:       req.TenantInfo.UserID,
 		PreviewStoragePath: "",
 		PreviewStatus:      previewStatusForFileType(session.ContentType),
+		// The profile is what says whether this document is ever to be read.
+		// Dropping it here left every document on a worker-less deployment
+		// recorded as `none` — not merely unextracted, but wrongly described,
+		// so it stayed unextracted even once a worker appeared.
+		ProcessingProfile: session.ProcessingProfile,
 	}
 	if session.DocumentTypeID != nil {
 		doc.DocumentTypeID = session.DocumentTypeID

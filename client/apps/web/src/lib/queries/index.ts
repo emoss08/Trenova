@@ -2,6 +2,7 @@ import { mergeQueryKeys } from "@lukemorales/query-key-factory";
 import { accountingControl } from "./accounting-control";
 import { agentScorecard } from "./agent-scorecard";
 import { attention } from "./attention";
+import { inbox } from "./inbox";
 import { watchtower } from "./watchtower";
 import { accountingReport } from "./accounting-report";
 import { ar } from "./ar";
@@ -117,6 +118,7 @@ const workspaceQueries = mergeQueryKeys(
   homeLayout,
   sidebarPreferences,
   user,
+  inbox,
   watchtower,
   worker,
   organization,

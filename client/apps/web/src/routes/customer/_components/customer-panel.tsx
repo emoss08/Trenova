@@ -32,6 +32,8 @@ const DEFAULT_VALUES: Customer = {
   allowConsolidation: true,
   exclusiveConsolidation: false,
   consolidationPriority: 1,
+  statusUpdatePreference: "None",
+  statusUpdateRecipients: null,
   billingProfile: {
     invoiceDelivery: "PerShipment",
     billingCycle: "Immediate",

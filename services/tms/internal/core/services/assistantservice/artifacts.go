@@ -28,6 +28,9 @@ const (
 	getToolPrefix     = "get_"
 	listToolPrefix    = "list_"
 	searchToolPrefix  = "search_"
+	toolComposeView   = "compose_table_view"
+	toolExplainRate   = "explain_rate"
+	toolCompareRuns   = "compare_report_runs"
 
 	maxArtifactTitleRunes = 120
 	minPreviewRows        = 1
@@ -48,6 +51,9 @@ type draftSpec struct {
 var draftSpecs = map[string]draftSpec{
 	"email_customer":        {title: "Customer update", subjectKey: "subject", bodyKey: "body"},
 	"send_detention_notice": {title: "Detention notice"},
+	// The reply's subject and recipient come from the message it answers,
+	// not from the proposal, so the draft carries the body alone.
+	"reply_to_inbound_message": {title: "Inbox reply", bodyKey: "body"},
 	"request_missing_docs": {
 		title:      "Document request",
 		subjectKey: "subject",
@@ -252,6 +258,12 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 		return runArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, getToolPrefix):
 		return entityCardArtifact(observation.Call.ID, name, result)
+	case name == toolComposeView:
+		return composedViewArtifact(observation.Call.ID, result)
+	case name == toolExplainRate:
+		return rateArtifact(observation.Call.ID, result)
+	case name == toolCompareRuns:
+		return runDiffArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, listToolPrefix), strings.HasPrefix(name, searchToolPrefix):
 		return tableArtifact(observation.Call.ID, name, result)
 	default:
@@ -299,6 +311,126 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
+}
+
+// composedViewArtifact is a described view as something to open.
+//
+// The pane shows what it was narrowed to and what could not be, with the link
+// to the live table. It is a table_view like a list result, because to the
+// reader it is the same thing arrived at a different way — except that this
+// one opens rather than being a snapshot.
+func composedViewArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
+	path := stringOf(result["path"])
+	if path == "" {
+		return nil
+	}
+
+	entity := stringOf(result["entity"])
+	payload := map[string]any{
+		"entity":      entity,
+		"path":        path,
+		"explanation": stringOf(result["explanation"]),
+		"terms":       stringsOf(result["terms"]),
+		"filterCount": result["filterCount"],
+		"unresolved":  result["unresolved"],
+	}
+
+	return &assistantartifact.Artifact{
+		Kind:   assistantartifact.KindTableView,
+		Status: assistantartifact.StatusReady,
+		Title: artifactTitle(
+			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)),
+		),
+		Payload:          payload,
+		SourceToolCallID: callID,
+	}
+}
+
+// rateArtifact is the ledger behind a price.
+//
+// A rate explanation read aloud is a wall of figures nobody can check against
+// an invoice. As a ledger — every charge with its arithmetic and a running
+// total, the limits that bit, what it was priced under — it is the thing a
+// person puts next to the invoice line they are disputing.
+func rateArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
+	// Nothing to explain is a sentence, not a ledger of zeroes.
+	if stringOf(result["note"]) != "" {
+		return nil
+	}
+	components, _ := result["components"].([]any)
+	if len(components) == 0 {
+		return nil
+	}
+
+	payload := map[string]any{
+		"shipmentId": stringOf(result["shipmentId"]),
+		"side":       stringOf(result["side"]),
+		"currency":   stringOf(result["currency"]),
+		"winner":     result["winner"],
+		"tieBreak":   stringOf(result["tieBreak"]),
+		"rejected":   result["rejected"],
+		"components": components,
+		"guardrails": result["guardrails"],
+		"totals":     result["totals"],
+		"warnings":   stringsOf(result["warnings"]),
+	}
+	fitRows(payload, "components")
+
+	return &assistantartifact.Artifact{
+		Kind:             assistantartifact.KindRateExplanation,
+		Status:           assistantartifact.StatusReady,
+		Title:            artifactTitle("Rate breakdown"),
+		Payload:          payload,
+		SourceToolCallID: callID,
+	}
+}
+
+// runDiffArtifact views a comparison as the table of movements it is.
+//
+// Read aloud, a diff is a list of numbers with no anchor — "ACME went from
+// 2,840.00 to 3,102.50" a dozen times over is not something anybody checks.
+// Shown, with the two runs named at the top, the biggest moves first and the
+// totals underneath, it is the answer to "what changed since last week".
+func runDiffArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
+	changes, _ := result["changes"].([]any)
+	totals, _ := result["totals"].([]any)
+
+	// A comparison with nothing on either side is a sentence: "nothing moved".
+	if len(changes) == 0 && len(totals) == 0 {
+		return nil
+	}
+
+	payload := map[string]any{
+		"before":    result["before"],
+		"after":     result["after"],
+		"keys":      stringsOf(result["keys"]),
+		"measures":  stringsOf(result["measures"]),
+		"summary":   result["summary"],
+		"changes":   changes,
+		"totals":    totals,
+		"truncated": result["truncated"],
+		"note":      stringOf(result["note"]),
+	}
+	// The changes are already sorted by risk and then by size, so halving the
+	// list drops the smallest movements rather than an arbitrary tail.
+	fitRows(payload, "changes")
+
+	return &assistantartifact.Artifact{
+		Kind:             assistantartifact.KindRunDiff,
+		Status:           assistantartifact.StatusReady,
+		Title:            artifactTitle(runDiffTitle(result)),
+		Payload:          payload,
+		SourceToolCallID: callID,
+	}
+}
+
+func runDiffTitle(result map[string]any) string {
+	side, _ := result["after"].(map[string]any)
+	if name := stringOf(side["reportName"]); name != "" {
+		return name + " — what changed"
+	}
+
+	return "What changed"
 }
 
 // stringsOf reads a JSON array of strings, dropping anything that is not one.

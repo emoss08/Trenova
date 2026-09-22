@@ -1,4 +1,4 @@
-import { filterOperatorSchema } from "@trenova/shared/types/data-table";
+import { filterOperatorSchema, sortDirectionSchema } from "@trenova/shared/types/data-table";
 import { z } from "zod";
 
 /*
@@ -11,19 +11,9 @@ outcome available here, because the table comes back looking answered and the
 one condition the person cared about is the one that went missing.
 */
 
-/*
-The operator is checked against the grid's own vocabulary rather than accepted
-as any string. This is the parse boundary between a model's answer and the
-table, and a plain z.string() validated nothing at it: whatever the composer
-returned went into the grid's filter list unexamined.
-
-The composer cannot currently produce anything outside this set — filtercatalog's
-operatorsByKind offers eighteen operators and every one of them is here. dbtype
-declares more (counteq, lastmonth, like, thismonth and the rest) that it never
-offers. So widening operatorsByKind without widening filterOperatorSchema to
-match would start rejecting legitimate answers right here, which is the failure
-this comment exists to prevent.
-*/
+// The operators and directions are the table's own: one the table cannot apply
+// fails the parse, loudly, rather than reaching the filter builder as a chip
+// that does nothing.
 const fieldFilterSchema = z.object({
   field: z.string(),
   operator: filterOperatorSchema,
@@ -32,7 +22,7 @@ const fieldFilterSchema = z.object({
 
 const sortFieldSchema = z.object({
   field: z.string(),
-  direction: z.string(),
+  direction: sortDirectionSchema,
 });
 
 export const unresolvedTermSchema = z.object({

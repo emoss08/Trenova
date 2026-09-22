@@ -51,7 +51,7 @@ export function DeleteIftaMileageEntryDialog({
       await onDeleted();
       onOpenChange(false);
     },
-    onError: (error) => handleMutationError({ error, resourceName: "Jurisdiction Mileage" }),
+    onError: (error) => handleMutationError({ error, resourceName: "Jurisdiction mileage" }),
   });
 
   const period = entry ? quarterLabel({ year: entry.year, quarter: entry.quarter }) : null;

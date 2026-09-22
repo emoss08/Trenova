@@ -212,8 +212,7 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
               options={taskOptions}
             />
           </FormControl>
-
-          <FormControl>
+          <FormControl cols="full">
             <NumberField
               name="priority"
               control={control}
@@ -221,8 +220,7 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
               description={t("Lower runs first. Providers behind it act as fallbacks.")}
             />
           </FormControl>
-
-          <FormControl>
+          <FormControl cols="full">
             <SwitchField
               name="trusted"
               control={control}

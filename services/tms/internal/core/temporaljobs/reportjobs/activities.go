@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,6 +32,10 @@ import (
 )
 
 const heartbeatEveryRows = 5000
+
+// rowsSidecarSuffix names the sidecar after the artifact it accompanies, so
+// the two share a prefix and the expiry sweep finds both from one run row.
+const rowsSidecarSuffix = ".rows.json"
 
 type ActivitiesParams struct {
 	fx.In
@@ -413,6 +418,7 @@ func (a *Activities) ExecuteAndRenderActivity(
 		result.ArtifactExpiresAt = expiresAt
 		if storeErr := a.resultCache.Store(ctx, cacheKey, &services.ReportCacheEntry{
 			ArtifactKey:       result.ArtifactKey,
+			RowsKey:           result.RowsKey,
 			RowCount:          result.RowCount,
 			ByteSize:          result.ByteSize,
 			Truncated:         result.Truncated,
@@ -476,6 +482,7 @@ func (a *Activities) cachedResult(
 	}
 	return &ExecuteResult{
 		ArtifactKey:       entry.ArtifactKey,
+		RowsKey:           entry.RowsKey,
 		RowCount:          entry.RowCount,
 		ByteSize:          entry.ByteSize,
 		Truncated:         entry.Truncated,
@@ -492,47 +499,45 @@ func (a *Activities) renderToStorage(
 	dataset services.ReportDatasetReader,
 	artifactKey string,
 ) (*ExecuteResult, error) {
-	pipeReader, pipeWriter := io.Pipe()
-	uploadDone := make(chan error, 1)
-	var uploadedBytes int64
+	meta := services.ReportRunMeta{
+		Title:           prepared.Title,
+		Description:     prepared.Description,
+		GeneratedAtUnix: timeutils.NowUnix(),
+		Timezone:        prepared.OrgTimezone,
+		RequestedBy:     prepared.RequestedBy,
+		Params:          prepared.Params,
+	}
+	objectMetadata := map[string]string{
+		"organization-id": prepared.OrganizationID.String(),
+		"run-id":          prepared.RunID.String(),
+	}
 
-	go func() {
-		info, uploadErr := a.storage.Upload(ctx, &storage.UploadParams{
-			Key:         artifactKey,
-			ContentType: prepared.Format.ContentType(),
-			Size:        -1,
-			Body:        pipeReader,
-			Metadata: map[string]string{
-				"organization-id": prepared.OrganizationID.String(),
-				"run-id":          prepared.RunID.String(),
-			},
-		})
-		if uploadErr != nil {
-			pipeReader.CloseWithError(uploadErr)
-			uploadDone <- uploadErr
-			return
-		}
-		uploadedBytes = info.Size
-		uploadDone <- nil
-	}()
-
-	limited := &limitWriter{inner: pipeWriter, remaining: a.cfg.GetMaxArtifactBytes()}
-	stats, renderErr := renderer.Render(ctx, &services.ReportRenderRequest{
-		Dataset: dataset,
-		Sink:    limited,
-		Meta: services.ReportRunMeta{
-			Title:           prepared.Title,
-			Description:     prepared.Description,
-			GeneratedAtUnix: timeutils.NowUnix(),
-			Timezone:        prepared.OrgTimezone,
-			RequestedBy:     prepared.RequestedBy,
-			Params:          prepared.Params,
-		},
+	artifact := a.openUploadPipe(ctx, uploadPipeParams{
+		Key:         artifactKey,
+		ContentType: prepared.Format.ContentType(),
+		Metadata:    objectMetadata,
 	})
 
+	// The sidecar rides the same pass over the rows. It cannot be a second
+	// render: the dataset is a forward-only cursor, and re-running the query
+	// would give two results free to disagree.
+	rowsKey := artifactKey + rowsSidecarSuffix
+	rowsUpload := a.openUploadPipe(ctx, uploadPipeParams{
+		Key:         rowsKey,
+		ContentType: report.FormatJSON.ContentType(),
+		Metadata:    objectMetadata,
+	})
+	sidecar := render.NewRowsSidecar(dataset, rowsUpload.sink, meta)
+
+	stats, renderErr := renderer.Render(ctx, &services.ReportRenderRequest{
+		Dataset: sidecar,
+		Sink:    artifact.sink,
+		Meta:    meta,
+	})
 	if renderErr != nil {
-		_ = pipeWriter.CloseWithError(renderErr)
-		<-uploadDone
+		rowsUpload.abort(renderErr)
+		artifact.abort(renderErr)
+
 		if errors.Is(renderErr, errArtifactTooLarge) {
 			return nil, temporal.NewNonRetryableApplicationError(
 				fmt.Sprintf(
@@ -542,23 +547,126 @@ func (a *Activities) renderToStorage(
 				ErrTypeReportTooExpensive, renderErr,
 			)
 		}
+
 		return nil, renderErr
 	}
 
-	if err := pipeWriter.Close(); err != nil {
-		<-uploadDone
-		return nil, err
-	}
-	if err := <-uploadDone; err != nil {
+	rowsKey = a.closeRowsSidecar(ctx, sidecar, rowsUpload, rowsKey)
+
+	uploadedBytes, err := artifact.close()
+	if err != nil {
 		return nil, fmt.Errorf("upload report artifact: %w", err)
 	}
 
 	return &ExecuteResult{
 		ArtifactKey: artifactKey,
+		RowsKey:     rowsKey,
 		RowCount:    stats.Rows,
 		ByteSize:    uploadedBytes,
 		Truncated:   stats.Truncated,
 	}, nil
+}
+
+// closeRowsSidecar finishes the sidecar and returns the key it was stored
+// under, or "" if it could not be written.
+//
+// A sidecar failure never fails the run. The artifact is what the person asked
+// for; the sidecar is only what makes a later comparison possible, and a run
+// without one is already a state compare_report_runs understands and reports.
+func (a *Activities) closeRowsSidecar(
+	ctx context.Context,
+	sidecar *render.RowsSidecar,
+	upload *uploadPipe,
+	rowsKey string,
+) string {
+	err := sidecar.Finish(ctx)
+	if err == nil {
+		_, err = upload.close()
+	} else {
+		upload.abort(err)
+	}
+	if err == nil {
+		return rowsKey
+	}
+
+	a.l.Warn("failed to write report rows sidecar; the run will not be comparable",
+		zap.String("key", rowsKey), zap.Error(err))
+
+	if delErr := a.storage.Delete(ctx, rowsKey); delErr != nil {
+		a.l.Debug("failed to clean up a partial rows sidecar",
+			zap.String("key", rowsKey), zap.Error(delErr))
+	}
+
+	return ""
+}
+
+type uploadPipeParams struct {
+	Key         string
+	ContentType string
+	Metadata    map[string]string
+}
+
+// uploadPipe streams what is written to sink straight into object storage. A
+// report is rendered row by row precisely so it never has to fit in memory,
+// and buffering it here to learn its length first would undo that.
+type uploadPipe struct {
+	sink   io.Writer
+	writer *io.PipeWriter
+	done   chan error
+	bytes  int64
+}
+
+func (a *Activities) openUploadPipe(
+	ctx context.Context,
+	params uploadPipeParams,
+) *uploadPipe {
+	pipeReader, pipeWriter := io.Pipe()
+	pipe := &uploadPipe{
+		sink:   &limitWriter{inner: pipeWriter, remaining: a.cfg.GetMaxArtifactBytes()},
+		writer: pipeWriter,
+		done:   make(chan error, 1),
+	}
+
+	go func() {
+		info, err := a.storage.Upload(ctx, &storage.UploadParams{
+			Key:         params.Key,
+			ContentType: params.ContentType,
+			Size:        -1,
+			Body:        pipeReader,
+			Metadata:    params.Metadata,
+		})
+		if err != nil {
+			pipeReader.CloseWithError(err)
+			pipe.done <- err
+
+			return
+		}
+		pipe.bytes = info.Size
+		pipe.done <- nil
+	}()
+
+	return pipe
+}
+
+// close ends the stream and waits for the upload, returning the stored size.
+func (p *uploadPipe) close() (int64, error) {
+	if err := p.writer.Close(); err != nil {
+		<-p.done
+
+		return 0, err
+	}
+	if err := <-p.done; err != nil {
+		return 0, err
+	}
+
+	return p.bytes, nil
+}
+
+// abort tears the stream down and waits for the upload goroutine, so a failed
+// render never leaves one running past the activity.
+func (p *uploadPipe) abort(cause error) {
+	_ = p.writer.CloseWithError(cause)
+	<-p.done
 }
 
 func (a *Activities) FinalizeRunActivity(
@@ -593,6 +701,7 @@ func (a *Activities) FinalizeRunActivity(
 	run.CacheHit = payload.CacheHit
 	if payload.Status == report.RunStatusSucceeded {
 		run.ArtifactKey = payload.ArtifactKey
+		run.RowsKey = payload.RowsKey
 		run.ArtifactExpiresAt = now + int64(a.cfg.GetArtifactRetention().Seconds())
 		if payload.ArtifactExpiresAt > 0 {
 			run.ArtifactExpiresAt = payload.ArtifactExpiresAt
@@ -759,6 +868,22 @@ func (a *Activities) CleanupExpiredArtifactsActivity(
 					continue
 				}
 				result.DeletedArtifacts++
+			}
+
+			// The sidecar expires with the artifact it describes: a run whose
+			// rows outlived its download would keep data around under a
+			// retention nobody set. It does not count towards
+			// DeletedArtifacts, whose unit is the run's artifact — the key is
+			// left on the row so a read refuses with "expired" rather than
+			// with "this run predates the sidecar".
+			if run.RowsKey != "" {
+				if err = a.storage.Delete(ctx, run.RowsKey); err != nil {
+					a.l.Warn("failed to delete expired report rows sidecar",
+						zap.String("runId", run.ID.String()),
+						zap.String("key", run.RowsKey),
+						zap.Error(err))
+					continue
+				}
 			}
 
 			run.Status = report.RunStatusExpired

@@ -389,6 +389,9 @@ func (s *Service) AttachLineageToResource(
 				"Invalid shipment ID",
 			)
 		}
+		if err = s.requireShipment(ctx, shipmentID, tenantInfo); err != nil {
+			return nil, err
+		}
 	}
 
 	previous := *current
@@ -451,6 +454,37 @@ func (s *Service) AttachLineageToResource(
 	}
 
 	return updated, nil
+}
+
+// requireShipment confirms the shipment a document is moved onto is one the
+// tenant has. The lineage columns hold the id as text with no foreign key, so
+// without this a document could be attached to another tenant's shipment, or
+// to one that never existed, and vanish from every place a person looks.
+func (s *Service) requireShipment(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if s.shipments == nil {
+		return errortypes.NewBusinessError("Shipments cannot be verified on this installation")
+	}
+
+	found, err := s.shipments.ListSummariesByIDs(ctx, &repositories.ListShipmentSummariesRequest{
+		TenantInfo:  tenantInfo,
+		ShipmentIDs: []pulid.ID{shipmentID},
+	})
+	if err != nil {
+		return err
+	}
+	if len(found) == 0 {
+		return errortypes.NewValidationError(
+			"shipmentId",
+			errortypes.ErrInvalid,
+			"No shipment with that id exists",
+		)
+	}
+
+	return nil
 }
 
 func cmpStrings(a, b string) int {

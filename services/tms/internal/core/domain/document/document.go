@@ -62,6 +62,12 @@ const (
 	ProcessingProfileNone                   ProcessingProfile = "none"
 	ProcessingProfileRateConfirmationImport ProcessingProfile = "rate_confirmation_import"
 	ProcessingProfileAssistantAttachment    ProcessingProfile = "assistant_attachment"
+	// ProcessingProfileInboundAttachment is a file that came in on a monitored
+	// mailbox. It is its own profile rather than borrowing the rate-confirmation
+	// one because a POD, an invoice and a tender all arrive this way, and
+	// labelling them all a rate confirmation would be a lie the pipeline then
+	// acts on.
+	ProcessingProfileInboundAttachment ProcessingProfile = "inbound_attachment"
 )
 
 func (s Status) String() string {
@@ -116,11 +122,37 @@ func (s ShipmentDraftStatus) IsValid() bool {
 	return false
 }
 
+// AllProcessingProfiles is the whole set, so a caller that has to reason about
+// which of them do what reads the list rather than repeating it.
+func AllProcessingProfiles() []ProcessingProfile {
+	return []ProcessingProfile{
+		ProcessingProfileNone,
+		ProcessingProfileRateConfirmationImport,
+		ProcessingProfileAssistantAttachment,
+		ProcessingProfileInboundAttachment,
+	}
+}
+
+// IntelligenceProcessingProfiles are the ones a document is read under. It is
+// derived from SupportsIntelligence rather than listed again, so the two cannot
+// disagree about which documents get opened.
+func IntelligenceProcessingProfiles() []ProcessingProfile {
+	profiles := make([]ProcessingProfile, 0, len(AllProcessingProfiles()))
+	for _, profile := range AllProcessingProfiles() {
+		if profile.SupportsIntelligence() {
+			profiles = append(profiles, profile)
+		}
+	}
+
+	return profiles
+}
+
 func (p ProcessingProfile) IsValid() bool {
 	switch p {
 	case ProcessingProfileNone,
 		ProcessingProfileRateConfirmationImport,
-		ProcessingProfileAssistantAttachment:
+		ProcessingProfileAssistantAttachment,
+		ProcessingProfileInboundAttachment:
 		return true
 	}
 	return false
@@ -138,7 +170,9 @@ func NormalizeProcessingProfile(raw string) (ProcessingProfile, error) {
 }
 
 func (p ProcessingProfile) SupportsIntelligence() bool {
-	return p == ProcessingProfileRateConfirmationImport || p == ProcessingProfileAssistantAttachment
+	return p == ProcessingProfileRateConfirmationImport ||
+		p == ProcessingProfileAssistantAttachment ||
+		p == ProcessingProfileInboundAttachment
 }
 
 func SupportsPreview(fileType string) bool {

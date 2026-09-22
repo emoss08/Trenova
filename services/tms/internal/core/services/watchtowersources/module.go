@@ -18,6 +18,7 @@ var Module = fx.Module("watchtower-sources",
 		asSource(NewEDIQuarantineSource),
 		asSource(NewBillingExceptionSource),
 		asSource(NewDetentionSource),
+		asSource(NewInboundMessageSource),
 	),
 )
 

@@ -23,6 +23,7 @@ const (
 	IconSearch    = "search"
 	IconBell      = "bell"
 	IconSparkle   = "sparkle"
+	IconInbox     = "inbox"
 )
 
 const (
@@ -53,6 +54,7 @@ var knownIcons = []string{
 	IconSearch,
 	IconBell,
 	IconSparkle,
+	IconInbox,
 }
 
 var knownAccents = []string{
@@ -82,6 +84,7 @@ var templateIcons = map[Template]string{
 	TemplateCredentialDesk:      IconClipboard,
 	TemplateCustomerUpdateDesk:  IconBell,
 	TemplateCarrierRiskDesk:     IconSearch,
+	TemplateIntakeDesk:          IconInbox,
 }
 
 func KnownIcons() []string {

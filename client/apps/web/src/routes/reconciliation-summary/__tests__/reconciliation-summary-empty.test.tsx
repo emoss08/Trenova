@@ -68,7 +68,7 @@ describe("Reconciliation summary", () => {
       "/accounting/reconciliation/import-batches",
     );
     expect(screen.queryByText("Match rate")).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /Work Queue/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Work queue/ })).not.toBeInTheDocument();
   });
 
   // Work can be open with nothing imported in the current window; that is
@@ -80,7 +80,7 @@ describe("Reconciliation summary", () => {
     expect(await screen.findByText("Match rate")).toBeInTheDocument();
     expect(screen.getByText("0%")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Nothing to reconcile yet" })).toBeNull();
-    expect(screen.getByRole("link", { name: /Work Queue/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Work queue/ })).toHaveAttribute(
       "href",
       "/accounting/reconciliation/work-queue",
     );

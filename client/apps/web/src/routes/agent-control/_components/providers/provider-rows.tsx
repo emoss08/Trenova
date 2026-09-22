@@ -1,11 +1,11 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import type { AIProviderRow } from "@/lib/graphql/ai-provider";
+import type { AIProviderCatalog } from "@/types/ai-provider";
 import { BrandLogo } from "@trenova/shared/components/brand-logo";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type { AIProviderRow } from "@/lib/graphql/ai-provider";
-import type { AIProviderCatalog } from "@/types/ai-provider";
 import {
   KeyRoundIcon,
   PencilIcon,
@@ -100,7 +100,6 @@ export function ProviderRow({
         size={28}
         className={cn(!provider.enabled && "opacity-60 grayscale")}
       />
-
       <div className="flex min-w-0 flex-col gap-0.5">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
           <button

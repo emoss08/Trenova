@@ -7,8 +7,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/core/domain/detention"
+	"github.com/emoss08/trenova/internal/core/domain/document"
+	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/report"
+	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -66,6 +72,18 @@ var lookups = map[permission.Resource]lookup{
 		idEq:    buncolgen.ShipmentMoveColumns.ID.Eq(),
 		version: func(v versioned) int64 { return v.(*shipment.ShipmentMove).Version },
 	},
+	permission.ResourceDocument: {
+		model:   func() versioned { return new(document.Document) },
+		scope:   buncolgen.DocumentScopeTenant,
+		idEq:    buncolgen.DocumentColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*document.Document).Version },
+	},
+	permission.ResourceDashboard: {
+		model:   func() versioned { return new(report.Dashboard) },
+		scope:   buncolgen.DashboardScopeTenant,
+		idEq:    buncolgen.DashboardColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*report.Dashboard).Version },
+	},
 	permission.ResourceWorkerPTO: {
 		model:   func() versioned { return new(worker.WorkerPTO) },
 		scope:   buncolgen.WorkerPTOScopeTenant,
@@ -95,6 +113,45 @@ var lookups = map[permission.Resource]lookup{
 		scope:   buncolgen.InsightScopeTenant,
 		idEq:    buncolgen.InsightColumns.ID.Eq(),
 		version: func(v versioned) int64 { return v.(*insight.Insight).Version },
+	},
+	permission.ResourceInboundMessage: {
+		model:   func() versioned { return new(inboundmessage.InboundMessage) },
+		scope:   buncolgen.InboundMessageScopeTenant,
+		idEq:    buncolgen.InboundMessageColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*inboundmessage.InboundMessage).Version },
+	},
+	permission.ResourceWorker: {
+		model:   func() versioned { return new(worker.Worker) },
+		scope:   buncolgen.WorkerScopeTenant,
+		idEq:    buncolgen.WorkerColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*worker.Worker).Version },
+	},
+	permission.ResourceServiceFailure: {
+		model:   func() versioned { return new(servicefailure.ServiceFailure) },
+		scope:   buncolgen.ServiceFailureScopeTenant,
+		idEq:    buncolgen.ServiceFailureColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*servicefailure.ServiceFailure).Version },
+	},
+	permission.ResourceReport: {
+		model:   func() versioned { return new(report.ReportDefinition) },
+		scope:   buncolgen.ReportDefinitionScopeTenant,
+		idEq:    buncolgen.ReportDefinitionColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*report.ReportDefinition).Version },
+	},
+	// The detention tools act on an occurrence under the detention policy
+	// resource, which is the permission a person needs to act on one.
+	permission.ResourceDetentionPolicy: {
+		model:   func() versioned { return new(detention.DetentionOccurrence) },
+		scope:   buncolgen.DetentionOccurrenceScopeTenant,
+		idEq:    buncolgen.DetentionOccurrenceColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*detention.DetentionOccurrence).Version },
+	},
+	// Likewise the carrier intelligence tools act on one event.
+	permission.ResourceCarrierIntelligence: {
+		model:   func() versioned { return new(carrierintel.CarrierIntelEvent) },
+		scope:   buncolgen.CarrierIntelEventScopeTenant,
+		idEq:    buncolgen.CarrierIntelEventColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*carrierintel.CarrierIntelEvent).Version },
 	},
 }
 

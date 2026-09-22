@@ -21,6 +21,9 @@ import { EntityCardArtifact } from "./entity-card-artifact";
 import { PlanArtifact } from "./plan-artifact";
 import { ReportPreviewArtifact } from "./report-preview-artifact";
 import { ReportRunArtifact } from "./report-run-artifact";
+import { ComposedViewArtifact } from "./composed-view-artifact";
+import { RateExplanationArtifact } from "./rate-explanation-artifact";
+import { RunDiffArtifact } from "./run-diff-artifact";
 import { TableViewArtifact } from "./table-view-artifact";
 
 /** The artifact to show when the person has not picked one: the newest. */
@@ -108,7 +111,18 @@ function ArtifactBody({ artifact }: { artifact: AssistantArtifact }) {
     case "entity_card":
       return <EntityCardArtifact artifact={artifact} />;
     case "table_view":
-      return <TableViewArtifact artifact={artifact} />;
+      // Two things arrive as a table_view: a list result, which carries its
+      // rows, and a described view, which carries the link that opens them
+      // live. The payload says which.
+      return "path" in artifact.payload ? (
+        <ComposedViewArtifact artifact={artifact} />
+      ) : (
+        <TableViewArtifact artifact={artifact} />
+      );
+    case "rate_explanation":
+      return <RateExplanationArtifact artifact={artifact} />;
+    case "run_diff":
+      return <RunDiffArtifact artifact={artifact} />;
     default:
       return (
         <p className="text-muted-foreground p-4 text-sm">
@@ -266,8 +280,15 @@ export function ArtifactsPane({
 export function isRenderableArtifactKind(kind: AssistantArtifact["kind"]): boolean {
   return (
     kind in ARTIFACT_KINDS &&
-    ["report_preview", "report_run", "email_draft", "plan", "entity_card", "table_view"].includes(
-      kind,
-    )
+    [
+      "report_preview",
+      "report_run",
+      "email_draft",
+      "plan",
+      "entity_card",
+      "table_view",
+      "rate_explanation",
+      "run_diff",
+    ].includes(kind)
   );
 }

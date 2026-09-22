@@ -6,6 +6,9 @@ import {
   agentSigil,
   resolveAgentIdentity,
 } from "@/components/agent-identity/agent-identity";
+import { repoRoot } from "@/test/go-source";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 describe("resolveAgentIdentity", () => {
@@ -141,5 +144,38 @@ describe("resolveAgentIdentity icon provenance", () => {
   it("knows when it is only the fallback", () => {
     expect(resolveAgentIdentity({ id: "agdef_1", name: "Night dispatch" }).iconChosen).toBe(false);
     expect(resolveAgentIdentity({ id: "agdef_1", icon: "skull" }).iconChosen).toBe(false);
+  });
+});
+
+/**
+ * The server validates an agent's icon against its own list, so an icon it
+ * accepts that has no glyph here is an agent drawn with the fallback — and one
+ * listed here that the server does not know is a choice the form offers and the
+ * save refuses. The list is read out of the Go source so neither side can move
+ * alone.
+ */
+describe("agent icons", () => {
+  function serverIcons(): string[] {
+    const source = readFileSync(
+      join(repoRoot(), "services/tms/internal/core/domain/agentdefinition/identity.go"),
+      "utf8",
+    );
+    const values = new Map<string, string>();
+    for (const match of source.matchAll(/(Icon\w+)\s*=\s*"([^"]+)"/g)) {
+      values.set(match[1], match[2]);
+    }
+    const list = /var knownIcons = \[\]string\{([^}]*)\}/.exec(source)?.[1] ?? "";
+
+    return list
+      .split(",")
+      .map((name) => values.get(name.trim()))
+      .filter((value): value is string => value !== undefined);
+  }
+
+  it("draws exactly the icons the server accepts", () => {
+    const icons = serverIcons();
+
+    expect(icons.length).toBeGreaterThan(10);
+    expect(Object.keys(AGENT_ICONS).sort()).toEqual([...icons].sort());
   });
 });

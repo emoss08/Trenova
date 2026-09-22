@@ -3,6 +3,8 @@ package modules
 import (
 	"go.uber.org/fx"
 
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountsreceivablerepository"
@@ -123,6 +125,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/homelayoutrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/iamrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/iftarepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/inboundmessagerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/insightrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/integrationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentcontrolrepository"
@@ -367,6 +370,13 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	edimessagerepository.New,
 	editestcaserepository.New,
 	ediinboundfilerepository.New,
+	inboundmessagerepository.New,
+	inboundmessagerepository.NewMailboxRepository,
+	fx.Annotate(
+		inboundmessagerepository.NewRecordFinder,
+		fx.As(new(repositories.InboundShipmentFinder)),
+		fx.As(new(repositories.InboundPartyFinder)),
+	),
 	edicarrierinvoicerepository.New,
 	commodityrepository.New,
 	customerpaymentrepository.New,

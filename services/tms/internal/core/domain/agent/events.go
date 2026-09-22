@@ -19,6 +19,7 @@ const (
 	EventCarrierIntelEventOpened    = EventKind("carrier_intel.event_opened")
 	EventShipmentMoveCoverageAtRisk = EventKind("shipment_move.coverage_at_risk")
 	EventEDIFileQuarantined         = EventKind("edi.file_quarantined")
+	EventInboundMessageClassified   = EventKind("inbound_message.classified")
 )
 
 type EventDescriptor struct {
@@ -125,7 +126,12 @@ var knownEvents = []EventDescriptor{
 		Label:       "EDI file held back",
 		Description: "An inbound EDI file could not be processed and is holding in quarantine rather than becoming shipments or updates.",
 	},
-}
+	{
+		Kind:        EventInboundMessageClassified,
+		SubjectType: SubjectInboundMessage,
+		Label:       "Message classified",
+		Description: "A message that arrived on a monitored address was read and turned out to need a decision.",
+	}}
 
 func KnownEvents() []EventDescriptor {
 	out := make([]EventDescriptor, len(knownEvents))

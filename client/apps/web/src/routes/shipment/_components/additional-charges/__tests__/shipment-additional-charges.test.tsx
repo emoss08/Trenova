@@ -103,6 +103,7 @@ function detentionCharge(): Shipment["additionalCharges"][number] {
     amount: 562.5,
     unit: 1,
     version: 0,
+    allocations: [],
     accessorialCharge: { code: "DET", description: "Detention Fee" } as never,
   } as Shipment["additionalCharges"][number];
 }

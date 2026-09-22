@@ -20,10 +20,7 @@ import (
 // constraint rather than a postgres enum -- the table takes far more writes
 // than it takes new event kinds, and a native enum would make every added kind
 // a non-transactional migration.
-func (r *agentRunEventResolver) OwnerKind(
-	_ context.Context,
-	obj *agent.AgentRunEvent,
-) (gqlmodel.AgentRunEventOwnerKind, error) {
+func (r *agentRunEventResolver) OwnerKind(ctx context.Context, obj *agent.AgentRunEvent) (gqlmodel.AgentRunEventOwnerKind, error) {
 	kind := gqlmodel.AgentRunEventOwnerKind(obj.OwnerKind)
 	if !kind.IsValid() {
 		return "", fmt.Errorf("unknown agent run event owner kind: %s", obj.OwnerKind)
@@ -38,10 +35,7 @@ func (r *agentRunEventResolver) OwnerKind(
 // these events are what a run did, so anyone who may look at the run may look
 // at how it got there, and a separate permission would only be another thing to
 // forget to grant.
-func (r *queryResolver) AgentRunEvents(
-	ctx context.Context,
-	input gqlmodel.DataTableConnectionInput,
-) (*gqlmodel.AgentRunEventConnection, error) {
+func (r *queryResolver) AgentRunEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunEventConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentRun, permission.OpRead)
 	if err != nil {
 		return nil, err

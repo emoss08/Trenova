@@ -41,6 +41,10 @@ const (
 	SubjectWorker            = SubjectType("Worker")
 	SubjectCarrierIntelEvent = SubjectType("CarrierIntelEvent")
 	SubjectEDIInboundFile    = SubjectType("EDIInboundFile")
+	// SubjectInboundMessage is the message, not the shipment or customer it
+	// turned out to be about: what a desk works on is the piece of mail, and
+	// two messages about one shipment are two things to answer.
+	SubjectInboundMessage = SubjectType("InboundMessage")
 )
 
 type RunTrigger string
@@ -75,7 +79,8 @@ func (s SubjectType) IsValid() bool {
 		SubjectDetentionOccurrence,
 		SubjectWorker,
 		SubjectCarrierIntelEvent,
-		SubjectEDIInboundFile:
+		SubjectEDIInboundFile,
+		SubjectInboundMessage:
 		return true
 	default:
 		return false
@@ -96,6 +101,7 @@ func AllSubjectTypes() []SubjectType {
 		SubjectWorker,
 		SubjectCarrierIntelEvent,
 		SubjectEDIInboundFile,
+		SubjectInboundMessage,
 	}
 }
 
@@ -227,6 +233,15 @@ func (t AutonomyTier) Rank() int {
 
 // Above reports whether t lets an agent do more on its own than other.
 func (t AutonomyTier) Above(other AutonomyTier) bool { return t.Rank() > other.Rank() }
+
+// AtMost is t, held down to limit when limit allows less.
+func (t AutonomyTier) AtMost(limit AutonomyTier) AutonomyTier {
+	if t.Above(limit) {
+		return limit
+	}
+
+	return t
+}
 
 // Next is the tier one step up, and false from the top.
 func (t AutonomyTier) Next() (AutonomyTier, bool) {

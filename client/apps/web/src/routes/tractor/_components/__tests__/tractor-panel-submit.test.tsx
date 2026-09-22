@@ -69,11 +69,11 @@ describe("TractorPanel fuel and IFTA fields", () => {
     );
 
     await user.type(screen.getByPlaceholderText("Code"), "TRC-900");
-    await user.type(screen.getByLabelText(/^Equipment Type/), "et_1");
-    await user.type(screen.getByLabelText(/^Equip. Manufacturer/), "em_1");
-    await user.type(screen.getByLabelText(/^Primary Worker/), "wrk_1");
-    await user.clear(screen.getByLabelText(/^Fuel Type/));
-    await user.type(screen.getByLabelText(/^Fuel Type/), "Gasoline");
+    await user.type(screen.getByLabelText(/^Equipment type/), "et_1");
+    await user.type(screen.getByLabelText(/^Equip. manufacturer/), "em_1");
+    await user.type(screen.getByLabelText(/^Primary worker/), "wrk_1");
+    await user.clear(screen.getByLabelText(/^Fuel type/));
+    await user.type(screen.getByLabelText(/^Fuel type/), "Gasoline");
     await user.click(screen.getByRole("switch", { name: /IFTA qualified/i }));
 
     await user.click(screen.getByRole("button", { name: /save/i }));
@@ -108,8 +108,8 @@ describe("TractorPanel fuel and IFTA fields", () => {
       </NuqsTestingAdapter>,
     );
 
-    await user.clear(screen.getByLabelText(/^Fuel Type/));
-    await user.type(screen.getByLabelText(/^Fuel Type/), "Biodiesel");
+    await user.clear(screen.getByLabelText(/^Fuel type/));
+    await user.type(screen.getByLabelText(/^Fuel type/), "Biodiesel");
     await user.click(screen.getByRole("switch", { name: /IFTA qualified/i }));
 
     const [saveButton] = screen.getAllByRole("button", { name: /save & close/i });

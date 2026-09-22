@@ -80,7 +80,7 @@ describe("accounting dashboard empty state", () => {
       "href",
       "/billing/queue",
     );
-    expect(screen.queryByText("AR Outstanding")).not.toBeInTheDocument();
+    expect(screen.queryByText("AR outstanding")).not.toBeInTheDocument();
   });
 
   // A clear book with history is a healthy dashboard, not an empty one: the
@@ -89,7 +89,7 @@ describe("accounting dashboard empty state", () => {
     mocks.fetchArDsoTrend.mockResolvedValue([week(), week({ billedMinor: 125_000 })]);
     renderAccountingPage(<AccountingDashboardPage />);
 
-    expect(await screen.findByText("AR Outstanding")).toBeInTheDocument();
+    expect(await screen.findByText("AR outstanding")).toBeInTheDocument();
     expect(screen.queryByText("Nothing on the books yet")).not.toBeInTheDocument();
   });
 
@@ -99,7 +99,7 @@ describe("accounting dashboard empty state", () => {
     );
     renderAccountingPage(<AccountingDashboardPage />);
 
-    expect(await screen.findByText("AR Outstanding")).toBeInTheDocument();
+    expect(await screen.findByText("AR outstanding")).toBeInTheDocument();
     expect(screen.queryByText("Nothing on the books yet")).not.toBeInTheDocument();
   });
 });

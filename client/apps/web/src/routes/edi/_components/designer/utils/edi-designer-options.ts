@@ -15,8 +15,8 @@ const templateElementSourceLabels: Record<
   string
 > = {
   constant: "Constant",
-  fieldPath: "Field Path",
-  partnerSetting: "Partner Setting",
+  fieldPath: "Field path",
+  partnerSetting: "Partner setting",
   mapping: "Mapping",
   runtime: "Runtime",
   repeat: "Repeat",
@@ -27,18 +27,18 @@ const templateElementSourceLabels: Record<
 const mappingEntityTypeLabels: Record<(typeof ediMappingEntityTypeSchema.options)[number], string> =
   {
     Customer: "Customer",
-    ServiceType: "Service Type",
-    ShipmentType: "Shipment Type",
-    FormulaTemplate: "Formula Template",
+    ServiceType: "Service type",
+    ShipmentType: "Shipment type",
+    FormulaTemplate: "Formula template",
     Location: "Location",
     Commodity: "Commodity",
-    AccessorialCharge: "Accessorial Charge",
-    ServiceFailureReasonCode: "Service Failure Reason Code",
+    AccessorialCharge: "Accessorial charge",
+    ServiceFailureReasonCode: "Service failure reason code",
   };
 
 const validationModeLabels: Record<(typeof ediValidationModeSchema.options)[number], string> = {
   Strict: "Strict",
-  WarnOnly: "Warn Only",
+  WarnOnly: "Warn only",
   Disabled: "Disabled",
 };
 

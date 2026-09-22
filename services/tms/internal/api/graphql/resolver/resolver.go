@@ -48,6 +48,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
 	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
 	"github.com/emoss08/trenova/internal/core/services/iftaservice"
+	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
@@ -219,6 +220,7 @@ type Params struct {
 	AgentDecisionService         services.AgentDecisionService
 	AgentDecisionQueueService    services.AgentDecisionQueueService
 	WatchtowerService            services.WatchtowerService
+	InboundMessageService        *inboundmessageservice.Service
 	AgentScorecardService        services.AgentScorecardService
 	AgentRunEventRepo            repositories.AgentRunEventRepository
 	BriefingService              services.BriefingService
@@ -373,6 +375,7 @@ type Resolver struct {
 	agentDecisionService         services.AgentDecisionService
 	agentDecisionQueueService    services.AgentDecisionQueueService
 	watchtowerService            services.WatchtowerService
+	inboundMessageService        *inboundmessageservice.Service
 	agentScorecardService        services.AgentScorecardService
 	agentRunEventRepo            repositories.AgentRunEventRepository
 	briefingService              services.BriefingService
@@ -528,6 +531,7 @@ func New(p Params) *Resolver {
 		agentDecisionService:         p.AgentDecisionService,
 		agentDecisionQueueService:    p.AgentDecisionQueueService,
 		watchtowerService:            p.WatchtowerService,
+		inboundMessageService:        p.InboundMessageService,
 		agentScorecardService:        p.AgentScorecardService,
 		agentRunEventRepo:            p.AgentRunEventRepo,
 		briefingService:              p.BriefingService,

@@ -53,4 +53,8 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(development.NewAgentDefinitionSeed())
 	r.MustRegister(development.NewAssistantConversationSeed())
 	r.MustRegister(development.NewInsightSeed())
+	r.MustRegister(development.NewInboundMessageSeed())
+	r.MustRegister(development.NewDeskSeed())
+	r.MustRegister(development.NewAgentActivitySeed())
+	r.MustRegister(development.NewAssistantArtifactSeed())
 }

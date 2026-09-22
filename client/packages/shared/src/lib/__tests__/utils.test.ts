@@ -30,11 +30,11 @@ afterEach(() => {
 
 describe("toTitleCase", () => {
   it("splits camelCase", () => {
-    expect(toTitleCase("firstName")).toBe("First name");
+    expect(toTitleCase("firstName")).toBe("First Name");
   });
 
   it("splits underscores", () => {
-    expect(toTitleCase("first_name")).toBe("First name");
+    expect(toTitleCase("first_name")).toBe("First Name");
   });
 
   it("handles technical term ID", () => {
@@ -82,7 +82,7 @@ describe("toTitleCase", () => {
   });
 
   it("handles ALL_CAPS input", () => {
-    expect(toTitleCase("FIRST_NAME")).toBe("First name");
+    expect(toTitleCase("FIRST_NAME")).toBe("First Name");
   });
 });
 

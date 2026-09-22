@@ -22,7 +22,6 @@ type ProjectorParams struct {
 
 	Logger        *zap.Logger
 	Repo          repositories.WatchtowerRepository
-	Roles         repositories.RoleRepository  `optional:"true"`
 	Realtime      services.RealtimeService     `optional:"true"`
 	Notifications *notificationservice.Service `optional:"true"`
 }
@@ -43,7 +42,6 @@ type ProjectorParams struct {
 type Projector struct {
 	l             *zap.Logger
 	repo          repositories.WatchtowerRepository
-	roles         repositories.RoleRepository
 	realtime      services.RealtimeService
 	notifications *notificationservice.Service
 	now           func() int64
@@ -53,7 +51,6 @@ func NewProjector(p ProjectorParams) *Projector {
 	return &Projector{
 		l:             p.Logger.Named("service.watchtower.projector"),
 		repo:          p.Repo,
-		roles:         p.Roles,
 		realtime:      p.Realtime,
 		notifications: p.Notifications,
 		now:           timeutils.NowUnix,
@@ -179,29 +176,8 @@ func (p *Projector) publish(ctx context.Context, item *watchtower.Item, action s
 // bounded, so a critical weather warning reaches dispatch and not the whole
 // company.
 func (p *Projector) notifyCritical(ctx context.Context, item *watchtower.Item) {
-	if p.notifications == nil || p.roles == nil {
+	if p.notifications == nil {
 		return
-	}
-
-	tenant := pagination.TenantInfo{OrgID: item.OrganizationID, BuID: item.BusinessUnitID}
-	recipients, err := p.roles.ListUsersWithPermission(
-		ctx,
-		repositories.ListUsersWithPermissionRequest{
-			OrganizationID: tenant.OrgID,
-			BusinessUnitID: tenant.BuID,
-			Resource:       item.SourceKind.ReadResource(),
-			Operation:      permission.OpRead,
-			Now:            p.now(),
-		},
-	)
-	if err != nil {
-		p.l.Warn("could not find who to tell about a critical item",
-			zap.String("item", item.ID.String()), zap.Error(err))
-
-		return
-	}
-	if len(recipients) > maxCriticalRecipients {
-		recipients = recipients[:maxCriticalRecipients]
 	}
 
 	correlation := item.ID.String()
@@ -209,20 +185,19 @@ func (p *Projector) notifyCritical(ctx context.Context, item *watchtower.Item) {
 	if link == "" {
 		link = FeedPath + "?item=" + item.ID.String()
 	}
-	for _, recipient := range recipients {
-		buID := tenant.BuID
-		userID := recipient.UserID
-		if _, err = p.notifications.Create(ctx, &notification.Notification{
-			OrganizationID: tenant.OrgID,
-			BusinessUnitID: &buID,
-			TargetUserID:   &userID,
-			Channel:        notification.ChannelUser,
-			EventType:      EventCritical,
-			Priority:       notification.PriorityHigh,
-			Title:          item.Title,
-			Message:        item.Summary,
-			Source:         notificationSource,
-			CorrelationID:  &correlation,
+	if _, err := p.notifications.NotifyPermitted(ctx, notificationservice.NotifyPermittedRequest{
+		Tenant:    pagination.TenantInfo{OrgID: item.OrganizationID, BuID: item.BusinessUnitID},
+		Resource:  item.SourceKind.ReadResource(),
+		Operation: permission.OpRead,
+		Limit:     maxCriticalRecipients,
+		Now:       p.now(),
+		Notification: notification.Notification{
+			EventType:     EventCritical,
+			Priority:      notification.PriorityHigh,
+			Title:         item.Title,
+			Message:       item.Summary,
+			Source:        notificationSource,
+			CorrelationID: &correlation,
 			Data: map[string]any{
 				"link":       link,
 				"itemId":     item.ID.String(),
@@ -231,12 +206,9 @@ func (p *Projector) notifyCritical(ctx context.Context, item *watchtower.Item) {
 				"severity":   string(item.Severity),
 			},
 			RelatedEntities: map[string]any{"watchtowerItemId": item.ID.String()},
-		}); err != nil {
-			p.l.Warn("critical watchtower notification lost",
-				zap.String("item", item.ID.String()),
-				zap.String("userId", recipient.UserID.String()),
-				zap.Error(err),
-			)
-		}
+		},
+	}); err != nil {
+		p.l.Warn("could not tell anyone about a critical item",
+			zap.String("item", item.ID.String()), zap.Error(err))
 	}
 }

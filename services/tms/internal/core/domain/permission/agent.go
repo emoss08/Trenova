@@ -56,6 +56,25 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpCreate: {},
 		OpUpdate: {},
 	},
+	// The three surfaces an agent builds rather than reads: a saved view of a
+	// table, a dashboard, and an alert that watches for a change. All three
+	// are additive and reversible — nothing an agent makes here alters a
+	// record, and a person can delete any of it.
+	// No read on the other two: nothing lists them. A grant no tool claims is
+	// one nobody can account for, which is what the coverage test holds.
+	ResourceTableConfiguration: {
+		OpCreate: {},
+	},
+	ResourceDashboard: {
+		// list_dashboards claims the read: add_dashboard_tile needs an id and
+		// nothing else hands one out.
+		OpRead:   {},
+		OpCreate: {},
+		OpUpdate: {},
+	},
+	ResourceTableChangeAlert: {
+		OpCreate: {},
+	},
 	ResourceCarrier: {
 		OpRead: {},
 	},
@@ -121,8 +140,11 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpUpdate: {},
 	},
 	ResourceDocument: {
-		OpRead:   {},
-		OpCreate: {},
+		OpRead: {},
+		// Update, not create. An agent attaches a document that already exists
+		// to the record it belongs to; it has no way to put bytes into storage,
+		// so a create grant would be a permission nothing can use.
+		OpUpdate: {},
 	},
 	ResourceAgentRun: {
 		OpRead:   {},
@@ -180,6 +202,13 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 	},
 	ResourceCustomerCommunication: {
 		OpCreate: {},
+	},
+	// The intake desk reads the inbox, files a message against its records
+	// and settles it. Mailboxes stay closed: their addresses, tokens and
+	// signing secrets are an administrator's.
+	ResourceInboundMessage: {
+		OpRead:   {},
+		OpUpdate: {},
 	},
 }
 

@@ -145,6 +145,35 @@ func optionalString(params map[string]any, key string) string {
 	return strings.TrimSpace(value)
 }
 
+// optionalStrings reads a list of strings the caller may leave out, accepting
+// every shape a model reaches for: the array, a lone string, a comma-separated
+// string, and a single-key object wrapping one of those. asList already knows
+// them, so the coercion lives in one place rather than per tool.
+func optionalStrings(params map[string]any, key string) []string {
+	raw, ok := params[key]
+	if !ok || raw == nil {
+		return nil
+	}
+
+	list, ok := asList(raw).([]any)
+	if !ok {
+		return nil
+	}
+
+	values := make([]string, 0, len(list))
+	for _, entry := range list {
+		text, isText := entry.(string)
+		if text = strings.TrimSpace(text); isText && text != "" {
+			values = append(values, text)
+		}
+	}
+	if len(values) == 0 {
+		return nil
+	}
+
+	return values
+}
+
 func requirePulid(params map[string]any, key string) (pulid.ID, error) {
 	value, err := requireString(params, key)
 	if err != nil {

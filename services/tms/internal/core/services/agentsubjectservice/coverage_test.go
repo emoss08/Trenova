@@ -90,6 +90,7 @@ func TestDescribe_UnwiredArmsStillNameTheirSubject(t *testing.T) {
 		agent.SubjectWorker:              "Driver",
 		agent.SubjectCarrierIntelEvent:   "Carrier finding",
 		agent.SubjectEDIInboundFile:      "EDI inbound file",
+		agent.SubjectInboundMessage:      "Inbound message",
 	}
 
 	for subjectType, label := range cases {

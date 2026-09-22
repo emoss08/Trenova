@@ -14,6 +14,7 @@ enum AgentTemplate {
   CredentialDesk
   CustomerUpdateDesk
   CarrierRiskDesk
+  IntakeDesk
 }
 
 enum AgentTriggerMode {

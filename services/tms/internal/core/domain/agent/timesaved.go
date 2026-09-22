@@ -48,7 +48,7 @@ var toolMinutesSaved = map[string]int{
 	"post_customer_payment":          6,
 	"match_bank_receipt":             8,
 	"resolve_bank_receipt_work_item": 6,
-	"attach_document_to_bqi":         3,
+	"attach_document_to_shipment":    3,
 	"request_missing_docs":           5,
 
 	// Communication. Writing the message is most of the cost.

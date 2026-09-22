@@ -14,6 +14,7 @@ import {
   PinOffIcon,
   ReceiptTextIcon,
   TableIcon,
+  GitCompareArrowsIcon,
   LayoutDashboardIcon,
   InboxIcon,
   type LucideIcon,
@@ -32,6 +33,7 @@ export const ARTIFACT_KINDS: Record<ArtifactKind, { label: string; icon: LucideI
   dashboard_ref: { label: "Dashboard", icon: LayoutDashboardIcon },
   briefing: { label: "Briefing", icon: NewspaperIcon },
   inbound_message: { label: "Message", icon: InboxIcon },
+  run_diff: { label: "Changes", icon: GitCompareArrowsIcon },
 };
 
 /** Where an artifact is, as a tone: severity, not category. */

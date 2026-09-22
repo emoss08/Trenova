@@ -165,6 +165,17 @@ func (t *createShipmentTool) DefaultAutonomyTier() agent.AutonomyTier {
 	return agent.TierActWithApproval
 }
 
+// TierLimit holds a new load at a decision whatever the agent has earned. A
+// shipment commits a customer's freight and the money that follows it, and the
+// organization decided no desk creates one unattended — the mailbox that lets
+// the intake desk answer a status question on its own does not let it book.
+func (t *createShipmentTool) TierLimit(
+	context.Context,
+	serviceports.ToolExecuteParams,
+) agent.AutonomyTier {
+	return agent.TierActWithApproval
+}
+
 func (t *createShipmentTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router";
@@ -81,7 +81,8 @@ describe("carrier settlement workspace empty states", () => {
 
     expect(await screen.findByText("No settlements this period yet")).toBeInTheDocument();
     expect(screen.getByText(/3 cost events across 2 carriers/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Generate settlements" }));
+    const sheet = screen.getByRole("region", { name: "No settlements this period yet" });
+    await user.click(within(sheet).getByRole("button", { name: "Generate settlements" }));
     await waitFor(() => expect(mocks.generateCarrierSettlementBatch).toHaveBeenCalledTimes(1));
   });
 
@@ -96,7 +97,10 @@ describe("carrier settlement workspace empty states", () => {
 
     expect(await screen.findByText("No settlements this period yet")).toBeInTheDocument();
     expect(screen.getByText(/accrue automatically/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Generate settlements" })).not.toBeInTheDocument();
+    const sheet = screen.getByRole("region", { name: "No settlements this period yet" });
+    expect(
+      within(sheet).queryByRole("button", { name: "Generate settlements" }),
+    ).not.toBeInTheDocument();
   });
 
   it("says the queue is voided out when every settlement has been voided", async () => {

@@ -37,8 +37,8 @@ const invoice = {
   billType: "Invoice",
   customerId: "cus_1",
   currencyCode: "USD",
-  totalAmount: "1000.00",
-  appliedAmount: "250.00",
+  totalAmount: 1000,
+  appliedAmount: 250,
   settlementStatus: "PartiallyPaid",
   dueDate: NOW - 40 * 86400,
 } as Invoice;

@@ -45,7 +45,6 @@ import {
 import { cn, initials } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { CheckIcon, SendIcon, UndoIcon, UsersIcon } from "lucide-react";
-import { m } from "motion/react";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";

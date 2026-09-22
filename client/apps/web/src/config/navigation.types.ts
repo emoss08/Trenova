@@ -5,6 +5,7 @@ import type { LucideIcon } from "lucide-react";
 export type ModuleId =
   | "home"
   | "desk"
+  | "inbox"
   | "dispatch"
   | "hr"
   | "fleet"

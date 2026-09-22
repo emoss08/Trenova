@@ -78,6 +78,13 @@ func TestAttachLineageToResourceUpdatesDraftAttachmentMetadata(t *testing.T) {
 	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
 	searchProjection.EXPECT().Upsert(mock.Anything, updated, "").Return(nil)
 	draftRepo := mocks.NewMockDocumentShipmentDraftRepository(t)
+	shipments := mocks.NewMockShipmentRepository(t)
+	shipments.EXPECT().
+		ListSummariesByIDs(mock.Anything, &repositories.ListShipmentSummariesRequest{
+			TenantInfo:  tenantInfo,
+			ShipmentIDs: []pulid.ID{shipmentID},
+		}).
+		Return([]*repositories.ShipmentSummary{{ShipmentID: shipmentID}}, nil)
 
 	draft := &documentshipmentdraft.DocumentShipmentDraft{
 		ID:             pulid.MustNew("dsd_"),
@@ -111,6 +118,7 @@ func TestAttachLineageToResourceUpdatesDraftAttachmentMetadata(t *testing.T) {
 		Logger:               zap.NewNop(),
 		Repo:                 repo,
 		DraftRepo:            draftRepo,
+		Shipments:            shipments,
 		CacheRepo:            cacheRepo,
 		SessionRepo:          sessionRepo,
 		Storage:              &mockStorageClient{},
@@ -133,4 +141,56 @@ func TestAttachLineageToResourceUpdatesDraftAttachmentMetadata(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Equal(t, updated, result)
+}
+
+// The lineage columns hold the shipment id as text with no foreign key, so a
+// document moved onto another tenant's shipment, or one that never existed,
+// would disappear from every place a person looks for it.
+func TestAttachLineageToResourceRefusesAShipmentTheTenantDoesNotHave(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  pulid.MustNew("org_"),
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
+	}
+	documentID := pulid.MustNew("doc_")
+
+	moved := false
+	repo := &mockDocRepo{
+		GetByIDFn: func(context.Context, repositories.GetDocumentByIDRequest) (*document.Document, error) {
+			return &document.Document{ID: documentID, ResourceType: "worker", ResourceID: "wrk_1"}, nil
+		},
+		MoveLineageToResourceFn: func(context.Context, *repositories.MoveDocumentLineageRequest) error {
+			moved = true
+			return nil
+		},
+	}
+	shipments := mocks.NewMockShipmentRepository(t)
+	shipments.EXPECT().
+		ListSummariesByIDs(mock.Anything, mock.Anything).
+		Return([]*repositories.ShipmentSummary{}, nil)
+
+	cfg := &config.Config{}
+	service := documentservice.New(documentservice.Params{
+		Logger:       zap.NewNop(),
+		Repo:         repo,
+		Shipments:    shipments,
+		Storage:      &mockStorageClient{},
+		Validator:    documentservice.NewValidator(documentservice.ValidatorParams{Config: cfg}),
+		AuditService: &mocks.NoopAuditService{},
+		Config:       cfg,
+	})
+
+	_, err := service.AttachLineageToResource(
+		t.Context(),
+		documentID,
+		"shipment",
+		pulid.MustNew("shp_").String(),
+		tenantInfo,
+		tenantInfo.UserID,
+	)
+
+	require.Error(t, err)
+	assert.False(t, moved, "the document must stay where it was")
 }

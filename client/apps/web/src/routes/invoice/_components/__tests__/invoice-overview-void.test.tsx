@@ -34,10 +34,10 @@ function invoice(overrides: Partial<Invoice> = {}): Invoice {
     invoiceDate: NOW,
     postedAt: NOW,
     billToName: "AMD",
-    subtotalAmount: "100",
-    otherAmount: "0",
-    totalAmount: "100",
-    appliedAmount: "0",
+    subtotalAmount: 100,
+    otherAmount: 0,
+    totalAmount: 100,
+    appliedAmount: 0,
     settlementStatus: "Unpaid",
     disputeStatus: "None",
     sendStatus: "NotSent",
@@ -101,7 +101,7 @@ describe("invoice overview for voided invoices and memos", () => {
         referenceInvoiceId: "inv_9",
         memoReason: "Goodwill credit for the late delivery",
         memoKind: "Manual",
-        totalAmount: "-50",
+        totalAmount: -50,
       }),
     );
 

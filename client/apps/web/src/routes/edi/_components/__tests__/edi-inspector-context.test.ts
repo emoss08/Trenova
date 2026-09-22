@@ -50,7 +50,7 @@ describe("EDI inspector context", () => {
     expect(context.status).toEqual({ label: "Provisional", variant: "info" });
     expect(context.payload).toBeUndefined();
     expect(context.provenanceRows).toBeUndefined();
-    expect(context.controlRows[0]).toEqual(["Interchange Control Number (Provisional)", "0001"]);
+    expect(context.controlRows[0]).toEqual(["Interchange control number (provisional)", "0001"]);
     expect(context.rawFilename).toBe("edi-preview-x12-0003.x12");
   });
 

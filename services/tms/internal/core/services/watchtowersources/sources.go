@@ -548,3 +548,43 @@ func (s *DetentionSource) Snapshot(
 
 	return items, nil
 }
+
+// InboundMessageSource puts mail that is waiting on a person on the tower.
+type InboundMessageSource struct {
+	repo repositories.InboundMessageRepository
+}
+
+func NewInboundMessageSource(
+	repo repositories.InboundMessageRepository,
+) services.WatchtowerSource {
+	return &InboundMessageSource{repo: repo}
+}
+
+func (s *InboundMessageSource) Kind() watchtower.SourceKind {
+	return watchtower.SourceInboundMessage
+}
+
+func (s *InboundMessageSource) Snapshot(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) ([]services.WatchtowerItemInput, error) {
+	messages, err := s.repo.ListRecentForReview(
+		ctx,
+		repositories.ListRecentInboundMessagesForReviewRequest{
+			TenantInfo: tenant,
+			Limit:      snapshotLimit,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]services.WatchtowerItemInput, 0, len(messages))
+	for _, message := range messages {
+		if message != nil {
+			items = append(items, DescribeInboundMessage(message))
+		}
+	}
+
+	return items, nil
+}

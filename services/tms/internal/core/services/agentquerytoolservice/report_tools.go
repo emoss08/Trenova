@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -36,6 +37,14 @@ type reportRunner interface {
 		req *reporting.ListDefinitionsRequest,
 	) ([]*report.ReportDefinition, error)
 	Preview(ctx context.Context, req *reporting.PreviewRequest) (*reporting.PreviewResult, error)
+	ListRuns(
+		ctx context.Context,
+		req *reporting.ListRunsRequest,
+	) ([]*report.ReportRun, error)
+	ReadRunRows(
+		ctx context.Context,
+		req *reporting.GetRunRequest,
+	) (*reportrows.Envelope, error)
 }
 
 type reportParameterRow struct {

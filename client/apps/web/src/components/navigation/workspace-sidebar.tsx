@@ -1,7 +1,11 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ActivityFeed } from "@/components/navigation/activity-section";
 import { AttentionCountBadge, ModulePageList } from "@/components/navigation/sidebar-chrome";
-import type { ModuleAttention, SidebarModuleView } from "@/components/navigation/sidebar-model";
+import {
+  moduleSidebarView,
+  type ModuleAttention,
+  type SidebarModuleView,
+} from "@/components/navigation/sidebar-model";
 import {
   WORKSPACE_SIDEBAR_WIDTH_CLASS,
   WorkspaceGroupLabel,
@@ -141,8 +145,7 @@ export function WorkspaceSidebar() {
   const { home, views, activeModule, activePath, pageAttention, hiddenSections } =
     useSidebarNavigation();
 
-  const activeView =
-    activeModule && activeModule.id !== "home" ? (views.get(activeModule.id) ?? null) : null;
+  const activeView = moduleSidebarView(activeModule, views);
 
   return (
     <aside

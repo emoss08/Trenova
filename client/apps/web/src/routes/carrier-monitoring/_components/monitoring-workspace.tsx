@@ -352,7 +352,7 @@ export function MonitoringWorkspace() {
         }
       />
     );
-  } else if (!status.provider.configured && !hasHistory) {
+  } else if (!statusQuery.data.provider.configured && !hasHistory) {
     body = (
       <EmptySheet
         title={t("Connect a carrier intelligence provider")}
@@ -374,7 +374,7 @@ export function MonitoringWorkspace() {
       />
     );
   } else {
-    body = <MonitoringBody status={status} canUpdate={canUpdate} canManage={canManage} />;
+    body = <MonitoringBody status={statusQuery.data} canUpdate={canUpdate} canManage={canManage} />;
   }
 
   return (

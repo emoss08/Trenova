@@ -455,6 +455,8 @@ type ShipmentSummary struct {
 	TotalCharge      decimal.NullDecimal `bun:"total_charge_amount"`
 }
 
+func (s *ShipmentSummary) GetID() pulid.ID { return s.ShipmentID }
+
 type ShipmentSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
 	CustomerID         pulid.ID                       `json:"customerId"`

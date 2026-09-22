@@ -1,6 +1,5 @@
 import { AGENT_ACCENTS, resolveAgentIdentity } from "@/components/agent-identity/agent-identity";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
-import { WorkingDot } from "@/components/assistant/voice/working-dot";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
@@ -248,12 +247,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       <DeskShell
         accent={accent}
         working={working}
-        lead={
-          <div className="flex shrink-0 items-center gap-1.5">
-            <AgentTile agent={activeAgent} size="md" />
-            <WorkingDot working={working} />
-          </div>
-        }
+        lead={<AgentTile agent={activeAgent} size="md" />}
         title={
           activeThread ? (
             <DeskTitleField

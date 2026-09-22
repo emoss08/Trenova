@@ -412,3 +412,35 @@ func TestTemplates_StarterToolsAreWellFormed(t *testing.T) {
 		}
 	}
 }
+
+/*
+No per-tool cap is an empty map, not an absent one.
+
+tool_daily_limits was added as NOT NULL DEFAULT '{}' while its bun tag said
+nullzero, and nullzero writes SQL NULL for a nil map. So every insert of an
+agent with no per-tool cap — which is every system agent — was rejected by the
+constraint, on Postgres as much as on SQLite. The full seed run had been red
+on master since, and a fresh organization could not be given its agents.
+
+Its older sibling tool_tiers is nullable, which is why that one never showed
+the problem and why the tag looked right.
+*/
+func TestApplyDefaults_LeavesNoNilWhereTheColumnRefusesOne(t *testing.T) {
+	t.Parallel()
+
+	d := &agentdefinition.Definition{}
+	d.ApplyDefaults()
+
+	require.NotNil(t, d.ToolDailyLimits)
+	assert.Empty(t, d.ToolDailyLimits)
+}
+
+// A cap somebody set is not a default to overwrite.
+func TestApplyDefaults_KeepsTheCapsAlreadySet(t *testing.T) {
+	t.Parallel()
+
+	d := &agentdefinition.Definition{ToolDailyLimits: map[string]int{"email_customer": 5}}
+	d.ApplyDefaults()
+
+	assert.Equal(t, 5, d.ToolDailyLimits["email_customer"])
+}

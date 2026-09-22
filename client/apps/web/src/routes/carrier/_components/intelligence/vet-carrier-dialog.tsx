@@ -6,8 +6,11 @@ import {
   carrierIntelProviderLabel,
   carrierIntelVetCost,
 } from "@/lib/carrier-intelligence";
-import type { CarrierIntelProviderInfo } from "@/lib/graphql/carrier-intel-settings";
-import { vetCarrier, type CarrierIntelVetResult } from "@/lib/graphql/carrier-intelligence";
+import {
+  vetCarrier,
+  type CarrierIntelProviderInfo,
+  type CarrierIntelVetResult,
+} from "@/lib/graphql/carrier-intelligence";
 import type { CarrierIntelDepth } from "@trenova/graphql/generated/graphql";
 import { Button } from "@trenova/shared/components/ui/button";
 import {

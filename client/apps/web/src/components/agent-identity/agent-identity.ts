@@ -6,6 +6,7 @@ import {
   FileInputIcon,
   GaugeIcon,
   HeadsetIcon,
+  InboxIcon,
   type LucideIcon,
   PackageIcon,
   RadarIcon,
@@ -36,6 +37,7 @@ export const AGENT_ICONS = {
   search: SearchIcon,
   bell: BellIcon,
   sparkle: AssistMark,
+  inbox: InboxIcon,
 } as const satisfies Record<string, LucideIcon>;
 
 export type AgentIconName = keyof typeof AGENT_ICONS;
@@ -78,6 +80,7 @@ export const TEMPLATE_ICON: Partial<Record<string, AgentIconName>> = {
   CredentialDesk: "clipboard",
   CustomerUpdateDesk: "bell",
   CarrierRiskDesk: "search",
+  IntakeDesk: "inbox",
 };
 
 export function isAgentIconName(value: string | null | undefined): value is AgentIconName {

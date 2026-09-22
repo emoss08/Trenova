@@ -1,16 +1,16 @@
 export const CATEGORY_LABELS: Record<string, string> = {
-  shipment: "Shipment Fields",
+  shipment: "Shipment fields",
   customer: "Customer",
-  tractorType: "Tractor Equipment",
-  trailerType: "Trailer Equipment",
+  tractorType: "Tractor equipment",
+  trailerType: "Trailer equipment",
   equipment: "Equipment",
   origin: "Origin",
   destination: "Destination",
-  serviceType: "Service Type",
-  shipmentType: "Shipment Type",
-  computed: "Computed Rollups",
-  context: "Market Data",
-  custom: "Custom Variables",
+  serviceType: "Service type",
+  shipmentType: "Shipment type",
+  computed: "Computed rollups",
+  context: "Market data",
+  custom: "Custom variables",
 };
 
 export const FUNCTION_CATEGORY_LABELS: Record<string, string> = {
@@ -18,7 +18,7 @@ export const FUNCTION_CATEGORY_LABELS: Record<string, string> = {
   rounding: "Rounding",
   aggregate: "Aggregates",
   conditional: "Conditionals",
-  rateTable: "Rate Tables",
+  rateTable: "Rate tables",
   string: "Text",
 };
 

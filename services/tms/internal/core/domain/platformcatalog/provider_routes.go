@@ -1064,8 +1064,15 @@ func agentAutomationRouteRefs() []RouteRef {
 			"/api/v1/agent-definitions/",
 			"/api/v1/agent-definitions/templates/",
 			"/api/v1/agent-definitions/:agentID/",
+			// A plan is one approval over several writes, read and resolved
+			// alongside the proposals it is made of.
 			"/api/v1/agent-plans/:planID/",
+			// Whether a reply can be answered on a worker, asked once per
+			// session: a client that finds no worker still asks in the request
+			// it came in on, so this has to be readable wherever asking is.
 			"/api/v1/assistant/capabilities/",
+			// Which models the assistant can be pointed at, read by the picker
+			// in the composer rather than by provider administration.
 			"/api/v1/assistant/providers/",
 			"/api/v1/assistant/threads/",
 			"/api/v1/assistant/threads/:threadID/",
@@ -1098,14 +1105,20 @@ func agentAutomationRouteRefs() []RouteRef {
 			"/api/v1/ai-providers/:providerID/test/",
 			"/api/v1/agent-definitions/",
 			"/api/v1/agent-plans/:planID/resolve/",
+			// Ask is the same turn pipeline on a hidden thread, not a second
+			// assistant, and is sold with the one it rides on.
 			"/api/v1/assistant/ask/",
 			"/api/v1/assistant/threads/",
 			"/api/v1/assistant/threads/:threadID/messages/",
+			// Starting a turn and stopping one are the two ends of the same
+			// reply, so they are sold with the thread it belongs to.
 			"/api/v1/assistant/threads/:threadID/turns/",
 			"/api/v1/assistant/turns/:turnID/stop/",
 			"/api/v1/tables/:resource/compose/",
 		),
 		routeRefsFor("PATCH",
+			// Pinning a thread, naming it, or promoting an Ask thread into a
+			// real one.
 			"/api/v1/assistant/threads/:threadID/",
 		),
 		routeRefsFor("PUT",

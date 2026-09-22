@@ -149,6 +149,20 @@ func (a *Activities) ProcessDocumentIntelligenceActivity(
 		}
 		return nil, err
 	}
+	// The profile says whether this document is ever to be read, and this is
+	// the one place that cannot be gone around. EnqueueExtraction checks it
+	// too, but the reconcile starts this workflow directly, so a gate that
+	// lived only at the enqueue was no gate at all.
+	if !doc.ProcessingProfile.SupportsIntelligence() {
+		a.metrics.Document.RecordExtraction("skipped", "", "processing_profile_disabled")
+
+		return &ProcessDocumentIntelligenceResult{
+			DocumentID: doc.ID,
+			Status:     string(doc.ContentStatus),
+			Kind:       doc.DetectedKind,
+		}, nil
+	}
+
 	control, err := a.getDocumentControl(ctx, doc.OrganizationID, doc.BusinessUnitID)
 	if err != nil {
 		return nil, err

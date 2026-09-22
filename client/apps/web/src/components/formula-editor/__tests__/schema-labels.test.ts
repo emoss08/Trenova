@@ -44,6 +44,6 @@ describe("CATEGORY_LABELS for typed relations", () => {
 
 describe("CATEGORY_LABELS for provided context", () => {
   it("names the market-data group fed by integrations", () => {
-    expect(CATEGORY_LABELS.context).toBe("Market Data");
+    expect(CATEGORY_LABELS.context).toBe("Market data");
   });
 });

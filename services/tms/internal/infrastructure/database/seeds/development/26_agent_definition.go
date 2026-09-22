@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	SeedAgentDispatchName = "Dispatch desk"
-	SeedAgentBillingName  = "Billing exceptions"
+	SeedAgentDispatchName   = "Dispatch desk"
+	SeedAgentBillingName    = "Billing exceptions"
+	SeedAgentIntakeDeskName = "Inbox desk"
 )
 
 type AgentDefinitionSeed struct {
@@ -66,35 +67,74 @@ func (s *AgentDefinitionSeed) Run(ctx context.Context, tx bun.Tx) error {
 				// otherwise stays unable to answer what it was created for. The
 				// compliance agent shipped holding get_worker and search_worker
 				// and could not look up an expiring medical card.
-				return s.reconcileToolNames(ctx, tx, org.ID, org.BusinessUnitID)
+				if err = s.reconcileToolNames(ctx, tx, org.ID, org.BusinessUnitID); err != nil {
+					return err
+				}
+
+				// A desk added to this list after a database was seeded is
+				// inserted now, so a new agent shows up without a reset.
+				return s.insertDefinitions(ctx, tx, sc, org.ID, org.BusinessUnitID, true)
 			}
 
 			if err = s.enableSystemAgents(ctx, tx, org.ID, org.BusinessUnitID); err != nil {
 				return err
 			}
 
-			now := timeutils.NowUnix()
-			for _, definition := range s.definitions(org.ID, org.BusinessUnitID) {
-				definition.ApplyDefaults()
-				if definition.TriggerMode == agentdefinition.TriggerScheduled ||
-					definition.TriggerMode == agentdefinition.TriggerContinuous {
-					next, nErr := definition.ComputeNextRun(now)
-					if nErr != nil {
-						return fmt.Errorf("schedule agent %s: %w", definition.Name, nErr)
-					}
-					definition.NextRunAt = &next
-				}
-				if _, err = tx.NewInsert().Model(definition).Exec(ctx); err != nil {
-					return fmt.Errorf("insert agent %s: %w", definition.Name, err)
-				}
-				if err = sc.TrackCreated(ctx, "agent_definitions", definition.ID, s.Name()); err != nil {
-					return err
-				}
-			}
-
-			return nil
+			return s.insertDefinitions(ctx, tx, sc, org.ID, org.BusinessUnitID, false)
 		},
 	)
+}
+
+// insertDefinitions inserts the seeded agents, skipping any whose name the
+// organization already has when onlyMissing is set.
+func (s *AgentDefinitionSeed) insertDefinitions(
+	ctx context.Context,
+	tx bun.Tx,
+	sc *seedhelpers.SeedContext,
+	orgID, buID pulid.ID,
+	onlyMissing bool,
+) error {
+	present := make(map[string]struct{})
+	if onlyMissing {
+		cols := buncolgen.DefinitionColumns
+		var names []string
+		if err := tx.NewSelect().
+			Model((*agentdefinition.Definition)(nil)).
+			Column(cols.Name.Name).
+			Where(cols.OrganizationID.Eq(), orgID).
+			Where(cols.BusinessUnitID.Eq(), buID).
+			Scan(ctx, &names); err != nil {
+			return fmt.Errorf("list existing agents: %w", err)
+		}
+		for _, name := range names {
+			present[name] = struct{}{}
+		}
+	}
+
+	now := timeutils.NowUnix()
+	for _, definition := range s.definitions(orgID, buID) {
+		if _, ok := present[definition.Name]; ok {
+			continue
+		}
+
+		definition.ApplyDefaults()
+		if definition.TriggerMode == agentdefinition.TriggerScheduled ||
+			definition.TriggerMode == agentdefinition.TriggerContinuous {
+			next, err := definition.ComputeNextRun(now)
+			if err != nil {
+				return fmt.Errorf("schedule agent %s: %w", definition.Name, err)
+			}
+			definition.NextRunAt = &next
+		}
+		if _, err := tx.NewInsert().Model(definition).Exec(ctx); err != nil {
+			return fmt.Errorf("insert agent %s: %w", definition.Name, err)
+		}
+		if err := sc.TrackCreated(ctx, "agent_definitions", definition.ID, s.Name()); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // reconcileToolNames adds any tool a definition's template has gained.
@@ -267,6 +307,30 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			CronTimezone:    "America/Los_Angeles",
 			OutputMode:      agentdefinition.OutputReport,
 			Enabled:         true,
+		},
+		{
+			OrganizationID:  orgID,
+			BusinessUnitID:  buID,
+			Name:            SeedAgentIntakeDeskName,
+			Icon:            agentdefinition.IconInbox,
+			Accent:          agentdefinition.AccentViolet,
+			Description:     agentdefinition.TemplateIntakeDesk.Description(),
+			Template:        agentdefinition.TemplateIntakeDesk,
+			Instructions:    agentdefinition.TemplateIntakeDesk.StarterInstructions(),
+			ToolNames:       agentdefinition.TemplateIntakeDesk.StarterTools(),
+			AutonomyCeiling: agentdefinition.TemplateIntakeDesk.StarterCeiling(),
+			TriggerMode:     agentdefinition.TemplateIntakeDesk.StarterTrigger(),
+			EventKinds:      agentdefinition.TemplateIntakeDesk.StarterEvents(),
+			OutputMode:      agentdefinition.OutputReport,
+			// Shadowed: in development the desk proposes against the seeded
+			// inbox without sending real mail until somebody turns it loose.
+			ShadowMode: true,
+			ContextProviders: []agentdefinition.ContextProvider{
+				agentdefinition.ContextOrganization,
+				agentdefinition.ContextClock,
+				agentdefinition.ContextTools,
+			},
+			Enabled: true,
 		},
 	}
 }

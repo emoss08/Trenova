@@ -81,6 +81,8 @@ function row(
     createdAt: PERIOD_END,
     updatedAt: PERIOD_END,
     customer: { id: "cus_1", name: "GlobalTrade Imports", code: "GLBL" },
+    shipperCustomerId: null,
+    isSplitBill: false,
     ...overrides,
   };
 }

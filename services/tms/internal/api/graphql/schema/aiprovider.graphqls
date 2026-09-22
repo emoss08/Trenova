@@ -28,6 +28,9 @@ enum AITask {
   BillingDiagnosis
   FormulaAssistant
   ScopeClassification
+  DailyBriefing
+  QueryCompose
+  InboundClassification
   AssistantChat
   OperationalInsights
   General

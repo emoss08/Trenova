@@ -20,6 +20,8 @@ type Params struct {
 	Repo     repositories.NotificationRepository
 	Realtime servicesport.RealtimeService
 	WebPush  *webpushservice.Service `optional:"true"`
+	// Roles answers who may read a resource, for NotifyPermitted.
+	Roles repositories.RoleRepository `optional:"true"`
 }
 
 type Service struct {
@@ -27,6 +29,7 @@ type Service struct {
 	repo     repositories.NotificationRepository
 	realtime servicesport.RealtimeService
 	webPush  *webpushservice.Service
+	roles    repositories.RoleRepository
 }
 
 func New(p Params) *Service {
@@ -35,6 +38,7 @@ func New(p Params) *Service {
 		repo:     p.Repo,
 		realtime: p.Realtime,
 		webPush:  p.WebPush,
+		roles:    p.Roles,
 	}
 }
 

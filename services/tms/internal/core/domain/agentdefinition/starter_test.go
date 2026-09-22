@@ -130,9 +130,45 @@ func TestTemplates_TheNewDesksWaitOnTheirOwnEvents(t *testing.T) {
 		agentdefinition.TemplateDispatchAssignment: {
 			agent.EventShipmentMoveCoverageAtRisk,
 		},
+		agentdefinition.TemplateIntakeDesk: {
+			agent.EventInboundMessageClassified,
+		},
 	}
 
 	for template, kinds := range cases {
 		require.ElementsMatch(t, kinds, template.StarterEvents(), template.Label())
+	}
+}
+
+/*
+The intake desk is the one desk that may earn running unattended, because the
+owner decided an inbox the organization trusts should answer a status question
+without a person. The grant is not the template's to make: each inbox tool holds
+itself to a proposal unless the message's mailbox handles it without review. The
+template only makes room.
+
+It holds nothing that creates a load or money. A tender's attachment already
+wakes shipment intake through the document it became; a second desk holding
+create_shipment would put two proposals for the same load in front of a person.
+*/
+func TestTemplates_TheIntakeDeskMayEarnAutonomyTheMailboxGrants(t *testing.T) {
+	t.Parallel()
+
+	desk := agentdefinition.TemplateIntakeDesk
+	require.Equal(t, agent.TierAutoExecute, desk.StarterCeiling())
+	require.Equal(t, agentdefinition.TriggerEvent, desk.StarterTrigger())
+
+	tools := desk.StarterTools()
+	for _, tool := range []string{
+		"get_inbound_message",
+		"link_inbound_message",
+		"mark_inbound_message",
+		"reply_to_inbound_message",
+		"attach_document_to_shipment",
+	} {
+		require.Containsf(t, tools, tool, "the intake desk needs %s", tool)
+	}
+	for _, tool := range []string{"create_shipment", "post_customer_payment", "tender_move_to_carriers"} {
+		require.NotContainsf(t, tools, tool, "the intake desk must not hold %s", tool)
 	}
 }

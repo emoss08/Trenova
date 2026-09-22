@@ -87,6 +87,16 @@ virtuals:
   WatchtowerItem:
     - seen
     - kindLabel
+  InboundMailbox:
+    - hasSigningSecret
+  InboundMessage:
+    - needsReview
+    - mailbox
+    - attachments
+    - attachmentCount
+    - preview
+    - matchedShipment
+    - matchedCustomer
   AgentDefinition:
     - pendingProposals
     - openRuns

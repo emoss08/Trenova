@@ -109,6 +109,10 @@ type ResolverRoot interface {
 	IFTAReturnLine() IFTAReturnLineResolver
 	IFTAReturnProblem() IFTAReturnProblemResolver
 	IFTATaxRate() IFTATaxRateResolver
+	InboundAttachment() InboundAttachmentResolver
+	InboundMailbox() InboundMailboxResolver
+	InboundMailboxCredentials() InboundMailboxCredentialsResolver
+	InboundMessage() InboundMessageResolver
 	Invoice() InvoiceResolver
 	InvoiceAdjustment() InvoiceAdjustmentResolver
 	InvoiceAdjustmentApprovalQueueItem() InvoiceAdjustmentApprovalQueueItemResolver
@@ -5464,6 +5468,122 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	InboundAttachment struct {
+		ByteSize    func(childComplexity int) int
+		ContentType func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		DocumentID  func(childComplexity int) int
+		FailureText func(childComplexity int) int
+		FileName    func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Kind        func(childComplexity int) int
+	}
+
+	InboundClassificationCount struct {
+		Classification func(childComplexity int) int
+		Total          func(childComplexity int) int
+		Waiting        func(childComplexity int) int
+	}
+
+	InboundMailbox struct {
+		Address          func(childComplexity int) int
+		BusinessUnitID   func(childComplexity int) int
+		CreatedAt        func(childComplexity int) int
+		HasSigningSecret func(childComplexity int) int
+		ID               func(childComplexity int) int
+		MinConfidence    func(childComplexity int) int
+		Name             func(childComplexity int) int
+		OrganizationID   func(childComplexity int) int
+		Provider         func(childComplexity int) int
+		Purpose          func(childComplexity int) int
+		ReviewPolicy     func(childComplexity int) int
+		Status           func(childComplexity int) int
+		UpdatedAt        func(childComplexity int) int
+		Version          func(childComplexity int) int
+	}
+
+	InboundMailboxCount struct {
+		MailboxID func(childComplexity int) int
+		Total     func(childComplexity int) int
+		Waiting   func(childComplexity int) int
+	}
+
+	InboundMailboxCredentials struct {
+		Mailbox     func(childComplexity int) int
+		Token       func(childComplexity int) int
+		WebhookPath func(childComplexity int) int
+	}
+
+	InboundMessage struct {
+		AttachmentCount   func(childComplexity int) int
+		Attachments       func(childComplexity int) int
+		BusinessUnitID    func(childComplexity int) int
+		CcAddresses       func(childComplexity int) int
+		Classification    func(childComplexity int) int
+		Confidence        func(childComplexity int) int
+		CreatedAt         func(childComplexity int) int
+		FailureCode       func(childComplexity int) int
+		FailureText       func(childComplexity int) int
+		FromAddress       func(childComplexity int) int
+		FromName          func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Mailbox           func(childComplexity int) int
+		MailboxID         func(childComplexity int) int
+		MatchReason       func(childComplexity int) int
+		MatchedCarrierID  func(childComplexity int) int
+		MatchedCustomer   func(childComplexity int) int
+		MatchedCustomerID func(childComplexity int) int
+		MatchedShipment   func(childComplexity int) int
+		MatchedShipmentID func(childComplexity int) int
+		NeedsReview       func(childComplexity int) int
+		OrganizationID    func(childComplexity int) int
+		Preview           func(childComplexity int) int
+		ReceivedAt        func(childComplexity int) int
+		ReviewNote        func(childComplexity int) int
+		ReviewedAt        func(childComplexity int) int
+		ReviewedBy        func(childComplexity int) int
+		RunID             func(childComplexity int) int
+		SpamScore         func(childComplexity int) int
+		Status            func(childComplexity int) int
+		Subject           func(childComplexity int) int
+		TextBody          func(childComplexity int) int
+		ToAddresses       func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+		Version           func(childComplexity int) int
+	}
+
+	InboundMessageConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	InboundMessageCounts struct {
+		ByClassification func(childComplexity int) int
+		ByMailbox        func(childComplexity int) int
+		Handled          func(childComplexity int) int
+		Ignored          func(childComplexity int) int
+		Quarantined      func(childComplexity int) int
+		Total            func(childComplexity int) int
+		Waiting          func(childComplexity int) int
+	}
+
+	InboundMessageEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	InboundShipmentRef struct {
+		BOL              func(childComplexity int) int
+		DestinationCity  func(childComplexity int) int
+		DestinationState func(childComplexity int) int
+		OriginCity       func(childComplexity int) int
+		OriginState      func(childComplexity int) int
+		PONumber         func(childComplexity int) int
+		ProNumber        func(childComplexity int) int
+		ShipmentID       func(childComplexity int) int
+	}
+
 	InviteWorkerToPortalResult struct {
 		EmailSent  func(childComplexity int) int
 		Invitation func(childComplexity int) int
@@ -6272,6 +6392,7 @@ type ComplexityRoot struct {
 		CreateFuelSurchargeProgram            func(childComplexity int, input gqlmodel.FuelSurchargeProgramInput) int
 		CreateHomeLayoutPreset                func(childComplexity int, input gqlmodel.SaveHomeLayoutPresetInput) int
 		CreateIFTAMileageEntry                func(childComplexity int, input gqlmodel.IFTAMileageEntryInput) int
+		CreateInboundMailbox                  func(childComplexity int, input gqlmodel.InboundMailboxInput, signingSecret *string) int
 		CreateInvoiceFromOrder                func(childComplexity int, orderID string, offCycleReason *string) int
 		CreateInvoiceFromShipments            func(childComplexity int, shipmentIds []string, offCycleReason *string) int
 		CreateInvoicesFromOrder               func(childComplexity int, orderID string, offCycleReason *string) int
@@ -6375,6 +6496,7 @@ type ComplexityRoot struct {
 		IssueDisciplinaryAction               func(childComplexity int, input gqlmodel.IssueDisciplinaryActionInput) int
 		IssuePayAdvance                       func(childComplexity int, input gqlmodel.IssuePayAdvanceInput) int
 		LinkEDICarrierInvoiceToCarrier        func(childComplexity int, invoiceID string, carrierID string) int
+		LinkInboundMessage                    func(childComplexity int, id string, input gqlmodel.LinkInboundMessageInput) int
 		LocateTractor                         func(childComplexity int, input gqlmodel.LocateTractorInput) int
 		LocateTrailer                         func(childComplexity int, input gqlmodel.LocateTrailerInput) int
 		MarkAllMyNotificationsRead            func(childComplexity int) int
@@ -6467,11 +6589,13 @@ type ComplexityRoot struct {
 		RetryBillingTransferRun               func(childComplexity int, id string) int
 		ReverseCustomerPayment                func(childComplexity int, input gqlmodel.ReverseCustomerPaymentInput) int
 		ReviewDriverExpense                   func(childComplexity int, input gqlmodel.ReviewDriverExpenseInput) int
+		ReviewInboundMessage                  func(childComplexity int, id string, input gqlmodel.ReviewInboundMessageInput) int
 		ReviewWorkerSafetyEvent               func(childComplexity int, input gqlmodel.SafetyEventStatusInput) int
 		RevokeApprovalDelegation              func(childComplexity int, id string) int
 		RevokeCarrierIntelOverride            func(childComplexity int, id string, reason string) int
 		RevokeWorkerPortalAccess              func(childComplexity int, workerID string) int
 		RollbackDocumentTemplate              func(childComplexity int, versionID string, notes *string) int
+		RotateInboundMailboxToken             func(childComplexity int, id string) int
 		RunDOTRandomDraw                      func(childComplexity int, input gqlmodel.RunDOTRandomDrawInput) int
 		RunPTOAccrual                         func(childComplexity int, input gqlmodel.RunPTOAccrualInput) int
 		RunReport                             func(childComplexity int, input gqlmodel.RunReportInput) int
@@ -6483,6 +6607,7 @@ type ComplexityRoot struct {
 		SetAgentMemoryStatus                  func(childComplexity int, id string, status agent.MemoryStatus) int
 		SetCarrierMonitoring                  func(childComplexity int, carrierIds []string, enabled bool) int
 		SetDefaultTableConfiguration          func(childComplexity int, id string) int
+		SetInboundMailboxSigningSecret        func(childComplexity int, id string, secret string) int
 		SetMyAvailability                     func(childComplexity int, input gqlmodel.SetMyAvailabilityInput) int
 		SetOrderChargeAllocations             func(childComplexity int, input gqlmodel.SetOrderChargeAllocationsInput) int
 		SetOrgDefaultTableConfiguration       func(childComplexity int, id string, enabled bool) int
@@ -6537,6 +6662,7 @@ type ComplexityRoot struct {
 		UpdateHomeLayout                      func(childComplexity int, input gqlmodel.HomeLayoutInput) int
 		UpdateHomeLayoutPreset                func(childComplexity int, input gqlmodel.UpdateHomeLayoutPresetInput) int
 		UpdateIFTAMileageEntry                func(childComplexity int, id string, version int, input gqlmodel.IFTAMileageEntryInput) int
+		UpdateInboundMailbox                  func(childComplexity int, id string, version int, input gqlmodel.InboundMailboxInput) int
 		UpdateJobPosition                     func(childComplexity int, input gqlmodel.UpdateJobPositionInput) int
 		UpdateLeaveCase                       func(childComplexity int, input gqlmodel.UpdateLeaveCaseInput) int
 		UpdateLeaveControl                    func(childComplexity int, input gqlmodel.UpdateLeaveControlInput) int
@@ -7667,6 +7793,10 @@ type ComplexityRoot struct {
 		IFTAReturnForPeriod                 func(childComplexity int, period gqlmodel.IFTAPeriodInput) int
 		IFTAReturns                         func(childComplexity int, input gqlmodel.IFTAReturnsInput) int
 		IFTATaxRates                        func(childComplexity int, input gqlmodel.IFTATaxRatesInput) int
+		InboundMailboxes                    func(childComplexity int) int
+		InboundMessage                      func(childComplexity int, id string) int
+		InboundMessageCounts                func(childComplexity int) int
+		InboundMessages                     func(childComplexity int, input gqlmodel.InboundMessagesInput) int
 		Invoice                             func(childComplexity int, id string) int
 		InvoiceAdjustment                   func(childComplexity int, id string) int
 		InvoiceAdjustmentApprovals          func(childComplexity int, input gqlmodel.InvoiceAdjustmentApprovalsInput) int
@@ -36070,6 +36200,532 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.IFTATaxRateEdge.Node(childComplexity), true
 
+	case "InboundAttachment.byteSize":
+		if e.ComplexityRoot.InboundAttachment.ByteSize == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundAttachment.ByteSize(childComplexity), true
+	case "InboundAttachment.contentType":
+		if e.ComplexityRoot.InboundAttachment.ContentType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundAttachment.ContentType(childComplexity), true
+	case "InboundAttachment.createdAt":
+		if e.ComplexityRoot.InboundAttachment.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundAttachment.CreatedAt(childComplexity), true
+	case "InboundAttachment.documentId":
+		if e.ComplexityRoot.InboundAttachment.DocumentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundAttachment.DocumentID(childComplexity), true
+	case "InboundAttachment.failureText":
+		if e.ComplexityRoot.InboundAttachment.FailureText == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundAttachment.FailureText(childComplexity), true
+	case "InboundAttachment.fileName":
+		if e.ComplexityRoot.InboundAttachment.FileName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundAttachment.FileName(childComplexity), true
+	case "InboundAttachment.id":
+		if e.ComplexityRoot.InboundAttachment.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundAttachment.ID(childComplexity), true
+	case "InboundAttachment.kind":
+		if e.ComplexityRoot.InboundAttachment.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundAttachment.Kind(childComplexity), true
+
+	case "InboundClassificationCount.classification":
+		if e.ComplexityRoot.InboundClassificationCount.Classification == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundClassificationCount.Classification(childComplexity), true
+	case "InboundClassificationCount.total":
+		if e.ComplexityRoot.InboundClassificationCount.Total == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundClassificationCount.Total(childComplexity), true
+	case "InboundClassificationCount.waiting":
+		if e.ComplexityRoot.InboundClassificationCount.Waiting == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundClassificationCount.Waiting(childComplexity), true
+
+	case "InboundMailbox.address":
+		if e.ComplexityRoot.InboundMailbox.Address == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.Address(childComplexity), true
+	case "InboundMailbox.businessUnitId":
+		if e.ComplexityRoot.InboundMailbox.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.BusinessUnitID(childComplexity), true
+	case "InboundMailbox.createdAt":
+		if e.ComplexityRoot.InboundMailbox.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.CreatedAt(childComplexity), true
+	case "InboundMailbox.hasSigningSecret":
+		if e.ComplexityRoot.InboundMailbox.HasSigningSecret == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.HasSigningSecret(childComplexity), true
+	case "InboundMailbox.id":
+		if e.ComplexityRoot.InboundMailbox.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.ID(childComplexity), true
+	case "InboundMailbox.minConfidence":
+		if e.ComplexityRoot.InboundMailbox.MinConfidence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.MinConfidence(childComplexity), true
+	case "InboundMailbox.name":
+		if e.ComplexityRoot.InboundMailbox.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.Name(childComplexity), true
+	case "InboundMailbox.organizationId":
+		if e.ComplexityRoot.InboundMailbox.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.OrganizationID(childComplexity), true
+	case "InboundMailbox.provider":
+		if e.ComplexityRoot.InboundMailbox.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.Provider(childComplexity), true
+	case "InboundMailbox.purpose":
+		if e.ComplexityRoot.InboundMailbox.Purpose == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.Purpose(childComplexity), true
+	case "InboundMailbox.reviewPolicy":
+		if e.ComplexityRoot.InboundMailbox.ReviewPolicy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.ReviewPolicy(childComplexity), true
+	case "InboundMailbox.status":
+		if e.ComplexityRoot.InboundMailbox.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.Status(childComplexity), true
+	case "InboundMailbox.updatedAt":
+		if e.ComplexityRoot.InboundMailbox.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.UpdatedAt(childComplexity), true
+	case "InboundMailbox.version":
+		if e.ComplexityRoot.InboundMailbox.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.Version(childComplexity), true
+
+	case "InboundMailboxCount.mailboxId":
+		if e.ComplexityRoot.InboundMailboxCount.MailboxID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailboxCount.MailboxID(childComplexity), true
+	case "InboundMailboxCount.total":
+		if e.ComplexityRoot.InboundMailboxCount.Total == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailboxCount.Total(childComplexity), true
+	case "InboundMailboxCount.waiting":
+		if e.ComplexityRoot.InboundMailboxCount.Waiting == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailboxCount.Waiting(childComplexity), true
+
+	case "InboundMailboxCredentials.mailbox":
+		if e.ComplexityRoot.InboundMailboxCredentials.Mailbox == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailboxCredentials.Mailbox(childComplexity), true
+	case "InboundMailboxCredentials.token":
+		if e.ComplexityRoot.InboundMailboxCredentials.Token == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailboxCredentials.Token(childComplexity), true
+	case "InboundMailboxCredentials.webhookPath":
+		if e.ComplexityRoot.InboundMailboxCredentials.WebhookPath == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailboxCredentials.WebhookPath(childComplexity), true
+
+	case "InboundMessage.attachmentCount":
+		if e.ComplexityRoot.InboundMessage.AttachmentCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.AttachmentCount(childComplexity), true
+	case "InboundMessage.attachments":
+		if e.ComplexityRoot.InboundMessage.Attachments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.Attachments(childComplexity), true
+	case "InboundMessage.businessUnitId":
+		if e.ComplexityRoot.InboundMessage.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.BusinessUnitID(childComplexity), true
+	case "InboundMessage.ccAddresses":
+		if e.ComplexityRoot.InboundMessage.CcAddresses == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.CcAddresses(childComplexity), true
+	case "InboundMessage.classification":
+		if e.ComplexityRoot.InboundMessage.Classification == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.Classification(childComplexity), true
+	case "InboundMessage.confidence":
+		if e.ComplexityRoot.InboundMessage.Confidence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.Confidence(childComplexity), true
+	case "InboundMessage.createdAt":
+		if e.ComplexityRoot.InboundMessage.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.CreatedAt(childComplexity), true
+	case "InboundMessage.failureCode":
+		if e.ComplexityRoot.InboundMessage.FailureCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.FailureCode(childComplexity), true
+	case "InboundMessage.failureText":
+		if e.ComplexityRoot.InboundMessage.FailureText == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.FailureText(childComplexity), true
+	case "InboundMessage.fromAddress":
+		if e.ComplexityRoot.InboundMessage.FromAddress == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.FromAddress(childComplexity), true
+	case "InboundMessage.fromName":
+		if e.ComplexityRoot.InboundMessage.FromName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.FromName(childComplexity), true
+	case "InboundMessage.id":
+		if e.ComplexityRoot.InboundMessage.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.ID(childComplexity), true
+	case "InboundMessage.mailbox":
+		if e.ComplexityRoot.InboundMessage.Mailbox == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.Mailbox(childComplexity), true
+	case "InboundMessage.mailboxId":
+		if e.ComplexityRoot.InboundMessage.MailboxID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.MailboxID(childComplexity), true
+	case "InboundMessage.matchReason":
+		if e.ComplexityRoot.InboundMessage.MatchReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.MatchReason(childComplexity), true
+	case "InboundMessage.matchedCarrierId":
+		if e.ComplexityRoot.InboundMessage.MatchedCarrierID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.MatchedCarrierID(childComplexity), true
+	case "InboundMessage.matchedCustomer":
+		if e.ComplexityRoot.InboundMessage.MatchedCustomer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.MatchedCustomer(childComplexity), true
+	case "InboundMessage.matchedCustomerId":
+		if e.ComplexityRoot.InboundMessage.MatchedCustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.MatchedCustomerID(childComplexity), true
+	case "InboundMessage.matchedShipment":
+		if e.ComplexityRoot.InboundMessage.MatchedShipment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.MatchedShipment(childComplexity), true
+	case "InboundMessage.matchedShipmentId":
+		if e.ComplexityRoot.InboundMessage.MatchedShipmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.MatchedShipmentID(childComplexity), true
+	case "InboundMessage.needsReview":
+		if e.ComplexityRoot.InboundMessage.NeedsReview == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.NeedsReview(childComplexity), true
+	case "InboundMessage.organizationId":
+		if e.ComplexityRoot.InboundMessage.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.OrganizationID(childComplexity), true
+	case "InboundMessage.preview":
+		if e.ComplexityRoot.InboundMessage.Preview == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.Preview(childComplexity), true
+	case "InboundMessage.receivedAt":
+		if e.ComplexityRoot.InboundMessage.ReceivedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.ReceivedAt(childComplexity), true
+	case "InboundMessage.reviewNote":
+		if e.ComplexityRoot.InboundMessage.ReviewNote == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.ReviewNote(childComplexity), true
+	case "InboundMessage.reviewedAt":
+		if e.ComplexityRoot.InboundMessage.ReviewedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.ReviewedAt(childComplexity), true
+	case "InboundMessage.reviewedBy":
+		if e.ComplexityRoot.InboundMessage.ReviewedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.ReviewedBy(childComplexity), true
+	case "InboundMessage.runId":
+		if e.ComplexityRoot.InboundMessage.RunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.RunID(childComplexity), true
+	case "InboundMessage.spamScore":
+		if e.ComplexityRoot.InboundMessage.SpamScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.SpamScore(childComplexity), true
+	case "InboundMessage.status":
+		if e.ComplexityRoot.InboundMessage.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.Status(childComplexity), true
+	case "InboundMessage.subject":
+		if e.ComplexityRoot.InboundMessage.Subject == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.Subject(childComplexity), true
+	case "InboundMessage.textBody":
+		if e.ComplexityRoot.InboundMessage.TextBody == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.TextBody(childComplexity), true
+	case "InboundMessage.toAddresses":
+		if e.ComplexityRoot.InboundMessage.ToAddresses == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.ToAddresses(childComplexity), true
+	case "InboundMessage.updatedAt":
+		if e.ComplexityRoot.InboundMessage.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.UpdatedAt(childComplexity), true
+	case "InboundMessage.version":
+		if e.ComplexityRoot.InboundMessage.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessage.Version(childComplexity), true
+
+	case "InboundMessageConnection.edges":
+		if e.ComplexityRoot.InboundMessageConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessageConnection.Edges(childComplexity), true
+	case "InboundMessageConnection.pageInfo":
+		if e.ComplexityRoot.InboundMessageConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessageConnection.PageInfo(childComplexity), true
+	case "InboundMessageConnection.totalCount":
+		if e.ComplexityRoot.InboundMessageConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessageConnection.TotalCount(childComplexity), true
+
+	case "InboundMessageCounts.byClassification":
+		if e.ComplexityRoot.InboundMessageCounts.ByClassification == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessageCounts.ByClassification(childComplexity), true
+	case "InboundMessageCounts.byMailbox":
+		if e.ComplexityRoot.InboundMessageCounts.ByMailbox == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessageCounts.ByMailbox(childComplexity), true
+	case "InboundMessageCounts.handled":
+		if e.ComplexityRoot.InboundMessageCounts.Handled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessageCounts.Handled(childComplexity), true
+	case "InboundMessageCounts.ignored":
+		if e.ComplexityRoot.InboundMessageCounts.Ignored == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessageCounts.Ignored(childComplexity), true
+	case "InboundMessageCounts.quarantined":
+		if e.ComplexityRoot.InboundMessageCounts.Quarantined == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessageCounts.Quarantined(childComplexity), true
+	case "InboundMessageCounts.total":
+		if e.ComplexityRoot.InboundMessageCounts.Total == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessageCounts.Total(childComplexity), true
+	case "InboundMessageCounts.waiting":
+		if e.ComplexityRoot.InboundMessageCounts.Waiting == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessageCounts.Waiting(childComplexity), true
+
+	case "InboundMessageEdge.cursor":
+		if e.ComplexityRoot.InboundMessageEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessageEdge.Cursor(childComplexity), true
+	case "InboundMessageEdge.node":
+		if e.ComplexityRoot.InboundMessageEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMessageEdge.Node(childComplexity), true
+
+	case "InboundShipmentRef.bol":
+		if e.ComplexityRoot.InboundShipmentRef.BOL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundShipmentRef.BOL(childComplexity), true
+	case "InboundShipmentRef.destinationCity":
+		if e.ComplexityRoot.InboundShipmentRef.DestinationCity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundShipmentRef.DestinationCity(childComplexity), true
+	case "InboundShipmentRef.destinationState":
+		if e.ComplexityRoot.InboundShipmentRef.DestinationState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundShipmentRef.DestinationState(childComplexity), true
+	case "InboundShipmentRef.originCity":
+		if e.ComplexityRoot.InboundShipmentRef.OriginCity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundShipmentRef.OriginCity(childComplexity), true
+	case "InboundShipmentRef.originState":
+		if e.ComplexityRoot.InboundShipmentRef.OriginState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundShipmentRef.OriginState(childComplexity), true
+	case "InboundShipmentRef.poNumber":
+		if e.ComplexityRoot.InboundShipmentRef.PONumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundShipmentRef.PONumber(childComplexity), true
+	case "InboundShipmentRef.proNumber":
+		if e.ComplexityRoot.InboundShipmentRef.ProNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundShipmentRef.ProNumber(childComplexity), true
+	case "InboundShipmentRef.id":
+		if e.ComplexityRoot.InboundShipmentRef.ShipmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundShipmentRef.ShipmentID(childComplexity), true
+
 	case "InviteWorkerToPortalResult.emailSent":
 		if e.ComplexityRoot.InviteWorkerToPortalResult.EmailSent == nil {
 			break
@@ -40584,6 +41240,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateIFTAMileageEntry(childComplexity, args["input"].(gqlmodel.IFTAMileageEntryInput)), true
+	case "Mutation.createInboundMailbox":
+		if e.ComplexityRoot.Mutation.CreateInboundMailbox == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createInboundMailbox_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateInboundMailbox(childComplexity, args["input"].(gqlmodel.InboundMailboxInput), args["signingSecret"].(*string)), true
 	case "Mutation.createInvoiceFromOrder":
 		if e.ComplexityRoot.Mutation.CreateInvoiceFromOrder == nil {
 			break
@@ -41717,6 +42384,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.LinkEDICarrierInvoiceToCarrier(childComplexity, args["invoiceId"].(string), args["carrierId"].(string)), true
+	case "Mutation.linkInboundMessage":
+		if e.ComplexityRoot.Mutation.LinkInboundMessage == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_linkInboundMessage_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.LinkInboundMessage(childComplexity, args["id"].(string), args["input"].(gqlmodel.LinkInboundMessageInput)), true
 	case "Mutation.locateTractor":
 		if e.ComplexityRoot.Mutation.LocateTractor == nil {
 			break
@@ -42709,6 +43387,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ReviewDriverExpense(childComplexity, args["input"].(gqlmodel.ReviewDriverExpenseInput)), true
+	case "Mutation.reviewInboundMessage":
+		if e.ComplexityRoot.Mutation.ReviewInboundMessage == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_reviewInboundMessage_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ReviewInboundMessage(childComplexity, args["id"].(string), args["input"].(gqlmodel.ReviewInboundMessageInput)), true
 	case "Mutation.reviewWorkerSafetyEvent":
 		if e.ComplexityRoot.Mutation.ReviewWorkerSafetyEvent == nil {
 			break
@@ -42764,6 +43453,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RollbackDocumentTemplate(childComplexity, args["versionId"].(string), args["notes"].(*string)), true
+	case "Mutation.rotateInboundMailboxToken":
+		if e.ComplexityRoot.Mutation.RotateInboundMailboxToken == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_rotateInboundMailboxToken_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RotateInboundMailboxToken(childComplexity, args["id"].(string)), true
 	case "Mutation.runDotRandomDraw":
 		if e.ComplexityRoot.Mutation.RunDOTRandomDraw == nil {
 			break
@@ -42885,6 +43585,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SetDefaultTableConfiguration(childComplexity, args["id"].(string)), true
+	case "Mutation.setInboundMailboxSigningSecret":
+		if e.ComplexityRoot.Mutation.SetInboundMailboxSigningSecret == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setInboundMailboxSigningSecret_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetInboundMailboxSigningSecret(childComplexity, args["id"].(string), args["secret"].(string)), true
 	case "Mutation.setMyAvailability":
 		if e.ComplexityRoot.Mutation.SetMyAvailability == nil {
 			break
@@ -43479,6 +44190,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateIFTAMileageEntry(childComplexity, args["id"].(string), args["version"].(int), args["input"].(gqlmodel.IFTAMileageEntryInput)), true
+	case "Mutation.updateInboundMailbox":
+		if e.ComplexityRoot.Mutation.UpdateInboundMailbox == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateInboundMailbox_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateInboundMailbox(childComplexity, args["id"].(string), args["version"].(int), args["input"].(gqlmodel.InboundMailboxInput)), true
 	case "Mutation.updateJobPosition":
 		if e.ComplexityRoot.Mutation.UpdateJobPosition == nil {
 			break
@@ -50120,6 +50842,40 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.IFTATaxRates(childComplexity, args["input"].(gqlmodel.IFTATaxRatesInput)), true
+	case "Query.inboundMailboxes":
+		if e.ComplexityRoot.Query.InboundMailboxes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.InboundMailboxes(childComplexity), true
+	case "Query.inboundMessage":
+		if e.ComplexityRoot.Query.InboundMessage == nil {
+			break
+		}
+
+		args, err := ec.field_Query_inboundMessage_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.InboundMessage(childComplexity, args["id"].(string)), true
+	case "Query.inboundMessageCounts":
+		if e.ComplexityRoot.Query.InboundMessageCounts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.InboundMessageCounts(childComplexity), true
+	case "Query.inboundMessages":
+		if e.ComplexityRoot.Query.InboundMessages == nil {
+			break
+		}
+
+		args, err := ec.field_Query_inboundMessages_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.InboundMessages(childComplexity, args["input"].(gqlmodel.InboundMessagesInput)), true
 
 	case "Query.invoice":
 		if e.ComplexityRoot.Query.Invoice == nil {
@@ -70646,12 +71402,15 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputIFTATaxRateInput,
 		ec.unmarshalInputIFTATaxRatesInput,
 		ec.unmarshalInputImportSourcedCarrierInput,
+		ec.unmarshalInputInboundMailboxInput,
+		ec.unmarshalInputInboundMessagesInput,
 		ec.unmarshalInputInviteWorkerToPortalInput,
 		ec.unmarshalInputInvoiceAdjustmentApprovalsInput,
 		ec.unmarshalInputIssueDisciplinaryActionInput,
 		ec.unmarshalInputIssuePayAdvanceInput,
 		ec.unmarshalInputJobPositionInput,
 		ec.unmarshalInputLateChargeAssessmentInput,
+		ec.unmarshalInputLinkInboundMessageInput,
 		ec.unmarshalInputListBriefingsInput,
 		ec.unmarshalInputLocateTractorInput,
 		ec.unmarshalInputLocateTrailerInput,
@@ -70733,6 +71492,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputReverseCustomerPaymentInput,
 		ec.unmarshalInputReviewDriverExpenseInput,
 		ec.unmarshalInputReviewGoalInput,
+		ec.unmarshalInputReviewInboundMessageInput,
 		ec.unmarshalInputReviewItemInput,
 		ec.unmarshalInputReviewRatingInput,
 		ec.unmarshalInputRotaFilterInput,
@@ -71261,6 +72021,7 @@ enum AgentSubjectType {
   Worker
   CarrierIntelEvent
   EDIInboundFile
+  InboundMessage
 }
 
 enum AgentRunTrigger {
@@ -71767,6 +72528,7 @@ extend type Mutation {
   CredentialDesk
   CustomerUpdateDesk
   CarrierRiskDesk
+  IntakeDesk
 }
 
 enum AgentTriggerMode {
@@ -72071,6 +72833,9 @@ enum AITask {
   BillingDiagnosis
   FormulaAssistant
   ScopeClassification
+  DailyBriefing
+  QueryCompose
+  InboundClassification
   AssistantChat
   OperationalInsights
   General
@@ -81910,6 +82675,284 @@ extend type Mutation {
   backfillJurisdictionMiles(input: BackfillJurisdictionMilesInput!): JurisdictionMilesBackfillResult!
 }
 `, BuiltIn: false},
+	{Name: "../schema/inboundmessage.graphqls", Input: `"What a message turned out to be, once it was read."
+enum InboundClassification {
+  Tender
+  RateConfirmation
+  ProofOfDelivery
+  Invoice
+  StatusRequest
+  DetentionDispute
+  Other
+}
+
+"How far a message has got, and whether it is waiting on anybody."
+enum InboundMessageStatus {
+  Received
+  Processing
+  Classified
+  InReview
+  Actioned
+  Ignored
+  Quarantined
+}
+
+"What a file that came with a message turned out to be."
+enum InboundAttachmentKind {
+  Unknown
+  RateConfirmation
+  ProofOfDelivery
+  Invoice
+  BillOfLading
+  Other
+}
+
+"How much an address is trusted to act without a person."
+enum InboundReviewPolicy {
+  AlwaysReview
+  ReviewBelowConfidence
+  AutoHandle
+}
+
+"Whether an address is still listening."
+enum InboundMailboxStatus {
+  Active
+  Inactive
+}
+
+"Which provider posts this address's mail."
+enum InboundProvider {
+  Postmark
+  Resend
+}
+
+"""
+An address the system listens on.
+
+The webhook token is never returned. It is shown once, when the mailbox is
+created or its token is rotated, and stored only as a hash — so a leaked row
+is a row somebody can read, not an address they can post to.
+"""
+type InboundMailbox {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  address: String!
+  provider: InboundProvider!
+  purpose: String!
+  reviewPolicy: InboundReviewPolicy!
+  "The bar a reading must clear before the desk acts without asking."
+  minConfidence: Float!
+  status: InboundMailboxStatus!
+  "Whether a signing secret is set. Without one the mailbox refuses every delivery. The secret itself is never returned."
+  hasSigningSecret: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+A mailbox with the webhook token it was just given.
+
+The token is stored only as a hash, so this is the one response that carries
+it. Whoever creates or rotates a mailbox copies the webhook URL from here.
+"""
+type InboundMailboxCredentials {
+  mailbox: InboundMailbox!
+  token: String!
+  "Where the provider posts, under the API's base URL."
+  webhookPath: String!
+}
+
+input InboundMailboxInput {
+  name: String!
+  address: String!
+  provider: InboundProvider!
+  purpose: String
+  reviewPolicy: InboundReviewPolicy!
+  "The bar a reading must clear to be acted on alone; read only by ReviewBelowConfidence."
+  minConfidence: Float!
+  status: InboundMailboxStatus!
+}
+
+"One file that came with a message, and what became of it."
+type InboundAttachment {
+  id: ID!
+  fileName: String!
+  contentType: String!
+  byteSize: Int!
+  kind: InboundAttachmentKind!
+  "The document this became, once the pipeline had read it."
+  documentId: ID
+  "Why this file was refused or could not be read; blank when it was."
+  failureText: String!
+  createdAt: Timestamp!
+}
+
+"""
+One email that arrived on a monitored address.
+
+It is kept whether or not anything could be made of it: a tender nobody
+matched is still something a person has to look at, and a message dropped
+because it did not classify is a message its sender believes was received.
+"""
+type InboundMessage {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  mailboxId: ID!
+  mailbox: InboundMailbox
+  fromAddress: String!
+  fromName: String!
+  toAddresses: [String!]!
+  ccAddresses: [String!]!
+  subject: String!
+  "The bounded plain text. The whole message is in object storage."
+  textBody: String!
+  receivedAt: Timestamp!
+  spamScore: Float!
+  classification: InboundClassification
+  "The reading's own confidence, between 0 and 1."
+  confidence: Float!
+  status: InboundMessageStatus!
+  matchedCustomerId: ID
+  matchedCarrierId: ID
+  matchedShipmentId: ID
+  "Why the message was matched to those records; a match nobody can check is one nobody will trust."
+  matchReason: String!
+  "The agent run that read it, where one did."
+  runId: ID
+  reviewedBy: ID
+  reviewedAt: Timestamp
+  reviewNote: String!
+  "Why the pipeline gave up, where it did."
+  failureCode: String!
+  failureText: String!
+  attachments: [InboundAttachment!]!
+  "How many files came with it. Read for a whole page of rows at once."
+  attachmentCount: Int!
+  """
+  A line or two of what the sender wrote, for a list row: whitespace folded,
+  quoted replies and the lines that introduce them left out.
+  """
+  preview: String!
+  "The shipment it was matched to, as a list row names it. Absent when unmatched or no longer visible."
+  matchedShipment: InboundShipmentRef
+  "The customer it was matched to. Absent when unmatched or no longer visible."
+  matchedCustomer: Customer
+  "Whether this message is waiting on a person."
+  needsReview: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+A shipment as an inbox row names it: the numbers a sender quotes and the lane.
+Enough to recognise the load without opening it.
+"""
+type InboundShipmentRef {
+  id: ID!
+  proNumber: String!
+  bol: String!
+  poNumber: String!
+  originCity: String!
+  originState: String!
+  destinationCity: String!
+  destinationState: String!
+}
+
+type InboundMessageEdge {
+  node: InboundMessage!
+  cursor: String!
+}
+
+type InboundMessageConnection {
+  edges: [InboundMessageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input InboundMessagesInput {
+  first: Int = 25
+  after: String
+  "Only these statuses; empty is every status."
+  statuses: [InboundMessageStatus!]
+  classification: InboundClassification
+  mailboxId: ID
+  shipmentId: ID
+  "Only what arrived at or after this instant."
+  since: Timestamp
+  "Words from the sender's name or address, or from the subject."
+  query: String
+}
+
+"The inbox in numbers, for the lane counts."
+type InboundMessageCounts {
+  waiting: Int!
+  handled: Int!
+  ignored: Int!
+  quarantined: Int!
+  total: Int!
+  "Every kind, in a stable order, including the ones with no mail."
+  byClassification: [InboundClassificationCount!]!
+  "Every mailbox that has mail."
+  byMailbox: [InboundMailboxCount!]!
+}
+
+"One kind of mail: how much there is, and how much of it is waiting on a person."
+type InboundClassificationCount {
+  classification: InboundClassification!
+  total: Int!
+  waiting: Int!
+}
+
+"One address's share of the inbox."
+type InboundMailboxCount {
+  mailboxId: ID!
+  total: Int!
+  waiting: Int!
+}
+
+input ReviewInboundMessageInput {
+  "Where the message ends up. Only Actioned and Ignored are a person's to choose."
+  status: InboundMessageStatus!
+  note: String
+}
+
+input LinkInboundMessageInput {
+  shipmentId: ID
+  customerId: ID
+  carrierId: ID
+  "Why this is the right record. Stored, because a link nobody can check is one nobody will trust."
+  reason: String!
+}
+
+extend type Query {
+  "Mail that arrived on a monitored address, newest first."
+  inboundMessages(input: InboundMessagesInput!): InboundMessageConnection!
+  inboundMessage(id: ID!): InboundMessage!
+  inboundMessageCounts: InboundMessageCounts!
+  "The addresses this organization listens on."
+  inboundMailboxes: [InboundMailbox!]!
+}
+
+extend type Mutation {
+  "Records a person's decision about a message and takes it off the feed."
+  reviewInboundMessage(id: ID!, input: ReviewInboundMessageInput!): InboundMessage!
+  "Says what a message is about, by hand, when the reading did not work it out."
+  linkInboundMessage(id: ID!, input: LinkInboundMessageInput!): InboundMessage!
+  "Creates a mailbox and returns its webhook token, once."
+  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
+  "Changes a mailbox's settings. Changing its provider clears the signing secret."
+  updateInboundMailbox(id: ID!, version: Int!, input: InboundMailboxInput!): InboundMailbox!
+  "Replaces the webhook token. The old URL stops working at once."
+  rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials!
+  "Seals and stores the provider's secret: a Resend whsec_ key, or Postmark's user:password."
+  setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
+}
+`, BuiltIn: false},
 	{Name: "../schema/invoice.graphqls", Input: `enum InvoiceStatus {
   Draft
   Posted
@@ -89068,6 +90111,8 @@ enum WatchtowerSourceKind {
   BillingException
   DetentionOccurrence
   InboundMessage
+  WorkerCredential
+  MoveCoverage
 }
 
 "How loudly an item asks to be looked at."
@@ -102568,6 +103613,238 @@ func (ec *executionContext) childFields_IFTATaxRateEdge(ctx context.Context, fie
 		return ec.fieldContext_IFTATaxRateEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type IFTATaxRateEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_InboundAttachment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_InboundAttachment_id(ctx, field)
+	case "fileName":
+		return ec.fieldContext_InboundAttachment_fileName(ctx, field)
+	case "contentType":
+		return ec.fieldContext_InboundAttachment_contentType(ctx, field)
+	case "byteSize":
+		return ec.fieldContext_InboundAttachment_byteSize(ctx, field)
+	case "kind":
+		return ec.fieldContext_InboundAttachment_kind(ctx, field)
+	case "documentId":
+		return ec.fieldContext_InboundAttachment_documentId(ctx, field)
+	case "failureText":
+		return ec.fieldContext_InboundAttachment_failureText(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_InboundAttachment_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InboundAttachment", field.Name)
+}
+
+func (ec *executionContext) childFields_InboundClassificationCount(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "classification":
+		return ec.fieldContext_InboundClassificationCount_classification(ctx, field)
+	case "total":
+		return ec.fieldContext_InboundClassificationCount_total(ctx, field)
+	case "waiting":
+		return ec.fieldContext_InboundClassificationCount_waiting(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InboundClassificationCount", field.Name)
+}
+
+func (ec *executionContext) childFields_InboundMailbox(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_InboundMailbox_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_InboundMailbox_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_InboundMailbox_organizationId(ctx, field)
+	case "name":
+		return ec.fieldContext_InboundMailbox_name(ctx, field)
+	case "address":
+		return ec.fieldContext_InboundMailbox_address(ctx, field)
+	case "provider":
+		return ec.fieldContext_InboundMailbox_provider(ctx, field)
+	case "purpose":
+		return ec.fieldContext_InboundMailbox_purpose(ctx, field)
+	case "reviewPolicy":
+		return ec.fieldContext_InboundMailbox_reviewPolicy(ctx, field)
+	case "minConfidence":
+		return ec.fieldContext_InboundMailbox_minConfidence(ctx, field)
+	case "status":
+		return ec.fieldContext_InboundMailbox_status(ctx, field)
+	case "hasSigningSecret":
+		return ec.fieldContext_InboundMailbox_hasSigningSecret(ctx, field)
+	case "version":
+		return ec.fieldContext_InboundMailbox_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_InboundMailbox_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_InboundMailbox_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InboundMailbox", field.Name)
+}
+
+func (ec *executionContext) childFields_InboundMailboxCount(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "mailboxId":
+		return ec.fieldContext_InboundMailboxCount_mailboxId(ctx, field)
+	case "total":
+		return ec.fieldContext_InboundMailboxCount_total(ctx, field)
+	case "waiting":
+		return ec.fieldContext_InboundMailboxCount_waiting(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InboundMailboxCount", field.Name)
+}
+
+func (ec *executionContext) childFields_InboundMailboxCredentials(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "mailbox":
+		return ec.fieldContext_InboundMailboxCredentials_mailbox(ctx, field)
+	case "token":
+		return ec.fieldContext_InboundMailboxCredentials_token(ctx, field)
+	case "webhookPath":
+		return ec.fieldContext_InboundMailboxCredentials_webhookPath(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InboundMailboxCredentials", field.Name)
+}
+
+func (ec *executionContext) childFields_InboundMessage(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_InboundMessage_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_InboundMessage_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_InboundMessage_organizationId(ctx, field)
+	case "mailboxId":
+		return ec.fieldContext_InboundMessage_mailboxId(ctx, field)
+	case "mailbox":
+		return ec.fieldContext_InboundMessage_mailbox(ctx, field)
+	case "fromAddress":
+		return ec.fieldContext_InboundMessage_fromAddress(ctx, field)
+	case "fromName":
+		return ec.fieldContext_InboundMessage_fromName(ctx, field)
+	case "toAddresses":
+		return ec.fieldContext_InboundMessage_toAddresses(ctx, field)
+	case "ccAddresses":
+		return ec.fieldContext_InboundMessage_ccAddresses(ctx, field)
+	case "subject":
+		return ec.fieldContext_InboundMessage_subject(ctx, field)
+	case "textBody":
+		return ec.fieldContext_InboundMessage_textBody(ctx, field)
+	case "receivedAt":
+		return ec.fieldContext_InboundMessage_receivedAt(ctx, field)
+	case "spamScore":
+		return ec.fieldContext_InboundMessage_spamScore(ctx, field)
+	case "classification":
+		return ec.fieldContext_InboundMessage_classification(ctx, field)
+	case "confidence":
+		return ec.fieldContext_InboundMessage_confidence(ctx, field)
+	case "status":
+		return ec.fieldContext_InboundMessage_status(ctx, field)
+	case "matchedCustomerId":
+		return ec.fieldContext_InboundMessage_matchedCustomerId(ctx, field)
+	case "matchedCarrierId":
+		return ec.fieldContext_InboundMessage_matchedCarrierId(ctx, field)
+	case "matchedShipmentId":
+		return ec.fieldContext_InboundMessage_matchedShipmentId(ctx, field)
+	case "matchReason":
+		return ec.fieldContext_InboundMessage_matchReason(ctx, field)
+	case "runId":
+		return ec.fieldContext_InboundMessage_runId(ctx, field)
+	case "reviewedBy":
+		return ec.fieldContext_InboundMessage_reviewedBy(ctx, field)
+	case "reviewedAt":
+		return ec.fieldContext_InboundMessage_reviewedAt(ctx, field)
+	case "reviewNote":
+		return ec.fieldContext_InboundMessage_reviewNote(ctx, field)
+	case "failureCode":
+		return ec.fieldContext_InboundMessage_failureCode(ctx, field)
+	case "failureText":
+		return ec.fieldContext_InboundMessage_failureText(ctx, field)
+	case "attachments":
+		return ec.fieldContext_InboundMessage_attachments(ctx, field)
+	case "attachmentCount":
+		return ec.fieldContext_InboundMessage_attachmentCount(ctx, field)
+	case "preview":
+		return ec.fieldContext_InboundMessage_preview(ctx, field)
+	case "matchedShipment":
+		return ec.fieldContext_InboundMessage_matchedShipment(ctx, field)
+	case "matchedCustomer":
+		return ec.fieldContext_InboundMessage_matchedCustomer(ctx, field)
+	case "needsReview":
+		return ec.fieldContext_InboundMessage_needsReview(ctx, field)
+	case "version":
+		return ec.fieldContext_InboundMessage_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_InboundMessage_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_InboundMessage_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InboundMessage", field.Name)
+}
+
+func (ec *executionContext) childFields_InboundMessageConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_InboundMessageConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_InboundMessageConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_InboundMessageConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InboundMessageConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_InboundMessageCounts(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "waiting":
+		return ec.fieldContext_InboundMessageCounts_waiting(ctx, field)
+	case "handled":
+		return ec.fieldContext_InboundMessageCounts_handled(ctx, field)
+	case "ignored":
+		return ec.fieldContext_InboundMessageCounts_ignored(ctx, field)
+	case "quarantined":
+		return ec.fieldContext_InboundMessageCounts_quarantined(ctx, field)
+	case "total":
+		return ec.fieldContext_InboundMessageCounts_total(ctx, field)
+	case "byClassification":
+		return ec.fieldContext_InboundMessageCounts_byClassification(ctx, field)
+	case "byMailbox":
+		return ec.fieldContext_InboundMessageCounts_byMailbox(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InboundMessageCounts", field.Name)
+}
+
+func (ec *executionContext) childFields_InboundMessageEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_InboundMessageEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_InboundMessageEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InboundMessageEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_InboundShipmentRef(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_InboundShipmentRef_id(ctx, field)
+	case "proNumber":
+		return ec.fieldContext_InboundShipmentRef_proNumber(ctx, field)
+	case "bol":
+		return ec.fieldContext_InboundShipmentRef_bol(ctx, field)
+	case "poNumber":
+		return ec.fieldContext_InboundShipmentRef_poNumber(ctx, field)
+	case "originCity":
+		return ec.fieldContext_InboundShipmentRef_originCity(ctx, field)
+	case "originState":
+		return ec.fieldContext_InboundShipmentRef_originState(ctx, field)
+	case "destinationCity":
+		return ec.fieldContext_InboundShipmentRef_destinationCity(ctx, field)
+	case "destinationState":
+		return ec.fieldContext_InboundShipmentRef_destinationState(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InboundShipmentRef", field.Name)
 }
 
 func (ec *executionContext) childFields_InviteWorkerToPortalResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

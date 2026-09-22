@@ -36,6 +36,10 @@ const DeliverEDIMessageWorkflowName = "DeliverEDIMessageWorkflow"
 
 const ProcessInboundEDIFileWorkflowName = "ProcessInboundEDIFileWorkflow"
 
+const ProcessInboundMessageWorkflowName = "ProcessInboundMessageWorkflow"
+
+const InboundMessageRetentionWorkflowName = "InboundMessageRetentionWorkflow"
+
 var DefaultRetryPolicy = &temporal.RetryPolicy{
 	InitialInterval:    time.Second,
 	BackoffCoefficient: 2.0,

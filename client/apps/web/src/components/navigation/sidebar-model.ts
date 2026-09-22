@@ -206,6 +206,29 @@ export function buildModuleView(
 }
 
 /**
+ * The page list the sidebar shows for the module a person is in, or null when
+ * it should show home's panel instead: on home itself, and in a module with no
+ * pages of its own to list because it draws its own navigation.
+ */
+export function moduleSidebarView(
+  activeModule: NavModule | null | undefined,
+  views: ReadonlyMap<string, SidebarModuleView>,
+): SidebarModuleView | null {
+  if (!activeModule || activeModule.id === "home") {
+    return null;
+  }
+
+  const view = views.get(activeModule.id);
+  if (view === undefined) {
+    return null;
+  }
+
+  const hasPages = view.sections.some((section) => section.items.length > 0);
+
+  return hasPages || view.configuration.length > 0 ? view : null;
+}
+
+/**
  * Modules in their configured domains. A module no domain claims still has
  * to be reachable, so it lands in a trailing group instead of vanishing.
  */

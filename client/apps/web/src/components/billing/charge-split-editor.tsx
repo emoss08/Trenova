@@ -103,7 +103,7 @@ export function ChargeSplitEditor({
     ]);
   };
 
-  const handleMethodChange = (next: string) => {
+  const handleMethodChange = (next: string | null) => {
     if (next !== "Percent" && next !== "Amount") return;
     setRows(
       rows.map((row) => ({

@@ -61,10 +61,10 @@ const invoice = {
   shipmentBol: "BOL-2026-0211",
   serviceDate: null,
   billToName: "GlobalTrade Imports",
-  subtotalAmount: "5000",
-  otherAmount: "0",
-  totalAmount: "5000",
-  appliedAmount: "0",
+  subtotalAmount: 5000,
+  otherAmount: 0,
+  totalAmount: 5000,
+  appliedAmount: 0,
   settlementStatus: "Unpaid",
   disputeStatus: "None",
   sendStatus: "NotSent",
@@ -72,9 +72,9 @@ const invoice = {
   version: 1,
   createdAt: 1_789_325_147,
   updatedAt: 1_789_325_147,
-  lines: [],
-  attachments: [],
-  emailAttempts: [],
+  lines: [] as Invoice["lines"],
+  attachments: [] as Invoice["attachments"],
+  emailAttempts: [] as Invoice["emailAttempts"],
 } as Invoice;
 
 function renderPane(searchParams: string, onUrlUpdate?: OnUrlUpdateFunction) {

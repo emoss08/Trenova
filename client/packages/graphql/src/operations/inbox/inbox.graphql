@@ -1,0 +1,177 @@
+fragment InboundAttachmentFields on InboundAttachment {
+  id
+  fileName
+  contentType
+  byteSize
+  kind
+  documentId
+  failureText
+  createdAt
+}
+
+fragment InboundShipmentRefFields on InboundShipmentRef {
+  id
+  proNumber
+  bol
+  poNumber
+  originCity
+  originState
+  destinationCity
+  destinationState
+}
+
+fragment InboundMailboxFields on InboundMailbox {
+  id
+  name
+  address
+  provider
+  purpose
+  reviewPolicy
+  minConfidence
+  status
+  hasSigningSecret
+  version
+  createdAt
+  updatedAt
+}
+
+fragment InboundMailboxCredentialsFields on InboundMailboxCredentials {
+  token
+  webhookPath
+  mailbox {
+    ...InboundMailboxFields
+  }
+}
+
+fragment InboundMessageListFields on InboundMessage {
+  id
+  mailboxId
+  fromAddress
+  fromName
+  subject
+  receivedAt
+  classification
+  confidence
+  status
+  matchedShipmentId
+  matchedCustomerId
+  matchReason
+  needsReview
+  failureText
+  preview
+  attachmentCount
+  matchedShipment {
+    ...InboundShipmentRefFields
+  }
+  matchedCustomer {
+    id
+    code
+    name
+  }
+}
+
+fragment InboundMessageDetailFields on InboundMessage {
+  ...InboundMessageListFields
+  toAddresses
+  ccAddresses
+  textBody
+  spamScore
+  matchedCarrierId
+  runId
+  reviewedBy
+  reviewedAt
+  reviewNote
+  failureCode
+  version
+  createdAt
+  updatedAt
+  mailbox {
+    ...InboundMailboxFields
+  }
+  attachments {
+    ...InboundAttachmentFields
+  }
+}
+
+query InboundMessages($input: InboundMessagesInput!) {
+  inboundMessages(input: $input) {
+    edges {
+      cursor
+      node {
+        ...InboundMessageListFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query InboundMessage($id: ID!) {
+  inboundMessage(id: $id) {
+    ...InboundMessageDetailFields
+  }
+}
+
+query InboundMessageCounts {
+  inboundMessageCounts {
+    waiting
+    handled
+    ignored
+    quarantined
+    total
+    byClassification {
+      classification
+      total
+      waiting
+    }
+    byMailbox {
+      mailboxId
+      total
+      waiting
+    }
+  }
+}
+
+query InboundMailboxes {
+  inboundMailboxes {
+    ...InboundMailboxFields
+  }
+}
+
+mutation ReviewInboundMessage($id: ID!, $input: ReviewInboundMessageInput!) {
+  reviewInboundMessage(id: $id, input: $input) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation LinkInboundMessage($id: ID!, $input: LinkInboundMessageInput!) {
+  linkInboundMessage(id: $id, input: $input) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation CreateInboundMailbox($input: InboundMailboxInput!, $signingSecret: String) {
+  createInboundMailbox(input: $input, signingSecret: $signingSecret) {
+    ...InboundMailboxCredentialsFields
+  }
+}
+
+mutation UpdateInboundMailbox($id: ID!, $version: Int!, $input: InboundMailboxInput!) {
+  updateInboundMailbox(id: $id, version: $version, input: $input) {
+    ...InboundMailboxFields
+  }
+}
+
+mutation RotateInboundMailboxToken($id: ID!) {
+  rotateInboundMailboxToken(id: $id) {
+    ...InboundMailboxCredentialsFields
+  }
+}
+
+mutation SetInboundMailboxSigningSecret($id: ID!, $secret: String!) {
+  setInboundMailboxSigningSecret(id: $id, secret: $secret) {
+    ...InboundMailboxFields
+  }
+}

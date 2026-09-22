@@ -244,6 +244,12 @@ var IFTAReturnLineSpec TypeSpec
 
 var IFTATaxRateSpec TypeSpec
 
+var InboundAttachmentSpec TypeSpec
+
+var InboundMailboxSpec TypeSpec
+
+var InboundMessageSpec TypeSpec
+
 var InvoiceSpec TypeSpec
 
 var InvoiceAdjustmentSpec TypeSpec
@@ -11426,6 +11432,267 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &IFTAJurisdictionSpec,
 				},
+			},
+		},
+	}
+
+	InboundAttachmentSpec = TypeSpec{
+		TypeName: "InboundAttachment",
+		FieldMap: buncolgen.InboundAttachmentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "fileName",
+				FieldMapKey: "fileName",
+			},
+			{
+				Name:        "contentType",
+				FieldMapKey: "contentType",
+			},
+			{
+				Name:        "byteSize",
+				FieldMapKey: "byteSize",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "failureText",
+				FieldMapKey: "failureText",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	InboundMailboxSpec = TypeSpec{
+		TypeName: "InboundMailbox",
+		FieldMap: buncolgen.MailboxFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "address",
+				FieldMapKey: "address",
+			},
+			{
+				Name:        "provider",
+				FieldMapKey: "provider",
+			},
+			{
+				Name:        "purpose",
+				FieldMapKey: "purpose",
+			},
+			{
+				Name:        "reviewPolicy",
+				FieldMapKey: "reviewPolicy",
+			},
+			{
+				Name:        "minConfidence",
+				FieldMapKey: "minConfidence",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:    "hasSigningSecret",
+				Special: "hasSigningSecret",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	InboundMessageSpec = TypeSpec{
+		TypeName: "InboundMessage",
+		FieldMap: buncolgen.InboundMessageFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "mailboxId",
+				FieldMapKey: "mailboxId",
+			},
+			{
+				Name:    "mailbox",
+				Special: "mailbox",
+			},
+			{
+				Name:        "fromAddress",
+				FieldMapKey: "fromAddress",
+			},
+			{
+				Name:        "fromName",
+				FieldMapKey: "fromName",
+			},
+			{
+				Name:        "toAddresses",
+				FieldMapKey: "toAddresses",
+			},
+			{
+				Name:        "ccAddresses",
+				FieldMapKey: "ccAddresses",
+			},
+			{
+				Name:        "subject",
+				FieldMapKey: "subject",
+			},
+			{
+				Name:        "textBody",
+				FieldMapKey: "textBody",
+			},
+			{
+				Name:        "receivedAt",
+				FieldMapKey: "receivedAt",
+			},
+			{
+				Name:        "spamScore",
+				FieldMapKey: "spamScore",
+			},
+			{
+				Name:        "classification",
+				FieldMapKey: "classification",
+			},
+			{
+				Name:        "confidence",
+				FieldMapKey: "confidence",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "matchedCustomerId",
+				FieldMapKey: "matchedCustomerId",
+			},
+			{
+				Name:        "matchedCarrierId",
+				FieldMapKey: "matchedCarrierId",
+			},
+			{
+				Name:        "matchedShipmentId",
+				FieldMapKey: "matchedShipmentId",
+			},
+			{
+				Name:        "matchReason",
+				FieldMapKey: "matchReason",
+			},
+			{
+				Name:        "runId",
+				FieldMapKey: "runId",
+			},
+			{
+				Name:        "reviewedBy",
+				FieldMapKey: "reviewedBy",
+			},
+			{
+				Name:        "reviewedAt",
+				FieldMapKey: "reviewedAt",
+			},
+			{
+				Name:        "reviewNote",
+				FieldMapKey: "reviewNote",
+			},
+			{
+				Name:        "failureCode",
+				FieldMapKey: "failureCode",
+			},
+			{
+				Name:        "failureText",
+				FieldMapKey: "failureText",
+			},
+			{
+				Name:    "attachments",
+				Special: "attachments",
+			},
+			{
+				Name:    "attachmentCount",
+				Special: "attachmentCount",
+			},
+			{
+				Name:    "preview",
+				Special: "preview",
+			},
+			{
+				Name:    "matchedShipment",
+				Special: "matchedShipment",
+			},
+			{
+				Name:    "matchedCustomer",
+				Special: "matchedCustomer",
+			},
+			{
+				Name:    "needsReview",
+				Special: "needsReview",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}

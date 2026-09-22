@@ -140,7 +140,7 @@ describe("importHeadline", () => {
 describe("importWarnings", () => {
   it("lists what the commit will leave out, one line each", () => {
     expect(importWarnings(batch({ unmappedHeaders: ["Driver name", "Memo"] }))).toEqual([
-      "Columns ignored: Driver Name, Memo.",
+      "Columns ignored: Driver name, Memo.",
       "1 row repeats a reference earlier in this statement and will be skipped.",
       "1 row matches a purchase already on file and will be skipped.",
       "1 row could not be read and will be skipped.",

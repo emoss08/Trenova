@@ -4028,6 +4028,40 @@ func (r *Registry) registerCommunicationResources() {
 		},
 		DefaultSensitivity: SensitivityInternal,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceInboundMessage.String(),
+		DisplayName: "Inbound Message",
+		Description: "Email that arrived on a monitored address, and what was made of it",
+		Category:    "Communications",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View inbound messages and their attachments",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Review",
+				Description: "Link a message to a record, reply to it, or mark it handled",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	// The mailbox is separated from the messages because they are different
+	// privileges: reading what a customer sent is ordinary desk work, while
+	// creating an address the outside world can post to, and seeing its token,
+	// is not.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceInboundMailbox.String(),
+		DisplayName: "Inbound Mailbox",
+		Description: "Addresses the system listens on, and how much they are trusted to act alone",
+		Category:    "Communications",
+		Operations:  standardOpsWithDelete,
+
+		DefaultSensitivity: SensitivityRestricted,
+	})
 }
 
 func GetAllOperations() []OperationDefinition {

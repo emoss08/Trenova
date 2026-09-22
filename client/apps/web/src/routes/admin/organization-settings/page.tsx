@@ -1,9 +1,10 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { queries } from "@/lib/queries";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
+import { SuspenseLoader } from "@trenova/shared/components/component-loader";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { Suspense, lazy } from "react";
+import { lazy } from "react";
 
 const OrganizationSettingsForm = lazy(() => import("./_components/organization-settings-form"));
 
@@ -23,12 +24,11 @@ export function OrganizationSettingsPage() {
         title: t("Organization settings"),
         description: t("Manage your organization profile, compliance, and security settings"),
       }}
+      className="p-0"
     >
-      <Suspense
-        fallback={<div className="text-muted-foreground px-1 py-8 text-sm">{t("Loading...")}</div>}
-      >
+      <SuspenseLoader>
         <OrganizationSettingsForm />
-      </Suspense>
+      </SuspenseLoader>
     </PageLayout>
   );
 }

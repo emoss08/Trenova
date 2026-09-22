@@ -59,6 +59,18 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/inbox",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.InboundMessage, Operation.Read),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/inbox/page"))),
+            ),
+            async lazy() {
+              const { InboxPage } = await import("@/routes/inbox/page");
+              return { Component: InboxPage };
+            },
+          },
+          {
             path: "/organization/data-retention",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Organization)),
             async lazy() {
@@ -1811,6 +1823,20 @@ export const routes: RouteObject[] = [
                 // Providers are a tab of AI Control now; saved links keep working.
                 path: "ai-providers",
                 loader: () => redirect("/admin/agent-control?tab=providers"),
+              },
+              {
+                path: "inbound-mailboxes",
+                loader: combineLoaders(
+                  createPermissionLoader(Resource.InboundMailbox, Operation.Read),
+                  createPrefetchLoader(
+                    lazyPrefetch(() => import("@/routes/admin/inbound-mailboxes/page")),
+                  ),
+                ),
+                async lazy() {
+                  const { InboundMailboxesPage } =
+                    await import("@/routes/admin/inbound-mailboxes/page");
+                  return { Component: InboundMailboxesPage };
+                },
               },
               {
                 path: "api-keys",

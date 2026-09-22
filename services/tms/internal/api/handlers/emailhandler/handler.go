@@ -1,10 +1,6 @@
 package emailhandler
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
-	"errors"
 	"io"
 	"net/http"
 	"strconv"
@@ -22,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/webhooksig"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
@@ -425,7 +422,7 @@ func (h *Handler) handleResendWebhook(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if err = verifySvixSignature(svixSignatureParams{
+	if err = webhooksig.VerifySvix(webhooksig.SvixParams{
 		Secret:    signingSecret,
 		ID:        c.GetHeader("svix-id"),
 		Timestamp: c.GetHeader("svix-timestamp"),
@@ -470,40 +467,6 @@ func (h *Handler) handleResendWebhook(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusNoContent)
-}
-
-type svixSignatureParams struct {
-	Secret    string
-	ID        string
-	Timestamp string
-	Signature string
-	Body      []byte
-}
-
-func verifySvixSignature(p svixSignatureParams) error {
-	if p.Secret == "" || p.ID == "" || p.Timestamp == "" || p.Signature == "" {
-		return errors.New("missing svix signature headers")
-	}
-	secret := strings.TrimPrefix(p.Secret, "whsec_")
-	key, err := base64.StdEncoding.DecodeString(secret)
-	if err != nil {
-		return err
-	}
-	mac := hmac.New(sha256.New, key)
-	mac.Write([]byte(p.ID + "." + p.Timestamp + "."))
-	mac.Write(p.Body)
-	expected := mac.Sum(nil)
-	for part := range strings.SplitSeq(p.Signature, " ") {
-		_, sig, ok := strings.Cut(part, ",")
-		if !ok {
-			sig = strings.TrimPrefix(part, "v1,")
-		}
-		decoded, err := base64.StdEncoding.DecodeString(sig)
-		if err == nil && hmac.Equal(decoded, expected) {
-			return nil
-		}
-	}
-	return errors.New("invalid svix signature")
 }
 
 func resendEventType(value string) email.EventType {

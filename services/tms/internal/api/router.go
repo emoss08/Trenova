@@ -68,6 +68,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/holdreasonhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/insighthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
@@ -216,6 +217,7 @@ type RouterParams struct {
 	HazmatSegregationRuleHandler    *hazmatsegregationrulehandler.Handler
 	DotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
 	EDIHandler                      *edihandler.Handler
+	InboundHandler                  *inboundhandler.Handler
 	EmailHandler                    *emailhandler.Handler
 	TelematicsHandler               *telematicshandler.Handler
 	CommodityHandler                *commodityhandler.Handler
@@ -350,6 +352,7 @@ type Router struct {
 	hazmatSegregationRuleHandler    *hazmatsegregationrulehandler.Handler
 	dotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
 	ediHandler                      *edihandler.Handler
+	inboundHandler                  *inboundhandler.Handler
 	emailHandler                    *emailhandler.Handler
 	telematicsHandler               *telematicshandler.Handler
 	commodityHandler                *commodityhandler.Handler
@@ -486,6 +489,7 @@ func NewRouter(p RouterParams) *Router {
 		hazmatSegregationRuleHandler:    p.HazmatSegregationRuleHandler,
 		dotHazmatReferenceHandler:       p.DotHazmatReferenceHandler,
 		ediHandler:                      p.EDIHandler,
+		inboundHandler:                  p.InboundHandler,
 		emailHandler:                    p.EmailHandler,
 		telematicsHandler:               p.TelematicsHandler,
 		commodityHandler:                p.CommodityHandler,
@@ -628,6 +632,7 @@ func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
 	r.telematicsHandler.RegisterPublicRoutes(rg)
 	r.invoiceHandler.RegisterPublicRoutes(rg)
 	r.ediHandler.RegisterPublicRoutes(rg)
+	r.inboundHandler.RegisterPublicRoutes(rg)
 	r.tenderPublicHandler.RegisterPublicRoutes(rg)
 	r.rateConfirmationPublicHandler.RegisterPublicRoutes(rg)
 }

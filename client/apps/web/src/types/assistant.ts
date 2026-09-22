@@ -17,6 +17,7 @@ export const agentTemplateKindSchema = z.enum([
   "CredentialDesk",
   "CustomerUpdateDesk",
   "CarrierRiskDesk",
+  "IntakeDesk",
 ]);
 
 export const autonomyTierSchema = z.enum(["Propose", "ActWithApproval", "AutoExecute"]);
@@ -57,6 +58,7 @@ export const artifactKindSchema = z.enum([
   "dashboard_ref",
   "briefing",
   "inbound_message",
+  "run_diff",
 ]);
 
 export const artifactStatusSchema = z.enum(["Pending", "Ready", "Failed", "Sent"]);

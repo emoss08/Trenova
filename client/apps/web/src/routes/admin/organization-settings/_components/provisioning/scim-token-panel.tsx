@@ -1,10 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -16,12 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "@trenova/shared/components/ui/table";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { CopyableSecret } from "@/components/copyable-secret";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { toTitleCase } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckIcon, ClipboardIcon, KeyRoundIcon, PlusIcon } from "lucide-react";
+import { KeyRoundIcon, PlusIcon } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState, PanelHeader, RowSkeleton } from "../security-access/shared";
@@ -98,7 +92,15 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
             </Button>
           </div>
         </div>
-        {createdToken && <CopyableSecretBlock key={createdToken} value={createdToken} />}
+        {createdToken && (
+          <CopyableSecret
+            key={createdToken}
+            value={createdToken}
+            title={t("Copy this token now")}
+            description={t("The plaintext token is only shown once.")}
+            className="mx-2"
+          />
+        )}
         {tokensQuery.isLoading ? (
           <RowSkeleton rows={2} />
         ) : tokens.length > 0 ? (
@@ -157,27 +159,3 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
     </div>
   );
 });
-
-function CopyableSecretBlock({ value }: { value: string }) {
-  const t = useT();
-
-  const { copy, isCopied } = useCopyToClipboard();
-
-  return (
-    <Alert variant="warning" className="mx-2 w-auto">
-      <AlertTitle>{t("Copy this token now")}</AlertTitle>
-      <AlertDescription>
-        {t("The plaintext token is only shown once.")}
-        <code className="bg-card text-foreground mt-1 block w-full rounded-md border p-2 font-mono text-xs break-all">
-          {value}
-        </code>
-      </AlertDescription>
-      <AlertAction>
-        <Button size="sm" variant="outline" onClick={() => void copy(value, { withToast: true })}>
-          {isCopied ? <CheckIcon /> : <ClipboardIcon />}
-          {isCopied ? t("Copied") : t("Copy")}
-        </Button>
-      </AlertAction>
-    </Alert>
-  );
-}

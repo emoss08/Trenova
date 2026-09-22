@@ -51,6 +51,7 @@ type Params struct {
 	PacketRuleRepo       repositories.DocumentPacketRuleRepository
 	DocumentTypeRepo     repositories.DocumentTypeRepository
 	DraftRepo            repositories.DocumentShipmentDraftRepository
+	Shipments            repositories.ShipmentRepository
 	CacheRepo            repositories.DocumentCacheRepository
 	SessionRepo          repositories.DocumentUploadSessionRepository
 	Storage              storage.Client
@@ -73,6 +74,7 @@ type Service struct {
 	packetRuleRepo       repositories.DocumentPacketRuleRepository
 	documentTypeRepo     repositories.DocumentTypeRepository
 	draftRepo            repositories.DocumentShipmentDraftRepository
+	shipments            repositories.ShipmentRepository
 	cacheRepo            repositories.DocumentCacheRepository
 	sessionRepo          repositories.DocumentUploadSessionRepository
 	storage              storage.Client
@@ -111,6 +113,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		packetRuleRepo:       p.PacketRuleRepo,
 		documentTypeRepo:     p.DocumentTypeRepo,
 		draftRepo:            p.DraftRepo,
+		shipments:            p.Shipments,
 		cacheRepo:            p.CacheRepo,
 		sessionRepo:          p.SessionRepo,
 		storage:              p.Storage,

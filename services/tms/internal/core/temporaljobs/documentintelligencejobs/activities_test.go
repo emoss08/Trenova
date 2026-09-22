@@ -79,10 +79,14 @@ func TestProcessDocumentIntelligenceActivity_SkipsWhenControlDisabled(t *testing
 	docID := pulid.MustNew("doc_")
 
 	doc := &document.Document{
-		ID:             docID,
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		ContentStatus:  document.ContentStatusPending,
+		ID: docID,
+		// The activity refuses a document whose profile says not to read
+		// it, so a fixture standing in for one that reached the pipeline
+		// carries the profile that put it there.
+		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
+		OrganizationID:    orgID,
+		BusinessUnitID:    buID,
+		ContentStatus:     document.ContentStatusPending,
 	}
 
 	docRepo.EXPECT().
@@ -129,6 +133,64 @@ func TestProcessDocumentIntelligenceActivity_SkipsWhenControlDisabled(t *testing
 	assert.Equal(t, "", result.Kind)
 }
 
+/*
+The profile is the one gate that cannot be gone around.
+
+EnqueueExtraction checks it, but the reconcile sweep starts this workflow
+directly — so for as long as the check lived only at the enqueue, every
+document that had not been extracted yet was OCR'd and run through a model ten
+minutes after it landed, whatever its profile said. The document control is not
+reached at all here: a document that is not to be read is not read, whatever
+the tenant has switched on.
+*/
+func TestProcessDocumentIntelligenceActivity_RefusesAProfileThatIsNotRead(t *testing.T) {
+	t.Parallel()
+
+	docRepo := mocks.NewMockDocumentRepository(t)
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	docID := pulid.MustNew("doc_")
+
+	doc := &document.Document{
+		ID:                docID,
+		ProcessingProfile: document.ProcessingProfileNone,
+		OrganizationID:    orgID,
+		BusinessUnitID:    buID,
+		ContentStatus:     document.ContentStatusPending,
+	}
+
+	docRepo.EXPECT().
+		GetByID(mock.Anything, repositories.GetDocumentByIDRequest{
+			ID:         docID,
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		}).
+		Return(doc, nil)
+
+	promRegistry := prometheus.NewRegistry()
+	activities := &Activities{
+		logger: zap.NewNop(),
+		metrics: &metrics.Registry{
+			Document: metrics.NewDocument(promRegistry, zap.NewNop(), true),
+		},
+		documentRepo: docRepo,
+		// No control repository: reaching for one would mean the profile was
+		// checked too late.
+	}
+
+	result, err := activities.ProcessDocumentIntelligenceActivity(
+		context.Background(),
+		&ProcessDocumentIntelligencePayload{
+			DocumentID:  docID,
+			BasePayload: temporaltype.BasePayload{OrganizationID: orgID, BusinessUnitID: buID},
+		},
+	)
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, string(document.ContentStatusPending), result.Status)
+}
+
 func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipments(t *testing.T) {
 	t.Parallel()
 
@@ -145,16 +207,20 @@ func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipm
 	docID := pulid.MustNew("doc_")
 
 	doc := &document.Document{
-		ID:             docID,
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		OriginalName:   "rate-confirmation.txt",
-		FileType:       "text/plain",
-		StoragePath:    "documents/rate-confirmation.txt",
-		ResourceType:   "trailer",
-		ResourceID:     "trl_123",
-		ContentStatus:  document.ContentStatusPending,
-		UploadedByID:   userID,
+		ID: docID,
+		// The activity refuses a document whose profile says not to read
+		// it, so a fixture standing in for one that reached the pipeline
+		// carries the profile that put it there.
+		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
+		OrganizationID:    orgID,
+		BusinessUnitID:    buID,
+		OriginalName:      "rate-confirmation.txt",
+		FileType:          "text/plain",
+		StoragePath:       "documents/rate-confirmation.txt",
+		ResourceType:      "trailer",
+		ResourceID:        "trl_123",
+		ContentStatus:     document.ContentStatusPending,
+		UploadedByID:      userID,
 	}
 
 	control := tenant.NewDefaultDocumentControl(orgID, buID)
@@ -267,16 +333,20 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 	typeID := pulid.MustNew("dt_")
 
 	doc := &document.Document{
-		ID:             docID,
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		OriginalName:   "rate-confirmation.txt",
-		FileType:       "text/plain",
-		StoragePath:    "documents/rate-confirmation.txt",
-		ResourceType:   "shipment",
-		ResourceID:     "shp_123",
-		ContentStatus:  document.ContentStatusPending,
-		UploadedByID:   userID,
+		ID: docID,
+		// The activity refuses a document whose profile says not to read
+		// it, so a fixture standing in for one that reached the pipeline
+		// carries the profile that put it there.
+		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
+		OrganizationID:    orgID,
+		BusinessUnitID:    buID,
+		OriginalName:      "rate-confirmation.txt",
+		FileType:          "text/plain",
+		StoragePath:       "documents/rate-confirmation.txt",
+		ResourceType:      "shipment",
+		ResourceID:        "shp_123",
+		ContentStatus:     document.ContentStatusPending,
+		UploadedByID:      userID,
 	}
 
 	control := tenant.NewDefaultDocumentControl(orgID, buID)
@@ -396,16 +466,20 @@ func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByNam
 	typeID := pulid.MustNew("dt_")
 
 	doc := &document.Document{
-		ID:             docID,
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		OriginalName:   "bill-of-lading.txt",
-		FileType:       "text/plain",
-		StoragePath:    "documents/bill-of-lading.txt",
-		ResourceType:   "shipment",
-		ResourceID:     "shp_123",
-		ContentStatus:  document.ContentStatusPending,
-		UploadedByID:   userID,
+		ID: docID,
+		// The activity refuses a document whose profile says not to read
+		// it, so a fixture standing in for one that reached the pipeline
+		// carries the profile that put it there.
+		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
+		OrganizationID:    orgID,
+		BusinessUnitID:    buID,
+		OriginalName:      "bill-of-lading.txt",
+		FileType:          "text/plain",
+		StoragePath:       "documents/bill-of-lading.txt",
+		ResourceType:      "shipment",
+		ResourceID:        "shp_123",
+		ContentStatus:     document.ContentStatusPending,
+		UploadedByID:      userID,
 	}
 
 	control := tenant.NewDefaultDocumentControl(orgID, buID)
@@ -516,16 +590,20 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 	typeID := pulid.MustNew("dt_")
 
 	doc := &document.Document{
-		ID:             docID,
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		OriginalName:   "rate-confirmation.txt",
-		FileType:       "text/plain",
-		StoragePath:    "documents/rate-confirmation.txt",
-		ResourceType:   "shipment",
-		ResourceID:     "shp_123",
-		ContentStatus:  document.ContentStatusPending,
-		UploadedByID:   userID,
+		ID: docID,
+		// The activity refuses a document whose profile says not to read
+		// it, so a fixture standing in for one that reached the pipeline
+		// carries the profile that put it there.
+		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
+		OrganizationID:    orgID,
+		BusinessUnitID:    buID,
+		OriginalName:      "rate-confirmation.txt",
+		FileType:          "text/plain",
+		StoragePath:       "documents/rate-confirmation.txt",
+		ResourceType:      "shipment",
+		ResourceID:        "shp_123",
+		ContentStatus:     document.ContentStatusPending,
+		UploadedByID:      userID,
 	}
 
 	control := tenant.NewDefaultDocumentControl(orgID, buID)

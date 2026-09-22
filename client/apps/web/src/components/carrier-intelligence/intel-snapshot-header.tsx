@@ -22,6 +22,8 @@ export type IntelSnapshotHeaderProps = {
   className?: string;
 };
 
+type SnapshotItem = { id: string; node: ReactNode };
+
 export function IntelSnapshotHeader({
   label,
   title,
@@ -39,7 +41,7 @@ export function IntelSnapshotHeader({
 }: IntelSnapshotHeaderProps) {
   const t = useT();
 
-  const items: { id: string; node: ReactNode }[] = [
+  const candidates: (SnapshotItem | null)[] = [
     { id: "risk", node: <RiskLabel level={riskLevel} /> },
     reviewState && reviewState !== "None"
       ? { id: "review", node: <ReviewStateLabel state={reviewState} reviewedAt={reviewedAt} /> }
@@ -66,7 +68,8 @@ export function IntelSnapshotHeader({
       : null,
     freshness ? { id: "freshness", node: <FreshnessIndicator {...freshness} /> } : null,
     meta ? { id: "meta", node: <span className="truncate">{meta}</span> } : null,
-  ].filter((item): item is { id: string; node: ReactNode } => item !== null);
+  ];
+  const items = candidates.filter((item): item is SnapshotItem => item !== null);
 
   return (
     <section aria-label={label} className={cn("flex flex-col gap-3 border-b pb-4", className)}>

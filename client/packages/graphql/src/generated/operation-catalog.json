@@ -1,6 +1,6 @@
 {
-  "operationCount": 789,
-  "fragmentCount": 203,
+  "operationCount": 799,
+  "fragmentCount": 209,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -4019,6 +4019,34 @@
       ],
       "usages": [],
       "sdl": "mutation CreateIftaMileageEntry($input: IFTAMileageEntryInput!) {\n  createIftaMileageEntry(input: $input) {\n    ...IftaMileageEntryFields\n  }\n}\n\nfragment IftaMileageEntryFields on IFTAJurisdictionMileageEntry {\n  id\n  businessUnitId\n  organizationId\n  tractorId\n  jurisdictionId\n  traveledAt\n  year\n  quarter\n  miles\n  loaded\n  source\n  shipmentMoveId\n  notes\n  createdById\n  version\n  createdAt\n  updatedAt\n  tractor {\n    id\n    code\n  }\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n  }\n}"
+    },
+    {
+      "name": "CreateInboundMailbox",
+      "kind": "mutation",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "hash": "sha256:53605eac20152c64ffab6905b3a4cb9fea3f2e394f3c4028cbfae8d27e8a49ae",
+      "rootFields": [
+        "createInboundMailbox"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "InboundMailboxInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "signingSecret",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "InboundMailboxCredentialsFields",
+        "InboundMailboxFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateInboundMailbox($input: InboundMailboxInput!, $signingSecret: String) {\n  createInboundMailbox(input: $input, signingSecret: $signingSecret) {\n    ...InboundMailboxCredentialsFields\n  }\n}\n\nfragment InboundMailboxCredentialsFields on InboundMailboxCredentials {\n  token\n  webhookPath\n  mailbox {\n    ...InboundMailboxFields\n  }\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n  hasSigningSecret\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "CreateInvoicesFromOrder",
@@ -8485,6 +8513,85 @@
       "sdl": "mutation ImportSourcedCarrier($input: ImportSourcedCarrierInput!) {\n  importSourcedCarrier(input: $input) {\n    id\n    code\n    name\n    dotNumber\n    mcNumber\n    status\n    complianceStatus\n  }\n}"
     },
     {
+      "name": "InboundMailboxes",
+      "kind": "query",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "hash": "sha256:03bfa034f29f0ebe88e72a98dfb768bc2505f65c525103be990c360ed8d1d412",
+      "rootFields": [
+        "inboundMailboxes"
+      ],
+      "variables": [],
+      "fragments": [
+        "InboundMailboxFields"
+      ],
+      "usages": [],
+      "sdl": "query InboundMailboxes {\n  inboundMailboxes {\n    ...InboundMailboxFields\n  }\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n  hasSigningSecret\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "InboundMessage",
+      "kind": "query",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "hash": "sha256:b5012ee112f0132470558f1dacf951d5d083a241db79ffd8cb68bc3fae3ab6bf",
+      "rootFields": [
+        "inboundMessage"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "InboundAttachmentFields",
+        "InboundMailboxFields",
+        "InboundMessageDetailFields",
+        "InboundMessageListFields",
+        "InboundShipmentRefFields"
+      ],
+      "usages": [],
+      "sdl": "query InboundMessage($id: ID!) {\n  inboundMessage(id: $id) {\n    ...InboundMessageDetailFields\n  }\n}\n\nfragment InboundAttachmentFields on InboundAttachment {\n  id\n  fileName\n  contentType\n  byteSize\n  kind\n  documentId\n  failureText\n  createdAt\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n  hasSigningSecret\n  version\n  createdAt\n  updatedAt\n}\n\nfragment InboundMessageDetailFields on InboundMessage {\n  ...InboundMessageListFields\n  toAddresses\n  ccAddresses\n  textBody\n  spamScore\n  matchedCarrierId\n  runId\n  reviewedBy\n  reviewedAt\n  reviewNote\n  failureCode\n  version\n  createdAt\n  updatedAt\n  mailbox {\n    ...InboundMailboxFields\n  }\n  attachments {\n    ...InboundAttachmentFields\n  }\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n  preview\n  attachmentCount\n  matchedShipment {\n    ...InboundShipmentRefFields\n  }\n  matchedCustomer {\n    id\n    code\n    name\n  }\n}\n\nfragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
+    },
+    {
+      "name": "InboundMessageCounts",
+      "kind": "query",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "hash": "sha256:0186e33cceac728a75529ebc6acbce0f61c96012f25f0b3cf1326efab11c6418",
+      "rootFields": [
+        "inboundMessageCounts"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query InboundMessageCounts {\n  inboundMessageCounts {\n    waiting\n    handled\n    ignored\n    quarantined\n    total\n    byClassification {\n      classification\n      total\n      waiting\n    }\n    byMailbox {\n      mailboxId\n      total\n      waiting\n    }\n  }\n}"
+    },
+    {
+      "name": "InboundMessages",
+      "kind": "query",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "hash": "sha256:f7683dd61b03d3635e618ae7dc12b17ce1aa52d3cf345b63b894169d986e9070",
+      "rootFields": [
+        "inboundMessages"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "InboundMessagesInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "InboundMessageListFields",
+        "InboundShipmentRefFields"
+      ],
+      "usages": [],
+      "sdl": "query InboundMessages($input: InboundMessagesInput!) {\n  inboundMessages(input: $input) {\n    edges {\n      cursor\n      node {\n        ...InboundMessageListFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n  preview\n  attachmentCount\n  matchedShipment {\n    ...InboundShipmentRefFields\n  }\n  matchedCustomer {\n    id\n    code\n    name\n  }\n}\n\nfragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
+    },
+    {
       "name": "InviteWorkerToPortal",
       "kind": "mutation",
       "domain": "driver-portal",
@@ -8944,6 +9051,37 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation LinkEdiCarrierInvoiceToCarrier($invoiceId: ID!, $carrierId: ID!) {\n  linkEdiCarrierInvoiceToCarrier(invoiceId: $invoiceId, carrierId: $carrierId) {\n    id\n    carrierId\n    reconciliationStatus\n    version\n  }\n}"
+    },
+    {
+      "name": "LinkInboundMessage",
+      "kind": "mutation",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "hash": "sha256:194611e396570a43e4758f83c5046369cfaa0e04211a053fa5d9e843014a8580",
+      "rootFields": [
+        "linkInboundMessage"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "LinkInboundMessageInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "InboundAttachmentFields",
+        "InboundMailboxFields",
+        "InboundMessageDetailFields",
+        "InboundMessageListFields",
+        "InboundShipmentRefFields"
+      ],
+      "usages": [],
+      "sdl": "mutation LinkInboundMessage($id: ID!, $input: LinkInboundMessageInput!) {\n  linkInboundMessage(id: $id, input: $input) {\n    ...InboundMessageDetailFields\n  }\n}\n\nfragment InboundAttachmentFields on InboundAttachment {\n  id\n  fileName\n  contentType\n  byteSize\n  kind\n  documentId\n  failureText\n  createdAt\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n  hasSigningSecret\n  version\n  createdAt\n  updatedAt\n}\n\nfragment InboundMessageDetailFields on InboundMessage {\n  ...InboundMessageListFields\n  toAddresses\n  ccAddresses\n  textBody\n  spamScore\n  matchedCarrierId\n  runId\n  reviewedBy\n  reviewedAt\n  reviewNote\n  failureCode\n  version\n  createdAt\n  updatedAt\n  mailbox {\n    ...InboundMailboxFields\n  }\n  attachments {\n    ...InboundAttachmentFields\n  }\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n  preview\n  attachmentCount\n  matchedShipment {\n    ...InboundShipmentRefFields\n  }\n  matchedCustomer {\n    id\n    code\n    name\n  }\n}\n\nfragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
     },
     {
       "name": "LiveTenderByMove",
@@ -12837,6 +12975,37 @@
       "sdl": "mutation ReviewDriverExpense($input: ReviewDriverExpenseInput!) {\n  reviewDriverExpense(input: $input) {\n    id\n    status\n    reviewNote\n    reviewedAt\n    settlementLineId\n    version\n  }\n}"
     },
     {
+      "name": "ReviewInboundMessage",
+      "kind": "mutation",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "hash": "sha256:2aad04e7ef8dc6ea1dc385f560163fc5b5d751fbee53ce11186e630df537b0b3",
+      "rootFields": [
+        "reviewInboundMessage"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "ReviewInboundMessageInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "InboundAttachmentFields",
+        "InboundMailboxFields",
+        "InboundMessageDetailFields",
+        "InboundMessageListFields",
+        "InboundShipmentRefFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ReviewInboundMessage($id: ID!, $input: ReviewInboundMessageInput!) {\n  reviewInboundMessage(id: $id, input: $input) {\n    ...InboundMessageDetailFields\n  }\n}\n\nfragment InboundAttachmentFields on InboundAttachment {\n  id\n  fileName\n  contentType\n  byteSize\n  kind\n  documentId\n  failureText\n  createdAt\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n  hasSigningSecret\n  version\n  createdAt\n  updatedAt\n}\n\nfragment InboundMessageDetailFields on InboundMessage {\n  ...InboundMessageListFields\n  toAddresses\n  ccAddresses\n  textBody\n  spamScore\n  matchedCarrierId\n  runId\n  reviewedBy\n  reviewedAt\n  reviewNote\n  failureCode\n  version\n  createdAt\n  updatedAt\n  mailbox {\n    ...InboundMailboxFields\n  }\n  attachments {\n    ...InboundAttachmentFields\n  }\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n  preview\n  attachmentCount\n  matchedShipment {\n    ...InboundShipmentRefFields\n  }\n  matchedCustomer {\n    id\n    code\n    name\n  }\n}\n\nfragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
+    },
+    {
       "name": "ReviewWorkerSafetyEvent",
       "kind": "mutation",
       "domain": "worker-safety",
@@ -12972,6 +13141,29 @@
       "fragments": [],
       "usages": [],
       "sdl": "query Rota($filter: RotaFilterInput) {\n  rota(filter: $filter) {\n    weekStart\n    weekEnd\n    weeks\n    scheduledDays\n    conflicts\n    rows {\n      workerId\n      name\n      fleetCode\n      fleetColor\n      shiftCode\n      shiftName\n      shiftColor\n      scheduledDays\n      conflicts\n      days {\n        date\n        state\n        scheduled\n        startMinute\n        durationMinutes\n        preference\n        assignmentCount\n        isConflict\n      }\n    }\n  }\n}"
+    },
+    {
+      "name": "RotateInboundMailboxToken",
+      "kind": "mutation",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "hash": "sha256:946e0d596649a249dcfe2ca2e5907df9779e48c1458801e26738a1fc6a2c8d51",
+      "rootFields": [
+        "rotateInboundMailboxToken"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "InboundMailboxCredentialsFields",
+        "InboundMailboxFields"
+      ],
+      "usages": [],
+      "sdl": "mutation RotateInboundMailboxToken($id: ID!) {\n  rotateInboundMailboxToken(id: $id) {\n    ...InboundMailboxCredentialsFields\n  }\n}\n\nfragment InboundMailboxCredentialsFields on InboundMailboxCredentials {\n  token\n  webhookPath\n  mailbox {\n    ...InboundMailboxFields\n  }\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n  hasSigningSecret\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "RoutingGuideOptions",
@@ -13391,6 +13583,33 @@
       ],
       "usages": [],
       "sdl": "mutation SetDefaultTableConfiguration($id: ID!) {\n  setDefaultTableConfiguration(id: $id) {\n    ...TableConfigurationFields\n  }\n}\n\nfragment TableConfigurationFields on TableConfiguration {\n  id\n  organizationId\n  businessUnitId\n  userId\n  name\n  description\n  resource\n  tableConfig\n  visibility\n  isDefault\n  isOrgDefault\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n    profilePicUrl\n  }\n}"
+    },
+    {
+      "name": "SetInboundMailboxSigningSecret",
+      "kind": "mutation",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "hash": "sha256:b19baacab4c0b1a7eeceffae35e61a76c60e30919c63202ef12b6c7112010e75",
+      "rootFields": [
+        "setInboundMailboxSigningSecret"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "secret",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "InboundMailboxFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SetInboundMailboxSigningSecret($id: ID!, $secret: String!) {\n  setInboundMailboxSigningSecret(id: $id, secret: $secret) {\n    ...InboundMailboxFields\n  }\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n  hasSigningSecret\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "SetMyAvailability",
@@ -15768,6 +15987,38 @@
       ],
       "usages": [],
       "sdl": "mutation UpdateIftaMileageEntry($id: ID!, $version: Int!, $input: IFTAMileageEntryInput!) {\n  updateIftaMileageEntry(id: $id, version: $version, input: $input) {\n    ...IftaMileageEntryFields\n  }\n}\n\nfragment IftaMileageEntryFields on IFTAJurisdictionMileageEntry {\n  id\n  businessUnitId\n  organizationId\n  tractorId\n  jurisdictionId\n  traveledAt\n  year\n  quarter\n  miles\n  loaded\n  source\n  shipmentMoveId\n  notes\n  createdById\n  version\n  createdAt\n  updatedAt\n  tractor {\n    id\n    code\n  }\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n  }\n}"
+    },
+    {
+      "name": "UpdateInboundMailbox",
+      "kind": "mutation",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "hash": "sha256:5de0a2a6e6aacd88d47682fca2a21fcf13464dc6c69e43b4e7b3d10ddd3c73fa",
+      "rootFields": [
+        "updateInboundMailbox"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "InboundMailboxInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "InboundMailboxFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateInboundMailbox($id: ID!, $version: Int!, $input: InboundMailboxInput!) {\n  updateInboundMailbox(id: $id, version: $version, input: $input) {\n    ...InboundMailboxFields\n  }\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n  hasSigningSecret\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "UpdateJobPosition",
@@ -19539,6 +19790,105 @@
       ],
       "usages": [],
       "sdl": "fragment IftaTaxRateFields on IFTATaxRate {\n  id\n  jurisdictionId\n  year\n  quarter\n  fuelType\n  ratePerGallon\n  surchargeRatePerGallon\n  sourceNote\n  sourceUrl\n  version\n  createdAt\n  updatedAt\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    hasSurcharge\n    isIftaMember\n  }\n}"
+    },
+    {
+      "name": "InboundAttachmentFields",
+      "typeCondition": "InboundAttachment",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "InboundMessage",
+        "LinkInboundMessage",
+        "ReviewInboundMessage"
+      ],
+      "usages": [],
+      "sdl": "fragment InboundAttachmentFields on InboundAttachment {\n  id\n  fileName\n  contentType\n  byteSize\n  kind\n  documentId\n  failureText\n  createdAt\n}"
+    },
+    {
+      "name": "InboundMailboxCredentialsFields",
+      "typeCondition": "InboundMailboxCredentials",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "fragments": [
+        "InboundMailboxFields"
+      ],
+      "usedByOperations": [
+        "CreateInboundMailbox",
+        "RotateInboundMailboxToken"
+      ],
+      "usages": [],
+      "sdl": "fragment InboundMailboxCredentialsFields on InboundMailboxCredentials {\n  token\n  webhookPath\n  mailbox {\n    ...InboundMailboxFields\n  }\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n  hasSigningSecret\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "InboundMailboxFields",
+      "typeCondition": "InboundMailbox",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CreateInboundMailbox",
+        "InboundMailboxes",
+        "InboundMessage",
+        "LinkInboundMessage",
+        "ReviewInboundMessage",
+        "RotateInboundMailboxToken",
+        "SetInboundMailboxSigningSecret",
+        "UpdateInboundMailbox"
+      ],
+      "usages": [],
+      "sdl": "fragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n  hasSigningSecret\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "InboundMessageDetailFields",
+      "typeCondition": "InboundMessage",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "fragments": [
+        "InboundAttachmentFields",
+        "InboundMailboxFields",
+        "InboundMessageListFields",
+        "InboundShipmentRefFields"
+      ],
+      "usedByOperations": [
+        "InboundMessage",
+        "LinkInboundMessage",
+        "ReviewInboundMessage"
+      ],
+      "usages": [],
+      "sdl": "fragment InboundMessageDetailFields on InboundMessage {\n  ...InboundMessageListFields\n  toAddresses\n  ccAddresses\n  textBody\n  spamScore\n  matchedCarrierId\n  runId\n  reviewedBy\n  reviewedAt\n  reviewNote\n  failureCode\n  version\n  createdAt\n  updatedAt\n  mailbox {\n    ...InboundMailboxFields\n  }\n  attachments {\n    ...InboundAttachmentFields\n  }\n}\n\nfragment InboundAttachmentFields on InboundAttachment {\n  id\n  fileName\n  contentType\n  byteSize\n  kind\n  documentId\n  failureText\n  createdAt\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n  hasSigningSecret\n  version\n  createdAt\n  updatedAt\n}\n\nfragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n  preview\n  attachmentCount\n  matchedShipment {\n    ...InboundShipmentRefFields\n  }\n  matchedCustomer {\n    id\n    code\n    name\n  }\n}\n\nfragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
+    },
+    {
+      "name": "InboundMessageListFields",
+      "typeCondition": "InboundMessage",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "fragments": [
+        "InboundShipmentRefFields"
+      ],
+      "usedByOperations": [
+        "InboundMessage",
+        "InboundMessages",
+        "LinkInboundMessage",
+        "ReviewInboundMessage"
+      ],
+      "usages": [],
+      "sdl": "fragment InboundMessageListFields on InboundMessage {\n  id\n  mailboxId\n  fromAddress\n  fromName\n  subject\n  receivedAt\n  classification\n  confidence\n  status\n  matchedShipmentId\n  matchedCustomerId\n  matchReason\n  needsReview\n  failureText\n  preview\n  attachmentCount\n  matchedShipment {\n    ...InboundShipmentRefFields\n  }\n  matchedCustomer {\n    id\n    code\n    name\n  }\n}\n\nfragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
+    },
+    {
+      "name": "InboundShipmentRefFields",
+      "typeCondition": "InboundShipmentRef",
+      "domain": "inbox",
+      "sourceFile": "src/operations/inbox/inbox.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "InboundMessage",
+        "InboundMessages",
+        "LinkInboundMessage",
+        "ReviewInboundMessage"
+      ],
+      "usages": [],
+      "sdl": "fragment InboundShipmentRefFields on InboundShipmentRef {\n  id\n  proNumber\n  bol\n  poNumber\n  originCity\n  originState\n  destinationCity\n  destinationState\n}"
     },
     {
       "name": "InvoiceApprovalQueueItemFields",
@@ -25586,6 +25936,94 @@
       ],
       "sdl": "input ImportSourcedCarrierInput {\n  code: String\n  dotNumber: String!\n  enrollMonitoring: Boolean\n}"
     },
+    "InboundMailboxInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "address",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "minConfidence",
+          "type": "Float!",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "provider",
+          "type": "InboundProvider!",
+          "defaultValue": null
+        },
+        {
+          "name": "purpose",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "reviewPolicy",
+          "type": "InboundReviewPolicy!",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "InboundMailboxStatus!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input InboundMailboxInput {\n  address: String!\n  \"\"\"\n  The bar a reading must clear to be acted on alone; read only by ReviewBelowConfidence.\n  \"\"\"\n  minConfidence: Float!\n  name: String!\n  provider: InboundProvider!\n  purpose: String\n  reviewPolicy: InboundReviewPolicy!\n  status: InboundMailboxStatus!\n}"
+    },
+    "InboundMessagesInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "classification",
+          "type": "InboundClassification",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "25",
+          "defaultJson": 25
+        },
+        {
+          "name": "mailboxId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "shipmentId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "since",
+          "type": "Timestamp",
+          "defaultValue": null
+        },
+        {
+          "name": "statuses",
+          "type": "[InboundMessageStatus!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input InboundMessagesInput {\n  after: String\n  classification: InboundClassification\n  first: Int = 25\n  mailboxId: ID\n  \"\"\"Words from the sender's name or address, or from the subject.\"\"\"\n  query: String\n  shipmentId: ID\n  \"\"\"Only what arrived at or after this instant.\"\"\"\n  since: Timestamp\n  \"\"\"Only these statuses; empty is every status.\"\"\"\n  statuses: [InboundMessageStatus!]\n}"
+    },
     "InspectionResult": {
       "kind": "enum",
       "values": [
@@ -25805,6 +26243,32 @@
         }
       ],
       "sdl": "input LateChargeAssessmentInput {\n  \"\"\"Defaults to now.\"\"\"\n  asOfDate: Timestamp\n  \"\"\"Limit the run to these customers; empty means every customer.\"\"\"\n  customerIds: [ID!]\n}"
+    },
+    "LinkInboundMessageInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "carrierId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "customerId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "shipmentId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input LinkInboundMessageInput {\n  carrierId: ID\n  customerId: ID\n  \"\"\"\n  Why this is the right record. Stored, because a link nobody can check is one nobody will trust.\n  \"\"\"\n  reason: String!\n  shipmentId: ID\n}"
     },
     "MarkCarrierSettlementPaidInput": {
       "kind": "input",
@@ -27745,6 +28209,22 @@
         }
       ],
       "sdl": "input ReviewDriverExpenseInput {\n  approve: Boolean!\n  expenseId: ID!\n  note: String\n}"
+    },
+    "ReviewInboundMessageInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "note",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "InboundMessageStatus!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReviewInboundMessageInput {\n  note: String\n  \"\"\"\n  Where the message ends up. Only Actioned and Ignored are a person's to choose.\n  \"\"\"\n  status: InboundMessageStatus!\n}"
     },
     "RotaFilterInput": {
       "kind": "input",
@@ -33092,6 +33572,57 @@
       ],
       "sdl": "\"\"\"\nDraft figures move with the data. Finalized locks them and can be reopened with\na reason. Filed is immutable; corrections open a new Draft through amendIftaReturn.\n\"\"\"\nenum IFTAReturnStatus {\n  Draft\n  Filed\n  Finalized\n}"
     },
+    "InboundProvider": {
+      "kind": "enum",
+      "values": [
+        "Postmark",
+        "Resend"
+      ],
+      "sdl": "\"\"\"Which provider posts this address's mail.\"\"\"\nenum InboundProvider {\n  Postmark\n  Resend\n}"
+    },
+    "InboundReviewPolicy": {
+      "kind": "enum",
+      "values": [
+        "AlwaysReview",
+        "AutoHandle",
+        "ReviewBelowConfidence"
+      ],
+      "sdl": "\"\"\"How much an address is trusted to act without a person.\"\"\"\nenum InboundReviewPolicy {\n  AlwaysReview\n  AutoHandle\n  ReviewBelowConfidence\n}"
+    },
+    "InboundMailboxStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Inactive"
+      ],
+      "sdl": "\"\"\"Whether an address is still listening.\"\"\"\nenum InboundMailboxStatus {\n  Active\n  Inactive\n}"
+    },
+    "InboundClassification": {
+      "kind": "enum",
+      "values": [
+        "DetentionDispute",
+        "Invoice",
+        "Other",
+        "ProofOfDelivery",
+        "RateConfirmation",
+        "StatusRequest",
+        "Tender"
+      ],
+      "sdl": "\"\"\"What a message turned out to be, once it was read.\"\"\"\nenum InboundClassification {\n  DetentionDispute\n  Invoice\n  Other\n  ProofOfDelivery\n  RateConfirmation\n  StatusRequest\n  Tender\n}"
+    },
+    "InboundMessageStatus": {
+      "kind": "enum",
+      "values": [
+        "Actioned",
+        "Classified",
+        "Ignored",
+        "InReview",
+        "Processing",
+        "Quarantined",
+        "Received"
+      ],
+      "sdl": "\"\"\"How far a message has got, and whether it is waiting on anybody.\"\"\"\nenum InboundMessageStatus {\n  Actioned\n  Classified\n  Ignored\n  InReview\n  Processing\n  Quarantined\n  Received\n}"
+    },
     "InvoiceAdjustmentKind": {
       "kind": "enum",
       "values": [
@@ -34576,10 +35107,12 @@
         "HOSViolation",
         "InboundMessage",
         "Insight",
+        "MoveCoverage",
         "ServiceFailure",
-        "WeatherAlert"
+        "WeatherAlert",
+        "WorkerCredential"
       ],
-      "sdl": "\"\"\"\nThe record an item stands in for. The source stays authoritative: an item\nis a projection of it, keyed by kind and id, and resolves when the source\ndoes.\n\"\"\"\nenum WatchtowerSourceKind {\n  AgentException\n  AgentPlan\n  AgentProposal\n  AgentRunFailed\n  BillingException\n  CarrierIntelEvent\n  DetentionOccurrence\n  EDIInboundQuarantined\n  HOSViolation\n  InboundMessage\n  Insight\n  ServiceFailure\n  WeatherAlert\n}"
+      "sdl": "\"\"\"\nThe record an item stands in for. The source stays authoritative: an item\nis a projection of it, keyed by kind and id, and resolves when the source\ndoes.\n\"\"\"\nenum WatchtowerSourceKind {\n  AgentException\n  AgentPlan\n  AgentProposal\n  AgentRunFailed\n  BillingException\n  CarrierIntelEvent\n  DetentionOccurrence\n  EDIInboundQuarantined\n  HOSViolation\n  InboundMessage\n  Insight\n  MoveCoverage\n  ServiceFailure\n  WeatherAlert\n  WorkerCredential\n}"
     },
     "WatchtowerSeverity": {
       "kind": "enum",

@@ -9,6 +9,7 @@ import {
   FuelIcon,
   HandshakeIcon,
   HomeIcon,
+  InboxIcon,
   MessagesSquareIcon,
   Package,
   ReceiptTextIcon,
@@ -46,6 +47,22 @@ const deskModule: NavModule = {
   routePrefixes: ["/desk"],
   hideSecondarySidebar: true,
   resource: Resource.Assistant,
+  navigation: [],
+};
+
+// The inbox is its own module rather than a page under the Desk. What arrives
+// by email is work coming in from outside, which is a different thing from the
+// conversations and decisions the Desk holds, and a dispatcher opens one
+// without wanting the other.
+const inboxModule: NavModule = {
+  id: "inbox",
+  label: "Inbox",
+  icon: InboxIcon,
+  description: "Mail that arrived on a monitored address, and what was made of it",
+  basePath: "/inbox",
+  routePrefixes: ["/inbox"],
+  hideSecondarySidebar: true,
+  resource: Resource.InboundMessage,
   navigation: [],
 };
 
@@ -991,6 +1008,7 @@ export const navigationConfig: NavigationConfig = {
   modules: [
     homeModule,
     deskModule,
+    inboxModule,
     shipmentManagementModule,
     dispatchModule,
     humanResourcesModule,
@@ -1416,7 +1434,7 @@ export const appModuleGroups: AppModuleGroup[] = [
   {
     id: "core",
     label: "Core",
-    moduleIds: ["home", "desk"],
+    moduleIds: ["home", "desk", "inbox"],
   },
   {
     id: "operations",
@@ -1707,6 +1725,13 @@ export const adminLinks: SidebarLink[] = [
     title: "Integrations",
     group: "Data & Integrations",
     resource: Resource.Integration,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/inbound-mailboxes",
+    title: "Inbound mailboxes",
+    group: "Data & Integrations",
+    resource: Resource.InboundMailbox,
     requiredOperation: Operation.Read,
   },
   {

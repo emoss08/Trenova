@@ -94,11 +94,14 @@ enum AIStructuredOutputMode {
 enum AITask {
   AssistantChat
   BillingDiagnosis
+  DailyBriefing
   DocumentClassification
   DocumentExtraction
   FormulaAssistant
   General
+  InboundClassification
   OperationalInsights
+  QueryCompose
   ScopeClassification
 }
 
@@ -1161,6 +1164,7 @@ enum AgentSubjectType {
   DetentionOccurrence
   Document
   EDIInboundFile
+  InboundMessage
   Insight
   Organization
   Shipment
@@ -1182,6 +1186,7 @@ enum AgentTemplate {
   DispatchAssistant
   GeneralAssistant
   ImportAssistant
+  IntakeDesk
   LoadMonitor
   ShipmentIntake
 }
@@ -4071,6 +4076,16 @@ type Customer {
   state: UsState
   stateId: ID!
   status: EntityStatus!
+  """
+  What this customer asked to be told as their freight moves. None is the
+  default: a customer who never opted in is not emailed about a stop.
+  """
+  statusUpdatePreference: CustomerStatusUpdatePreference!
+  """
+  Who receives those updates, comma separated. Empty falls back to the
+  notice profile's own recipients.
+  """
+  statusUpdateRecipients: String
   updatedAt: Timestamp!
   version: Int!
 }
@@ -4357,6 +4372,14 @@ enum CustomerPaymentTerm {
   Net45
   Net60
   Net90
+}
+
+"""What a customer asked to be told as their freight moves."""
+enum CustomerStatusUpdatePreference {
+  Arrivals
+  ArrivalsAndDepartures
+  Departures
+  None
 }
 
 """
@@ -9188,6 +9211,258 @@ input ImportSourcedCarrierInput {
   enrollMonitoring: Boolean
 }
 
+"""One file that came with a message, and what became of it."""
+type InboundAttachment {
+  byteSize: Int!
+  contentType: String!
+  createdAt: Timestamp!
+  """The document this became, once the pipeline had read it."""
+  documentId: ID
+  """Why this file was refused or could not be read; blank when it was."""
+  failureText: String!
+  fileName: String!
+  id: ID!
+  kind: InboundAttachmentKind!
+}
+
+"""What a file that came with a message turned out to be."""
+enum InboundAttachmentKind {
+  BillOfLading
+  Invoice
+  Other
+  ProofOfDelivery
+  RateConfirmation
+  Unknown
+}
+
+"""What a message turned out to be, once it was read."""
+enum InboundClassification {
+  DetentionDispute
+  Invoice
+  Other
+  ProofOfDelivery
+  RateConfirmation
+  StatusRequest
+  Tender
+}
+
+"""
+One kind of mail: how much there is, and how much of it is waiting on a person.
+"""
+type InboundClassificationCount {
+  classification: InboundClassification!
+  total: Int!
+  waiting: Int!
+}
+
+"""
+An address the system listens on.
+
+The webhook token is never returned. It is shown once, when the mailbox is
+created or its token is rotated, and stored only as a hash — so a leaked row
+is a row somebody can read, not an address they can post to.
+"""
+type InboundMailbox {
+  address: String!
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  """
+  Whether a signing secret is set. Without one the mailbox refuses every delivery. The secret itself is never returned.
+  """
+  hasSigningSecret: Boolean!
+  id: ID!
+  """The bar a reading must clear before the desk acts without asking."""
+  minConfidence: Float!
+  name: String!
+  organizationId: ID!
+  provider: InboundProvider!
+  purpose: String!
+  reviewPolicy: InboundReviewPolicy!
+  status: InboundMailboxStatus!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""One address's share of the inbox."""
+type InboundMailboxCount {
+  mailboxId: ID!
+  total: Int!
+  waiting: Int!
+}
+
+"""
+A mailbox with the webhook token it was just given.
+
+The token is stored only as a hash, so this is the one response that carries
+it. Whoever creates or rotates a mailbox copies the webhook URL from here.
+"""
+type InboundMailboxCredentials {
+  mailbox: InboundMailbox!
+  token: String!
+  """Where the provider posts, under the API's base URL."""
+  webhookPath: String!
+}
+
+input InboundMailboxInput {
+  address: String!
+  """
+  The bar a reading must clear to be acted on alone; read only by ReviewBelowConfidence.
+  """
+  minConfidence: Float!
+  name: String!
+  provider: InboundProvider!
+  purpose: String
+  reviewPolicy: InboundReviewPolicy!
+  status: InboundMailboxStatus!
+}
+
+"""Whether an address is still listening."""
+enum InboundMailboxStatus {
+  Active
+  Inactive
+}
+
+"""
+One email that arrived on a monitored address.
+
+It is kept whether or not anything could be made of it: a tender nobody
+matched is still something a person has to look at, and a message dropped
+because it did not classify is a message its sender believes was received.
+"""
+type InboundMessage {
+  """How many files came with it. Read for a whole page of rows at once."""
+  attachmentCount: Int!
+  attachments: [InboundAttachment!]!
+  businessUnitId: ID!
+  ccAddresses: [String!]!
+  classification: InboundClassification
+  """The reading's own confidence, between 0 and 1."""
+  confidence: Float!
+  createdAt: Timestamp!
+  """Why the pipeline gave up, where it did."""
+  failureCode: String!
+  failureText: String!
+  fromAddress: String!
+  fromName: String!
+  id: ID!
+  mailbox: InboundMailbox
+  mailboxId: ID!
+  """
+  Why the message was matched to those records; a match nobody can check is one nobody will trust.
+  """
+  matchReason: String!
+  matchedCarrierId: ID
+  """
+  The customer it was matched to. Absent when unmatched or no longer visible.
+  """
+  matchedCustomer: Customer
+  matchedCustomerId: ID
+  """
+  The shipment it was matched to, as a list row names it. Absent when unmatched or no longer visible.
+  """
+  matchedShipment: InboundShipmentRef
+  matchedShipmentId: ID
+  """Whether this message is waiting on a person."""
+  needsReview: Boolean!
+  organizationId: ID!
+  """
+  A line or two of what the sender wrote, for a list row: whitespace folded,
+  quoted replies and the lines that introduce them left out.
+  """
+  preview: String!
+  receivedAt: Timestamp!
+  reviewNote: String!
+  reviewedAt: Timestamp
+  reviewedBy: ID
+  """The agent run that read it, where one did."""
+  runId: ID
+  spamScore: Float!
+  status: InboundMessageStatus!
+  subject: String!
+  """The bounded plain text. The whole message is in object storage."""
+  textBody: String!
+  toAddresses: [String!]!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type InboundMessageConnection {
+  edges: [InboundMessageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""The inbox in numbers, for the lane counts."""
+type InboundMessageCounts {
+  """Every kind, in a stable order, including the ones with no mail."""
+  byClassification: [InboundClassificationCount!]!
+  """Every mailbox that has mail."""
+  byMailbox: [InboundMailboxCount!]!
+  handled: Int!
+  ignored: Int!
+  quarantined: Int!
+  total: Int!
+  waiting: Int!
+}
+
+type InboundMessageEdge {
+  cursor: String!
+  node: InboundMessage!
+}
+
+"""How far a message has got, and whether it is waiting on anybody."""
+enum InboundMessageStatus {
+  Actioned
+  Classified
+  Ignored
+  InReview
+  Processing
+  Quarantined
+  Received
+}
+
+input InboundMessagesInput {
+  after: String
+  classification: InboundClassification
+  first: Int = 25
+  mailboxId: ID
+  """Words from the sender's name or address, or from the subject."""
+  query: String
+  shipmentId: ID
+  """Only what arrived at or after this instant."""
+  since: Timestamp
+  """Only these statuses; empty is every status."""
+  statuses: [InboundMessageStatus!]
+}
+
+"""Which provider posts this address's mail."""
+enum InboundProvider {
+  Postmark
+  Resend
+}
+
+"""How much an address is trusted to act without a person."""
+enum InboundReviewPolicy {
+  AlwaysReview
+  AutoHandle
+  ReviewBelowConfidence
+}
+
+"""
+A shipment as an inbox row names it: the numbers a sender quotes and the lane.
+Enough to recognise the load without opening it.
+"""
+type InboundShipmentRef {
+  bol: String!
+  destinationCity: String!
+  destinationState: String!
+  id: ID!
+  originCity: String!
+  originState: String!
+  poNumber: String!
+  proNumber: String!
+}
+
 enum InjuryCaseStatus {
   Closed
   Open
@@ -10272,6 +10547,16 @@ type LeaveWindow {
   through: Timestamp!
 }
 
+input LinkInboundMessageInput {
+  carrierId: ID
+  customerId: ID
+  """
+  Why this is the right record. Stored, because a link nobody can check is one nobody will trust.
+  """
+  reason: String!
+  shipmentId: ID
+}
+
 input ListBriefingsInput {
   first: Int = 14
   roleKey: BriefingRoleKey
@@ -10640,6 +10925,8 @@ type Mutation {
   createFuelSurchargeProgram(input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
   createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
   createIftaMileageEntry(input: IFTAMileageEntryInput!): IFTAJurisdictionMileageEntry!
+  """Creates a mailbox and returns its webhook token, once."""
+  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
   createInvoiceFromOrder(offCycleReason: String, orderId: ID!): Invoice! @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromOrder.")
   """
   Bills the given shipments. offCycleReason is required only when the customer
@@ -10787,6 +11074,10 @@ type Mutation {
   issuePayAdvance(input: IssuePayAdvanceInput!): PayAdvance!
   """Links an inbound EDI carrier invoice to a carrier in the master."""
   linkEdiCarrierInvoiceToCarrier(carrierId: ID!, invoiceId: ID!): EdiCarrierInvoice!
+  """
+  Says what a message is about, by hand, when the reading did not work it out.
+  """
+  linkInboundMessage(id: ID!, input: LinkInboundMessageInput!): InboundMessage!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
   """
@@ -10947,6 +11238,8 @@ type Mutation {
   reimbursement to the driver's open settlement immediately.
   """
   reviewDriverExpense(input: ReviewDriverExpenseInput!): DriverExpense!
+  """Records a person's decision about a message and takes it off the feed."""
+  reviewInboundMessage(id: ID!, input: ReviewInboundMessageInput!): InboundMessage!
   reviewWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
   revokeApprovalDelegation(id: ID!): ApprovalDelegation!
   revokeCarrierIntelOverride(id: ID!, reason: String!): CarrierIntelOverride!
@@ -10960,6 +11253,8 @@ type Mutation {
   live at two different times under two different approvals.
   """
   rollbackDocumentTemplate(notes: String, versionId: ID!): DocumentTemplateVersion!
+  """Replaces the webhook token. The old URL stops working at once."""
+  rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials!
   runDotRandomDraw(input: RunDOTRandomDrawInput!): DOTRandomDraw!
   runPtoAccrual(input: RunPTOAccrualInput!): PTOAccrualRunPayload!
   runReport(input: RunReportInput!): ReportRun!
@@ -10978,6 +11273,10 @@ type Mutation {
   setAgentMemoryStatus(id: ID!, status: AgentMemoryStatus!): AgentMemory!
   setCarrierMonitoring(carrierIds: [ID!]!, enabled: Boolean!): Int!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
+  """
+  Seals and stores the provider's secret: a Resend whsec_ key, or Postmark's user:password.
+  """
+  setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
   """
   The signed-in driver stating what they would rather work on one weekday.
   """
@@ -11051,6 +11350,10 @@ type Mutation {
   updateHomeLayout(input: HomeLayoutInput!): HomeLayout!
   updateHomeLayoutPreset(input: UpdateHomeLayoutPresetInput!): HomeLayoutPreset!
   updateIftaMileageEntry(id: ID!, input: IFTAMileageEntryInput!, version: Int!): IFTAJurisdictionMileageEntry!
+  """
+  Changes a mailbox's settings. Changing its provider clears the signing secret.
+  """
+  updateInboundMailbox(id: ID!, input: InboundMailboxInput!, version: Int!): InboundMailbox!
   updateJobPosition(input: UpdateJobPositionInput!): JobPosition!
   updateLeaveCase(input: UpdateLeaveCaseInput!): WorkerLeaveCase!
   updateLeaveControl(input: UpdateLeaveControlInput!): LeaveControl!
@@ -13004,6 +13307,12 @@ type Query {
   iftaReturnForPeriod(period: IFTAPeriodInput!): IFTAReturn
   iftaReturns(input: IFTAReturnsInput!): IFTAReturnConnection!
   iftaTaxRates(input: IFTATaxRatesInput!): IFTATaxRateConnection!
+  """The addresses this organization listens on."""
+  inboundMailboxes: [InboundMailbox!]!
+  inboundMessage(id: ID!): InboundMessage!
+  inboundMessageCounts: InboundMessageCounts!
+  """Mail that arrived on a monitored address, newest first."""
+  inboundMessages(input: InboundMessagesInput!): InboundMessageConnection!
   invoice(id: ID!): Invoice
   invoiceAdjustment(id: ID!): InvoiceAdjustment
   """Adjustments whose policy holds them for finance approval."""
@@ -14546,6 +14855,14 @@ enum ReviewGoalStatus {
   Done
   Dropped
   Open
+}
+
+input ReviewInboundMessageInput {
+  note: String
+  """
+  Where the message ends up. Only Actioned and Ignored are a person's to choose.
+  """
+  status: InboundMessageStatus!
 }
 
 type ReviewItem {
@@ -18823,8 +19140,10 @@ enum WatchtowerSourceKind {
   HOSViolation
   InboundMessage
   Insight
+  MoveCoverage
   ServiceFailure
   WeatherAlert
+  WorkerCredential
 }
 
 input WithdrawInvoiceDisputeInput {

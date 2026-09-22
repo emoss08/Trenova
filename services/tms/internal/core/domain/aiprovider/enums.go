@@ -132,7 +132,12 @@ const (
 	// cheap model that guesses wrong produces an unresolved line rather than a
 	// wrong answer.
 	TaskQueryCompose = Task("QueryCompose")
-	TaskGeneral      = Task("General")
+	// TaskInboundClassification decides what an email that arrived actually is.
+	// Like the other classifiers it answers with a label from a fixed set, and
+	// the label is re-checked against that set afterwards — a model that invents
+	// a category produces a message for a person, not a new kind of work.
+	TaskInboundClassification = Task("InboundClassification")
+	TaskGeneral               = Task("General")
 )
 
 func (t Task) IsValid() bool {
@@ -146,6 +151,7 @@ func (t Task) IsValid() bool {
 		TaskOperationalInsights,
 		TaskDailyBriefing,
 		TaskQueryCompose,
+		TaskInboundClassification,
 		TaskGeneral:
 		return true
 	default:
@@ -165,6 +171,7 @@ func AllTasks() []Task {
 		TaskOperationalInsights,
 		TaskDailyBriefing,
 		TaskQueryCompose,
+		TaskInboundClassification,
 		TaskGeneral,
 	}
 }

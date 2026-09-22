@@ -110,6 +110,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
 	"github.com/emoss08/trenova/internal/core/services/iamservice"
 	"github.com/emoss08/trenova/internal/core/services/iftaservice"
+	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/narrator"
 	"github.com/emoss08/trenova/internal/core/services/internaledistatussync"
@@ -385,6 +386,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	dataretentionservice.New,
 	ediservice.New,
 	ediinboundservice.New,
+	inboundmessageservice.New,
 	func(s *ediservice.Service) services.EDIService { return s },
 	fx.Annotate(
 		func(s *ediservice.Service) services.ShipmentMutationObserver { return s },

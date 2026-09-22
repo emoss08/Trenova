@@ -56,6 +56,7 @@ export const Resource = {
   Worker: "worker",
   WorkerPTO: "worker_pto",
   PTOPolicy: "pto_policy",
+  WorkerDispatchHold: "worker_dispatch_hold",
   WorkerCredential: "worker_credential",
   WorkerCredentialType: "worker_credential_type",
   WorkerEmploymentEvent: "worker_employment_event",
@@ -215,6 +216,8 @@ export const Resource = {
   // Communications
   DriverMessage: "driver_message",
   CustomerCommunication: "customer_communication",
+  InboundMessage: "inbound_message",
+  InboundMailbox: "inbound_mailbox",
 } as const;
 
 export type ResourceType = (typeof Resource)[keyof typeof Resource];

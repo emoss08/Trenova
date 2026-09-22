@@ -140,6 +140,7 @@ func RunReportWorkflow(
 		BusinessUnitID:    payload.BusinessUnitID,
 		Status:            report.RunStatusSucceeded,
 		ArtifactKey:       execResult.ArtifactKey,
+		RowsKey:           execResult.RowsKey,
 		CacheHit:          execResult.CacheHit,
 		ArtifactExpiresAt: execResult.ArtifactExpiresAt,
 		RowCount:          execResult.RowCount,

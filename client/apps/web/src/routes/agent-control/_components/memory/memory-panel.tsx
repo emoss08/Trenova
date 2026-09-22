@@ -33,7 +33,12 @@ export function MemoryPanel({
 
   if (mode === "edit") {
     return (
-      <FormEditPanel<MemoryFormValues, AgentMemoryRow>
+      <FormEditPanel<
+        MemoryFormValues,
+        AgentMemoryRow,
+        MemoryFormValues,
+        Awaited<ReturnType<typeof updateAgentMemory>>
+      >
         open={open}
         onOpenChange={onOpenChange}
         row={row}
@@ -48,7 +53,12 @@ export function MemoryPanel({
   }
 
   return (
-    <FormCreatePanel<MemoryFormValues>
+    <FormCreatePanel<
+      MemoryFormValues,
+      AgentMemoryRow,
+      MemoryFormValues,
+      Awaited<ReturnType<typeof createAgentMemory>>
+    >
       open={open}
       onOpenChange={onOpenChange}
       form={form}

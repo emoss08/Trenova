@@ -83,6 +83,8 @@ type FactoryParams struct {
 	CarrierIntelSnapshotByCarrierID           *CarrierIntelSnapshotByCarrierIDLoaderFactory
 	CarrierIntelSnapshotByCustomerID          *CarrierIntelSnapshotByCustomerIDLoaderFactory
 	CarrierIntelOpenEventCount                *CarrierIntelOpenEventCountLoaderFactory
+	InboundAttachmentCount                    *InboundAttachmentCountLoaderFactory
+	ShipmentSummaryByID                       *ShipmentSummaryByIDLoaderFactory
 	CarrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 }
 
@@ -131,6 +133,8 @@ type Factory struct {
 	carrierIntelSnapshotByCarrierID           *CarrierIntelSnapshotByCarrierIDLoaderFactory
 	carrierIntelSnapshotByCustomerID          *CarrierIntelSnapshotByCustomerIDLoaderFactory
 	carrierIntelOpenEventCount                *CarrierIntelOpenEventCountLoaderFactory
+	inboundAttachmentCount                    *InboundAttachmentCountLoaderFactory
+	shipmentSummaryByID                       *ShipmentSummaryByIDLoaderFactory
 	carrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 }
 
@@ -179,6 +183,8 @@ type Loaders struct {
 	CarrierIntelSnapshotByCarrierID           *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
 	CarrierIntelSnapshotByCustomerID          *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
 	CarrierIntelOpenEventCount                *dataloadgen.Loader[string, int]
+	InboundAttachmentCount                    *dataloadgen.Loader[string, int]
+	ShipmentSummaryByID                       *dataloadgen.Loader[string, *repositories.ShipmentSummary]
 	CarrierMonitoringEnrollmentByCarrierID    *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment]
 }
 
@@ -228,6 +234,8 @@ func NewFactory(p FactoryParams) *Factory {
 		carrierIntelSnapshotByCarrierID:           p.CarrierIntelSnapshotByCarrierID,
 		carrierIntelSnapshotByCustomerID:          p.CarrierIntelSnapshotByCustomerID,
 		carrierIntelOpenEventCount:                p.CarrierIntelOpenEventCount,
+		inboundAttachmentCount:                    p.InboundAttachmentCount,
+		shipmentSummaryByID:                       p.ShipmentSummaryByID,
 		carrierMonitoringEnrollmentByCarrierID:    p.CarrierMonitoringEnrollmentByCarrierID,
 	}
 }
@@ -278,6 +286,8 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		CarrierIntelSnapshotByCarrierID:           f.carrierIntelSnapshotByCarrierID.NewForTenant(tenantInfo),
 		CarrierIntelSnapshotByCustomerID:          f.carrierIntelSnapshotByCustomerID.NewForTenant(tenantInfo),
 		CarrierIntelOpenEventCount:                f.carrierIntelOpenEventCount.NewForTenant(tenantInfo),
+		InboundAttachmentCount:                    f.inboundAttachmentCount.NewForTenant(tenantInfo),
+		ShipmentSummaryByID:                       f.shipmentSummaryByID.NewForTenant(tenantInfo),
 		CarrierMonitoringEnrollmentByCarrierID:    f.carrierMonitoringEnrollmentByCarrierID.NewForTenant(tenantInfo),
 	}
 }

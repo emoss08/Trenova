@@ -7,6 +7,12 @@ import {
   summarizeUsageByDay,
   utcDayKeyToUnix,
 } from "../carrier-intel-usage";
+import type { CarrierIntelUsageSummary } from "../graphql/carrier-intel-settings";
+
+/** Rows as the usage query returns them, endpoint and all. */
+function daily(rows: CarrierIntelUsageSummary["daily"]) {
+  return rows;
+}
 
 describe("carrier intelligence usage", () => {
   it("lists UTC month starts newest first, crossing the year boundary", () => {
@@ -23,11 +29,13 @@ describe("carrier intelligence usage", () => {
 
   it("totals every endpoint for a day, newest day first", () => {
     expect(
-      summarizeUsageByDay([
-        { day: 20260915, endpoint: "lookup", calls: 3, billableUnits: 3, estimatedCost: "1.50" },
-        { day: 20260916, endpoint: "lookup", calls: 2, billableUnits: 2, estimatedCost: "1.00" },
-        { day: 20260916, endpoint: "monitor", calls: 1, billableUnits: 4, estimatedCost: "0.25" },
-      ]),
+      summarizeUsageByDay(
+        daily([
+          { day: 20260915, endpoint: "lookup", calls: 3, billableUnits: 3, estimatedCost: "1.50" },
+          { day: 20260916, endpoint: "lookup", calls: 2, billableUnits: 2, estimatedCost: "1.00" },
+          { day: 20260916, endpoint: "monitor", calls: 1, billableUnits: 4, estimatedCost: "0.25" },
+        ]),
+      ),
     ).toEqual([
       { day: 20260916, calls: 3, billableUnits: 6, estimatedCost: "1.25" },
       { day: 20260915, calls: 3, billableUnits: 3, estimatedCost: "1.50" },
@@ -57,11 +65,11 @@ describe("carrier intelligence usage", () => {
     const monthStart = Date.UTC(2026, 8, 1) / 1000;
     const now = Date.UTC(2026, 8, 3, 15) / 1000;
     const series = dailyUsageSeries(
-      [
+      daily([
         { day: 20260901, endpoint: "lookup", calls: 2, billableUnits: 2, estimatedCost: "1.00" },
         { day: 20260903, endpoint: "lookup", calls: 1, billableUnits: 1, estimatedCost: "0.50" },
         { day: 20260903, endpoint: "monitor", calls: 1, billableUnits: 3, estimatedCost: "0.25" },
-      ],
+      ]),
       monthStart,
       now,
     );

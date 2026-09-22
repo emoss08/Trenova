@@ -116,6 +116,7 @@ export function useShipmentTotalsPreview() {
         unit: fuelSurcharge.unit ?? 1,
         fuelSurchargeProgramId: fuelSurcharge.fuelSurchargeProgramId ?? null,
         fuelSurchargeDetail: fuelSurcharge.fuelSurchargeDetail ?? null,
+        allocations: existing?.allocations ?? [],
       };
 
       setValue(
