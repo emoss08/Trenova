@@ -12,7 +12,9 @@ func (s SeedID) String() string {
 const (
 	SeedAIProvider SeedID = "AIProvider" // from 25_ai_provider.go
 	SeedAdminAccount SeedID = "AdminAccount" // from 01_adminaccount.go
+	SeedAgentActivity SeedID = "AgentActivity" // from 31_agent_activity.go
 	SeedAgentDefinition SeedID = "AgentDefinition" // from 26_agent_definition.go
+	SeedAssistantArtifact SeedID = "AssistantArtifact" // from 32_assistant_artifact.go
 	SeedAssistantConversation SeedID = "AssistantConversation" // from 27_assistant_conversation.go
 	SeedCarrier SeedID = "Carrier" // from 14_carrier.go
 	SeedDesk SeedID = "Desk" // from 30_desk.go
@@ -60,7 +62,9 @@ const (
 var AllSeedIDs = []SeedID{
 	SeedAIProvider,
 	SeedAdminAccount,
+	SeedAgentActivity,
 	SeedAgentDefinition,
+	SeedAssistantArtifact,
 	SeedAssistantConversation,
 	SeedCarrier,
 	SeedDesk,
@@ -124,7 +128,9 @@ var BaseSeedIDs = []SeedID{
 
 var DevelopmentSeedIDs = []SeedID{
 	SeedAIProvider,
+	SeedAgentActivity,
 	SeedAgentDefinition,
+	SeedAssistantArtifact,
 	SeedAssistantConversation,
 	SeedCarrier,
 	SeedDesk,

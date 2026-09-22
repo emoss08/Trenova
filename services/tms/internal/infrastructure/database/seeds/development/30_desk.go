@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -30,15 +34,18 @@ type DeskSeed struct {
 // DeskSeed fills the Desk's two reading surfaces: the watchtower feed and
 // this morning's briefing.
 //
-// The watchtower items for inbound mail are built with the same describer the
-// live projection uses, rather than written by hand. That is the point of
-// having one: a seeded row and a projected row are the same row, so what a
-// developer sees on the feed is what a real message will look like there.
+// Most of the feed is built with the same describers the live projection
+// uses, over records that really exist — inbound mail, insights, the
+// proposals and plans waiting in the queue, the run that failed and the
+// exceptions it raised. That is the point of having describers: a seeded row
+// and a projected row are the same row, so the nightly reconcile leaves them
+// alone, "Ask about this" opens a thread on a real subject, and "Hand off"
+// has something to hand off.
 //
-// The rest of the feed is written directly, because the records those kinds
-// project from are not all seeded and an item standing in for nothing would
-// resolve itself the first time the nightly reconcile ran. Those carry no
-// subject, so nothing offers to hand them to an agent.
+// A handful of rows are written directly, for the kinds whose sources are not
+// seeded at all — hours of service, weather, a credential sweep. Those carry
+// no subject on purpose: offering to hand one to an agent would be offering
+// to work on nothing.
 //
 // The briefing is deterministic and un-narrated, which is exactly what a
 // briefing looks like on an installation with no provider reachable — a
@@ -46,6 +53,8 @@ type DeskSeed struct {
 //
 // Depends on:
 //   - InboundMessage: the mail the inbox items stand for
+//   - AgentActivity: the decisions, failures and exceptions the feed carries
+//   - Insight: the findings the feed carries
 func NewDeskSeed() *DeskSeed {
 	seed := &DeskSeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
@@ -54,15 +63,25 @@ func NewDeskSeed() *DeskSeed {
 		"Seeds the watchtower feed and today's briefing",
 		[]common.Environment{common.EnvDevelopment},
 	)
-	seed.SetDependencies(seedhelpers.SeedInboundMessage)
+	seed.SetDependencies(
+		seedhelpers.SeedInboundMessage,
+		seedhelpers.SeedAgentActivity,
+		seedhelpers.SeedInsight,
+	)
 
 	return seed
 }
 
 type deskSeedRefs struct {
-	org      *tenant.Organization
-	messages []*inboundmessage.InboundMessage
-	now      int64
+	org        *tenant.Organization
+	messages   []*inboundmessage.InboundMessage
+	proposals  []*agent.AgentProposal
+	plans      []*agent.AgentPlan
+	failedRuns []*agent.AgentRun
+	exceptions []*agent.AgentException
+	insights   []*insight.Insight
+	agentNames map[pulid.ID]string
+	now        int64
 }
 
 func (s *DeskSeed) Run(ctx context.Context, tx bun.Tx) error {
@@ -124,7 +143,118 @@ func (s *DeskSeed) loadRefs(
 		return nil, fmt.Errorf("load inbound messages awaiting review: %w", err)
 	}
 
+	if err = refs.loadAgentWork(ctx, tx); err != nil {
+		return nil, err
+	}
+
 	return refs, nil
+}
+
+// loadAgentWork reads the records the tower stands in for.
+//
+// The items are built from these rather than written by hand, which is what
+// makes "Hand off" and "Ask about this" do anything: both need the subject of
+// a real record, and an invented one has none.
+func (r *deskSeedRefs) loadAgentWork(ctx context.Context, tx bun.Tx) error {
+	proposalCols := buncolgen.AgentProposalColumns
+	r.proposals = make([]*agent.AgentProposal, 0, 4)
+	if err := tx.NewSelect().
+		Model(&r.proposals).
+		Where(proposalCols.OrganizationID.Eq(), r.org.ID).
+		Where(proposalCols.BusinessUnitID.Eq(), r.org.BusinessUnitID).
+		Where(proposalCols.Status.Eq(), agent.ProposalStatusPending).
+		Where(proposalCols.PlanID.IsNull()).
+		Order(proposalCols.CreatedAt.OrderDesc()).
+		Scan(ctx); err != nil {
+		return fmt.Errorf("load pending proposals: %w", err)
+	}
+
+	planCols := buncolgen.AgentPlanColumns
+	r.plans = make([]*agent.AgentPlan, 0, 2)
+	if err := tx.NewSelect().
+		Model(&r.plans).
+		Where(planCols.OrganizationID.Eq(), r.org.ID).
+		Where(planCols.BusinessUnitID.Eq(), r.org.BusinessUnitID).
+		Where(planCols.Status.Eq(), agent.PlanStatusPending).
+		Scan(ctx); err != nil {
+		return fmt.Errorf("load pending plans: %w", err)
+	}
+
+	runCols := buncolgen.AgentRunColumns
+	r.failedRuns = make([]*agent.AgentRun, 0, 2)
+	if err := tx.NewSelect().
+		Model(&r.failedRuns).
+		Where(runCols.OrganizationID.Eq(), r.org.ID).
+		Where(runCols.BusinessUnitID.Eq(), r.org.BusinessUnitID).
+		Where(runCols.Status.Eq(), agent.RunStatusFailed).
+		Scan(ctx); err != nil {
+		return fmt.Errorf("load failed runs: %w", err)
+	}
+
+	exceptionCols := buncolgen.AgentExceptionColumns
+	r.exceptions = make([]*agent.AgentException, 0, 2)
+	if err := tx.NewSelect().
+		Model(&r.exceptions).
+		Where(exceptionCols.OrganizationID.Eq(), r.org.ID).
+		Where(exceptionCols.BusinessUnitID.Eq(), r.org.BusinessUnitID).
+		Where(exceptionCols.ResolutionState.Eq(), agent.ResolutionStateOpen).
+		Scan(ctx); err != nil {
+		return fmt.Errorf("load open exceptions: %w", err)
+	}
+
+	insightCols := buncolgen.InsightColumns
+	r.insights = make([]*insight.Insight, 0, 5)
+	if err := tx.NewSelect().
+		Model(&r.insights).
+		Where(insightCols.OrganizationID.Eq(), r.org.ID).
+		Where(insightCols.BusinessUnitID.Eq(), r.org.BusinessUnitID).
+		Where(insightCols.Status.Eq(), insight.StatusActive).
+		Order(insightCols.DetectedAt.OrderDesc()).
+		Limit(5).
+		Scan(ctx); err != nil {
+		return fmt.Errorf("load active insights: %w", err)
+	}
+
+	return r.loadAgentNames(ctx, tx)
+}
+
+// loadAgentNames is what lets a tower row say which desk asked. The proposal
+// carries only its run, and the run only its definition, so the names are read
+// once here rather than per row.
+func (r *deskSeedRefs) loadAgentNames(ctx context.Context, tx bun.Tx) error {
+	definitions := make([]*agentdefinition.Definition, 0, 8)
+	defCols := buncolgen.DefinitionColumns
+	if err := tx.NewSelect().
+		Model(&definitions).
+		Where(defCols.OrganizationID.Eq(), r.org.ID).
+		Where(defCols.BusinessUnitID.Eq(), r.org.BusinessUnitID).
+		Scan(ctx); err != nil {
+		return fmt.Errorf("load agent definitions: %w", err)
+	}
+
+	byDefinition := make(map[pulid.ID]string, len(definitions))
+	for _, definition := range definitions {
+		byDefinition[definition.ID] = definition.Name
+	}
+
+	runs := make([]*agent.AgentRun, 0, 16)
+	runCols := buncolgen.AgentRunColumns
+	if err := tx.NewSelect().
+		Model(&runs).
+		Where(runCols.OrganizationID.Eq(), r.org.ID).
+		Where(runCols.BusinessUnitID.Eq(), r.org.BusinessUnitID).
+		Scan(ctx); err != nil {
+		return fmt.Errorf("load runs for agent names: %w", err)
+	}
+
+	r.agentNames = make(map[pulid.ID]string, len(runs))
+	for _, run := range runs {
+		if name, ok := byDefinition[run.AgentDefinitionID]; ok {
+			r.agentNames[run.ID] = name
+		}
+	}
+
+	return nil
 }
 
 func (s *DeskSeed) insertItems(
@@ -132,10 +262,37 @@ func (s *DeskSeed) insertItems(
 	tx bun.Tx,
 	refs *deskSeedRefs,
 ) error {
-	items := make([]*watchtower.Item, 0, len(refs.messages)+4)
-
+	inputs := make([]services.WatchtowerItemInput, 0, 24)
 	for _, message := range refs.messages {
-		input := watchtowersources.DescribeInboundMessage(message)
+		inputs = append(inputs, watchtowersources.DescribeInboundMessage(message))
+	}
+	for _, entity := range refs.insights {
+		inputs = append(inputs, watchtowersources.DescribeInsight(entity))
+	}
+	for _, entity := range refs.proposals {
+		inputs = append(
+			inputs,
+			watchtowersources.DescribeProposal(entity, refs.agentNames[entity.RunID]),
+		)
+	}
+	for _, entity := range refs.plans {
+		inputs = append(
+			inputs,
+			watchtowersources.DescribePlan(entity, refs.agentNames[entity.RunID]),
+		)
+	}
+	for _, entity := range refs.failedRuns {
+		inputs = append(
+			inputs,
+			watchtowersources.DescribeFailedRun(entity, refs.agentNames[entity.ID]),
+		)
+	}
+	for _, entity := range refs.exceptions {
+		inputs = append(inputs, watchtowersources.DescribeException(entity))
+	}
+
+	items := make([]*watchtower.Item, 0, len(inputs)+5)
+	for _, input := range inputs {
 		items = append(items, &watchtower.Item{
 			ID:             pulid.MustNew("wt_"),
 			OrganizationID: refs.org.ID,
@@ -246,14 +403,14 @@ func (s *DeskSeed) insertBriefing(
 	tx bun.Tx,
 	refs *deskSeedRefs,
 ) error {
-	today := time.Unix(refs.now, 0).UTC().Format(time.DateOnly)
+	entity := briefingFor(refs)
 
 	cols := buncolgen.BriefingColumns
 	count, err := tx.NewSelect().
 		Model((*briefing.Briefing)(nil)).
 		Where(cols.OrganizationID.Eq(), refs.org.ID).
 		Where(cols.BusinessUnitID.Eq(), refs.org.BusinessUnitID).
-		Where(cols.BriefingDate.Eq(), today).
+		Where(cols.BriefingDate.Eq(), entity.BriefingDate).
 		Count(ctx)
 	if err != nil {
 		return fmt.Errorf("count existing briefings: %w", err)
@@ -262,8 +419,21 @@ func (s *DeskSeed) insertBriefing(
 		return nil
 	}
 
+	if _, err = tx.NewInsert().Model(entity).Exec(ctx); err != nil {
+		return fmt.Errorf("insert briefing: %w", err)
+	}
+
+	return nil
+}
+
+// briefingFor lays out the morning page. It builds rather than writes, so the
+// figures and the sections can be checked without a database.
+func briefingFor(refs *deskSeedRefs) *briefing.Briefing {
+	today := time.Unix(refs.now, 0).UTC().Format(time.DateOnly)
 	waiting := len(refs.messages)
-	entity := &briefing.Briefing{
+	decisions := len(refs.proposals) + len(refs.plans)
+
+	return &briefing.Briefing{
 		ID:             pulid.MustNew("brf_"),
 		OrganizationID: refs.org.ID,
 		BusinessUnitID: refs.org.BusinessUnitID,
@@ -271,8 +441,9 @@ func (s *DeskSeed) insertBriefing(
 		BriefingDate:   today,
 		Status:         briefing.StatusReady,
 		Headline: fmt.Sprintf(
-			"14 pickups and 11 deliveries today, 2 moves uncovered, %d messages waiting.",
-			waiting,
+			"14 pickups and 11 deliveries today, 2 moves uncovered, "+
+				"%d messages and %d decisions waiting.",
+			waiting, decisions,
 		),
 		Narrated: false,
 		Sections: []briefing.Section{
@@ -315,11 +486,16 @@ func (s *DeskSeed) insertBriefing(
 				Key:   briefing.SectionDecisions,
 				Title: "Waiting on you",
 				Summary: fmt.Sprintf(
-					"%d messages are waiting on a person.", waiting,
+					"%d messages and %d decisions are waiting on a person.",
+					waiting, decisions,
 				),
 				Items: []briefing.Item{
 					{Label: "Messages in review", Value: fmt.Sprint(waiting), Path: "/inbox"},
-					{Label: "Proposals pending", Value: "1", Path: "/desk/decisions"},
+					{
+						Label: "Decisions pending",
+						Value: fmt.Sprint(decisions),
+						Path:  "/desk/decisions",
+					},
 				},
 				Path: "/desk/decisions",
 			},
@@ -342,15 +518,9 @@ func (s *DeskSeed) insertBriefing(
 			"hosViolations":       1,
 			"openServiceFailures": 1,
 			"messagesInReview":    waiting,
-			"proposalsPending":    1,
+			"decisionsPending":    decisions,
 			"expiringCredentials": 3,
 			"seeded":              true,
 		},
 	}
-
-	if _, err = tx.NewInsert().Model(entity).Exec(ctx); err != nil {
-		return fmt.Errorf("insert briefing: %w", err)
-	}
-
-	return nil
 }
