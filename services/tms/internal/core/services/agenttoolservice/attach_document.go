@@ -91,7 +91,14 @@ func (t *attachDocumentTool) Target(params map[string]any) (serviceports.ToolTar
 	return targetOf(params, "documentId", permission.ResourceDocument)
 }
 
-func (t *attachDocumentTool) Validate(params map[string]any) error {
+func (t *attachDocumentTool) Validate(
+	_ context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
+	return t.validateArgs(params.Params)
+}
+
+func (t *attachDocumentTool) validateArgs(params map[string]any) error {
 	if _, err := requirePulid(params, "documentId"); err != nil {
 		return err
 	}

@@ -107,7 +107,14 @@ func (t *saveTableViewTool) DefaultAutonomyTier() agent.AutonomyTier {
 	return agent.TierPropose
 }
 
-func (t *saveTableViewTool) Validate(params map[string]any) error {
+func (t *saveTableViewTool) Validate(
+	_ context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
+	return t.validateArgs(params.Params)
+}
+
+func (t *saveTableViewTool) validateArgs(params map[string]any) error {
 	multiErr := errortypes.NewMultiError()
 
 	if optionalString(params, "name") == "" {

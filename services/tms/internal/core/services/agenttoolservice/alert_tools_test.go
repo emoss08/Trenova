@@ -20,13 +20,13 @@ func TestScheduleReport_RefusesAnExpressionThatWillNeverFire(t *testing.T) {
 
 	tool := &scheduleReportTool{}
 
-	require.Error(t, tool.Validate(map[string]any{
+	require.Error(t, tool.validateArgs(map[string]any{
 		"definitionId":    "rdef_1",
 		"cronExpression":  "every monday morning",
 		"emailRecipients": []any{"ops@example.com"},
 	}))
 
-	require.Error(t, tool.Validate(map[string]any{
+	require.Error(t, tool.validateArgs(map[string]any{
 		"definitionId":    "rdef_1",
 		"cronExpression":  "99 99 * * *",
 		"emailRecipients": []any{"ops@example.com"},
@@ -38,7 +38,7 @@ func TestScheduleReport_AcceptsARealSchedule(t *testing.T) {
 
 	tool := &scheduleReportTool{}
 
-	require.NoError(t, tool.Validate(map[string]any{
+	require.NoError(t, tool.validateArgs(map[string]any{
 		"definitionId":    "rdef_1",
 		"cronExpression":  "0 7 * * 1",
 		"timezone":        "America/New_York",
@@ -52,11 +52,11 @@ func TestScheduleReport_RefusesASendWithNoRecipients(t *testing.T) {
 
 	tool := &scheduleReportTool{}
 
-	require.Error(t, tool.Validate(map[string]any{
+	require.Error(t, tool.validateArgs(map[string]any{
 		"definitionId":   "rdef_1",
 		"cronExpression": "0 7 * * 1",
 	}))
-	require.Error(t, tool.Validate(map[string]any{
+	require.Error(t, tool.validateArgs(map[string]any{
 		"definitionId":    "rdef_1",
 		"cronExpression":  "0 7 * * 1",
 		"emailRecipients": []any{"", "   "},
@@ -81,7 +81,7 @@ func TestCreateTableChangeAlert_RefusesAnEventNothingEmits(t *testing.T) {
 
 	tool := &createTableChangeAlertTool{}
 
-	require.Error(t, tool.Validate(map[string]any{
+	require.Error(t, tool.validateArgs(map[string]any{
 		"name":       "Delayed shipments",
 		"tableName":  "shipments",
 		"eventTypes": []any{"MODIFIED"},
@@ -93,7 +93,7 @@ func TestCreateTableChangeAlert_RefusesAnOperatorTheMatcherDoesNotKnow(t *testin
 
 	tool := &createTableChangeAlertTool{}
 
-	require.Error(t, tool.Validate(map[string]any{
+	require.Error(t, tool.validateArgs(map[string]any{
 		"name":       "Delayed shipments",
 		"tableName":  "shipments",
 		"eventTypes": []any{"UPDATE"},
@@ -108,7 +108,7 @@ func TestCreateTableChangeAlert_RefusesAConditionOnNoColumn(t *testing.T) {
 
 	tool := &createTableChangeAlertTool{}
 
-	require.Error(t, tool.Validate(map[string]any{
+	require.Error(t, tool.validateArgs(map[string]any{
 		"name":       "Delayed shipments",
 		"tableName":  "shipments",
 		"eventTypes": []any{"UPDATE"},
@@ -121,7 +121,7 @@ func TestCreateTableChangeAlert_AcceptsAnAlertThatCanFire(t *testing.T) {
 
 	tool := &createTableChangeAlertTool{}
 
-	require.NoError(t, tool.Validate(map[string]any{
+	require.NoError(t, tool.validateArgs(map[string]any{
 		"name":           "Delayed shipments",
 		"tableName":      "shipments",
 		"eventTypes":     []any{"UPDATE"},
@@ -137,9 +137,9 @@ func TestCreateTableChangeAlert_NeedsSomethingToWatch(t *testing.T) {
 
 	tool := &createTableChangeAlertTool{}
 
-	require.Error(t, tool.Validate(map[string]any{"name": "x", "tableName": "shipments"}))
-	require.Error(t, tool.Validate(map[string]any{"name": "x", "eventTypes": []any{"UPDATE"}}))
-	require.Error(t, tool.Validate(map[string]any{
+	require.Error(t, tool.validateArgs(map[string]any{"name": "x", "tableName": "shipments"}))
+	require.Error(t, tool.validateArgs(map[string]any{"name": "x", "eventTypes": []any{"UPDATE"}}))
+	require.Error(t, tool.validateArgs(map[string]any{
 		"tableName": "shipments", "eventTypes": []any{"UPDATE"},
 	}))
 }

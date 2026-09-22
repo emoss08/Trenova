@@ -114,7 +114,14 @@ func (t *scheduleReportTool) DefaultAutonomyTier() agent.AutonomyTier {
 	return agent.TierPropose
 }
 
-func (t *scheduleReportTool) Validate(params map[string]any) error {
+func (t *scheduleReportTool) Validate(
+	_ context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
+	return t.validateArgs(params.Params)
+}
+
+func (t *scheduleReportTool) validateArgs(params map[string]any) error {
 	multiErr := errortypes.NewMultiError()
 
 	if optionalString(params, "definitionId") == "" {
@@ -299,7 +306,14 @@ func (t *createTableChangeAlertTool) DefaultAutonomyTier() agent.AutonomyTier {
 	return agent.TierPropose
 }
 
-func (t *createTableChangeAlertTool) Validate(params map[string]any) error {
+func (t *createTableChangeAlertTool) Validate(
+	_ context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
+	return t.validateArgs(params.Params)
+}
+
+func (t *createTableChangeAlertTool) validateArgs(params map[string]any) error {
 	multiErr := errortypes.NewMultiError()
 
 	if optionalString(params, "name") == "" {

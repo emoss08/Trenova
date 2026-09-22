@@ -143,7 +143,14 @@ func (t *createDashboardTool) DefaultAutonomyTier() agent.AutonomyTier {
 	return agent.TierPropose
 }
 
-func (t *createDashboardTool) Validate(params map[string]any) error {
+func (t *createDashboardTool) Validate(
+	_ context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
+	return t.validateArgs(params.Params)
+}
+
+func (t *createDashboardTool) validateArgs(params map[string]any) error {
 	multiErr := errortypes.NewMultiError()
 	if optionalString(params, "name") == "" {
 		multiErr.Add("name", errortypes.ErrRequired, "Give the dashboard a name")
@@ -272,7 +279,14 @@ func (t *addDashboardTileTool) DefaultAutonomyTier() agent.AutonomyTier {
 	return agent.TierPropose
 }
 
-func (t *addDashboardTileTool) Validate(params map[string]any) error {
+func (t *addDashboardTileTool) Validate(
+	_ context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
+	return t.validateArgs(params.Params)
+}
+
+func (t *addDashboardTileTool) validateArgs(params map[string]any) error {
 	multiErr := errortypes.NewMultiError()
 	if optionalString(params, "dashboardId") == "" {
 		multiErr.Add("dashboardId", errortypes.ErrRequired, "Name the dashboard to add to")

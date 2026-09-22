@@ -139,13 +139,13 @@ func TestCreateDashboard_RefusesATileThatCannotDrawAnything(t *testing.T) {
 
 	tool := &createDashboardTool{}
 
-	err := tool.Validate(map[string]any{
+	err := tool.validateArgs(map[string]any{
 		"name":  "Morning numbers",
 		"tiles": []any{map[string]any{"kind": "table"}},
 	})
 	require.Error(t, err)
 
-	err = tool.Validate(map[string]any{
+	err = tool.validateArgs(map[string]any{
 		"name":  "Morning numbers",
 		"tiles": []any{map[string]any{"kind": "text"}},
 	})
@@ -153,7 +153,7 @@ func TestCreateDashboard_RefusesATileThatCannotDrawAnything(t *testing.T) {
 
 	// A KPI with a report but no column has a number to show and no idea
 	// which one.
-	err = tool.Validate(map[string]any{
+	err = tool.validateArgs(map[string]any{
 		"name": "Morning numbers",
 		"tiles": []any{
 			map[string]any{"kind": "kpi", "definitionId": "rdef_1"},
@@ -167,8 +167,8 @@ func TestCreateDashboard_RefusesADashboardWithNothingOnIt(t *testing.T) {
 
 	tool := &createDashboardTool{}
 
-	require.Error(t, tool.Validate(map[string]any{"name": "Empty"}))
-	require.Error(t, tool.Validate(map[string]any{
+	require.Error(t, tool.validateArgs(map[string]any{"name": "Empty"}))
+	require.Error(t, tool.validateArgs(map[string]any{
 		"tiles": []any{map[string]any{"kind": "text", "text": "hello"}},
 	}))
 }
@@ -178,7 +178,7 @@ func TestCreateDashboard_AcceptsAPageItCanDraw(t *testing.T) {
 
 	tool := &createDashboardTool{}
 
-	err := tool.Validate(map[string]any{
+	err := tool.validateArgs(map[string]any{
 		"name": "Morning numbers",
 		"tiles": []any{
 			map[string]any{"kind": "kpi", "definitionId": "rdef_1", "columnId": "revenue"},
