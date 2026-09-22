@@ -19254,6 +19254,15 @@
       "service/emailservice"
     ]
   },
+  "Attachment file names": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/inboundmessageservice"
+    ]
+  },
   "Attachment filename": {
     "sites": 1,
     "scope": [
@@ -23924,12 +23933,14 @@
     ]
   },
   "Body": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/invoice"
+      "routes/invoice",
+      "service/inboundmessageservice"
     ]
   },
   "Body HTML size cannot be negative": {
@@ -122946,6 +122957,15 @@
       "service/formula"
     ]
   },
+  "Reads a staged inbound message and decides what it is.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Reads only what you can already see. Changes wait for your approval.": {
     "sites": 1,
     "scope": [
@@ -141835,12 +141855,14 @@
     ]
   },
   "Sender": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/organization"
+      "routes/organization",
+      "service/inboundmessageservice"
     ]
   },
   "Sender email": {
@@ -151182,15 +151204,17 @@
     ]
   },
   "Subject": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/agent-control",
       "routes/desk",
       "routes/invoice",
-      "routes/organization"
+      "routes/organization",
+      "service/inboundmessageservice"
     ]
   },
   "Subject cannot be longer than 255 characters": {

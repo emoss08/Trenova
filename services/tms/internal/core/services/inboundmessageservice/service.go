@@ -14,9 +14,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/webhooksig"
+	"go.temporal.io/api/enums/v1"
+	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -57,6 +60,10 @@ type Params struct {
 	// being classified, which is the behaviour a mailbox on AlwaysReview has
 	// anyway.
 	Completion services.CompletionService `optional:"true"`
+	// Workflows is optional so an installation without a worker still receives
+	// mail. It lands at Received and waits, which is what a mailbox on
+	// AlwaysReview does with every message anyway.
+	Workflows services.WorkflowStarter `optional:"true"`
 	// Shipments and Parties resolve what a message is about. Both are optional:
 	// an unmatched message is still one a person can read and link by hand.
 	Shipments ShipmentFinder `optional:"true"`
@@ -70,6 +77,7 @@ type Service struct {
 	storage     storage.Client
 	encryption  secretDecryptor
 	completion  services.CompletionService
+	workflows   services.WorkflowStarter
 	shipments   ShipmentFinder
 	parties     PartyFinder
 }
@@ -82,6 +90,7 @@ func New(p Params) *Service {
 		storage:     p.Storage,
 		encryption:  p.Encryption,
 		completion:  p.Completion,
+		workflows:   p.Workflows,
 		shipments:   p.Shipments,
 		parties:     p.Parties,
 	}
@@ -280,6 +289,8 @@ func (s *Service) stage(
 		zap.String("mailboxId", mailbox.ID.String()),
 		zap.Int("attachments", len(attachments)))
 
+	s.startProcessing(ctx, created)
+
 	return &ReceiveWebhookResult{MessageID: created.ID.String()}, nil
 }
 
@@ -321,4 +332,38 @@ func (s *Service) storeRawBody(
 	}
 
 	return key
+}
+
+// startProcessing hands the message to the workflow that reads it.
+//
+// A failure here never fails the delivery. The message is already written down,
+// which is the part that cannot be recovered; the reading can be retried by a
+// sweep or by a person, and making the provider redeliver a message that landed
+// correctly would be the worse outcome.
+func (s *Service) startProcessing(ctx context.Context, message *inboundmessage.InboundMessage) {
+	if s.workflows == nil || !s.workflows.Enabled() {
+		return
+	}
+
+	if _, err := s.workflows.StartWorkflow(
+		ctx,
+		client.StartWorkflowOptions{
+			// Keyed by the message, so a redelivery that somehow got past the
+			// idempotency read cannot start a second reading of the same mail.
+			ID:                    "inbound-message/" + message.ID.String(),
+			TaskQueue:             temporaltype.TaskQueueSystem.String(),
+			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
+		},
+		temporaltype.ProcessInboundMessageWorkflowName,
+		&ProcessInboundMessagePayload{
+			BasePayload: temporaltype.BasePayload{
+				OrganizationID: message.OrganizationID,
+				BusinessUnitID: message.BusinessUnitID,
+			},
+			MessageID: message.ID,
+		},
+	); err != nil {
+		s.l.Warn("failed to start reading an inbound message; it stays at Received",
+			zap.String("messageId", message.ID.String()), zap.Error(err))
+	}
 }
