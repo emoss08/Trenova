@@ -16,8 +16,11 @@ import {
   isBulkAction,
   parseInvalidationEvent,
   patchEntityInListRows,
+  queryKeyPrefix,
+  queryKeyRootId,
   resolveEntityID,
   shouldPatchEvent,
+  type QueryKeyRoot,
   type ResourceInvalidationEvent,
 } from "@trenova/shared/hooks/realtime-patching";
 import {
@@ -39,7 +42,10 @@ export function useRealtimeConnection() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
-  const pendingKeysRef = useRef<Set<string>>(new Set());
+  // Keyed by the root's identity rather than the root itself, because a root
+  // is now either a string or a key prefix and two equal prefixes are two
+  // different arrays.
+  const pendingKeysRef = useRef<Map<string, QueryKeyRoot>>(new Map());
   // Held in a ref so a new navigate identity never tears down and rebuilds the
   // realtime subscription.
   const navigate = useNavigate();
@@ -68,19 +74,19 @@ export function useRealtimeConnection() {
     );
     let disposed = false;
 
-    const enqueueInvalidation = (queryKeys: string[]) => {
-      queryKeys.forEach((queryKey) => pendingKeys.add(queryKey));
+    const enqueueInvalidation = (roots: readonly QueryKeyRoot[]) => {
+      roots.forEach((root) => pendingKeys.set(queryKeyRootId(root), root));
       if (flushTimeoutRef.current !== null) return;
 
       flushTimeoutRef.current = window.setTimeout(() => {
-        const keysToInvalidate = Array.from(pendingKeys);
+        const rootsToInvalidate = Array.from(pendingKeys.values());
         pendingKeys.clear();
         flushTimeoutRef.current = null;
 
         void Promise.all(
-          keysToInvalidate.map((queryKey) =>
+          rootsToInvalidate.map((root) =>
             queryClient.invalidateQueries({
-              queryKey: [queryKey],
+              queryKey: queryKeyPrefix(root),
               refetchType: "all",
             }),
           ),
@@ -92,17 +98,20 @@ export function useRealtimeConnection() {
       enqueueInvalidation(CORE_QUERY_KEYS);
     };
 
-    const applyEntityPatch = (queryKey: string, event: ResourceInvalidationEvent) => {
+    const applyEntityPatch = (root: QueryKeyRoot, event: ResourceInvalidationEvent) => {
       const entityID = resolveEntityID(event);
       const entity = event.entity;
       if (!entityID || !entity) return false;
 
       let patched = false;
-      queryClient.setQueriesData({ queryKey: [queryKey] }, (current: unknown): unknown => {
-        const result = patchEntityInListRows(current, event);
-        patched = result.patched || patched;
-        return result.data;
-      });
+      queryClient.setQueriesData(
+        { queryKey: queryKeyPrefix(root) },
+        (current: unknown): unknown => {
+          const result = patchEntityInListRows(current, event);
+          patched = result.patched || patched;
+          return result.data;
+        },
+      );
 
       return patched;
     };
@@ -239,8 +248,8 @@ export function useRealtimeConnection() {
 
       if (shouldPatchEvent(evt)) {
         let patchedAny = false;
-        queryKeys.forEach((queryKey) => {
-          patchedAny = applyEntityPatch(queryKey, evt) || patchedAny;
+        queryKeys.forEach((root) => {
+          patchedAny = applyEntityPatch(root, evt) || patchedAny;
         });
 
         if (!patchedAny) {

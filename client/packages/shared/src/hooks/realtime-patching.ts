@@ -1,22 +1,50 @@
 export const RESOURCE_EVENT_NAME = "resource.invalidation";
 
-export const RESOURCE_QUERY_KEY_MAP: Record<string, string[]> = {
+/**
+ * Where a resource's rows are cached: either a plain key root, or the prefix a
+ * query factory puts in front of one.
+ *
+ * `createQueryKeys("assistant", { proposals })` does not cache under the root
+ * it is handed — it prepends its scope and the method name, so a component
+ * reading `queries.assistant.proposals(id)` reads
+ * `["assistant", "proposals", "assistant-proposals", id]`. Naming the root on
+ * its own matches nothing, because TanStack matches from the start of the key,
+ * and nothing reports the miss: the event arrives, the invalidation runs, and
+ * the screen does not move. Five resources here were addressing rows that way.
+ *
+ * So a factory-backed entry spells its prefix as an array. The prefixes are
+ * literals because this package cannot see the app's factories; a test in the
+ * app compares each one against the live `_def` and fails if they drift.
+ */
+export type QueryKeyRoot = string | readonly string[];
+
+/** One root as a key TanStack can match a cached query against. */
+export function queryKeyPrefix(root: QueryKeyRoot): readonly string[] {
+  return typeof root === "string" ? [root] : root;
+}
+
+/** A stable identity for a root, so a coalescing pass can deduplicate them. */
+export function queryKeyRootId(root: QueryKeyRoot): string {
+  return queryKeyPrefix(root).join("\u0000");
+}
+
+export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   agent_proposal: [
-    "assistant-proposals",
+    ["assistant", "proposals"],
     "agent-proposal-list",
     "pending-decisions",
     "pending-decision-summary",
     "attention",
   ],
   agent_plan: [
-    "assistant-plans",
+    ["assistant", "plans"],
     "agent-plan-list",
     "pending-decisions",
     "pending-decision-summary",
     "attention",
   ],
-  agent_run: ["agent-run-list", "agent-definitions"],
-  assistant_artifact: ["assistant-artifacts"],
+  agent_run: ["agent-run-list", ["assistant", "agents"]],
+  assistant_artifact: [["assistant", "artifacts"]],
   // The feed and its counts live under one key root from the query factory
   // (createQueryKeys("watchtower")), so invalidating the root catches both the
   // list and every filtered variant of it.
@@ -77,7 +105,7 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, string[]> = {
     "worker",
     "dash-credentials",
   ],
-  worker_employment_event: ["worker-employment-events", "worker", "worker-list", "pto-history"],
+  worker_employment_event: ["worker-employment-events", "worker", "worker-list"],
   worker_checklist: ["worker-checklists", "worker", "worker-list"],
   worker_checklist_template: ["worker-checklist-template-list", "worker-checklist-templates"],
   worker_credential_type: [
@@ -128,7 +156,13 @@ export const PATCHABLE_FIELDS_BY_RESOURCE: Record<string, Set<string>> = {
   workers: new Set(["status", "firstName", "lastName", "updatedAt"]),
 };
 
-export const CORE_QUERY_KEYS = Array.from(new Set(Object.values(RESOURCE_QUERY_KEY_MAP).flat()));
+export const CORE_QUERY_KEYS: QueryKeyRoot[] = Array.from(
+  new Map(
+    Object.values(RESOURCE_QUERY_KEY_MAP)
+      .flat()
+      .map((root) => [queryKeyRootId(root), root] as const),
+  ).values(),
+);
 
 export interface ResourceInvalidationEvent {
   type?: string;
