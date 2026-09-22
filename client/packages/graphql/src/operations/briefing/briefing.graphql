@@ -1,0 +1,40 @@
+fragment BriefingFields on Briefing {
+  id
+  roleKey
+  briefingDate
+  status
+  headline
+  narrated
+  readAt
+  sections {
+    key
+    title
+    summary
+    body
+    read
+    path
+    items {
+      label
+      value
+      path
+    }
+  }
+}
+
+query TodaysBriefing($input: TodaysBriefingInput!) {
+  todaysBriefing(input: $input) {
+    ...BriefingFields
+  }
+}
+
+mutation MarkBriefingRead($id: ID!) {
+  markBriefingRead(id: $id) {
+    ...BriefingFields
+  }
+}
+
+mutation RegenerateBriefing($input: TodaysBriefingInput!) {
+  regenerateBriefing(input: $input) {
+    ...BriefingFields
+  }
+}

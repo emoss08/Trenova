@@ -528,6 +528,31 @@ export type BillingTransferRunStatus =
   | 'Queued'
   | 'Running';
 
+/** Who a briefing is written for. The same morning reads differently to a dispatcher and a biller. */
+export type BriefingRoleKey =
+  | 'Billing'
+  | 'Compliance'
+  | 'Dispatch'
+  | 'General'
+  | 'Leadership';
+
+/** A block of the page. The keys are fixed, so a model cannot invent a section nothing computed. */
+export type BriefingSectionKey =
+  | 'Attention'
+  | 'Billing'
+  | 'Cash'
+  | 'Compliance'
+  | 'Coverage'
+  | 'Decisions'
+  | 'Exceptions'
+  | 'Today';
+
+/** How far the morning's writing got. */
+export type BriefingStatus =
+  | 'Failed'
+  | 'Pending'
+  | 'Ready';
+
 export type BulkAssignTrainingInput = {
   courseIds: Array<string | number>;
   /** Overrides each course's own due-days default for this rollout. */
@@ -2450,6 +2475,11 @@ export type GrantCarrierIntelOverrideInput = {
   expiresAt?: number | null | undefined;
   reason: string;
   ruleCode: string;
+};
+
+export type HandOffWatchtowerItemInput = {
+  /** Start this agent on the item's subject; omit to publish the item's event to whoever subscribes. */
+  agentDefinitionId?: string | number | null | undefined;
 };
 
 export type HazardousClass =
@@ -4969,6 +4999,13 @@ export type TimesheetStatus =
   | 'Rejected'
   | 'Submitted';
 
+export type TodaysBriefingInput = {
+  /** An organization-local day, as YYYY-MM-DD; omitted is today. */
+  briefingDate?: string | null | undefined;
+  /** Whose morning to read; omitted reads the one written for everybody. */
+  roleKey?: BriefingRoleKey | null | undefined;
+};
+
 export type TrainingCategory =
   | 'Compliance'
   | 'Equipment'
@@ -5469,6 +5506,45 @@ export type WaiveWorkerTrainingInput = {
   reason: string;
   version?: number | null | undefined;
 };
+
+export type WatchtowerItemsInput = {
+  after?: string | null | undefined;
+  first?: number | null | undefined;
+  /** Only these kinds; empty is every kind the reader may see. */
+  kinds?: Array<WatchtowerSourceKind> | null | undefined;
+  /** Only these severities; empty is all three. */
+  severities?: Array<WatchtowerSeverity> | null | undefined;
+  /** Only what occurred at or after this instant. */
+  since?: number | null | undefined;
+  /** Leave out what has already resolved. */
+  unresolvedOnly?: boolean | null | undefined;
+};
+
+/** How loudly an item asks to be looked at. */
+export type WatchtowerSeverity =
+  | 'Critical'
+  | 'Info'
+  | 'Warning';
+
+/**
+ * The record an item stands in for. The source stays authoritative: an item
+ * is a projection of it, keyed by kind and id, and resolves when the source
+ * does.
+ */
+export type WatchtowerSourceKind =
+  | 'AgentException'
+  | 'AgentPlan'
+  | 'AgentProposal'
+  | 'AgentRunFailed'
+  | 'BillingException'
+  | 'CarrierIntelEvent'
+  | 'DetentionOccurrence'
+  | 'EDIInboundQuarantined'
+  | 'HOSViolation'
+  | 'InboundMessage'
+  | 'Insight'
+  | 'ServiceFailure'
+  | 'WeatherAlert';
 
 export type WithdrawInvoiceDisputeInput = {
   disputeId: string | number;
@@ -6386,6 +6462,29 @@ export type RetryBillingTransferRunMutationVariables = Exact<{
 
 
 export type RetryBillingTransferRunMutation = { retryBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } };
+
+export type BriefingFieldsFragment = { id: string, roleKey: BriefingRoleKey, briefingDate: string, status: BriefingStatus, headline: string, narrated: boolean, readAt: number | null, sections: Array<{ key: BriefingSectionKey, title: string, summary: string, body: string | null, read: string, path: string | null, items: Array<{ label: string, value: string, path: string | null }> }> } & { ' $fragmentName'?: 'BriefingFieldsFragment' };
+
+export type TodaysBriefingQueryVariables = Exact<{
+  input: TodaysBriefingInput;
+}>;
+
+
+export type TodaysBriefingQuery = { todaysBriefing: { ' $fragmentRefs'?: { 'BriefingFieldsFragment': BriefingFieldsFragment } } | null };
+
+export type MarkBriefingReadMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type MarkBriefingReadMutation = { markBriefingRead: { ' $fragmentRefs'?: { 'BriefingFieldsFragment': BriefingFieldsFragment } } };
+
+export type RegenerateBriefingMutationVariables = Exact<{
+  input: TodaysBriefingInput;
+}>;
+
+
+export type RegenerateBriefingMutation = { regenerateBriefing: { ' $fragmentRefs'?: { 'BriefingFieldsFragment': BriefingFieldsFragment } } };
 
 export type CarrierIntelFindingFieldsFragment = { code: string, category: CarrierIntelSection, action: CarrierIntelRuleAction, severity: CarrierIntelSeverity, message: string, unverifiable: boolean, unconfirmed: boolean, overridden: boolean, overrideId: string | null, overrideExpiresAt: number | null } & { ' $fragmentName'?: 'CarrierIntelFindingFieldsFragment' };
 
@@ -10995,6 +11094,44 @@ export type UserTableQueryVariables = Exact<{
 
 export type UserTableQuery = { users: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'UserTableRowFieldsFragment': UserTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type WatchtowerItemFieldsFragment = { id: string, sourceKind: WatchtowerSourceKind, sourceId: string, severity: WatchtowerSeverity, title: string, summary: string, subjectType: AgentSubjectType | null, subjectId: string | null, eventKind: string | null, path: string, occurredAt: number, resolvedAt: number | null, seen: boolean, kindLabel: string } & { ' $fragmentName'?: 'WatchtowerItemFieldsFragment' };
+
+export type WatchtowerCountsFieldsFragment = { unresolved: number, critical: number, unseen: number, unseenCritical: number, seenAt: number, byKind: Array<{ kind: WatchtowerSourceKind, label: string, count: number }> } & { ' $fragmentName'?: 'WatchtowerCountsFieldsFragment' };
+
+export type WatchtowerFeedQueryVariables = Exact<{
+  input: WatchtowerItemsInput;
+}>;
+
+
+export type WatchtowerFeedQuery = { watchtowerItems: { seenAt: number, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type WatchtowerCountsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type WatchtowerCountsQuery = { watchtowerCounts: { ' $fragmentRefs'?: { 'WatchtowerCountsFieldsFragment': WatchtowerCountsFieldsFragment } } };
+
+export type MarkWatchtowerSeenMutationVariables = Exact<{
+  seenAt?: number | null | undefined;
+}>;
+
+
+export type MarkWatchtowerSeenMutation = { markWatchtowerSeen: { ' $fragmentRefs'?: { 'WatchtowerCountsFieldsFragment': WatchtowerCountsFieldsFragment } } };
+
+export type DismissWatchtowerItemMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DismissWatchtowerItemMutation = { dismissWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
+
+export type HandOffWatchtowerItemMutationVariables = Exact<{
+  id: string | number;
+  input: HandOffWatchtowerItemInput;
+}>;
+
+
+export type HandOffWatchtowerItemMutation = { handOffWatchtowerItem: { templates: Array<string>, item: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } }, run: { id: string, status: AgentRunStatus } | null, subscribers: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }>, candidates: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }> } };
+
 export type WorkerChecklistTemplateItemFieldsFragment = { id: string, templateId: string, label: string, description: string | null, kind: WorkerChecklistItemKind, required: boolean, dueOffsetDays: number, owner: WorkerChecklistOwner, credentialTypeId: string | null, documentTypeId: string | null, documentTypeName: string | null, sortOrder: number, credentialType: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'WorkerChecklistTemplateItemFieldsFragment' };
 
 export type WorkerChecklistTemplateFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string | null, kind: WorkerChecklistKind, trigger: WorkerChecklistTrigger, status: EntityStatus, isDefault: boolean, openChecklistCount: number, version: number, createdAt: number, updatedAt: number, items: Array<{ id: string, templateId: string, label: string, description: string | null, kind: WorkerChecklistItemKind, required: boolean, dueOffsetDays: number, owner: WorkerChecklistOwner, credentialTypeId: string | null, documentTypeId: string | null, documentTypeName: string | null, sortOrder: number, credentialType: { id: string, code: string, name: string } | null }> } & { ' $fragmentName'?: 'WorkerChecklistTemplateFieldsFragment' };
@@ -12463,6 +12600,30 @@ export const BillingQueueActionFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"BillingQueueActionFields"}) as unknown as TypedDocumentString<BillingQueueActionFieldsFragment, unknown>;
+export const BriefingFieldsFragmentDoc = new TypedDocumentString(`
+    fragment BriefingFields on Briefing {
+  id
+  roleKey
+  briefingDate
+  status
+  headline
+  narrated
+  readAt
+  sections {
+    key
+    title
+    summary
+    body
+    read
+    path
+    items {
+      label
+      value
+      path
+    }
+  }
+}
+    `, {"fragmentName":"BriefingFields"}) as unknown as TypedDocumentString<BriefingFieldsFragment, unknown>;
 export const CarrierIntelFindingFieldsFragmentDoc = new TypedDocumentString(`
     fragment CarrierIntelFindingFields on CarrierIntelFinding {
   code
@@ -17842,6 +18003,38 @@ export const UserTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"UserTableRowFields"}) as unknown as TypedDocumentString<UserTableRowFieldsFragment, unknown>;
+export const WatchtowerItemFieldsFragmentDoc = new TypedDocumentString(`
+    fragment WatchtowerItemFields on WatchtowerItem {
+  id
+  sourceKind
+  sourceId
+  severity
+  title
+  summary
+  subjectType
+  subjectId
+  eventKind
+  path
+  occurredAt
+  resolvedAt
+  seen
+  kindLabel
+}
+    `, {"fragmentName":"WatchtowerItemFields"}) as unknown as TypedDocumentString<WatchtowerItemFieldsFragment, unknown>;
+export const WatchtowerCountsFieldsFragmentDoc = new TypedDocumentString(`
+    fragment WatchtowerCountsFields on WatchtowerCounts {
+  unresolved
+  critical
+  unseen
+  unseenCritical
+  seenAt
+  byKind {
+    kind
+    label
+    count
+  }
+}
+    `, {"fragmentName":"WatchtowerCountsFields"}) as unknown as TypedDocumentString<WatchtowerCountsFieldsFragment, unknown>;
 export const WorkerChecklistTemplateItemFieldsFragmentDoc = new TypedDocumentString(`
     fragment WorkerChecklistTemplateItemFields on WorkerChecklistTemplateItem {
   id
@@ -18798,6 +18991,9 @@ export const BillingTransferRunItemsDocument = {"__meta__":{"kind":"query","name
 export const StartBillingTransferRunDocument = {"__meta__":{"kind":"mutation","name":"StartBillingTransferRun","hash":"sha256:923c2949ec8c393809aeba369e80aaef0ec093127e63d4ebc8cd6a7763929262"}} as unknown as TypedDocumentString<StartBillingTransferRunMutation, StartBillingTransferRunMutationVariables>;
 export const CancelBillingTransferRunDocument = {"__meta__":{"kind":"mutation","name":"CancelBillingTransferRun","hash":"sha256:fcc61ac6f50e02597d21790c1ba07ef0ae951e5619c6147fbafa8ee7da06e128"}} as unknown as TypedDocumentString<CancelBillingTransferRunMutation, CancelBillingTransferRunMutationVariables>;
 export const RetryBillingTransferRunDocument = {"__meta__":{"kind":"mutation","name":"RetryBillingTransferRun","hash":"sha256:a2e10a17e3e30a7adc54d60318390372f9f31e4cf52553538bd02b5f43d31150"}} as unknown as TypedDocumentString<RetryBillingTransferRunMutation, RetryBillingTransferRunMutationVariables>;
+export const TodaysBriefingDocument = {"__meta__":{"kind":"query","name":"TodaysBriefing","hash":"sha256:efa1e68a6557f06f8c90f3e6482f6a73399254696a433c83e2f5a821f891a838"}} as unknown as TypedDocumentString<TodaysBriefingQuery, TodaysBriefingQueryVariables>;
+export const MarkBriefingReadDocument = {"__meta__":{"kind":"mutation","name":"MarkBriefingRead","hash":"sha256:a528508c33bf6da76c15bf36e4159bdb24aeeb7c644cabbd8e779423cfe86371"}} as unknown as TypedDocumentString<MarkBriefingReadMutation, MarkBriefingReadMutationVariables>;
+export const RegenerateBriefingDocument = {"__meta__":{"kind":"mutation","name":"RegenerateBriefing","hash":"sha256:78838e889a7a2e313f67553e5f19966a6338ae041961bd169a6bf8e9ad5108df"}} as unknown as TypedDocumentString<RegenerateBriefingMutation, RegenerateBriefingMutationVariables>;
 export const CarrierIntelSettingsDocument = {"__meta__":{"kind":"query","name":"CarrierIntelSettings","hash":"sha256:4a7babaf1487c88a6bd87dffabb128a4aa3596f4588b785dc0d829fb13ae17c6"}} as unknown as TypedDocumentString<CarrierIntelSettingsQuery, CarrierIntelSettingsQueryVariables>;
 export const CarrierIntelCostEstimateDocument = {"__meta__":{"kind":"query","name":"CarrierIntelCostEstimate","hash":"sha256:bdbf9851d96a8afa735c9a57aa94a2cb1178adc0ad769eae1dcbfe566a39af79"}} as unknown as TypedDocumentString<CarrierIntelCostEstimateQuery, CarrierIntelCostEstimateQueryVariables>;
 export const CarrierIntelUsageDocument = {"__meta__":{"kind":"query","name":"CarrierIntelUsage","hash":"sha256:2781e60e21bd7c2e05802c14748eddc0b97a4f3f22d6d7dfda25f5aefd9d4d63"}} as unknown as TypedDocumentString<CarrierIntelUsageQuery, CarrierIntelUsageQueryVariables>;
@@ -19387,6 +19583,11 @@ export const TransitionTimesheetDocument = {"__meta__":{"kind":"mutation","name"
 export const GeneratePayrollExportDocument = {"__meta__":{"kind":"mutation","name":"GeneratePayrollExport","hash":"sha256:d2e6498db231b0929eaae44b9fec9404182112f932187530c9b5d214f16cb761"}} as unknown as TypedDocumentString<GeneratePayrollExportMutation, GeneratePayrollExportMutationVariables>;
 export const VoidPayrollExportDocument = {"__meta__":{"kind":"mutation","name":"VoidPayrollExport","hash":"sha256:91d91e0679fb937df8c50be37f8d75aa727a2a797c7a9a886e9afe3e903b89c2"}} as unknown as TypedDocumentString<VoidPayrollExportMutation, VoidPayrollExportMutationVariables>;
 export const UserTableDocument = {"__meta__":{"kind":"query","name":"UserTable","hash":"sha256:40300ce9b4742ab9f0008bfa9e6af539b18334e725df797823f41d75af2f3b48"}} as unknown as TypedDocumentString<UserTableQuery, UserTableQueryVariables>;
+export const WatchtowerFeedDocument = {"__meta__":{"kind":"query","name":"WatchtowerFeed","hash":"sha256:ceca8b044fbd37d9f5a5e86dbe6d66b6b6c8696ba19d2ac18418fde175b16e37"}} as unknown as TypedDocumentString<WatchtowerFeedQuery, WatchtowerFeedQueryVariables>;
+export const WatchtowerCountsDocument = {"__meta__":{"kind":"query","name":"WatchtowerCounts","hash":"sha256:9abddd9875a5ae7d5580f430cbfc811d4c5b7f7058e05d91b7555b02b5018b1e"}} as unknown as TypedDocumentString<WatchtowerCountsQuery, WatchtowerCountsQueryVariables>;
+export const MarkWatchtowerSeenDocument = {"__meta__":{"kind":"mutation","name":"MarkWatchtowerSeen","hash":"sha256:93e4737258bcf6abb3f847b3db83650975d88d250ddf6ddf82587f23ed165c3e"}} as unknown as TypedDocumentString<MarkWatchtowerSeenMutation, MarkWatchtowerSeenMutationVariables>;
+export const DismissWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"DismissWatchtowerItem","hash":"sha256:a4d52c1f24091bec9e7b5e7bd5c3de38363d559b903c74333c452e2f4331fbf6"}} as unknown as TypedDocumentString<DismissWatchtowerItemMutation, DismissWatchtowerItemMutationVariables>;
+export const HandOffWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"HandOffWatchtowerItem","hash":"sha256:49824f70ee0a28ce5164f83c692d2a33d019e4baa4f4b5d179dfda66fb2d7069"}} as unknown as TypedDocumentString<HandOffWatchtowerItemMutation, HandOffWatchtowerItemMutationVariables>;
 export const WorkerChecklistTemplateTableDocument = {"__meta__":{"kind":"query","name":"WorkerChecklistTemplateTable","hash":"sha256:f2eda82e9be4f74f7c9dc81c979e31c50ed9bc54a77cbc16e0faeecbc20376e2"}} as unknown as TypedDocumentString<WorkerChecklistTemplateTableQuery, WorkerChecklistTemplateTableQueryVariables>;
 export const ActiveWorkerChecklistTemplatesDocument = {"__meta__":{"kind":"query","name":"ActiveWorkerChecklistTemplates","hash":"sha256:7ea423ffb6c8654acdf33a23df25d34a19e6af10a5300c0a6f3bf0f0f25a30ab"}} as unknown as TypedDocumentString<ActiveWorkerChecklistTemplatesQuery, ActiveWorkerChecklistTemplatesQueryVariables>;
 export const WorkerChecklistsDocument = {"__meta__":{"kind":"query","name":"WorkerChecklists","hash":"sha256:04a8feaf12d8632f22968dc84a503969e99a8a2475d5dd7db3f25cf26416fcea"}} as unknown as TypedDocumentString<WorkerChecklistsQuery, WorkerChecklistsQueryVariables>;

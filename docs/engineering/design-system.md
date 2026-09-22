@@ -248,10 +248,11 @@ tables on the same screen line up. A denser table repoints the token —
 
 ## Elevation
 
-There is none. Trenova draws no shadows, anywhere. A surface is told from the one
+Nothing that sits **in** the page draws a shadow. A surface is told from the one
 beneath it by a hairline and a step in lightness; a floating surface by its
 `ring-1 ring-foreground/10` and by being inverted (below). A shadow is a blur, and
-a blur is the one thing on a dense screen that cannot be aligned to anything.
+a blur is the one thing on a dense screen that cannot be aligned to anything. A
+table row, a field, a card, a panel: all flat, all the time.
 
 The four `--elevation-*` tokens still exist and are all `0 0 #0000`, and the whole
 Tailwind `shadow-*` scale points at them, so a stray `shadow-md` lands on nothing
@@ -261,6 +262,30 @@ fails on any `shadow-sm|md|lg|…` or coloured `shadow-black/15`.
 Two things are box-shadows in CSS and lines on screen, and are fine: the focus
 ring, and a zero-blur outline such as `shadow-[0_0_0_1px_var(--brand)]` on a
 selected card or the inset hairline on a pinned column.
+
+### Lift
+
+The rule above is about the page. The few things that sit **above** it and are
+meant to be picked up — a composer floating over a conversation, an artifact
+card in flight, a menu — have their own family, and it is named by where it is
+allowed rather than by how big it is:
+
+```
+ui-lift-whisper   a hairline ring and one pixel of depth
+ui-lift           something you could pick up: a floating composer, a card
+ui-lift-float     something over everything else: a switcher, a menu
+```
+
+Each is a hairline ring plus a whisper of shadow at `--hue-neutral`, so it reads
+as the surface occluding light rather than as grey smudge. The blur is small and
+the offset smaller: a lift should be felt before it is seen. In dark the shadow
+hue goes near-black, because a grey halo on an already dark surface reads as
+fog, not depth.
+
+The naming is the whole guard. There is no `shadow-lg` to reach for and no size
+to argue about — you either are a thing that floats, in which case one of three
+names fits, or you are not, in which case none of them do. A table row with a
+lift is still the defect the rule above was written against.
 
 ## Floating surfaces are inverted
 
@@ -569,14 +594,50 @@ is deliberately visible in review; a silent exception is how the last set eroded
 ## Assistant surfaces
 
 The assistant is not a chat widget with cards in it. It has a voice inside the
-system, and four things carry it.
+system, and these are the things that carry it.
 
-**The gutter is the agent's spine.** In the Desk, a two pixel hairline runs down the
-avatar gutter in the agent's own accent (`AgentGutter` in
-`components/assistant/voice/agent-gutter.tsx`, reading `--agent-*` through
-`resolveAgentIdentity`). Tool receipts, artifacts and proposals hang off it, so a thread
-reads as one agent's work rather than a stack of cards, and two desks tell apart at a
-glance. The line is drawn from the accent token; nothing in the thread picks a colour.
+**The agent's accent is light, not a line.** This used to be a two pixel
+hairline down the avatar gutter, and the bar was wrong three ways: it ran the
+full height of a scrolling column to carry one bit, it put a hard vertical at
+full saturation beside prose, and on a 400px panel it spent a column of width
+on it. `AgentGutter` (`components/assistant/voice/agent-gutter.tsx`) now wears
+`ui-agent-glow`: a radial wash at the head of the column in the agent's accent,
+brightest where its mark is and gone within 200px. It carries two facts at
+once — `--agent-glow-rest` says who, and `data-working="true"` lifts it to full
+while a turn runs. A surface that only wants the second, like the Desk's
+header, leaves the rest at zero.
+
+This is the one place an accent becomes an area rather than a line. Everywhere
+else the agent's colour is its mark.
+
+**An agent's mark has to be its own.** `AgentTile` layers three things: the
+icon the organization chose, the accent, and a **sigil** — a short arc around
+the tile derived from the agent's id. The sigil exists because sixteen icons
+and eight accents collide constantly when both are hash-assigned, and an agent
+with no starter gets the same robot as every other one, so four desks wore one
+face. A mark also knows whether its icon is genuinely the agent's: when it is
+not, it draws the agent's initials instead of the fallback. One line, one
+weight, nothing to decode — a person only has to notice that two marks are not
+the same.
+
+**Motion has four verbs.** They live in `tokens.css` as `--animate-*` and each
+means one thing:
+
+```
+land         a step of an agent's work arrives   (from the left: the agent's side)
+materialise  produced work appears in the workspace (in from the conversation)
+draw         a line extends
+breathe      work is running
+```
+
+`breathe` is the only loop in the product and it earns the exception the way a
+heartbeat monitor does: it runs because the thing it describes is still going,
+and it stops when that stops. It is one shape, `WorkingDot` in
+`components/assistant/voice/working-dot.tsx`, used everywhere "still going" is
+said — the Desk's header, a tool step — because a spinner here and a pulse
+there is two vocabularies for one fact. Everything else still answers an
+action, and `prefers-reduced-motion` keeps the state change and drops the
+travel.
 
 **Artifacts are the product of a turn.** A report answer is a table, an email is a
 draft, a plan is a checklist, a record is a card. They render in the pane beside the
@@ -603,14 +664,51 @@ under the text in `font-mono`, never as a form. An at-sign opens a listbox over 
 organization's records in the same style as the command list. The dictation control is a
 plain icon button that turns `text-danger-foreground` while listening; nothing pulses.
 
-**The launcher is a signal.** The corner mark moves for exactly one thing: a decision
-waiting on someone. Its count is the attention summary's `agentDecisions`, the same number
-the sidebar and the Desk show, never a second query. The border beam is spent only on
-that; nothing else on the mark loops.
+**The launcher is a signal, and it says what it means.** At rest the corner mark
+does nothing at all — it is on every page, so anything that moved would be
+movement nobody can escape. When decisions are waiting it grows into a pill and
+says "3 waiting". It used to say that with a beam travelling its border and a
+numbered dot: two devices for one fact, one of them a loop running on every
+screen for as long as anything was pending. A shape that changes is a stronger
+signal than a shape that moves, and it can carry a word — a bare `3` in a
+corner could be anything. The visible count caps at 99+; the accessible name
+does not, because "99+ changes" is worse than the number. The count is the
+attention summary's `agentDecisions`, the same number the sidebar and the Desk
+show, never a second query.
 
-The Desk page itself takes `fill` and `p-0` because it manages its own panes: the rail is
-`bg-sunken`, the middle is `bg-canvas`, the pane is `bg-sunken`. Panes are separated by
-the resizable handle's hairline, never a shadow.
+### The Desk is a room
+
+The Desk runs **outside the app shell** — hoisted out of `AppLayout` into its
+own route group, so it wears no sidebar, no breadcrumb and no page header, and
+takes the whole viewport. It is the one surface in Trenova allowed its own
+light, and it has its own tokens for it:
+
+```
+--desk-canvas    the room
+--desk-column    the conversation, lit from within
+--desk-hairline  what separates the two
+```
+
+In dark the column is a step **above** the canvas rather than below it, because
+a lit surface comes forward in dark and recedes in light. That inversion is why
+one set of values never works for both.
+
+The layout is a 48px strip and two columns: the conversation on the left at
+`clamp(26rem, 38%, 34rem)`, the work it produced filling the rest. The
+conversation is the narrower half on purpose — prose is unreadable past about
+70 characters, so the extra width goes to the tables and drafts that can use
+it. There is one strip of chrome at the top of the room, not one per column,
+which is why the conversation's title, pin and transcript live in the shell
+rather than inside the thread. Folded away with `⌘\`, the workspace gives its
+width back rather than leaving a gap.
+
+The conversation list is a switcher behind one control, not a rail. A person
+picks a conversation perhaps twice an hour and then reads and writes in it for
+the rest of the hour; a permanent 260px column answers a question asked twice.
+
+Both the Desk's front page and the corner panel open onto the same `AskBox`
+(`components/assistant/ask-box.tsx`) rather than a directory. An empty text
+field is a better first screen than a good menu.
 
 ## Checking your work
 

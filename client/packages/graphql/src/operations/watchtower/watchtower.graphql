@@ -1,0 +1,90 @@
+fragment WatchtowerItemFields on WatchtowerItem {
+  id
+  sourceKind
+  sourceId
+  severity
+  title
+  summary
+  subjectType
+  subjectId
+  eventKind
+  path
+  occurredAt
+  resolvedAt
+  seen
+  kindLabel
+}
+
+fragment WatchtowerCountsFields on WatchtowerCounts {
+  unresolved
+  critical
+  unseen
+  unseenCritical
+  seenAt
+  byKind {
+    kind
+    label
+    count
+  }
+}
+
+query WatchtowerFeed($input: WatchtowerItemsInput!) {
+  watchtowerItems(input: $input) {
+    edges {
+      cursor
+      node {
+        ...WatchtowerItemFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    seenAt
+  }
+}
+
+query WatchtowerCounts {
+  watchtowerCounts {
+    ...WatchtowerCountsFields
+  }
+}
+
+mutation MarkWatchtowerSeen($seenAt: Timestamp) {
+  markWatchtowerSeen(seenAt: $seenAt) {
+    ...WatchtowerCountsFields
+  }
+}
+
+mutation DismissWatchtowerItem($id: ID!) {
+  dismissWatchtowerItem(id: $id) {
+    ...WatchtowerItemFields
+  }
+}
+
+mutation HandOffWatchtowerItem($id: ID!, $input: HandOffWatchtowerItemInput!) {
+  handOffWatchtowerItem(id: $id, input: $input) {
+    item {
+      ...WatchtowerItemFields
+    }
+    run {
+      id
+      status
+    }
+    subscribers {
+      id
+      name
+      icon
+      accent
+      template
+    }
+    candidates {
+      id
+      name
+      icon
+      accent
+      template
+    }
+    templates
+  }
+}

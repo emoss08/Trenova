@@ -13613,6 +13613,15 @@
       "routes/agent-control"
     ]
   },
+  "An agent is working on it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "An agent needs at least one tool call per run": {
     "sites": 1,
     "scope": [
@@ -17434,6 +17443,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Ask about this": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Ask again": {
@@ -40256,7 +40274,7 @@
     ]
   },
   "Critical": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -40265,6 +40283,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
+      "routes/desk",
       "routes/shipment",
       "routes/table-change-alert",
       "service/briefingservice"
@@ -48517,7 +48536,7 @@
     ]
   },
   "Dismiss": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -48525,6 +48544,7 @@
       "apps/web/components",
       "routes/agent-control",
       "routes/bank-receipt-queue",
+      "routes/desk",
       "routes/driver-settlement",
       "routes/insights",
       "routes/journal-reversal",
@@ -62537,6 +62557,15 @@
       "routes/invoice-adjustment-batch"
     ]
   },
+  "Failed runs, service failures, expiring credentials, quarantined EDI and anything else worth a look will appear here as it happens.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Failed to accept EDI connection": {
     "sites": 1,
     "scope": [
@@ -70643,6 +70672,15 @@
       "domain/permission"
     ]
   },
+  "Hand off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Hand over": {
     "sites": 1,
     "scope": [
@@ -70704,6 +70742,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Handed to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Handing approval to somebody else while a manager is away": {
@@ -75272,12 +75319,13 @@
     ]
   },
   "Info": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/dispatch-console",
       "routes/edi"
     ]
@@ -93888,6 +93936,15 @@
       "routes/shipment"
     ]
   },
+  "New since you last looked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "New template name": {
     "sites": 1,
     "scope": [
@@ -94632,6 +94689,24 @@
       "apps/web/lib"
     ]
   },
+  "No agent can take this one yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "No agent subscribes to this yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No agents are available": {
     "sites": 2,
     "scope": [
@@ -94639,6 +94714,15 @@
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk"
+    ]
+  },
+  "No agents are available to ask": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/desk"
     ]
   },
@@ -100187,6 +100271,15 @@
       "service/billingtransferservice"
     ]
   },
+  "Nothing is asking for you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing is running for this employment.": {
     "sites": 1,
     "scope": [
@@ -105531,6 +105624,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Open the record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Open the run": {
@@ -146790,6 +146892,15 @@
       "packages/shared/components"
     ]
   },
+  "Some of this wording was written by a model and checked against the figures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Some selected pay events are no longer payable — they may be settled, held, or voided. Refresh and try again.": {
     "sites": 2,
     "scope": [
@@ -162284,6 +162395,15 @@
       "go/other"
     ]
   },
+  "There is more below": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "There is no leave to end": {
     "sites": 1,
     "scope": [
@@ -176785,12 +176905,13 @@
     ]
   },
   "Warning": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/desk",
       "routes/dispatch-console",
       "routes/shipment"
     ]
@@ -176889,6 +177010,15 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "Watchtower": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Watchtower item not found": {
@@ -183259,6 +183389,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Your day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Your disputes on this statement": {
@@ -190514,6 +190653,15 @@
     ],
     "areas": [
       "service/carrierintelservice"
+    ]
+  },
+  "{0} could take it — start one from AI Control.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} covered {1} {2}": {

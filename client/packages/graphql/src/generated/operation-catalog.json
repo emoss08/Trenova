@@ -1,6 +1,6 @@
 {
-  "operationCount": 780,
-  "fragmentCount": 199,
+  "operationCount": 788,
+  "fragmentCount": 202,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -5931,6 +5931,28 @@
       "sdl": "mutation DismissNotifications($ids: [ID!]!) {\n  dismissNotifications(ids: $ids)\n}"
     },
     {
+      "name": "DismissWatchtowerItem",
+      "kind": "mutation",
+      "domain": "watchtower",
+      "sourceFile": "src/operations/watchtower/watchtower.graphql",
+      "hash": "sha256:a4d52c1f24091bec9e7b5e7bd5c3de38363d559b903c74333c452e2f4331fbf6",
+      "rootFields": [
+        "dismissWatchtowerItem"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "WatchtowerItemFields"
+      ],
+      "usages": [],
+      "sdl": "mutation DismissWatchtowerItem($id: ID!) {\n  dismissWatchtowerItem(id: $id) {\n    ...WatchtowerItemFields\n  }\n}\n\nfragment WatchtowerItemFields on WatchtowerItem {\n  id\n  sourceKind\n  sourceId\n  severity\n  title\n  summary\n  subjectType\n  subjectId\n  eventKind\n  path\n  occurredAt\n  resolvedAt\n  seen\n  kindLabel\n}"
+    },
+    {
       "name": "DispatchAssignmentPreview",
       "kind": "query",
       "domain": "dispatch-console",
@@ -7936,6 +7958,33 @@
       "sdl": "mutation GrantCarrierIntelOverride($input: GrantCarrierIntelOverrideInput!) {\n  grantCarrierIntelOverride(input: $input) {\n    ...CarrierIntelOverrideFields\n  }\n}\n\nfragment CarrierIntelOverrideFields on CarrierIntelOverride {\n  id\n  carrierId\n  ruleCode\n  reason\n  grantedById\n  grantedAt\n  expiresAt\n  revokedById\n  revokedAt\n  revokeReason\n  active\n  version\n  createdAt\n}"
     },
     {
+      "name": "HandOffWatchtowerItem",
+      "kind": "mutation",
+      "domain": "watchtower",
+      "sourceFile": "src/operations/watchtower/watchtower.graphql",
+      "hash": "sha256:49824f70ee0a28ce5164f83c692d2a33d019e4baa4f4b5d179dfda66fb2d7069",
+      "rootFields": [
+        "handOffWatchtowerItem"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "HandOffWatchtowerItemInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "WatchtowerItemFields"
+      ],
+      "usages": [],
+      "sdl": "mutation HandOffWatchtowerItem($id: ID!, $input: HandOffWatchtowerItemInput!) {\n  handOffWatchtowerItem(id: $id, input: $input) {\n    item {\n      ...WatchtowerItemFields\n    }\n    run {\n      id\n      status\n    }\n    subscribers {\n      id\n      name\n      icon\n      accent\n      template\n    }\n    candidates {\n      id\n      name\n      icon\n      accent\n      template\n    }\n    templates\n  }\n}\n\nfragment WatchtowerItemFields on WatchtowerItem {\n  id\n  sourceKind\n  sourceId\n  severity\n  title\n  summary\n  subjectType\n  subjectId\n  eventKind\n  path\n  occurredAt\n  resolvedAt\n  seen\n  kindLabel\n}"
+    },
+    {
       "name": "HazardousMaterialTable",
       "kind": "query",
       "domain": "hazardous-material",
@@ -9043,6 +9092,28 @@
       "sdl": "mutation MarkAllNotificationsRead {\n  markAllNotificationsRead\n}"
     },
     {
+      "name": "MarkBriefingRead",
+      "kind": "mutation",
+      "domain": "briefing",
+      "sourceFile": "src/operations/briefing/briefing.graphql",
+      "hash": "sha256:a528508c33bf6da76c15bf36e4159bdb24aeeb7c644cabbd8e779423cfe86371",
+      "rootFields": [
+        "markBriefingRead"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "BriefingFields"
+      ],
+      "usages": [],
+      "sdl": "mutation MarkBriefingRead($id: ID!) {\n  markBriefingRead(id: $id) {\n    ...BriefingFields\n  }\n}\n\nfragment BriefingFields on Briefing {\n  id\n  roleKey\n  briefingDate\n  status\n  headline\n  narrated\n  readAt\n  sections {\n    key\n    title\n    summary\n    body\n    read\n    path\n    items {\n      label\n      value\n      path\n    }\n  }\n}"
+    },
+    {
       "name": "MarkCarrierIntelReviewed",
       "kind": "mutation",
       "domain": "carrier-intelligence",
@@ -9230,6 +9301,28 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation MarkNotificationsUnread($ids: [ID!]!) {\n  markNotificationsUnread(ids: $ids)\n}"
+    },
+    {
+      "name": "MarkWatchtowerSeen",
+      "kind": "mutation",
+      "domain": "watchtower",
+      "sourceFile": "src/operations/watchtower/watchtower.graphql",
+      "hash": "sha256:93e4737258bcf6abb3f847b3db83650975d88d250ddf6ddf82587f23ed165c3e",
+      "rootFields": [
+        "markWatchtowerSeen"
+      ],
+      "variables": [
+        {
+          "name": "seenAt",
+          "type": "Timestamp",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "WatchtowerCountsFields"
+      ],
+      "usages": [],
+      "sdl": "mutation MarkWatchtowerSeen($seenAt: Timestamp) {\n  markWatchtowerSeen(seenAt: $seenAt) {\n    ...WatchtowerCountsFields\n  }\n}\n\nfragment WatchtowerCountsFields on WatchtowerCounts {\n  unresolved\n  critical\n  unseen\n  unseenCritical\n  seenAt\n  byKind {\n    kind\n    label\n    count\n  }\n}"
     },
     {
       "name": "MarkWorkerChecklistItemNotApplicable",
@@ -11569,6 +11662,28 @@
       ],
       "usages": [],
       "sdl": "query RecurringShipmentTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  recurringShipments(input: $input) {\n    edges {\n      node {\n        ...RecurringShipmentTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RecurringShipmentTableRowFields on RecurringShipment {\n  id\n  businessUnitId\n  organizationId\n  sourceShipmentId\n  customerId\n  originLocationId\n  destinationLocationId\n  name\n  description\n  status\n  cronExpression\n  timezone\n  startDate\n  endDate\n  maxOccurrences\n  leadTimeDays\n  skipWeekends\n  exceptionPolicy\n  blackoutDates\n  autoGenerate\n  nextOccurrenceAt\n  lastOccurrenceAt\n  lastRunAt\n  generationCount\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n  customer {\n    id\n    name\n    code\n  }\n  originLocation {\n    id\n    name\n    code\n  }\n  destinationLocation {\n    id\n    name\n    code\n  }\n}"
+    },
+    {
+      "name": "RegenerateBriefing",
+      "kind": "mutation",
+      "domain": "briefing",
+      "sourceFile": "src/operations/briefing/briefing.graphql",
+      "hash": "sha256:78838e889a7a2e313f67553e5f19966a6338ae041961bd169a6bf8e9ad5108df",
+      "rootFields": [
+        "regenerateBriefing"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "TodaysBriefingInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "BriefingFields"
+      ],
+      "usages": [],
+      "sdl": "mutation RegenerateBriefing($input: TodaysBriefingInput!) {\n  regenerateBriefing(input: $input) {\n    ...BriefingFields\n  }\n}\n\nfragment BriefingFields on Briefing {\n  id\n  roleKey\n  briefingDate\n  status\n  headline\n  narrated\n  readAt\n  sections {\n    key\n    title\n    summary\n    body\n    read\n    path\n    items {\n      label\n      value\n      path\n    }\n  }\n}"
     },
     {
       "name": "RejectCarrierInvoiceMatch",
@@ -14541,6 +14656,28 @@
       "sdl": "query Timesheets($filter: TimesheetFilterInput) {\n  timesheets(filter: $filter) {\n    id\n    workerId\n    status\n    periodStart\n    periodEnd\n    regularMinutes\n    overtimeMinutes\n    paidLeaveMinutes\n    totalMinutes\n    entryCount\n    overtimeThresholdMinutes\n    submittedAt\n    approvedAt\n    decisionNote\n    payrollExportId\n    version\n    worker {\n      id\n      firstName\n      lastName\n      type\n    }\n  }\n}"
     },
     {
+      "name": "TodaysBriefing",
+      "kind": "query",
+      "domain": "briefing",
+      "sourceFile": "src/operations/briefing/briefing.graphql",
+      "hash": "sha256:efa1e68a6557f06f8c90f3e6482f6a73399254696a433c83e2f5a821f891a838",
+      "rootFields": [
+        "todaysBriefing"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "TodaysBriefingInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "BriefingFields"
+      ],
+      "usages": [],
+      "sdl": "query TodaysBriefing($input: TodaysBriefingInput!) {\n  todaysBriefing(input: $input) {\n    ...BriefingFields\n  }\n}\n\nfragment BriefingFields on Briefing {\n  id\n  roleKey\n  briefingDate\n  status\n  headline\n  narrated\n  readAt\n  sections {\n    key\n    title\n    summary\n    body\n    read\n    path\n    items {\n      label\n      value\n      path\n    }\n  }\n}"
+    },
+    {
       "name": "TractorTable",
       "kind": "query",
       "domain": "equipment",
@@ -16766,6 +16903,44 @@
       "sdl": "mutation WaiveWorkerTraining($input: WaiveWorkerTrainingInput!) {\n  waiveWorkerTraining(input: $input) {\n    ...WorkerTrainingRecordFields\n  }\n}\n\nfragment WorkerTrainingRecordFields on WorkerTrainingRecord {\n  id\n  businessUnitId\n  organizationId\n  workerId\n  courseId\n  course {\n    id\n    businessUnitId\n    organizationId\n    code\n    name\n    description\n    category\n    status\n    delivery\n    contentUrl\n    durationMinutes\n    passingScore\n    validityMonths\n    renewalWindowDays\n    isRequired\n    requiredForDriverTypes\n    dueDaysAfterAssignment\n    requiresAcknowledgement\n    sortOrder\n    openRecordCount\n    version\n    createdAt\n    updatedAt\n  }\n  status\n  assignedAt\n  dueAt\n  startedAt\n  completedAt\n  expiresAt\n  score\n  passed\n  acknowledgedAt\n  documentId\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  assignedById\n  assignedBy {\n    id\n    name\n  }\n  recordedById\n  recordedBy {\n    id\n    name\n  }\n  notes\n  waivedReason\n  health\n  daysUntilDue\n  daysUntilExpiry\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "WatchtowerCounts",
+      "kind": "query",
+      "domain": "watchtower",
+      "sourceFile": "src/operations/watchtower/watchtower.graphql",
+      "hash": "sha256:9abddd9875a5ae7d5580f430cbfc811d4c5b7f7058e05d91b7555b02b5018b1e",
+      "rootFields": [
+        "watchtowerCounts"
+      ],
+      "variables": [],
+      "fragments": [
+        "WatchtowerCountsFields"
+      ],
+      "usages": [],
+      "sdl": "query WatchtowerCounts {\n  watchtowerCounts {\n    ...WatchtowerCountsFields\n  }\n}\n\nfragment WatchtowerCountsFields on WatchtowerCounts {\n  unresolved\n  critical\n  unseen\n  unseenCritical\n  seenAt\n  byKind {\n    kind\n    label\n    count\n  }\n}"
+    },
+    {
+      "name": "WatchtowerFeed",
+      "kind": "query",
+      "domain": "watchtower",
+      "sourceFile": "src/operations/watchtower/watchtower.graphql",
+      "hash": "sha256:ceca8b044fbd37d9f5a5e86dbe6d66b6b6c8696ba19d2ac18418fde175b16e37",
+      "rootFields": [
+        "watchtowerItems"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "WatchtowerItemsInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "WatchtowerItemFields"
+      ],
+      "usages": [],
+      "sdl": "query WatchtowerFeed($input: WatchtowerItemsInput!) {\n  watchtowerItems(input: $input) {\n    edges {\n      cursor\n      node {\n        ...WatchtowerItemFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    seenAt\n  }\n}\n\nfragment WatchtowerItemFields on WatchtowerItem {\n  id\n  sourceKind\n  sourceId\n  severity\n  title\n  summary\n  subjectType\n  subjectId\n  eventKind\n  path\n  occurredAt\n  resolvedAt\n  seen\n  kindLabel\n}"
+    },
+    {
       "name": "WithdrawInvoiceDispute",
       "kind": "mutation",
       "domain": "invoice",
@@ -18110,6 +18285,20 @@
       ],
       "usages": [],
       "sdl": "fragment BillingQueueActionFields on BillingQueueItem {\n  id\n  organizationId\n  businessUnitId\n  shipmentId\n  billToCustomerId\n  allocatedTotalAmount\n  billToCustomer {\n    id\n    name\n    code\n  }\n  assignedBillerId\n  number\n  status\n  billType\n  exceptionReasonCode\n  reviewNotes\n  exceptionNotes\n  reviewStartedAt\n  reviewCompletedAt\n  canceledById\n  canceledAt\n  cancelReason\n  isAdjustmentOrigin\n  sourceInvoiceId\n  sourceInvoiceAdjustmentId\n  sourceCreditMemoInvoiceId\n  correctionGroupId\n  rebillStrategy\n  requiresReplacementReview\n  rerateVariancePercent\n  adjustmentContext\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "BriefingFields",
+      "typeCondition": "Briefing",
+      "domain": "briefing",
+      "sourceFile": "src/operations/briefing/briefing.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "MarkBriefingRead",
+        "RegenerateBriefing",
+        "TodaysBriefing"
+      ],
+      "usages": [],
+      "sdl": "fragment BriefingFields on Briefing {\n  id\n  roleKey\n  briefingDate\n  status\n  headline\n  narrated\n  readAt\n  sections {\n    key\n    title\n    summary\n    body\n    read\n    path\n    items {\n      label\n      value\n      path\n    }\n  }\n}"
     },
     {
       "name": "CarrierContactFields",
@@ -20566,6 +20755,33 @@
       ],
       "usages": [],
       "sdl": "fragment UsStateTableFields on UsState {\n  id\n  name\n  abbreviation\n}"
+    },
+    {
+      "name": "WatchtowerCountsFields",
+      "typeCondition": "WatchtowerCounts",
+      "domain": "watchtower",
+      "sourceFile": "src/operations/watchtower/watchtower.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "MarkWatchtowerSeen",
+        "WatchtowerCounts"
+      ],
+      "usages": [],
+      "sdl": "fragment WatchtowerCountsFields on WatchtowerCounts {\n  unresolved\n  critical\n  unseen\n  unseenCritical\n  seenAt\n  byKind {\n    kind\n    label\n    count\n  }\n}"
+    },
+    {
+      "name": "WatchtowerItemFields",
+      "typeCondition": "WatchtowerItem",
+      "domain": "watchtower",
+      "sourceFile": "src/operations/watchtower/watchtower.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "DismissWatchtowerItem",
+        "HandOffWatchtowerItem",
+        "WatchtowerFeed"
+      ],
+      "usages": [],
+      "sdl": "fragment WatchtowerItemFields on WatchtowerItem {\n  id\n  sourceKind\n  sourceId\n  severity\n  title\n  summary\n  subjectType\n  subjectId\n  eventKind\n  path\n  occurredAt\n  resolvedAt\n  seen\n  kindLabel\n}"
     },
     {
       "name": "WorkerChecklistFields",
@@ -24969,6 +25185,17 @@
       ],
       "sdl": "input GrantCarrierIntelOverrideInput {\n  carrierId: ID!\n  expiresAt: Timestamp\n  reason: String!\n  ruleCode: String!\n}"
     },
+    "HandOffWatchtowerItemInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "agentDefinitionId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input HandOffWatchtowerItemInput {\n  \"\"\"\n  Start this agent on the item's subject; omit to publish the item's event to whoever subscribes.\n  \"\"\"\n  agentDefinitionId: ID\n}"
+    },
     "HoldPayEventInput": {
       "kind": "input",
       "fields": [
@@ -28975,6 +29202,22 @@
       "kind": "scalar",
       "sdl": "\"\"\"\nA point in time as a Unix timestamp: the number of whole seconds since the\nUnix epoch (1970-01-01T00:00:00Z), UTC. Serialized as a JSON number.\n\"\"\"\nscalar Timestamp"
     },
+    "TodaysBriefingInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "briefingDate",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "roleKey",
+          "type": "BriefingRoleKey",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input TodaysBriefingInput {\n  \"\"\"An organization-local day, as YYYY-MM-DD; omitted is today.\"\"\"\n  briefingDate: String\n  \"\"\"Whose morning to read; omitted reads the one written for everybody.\"\"\"\n  roleKey: BriefingRoleKey\n}"
+    },
     "TrainingCourseInput": {
       "kind": "input",
       "fields": [
@@ -31030,6 +31273,44 @@
         }
       ],
       "sdl": "input WaiveWorkerTrainingInput {\n  id: ID!\n  reason: String!\n  version: Int\n}"
+    },
+    "WatchtowerItemsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "25",
+          "defaultJson": 25
+        },
+        {
+          "name": "kinds",
+          "type": "[WatchtowerSourceKind!]",
+          "defaultValue": null
+        },
+        {
+          "name": "severities",
+          "type": "[WatchtowerSeverity!]",
+          "defaultValue": null
+        },
+        {
+          "name": "since",
+          "type": "Timestamp",
+          "defaultValue": null
+        },
+        {
+          "name": "unresolvedOnly",
+          "type": "Boolean",
+          "defaultValue": "true",
+          "defaultJson": true
+        }
+      ],
+      "sdl": "input WatchtowerItemsInput {\n  after: String\n  first: Int = 25\n  \"\"\"Only these kinds; empty is every kind the reader may see.\"\"\"\n  kinds: [WatchtowerSourceKind!]\n  \"\"\"Only these severities; empty is all three.\"\"\"\n  severities: [WatchtowerSeverity!]\n  \"\"\"Only what occurred at or after this instant.\"\"\"\n  since: Timestamp\n  \"\"\"Leave out what has already resolved.\"\"\"\n  unresolvedOnly: Boolean = true\n}"
     },
     "WithdrawInvoiceDisputeInput": {
       "kind": "input",
@@ -34027,6 +34308,17 @@
       ],
       "sdl": "\"\"\"How far a week has got.\"\"\"\nenum TimesheetStatus {\n  Approved\n  Locked\n  Open\n  Rejected\n  Submitted\n}"
     },
+    "BriefingRoleKey": {
+      "kind": "enum",
+      "values": [
+        "Billing",
+        "Compliance",
+        "Dispatch",
+        "General",
+        "Leadership"
+      ],
+      "sdl": "\"\"\"\nWho a briefing is written for. The same morning reads differently to a dispatcher and a biller.\n\"\"\"\nenum BriefingRoleKey {\n  Billing\n  Compliance\n  Dispatch\n  General\n  Leadership\n}"
+    },
     "TrainingCategory": {
       "kind": "enum",
       "values": [
@@ -34209,6 +34501,34 @@
         "Rebill"
       ],
       "sdl": "\"\"\"What happens to the freight a voided invoice billed.\"\"\"\nenum InvoiceVoidDisposition {\n  \"\"\"\n  The billing queue items are canceled and the shipments settle as completed.\n  \"\"\"\n  DoNotRebill\n  \"\"\"\n  The billing queue items go back to Approved with a fresh number, ready to bill again.\n  \"\"\"\n  Rebill\n}"
+    },
+    "WatchtowerSourceKind": {
+      "kind": "enum",
+      "values": [
+        "AgentException",
+        "AgentPlan",
+        "AgentProposal",
+        "AgentRunFailed",
+        "BillingException",
+        "CarrierIntelEvent",
+        "DetentionOccurrence",
+        "EDIInboundQuarantined",
+        "HOSViolation",
+        "InboundMessage",
+        "Insight",
+        "ServiceFailure",
+        "WeatherAlert"
+      ],
+      "sdl": "\"\"\"\nThe record an item stands in for. The source stays authoritative: an item\nis a projection of it, keyed by kind and id, and resolves when the source\ndoes.\n\"\"\"\nenum WatchtowerSourceKind {\n  AgentException\n  AgentPlan\n  AgentProposal\n  AgentRunFailed\n  BillingException\n  CarrierIntelEvent\n  DetentionOccurrence\n  EDIInboundQuarantined\n  HOSViolation\n  InboundMessage\n  Insight\n  ServiceFailure\n  WeatherAlert\n}"
+    },
+    "WatchtowerSeverity": {
+      "kind": "enum",
+      "values": [
+        "Critical",
+        "Info",
+        "Warning"
+      ],
+      "sdl": "\"\"\"How loudly an item asks to be looked at.\"\"\"\nenum WatchtowerSeverity {\n  Critical\n  Info\n  Warning\n}"
     },
     "WorkerChecklistTemplateItemInput": {
       "kind": "input",

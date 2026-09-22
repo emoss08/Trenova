@@ -1,5 +1,6 @@
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { AskBox } from "@/components/assistant/ask-box";
+import { queries } from "@/lib/queries";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
@@ -14,8 +15,10 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ArrowRightIcon, BotIcon, InboxIcon, PlugZapIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
+import { BriefingPanel } from "./briefing-panel";
 import { usePendingDecisionSummary } from "./decisions/use-pending-decisions";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
@@ -50,6 +53,11 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { data: attention } = useAttentionSummary();
+  // The briefing is written on a schedule, so before that hour there simply
+  // is none. That is an ordinary answer, not a failure, and the page reads
+  // the same without it.
+  const briefingQuery = useQuery({ ...queries.briefing.today(), retry: false });
+  const briefing = briefingQuery.data ?? null;
   const summaryQuery = usePendingDecisionSummary(canDecide);
   const waiting = summaryQuery.data?.total ?? attention?.agentDecisions ?? 0;
   const recent = threads.slice(0, RECENT_LIMIT);
@@ -69,15 +77,20 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-6 py-10">
       <header className="flex flex-col gap-1">
         <p className="text-muted-foreground text-xs">{dateline}</p>
+        {/* The briefing's headline when there is one: it was written from
+            figures gathered before a word of it, and every number in it was
+            checked against them. The computed sentence below is what a
+            morning reads like before the page has been written. */}
         <h1 className="text-2xl font-semibold tracking-tight text-balance">
-          {canDecide && waiting > 0
-            ? t(
-                "{0, plural, one {One decision is waiting on you.} other {# decisions are waiting on you.}}",
-                waiting,
-              )
-            : agents.length === 0
-              ? t("Nothing is running here yet.")
-              : t("Nothing is waiting on you.")}
+          {briefing?.headline ||
+            (canDecide && waiting > 0
+              ? t(
+                  "{0, plural, one {One decision is waiting on you.} other {# decisions are waiting on you.}}",
+                  waiting,
+                )
+              : agents.length === 0
+                ? t("Nothing is running here yet.")
+                : t("Nothing is waiting on you."))}
         </h1>
         <p className="text-muted-foreground text-sm">
           {agents.length === 0
@@ -94,6 +107,8 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
           onAsk={(agentId, question) => onStart(agentId, question)}
         />
       )}
+
+      {briefing && <BriefingPanel briefing={briefing} />}
 
       {canDecide && waiting > 0 && (
         <Link

@@ -2,6 +2,7 @@ import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import { queries } from "@/lib/queries";
 import type { AssistantThread } from "@/types/assistant";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -18,9 +19,11 @@ import {
   MessageSquareIcon,
   PinIcon,
   PlusIcon,
+  RadarIcon,
   SearchIcon,
   Trash2Icon,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { NavLink } from "react-router";
 import { groupDeskThreads, matchesThreadSearch, type DeskThreadGroup } from "./desk-threads";
@@ -68,8 +71,14 @@ export function DeskDirectory({
   const [query, setQuery] = useState("");
   const [now] = useState(nowInSeconds);
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
+  const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
   const { data: attention } = useAttentionSummary();
+  const { data: watchtowerCounts } = useQuery({
+    ...queries.watchtower.counts(),
+    enabled: canWatch,
+  });
   const decisions = attention?.agentDecisions ?? 0;
+  const unseen = watchtowerCounts?.unseen ?? 0;
 
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
   const agentNames = useMemo(
@@ -104,6 +113,26 @@ export function DeskDirectory({
 
       <div className="flex flex-col gap-0.5 p-2">
         <DirectoryLink to="/desk" end icon={HomeIcon} label={t("Today")} onNavigate={onNavigate} />
+        {canWatch && (
+          <DirectoryLink
+            to="/desk/watchtower"
+            icon={RadarIcon}
+            label={t("Watchtower")}
+            onNavigate={onNavigate}
+            trailing={
+              unseen > 0 ? (
+                <Badge
+                  variant={
+                    watchtowerCounts && watchtowerCounts.unseenCritical > 0 ? "danger" : "neutral"
+                  }
+                  className="text-2xs h-4 px-1.5 tabular-nums"
+                >
+                  {unseen > 99 ? "99+" : unseen}
+                </Badge>
+              ) : null
+            }
+          />
+        )}
         {canDecide && (
           <DirectoryLink
             to="/desk/decisions"

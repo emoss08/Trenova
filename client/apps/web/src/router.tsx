@@ -1890,6 +1890,14 @@ export const routes: RouteObject[] = [
                   return { Component: DeskDecisionsPage };
                 },
               },
+              {
+                path: "watchtower",
+                loader: createPermissionLoader(Resource.Watchtower, Operation.Read),
+                async lazy() {
+                  const { DeskWatchtowerPage } = await import("@/routes/desk/watchtower-page");
+                  return { Component: DeskWatchtowerPage };
+                },
+              },
             ],
           },
         ],
