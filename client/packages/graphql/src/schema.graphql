@@ -94,11 +94,14 @@ enum AIStructuredOutputMode {
 enum AITask {
   AssistantChat
   BillingDiagnosis
+  DailyBriefing
   DocumentClassification
   DocumentExtraction
   FormulaAssistant
   General
+  InboundClassification
   OperationalInsights
+  QueryCompose
   ScopeClassification
 }
 
@@ -4071,6 +4074,16 @@ type Customer {
   state: UsState
   stateId: ID!
   status: EntityStatus!
+  """
+  What this customer asked to be told as their freight moves. None is the
+  default: a customer who never opted in is not emailed about a stop.
+  """
+  statusUpdatePreference: CustomerStatusUpdatePreference!
+  """
+  Who receives those updates, comma separated. Empty falls back to the
+  notice profile's own recipients.
+  """
+  statusUpdateRecipients: String
   updatedAt: Timestamp!
   version: Int!
 }
@@ -4357,6 +4370,14 @@ enum CustomerPaymentTerm {
   Net45
   Net60
   Net90
+}
+
+"""What a customer asked to be told as their freight moves."""
+enum CustomerStatusUpdatePreference {
+  Arrivals
+  ArrivalsAndDepartures
+  Departures
+  None
 }
 
 """
@@ -18823,8 +18844,10 @@ enum WatchtowerSourceKind {
   HOSViolation
   InboundMessage
   Insight
+  MoveCoverage
   ServiceFailure
   WeatherAlert
+  WorkerCredential
 }
 
 input WithdrawInvoiceDisputeInput {

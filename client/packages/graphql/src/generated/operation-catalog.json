@@ -34576,10 +34576,12 @@
         "HOSViolation",
         "InboundMessage",
         "Insight",
+        "MoveCoverage",
         "ServiceFailure",
-        "WeatherAlert"
+        "WeatherAlert",
+        "WorkerCredential"
       ],
-      "sdl": "\"\"\"\nThe record an item stands in for. The source stays authoritative: an item\nis a projection of it, keyed by kind and id, and resolves when the source\ndoes.\n\"\"\"\nenum WatchtowerSourceKind {\n  AgentException\n  AgentPlan\n  AgentProposal\n  AgentRunFailed\n  BillingException\n  CarrierIntelEvent\n  DetentionOccurrence\n  EDIInboundQuarantined\n  HOSViolation\n  InboundMessage\n  Insight\n  ServiceFailure\n  WeatherAlert\n}"
+      "sdl": "\"\"\"\nThe record an item stands in for. The source stays authoritative: an item\nis a projection of it, keyed by kind and id, and resolves when the source\ndoes.\n\"\"\"\nenum WatchtowerSourceKind {\n  AgentException\n  AgentPlan\n  AgentProposal\n  AgentRunFailed\n  BillingException\n  CarrierIntelEvent\n  DetentionOccurrence\n  EDIInboundQuarantined\n  HOSViolation\n  InboundMessage\n  Insight\n  MoveCoverage\n  ServiceFailure\n  WeatherAlert\n  WorkerCredential\n}"
     },
     "WatchtowerSeverity": {
       "kind": "enum",

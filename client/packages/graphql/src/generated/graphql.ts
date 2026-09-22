@@ -28,11 +28,14 @@ export type AiStructuredOutputMode =
 export type AiTask =
   | 'AssistantChat'
   | 'BillingDiagnosis'
+  | 'DailyBriefing'
   | 'DocumentClassification'
   | 'DocumentExtraction'
   | 'FormulaAssistant'
   | 'General'
+  | 'InboundClassification'
   | 'OperationalInsights'
+  | 'QueryCompose'
   | 'ScopeClassification';
 
 export type AccessorialMethod =
@@ -5562,8 +5565,10 @@ export type WatchtowerSourceKind =
   | 'HOSViolation'
   | 'InboundMessage'
   | 'Insight'
+  | 'MoveCoverage'
   | 'ServiceFailure'
-  | 'WeatherAlert';
+  | 'WeatherAlert'
+  | 'WorkerCredential';
 
 export type WithdrawInvoiceDisputeInput = {
   disputeId: string | number;

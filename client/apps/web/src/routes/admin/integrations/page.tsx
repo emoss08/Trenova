@@ -13,6 +13,7 @@ export function IntegrationsPage() {
           "Connect the outside services Trenova works with: mileage, telematics, email, fuel prices and carrier data.",
         ),
       }}
+      className="p-0"
     >
       <IntegrationCatalogCard />
     </PageLayout>
