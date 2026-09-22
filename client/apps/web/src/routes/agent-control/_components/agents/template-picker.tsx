@@ -3,8 +3,11 @@ import { SelectField } from "@/components/fields/select-field";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type { AgentTemplate, AgentTemplateKind } from "@/types/assistant";
 import {
+  BellIcon,
   BotIcon,
+  ClipboardCheckIcon,
   FileInputIcon,
+  GaugeIcon,
   HeadsetIcon,
   type LucideIcon,
   ReceiptTextIcon,
@@ -15,6 +18,7 @@ import {
   RadarIcon,
   PackagePlusIcon,
   LandmarkIcon,
+  SearchIcon,
 } from "lucide-react";
 import { useMemo } from "react";
 import type { Control } from "react-hook-form";
@@ -32,6 +36,10 @@ export const TEMPLATE_ICONS: Record<AgentTemplateKind, LucideIcon> = {
   LoadMonitor: RadarIcon,
   ShipmentIntake: PackagePlusIcon,
   CashApplication: LandmarkIcon,
+  DetentionDesk: GaugeIcon,
+  CredentialDesk: ClipboardCheckIcon,
+  CustomerUpdateDesk: BellIcon,
+  CarrierRiskDesk: SearchIcon,
 };
 
 type TemplatePickerProps = {

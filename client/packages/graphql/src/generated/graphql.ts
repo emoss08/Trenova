@@ -270,18 +270,26 @@ export type AgentSubjectType =
   | 'AssistantThread'
   | 'BankReceipt'
   | 'BillingQueueItem'
+  | 'CarrierIntelEvent'
+  | 'DetentionOccurrence'
   | 'Document'
+  | 'EDIInboundFile'
   | 'Insight'
   | 'Organization'
   | 'Shipment'
-  | 'ShipmentMove';
+  | 'ShipmentMove'
+  | 'Worker';
 
 export type AgentTemplate =
   | 'BillingAssistant'
   | 'BillingException'
+  | 'CarrierRiskDesk'
   | 'CashApplication'
   | 'ComplianceAssistant'
+  | 'CredentialDesk'
   | 'CustomerAssistant'
+  | 'CustomerUpdateDesk'
+  | 'DetentionDesk'
   | 'DispatchAssignment'
   | 'DispatchAssistant'
   | 'GeneralAssistant'

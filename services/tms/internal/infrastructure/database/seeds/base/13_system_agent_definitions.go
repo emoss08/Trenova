@@ -173,6 +173,7 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 			ToolTiers:       map[string]agent.AutonomyTier{"assign_move": agent.TierPropose},
 			AutonomyCeiling: dispatch.StarterCeiling(),
 			TriggerMode:     dispatch.StarterTrigger(),
+			EventKinds:      dispatch.StarterEvents(),
 			CronExpression:  dispatch.StarterCron(),
 			OutputMode:      agentdefinition.OutputReport,
 			ShadowMode:      true,

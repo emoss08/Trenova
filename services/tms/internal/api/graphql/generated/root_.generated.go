@@ -71591,6 +71591,10 @@ extend type Mutation {
   LoadMonitor
   ShipmentIntake
   CashApplication
+  DetentionDesk
+  CredentialDesk
+  CustomerUpdateDesk
+  CarrierRiskDesk
 }
 
 enum AgentTriggerMode {

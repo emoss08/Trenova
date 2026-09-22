@@ -16,6 +16,10 @@ const (
 	TemplateLoadMonitor         = Template("LoadMonitor")
 	TemplateShipmentIntake      = Template("ShipmentIntake")
 	TemplateCashApplication     = Template("CashApplication")
+	TemplateDetentionDesk       = Template("DetentionDesk")
+	TemplateCredentialDesk      = Template("CredentialDesk")
+	TemplateCustomerUpdateDesk  = Template("CustomerUpdateDesk")
+	TemplateCarrierRiskDesk     = Template("CarrierRiskDesk")
 )
 
 func (t Template) IsValid() bool {
@@ -30,7 +34,11 @@ func (t Template) IsValid() bool {
 		TemplateImportAssistant,
 		TemplateLoadMonitor,
 		TemplateShipmentIntake,
-		TemplateCashApplication:
+		TemplateCashApplication,
+		TemplateDetentionDesk,
+		TemplateCredentialDesk,
+		TemplateCustomerUpdateDesk,
+		TemplateCarrierRiskDesk:
 		return true
 	default:
 		return false
@@ -50,6 +58,10 @@ func AllTemplates() []Template {
 		TemplateLoadMonitor,
 		TemplateShipmentIntake,
 		TemplateCashApplication,
+		TemplateDetentionDesk,
+		TemplateCredentialDesk,
+		TemplateCustomerUpdateDesk,
+		TemplateCarrierRiskDesk,
 	}
 }
 
@@ -77,6 +89,14 @@ func (t Template) Label() string {
 		return "Shipment intake agent"
 	case TemplateCashApplication:
 		return "Cash application agent"
+	case TemplateDetentionDesk:
+		return "Detention desk"
+	case TemplateCredentialDesk:
+		return "Credential desk"
+	case TemplateCustomerUpdateDesk:
+		return "Customer update desk"
+	case TemplateCarrierRiskDesk:
+		return "Carrier risk desk"
 	default:
 		return string(t)
 	}
@@ -110,6 +130,18 @@ func (t Template) Description() string {
 		return "Works each bank receipt that could not be matched on its own: finds the payment " +
 			"or the invoices it pays and proposes the match, so the morning's reconciliation " +
 			"is a review rather than a search."
+	case TemplateDetentionDesk:
+		return "Works each detention clock from the moment it starts: gets the notice out " +
+			"while the window is open and says what the stay is going to cost."
+	case TemplateCredentialDesk:
+		return "Takes a driver's papers in hand before they expire, chasing the renewal " +
+			"and saying when somebody has to come off dispatch."
+	case TemplateCustomerUpdateDesk:
+		return "Tells each customer their freight arrived or left, as they asked to be " +
+			"told, and stays quiet with the ones who did not."
+	case TemplateCarrierRiskDesk:
+		return "Reads every change on a carrier's authority, insurance and safety record " +
+			"and says whether they can still be tendered freight."
 	default:
 		return ""
 	}
@@ -197,6 +229,66 @@ func (t Template) StarterInstructions() string {
 			"customer cannot be identified from the records, resolve the work item with " +
 			"RequiresExternalFollowUp or MarkedFalsePositive and say why. Report what you " +
 			"matched, what you posted and what you left for a person."
+	case TemplateDetentionDesk:
+		return "You work detention. A run starts either when a clock opens at a stop or " +
+			"when a notice is due on a policy that leaves sending to a person; read the " +
+			"occurrence with get_detention_occurrence first, which gives you the clock, " +
+			"the free time, the notice window and what has already gone out. A notice " +
+			"whose window is open and that has not been sent gets send_detention_notice, " +
+			"with the stop, the times and the charge as they stand, and nothing internal. " +
+			"A clock already past its notice deadline, or one held back by a gate or " +
+			"waiting on approval, gets escalate_detention with what is blocking it rather " +
+			"than a notice the customer can reject on timing. Never send a second notice " +
+			"for an occurrence that shows one already sent, and never send one for a clock " +
+			"that has stopped. Leave the charge itself alone: waiving, approving and " +
+			"disputing are a person's to decide. When the customer has no notice " +
+			"recipients on file, or the occurrence is frozen, raise an exception saying " +
+			"so. Report the clock, what you sent, and what is still running."
+	case TemplateCredentialDesk:
+		return "You keep drivers legal. A run starts when a driver has papers coming due; " +
+			"read the driver with get_worker, which lists every credential nearest expiry " +
+			"first, and use get_worker_credential for the detail on one. Ask for the " +
+			"renewal once per driver with request_credential_renewal, covering every " +
+			"paper that is due rather than one message per certificate. A credential that " +
+			"has already expired, or that expires before a renewal could realistically " +
+			"land, gets place_worker_dispatch_hold as well, because a driver without a " +
+			"current medical card or licence cannot be given freight — say plainly in the " +
+			"reason which paper it is and when it lapsed. A hold is reversible and a " +
+			"person can lift it; do not treat it as a punishment. Never place a hold on a " +
+			"paper that is merely approaching its date. When the credential type is not " +
+			"one that governs driving, ask for the renewal and stop there. Report the " +
+			"driver, the papers, what you asked for and whether they can still roll."
+	case TemplateCustomerUpdateDesk:
+		return "You tell customers where their freight is. A run starts when a truck " +
+			"arrives at or departs from a stop; read the shipment with " +
+			"get_shipment_tracking to see which stop moved and what is left. Before " +
+			"writing anything, call get_customer_update_preferences: a customer set to " +
+			"None is not to be emailed at all, and one set to Arrivals or Departures is " +
+			"to be told about that event only. When they do want it, send the update with " +
+			"email_customer: the stop, what happened, the time it happened, and the next " +
+			"stop with its window. Nothing internal — no driver name, no pay, no margin, " +
+			"no other customer's freight. Lateness is the load monitor's to report, not " +
+			"yours; say what happened rather than what it means for the delivery. Do not " +
+			"repeat an update the shipment's comments show already went out for this " +
+			"stop. When the customer wants updates but has no recipients on file, raise " +
+			"an exception rather than sending to the billing address. Report the stop, " +
+			"who you told and who you did not."
+	case TemplateCarrierRiskDesk:
+		return "You decide whether a carrier can still be given freight. A run starts " +
+			"when monitoring opens a finding; read it with get_carrier_intel_event, " +
+			"which gives you the rule, the severity, the summary and whether the finding " +
+			"bears on eligibility at all. A finding that does not affect eligibility — a " +
+			"changed address, a new contact — gets acknowledge_carrier_intel_event and " +
+			"nothing more. A finding that does, and that the record confirms, gets " +
+			"set_carrier_tender_block with the rule and a reason a dispatcher can read: " +
+			"revoked authority, lapsed insurance, an out-of-service order. Check the " +
+			"carrier with get_carrier before blocking, because a finding can arrive after " +
+			"the carrier has already fixed it, and a block on a carrier mid-load strands " +
+			"freight. When the record shows the problem resolved, use " +
+			"resolve_carrier_intel_event and say what changed. Never block on a finding " +
+			"the catalogue does not mark as bearing on eligibility, and never block on " +
+			"severity alone. Report the carrier, the finding, and whether they can be " +
+			"tendered."
 	default:
 		return ""
 	}
@@ -307,6 +399,64 @@ func (t Template) StarterTools() []string {
 		}
 	case TemplateGeneralAssistant:
 		return nil
+	case TemplateDetentionDesk:
+		return []string{
+			"get_detention_occurrence",
+			"list_detention_occurrences",
+			"list_detention_desk",
+			"get_shipment",
+			"get_shipment_tracking",
+			"get_customer",
+			"list_email_profiles",
+			"send_detention_notice",
+			"escalate_detention",
+			"add_shipment_comment",
+			"raise_exception",
+			"flag_for_manual_review",
+			"recall_memory",
+			"remember",
+		}
+	case TemplateCredentialDesk:
+		return []string{
+			"get_worker",
+			"get_worker_credential",
+			"list_expiring_credentials",
+			"list_workers",
+			"request_credential_renewal",
+			"place_worker_dispatch_hold",
+			"notify_driver",
+			"raise_exception",
+			"flag_for_manual_review",
+			"recall_memory",
+			"remember",
+		}
+	case TemplateCustomerUpdateDesk:
+		return []string{
+			"get_shipment",
+			"get_shipment_tracking",
+			"get_customer",
+			"get_customer_update_preferences",
+			"list_email_profiles",
+			"email_customer",
+			"add_shipment_comment",
+			"raise_exception",
+			"flag_for_manual_review",
+			"recall_memory",
+			"remember",
+		}
+	case TemplateCarrierRiskDesk:
+		return []string{
+			"get_carrier_intel_event",
+			"get_carrier",
+			"list_carriers",
+			"acknowledge_carrier_intel_event",
+			"resolve_carrier_intel_event",
+			"set_carrier_tender_block",
+			"raise_exception",
+			"flag_for_manual_review",
+			"recall_memory",
+			"remember",
+		}
 	case TemplateCashApplication:
 		return []string{
 			"get_bank_receipt",
@@ -381,9 +531,20 @@ func (t Template) StarterTools() []string {
 
 func (t Template) StarterTrigger() TriggerMode {
 	switch t {
-	case TemplateBillingException, TemplateShipmentIntake, TemplateCashApplication:
+	case TemplateBillingException,
+		TemplateShipmentIntake,
+		TemplateCashApplication,
+		TemplateDetentionDesk,
+		TemplateCredentialDesk,
+		TemplateCustomerUpdateDesk,
+		TemplateCarrierRiskDesk,
+		// The dispatch sweep now raises a move that is close enough to its
+		// start to matter, so coverage is answered per move, with the move
+		// as the run's subject, rather than by re-planning the board every
+		// half hour and hoping a person reads the report.
+		TemplateDispatchAssignment:
 		return TriggerEvent
-	case TemplateDispatchAssignment, TemplateLoadMonitor:
+	case TemplateLoadMonitor:
 		return TriggerScheduled
 	default:
 		return TriggerChat
@@ -398,6 +559,22 @@ func (t Template) StarterEvents() []agent.EventKind {
 		return []agent.EventKind{agent.EventDocumentExtracted}
 	case TemplateCashApplication:
 		return []agent.EventKind{agent.EventBankReceiptException}
+	case TemplateDispatchAssignment:
+		return []agent.EventKind{agent.EventShipmentMoveCoverageAtRisk}
+	case TemplateDetentionDesk:
+		return []agent.EventKind{
+			agent.EventDetentionOccurrenceOpened,
+			agent.EventDetentionNoticeDue,
+		}
+	case TemplateCredentialDesk:
+		return []agent.EventKind{agent.EventWorkerCredentialExpiring}
+	case TemplateCustomerUpdateDesk:
+		return []agent.EventKind{
+			agent.EventShipmentMoveArrived,
+			agent.EventShipmentMoveDeparted,
+		}
+	case TemplateCarrierRiskDesk:
+		return []agent.EventKind{agent.EventCarrierIntelEventOpened}
 	default:
 		return nil
 	}
@@ -405,8 +582,6 @@ func (t Template) StarterEvents() []agent.EventKind {
 
 func (t Template) StarterCron() string {
 	switch t {
-	case TemplateDispatchAssignment:
-		return "*/30 * * * *"
 	case TemplateLoadMonitor:
 		return "*/15 * * * *"
 	default:
@@ -416,7 +591,10 @@ func (t Template) StarterCron() string {
 
 func (t Template) StarterCeiling() agent.AutonomyTier {
 	switch t {
-	case TemplateGeneralAssistant, TemplateCustomerAssistant:
+	case TemplateGeneralAssistant,
+		TemplateCustomerAssistant,
+		TemplateCustomerUpdateDesk,
+		TemplateCarrierRiskDesk:
 		return agent.TierPropose
 	default:
 		return agent.TierActWithApproval
