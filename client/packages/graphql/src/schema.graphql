@@ -1084,6 +1084,68 @@ enum AgentRunTrigger {
   Scheduled
 }
 
+"""
+One agent's record, counted at read time from its runs, its proposals and its
+usage. Nothing here is stored, so there is no second copy to drift out of step
+with the rows a person can audit.
+"""
+type AgentScorecard {
+  agentDefinitionId: ID!
+  """
+  The share of answered proposals approved unchanged, 0 to 1. Absent until
+  somebody has decided: an agent whose first proposal is still waiting has an
+  unknown record, not a zero one.
+  """
+  approvalRate: Float
+  approved: Int!
+  """Writes carried out without anybody being asked."""
+  autoExecuted: Int!
+  byTool: [AgentToolOutcome!]!
+  costUsd: Decimal!
+  """
+  Clerical minutes the carried-out writes took off somebody. An estimate,
+  and labelled as one wherever it is shown: it prices finding the record and
+  typing the change, never deciding whether the change was right.
+  """
+  estimatedMinutesSaved: Int!
+  exceptions: Int!
+  executed: Int!
+  executionFailures: Int!
+  inputTokens: Int!
+  modified: Int!
+  outputTokens: Int!
+  pending: Int!
+  proposals: Int!
+  rejected: Int!
+  runs: Int!
+  runsFailed: Int!
+  """The start of the window."""
+  since: Timestamp!
+  toolTrust: [AgentToolTrust!]!
+  trend: [AgentScorecardPoint!]!
+  window: AgentScorecardWindow!
+}
+
+input AgentScorecardInput {
+  agentDefinitionId: ID!
+  window: AgentScorecardWindow = Last30Days
+}
+
+"""One day of the trend line."""
+type AgentScorecardPoint {
+  approved: Int!
+  day: Timestamp!
+  proposals: Int!
+  runs: Int!
+}
+
+"""How far back a scorecard looks."""
+enum AgentScorecardWindow {
+  Last7Days
+  Last30Days
+  Last90Days
+}
+
 enum AgentSeverity {
   Critical
   High
@@ -1114,6 +1176,47 @@ enum AgentTemplate {
   ImportAssistant
   LoadMonitor
   ShipmentIntake
+}
+
+"""One tool's record over the window."""
+type AgentToolOutcome {
+  approved: Int!
+  """Writes the trust ladder let through without asking anyone."""
+  automatic: Int!
+  """Proposals that actually went through."""
+  executed: Int!
+  """Approved, and then refused by the world."""
+  failed: Int!
+  modified: Int!
+  pending: Int!
+  rejected: Int!
+  toolName: String!
+}
+
+"""
+What one tool has earned on this agent.
+
+The ladder is not windowed: a tier is earned over the agent's whole life and
+taken back the same way, so a thirty-day view of it would describe a
+different ladder from the one deciding what runs without asking.
+"""
+type AgentToolTrust {
+  approvals: Int!
+  demotedAt: Timestamp
+  """
+  The tier the ledger granted, when the tool's tier was earned rather than chosen.
+  """
+  earnedTier: AgentAutonomyTier
+  executionFailures: Int!
+  lastDecisionAt: Timestamp
+  modifications: Int!
+  promotedAt: Timestamp
+  rejections: Int!
+  """
+  Clean approvals in a row. A modification, a rejection or a failure sends it back to zero.
+  """
+  streak: Int!
+  toolName: String!
 }
 
 enum AgentTriggerMode {
@@ -12659,6 +12762,8 @@ type Query {
   agentProposals(input: DataTableConnectionInput!): AgentProposalConnection!
   agentRun(id: ID!): AgentRun
   agentRuns(input: DataTableConnectionInput!): AgentRunConnection!
+  """How one agent has been doing."""
+  agentScorecard(input: AgentScorecardInput!): AgentScorecard!
   aiProvider(id: ID!): AIProvider
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
   """

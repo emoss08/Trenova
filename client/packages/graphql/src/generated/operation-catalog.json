@@ -1,6 +1,6 @@
 {
-  "operationCount": 788,
-  "fragmentCount": 202,
+  "operationCount": 789,
+  "fragmentCount": 203,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -831,6 +831,28 @@
       ],
       "usages": [],
       "sdl": "query AgentRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentRuns(input: $input) {\n    edges {\n      node {\n        ...AgentRunTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AgentScorecard",
+      "kind": "query",
+      "domain": "agent-scorecard",
+      "sourceFile": "src/operations/agent-scorecard/scorecard.graphql",
+      "hash": "sha256:4ad32e77a6c5d07bddbf798b32093cb772102fd0a3a232f14c6c0e1136dc699f",
+      "rootFields": [
+        "agentScorecard"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "AgentScorecardInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentScorecardFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentScorecard($input: AgentScorecardInput!) {\n  agentScorecard(input: $input) {\n    ...AgentScorecardFields\n  }\n}\n\nfragment AgentScorecardFields on AgentScorecard {\n  agentDefinitionId\n  window\n  since\n  runs\n  runsFailed\n  exceptions\n  proposals\n  approved\n  modified\n  rejected\n  pending\n  executed\n  executionFailures\n  autoExecuted\n  approvalRate\n  inputTokens\n  outputTokens\n  costUsd\n  estimatedMinutesSaved\n  byTool {\n    toolName\n    approved\n    modified\n    rejected\n    executed\n    failed\n    pending\n    automatic\n  }\n  toolTrust {\n    toolName\n    streak\n    approvals\n    modifications\n    rejections\n    executionFailures\n    earnedTier\n    lastDecisionAt\n    promotedAt\n    demotedAt\n  }\n}"
     },
     {
       "name": "AIProviderCards",
@@ -18236,6 +18258,18 @@
       "sdl": "fragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentScorecardFields",
+      "typeCondition": "AgentScorecard",
+      "domain": "agent-scorecard",
+      "sourceFile": "src/operations/agent-scorecard/scorecard.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentScorecard"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentScorecardFields on AgentScorecard {\n  agentDefinitionId\n  window\n  since\n  runs\n  runsFailed\n  exceptions\n  proposals\n  approved\n  modified\n  rejected\n  pending\n  executed\n  executionFailures\n  autoExecuted\n  approvalRate\n  inputTokens\n  outputTokens\n  costUsd\n  estimatedMinutesSaved\n  byTool {\n    toolName\n    approved\n    modified\n    rejected\n    executed\n    failed\n    pending\n    automatic\n  }\n  toolTrust {\n    toolName\n    streak\n    approvals\n    modifications\n    rejections\n    executionFailures\n    earnedTier\n    lastDecisionAt\n    promotedAt\n    demotedAt\n  }\n}"
+    },
+    {
       "name": "AIProviderCardFields",
       "typeCondition": "AIProvider",
       "domain": "ai-provider",
@@ -21411,6 +21445,23 @@
         }
       ],
       "sdl": "input AgentProposalDecisionInput {\n  decision: AgentDecisionType!\n  modifications: JSON\n  reasonCode: String!\n}"
+    },
+    "AgentScorecardInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "agentDefinitionId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "window",
+          "type": "AgentScorecardWindow",
+          "defaultValue": "Last30Days",
+          "defaultJson": "Last30Days"
+        }
+      ],
+      "sdl": "input AgentScorecardInput {\n  agentDefinitionId: ID!\n  window: AgentScorecardWindow = Last30Days\n}"
     },
     "AmendWorkerEmploymentEventInput": {
       "kind": "input",
@@ -32080,6 +32131,15 @@
         "Rejected"
       ],
       "sdl": "enum AgentDecisionType {\n  Accepted\n  Modified\n  Rejected\n}"
+    },
+    "AgentScorecardWindow": {
+      "kind": "enum",
+      "values": [
+        "Last7Days",
+        "Last30Days",
+        "Last90Days"
+      ],
+      "sdl": "\"\"\"How far back a scorecard looks.\"\"\"\nenum AgentScorecardWindow {\n  Last7Days\n  Last30Days\n  Last90Days\n}"
     },
     "CarrierIntelSyncField": {
       "kind": "enum",

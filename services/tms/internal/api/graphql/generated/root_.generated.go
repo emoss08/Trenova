@@ -877,6 +877,62 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	AgentScorecard struct {
+		AgentDefinitionID     func(childComplexity int) int
+		ApprovalRate          func(childComplexity int) int
+		Approved              func(childComplexity int) int
+		AutoExecuted          func(childComplexity int) int
+		ByTool                func(childComplexity int) int
+		CostUsd               func(childComplexity int) int
+		EstimatedMinutesSaved func(childComplexity int) int
+		Exceptions            func(childComplexity int) int
+		Executed              func(childComplexity int) int
+		ExecutionFailures     func(childComplexity int) int
+		InputTokens           func(childComplexity int) int
+		Modified              func(childComplexity int) int
+		OutputTokens          func(childComplexity int) int
+		Pending               func(childComplexity int) int
+		Proposals             func(childComplexity int) int
+		Rejected              func(childComplexity int) int
+		Runs                  func(childComplexity int) int
+		RunsFailed            func(childComplexity int) int
+		Since                 func(childComplexity int) int
+		ToolTrust             func(childComplexity int) int
+		Trend                 func(childComplexity int) int
+		Window                func(childComplexity int) int
+	}
+
+	AgentScorecardPoint struct {
+		Approved  func(childComplexity int) int
+		Day       func(childComplexity int) int
+		Proposals func(childComplexity int) int
+		Runs      func(childComplexity int) int
+	}
+
+	AgentToolOutcome struct {
+		Approved  func(childComplexity int) int
+		Automatic func(childComplexity int) int
+		Executed  func(childComplexity int) int
+		Failed    func(childComplexity int) int
+		Modified  func(childComplexity int) int
+		Pending   func(childComplexity int) int
+		Rejected  func(childComplexity int) int
+		ToolName  func(childComplexity int) int
+	}
+
+	AgentToolTrust struct {
+		Approvals         func(childComplexity int) int
+		DemotedAt         func(childComplexity int) int
+		EarnedTier        func(childComplexity int) int
+		ExecutionFailures func(childComplexity int) int
+		LastDecisionAt    func(childComplexity int) int
+		Modifications     func(childComplexity int) int
+		PromotedAt        func(childComplexity int) int
+		Rejections        func(childComplexity int) int
+		Streak            func(childComplexity int) int
+		ToolName          func(childComplexity int) int
+	}
+
 	ApiKey struct {
 		BusinessUnitID    func(childComplexity int) int
 		CreatedAt         func(childComplexity int) int
@@ -7394,6 +7450,7 @@ type ComplexityRoot struct {
 		AgentProposals                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentRun                            func(childComplexity int, id string) int
 		AgentRuns                           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AgentScorecard                      func(childComplexity int, input gqlmodel.AgentScorecardInput) int
 		AiProvider                          func(childComplexity int, id string) int
 		AiProviders                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AiUsageSummary                      func(childComplexity int, since *int) int
@@ -14664,6 +14721,274 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentRunEdge.Node(childComplexity), true
+
+	case "AgentScorecard.agentDefinitionId":
+		if e.ComplexityRoot.AgentScorecard.AgentDefinitionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.AgentDefinitionID(childComplexity), true
+	case "AgentScorecard.approvalRate":
+		if e.ComplexityRoot.AgentScorecard.ApprovalRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.ApprovalRate(childComplexity), true
+	case "AgentScorecard.approved":
+		if e.ComplexityRoot.AgentScorecard.Approved == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.Approved(childComplexity), true
+	case "AgentScorecard.autoExecuted":
+		if e.ComplexityRoot.AgentScorecard.AutoExecuted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.AutoExecuted(childComplexity), true
+	case "AgentScorecard.byTool":
+		if e.ComplexityRoot.AgentScorecard.ByTool == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.ByTool(childComplexity), true
+	case "AgentScorecard.costUsd":
+		if e.ComplexityRoot.AgentScorecard.CostUsd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.CostUsd(childComplexity), true
+	case "AgentScorecard.estimatedMinutesSaved":
+		if e.ComplexityRoot.AgentScorecard.EstimatedMinutesSaved == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.EstimatedMinutesSaved(childComplexity), true
+	case "AgentScorecard.exceptions":
+		if e.ComplexityRoot.AgentScorecard.Exceptions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.Exceptions(childComplexity), true
+	case "AgentScorecard.executed":
+		if e.ComplexityRoot.AgentScorecard.Executed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.Executed(childComplexity), true
+	case "AgentScorecard.executionFailures":
+		if e.ComplexityRoot.AgentScorecard.ExecutionFailures == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.ExecutionFailures(childComplexity), true
+	case "AgentScorecard.inputTokens":
+		if e.ComplexityRoot.AgentScorecard.InputTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.InputTokens(childComplexity), true
+	case "AgentScorecard.modified":
+		if e.ComplexityRoot.AgentScorecard.Modified == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.Modified(childComplexity), true
+	case "AgentScorecard.outputTokens":
+		if e.ComplexityRoot.AgentScorecard.OutputTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.OutputTokens(childComplexity), true
+	case "AgentScorecard.pending":
+		if e.ComplexityRoot.AgentScorecard.Pending == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.Pending(childComplexity), true
+	case "AgentScorecard.proposals":
+		if e.ComplexityRoot.AgentScorecard.Proposals == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.Proposals(childComplexity), true
+	case "AgentScorecard.rejected":
+		if e.ComplexityRoot.AgentScorecard.Rejected == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.Rejected(childComplexity), true
+	case "AgentScorecard.runs":
+		if e.ComplexityRoot.AgentScorecard.Runs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.Runs(childComplexity), true
+	case "AgentScorecard.runsFailed":
+		if e.ComplexityRoot.AgentScorecard.RunsFailed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.RunsFailed(childComplexity), true
+	case "AgentScorecard.since":
+		if e.ComplexityRoot.AgentScorecard.Since == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.Since(childComplexity), true
+	case "AgentScorecard.toolTrust":
+		if e.ComplexityRoot.AgentScorecard.ToolTrust == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.ToolTrust(childComplexity), true
+	case "AgentScorecard.trend":
+		if e.ComplexityRoot.AgentScorecard.Trend == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.Trend(childComplexity), true
+	case "AgentScorecard.window":
+		if e.ComplexityRoot.AgentScorecard.Window == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecard.Window(childComplexity), true
+
+	case "AgentScorecardPoint.approved":
+		if e.ComplexityRoot.AgentScorecardPoint.Approved == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecardPoint.Approved(childComplexity), true
+	case "AgentScorecardPoint.day":
+		if e.ComplexityRoot.AgentScorecardPoint.Day == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecardPoint.Day(childComplexity), true
+	case "AgentScorecardPoint.proposals":
+		if e.ComplexityRoot.AgentScorecardPoint.Proposals == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecardPoint.Proposals(childComplexity), true
+	case "AgentScorecardPoint.runs":
+		if e.ComplexityRoot.AgentScorecardPoint.Runs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentScorecardPoint.Runs(childComplexity), true
+
+	case "AgentToolOutcome.approved":
+		if e.ComplexityRoot.AgentToolOutcome.Approved == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolOutcome.Approved(childComplexity), true
+	case "AgentToolOutcome.automatic":
+		if e.ComplexityRoot.AgentToolOutcome.Automatic == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolOutcome.Automatic(childComplexity), true
+	case "AgentToolOutcome.executed":
+		if e.ComplexityRoot.AgentToolOutcome.Executed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolOutcome.Executed(childComplexity), true
+	case "AgentToolOutcome.failed":
+		if e.ComplexityRoot.AgentToolOutcome.Failed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolOutcome.Failed(childComplexity), true
+	case "AgentToolOutcome.modified":
+		if e.ComplexityRoot.AgentToolOutcome.Modified == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolOutcome.Modified(childComplexity), true
+	case "AgentToolOutcome.pending":
+		if e.ComplexityRoot.AgentToolOutcome.Pending == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolOutcome.Pending(childComplexity), true
+	case "AgentToolOutcome.rejected":
+		if e.ComplexityRoot.AgentToolOutcome.Rejected == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolOutcome.Rejected(childComplexity), true
+	case "AgentToolOutcome.toolName":
+		if e.ComplexityRoot.AgentToolOutcome.ToolName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolOutcome.ToolName(childComplexity), true
+
+	case "AgentToolTrust.approvals":
+		if e.ComplexityRoot.AgentToolTrust.Approvals == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolTrust.Approvals(childComplexity), true
+	case "AgentToolTrust.demotedAt":
+		if e.ComplexityRoot.AgentToolTrust.DemotedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolTrust.DemotedAt(childComplexity), true
+	case "AgentToolTrust.earnedTier":
+		if e.ComplexityRoot.AgentToolTrust.EarnedTier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolTrust.EarnedTier(childComplexity), true
+	case "AgentToolTrust.executionFailures":
+		if e.ComplexityRoot.AgentToolTrust.ExecutionFailures == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolTrust.ExecutionFailures(childComplexity), true
+	case "AgentToolTrust.lastDecisionAt":
+		if e.ComplexityRoot.AgentToolTrust.LastDecisionAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolTrust.LastDecisionAt(childComplexity), true
+	case "AgentToolTrust.modifications":
+		if e.ComplexityRoot.AgentToolTrust.Modifications == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolTrust.Modifications(childComplexity), true
+	case "AgentToolTrust.promotedAt":
+		if e.ComplexityRoot.AgentToolTrust.PromotedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolTrust.PromotedAt(childComplexity), true
+	case "AgentToolTrust.rejections":
+		if e.ComplexityRoot.AgentToolTrust.Rejections == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolTrust.Rejections(childComplexity), true
+	case "AgentToolTrust.streak":
+		if e.ComplexityRoot.AgentToolTrust.Streak == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolTrust.Streak(childComplexity), true
+	case "AgentToolTrust.toolName":
+		if e.ComplexityRoot.AgentToolTrust.ToolName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolTrust.ToolName(childComplexity), true
 
 	case "ApiKey.businessUnitId":
 		if e.ComplexityRoot.ApiKey.BusinessUnitID == nil {
@@ -47708,6 +48033,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentRuns(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentScorecard":
+		if e.ComplexityRoot.Query.AgentScorecard == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentScorecard_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentScorecard(childComplexity, args["input"].(gqlmodel.AgentScorecardInput)), true
 	case "Query.aiProvider":
 		if e.ComplexityRoot.Query.AiProvider == nil {
 			break
@@ -70007,6 +70343,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAgentMemoryInput,
 		ec.unmarshalInputAgentPlanDecisionInput,
 		ec.unmarshalInputAgentProposalDecisionInput,
+		ec.unmarshalInputAgentScorecardInput,
 		ec.unmarshalInputAmendWorkerEmploymentEventInput,
 		ec.unmarshalInputApplyCarrierIntelSuggestionsInput,
 		ec.unmarshalInputApplyCreditMemoInput,
@@ -71345,6 +71682,115 @@ type AgentDefinitionConnection {
 extend type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
   agentDefinition(id: ID!): AgentDefinition
+}
+`, BuiltIn: false},
+	{Name: "../schema/agentscorecard.graphqls", Input: `"How far back a scorecard looks."
+enum AgentScorecardWindow {
+  Last7Days
+  Last30Days
+  Last90Days
+}
+
+"One tool's record over the window."
+type AgentToolOutcome {
+  toolName: String!
+  approved: Int!
+  modified: Int!
+  rejected: Int!
+  "Proposals that actually went through."
+  executed: Int!
+  "Approved, and then refused by the world."
+  failed: Int!
+  pending: Int!
+  "Writes the trust ladder let through without asking anyone."
+  automatic: Int!
+}
+
+"One day of the trend line."
+type AgentScorecardPoint {
+  day: Timestamp!
+  runs: Int!
+  proposals: Int!
+  approved: Int!
+}
+
+"""
+What one tool has earned on this agent.
+
+The ladder is not windowed: a tier is earned over the agent's whole life and
+taken back the same way, so a thirty-day view of it would describe a
+different ladder from the one deciding what runs without asking.
+"""
+type AgentToolTrust {
+  toolName: String!
+  "Clean approvals in a row. A modification, a rejection or a failure sends it back to zero."
+  streak: Int!
+  approvals: Int!
+  modifications: Int!
+  rejections: Int!
+  executionFailures: Int!
+  "The tier the ledger granted, when the tool's tier was earned rather than chosen."
+  earnedTier: AgentAutonomyTier
+  lastDecisionAt: Timestamp
+  promotedAt: Timestamp
+  demotedAt: Timestamp
+}
+
+"""
+One agent's record, counted at read time from its runs, its proposals and its
+usage. Nothing here is stored, so there is no second copy to drift out of step
+with the rows a person can audit.
+"""
+type AgentScorecard {
+  agentDefinitionId: ID!
+  window: AgentScorecardWindow!
+  "The start of the window."
+  since: Timestamp!
+
+  runs: Int!
+  runsFailed: Int!
+  exceptions: Int!
+
+  proposals: Int!
+  approved: Int!
+  modified: Int!
+  rejected: Int!
+  pending: Int!
+  executed: Int!
+  executionFailures: Int!
+  "Writes carried out without anybody being asked."
+  autoExecuted: Int!
+  """
+  The share of answered proposals approved unchanged, 0 to 1. Absent until
+  somebody has decided: an agent whose first proposal is still waiting has an
+  unknown record, not a zero one.
+  """
+  approvalRate: Float
+
+  inputTokens: Int!
+  outputTokens: Int!
+  costUsd: Decimal!
+
+  """
+  Clerical minutes the carried-out writes took off somebody. An estimate,
+  and labelled as one wherever it is shown: it prices finding the record and
+  typing the change, never deciding whether the change was right.
+  """
+  estimatedMinutesSaved: Int!
+
+  byTool: [AgentToolOutcome!]!
+  trend: [AgentScorecardPoint!]!
+  toolTrust: [AgentToolTrust!]!
+}
+
+input AgentScorecardInput {
+  agentDefinitionId: ID!
+  window: AgentScorecardWindow = Last30Days
+}
+
+extend type Query {
+  "How one agent has been doing."
+  agentScorecard(input: AgentScorecardInput!): AgentScorecard!
 }
 `, BuiltIn: false},
 	{Name: "../schema/aiprovider.graphqls", Input: `enum AIProviderKind {
@@ -92682,6 +93128,118 @@ func (ec *executionContext) childFields_AgentRunEdge(ctx context.Context, field 
 		return ec.fieldContext_AgentRunEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentRunEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentScorecard(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "agentDefinitionId":
+		return ec.fieldContext_AgentScorecard_agentDefinitionId(ctx, field)
+	case "window":
+		return ec.fieldContext_AgentScorecard_window(ctx, field)
+	case "since":
+		return ec.fieldContext_AgentScorecard_since(ctx, field)
+	case "runs":
+		return ec.fieldContext_AgentScorecard_runs(ctx, field)
+	case "runsFailed":
+		return ec.fieldContext_AgentScorecard_runsFailed(ctx, field)
+	case "exceptions":
+		return ec.fieldContext_AgentScorecard_exceptions(ctx, field)
+	case "proposals":
+		return ec.fieldContext_AgentScorecard_proposals(ctx, field)
+	case "approved":
+		return ec.fieldContext_AgentScorecard_approved(ctx, field)
+	case "modified":
+		return ec.fieldContext_AgentScorecard_modified(ctx, field)
+	case "rejected":
+		return ec.fieldContext_AgentScorecard_rejected(ctx, field)
+	case "pending":
+		return ec.fieldContext_AgentScorecard_pending(ctx, field)
+	case "executed":
+		return ec.fieldContext_AgentScorecard_executed(ctx, field)
+	case "executionFailures":
+		return ec.fieldContext_AgentScorecard_executionFailures(ctx, field)
+	case "autoExecuted":
+		return ec.fieldContext_AgentScorecard_autoExecuted(ctx, field)
+	case "approvalRate":
+		return ec.fieldContext_AgentScorecard_approvalRate(ctx, field)
+	case "inputTokens":
+		return ec.fieldContext_AgentScorecard_inputTokens(ctx, field)
+	case "outputTokens":
+		return ec.fieldContext_AgentScorecard_outputTokens(ctx, field)
+	case "costUsd":
+		return ec.fieldContext_AgentScorecard_costUsd(ctx, field)
+	case "estimatedMinutesSaved":
+		return ec.fieldContext_AgentScorecard_estimatedMinutesSaved(ctx, field)
+	case "byTool":
+		return ec.fieldContext_AgentScorecard_byTool(ctx, field)
+	case "trend":
+		return ec.fieldContext_AgentScorecard_trend(ctx, field)
+	case "toolTrust":
+		return ec.fieldContext_AgentScorecard_toolTrust(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentScorecard", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentScorecardPoint(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "day":
+		return ec.fieldContext_AgentScorecardPoint_day(ctx, field)
+	case "runs":
+		return ec.fieldContext_AgentScorecardPoint_runs(ctx, field)
+	case "proposals":
+		return ec.fieldContext_AgentScorecardPoint_proposals(ctx, field)
+	case "approved":
+		return ec.fieldContext_AgentScorecardPoint_approved(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentScorecardPoint", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentToolOutcome(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "toolName":
+		return ec.fieldContext_AgentToolOutcome_toolName(ctx, field)
+	case "approved":
+		return ec.fieldContext_AgentToolOutcome_approved(ctx, field)
+	case "modified":
+		return ec.fieldContext_AgentToolOutcome_modified(ctx, field)
+	case "rejected":
+		return ec.fieldContext_AgentToolOutcome_rejected(ctx, field)
+	case "executed":
+		return ec.fieldContext_AgentToolOutcome_executed(ctx, field)
+	case "failed":
+		return ec.fieldContext_AgentToolOutcome_failed(ctx, field)
+	case "pending":
+		return ec.fieldContext_AgentToolOutcome_pending(ctx, field)
+	case "automatic":
+		return ec.fieldContext_AgentToolOutcome_automatic(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentToolOutcome", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentToolTrust(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "toolName":
+		return ec.fieldContext_AgentToolTrust_toolName(ctx, field)
+	case "streak":
+		return ec.fieldContext_AgentToolTrust_streak(ctx, field)
+	case "approvals":
+		return ec.fieldContext_AgentToolTrust_approvals(ctx, field)
+	case "modifications":
+		return ec.fieldContext_AgentToolTrust_modifications(ctx, field)
+	case "rejections":
+		return ec.fieldContext_AgentToolTrust_rejections(ctx, field)
+	case "executionFailures":
+		return ec.fieldContext_AgentToolTrust_executionFailures(ctx, field)
+	case "earnedTier":
+		return ec.fieldContext_AgentToolTrust_earnedTier(ctx, field)
+	case "lastDecisionAt":
+		return ec.fieldContext_AgentToolTrust_lastDecisionAt(ctx, field)
+	case "promotedAt":
+		return ec.fieldContext_AgentToolTrust_promotedAt(ctx, field)
+	case "demotedAt":
+		return ec.fieldContext_AgentToolTrust_demotedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentToolTrust", field.Name)
 }
 
 func (ec *executionContext) childFields_ApiKey(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

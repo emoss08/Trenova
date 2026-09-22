@@ -306,6 +306,67 @@ type AgentRunEdge struct {
 	Cursor string          `json:"cursor"`
 }
 
+// One agent's record, counted at read time from its runs, its proposals and its
+// usage. Nothing here is stored, so there is no second copy to drift out of step
+// with the rows a person can audit.
+type AgentScorecard struct {
+	AgentDefinitionID string                `json:"agentDefinitionId"`
+	Window            agent.ScorecardWindow `json:"window"`
+	// The start of the window.
+	Since             int `json:"since"`
+	Runs              int `json:"runs"`
+	RunsFailed        int `json:"runsFailed"`
+	Exceptions        int `json:"exceptions"`
+	Proposals         int `json:"proposals"`
+	Approved          int `json:"approved"`
+	Modified          int `json:"modified"`
+	Rejected          int `json:"rejected"`
+	Pending           int `json:"pending"`
+	Executed          int `json:"executed"`
+	ExecutionFailures int `json:"executionFailures"`
+	// Writes carried out without anybody being asked.
+	AutoExecuted int `json:"autoExecuted"`
+	// The share of answered proposals approved unchanged, 0 to 1. Absent until
+	// somebody has decided: an agent whose first proposal is still waiting has an
+	// unknown record, not a zero one.
+	ApprovalRate *float64 `json:"approvalRate,omitempty"`
+	InputTokens  int      `json:"inputTokens"`
+	OutputTokens int      `json:"outputTokens"`
+	CostUsd      string   `json:"costUsd"`
+	// Clerical minutes the carried-out writes took off somebody. An estimate,
+	// and labelled as one wherever it is shown: it prices finding the record and
+	// typing the change, never deciding whether the change was right.
+	EstimatedMinutesSaved int                       `json:"estimatedMinutesSaved"`
+	ByTool                []*agent.ToolOutcomeCount `json:"byTool"`
+	Trend                 []*agent.ScorecardPoint   `json:"trend"`
+	ToolTrust             []*AgentToolTrust         `json:"toolTrust"`
+}
+
+type AgentScorecardInput struct {
+	AgentDefinitionID string                 `json:"agentDefinitionId"`
+	Window            *agent.ScorecardWindow `json:"window,omitempty"`
+}
+
+// What one tool has earned on this agent.
+//
+// The ladder is not windowed: a tier is earned over the agent's whole life and
+// taken back the same way, so a thirty-day view of it would describe a
+// different ladder from the one deciding what runs without asking.
+type AgentToolTrust struct {
+	ToolName string `json:"toolName"`
+	// Clean approvals in a row. A modification, a rejection or a failure sends it back to zero.
+	Streak            int `json:"streak"`
+	Approvals         int `json:"approvals"`
+	Modifications     int `json:"modifications"`
+	Rejections        int `json:"rejections"`
+	ExecutionFailures int `json:"executionFailures"`
+	// The tier the ledger granted, when the tool's tier was earned rather than chosen.
+	EarnedTier     *agent.AutonomyTier `json:"earnedTier,omitempty"`
+	LastDecisionAt *int                `json:"lastDecisionAt,omitempty"`
+	PromotedAt     *int                `json:"promotedAt,omitempty"`
+	DemotedAt      *int                `json:"demotedAt,omitempty"`
+}
+
 type AmendWorkerEmploymentEventInput struct {
 	ID            string  `json:"id"`
 	EffectiveAt   *int    `json:"effectiveAt,omitempty"`

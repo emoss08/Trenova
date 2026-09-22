@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentproposalnotifier"
 	"github.com/emoss08/trenova/internal/core/services/agentproposalservice"
 	"github.com/emoss08/trenova/internal/core/services/agentrunservice"
+	"github.com/emoss08/trenova/internal/core/services/agentscorecardservice"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/agentsubjectservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttrustservice"
@@ -306,6 +307,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	newBriefingSources,
 	briefingservice.New,
 	briefingservice.AsService,
+	agentscorecardservice.New,
+	agentscorecardservice.AsService,
 	agenttrustservice.New,
 	agentproposalnotifier.New,
 	agentdecisionservice.New,

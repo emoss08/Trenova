@@ -1,5 +1,6 @@
 import { mergeQueryKeys } from "@lukemorales/query-key-factory";
 import { accountingControl } from "./accounting-control";
+import { agentScorecard } from "./agent-scorecard";
 import { attention } from "./attention";
 import { watchtower } from "./watchtower";
 import { accountingReport } from "./accounting-report";
@@ -124,6 +125,7 @@ const workspaceQueries = mergeQueryKeys(
   assistant,
   insight,
   carrierIntelSettings,
+  agentScorecard,
   attention,
   audit,
   briefing,
