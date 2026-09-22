@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -150,9 +151,9 @@ func (t *searchShipmentsTool) Query(
 		return nil, err
 	}
 
-	criteria := newSearchCriteria("shipments").at(clockFor(params))
-	criteria.text(query)
-	criteria.field("status", status)
+	criteria := filtercatalog.NewCriteria("shipments").At(clockFor(params))
+	criteria.Text(query)
+	criteria.Field("status", status)
 
 	result, err := t.repo.List(ctx, &repositories.ListShipmentsRequest{
 		Filter: &pagination.QueryOptions{
@@ -178,7 +179,7 @@ func (t *searchShipmentsTool) Query(
 		rows = append(rows, toShipmentRow(item))
 	}
 
-	return criteria.result(rows, len(rows)), nil
+	return searchResult(criteria, rows, len(rows)), nil
 }
 
 // shipmentStatusFilter refuses a status outside the set and names the set.

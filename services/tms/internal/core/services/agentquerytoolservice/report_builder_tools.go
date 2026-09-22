@@ -13,6 +13,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -258,9 +259,9 @@ func (t *listReportDatasetsTool) Query(
 	query := strings.ToLower(optionalString(params.Params, "query"))
 	category := optionalString(params.Params, "category")
 
-	criteria := newSearchCriteria("datasets").at(clockFor(params))
-	criteria.text(query)
-	criteria.field("category", category)
+	criteria := filtercatalog.NewCriteria("datasets").At(clockFor(params))
+	criteria.Text(query)
+	criteria.Field("category", category)
 
 	catalog := &reportcatalog.Default
 	rows := make([]datasetRow, 0, len(catalog.Entities))
@@ -292,7 +293,7 @@ func (t *listReportDatasetsTool) Query(
 		})
 	}
 
-	return criteria.result(rows, len(rows)), nil
+	return searchResult(criteria, rows, len(rows)), nil
 }
 
 func matchesDataset(entity *reportcatalog.Entity, needle string) bool {
@@ -978,7 +979,7 @@ func renderDates(row serviceports.ReportRow, dated []bool, clk clock) servicepor
 	for idx, value := range row {
 		if idx < len(dated) && dated[idx] {
 			if seconds, ok := epochSeconds(value); ok {
-				out[idx] = time.Unix(seconds, 0).In(clk.location()).Format("2006-01-02 15:04 MST")
+				out[idx] = time.Unix(seconds, 0).In(clk.Location()).Format("2006-01-02 15:04 MST")
 
 				continue
 			}

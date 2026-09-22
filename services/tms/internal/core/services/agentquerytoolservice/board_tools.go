@@ -163,7 +163,7 @@ func (t *getDispatchBoardTool) Query(
 		limit = defaultBoardLimit
 	}
 
-	now := clockFor(params).now
+	now := clockFor(params).Now
 	board, err := t.board.GetBoard(ctx, &dispatchconsoleservice.GetBoardRequest{
 		TenantInfo:     tenantOf(params),
 		WindowStart:    now,

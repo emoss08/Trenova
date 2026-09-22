@@ -3,13 +3,13 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -24,33 +24,21 @@ const (
 	maxRelativeDays = 3650
 )
 
-// filterKind decides which operators a field accepts and how its value is read.
-// It is declared per field in the catalog rather than inferred from the Go type,
-// because a Go string is a free-text name in one column and a closed enum in the
-// next, and the difference is the whole of what keeps a model from inventing a
-// status that does not exist.
-type filterKind string
+// The filter vocabulary lives in filtercatalog, which the table composer
+// behind the Ask input compiles through as well. Aliasing rather than
+// redeclaring is what keeps "in transit" meaning one thing to an agent and the
+// same thing to the grid.
+type filterKind = filtercatalog.Kind
 
 const (
-	filterText   filterKind = "text"
-	filterEnum   filterKind = "enum"
-	filterDate   filterKind = "date"
-	filterNumber filterKind = "number"
-	filterBool   filterKind = "boolean"
+	filterText   = filtercatalog.KindText
+	filterEnum   = filtercatalog.KindEnum
+	filterDate   = filtercatalog.KindDate
+	filterNumber = filtercatalog.KindNumber
+	filterBool   = filtercatalog.KindBoolean
 )
 
-type listField struct {
-	Name string
-	Kind filterKind
-	// Note explains the column in the words the business uses, when the name
-	// alone does not.
-	Note string
-	// Values closes an enum. A value outside the set is refused rather than
-	// passed through, because the query would match nothing and the model would
-	// report that as "there are none".
-	Values   []string
-	Sortable bool
-}
+type listField = filtercatalog.Field
 
 // listSpec is one entry in the catalog: an entity, the fields a model may
 // narrow it by, and the repository call that serves it.
@@ -77,101 +65,46 @@ type listSpec struct {
 	fetchIn func(ctx context.Context, opts *pagination.QueryOptions, clk clock) ([]any, error)
 }
 
-type operatorArity uint8
-
-const (
-	arityValue operatorArity = iota
-	arityNone
-	arityDays
-	arityList
-)
-
-var operatorArities = map[dbtype.Operator]operatorArity{
-	dbtype.OpEqual:              arityValue,
-	dbtype.OpNotEqual:           arityValue,
-	dbtype.OpGreaterThan:        arityValue,
-	dbtype.OpGreaterThanOrEqual: arityValue,
-	dbtype.OpLessThan:           arityValue,
-	dbtype.OpLessThanOrEqual:    arityValue,
-	dbtype.OpContains:           arityValue,
-	dbtype.OpStartsWith:         arityValue,
-	dbtype.OpEndsWith:           arityValue,
-	dbtype.OpIn:                 arityList,
-	dbtype.OpNotIn:              arityList,
-	dbtype.OpIsNull:             arityNone,
-	dbtype.OpIsNotNull:          arityNone,
-	dbtype.OpToday:              arityNone,
-	dbtype.OpYesterday:          arityNone,
-	dbtype.OpTomorrow:           arityNone,
-	dbtype.OpLastNDays:          arityDays,
-	dbtype.OpNextNDays:          arityDays,
-}
-
-var operatorsByKind = map[filterKind][]dbtype.Operator{
-	filterText: {
-		dbtype.OpEqual, dbtype.OpNotEqual, dbtype.OpContains, dbtype.OpStartsWith,
-		dbtype.OpEndsWith, dbtype.OpIn, dbtype.OpNotIn, dbtype.OpIsNull, dbtype.OpIsNotNull,
-	},
-	// isnull and isnotnull belong here for the same reason they belong on text,
-	// date and number: an enum column is nullable too, and "has no billing
-	// transfer state yet" is one of the most ordinary questions asked of one.
-	// Leaving them off sent a model round the houses building the same answer
-	// out of a status filter and a date window.
-	filterEnum: {
-		dbtype.OpEqual, dbtype.OpNotEqual, dbtype.OpIn, dbtype.OpNotIn,
-		dbtype.OpIsNull, dbtype.OpIsNotNull,
-	},
-	filterDate: {
-		dbtype.OpGreaterThan, dbtype.OpGreaterThanOrEqual, dbtype.OpLessThan,
-		dbtype.OpLessThanOrEqual, dbtype.OpLastNDays, dbtype.OpNextNDays, dbtype.OpToday,
-		dbtype.OpYesterday, dbtype.OpTomorrow, dbtype.OpIsNull, dbtype.OpIsNotNull,
-	},
-	filterNumber: {
-		dbtype.OpEqual, dbtype.OpNotEqual, dbtype.OpGreaterThan, dbtype.OpGreaterThanOrEqual,
-		dbtype.OpLessThan, dbtype.OpLessThanOrEqual, dbtype.OpIsNull, dbtype.OpIsNotNull,
-	},
-	filterBool: {dbtype.OpEqual, dbtype.OpNotEqual},
-}
-
 type listTool struct {
 	spec        listSpec
-	byName      map[string]listField
-	fieldNames  []string
-	sortNames   []string
+	resource    filtercatalog.Resource
 	operators   []string
 	description string
 }
 
 func newListTool(spec listSpec) serviceports.AgentQueryTool {
-	tool := &listTool{
-		spec:       spec,
-		byName:     make(map[string]listField, len(spec.fields)),
-		fieldNames: make([]string, 0, len(spec.fields)),
-		sortNames:  make([]string, 0, len(spec.fields)),
-	}
-
-	seenOperators := make(map[dbtype.Operator]bool, len(operatorArities))
-	operators := make([]string, 0, len(operatorArities))
-
+	seen := make(map[dbtype.Operator]bool, len(spec.fields)*4)
+	operators := make([]string, 0, len(spec.fields)*4)
 	for _, field := range spec.fields {
-		tool.byName[field.Name] = field
-		tool.fieldNames = append(tool.fieldNames, field.Name)
-		if field.Sortable {
-			tool.sortNames = append(tool.sortNames, field.Name)
-		}
-		for _, operator := range operatorsByKind[field.Kind] {
-			if seenOperators[operator] {
+		for _, operator := range filtercatalog.Operators(field.Kind) {
+			if seen[operator] {
 				continue
 			}
-			seenOperators[operator] = true
+			seen[operator] = true
 			operators = append(operators, string(operator))
 		}
 	}
 
-	tool.operators = operators
-	tool.description = buildListDescription(spec)
+	return &listTool{
+		spec:        spec,
+		resource:    catalogResource(spec),
+		operators:   operators,
+		description: buildListDescription(spec),
+	}
+}
 
-	return tool
+// catalogResource is the one place a list spec becomes a catalogued resource,
+// so the tool and the table composer narrow the same entity by the same
+// fields.
+func catalogResource(spec listSpec) filtercatalog.Resource {
+	return filtercatalog.Resource{
+		Tool:     spec.name,
+		Resource: spec.resource,
+		Entity:   spec.entityPlural,
+		Summary:  spec.summary,
+		Fields:   spec.fields,
+		Config:   spec.config,
+	}.Prepare()
 }
 
 func buildListDescription(spec listSpec) string {
@@ -230,7 +163,7 @@ func (t *listTool) ParamSchema() map[string]any {
 				"items": map[string]any{
 					"type": "object",
 					"properties": map[string]any{
-						"field":    map[string]any{"type": "string", "enum": t.fieldNames},
+						"field":    map[string]any{"type": "string", "enum": t.resource.FieldNames()},
 						"operator": map[string]any{"type": "string", "enum": t.operators},
 						"value":    map[string]any{"type": "string"},
 						"values": map[string]any{
@@ -245,7 +178,7 @@ func (t *listTool) ParamSchema() map[string]any {
 			},
 			"sortBy": map[string]any{
 				"type":        "string",
-				"enum":        t.sortNames,
+				"enum":        t.resource.SortableNames(),
 				"description": "Field to order by. Defaults to most recently created.",
 			},
 			"sortDirection": map[string]any{
@@ -269,10 +202,10 @@ func (t *listTool) Query(
 		return nil, err
 	}
 
-	criteria := newSearchCriteria(t.spec.entityPlural).at(clockFor(params))
+	criteria := filtercatalog.NewCriteria(t.spec.entityPlural).At(clockFor(params))
 
 	query := optionalString(params.Params, "query")
-	criteria.text(query)
+	criteria.Text(query)
 
 	filters, err := t.buildFilters(params.Params, criteria)
 	if err != nil {
@@ -306,7 +239,7 @@ func (t *listTool) Query(
 
 	var rows []any
 	if t.spec.fetchIn != nil {
-		rows, err = t.spec.fetchIn(ctx, opts, criteria.clock)
+		rows, err = t.spec.fetchIn(ctx, opts, criteria.Clock)
 	} else {
 		rows, err = t.spec.fetch(ctx, opts)
 	}
@@ -314,12 +247,12 @@ func (t *listTool) Query(
 		return nil, err
 	}
 
-	return criteria.result(rows, len(rows)), nil
+	return searchResult(criteria, rows, len(rows)), nil
 }
 
 func (t *listTool) buildFilters(
 	params map[string]any,
-	criteria *searchCriteria,
+	criteria *filtercatalog.Criteria,
 ) ([]domaintypes.FieldFilter, error) {
 	raw, ok := params["filters"]
 	if !ok || raw == nil {
@@ -339,359 +272,51 @@ func (t *listTool) buildFilters(
 		)
 	}
 
-	built := make([]domaintypes.FieldFilter, 0, len(entries)*2)
+	conditions := make([]filtercatalog.Condition, 0, len(entries))
 	for _, entry := range entries {
-		condition, ok := entry.(map[string]any)
+		object, ok := entry.(map[string]any)
 		if !ok {
 			return nil, fmt.Errorf(
 				`each entry in "filters" must be an object with field and operator`,
 			)
 		}
+		conditions = append(conditions, toCondition(object))
+	}
 
-		next, err := t.buildFilter(condition, criteria)
-		if err != nil {
-			return nil, err
+	return t.resource.Compile(conditions, criteria)
+}
+
+// toCondition reads one JSON filter. Every operand is taken as a string
+// because that is what the schema asks for and what a model produces; reading
+// it is the catalog's job, so nothing here needs to know that a date is stored
+// as an epoch second.
+func toCondition(object map[string]any) filtercatalog.Condition {
+	condition := filtercatalog.Condition{
+		Field:    optionalString(object, "field"),
+		Operator: dbtype.Operator(optionalString(object, "operator")),
+		Value:    optionalString(object, "value"),
+		Days:     optionalInt(object, "days", 0),
+	}
+
+	if raw, ok := object["values"].([]any); ok {
+		condition.Values = make([]string, 0, len(raw))
+		for _, item := range raw {
+			// A non-string entry becomes the empty string rather than being
+			// dropped, so the catalog refuses the filter by name instead of
+			// silently applying a shorter one than was asked for.
+			text, _ := item.(string)
+			condition.Values = append(condition.Values, text)
 		}
-		built = append(built, next...)
 	}
 
-	return built, nil
-}
-
-func (t *listTool) buildFilter(
-	condition map[string]any,
-	criteria *searchCriteria,
-) ([]domaintypes.FieldFilter, error) {
-	field, err := t.resolveField(optionalString(condition, "field"))
-	if err != nil {
-		return nil, err
-	}
-
-	operator := dbtype.Operator(strings.ToLower(optionalString(condition, "operator")))
-	if !operatorAllowed(field.Kind, operator) {
-		return nil, fmt.Errorf(
-			"%q is not an operator for the %s field %q; use one of: %s",
-			operator, field.Kind, field.Name, joinOperators(operatorsByKind[field.Kind]),
-		)
-	}
-
-	switch operatorArities[operator] {
-	case arityNone:
-		criteria.field(field.Name, operatorPhrase(operator))
-
-		return []domaintypes.FieldFilter{{Field: field.Name, Operator: operator}}, nil
-	case arityDays:
-		return t.buildWindow(field, operator, condition, criteria)
-	case arityList:
-		return t.buildListFilter(field, operator, condition, criteria)
-	default:
-		return t.buildValueFilter(field, operator, condition, criteria)
-	}
-}
-
-func (t *listTool) resolveField(name string) (listField, error) {
-	field, ok := t.byName[name]
-	if !ok {
-		return listField{}, fmt.Errorf(
-			"cannot filter %s on %q; the filterable fields are: %s",
-			t.spec.entityPlural, name, strings.Join(t.fieldNames, ", "),
-		)
-	}
-
-	// The query builder skips a field it cannot map and returns the page
-	// unfiltered, which the model would present as a filtered answer. Catching
-	// the drift here turns a wrong answer into a plain error.
-	if t.spec.config != nil && !t.spec.config.FilterableFields[field.Name] {
-		return listField{}, fmt.Errorf(
-			"%q can no longer be queried on %s; the filterable fields are: %s",
-			field.Name, t.spec.entityPlural, strings.Join(t.fieldNames, ", "),
-		)
-	}
-
-	return field, nil
-}
-
-/*
-buildWindow turns a relative day count into a bounded range.
-
-OpNextNDays alone applies only `column <= now + N days`, so "expiring in the
-next 30 days" would also match every row that lapsed years ago, and OpLastNDays
-applies only the floor. Both are fine for a person reading a grid they can sort;
-they are not fine for a model that will summarize the count in a sentence.
-*/
-func (t *listTool) buildWindow(
-	field listField,
-	operator dbtype.Operator,
-	condition map[string]any,
-	criteria *searchCriteria,
-) ([]domaintypes.FieldFilter, error) {
-	days := optionalInt(condition, "days", 0)
-	if days <= 0 || days > maxRelativeDays {
-		return nil, fmt.Errorf(
-			"%q needs a whole number of days between 1 and %d in the \"days\" field",
-			operator, maxRelativeDays,
-		)
-	}
-
-	span := int64(days) * secondsPerDay
-
-	// Windows are whole days in the organization's zone, not offsets from this
-	// instant. "Expiring in the next 30 days" starting at the current second
-	// excluded a medical card that expired at nine this morning — the one
-	// question this tool was built to answer.
-	clk := criteria.clock
-	dayStart := clk.today()
-
-	lower, upper := dayStart, dayStart+span+secondsPerDay-1
-	phrase := fmt.Sprintf("within the next %d days", days)
-	if operator == dbtype.OpLastNDays {
-		lower, upper = dayStart-span, clk.instant()
-		phrase = fmt.Sprintf("within the last %d days", days)
-	}
-
-	criteria.field(field.Name, phrase)
-
-	return []domaintypes.FieldFilter{
-		{Field: field.Name, Operator: dbtype.OpGreaterThanOrEqual, Value: lower},
-		{Field: field.Name, Operator: dbtype.OpLessThanOrEqual, Value: upper},
-	}, nil
-}
-
-func (t *listTool) buildListFilter(
-	field listField,
-	operator dbtype.Operator,
-	condition map[string]any,
-	criteria *searchCriteria,
-) ([]domaintypes.FieldFilter, error) {
-	raw, ok := condition["values"].([]any)
-	if !ok || len(raw) == 0 {
-		return nil, fmt.Errorf(
-			"%q on %q needs a non-empty \"values\" array", operator, field.Name,
-		)
-	}
-
-	values := make([]any, 0, len(raw))
-	labels := make([]string, 0, len(raw))
-	for _, item := range raw {
-		text, ok := item.(string)
-		if !ok {
-			return nil, fmt.Errorf("every entry in \"values\" for %q must be a string", field.Name)
-		}
-
-		value, err := coerceFilterValue(field, text, criteria.clock)
-		if err != nil {
-			return nil, err
-		}
-		values = append(values, value)
-		labels = append(labels, text)
-	}
-
-	criteria.field(field.Name, operatorPhrase(operator)+" "+strings.Join(labels, ", "))
-
-	return []domaintypes.FieldFilter{
-		{Field: field.Name, Operator: operator, Value: values},
-	}, nil
-}
-
-func (t *listTool) buildValueFilter(
-	field listField,
-	operator dbtype.Operator,
-	condition map[string]any,
-	criteria *searchCriteria,
-) ([]domaintypes.FieldFilter, error) {
-	raw := optionalString(condition, "value")
-	if raw == "" {
-		return nil, fmt.Errorf("%q on %q needs a \"value\"", operator, field.Name)
-	}
-
-	value, err := coerceFilterValue(field, raw, criteria.clock)
-	if err != nil {
-		return nil, err
-	}
-
-	criteria.field(field.Name, operatorPhrase(operator)+" "+raw)
-
-	return []domaintypes.FieldFilter{
-		{Field: field.Name, Operator: operator, Value: value},
-	}, nil
+	return condition
 }
 
 func (t *listTool) buildSort(params map[string]any) ([]domaintypes.SortField, error) {
-	name := optionalString(params, "sortBy")
-	if name == "" {
-		return nil, nil
-	}
-
-	field, ok := t.byName[name]
-	if !ok || !field.Sortable {
-		return nil, fmt.Errorf(
-			"cannot sort %s by %q; the sortable fields are: %s",
-			t.spec.entityPlural, name, strings.Join(t.sortNames, ", "),
-		)
-	}
-
-	direction := dbtype.SortDirectionDesc
-	switch strings.ToLower(optionalString(params, "sortDirection")) {
-	case "asc":
-		direction = dbtype.SortDirectionAsc
-	case "", "desc":
-	default:
-		return nil, fmt.Errorf(`"sortDirection" must be "asc" or "desc"`)
-	}
-
-	return []domaintypes.SortField{{Field: field.Name, Direction: direction}}, nil
-}
-
-func coerceFilterValue(field listField, raw string, clk clock) (any, error) {
-	switch field.Kind {
-	case filterEnum:
-		for _, candidate := range field.Values {
-			if strings.EqualFold(candidate, raw) {
-				return candidate, nil
-			}
-		}
-
-		return nil, fmt.Errorf(
-			"%q is not a value of %q; the values are: %s",
-			raw, field.Name, strings.Join(field.Values, ", "),
-		)
-	case filterDate:
-		return coerceDateValue(field.Name, raw, clk)
-	case filterNumber:
-		if whole, err := strconv.ParseInt(raw, 10, 64); err == nil {
-			return whole, nil
-		}
-		fractional, err := strconv.ParseFloat(raw, 64)
-		if err != nil {
-			return nil, fmt.Errorf("%q on %q is not a number", raw, field.Name)
-		}
-
-		return fractional, nil
-	case filterBool:
-		parsed, err := strconv.ParseBool(raw)
-		if err != nil {
-			return nil, fmt.Errorf("%q on %q must be true or false", raw, field.Name)
-		}
-
-		return parsed, nil
-	case filterText:
-		return raw, nil
-	default:
-		return raw, nil
-	}
-}
-
-// coerceDateValue reads a calendar date rather than asking the model for an
-// epoch. A fabricated timestamp is indistinguishable from a real one once it is
-// in the SQL, and a model that has to do the arithmetic will sometimes get it
-// wrong by a year.
-func coerceDateValue(name, raw string, clk clock) (int64, error) {
-	if seconds, err := strconv.ParseInt(raw, 10, 64); err == nil {
-		return seconds, nil
-	}
-
-	if seconds, ok := namedDay(raw, clk); ok {
-		return seconds, nil
-	}
-
-	if seconds, ok := clk.parseDate(raw); ok {
-		return seconds, nil
-	}
-
-	return 0, fmt.Errorf(
-		"%q on %q is not a date; use YYYY-MM-DD, today, tomorrow or yesterday, "+
-			"or nextndays/lastndays with a day count",
-		raw, name,
+	return t.resource.Sort(
+		optionalString(params, "sortBy"),
+		optionalString(params, "sortDirection"),
 	)
-}
-
-// namedDay resolves the words a person uses for a date.
-//
-// "today" is the obvious thing to send for "expiring from now on", and refusing
-// it cost a whole round trip: the model sent it, read the correction, and asked
-// again with the same question. That worked, but only because the refusal names
-// what would have worked — on a weaker model the extra turn is where the
-// conversation falls apart, and the retry is billed either way.
-//
-// Resolving it here rather than in the prompt also keeps the clock on the
-// server. A model computing today's date is the arithmetic that put a medical
-// card three months out of place.
-func namedDay(raw string, clk clock) (int64, bool) {
-	const day = 86400
-
-	now := clk.instant()
-	midnight := clk.dayStart
-
-	switch strings.ToLower(strings.TrimSpace(raw)) {
-	case "today", "now":
-		return midnight(now), true
-	case "tomorrow":
-		return midnight(now + day), true
-	case "yesterday":
-		return midnight(now - day), true
-	default:
-		return 0, false
-	}
-}
-
-func operatorAllowed(kind filterKind, operator dbtype.Operator) bool {
-	for _, candidate := range operatorsByKind[kind] {
-		if candidate == operator {
-			return true
-		}
-	}
-
-	return false
-}
-
-func joinOperators(operators []dbtype.Operator) string {
-	names := make([]string, 0, len(operators))
-	for _, operator := range operators {
-		names = append(names, string(operator))
-	}
-
-	return strings.Join(names, ", ")
-}
-
-// operatorPhrase renders an operator the way the criteria read back to the
-// model, so an empty result says "status equals Active" rather than "status eq".
-func operatorPhrase(operator dbtype.Operator) string {
-	switch operator { //nolint:exhaustive // the catalog exposes only these
-	case dbtype.OpEqual:
-		return "equals"
-	case dbtype.OpNotEqual:
-		return "is not"
-	case dbtype.OpGreaterThan:
-		return "after"
-	case dbtype.OpGreaterThanOrEqual:
-		return "on or after"
-	case dbtype.OpLessThan:
-		return "before"
-	case dbtype.OpLessThanOrEqual:
-		return "on or before"
-	case dbtype.OpContains:
-		return "contains"
-	case dbtype.OpStartsWith:
-		return "starts with"
-	case dbtype.OpEndsWith:
-		return "ends with"
-	case dbtype.OpIn:
-		return "one of"
-	case dbtype.OpNotIn:
-		return "not one of"
-	case dbtype.OpIsNull:
-		return "is empty"
-	case dbtype.OpIsNotNull:
-		return "is set"
-	case dbtype.OpToday:
-		return "is today"
-	case dbtype.OpYesterday:
-		return "was yesterday"
-	case dbtype.OpTomorrow:
-		return "is tomorrow"
-	default:
-		return string(operator)
-	}
 }
 
 // listRows projects repository entities into the compact shapes the catalog

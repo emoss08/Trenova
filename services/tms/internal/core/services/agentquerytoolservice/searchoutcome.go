@@ -1,9 +1,10 @@
 package agentquerytoolservice
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 )
 
 // searchOutcome is what a search tool returns instead of a bare slice.
@@ -37,84 +38,18 @@ type searchOutcome struct {
 	Note string `json:"note,omitempty"`
 }
 
-// searchCriteria accumulates the filters a tool actually applied, in the words
-// a person would use, so they can be read back in the outcome.
-type searchCriteria struct {
-	entityPlural string
-	terms        []string
-	// clock is the frame the search's dates were read in. It rides with the
-	// criteria because every filter builder already receives them, and a
-	// window built on the wrong day is a criterion nobody stated.
-	clock clock
-}
-
-func newSearchCriteria(entityPlural string) *searchCriteria {
-	return &searchCriteria{entityPlural: entityPlural, terms: make([]string, 0, 4)}
-}
-
-// at sets the frame the search reads dates in.
-func (c *searchCriteria) at(clk clock) *searchCriteria {
-	c.clock = clk
-
-	return c
-}
-
-// text records a free-text term. An empty value records nothing, which is how
-// "no filter" stays distinguishable from "filtered on the empty string".
-func (c *searchCriteria) text(value string) {
-	if strings.TrimSpace(value) == "" {
-		return
-	}
-
-	c.terms = append(c.terms, fmt.Sprintf("text matching %q", value))
-}
-
-func (c *searchCriteria) field(label, value string) {
-	if strings.TrimSpace(value) == "" {
-		return
-	}
-
-	c.terms = append(c.terms, fmt.Sprintf("%s %s", label, value))
-}
-
-// describe renders the applied filters for the model, including the case where
-// there were none — "every" is the honest description of an unfiltered list and
-// stops the model reporting a short page as the whole population.
-func (c *searchCriteria) describe() []string {
-	if len(c.terms) == 0 {
-		return []string{"no filters: the most recent " + c.entityPlural}
-	}
-
-	return c.terms
-}
-
-func (c *searchCriteria) emptyNote() string {
-	if len(c.terms) == 0 {
-		return fmt.Sprintf(
-			"No %s are visible to you in this organization. "+
-				"This is an unfiltered list, so the result is the whole set, not a near miss.",
-			c.entityPlural,
-		)
-	}
-
-	return fmt.Sprintf(
-		"No %s matched %s. Other %s may exist; only these filters were applied.",
-		c.entityPlural, strings.Join(c.terms, " and "), c.entityPlural,
-	)
-}
-
-// result wraps what a repository returned. count is taken from the caller
-// rather than derived by reflection so a tool stays in charge of what "how
-// many" means for its own shape.
-func (c *searchCriteria) result(items any, count int) searchOutcome {
+// searchResult wraps what a repository returned. count is taken from the
+// caller rather than derived by reflection so a tool stays in charge of what
+// "how many" means for its own shape.
+func searchResult(criteria *filtercatalog.Criteria, items any, count int) searchOutcome {
 	outcome := searchOutcome{
 		Count:       count,
-		SearchedFor: c.describe(),
+		SearchedFor: criteria.Describe(),
 		Items:       items,
 		Columns:     columnsOf(items),
 	}
 	if count == 0 {
-		outcome.Note = c.emptyNote()
+		outcome.Note = criteria.EmptyNote()
 	}
 
 	return outcome

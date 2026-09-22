@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -154,7 +155,7 @@ func (t *getShipmentTrackingTool) Query(
 		Assignments: assignments,
 		Positions:   positions,
 		HOS:         hos,
-		Now:         clockFor(params).now,
+		Now:         clockFor(params).Now,
 		Timezone:    params.Timezone,
 	}), nil
 }
@@ -402,10 +403,10 @@ func (t *listVehiclePositionsTool) Query(
 		}
 	}
 
-	criteria := newSearchCriteria("vehicle positions").at(clockFor(params))
-	criteria.field("readings newer than", fmt.Sprintf("%d minutes", maxAge))
+	criteria := filtercatalog.NewCriteria("vehicle positions").At(clockFor(params))
+	criteria.Field("readings newer than", fmt.Sprintf("%d minutes", maxAge))
 	if len(wanted) > 0 {
-		criteria.field("tractors", fmt.Sprintf("%d named", len(wanted)))
+		criteria.Field("tractors", fmt.Sprintf("%d named", len(wanted)))
 	}
 
 	positions, err := t.telematics.ListVehiclePositions(
@@ -415,7 +416,7 @@ func (t *listVehiclePositionsTool) Query(
 		return nil, err
 	}
 
-	now := clockFor(params).now
+	now := clockFor(params).Now
 	// The map is a tractor's; who is driving it is a worker's, and a reader
 	// who may not open workers is not told who is where from the map instead.
 	nameDrivers := t.access.mayRead(ctx, params, permission.ResourceWorker)
@@ -432,7 +433,7 @@ func (t *listVehiclePositionsTool) Query(
 		rows = append(rows, row)
 	}
 
-	return criteria.result(rows, len(rows)), nil
+	return searchResult(criteria, rows, len(rows)), nil
 }
 
 func toVehiclePositionRow(
@@ -536,7 +537,7 @@ func (t *getWorkerHOSTool) Query(
 		)
 	}
 
-	now := clockFor(params).now
+	now := clockFor(params).Now
 	row := workerHOSRow{
 		WorkerID:              state.WorkerID.String(),
 		DutyStatus:            string(state.DutyStatus),

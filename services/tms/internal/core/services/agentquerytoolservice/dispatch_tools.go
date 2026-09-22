@@ -325,7 +325,7 @@ func (t *planDispatchTool) Query(
 		return nil, err
 	}
 
-	now := clockFor(params).instant()
+	now := clockFor(params).Instant()
 	plan, err := t.planner.Plan(ctx, &serviceports.DispatchPlanRequest{
 		TenantInfo:   tenantOf(params),
 		WindowStart:  now,

@@ -11,6 +11,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -138,9 +139,9 @@ func (t *listReportsTool) Query(
 	category := optionalString(params.Params, "category")
 	query := optionalString(params.Params, "query")
 
-	criteria := newSearchCriteria("reports").at(clockFor(params))
-	criteria.text(query)
-	criteria.field("category", category)
+	criteria := filtercatalog.NewCriteria("reports").At(clockFor(params))
+	criteria.Text(query)
+	criteria.Field("category", category)
 
 	entries := t.reports.ListCanned()
 	saved, err := t.reports.ListDefinitions(ctx, &reporting.ListDefinitionsRequest{
@@ -184,7 +185,7 @@ func (t *listReportsTool) Query(
 		rows = rows[:limit]
 	}
 
-	outcome := criteria.result(rows, matched)
+	outcome := searchResult(criteria, rows, matched)
 	if matched > len(rows) {
 		// The count alone reads as "this is all of them" to a model that has
 		// no other signal, and it will then answer as though the rest do not

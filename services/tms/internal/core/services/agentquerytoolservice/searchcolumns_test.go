@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,7 +38,7 @@ type taggedRow struct {
 }
 
 func TestColumnsAreTheProjectionsOwnOrder(t *testing.T) {
-	outcome := newSearchCriteria("shipments").result([]any{
+	outcome := searchResult(filtercatalog.NewCriteria("shipments"), []any{
 		columnRow{ProNumber: "P1", Customer: "Acme", Status: "InTransit"},
 		columnRow{ProNumber: "P2"},
 	}, 2)
@@ -48,7 +49,7 @@ func TestColumnsAreTheProjectionsOwnOrder(t *testing.T) {
 // An embedded struct is fields on the row, not a cell holding an object, so
 // the grid draws them as the columns they are.
 func TestColumnsFlattenAnEmbeddedProjection(t *testing.T) {
-	outcome := newSearchCriteria("workers").result([]any{
+	outcome := searchResult(filtercatalog.NewCriteria("workers"), []any{
 		embeddedRow{columnBase: columnBase{ID: "w1", Version: 3}, Code: "W-1"},
 	}, 1)
 
@@ -56,21 +57,21 @@ func TestColumnsFlattenAnEmbeddedProjection(t *testing.T) {
 }
 
 func TestColumnsFollowTheJSONTag(t *testing.T) {
-	outcome := newSearchCriteria("things").result([]any{taggedRow{Kept: "yes"}}, 1)
+	outcome := searchResult(filtercatalog.NewCriteria("things"), []any{taggedRow{Kept: "yes"}}, 1)
 
 	assert.Equal(t, []string{"kept", "Bare"}, outcome.Columns)
 }
 
 // Rows arrive as pointers from some projections and values from others.
 func TestColumnsReadThroughAPointerRow(t *testing.T) {
-	outcome := newSearchCriteria("shipments").result([]any{&columnRow{ProNumber: "P1"}}, 1)
+	outcome := searchResult(filtercatalog.NewCriteria("shipments"), []any{&columnRow{ProNumber: "P1"}}, 1)
 
 	assert.Equal(t, []string{"proNumber", "customer", "status"}, outcome.Columns)
 }
 
 // Nothing matched is not a table with no columns; it is no table.
 func TestAnEmptyResultReportsNoColumns(t *testing.T) {
-	outcome := newSearchCriteria("shipments").result([]any{}, 0)
+	outcome := searchResult(filtercatalog.NewCriteria("shipments"), []any{}, 0)
 
 	assert.Empty(t, outcome.Columns)
 	assert.NotEmpty(t, outcome.Note)
