@@ -5289,15 +5289,6 @@
       "routes/agent-control"
     ]
   },
-  "A table the assistant previews, a report it runs, a draft it wants to send or a record it looks up will appear here.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "A tag must be between 1 and 100 characters": {
     "sites": 3,
     "scope": [
@@ -100485,12 +100476,13 @@
     ]
   },
   "Nothing here yet": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/reports"
     ]
   },
@@ -100872,15 +100864,6 @@
     ],
     "areas": [
       "routes/rate-matrix"
-    ]
-  },
-  "Nothing produced yet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Nothing recorded": {
@@ -178205,6 +178188,15 @@
       "routes/policies"
     ]
   },
+  "What a turn makes — a table, a report, a record, a draft — opens here beside the conversation.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "What a unit is on this charge": {
     "sites": 1,
     "scope": [
@@ -195811,6 +195803,15 @@
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk"
+    ]
+  },
+  "“{example}”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/desk"
     ]
   },

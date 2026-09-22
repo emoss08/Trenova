@@ -10,7 +10,6 @@ import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
-import { EmptySheet, GhostBox, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -34,6 +33,63 @@ export function defaultArtifactId(
   const newest = [...artifacts].sort((a, b) => b.createdAt - a.createdAt)[0];
 
   return newest?.id ?? null;
+}
+
+/**
+ * The kinds this pane holds, in the order a conversation tends to produce
+ * them, with the sentence that earns each one.
+ *
+ * An empty pane is the first thing a person sees on a new desk, so it is
+ * doing the teaching: grey boxes said only that nothing was here, which they
+ * could already see. Naming what will appear says what the pane is for and,
+ * more usefully, what to ask for to fill it.
+ */
+const ARTIFACT_PROMISES = [
+  { kind: "report_preview", example: "How many shipments are in transit?" },
+  { kind: "report_run", example: "Run the detention report for last week." },
+  { kind: "entity_card", example: "Show me shipment SEED-SHP-008." },
+  { kind: "email_draft", example: "Tell the customer their load is running late." },
+] as const;
+
+function ArtifactsEmpty() {
+  const t = useT();
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col justify-center gap-4 px-4 py-6">
+      <div className="space-y-1">
+        <p className="text-sm font-medium">{t("Nothing here yet")}</p>
+        <p className="text-muted-foreground text-xs">
+          {t(
+            "What a turn makes — a table, a report, a record, a draft — opens here beside the conversation.",
+          )}
+        </p>
+      </div>
+
+      <ul className="space-y-1.5">
+        {ARTIFACT_PROMISES.map(({ kind, example }, index) => (
+          <li
+            key={kind}
+            style={{ animationDelay: `${index * 45}ms` }}
+            className={cn(
+              "animate-land border-desk-hairline flex items-start gap-2.5",
+              "rounded-surface border px-2.5 py-2",
+            )}
+          >
+            <ArtifactKindIcon
+              kind={kind}
+              className="text-muted-foreground mt-0.5 size-3.5 shrink-0"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs">{t(ARTIFACT_KINDS[kind].label)}</span>
+              <span className="text-muted-foreground block text-2xs">
+                {t("“{example}”", { example })}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 function ArtifactBody({ artifact }: { artifact: AssistantArtifact }) {
@@ -147,19 +203,7 @@ export function ArtifactsPane({
           <Skeleton className="h-48" />
         </div>
       ) : artifacts.length === 0 ? (
-        <EmptySheet
-          title={t("Nothing produced yet")}
-          description={t(
-            "A table the assistant previews, a report it runs, a draft it wants to send or a record it looks up will appear here.",
-          )}
-          sketch={
-            <div className="flex flex-col gap-2">
-              <GhostLine className="w-1/2" />
-              <GhostBox className="h-24" />
-              <GhostLine className="w-1/3" />
-            </div>
-          }
-        />
+        <ArtifactsEmpty />
       ) : (
         <>
           <div className="scrollbar-overlay shrink-0 overflow-x-auto">
