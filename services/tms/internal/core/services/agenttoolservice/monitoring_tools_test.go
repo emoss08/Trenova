@@ -20,7 +20,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -317,6 +319,16 @@ type fakeCommentWriter struct {
 	serviceports.ShipmentCommentService
 
 	created *serviceports.CreateSystemShipmentCommentRequest
+	// existing is what the repeat guard reads back before a send. Empty
+	// means nothing has gone to this customer yet.
+	existing []*shipment.ShipmentComment
+}
+
+func (f *fakeCommentWriter) ListByShipmentID(
+	context.Context,
+	*repositories.ListShipmentCommentsRequest,
+) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
+	return &pagination.CursorListResult[*shipment.ShipmentComment]{Items: f.existing}, nil
 }
 
 func (f *fakeCommentWriter) CreateSystem(
@@ -456,6 +468,15 @@ type failingCommentWriter struct {
 	serviceports.ShipmentCommentService
 }
 
+// Nothing has gone to this customer yet; the failure under test is the
+// record after the send, not the guard before it.
+func (f *failingCommentWriter) ListByShipmentID(
+	context.Context,
+	*repositories.ListShipmentCommentsRequest,
+) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
+	return &pagination.CursorListResult[*shipment.ShipmentComment]{}, nil
+}
+
 func (failingCommentWriter) CreateSystem(
 	context.Context,
 	*serviceports.CreateSystemShipmentCommentRequest,
@@ -570,4 +591,59 @@ func TestOutboundTools_AreGatedOnTheCommunicationTheySend(t *testing.T) {
 			permission.IsAgentAllowed(entry.tool.PermissionResource(), entry.tool.PermissionOperation()),
 			"%s must be reachable by an agent principal", entry.tool.Name())
 	}
+}
+
+/*
+The customer update desk is woken by every arrival and every departure, so a
+shipment crossing a yard can raise several runs within a few minutes. The
+rule against telling the customer twice used to be a line in the prompt,
+which held exactly as well as the model's attention; the comment the send
+leaves is the record, and reading it back is what makes the rule a rule.
+*/
+func TestEmailCustomer_WillNotTellTheSameCustomerTwiceWithinTheHour(t *testing.T) {
+	t.Parallel()
+
+	tool, mailer, _, comments, _ := customerEmailFixture()
+	comments.existing = []*shipment.ShipmentComment{{
+		CreatedAt: timeutils.NowUnix() - 600,
+		Type:      shipment.CommentTypeCustomerUpdate,
+		Metadata:  map[string]any{"source": "agent", "tool": "email_customer"},
+	}}
+
+	params := executeParams(map[string]any{
+		"shipmentId": pulid.MustNew("shp_").String(),
+		"profileId":  pulid.MustNew("emp_").String(),
+		"subject":    "S12345 has departed",
+		"body":       "The truck left the yard at 3:32 PM.",
+	})
+	params.IdempotencyKey = "idem-2"
+
+	err := tool.Execute(t.Context(), params)
+	require.ErrorIs(t, err, ErrCustomerAlreadyTold)
+	assert.Nil(t, mailer.sent, "nothing may go out once the customer has been told")
+	assert.Nil(t, comments.created)
+}
+
+// A dispatcher typing an update on the shipment is not an email to the
+// customer, and must not silence one.
+func TestEmailCustomer_ATypedCommentDoesNotSilenceTheDesk(t *testing.T) {
+	t.Parallel()
+
+	tool, mailer, _, comments, _ := customerEmailFixture()
+	comments.existing = []*shipment.ShipmentComment{{
+		CreatedAt: timeutils.NowUnix() - 60,
+		Type:      shipment.CommentTypeCustomerUpdate,
+		Metadata:  map[string]any{"source": "user"},
+	}}
+
+	params := executeParams(map[string]any{
+		"shipmentId": pulid.MustNew("shp_").String(),
+		"profileId":  pulid.MustNew("emp_").String(),
+		"subject":    "S12345 has departed",
+		"body":       "The truck left the yard at 3:32 PM.",
+	})
+	params.IdempotencyKey = "idem-3"
+
+	require.NoError(t, tool.Execute(t.Context(), params))
+	require.NotNil(t, mailer.sent)
 }

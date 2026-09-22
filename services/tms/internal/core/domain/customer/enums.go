@@ -214,3 +214,47 @@ func (d InvoiceDetail) IsValid() bool {
 		return false
 	}
 }
+
+// StatusUpdatePreference is what a customer asked to be told as their
+// freight moves. It is an opt-in: None is the default, because a carrier
+// that starts emailing every arrival to everyone on file loses the right to
+// email them at all.
+type StatusUpdatePreference string
+
+const (
+	StatusUpdateNone                  = StatusUpdatePreference("None")
+	StatusUpdateArrivals              = StatusUpdatePreference("Arrivals")
+	StatusUpdateDepartures            = StatusUpdatePreference("Departures")
+	StatusUpdateArrivalsAndDepartures = StatusUpdatePreference("ArrivalsAndDepartures")
+)
+
+func (p StatusUpdatePreference) IsValid() bool {
+	switch p {
+	case StatusUpdateNone,
+		StatusUpdateArrivals,
+		StatusUpdateDepartures,
+		StatusUpdateArrivalsAndDepartures:
+		return true
+	default:
+		return false
+	}
+}
+
+func AllStatusUpdatePreferences() []StatusUpdatePreference {
+	return []StatusUpdatePreference{
+		StatusUpdateNone,
+		StatusUpdateArrivals,
+		StatusUpdateDepartures,
+		StatusUpdateArrivalsAndDepartures,
+	}
+}
+
+// WantsArrivals and WantsDepartures are the two questions the customer
+// update desk asks before it writes anything.
+func (p StatusUpdatePreference) WantsArrivals() bool {
+	return p == StatusUpdateArrivals || p == StatusUpdateArrivalsAndDepartures
+}
+
+func (p StatusUpdatePreference) WantsDepartures() bool {
+	return p == StatusUpdateDepartures || p == StatusUpdateArrivalsAndDepartures
+}

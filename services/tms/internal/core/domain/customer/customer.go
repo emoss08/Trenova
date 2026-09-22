@@ -30,34 +30,36 @@ type Customer struct {
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID                     pulid.ID           `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID         pulid.ID           `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID         pulid.ID           `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	StateID                pulid.ID           `json:"stateId"                bun:"state_id,type:VARCHAR(100),notnull"`
-	Status                 domaintypes.Status `json:"status"                 bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code                   string             `json:"code"                   bun:"code,type:VARCHAR(10),notnull"`
-	Name                   string             `json:"name"                   bun:"name,type:VARCHAR(255),nullzero"`
-	AddressLine1           string             `json:"addressLine1"           bun:"address_line_1,type:VARCHAR(150),nullzero"`
-	AddressLine2           string             `json:"addressLine2"           bun:"address_line_2,type:VARCHAR(150),nullzero"`
-	City                   string             `json:"city"                   bun:"city,type:VARCHAR(100),nullzero"`
-	PostalCode             string             `json:"postalCode"             bun:"postal_code,type:us_postal_code,notnull"`
-	IsGeocoded             bool               `json:"isGeocoded"             bun:"is_geocoded,type:BOOLEAN"`
-	Longitude              *float64           `json:"longitude"              bun:"longitude,type:FLOAT,nullzero"`
-	Latitude               *float64           `json:"latitude"               bun:"latitude,type:FLOAT,nullzero"`
-	PlaceID                string             `json:"placeId"                bun:"place_id,type:TEXT,nullzero"`
-	ExternalID             string             `json:"externalId"             bun:"external_id,type:TEXT,nullzero"`
-	DOTNumber              string             `json:"dotNumber"              bun:"dot_number,type:VARCHAR(12),nullzero"`
-	MCNumber               string             `json:"mcNumber"               bun:"mc_number,type:VARCHAR(12),nullzero"`
-	BrokerVettingEnabled   bool               `json:"brokerVettingEnabled"   bun:"broker_vetting_enabled,type:BOOLEAN,notnull"`
-	Geom                   *postgis.Point     `json:"-"                      bun:"geom,type:geography,scanonly"`
-	AllowConsolidation     bool               `json:"allowConsolidation"     bun:"allow_consolidation,type:BOOLEAN"`
-	ExclusiveConsolidation bool               `json:"exclusiveConsolidation" bun:"exclusive_consolidation,type:BOOLEAN"`
-	ConsolidationPriority  int                `json:"consolidationPriority"  bun:"consolidation_priority,type:INTEGER,default:1"`
-	SearchVector           string             `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                   string             `json:"-"                      bun:"rank,type:VARCHAR(100),scanonly"`
-	Version                int64              `json:"version"                bun:"version,type:BIGINT"`
-	CreatedAt              int64              `json:"createdAt"              bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64              `json:"updatedAt"              bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                     pulid.ID               `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID         pulid.ID               `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID         pulid.ID               `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	StateID                pulid.ID               `json:"stateId"                bun:"state_id,type:VARCHAR(100),notnull"`
+	Status                 domaintypes.Status     `json:"status"                 bun:"status,type:status_enum,notnull,default:'Active'"`
+	Code                   string                 `json:"code"                   bun:"code,type:VARCHAR(10),notnull"`
+	Name                   string                 `json:"name"                   bun:"name,type:VARCHAR(255),nullzero"`
+	AddressLine1           string                 `json:"addressLine1"           bun:"address_line_1,type:VARCHAR(150),nullzero"`
+	AddressLine2           string                 `json:"addressLine2"           bun:"address_line_2,type:VARCHAR(150),nullzero"`
+	City                   string                 `json:"city"                   bun:"city,type:VARCHAR(100),nullzero"`
+	PostalCode             string                 `json:"postalCode"             bun:"postal_code,type:us_postal_code,notnull"`
+	IsGeocoded             bool                   `json:"isGeocoded"             bun:"is_geocoded,type:BOOLEAN"`
+	Longitude              *float64               `json:"longitude"              bun:"longitude,type:FLOAT,nullzero"`
+	Latitude               *float64               `json:"latitude"               bun:"latitude,type:FLOAT,nullzero"`
+	PlaceID                string                 `json:"placeId"                bun:"place_id,type:TEXT,nullzero"`
+	ExternalID             string                 `json:"externalId"             bun:"external_id,type:TEXT,nullzero"`
+	DOTNumber              string                 `json:"dotNumber"              bun:"dot_number,type:VARCHAR(12),nullzero"`
+	MCNumber               string                 `json:"mcNumber"               bun:"mc_number,type:VARCHAR(12),nullzero"`
+	StatusUpdatePreference StatusUpdatePreference `json:"statusUpdatePreference" bun:"status_update_preference,type:VARCHAR(30),notnull,default:'None'"`
+	StatusUpdateRecipients string                 `json:"statusUpdateRecipients" bun:"status_update_recipients,type:TEXT,nullzero"`
+	BrokerVettingEnabled   bool                   `json:"brokerVettingEnabled"   bun:"broker_vetting_enabled,type:BOOLEAN,notnull"`
+	Geom                   *postgis.Point         `json:"-"                      bun:"geom,type:geography,scanonly"`
+	AllowConsolidation     bool                   `json:"allowConsolidation"     bun:"allow_consolidation,type:BOOLEAN"`
+	ExclusiveConsolidation bool                   `json:"exclusiveConsolidation" bun:"exclusive_consolidation,type:BOOLEAN"`
+	ConsolidationPriority  int                    `json:"consolidationPriority"  bun:"consolidation_priority,type:INTEGER,default:1"`
+	SearchVector           string                 `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank                   string                 `json:"-"                      bun:"rank,type:VARCHAR(100),scanonly"`
+	Version                int64                  `json:"version"                bun:"version,type:BIGINT"`
+	CreatedAt              int64                  `json:"createdAt"              bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt              int64                  `json:"updatedAt"              bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit   *tenant.BusinessUnit    `json:"businessUnit,omitempty"   bun:"rel:belongs-to,join:business_unit_id=id"`
@@ -67,9 +69,29 @@ type Customer struct {
 	State          *usstate.UsState        `json:"state,omitempty"          bun:"rel:belongs-to,join:state_id=id"`
 }
 
+// NormalizeStatusUpdates reads an unset preference as the customer not
+// having opted in, which is what an older row and a request that predates
+// the field both mean. Requiring it instead would fail every caller that
+// has no opinion, for a field whose whole point is that silence means no.
+func (c *Customer) NormalizeStatusUpdates() {
+	if !c.StatusUpdatePreference.IsValid() {
+		c.StatusUpdatePreference = StatusUpdateNone
+	}
+	if c.StatusUpdatePreference == StatusUpdateNone {
+		c.StatusUpdateRecipients = ""
+	}
+}
+
 func (c *Customer) Validate(multiErr *errortypes.MultiError) {
+	c.NormalizeStatusUpdates()
+
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		c,
+		validation.Field(&c.StatusUpdateRecipients,
+			validation.Length(0, 2000).Error(
+				"Status update recipients cannot exceed 2000 characters",
+			),
+		),
 		validation.Field(&c.Code,
 			validation.Required.Error("Code is required"),
 			validation.Length(1, 10).Error("Code must be between 1 and 10 characters"),
@@ -197,6 +219,12 @@ func (c *Customer) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 
 func (c *Customer) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
+
+	// An older row, or a request that never knew about the field, is a
+	// customer who has not opted in — which is the safe reading.
+	if !c.StatusUpdatePreference.IsValid() {
+		c.StatusUpdatePreference = StatusUpdateNone
+	}
 
 	switch query.(type) {
 	case *bun.InsertQuery:

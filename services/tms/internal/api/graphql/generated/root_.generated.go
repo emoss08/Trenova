@@ -2508,6 +2508,8 @@ type ComplexityRoot struct {
 		State                  func(childComplexity int) int
 		StateID                func(childComplexity int) int
 		Status                 func(childComplexity int) int
+		StatusUpdatePreference func(childComplexity int) int
+		StatusUpdateRecipients func(childComplexity int) int
 		UpdatedAt              func(childComplexity int) int
 		Version                func(childComplexity int) int
 	}
@@ -22292,6 +22294,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Customer.Status(childComplexity), true
+	case "Customer.statusUpdatePreference":
+		if e.ComplexityRoot.Customer.StatusUpdatePreference == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Customer.StatusUpdatePreference(childComplexity), true
+	case "Customer.statusUpdateRecipients":
+		if e.ComplexityRoot.Customer.StatusUpdateRecipients == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Customer.StatusUpdateRecipients(childComplexity), true
 	case "Customer.updatedAt":
 		if e.ComplexityRoot.Customer.UpdatedAt == nil {
 			break
@@ -71085,6 +71099,10 @@ enum AgentSubjectType {
   Organization
   Insight
   BankReceipt
+  DetentionOccurrence
+  Worker
+  CarrierIntelEvent
+  EDIInboundFile
 }
 
 enum AgentRunTrigger {
@@ -71587,6 +71605,10 @@ extend type Mutation {
   LoadMonitor
   ShipmentIntake
   CashApplication
+  DetentionDesk
+  CredentialDesk
+  CustomerUpdateDesk
+  CarrierRiskDesk
 }
 
 enum AgentTriggerMode {
@@ -74756,6 +74778,16 @@ type CustomerEmailProfile {
   updatedAt: Timestamp!
 }
 
+"""
+What a customer asked to be told as their freight moves.
+"""
+enum CustomerStatusUpdatePreference {
+  None
+  Arrivals
+  Departures
+  ArrivalsAndDepartures
+}
+
 type Customer {
   id: ID!
   businessUnitId: ID!
@@ -74776,6 +74808,16 @@ type Customer {
   allowConsolidation: Boolean!
   exclusiveConsolidation: Boolean!
   consolidationPriority: Int!
+  """
+  What this customer asked to be told as their freight moves. None is the
+  default: a customer who never opted in is not emailed about a stop.
+  """
+  statusUpdatePreference: CustomerStatusUpdatePreference!
+  """
+  Who receives those updates, comma separated. Empty falls back to the
+  notice profile's own recipients.
+  """
+  statusUpdateRecipients: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -96372,6 +96414,10 @@ func (ec *executionContext) childFields_Customer(ctx context.Context, field grap
 		return ec.fieldContext_Customer_exclusiveConsolidation(ctx, field)
 	case "consolidationPriority":
 		return ec.fieldContext_Customer_consolidationPriority(ctx, field)
+	case "statusUpdatePreference":
+		return ec.fieldContext_Customer_statusUpdatePreference(ctx, field)
+	case "statusUpdateRecipients":
+		return ec.fieldContext_Customer_statusUpdateRecipients(ctx, field)
 	case "version":
 		return ec.fieldContext_Customer_version(ctx, field)
 	case "createdAt":

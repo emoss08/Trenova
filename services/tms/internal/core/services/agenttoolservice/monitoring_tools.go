@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 )
 
@@ -518,6 +519,18 @@ func (t *emailCustomerTool) Execute(
 	})
 	if err != nil {
 		return err
+	}
+
+	// The customer update desk is woken by every arrival and every
+	// departure, so a shipment crossing a yard can raise several runs in a
+	// few minutes. Telling the customer once is the rule; reading back what
+	// was already sent is what enforces it.
+	told, err := alreadyToldCustomer(ctx, t.deps.comments, tenant, sp.ID, timeutils.NowUnix())
+	if err != nil {
+		return err
+	}
+	if told {
+		return ErrCustomerAlreadyTold
 	}
 
 	recipients, customerName, err := t.recipients(ctx, sp, tenant)

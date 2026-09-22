@@ -16,8 +16,13 @@ import (
 )
 
 var (
-	ErrMissingActor          = errors.New("agent tool requires an actor")
-	ErrAgentCannotApprove    = errors.New("agent principals cannot approve billing queue items")
+	ErrMissingActor       = errors.New("agent tool requires an actor")
+	ErrAgentCannotApprove = errors.New("agent principals cannot approve billing queue items")
+	// ErrCustomerAlreadyTold is a skip rather than a failure: the customer
+	// has the update, which is the outcome the call wanted.
+	ErrCustomerAlreadyTold = errors.New(
+		"this customer was already emailed about this shipment within the hour",
+	)
 	ErrTenantMismatch        = errors.New("tool parameters do not match the actor tenant")
 	ErrMissingIdempotencyKey = errors.New("idempotency key is required for this tool")
 )

@@ -23,6 +23,14 @@ const (
 
 	DefaultHorizonSearchIterations = int16(25)
 	MaxHorizonSearchIterations     = int16(500)
+
+	// A move that still has nobody on it this close to its start is raised to
+	// the desk, and to whichever agent covers dispatch. The window is shorter
+	// than the planning horizon on purpose: the planner looks ahead so it can
+	// build a good day, while this asks who is going to run a load that is
+	// about to leave.
+	DefaultCoverageRiskWindowHours = int16(12)
+	MaxCoverageRiskWindowHours     = int16(168)
 )
 
 var defaultAutoAssignConfidenceThreshold = decimal.NewFromFloat(0.85)
@@ -59,6 +67,7 @@ type DispatchControl struct {
 	PlanningMode                         PlanningMode               `json:"planningMode"                         bun:"planning_mode,type:dispatch_planning_mode_enum,notnull,default:'Immediate'"`
 	HorizonMaxMovesPerDriver             int16                      `json:"horizonMaxMovesPerDriver"             bun:"horizon_max_moves_per_driver,type:SMALLINT,notnull,default:3"`
 	HorizonSearchIterations              *int16                     `json:"horizonSearchIterations"              bun:"horizon_search_iterations,type:SMALLINT,nullzero"`
+	CoverageRiskWindowHours              int16                      `json:"coverageRiskWindowHours"              bun:"coverage_risk_window_hours,type:SMALLINT,notnull,default:12"`
 	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'"`
 	RecordServiceFailures                ServiceIncidentType        `json:"recordServiceFailures"                bun:"record_service_failures,type:service_incident_type_enum,notnull,default:'Never'"`
 	ServiceFailureTarget                 *float64                   `json:"serviceFailureTarget"                 bun:"service_failure_target,type:FLOAT,nullzero"`
@@ -83,6 +92,17 @@ func (dc *DispatchControl) PlanningHorizonHours() int16 {
 		return MaxAutoAssignPlanningHorizonHours
 	}
 	return dc.AutoAssignPlanningHorizonHours
+}
+
+func (dc *DispatchControl) CoverageWindowHours() int16 {
+	if dc == nil || dc.CoverageRiskWindowHours <= 0 {
+		return DefaultCoverageRiskWindowHours
+	}
+	if dc.CoverageRiskWindowHours > MaxCoverageRiskWindowHours {
+		return MaxCoverageRiskWindowHours
+	}
+
+	return dc.CoverageRiskWindowHours
 }
 
 func (dc *DispatchControl) ResolvedPlanningMode() PlanningMode {
@@ -158,6 +178,9 @@ func (dc *DispatchControl) NormalizeAutoAssignmentSettings() {
 	}
 	if dc.HorizonMaxMovesPerDriver <= 0 {
 		dc.HorizonMaxMovesPerDriver = DefaultHorizonMaxMovesPerDriver
+	}
+	if dc.CoverageRiskWindowHours <= 0 {
+		dc.CoverageRiskWindowHours = DefaultCoverageRiskWindowHours
 	}
 }
 
@@ -260,6 +283,17 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
+		validation.Field(&dc.CoverageRiskWindowHours,
+			validation.By(func(_ any) error {
+				if dc.CoverageRiskWindowHours <= 0 ||
+					dc.CoverageRiskWindowHours > MaxCoverageRiskWindowHours {
+					return errors.New(
+						"Coverage risk window must be between 1 and 168 hours",
+					)
+				}
+				return nil
+			}),
+		),
 	))
 }
 
@@ -315,5 +349,6 @@ func NewDefaultDispatchControl(orgID, buID pulid.ID) *DispatchControl {
 		ScoringWeights:                       ScoringWeights{},
 		AutoAssignConfidenceThreshold:        defaultAutoAssignConfidenceThreshold,
 		AutoAssignPlanningHorizonHours:       DefaultAutoAssignPlanningHorizonHours,
+		CoverageRiskWindowHours:              DefaultCoverageRiskWindowHours,
 	}
 }

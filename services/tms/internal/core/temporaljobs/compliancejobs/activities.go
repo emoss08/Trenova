@@ -3,13 +3,17 @@ package compliancejobs
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
 	"github.com/emoss08/trenova/internal/core/services/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
@@ -54,7 +58,12 @@ type ActivitiesParams struct {
 	DashControlRepo repositories.DashControlRepository
 	Notifications   *notificationservice.Service
 	DriverNotify    *drivernotificationservice.Service
-	Logger          *zap.Logger
+	// Watchtower puts a driver whose papers are running out on the feed.
+	Watchtower services.WatchtowerProjector `optional:"true"`
+	// Publisher wakes whichever agent covers credentials, once for the
+	// driver rather than once for each paper.
+	Publisher services.AgentEventPublisher `optional:"true"`
+	Logger    *zap.Logger
 }
 
 type Activities struct {
@@ -69,6 +78,8 @@ type Activities struct {
 	dashControlRepo repositories.DashControlRepository
 	notifications   *notificationservice.Service
 	driverNotify    *drivernotificationservice.Service
+	watchtower      services.WatchtowerProjector
+	publisher       services.AgentEventPublisher
 	logger          *zap.Logger
 }
 
@@ -85,14 +96,27 @@ func NewActivities(p ActivitiesParams) *Activities {
 		dashControlRepo: p.DashControlRepo,
 		notifications:   p.Notifications,
 		driverNotify:    p.DriverNotify,
+		watchtower:      p.Watchtower,
+		publisher:       p.Publisher,
 		logger:          p.Logger.Named("compliance-activities"),
 	}
+}
+
+// dueDriver gathers one driver's papers that reached a reminder mark on
+// this pass. The sweep walks credentials, but a driver with three papers
+// coming due is one conversation and one renewal packet, so the event and
+// the tower item are raised per driver rather than per paper.
+type dueDriver struct {
+	tenantInfo pagination.TenantInfo
+	name       string
+	papers     []watchtowersources.ExpiringPaper
 }
 
 type sweepState struct {
 	now            int64
 	remindersByOrg map[pulid.ID]bool
 	touchedWorkers map[pulid.ID]pagination.TenantInfo
+	dueDrivers     map[pulid.ID]*dueDriver
 	result         *CredentialExpirySweepResult
 }
 
@@ -103,6 +127,7 @@ func (a *Activities) CredentialExpirySweepActivity(
 		now:            timeutils.NowUnix(),
 		remindersByOrg: make(map[pulid.ID]bool),
 		touchedWorkers: make(map[pulid.ID]pagination.TenantInfo),
+		dueDrivers:     make(map[pulid.ID]*dueDriver),
 		result:         new(CredentialExpirySweepResult),
 	}
 
@@ -137,6 +162,8 @@ func (a *Activities) CredentialExpirySweepActivity(
 		after = page[len(page)-1].ID
 	}
 
+	a.raiseDueDrivers(ctx, state)
+
 	for workerID, tenantInfo := range state.touchedWorkers {
 		state.result.WorkersChecked++
 		if _, err := a.credentials.RefreshCompliance(ctx, tenantInfo, workerID); err != nil {
@@ -147,6 +174,53 @@ func (a *Activities) CredentialExpirySweepActivity(
 	}
 
 	return state.result, nil
+}
+
+// recordDueDriver files one paper under its driver. The map is what makes
+// the raise once per driver per pass however many papers reached a mark.
+func (s *sweepState) recordDueDriver(
+	cred *worker.WorkerCredential,
+	tenantInfo pagination.TenantInfo,
+	daysLeft int64,
+) {
+	driver, ok := s.dueDrivers[cred.WorkerID]
+	if !ok {
+		driver = &dueDriver{
+			tenantInfo: tenantInfo,
+			name: strings.TrimSpace(
+				cred.Worker.FirstName + " " + cred.Worker.LastName,
+			),
+		}
+		s.dueDrivers[cred.WorkerID] = driver
+	}
+	driver.papers = append(driver.papers, watchtowersources.ExpiringPaper{
+		Name:     cred.CredentialType.Name,
+		DaysLeft: daysLeft,
+	})
+}
+
+// raiseDueDrivers puts each driver whose papers reached a mark on the feed
+// and wakes the credential desk for them, once each.
+func (a *Activities) raiseDueDrivers(ctx context.Context, state *sweepState) {
+	for workerID, driver := range state.dueDrivers {
+		state.result.DriversRaised++
+		if a.watchtower != nil {
+			a.watchtower.Upsert(ctx, watchtowersources.DescribeExpiringCredentials(
+				watchtowersources.ExpiringCredentials{
+					TenantInfo: driver.tenantInfo,
+					WorkerID:   workerID,
+					WorkerName: driver.name,
+					Papers:     driver.papers,
+					OccurredAt: state.now,
+				},
+			))
+		}
+		services.PublishAgentEvent(ctx, a.publisher, services.AgentEvent{
+			Kind:       agent.EventWorkerCredentialExpiring,
+			SubjectID:  workerID,
+			TenantInfo: driver.tenantInfo,
+		})
+	}
 }
 
 func (a *Activities) sweepCredential(
@@ -171,6 +245,7 @@ func (a *Activities) sweepCredential(
 	if step < 0 {
 		return nil
 	}
+	state.recordDueDriver(cred, tenantInfo, daysLeft)
 
 	remindDrivers, err := a.driverRemindersEnabled(ctx, tenantInfo, state.remindersByOrg)
 	if err != nil {

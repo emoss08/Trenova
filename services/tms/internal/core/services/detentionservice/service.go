@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -45,6 +46,9 @@ type Params struct {
 	// Watchtower puts a running detention clock on the feed and takes it
 	// off once the occurrence closes.
 	Watchtower services.WatchtowerProjector `optional:"true"`
+	// Publisher wakes whichever agent covers detention when a clock starts
+	// and when a notice is left for a person to send.
+	Publisher services.AgentEventPublisher `optional:"true"`
 }
 
 type Service struct {
@@ -69,6 +73,7 @@ type Service struct {
 	contextBuilder    *ContextBuilder
 	auditService      services.AuditService
 	watchtower        services.WatchtowerProjector
+	publisher         services.AgentEventPublisher
 	now               func() int64
 }
 
@@ -96,6 +101,7 @@ func New(p Params) *Service {
 		templates:         p.Templates,
 		contextBuilder:    p.ContextBuilder,
 		watchtower:        p.Watchtower,
+		publisher:         p.Publisher,
 		auditService:      p.AuditService,
 		now:               timeutils.NowUnix,
 	}
@@ -586,4 +592,27 @@ func (s *Service) projectToWatchtower(
 	}
 
 	s.watchtower.Upsert(ctx, watchtowersources.DescribeDetentionOccurrence(&described))
+}
+
+// publishOccurrenceOpened wakes the detention desk the moment a clock
+// starts, and only then. Recalculation runs on every stop update, so an
+// occurrence that was already running is not news; the event fires on the
+// transition into open, not on every pass over one that already is.
+func (s *Service) publishOccurrenceOpened(
+	ctx context.Context,
+	saved *detention.DetentionOccurrence,
+	p computeStopParams,
+) {
+	if saved == nil || !saved.IsOpen {
+		return
+	}
+	if p.existing != nil && p.existing.IsOpen {
+		return
+	}
+
+	services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+		Kind:       agent.EventDetentionOccurrenceOpened,
+		SubjectID:  saved.ID,
+		TenantInfo: p.tenantInfo,
+	})
 }

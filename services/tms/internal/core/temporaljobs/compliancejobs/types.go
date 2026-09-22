@@ -7,6 +7,7 @@ type CredentialExpirySweepResult struct {
 	WorkersChecked      int                          `json:"workersChecked"`
 	DriverNotifications int                          `json:"driverNotifications"`
 	ComplianceAlerts    int                          `json:"complianceAlerts"`
+	DriversRaised       int                          `json:"driversRaised"`
 	Failed              int                          `json:"failed"`
 	Training            *TrainingReminderSweepResult `json:"training,omitempty"`
 	Safety              *SafetyRollupSweepResult     `json:"safety,omitempty"`

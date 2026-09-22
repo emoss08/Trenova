@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -133,16 +134,16 @@ func (t *listExpiringCredentialsTool) Query(
 		codes = []string{strings.ToUpper(code)}
 	}
 
-	criteria := newSearchCriteria("credentials").at(clockFor(params))
-	criteria.field("expiring within", fmt.Sprintf("%d days", horizon))
+	criteria := filtercatalog.NewCriteria("credentials").At(clockFor(params))
+	criteria.Field("expiring within", fmt.Sprintf("%d days", horizon))
 	if len(codes) > 0 {
-		criteria.field("credential type", codes[0])
+		criteria.Field("credential type", codes[0])
 	}
 	if includeExpired {
-		criteria.field("including", "already expired")
+		criteria.Field("including", "already expired")
 	}
 	if requiredOnly {
-		criteria.field("limited to", "required credential types")
+		criteria.Field("limited to", "required credential types")
 	}
 
 	// The tenant comes from the actor, never from the model. ListExpiring walks
@@ -157,7 +158,7 @@ func (t *listExpiringCredentialsTool) Query(
 		},
 		HorizonDays:         horizon,
 		GraceDays:           grace,
-		AsOf:                criteria.clock.today(),
+		AsOf:                criteria.Clock.Today(),
 		RequiredOnly:        requiredOnly,
 		CredentialTypeCodes: codes,
 		Limit:               limit,
@@ -168,10 +169,10 @@ func (t *listExpiringCredentialsTool) Query(
 
 	rows := make([]expiringCredentialRow, 0, len(credentials))
 	for _, credential := range credentials {
-		rows = append(rows, toExpiringRow(credential, criteria.clock))
+		rows = append(rows, toExpiringRow(credential, criteria.Clock))
 	}
 
-	return criteria.result(rows, len(rows)), nil
+	return searchResult(criteria, rows, len(rows)), nil
 }
 
 func toExpiringRow(credential *worker.WorkerCredential, clk clock) expiringCredentialRow {
@@ -184,8 +185,8 @@ func toExpiringRow(credential *worker.WorkerCredential, clk clock) expiringCrede
 	if credential.ExpiresAt != nil {
 		// Calendar days in the organization's zone, so a card expiring at
 		// 00:30 tomorrow is one day out at any hour tonight — not zero.
-		row.DaysUntilExpiry = clk.daysBetween(clk.instant(), *credential.ExpiresAt)
-		row.Expired = *credential.ExpiresAt < clk.instant()
+		row.DaysUntilExpiry = clk.DaysBetween(clk.Instant(), *credential.ExpiresAt)
+		row.Expired = *credential.ExpiresAt < clk.Instant()
 	}
 
 	if credential.CredentialType != nil {
@@ -197,5 +198,3 @@ func toExpiringRow(credential *worker.WorkerCredential, clk clock) expiringCrede
 
 	return row
 }
-
-const secondsPerDay = 86400

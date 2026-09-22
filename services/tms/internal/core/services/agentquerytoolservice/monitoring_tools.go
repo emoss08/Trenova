@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -104,7 +105,7 @@ func newListServiceFailuresTool(failures serviceFailureLister) serviceports.Agen
 		}
 
 		return listRows(result.Items, func(item *servicefailure.ServiceFailure) any {
-			return toServiceFailureRow(item, clk.timezone)
+			return toServiceFailureRow(item, clk.Timezone)
 		}), nil
 	}
 
@@ -200,9 +201,9 @@ func (t *listReasonCodesTool) Query(
 
 	query := optionalString(params.Params, "query")
 	appliesTo := optionalString(params.Params, "appliesTo")
-	criteria := newSearchCriteria("reason codes").at(clockFor(params))
-	criteria.text(query)
-	criteria.field("applies to", appliesTo)
+	criteria := filtercatalog.NewCriteria("reason codes").At(clockFor(params))
+	criteria.Text(query)
+	criteria.Field("applies to", appliesTo)
 
 	result, err := t.codes.SelectOptions(
 		ctx,
@@ -235,7 +236,7 @@ func (t *listReasonCodesTool) Query(
 		})
 	}
 
-	return criteria.result(rows, len(rows)), nil
+	return searchResult(criteria, rows, len(rows)), nil
 }
 
 type detentionDeskRow struct {
@@ -305,8 +306,8 @@ func (t *listDetentionDeskTool) Query(
 	}
 
 	urgency := optionalString(params.Params, "urgency")
-	criteria := newSearchCriteria("open detention occurrences").at(clockFor(params))
-	criteria.field("urgency", urgency)
+	criteria := filtercatalog.NewCriteria("open detention occurrences").At(clockFor(params))
+	criteria.Field("urgency", urgency)
 
 	entries, err := t.desk.ListDesk(ctx, tenantOf(params))
 	if err != nil {
@@ -324,7 +325,7 @@ func (t *listDetentionDeskTool) Query(
 		rows = append(rows, toDetentionDeskRow(entry, params.Timezone))
 	}
 
-	return criteria.result(rows, len(rows)), nil
+	return searchResult(criteria, rows, len(rows)), nil
 }
 
 func toDetentionDeskRow(entry *detentionservice.DeskEntry, timezone string) detentionDeskRow {
@@ -431,9 +432,9 @@ func (t *listWeatherAlertsTool) Query(
 	}
 	query := strings.ToLower(optionalString(params.Params, "query"))
 
-	criteria := newSearchCriteria("weather alerts").at(clockFor(params))
-	criteria.field("severity at least", floor)
-	criteria.text(query)
+	criteria := filtercatalog.NewCriteria("weather alerts").At(clockFor(params))
+	criteria.Field("severity at least", floor)
+	criteria.Text(query)
 
 	collection, err := t.weather.GetActiveAlerts(ctx, tenantOf(params))
 	if err != nil {
@@ -473,5 +474,5 @@ func (t *listWeatherAlertsTool) Query(
 		rows = append(rows, row)
 	}
 
-	return criteria.result(rows, len(rows)), nil
+	return searchResult(criteria, rows, len(rows)), nil
 }

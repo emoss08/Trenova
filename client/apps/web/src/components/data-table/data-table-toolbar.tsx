@@ -12,11 +12,13 @@ import type {
   AddRecordAction,
   DataTableGraphQLSource,
   DataTableQueryOptions,
+  FieldFilter,
   FilterItem,
   SortField,
   ColumnDef,
   Table,
 } from "@trenova/shared/types/data-table";
+import type { ComposedTableQuery } from "@/types/table-query";
 import type {
   ActiveTableView,
   TableConfig,
@@ -55,6 +57,12 @@ const DataTableExportDialog = lazy(
   () => import("@/components/data-table/data-table-export-dialog"),
 );
 
+const DataTableAsk = lazy(() =>
+  import("@/components/data-table/data-table-ask").then((module) => ({
+    default: module.DataTableAsk,
+  })),
+);
+
 function ToolbarButtonSkeleton() {
   return <Skeleton className="h-7 w-20" />;
 }
@@ -79,6 +87,9 @@ type DataTableToolbarProps<TData extends Record<string, any>> = {
   onFiltersChange: (filters: FilterItem[]) => void;
   sort: SortField[];
   onSortChange: (sort: SortField[]) => void;
+  /** The filters as the API states them, which is what the composer narrows. */
+  fieldFilters?: FieldFilter[];
+  onAskApplied?: (composed: ComposedTableQuery) => void;
   addRecordActions?: AddRecordAction[];
   resource?: string;
   currentConfig: TableConfig;
@@ -103,6 +114,8 @@ export function DataTableToolbar<TData extends Record<string, any>>({
   onFiltersChange,
   sort,
   onSortChange,
+  fieldFilters = [],
+  onAskApplied,
   addRecordActions = [],
   resource,
   currentConfig,
@@ -148,6 +161,21 @@ export function DataTableToolbar<TData extends Record<string, any>>({
               onSortChange={onSortChange}
             />
           </Suspense>
+          {/* Whether this table can be narrowed by description is a server
+              fact, so the input asks the server itself and renders nothing
+              until it knows — a skeleton here would promise a control that
+              most tables never get. */}
+          {resource && onAskApplied && (
+            <Suspense fallback={null}>
+              <DataTableAsk
+                resource={resource}
+                query={query}
+                fieldFilters={fieldFilters}
+                sort={sort}
+                onApply={onAskApplied}
+              />
+            </Suspense>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

@@ -1,6 +1,5 @@
+import { goEnumValues } from "@/test/go-source";
 import { aiTaskSchema } from "@/types/ai-provider";
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -21,47 +20,10 @@ import { describe, expect, it } from "vitest";
  * here fails this test rather than the page.
  */
 function serverTasks(): string[] {
-  const source = readFileSync(
-    join(repoRoot(), "services/tms/internal/core/domain/aiprovider/enums.go"),
-    "utf8",
-  );
-  const block = /func AllTasks\(\) \[\]Task \{\s*return \[\]Task\{([\s\S]*?)\}/.exec(source);
-  if (block === null) {
-    throw new Error("could not find AllTasks() in the aiprovider enums");
-  }
-
-  const names = [...block[1].matchAll(/Task([A-Za-z]+),/g)].map((match) => match[1]);
-  const constants = new Map(
-    [...source.matchAll(/Task([A-Za-z]+)\s*=\s*Task\("([^"]+)"\)/g)].map((match) => [
-      match[1],
-      match[2],
-    ]),
-  );
-
-  return names.map((name) => {
-    const value = constants.get(name);
-    if (value === undefined) {
-      throw new Error(`AllTasks() names Task${name}, which has no constant`);
-    }
-
-    return value;
+  return goEnumValues({
+    file: "services/tms/internal/core/domain/aiprovider/enums.go",
+    typeName: "Task",
   });
-}
-
-/** The nearest ancestor holding both halves of the monorepo. */
-function repoRoot(): string {
-  let current = process.cwd();
-  for (let depth = 0; depth < 8; depth++) {
-    try {
-      readFileSync(join(current, "go.work"), "utf8");
-
-      return current;
-    } catch {
-      current = dirname(current);
-    }
-  }
-
-  throw new Error("could not find the repository root from " + process.cwd());
 }
 
 describe("aiTaskSchema", () => {

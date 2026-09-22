@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 )
@@ -176,7 +177,7 @@ func (t *listInsightsTool) Query(
 	}
 
 	clk := clockFor(params)
-	criteria := newSearchCriteria("insights").at(clk)
+	criteria := filtercatalog.NewCriteria("insights").At(clk)
 
 	if raw := optionalString(params.Params, "category"); raw != "" {
 		category := insight.Category(raw)
@@ -184,7 +185,7 @@ func (t *listInsightsTool) Query(
 			return nil, fmt.Errorf("category %q is not one of %s", raw, strings.Join(insightCategoryNames(), ", "))
 		}
 		req.Categories = []insight.Category{category}
-		criteria.field("category", raw)
+		criteria.Field("category", raw)
 	}
 
 	if raw := optionalString(params.Params, "severity"); raw != "" {
@@ -193,7 +194,7 @@ func (t *listInsightsTool) Query(
 			return nil, fmt.Errorf("severity %q is not one of %s", raw, strings.Join(insightSeverityNames(), ", "))
 		}
 		req.Severities = []insight.Severity{severity}
-		criteria.field("severity", raw)
+		criteria.Field("severity", raw)
 	}
 
 	status := insight.StatusActive
@@ -204,20 +205,20 @@ func (t *listInsightsTool) Query(
 		}
 	}
 	req.Statuses = []insight.Status{status}
-	criteria.field("status", string(status))
+	criteria.Field("status", string(status))
 
 	result, err := t.insights.List(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	now := clk.instant()
+	now := clk.Instant()
 	rows := make([]insightRow, 0, len(result.Items))
 	for _, entity := range result.Items {
 		rows = append(rows, insightRowFrom(entity, now))
 	}
 
-	return criteria.result(rows, result.Total), nil
+	return searchResult(criteria, rows, result.Total), nil
 }
 
 // insightDetailRow is one finding with its trend and the rule behind it.
@@ -299,7 +300,7 @@ func (t *getInsightTool) Query(
 		return nil, err
 	}
 
-	now := clockFor(params).instant()
+	now := clockFor(params).Instant()
 	row := insightDetailRow{
 		insightRow: insightRowFrom(detail.Insight, now),
 		Rule: insightRuleRow{

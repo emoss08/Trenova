@@ -3,6 +3,8 @@ package agentguard
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 
@@ -23,9 +25,30 @@ type Params struct {
 	Config   *config.Config                           `optional:"true"`
 }
 
+/*
+DefaultClassifierTimeout bounds the scope check.
+
+The classifier is a gate in front of the answer, so every second it spends is
+a second the person watches "Checking the question…" with nothing else
+happening. It is also a model call, which means it inherits whatever latency
+the provider assigned to scope classification has — and a reasoning model on
+that task turned a gate into a two-minute wait before the first token.
+
+Failing open on a timeout is the same posture this service already takes for
+every other classifier failure, and for the same reason: the deterministic
+rules have run and passed, the system prompt still refuses off-domain work,
+and every tool call is authorized independently. An operator who wants the
+stricter posture sets RefuseWhenUnavailable.
+*/
+const DefaultClassifierTimeout = 8 * time.Second
+
 type Service struct {
 	logger     *zap.Logger
 	completion serviceports.CompletionService
+
+	// ClassifierTimeout is how long the scope check may take before the
+	// request proceeds on the deterministic verdict alone.
+	ClassifierTimeout time.Duration
 
 	// verdicts remembers classifications already made, so the same question
 	// asked twice costs one call rather than two.
@@ -47,9 +70,10 @@ func New(p Params) *Service {
 	}
 
 	return &Service{
-		logger:     logger,
-		completion: p.Completion,
-		verdicts:   newVerdictCache(p.Verdicts, ai.GetVerdictCacheTTL(), logger),
+		logger:            logger,
+		completion:        p.Completion,
+		verdicts:          newVerdictCache(p.Verdicts, ai.GetVerdictCacheTTL(), logger),
+		ClassifierTimeout: DefaultClassifierTimeout,
 	}
 }
 
@@ -87,6 +111,31 @@ func New(p Params) *Service {
 // layer filters scope, and failing it closed denies service rather than
 // protecting anything. An operator who wants the stricter posture can set
 // RefuseWhenUnavailable.
+// classifyWithin runs the scope check under its own deadline, so a slow
+// provider costs the turn a bounded wait rather than the whole turn.
+func (s *Service) classifyWithin(
+	ctx context.Context,
+	req EvaluateRequest,
+) (*ClassifierResult, error) {
+	timeout := s.classifierTimeout()
+	if timeout <= 0 {
+		return s.Classify(ctx, req)
+	}
+
+	bounded, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	return s.Classify(bounded, req)
+}
+
+func (s *Service) classifierTimeout() time.Duration {
+	if s.ClassifierTimeout <= 0 {
+		return DefaultClassifierTimeout
+	}
+
+	return s.ClassifierTimeout
+}
+
 func (s *Service) Evaluate(ctx context.Context, req EvaluateRequest) Decision {
 	if decision := EvaluateDeterministic(req.Input); !decision.Allowed {
 		s.logger.Info("request refused by deterministic scope rule",
@@ -97,8 +146,20 @@ func (s *Service) Evaluate(ctx context.Context, req EvaluateRequest) Decision {
 		return decision
 	}
 
-	result, err := s.Classify(ctx, req)
+	result, err := s.classifyWithin(ctx, req)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) && !s.RefuseWhenUnavailable {
+			// Named separately from the general failure because it is a
+			// different operational problem: the classifier is reachable and
+			// too slow, which is a provider assignment to look at rather than
+			// an outage.
+			s.logger.Warn("scope classifier timed out; falling back to deterministic rules",
+				zap.Duration("timeout", s.classifierTimeout()),
+			)
+
+			return allowed(StageUnavailable, CategoryOther)
+		}
+
 		if errors.Is(err, serviceports.ErrNoProviderConfigured) {
 			s.logger.Debug("no scope classifier configured; deterministic rules only")
 
@@ -146,5 +207,19 @@ func reasonForCategory(category Category) Reason {
 		return ReasonPromptManipulation
 	default:
 		return ReasonOffDomain
+	}
+}
+
+// SetCompletionForTest wires a stub classifier onto a Service built as a
+// literal. The field is unexported because nothing outside this package has
+// any business swapping the classifier at runtime; a test that needs a slow
+// or failing one does.
+func SetCompletionForTest(s *Service, completion serviceports.CompletionService) {
+	s.completion = completion
+	if s.logger == nil {
+		s.logger = zap.NewNop()
+	}
+	if s.verdicts == nil {
+		s.verdicts = newVerdictCache(nil, 0, s.logger)
 	}
 }

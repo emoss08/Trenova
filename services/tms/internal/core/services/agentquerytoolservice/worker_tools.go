@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -240,8 +241,8 @@ func (t *searchWorkerTool) Query(
 		limit = defaultSearchLimit
 	}
 
-	criteria := newSearchCriteria("workers").at(clockFor(params))
-	criteria.text(query)
+	criteria := filtercatalog.NewCriteria("workers").At(clockFor(params))
+	criteria.Text(query)
 
 	result, err := t.repo.List(ctx, &repositories.ListWorkersRequest{
 		Filter: &pagination.QueryOptions{
@@ -266,7 +267,7 @@ func (t *searchWorkerTool) Query(
 		rows = append(rows, toWorkerRow(item))
 	}
 
-	return criteria.result(rows, len(rows)), nil
+	return searchResult(criteria, rows, len(rows)), nil
 }
 
 // workerName is how a person names a driver. Every tool that returns a worker

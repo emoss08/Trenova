@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -188,8 +189,8 @@ func (t *listBankReceiptExceptionsTool) Query(
 	}
 	query := strings.ToLower(strings.TrimSpace(optionalString(params.Params, "query")))
 
-	criteria := newSearchCriteria("unmatched bank receipts").at(clockFor(params))
-	criteria.text(query)
+	criteria := filtercatalog.NewCriteria("unmatched bank receipts").At(clockFor(params))
+	criteria.Text(query)
 
 	tenant := tenantOf(params)
 	receipts, err := t.receipts.ListExceptions(ctx, tenant)
@@ -222,7 +223,7 @@ func (t *listBankReceiptExceptionsTool) Query(
 		}
 	}
 
-	return criteria.result(rows, matched), nil
+	return searchResult(criteria, rows, matched), nil
 }
 
 func receiptMatchesQuery(receipt *bankreceipt.BankReceipt, query string) bool {
@@ -480,7 +481,7 @@ func (t *listCustomerPaymentsTool) Query(
 		limit = maxBankReceiptRows
 	}
 
-	criteria := newSearchCriteria("customer payments").at(clockFor(params))
+	criteria := filtercatalog.NewCriteria("customer payments").At(clockFor(params))
 
 	req := &repositories.ListCustomerPaymentsRequest{
 		Filter: &pagination.QueryOptions{
@@ -490,7 +491,7 @@ func (t *listCustomerPaymentsTool) Query(
 		},
 		Status: customerpayment.StatusPosted,
 	}
-	criteria.text(req.Filter.Query)
+	criteria.Text(req.Filter.Query)
 
 	if raw := optionalString(params.Params, "customerId"); raw != "" {
 		customerID, err := pulid.Parse(raw)
@@ -498,7 +499,7 @@ func (t *listCustomerPaymentsTool) Query(
 			return nil, fmt.Errorf("customerId %q is not a record id", raw)
 		}
 		req.CustomerID = customerID
-		criteria.field("customer", raw)
+		criteria.Field("customer", raw)
 	}
 
 	if raw := optionalString(params.Params, "status"); raw != "" {
@@ -508,7 +509,7 @@ func (t *listCustomerPaymentsTool) Query(
 		}
 		req.Status = status
 	}
-	criteria.field("status", string(req.Status))
+	criteria.Field("status", string(req.Status))
 
 	result, err := t.payments.List(ctx, req)
 	if err != nil {
@@ -522,5 +523,5 @@ func (t *listCustomerPaymentsTool) Query(
 		}
 	}
 
-	return criteria.result(rows, result.Total), nil
+	return searchResult(criteria, rows, result.Total), nil
 }

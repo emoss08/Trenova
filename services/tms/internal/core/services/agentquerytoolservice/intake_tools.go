@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -363,12 +364,12 @@ func (t *quoteShipmentTool) Query(
 
 	asOf := entity.Moves[0].Stops[0].ScheduledWindowStart
 	if raw := optionalString(params.Params, "asOf"); raw != "" {
-		if asOf, err = coerceDateValue("asOf", raw, clk); err != nil {
+		if asOf, err = filtercatalog.CoerceDate("asOf", raw, clk); err != nil {
 			return nil, err
 		}
 	}
 	if asOf == 0 {
-		asOf = clk.instant()
+		asOf = clk.Instant()
 	}
 
 	rated, err := t.quotes.Quote(ctx, &ratequoteservice.QuoteRequest{
@@ -434,7 +435,7 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 
 		var scheduled int64
 		if strings.TrimSpace(stop.Date) != "" {
-			if scheduled, err = coerceDateValue(fmt.Sprintf("stops[%d].date", idx), stop.Date, clk); err != nil {
+			if scheduled, err = filtercatalog.CoerceDate(fmt.Sprintf("stops[%d].date", idx), stop.Date, clk); err != nil {
 				return nil, nil, err
 			}
 		}

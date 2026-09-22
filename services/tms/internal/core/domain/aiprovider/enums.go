@@ -126,7 +126,13 @@ const (
 	// every number it writes is checked against those figures afterwards,
 	// so it is safe to route wherever is cheapest.
 	TaskDailyBriefing = Task("DailyBriefing")
-	TaskGeneral       = Task("General")
+	// TaskQueryCompose turns a sentence into a table's filters. It names
+	// fields and values from a catalogue it is shown and writes no SQL;
+	// everything it names is compiled against that catalogue afterwards, so a
+	// cheap model that guesses wrong produces an unresolved line rather than a
+	// wrong answer.
+	TaskQueryCompose = Task("QueryCompose")
+	TaskGeneral      = Task("General")
 )
 
 func (t Task) IsValid() bool {
@@ -139,6 +145,7 @@ func (t Task) IsValid() bool {
 		TaskAssistantChat,
 		TaskOperationalInsights,
 		TaskDailyBriefing,
+		TaskQueryCompose,
 		TaskGeneral:
 		return true
 	default:
@@ -157,6 +164,7 @@ func AllTasks() []Task {
 		TaskAssistantChat,
 		TaskOperationalInsights,
 		TaskDailyBriefing,
+		TaskQueryCompose,
 		TaskGeneral,
 	}
 }

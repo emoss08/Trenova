@@ -166,6 +166,18 @@ function AutoAssignmentForm() {
                   sideText="hours"
                 />
               </FormControl>
+              <FormControl className="min-h-[3em] max-w-[400px] pl-10">
+                <NumberField
+                  control={control}
+                  name="coverageRiskWindowHours"
+                  label={t("Coverage risk window (hours)")}
+                  description={t(
+                    "A move this close to its start with nobody on it is raised to the watchtower and handed to the dispatch agent. Shorter than the planning horizon on purpose.",
+                  )}
+                  placeholder="12"
+                  sideText="hours"
+                />
+              </FormControl>
             </>
           )}
         </FormGroup>

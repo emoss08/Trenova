@@ -75,6 +75,13 @@ var templateIcons = map[Template]string{
 	TemplateBillingException:    IconReceipt,
 	TemplateDispatchAssignment:  IconRoute,
 	TemplateImportAssistant:     IconFile,
+	TemplateLoadMonitor:         IconRadar,
+	TemplateShipmentIntake:      IconPackage,
+	TemplateCashApplication:     IconWallet,
+	TemplateDetentionDesk:       IconGauge,
+	TemplateCredentialDesk:      IconClipboard,
+	TemplateCustomerUpdateDesk:  IconBell,
+	TemplateCarrierRiskDesk:     IconSearch,
 }
 
 func KnownIcons() []string {

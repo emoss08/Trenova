@@ -64,6 +64,7 @@ import { DataTablePanelContent, DataTablePanelWrapper } from "./data-table-panel
 import { DataTableRefreshPill } from "./data-table-refresh-pill";
 import { DataTableSelectionBanner } from "./data-table-selection-banner";
 import { createSelectionColumn } from "./data-table-selection-column";
+import type { ComposedTableQuery } from "@/types/table-query";
 import { DataTableToolbar } from "./data-table-toolbar";
 
 const BULK_SELECT_MAX = 1000;
@@ -229,6 +230,26 @@ export function DataTable<TData extends Record<string, any>>({
       void setSearchParams(nextParams);
     },
     [setSearchParams],
+  );
+
+  /**
+   * A question answered as filters, put where a hand-built filter goes.
+   *
+   * Nothing is applied that is not shown: the composed filters land in the
+   * same builder and the same chips, so the person sees each one and can
+   * change or drop it before reading a single row. Text the composer could not
+   * place on a field becomes the search term rather than being thrown away.
+   */
+  const handleAskApplied = useCallback(
+    (composed: ComposedTableQuery) => {
+      applyFilterState({ fieldFilters: composed.fieldFilters, filterGroups: [] });
+      void setSearchParams({
+        query: composed.query,
+        sort: composed.sort as SortField[],
+        pageIndex: 1,
+      });
+    },
+    [applyFilterState, setSearchParams],
   );
 
   const handlePageChange = useCallback(
@@ -697,6 +718,8 @@ export function DataTable<TData extends Record<string, any>>({
               onFiltersChange={handleFiltersChange}
               sort={sort}
               onSortChange={handleSortArrayChange}
+              fieldFilters={fieldFilters ?? []}
+              onAskApplied={handleAskApplied}
               addRecordActions={resolvedAddRecordActions}
               resource={name}
               currentConfig={currentConfig}

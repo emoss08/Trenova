@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/email"
@@ -565,6 +566,17 @@ func (s *Service) SweepNoticesDue(
 		policy := s.cachedNoticePolicy(ctx, occurrence, tenantInfo, policyCache)
 		if policy == nil || !policy.AutoSendNotice {
 			result.Skipped++
+			// A policy that leaves sending to a person is a decision, not a
+			// gap: the notice stays on the desk and whichever agent covers
+			// detention is woken to draft it. A policy that could not be
+			// read is a configuration problem and wakes nobody.
+			if policy != nil {
+				services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+					Kind:       agent.EventDetentionNoticeDue,
+					SubjectID:  occurrence.ID,
+					TenantInfo: tenantInfo,
+				})
+			}
 			continue
 		}
 

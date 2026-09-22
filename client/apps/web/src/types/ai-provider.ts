@@ -57,6 +57,7 @@ export const aiTaskSchema = z.enum([
   "AssistantChat",
   "OperationalInsights",
   "DailyBriefing",
+  "QueryCompose",
   "General",
 ]);
 

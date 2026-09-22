@@ -1,5 +1,6 @@
 import type { ReportPreviewColumn } from "@/lib/graphql/reports";
 import type { AssistantArtifact } from "@/types/assistant";
+import { toTitleCase } from "@trenova/shared/lib/utils";
 
 /*
  * The server stores each artifact's payload in the shape the tool published
@@ -75,6 +76,71 @@ export function reportPreviewFrom(artifact: AssistantArtifact): ReportPreviewArt
     rowCount: numberOf(payload.rowCount) || rows.length,
     truncated: payload.truncated === true,
   };
+}
+
+export type TableViewArtifact = {
+  tool: string;
+  entity: string;
+  searchedFor: string[];
+  columns: ReportPreviewColumn[];
+  rows: unknown[][];
+  rowCount: number;
+  truncated: boolean;
+};
+
+/**
+ * A list or search result as a table.
+ *
+ * The columns come from the server in the order the row projection declares
+ * them, because a JSON object has no order and the pane would otherwise draw
+ * "pro number, customer, status" in whatever order the payload happened to
+ * serialize. The rows are keyed objects, so they are read positionally
+ * against those columns; a row missing a column reads as an empty cell, never
+ * as a shifted one.
+ */
+export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
+  const payload = artifact.payload;
+  const columns = listOf(payload.columns)
+    .filter((name): name is string => typeof name === "string" && name !== "")
+    .map(
+      (name) =>
+        ({
+          id: name,
+          label: toTitleCase(name),
+          type: "string",
+          format: null,
+        }) as ReportPreviewColumn,
+    );
+  const rows = listOf(payload.rows)
+    .filter(isRecord)
+    .map((row) => columns.map((column) => cell(row[column.id])));
+  const rowCount = numberOf(payload.rowCount) || rows.length;
+
+  return {
+    tool: stringOf(payload.tool),
+    entity: stringOf(payload.entity),
+    searchedFor: listOf(payload.searchedFor).filter(
+      (term): term is string => typeof term === "string" && term !== "",
+    ),
+    columns,
+    rows,
+    rowCount,
+    // The count is what the search found; the rows are what fitted in the
+    // payload. A table that says 400 above 200 rows has to say why.
+    truncated: rowCount > rows.length,
+  };
+}
+
+/**
+ * One value as the grid can draw it. A nested object or list is a cell the
+ * grid has no column layout for, so it is rendered as its JSON rather than
+ * as "[object Object]".
+ */
+function cell(value: unknown): unknown {
+  if (value === undefined) return null;
+  if (value === null || typeof value !== "object") return value;
+
+  return JSON.stringify(value);
 }
 
 export type ReportRunArtifact = {

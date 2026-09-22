@@ -1871,6 +1871,9 @@ models:
   AgentSubjectType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.SubjectType
+  CustomerStatusUpdatePreference:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.StatusUpdatePreference
   AgentRunTrigger:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.RunTrigger

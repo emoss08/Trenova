@@ -3,16 +3,22 @@ package agent
 type EventKind string
 
 const (
-	EventBillingQueueItemException = EventKind("billing_queue.item_exception")
-	EventBillingQueueItemOnHold    = EventKind("billing_queue.item_on_hold")
-	EventShipmentMoveUnassigned    = EventKind("shipment_move.unassigned")
-	EventShipmentCreated           = EventKind("shipment.created")
-	EventDocumentExtracted         = EventKind("document.extracted")
-	EventServiceFailureDetected    = EventKind("service_failure.detected")
-	EventShipmentMoveArrived       = EventKind("shipment_move.arrived")
-	EventShipmentMoveDeparted      = EventKind("shipment_move.departed")
-	EventInsightDetected           = EventKind("insight.detected")
-	EventBankReceiptException      = EventKind("bank_receipt.exception")
+	EventBillingQueueItemException  = EventKind("billing_queue.item_exception")
+	EventBillingQueueItemOnHold     = EventKind("billing_queue.item_on_hold")
+	EventShipmentMoveUnassigned     = EventKind("shipment_move.unassigned")
+	EventShipmentCreated            = EventKind("shipment.created")
+	EventDocumentExtracted          = EventKind("document.extracted")
+	EventServiceFailureDetected     = EventKind("service_failure.detected")
+	EventShipmentMoveArrived        = EventKind("shipment_move.arrived")
+	EventShipmentMoveDeparted       = EventKind("shipment_move.departed")
+	EventInsightDetected            = EventKind("insight.detected")
+	EventBankReceiptException       = EventKind("bank_receipt.exception")
+	EventDetentionOccurrenceOpened  = EventKind("detention.occurrence_opened")
+	EventDetentionNoticeDue         = EventKind("detention.notice_due")
+	EventWorkerCredentialExpiring   = EventKind("worker_credential.expiring")
+	EventCarrierIntelEventOpened    = EventKind("carrier_intel.event_opened")
+	EventShipmentMoveCoverageAtRisk = EventKind("shipment_move.coverage_at_risk")
+	EventEDIFileQuarantined         = EventKind("edi.file_quarantined")
 )
 
 type EventDescriptor struct {
@@ -82,6 +88,42 @@ var knownEvents = []EventDescriptor{
 		SubjectType: SubjectBankReceipt,
 		Label:       "Bank receipt needs matching",
 		Description: "An imported bank receipt could not be matched to a customer payment on its own and is waiting in the reconciliation queue.",
+	},
+	{
+		Kind:        EventDetentionOccurrenceOpened,
+		SubjectType: SubjectDetentionOccurrence,
+		Label:       "Detention clock started",
+		Description: "A truck went past its free time at a stop and a detention occurrence opened against the shipment.",
+	},
+	{
+		Kind:        EventDetentionNoticeDue,
+		SubjectType: SubjectDetentionOccurrence,
+		Label:       "Detention notice due",
+		Description: "A detention notice's window opened on a policy that leaves sending to a person, so nothing has gone to the customer yet.",
+	},
+	{
+		Kind:        EventWorkerCredentialExpiring,
+		SubjectType: SubjectWorker,
+		Label:       "Credentials coming due",
+		Description: "A driver has one or more credentials expiring inside the compliance horizon, raised once a day however many papers are due.",
+	},
+	{
+		Kind:        EventCarrierIntelEventOpened,
+		SubjectType: SubjectCarrierIntelEvent,
+		Label:       "Carrier changed",
+		Description: "Carrier monitoring opened a finding worth a person's attention: authority, insurance, safety scores or a watch list.",
+	},
+	{
+		Kind:        EventShipmentMoveCoverageAtRisk,
+		SubjectType: SubjectShipmentMove,
+		Label:       "Move may go uncovered",
+		Description: "A move starting inside the coverage window still has nobody on it and the planner could not find a candidate.",
+	},
+	{
+		Kind:        EventEDIFileQuarantined,
+		SubjectType: SubjectEDIInboundFile,
+		Label:       "EDI file held back",
+		Description: "An inbound EDI file could not be processed and is holding in quarantine rather than becoming shipments or updates.",
 	},
 }
 

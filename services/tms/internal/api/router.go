@@ -115,6 +115,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/tablequeryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/telematicshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tenderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tenderpublichandler"
@@ -188,6 +189,7 @@ type RouterParams struct {
 	AgentProposalHandler            *agentproposalhandler.Handler
 	AgentPlanHandler                *agentplanhandler.Handler
 	AgentExceptionHandler           *agentexceptionhandler.Handler
+	TableQueryHandler               *tablequeryhandler.Handler
 	AgentControlHandler             *agentcontrolhandler.Handler
 	AIProviderHandler               *aiproviderhandler.Handler
 	AgentDefinitionHandler          *agentdefinitionhandler.Handler
@@ -332,6 +334,7 @@ type Router struct {
 	agentProposalHandler            *agentproposalhandler.Handler
 	agentPlanHandler                *agentplanhandler.Handler
 	agentExceptionHandler           *agentexceptionhandler.Handler
+	tableQueryHandler               *tablequeryhandler.Handler
 	agentControlHandler             *agentcontrolhandler.Handler
 	aiProviderHandler               *aiproviderhandler.Handler
 	agentDefinitionHandler          *agentdefinitionhandler.Handler
@@ -467,6 +470,7 @@ func NewRouter(p RouterParams) *Router {
 		agentProposalHandler:            p.AgentProposalHandler,
 		agentPlanHandler:                p.AgentPlanHandler,
 		agentExceptionHandler:           p.AgentExceptionHandler,
+		tableQueryHandler:               p.TableQueryHandler,
 		agentControlHandler:             p.AgentControlHandler,
 		aiProviderHandler:               p.AIProviderHandler,
 		agentDefinitionHandler:          p.AgentDefinitionHandler,
@@ -665,6 +669,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.agentProposalHandler.RegisterRoutes(protected)
 	r.agentPlanHandler.RegisterRoutes(protected)
 	r.agentExceptionHandler.RegisterRoutes(protected)
+	r.tableQueryHandler.RegisterRoutes(protected)
 	r.agentControlHandler.RegisterRoutes(protected)
 	r.aiProviderHandler.RegisterRoutes(protected)
 	r.agentDefinitionHandler.RegisterRoutes(protected)

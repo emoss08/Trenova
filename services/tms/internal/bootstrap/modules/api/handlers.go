@@ -112,6 +112,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/tablequeryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/telematicshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tenderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tenderpublichandler"
@@ -164,6 +165,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	agentproposalhandler.New,
 	agentplanhandler.New,
 	agentexceptionhandler.New,
+	tablequeryhandler.New,
 	agentcontrolhandler.New,
 	agentdefinitionhandler.New,
 	assistanthandler.New,

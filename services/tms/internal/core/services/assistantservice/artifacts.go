@@ -26,6 +26,8 @@ const (
 	toolRunReport     = "run_report"
 	toolGetReportRun  = "get_report_run"
 	getToolPrefix     = "get_"
+	listToolPrefix    = "list_"
+	searchToolPrefix  = "search_"
 
 	maxArtifactTitleRunes = 120
 	minPreviewRows        = 1
@@ -250,9 +252,70 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 		return runArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, getToolPrefix):
 		return entityCardArtifact(observation.Call.ID, name, result)
+	case strings.HasPrefix(name, listToolPrefix), strings.HasPrefix(name, searchToolPrefix):
+		return tableArtifact(observation.Call.ID, name, result)
 	default:
 		return nil
 	}
+}
+
+// tableArtifact views a list or search result as the table it already is.
+//
+// This is the common case by a long way — "how many shipments are in transit",
+// "which drivers are out of hours" — and it used to produce nothing at all.
+// The pane promised a table and then sat empty through the one kind of turn
+// that most often earns one, because only a report preview, a report run and
+// a single-record get were mapped.
+//
+// The guard is the shape rather than the name: the list tools share one
+// outcome type, but "list" is a common enough verb that a tool named for it
+// could return something else entirely. A result without both rows and their
+// declared column order is not a table, whatever it is called.
+func tableArtifact(callID, toolName string, result map[string]any) *assistantartifact.Artifact {
+	rows, ok := result["items"].([]any)
+	if !ok || len(rows) == 0 {
+		return nil
+	}
+	columns := stringsOf(result["columns"])
+	if len(columns) == 0 {
+		return nil
+	}
+
+	entity := strings.TrimPrefix(strings.TrimPrefix(toolName, listToolPrefix), searchToolPrefix)
+	payload := map[string]any{
+		"tool":        toolName,
+		"entity":      entity,
+		"columns":     columns,
+		"rows":        rows,
+		"rowCount":    result["count"],
+		"searchedFor": stringsOf(result["searchedFor"]),
+	}
+	fitRows(payload, "rows")
+
+	return &assistantartifact.Artifact{
+		Kind:             assistantartifact.KindTableView,
+		Status:           assistantartifact.StatusReady,
+		Title:            artifactTitle(stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity))),
+		Payload:          payload,
+		SourceToolCallID: callID,
+	}
+}
+
+// stringsOf reads a JSON array of strings, dropping anything that is not one.
+func stringsOf(value any) []string {
+	raw, ok := value.([]any)
+	if !ok {
+		return nil
+	}
+
+	out := make([]string, 0, len(raw))
+	for _, entry := range raw {
+		if text, isText := entry.(string); isText && text != "" {
+			out = append(out, text)
+		}
+	}
+
+	return out
 }
 
 func previewArtifact(callID string, result map[string]any) *assistantartifact.Artifact {

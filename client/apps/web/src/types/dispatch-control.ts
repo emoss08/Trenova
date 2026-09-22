@@ -223,6 +223,12 @@ export const dispatchControlSchema = z
       .min(1, "Planning horizon must be at least 1 hour")
       .max(336, "Planning horizon cannot exceed 336 hours")
       .optional(),
+    coverageRiskWindowHours: z
+      .number()
+      .int()
+      .min(1, "Coverage risk window must be at least 1 hour")
+      .max(168, "Coverage risk window cannot exceed 168 hours")
+      .optional(),
     enforceWorkerAssign: z.boolean(),
     enforceTrailerContinuity: z.boolean(),
     enforceHosCompliance: z.boolean(),

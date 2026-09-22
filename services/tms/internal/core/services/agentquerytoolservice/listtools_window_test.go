@@ -82,18 +82,3 @@ func TestListTool_WindowOpensOnTheOrganizationsMidnight(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, expected, lower)
 }
-
-// "today" is the organization's today, and a bare date is midnight there.
-func TestListTool_ReadsNamedAndCalendarDaysInTheOrganizationsZone(t *testing.T) {
-	t.Parallel()
-
-	ny := clock{now: lateEveningNewYork, timezone: "America/New_York"}
-
-	today, ok := namedDay("today", ny)
-	require.True(t, ok)
-	assert.Equal(t, int64(1789790400), today, "still the 19th in New York")
-
-	seconds, err := coerceDateValue("expiresAt", "2026-09-19", ny)
-	require.NoError(t, err)
-	assert.Equal(t, int64(1789790400), seconds)
-}

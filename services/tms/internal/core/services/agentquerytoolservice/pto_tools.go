@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -154,21 +155,21 @@ func (t *listTimeOffTool) Query(
 		IncludeWorker: true,
 	}
 
-	criteria := newSearchCriteria("time-off requests").at(clockFor(params))
+	criteria := filtercatalog.NewCriteria("time-off requests").At(clockFor(params))
 
 	status, err := timeOffEnum(params.Params, "status", worker.PTOStatusFromString)
 	if err != nil {
 		return nil, err
 	}
 	request.Status = status
-	criteria.field("status", status)
+	criteria.Field("status", status)
 
 	leaveType, err := timeOffEnum(params.Params, "type", worker.PTOTypeFromString)
 	if err != nil {
 		return nil, err
 	}
 	request.Type = leaveType
-	criteria.field("type", leaveType)
+	criteria.Field("type", leaveType)
 
 	if raw := optionalString(params.Params, "workerId"); raw != "" {
 		workerID, wErr := requirePulid(params.Params, "workerId")
@@ -176,7 +177,7 @@ func (t *listTimeOffTool) Query(
 			return nil, wErr
 		}
 		request.WorkerID = workerID
-		criteria.field("worker", workerID.String())
+		criteria.Field("worker", workerID.String())
 	}
 
 	applyTimeOffWindow(params.Params, request, criteria)
@@ -191,7 +192,7 @@ func (t *listTimeOffTool) Query(
 		rows = append(rows, toTimeOffRow(pto))
 	}
 
-	return criteria.result(rows, len(rows)), nil
+	return searchResult(criteria, rows, len(rows)), nil
 }
 
 // applyTimeOffWindow resolves the date window server-side.
@@ -202,7 +203,7 @@ func (t *listTimeOffTool) Query(
 func applyTimeOffWindow(
 	params map[string]any,
 	request *repositories.ListPTORequest,
-	criteria *searchCriteria,
+	criteria *filtercatalog.Criteria,
 ) {
 	from := int64(optionalInt(params, "startingFrom", 0))
 	before := int64(optionalInt(params, "startingBefore", 0))
@@ -211,10 +212,10 @@ func applyTimeOffWindow(
 		request.StartDateFrom = from
 		request.StartDateTo = before
 		if from > 0 {
-			criteria.field("starting on or after", timeutils.FormatUnixDateIn(from, criteria.clock.timezone))
+			criteria.Field("starting on or after", timeutils.FormatUnixDateIn(from, criteria.Clock.Timezone))
 		}
 		if before > 0 {
-			criteria.field("starting on or before", timeutils.FormatUnixDateIn(before, criteria.clock.timezone))
+			criteria.Field("starting on or before", timeutils.FormatUnixDateIn(before, criteria.Clock.Timezone))
 		}
 
 		return
@@ -228,10 +229,10 @@ func applyTimeOffWindow(
 	// Whole days in the organization's zone: from the start of today through
 	// the end of the horizon's last day. Leave that started this morning is
 	// still leave that is on now.
-	today := criteria.clock.today()
+	today := criteria.Clock.Today()
 	request.StartDateFrom = today
 	request.StartDateTo = today + int64(horizon+1)*secondsPerDay - 1
-	criteria.field("starting within", fmt.Sprintf("%d days", horizon))
+	criteria.Field("starting within", fmt.Sprintf("%d days", horizon))
 }
 
 // timeOffEnum refuses a value outside the set rather than passing it through.

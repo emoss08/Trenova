@@ -1,5 +1,25 @@
+import { queries } from "@/lib/queries";
 import type { AssistantProposal, ProposalDecision } from "@/types/assistant";
 import type { QueryClient } from "@tanstack/react-query";
+
+/*
+Every key here comes from the query factory rather than being written out.
+
+createQueryKeys prepends its scope and the method name, so the thread
+proposals a component reads under `queries.assistant.proposals(id)` actually
+live at ["assistant", "proposals", "assistant-proposals", id]. This file used
+to invalidate ["assistant-proposals", id], which is a prefix of nothing:
+TanStack matches from the start of the key, and the start is "assistant".
+
+Nothing failed. The request succeeded, the mutation resolved, and the cache
+was never touched — so an approved proposal kept its buttons until the thread
+was remounted, which is indistinguishable from the click not working.
+*/
+
+/** The prefix every thread's entry for one factory key shares. */
+function scopeOf(key: { _def: readonly unknown[] }): unknown[] {
+  return [...key._def];
+}
 
 /**
  * The queries a decision on a proposal or a plan makes stale, whichever
@@ -10,8 +30,8 @@ import type { QueryClient } from "@tanstack/react-query";
  * clickable in AI Control until a remount, and the other way round.
  */
 export async function invalidateProposalViews(queryClient: QueryClient, threadId?: string) {
+  // These are read with a plain useQuery, so their key is what it says.
   const keys: unknown[][] = [
-    ["assistant", "pending-proposals"],
     ["agent-proposal-list"],
     ["agent-plan-list"],
     ["agent-run-list"],
@@ -19,15 +39,15 @@ export async function invalidateProposalViews(queryClient: QueryClient, threadId
     ["pending-decision-summary"],
     ["attention"],
   ];
-  if (threadId) {
-    keys.push(
-      ["assistant-proposals", threadId],
-      ["assistant-plans", threadId],
-      ["assistant-messages", threadId],
-      ["assistant-artifacts", threadId],
-    );
-  } else {
-    keys.push(["assistant-proposals"], ["assistant-plans"], ["assistant-artifacts"]);
+
+  const threadScoped = [
+    queries.assistant.proposals,
+    queries.assistant.plans,
+    queries.assistant.messages,
+    queries.assistant.artifacts,
+  ];
+  for (const key of threadScoped) {
+    keys.push(threadId ? [...key(threadId).queryKey] : scopeOf(key));
   }
 
   await Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
@@ -79,7 +99,7 @@ export function markProposalDecided(
   decision: ProposalDecision,
 ) {
   queryClient.setQueriesData<{ results: AssistantProposal[] }>(
-    { queryKey: ["assistant-proposals"] },
+    { queryKey: scopeOf(queries.assistant.proposals) },
     (data) =>
       data === undefined
         ? data

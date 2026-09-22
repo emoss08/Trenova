@@ -213,6 +213,16 @@ type CustomerEmailProfile {
   updatedAt: Timestamp!
 }
 
+"""
+What a customer asked to be told as their freight moves.
+"""
+enum CustomerStatusUpdatePreference {
+  None
+  Arrivals
+  Departures
+  ArrivalsAndDepartures
+}
+
 type Customer {
   id: ID!
   businessUnitId: ID!
@@ -233,6 +243,16 @@ type Customer {
   allowConsolidation: Boolean!
   exclusiveConsolidation: Boolean!
   consolidationPriority: Int!
+  """
+  What this customer asked to be told as their freight moves. None is the
+  default: a customer who never opted in is not emailed about a stop.
+  """
+  statusUpdatePreference: CustomerStatusUpdatePreference!
+  """
+  Who receives those updates, comma separated. Empty falls back to the
+  notice profile's own recipients.
+  """
+  statusUpdateRecipients: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!

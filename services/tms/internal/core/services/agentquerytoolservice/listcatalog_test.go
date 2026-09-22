@@ -150,3 +150,32 @@ func TestListWorkers_ExplainsTheEndorsementCodes(t *testing.T) {
 	assert.Contains(t, endorsement.Note, "X",
 		"the code that means both has to be spelled out or hazmat holders get undercounted")
 }
+
+/*
+The catalog behind the Ask input is the catalog behind the list tools.
+
+If they drift, "in transit" means one thing to an agent and another to the
+grid, and only one of the two is ever tested. This holds them to the same
+source: every list tool's resource is in the catalog, under the permission
+resource a page would look it up by.
+*/
+func TestFilterCatalog_CoversEveryListTool(t *testing.T) {
+	t.Parallel()
+
+	catalog := FilterCatalog()
+
+	for _, spec := range listCatalogSpecs() {
+		resource, ok := catalog.For(spec.resource)
+		require.True(t, ok, "%s is not in the filter catalog", spec.name)
+		assert.Equal(t, spec.name, resource.Tool)
+		assert.Equal(t, spec.entityPlural, resource.Entity)
+		assert.Equal(t, len(spec.fields), len(resource.Fields), "%s lost fields", spec.name)
+
+		// Every catalogued field has to be one the entity still maps, or a
+		// filter compiles to nothing and the page comes back unfiltered.
+		for _, field := range resource.Fields {
+			_, found := resource.Field(field.Name)
+			assert.True(t, found, "%s: %s is not indexed", spec.name, field.Name)
+		}
+	}
+}

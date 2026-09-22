@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 )
@@ -546,4 +547,21 @@ func applyProfile(row *workerRow, profile *worker.WorkerProfile) {
 	row.HazmatExpiry = pointerDate(profile.HazmatExpiry)
 	row.LicenseExpiry = recordedDate(profile.LicenseExpiry)
 	row.MedicalCardExpiry = pointerDate(profile.MedicalCardExpiry)
+}
+
+// FilterCatalog is the vocabulary every catalogued resource answers to.
+//
+// It is built from the same specs the list tools are, with nil repositories,
+// because what a caller may narrow an entity by is a property of the entity
+// and not of the connection. That is what lets the Ask input on a data table
+// compile "shipments in transit" into the filters list_shipments would have
+// built from the same words.
+func FilterCatalog() *filtercatalog.Catalog {
+	specs := listCatalogSpecs()
+	resources := make([]filtercatalog.Resource, 0, len(specs))
+	for _, spec := range specs {
+		resources = append(resources, catalogResource(spec))
+	}
+
+	return filtercatalog.New(resources...)
 }

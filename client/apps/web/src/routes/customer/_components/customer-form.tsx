@@ -6,7 +6,7 @@ import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
-import { statusChoices } from "@/lib/choices";
+import { statusChoices, statusUpdatePreferenceChoices } from "@/lib/choices";
 import type { Customer } from "@trenova/shared/types/customer";
 import { useFormContext, useWatch } from "react-hook-form";
 
@@ -237,6 +237,38 @@ export function CustomerForm() {
               placeholder="1"
               description={t(
                 "Lower numbers are consolidated first when trailer space is limited. Use 1 for highest priority customers.",
+              )}
+            />
+          </FormControl>
+        </FormGroup>
+      </FormSection>
+
+      <FormSection
+        title={t("Status updates")}
+        description={t(
+          "What this customer asked to be told as their freight moves, and who hears it",
+        )}
+      >
+        <FormGroup cols={2}>
+          <FormControl>
+            <SelectField
+              control={control}
+              name="statusUpdatePreference"
+              label={t("Send status updates")}
+              options={statusUpdatePreferenceChoices}
+              description={t(
+                "The customer update desk emails these as each stop is reached or left. A customer set to Nothing is never emailed about a stop.",
+              )}
+            />
+          </FormControl>
+          <FormControl>
+            <InputField
+              control={control}
+              name="statusUpdateRecipients"
+              label={t("Status update recipients")}
+              placeholder="ops@acme.example, dispatch@acme.example"
+              description={t(
+                "Comma separated. Leave empty to fall back to the notice profile's own recipients.",
               )}
             />
           </FormControl>

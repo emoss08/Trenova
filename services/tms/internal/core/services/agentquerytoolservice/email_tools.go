@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -70,8 +71,8 @@ func (t *listEmailProfilesTool) Query(
 	}
 
 	query := optionalString(params.Params, "query")
-	criteria := newSearchCriteria("email profiles").at(clockFor(params))
-	criteria.text(query)
+	criteria := filtercatalog.NewCriteria("email profiles").At(clockFor(params))
+	criteria.Text(query)
 
 	result, err := t.profiles.SelectProfileOptions(ctx, &repositories.EmailProfileSelectOptionsRequest{
 		SelectQueryRequest: &pagination.SelectQueryRequest{
@@ -99,5 +100,5 @@ func (t *listEmailProfilesTool) Query(
 		})
 	}
 
-	return criteria.result(rows, len(rows)), nil
+	return searchResult(criteria, rows, len(rows)), nil
 }

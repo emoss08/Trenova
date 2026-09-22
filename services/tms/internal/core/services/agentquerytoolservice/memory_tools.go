@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -129,13 +130,13 @@ func (t *recallMemoryTool) Query(
 		req.SubjectID = subjectID
 	}
 
-	criteria := newSearchCriteria("memories").at(clockFor(params))
-	criteria.text(req.Query)
-	criteria.field("kind", string(req.Kind))
+	criteria := filtercatalog.NewCriteria("memories").At(clockFor(params))
+	criteria.Text(req.Query)
+	criteria.Field("kind", string(req.Kind))
 	if subjectType != "" {
-		criteria.field("about", strings.ToLower(string(subjectType))+" "+rawID)
+		criteria.Field("about", strings.ToLower(string(subjectType))+" "+rawID)
 	}
-	criteria.field("tool", req.ToolName)
+	criteria.Field("tool", req.ToolName)
 
 	memories, err := t.memories.Recall(ctx, req)
 	if err != nil {
@@ -156,7 +157,7 @@ func (t *recallMemoryTool) Query(
 		})
 	}
 
-	return criteria.result(rows, len(rows)), nil
+	return searchResult(criteria, rows, len(rows)), nil
 }
 
 func recordedBy(source agent.MemorySource) string {

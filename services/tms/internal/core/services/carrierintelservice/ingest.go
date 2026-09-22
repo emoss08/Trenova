@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
@@ -529,6 +530,7 @@ func (s *Service) afterIngest(
 	if len(events) > 0 {
 		s.publish(ctx, in.tenant, "carrier_intel_events", "created", pulid.Nil)
 		s.projectEventsToWatchtower(ctx, events)
+		s.publishEventsToAgents(ctx, in.tenant, events)
 	}
 }
 
@@ -548,6 +550,30 @@ func (s *Service) projectEventsToWatchtower(
 			continue
 		}
 		s.watchtower.Upsert(ctx, watchtowersources.DescribeCarrierIntelEvent(event))
+	}
+}
+
+// publishEventsToAgents wakes the carrier risk desk on the same findings
+// the tower shows, and on no others: the filter that decides what is worth
+// a person's attention decides what is worth a run.
+func (s *Service) publishEventsToAgents(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	events []*carrierintel.CarrierIntelEvent,
+) {
+	if s.publisher == nil {
+		return
+	}
+
+	for _, event := range events {
+		if !watchtowersources.CarrierIntelEventOnTower(event) {
+			continue
+		}
+		services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+			Kind:       agent.EventCarrierIntelEventOpened,
+			SubjectID:  event.ID,
+			TenantInfo: tenant,
+		})
 	}
 }
 
