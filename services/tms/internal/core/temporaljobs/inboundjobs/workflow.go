@@ -50,7 +50,42 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Reads a staged inbound message and decides what it is.",
 		},
+		{
+			Name:        temporaltype.InboundMessageRetentionWorkflowName,
+			Fn:          InboundMessageRetentionWorkflow,
+			TaskQueue:   temporaltype.TaskQueueSystem.String(),
+			Description: "Removes inbound messages settled more than six months ago.",
+		},
 	}
+}
+
+// retentionOptions give a sweep over every tenant room to finish, heartbeating
+// per tenant so a worker lost halfway is noticed in minutes rather than hours.
+var retentionOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: 30 * time.Minute,
+	HeartbeatTimeout:    2 * time.Minute,
+	RetryPolicy: &temporal.RetryPolicy{
+		InitialInterval: 30 * time.Second,
+		MaximumAttempts: 3,
+	},
+}
+
+// InboundMessageRetentionWorkflow removes the mail nobody needs any more.
+func InboundMessageRetentionWorkflow(
+	ctx workflow.Context,
+) (*InboundMessageRetentionResult, error) {
+	ctx = workflow.WithActivityOptions(ctx, retentionOptions)
+
+	var a *Activities
+	result := new(InboundMessageRetentionResult)
+	if err := workflow.ExecuteActivity(ctx, a.InboundMessageRetentionActivity).
+		Get(ctx, result); err != nil {
+		workflow.GetLogger(ctx).Error("Inbound message retention workflow failed", "error", err)
+
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // ProcessInboundMessageWorkflow settles one message.

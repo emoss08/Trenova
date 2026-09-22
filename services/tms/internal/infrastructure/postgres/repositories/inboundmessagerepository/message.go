@@ -436,3 +436,75 @@ func (r *repository) DeleteBefore(
 
 	return results.RowsAffected()
 }
+
+// ListSettledBefore reads the oldest settled messages first, through the lane
+// index, returning only what retention needs: the id and the stored body key.
+func (r *repository) ListSettledBefore(
+	ctx context.Context,
+	req repositories.ListSettledInboundMessagesRequest,
+) ([]*inboundmessage.InboundMessage, error) {
+	entities := make([]*inboundmessage.InboundMessage, 0, req.Limit)
+	if err := settledBeforeQuery(r.db.DBForContext(ctx), req, &entities).Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
+func settledBeforeQuery(
+	db bun.IDB,
+	req repositories.ListSettledInboundMessagesRequest,
+	entities *[]*inboundmessage.InboundMessage,
+) *bun.SelectQuery {
+	cols := buncolgen.InboundMessageColumns
+
+	return db.NewSelect().
+		Model(entities).
+		Column(
+			cols.ID.Bare(),
+			cols.OrganizationID.Bare(),
+			cols.BusinessUnitID.Bare(),
+			cols.HTMLKey.Bare(),
+		).
+		Apply(buncolgen.InboundMessageApplyTenant(req.TenantInfo)).
+		Where(cols.Status.In(), bun.In([]inboundmessage.Status{
+			inboundmessage.StatusActioned,
+			inboundmessage.StatusIgnored,
+		})).
+		Where(cols.ReceivedAt.Lt(), req.Before).
+		Order(cols.ReceivedAt.OrderAsc()).
+		Limit(req.Limit)
+}
+
+// DeleteByIDs removes messages inside one tenant. Their attachment rows go
+// with them through the foreign key's cascade.
+func (r *repository) DeleteByIDs(
+	ctx context.Context,
+	req repositories.DeleteInboundMessagesRequest,
+) (int, error) {
+	if len(req.IDs) == 0 {
+		return 0, nil
+	}
+
+	result, err := deleteByIDsQuery(r.db.DBForContext(ctx), req).Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	deleted, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(deleted), nil
+}
+
+func deleteByIDsQuery(db bun.IDB, req repositories.DeleteInboundMessagesRequest) *bun.DeleteQuery {
+	cols := buncolgen.InboundMessageColumns
+
+	return db.NewDelete().
+		Model((*inboundmessage.InboundMessage)(nil)).
+		Where(cols.ID.In(), bun.In(req.IDs)).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID)
+}

@@ -26,3 +26,10 @@ type RecordInboundAttachmentPayload = inboundmessageservice.RecordInboundAttachm
 type PollInboundAttachmentPayload = inboundmessageservice.PollInboundAttachmentPayload
 
 type AttachmentExtractionState = inboundmessageservice.AttachmentExtractionState
+
+// InboundMessageRetentionResult is what one retention run removed, and which
+// tenants it could not finish, so a failure is visible without failing the rest.
+type InboundMessageRetentionResult struct {
+	Deleted int      `json:"deleted"`
+	Failed  []string `json:"failed,omitempty"`
+}

@@ -50,6 +50,13 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   // list and every filtered variant of it.
   watchtower: ["watchtower", "attention"],
   briefings: ["briefing"],
+  // Every inbox write: the lanes, their counts and the open message move
+  // together. Mailbox administration is not a message and is left alone.
+  inbound_message: [
+    ["inbox", "messages"],
+    ["inbox", "counts"],
+    ["inbox", "message"],
+  ],
   shipments: [
     "shipment-list",
     "dispatch-board",

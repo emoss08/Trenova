@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/fileutils"
@@ -83,6 +84,19 @@ type Params struct {
 	Events     services.AgentEventPublisher `optional:"true"`
 	// Audit records mailbox configuration changes.
 	Audit services.AuditService `optional:"true"`
+	// Realtime keeps an open inbox current, and Notifications tells the people
+	// who read the inbox that a message is waiting on them. Both optional: the
+	// inbox is still right on the next load without either.
+	Realtime      services.RealtimeService     `optional:"true"`
+	Notifications *notificationservice.Service `optional:"true"`
+}
+
+// reviewNotifier is the slice of the notification service the inbox uses.
+type reviewNotifier interface {
+	NotifyPermitted(
+		ctx context.Context,
+		req notificationservice.NotifyPermittedRequest,
+	) (int, error)
 }
 
 type Service struct {
@@ -100,9 +114,16 @@ type Service struct {
 	watchtower  services.WatchtowerProjector
 	events      services.AgentEventPublisher
 	audit       services.AuditService
+	realtime    services.RealtimeService
+	notifier    reviewNotifier
 }
 
 func New(p Params) *Service {
+	var notifier reviewNotifier
+	if p.Notifications != nil {
+		notifier = p.Notifications
+	}
+
 	return &Service{
 		l:           p.Logger.Named("service.inbound-message"),
 		mailboxRepo: p.MailboxRepo,
@@ -118,6 +139,8 @@ func New(p Params) *Service {
 		watchtower:  p.Watchtower,
 		events:      p.Events,
 		audit:       p.Audit,
+		realtime:    p.Realtime,
+		notifier:    notifier,
 	}
 }
 
@@ -339,6 +362,7 @@ func (s *Service) stage(
 		zap.Int("attachments", len(attachments)))
 
 	s.stageAttachments(ctx, created, parsed)
+	s.publishMessage(ctx, created, "created")
 	s.startProcessing(ctx, created)
 
 	return &ReceiveWebhookResult{MessageID: created.ID.String()}, nil

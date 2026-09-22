@@ -234,6 +234,7 @@ func (s *Service) Review(
 	// Off the tower: the item stood for work owed, and this is the moment it
 	// stops being owed.
 	s.project(ctx, updated)
+	s.publishMessage(ctx, updated, inboxRealtimeAction)
 
 	return updated, nil
 }
@@ -274,6 +275,7 @@ func (s *Service) Link(
 	// do about it — so the tower item is refreshed rather than resolved, and
 	// now carries the reason the link was made.
 	s.project(ctx, updated)
+	s.publishMessage(ctx, updated, inboxRealtimeAction)
 
 	return updated, nil
 }

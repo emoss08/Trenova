@@ -86,6 +86,8 @@ func (s *Service) ProcessMessage(
 		zap.Bool("handled", outcome.Handle))
 
 	s.project(ctx, updated)
+	s.publishMessage(ctx, updated, inboxRealtimeAction)
+	s.notifyNeedsReview(ctx, updated)
 	s.announce(ctx, updated)
 
 	return &ProcessResult{
@@ -132,6 +134,8 @@ func (s *Service) MarkFailed(
 	}
 
 	s.project(ctx, updated)
+	s.publishMessage(ctx, updated, inboxRealtimeAction)
+	s.notifyNeedsReview(ctx, updated)
 
 	return nil
 }

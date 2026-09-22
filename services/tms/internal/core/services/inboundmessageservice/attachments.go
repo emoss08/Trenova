@@ -77,7 +77,7 @@ func (s *Service) stageAttachments(
 		}
 
 		row.UploadSessionID = sessionID
-		if _, err = s.messageRepo.UpdateAttachment(ctx, row); err != nil {
+		if err = s.updateAttachment(ctx, row); err != nil {
 			s.l.Error("staged an inbound attachment but could not record its session",
 				zap.String("attachmentId", row.ID.String()), zap.Error(err))
 		}
@@ -173,7 +173,7 @@ func (s *Service) RecordAttachmentDocument(
 	if failureText != "" {
 		row.FailureText = failureText
 	}
-	_, err = s.messageRepo.UpdateAttachment(ctx, row)
+	err = s.updateAttachment(ctx, row)
 
 	return err
 }
@@ -232,7 +232,7 @@ func (s *Service) PollAttachmentExtraction(
 	if doc.ContentStatus == document.ContentStatusFailed && row.FailureText == "" {
 		row.FailureText = "The document could not be read."
 	}
-	if _, err = s.messageRepo.UpdateAttachment(ctx, row); err != nil {
+	if err = s.updateAttachment(ctx, row); err != nil {
 		s.l.Error("could not record what an inbound attachment turned out to be",
 			zap.String("attachmentId", ref.AttachmentID.String()), zap.Error(err))
 	}
@@ -264,7 +264,7 @@ func (s *Service) GiveUpOnAttachment(
 	if row.Kind == "" {
 		row.Kind = inboundmessage.AttachmentUnknown
 	}
-	_, err = s.messageRepo.UpdateAttachment(ctx, row)
+	err = s.updateAttachment(ctx, row)
 
 	return err
 }
@@ -299,7 +299,7 @@ func (s *Service) recordAttachmentFailure(
 ) {
 	row.FailureText = text
 	row.Kind = inboundmessage.AttachmentUnknown
-	if _, err := s.messageRepo.UpdateAttachment(ctx, row); err != nil {
+	if err := s.updateAttachment(ctx, row); err != nil {
 		s.l.Error("could not record why an inbound attachment was refused",
 			zap.String("attachmentId", row.ID.String()), zap.Error(err))
 	}
@@ -334,4 +334,18 @@ func refusalText(err error) string {
 	}
 
 	return text
+}
+
+// updateAttachment saves a row and tells an open inbox its message changed,
+// since an attachment becoming a document is what a reading pane shows.
+func (s *Service) updateAttachment(
+	ctx context.Context,
+	row *inboundmessage.InboundAttachment,
+) error {
+	if _, err := s.messageRepo.UpdateAttachment(ctx, row); err != nil {
+		return err
+	}
+	s.publish(ctx, row.OrganizationID, row.BusinessUnitID, row.MessageID, inboxRealtimeAction)
+
+	return nil
 }

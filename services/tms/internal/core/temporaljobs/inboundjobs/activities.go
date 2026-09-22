@@ -2,6 +2,11 @@ package inboundjobs
 
 import (
 	"context"
+	"fmt"
+
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.temporal.io/sdk/activity"
 
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,16 +19,30 @@ type ActivitiesParams struct {
 	fx.In
 
 	Inbound *inboundmessageservice.Service
+	Tenants repositories.TenantSyncRepository
 	Logger  *zap.Logger
+}
+
+// settledPurger is the retention slice of the inbox, narrow so the sweep can be
+// tested against the tenants it walks rather than a database.
+type settledPurger interface {
+	PurgeSettled(ctx context.Context, req inboundmessageservice.PurgeSettledRequest) (int, error)
 }
 
 type Activities struct {
 	inbound *inboundmessageservice.Service
+	purger  settledPurger
+	tenants repositories.TenantSyncRepository
 	l       *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
-	return &Activities{inbound: p.Inbound, l: p.Logger.Named("inbound-activities")}
+	return &Activities{
+		inbound: p.Inbound,
+		purger:  p.Inbound,
+		tenants: p.Tenants,
+		l:       p.Logger.Named("inbound-activities"),
+	}
 }
 
 // SettleInboundMessageActivity reads a staged message and decides what it is.
@@ -140,4 +159,56 @@ func (a *Activities) PollInboundAttachmentActivity(
 
 func tenantOf(base temporaltype.BasePayload) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: base.OrganizationID, BuID: base.BusinessUnitID}
+}
+
+const (
+	// inboundRetentionBatch bounds one delete, so a first sweep over a
+	// long-running deployment never holds a transaction across a backlog.
+	inboundRetentionBatch = 500
+	// inboundRetentionPasses bounds the batches one tenant gets per run, so a
+	// very large backlog ends in a predictable time and the next run continues.
+	inboundRetentionPasses = 20
+)
+
+// InboundMessageRetentionActivity removes settled mail older than the
+// retention window from every tenant, a bounded batch at a time. A tenant
+// whose sweep fails is recorded and stepped over; the next run picks it up.
+func (a *Activities) InboundMessageRetentionActivity(
+	ctx context.Context,
+) (*InboundMessageRetentionResult, error) {
+	organizations, err := a.tenants.ListOrganizations(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list organizations: %w", err)
+	}
+
+	before := timeutils.NowUnix() - inboundmessageservice.RetentionDays*24*60*60
+	result := &InboundMessageRetentionResult{}
+	for _, org := range organizations {
+		activity.RecordHeartbeat(ctx, org.ID.String())
+
+		tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+		for range inboundRetentionPasses {
+			deleted, pErr := a.purger.PurgeSettled(ctx, inboundmessageservice.PurgeSettledRequest{
+				TenantInfo: tenant,
+				Before:     before,
+				Limit:      inboundRetentionBatch,
+			})
+			if pErr != nil {
+				a.l.Warn("inbound retention failed for an organization",
+					zap.String("organizationId", org.ID.String()), zap.Error(pErr))
+				result.Failed = append(result.Failed, org.ID.String())
+
+				break
+			}
+			result.Deleted += deleted
+			if deleted < inboundRetentionBatch {
+				break
+			}
+		}
+	}
+
+	a.l.Info("inbound retention sweep complete",
+		zap.Int("deleted", result.Deleted), zap.Int("failed", len(result.Failed)))
+
+	return result, nil
 }

@@ -159,6 +159,11 @@ type InboundMessageRepository interface {
 		ctx context.Context,
 		req DeleteInboundMessagesBeforeRequest,
 	) (int64, error)
+	ListSettledBefore(
+		ctx context.Context,
+		req ListSettledInboundMessagesRequest,
+	) ([]*inboundmessage.InboundMessage, error)
+	DeleteByIDs(ctx context.Context, req DeleteInboundMessagesRequest) (int, error)
 }
 
 // InboundShipmentFinder resolves what a message names to a shipment.
@@ -189,4 +194,19 @@ type InboundPartyFinder interface {
 	) (pulid.ID, bool, error)
 	CustomerExists(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) (bool, error)
 	CarrierExists(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) (bool, error)
+}
+
+// ListSettledInboundMessagesRequest finds the oldest messages somebody has
+// finished with, a bounded batch at a time, for retention.
+type ListSettledInboundMessagesRequest struct {
+	TenantInfo pagination.TenantInfo
+	Before     int64
+	Limit      int
+}
+
+// DeleteInboundMessagesRequest removes messages, and their attachment rows
+// with them, inside one tenant.
+type DeleteInboundMessagesRequest struct {
+	TenantInfo pagination.TenantInfo
+	IDs        []pulid.ID
 }
