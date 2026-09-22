@@ -100621,6 +100621,15 @@
       "routes/worker"
     ]
   },
+  "Nothing matched.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing matches": {
     "sites": 11,
     "scope": [
@@ -116890,7 +116899,7 @@
     ]
   },
   "Preview": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -146009,6 +146018,15 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "Showing the first {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Showing {0} of {1}": {
@@ -175135,15 +175153,6 @@
       "domain/permission"
     ]
   },
-  "View": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "View AI providers": {
     "sites": 1,
     "scope": [
@@ -190123,7 +190132,7 @@
     ]
   },
   "{0, plural, one {# row} other {# rows}}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"

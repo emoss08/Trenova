@@ -22,12 +22,12 @@ import type { ReactNode } from "react";
 
 /** What each kind is called and drawn as, once, for every surface that names one. */
 export const ARTIFACT_KINDS: Record<ArtifactKind, { label: string; icon: LucideIcon }> = {
-  report_preview: { label: "Table", icon: TableIcon },
+  report_preview: { label: "Preview", icon: TableIcon },
   report_run: { label: "Report", icon: FileTextIcon },
   email_draft: { label: "Draft", icon: MailIcon },
   plan: { label: "Plan", icon: ListChecksIcon },
   entity_card: { label: "Record", icon: IdCardIcon },
-  table_view: { label: "View", icon: TableIcon },
+  table_view: { label: "Table", icon: TableIcon },
   rate_explanation: { label: "Rate", icon: ReceiptTextIcon },
   dashboard_ref: { label: "Dashboard", icon: LayoutDashboardIcon },
   briefing: { label: "Briefing", icon: NewspaperIcon },

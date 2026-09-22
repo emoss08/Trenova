@@ -297,3 +297,108 @@ func TestListThreadArtifacts_DraftStatusFollowsTheProposal(t *testing.T) {
 	assert.Equal(t, assistantartifact.StatusFailed, listed[1].Status)
 	assert.Equal(t, assistantartifact.StatusReady, listed[2].Status)
 }
+
+/*
+A list or a search is the turn that most often earns a table, and for a long
+while it was the one turn that produced nothing: only a report preview, a
+report run and a single-record get were mapped. So the pane promised a table
+beside the conversation and then sat empty through "how many shipments are in
+transit", which is the question people actually ask.
+*/
+func listResult(count int, items ...any) map[string]any {
+	return map[string]any{
+		"count":       float64(count),
+		"searchedFor": []any{"status is InTransit"},
+		"columns":     []any{"proNumber", "customer", "status"},
+		"items":       items,
+	}
+}
+
+func TestArtifactFromObservation_AListBecomesATable(t *testing.T) {
+	t.Parallel()
+
+	artifact := artifactFromObservation(observation("list_shipments", listResult(2,
+		map[string]any{"proNumber": "P1", "customer": "Acme", "status": "InTransit"},
+		map[string]any{"proNumber": "P2", "customer": "Globex", "status": "InTransit"},
+	)))
+
+	require.NotNil(t, artifact)
+	assert.Equal(t, assistantartifact.KindTableView, artifact.Kind)
+	assert.Equal(t, assistantartifact.StatusReady, artifact.Status)
+	assert.Equal(t, "Shipments", artifact.Title)
+	assert.Equal(t, "shipments", artifact.Payload["entity"])
+	assert.Equal(t, "list_shipments", artifact.Payload["tool"])
+	assert.Equal(t, []string{"proNumber", "customer", "status"}, artifact.Payload["columns"])
+	assert.Len(t, artifact.Payload["rows"], 2)
+	// The terms that were applied, so the table says what it is a table of.
+	assert.Equal(t, []string{"status is InTransit"}, artifact.Payload["searchedFor"])
+}
+
+func TestArtifactFromObservation_ASearchBecomesATableToo(t *testing.T) {
+	t.Parallel()
+
+	artifact := artifactFromObservation(observation("search_workers", listResult(1,
+		map[string]any{"proNumber": "irrelevant"},
+	)))
+
+	require.NotNil(t, artifact)
+	assert.Equal(t, assistantartifact.KindTableView, artifact.Kind)
+	assert.Equal(t, "Workers", artifact.Title)
+	assert.Equal(t, "workers", artifact.Payload["entity"])
+}
+
+// The guard is the shape, not the name. "list" is a common enough verb that a
+// tool named for it can return something that is not a table, and a pane that
+// drew one anyway would be drawing a table of nothing.
+func TestArtifactFromObservation_AListWithoutRowsOrColumnsIsNotATable(t *testing.T) {
+	t.Parallel()
+
+	noColumns := listResult(1, map[string]any{"proNumber": "P1"})
+	delete(noColumns, "columns")
+	assert.Nil(t, artifactFromObservation(observation("list_reports", noColumns)))
+
+	assert.Nil(t, artifactFromObservation(observation("list_shipments", listResult(0))))
+	assert.Nil(t, artifactFromObservation(observation("list_shipments", map[string]any{
+		"count": float64(3),
+		"items": "not rows",
+	})))
+}
+
+// Nothing matched is a sentence, not a table with no rows in it.
+func TestArtifactFromObservation_AnEmptyListLeavesThePaneAlone(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, artifactFromObservation(observation("list_shipments", map[string]any{
+		"count":       float64(0),
+		"searchedFor": []any{"status is InTransit"},
+		"items":       []any{},
+		"note":        "No shipments matched status is InTransit.",
+	})))
+}
+
+// A long list is cut to fit rather than dropped: half a table beside the
+// conversation beats the pane staying empty because the answer was big.
+func TestArtifactFromObservation_ALongListIsCutToFit(t *testing.T) {
+	t.Parallel()
+
+	rows := make([]any, 0, 400)
+	for i := range 400 {
+		rows = append(rows, map[string]any{
+			"proNumber": strings.Repeat("P", 400),
+			"customer":  strings.Repeat("C", 400),
+			"status":    "InTransit",
+			"index":     float64(i),
+		})
+	}
+
+	artifact := artifactFromObservation(observation("list_shipments", listResult(400, rows...)))
+
+	require.NotNil(t, artifact)
+	kept, ok := artifact.Payload["rows"].([]any)
+	require.True(t, ok)
+	assert.NotEmpty(t, kept)
+	assert.Less(t, len(kept), 400)
+	// The count stays what the search found, so the footer does not report the
+	// truncation as the answer.
+	assert.Equal(t, float64(400), artifact.Payload["rowCount"])
+}

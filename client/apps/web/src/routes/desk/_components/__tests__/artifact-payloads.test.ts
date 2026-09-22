@@ -6,6 +6,7 @@ import {
   planFrom,
   reportPreviewFrom,
   reportRunFrom,
+  tableViewFrom,
 } from "../artifacts/artifact-payloads";
 
 function artifact(kind: AssistantArtifact["kind"], payload: Record<string, unknown>) {
@@ -35,10 +36,7 @@ describe("reportPreviewFrom", () => {
           { id: "customer", label: "Customer", type: "string" },
           { id: "revenue", label: "Revenue", type: "decimal", format: "currency" },
         ],
-        rows: [
-          { Customer: "Acme", Revenue: "120.50" },
-          { Revenue: "9.00" },
-        ],
+        rows: [{ Customer: "Acme", Revenue: "120.50" }, { Revenue: "9.00" }],
         totals: { Revenue: "129.50" },
         rowCount: 2,
         truncated: true,
@@ -93,10 +91,12 @@ describe("emailDraftFrom", () => {
   });
 
   it("reads a single recipient and a missing one", () => {
-    expect(emailDraftFrom(artifact("email_draft", { tool: "email_customer", to: "a@b.c" })).to).toEqual([
-      "a@b.c",
-    ]);
-    expect(emailDraftFrom(artifact("email_draft", { tool: "send_detention_notice" })).to).toEqual([]);
+    expect(
+      emailDraftFrom(artifact("email_draft", { tool: "email_customer", to: "a@b.c" })).to,
+    ).toEqual(["a@b.c"]);
+    expect(emailDraftFrom(artifact("email_draft", { tool: "send_detention_notice" })).to).toEqual(
+      [],
+    );
   });
 });
 
@@ -137,5 +137,113 @@ describe("planFrom", () => {
     );
     expect(plan.steps.map((step) => step.step)).toEqual([1, 2]);
     expect(plan.stepCount).toBe(2);
+  });
+});
+
+/*
+A list or search result is the turn that most often earns a table, and for a
+while it produced nothing at all: only a report preview, a report run and a
+single-record get were mapped, so the pane promised a table and then sat empty
+through "which shipments are in transit".
+
+The columns arrive as names in the order the server's row projection declares
+them, because a JSON object has none of its own. Everything here turns on
+that: the cells are read against the declared order, so a row missing a field
+leaves a hole rather than shifting every value one column left.
+*/
+describe("tableViewFrom", () => {
+  const view = (payload: Record<string, unknown>) => tableViewFrom(artifact("table_view", payload));
+
+  it("labels each column from its field name and keeps the declared order", () => {
+    const table = view({
+      columns: ["proNumber", "customerName", "status"],
+      rows: [{ status: "InTransit", proNumber: "P1", customerName: "Acme" }],
+    });
+
+    expect(table.columns.map((column) => column.id)).toEqual([
+      "proNumber",
+      "customerName",
+      "status",
+    ]);
+    expect(table.columns.map((column) => column.label)).toEqual([
+      "Pro Number",
+      "Customer Name",
+      "Status",
+    ]);
+    // Read against the columns, not against the row's own key order.
+    expect(table.rows).toEqual([["P1", "Acme", "InTransit"]]);
+  });
+
+  it("leaves a hole where a row has no value for a column", () => {
+    const table = view({
+      columns: ["proNumber", "customer", "status"],
+      rows: [{ proNumber: "P1", status: "InTransit" }],
+    });
+
+    expect(table.rows).toEqual([["P1", null, "InTransit"]]);
+  });
+
+  // A projection can carry a nested value. The grid has no layout for one, so
+  // it is drawn as its JSON rather than as "[object Object]".
+  it("renders a nested value as text", () => {
+    const table = view({
+      columns: ["stops"],
+      rows: [{ stops: [{ city: "Reno" }] }],
+    });
+
+    expect(table.rows).toEqual([['[{"city":"Reno"}]']]);
+  });
+
+  it("keeps false and zero, which are values and not absences", () => {
+    const table = view({
+      columns: ["billed", "weight"],
+      rows: [{ billed: false, weight: 0 }],
+    });
+
+    expect(table.rows).toEqual([[false, 0]]);
+  });
+
+  // The count is what the search found; the rows are what fitted in the
+  // payload. A table showing 200 of 400 has to say so.
+  it("knows it is showing less than was found", () => {
+    const table = view({
+      columns: ["proNumber"],
+      rows: [{ proNumber: "P1" }, { proNumber: "P2" }],
+      rowCount: 400,
+    });
+
+    expect(table.rowCount).toBe(400);
+    expect(table.truncated).toBe(true);
+  });
+
+  it("is not truncated when every row came back", () => {
+    const table = view({
+      columns: ["proNumber"],
+      rows: [{ proNumber: "P1" }],
+      rowCount: 1,
+    });
+
+    expect(table.truncated).toBe(false);
+  });
+
+  // Reading a filtered page as the whole fleet is the mistake the footer
+  // exists to prevent, so the terms come through with the rows.
+  it("carries the terms the search applied", () => {
+    const table = view({
+      columns: ["proNumber"],
+      rows: [{ proNumber: "P1" }],
+      searchedFor: ["status is InTransit", "", 7],
+    });
+
+    expect(table.searchedFor).toEqual(["status is InTransit"]);
+  });
+
+  it("reads a payload that promises nothing as an empty table", () => {
+    const table = view({});
+
+    expect(table.columns).toEqual([]);
+    expect(table.rows).toEqual([]);
+    expect(table.rowCount).toBe(0);
+    expect(table.truncated).toBe(false);
   });
 });

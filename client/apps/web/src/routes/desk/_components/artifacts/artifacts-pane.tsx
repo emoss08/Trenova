@@ -21,6 +21,7 @@ import { EntityCardArtifact } from "./entity-card-artifact";
 import { PlanArtifact } from "./plan-artifact";
 import { ReportPreviewArtifact } from "./report-preview-artifact";
 import { ReportRunArtifact } from "./report-run-artifact";
+import { TableViewArtifact } from "./table-view-artifact";
 
 /** The artifact to show when the person has not picked one: the newest. */
 export function defaultArtifactId(
@@ -45,7 +46,7 @@ export function defaultArtifactId(
  * more usefully, what to ask for to fill it.
  */
 const ARTIFACT_PROMISES = [
-  { kind: "report_preview", example: "How many shipments are in transit?" },
+  { kind: "table_view", example: "Which shipments are in transit?" },
   { kind: "report_run", example: "Run the detention report for last week." },
   { kind: "entity_card", example: "Show me shipment SEED-SHP-008." },
   { kind: "email_draft", example: "Tell the customer their load is running late." },
@@ -106,6 +107,8 @@ function ArtifactBody({ artifact }: { artifact: AssistantArtifact }) {
       return <PlanArtifact artifact={artifact} />;
     case "entity_card":
       return <EntityCardArtifact artifact={artifact} />;
+    case "table_view":
+      return <TableViewArtifact artifact={artifact} />;
     default:
       return (
         <p className="text-muted-foreground p-4 text-sm">
@@ -263,6 +266,8 @@ export function ArtifactsPane({
 export function isRenderableArtifactKind(kind: AssistantArtifact["kind"]): boolean {
   return (
     kind in ARTIFACT_KINDS &&
-    ["report_preview", "report_run", "email_draft", "plan", "entity_card"].includes(kind)
+    ["report_preview", "report_run", "email_draft", "plan", "entity_card", "table_view"].includes(
+      kind,
+    )
   );
 }
