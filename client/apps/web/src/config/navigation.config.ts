@@ -1434,7 +1434,7 @@ export const appModuleGroups: AppModuleGroup[] = [
   {
     id: "core",
     label: "Core",
-    moduleIds: ["home", "desk"],
+    moduleIds: ["home", "desk", "inbox"],
   },
   {
     id: "operations",

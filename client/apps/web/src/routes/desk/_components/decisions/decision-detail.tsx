@@ -21,6 +21,7 @@ import {
   type PendingPlanNode,
   type PendingProposalNode,
 } from "./use-pending-decisions";
+import { agentRunPath } from "@/lib/record-paths";
 
 export type DecisionActions = {
   onAccept: () => void;
@@ -87,12 +88,7 @@ function Provenance({ node }: { node: PendingDecisionNode }) {
         </Link>
       )}
       {run && (
-        <Link
-          to={`/admin/agent-control?tab=activity&activity=runs&fieldFilters=${encodeURIComponent(
-            JSON.stringify([{ field: "id", operator: "eq", value: run.id }]),
-          )}`}
-          className="text-brand hover:underline"
-        >
+        <Link to={agentRunPath(run.id)} className="text-brand hover:underline">
           {t("Open the run")}
         </Link>
       )}

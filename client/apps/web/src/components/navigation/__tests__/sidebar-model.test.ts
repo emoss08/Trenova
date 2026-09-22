@@ -1,5 +1,5 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
-import { navigationConfig } from "@/config/navigation.config";
+import { appModuleGroups, navigationConfig } from "@/config/navigation.config";
 import type { NavModule } from "@/config/navigation.types";
 import { HomeIcon } from "lucide-react";
 import { describe, expect, it } from "vitest";
@@ -10,6 +10,7 @@ import {
   groupModulesByDomain,
   moduleAttention,
   moduleDisplayLabel,
+  moduleSidebarView,
   pageAttention,
 } from "../sidebar-model";
 
@@ -149,9 +150,10 @@ describe("buildModuleView", () => {
 
 describe("groupModulesByDomain", () => {
   it("keeps the configured domain order and drops domains with nothing to show", () => {
-    const domains = groupModulesByDomain(
-      modules.filter((module) => module.id !== "home" && module.id !== "desk"),
+    const core = new Set<string>(
+      appModuleGroups.find((group) => group.id === "core")?.moduleIds ?? [],
     );
+    const domains = groupModulesByDomain(modules.filter((module) => !core.has(module.id)));
     expect(domains.map((domain) => domain.id)).toEqual([
       "operations",
       "people",
@@ -272,5 +274,26 @@ describe("module ownership of its own pages", () => {
   it("keeps a module's deeper pages inside the module", () => {
     expect(findModuleForPath(modules, "/edi/designer")?.id).toBe("edi");
     expect(findModuleForPath(modules, "/edi/partners/prt_01")?.id).toBe("edi");
+  });
+});
+
+describe("moduleSidebarView", () => {
+  const views = new Map(modules.map((module) => [module.id, buildModuleView(module, [])] as const));
+
+  /*
+   * A module that draws its own navigation — the inbox's folders — has no
+   * pages for the sidebar to list. Showing its empty list told people "this
+   * area has no pages yet" beside a page full of navigation; the sidebar
+   * shows home's panel instead, which keeps what needs them and what they
+   * pinned one click away.
+   */
+  it("gives a module with no pages no page list", () => {
+    expect(moduleSidebarView(moduleById("inbox"), views)).toBeNull();
+  });
+
+  it("lists the pages of an ordinary module, and none for home", () => {
+    expect(moduleSidebarView(moduleById("shipment"), views)?.module.id).toBe("shipment");
+    expect(moduleSidebarView(moduleById("home"), views)).toBeNull();
+    expect(moduleSidebarView(null, views)).toBeNull();
   });
 });

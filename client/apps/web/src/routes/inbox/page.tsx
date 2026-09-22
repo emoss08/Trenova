@@ -1,252 +1,352 @@
-import { KPI_VALUE_CLASS, KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { queries } from "@/lib/queries";
-import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { inboxMessagesQuery } from "@/lib/queries/inbox";
+import type { RoutePrefetch } from "@/lib/route-prefetch";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useCallback, useMemo, useState } from "react";
+import { MailOpenIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
-import { InboxMessageDetail } from "./_components/message-detail";
-import { InboxMessageRow } from "./_components/message-row";
-import { LANE_ORDER, LANE_STATUSES, isLaneKey, type LaneKey } from "./_components/lanes";
+import { classificationLabel } from "./_components/classification";
+import { FolderRail, laneLabel } from "./_components/folder-rail";
+import {
+  folderFilter,
+  folderParams,
+  isSameFolder,
+  parseFolder,
+  type InboxFolder,
+} from "./_components/folders";
+import { LANE_ORDER } from "./_components/lanes";
+import { MessageList } from "./_components/message-list";
+import { ReadingPane } from "./_components/reading-pane";
+import { nextAfterLeaving, reduceTriageKey, useTriageKeys } from "./_components/triage-keys";
+import { useInboxActions } from "./_components/use-inbox-actions";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
+const SEARCH_DEBOUNCE_MS = 250;
+const CLOCK_TICK_MS = 60_000;
+
+export const prefetch: RoutePrefetch = ({ request }) => {
+  const params = new URL(request.url).searchParams;
+  const folder = parseFolder(params);
+
+  return [queries.inbox.counts(), inboxMessagesQuery(folderFilter(folder, params.get("q") ?? ""))];
+};
+
+function useNow(): number {
+  const [now, setNow] = useState(nowInSeconds);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(nowInSeconds()), CLOCK_TICK_MS);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return now;
+}
 
 /**
- * The inbox: what arrived on a monitored address, and what was made of it.
+ * The inbox: a mail client for what arrived on a monitored address, with the
+ * desk's reading of every message beside it.
  *
- * The lane and the open message are both in the URL rather than in state, so a
- * message somebody is asking about can be linked — which is what the watchtower
- * items point at — and the back button does what it looks like it does.
+ * Three panes, as mail has always been read — folders, the list, the open
+ * message — and the address holds all of it: the folder, the search and the
+ * open message. A watchtower item links straight to a message, the back
+ * button walks back through what was opened, and a link pasted into a chat
+ * opens what the sender was looking at.
  */
 export function InboxPage() {
   const t = useT();
-  const [now] = useState(nowInSeconds);
+  const now = useNow();
   const [searchParams, setSearchParams] = useSearchParams();
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [linkOpen, setLinkOpen] = useState(false);
 
-  const laneParam = searchParams.get("lane");
-  const lane: LaneKey = isLaneKey(laneParam) ? laneParam : "waiting";
+  const folder = useMemo(() => parseFolder(searchParams), [searchParams]);
   const openId = searchParams.get("message");
+  const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
+  const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS);
 
-  const filter = useMemo(() => ({ statuses: LANE_STATUSES[lane] }), [lane]);
-  const messagesQuery = useQuery(queries.inbox.messages(filter));
-  const countsQuery = useQuery(queries.inbox.counts());
-
-  const setLane = useCallback(
-    (next: LaneKey) => {
-      const params = new URLSearchParams(searchParams);
-      params.set("lane", next);
-      // Switching lane closes whatever was open: the message a person was
-      // reading is very likely not in the lane they just moved to.
-      params.delete("message");
-      setSearchParams(params);
+  const updateParams = useCallback(
+    (update: (params: URLSearchParams) => void, replace = false) => {
+      setSearchParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          update(next);
+          return next;
+        },
+        { replace },
+      );
     },
-    [searchParams, setSearchParams],
+    [setSearchParams],
   );
+
+  useEffect(() => {
+    updateParams((params) => {
+      if (debouncedSearch.trim() === "") {
+        params.delete("q");
+      } else {
+        params.set("q", debouncedSearch);
+      }
+    }, true);
+  }, [debouncedSearch, updateParams]);
+
+  const filter = useMemo(() => folderFilter(folder, debouncedSearch), [folder, debouncedSearch]);
+  const messagesQuery = useInfiniteQuery(inboxMessagesQuery(filter));
+  const countsQuery = useQuery(queries.inbox.counts());
+  const mailboxesQuery = useQuery({ ...queries.inbox.mailboxes(), retry: false });
+
+  const messages = useMemo(
+    () => messagesQuery.data?.pages.flatMap((page) => page.messages) ?? [],
+    [messagesQuery.data],
+  );
+  const ids = useMemo(() => messages.map((message) => message.id), [messages]);
 
   const openMessage = useCallback(
     (id: string | null) => {
-      const params = new URLSearchParams(searchParams);
-      if (id === null) {
-        params.delete("message");
-      } else {
-        params.set("message", id);
-      }
-      setSearchParams(params);
+      setLinkOpen(false);
+      updateParams((params) => {
+        if (id === null) {
+          params.delete("message");
+        } else {
+          params.set("message", id);
+        }
+      });
     },
-    [searchParams, setSearchParams],
+    [updateParams],
   );
 
-  const messages = messagesQuery.data?.messages ?? [];
+  const selectFolder = useCallback(
+    (next: InboxFolder) => {
+      if (isSameFolder(next, folder)) {
+        return;
+      }
+      setSearchParams((current) => folderParams(current, next));
+    },
+    [folder, setSearchParams],
+  );
+
+  // A decision takes a waiting message out of the waiting lane. The reader
+  // goes on to the next one, as a triage run does, instead of being left on a
+  // message the list beside it no longer shows.
+  const onReviewed = useCallback(
+    (id: string) => {
+      if (folder.kind === "lane" && folder.lane === "waiting") {
+        openMessage(nextAfterLeaving(ids, id));
+      }
+    },
+    [folder, ids, openMessage],
+  );
+
+  const actions = useInboxActions({ onReviewed });
+  const { review, ask } = actions;
+  const detail = useQuery({ ...queries.inbox.message(openId ?? ""), enabled: openId !== null });
+
+  const onKey = useCallback(
+    (key: string) => {
+      const next = reduceTriageKey({ openId, ask: null }, key, ids);
+      if (next.openId !== openId) {
+        openMessage(next.openId);
+      }
+      if (next.ask === null) {
+        return;
+      }
+      const message = detail.data;
+      switch (next.ask.kind) {
+        case "handle":
+        case "ignore":
+          if (message?.needsReview) {
+            review({
+              id: next.ask.id,
+              status: next.ask.kind === "handle" ? "Actioned" : "Ignored",
+              note: "",
+            });
+          }
+          break;
+        case "link":
+          setLinkOpen(true);
+          break;
+        case "ask":
+          if (message !== undefined) {
+            ask(message);
+          }
+          break;
+      }
+    },
+    [openId, ids, openMessage, detail.data, review, ask],
+  );
+
+  useTriageKeys({
+    enabled: !linkOpen,
+    onKey,
+    onSearch: () => searchRef.current?.focus(),
+  });
+
   const counts = countsQuery.data;
+  const mailboxes = mailboxesQuery.data ?? [];
+  const title = folderTitle(t, folder, mailboxes);
 
   return (
     <PageLayout
+      fill
+      className="p-0"
       pageHeaderProps={{
         title: t("Inbox"),
-        description: t("Mail that arrived on a monitored address, and what was made of it"),
+        description: t(
+          "Mail that arrived on a monitored address, what the desk made of each message, and what is still waiting on a person",
+        ),
       }}
     >
-      <div className="flex flex-col gap-4">
-        <KpiStrip>
-          <KpiStripItem
-            label={t("Waiting on you")}
-            value={
-              counts ? (
-                <span className={KPI_VALUE_CLASS}>{counts.waiting}</span>
-              ) : (
-                <Skeleton className="h-6 w-8" />
-              )
-            }
+      <div className="flex min-h-0 flex-1">
+        <aside className="border-border bg-sunken hidden w-60 shrink-0 flex-col border-r md:flex">
+          <FolderRail
+            folder={folder}
+            counts={counts}
+            mailboxes={mailboxes}
+            onSelect={selectFolder}
           />
-          <KpiStripItem
-            label={t("Handled")}
-            value={
-              counts ? (
-                <span className={KPI_VALUE_CLASS}>{counts.handled}</span>
-              ) : (
-                <Skeleton className="h-6 w-8" />
-              )
-            }
-          />
-          <KpiStripItem
-            label={t("Held back")}
-            value={
-              counts ? (
-                <span className={KPI_VALUE_CLASS}>{counts.quarantined}</span>
-              ) : (
-                <Skeleton className="h-6 w-8" />
-              )
-            }
-          />
-          <KpiStripItem
-            label={t("Received in total")}
-            value={
-              counts ? (
-                <span className={KPI_VALUE_CLASS}>{counts.total}</span>
-              ) : (
-                <Skeleton className="h-6 w-8" />
-              )
-            }
-          />
-        </KpiStrip>
+        </aside>
 
-        <div className="border-border flex min-h-[32rem] overflow-hidden rounded-lg border">
-          <div
-            className={cn(
-              "flex min-w-0 flex-col",
-              openId === null ? "flex-1" : "hidden flex-1 lg:flex lg:max-w-md",
-            )}
-          >
-            <div className="border-border flex flex-wrap items-center gap-1.5 border-b px-4 py-2.5">
-              {LANE_ORDER.map((key) => (
-                <LaneChip
-                  key={key}
-                  label={laneLabel(t, key)}
-                  count={laneCount(counts, key)}
-                  active={lane === key}
-                  onClick={() => setLane(key)}
-                />
-              ))}
-            </div>
-
-            <ScrollArea className="min-h-0 flex-1">
-              {messagesQuery.isLoading ? (
-                <div className="flex flex-col gap-2 p-4">
-                  <Skeleton className="h-16" />
-                  <Skeleton className="h-16" />
-                  <Skeleton className="h-16" />
-                </div>
-              ) : messages.length === 0 ? (
-                <EmptySheet
-                  className="my-10"
-                  title={t("Nothing in this lane")}
-                  description={t(
-                    "Tenders, rate confirmations, proofs of delivery and status requests appear here as they arrive, with what the desk made of each one.",
-                  )}
-                  sketch={
-                    <div className="flex flex-col gap-3">
-                      <GhostLine className="w-2/3" />
-                      <GhostLine className="w-1/2" />
-                      <GhostLine className="w-3/5" />
-                    </div>
-                  }
-                />
-              ) : (
-                <ul className="flex flex-col">
-                  {messages.map((message) => (
-                    <InboxMessageRow
-                      key={message.id}
-                      message={message}
-                      active={message.id === openId}
-                      now={now}
-                      onOpen={(value) => openMessage(value.id)}
-                    />
-                  ))}
-                </ul>
-              )}
-            </ScrollArea>
-          </div>
-
-          {openId !== null && (
-            <div className="border-border flex min-w-0 flex-1 flex-col lg:border-l">
-              <InboxMessageDetail messageId={openId} onClose={() => openMessage(null)} />
-            </div>
+        <div
+          className={cn(
+            "border-border min-w-0 flex-col lg:flex lg:w-96 lg:shrink-0 lg:border-r xl:w-[28rem]",
+            openId === null ? "flex flex-1 lg:flex-none" : "hidden",
           )}
+        >
+          <div className="border-border flex gap-1 overflow-x-auto border-b px-3 py-2 md:hidden">
+            {LANE_ORDER.map((lane) => {
+              const target: InboxFolder = { kind: "lane", lane };
+              const active = isSameFolder(folder, target);
+              return (
+                <button
+                  key={lane}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => selectFolder(target)}
+                  className={cn(
+                    "ui-focus-ring shrink-0 rounded-full px-2.5 py-1 text-xs transition-colors",
+                    active
+                      ? "bg-nav-active text-nav-active-foreground"
+                      : "text-foreground-muted ring-foreground/10 ring-1",
+                  )}
+                >
+                  {laneLabel(t, lane)}
+                </button>
+              );
+            })}
+          </div>
+          <MessageList
+            title={title}
+            list={{
+              messages,
+              isLoading: messagesQuery.isLoading,
+              isError: messagesQuery.isError,
+              hasNextPage: messagesQuery.hasNextPage,
+              isFetchingNextPage: messagesQuery.isFetchingNextPage,
+              fetchNextPage: () => void messagesQuery.fetchNextPage(),
+              retry: () => void messagesQuery.refetch(),
+            }}
+            openId={openId}
+            now={now}
+            search={search}
+            searchRef={searchRef}
+            onSearchChange={setSearch}
+            onOpen={openMessage}
+            empty={emptyFor(t, folder, counts?.handled ?? 0)}
+          />
         </div>
+
+        <main
+          className={cn("min-w-0 flex-1 flex-col", openId === null ? "hidden lg:flex" : "flex")}
+        >
+          {openId === null ? (
+            <NothingOpen waiting={counts?.waiting ?? 0} />
+          ) : (
+            <ReadingPane
+              key={openId}
+              messageId={openId}
+              now={now}
+              actions={actions}
+              linkOpen={linkOpen}
+              onLinkOpenChange={setLinkOpen}
+              onClose={() => openMessage(null)}
+            />
+          )}
+        </main>
       </div>
     </PageLayout>
   );
 }
 
-function laneLabel(t: (value: string) => string, lane: LaneKey): string {
-  switch (lane) {
-    case "waiting":
-      return t("Waiting on you");
-    case "handled":
-      return t("Handled");
-    case "ignored":
-      return t("Ignored");
-    case "all":
-      return t("Everything");
+function folderTitle(
+  t: (value: string, ...args: unknown[]) => string,
+  folder: InboxFolder,
+  mailboxes: { id: string; name: string; address: string }[],
+): string {
+  switch (folder.kind) {
+    case "lane":
+      return laneLabel(t, folder.lane);
+    case "classification":
+      return classificationLabel(t, folder.classification);
+    case "mailbox": {
+      const mailbox = mailboxes.find((row) => row.id === folder.mailboxId);
+      if (mailbox === undefined) {
+        return t("Mailbox");
+      }
+      return mailbox.name === "" ? mailbox.address : mailbox.name;
+    }
   }
 }
 
-function laneCount(
-  counts: { waiting: number; handled: number; ignored: number; total: number } | undefined,
-  lane: LaneKey,
-): number | undefined {
-  if (counts === undefined) {
-    return undefined;
+function emptyFor(
+  t: (value: string, ...args: unknown[]) => string,
+  folder: InboxFolder,
+  handled: number,
+): { title: string; description: string } {
+  if (folder.kind === "lane" && folder.lane === "waiting") {
+    return {
+      title: t("Nothing is waiting on you"),
+      description:
+        handled > 0
+          ? t(
+              "{0, plural, one {The desk has handled # message. It is under Handled.} other {The desk has handled # messages. They are under Handled.}}",
+              handled,
+            )
+          : t(
+              "Tenders, rate confirmations, proofs of delivery and status requests land here when the desk needs a person.",
+            ),
+    };
   }
-  switch (lane) {
-    case "waiting":
-      return counts.waiting;
-    case "handled":
-      return counts.handled;
-    case "ignored":
-      return counts.ignored;
-    case "all":
-      return counts.total;
+  if (folder.kind === "classification") {
+    return {
+      title: t("No {0} mail yet", classificationLabel(t, folder.classification).toLowerCase()),
+      description: t("Messages the desk reads as this kind will collect here."),
+    };
   }
+
+  return {
+    title: t("Nothing here"),
+    description: t("Mail appears here as it arrives on a monitored address."),
+  };
 }
 
-function LaneChip({
-  label,
-  count,
-  active,
-  onClick,
-}: {
-  label: string;
-  count?: number;
-  active: boolean;
-  onClick: () => void;
-}) {
+function NothingOpen({ waiting }: { waiting: number }) {
+  const t = useT();
+
   return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "ui-focus-ring flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs transition-colors",
-        active
-          ? "bg-foreground text-background"
-          : "text-muted-foreground hover:text-foreground ring-foreground/10 ring-1",
-      )}
-    >
-      {label}
-      {count !== undefined && (
-        <Badge
-          variant="neutral"
-          className={cn("h-4 px-1 tabular-nums", active && "bg-background/20 text-background")}
-        >
-          {count}
-        </Badge>
-      )}
-    </button>
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+      <MailOpenIcon className="text-foreground-subtle size-8" aria-hidden />
+      <p className="text-sm font-medium">
+        {waiting > 0
+          ? t(
+              "{0, plural, one {# message is waiting on you} other {# messages are waiting on you}}",
+              waiting,
+            )
+          : t("Choose a message to read")}
+      </p>
+      <p className="text-foreground-subtle max-w-xs text-xs leading-relaxed">
+        {t("Press j to open the first one, and keep pressing it to work down the list.")}
+      </p>
+    </div>
   );
 }

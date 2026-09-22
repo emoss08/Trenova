@@ -1,5 +1,37 @@
 import type { InboundClassification, InboundMessageStatus } from "@/lib/graphql/inbox";
 import type { BadgeVariant } from "@trenova/shared/types/badge";
+import {
+  CircleHelpIcon,
+  ClockAlertIcon,
+  FileCheckIcon,
+  FileSignatureIcon,
+  PackagePlusIcon,
+  ReceiptTextIcon,
+  RadarIcon,
+  type LucideIcon,
+} from "lucide-react";
+
+/** Every kind a message can be read as, in the order the server lists them. */
+export const INBOUND_CLASSIFICATIONS = [
+  "Tender",
+  "RateConfirmation",
+  "ProofOfDelivery",
+  "Invoice",
+  "StatusRequest",
+  "DetentionDispute",
+  "Other",
+] as const satisfies readonly InboundClassification[];
+
+/** A glyph per kind, so the rail and a row can be told apart at a glance. */
+export const CLASSIFICATION_ICON: Record<InboundClassification, LucideIcon> = {
+  Tender: PackagePlusIcon,
+  RateConfirmation: FileSignatureIcon,
+  ProofOfDelivery: FileCheckIcon,
+  Invoice: ReceiptTextIcon,
+  StatusRequest: RadarIcon,
+  DetentionDispute: ClockAlertIcon,
+  Other: CircleHelpIcon,
+};
 
 /**
  * A classification is a category, not a severity: a tender is not worse than
@@ -31,10 +63,7 @@ export const STATUS_VARIANT: Record<InboundMessageStatus, BadgeVariant> = {
 };
 
 /** The status in the reader's words. The enum's own spelling is not English. */
-export function statusLabel(
-  t: (value: string) => string,
-  status: InboundMessageStatus,
-): string {
+export function statusLabel(t: (value: string) => string, status: InboundMessageStatus): string {
   switch (status) {
     case "Received":
       return t("Received");

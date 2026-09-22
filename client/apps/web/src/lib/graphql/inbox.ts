@@ -7,6 +7,7 @@ import {
   InboundMessageDocument,
   InboundMessageListFieldsFragmentDoc,
   InboundMessagesDocument,
+  type InboundMessageCountsQuery,
   LinkInboundMessageDocument,
   ReviewInboundMessageDocument,
   type InboundClassification,
@@ -30,6 +31,8 @@ import type { UnmaskFragments } from "@trenova/shared/types/graphql-connection";
 export type InboundMessageRow = UnmaskFragments<InboundMessageListFieldsFragment>;
 export type InboundMessageDetail = UnmaskFragments<InboundMessageDetailFieldsFragment>;
 export type InboundMailbox = UnmaskFragments<InboundMailboxFieldsFragment>;
+export type InboundShipmentRef = NonNullable<InboundMessageRow["matchedShipment"]>;
+export type InboundAttachment = InboundMessageDetail["attachments"][number];
 export type { InboundClassification, InboundMessageStatus };
 
 type RequestOptions = { signal?: AbortSignal };
@@ -45,7 +48,6 @@ function unmasked<T>(value: unknown): T {
   return value as T;
 }
 
-
 export type InboundMessagePage = {
   messages: InboundMessageRow[];
   endCursor: string | null;
@@ -57,17 +59,12 @@ export type InboundMessageFilter = {
   classification?: InboundClassification | null;
   mailboxId?: string | null;
   shipmentId?: string | null;
+  query?: string | null;
   after?: string | null;
   first?: number;
 };
 
-export type InboundMessageCounts = {
-  waiting: number;
-  handled: number;
-  ignored: number;
-  quarantined: number;
-  total: number;
-};
+export type InboundMessageCounts = InboundMessageCountsQuery["inboundMessageCounts"];
 
 /** How much of the inbox one request asks for. */
 export const INBOX_PAGE_SIZE = 25;
@@ -83,6 +80,7 @@ export async function fetchInboundMessages(
     classification: filter.classification ?? null,
     mailboxId: filter.mailboxId ?? null,
     shipmentId: filter.shipmentId ?? null,
+    query: filter.query ?? null,
   };
 
   const data = await requestGraphQL({
@@ -94,9 +92,7 @@ export async function fetchInboundMessages(
 
   return {
     messages: data.inboundMessages.edges.map((edge) =>
-      unmasked<InboundMessageRow>(
-        getFragmentData(InboundMessageListFieldsFragmentDoc, edge.node),
-      ),
+      unmasked<InboundMessageRow>(getFragmentData(InboundMessageListFieldsFragmentDoc, edge.node)),
     ),
     endCursor: data.inboundMessages.pageInfo.endCursor ?? null,
     hasNextPage: data.inboundMessages.pageInfo.hasNextPage,
@@ -132,9 +128,7 @@ export async function fetchInboundMessageCounts(
   return data.inboundMessageCounts;
 }
 
-export async function fetchInboundMailboxes(
-  options?: RequestOptions,
-): Promise<InboundMailbox[]> {
+export async function fetchInboundMailboxes(options?: RequestOptions): Promise<InboundMailbox[]> {
   const data = await requestGraphQL({
     document: InboundMailboxesDocument,
     operationName: "InboundMailboxes",
