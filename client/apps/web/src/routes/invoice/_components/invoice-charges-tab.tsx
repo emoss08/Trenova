@@ -35,6 +35,7 @@ const COLLAPSE_THRESHOLD = 8;
 const LINE_TYPE_DOTS: Record<InvoiceLineType, string> = {
   Freight: "bg-info",
   Accessorial: "bg-accent-violet",
+  Memo: "bg-accent-amber",
 };
 
 const EMPTY_COLUMNS: readonly EmptyTableColumn[] = [
@@ -193,7 +194,7 @@ function ChargeSection({
           onClick={onToggle}
           aria-expanded={!isCollapsed}
           aria-controls={bodyId}
- className="ui-focus-ring hover:text-foreground text-muted-foreground flex min-w-0 items-center gap-2 rounded-sm px-2 py-1 text-left transition-colors"
+          className="ui-focus-ring hover:text-foreground text-muted-foreground flex min-w-0 items-center gap-2 rounded-sm px-2 py-1 text-left transition-colors"
         >
           <ChevronRightIcon
             className={cn(
@@ -291,9 +292,7 @@ function ChargeBreakdown({
       <Separator className="my-1" />
 
       <div className="px-2 pt-1">
-        <span className="text-muted-foreground text-xs font-medium">
-          {t("Accessorials")}
-        </span>
+        <span className="text-muted-foreground text-xs font-medium">{t("Accessorials")}</span>
       </div>
 
       {accessorialLines.length === 0 ? (

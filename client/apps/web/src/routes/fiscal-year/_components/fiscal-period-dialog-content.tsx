@@ -143,7 +143,7 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
   }
 }
 
-function runAction(action: FiscalPeriodAction, periodId: string, reason: string) {
+function runAction(action: FiscalPeriodAction, periodId: FiscalPeriod["id"], reason: string) {
   const service = apiService.fiscalPeriodService;
   switch (action) {
     case "activate":

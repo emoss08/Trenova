@@ -32,7 +32,6 @@ import { elapsedMinutes, formatHours, timesheetStatusTone } from "@trenova/share
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ClockIcon, PenLineIcon, PlayIcon, SquareIcon, Trash2Icon } from "lucide-react";
-import { m } from "motion/react";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";

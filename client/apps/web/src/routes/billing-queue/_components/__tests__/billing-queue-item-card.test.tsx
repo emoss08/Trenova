@@ -69,7 +69,7 @@ describe("BillingQueueItemCard payer", () => {
           name: "AMD",
           code: "AMD",
         } as BillingQueueItem["billToCustomer"],
-        allocatedTotalAmount: "400.00",
+        allocatedTotalAmount: 400,
       }),
     );
 

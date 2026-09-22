@@ -1,3 +1,4 @@
+import { filterOperatorSchema, sortDirectionSchema } from "@trenova/shared/types/data-table";
 import { z } from "zod";
 
 /*
@@ -10,15 +11,18 @@ outcome available here, because the table comes back looking answered and the
 one condition the person cared about is the one that went missing.
 */
 
+// The operators and directions are the table's own: one the table cannot apply
+// fails the parse, loudly, rather than reaching the filter builder as a chip
+// that does nothing.
 const fieldFilterSchema = z.object({
   field: z.string(),
-  operator: z.string(),
-  value: z.unknown().optional(),
+  operator: filterOperatorSchema,
+  value: z.unknown(),
 });
 
 const sortFieldSchema = z.object({
   field: z.string(),
-  direction: z.string(),
+  direction: sortDirectionSchema,
 });
 
 export const unresolvedTermSchema = z.object({

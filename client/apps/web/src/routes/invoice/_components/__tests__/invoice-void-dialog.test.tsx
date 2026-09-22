@@ -19,7 +19,7 @@ const invoice = {
   id: "inv_1",
   number: "INV-1",
   status: "Posted",
-  appliedAmount: "0",
+  appliedAmount: 0,
 } as Invoice;
 
 function renderDialog(onOpenChange = vi.fn()) {

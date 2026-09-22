@@ -235,7 +235,6 @@ export default function KpiRail() {
           tone="danger"
           sub={`${merged.atRisk.etaSlip} ETA slip · ${merged.atRisk.weather} weather · ${merged.atRisk.reefer} reefer`}
           info={<KpiInfoPopover {...KPI_INFO.atRisk} />}
-          span={2}
         />
         <KpiStripItem
           label={t("Unassigned")}
@@ -244,7 +243,6 @@ export default function KpiRail() {
           tone="warning"
           sub={`$${merged.unassigned.revenueWaiting.toLocaleString()} revenue waiting`}
           info={<KpiInfoPopover {...KPI_INFO.unassigned} />}
-          span={2}
         />
         <KpiStripItem
           label={t("Ready to dispatch")}
@@ -253,7 +251,6 @@ export default function KpiRail() {
           tone="brand"
           sub={`${merged.readyToDispatch.unassigned} unassigned · ${merged.readyToDispatch.driverReady} driver-ready`}
           info={<KpiInfoPopover {...KPI_INFO.readyToDispatch} />}
-          span={2}
         />
         <KpiWatchlist
           label={t("HOS near limit")}

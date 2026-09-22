@@ -87,6 +87,8 @@ const getDefaultValues = (): ShipmentCreateInput => {
     canceledAt: undefined,
     ratingUnit: 1,
     fuelSurchargeLocked: false,
+    freightTerms: "Prepaid",
+    freightAllocations: [],
     additionalCharges: [],
     commodities: [],
     moves: [

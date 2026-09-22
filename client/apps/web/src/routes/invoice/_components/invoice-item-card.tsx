@@ -39,6 +39,7 @@ export function InvoiceItemCard({
   const customerName = invoice.customer?.name ?? invoice.billToName;
   const totalAmount = Number(invoice.totalAmount ?? 0);
   const billsSingleShipment = invoiceBillsSingleShipment(invoice.scope);
+  const shipmentId = invoice.shipmentId;
   const billingPeriod = invoiceBillingPeriod(invoice);
   const scopeDetail = billingPeriod
     ? t(
@@ -59,9 +60,7 @@ export function InvoiceItemCard({
             <span className="flex items-center gap-1.5">
               <PlainInvoiceScopeBadge scope={invoice.scope} />
               <PlainInvoiceSplitBadge isSplitBill={invoice.isSplitBill} />
-              <span className="text-muted-foreground font-mono text-2xs">
-                {invoice.billType}
-              </span>
+              <span className="text-muted-foreground font-mono text-2xs">{invoice.billType}</span>
             </span>
           }
           amount={formatCurrency(totalAmount, invoice.currencyCode)}
@@ -97,10 +96,8 @@ export function InvoiceItemCard({
         />
       </ContextMenuTrigger>
       <ContextMenuContent>
-        {billsSingleShipment && invoice.shipmentId ? (
-          <ContextMenuItem
-            onClick={() => window.open(shipmentPanelPath(invoice.shipmentId), "_blank")}
-          >
+        {billsSingleShipment && shipmentId ? (
+          <ContextMenuItem onClick={() => window.open(shipmentPanelPath(shipmentId), "_blank")}>
             <ExternalLinkIcon className="size-3.5" />
             {t("View shipment")}
           </ContextMenuItem>

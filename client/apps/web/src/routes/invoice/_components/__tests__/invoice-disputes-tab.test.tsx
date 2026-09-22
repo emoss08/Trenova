@@ -39,8 +39,8 @@ const invoice = {
   billType: "Invoice",
   customerId: "cus_1",
   currencyCode: "USD",
-  totalAmount: "1000.00",
-  appliedAmount: "0",
+  totalAmount: 1000,
+  appliedAmount: 0,
 } as Invoice;
 
 const openCase = {

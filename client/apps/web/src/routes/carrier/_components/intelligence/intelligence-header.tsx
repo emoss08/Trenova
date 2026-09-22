@@ -4,9 +4,9 @@ import { StatusDot } from "@/components/carrier-intelligence/status-dot";
 import { useCarrierIntelLabels } from "@/components/carrier-intelligence/use-carrier-intel-labels";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { carrierIntelProviderLabel } from "@/lib/carrier-intelligence";
-import type { CarrierIntelControl } from "@/lib/graphql/carrier-intel-settings";
 import {
   setCarrierMonitoring,
+  type CarrierIntelControl,
   type CarrierIntelSnapshot,
   type CarrierMonitoringEnrollment,
 } from "@/lib/graphql/carrier-intelligence";

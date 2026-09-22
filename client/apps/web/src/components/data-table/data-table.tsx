@@ -245,7 +245,7 @@ export function DataTable<TData extends Record<string, any>>({
       applyFilterState({ fieldFilters: composed.fieldFilters, filterGroups: [] });
       void setSearchParams({
         query: composed.query,
-        sort: composed.sort as SortField[],
+        sort: composed.sort,
         pageIndex: 1,
       });
     },

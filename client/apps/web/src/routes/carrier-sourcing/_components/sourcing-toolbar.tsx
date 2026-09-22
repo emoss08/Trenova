@@ -218,6 +218,9 @@ export function SourcingToolbar({
         </>
       ) : null}
       <div className="ml-auto flex items-center gap-2">
+        <span className="text-muted-foreground text-xs tabular-nums" aria-live="polite">
+          {summary}
+        </span>
         {showFilters ? (
           <DropdownMenu>
             <DropdownMenuTrigger

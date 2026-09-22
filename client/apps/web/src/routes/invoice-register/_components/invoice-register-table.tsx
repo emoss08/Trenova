@@ -71,7 +71,7 @@ export default function InvoiceRegisterTable() {
         resource={Resource.Invoice}
         columns={columns}
         enableCreateAction={false}
-        onRowClick={openInvoice}
+        onRowClick={(row) => openInvoice(row.original)}
         contextMenuActions={contextMenuActions}
       />
       {voiding ? (

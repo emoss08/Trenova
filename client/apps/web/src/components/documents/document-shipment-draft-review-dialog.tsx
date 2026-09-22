@@ -181,6 +181,8 @@ function createDefaultShipmentValues(draft: DocumentShipmentDraft | null): Shipm
     canceledAt: undefined,
     ratingUnit: 1,
     fuelSurchargeLocked: false,
+    freightTerms: "Prepaid",
+    freightAllocations: [],
     additionalCharges: [],
     commodities: [],
     moves,
@@ -324,9 +326,7 @@ export function DocumentShipmentDraftReviewDialog({
             {isAttached ? (
               <Alert variant="success" size="sm">
                 <CircleCheckIcon />
-                <AlertTitle>
-                  {t("This source document is already attached.")}
-                </AlertTitle>
+                <AlertTitle>{t("This source document is already attached.")}</AlertTitle>
                 <AlertDescription>
                   {t(
                     "Shipment {0} attached {1}.",

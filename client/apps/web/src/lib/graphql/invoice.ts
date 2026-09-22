@@ -3,6 +3,7 @@ import {
   CreateInvoicesFromOrderDocument,
   CreateInvoicesFromShipmentsDocument,
   CreateMemoDocument,
+  CreatedInvoiceFieldsFragmentDoc,
   CreditMemoApplicationFieldsFragmentDoc,
   InvoiceArContextDocument,
   InvoiceArFieldsFragmentDoc,
@@ -17,6 +18,7 @@ import {
   VoidInvoiceDocument,
   WithdrawInvoiceDisputeDocument,
   type ApplyCreditMemoInput,
+  type CreatedInvoiceFieldsFragment,
   type CreateInvoicesFromShipmentsMutation,
   type CreateMemoInput,
   type CreateMemoMutation,
@@ -39,9 +41,18 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 type RequestOptions = { signal?: AbortSignal };
 
-export type CreateInvoicesResult =
+type MaskedCreateInvoicesResult =
   CreateInvoicesFromShipmentsMutation["createInvoicesFromShipments"];
-export type CreatedInvoice = CreateInvoicesResult["primary"];
+export type CreatedInvoice = CreatedInvoiceFieldsFragment;
+/** The payer's invoice first, then every invoice the call created, one per payer. */
+export type CreateInvoicesResult = { primary: CreatedInvoice; invoices: CreatedInvoice[] };
+
+function unmaskCreatedInvoices(result: MaskedCreateInvoicesResult): CreateInvoicesResult {
+  return {
+    primary: getFragmentData(CreatedInvoiceFieldsFragmentDoc, result.primary),
+    invoices: result.invoices.map((row) => getFragmentData(CreatedInvoiceFieldsFragmentDoc, row)),
+  };
+}
 export type RelatedInvoice = InvoiceRelatedFieldsFragment;
 export type InvoiceDisputeCase = InvoiceDisputeFieldsFragment;
 export type InvoiceCreditApplication = CreditMemoApplicationFieldsFragment;
@@ -95,7 +106,7 @@ export async function createInvoicesFromShipments(
     operationName: "CreateInvoicesFromShipments",
     variables: { shipmentIds, offCycleReason },
   });
-  return data.createInvoicesFromShipments;
+  return unmaskCreatedInvoices(data.createInvoicesFromShipments);
 }
 
 export async function createInvoicesFromOrder(
@@ -107,7 +118,7 @@ export async function createInvoicesFromOrder(
     operationName: "CreateInvoicesFromOrder",
     variables: { orderId, offCycleReason },
   });
-  return data.createInvoicesFromOrder;
+  return unmaskCreatedInvoices(data.createInvoicesFromOrder);
 }
 
 function unmaskArContext(invoice: ArContextBase): InvoiceArContext {
