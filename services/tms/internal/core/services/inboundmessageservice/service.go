@@ -57,6 +57,10 @@ type Params struct {
 	// being classified, which is the behaviour a mailbox on AlwaysReview has
 	// anyway.
 	Completion services.CompletionService `optional:"true"`
+	// Shipments and Parties resolve what a message is about. Both are optional:
+	// an unmatched message is still one a person can read and link by hand.
+	Shipments ShipmentFinder `optional:"true"`
+	Parties   PartyFinder    `optional:"true"`
 }
 
 type Service struct {
@@ -66,6 +70,8 @@ type Service struct {
 	storage     storage.Client
 	encryption  secretDecryptor
 	completion  services.CompletionService
+	shipments   ShipmentFinder
+	parties     PartyFinder
 }
 
 func New(p Params) *Service {
@@ -76,6 +82,8 @@ func New(p Params) *Service {
 		storage:     p.Storage,
 		encryption:  p.Encryption,
 		completion:  p.Completion,
+		shipments:   p.Shipments,
+		parties:     p.Parties,
 	}
 }
 
