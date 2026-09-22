@@ -33,3 +33,5 @@ docs/screenshots/light/
 docs/screenshots/dark/
 /i18n-extract
 .turbo
+# Redis snapshots written by a local redis-server
+*.rdb
