@@ -60,6 +60,8 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 		{&rejectWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
 		{&cancelWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
 		{&correctChargeCodeTool{}, "billingQueueItemId", permission.ResourceBillingQueue},
+		{&addDashboardTileTool{}, "dashboardId", permission.ResourceDashboard},
+		{&scheduleReportTool{}, "definitionId", permission.ResourceReport},
 	}
 
 	for _, tc := range cases {

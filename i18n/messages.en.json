@@ -1323,6 +1323,15 @@
       "routes/shipment"
     ]
   },
+  "A KPI tile needs the column whose number it shows": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A KPI tile shows a single number and has no category axis": {
     "sites": 1,
     "scope": [
@@ -2321,6 +2330,15 @@
     ],
     "areas": [
       "domain/report"
+    ]
+  },
+  "A dashboard needs at least one tile": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "A day cannot hold more than 24 hours": {
@@ -5452,6 +5470,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "A text tile needs something to say": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "A tier cannot start after an open-ended tier": {
@@ -46991,6 +47018,15 @@
       "routes/admin"
     ]
   },
+  "Describe the tile to add": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Describe the violation": {
     "sites": 1,
     "scope": [
@@ -69977,6 +70013,15 @@
       "routes/agent-control"
     ]
   },
+  "Give the alert a name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Give the card a label": {
     "sites": 1,
     "scope": [
@@ -69984,6 +70029,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Give the dashboard a name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Give the recognition a title": {
@@ -70006,6 +70060,15 @@
     "areas": [
       "domain/worker",
       "packages/shared/types"
+    ]
+  },
+  "Give the view a name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Give this home screen a name": {
@@ -83267,6 +83330,15 @@
       "domain/worker"
     ]
   },
+  "Limits applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Limits on what this carrier may be paid relative to what the load sells for.": {
     "sites": 1,
     "scope": [
@@ -92924,6 +92996,15 @@
       "routes/service-failure-reason-code"
     ]
   },
+  "Name the column the condition is on": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Name the company executive who certified the summary (29 CFR 1904.32(b)(3))": {
     "sites": 1,
     "scope": [
@@ -92942,6 +93023,15 @@
       "routes/admin"
     ]
   },
+  "Name the dashboard to add to": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Name the executed adjustment that settled this dispute": {
     "sites": 2,
     "scope": [
@@ -92951,6 +93041,15 @@
     "areas": [
       "packages/shared/types",
       "service/invoicedisputeservice"
+    ]
+  },
+  "Name the report to run": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Name the scenario and pick the partner document profile it certifies.": {
@@ -99750,6 +99849,15 @@
       "routes/formula-template"
     ]
   },
+  "Not included": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not linked": {
     "sites": 1,
     "scope": [
@@ -105958,6 +106066,15 @@
       "routes/desk"
     ]
   },
+  "Open the table": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Open the user settings dialog": {
     "sites": 1,
     "scope": [
@@ -110692,6 +110809,15 @@
     ],
     "areas": [
       "routes/training-course"
+    ]
+  },
+  "Passed over": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Passenger (P)": {
@@ -117510,6 +117636,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Priced under": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Pricing": {
@@ -136525,6 +136660,15 @@
       "routes/formula-template"
     ]
   },
+  "Say what the view should show": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Say what to narrow the table to.": {
     "sites": 1,
     "scope": [
@@ -136543,6 +136687,24 @@
       "routes/worker"
     ]
   },
+  "Say when it should run": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "Say whether to watch inserts, updates or deletes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Say which agreements this touches: a selection, a customer, a carrier, or a whole party type": {
     "sites": 1,
     "scope": [
@@ -136552,6 +136714,15 @@
       "service/rateagreementservice"
     ]
   },
+  "Say which table to watch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Say who is being put on the position": {
     "sites": 1,
     "scope": [
@@ -136559,6 +136730,15 @@
     ],
     "areas": [
       "service/orgstructureservice"
+    ]
+  },
+  "Say who it goes to": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Say why in at least ten characters; cancelling is permanent": {
@@ -165683,6 +165863,15 @@
       "api/handlers"
     ]
   },
+  "This view has no table to open.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This view has unsaved changes": {
     "sites": 1,
     "scope": [
@@ -167571,7 +167760,7 @@
     ]
   },
   "Total": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "go",
       "ts"
@@ -167582,6 +167771,7 @@
       "routes/bank-receipt-batch",
       "routes/billing-queue",
       "routes/customer-statement",
+      "routes/desk",
       "routes/driver-pay-event",
       "routes/formula-template",
       "routes/ifta-return",
@@ -184951,6 +185141,15 @@
       "routes/billing-queue"
     ]
   },
+  "chosen on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "coaching conversation": {
     "sites": 1,
     "scope": [
@@ -194646,6 +194845,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0}: {1} became {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0}: {1} changes waiting on a decision": {

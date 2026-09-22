@@ -143,6 +143,134 @@ function cell(value: unknown): unknown {
   return JSON.stringify(value);
 }
 
+/** A described view, as something to open rather than rows to read. */
+export type ComposedViewArtifact = {
+  entity: string;
+  path: string;
+  explanation: string;
+  terms: string[];
+  filterCount: number;
+  unresolved: { phrase: string; reason: string }[];
+};
+
+export function composedViewFrom(artifact: AssistantArtifact): ComposedViewArtifact | null {
+  const path = stringOf(artifact.payload.path);
+  if (path === "") {
+    return null;
+  }
+
+  return {
+    entity: stringOf(artifact.payload.entity),
+    path,
+    explanation: stringOf(artifact.payload.explanation),
+    terms: listOf(artifact.payload.terms).filter(
+      (term): term is string => typeof term === "string" && term !== "",
+    ),
+    filterCount: numberOf(artifact.payload.filterCount),
+    unresolved: listOf(artifact.payload.unresolved)
+      .filter(isRecord)
+      .map((entry) => ({ phrase: stringOf(entry.phrase), reason: stringOf(entry.reason) }))
+      .filter((entry) => entry.phrase !== ""),
+  };
+}
+
+export type RateComponent = {
+  label: string;
+  basis: string;
+  amount: string;
+  runningTotal: string;
+};
+
+export type RateGuardrail = { kind: string; bound: string; raw: string; result: string };
+
+export type RateExplanationArtifact = {
+  shipmentId: string;
+  side: string;
+  currency: string;
+  winner: { agreementCode: string; agreementName: string; ruleLabel: string } | null;
+  tieBreak: string;
+  rejected: { agreementCode: string; ruleLabel: string; reason: string; detail: string }[];
+  components: RateComponent[];
+  guardrails: RateGuardrail[];
+  totals: { linehaul: string; fuel: string; accessorial: string; total: string };
+  warnings: string[];
+};
+
+/**
+ * A price as a ledger.
+ *
+ * Every figure is passed through as the engine wrote it — amounts are decimal
+ * strings on the wire and stay strings here, because reading money into a
+ * JavaScript number is how a cent goes missing between the explanation and
+ * the invoice it is meant to match.
+ */
+export function rateExplanationFrom(artifact: AssistantArtifact): RateExplanationArtifact {
+  const payload = artifact.payload;
+  const winner = isRecord(payload.winner) ? payload.winner : null;
+
+  return {
+    shipmentId: stringOf(payload.shipmentId),
+    side: stringOf(payload.side),
+    currency: stringOf(payload.currency),
+    winner:
+      winner === null
+        ? null
+        : {
+            agreementCode: stringOf(winner.agreementCode),
+            agreementName: stringOf(winner.agreementName),
+            ruleLabel: stringOf(winner.ruleLabel),
+          },
+    tieBreak: stringOf(payload.tieBreak),
+    rejected: listOf(payload.rejected)
+      .filter(isRecord)
+      .map((entry) => ({
+        agreementCode: stringOf(entry.agreementCode),
+        ruleLabel: stringOf(entry.ruleLabel),
+        reason: stringOf(entry.reason),
+        detail: stringOf(entry.detail),
+      })),
+    components: listOf(payload.components)
+      .filter(isRecord)
+      .map((entry) => ({
+        label: stringOf(entry.label),
+        basis: stringOf(entry.basis),
+        amount: amountOf(entry.amount),
+        runningTotal: amountOf(entry.runningTotal),
+      })),
+    guardrails: listOf(payload.guardrails)
+      .filter(isRecord)
+      .map((entry) => ({
+        kind: stringOf(entry.kind),
+        bound: amountOf(entry.bound),
+        raw: amountOf(entry.raw),
+        result: amountOf(entry.result),
+      })),
+    totals: totalsOf(payload.totals),
+    warnings: listOf(payload.warnings).filter(
+      (warning): warning is string => typeof warning === "string" && warning !== "",
+    ),
+  };
+}
+
+/** Money stays as it arrived. A number would round it. */
+function amountOf(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+
+  return "";
+}
+
+function totalsOf(value: unknown) {
+  const totals = isRecord(value) ? value : {};
+
+  return {
+    linehaul: amountOf(totals.linehaul),
+    fuel: amountOf(totals.fuel),
+    accessorial: amountOf(totals.accessorial),
+    total: amountOf(totals.total),
+  };
+}
+
 export type ReportRunArtifact = {
   runId: string;
   reportKey: string;

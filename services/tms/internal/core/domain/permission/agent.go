@@ -56,6 +56,25 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpCreate: {},
 		OpUpdate: {},
 	},
+	// The three surfaces an agent builds rather than reads: a saved view of a
+	// table, a dashboard, and an alert that watches for a change. All three
+	// are additive and reversible — nothing an agent makes here alters a
+	// record, and a person can delete any of it.
+	// No read on any of the three: the tools only add. add_dashboard_tile
+	// reads the dashboard it is appending to, but that read is part of
+	// executing the update it already declares, and the runtime authorizes a
+	// tool's declared resource and operation rather than every call inside it.
+	// Granting a read nothing claims is a grant nobody can account for.
+	ResourceTableConfiguration: {
+		OpCreate: {},
+	},
+	ResourceDashboard: {
+		OpCreate: {},
+		OpUpdate: {},
+	},
+	ResourceTableChangeAlert: {
+		OpCreate: {},
+	},
 	ResourceCarrier: {
 		OpRead: {},
 	},
