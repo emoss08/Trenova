@@ -1825,6 +1825,20 @@ export const routes: RouteObject[] = [
                 loader: () => redirect("/admin/agent-control?tab=providers"),
               },
               {
+                path: "inbound-mailboxes",
+                loader: combineLoaders(
+                  createPermissionLoader(Resource.InboundMailbox, Operation.Read),
+                  createPrefetchLoader(
+                    lazyPrefetch(() => import("@/routes/admin/inbound-mailboxes/page")),
+                  ),
+                ),
+                async lazy() {
+                  const { InboundMailboxesPage } =
+                    await import("@/routes/admin/inbound-mailboxes/page");
+                  return { Component: InboundMailboxesPage };
+                },
+              },
+              {
                 path: "api-keys",
                 loader: createPermissionLoader(Resource.APIKey, Operation.Read),
                 async lazy() {

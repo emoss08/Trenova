@@ -24,6 +24,12 @@ import (
 type InboundAttachmentResolver interface {
 	DocumentID(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error)
 }
+type InboundMailboxResolver interface {
+	HasSigningSecret(ctx context.Context, obj *inboundmessage.Mailbox) (bool, error)
+}
+type InboundMailboxCredentialsResolver interface {
+	WebhookPath(ctx context.Context, obj *inboundmessageservice.MailboxCredentials) (string, error)
+}
 type InboundMessageResolver interface {
 	Mailbox(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessage.Mailbox, error)
 
@@ -536,6 +542,29 @@ func (ec *executionContext) fieldContext_InboundMailbox_status(_ context.Context
 	return graphql.NewScalarFieldContext("InboundMailbox", field, false, false, errors.New("field of type InboundMailboxStatus does not have child fields"))
 }
 
+func (ec *executionContext) _InboundMailbox_hasSigningSecret(ctx context.Context, field graphql.CollectedField, obj *inboundmessage.Mailbox) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundMailbox_hasSigningSecret(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.InboundMailbox().HasSigningSecret(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundMailbox_hasSigningSecret(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundMailbox", field, true, true, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _InboundMailbox_version(ctx context.Context, field graphql.CollectedField, obj *inboundmessage.Mailbox) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -672,6 +701,84 @@ func (ec *executionContext) _InboundMailboxCount_waiting(ctx context.Context, fi
 }
 func (ec *executionContext) fieldContext_InboundMailboxCount_waiting(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("InboundMailboxCount", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _InboundMailboxCredentials_mailbox(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.MailboxCredentials) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundMailboxCredentials_mailbox(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Mailbox, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *inboundmessage.Mailbox) graphql.Marshaler {
+			return ec.marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailbox(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundMailboxCredentials_mailbox(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InboundMailboxCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InboundMailbox(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InboundMailboxCredentials_token(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.MailboxCredentials) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundMailboxCredentials_token(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Token, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundMailboxCredentials_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundMailboxCredentials", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _InboundMailboxCredentials_webhookPath(ctx context.Context, field graphql.CollectedField, obj *inboundmessageservice.MailboxCredentials) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundMailboxCredentials_webhookPath(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.InboundMailboxCredentials().WebhookPath(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundMailboxCredentials_webhookPath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundMailboxCredentials", field, true, true, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _InboundMessage_id(ctx context.Context, field graphql.CollectedField, obj *inboundmessage.InboundMessage) (ret graphql.Marshaler) {
@@ -2024,6 +2131,78 @@ func (ec *executionContext) fieldContext_InboundShipmentRef_destinationState(_ c
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputInboundMailboxInput(ctx context.Context, obj any) (gqlmodel.InboundMailboxInput, error) {
+	var it gqlmodel.InboundMailboxInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "address", "provider", "purpose", "reviewPolicy", "minConfidence", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "address":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Address = data
+		case "provider":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+			data, err := ec.unmarshalNInboundProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐProvider(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Provider = data
+		case "purpose":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("purpose"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Purpose = data
+		case "reviewPolicy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reviewPolicy"))
+			data, err := ec.unmarshalNInboundReviewPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐReviewPolicy(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReviewPolicy = data
+		case "minConfidence":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minConfidence"))
+			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinConfidence = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalNInboundMailboxStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailboxStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputInboundMessagesInput(ctx context.Context, obj any) (gqlmodel.InboundMessagesInput, error) {
 	var it gqlmodel.InboundMessagesInput
 	if obj == nil {
@@ -2372,67 +2551,105 @@ func (ec *executionContext) _InboundMailbox(ctx context.Context, sel ast.Selecti
 		case "id":
 			out.Values[i] = ec._InboundMailbox_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "businessUnitId":
 			out.Values[i] = ec._InboundMailbox_businessUnitId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "organizationId":
 			out.Values[i] = ec._InboundMailbox_organizationId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._InboundMailbox_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "address":
 			out.Values[i] = ec._InboundMailbox_address(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "provider":
 			out.Values[i] = ec._InboundMailbox_provider(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "purpose":
 			out.Values[i] = ec._InboundMailbox_purpose(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "reviewPolicy":
 			out.Values[i] = ec._InboundMailbox_reviewPolicy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "minConfidence":
 			out.Values[i] = ec._InboundMailbox_minConfidence(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._InboundMailbox_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "hasSigningSecret":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._InboundMailbox_hasSigningSecret(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "version":
 			out.Values[i] = ec._InboundMailbox_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._InboundMailbox_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._InboundMailbox_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -2482,6 +2699,87 @@ func (ec *executionContext) _InboundMailboxCount(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var inboundMailboxCredentialsImplementors = []string{"InboundMailboxCredentials"}
+
+func (ec *executionContext) _InboundMailboxCredentials(ctx context.Context, sel ast.SelectionSet, obj *inboundmessageservice.MailboxCredentials) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, inboundMailboxCredentialsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InboundMailboxCredentials")
+		case "mailbox":
+			out.Values[i] = ec._InboundMailboxCredentials_mailbox(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "token":
+			out.Values[i] = ec._InboundMailboxCredentials_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "webhookPath":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._InboundMailboxCredentials_webhookPath(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3533,6 +3831,21 @@ func (ec *executionContext) marshalNInboundMailboxCount2ᚕgithubᚗcomᚋemoss0
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐMailboxCredentials(ctx context.Context, sel ast.SelectionSet, v *inboundmessageservice.MailboxCredentials) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._InboundMailboxCredentials(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNInboundMailboxInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInboundMailboxInput(ctx context.Context, v any) (gqlmodel.InboundMailboxInput, error) {
+	res, err := ec.unmarshalInputInboundMailboxInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNInboundMailboxStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailboxStatus(ctx context.Context, v any) (inboundmessage.MailboxStatus, error) {

@@ -11459,6 +11459,10 @@ func init() {
 				FieldMapKey: "status",
 			},
 			{
+				Name:    "hasSigningSecret",
+				Special: "hasSigningSecret",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},

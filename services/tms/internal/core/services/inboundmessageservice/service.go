@@ -40,10 +40,12 @@ var (
 	ErrMailboxInactive     = errors.New("the mailbox is no longer listening")
 )
 
-// secretDecryptor is the sliver of the encryption service this needs. Taking
-// the interface rather than the concrete service keeps the ingest path
-// testable without standing up a key manager to check a signature.
-type secretDecryptor interface {
+// secretKeeper is the sliver of the encryption service this needs: sealing a
+// mailbox's signing secret when it is set, and opening it to check a delivery.
+// Taking the interface rather than the concrete service keeps both paths
+// testable without standing up a key manager.
+type secretKeeper interface {
+	EncryptString(value string) (string, error)
 	DecryptString(value string) (string, error)
 }
 
@@ -79,6 +81,8 @@ type Params struct {
 	// message and its reason, and nothing else is told about it.
 	Watchtower services.WatchtowerProjector `optional:"true"`
 	Events     services.AgentEventPublisher `optional:"true"`
+	// Audit records mailbox configuration changes.
+	Audit services.AuditService `optional:"true"`
 }
 
 type Service struct {
@@ -86,7 +90,7 @@ type Service struct {
 	mailboxRepo repositories.InboundMailboxRepository
 	messageRepo repositories.InboundMessageRepository
 	storage     storage.Client
-	encryption  secretDecryptor
+	encryption  secretKeeper
 	completion  services.CompletionService
 	workflows   services.WorkflowStarter
 	shipments   ShipmentFinder
@@ -95,6 +99,7 @@ type Service struct {
 	documents   repositories.DocumentRepository
 	watchtower  services.WatchtowerProjector
 	events      services.AgentEventPublisher
+	audit       services.AuditService
 }
 
 func New(p Params) *Service {
@@ -112,6 +117,7 @@ func New(p Params) *Service {
 		documents:   p.Documents,
 		watchtower:  p.Watchtower,
 		events:      p.Events,
+		audit:       p.Audit,
 	}
 }
 

@@ -2099,6 +2099,15 @@ models:
   InboundMailbox:
     model:
       - github.com/emoss08/trenova/internal/core/domain/inboundmessage.Mailbox
+    fields:
+      hasSigningSecret:
+        resolver: true
+  InboundMailboxCredentials:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/inboundmessageservice.MailboxCredentials
+    fields:
+      webhookPath:
+        resolver: true
   InboundMessageStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/inboundmessage.Status

@@ -68,9 +68,35 @@ type InboundMailbox {
   "The bar a reading must clear before the desk acts without asking."
   minConfidence: Float!
   status: InboundMailboxStatus!
+  "Whether a signing secret is set. Without one the mailbox refuses every delivery. The secret itself is never returned."
+  hasSigningSecret: Boolean!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"""
+A mailbox with the webhook token it was just given.
+
+The token is stored only as a hash, so this is the one response that carries
+it. Whoever creates or rotates a mailbox copies the webhook URL from here.
+"""
+type InboundMailboxCredentials {
+  mailbox: InboundMailbox!
+  token: String!
+  "Where the provider posts, under the API's base URL."
+  webhookPath: String!
+}
+
+input InboundMailboxInput {
+  name: String!
+  address: String!
+  provider: InboundProvider!
+  purpose: String
+  reviewPolicy: InboundReviewPolicy!
+  "The bar a reading must clear to be acted on alone; read only by ReviewBelowConfidence."
+  minConfidence: Float!
+  status: InboundMailboxStatus!
 }
 
 "One file that came with a message, and what became of it."
@@ -240,4 +266,12 @@ extend type Mutation {
   reviewInboundMessage(id: ID!, input: ReviewInboundMessageInput!): InboundMessage!
   "Says what a message is about, by hand, when the reading did not work it out."
   linkInboundMessage(id: ID!, input: LinkInboundMessageInput!): InboundMessage!
+  "Creates a mailbox and returns its webhook token, once."
+  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
+  "Changes a mailbox's settings. Changing its provider clears the signing secret."
+  updateInboundMailbox(id: ID!, version: Int!, input: InboundMailboxInput!): InboundMailbox!
+  "Replaces the webhook token. The old URL stops working at once."
+  rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials!
+  "Seals and stores the provider's secret: a Resend whsec_ key, or Postmark's user:password."
+  setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
 }

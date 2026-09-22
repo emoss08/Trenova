@@ -1,5 +1,7 @@
-import { getFragmentData } from "@trenova/graphql/fragment-data";
+import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
 import {
+  CreateInboundMailboxDocument,
+  InboundMailboxCredentialsFieldsFragmentDoc,
   InboundMailboxesDocument,
   InboundMailboxFieldsFragmentDoc,
   InboundMessageCountsDocument,
@@ -10,6 +12,14 @@ import {
   type InboundMessageCountsQuery,
   LinkInboundMessageDocument,
   ReviewInboundMessageDocument,
+  RotateInboundMailboxTokenDocument,
+  SetInboundMailboxSigningSecretDocument,
+  UpdateInboundMailboxDocument,
+  type InboundMailboxCredentialsFieldsFragment,
+  type InboundMailboxInput,
+  type InboundProvider,
+  type InboundReviewPolicy,
+  type InboundMailboxStatus,
   type InboundClassification,
   type InboundMailboxFieldsFragment,
   type InboundMessageDetailFieldsFragment,
@@ -31,6 +41,8 @@ import type { UnmaskFragments } from "@trenova/shared/types/graphql-connection";
 export type InboundMessageRow = UnmaskFragments<InboundMessageListFieldsFragment>;
 export type InboundMessageDetail = UnmaskFragments<InboundMessageDetailFieldsFragment>;
 export type InboundMailbox = UnmaskFragments<InboundMailboxFieldsFragment>;
+export type InboundMailboxCredentials = UnmaskFragments<InboundMailboxCredentialsFieldsFragment>;
+export type { InboundMailboxInput, InboundMailboxStatus, InboundProvider, InboundReviewPolicy };
 export type InboundShipmentRef = NonNullable<InboundMessageRow["matchedShipment"]>;
 export type InboundAttachment = InboundMessageDetail["attachments"][number];
 export type { InboundClassification, InboundMessageStatus };
@@ -136,9 +148,7 @@ export async function fetchInboundMailboxes(options?: RequestOptions): Promise<I
     signal: options?.signal,
   });
 
-  return data.inboundMailboxes.map((mailbox) =>
-    unmasked<InboundMailbox>(getFragmentData(InboundMailboxFieldsFragmentDoc, mailbox)),
-  );
+  return data.inboundMailboxes.map((row) => mailbox(row));
 }
 
 export async function reviewInboundMessage(
@@ -169,4 +179,66 @@ export async function linkInboundMessage(
   return unmasked<InboundMessageDetail>(
     getFragmentData(InboundMessageDetailFieldsFragmentDoc, data.linkInboundMessage),
   );
+}
+
+function credentials(
+  masked: FragmentType<typeof InboundMailboxCredentialsFieldsFragmentDoc>,
+): InboundMailboxCredentials {
+  return unmasked<InboundMailboxCredentials>(
+    getFragmentData(InboundMailboxCredentialsFieldsFragmentDoc, masked),
+  );
+}
+
+function mailbox(masked: FragmentType<typeof InboundMailboxFieldsFragmentDoc>): InboundMailbox {
+  return unmasked<InboundMailbox>(getFragmentData(InboundMailboxFieldsFragmentDoc, masked));
+}
+
+export async function createInboundMailbox(
+  input: InboundMailboxInput,
+  signingSecret: string | null,
+): Promise<InboundMailboxCredentials> {
+  const data = await requestGraphQL({
+    document: CreateInboundMailboxDocument,
+    operationName: "CreateInboundMailbox",
+    variables: { input, signingSecret },
+  });
+
+  return credentials(data.createInboundMailbox);
+}
+
+export async function updateInboundMailbox(
+  id: string,
+  version: number,
+  input: InboundMailboxInput,
+): Promise<InboundMailbox> {
+  const data = await requestGraphQL({
+    document: UpdateInboundMailboxDocument,
+    operationName: "UpdateInboundMailbox",
+    variables: { id, version, input },
+  });
+
+  return mailbox(data.updateInboundMailbox);
+}
+
+export async function rotateInboundMailboxToken(id: string): Promise<InboundMailboxCredentials> {
+  const data = await requestGraphQL({
+    document: RotateInboundMailboxTokenDocument,
+    operationName: "RotateInboundMailboxToken",
+    variables: { id },
+  });
+
+  return credentials(data.rotateInboundMailboxToken);
+}
+
+export async function setInboundMailboxSigningSecret(
+  id: string,
+  secret: string,
+): Promise<InboundMailbox> {
+  const data = await requestGraphQL({
+    document: SetInboundMailboxSigningSecretDocument,
+    operationName: "SetInboundMailboxSigningSecret",
+    variables: { id, secret },
+  });
+
+  return mailbox(data.setInboundMailboxSigningSecret);
 }

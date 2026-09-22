@@ -87,6 +87,8 @@ virtuals:
   WatchtowerItem:
     - seen
     - kindLabel
+  InboundMailbox:
+    - hasSigningSecret
   InboundMessage:
     - needsReview
     - mailbox

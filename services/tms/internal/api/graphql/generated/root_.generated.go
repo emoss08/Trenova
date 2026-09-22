@@ -109,6 +109,8 @@ type ResolverRoot interface {
 	IFTAReturnProblem() IFTAReturnProblemResolver
 	IFTATaxRate() IFTATaxRateResolver
 	InboundAttachment() InboundAttachmentResolver
+	InboundMailbox() InboundMailboxResolver
+	InboundMailboxCredentials() InboundMailboxCredentialsResolver
 	InboundMessage() InboundMessageResolver
 	Invoice() InvoiceResolver
 	InvoiceAdjustment() InvoiceAdjustmentResolver
@@ -5455,25 +5457,32 @@ type ComplexityRoot struct {
 	}
 
 	InboundMailbox struct {
-		Address        func(childComplexity int) int
-		BusinessUnitID func(childComplexity int) int
-		CreatedAt      func(childComplexity int) int
-		ID             func(childComplexity int) int
-		MinConfidence  func(childComplexity int) int
-		Name           func(childComplexity int) int
-		OrganizationID func(childComplexity int) int
-		Provider       func(childComplexity int) int
-		Purpose        func(childComplexity int) int
-		ReviewPolicy   func(childComplexity int) int
-		Status         func(childComplexity int) int
-		UpdatedAt      func(childComplexity int) int
-		Version        func(childComplexity int) int
+		Address          func(childComplexity int) int
+		BusinessUnitID   func(childComplexity int) int
+		CreatedAt        func(childComplexity int) int
+		HasSigningSecret func(childComplexity int) int
+		ID               func(childComplexity int) int
+		MinConfidence    func(childComplexity int) int
+		Name             func(childComplexity int) int
+		OrganizationID   func(childComplexity int) int
+		Provider         func(childComplexity int) int
+		Purpose          func(childComplexity int) int
+		ReviewPolicy     func(childComplexity int) int
+		Status           func(childComplexity int) int
+		UpdatedAt        func(childComplexity int) int
+		Version          func(childComplexity int) int
 	}
 
 	InboundMailboxCount struct {
 		MailboxID func(childComplexity int) int
 		Total     func(childComplexity int) int
 		Waiting   func(childComplexity int) int
+	}
+
+	InboundMailboxCredentials struct {
+		Mailbox     func(childComplexity int) int
+		Token       func(childComplexity int) int
+		WebhookPath func(childComplexity int) int
 	}
 
 	InboundMessage struct {
@@ -6354,6 +6363,7 @@ type ComplexityRoot struct {
 		CreateFuelSurchargeProgram            func(childComplexity int, input gqlmodel.FuelSurchargeProgramInput) int
 		CreateHomeLayoutPreset                func(childComplexity int, input gqlmodel.SaveHomeLayoutPresetInput) int
 		CreateIFTAMileageEntry                func(childComplexity int, input gqlmodel.IFTAMileageEntryInput) int
+		CreateInboundMailbox                  func(childComplexity int, input gqlmodel.InboundMailboxInput, signingSecret *string) int
 		CreateInvoiceFromOrder                func(childComplexity int, orderID string, offCycleReason *string) int
 		CreateInvoiceFromShipments            func(childComplexity int, shipmentIds []string, offCycleReason *string) int
 		CreateInvoicesFromOrder               func(childComplexity int, orderID string, offCycleReason *string) int
@@ -6556,6 +6566,7 @@ type ComplexityRoot struct {
 		RevokeCarrierIntelOverride            func(childComplexity int, id string, reason string) int
 		RevokeWorkerPortalAccess              func(childComplexity int, workerID string) int
 		RollbackDocumentTemplate              func(childComplexity int, versionID string, notes *string) int
+		RotateInboundMailboxToken             func(childComplexity int, id string) int
 		RunDOTRandomDraw                      func(childComplexity int, input gqlmodel.RunDOTRandomDrawInput) int
 		RunPTOAccrual                         func(childComplexity int, input gqlmodel.RunPTOAccrualInput) int
 		RunReport                             func(childComplexity int, input gqlmodel.RunReportInput) int
@@ -6567,6 +6578,7 @@ type ComplexityRoot struct {
 		SetAgentMemoryStatus                  func(childComplexity int, id string, status agent.MemoryStatus) int
 		SetCarrierMonitoring                  func(childComplexity int, carrierIds []string, enabled bool) int
 		SetDefaultTableConfiguration          func(childComplexity int, id string) int
+		SetInboundMailboxSigningSecret        func(childComplexity int, id string, secret string) int
 		SetMyAvailability                     func(childComplexity int, input gqlmodel.SetMyAvailabilityInput) int
 		SetOrderChargeAllocations             func(childComplexity int, input gqlmodel.SetOrderChargeAllocationsInput) int
 		SetOrgDefaultTableConfiguration       func(childComplexity int, id string, enabled bool) int
@@ -6621,6 +6633,7 @@ type ComplexityRoot struct {
 		UpdateHomeLayout                      func(childComplexity int, input gqlmodel.HomeLayoutInput) int
 		UpdateHomeLayoutPreset                func(childComplexity int, input gqlmodel.UpdateHomeLayoutPresetInput) int
 		UpdateIFTAMileageEntry                func(childComplexity int, id string, version int, input gqlmodel.IFTAMileageEntryInput) int
+		UpdateInboundMailbox                  func(childComplexity int, id string, version int, input gqlmodel.InboundMailboxInput) int
 		UpdateJobPosition                     func(childComplexity int, input gqlmodel.UpdateJobPositionInput) int
 		UpdateLeaveCase                       func(childComplexity int, input gqlmodel.UpdateLeaveCaseInput) int
 		UpdateLeaveControl                    func(childComplexity int, input gqlmodel.UpdateLeaveControlInput) int
@@ -36126,6 +36139,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.InboundMailbox.CreatedAt(childComplexity), true
+	case "InboundMailbox.hasSigningSecret":
+		if e.ComplexityRoot.InboundMailbox.HasSigningSecret == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailbox.HasSigningSecret(childComplexity), true
 	case "InboundMailbox.id":
 		if e.ComplexityRoot.InboundMailbox.ID == nil {
 			break
@@ -36205,6 +36224,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.InboundMailboxCount.Waiting(childComplexity), true
+
+	case "InboundMailboxCredentials.mailbox":
+		if e.ComplexityRoot.InboundMailboxCredentials.Mailbox == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailboxCredentials.Mailbox(childComplexity), true
+	case "InboundMailboxCredentials.token":
+		if e.ComplexityRoot.InboundMailboxCredentials.Token == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailboxCredentials.Token(childComplexity), true
+	case "InboundMailboxCredentials.webhookPath":
+		if e.ComplexityRoot.InboundMailboxCredentials.WebhookPath == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundMailboxCredentials.WebhookPath(childComplexity), true
 
 	case "InboundMessage.attachmentCount":
 		if e.ComplexityRoot.InboundMessage.AttachmentCount == nil {
@@ -41055,6 +41093,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateIFTAMileageEntry(childComplexity, args["input"].(gqlmodel.IFTAMileageEntryInput)), true
+	case "Mutation.createInboundMailbox":
+		if e.ComplexityRoot.Mutation.CreateInboundMailbox == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createInboundMailbox_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateInboundMailbox(childComplexity, args["input"].(gqlmodel.InboundMailboxInput), args["signingSecret"].(*string)), true
 	case "Mutation.createInvoiceFromOrder":
 		if e.ComplexityRoot.Mutation.CreateInvoiceFromOrder == nil {
 			break
@@ -43257,6 +43306,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RollbackDocumentTemplate(childComplexity, args["versionId"].(string), args["notes"].(*string)), true
+	case "Mutation.rotateInboundMailboxToken":
+		if e.ComplexityRoot.Mutation.RotateInboundMailboxToken == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_rotateInboundMailboxToken_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RotateInboundMailboxToken(childComplexity, args["id"].(string)), true
 	case "Mutation.runDotRandomDraw":
 		if e.ComplexityRoot.Mutation.RunDOTRandomDraw == nil {
 			break
@@ -43378,6 +43438,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SetDefaultTableConfiguration(childComplexity, args["id"].(string)), true
+	case "Mutation.setInboundMailboxSigningSecret":
+		if e.ComplexityRoot.Mutation.SetInboundMailboxSigningSecret == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setInboundMailboxSigningSecret_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetInboundMailboxSigningSecret(childComplexity, args["id"].(string), args["secret"].(string)), true
 	case "Mutation.setMyAvailability":
 		if e.ComplexityRoot.Mutation.SetMyAvailability == nil {
 			break
@@ -43972,6 +44043,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateIFTAMileageEntry(childComplexity, args["id"].(string), args["version"].(int), args["input"].(gqlmodel.IFTAMileageEntryInput)), true
+	case "Mutation.updateInboundMailbox":
+		if e.ComplexityRoot.Mutation.UpdateInboundMailbox == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateInboundMailbox_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateInboundMailbox(childComplexity, args["id"].(string), args["version"].(int), args["input"].(gqlmodel.InboundMailboxInput)), true
 	case "Mutation.updateJobPosition":
 		if e.ComplexityRoot.Mutation.UpdateJobPosition == nil {
 			break
@@ -71162,6 +71244,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputIFTATaxRateInput,
 		ec.unmarshalInputIFTATaxRatesInput,
 		ec.unmarshalInputImportSourcedCarrierInput,
+		ec.unmarshalInputInboundMailboxInput,
 		ec.unmarshalInputInboundMessagesInput,
 		ec.unmarshalInputInviteWorkerToPortalInput,
 		ec.unmarshalInputInvoiceAdjustmentApprovalsInput,
@@ -82435,9 +82518,35 @@ type InboundMailbox {
   "The bar a reading must clear before the desk acts without asking."
   minConfidence: Float!
   status: InboundMailboxStatus!
+  "Whether a signing secret is set. Without one the mailbox refuses every delivery. The secret itself is never returned."
+  hasSigningSecret: Boolean!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"""
+A mailbox with the webhook token it was just given.
+
+The token is stored only as a hash, so this is the one response that carries
+it. Whoever creates or rotates a mailbox copies the webhook URL from here.
+"""
+type InboundMailboxCredentials {
+  mailbox: InboundMailbox!
+  token: String!
+  "Where the provider posts, under the API's base URL."
+  webhookPath: String!
+}
+
+input InboundMailboxInput {
+  name: String!
+  address: String!
+  provider: InboundProvider!
+  purpose: String
+  reviewPolicy: InboundReviewPolicy!
+  "The bar a reading must clear to be acted on alone; read only by ReviewBelowConfidence."
+  minConfidence: Float!
+  status: InboundMailboxStatus!
 }
 
 "One file that came with a message, and what became of it."
@@ -82607,6 +82716,14 @@ extend type Mutation {
   reviewInboundMessage(id: ID!, input: ReviewInboundMessageInput!): InboundMessage!
   "Says what a message is about, by hand, when the reading did not work it out."
   linkInboundMessage(id: ID!, input: LinkInboundMessageInput!): InboundMessage!
+  "Creates a mailbox and returns its webhook token, once."
+  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
+  "Changes a mailbox's settings. Changing its provider clears the signing secret."
+  updateInboundMailbox(id: ID!, version: Int!, input: InboundMailboxInput!): InboundMailbox!
+  "Replaces the webhook token. The old URL stops working at once."
+  rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials!
+  "Seals and stores the provider's secret: a Resend whsec_ key, or Postmark's user:password."
+  setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
 }
 `, BuiltIn: false},
 	{Name: "../schema/invoice.graphqls", Input: `enum InvoiceStatus {
@@ -103271,6 +103388,8 @@ func (ec *executionContext) childFields_InboundMailbox(ctx context.Context, fiel
 		return ec.fieldContext_InboundMailbox_minConfidence(ctx, field)
 	case "status":
 		return ec.fieldContext_InboundMailbox_status(ctx, field)
+	case "hasSigningSecret":
+		return ec.fieldContext_InboundMailbox_hasSigningSecret(ctx, field)
 	case "version":
 		return ec.fieldContext_InboundMailbox_version(ctx, field)
 	case "createdAt":
@@ -103291,6 +103410,18 @@ func (ec *executionContext) childFields_InboundMailboxCount(ctx context.Context,
 		return ec.fieldContext_InboundMailboxCount_waiting(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type InboundMailboxCount", field.Name)
+}
+
+func (ec *executionContext) childFields_InboundMailboxCredentials(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "mailbox":
+		return ec.fieldContext_InboundMailboxCredentials_mailbox(ctx, field)
+	case "token":
+		return ec.fieldContext_InboundMailboxCredentials_token(ctx, field)
+	case "webhookPath":
+		return ec.fieldContext_InboundMailboxCredentials_webhookPath(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InboundMailboxCredentials", field.Name)
 }
 
 func (ec *executionContext) childFields_InboundMessage(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

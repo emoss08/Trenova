@@ -6,9 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // optionalPulid renders a nullable id. A nil id is absent rather than an empty
@@ -70,4 +72,16 @@ func requestLoaders(ctx context.Context) (*loaders.Loaders, error) {
 	}
 
 	return l, nil
+}
+
+func mailboxSettings(input gqlmodel.InboundMailboxInput) inboundmessageservice.MailboxSettings {
+	return inboundmessageservice.MailboxSettings{
+		Name:          input.Name,
+		Address:       input.Address,
+		Provider:      input.Provider,
+		Purpose:       stringutils.FromPtr(input.Purpose),
+		ReviewPolicy:  input.ReviewPolicy,
+		MinConfidence: input.MinConfidence,
+		Status:        input.Status,
+	}
 }

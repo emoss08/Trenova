@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -23,6 +24,14 @@ import (
 
 func (r *inboundAttachmentResolver) DocumentID(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error) {
 	return inboundOptionalID(obj.DocumentID), nil
+}
+
+func (r *inboundMailboxResolver) HasSigningSecret(ctx context.Context, obj *inboundmessage.Mailbox) (bool, error) {
+	return obj.SigningSecret != "", nil
+}
+
+func (r *inboundMailboxCredentialsResolver) WebhookPath(ctx context.Context, obj *inboundmessageservice.MailboxCredentials) (string, error) {
+	return inboundhandler.WebhookPath(obj.Token), nil
 }
 
 // Mailbox comes off the row the list already joined. It is not loaded per
@@ -208,6 +217,81 @@ func (r *mutationResolver) LinkInboundMessage(ctx context.Context, id string, in
 	return r.inboundMessageService.Link(ctx, req)
 }
 
+func (r *mutationResolver) CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string) (*inboundmessageservice.MailboxCredentials, error) {
+	authCtx, err := r.requirePermission(
+		ctx, permission.ResourceInboundMailbox, permission.OpCreate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.inboundMessageService.CreateMailbox(ctx, inboundmessageservice.CreateMailboxRequest{
+		Actor:         actorutil.FromAuthContext(authCtx),
+		Settings:      mailboxSettings(input),
+		SigningSecret: stringutils.FromPtr(signingSecret),
+	})
+}
+
+func (r *mutationResolver) UpdateInboundMailbox(ctx context.Context, id string, version int, input gqlmodel.InboundMailboxInput) (*inboundmessage.Mailbox, error) {
+	authCtx, err := r.requirePermission(
+		ctx, permission.ResourceInboundMailbox, permission.OpUpdate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	mailboxID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.inboundMessageService.UpdateMailbox(ctx, inboundmessageservice.UpdateMailboxRequest{
+		Actor:    actorutil.FromAuthContext(authCtx),
+		ID:       mailboxID,
+		Version:  int64(version),
+		Settings: mailboxSettings(input),
+	})
+}
+
+func (r *mutationResolver) RotateInboundMailboxToken(ctx context.Context, id string) (*inboundmessageservice.MailboxCredentials, error) {
+	authCtx, err := r.requirePermission(
+		ctx, permission.ResourceInboundMailbox, permission.OpUpdate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	mailboxID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.inboundMessageService.RotateMailboxToken(ctx, inboundmessageservice.MailboxActionRequest{
+		Actor: actorutil.FromAuthContext(authCtx),
+		ID:    mailboxID,
+	})
+}
+
+func (r *mutationResolver) SetInboundMailboxSigningSecret(ctx context.Context, id string, secret string) (*inboundmessage.Mailbox, error) {
+	authCtx, err := r.requirePermission(
+		ctx, permission.ResourceInboundMailbox, permission.OpUpdate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	mailboxID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.inboundMessageService.SetMailboxSigningSecret(ctx, inboundmessageservice.SetMailboxSecretRequest{
+		Actor:  actorutil.FromAuthContext(authCtx),
+		ID:     mailboxID,
+		Secret: secret,
+	})
+}
+
 func (r *queryResolver) InboundMessages(ctx context.Context, input gqlmodel.InboundMessagesInput) (*gqlmodel.InboundMessageConnection, error) {
 	authCtx, err := r.requirePermission(
 		ctx, permission.ResourceInboundMessage, permission.OpRead,
@@ -323,11 +407,21 @@ func (r *Resolver) InboundAttachment() generated.InboundAttachmentResolver {
 	return &inboundAttachmentResolver{r}
 }
 
+func (r *Resolver) InboundMailbox() generated.InboundMailboxResolver {
+	return &inboundMailboxResolver{r}
+}
+
+func (r *Resolver) InboundMailboxCredentials() generated.InboundMailboxCredentialsResolver {
+	return &inboundMailboxCredentialsResolver{r}
+}
+
 func (r *Resolver) InboundMessage() generated.InboundMessageResolver {
 	return &inboundMessageResolver{r}
 }
 
 type (
-	inboundAttachmentResolver struct{ *Resolver }
-	inboundMessageResolver    struct{ *Resolver }
+	inboundAttachmentResolver         struct{ *Resolver }
+	inboundMailboxResolver            struct{ *Resolver }
+	inboundMailboxCredentialsResolver struct{ *Resolver }
+	inboundMessageResolver            struct{ *Resolver }
 )

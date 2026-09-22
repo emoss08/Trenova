@@ -9265,6 +9265,10 @@ type InboundMailbox {
   address: String!
   businessUnitId: ID!
   createdAt: Timestamp!
+  """
+  Whether a signing secret is set. Without one the mailbox refuses every delivery. The secret itself is never returned.
+  """
+  hasSigningSecret: Boolean!
   id: ID!
   """The bar a reading must clear before the desk acts without asking."""
   minConfidence: Float!
@@ -9283,6 +9287,32 @@ type InboundMailboxCount {
   mailboxId: ID!
   total: Int!
   waiting: Int!
+}
+
+"""
+A mailbox with the webhook token it was just given.
+
+The token is stored only as a hash, so this is the one response that carries
+it. Whoever creates or rotates a mailbox copies the webhook URL from here.
+"""
+type InboundMailboxCredentials {
+  mailbox: InboundMailbox!
+  token: String!
+  """Where the provider posts, under the API's base URL."""
+  webhookPath: String!
+}
+
+input InboundMailboxInput {
+  address: String!
+  """
+  The bar a reading must clear to be acted on alone; read only by ReviewBelowConfidence.
+  """
+  minConfidence: Float!
+  name: String!
+  provider: InboundProvider!
+  purpose: String
+  reviewPolicy: InboundReviewPolicy!
+  status: InboundMailboxStatus!
 }
 
 """Whether an address is still listening."""
@@ -10894,6 +10924,8 @@ type Mutation {
   createFuelSurchargeProgram(input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
   createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
   createIftaMileageEntry(input: IFTAMileageEntryInput!): IFTAJurisdictionMileageEntry!
+  """Creates a mailbox and returns its webhook token, once."""
+  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
   createInvoiceFromOrder(offCycleReason: String, orderId: ID!): Invoice! @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromOrder.")
   """
   Bills the given shipments. offCycleReason is required only when the customer
@@ -11220,6 +11252,8 @@ type Mutation {
   live at two different times under two different approvals.
   """
   rollbackDocumentTemplate(notes: String, versionId: ID!): DocumentTemplateVersion!
+  """Replaces the webhook token. The old URL stops working at once."""
+  rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials!
   runDotRandomDraw(input: RunDOTRandomDrawInput!): DOTRandomDraw!
   runPtoAccrual(input: RunPTOAccrualInput!): PTOAccrualRunPayload!
   runReport(input: RunReportInput!): ReportRun!
@@ -11238,6 +11272,10 @@ type Mutation {
   setAgentMemoryStatus(id: ID!, status: AgentMemoryStatus!): AgentMemory!
   setCarrierMonitoring(carrierIds: [ID!]!, enabled: Boolean!): Int!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
+  """
+  Seals and stores the provider's secret: a Resend whsec_ key, or Postmark's user:password.
+  """
+  setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
   """
   The signed-in driver stating what they would rather work on one weekday.
   """
@@ -11311,6 +11349,10 @@ type Mutation {
   updateHomeLayout(input: HomeLayoutInput!): HomeLayout!
   updateHomeLayoutPreset(input: UpdateHomeLayoutPresetInput!): HomeLayoutPreset!
   updateIftaMileageEntry(id: ID!, input: IFTAMileageEntryInput!, version: Int!): IFTAJurisdictionMileageEntry!
+  """
+  Changes a mailbox's settings. Changing its provider clears the signing secret.
+  """
+  updateInboundMailbox(id: ID!, input: InboundMailboxInput!, version: Int!): InboundMailbox!
   updateJobPosition(input: UpdateJobPositionInput!): JobPosition!
   updateLeaveCase(input: UpdateLeaveCaseInput!): WorkerLeaveCase!
   updateLeaveControl(input: UpdateLeaveControlInput!): LeaveControl!

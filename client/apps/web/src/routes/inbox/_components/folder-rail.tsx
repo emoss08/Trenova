@@ -1,8 +1,10 @@
+import { usePermission } from "@/hooks/use-permission";
 import type { InboundMailbox, InboundMessageCounts } from "@/lib/graphql/inbox";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   ArchiveIcon,
   CheckCheckIcon,
@@ -11,6 +13,7 @@ import {
   MailIcon,
   type LucideIcon,
 } from "lucide-react";
+import { Link } from "react-router";
 import {
   CLASSIFICATION_ICON,
   INBOUND_CLASSIFICATIONS,
@@ -75,6 +78,7 @@ export function FolderRail({
   onSelect: (folder: InboxFolder) => void;
 }) {
   const t = useT();
+  const { allowed: canManageMailboxes } = usePermission(Resource.InboundMailbox, Operation.Read);
   const mailboxCounts = new Map(counts?.byMailbox.map((row) => [row.mailboxId, row]) ?? []);
   const kindCounts = new Map(
     counts?.byClassification.map((row) => [row.classification, row]) ?? [],
@@ -121,8 +125,20 @@ export function FolderRail({
             })}
           </RailSection>
 
-          {mailboxes.length > 0 && (
-            <RailSection title={t("Mailboxes")}>
+          {(mailboxes.length > 0 || canManageMailboxes) && (
+            <RailSection
+              title={t("Mailboxes")}
+              action={
+                canManageMailboxes ? (
+                  <Link
+                    to="/admin/inbound-mailboxes"
+                    className="ui-focus-ring text-foreground-subtle hover:text-foreground text-xs"
+                  >
+                    {t("Manage")}
+                  </Link>
+                ) : undefined
+              }
+            >
               {mailboxes.map((mailbox) => {
                 const target: InboxFolder = { kind: "mailbox", mailboxId: mailbox.id };
                 const row = mailboxCounts.get(mailbox.id);
@@ -151,11 +167,22 @@ export function FolderRail({
   );
 }
 
-function RailSection({ title, children }: { title?: string; children: React.ReactNode }) {
+function RailSection({
+  title,
+  action,
+  children,
+}: {
+  title?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-0.5">
       {title !== undefined && (
-        <h3 className="text-foreground-subtle px-2 pb-1 text-xs font-medium">{title}</h3>
+        <div className="flex items-center justify-between px-2 pb-1">
+          <h3 className="text-foreground-subtle text-xs font-medium">{title}</h3>
+          {action}
+        </div>
       )}
       {children}
     </div>

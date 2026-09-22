@@ -11,6 +11,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -48,7 +49,21 @@ func New(p Params) *Handler {
 // /webhooks/email/, where the outbound delivery hooks already own the segment
 // after the provider name with a wildcard.
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
-	rg.POST("/webhooks/inbound-mail/:mailboxToken/", h.receive)
+	rg.POST(webhookRoute, h.receive)
+}
+
+const (
+	// apiPrefix is the versioned group the public routes are mounted under.
+	apiPrefix    = "/api/v1"
+	webhookRoot  = "/webhooks/inbound-mail/"
+	webhookRoute = webhookRoot + ":mailboxToken/"
+)
+
+// WebhookPath is where a provider posts a mailbox's mail, built from the same
+// route the handler registers so the URL shown to a person cannot drift from
+// the one that answers.
+func WebhookPath(token string) string {
+	return apiPrefix + webhookRoot + url.PathEscape(token) + "/"
 }
 
 func (h *Handler) receive(c *gin.Context) {

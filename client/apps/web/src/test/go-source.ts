@@ -39,6 +39,11 @@ type GoEnumOptions = {
   typeName: string;
   /** The function listing every member; defaults to All{typeName}s. */
   listFn?: string;
+  /**
+   * What the constants are named with, when it is not the type's name:
+   * `ReviewAlways` for `ReviewPolicy`, `MailboxActive` for `MailboxStatus`.
+   */
+  constPrefix?: string;
 };
 
 /**
@@ -48,18 +53,21 @@ type GoEnumOptions = {
  * constant that nothing lists is one the server never serves — and because
  * that list is what the API hands the client.
  */
-export function goEnumValues({ file, typeName, listFn }: GoEnumOptions): string[] {
+export function goEnumValues({ file, typeName, listFn, constPrefix }: GoEnumOptions): string[] {
+  const prefix = constPrefix ?? typeName;
   const source = readFileSync(join(repoRoot(), file), "utf8");
   const listName = listFn ?? `All${typeName}s`;
+  // The list is read up to its closing brace, so a one-line list
+  // (`return []Provider{ProviderPostmark, ProviderResend}`) is read as well as
+  // one written a member per line; a list literal holds no braces of its own.
   const listPattern =
-    `func ${listName}\\(\\) \\[\\]${typeName} \\{\\s*` +
-    `return \\[\\]${typeName}\\{([\\s\\S]*?)\\n\\t\\}`;
+    `func ${listName}\\(\\) \\[\\]${typeName} \\{\\s*` + `return \\[\\]${typeName}\\{([^}]*)\\}`;
   const block = new RegExp(listPattern).exec(source);
   if (block === null) {
     throw new Error(`could not find ${listName}() in ${file}`);
   }
 
-  const names = [...block[1].matchAll(new RegExp(`${typeName}([A-Za-z]+),`, "g"))].map(
+  const names = [...block[1].matchAll(new RegExp(`\\b${prefix}([A-Za-z]+)\\b`, "g"))].map(
     (match) => match[1],
   );
   // Both forms Go writes a string enum in: the conversion
@@ -67,8 +75,7 @@ export function goEnumValues({ file, typeName, listFn }: GoEnumOptions): string[
   // with the repeated type optional because a const block only needs it on
   // the first line.
   const constantPattern =
-    `${typeName}([A-Za-z]+)\\s*(?:${typeName}\\s*)?=\\s*` +
-    `(?:${typeName}\\()?"([^"]+)"\\)?`;
+    `\\b${prefix}([A-Za-z]+)\\s*(?:${typeName}\\s*)?=\\s*` + `(?:${typeName}\\()?"([^"]+)"\\)?`;
   const constants = new Map(
     [...source.matchAll(new RegExp(constantPattern, "g"))].map((match) => [match[1], match[2]]),
   );
@@ -76,7 +83,7 @@ export function goEnumValues({ file, typeName, listFn }: GoEnumOptions): string[
   return names.map((name) => {
     const value = constants.get(name);
     if (value === undefined) {
-      throw new Error(`${listName}() names ${typeName}${name}, which has no constant`);
+      throw new Error(`${listName}() names ${prefix}${name}, which has no constant`);
     }
 
     return value;

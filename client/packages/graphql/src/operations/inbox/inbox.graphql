@@ -29,6 +29,18 @@ fragment InboundMailboxFields on InboundMailbox {
   reviewPolicy
   minConfidence
   status
+  hasSigningSecret
+  version
+  createdAt
+  updatedAt
+}
+
+fragment InboundMailboxCredentialsFields on InboundMailboxCredentials {
+  token
+  webhookPath
+  mailbox {
+    ...InboundMailboxFields
+  }
 }
 
 fragment InboundMessageListFields on InboundMessage {
@@ -137,5 +149,29 @@ mutation ReviewInboundMessage($id: ID!, $input: ReviewInboundMessageInput!) {
 mutation LinkInboundMessage($id: ID!, $input: LinkInboundMessageInput!) {
   linkInboundMessage(id: $id, input: $input) {
     ...InboundMessageDetailFields
+  }
+}
+
+mutation CreateInboundMailbox($input: InboundMailboxInput!, $signingSecret: String) {
+  createInboundMailbox(input: $input, signingSecret: $signingSecret) {
+    ...InboundMailboxCredentialsFields
+  }
+}
+
+mutation UpdateInboundMailbox($id: ID!, $version: Int!, $input: InboundMailboxInput!) {
+  updateInboundMailbox(id: $id, version: $version, input: $input) {
+    ...InboundMailboxFields
+  }
+}
+
+mutation RotateInboundMailboxToken($id: ID!) {
+  rotateInboundMailboxToken(id: $id) {
+    ...InboundMailboxCredentialsFields
+  }
+}
+
+mutation SetInboundMailboxSigningSecret($id: ID!, $secret: String!) {
+  setInboundMailboxSigningSecret(id: $id, secret: $secret) {
+    ...InboundMailboxFields
   }
 }

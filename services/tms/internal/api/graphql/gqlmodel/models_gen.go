@@ -3498,6 +3498,17 @@ type ImportSourcedCarrierInput struct {
 	EnrollMonitoring *bool   `json:"enrollMonitoring,omitempty"`
 }
 
+type InboundMailboxInput struct {
+	Name         string                      `json:"name"`
+	Address      string                      `json:"address"`
+	Provider     inboundmessage.Provider     `json:"provider"`
+	Purpose      *string                     `json:"purpose,omitempty"`
+	ReviewPolicy inboundmessage.ReviewPolicy `json:"reviewPolicy"`
+	// The bar a reading must clear to be acted on alone; read only by ReviewBelowConfidence.
+	MinConfidence float64                      `json:"minConfidence"`
+	Status        inboundmessage.MailboxStatus `json:"status"`
+}
+
 type InboundMessageConnection struct {
 	Edges      []*InboundMessageEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`

@@ -1728,6 +1728,13 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
+    href: "/admin/inbound-mailboxes",
+    title: "Inbound mailboxes",
+    group: "Data & Integrations",
+    resource: Resource.InboundMailbox,
+    requiredOperation: Operation.Read,
+  },
+  {
     href: "/admin/api-keys",
     title: "API keys",
     group: "Data & Integrations",

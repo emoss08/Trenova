@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -168,7 +169,15 @@ func resendBody() []byte {
 // while the envelope encryption is somebody else's tested concern.
 type plainSecrets struct{}
 
-func (plainSecrets) DecryptString(value string) (string, error) { return value, nil }
+// sealedPrefix marks a value the stub has "sealed", so a test can tell a
+// secret that went through the keeper from one stored in the clear.
+const sealedPrefix = "sealed:"
+
+func (plainSecrets) EncryptString(value string) (string, error) { return sealedPrefix + value, nil }
+
+func (plainSecrets) DecryptString(value string) (string, error) {
+	return strings.TrimPrefix(value, sealedPrefix), nil
+}
 
 func newService(
 	mailboxes *stubMailboxRepo,
