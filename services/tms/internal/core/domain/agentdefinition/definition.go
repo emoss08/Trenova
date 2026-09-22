@@ -83,8 +83,13 @@ type Definition struct {
 	// all: each is previewed and recorded as what it would have changed.
 	MonthlyBudgetUSD *decimal.Decimal `json:"monthlyBudgetUsd" bun:"monthly_budget_usd,type:NUMERIC(14,6),nullzero"`
 	DailyRunLimit    int              `json:"dailyRunLimit"    bun:"daily_run_limit,type:INTEGER,notnull"`
-	ToolDailyLimits  map[string]int   `json:"toolDailyLimits"  bun:"tool_daily_limits,type:JSONB,nullzero"`
-	SimulationMode   bool             `json:"simulationMode"   bun:"simulation_mode,type:BOOLEAN,notnull"`
+	// ToolDailyLimits is notnull because its column is: it was added as
+	// NOT NULL DEFAULT '{}' while its tag said nullzero, and nullzero writes
+	// SQL NULL for a nil map. Every insert of an agent with no per-tool cap —
+	// which is every system agent — was therefore rejected by the constraint.
+	// Its older sibling tool_tiers is nullable, which is why that one worked.
+	ToolDailyLimits map[string]int `json:"toolDailyLimits"  bun:"tool_daily_limits,type:JSONB,notnull"`
+	SimulationMode  bool           `json:"simulationMode"   bun:"simulation_mode,type:BOOLEAN,notnull"`
 
 	Icon   string `json:"icon"   bun:"icon,type:VARCHAR(40),nullzero"`
 	Accent string `json:"accent" bun:"accent,type:VARCHAR(20),nullzero"`
@@ -165,6 +170,11 @@ func (d *Definition) ApplyDefaults() {
 	}
 	if strings.TrimSpace(d.CronTimezone) == "" {
 		d.CronTimezone = DefaultCronTimezone
+	}
+	// No per-tool cap is an empty map, not an absent one, because the column
+	// cannot hold an absent one.
+	if d.ToolDailyLimits == nil {
+		d.ToolDailyLimits = map[string]int{}
 	}
 }
 
