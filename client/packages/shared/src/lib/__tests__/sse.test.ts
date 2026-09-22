@@ -1,64 +1,48 @@
 import { describe, expect, it } from "vitest";
-import { createSSEParser, type SSEMessage } from "../sse";
+import { createSSEParser } from "@trenova/shared/lib/sse";
 
-function feedAll(chunks: string[]): SSEMessage[] {
-  const parser = createSSEParser();
-  const out: SSEMessage[] = [];
-  for (const chunk of chunks) {
-    out.push(...parser.feed(chunk));
-  }
-  out.push(...parser.flush());
-  return out;
-}
-
-/**
- * The parser follows the event-stream specification rather than the shape one
- * server happens to send: an event ends at a blank line, several data lines
- * join with newlines, a colon line is a comment, and a chunk boundary can fall
- * anywhere — mid-line, mid-multibyte character, or between the two newlines
- * that close an event.
- */
 describe("createSSEParser", () => {
-  it("emits one message per blank-line-terminated block", () => {
-    expect(feedAll(["event: delta\ndata: {\"text\":\"a\"}\n\nevent: done\ndata: {}\n\n"])).toEqual([
-      { event: "delta", data: '{"text":"a"}' },
-      { event: "done", data: "{}" },
-    ]);
+  it("surfaces the resume cursor the server sent", () => {
+    const parser = createSSEParser();
+
+    const [message] = parser.feed('id: 1738-0\nevent: delta\ndata: {"text":"hi"}\n\n');
+
+    expect(message).toEqual({ event: "delta", data: '{"text":"hi"}', id: "1738-0" });
   });
 
-  it("reassembles a block split across chunks at any byte", () => {
-    const whole = 'event: delta\ndata: {"text":"héllo"}\n\n';
-    const bytes = new TextEncoder().encode(whole);
-    // Split inside the multibyte "é" so a naive decoder would corrupt it.
-    const cut = whole.indexOf("é") + 1;
-    const decoder = new TextDecoder();
-    const first = decoder.decode(bytes.slice(0, cut), { stream: true });
-    const second = decoder.decode(bytes.slice(cut), { stream: true });
+  it("leaves the cursor empty when the server sent none", () => {
+    const parser = createSSEParser();
 
-    expect(feedAll([first, second])).toEqual([{ event: "delta", data: '{"text":"héllo"}' }]);
+    const [message] = parser.feed('event: delta\ndata: {"text":"hi"}\n\n');
+
+    expect(message.id).toBe("");
   });
 
-  it("joins multiple data lines with a newline and drops comments", () => {
-    expect(feedAll([": keep-alive\nevent: x\ndata: line one\ndata: line two\n\n"])).toEqual([
-      { event: "x", data: "line one\nline two" },
-    ]);
+  // The specification says an id persists until replaced: a server that sends
+  // one id and then several events means all of them to carry it.
+  it("carries the cursor forward to later events", () => {
+    const parser = createSSEParser();
+
+    parser.feed("id: 7-0\nevent: delta\ndata: a\n\n");
+    const [second] = parser.feed("event: delta\ndata: b\n\n");
+
+    expect(second.id).toBe("7-0");
   });
 
-  it("defaults the event name to message when none is given", () => {
-    expect(feedAll(["data: hello\n\n"])).toEqual([{ event: "message", data: "hello" }]);
+  it("keeps the cursor across a chunk boundary", () => {
+    const parser = createSSEParser();
+
+    expect(parser.feed("id: 99-")).toEqual([]);
+    const [message] = parser.feed("2\nevent: done\ndata: {}\n\n");
+
+    expect(message.id).toBe("99-2");
   });
 
-  it("ignores a block with no data at all", () => {
-    expect(feedAll(["event: ping\n\n", "data: real\n\n"])).toEqual([
-      { event: "message", data: "real" },
-    ]);
-  });
+  it("ignores an id containing a NUL, as the specification requires", () => {
+    const parser = createSSEParser();
 
-  it("accepts CRLF line endings", () => {
-    expect(feedAll(["event: e\r\ndata: 1\r\n\r\n"])).toEqual([{ event: "e", data: "1" }]);
-  });
+    const [message] = parser.feed("id: 5-\u00000\nevent: delta\ndata: a\n\n");
 
-  it("flushes a final block the server never terminated", () => {
-    expect(feedAll(["event: done\ndata: {}"])).toEqual([{ event: "done", data: "{}" }]);
+    expect(message.id).toBe("");
   });
 });

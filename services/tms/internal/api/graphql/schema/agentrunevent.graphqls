@@ -1,0 +1,67 @@
+"""
+One thing an agent did, in the order it did it.
+
+The runtime has always said this aloud; these are the rows that keep it. A
+background run's durable record used to be its final reply cut to two thousand
+characters, which answered what the agent concluded but never what it did.
+"""
+type AgentRunEvent {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+
+  """Whether this belongs to a background run or a conversation turn."""
+  ownerKind: AgentRunEventOwnerKind!
+  ownerId: ID!
+
+  """
+  The event's place in its owner's account of itself. Ordering by time will not
+  do: several events share a second easily, and a trajectory read back in the
+  wrong order reports the agent doing things in an order it never did.
+  """
+  sequence: Int!
+
+  """The runtime's own event name, unchanged."""
+  kind: String!
+
+  """
+  Joins a tool event to the ledger row that claimed it. Empty for everything
+  that is not a tool call.
+  """
+  stepKey: String!
+
+  """Pairs a tool's start with its finish without opening the payload."""
+  callId: String!
+
+  payload: JSON!
+
+  """
+  Whether the payload was too large to keep. A reader that cannot tell a short
+  payload from a shortened one will eventually mistake one for the other.
+  """
+  truncated: Boolean!
+
+  occurredAt: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+enum AgentRunEventOwnerKind {
+  AgentRun
+  AssistantTurn
+}
+
+type AgentRunEventEdge {
+  node: AgentRunEvent!
+  cursor: String!
+}
+
+type AgentRunEventConnection {
+  edges: [AgentRunEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  agentRunEvents(input: DataTableConnectionInput!): AgentRunEventConnection!
+}

@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,25 +27,47 @@ type Params struct {
 	fx.In
 
 	Service              serviceports.AssistantService
+	Turns                *assistantturnservice.Service
+	Workflows            serviceports.WorkflowStarter
+	Config               *config.Config
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
 }
 
 type Handler struct {
-	service serviceports.AssistantService
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
-	logger  *zap.Logger
+	service   serviceports.AssistantService
+	turns     *assistantturnservice.Service
+	workflows serviceports.WorkflowStarter
+	ai        *config.AIConfig
+	eh        *helpers.ErrorHandler
+	pm        *middleware.PermissionMiddleware
+	logger    *zap.Logger
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
-		logger:  p.Logger.Named("assistanthandler"),
+		service:   p.Service,
+		turns:     p.Turns,
+		workflows: p.Workflows,
+		ai:        aiConfigOf(p.Config),
+		eh:        p.ErrorHandler,
+		pm:        p.PermissionMiddleware,
+		logger:    p.Logger.Named("assistanthandler"),
 	}
+}
+
+// aiConfigOf tolerates a handler built without configuration.
+//
+// Every getter on AIConfig is nil-safe on its receiver, which is what lets a
+// test construct this handler to assert its routes without standing up a whole
+// configuration. Reaching through a nil Config here would take that away.
+func aiConfigOf(cfg *config.Config) *config.AIConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	return cfg.GetAIConfig()
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
@@ -54,6 +78,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// response is a projection, so this does not widen access to the provider
 	// records themselves.
 	api.GET("/providers/", h.pm.RequirePermission(resource, permission.OpRead), h.listProviders)
+	// Which way to ask a question. The two paths roll forward independently,
+	// so the client asks rather than assumes.
+	api.GET(
+		"/capabilities/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.capabilities,
+	)
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
 	api.POST("/threads/", h.pm.RequirePermission(resource, permission.OpCreate), h.startThread)
 	// A quick question makes a thread of its own, so it needs what starting
@@ -99,6 +130,35 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/threads/:threadID/messages/stream/",
 		h.pm.RequirePermission(resource, permission.OpCreate),
 		h.sendMessageStream,
+	)
+	// A reply is watched through the turn producing it rather than through the
+	// request that asked for one. That is what lets a reader who closed the tab
+	// come back to a reply still being written: the events are somewhere other
+	// than in the connection that was lost.
+	api.GET(
+		"/threads/:threadID/turns/active/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.activeTurn,
+	)
+	api.GET(
+		"/turns/:turnID/stream/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.streamTurn,
+	)
+	// Asking a question durably: the worker answers it, this returns the turn
+	// to watch. Creating a turn is creating a message, so it is gated the same
+	// way as sending one.
+	api.POST(
+		"/threads/:threadID/turns/",
+		h.pm.RequirePermission(resource, permission.OpCreate),
+		h.startTurn,
+	)
+	// Stopping a reply is arranging one's own conversation, like naming or
+	// deleting it, and every turn here is read under the caller's own user id.
+	api.POST(
+		"/turns/:turnID/stop/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.stopTurn,
 	)
 	// Reading a conversation's proposals needs no more than reading the
 	// conversation: they are part of what was said. Acting on one goes through the
@@ -575,6 +635,28 @@ func (h *Handler) sendMessageStream(c *gin.Context) {
 		}
 	}
 
+	// The turn is recorded before it runs, and everything it says is published
+	// under that id as well as written here. The connection stays the fast
+	// path; the stream is what a reader who lost it can come back to.
+	turn, err := h.turns.Start(c.Request.Context(), assistantturnservice.StartRequest{
+		ThreadID:   threadID,
+		UserID:     authCtx.UserID,
+		TenantInfo: tenantFromAuthContext(authCtx),
+	})
+	if err != nil {
+		emit(serviceports.StreamEvent{
+			Event: serviceports.AssistantEventError,
+			Data:  gin.H{"message": h.streamErrorMessage(err)},
+		})
+		return
+	}
+	emit(serviceports.StreamEvent{
+		Event: serviceports.AssistantEventTurn,
+		Data:  serviceports.AssistantTurnEvent{TurnID: turn.ID, ThreadID: threadID},
+	})
+
+	observed, closeStream := h.turns.Observe(c.Request.Context(), turn, emit)
+
 	actor := requestActorFromAuthContext(authCtx)
 	providerID, providerChosen := body.provider()
 	result, err := h.service.SendMessageStream(c.Request.Context(), &serviceports.SendMessageRequest{
@@ -586,16 +668,25 @@ func (h *Handler) sendMessageStream(c *gin.Context) {
 		ProviderChosen:        providerChosen,
 		AttachmentDocumentIDs: body.AttachmentDocumentIDs,
 		Mentions:              body.Mentions,
-	}, &actor, emit)
+	}, &actor, observed)
 	if err != nil {
-		emit(serviceports.StreamEvent{
-			Event: "error",
+		ending := serviceports.StreamEvent{
+			Event: serviceports.AssistantEventError,
 			Data:  gin.H{"message": h.streamErrorMessage(err)},
-		})
+		}
+		emit(ending)
+		closeStream(ending)
+		h.turns.Complete(c.Request.Context(), turn, assistantturnservice.StatusFor(false, err), err)
+
 		return
 	}
 
-	emit(serviceports.StreamEvent{Event: serviceports.AssistantEventDone, Data: result})
+	ending := serviceports.StreamEvent{Event: serviceports.AssistantEventDone, Data: result}
+	emit(ending)
+	closeStream(ending)
+	h.turns.Complete(
+		c.Request.Context(), turn, assistantturnservice.StatusFor(result.Refused, nil), nil,
+	)
 }
 
 // ask streams a quick question's answer. The thread it runs on is announced

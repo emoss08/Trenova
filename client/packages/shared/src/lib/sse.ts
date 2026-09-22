@@ -1,10 +1,16 @@
 /**
  * One server-sent event. `event` defaults to "message" when the server names
  * none, as the specification says it should.
+ *
+ * `id` is the server's resume cursor, empty when it sent none. A reader that
+ * loses its connection sends the last id it *applied* back as Last-Event-ID —
+ * not the last it received, which can be a frame that never made it out of the
+ * socket.
  */
 export type SSEMessage = {
   event: string;
   data: string;
+  id: string;
 };
 
 export type SSEParser = {
@@ -26,6 +32,9 @@ export function createSSEParser(): SSEParser {
   let remainder = "";
   let eventName = "";
   let dataLines: string[] = [];
+  // The id persists across events, as the specification says: a server that
+  // sends one id and then several events means all of them to carry it.
+  let lastId = "";
 
   const complete = (): SSEMessage[] => {
     if (dataLines.length === 0) {
@@ -35,6 +44,7 @@ export function createSSEParser(): SSEParser {
     const message: SSEMessage = {
       event: eventName === "" ? "message" : eventName,
       data: dataLines.join("\n"),
+      id: lastId,
     };
     eventName = "";
     dataLines = [];
@@ -59,6 +69,10 @@ export function createSSEParser(): SSEParser {
       eventName = value;
     } else if (field === "data") {
       dataLines.push(value);
+    } else if (field === "id" && !value.includes("\u0000")) {
+      // A NUL in an id is the one case the specification says to ignore
+      // rather than store.
+      lastId = value;
     }
     return [];
   };

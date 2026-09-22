@@ -8,11 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/core/services/agentruneventservice"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
+	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/formula"
@@ -21,9 +23,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/rateengine"
+	"github.com/emoss08/trenova/internal/core/services/runstepledger"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs"
@@ -69,6 +73,7 @@ import (
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
 	telematicsinfra "github.com/emoss08/trenova/internal/infrastructure/telematics"
+	"github.com/emoss08/trenova/internal/infrastructure/turnstream"
 	"go.uber.org/fx"
 )
 
@@ -125,14 +130,19 @@ func Options() fx.Option {
 		telematicsjobs.Module,
 		shipmentjobs.Module,
 		agentjobs.Module,
+		assistantjobs.Module,
 		agenttoolservice.Module,
 		agentquerytoolservice.Module,
 		agenttoolcatalog.Module,
 		agentguard.Module,
 		agentruntime.Module,
+		runstepledger.Module,
+		agentruneventservice.Module,
+		turnstream.Module,
 		watchtowersources.Module,
 		proposalrecorder.Module,
 		fx.Provide(assistantservice.New),
+		assistantturnservice.Module,
 		completionrouter.Module,
 		recurringshipmentjobs.Module,
 		settlementjobs.Module,

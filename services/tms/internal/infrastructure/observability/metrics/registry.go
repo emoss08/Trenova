@@ -23,6 +23,7 @@ type Registry struct {
 	Error      *Error
 	Database   *Database
 	Temporal   *Temporal
+	Assistant  *Assistant
 	Audit      *Audit
 	Document   *Document
 	EDI        *EDI
@@ -54,6 +55,7 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 			Error:      NewError(nil, logger, false),
 			Database:   NewDatabase(nil, logger, false),
 			Temporal:   NewTemporal(nil, logger, false),
+			Assistant:  NewAssistant(nil, logger, false),
 			Audit:      NewAudit(nil, logger, false),
 			Document:   NewDocument(nil, logger, false),
 			EDI:        NewEDI(nil, logger, false),
@@ -77,6 +79,7 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 		Error:      NewError(registry, logger, true),
 		Database:   NewDatabase(registry, logger, true),
 		Temporal:   NewTemporal(registry, logger, true),
+		Assistant:  NewAssistant(registry, logger, true),
 		Audit:      NewAudit(registry, logger, true),
 		Document:   NewDocument(registry, logger, true),
 		EDI:        NewEDI(registry, logger, true),

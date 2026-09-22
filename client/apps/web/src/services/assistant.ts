@@ -49,6 +49,22 @@ export function downloadAssistantTranscript(threadId: AssistantThread["id"]): vo
   downloadFromUrl(assistantTranscriptUrl(threadId));
 }
 
+/** A turn handed to a worker, and where to watch it. */
+export type StartedTurn = {
+  turnId: string;
+  threadId: string;
+  streamUrl: string;
+  status: string;
+};
+
+/** A reply a conversation is still producing. */
+export type ActiveTurn = {
+  id: string;
+  threadId: string;
+  status: string;
+  workflowId?: string;
+};
+
 /** Where a stream that never opened went wrong, for the reader. */
 export class AssistantStreamError extends Error {
   readonly status: number;
@@ -238,6 +254,107 @@ export class AssistantService {
       onEvent,
       signal,
     );
+  }
+
+  /**
+   * Whether this server answers questions on a worker.
+   *
+   * The two paths roll forward independently, so the client asks rather than
+   * assumes: one that asked durably against a server with no Temporal client
+   * would fail every question.
+   */
+  public async capabilities(): Promise<{ durableTurns: boolean }> {
+    const response = await api.get("/assistant/capabilities/");
+    const durable =
+      typeof response === "object" && response !== null && "durableTurns" in response
+        ? Boolean((response as { durableTurns: unknown }).durableTurns)
+        : false;
+
+    return { durableTurns: durable };
+  }
+
+  /**
+   * Hands a question to a worker and returns the turn to watch.
+   *
+   * The reply is not on this response. It arrives on the turn's stream, which
+   * means it survives this request ending — a deploy, a dropped connection, or
+   * somebody closing the tab.
+   */
+  public async startTurn(
+    threadId: AssistantThread["id"],
+    content: string,
+    options: SendMessageOptions = {},
+  ): Promise<StartedTurn> {
+    const response = await api.post(
+      `/assistant/threads/${threadId}/turns/`,
+      messageBody(content, options),
+    );
+
+    return response as StartedTurn;
+  }
+
+  /**
+   * Follows a turn from where the reader left off.
+   *
+   * `cursor` is the id of the last event the caller *applied*, not the last it
+   * received: those differ when a connection dies mid-frame, and resuming from
+   * the received one loses an event. An empty cursor replays the turn from its
+   * beginning, which is what a fresh tab attaching to a reply in progress
+   * wants.
+   */
+  public async attachTurn(
+    turnId: string,
+    onEvent: (event: AssistantStreamEvent, cursor: string) => void,
+    options: { cursor?: string; signal?: AbortSignal } = {},
+  ): Promise<void> {
+    const path = `/assistant/turns/${turnId}/stream/`;
+    const headers: Record<string, string> = { Accept: "text/event-stream" };
+    if (options.cursor) {
+      headers["Last-Event-ID"] = options.cursor;
+    }
+
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method: "GET",
+      headers,
+      credentials: "include",
+      signal: options.signal,
+    });
+
+    if (!response.ok || !response.body) {
+      throw new AssistantStreamError(await streamFailureMessage(response), response.status);
+    }
+
+    await readEventStream(
+      response.body,
+      (message) => {
+        const event = parseAssistantStreamEvent(message.event, message.data);
+        if (event) {
+          onEvent(event, message.id);
+        }
+      },
+      options.signal,
+    );
+  }
+
+  /**
+   * Stops a reply nobody is waiting for.
+   *
+   * This has to reach the server. Aborting the reader used to stop the model,
+   * because the model was running on the request being aborted; with the work
+   * on a worker it stops nothing and the turn keeps billing.
+   */
+  public async stopTurn(turnId: string): Promise<void> {
+    await api.post(`/assistant/turns/${turnId}/stop/`, {});
+  }
+
+  /** The reply a conversation is still producing, if it is producing one. */
+  public async activeTurn(threadId: AssistantThread["id"]): Promise<ActiveTurn | null> {
+    const response = await api.get(`/assistant/threads/${threadId}/turns/active/`);
+    if (typeof response !== "object" || response === null || !("turn" in response)) {
+      return null;
+    }
+
+    return ((response as { turn: ActiveTurn | null }).turn as ActiveTurn) ?? null;
   }
 
   private async stream(

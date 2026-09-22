@@ -64,7 +64,19 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 			require.NoError(t, fx.ValidateApp(
 				bootstrap.Options(),
 				processOptions,
-				fx.Invoke(func(services.AgentEventPublisher, services.WatchtowerProjector) {}),
+				fx.Invoke(
+					func(
+						services.AgentEventPublisher,
+						services.WatchtowerProjector,
+						// A trajectory recorder is optional at every use site, so
+						// an installation missing it records nothing and says
+						// nothing — the exact failure this file exists to catch.
+						// It matters most in the worker, where the background runs
+						// that had no durable account of themselves execute.
+						services.AgentRunEventRecorder,
+					) {
+					},
+				),
 			))
 		})
 	}

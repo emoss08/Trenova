@@ -142,7 +142,7 @@ func (s *Service) StartForDefinition(
 
 	if _, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID:                    workflowID,
-		TaskQueue:             temporaltype.TaskQueueAgent.String(),
+		TaskQueue:             temporaltype.TaskQueueAgentBackground.String(),
 		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 	}, agentjobs.AgentRunWorkflowName, payload); err != nil {
 		created.Status = agent.RunStatusFailed

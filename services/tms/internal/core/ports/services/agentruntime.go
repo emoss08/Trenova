@@ -78,6 +78,17 @@ type RunRequest struct {
 	// rather than the "awaiting review" it was told at the time, and does not
 	// propose again what is still waiting.
 	Proposals []ProposalOutcome
+	// Steps, together with StepOwner, makes the run's tool calls replay-safe:
+	// each call is claimed before it runs and settled after, so an attempt
+	// following a failure is handed the earlier answer instead of writing a
+	// second time. Nil leaves the run unguarded, which is where every run stood
+	// before the ledger existed and is still right for a one-shot that is never
+	// retried.
+	Steps     RunStepLedger
+	StepOwner RunStepOwner
+	// Attempt is which try of this run is executing, recorded on each step so
+	// the ledger can be read back when something went wrong. One-based.
+	Attempt int
 }
 
 // ProposalOutcome is the current state of a proposal an earlier turn raised.

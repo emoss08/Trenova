@@ -240,8 +240,11 @@ func TestStartForDefinitionLaunchesWorkflow(t *testing.T) {
 	if started.ID != wantWorkflowID {
 		t.Fatalf("expected workflow id %s, got %s", wantWorkflowID, started.ID)
 	}
-	if started.TaskQueue != temporaltype.TaskQueueAgent.String() {
-		t.Fatalf("expected agent task queue, got %s", started.TaskQueue)
+	// A run belongs on the background queue, not the one a person's chat turn
+	// waits in: a research run that takes ten minutes must not hold a slot
+	// somebody is watching for.
+	if started.TaskQueue != temporaltype.TaskQueueAgentBackground.String() {
+		t.Fatalf("expected the agent background task queue, got %s", started.TaskQueue)
 	}
 	if started.WorkflowIDReusePolicy != enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE {
 		t.Fatalf("expected reject-duplicate reuse policy, got %v", started.WorkflowIDReusePolicy)

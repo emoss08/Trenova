@@ -105,16 +105,36 @@ func OpenEventStream(c *gin.Context, opts EventStreamOptions) (*EventStream, err
 // reader is sent an error event naming the one that was lost instead, and
 // the caller gets the encoding error to log.
 func (s *EventStream) Emit(event string, data any) error {
+	return s.EmitWithID("", event, data)
+}
+
+// EmitWithID writes one event under a resume cursor.
+//
+// A reader that loses its connection sends back the last id it saw as
+// Last-Event-ID, and the caller turns that into a position in whatever it is
+// relaying. An empty id writes no line at all, so a stream that has nothing to
+// resume from does not invite a reader to try.
+func (s *EventStream) EmitWithID(id, event string, data any) error {
 	encoded, err := sonic.Marshal(data)
 	if err != nil {
-		s.write(lostEventName, lostEventFrame(event))
+		s.write("", lostEventName, lostEventFrame(event))
 
 		return fmt.Errorf("encode %q event: %w", event, err)
 	}
 
-	s.write(event, encoded)
+	s.write(id, event, encoded)
 
 	return nil
+}
+
+// EmitRaw writes an event whose payload is already encoded.
+//
+// A relay's frames arrive as bytes and leave as bytes; decoding one only to
+// encode it again would cost the whole stream's throughput to learn nothing,
+// and would let a frame the relay cannot parse kill a turn it was only meant
+// to carry.
+func (s *EventStream) EmitRaw(id, event string, encoded []byte) {
+	s.write(id, event, encoded)
 }
 
 // lostEventName is the event a reader receives in place of one that could
@@ -135,13 +155,19 @@ func lostEventFrame(event string) []byte {
 	return encoded
 }
 
-func (s *EventStream) write(event string, encoded []byte) {
+func (s *EventStream) write(id, event string, encoded []byte) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.closed {
 		return
 	}
 
+	// The id goes first. A conforming parser applies it to the event it
+	// precedes, so writing it after the data would attribute the cursor to
+	// the following event and a resume would replay one frame twice.
+	if id != "" {
+		_, _ = s.writer.WriteString("id: " + id + "\n")
+	}
 	_, _ = s.writer.WriteString("event: " + event + "\n")
 	_, _ = s.writer.WriteString("data: " + string(encoded) + "\n\n")
 	s.flusher.Flush()

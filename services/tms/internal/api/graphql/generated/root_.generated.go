@@ -40,6 +40,7 @@ type ResolverRoot interface {
 	AgentPlan() AgentPlanResolver
 	AgentProposal() AgentProposalResolver
 	AgentRun() AgentRunResolver
+	AgentRunEvent() AgentRunEventResolver
 	ApiKey() ApiKeyResolver
 	ApprovalDelegation() ApprovalDelegationResolver
 	AuditEntry() AuditEntryResolver
@@ -877,6 +878,34 @@ type ComplexityRoot struct {
 	}
 
 	AgentRunEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AgentRunEvent struct {
+		BusinessUnitID func(childComplexity int) int
+		CallID         func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Kind           func(childComplexity int) int
+		OccurredAt     func(childComplexity int) int
+		OrganizationID func(childComplexity int) int
+		OwnerID        func(childComplexity int) int
+		OwnerKind      func(childComplexity int) int
+		Payload        func(childComplexity int) int
+		Sequence       func(childComplexity int) int
+		StepKey        func(childComplexity int) int
+		Truncated      func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+	}
+
+	AgentRunEventConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AgentRunEventEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
@@ -7577,6 +7606,7 @@ type ComplexityRoot struct {
 		AgentProposal                       func(childComplexity int, id string) int
 		AgentProposals                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentRun                            func(childComplexity int, id string) int
+		AgentRunEvents                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentRuns                           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentScorecard                      func(childComplexity int, input gqlmodel.AgentScorecardInput) int
 		AiProvider                          func(childComplexity int, id string) int
@@ -14853,6 +14883,123 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentRunEdge.Node(childComplexity), true
+
+	case "AgentRunEvent.businessUnitId":
+		if e.ComplexityRoot.AgentRunEvent.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.BusinessUnitID(childComplexity), true
+	case "AgentRunEvent.callId":
+		if e.ComplexityRoot.AgentRunEvent.CallID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.CallID(childComplexity), true
+	case "AgentRunEvent.createdAt":
+		if e.ComplexityRoot.AgentRunEvent.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.CreatedAt(childComplexity), true
+	case "AgentRunEvent.id":
+		if e.ComplexityRoot.AgentRunEvent.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.ID(childComplexity), true
+	case "AgentRunEvent.kind":
+		if e.ComplexityRoot.AgentRunEvent.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.Kind(childComplexity), true
+	case "AgentRunEvent.occurredAt":
+		if e.ComplexityRoot.AgentRunEvent.OccurredAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.OccurredAt(childComplexity), true
+	case "AgentRunEvent.organizationId":
+		if e.ComplexityRoot.AgentRunEvent.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.OrganizationID(childComplexity), true
+	case "AgentRunEvent.ownerId":
+		if e.ComplexityRoot.AgentRunEvent.OwnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.OwnerID(childComplexity), true
+	case "AgentRunEvent.ownerKind":
+		if e.ComplexityRoot.AgentRunEvent.OwnerKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.OwnerKind(childComplexity), true
+	case "AgentRunEvent.payload":
+		if e.ComplexityRoot.AgentRunEvent.Payload == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.Payload(childComplexity), true
+	case "AgentRunEvent.sequence":
+		if e.ComplexityRoot.AgentRunEvent.Sequence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.Sequence(childComplexity), true
+	case "AgentRunEvent.stepKey":
+		if e.ComplexityRoot.AgentRunEvent.StepKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.StepKey(childComplexity), true
+	case "AgentRunEvent.truncated":
+		if e.ComplexityRoot.AgentRunEvent.Truncated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.Truncated(childComplexity), true
+	case "AgentRunEvent.updatedAt":
+		if e.ComplexityRoot.AgentRunEvent.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEvent.UpdatedAt(childComplexity), true
+
+	case "AgentRunEventConnection.edges":
+		if e.ComplexityRoot.AgentRunEventConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEventConnection.Edges(childComplexity), true
+	case "AgentRunEventConnection.pageInfo":
+		if e.ComplexityRoot.AgentRunEventConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEventConnection.PageInfo(childComplexity), true
+	case "AgentRunEventConnection.totalCount":
+		if e.ComplexityRoot.AgentRunEventConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEventConnection.TotalCount(childComplexity), true
+
+	case "AgentRunEventEdge.cursor":
+		if e.ComplexityRoot.AgentRunEventEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEventEdge.Cursor(childComplexity), true
+	case "AgentRunEventEdge.node":
+		if e.ComplexityRoot.AgentRunEventEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunEventEdge.Node(childComplexity), true
 
 	case "AgentScorecard.agentDefinitionId":
 		if e.ComplexityRoot.AgentScorecard.AgentDefinitionID == nil {
@@ -48758,6 +48905,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentRun(childComplexity, args["id"].(string)), true
+	case "Query.agentRunEvents":
+		if e.ComplexityRoot.Query.AgentRunEvents == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentRunEvents_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentRunEvents(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.agentRuns":
 		if e.ComplexityRoot.Query.AgentRuns == nil {
 			break
@@ -72468,6 +72626,74 @@ extend type Query {
   agentDefinition(id: ID!): AgentDefinition
 }
 `, BuiltIn: false},
+	{Name: "../schema/agentrunevent.graphqls", Input: `"""
+One thing an agent did, in the order it did it.
+
+The runtime has always said this aloud; these are the rows that keep it. A
+background run's durable record used to be its final reply cut to two thousand
+characters, which answered what the agent concluded but never what it did.
+"""
+type AgentRunEvent {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+
+  """Whether this belongs to a background run or a conversation turn."""
+  ownerKind: AgentRunEventOwnerKind!
+  ownerId: ID!
+
+  """
+  The event's place in its owner's account of itself. Ordering by time will not
+  do: several events share a second easily, and a trajectory read back in the
+  wrong order reports the agent doing things in an order it never did.
+  """
+  sequence: Int!
+
+  """The runtime's own event name, unchanged."""
+  kind: String!
+
+  """
+  Joins a tool event to the ledger row that claimed it. Empty for everything
+  that is not a tool call.
+  """
+  stepKey: String!
+
+  """Pairs a tool's start with its finish without opening the payload."""
+  callId: String!
+
+  payload: JSON!
+
+  """
+  Whether the payload was too large to keep. A reader that cannot tell a short
+  payload from a shortened one will eventually mistake one for the other.
+  """
+  truncated: Boolean!
+
+  occurredAt: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+enum AgentRunEventOwnerKind {
+  AgentRun
+  AssistantTurn
+}
+
+type AgentRunEventEdge {
+  node: AgentRunEvent!
+  cursor: String!
+}
+
+type AgentRunEventConnection {
+  edges: [AgentRunEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  agentRunEvents(input: DataTableConnectionInput!): AgentRunEventConnection!
+}
+`, BuiltIn: false},
 	{Name: "../schema/agentscorecard.graphqls", Input: `"How far back a scorecard looks."
 enum AgentScorecardWindow {
   Last7Days
@@ -94215,6 +94441,62 @@ func (ec *executionContext) childFields_AgentRunEdge(ctx context.Context, field 
 		return ec.fieldContext_AgentRunEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentRunEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentRunEvent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AgentRunEvent_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_AgentRunEvent_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_AgentRunEvent_businessUnitId(ctx, field)
+	case "ownerKind":
+		return ec.fieldContext_AgentRunEvent_ownerKind(ctx, field)
+	case "ownerId":
+		return ec.fieldContext_AgentRunEvent_ownerId(ctx, field)
+	case "sequence":
+		return ec.fieldContext_AgentRunEvent_sequence(ctx, field)
+	case "kind":
+		return ec.fieldContext_AgentRunEvent_kind(ctx, field)
+	case "stepKey":
+		return ec.fieldContext_AgentRunEvent_stepKey(ctx, field)
+	case "callId":
+		return ec.fieldContext_AgentRunEvent_callId(ctx, field)
+	case "payload":
+		return ec.fieldContext_AgentRunEvent_payload(ctx, field)
+	case "truncated":
+		return ec.fieldContext_AgentRunEvent_truncated(ctx, field)
+	case "occurredAt":
+		return ec.fieldContext_AgentRunEvent_occurredAt(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_AgentRunEvent_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AgentRunEvent_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentRunEvent", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentRunEventConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AgentRunEventConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AgentRunEventConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AgentRunEventConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentRunEventConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentRunEventEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AgentRunEventEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AgentRunEventEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentRunEventEdge", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentScorecard(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
