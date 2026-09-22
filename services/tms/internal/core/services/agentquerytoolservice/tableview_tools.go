@@ -8,7 +8,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/report"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tablequeryservice"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -210,4 +212,105 @@ func encodeJSON(value any) string {
 
 func urlValue(raw string) string {
 	return url.QueryEscape(raw)
+}
+
+// listDashboardsTool exists because add_dashboard_tile needs a dashboard id
+// and nothing else hands one out. Without it the only dashboard an agent can
+// touch is one it made in the same turn.
+type listDashboardsTool struct {
+	dashboards dashboardLister
+}
+
+type dashboardLister interface {
+	ListDashboards(
+		ctx context.Context,
+		req *reporting.ListDashboardsRequest,
+	) ([]*report.Dashboard, error)
+}
+
+func newListDashboardsTool(dashboards *reporting.Service) serviceports.AgentQueryTool {
+	return &listDashboardsTool{dashboards: dashboards}
+}
+
+func (t *listDashboardsTool) Name() string { return "list_dashboards" }
+
+func (t *listDashboardsTool) Description() string {
+	return "List the dashboards this organization has, with what is on each one. Use it to " +
+		"find the dashboard somebody means before adding to it, and to answer \"do we " +
+		"already have a page for this\" before building a second one."
+}
+
+func (t *listDashboardsTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"limit": map[string]any{
+				"type":        "integer",
+				"description": fmt.Sprintf("How many to return, at most %d.", maxDashboardRows),
+			},
+		},
+		"additionalProperties": false,
+	}
+}
+
+func (t *listDashboardsTool) PermissionResource() permission.Resource {
+	return permission.ResourceDashboard
+}
+
+const maxDashboardRows = 50
+
+type dashboardRow struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Category    string `json:"category,omitempty"`
+	Visibility  string `json:"visibility"`
+	TileCount   int    `json:"tileCount"`
+}
+
+func (t *listDashboardsTool) Query(
+	ctx context.Context,
+	params serviceports.QueryToolParams,
+) (any, error) {
+	if err := guardQuery(params); err != nil {
+		return nil, err
+	}
+
+	limit := optionalInt(params.Params, "limit", maxDashboardRows)
+	if limit <= 0 || limit > maxDashboardRows {
+		limit = maxDashboardRows
+	}
+
+	criteria := filtercatalog.NewCriteria("dashboards").At(clockFor(params))
+	dashboards, err := t.dashboards.ListDashboards(ctx, &reporting.ListDashboardsRequest{
+		Request: reporting.Request{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  params.OrganizationID,
+				BuID:   params.BusinessUnitID,
+				UserID: params.Actor.UserID,
+			},
+		},
+		Limit: limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	rows := make([]any, 0, len(dashboards))
+	for _, dashboard := range dashboards {
+		tiles := 0
+		if dashboard.Layout != nil {
+			tiles = len(dashboard.Layout.Tiles)
+		}
+		rows = append(rows, dashboardRow{
+			ID:          dashboard.ID.String(),
+			Name:        dashboard.Name,
+			Description: dashboard.Description,
+			Category:    dashboard.Category,
+			Visibility:  string(dashboard.Visibility),
+			TileCount:   tiles,
+		})
+	}
+
+	return searchResult(criteria, rows, len(rows)), nil
 }

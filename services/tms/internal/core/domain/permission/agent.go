@@ -60,15 +60,15 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 	// table, a dashboard, and an alert that watches for a change. All three
 	// are additive and reversible — nothing an agent makes here alters a
 	// record, and a person can delete any of it.
-	// No read on any of the three: the tools only add. add_dashboard_tile
-	// reads the dashboard it is appending to, but that read is part of
-	// executing the update it already declares, and the runtime authorizes a
-	// tool's declared resource and operation rather than every call inside it.
-	// Granting a read nothing claims is a grant nobody can account for.
+	// No read on the other two: nothing lists them. A grant no tool claims is
+	// one nobody can account for, which is what the coverage test holds.
 	ResourceTableConfiguration: {
 		OpCreate: {},
 	},
 	ResourceDashboard: {
+		// list_dashboards claims the read: add_dashboard_tile needs an id and
+		// nothing else hands one out.
+		OpRead:   {},
 		OpCreate: {},
 		OpUpdate: {},
 	},
