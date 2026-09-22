@@ -25,16 +25,39 @@ const (
 	KindBriefing Kind = "briefing"
 	// KindInboundMessage is a message from the inbox the conversation is about.
 	KindInboundMessage Kind = "inbound_message"
+	// KindRunDiff is what moved between two runs of the same report.
+	KindRunDiff Kind = "run_diff"
 )
 
-func (k Kind) IsValid() bool {
-	switch k {
-	case KindReportPreview, KindReportRun, KindEmailDraft, KindPlan, KindEntityCard,
-		KindTableView, KindRateExplanation, KindDashboardRef, KindBriefing, KindInboundMessage:
-		return true
-	default:
-		return false
+// AllKinds is the whole set, in the order they were added.
+//
+// It exists so the client's own list can be checked against this one rather
+// than maintained beside it: a kind added here and forgotten there is what
+// blanked AI Control the last time a hand-listed enum fell behind.
+func AllKinds() []Kind {
+	return []Kind{
+		KindReportPreview,
+		KindReportRun,
+		KindEmailDraft,
+		KindPlan,
+		KindEntityCard,
+		KindTableView,
+		KindRateExplanation,
+		KindDashboardRef,
+		KindBriefing,
+		KindInboundMessage,
+		KindRunDiff,
 	}
+}
+
+func (k Kind) IsValid() bool {
+	for _, kind := range AllKinds() {
+		if k == kind {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Status is where an artifact is in its life. Most are Ready when made; a

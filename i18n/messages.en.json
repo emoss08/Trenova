@@ -10388,12 +10388,13 @@
     ]
   },
   "Added": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/desk",
       "routes/formula-template"
     ]
   },
@@ -10703,11 +10704,13 @@
     ]
   },
   "Address is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/inboundmessage",
       "packages/shared/types"
     ]
   },
@@ -10788,6 +10791,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Address must be an email address": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/inboundmessage"
     ]
   },
   "Address not extracted": {
@@ -28636,12 +28648,13 @@
     ]
   },
   "Changed": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/desk",
       "routes/formula-template",
       "routes/rate-agreement"
     ]
@@ -28674,7 +28687,7 @@
     ]
   },
   "Changes": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -31308,6 +31321,15 @@
     ],
     "areas": [
       "domain/driversettlement"
+    ]
+  },
+  "Classification is not a known one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/inboundmessage"
     ]
   },
   "Classification is required": {
@@ -34533,13 +34555,23 @@
     ]
   },
   "Confidence must be between 0 and 1": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/documentcontent",
-      "domain/documentshipmentdraft"
+      "domain/documentshipmentdraft",
+      "domain/inboundmessage"
+    ]
+  },
+  "Confidence must be between {0} and 1": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/inboundmessage"
     ]
   },
   "Confidence: {0}% {1}": {
@@ -65152,7 +65184,7 @@
     ]
   },
   "File name is required": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
@@ -65162,6 +65194,7 @@
       "domain/documenttemplate",
       "domain/edi",
       "domain/email",
+      "domain/inboundmessage",
       "domain/invoice"
     ]
   },
@@ -70216,6 +70249,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Gone": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Good": {
@@ -80753,6 +80795,15 @@
       "routes/worker-checklist-template"
     ]
   },
+  "Kind is not a known one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/inboundmessage"
+    ]
+  },
   "Kind is required": {
     "sites": 14,
     "scope": [
@@ -86298,6 +86349,15 @@
       "routes/edi"
     ]
   },
+  "Mailbox is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/inboundmessage"
+    ]
+  },
   "Mailing address": {
     "sites": 1,
     "scope": [
@@ -88056,6 +88116,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Matched on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Matched payment": {
     "sites": 1,
     "scope": [
@@ -89491,12 +89560,13 @@
     ]
   },
   "Message is required": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/edi",
+      "domain/inboundmessage",
       "domain/modeprofile",
       "domain/notification",
       "domain/worker"
@@ -92752,7 +92822,7 @@
     ]
   },
   "Name is required": {
-    "sites": 103,
+    "sites": 104,
     "scope": [
       "go",
       "ts"
@@ -92789,6 +92859,7 @@
       "domain/homelayout",
       "domain/iam",
       "domain/ifta",
+      "domain/inboundmessage",
       "domain/integration",
       "domain/location",
       "domain/locationcategory",
@@ -93068,6 +93139,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Name two different runs — comparing a run with itself reports nothing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentquerytoolservice"
     ]
   },
   "Name who receives these updates, or set the preference back to None": {
@@ -93875,7 +93955,7 @@
     ]
   },
   "New": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -93887,6 +93967,7 @@
       "domain/fuelpurchase",
       "packages/shared/components",
       "routes/admin",
+      "routes/desk",
       "routes/edi",
       "routes/fuel-purchase",
       "routes/shipment"
@@ -100799,6 +100880,15 @@
       "routes/worker"
     ]
   },
+  "Nothing moved between these two runs.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing moving right now.": {
     "sites": 1,
     "scope": [
@@ -103231,6 +103321,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "One of these runs hit its row cap, so a row shown as gone may only be past the cap.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "One or both versions not found in the retrieved range": {
@@ -119149,7 +119248,7 @@
     ]
   },
   "Provider is required": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go"
     ],
@@ -119159,6 +119258,7 @@
       "domain/exchangerate",
       "domain/fuelpurchase",
       "domain/iam",
+      "domain/inboundmessage",
       "domain/storedmileage",
       "domain/telematics",
       "domain/tenant"
@@ -119208,6 +119308,15 @@
     "areas": [
       "domain/email",
       "domain/invoice"
+    ]
+  },
+  "Provider message id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/inboundmessage"
     ]
   },
   "Provider must be PCMiler": {
@@ -128134,6 +128243,15 @@
       "routes/agent-control"
     ]
   },
+  "Repeated key": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Repeats": {
     "sites": 1,
     "scope": [
@@ -128531,7 +128649,7 @@
     ]
   },
   "Report": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -128540,6 +128658,7 @@
       "apps/web/components",
       "domain/homelayout",
       "routes/agent-control",
+      "routes/desk",
       "routes/home",
       "routes/reports"
     ]
@@ -132511,6 +132630,15 @@
       "routes/customer"
     ]
   },
+  "Review policy is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/inboundmessage"
+    ]
+  },
   "Review policy-controlled invoice adjustments awaiting finance approval.": {
     "sites": 1,
     "scope": [
@@ -134191,6 +134319,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Rows key cannot be longer than 512 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/report"
     ]
   },
   "Rows on the rota for these weeks: everyone on a pattern or with a shift, plus people with nothing rostered, so the gaps show.": {
@@ -141704,6 +141841,15 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "Sender is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/inboundmessage"
     ]
   },
   "Sender name": {
@@ -149969,7 +150115,7 @@
     ]
   },
   "Status is required": {
-    "sites": 123,
+    "sites": 125,
     "scope": [
       "go"
     ],
@@ -150005,6 +150151,7 @@
       "domain/glaccount",
       "domain/iam",
       "domain/ifta",
+      "domain/inboundmessage",
       "domain/insight",
       "domain/invoice",
       "domain/invoiceadjustment",
@@ -162067,6 +162214,42 @@
       "api/graphql"
     ]
   },
+  "The stored rows for this report run are no longer available": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/reporting"
+    ]
+  },
+  "The stored rows for this report run could not be read — run the report again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/reporting"
+    ]
+  },
+  "The stored rows for this report run could not be read — try again shortly": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/reporting"
+    ]
+  },
+  "The stored rows for this report run have expired — run the report again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/reporting"
+    ]
+  },
   "The subject the agent composed. Required on the subject channel.": {
     "sites": 1,
     "scope": [
@@ -165267,6 +165450,24 @@
       "routes/reports"
     ]
   },
+  "This report has no column that identifies a row, so its rows cannot be matched across two runs. Compare a report that groups by something.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentquerytoolservice"
+    ]
+  },
+  "This report has no numeric column, so there is nothing to compare between two runs beyond which rows are present.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentquerytoolservice"
+    ]
+  },
   "This report has no parameter by that name": {
     "sites": 1,
     "scope": [
@@ -165357,6 +165558,15 @@
       "routes/home"
     ]
   },
+  "This report run did not finish successfully, so it has no rows to read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/reporting"
+    ]
+  },
   "This report run has already finished": {
     "sites": 1,
     "scope": [
@@ -165367,6 +165577,24 @@
     ]
   },
   "This report run has no downloadable artifact": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/reporting"
+    ]
+  },
+  "This report run is too large to read back — narrow its filters and run it again": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/reporting"
+    ]
+  },
+  "This report run was generated before its rows were stored, so it cannot be compared": {
     "sites": 1,
     "scope": [
       "go"
@@ -168303,13 +168531,14 @@
     ]
   },
   "Totals": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/customer-payments",
+      "routes/desk",
       "routes/trial-balance"
     ]
   },
@@ -171110,6 +171339,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Unchanged": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Uncollectable": {
@@ -191365,6 +191603,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} compared with {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} completed": {

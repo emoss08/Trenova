@@ -57,6 +57,8 @@ var Module = fx.Module("agent-query-tool-service",
 		fx.Annotate(provideListReportsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideRunReportTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideGetReportRunTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideListReportRunsTool, fx.ResultTags(`group:"agent_query_tools"`)),
+		fx.Annotate(provideCompareReportRunsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideDescribeReportTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideListReportDatasetsTool, fx.ResultTags(`group:"agent_query_tools"`)),
 		fx.Annotate(provideDescribeReportDatasetTool, fx.ResultTags(`group:"agent_query_tools"`)),
@@ -102,6 +104,14 @@ func provideRunReportTool(
 
 func provideGetReportRunTool(reports *reporting.Service) services.AgentQueryTool {
 	return newGetReportRunTool(reports)
+}
+
+func provideListReportRunsTool(reports *reporting.Service) services.AgentQueryTool {
+	return newListReportRunsTool(reports)
+}
+
+func provideCompareReportRunsTool(reports *reporting.Service) services.AgentQueryTool {
+	return newCompareReportRunsTool(reports)
 }
 
 func provideDescribeReportTool(reports *reporting.Service) services.AgentQueryTool {

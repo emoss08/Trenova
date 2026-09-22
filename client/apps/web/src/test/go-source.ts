@@ -62,7 +62,13 @@ export function goEnumValues({ file, typeName, listFn }: GoEnumOptions): string[
   const names = [...block[1].matchAll(new RegExp(`${typeName}([A-Za-z]+),`, "g"))].map(
     (match) => match[1],
   );
-  const constantPattern = `${typeName}([A-Za-z]+)\\s*=\\s*${typeName}\\("([^"]+)"\\)`;
+  // Both forms Go writes a string enum in: the conversion
+  // (`TaskFoo = Task("foo")`) and the typed literal (`KindFoo Kind = "foo"`),
+  // with the repeated type optional because a const block only needs it on
+  // the first line.
+  const constantPattern =
+    `${typeName}([A-Za-z]+)\\s*(?:${typeName}\\s*)?=\\s*` +
+    `(?:${typeName}\\()?"([^"]+)"\\)?`;
   const constants = new Map(
     [...source.matchAll(new RegExp(constantPattern, "g"))].map((match) => [match[1], match[2]]),
   );

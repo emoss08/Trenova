@@ -391,3 +391,114 @@ export function planFrom(artifact: AssistantArtifact): PlanArtifact {
     steps,
   };
 }
+
+export type RunDiffSideArtifact = {
+  runId: string;
+  reportName: string;
+  generatedAt: number;
+  rowCount: number;
+  truncated: boolean;
+};
+
+export type RunDiffMeasureArtifact = {
+  column: string;
+  label: string;
+  before: string;
+  after: string;
+  delta: string;
+};
+
+export type RunDiffChangeArtifact = {
+  kind: string;
+  key: string;
+  keyValues: string[];
+  measures: RunDiffMeasureArtifact[];
+};
+
+export type RunDiffArtifactPayload = {
+  before: RunDiffSideArtifact;
+  after: RunDiffSideArtifact;
+  keys: string[];
+  measures: string[];
+  counts: { added: number; removed: number; changed: number; unchanged: number; duplicate: number };
+  changes: RunDiffChangeArtifact[];
+  totals: RunDiffMeasureArtifact[];
+  truncated: boolean;
+  note: string;
+};
+
+function diffSide(value: unknown): RunDiffSideArtifact {
+  const side = isRecord(value) ? value : {};
+
+  return {
+    runId: stringOf(side.runId),
+    reportName: stringOf(side.reportName),
+    generatedAt: numberOf(side.generatedAt),
+    rowCount: numberOf(side.rowCount),
+    truncated: side.truncated === true,
+  };
+}
+
+function diffMeasure(value: unknown): RunDiffMeasureArtifact | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const column = stringOf(value.column);
+  if (column === "") {
+    return null;
+  }
+
+  return {
+    column,
+    label: stringOf(value.label) || column,
+    before: stringOf(value.before),
+    after: stringOf(value.after),
+    delta: stringOf(value.delta),
+  };
+}
+
+function diffMeasures(value: unknown): RunDiffMeasureArtifact[] {
+  return listOf(value)
+    .map(diffMeasure)
+    .filter((measure): measure is RunDiffMeasureArtifact => measure !== null);
+}
+
+/**
+ * What moved between two runs.
+ *
+ * The counts come off the server's own summary rather than from the length of
+ * the change list: the list is bounded so an answer stays readable, and
+ * counting it instead would report "3 changed" for a report where three
+ * hundred did.
+ */
+export function runDiffFrom(artifact: AssistantArtifact): RunDiffArtifactPayload {
+  const payload = artifact.payload;
+  const summary = isRecord(payload.summary) ? payload.summary : {};
+
+  const changes = listOf(payload.changes)
+    .filter(isRecord)
+    .map((change) => ({
+      kind: stringOf(change.kind),
+      key: stringOf(change.key),
+      keyValues: listOf(change.keyValues).map(stringOf),
+      measures: diffMeasures(change.measures),
+    }));
+
+  return {
+    before: diffSide(payload.before),
+    after: diffSide(payload.after),
+    keys: listOf(payload.keys).map(stringOf),
+    measures: listOf(payload.measures).map(stringOf),
+    counts: {
+      added: numberOf(summary.added),
+      removed: numberOf(summary.removed),
+      changed: numberOf(summary.changed),
+      unchanged: numberOf(summary.unchanged),
+      duplicate: numberOf(summary.duplicate),
+    },
+    changes,
+    totals: diffMeasures(payload.totals),
+    truncated: payload.truncated === true,
+    note: stringOf(payload.note),
+  };
+}

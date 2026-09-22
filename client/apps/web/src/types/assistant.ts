@@ -57,6 +57,7 @@ export const artifactKindSchema = z.enum([
   "dashboard_ref",
   "briefing",
   "inbound_message",
+  "run_diff",
 ]);
 
 export const artifactStatusSchema = z.enum(["Pending", "Ready", "Failed", "Sent"]);

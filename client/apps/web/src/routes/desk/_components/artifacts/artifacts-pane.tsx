@@ -23,6 +23,7 @@ import { ReportPreviewArtifact } from "./report-preview-artifact";
 import { ReportRunArtifact } from "./report-run-artifact";
 import { ComposedViewArtifact } from "./composed-view-artifact";
 import { RateExplanationArtifact } from "./rate-explanation-artifact";
+import { RunDiffArtifact } from "./run-diff-artifact";
 import { TableViewArtifact } from "./table-view-artifact";
 
 /** The artifact to show when the person has not picked one: the newest. */
@@ -120,6 +121,8 @@ function ArtifactBody({ artifact }: { artifact: AssistantArtifact }) {
       );
     case "rate_explanation":
       return <RateExplanationArtifact artifact={artifact} />;
+    case "run_diff":
+      return <RunDiffArtifact artifact={artifact} />;
     default:
       return (
         <p className="text-muted-foreground p-4 text-sm">
@@ -285,6 +288,7 @@ export function isRenderableArtifactKind(kind: AssistantArtifact["kind"]): boole
       "entity_card",
       "table_view",
       "rate_explanation",
+      "run_diff",
     ].includes(kind)
   );
 }

@@ -30,6 +30,7 @@ const (
 	searchToolPrefix  = "search_"
 	toolComposeView   = "compose_table_view"
 	toolExplainRate   = "explain_rate"
+	toolCompareRuns   = "compare_report_runs"
 
 	maxArtifactTitleRunes = 120
 	minPreviewRows        = 1
@@ -258,6 +259,8 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 		return composedViewArtifact(observation.Call.ID, result)
 	case name == toolExplainRate:
 		return rateArtifact(observation.Call.ID, result)
+	case name == toolCompareRuns:
+		return runDiffArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, listToolPrefix), strings.HasPrefix(name, searchToolPrefix):
 		return tableArtifact(observation.Call.ID, name, result)
 	default:
@@ -377,6 +380,54 @@ func rateArtifact(callID string, result map[string]any) *assistantartifact.Artif
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
+}
+
+// runDiffArtifact views a comparison as the table of movements it is.
+//
+// Read aloud, a diff is a list of numbers with no anchor — "ACME went from
+// 2,840.00 to 3,102.50" a dozen times over is not something anybody checks.
+// Shown, with the two runs named at the top, the biggest moves first and the
+// totals underneath, it is the answer to "what changed since last week".
+func runDiffArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
+	changes, _ := result["changes"].([]any)
+	totals, _ := result["totals"].([]any)
+
+	// A comparison with nothing on either side is a sentence: "nothing moved".
+	if len(changes) == 0 && len(totals) == 0 {
+		return nil
+	}
+
+	payload := map[string]any{
+		"before":    result["before"],
+		"after":     result["after"],
+		"keys":      stringsOf(result["keys"]),
+		"measures":  stringsOf(result["measures"]),
+		"summary":   result["summary"],
+		"changes":   changes,
+		"totals":    totals,
+		"truncated": result["truncated"],
+		"note":      stringOf(result["note"]),
+	}
+	// The changes are already sorted by risk and then by size, so halving the
+	// list drops the smallest movements rather than an arbitrary tail.
+	fitRows(payload, "changes")
+
+	return &assistantartifact.Artifact{
+		Kind:             assistantartifact.KindRunDiff,
+		Status:           assistantartifact.StatusReady,
+		Title:            artifactTitle(runDiffTitle(result)),
+		Payload:          payload,
+		SourceToolCallID: callID,
+	}
+}
+
+func runDiffTitle(result map[string]any) string {
+	side, _ := result["after"].(map[string]any)
+	if name := stringOf(side["reportName"]); name != "" {
+		return name + " — what changed"
+	}
+
+	return "What changed"
 }
 
 // stringsOf reads a JSON array of strings, dropping anything that is not one.
