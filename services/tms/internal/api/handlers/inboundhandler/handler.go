@@ -65,6 +65,7 @@ func (h *Handler) receive(c *gin.Context) {
 		SignatureID:        c.GetHeader("svix-id"),
 		SignatureTimestamp: c.GetHeader("svix-timestamp"),
 		Signature:          c.GetHeader("svix-signature"),
+		Authorization:      c.GetHeader("Authorization"),
 		ReceivedAt:         time.Now(),
 	})
 	if err != nil {

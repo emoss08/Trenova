@@ -426,3 +426,78 @@ func utf8ValidString(s string) bool {
 
 	return true
 }
+
+const testPostmarkCredentials = "postmark:a-long-random-webhook-password"
+
+func postmarkMailbox() *inboundmessage.Mailbox {
+	mailbox := testMailbox()
+	mailbox.Provider = inboundmessage.ProviderPostmark
+	mailbox.SigningSecret = testPostmarkCredentials
+
+	return mailbox
+}
+
+func postmarkBody() []byte {
+	return []byte(`{
+		"MessageID": "pm-7c1d",
+		"From": "dispatch@bigshipper.com",
+		"FromName": "Dispatch",
+		"To": "tenders@acme-logistics.com",
+		"Subject": "Load 88213 tender",
+		"TextBody": "Please confirm pickup Thursday."
+	}`)
+}
+
+func postmarkDelivery(credentials string) *ReceiveWebhookRequest {
+	return &ReceiveWebhookRequest{
+		MailboxToken:  testToken,
+		Body:          postmarkBody(),
+		Authorization: "Basic " + base64.StdEncoding.EncodeToString([]byte(credentials)),
+		ReceivedAt:    time.Unix(1784131200, 0),
+	}
+}
+
+/*
+Postmark does not sign inbound webhooks, so a Postmark mailbox used to be
+checked for a Svix signature Postmark never sends — every delivery was refused.
+It is verified by the basic-auth credentials Postmark sends from the webhook
+URL instead, which are the protection Postmark offers.
+*/
+func TestReceiveWebhook_AcceptsAPostmarkDeliveryCarryingTheConfiguredCredentials(t *testing.T) {
+	t.Parallel()
+
+	messages := &stubMessageRepo{}
+	svc := newService(&stubMailboxRepo{mailbox: postmarkMailbox()}, messages, &stubStorage{})
+
+	result, err := svc.ReceiveWebhook(t.Context(), postmarkDelivery(testPostmarkCredentials))
+	require.NoError(t, err)
+	assert.False(t, result.Duplicate)
+	require.NotNil(t, messages.created)
+	assert.Equal(t, "pm-7c1d", messages.created.ProviderMessageID)
+}
+
+func TestReceiveWebhook_RefusesAPostmarkDeliveryWithTheWrongCredentials(t *testing.T) {
+	t.Parallel()
+
+	messages := &stubMessageRepo{}
+	svc := newService(&stubMailboxRepo{mailbox: postmarkMailbox()}, messages, &stubStorage{})
+
+	_, err := svc.ReceiveWebhook(t.Context(), postmarkDelivery("postmark:guessed"))
+	require.ErrorIs(t, err, ErrUnverified)
+	assert.Zero(t, messages.writes)
+}
+
+// The scheme is the mailbox's, never the request's. A delivery to a Postmark
+// mailbox that brings a Svix signature instead of credentials is refused, or
+// anyone could pick whichever check they found easier to satisfy.
+func TestReceiveWebhook_ChecksTheMailboxesSchemeNotTheOneTheRequestBrings(t *testing.T) {
+	t.Parallel()
+
+	messages := &stubMessageRepo{}
+	svc := newService(&stubMailboxRepo{mailbox: postmarkMailbox()}, messages, &stubStorage{})
+
+	req := signed(t, postmarkBody(), time.Unix(1784131200, 0))
+	_, err := svc.ReceiveWebhook(t.Context(), req)
+	require.ErrorIs(t, err, ErrUnverified)
+	assert.Zero(t, messages.writes)
+}

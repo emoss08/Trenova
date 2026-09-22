@@ -125,6 +125,10 @@ type ReceiveWebhookRequest struct {
 	SignatureID        string
 	SignatureTimestamp string
 	Signature          string
+	// Authorization is the request's Authorization header. Postmark sends the
+	// basic-auth credentials from the webhook URL in it, and that is how a
+	// Postmark delivery is verified.
+	Authorization string
 	// ReceivedAt is injectable so the verification window can be tested rather
 	// than taken on trust.
 	ReceivedAt time.Time
@@ -222,14 +226,7 @@ func (s *Service) verify(
 		return fmt.Errorf("%w: the signing secret could not be read", ErrUnverified)
 	}
 
-	if err = webhooksig.VerifySvix(webhooksig.SvixParams{
-		Secret:    secret,
-		ID:        req.SignatureID,
-		Timestamp: req.SignatureTimestamp,
-		Signature: req.Signature,
-		Body:      req.Body,
-		Now:       req.ReceivedAt,
-	}); err != nil {
+	if err = verifyDelivery(mailbox.Provider, secret, req); err != nil {
 		s.l.Warn("rejected an unverified inbound delivery",
 			zap.String("mailboxId", mailbox.ID.String()), zap.Error(err))
 
@@ -237,6 +234,33 @@ func (s *Service) verify(
 	}
 
 	return nil
+}
+
+// verifyDelivery checks a delivery by the scheme of the provider the mailbox
+// is configured for — never by whichever headers the request happens to bring,
+// or a caller could pick the check they found easier to satisfy. Resend signs
+// with Svix; Postmark does not sign inbound mail, and sends back the basic-auth
+// credentials from the webhook URL instead.
+func verifyDelivery(
+	provider inboundmessage.Provider,
+	secret string,
+	req *ReceiveWebhookRequest,
+) error {
+	switch provider {
+	case inboundmessage.ProviderResend:
+		return webhooksig.VerifySvix(webhooksig.SvixParams{
+			Secret:    secret,
+			ID:        req.SignatureID,
+			Timestamp: req.SignatureTimestamp,
+			Signature: req.Signature,
+			Body:      req.Body,
+			Now:       req.ReceivedAt,
+		})
+	case inboundmessage.ProviderPostmark:
+		return webhooksig.VerifyBasicAuth(secret, req.Authorization)
+	default:
+		return fmt.Errorf("%w: %s", ErrUnsupportedProvider, provider)
+	}
 }
 
 // stage writes the message down before anything tries to understand it.
