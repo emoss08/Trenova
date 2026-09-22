@@ -381,3 +381,64 @@ func TestNewToolSet_OffersNothingWithoutAnActor(t *testing.T) {
 	assert.Empty(t, set.allowed)
 	assert.Equal(t, []string{askUserName}, specNames(set.specs), "only the question tool, which reads nothing")
 }
+
+// coreRuntime is wideRuntime with two of the core tools registered, as they are
+// in production.
+func coreRuntime(t *testing.T) (*Service, []string) {
+	t.Helper()
+
+	service, names := wideRuntime(t)
+	query := service.queryTools.(*stubQueryRegistry)
+	query.Tools = append(query.Tools,
+		describedTool("recall_memory", "Recall what the organization has taught its agents."),
+		describedTool("remember", "Save a correction for next time."),
+	)
+	service.catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
+		QueryTools:  query,
+		ActionTools: service.actionTools,
+	})
+
+	return service, names
+}
+
+/*
+An agent configured with nothing but its task tools still carries memory.
+
+The organization-built agents in the field were saved without recall_memory or
+remember, and so worked every conversation from nothing. The core tools come
+from the definition, not the selection.
+*/
+func TestNewToolSet_CarriesTheCoreToolsForAnAgentThatSelectedNone(t *testing.T) {
+	t.Parallel()
+
+	service, names := coreRuntime(t)
+	definition := testDefinition(names[:4]...)
+
+	set := service.newToolSet(t.Context(), definition, testActor(), "which drivers are available", false)
+
+	sent := specNames(set.specs)
+	assert.Contains(t, sent, "recall_memory")
+	assert.Contains(t, sent, "remember")
+	assert.Len(t, set.specs, 4+2+1, "four selected, two core, ask_user")
+}
+
+// The core tools neither push an agent over the narrowing threshold nor take a
+// preselected slot from the work the turn is about.
+func TestNewToolSet_CoreToolsDoNotCountTowardNarrowing(t *testing.T) {
+	t.Parallel()
+
+	service, names := coreRuntime(t)
+
+	small := service.newToolSet(t.Context(), testDefinition(names[:disclosureThreshold]...),
+		testActor(), "which drivers are available", false)
+	assert.False(t, small.disclosed, "twelve selected tools plus the core ones is still a small agent")
+
+	large := service.newToolSet(t.Context(), testDefinition(names...),
+		testActor(), "which drivers are available", false)
+	require.True(t, large.disclosed)
+	sent := specNames(large.specs)
+	assert.Contains(t, sent, "recall_memory")
+	assert.Contains(t, sent, "remember")
+	assert.Len(t, large.specs, preselectedTools+2+2,
+		"the preselected tools, the two core tools, find_tools and ask_user")
+}

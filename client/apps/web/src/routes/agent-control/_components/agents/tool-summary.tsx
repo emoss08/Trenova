@@ -10,6 +10,7 @@ import {
   TIER_LABEL,
   effectiveTier,
   groupToolsByResource,
+  splitCoreTools,
   summarizeSelection,
   toggleTool,
   toolTitle,
@@ -43,6 +44,7 @@ export function ToolSummary({
   const t = useT();
   const [open, setOpen] = useState(false);
 
+  const { core, selectable } = useMemo(() => splitCoreTools(tools), [tools]);
   const summary = useMemo(
     () => summarizeSelection(selected, tools, tiers, ceiling),
     [ceiling, selected, tiers, tools],
@@ -50,10 +52,11 @@ export function ToolSummary({
   const chosenGroups = useMemo(() => {
     const chosen = new Set(selected);
     return groupToolsByResource(
-      tools.filter((tool) => chosen.has(tool.name)),
+      selectable.filter((tool) => chosen.has(tool.name)),
       selected,
     );
-  }, [selected, tools]);
+  }, [selectable, selected]);
+  const chosenCount = summary.reads + summary.changes;
 
   const remove = useCallback(
     (name: string) => {
@@ -124,8 +127,8 @@ export function ToolSummary({
   }
 
   const totals =
-    selected.length === 0
-      ? t("Answers only. It can look nothing up and change nothing.")
+    chosenCount === 0
+      ? t("No task tools. It can still recall, remember and escalate.")
       : [
           t("{0, plural, one {# read} other {# reads}}", summary.reads),
           summary.changes > 0
@@ -142,9 +145,28 @@ export function ToolSummary({
         <p className="text-muted-foreground min-w-0 truncate text-xs">{totals}</p>
         <Button type="button" size="xs" variant="outline" onClick={() => setOpen(true)}>
           <SlidersHorizontalIcon className="size-3" />
-          {selected.length === 0 ? t("Choose tools") : t("Change tools")}
+          {chosenCount === 0 ? t("Choose tools") : t("Change tools")}
         </Button>
       </div>
+
+      {core.length > 0 && (
+        <div className="border-border flex flex-wrap items-center gap-1.5 border-t px-3 py-2">
+          <span className="text-muted-foreground mr-1 shrink-0 text-xs font-medium">
+            {t("Always on")}
+          </span>
+          <ul aria-label={t("Always on")} className="contents">
+            {core.map((tool) => (
+              <li
+                key={tool.name}
+                title={tool.description}
+                className="bg-sunken text-muted-foreground inline-flex h-6 max-w-full items-center rounded-full px-2 text-xs"
+              >
+                <span className="truncate">{toolTitle(tool)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* The chosen list is windowed under a ceiling of its own. An agent
           holding the whole catalog would otherwise mount fifty chips and run
@@ -164,7 +186,7 @@ export function ToolSummary({
       <ToolPickerDialog
         open={open}
         onOpenChange={setOpen}
-        tools={tools}
+        tools={selectable}
         selected={selected}
         tiers={tiers}
         ceiling={ceiling}

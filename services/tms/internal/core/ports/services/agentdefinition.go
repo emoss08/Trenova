@@ -78,6 +78,7 @@ type ToolCatalogEntry struct {
 	Operation           permission.Operation `json:"operation"`
 	DefaultAutonomyTier agent.AutonomyTier   `json:"defaultAutonomyTier"`
 	Reversible          bool                 `json:"reversible"`
+	Core                bool                 `json:"core"`
 }
 
 type PreviewPromptRequest struct {

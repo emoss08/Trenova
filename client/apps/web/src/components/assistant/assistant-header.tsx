@@ -134,7 +134,7 @@ export function AssistantHeader({
                       <span className="truncate">{agent.name}</span>
                       <Badge variant="neutral" className="h-4 px-1 text-2xs">
                         {agent.toolNames.length === 0
-                          ? t("Answers only")
+                          ? t("No task tools")
                           : t("{0, plural, one {# tool} other {# tools}}", agent.toolNames.length)}
                       </Badge>
                     </span>

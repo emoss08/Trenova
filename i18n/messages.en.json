@@ -13172,6 +13172,15 @@
       "apps/web/lib"
     ]
   },
+  "Always on": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Always require approval": {
     "sites": 1,
     "scope": [
@@ -15096,26 +15105,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Answers only": {
-    "sites": 3,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components",
-      "routes/agent-control",
-      "routes/desk"
-    ]
-  },
-  "Answers only. It can look nothing up and change nothing.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Anthropic": {
@@ -99597,6 +99586,26 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "No task tools": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/agent-control",
+      "routes/desk"
+    ]
+  },
+  "No task tools. It can still recall, remember and escalate.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No tasks assigned": {

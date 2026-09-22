@@ -216,6 +216,8 @@ export const toolCatalogEntrySchema = z.object({
   operation: z.string(),
   defaultAutonomyTier: z.string().optional().default(""),
   reversible: z.boolean().default(false),
+  /** Held by every agent without being chosen: memory, escalation, review. */
+  core: z.boolean().default(false),
 });
 
 export const toolCatalogSchema = z.object({

@@ -155,7 +155,8 @@ func operationValues(t *testing.T) map[string]permission.Operation {
 }
 
 // backgroundTools are the tools the templates that run without a person
-// list, which is the set an agent principal has to be able to call.
+// hold — their starters and the core tools every agent carries — which is the
+// set an agent principal has to be able to call.
 func backgroundTools(t *testing.T) map[string][]agentdefinition.Template {
 	t.Helper()
 
@@ -167,6 +168,9 @@ func backgroundTools(t *testing.T) map[string][]agentdefinition.Template {
 		for _, tool := range template.StarterTools() {
 			out[tool] = append(out[tool], template)
 		}
+		for _, tool := range agentdefinition.CoreTools() {
+			out[tool] = append(out[tool], template)
+		}
 	}
 	require.NotEmpty(t, out)
 
@@ -176,21 +180,8 @@ func backgroundTools(t *testing.T) map[string][]agentdefinition.Template {
 func TestEveryToolADeskRunsOnIsOneAnAgentMayCall(t *testing.T) {
 	t.Parallel()
 
-	// These are named by a desk but are answered by the loop rather than
-	// registered as tools, so there is nothing to look up.
-	loopAnswered := map[string]struct{}{
-		"raise_exception":        {},
-		"flag_for_manual_review": {},
-		"recall_memory":          {},
-		"remember":               {},
-	}
-
 	permissions := toolPermissions(t)
 	for name, templates := range backgroundTools(t) {
-		if _, ok := loopAnswered[name]; ok {
-			continue
-		}
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -230,12 +221,9 @@ func TestTheAllowListGrantsNothingNoToolClaims(t *testing.T) {
 			permission.OpCreate: "the loop raises proposals, not a tool",
 		},
 		permission.ResourceAgentException: {
-			permission.OpRead:   "the loop reads its own exceptions",
-			permission.OpCreate: "raise_exception is answered by the loop",
+			permission.OpRead: "the loop reads its own exceptions",
 		},
 		permission.ResourceAgentMemory: {
-			permission.OpRead:   "recall_memory is answered by the loop",
-			permission.OpCreate: "remember is answered by the loop",
 			permission.OpUpdate: "remember overwrites what it wrote before",
 		},
 		permission.ResourceWatchtower: {

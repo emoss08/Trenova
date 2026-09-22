@@ -49,6 +49,7 @@ func buildToolCatalog(
 			Resource:    tool.PermissionResource(),
 			Operation:   permission.OpRead,
 			Reversible:  true,
+			Core:        agentdefinition.IsCoreTool(tool.Name()),
 		})
 	}
 
@@ -62,6 +63,7 @@ func buildToolCatalog(
 			Operation:           tool.PermissionOperation(),
 			DefaultAutonomyTier: tool.DefaultAutonomyTier(),
 			Reversible:          tool.Reversible(),
+			Core:                agentdefinition.IsCoreTool(tool.Name()),
 		})
 	}
 

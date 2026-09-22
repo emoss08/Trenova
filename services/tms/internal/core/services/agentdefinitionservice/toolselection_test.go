@@ -202,3 +202,34 @@ func TestApply_ClearsTriggerFieldsThatDoNotBelongToTheMode(t *testing.T) {
 	assert.Equal(t, agentdefinition.DefaultMaxToolCalls, d.MaxToolCalls)
 	assert.Equal(t, agentdefinition.OutputConversational, d.OutputMode)
 }
+
+// A saved selection never stores a core tool. A client that still sends one —
+// an older builder, or a definition loaded before the core set existed — is not
+// an error, but it must not come back as a choice the organization made.
+func TestApply_StoresNoCoreTool(t *testing.T) {
+	t.Parallel()
+
+	d := &agentdefinition.Definition{}
+	apply(d, &serviceports.SaveAgentDefinitionRequest{
+		Name:      "Report builder",
+		ToolNames: []string{"recall_memory", " list_reports ", "remember", "create_report"},
+	})
+
+	assert.Equal(t, []string{"list_reports", "create_report"}, d.ToolNames)
+}
+
+func TestBuildToolCatalog_MarksTheCoreTools(t *testing.T) {
+	t.Parallel()
+
+	actions, queries := testRegistries()
+	queries.Tools = append(queries.Tools,
+		&agentruntimetest.StubQueryTool{ToolName: "recall_memory", Resource: permission.ResourceAgentMemory})
+
+	byName := make(map[string]serviceports.ToolCatalogEntry)
+	for _, entry := range buildToolCatalog(actions, queries) {
+		byName[entry.Name] = entry
+	}
+
+	assert.True(t, byName["recall_memory"].Core)
+	assert.False(t, byName["get_shipment"].Core)
+}

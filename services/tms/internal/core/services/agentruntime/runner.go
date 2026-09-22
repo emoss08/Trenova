@@ -407,9 +407,10 @@ const truncationNotice = "\n\n_This reply was cut off before it finished. " +
 func (s *Service) ToolSummaries(
 	definition *agentdefinition.Definition,
 ) []agentdefinition.ToolSummary {
-	summaries := make([]agentdefinition.ToolSummary, 0, len(definition.ToolNames))
+	names := definition.EffectiveToolNames()
+	summaries := make([]agentdefinition.ToolSummary, 0, len(names))
 
-	for _, name := range definition.ToolNames {
+	for _, name := range names {
 		if tool, ok := s.queryTools.Get(name); ok {
 			summaries = append(summaries, agentdefinition.ToolSummary{
 				Name:        tool.Name(),

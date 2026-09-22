@@ -26,6 +26,7 @@ function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
     operation: "read",
     defaultAutonomyTier: "",
     reversible: false,
+    core: false,
     ...overrides,
   };
 }
@@ -34,6 +35,7 @@ const catalog = [
   tool({ name: "get_shipment" }),
   tool({ name: "cancel_shipment", kind: "action" }),
   tool({ name: "list_workers", resource: "worker" }),
+  tool({ name: "recall_memory", resource: "agent_memory", core: true }),
 ];
 
 function renderSummary(selected: string[]) {
@@ -80,10 +82,32 @@ describe("ToolSummary", () => {
     expect(onSelectedChange).toHaveBeenCalledWith(["get_shipment"]);
   });
 
-  it("says plainly when the agent can only answer", () => {
+  // An agent with no task tools still recalls and escalates, so "answers
+  // only" would be false.
+  it("says what an agent with no task tools can still do", () => {
     renderSummary([]);
 
-    expect(screen.getByText(/answers only/i)).toBeInTheDocument();
+    expect(screen.getByText(/no task tools/i)).toBeInTheDocument();
+    expect(screen.queryByText(/answers only/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /choose tools/i })).toBeInTheDocument();
+  });
+
+  it("shows the always-on tools, and none can be removed", () => {
+    renderSummary(["get_shipment"]);
+
+    const alwaysOn = screen.getByRole("list", { name: /always on/i });
+    expect(alwaysOn).toHaveTextContent(/recall/i);
+    expect(screen.queryByRole("button", { name: /remove recall/i })).not.toBeInTheDocument();
+  });
+
+  it("never offers a core tool as a choice, even through All reads", async () => {
+    const { onSelectedChange } = renderSummary([]);
+
+    await userEvent.click(screen.getByRole("button", { name: /choose tools/i }));
+    await screen.findByRole("dialog");
+    expect(screen.queryByRole("checkbox", { name: /recall/i })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /all reads/i }));
+    expect(onSelectedChange).toHaveBeenCalledWith(["get_shipment", "list_workers"]);
   });
 });

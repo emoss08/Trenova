@@ -92,21 +92,28 @@ func (s *Service) newToolSet(
 	// ranked and offered, and denied only when called, which taught the
 	// model that the system refuses rather than that this person lacks the
 	// right; the denial also named the resource they lacked.
-	allowed := s.permittedTools(ctx, actor, definition.ToolNames)
-	configured := s.configuredSpecs(allowed)
+	allowed := s.permittedTools(ctx, actor, definition.EffectiveToolNames())
+	selected := agentdefinition.WithoutCoreTools(allowed)
+	configured := s.configuredSpecs(selected)
 
 	set := &toolSet{
-		loaded:  make(map[string]struct{}, len(configured)),
+		loaded:  make(map[string]struct{}, len(allowed)),
 		allowed: allowed,
 		usable: func(name string) bool {
 			return len(s.permittedTools(ctx, actor, []string{name})) == 1
 		},
 	}
 
+	// The core tools ride on every turn and do not count toward narrowing: a
+	// turn that opened with eight slots would otherwise spend half of them on
+	// memory and escalation before reaching the work it was asked to do.
+	for _, spec := range s.configuredSpecs(coreOf(allowed)) {
+		set.add(spec)
+	}
+
 	if len(configured) <= disclosureThreshold || s.catalog == nil {
-		set.specs = configured
 		for _, spec := range configured {
-			set.loaded[spec.Name] = struct{}{}
+			set.add(spec)
 		}
 		if !unattended {
 			set.add(askUserSpec())
@@ -116,7 +123,7 @@ func (s *Service) newToolSet(
 	}
 
 	set.disclosed = true
-	for _, descriptor := range s.catalog.Rank(allowed, input, preselectedTools) {
+	for _, descriptor := range s.catalog.Rank(selected, input, preselectedTools) {
 		set.add(toSpec(descriptor))
 	}
 	set.specs = append(set.specs, findToolsSpec())
@@ -313,6 +320,17 @@ func (s *Service) configuredSpecs(names []string) []serviceports.ToolSpec {
 	}
 
 	return specs
+}
+
+func coreOf(names []string) []string {
+	core := make([]string, 0, len(names))
+	for _, name := range names {
+		if agentdefinition.IsCoreTool(name) {
+			core = append(core, name)
+		}
+	}
+
+	return core
 }
 
 func toSpec(descriptor serviceports.AgentToolDescriptor) serviceports.ToolSpec {

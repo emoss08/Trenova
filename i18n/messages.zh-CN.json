@@ -1569,8 +1569,6 @@
   "Answer recorded": "已记录答复",
   "Answered on": "答复日期",
   "Answered without the drug and alcohol history (49 CFR 382.413).": "答复时未含药物与酒精记录 (49 CFR 382.413)。",
-  "Answers only": "仅回答",
-  "Answers only. It can look nothing up and change nothing.": "仅回答，无法查询或更改任何内容。",
   "Anthropic": "Anthropic",
   "Anthropic Messages": "Anthropic Messages",
   "Anthropic's API, and any endpoint serving the same shape such as Amazon Bedrock.": "Anthropic 的 API，以及采用相同格式的任何端点，例如 Amazon Bedrock。",

@@ -35,6 +35,23 @@ export type ToolGroup = {
   chosen: number;
 };
 
+/**
+ * The catalog split into the tools every agent holds and the ones an
+ * administrator chooses. The server strips core tools from a saved selection,
+ * so offering one as a choice would be a checkbox that does nothing.
+ */
+export function splitCoreTools(tools: readonly ToolCatalogEntry[]): {
+  core: ToolCatalogEntry[];
+  selectable: ToolCatalogEntry[];
+} {
+  const core: ToolCatalogEntry[] = [];
+  const selectable: ToolCatalogEntry[] = [];
+  for (const tool of tools) {
+    (tool.core ? core : selectable).push(tool);
+  }
+  return { core, selectable };
+}
+
 /** The title an administrator reads for a tool, from the same words the chat uses. */
 export function toolTitle(tool: ToolCatalogEntry): string {
   return describeToolCall(tool.name, null).title;
@@ -135,6 +152,9 @@ export function summarizeSelection(
     const tool = byName.get(name);
     if (!tool) {
       summary.unknown.push(name);
+      continue;
+    }
+    if (tool.core) {
       continue;
     }
     if (tool.kind === "query") {

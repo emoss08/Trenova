@@ -283,7 +283,7 @@ func apply(definition *agentdefinition.Definition, req *services.SaveAgentDefini
 	definition.Template = req.Template
 	definition.Instructions = strings.TrimSpace(req.Instructions)
 	definition.Guardrails = trimAll(req.Guardrails)
-	definition.ToolNames = trimAll(req.ToolNames)
+	definition.ToolNames = agentdefinition.WithoutCoreTools(trimAll(req.ToolNames))
 	definition.ToolTiers = copyTiers(req.ToolTiers)
 	definition.AutonomyCeiling = req.AutonomyCeiling
 	definition.Enabled = req.Enabled

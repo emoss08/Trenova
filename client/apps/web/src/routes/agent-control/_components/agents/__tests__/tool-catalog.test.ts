@@ -4,6 +4,7 @@ import {
   effectiveTier,
   groupToolsByResource,
   resourceLabel,
+  splitCoreTools,
   summarizeSelection,
   toggleTool,
 } from "../tool-catalog";
@@ -18,6 +19,7 @@ function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
     operation: "read",
     defaultAutonomyTier: "",
     reversible: false,
+    core: false,
     ...overrides,
   };
 }
@@ -90,5 +92,36 @@ describe("toggleTool", () => {
     const removed = toggleTool(["a", "b"], { a: "Propose", b: "AutoExecute" }, "b", false);
     expect(removed.selected).toEqual(["a"]);
     expect(removed.tiers).toEqual({ a: "Propose" });
+  });
+});
+
+/**
+ * Memory, escalation and review are held by every agent. The server marks
+ * them core and strips them from a saved selection, so the picker must never
+ * offer them as a choice or count them as one.
+ */
+describe("core tools", () => {
+  const withCore = [
+    ...catalog,
+    tool({ name: "recall_memory", resource: "agent_memory", core: true }),
+    tool({ name: "remember", kind: "action", resource: "agent_memory", core: true }),
+  ];
+
+  it("splits the always-on tools from the ones an agent chooses", () => {
+    const { core, selectable } = splitCoreTools(withCore);
+
+    expect(core.map((t) => t.name)).toEqual(["recall_memory", "remember"]);
+    expect(selectable.map((t) => t.name)).toEqual(catalog.map((t) => t.name));
+  });
+
+  it("does not count a core tool an older agent still lists", () => {
+    const summary = summarizeSelection(
+      ["get_shipment", "recall_memory", "remember"],
+      withCore,
+      {},
+      "Propose",
+    );
+
+    expect(summary).toMatchObject({ reads: 1, changes: 0, unknown: [] });
   });
 });

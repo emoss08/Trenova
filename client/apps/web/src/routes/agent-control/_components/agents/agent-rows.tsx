@@ -172,7 +172,7 @@ export function AgentRow({
         <span className="inline-flex items-center gap-1">
           <WrenchIcon className="size-3" />
           {agent.toolNames.length === 0
-            ? t("Answers only")
+            ? t("No task tools")
             : t("{0, plural, one {# tool} other {# tools}}", agent.toolNames.length)}
         </span>
         <ScheduleSummary agent={agent} />
