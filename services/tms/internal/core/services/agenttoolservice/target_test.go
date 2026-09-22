@@ -51,6 +51,9 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 		resource permission.Resource
 	}{
 		{&addShipmentCommentTool{}, "shipmentId", permission.ResourceShipment},
+		// The document, not the shipment: attaching changes the document's
+		// lineage, so that is the record whose version the proposal pins.
+		{&attachDocumentTool{}, "documentId", permission.ResourceDocument},
 		{&placeShipmentHoldTool{}, "shipmentId", permission.ResourceShipment},
 		{&releaseShipmentHoldTool{}, "shipmentId", permission.ResourceShipment},
 		{&cancelShipmentTool{}, "shipmentId", permission.ResourceShipment},

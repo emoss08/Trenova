@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
@@ -28,7 +29,7 @@ var Module = fx.Module("agent-tool-service",
 		fx.Annotate(newScheduleReportTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(newCreateTableChangeAlertTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(newRequestMissingDocsTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newAttachDocumentTool, fx.ResultTags(`group:"agent_tools"`)),
+		fx.Annotate(provideAttachDocumentTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(newFlagManualReviewTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(newAssignMoveTool, fx.ResultTags(`group:"agent_tools"`)),
 		fx.Annotate(newRaiseExceptionTool, fx.ResultTags(`group:"agent_tools"`)),
@@ -211,4 +212,10 @@ func provideAcknowledgeCarrierIntelEventTool(
 
 func provideResolveCarrierIntelEventTool(intel *carrierintelservice.Service) services.AgentTool {
 	return newResolveCarrierIntelEventTool(intel)
+}
+
+// The tool takes a narrow interface so it can be tested without the whole
+// document stack; fx holds the concrete service, so the widening happens here.
+func provideAttachDocumentTool(documents *documentservice.Service) services.AgentTool {
+	return newAttachDocumentTool(documents)
 }

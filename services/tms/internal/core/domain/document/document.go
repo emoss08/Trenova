@@ -122,6 +122,31 @@ func (s ShipmentDraftStatus) IsValid() bool {
 	return false
 }
 
+// AllProcessingProfiles is the whole set, so a caller that has to reason about
+// which of them do what reads the list rather than repeating it.
+func AllProcessingProfiles() []ProcessingProfile {
+	return []ProcessingProfile{
+		ProcessingProfileNone,
+		ProcessingProfileRateConfirmationImport,
+		ProcessingProfileAssistantAttachment,
+		ProcessingProfileInboundAttachment,
+	}
+}
+
+// IntelligenceProcessingProfiles are the ones a document is read under. It is
+// derived from SupportsIntelligence rather than listed again, so the two cannot
+// disagree about which documents get opened.
+func IntelligenceProcessingProfiles() []ProcessingProfile {
+	profiles := make([]ProcessingProfile, 0, len(AllProcessingProfiles()))
+	for _, profile := range AllProcessingProfiles() {
+		if profile.SupportsIntelligence() {
+			profiles = append(profiles, profile)
+		}
+	}
+
+	return profiles
+}
+
 func (p ProcessingProfile) IsValid() bool {
 	switch p {
 	case ProcessingProfileNone,

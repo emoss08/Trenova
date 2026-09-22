@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -66,6 +67,12 @@ var lookups = map[permission.Resource]lookup{
 		scope:   buncolgen.ShipmentMoveScopeTenant,
 		idEq:    buncolgen.ShipmentMoveColumns.ID.Eq(),
 		version: func(v versioned) int64 { return v.(*shipment.ShipmentMove).Version },
+	},
+	permission.ResourceDocument: {
+		model:   func() versioned { return new(document.Document) },
+		scope:   buncolgen.DocumentScopeTenant,
+		idEq:    buncolgen.DocumentColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*document.Document).Version },
 	},
 	permission.ResourceDashboard: {
 		model:   func() versioned { return new(report.Dashboard) },

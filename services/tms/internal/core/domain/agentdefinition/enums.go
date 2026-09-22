@@ -476,7 +476,7 @@ func (t Template) StarterTools() []string {
 			"transition_item_to_in_review",
 			"correct_charge_code",
 			"request_missing_docs",
-			"attach_document_to_bqi",
+			"attach_document_to_shipment",
 			"flag_for_manual_review",
 			"raise_exception",
 		}

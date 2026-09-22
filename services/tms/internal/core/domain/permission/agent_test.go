@@ -29,7 +29,7 @@ func TestIsAgentAllowedCoversWhatTheRegisteredToolsNeed(t *testing.T) {
 		{permission.ResourceBillingQueue, permission.OpRead},
 		{permission.ResourceBillingQueue, permission.OpUpdate},
 		{permission.ResourceDocument, permission.OpRead},
-		{permission.ResourceDocument, permission.OpCreate},
+		{permission.ResourceDocument, permission.OpUpdate},
 		{permission.ResourceAgentException, permission.OpCreate},
 		{permission.ResourceWorkerCredential, permission.OpRead},
 		{permission.ResourceDriverMessage, permission.OpCreate},

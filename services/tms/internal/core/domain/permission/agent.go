@@ -140,8 +140,11 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpUpdate: {},
 	},
 	ResourceDocument: {
-		OpRead:   {},
-		OpCreate: {},
+		OpRead: {},
+		// Update, not create. An agent attaches a document that already exists
+		// to the record it belongs to; it has no way to put bytes into storage,
+		// so a create grant would be a permission nothing can use.
+		OpUpdate: {},
 	},
 	ResourceAgentRun: {
 		OpRead:   {},

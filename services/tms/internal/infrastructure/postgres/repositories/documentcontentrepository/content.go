@@ -234,8 +234,14 @@ func applyPendingDocumentExtractionFilters(q *bun.SelectQuery) *bun.SelectQuery 
 	docCols := buncolgen.DocumentColumns
 	contentCols := buncolgen.ContentColumns
 
+	// The profile is the whole gate on whether a document is ever read, and
+	// EnqueueExtraction is the only place it was being checked. The reconcile
+	// starts the workflow directly, so without this it re-drove every active
+	// document with no content row — running OCR and a model over files whose
+	// profile says plainly not to, ten minutes after they landed.
 	return q.
 		Where(docCols.Status.Eq(), document.StatusActive).
+		Where(docCols.ProcessingProfile.In(), bun.In(document.IntelligenceProcessingProfiles())).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.WhereGroup(" OR ", func(orq *bun.SelectQuery) *bun.SelectQuery {
 				return orq.
