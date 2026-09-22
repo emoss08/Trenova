@@ -919,6 +919,15 @@
       "routes/driver-settlement"
     ]
   },
+  "30 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "30 minutes": {
     "sites": 1,
     "scope": [
@@ -1122,7 +1131,7 @@
     ]
   },
   "7 days": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -1156,6 +1165,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "90 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "90+ Days": {
@@ -16509,7 +16527,7 @@
     ]
   },
   "Approved": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -16520,6 +16538,7 @@
       "domain/worker",
       "packages/shared/components",
       "packages/shared/lib",
+      "routes/agent-control",
       "routes/carrier-settlement",
       "routes/carrier-settlement-workspace",
       "routes/driver-expense",
@@ -37271,12 +37290,13 @@
     ]
   },
   "Cost": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/shipment"
     ]
   },
@@ -38104,6 +38124,15 @@
     ],
     "areas": [
       "routes/pto-policy"
+    ]
+  },
+  "Counted from this agent's runs, its proposals and what it cost. Time saved is an estimate: it prices the clerical work a carried-out change replaces, never the decision to allow it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Counted once per role across the route, not once per state.": {
@@ -72553,6 +72582,15 @@
       "routes/customer"
     ]
   },
+  "How it has been doing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "How it is taken": {
     "sites": 1,
     "scope": [
@@ -99778,11 +99816,12 @@
     ]
   },
   "Not yet": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/invoice"
     ]
   },
@@ -134484,7 +134523,7 @@
     ]
   },
   "Runs": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -162701,6 +162740,15 @@
       "apps/web/components"
     ]
   },
+  "This agent has not run in this window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This allocation is already carried on a posted invoice and cannot change": {
     "sites": 1,
     "scope": [
@@ -166085,6 +166133,15 @@
       "routes/edi"
     ]
   },
+  "Time saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Time window": {
     "sites": 1,
     "scope": [
@@ -167776,7 +167833,7 @@
     ]
   },
   "Track record": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -182766,6 +182823,15 @@
       "routes/admin"
     ]
   },
+  "You cannot read this agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentscorecardservice"
+    ]
+  },
   "You cannot see this watchtower item": {
     "sites": 1,
     "scope": [
@@ -188964,6 +189030,15 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {# approved change did not run} other {# approved changes did not run}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0, plural, one {# assertion} other {# assertions}}": {
     "sites": 1,
     "scope": [
@@ -189062,6 +189137,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {# change ran without being asked} other {# changes ran without being asked}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {# change rejected} other {# changes rejected}}": {
@@ -189276,6 +189360,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "{0, plural, one {# exception raised} other {# exceptions raised}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0, plural, one {# factor} other {# factors}} contributed nothing": {
     "sites": 1,
     "scope": [
@@ -189283,6 +189376,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "{0, plural, one {# failed run} other {# failed runs}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {# field} other {# fields}}": {
@@ -189936,11 +190038,12 @@
     ]
   },
   "{0, plural, one {# waiting} other {# waiting}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/desk"
     ]
   },
@@ -190928,7 +191031,7 @@
     ]
   },
   "{0} failed": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -192189,6 +192292,15 @@
       "routes/time-attendance"
     ]
   },
+  "{0} of {1} approved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} of {1} chosen": {
     "sites": 2,
     "scope": [
@@ -192669,6 +192781,15 @@
     ]
   },
   "{0} regressed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} rejected": {
     "sites": 1,
     "scope": [
       "ts"
@@ -194149,12 +194270,31 @@
       "routes/shipment"
     ]
   },
-  "{0}m": {
+  "{0}h": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0}h {1}m": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0}m": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
       "routes/time-attendance"
     ]
   },

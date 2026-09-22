@@ -1,0 +1,49 @@
+fragment AgentScorecardFields on AgentScorecard {
+  agentDefinitionId
+  window
+  since
+  runs
+  runsFailed
+  exceptions
+  proposals
+  approved
+  modified
+  rejected
+  pending
+  executed
+  executionFailures
+  autoExecuted
+  approvalRate
+  inputTokens
+  outputTokens
+  costUsd
+  estimatedMinutesSaved
+  byTool {
+    toolName
+    approved
+    modified
+    rejected
+    executed
+    failed
+    pending
+    automatic
+  }
+  toolTrust {
+    toolName
+    streak
+    approvals
+    modifications
+    rejections
+    executionFailures
+    earnedTier
+    lastDecisionAt
+    promotedAt
+    demotedAt
+  }
+}
+
+query AgentScorecard($input: AgentScorecardInput!) {
+  agentScorecard(input: $input) {
+    ...AgentScorecardFields
+  }
+}

@@ -219,6 +219,7 @@ type Params struct {
 	AgentDecisionService         services.AgentDecisionService
 	AgentDecisionQueueService    services.AgentDecisionQueueService
 	WatchtowerService            services.WatchtowerService
+	AgentScorecardService        services.AgentScorecardService
 	BriefingService              services.BriefingService
 	AgentTools                   services.AgentToolRegistry
 	AgentControlService          services.AgentControlService
@@ -371,6 +372,7 @@ type Resolver struct {
 	agentDecisionService         services.AgentDecisionService
 	agentDecisionQueueService    services.AgentDecisionQueueService
 	watchtowerService            services.WatchtowerService
+	agentScorecardService        services.AgentScorecardService
 	briefingService              services.BriefingService
 	agentTools                   services.AgentToolRegistry
 	agentControlService          services.AgentControlService
@@ -524,6 +526,7 @@ func New(p Params) *Resolver {
 		agentDecisionService:         p.AgentDecisionService,
 		agentDecisionQueueService:    p.AgentDecisionQueueService,
 		watchtowerService:            p.WatchtowerService,
+		agentScorecardService:        p.AgentScorecardService,
 		briefingService:              p.BriefingService,
 		agentTools:                   p.AgentTools,
 		agentControlService:          p.AgentControlService,

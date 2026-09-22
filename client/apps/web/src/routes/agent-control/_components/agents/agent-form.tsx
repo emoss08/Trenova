@@ -36,6 +36,7 @@ import { PromptPreviewSheet } from "./prompt-preview-sheet";
 import { applyTemplateStarter } from "./template-fill";
 import { TemplatePicker } from "./template-picker";
 import { ToolSummary } from "./tool-summary";
+import { AgentScorecardPanel } from "./scorecard";
 import { TrackRecordSection } from "./track-record";
 import { BudgetStatusSection, ToolLimitsField } from "./budget";
 
@@ -397,6 +398,17 @@ export function AgentForm({ mode, agentId = "", systemKey = "" }: AgentFormProps
         </FormGroup>
         {mode === "edit" && agentId !== "" && <BudgetStatusSection agentId={agentId} />}
       </FormSection>
+
+      {mode === "edit" && agentId !== "" && (
+        <FormSection
+          title={t("How it has been doing")}
+          description={t(
+            "Counted from this agent's runs, its proposals and what it cost. Time saved is an estimate: it prices the clerical work a carried-out change replaces, never the decision to allow it.",
+          )}
+        >
+          <AgentScorecardPanel agentDefinitionId={agentId} />
+        </FormSection>
+      )}
 
       {mode === "edit" && agentId !== "" && (
         <FormSection

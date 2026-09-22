@@ -7546,6 +7546,25 @@ func (ec *executionContext) marshalNAgentType2githubᚗcomᚋemoss08ᚋtrenova�
 	return res
 }
 
+func (ec *executionContext) unmarshalOAgentAutonomyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAutonomyTier(ctx context.Context, v any) (*agent.AutonomyTier, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := agent.AutonomyTier(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAgentAutonomyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAutonomyTier(ctx context.Context, sel ast.SelectionSet, v *agent.AutonomyTier) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
 func (ec *executionContext) marshalOAgentDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAgentDecision(ctx context.Context, sel ast.SelectionSet, v *agent.AgentDecision) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null

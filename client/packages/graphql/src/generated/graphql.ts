@@ -249,6 +249,17 @@ export type AgentRunTrigger =
   | 'Manual'
   | 'Scheduled';
 
+export type AgentScorecardInput = {
+  agentDefinitionId: string | number;
+  window?: AgentScorecardWindow | null | undefined;
+};
+
+/** How far back a scorecard looks. */
+export type AgentScorecardWindow =
+  | 'Last7Days'
+  | 'Last30Days'
+  | 'Last90Days';
+
 export type AgentSeverity =
   | 'Critical'
   | 'High'
@@ -5997,6 +6008,15 @@ export type ArCustomerProfileQueryVariables = Exact<{
 
 
 export type ArCustomerProfileQuery = { arCustomerProfile: { dsoDays: number, creditUtilization: number, delinquencyScore: number, snapshot: { customerId: string, customerName: string, totalOpenMinor: number, overdueMinor: number, unappliedCashMinor: number, creditLimitMinor: number, hasCreditLimit: boolean, openInvoiceCount: number, oldestOpenInvoiceDate: number, oldestDaysPastDue: number, lastPaymentDate: number, lastPaymentMinor: number, avgDaysToPay: number, billedTrailing91Minor: number, buckets: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number }, monthlyCollections: Array<{ monthStart: number, amountMinor: number }> } } };
+
+export type AgentScorecardFieldsFragment = { agentDefinitionId: string, window: AgentScorecardWindow, since: number, runs: number, runsFailed: number, exceptions: number, proposals: number, approved: number, modified: number, rejected: number, pending: number, executed: number, executionFailures: number, autoExecuted: number, approvalRate: number | null, inputTokens: number, outputTokens: number, costUsd: string, estimatedMinutesSaved: number, byTool: Array<{ toolName: string, approved: number, modified: number, rejected: number, executed: number, failed: number, pending: number, automatic: number }>, toolTrust: Array<{ toolName: string, streak: number, approvals: number, modifications: number, rejections: number, executionFailures: number, earnedTier: AgentAutonomyTier | null, lastDecisionAt: number | null, promotedAt: number | null, demotedAt: number | null }> } & { ' $fragmentName'?: 'AgentScorecardFieldsFragment' };
+
+export type AgentScorecardQueryVariables = Exact<{
+  input: AgentScorecardInput;
+}>;
+
+
+export type AgentScorecardQuery = { agentScorecard: { ' $fragmentRefs'?: { 'AgentScorecardFieldsFragment': AgentScorecardFieldsFragment } } };
 
 export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
 
@@ -12113,6 +12133,51 @@ export const LateChargeAssessmentResultFieldsFragmentDoc = new TypedDocumentStri
   }
 }
     `, {"fragmentName":"LateChargeAssessmentResultFields"}) as unknown as TypedDocumentString<LateChargeAssessmentResultFieldsFragment, unknown>;
+export const AgentScorecardFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentScorecardFields on AgentScorecard {
+  agentDefinitionId
+  window
+  since
+  runs
+  runsFailed
+  exceptions
+  proposals
+  approved
+  modified
+  rejected
+  pending
+  executed
+  executionFailures
+  autoExecuted
+  approvalRate
+  inputTokens
+  outputTokens
+  costUsd
+  estimatedMinutesSaved
+  byTool {
+    toolName
+    approved
+    modified
+    rejected
+    executed
+    failed
+    pending
+    automatic
+  }
+  toolTrust {
+    toolName
+    streak
+    approvals
+    modifications
+    rejections
+    executionFailures
+    earnedTier
+    lastDecisionAt
+    promotedAt
+    demotedAt
+  }
+}
+    `, {"fragmentName":"AgentScorecardFields"}) as unknown as TypedDocumentString<AgentScorecardFieldsFragment, unknown>;
 export const AgentControlFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentControlFields on AgentControl {
   id
@@ -18935,6 +19000,7 @@ export const ArTopOverdueCustomersDocument = {"__meta__":{"kind":"query","name":
 export const ArCollectionsWorklistDocument = {"__meta__":{"kind":"query","name":"ArCollectionsWorklist","hash":"sha256:73b418ffccc6ba72bbf8790bc8292b65324d7044cc72d811dd32877da5496f2a"}} as unknown as TypedDocumentString<ArCollectionsWorklistQuery, ArCollectionsWorklistQueryVariables>;
 export const ArPaymentStatsDocument = {"__meta__":{"kind":"query","name":"ArPaymentStats","hash":"sha256:a4fe33f6233932aadde3e5ec2e4dc656c78b2e73188bab35638f674c3045bbeb"}} as unknown as TypedDocumentString<ArPaymentStatsQuery, ArPaymentStatsQueryVariables>;
 export const ArCustomerProfileDocument = {"__meta__":{"kind":"query","name":"ArCustomerProfile","hash":"sha256:b82086fc8a84f2dcc1c322b26634a1465bf4d240b6a5ff5f9bfd36300fbe7b37"}} as unknown as TypedDocumentString<ArCustomerProfileQuery, ArCustomerProfileQueryVariables>;
+export const AgentScorecardDocument = {"__meta__":{"kind":"query","name":"AgentScorecard","hash":"sha256:4ad32e77a6c5d07bddbf798b32093cb772102fd0a3a232f14c6c0e1136dc699f"}} as unknown as TypedDocumentString<AgentScorecardQuery, AgentScorecardQueryVariables>;
 export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:a44ebbd4e0c314668190068941ad623cefb3b405b0fb345a4dfe58072465cf70"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
 export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:5f38f15ae16abb622bccc80b578ce30e1743ab4b89440782ac1b96232f48a2c3"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
 export const PendingDecisionsDocument = {"__meta__":{"kind":"query","name":"PendingDecisions","hash":"sha256:830984fb64f11f16fc179642cec7259c4e9c4274405f3cf81a86367a8bc77a91"}} as unknown as TypedDocumentString<PendingDecisionsQuery, PendingDecisionsQueryVariables>;

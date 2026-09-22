@@ -1,0 +1,108 @@
+"How far back a scorecard looks."
+enum AgentScorecardWindow {
+  Last7Days
+  Last30Days
+  Last90Days
+}
+
+"One tool's record over the window."
+type AgentToolOutcome {
+  toolName: String!
+  approved: Int!
+  modified: Int!
+  rejected: Int!
+  "Proposals that actually went through."
+  executed: Int!
+  "Approved, and then refused by the world."
+  failed: Int!
+  pending: Int!
+  "Writes the trust ladder let through without asking anyone."
+  automatic: Int!
+}
+
+"One day of the trend line."
+type AgentScorecardPoint {
+  day: Timestamp!
+  runs: Int!
+  proposals: Int!
+  approved: Int!
+}
+
+"""
+What one tool has earned on this agent.
+
+The ladder is not windowed: a tier is earned over the agent's whole life and
+taken back the same way, so a thirty-day view of it would describe a
+different ladder from the one deciding what runs without asking.
+"""
+type AgentToolTrust {
+  toolName: String!
+  "Clean approvals in a row. A modification, a rejection or a failure sends it back to zero."
+  streak: Int!
+  approvals: Int!
+  modifications: Int!
+  rejections: Int!
+  executionFailures: Int!
+  "The tier the ledger granted, when the tool's tier was earned rather than chosen."
+  earnedTier: AgentAutonomyTier
+  lastDecisionAt: Timestamp
+  promotedAt: Timestamp
+  demotedAt: Timestamp
+}
+
+"""
+One agent's record, counted at read time from its runs, its proposals and its
+usage. Nothing here is stored, so there is no second copy to drift out of step
+with the rows a person can audit.
+"""
+type AgentScorecard {
+  agentDefinitionId: ID!
+  window: AgentScorecardWindow!
+  "The start of the window."
+  since: Timestamp!
+
+  runs: Int!
+  runsFailed: Int!
+  exceptions: Int!
+
+  proposals: Int!
+  approved: Int!
+  modified: Int!
+  rejected: Int!
+  pending: Int!
+  executed: Int!
+  executionFailures: Int!
+  "Writes carried out without anybody being asked."
+  autoExecuted: Int!
+  """
+  The share of answered proposals approved unchanged, 0 to 1. Absent until
+  somebody has decided: an agent whose first proposal is still waiting has an
+  unknown record, not a zero one.
+  """
+  approvalRate: Float
+
+  inputTokens: Int!
+  outputTokens: Int!
+  costUsd: Decimal!
+
+  """
+  Clerical minutes the carried-out writes took off somebody. An estimate,
+  and labelled as one wherever it is shown: it prices finding the record and
+  typing the change, never deciding whether the change was right.
+  """
+  estimatedMinutesSaved: Int!
+
+  byTool: [AgentToolOutcome!]!
+  trend: [AgentScorecardPoint!]!
+  toolTrust: [AgentToolTrust!]!
+}
+
+input AgentScorecardInput {
+  agentDefinitionId: ID!
+  window: AgentScorecardWindow = Last30Days
+}
+
+extend type Query {
+  "How one agent has been doing."
+  agentScorecard(input: AgentScorecardInput!): AgentScorecard!
+}

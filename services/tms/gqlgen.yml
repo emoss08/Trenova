@@ -1913,6 +1913,15 @@ models:
   AgentAutonomyTier:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyTier
+  AgentScorecardWindow:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ScorecardWindow
+  AgentToolOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ToolOutcomeCount
+  AgentScorecardPoint:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ScorecardPoint
   AgentSeverity:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.Severity
