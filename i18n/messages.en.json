@@ -77383,7 +77383,7 @@
     ]
   },
   "Invalid owner kind": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -80719,7 +80719,7 @@
     ]
   },
   "Kind is required": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go"
     ],
@@ -102071,11 +102071,12 @@
     ]
   },
   "Occurred at is required": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agent",
       "domain/email",
       "domain/iam",
       "domain/shipmentevent",
@@ -109159,7 +109160,7 @@
     ]
   },
   "Owner id is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -109188,7 +109189,7 @@
     ]
   },
   "Owner kind is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -142045,6 +142046,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Sequence starts at one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Sequence type can only appear once": {
