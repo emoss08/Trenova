@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentplanservice"
 	"github.com/emoss08/trenova/internal/core/services/agentproposalnotifier"
 	"github.com/emoss08/trenova/internal/core/services/agentproposalservice"
+	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentrunservice"
 	"github.com/emoss08/trenova/internal/core/services/agentscorecardservice"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
@@ -177,6 +178,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
+	"github.com/emoss08/trenova/internal/core/services/tablequeryservice"
 	"github.com/emoss08/trenova/internal/core/services/tenantprovisioningservice"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
@@ -309,6 +311,11 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	briefingservice.AsService,
 	agentscorecardservice.New,
 	agentscorecardservice.AsService,
+	// The filter catalog is one value, not a service: what a resource can be
+	// narrowed by is a property of the entity, so the table composer and the
+	// list tools read the same one.
+	agentquerytoolservice.FilterCatalog,
+	tablequeryservice.NewService,
 	agenttrustservice.New,
 	agentproposalnotifier.New,
 	agentdecisionservice.New,
