@@ -44,9 +44,7 @@ func CursorList[T any](
 	}
 
 	cursorColumns := cursorListColumns(params.Filter)
-	for _, column := range cursorColumns {
-		query = query.ColumnExpr("? AS ?", bun.Safe(column.SQLExpression), bun.Ident(column.Alias))
-	}
+	query = selectWithCursorColumns(query, cursorColumns)
 
 	if err := query.Limit(limit + 1).Scan(ctx); err != nil {
 		return nil, err
@@ -68,6 +66,25 @@ func CursorList[T any](
 	}
 
 	return result, nil
+}
+
+func selectWithCursorColumns(
+	query *bun.SelectQuery,
+	columns []pagination.CursorValueColumn,
+) *bun.SelectQuery {
+	if len(columns) == 0 {
+		return query
+	}
+
+	if query.GetTableName() != "" {
+		query = query.ExcludeColumn()
+	}
+
+	for _, column := range columns {
+		query = query.ColumnExpr("? AS ?", bun.Safe(column.SQLExpression), bun.Ident(column.Alias))
+	}
+
+	return query
 }
 
 func cursorValuesFromItems[T any](items []T, count int) ([][]any, error) {

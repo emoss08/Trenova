@@ -59,6 +59,18 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/inbox",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.InboundMessage, Operation.Read),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/inbox/page"))),
+            ),
+            async lazy() {
+              const { InboxPage } = await import("@/routes/inbox/page");
+              return { Component: InboxPage };
+            },
+          },
+          {
             path: "/organization/data-retention",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Organization)),
             async lazy() {
@@ -1899,18 +1911,6 @@ export const routes: RouteObject[] = [
                 },
               },
             ],
-          },
-          {
-            path: "/inbox",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.InboundMessage, Operation.Read),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/inbox/page"))),
-            ),
-            async lazy() {
-              const { InboxPage } = await import("@/routes/inbox/page");
-              return { Component: InboxPage };
-            },
           },
         ],
       },
