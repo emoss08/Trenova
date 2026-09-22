@@ -1065,6 +1065,7 @@ func agentAutomationRouteRefs() []RouteRef {
 			"/api/v1/agent-definitions/templates/",
 			"/api/v1/agent-definitions/:agentID/",
 			"/api/v1/agent-plans/:planID/",
+			"/api/v1/assistant/capabilities/",
 			"/api/v1/assistant/providers/",
 			"/api/v1/assistant/threads/",
 			"/api/v1/assistant/threads/:threadID/",

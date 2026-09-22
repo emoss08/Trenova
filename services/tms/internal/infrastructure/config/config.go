@@ -648,6 +648,11 @@ type AIConfig struct {
 	StreamIdleTimeout time.Duration `mapstructure:"streamIdleTimeout"`
 	MaxRetries        int           `mapstructure:"maxRetries"        validate:"omitempty,min=0,max=10"`
 
+	// DurableTurns answers interactive questions on a worker rather than on
+	// the request that asked. Off leaves the turn running in the request, as
+	// it always did, which is what a developer without a Temporal server
+	// gets and what an operator rolls forward from.
+	DurableTurns bool `mapstructure:"durableTurns"`
 	// TurnStreamKeyPrefix names the redis streams a turn's events are
 	// published to, one per turn. They are a tail buffer a reader can rejoin,
 	// never the transcript: that is in postgres and outlives all of this.
@@ -800,6 +805,14 @@ func (c *AIConfig) GetStreamIdleTimeout() time.Duration {
 	}
 
 	return c.StreamIdleTimeout
+}
+
+// DurableTurnsEnabled reports whether a question is handed to a worker.
+//
+// Nil-safe on the receiver, like the rest of this section: a service built
+// without configuration falls to the behaviour that needs no infrastructure.
+func (c *AIConfig) DurableTurnsEnabled() bool {
+	return c != nil && c.DurableTurns
 }
 
 // GetTurnStreamKeyPrefix names the redis key space a turn's events live in.

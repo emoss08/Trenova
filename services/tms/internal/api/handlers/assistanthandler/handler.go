@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,6 +29,7 @@ type Params struct {
 	Service              serviceports.AssistantService
 	Turns                *assistantturnservice.Service
 	Workflows            serviceports.WorkflowStarter
+	Config               *config.Config
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
@@ -37,6 +39,7 @@ type Handler struct {
 	service   serviceports.AssistantService
 	turns     *assistantturnservice.Service
 	workflows serviceports.WorkflowStarter
+	ai        *config.AIConfig
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
 	logger    *zap.Logger
@@ -47,10 +50,24 @@ func New(p Params) *Handler {
 		service:   p.Service,
 		turns:     p.Turns,
 		workflows: p.Workflows,
+		ai:        aiConfigOf(p.Config),
 		eh:        p.ErrorHandler,
 		pm:        p.PermissionMiddleware,
 		logger:    p.Logger.Named("assistanthandler"),
 	}
+}
+
+// aiConfigOf tolerates a handler built without configuration.
+//
+// Every getter on AIConfig is nil-safe on its receiver, which is what lets a
+// test construct this handler to assert its routes without standing up a whole
+// configuration. Reaching through a nil Config here would take that away.
+func aiConfigOf(cfg *config.Config) *config.AIConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	return cfg.GetAIConfig()
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
@@ -61,6 +78,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// response is a projection, so this does not widen access to the provider
 	// records themselves.
 	api.GET("/providers/", h.pm.RequirePermission(resource, permission.OpRead), h.listProviders)
+	// Which way to ask a question. The two paths roll forward independently,
+	// so the client asks rather than assumes.
+	api.GET(
+		"/capabilities/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.capabilities,
+	)
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
 	api.POST("/threads/", h.pm.RequirePermission(resource, permission.OpCreate), h.startThread)
 	// A quick question makes a thread of its own, so it needs what starting

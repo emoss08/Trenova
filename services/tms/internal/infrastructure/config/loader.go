@@ -307,6 +307,7 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("ai.completionTimeout", "5m")
 	l.viper.SetDefault("ai.streamIdleTimeout", "5m")
 	l.viper.SetDefault("ai.maxRetries", 2)
+	l.viper.SetDefault("ai.durableTurns", false)
 	l.viper.SetDefault("ai.turnStreamKeyPrefix", "assistant:turn")
 	l.viper.SetDefault("ai.turnStreamMaxLen", 10000)
 	l.viper.SetDefault("ai.turnStreamTtl", "1h")
