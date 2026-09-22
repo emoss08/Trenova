@@ -79,10 +79,16 @@ func TestAssistantArtifactSeed_PayloadsCarryWhatTheirRendererReads(t *testing.T)
 		assistantartifact.KindPlan:            {"title", "stepCount", "steps"},
 		assistantartifact.KindEntityCard:      {"entity", "record"},
 		assistantartifact.KindRateExplanation: {"winner", "components", "totals"},
+		assistantartifact.KindRunDiff: {
+			"before", "after", "keys", "measures", "summary", "changes", "totals",
+		},
 	}
 
+	refs := artifactRefs(t)
+	refs.includeRunDiff = true
+
 	seeded := map[assistantartifact.Kind]bool{}
-	for _, artifact := range NewAssistantArtifactSeed().artifacts(artifactRefs(t)) {
+	for _, artifact := range NewAssistantArtifactSeed().artifacts(refs) {
 		seeded[artifact.Kind] = true
 		keys, known := required[artifact.Kind]
 		require.Truef(t, known, "artifact kind %q has no expected payload here", artifact.Kind)
@@ -97,6 +103,26 @@ func TestAssistantArtifactSeed_PayloadsCarryWhatTheirRendererReads(t *testing.T)
 	for kind := range required {
 		assert.Truef(t, seeded[kind], "no artifact was seeded for kind %q", kind)
 	}
+}
+
+/*
+The SQLite schema's kind CHECK predates run_diff, and the dialect converter
+never emits a CHECK alteration, so a run_diff row fails the whole seed run
+there. It is seeded where the schema accepts it — Postgres — and nowhere else.
+*/
+func TestAssistantArtifactSeed_SeedsRunDiffOnlyWhereTheSchemaAcceptsIt(t *testing.T) {
+	kinds := func(includeRunDiff bool) map[assistantartifact.Kind]bool {
+		refs := artifactRefs(t)
+		refs.includeRunDiff = includeRunDiff
+		seen := map[assistantartifact.Kind]bool{}
+		for _, artifact := range NewAssistantArtifactSeed().artifacts(refs) {
+			seen[artifact.Kind] = true
+		}
+		return seen
+	}
+
+	assert.True(t, kinds(true)[assistantartifact.KindRunDiff])
+	assert.False(t, kinds(false)[assistantartifact.KindRunDiff])
 }
 
 // A plan artifact is a view over a plan, not a second copy of it: its steps

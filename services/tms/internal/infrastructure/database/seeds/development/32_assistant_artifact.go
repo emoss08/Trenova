@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 )
 
 type AssistantArtifactSeed struct {
@@ -32,10 +33,9 @@ type AssistantArtifactSeed struct {
 // payload that parses to nothing renders as an empty card and would teach a
 // developer the wrong thing about what the kind looks like.
 //
-// run_diff is left out. The SQLite schema's kind CHECK predates that kind —
-// the dialect converter never emits a CHECK alteration — so a seeded run_diff
-// fails the full seed run on SQLite. It seeds fine on Postgres; it is left out
-// until the SQLite table is brought in line.
+// run_diff is seeded on Postgres only. The SQLite schema's kind CHECK
+// predates that kind — the dialect converter never emits a CHECK alteration —
+// so a run_diff row there would fail the whole seed run.
 //
 // Depends on:
 //   - AssistantConversation: the threads the artifacts hang off
@@ -67,6 +67,9 @@ type artifactSeedRefs struct {
 	// tied to the decision it belongs to is a second copy of that decision.
 	draft *agent.AgentProposal
 	now   int64
+	// includeRunDiff is whether the schema accepts a run_diff row. SQLite's
+	// kind CHECK predates the kind, so it is seeded on Postgres only.
+	includeRunDiff bool
 }
 
 func (s *AssistantArtifactSeed) Run(ctx context.Context, tx bun.Tx) error {
@@ -91,7 +94,7 @@ func (s *AssistantArtifactSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return fmt.Errorf("count existing artifacts: %w", err)
 			}
 			if count > 0 {
-				return nil
+				return s.backfillRunDiff(ctx, tx, refs)
 			}
 
 			artifacts := s.artifacts(refs)
@@ -104,6 +107,44 @@ func (s *AssistantArtifactSeed) Run(ctx context.Context, tx bun.Tx) error {
 	)
 }
 
+// backfillRunDiff adds the run_diff artifact to a database seeded before the
+// kind existed, so re-running the seed shows it without a reset. The rest of
+// the artifacts are left as they are.
+func (s *AssistantArtifactSeed) backfillRunDiff(
+	ctx context.Context,
+	tx bun.Tx,
+	refs *artifactSeedRefs,
+) error {
+	if !refs.includeRunDiff {
+		return nil
+	}
+
+	cols := buncolgen.ArtifactColumns
+	exists, err := tx.NewSelect().
+		Model((*assistantartifact.Artifact)(nil)).
+		Where(cols.OrganizationID.Eq(), refs.org.ID).
+		Where(cols.BusinessUnitID.Eq(), refs.org.BusinessUnitID).
+		Where(cols.Kind.Eq(), assistantartifact.KindRunDiff).
+		Exists(ctx)
+	if err != nil {
+		return fmt.Errorf("look for a seeded run diff: %w", err)
+	}
+	if exists {
+		return nil
+	}
+
+	for _, artifact := range s.artifacts(refs) {
+		if artifact.Kind != assistantartifact.KindRunDiff {
+			continue
+		}
+		if _, err = tx.NewInsert().Model(artifact).Exec(ctx); err != nil {
+			return fmt.Errorf("insert run diff artifact: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func (s *AssistantArtifactSeed) loadRefs(
 	ctx context.Context,
 	tx bun.Tx,
@@ -114,7 +155,11 @@ func (s *AssistantArtifactSeed) loadRefs(
 		return nil, err
 	}
 
-	refs := &artifactSeedRefs{org: org, now: timeutils.NowUnix()}
+	refs := &artifactSeedRefs{
+		org:            org,
+		now:            timeutils.NowUnix(),
+		includeRunDiff: tx.Dialect().Name() == dialect.PG,
+	}
 
 	threadCols := buncolgen.ThreadColumns
 	refs.threads = make([]*conversation.Thread, 0, 2)
@@ -279,7 +324,7 @@ func (s *AssistantArtifactSeed) artifacts(
 	planned.PlanID = refs.plan.ID
 	planned.RunID = refs.plan.RunID
 
-	return []*assistantartifact.Artifact{
+	artifacts := []*assistantartifact.Artifact{
 		preview,
 
 		build(refs.thread(0), assistantartifact.KindTableView,
@@ -391,5 +436,73 @@ func (s *AssistantArtifactSeed) artifacts(
 					"The detention hours came from the dwell clock, not from a signed bill.",
 				},
 			}, 6*activitySeedHour),
+	}
+
+	if refs.includeRunDiff {
+		artifacts = append(artifacts, build(refs.thread(0), assistantartifact.KindRunDiff,
+			"Revenue by customer — what changed",
+			runDiffPayload(refs), 2*activitySeedHour))
+	}
+
+	return artifacts
+}
+
+// runDiffPayload is two weekly runs of the revenue report compared: one
+// customer grew, one shrank, one is new and one dropped out, so every kind of
+// movement the renderer draws has a row. Decimals are exact strings, as the
+// diff writes them.
+func runDiffPayload(refs *artifactSeedRefs) map[string]any {
+	week := int64(7 * 24 * 3600)
+	side := func(runID string, generatedAt int64, rows int) map[string]any {
+		return map[string]any{
+			"runId":       runID,
+			"reportName":  "Revenue by customer",
+			"generatedAt": generatedAt,
+			"rowCount":    rows,
+			"truncated":   false,
+		}
+	}
+	measure := func(before, after, delta string) []map[string]any {
+		return []map[string]any{{
+			"column": "revenue", "label": "Revenue", "before": before, "after": after, "delta": delta,
+		}}
+	}
+
+	return map[string]any{
+		"before":   side("rrun_seed_last_week", refs.now-week, 4),
+		"after":    side("rrun_seed_this_week", refs.now-3600, 4),
+		"keys":     []string{"customer"},
+		"measures": []string{"revenue"},
+		"summary": map[string]any{
+			"added": 1, "removed": 1, "changed": 2, "unchanged": 1, "duplicate": 0,
+		},
+		"changes": []map[string]any{
+			{
+				"kind": "Changed", "key": "Acme Manufacturing",
+				"keyValues": []string{"Acme Manufacturing"},
+				"measures":  measure("18240.00", "22915.50", "4675.50"),
+			},
+			{
+				"kind": "Changed", "key": "Harborline Grocers",
+				"keyValues": []string{"Harborline Grocers"},
+				"measures":  measure("9120.00", "6480.00", "-2640.00"),
+			},
+			{
+				"kind": "Added", "key": "Northwind Foods",
+				"keyValues": []string{"Northwind Foods"},
+				"measures":  measure("", "3150.00", "3150.00"),
+			},
+			{
+				"kind": "Removed", "key": "Blue Ridge Paper",
+				"keyValues": []string{"Blue Ridge Paper"},
+				"measures":  measure("2210.00", "", "-2210.00"),
+			},
+		},
+		"totals": []map[string]any{{
+			"column": "revenue", "label": "Revenue",
+			"before": "41870.00", "after": "44845.50", "delta": "2975.50",
+		}},
+		"truncated": false,
+		"note":      "",
 	}
 }

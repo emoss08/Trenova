@@ -2,12 +2,14 @@ package development
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
@@ -29,7 +31,32 @@ const (
 	SeedInboundMailboxToken = "trenova-development-inbound-token"
 	// SeedInboundMailboxAddress is where the seeded mail is addressed.
 	SeedInboundMailboxAddress = "intake@dev.trenova.app"
+	// SeedInboundMailboxSigningSecret is the seeded mailbox's Svix signing
+	// secret, published for the same reason as the token: so a developer can
+	// sign a delivery with webhooksig.SignSvix and post it. It is stored sealed
+	// with the configured encryption key, like any other mailbox's.
+	SeedInboundMailboxSigningSecret = "whsec_dHJlbm92YS1kZXZlbG9wbWVudC1pbmJvdW5kLXNpZ25pbmcta2V5" // #nosec G101 -- a published development fixture, not a credential.
 )
+
+type stringSealer interface {
+	EncryptString(value string) (string, error)
+}
+
+// mailboxSigningSecret seals the development signing secret. With no key
+// configured there is nothing to seal with, so the mailbox is seeded without
+// one and refuses deliveries — the safe default — rather than the seed failing
+// or storing the secret in the clear.
+func mailboxSigningSecret(sealer stringSealer) (string, error) {
+	sealed, err := sealer.EncryptString(SeedInboundMailboxSigningSecret)
+	if errors.Is(err, encryptionservice.ErrKeyManagerDisabled) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("seal the mailbox signing secret: %w", err)
+	}
+
+	return sealed, nil
+}
 
 type InboundMessageSeed struct {
 	seedhelpers.BaseSeed
@@ -84,6 +111,18 @@ func (s *InboundMessageSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
+			secret, err := mailboxSigningSecret(
+				encryptionservice.New(encryptionservice.Params{Config: sc.Config()}),
+			)
+			if err != nil {
+				return err
+			}
+			if secret == "" {
+				sc.Logger().Warn(
+					"no encryption key is configured, so the seeded mailbox has no signing secret and will refuse deliveries",
+				)
+			}
+
 			cols := buncolgen.MailboxColumns
 			count, err := tx.NewSelect().
 				Model((*inboundmessage.Mailbox)(nil)).
@@ -94,10 +133,10 @@ func (s *InboundMessageSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return fmt.Errorf("count existing mailboxes: %w", err)
 			}
 			if count > 0 {
-				return nil
+				return s.backfillSigningSecret(ctx, tx, refs, secret)
 			}
 
-			mailbox, err := s.insertMailbox(ctx, tx, refs)
+			mailbox, err := s.insertMailbox(ctx, tx, refs, secret)
 			if err != nil {
 				return err
 			}
@@ -160,10 +199,39 @@ func (s *InboundMessageSeed) loadRefs(
 // is confident, ask when it is not. AlwaysReview would leave every seeded
 // message in one lane, and AutoHandle would leave none of them waiting, so
 // neither would show what the inbox is for.
+// backfillSigningSecret gives the seeded mailbox a secret in a database seeded
+// before it had one, so re-running the seed makes it able to receive mail. A
+// secret somebody has since set is left alone.
+func (s *InboundMessageSeed) backfillSigningSecret(
+	ctx context.Context,
+	tx bun.Tx,
+	refs *inboundSeedRefs,
+	secret string,
+) error {
+	if secret == "" {
+		return nil
+	}
+
+	cols := buncolgen.MailboxColumns
+	if _, err := tx.NewUpdate().
+		Model((*inboundmessage.Mailbox)(nil)).
+		Set(cols.SigningSecret.Set(), secret).
+		Where(cols.OrganizationID.Eq(), refs.org.ID).
+		Where(cols.BusinessUnitID.Eq(), refs.org.BusinessUnitID).
+		Where(cols.TokenHash.Eq(), hashutils.SHA256Hex(SeedInboundMailboxToken)).
+		Where(cols.SigningSecret.IsNull()).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("backfill the mailbox signing secret: %w", err)
+	}
+
+	return nil
+}
+
 func (s *InboundMessageSeed) insertMailbox(
 	ctx context.Context,
 	tx bun.Tx,
 	refs *inboundSeedRefs,
+	secret string,
 ) (*inboundmessage.Mailbox, error) {
 	mailbox := &inboundmessage.Mailbox{
 		ID:             pulid.MustNew("imbx_"),
@@ -177,6 +245,7 @@ func (s *InboundMessageSeed) insertMailbox(
 		ReviewPolicy:   inboundmessage.ReviewBelowConfidence,
 		MinConfidence:  0.75,
 		Status:         inboundmessage.MailboxActive,
+		SigningSecret:  secret,
 	}
 
 	if _, err := tx.NewInsert().Model(mailbox).Exec(ctx); err != nil {

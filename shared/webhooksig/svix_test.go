@@ -144,3 +144,24 @@ func TestVerifySvix_RefusesANonNumericTimestamp(t *testing.T) {
 
 	require.ErrorIs(t, webhooksig.VerifySvix(p), webhooksig.ErrBadTimestamp)
 }
+
+// SignSvix is how a test or a developer produces a delivery the endpoint will
+// accept. It must agree with the independent signature above byte for byte,
+// or a delivery signed with it would pass here and fail at the provider.
+func TestSignSvix_MatchesTheSchemeTheVerifierChecks(t *testing.T) {
+	at := time.Unix(1_790_000_000, 0)
+	body := []byte(`{"type":"email.received"}`)
+	want := signedDelivery(t, body, at)
+
+	got, err := webhooksig.SignSvix(want.Secret, want.ID, want.Timestamp, body)
+	require.NoError(t, err)
+	assert.Equal(t, want.Signature, got)
+
+	want.Signature = got
+	assert.NoError(t, webhooksig.VerifySvix(want))
+}
+
+func TestSignSvix_RefusesASecretThatIsNotBase64(t *testing.T) {
+	_, err := webhooksig.SignSvix("whsec_not base64!", "msg_1", "1790000000", []byte("{}"))
+	assert.Error(t, err)
+}

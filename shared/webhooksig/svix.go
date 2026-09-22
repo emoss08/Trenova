@@ -62,15 +62,10 @@ func VerifySvix(p SvixParams) error {
 		return err
 	}
 
-	key, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(p.Secret, "whsec_"))
+	expected, err := svixMAC(p.Secret, p.ID, p.Timestamp, p.Body)
 	if err != nil {
-		return fmt.Errorf("the signing secret is not valid base64: %w", err)
+		return err
 	}
-
-	mac := hmac.New(sha256.New, key)
-	mac.Write([]byte(p.ID + "." + p.Timestamp + "."))
-	mac.Write(p.Body)
-	expected := mac.Sum(nil)
 
 	// A delivery carries every signature still in rotation, space separated, so
 	// a secret roll does not drop messages. One match is enough.
@@ -86,6 +81,30 @@ func VerifySvix(p SvixParams) error {
 	}
 
 	return ErrNoMatch
+}
+
+// SignSvix is the svix-signature header value for a delivery: what a provider
+// sends, and what a test or a developer sends to exercise an endpoint.
+func SignSvix(secret, id, timestamp string, body []byte) (string, error) {
+	mac, err := svixMAC(secret, id, timestamp, body)
+	if err != nil {
+		return "", err
+	}
+
+	return "v1," + base64.StdEncoding.EncodeToString(mac), nil
+}
+
+func svixMAC(secret, id, timestamp string, body []byte) ([]byte, error) {
+	key, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(secret, "whsec_"))
+	if err != nil {
+		return nil, fmt.Errorf("the signing secret is not valid base64: %w", err)
+	}
+
+	mac := hmac.New(sha256.New, key)
+	mac.Write([]byte(id + "." + timestamp + "."))
+	mac.Write(body)
+
+	return mac.Sum(nil), nil
 }
 
 func checkSkew(p SvixParams) error {
