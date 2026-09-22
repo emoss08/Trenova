@@ -6,6 +6,7 @@ import (
 	"time"
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"go.uber.org/zap"
 )
 
@@ -35,9 +36,10 @@ const (
 // connection that asked for it and is still saved. Failures are logged once
 // and the turn carries on.
 type publisher struct {
-	stream serviceports.TurnStreamPublisher
-	ref    serviceports.TurnStreamRef
-	logger *zap.Logger
+	stream  serviceports.TurnStreamPublisher
+	ref     serviceports.TurnStreamRef
+	logger  *zap.Logger
+	metrics *metrics.Assistant
 
 	// buffered is the text waiting to go out, and kind is which of the two
 	// text events it belongs to — a reply and the thinking behind it must not
@@ -53,8 +55,15 @@ func newPublisher(
 	stream serviceports.TurnStreamPublisher,
 	ref serviceports.TurnStreamRef,
 	logger *zap.Logger,
+	observer *metrics.Assistant,
 ) *publisher {
-	return &publisher{stream: stream, ref: ref, logger: logger, lastSent: time.Now()}
+	return &publisher{
+		stream:   stream,
+		ref:      ref,
+		logger:   logger,
+		metrics:  observer,
+		lastSent: time.Now(),
+	}
 }
 
 // emit takes one event from the turn. It is called from the turn's own
@@ -107,9 +116,23 @@ func (p *publisher) flush(ctx context.Context) {
 }
 
 func (p *publisher) publish(ctx context.Context, event serviceports.StreamEvent) {
-	if err := p.stream.Publish(ctx, p.ref, event); err != nil {
+	err := p.stream.Publish(ctx, p.ref, event)
+	p.metrics.RecordStreamPublish(event.Event, sizeOf(event), err)
+	if err != nil {
 		p.report("could not publish a turn event", err)
 	}
+}
+
+// sizeOf measures what a text event carries, which is the only event whose
+// size varies enough to be worth counting: it is what decides whether
+// coalescing is earning its keep.
+func sizeOf(event serviceports.StreamEvent) int {
+	text, ok := textOf(event)
+	if !ok {
+		return 0
+	}
+
+	return len(text)
 }
 
 func (p *publisher) report(message string, err error) {

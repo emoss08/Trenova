@@ -4,13 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -18,26 +21,40 @@ import (
 type Params struct {
 	fx.In
 
-	Logger *zap.Logger
-	Turns  repositories.AssistantTurnRepository
-	Stream serviceports.TurnStreamPublisher
-	Reader serviceports.TurnStreamReader
+	Logger  *zap.Logger
+	Turns   repositories.AssistantTurnRepository
+	Stream  serviceports.TurnStreamPublisher
+	Reader  serviceports.TurnStreamReader
+	Metrics *metrics.Registry `optional:"true"`
 }
 
 type Service struct {
-	l      *zap.Logger
-	turns  repositories.AssistantTurnRepository
-	stream serviceports.TurnStreamPublisher
-	reader serviceports.TurnStreamReader
+	l       *zap.Logger
+	turns   repositories.AssistantTurnRepository
+	stream  serviceports.TurnStreamPublisher
+	reader  serviceports.TurnStreamReader
+	metrics *metrics.Assistant
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:      p.Logger.Named("service.assistantturn"),
-		turns:  p.Turns,
-		stream: p.Stream,
-		reader: p.Reader,
+		l:       p.Logger.Named("service.assistantturn"),
+		turns:   p.Turns,
+		stream:  p.Stream,
+		reader:  p.Reader,
+		metrics: assistantMetrics(p.Metrics),
 	}
+}
+
+// assistantMetrics tolerates a service built without a registry, which a test
+// does and an install with metrics switched off does too. Every method on the
+// returned value is safe on a disabled collector.
+func assistantMetrics(registry *metrics.Registry) *metrics.Assistant {
+	if registry == nil {
+		return metrics.NewAssistant(nil, zap.NewNop(), false)
+	}
+
+	return registry.Assistant
 }
 
 // StartRequest opens a turn on a conversation.
@@ -111,7 +128,7 @@ func (s *Service) Observe(
 		},
 		TurnID: turn.ID,
 	}
-	pub := newPublisher(s.stream, ref, s.l)
+	pub := newPublisher(s.stream, ref, s.l, s.metrics)
 
 	// The publish rides a context cancellation cannot reach. The turn's own
 	// context dies the moment the reader closes the tab, which is precisely
@@ -119,7 +136,19 @@ func (s *Service) Observe(
 	// come back for what it said.
 	keep := context.WithoutCancel(ctx)
 
+	// When the turn first said anything. It is measured here rather than from
+	// the turn's record because the record knows when the turn started and
+	// how it ended, not when the person stopped looking at nothing — which is
+	// the figure a durable hop could plausibly have made worse, and therefore
+	// the one worth watching.
+	began := time.Now()
+	var spoke time.Time
+
 	observed := func(event serviceports.StreamEvent) {
+		if spoke.IsZero() {
+			spoke = time.Now()
+			s.metrics.RecordFirstEvent(transportOf(turn), spoke.Sub(began).Seconds())
+		}
 		if emit != nil {
 			emit(event)
 		}
@@ -157,6 +186,35 @@ func (s *Service) Complete(
 			zap.Error(err),
 		)
 	}
+
+	s.metrics.RecordTurn(
+		transportOf(turn),
+		string(status),
+		elapsedSince(turn.StartedAt),
+		// The first event is not known here. A turn's record carries when it
+		// started and how it ended, not when it first spoke, so that figure
+		// is observed by whoever held the stream.
+		-1,
+	)
+}
+
+// transportOf says where a turn ran, which is what makes the durable path
+// comparable against the one it replaces. A turn with no execution behind it
+// ran in the request that asked for it.
+func transportOf(turn *conversation.AssistantTurn) string {
+	if turn.WorkflowID == "" {
+		return metrics.TransportInProcess
+	}
+
+	return metrics.TransportDurable
+}
+
+func elapsedSince(startedAt int64) float64 {
+	if startedAt <= 0 {
+		return 0
+	}
+
+	return float64(timeutils.NowUnix() - startedAt)
 }
 
 // StatusFor maps how a turn ended onto how it is recorded.
@@ -234,6 +292,8 @@ func (s *Service) Stop(
 	if turn.Status.Terminal() {
 		// Already over. Saying so beats reporting a failure for something the
 		// person got what they wanted from.
+		s.metrics.RecordTurnStopped(transportOf(turn), "already_ended")
+
 		return nil
 	}
 
@@ -241,12 +301,18 @@ func (s *Service) Stop(
 		// A turn still running in the request that asked for it. Its reader
 		// aborting is what stops it, exactly as before, and there is no
 		// execution to cancel.
+		s.metrics.RecordTurnStopped(metrics.TransportInProcess, "no_execution")
+
 		return nil
 	}
 
 	if err := cancel(turn.WorkflowID); err != nil {
+		s.metrics.RecordTurnStopped(metrics.TransportDurable, "error")
+
 		return fmt.Errorf("stop this reply: %w", err)
 	}
+
+	s.metrics.RecordTurnStopped(metrics.TransportDurable, "cancelled")
 
 	return nil
 }

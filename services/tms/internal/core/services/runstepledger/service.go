@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -28,22 +29,29 @@ const maxStoredOutcomeChars = 64 * 1024
 type Params struct {
 	fx.In
 
-	Logger *zap.Logger
-	Repo   repositories.AgentRunStepRepository
+	Logger  *zap.Logger
+	Repo    repositories.AgentRunStepRepository
+	Metrics *metrics.Registry `optional:"true"`
 }
 
 type Service struct {
-	l    *zap.Logger
-	repo repositories.AgentRunStepRepository
+	l       *zap.Logger
+	repo    repositories.AgentRunStepRepository
+	metrics *metrics.Assistant
 }
 
 var _ serviceports.RunStepLedger = (*Service)(nil)
 
 func New(p Params) serviceports.RunStepLedger {
-	return &Service{
+	service := &Service{
 		l:    p.Logger.Named("service.runstepledger"),
 		repo: p.Repo,
 	}
+	if p.Metrics != nil {
+		service.metrics = p.Metrics.Assistant
+	}
+
+	return service
 }
 
 // Claim reserves a step key before the work happens.
@@ -70,16 +78,22 @@ func (s *Service) Claim(
 	// The key is taken and the holder could not be read. Unknown is the only
 	// safe answer: something ran, and this attempt cannot say what it did.
 	if held == nil {
+		s.countReplayed(step, serviceports.StepUnknown)
+
 		return serviceports.StepVerdict{State: serviceports.StepUnknown}, nil
 	}
 
 	switch serviceports.RunStepStatus(held.Status) {
 	case serviceports.RunStepCompleted:
+		s.countReplayed(step, serviceports.StepCompleted)
+
 		return serviceports.StepVerdict{
 			State:   serviceports.StepCompleted,
 			Outcome: decodeOutcome(s.l, held),
 		}, nil
 	case serviceports.RunStepFailed:
+		s.countReplayed(step, serviceports.StepFailed)
+
 		return serviceports.StepVerdict{
 			State:   serviceports.StepFailed,
 			Outcome: decodeOutcome(s.l, held),
@@ -91,8 +105,19 @@ func (s *Service) Claim(
 			zap.Int("claimedOnAttempt", held.Attempt),
 		)
 
+		s.countReplayed(step, serviceports.StepUnknown)
+
 		return serviceports.StepVerdict{State: serviceports.StepUnknown}, nil
 	}
+}
+
+// countReplayed files an operation a later attempt declined to repeat.
+//
+// This is the reliability figure worth having: each one is a write that a
+// retry would otherwise have made twice, so the count is a direct measure of
+// what the ledger is preventing rather than a proxy for it.
+func (s *Service) countReplayed(step serviceports.RunStep, state serviceports.StepState) {
+	s.metrics.RecordStepReplayed(string(step.OwnerKind), string(state))
 }
 
 func (s *Service) Settle(

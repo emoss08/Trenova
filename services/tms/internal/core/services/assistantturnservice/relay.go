@@ -47,6 +47,8 @@ func (s *Service) Relay(
 	// all: the answer is written down, and saying so immediately beats
 	// blocking on a key that may not exist.
 	if turn.Status.Terminal() {
+		s.metrics.RecordStreamAttach("already_ended")
+
 		return onFrame(closingFrame(turn))
 	}
 
@@ -55,7 +57,18 @@ func (s *Service) Relay(
 		return err
 	}
 	if !live {
+		s.metrics.RecordStreamAttach("expired")
+
 		return onFrame(s.expiredFrame(ctx, turn))
+	}
+
+	if req.Cursor == "" {
+		s.metrics.RecordStreamAttach("live")
+	} else {
+		// A cursor means somebody came back to a reply they had already
+		// started watching, which is the recovery this work exists to make
+		// possible and therefore the number worth counting.
+		s.metrics.RecordStreamAttach("resumed")
 	}
 
 	// seen guards the ending: a turn whose record says it finished, whose
