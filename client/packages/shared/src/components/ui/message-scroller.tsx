@@ -1,14 +1,14 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import * as React from "react";
 import {
   MessageScroller as MessageScrollerPrimitive,
   useMessageScroller,
   useMessageScrollerScrollable,
   useMessageScrollerVisibility,
 } from "@shadcn/react/message-scroller";
+import { useT } from "@trenova/shared/i18n/use-t";
+import * as React from "react";
 
-import { cn } from "@trenova/shared/lib/utils";
 import { Button } from "@trenova/shared/components/ui/button";
+import { cn } from "@trenova/shared/lib/utils";
 import { ArrowDownIcon } from "lucide-react";
 
 function MessageScrollerProvider(
@@ -45,7 +45,7 @@ function MessageScrollerViewport({
       // it is an alpha mask, so unlike ScrollArea's colour-matched fade it is
       // already correct on any surface.
       className={cn(
-        "size-full min-h-0 min-w-0 scroll-fade-b scrollbar-overlay overflow-y-auto overscroll-contain contain-content",
+        "size-full min-h-0 min-w-0 scroll-fade-b scrollbar-overlay overflow-y-auto overscroll-contain contain-content outline-none",
         className,
       )}
       {...props}
@@ -123,12 +123,12 @@ function MessageScrollerButton({
 }
 
 export {
-  MessageScrollerProvider,
   MessageScroller,
-  MessageScrollerViewport,
+  MessageScrollerButton,
   MessageScrollerContent,
   MessageScrollerItem,
-  MessageScrollerButton,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
   useMessageScroller,
   useMessageScrollerScrollable,
   useMessageScrollerVisibility,
