@@ -169,6 +169,9 @@ func (s *Service) prepareTurn(
 			"Agent {0} is disabled and cannot be used", definition.Name,
 		)
 	}
+	if err = assertChatAgent(definition); err != nil {
+		return nil, nil, err
+	}
 
 	if err = s.assertWithinBudget(ctx, definition); err != nil {
 		return nil, nil, err
@@ -211,7 +214,7 @@ func (s *Service) prepareTurn(
 		PreferredProviderID: thread.PreferredProviderID,
 		ThreadID:            thread.ID,
 		Proposals:           s.proposalOutcomes(ctx, thread, req.TenantInfo),
-		Subject:             s.describeSubject(ctx, thread, req.TenantInfo),
+		Subject:             s.describeSubject(ctx, thread, actor, req.TenantInfo),
 		Attachments:         runtimeAttachments,
 		Mentions:            mentions,
 	}

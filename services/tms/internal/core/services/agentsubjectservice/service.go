@@ -573,7 +573,9 @@ func (s *Service) worker(
 		"driverType": entity.DriverType,
 	}
 	if entity.Profile != nil {
-		notes["licenceNumber"] = entity.Profile.LicenseNumber
+		// The licence number is Confidential, and nothing Confidential is
+		// sent to a model, whoever is asking: its expiry is what the work
+		// turns on.
 		notes["licenceExpiry"] = entity.Profile.LicenseExpiry
 		notes["endorsement"] = entity.Profile.Endorsement
 		notes["physicalDueDate"] = entity.Profile.PhysicalDueDate

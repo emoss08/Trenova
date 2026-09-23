@@ -1,5 +1,7 @@
 package agent
 
+import "github.com/emoss08/trenova/internal/core/domain/permission"
+
 type Type string
 
 const (
@@ -46,6 +48,38 @@ const (
 	// two messages about one shipment are two things to answer.
 	SubjectInboundMessage = SubjectType("InboundMessage")
 )
+
+// Resource is the permission a person needs to read a record of this kind.
+// The organization and a person's own conversation are no record of anyone
+// else's, so they name none.
+func (s SubjectType) Resource() (permission.Resource, bool) {
+	switch s {
+	case SubjectBillingQueueItem:
+		return permission.ResourceBillingQueue, true
+	case SubjectShipmentMove:
+		return permission.ResourceShipmentMove, true
+	case SubjectShipment:
+		return permission.ResourceShipment, true
+	case SubjectDocument:
+		return permission.ResourceDocument, true
+	case SubjectInsight:
+		return permission.ResourceInsight, true
+	case SubjectBankReceipt:
+		return permission.ResourceBankReceipt, true
+	case SubjectDetentionOccurrence:
+		return permission.ResourceDetentionPolicy, true
+	case SubjectWorker:
+		return permission.ResourceWorker, true
+	case SubjectCarrierIntelEvent:
+		return permission.ResourceCarrierIntelligence, true
+	case SubjectEDIInboundFile:
+		return permission.ResourceEDI, true
+	case SubjectInboundMessage:
+		return permission.ResourceInboundMessage, true
+	default:
+		return "", false
+	}
+}
 
 type RunTrigger string
 

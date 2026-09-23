@@ -52,6 +52,14 @@ func (s *Service) StartThread(
 			"Agent {0} is disabled and cannot be used", definition.Name,
 		)
 	}
+	if err = assertChatAgent(definition); err != nil {
+		return nil, err
+	}
+	if req.SubjectID.IsNotNil() {
+		if err = s.assertSubjectReadable(ctx, actor, req.SubjectType); err != nil {
+			return nil, err
+		}
+	}
 
 	origin := req.Origin
 	if origin == "" {

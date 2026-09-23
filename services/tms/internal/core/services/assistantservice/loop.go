@@ -163,9 +163,14 @@ func (s *Service) buildContext(
 // starts with it in front of it. A subject that cannot be read is named by
 // its type and id rather than failing the turn: the conversation is still
 // worth having.
+//
+// Access is checked on every turn, not only when the thread was opened: a
+// person who lost access to the record keeps the conversation but no longer
+// has the record read into it.
 func (s *Service) describeSubject(
 	ctx context.Context,
 	thread *conversation.Thread,
+	actor *serviceports.RequestActor,
 	tenant pagination.TenantInfo,
 ) *agentdefinition.RuntimeSubject {
 	if !thread.HasSubject() {
@@ -178,6 +183,17 @@ func (s *Service) describeSubject(
 		Label: stringutils.HumanizeSnakeCase(string(thread.SubjectType)),
 	}
 	if s.subjects == nil {
+		return bare
+	}
+	allowed, err := s.mayReadSubject(ctx, actor, thread.SubjectType)
+	if err != nil || !allowed {
+		s.logger.Info("thread subject withheld from the turn",
+			zap.String("thread", thread.ID.String()),
+			zap.String("subjectType", string(thread.SubjectType)),
+			zap.Bool("denied", err == nil),
+			zap.Error(err),
+		)
+
 		return bare
 	}
 

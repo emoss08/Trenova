@@ -39,6 +39,9 @@ type Params struct {
 	// reads what document intelligence made of it.
 	Documents repositories.DocumentRepository     `optional:"true"`
 	Contents  serviceports.DocumentContentService `optional:"true"`
+	// Permissions decides whether the person may read the record a
+	// conversation is about before any of it reaches the model.
+	Permissions serviceports.PermissionEngine
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -67,6 +70,7 @@ type Service struct {
 	activity      serviceports.AgentActivityPublisher
 	documents     repositories.DocumentRepository
 	contents      serviceports.DocumentContentService
+	permissions   serviceports.PermissionEngine
 }
 
 func New(p Params) *Service {
@@ -90,5 +94,6 @@ func New(p Params) *Service {
 		activity:      p.Activity,
 		documents:     p.Documents,
 		contents:      p.Contents,
+		permissions:   p.Permissions,
 	}
 }

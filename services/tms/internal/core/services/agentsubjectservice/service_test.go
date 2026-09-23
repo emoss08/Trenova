@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -295,4 +296,47 @@ func TestService_BankReceiptWithoutServiceStillHasAnID(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, id.String(), subject.ID)
 	assert.Equal(t, "Bank receipt", subject.Label)
+}
+
+type fakeWorkers struct {
+	repositories.WorkerRepository
+
+	worker *worker.Worker
+}
+
+func (f *fakeWorkers) GetByID(
+	context.Context,
+	repositories.GetWorkerByIDRequest,
+) (*worker.Worker, error) {
+	return f.worker, nil
+}
+
+// Nothing Confidential reaches a model, whoever is asking. A driver's licence
+// number is Confidential; its expiry is what a desk's work turns on.
+func TestService_DescribesADriverWithoutTheirLicenceNumber(t *testing.T) {
+	t.Parallel()
+
+	subjects := &Service{
+		workers: &fakeWorkers{worker: &worker.Worker{
+			FirstName: "Ada",
+			LastName:  "Lovelace",
+			Profile: &worker.WorkerProfile{
+				LicenseNumber: "D1234-5678-9012",
+				LicenseExpiry: 1893456000,
+			},
+		}},
+		logger: zap.NewNop(),
+	}
+
+	subject, err := subjects.Describe(
+		t.Context(),
+		pagination.TenantInfo{},
+		agent.SubjectWorker,
+		pulid.MustNew("wrk_"),
+	)
+
+	require.NoError(t, err)
+	assert.NotContains(t, subject.Notes, "D1234-5678-9012")
+	assert.NotContains(t, subject.Notes, "licenceNumber")
+	assert.Contains(t, subject.Notes, "licenceExpiry")
 }
