@@ -135,9 +135,17 @@ A partial unique index on `assistant_turns` enforces one live turn per thread;
 its `origin` and `input` say what the turn answers.
 
 **Stopping** cancels the workflow. What had happened by then is saved on a
-disconnected context and the execution is recorded as cancelled. A turn recorded
-but never handed to a worker has no execution to cancel; Stop closes its record
-as `Stopped`.
+disconnected context and the execution is recorded as cancelled. The execution
+id is derived from the turn (`AssistantTurn.ExecutionID`), so Relay and Stop
+reach a turn whose start was never recorded. When no execution carries the turn
+— it was never handed to a worker, or its execution ended without closing the
+record — Stop closes the record as `Stopped`.
+
+The record always closes. `MarkWorkflow` only touches a live record, so a turn
+that finished before its start was recorded is not put back to Running; a save
+retried after a lost attempt closes the record it did not re-save; and a save
+that fails on every attempt is followed by `CloseTurnActivity`, which records
+the turn as Failed.
 
 ### The turn stream
 
