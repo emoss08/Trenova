@@ -14,7 +14,8 @@ import type { AgentFormValues } from "./agent-form-schema";
 /**
  * A daily cap for each change tool the agent holds. Reads are not listed:
  * a cap on a lookup would only make the agent answer worse, and the cost
- * of lookups is already under the monthly budget.
+ * of lookups is already under the monthly budget. A tool the catalog does
+ * not describe is not listed either, since nothing says it changes anything.
  */
 export function ToolLimitsField({
   toolNames,
@@ -27,7 +28,7 @@ export function ToolLimitsField({
   const { control } = useFormContext<AgentFormValues>();
   const writes = useMemo(() => {
     const catalog = new Map(tools.map((tool) => [tool.name, tool]));
-    return toolNames.filter((name) => catalog.get(name)?.kind !== "query");
+    return toolNames.filter((name) => catalog.get(name)?.kind === "action");
   }, [toolNames, tools]);
 
   if (writes.length === 0) {

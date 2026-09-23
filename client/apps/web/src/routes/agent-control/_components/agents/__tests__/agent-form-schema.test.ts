@@ -48,6 +48,27 @@ describe("agentFormSchema", () => {
     expect(sent.monthlyBudgetUsd).toBe(25);
   });
 
+  // A limit box the person never filled holds nothing; saving must not
+  // fail on it, and it is not a limit.
+  it("accepts an empty daily limit box and does not send it", () => {
+    expect(
+      issuesOf(
+        values({
+          toolNames: ["assign_move"],
+          toolDailyLimits: { assign_move: undefined, get_insight: null },
+        }),
+      ),
+    ).toEqual({});
+
+    const sent = toSaveRequest({
+      ...agentFormDefaults,
+      name: "Home builder",
+      toolNames: ["assign_move", "get_insight"],
+      toolDailyLimits: { assign_move: undefined, get_insight: null },
+    });
+    expect(sent.toolDailyLimits).toEqual({});
+  });
+
   it("requires a cron expression for a scheduled agent", () => {
     expect(issuesOf(values({ triggerMode: "Scheduled", cronExpression: "" }))).toHaveProperty(
       "cronExpression",

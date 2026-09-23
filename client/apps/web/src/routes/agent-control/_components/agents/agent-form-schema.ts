@@ -22,6 +22,11 @@ export function tierWithin(tier: AutonomyTier, ceiling: AutonomyTier): boolean {
 export const agentFormSchema = saveAgentDefinitionRequestSchema
   .extend({
     toolTiers: z.record(z.string(), autonomyTierSchema).default({}),
+    /**
+     * A limit box left empty is no limit: the field holds nothing for it, and
+     * only a positive limit on a tool the agent holds is saved.
+     */
+    toolDailyLimits: z.record(z.string(), z.number().int().min(0).max(10000).nullish()).default({}),
     /** The agents this one may hand work to; the form always sends the whole list. */
     delegateIds: z
       .array(z.string())
@@ -64,8 +69,8 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
     }
 
     const selected = new Set(values.toolNames);
-    for (const tool of Object.keys(values.toolDailyLimits)) {
-      if (!selected.has(tool)) {
+    for (const [tool, limit] of Object.entries(values.toolDailyLimits)) {
+      if (!selected.has(tool) && hasLimit(limit)) {
         ctx.addIssue({
           code: "custom",
           path: ["toolDailyLimits"],
@@ -95,6 +100,11 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
   });
 
 export type AgentFormValues = z.infer<typeof agentFormSchema>;
+
+/** A daily limit that caps anything: an empty box or a zero is no limit. */
+function hasLimit(limit: number | null | undefined): limit is number {
+  return typeof limit === "number" && limit > 0;
+}
 
 export const agentFormDefaults: AgentFormValues = {
   name: "",
@@ -147,7 +157,9 @@ export function toSaveRequest(
   // A limit of zero is no limit, and a limit on a tool the agent no longer
   // holds is a leftover; neither goes over the wire.
   const toolDailyLimits = Object.fromEntries(
-    Object.entries(form.toolDailyLimits).filter(([tool, limit]) => selected.has(tool) && limit > 0),
+    Object.entries(form.toolDailyLimits).filter(
+      (entry): entry is [string, number] => selected.has(entry[0]) && hasLimit(entry[1]),
+    ),
   );
   const scheduled = form.triggerMode === "Scheduled";
   const event = form.triggerMode === "Event";
