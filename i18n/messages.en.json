@@ -2377,6 +2377,15 @@
       "domain/worker"
     ]
   },
+  "A decision follow-up carries no message; the decision is its input": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "A decision must reference exactly one proposal or exception": {
     "sites": 1,
     "scope": [
@@ -44382,7 +44391,7 @@
     ]
   },
   "Decision": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -44445,6 +44454,15 @@
     ],
     "areas": [
       "domain/sidebarpreference"
+    ]
+  },
+  "Decisions cannot be followed up here": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
     ]
   },
   "Decisions must be attributed to a human user": {
@@ -67364,6 +67382,15 @@
       "routes/worker"
     ]
   },
+  "Following up on your decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Footer content displayed on invoices": {
     "sites": 1,
     "scope": [
@@ -70407,6 +70434,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "Give a tile a definitionId or a cannedKey, not both": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Give at least ten characters saying what the amendment corrects.": {
@@ -156322,6 +156358,15 @@
       "go/other"
     ]
   },
+  "That decision has already been answered": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "That delegation has already been revoked": {
     "sites": 1,
     "scope": [
@@ -156437,6 +156482,24 @@
     ],
     "areas": [
       "service/orgstructureservice"
+    ]
+  },
+  "That proposal has not been decided yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
+  "That proposal is not part of this conversation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
     ]
   },
   "That reporting line loops back on itself": {

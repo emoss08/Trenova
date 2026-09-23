@@ -13,6 +13,7 @@ function message(overrides: Partial<AssistantMessage> = {}): AssistantMessage {
     id: "amsg_1",
     threadId: "athr_1",
     sequence: 0,
+    kind: "Message",
     role: "Assistant",
     content: "",
     toolCalls: null,

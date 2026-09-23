@@ -33,6 +33,9 @@ type Message struct {
 	// which can collide inside a single fast tool loop.
 	Sequence int  `json:"sequence" bun:"sequence,type:INTEGER,notnull"`
 	Role     Role `json:"role"     bun:"role,type:VARCHAR(50),notnull"`
+	// Kind is Message for everything but the note that starts the turn after
+	// a decision; see MessageKind.
+	Kind MessageKind `json:"kind" bun:"kind,type:VARCHAR(50),notnull,default:'Message'"`
 
 	Content string `json:"content" bun:"content,type:TEXT,nullzero"`
 
@@ -149,6 +152,9 @@ func (m *Message) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		}
 		if m.CreatedAt == 0 {
 			m.CreatedAt = timeutils.NowUnix()
+		}
+		if m.Kind == "" {
+			m.Kind = MessageKindMessage
 		}
 	}
 

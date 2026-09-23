@@ -11,6 +11,7 @@ export type ToolExchange = {
 
 export type ThreadEntry =
   | { kind: "user"; message: AssistantMessage }
+  | { kind: "decision"; message: AssistantMessage }
   | { kind: "declined"; message: AssistantMessage }
   | { kind: "refusal"; message: AssistantMessage }
   | { kind: "assistant"; message: AssistantMessage; tools: ToolExchange[] };
@@ -46,7 +47,10 @@ export function groupThread(messages: readonly AssistantMessage[]): ThreadEntry[
         break;
       }
       case "user":
-        entries.push({ kind: "user", message });
+        entries.push({
+          kind: message.kind === "DecisionNote" ? "decision" : "user",
+          message,
+        });
         break;
       case "declined-prompt":
         entries.push({ kind: "declined", message });

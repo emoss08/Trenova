@@ -12,6 +12,7 @@ function message(sequence: number, createdAt: number): AssistantMessage {
   return {
     id: `amsg_${sequence}`,
     threadId: "thr_1",
+    kind: "Message",
     sequence,
     role: "User",
     content: "",

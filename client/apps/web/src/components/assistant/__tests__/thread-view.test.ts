@@ -23,6 +23,7 @@ function message(overrides: Partial<AssistantMessage>): AssistantMessage {
     inputTokens: 0,
     outputTokens: 0,
     createdAt: 1_700_000_000 + sequence,
+    kind: "Message",
     ...overrides,
   };
 }
@@ -94,5 +95,33 @@ describe("groupThread", () => {
     expect(entries).toHaveLength(1);
     if (entries[0].kind !== "assistant") throw new Error("expected an assistant entry");
     expect(entries[0].tools).toHaveLength(1);
+  });
+});
+
+/**
+ * The input of the turn after a decision is the application's note, not the
+ * person's words. Drawn as a bubble it read as though they had typed
+ * "Approved create_dashboard, and it ran." themselves.
+ */
+describe("groupThread decision notes", () => {
+  it("shows a decision note as a note, not as the person's message", () => {
+    const entries = groupThread([
+      message({ role: "User", content: "Build me a dashboard" }),
+      message({ role: "Assistant", content: "Here is a proposal." }),
+      message({
+        role: "User",
+        kind: "DecisionNote",
+        content:
+          "Approved create_dashboard, and it ran.\nDecision on proposal ap_1 (create_dashboard).",
+      }),
+      message({ role: "Assistant", content: "It is under Reports." }),
+    ]);
+
+    expect(entries.map((entry) => entry.kind)).toEqual([
+      "user",
+      "assistant",
+      "decision",
+      "assistant",
+    ]);
   });
 });

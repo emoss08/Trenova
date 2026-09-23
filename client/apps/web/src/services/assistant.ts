@@ -92,6 +92,8 @@ export type SendMessageOptions = {
   attachmentDocumentIds?: readonly string[];
   /** Records named from the composer. */
   mentions?: readonly AssistantEntityRef[];
+  /** Asks for the turn that follows a decision on this proposal, in place of content. */
+  followUpProposalId?: string;
 };
 
 /** A quick question from anywhere: no thread yet, the answer makes one. */
@@ -445,6 +447,7 @@ function messageBody(content: string, options: SendMessageOptions): Record<strin
     providerId: options.providerId ?? "",
     attachmentDocumentIds: options.attachmentDocumentIds ?? [],
     mentions: options.mentions ?? [],
+    ...(options.followUpProposalId ? { followUpProposalId: options.followUpProposalId } : {}),
   };
 }
 

@@ -52,6 +52,7 @@ func (h *Handler) turnStarter(
 				AttachmentDocumentIDs: body.AttachmentDocumentIDs,
 				PreferredProviderID:   providerID,
 				ProviderChosen:        providerChosen,
+				FollowUpProposalID:    body.FollowUpProposalID,
 			},
 		})
 		if err != nil {

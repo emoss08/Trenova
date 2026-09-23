@@ -3,7 +3,9 @@ package agentruntime
 import (
 	"fmt"
 	"strings"
+	"unicode"
 
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 )
 
@@ -38,6 +40,59 @@ const askUserDescription = "Ask the person to choose a value you need and cannot
 const unattendedAskRefusal = "Nobody is watching this run, so there is no one to ask. " +
 	"Decide as your instructions allow, or call raise_exception to hand the question " +
 	"to a person."
+
+// repeatedAskRefusal answers a question the conversation has already put to
+// the person. The Homepage Widget Builder asked which dashboard twice in a
+// row; the second time the person had already answered, and being asked again
+// reads as not having been heard.
+const repeatedAskRefusal = "You already asked the person this, and their answer is in the " +
+	"conversation. Use it. If it does not settle the question, say what you are " +
+	"assuming and carry on rather than asking again."
+
+// askedQuestions collects the questions put to the person in the replayed
+// conversation's last turns, in comparable form.
+func askedQuestions(history []conversation.Message) map[string]struct{} {
+	asked := make(map[string]struct{}, 2)
+	turns := 0
+	for idx := len(history) - 1; idx >= 0 && turns < recentToolTurns; idx-- {
+		message := history[idx]
+		if message.Role == conversation.RoleUser {
+			turns++
+			continue
+		}
+		for _, call := range message.ToolCalls {
+			if call.Name != askUserName {
+				continue
+			}
+			if question := comparableQuestion(stringArg(call.Arguments, "question")); question != "" {
+				asked[question] = struct{}{}
+			}
+		}
+	}
+
+	return asked
+}
+
+// comparableQuestion folds the differences that do not make a question new:
+// case, punctuation and spacing.
+func comparableQuestion(question string) string {
+	var b strings.Builder
+	space := false
+	for _, r := range strings.ToLower(question) {
+		switch {
+		case unicode.IsLetter(r) || unicode.IsDigit(r):
+			if space && b.Len() > 0 {
+				b.WriteByte(' ')
+			}
+			b.WriteRune(r)
+			space = false
+		default:
+			space = true
+		}
+	}
+
+	return b.String()
+}
 
 // askUserSpec is the second tool the runtime answers itself.
 //

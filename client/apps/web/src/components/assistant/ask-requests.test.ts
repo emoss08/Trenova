@@ -13,6 +13,7 @@ function exchange(name: string, content: string, sequence = 3): ToolExchange {
     result: {
       id: `amsg_${sequence}`,
       threadId: "athr_1",
+      kind: "Message",
       sequence,
       role: "Tool",
       content,

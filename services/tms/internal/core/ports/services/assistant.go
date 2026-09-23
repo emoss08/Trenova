@@ -62,6 +62,11 @@ type SendMessageRequest struct {
 	// "the organization's order". A request that says nothing about the
 	// model leaves the thread's saved choice as it is.
 	ProviderChosen bool
+	// FollowUpProposalID asks for the turn that follows a decision on one of
+	// this thread's proposals. The request then carries no content: the input
+	// is a note the service writes from the decision, so the agent reports
+	// what happened rather than leaving an approval unanswered.
+	FollowUpProposalID pulid.ID
 }
 
 // AskRequest is a quick question from anywhere in the application. It runs

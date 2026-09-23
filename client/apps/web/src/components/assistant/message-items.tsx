@@ -26,6 +26,7 @@ import type {
 } from "@/types/assistant";
 import { ArtifactKindIcon, ARTIFACT_KINDS } from "./voice/artifact-chrome";
 import {
+  CheckCheckIcon,
   CheckIcon,
   ChevronRightIcon,
   CopyIcon,
@@ -602,6 +603,30 @@ export function DeclinedTurn({ content, sentAt }: { content: string; sentAt: num
     >
       <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
     </Turn>
+  );
+}
+
+/**
+ * What a decision on a proposal was, where the person's message would be. The
+ * turn after a decision starts from a note the application wrote, and drawing
+ * it as their bubble read as though they had typed it.
+ */
+export function DecisionNote({ content, at }: { content: string; at?: number }) {
+  const t = useT();
+  const line = content.split("\n", 1)[0] ?? "";
+
+  return (
+    <div
+      role="note"
+      aria-label={t("Decision")}
+      className="text-muted-foreground flex items-center justify-center gap-1.5 px-2 text-xs"
+    >
+      <CheckCheckIcon className="size-3 shrink-0" />
+      <span className="min-w-0 truncate">{line || t("Following up on your decision")}</span>
+      {at !== undefined && (
+        <span className="shrink-0 tabular-nums">· {formatUnixInUserTimezone(at, TIME_FORMAT)}</span>
+      )}
+    </div>
   );
 }
 

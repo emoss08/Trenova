@@ -66,6 +66,7 @@ type AssistantTurnRequest struct {
 	AttachmentDocumentIDs []pulid.ID         `json:"attachmentDocumentIds,omitempty"`
 	PreferredProviderID   pulid.ID           `json:"preferredProviderId,omitempty"`
 	ProviderChosen        bool               `json:"providerChosen"`
+	FollowUpProposalID    pulid.ID           `json:"followUpProposalId,omitempty"`
 }
 
 // AssistantTurnResult is what the turn came to.

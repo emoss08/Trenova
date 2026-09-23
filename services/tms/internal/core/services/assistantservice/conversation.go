@@ -264,9 +264,14 @@ func (s *Service) SendMessageStream(
 	emit services.AssistantStreamEmitter,
 ) (*services.SendMessageResult, error) {
 	content := strings.TrimSpace(req.Content)
+	followUp := req.FollowUpProposalID.IsNotNil()
 	multiErr := errortypes.NewMultiError()
-	if content == "" {
+	switch {
+	case content == "" && !followUp:
 		multiErr.Add("content", errortypes.ErrRequired, "Message cannot be empty")
+	case content != "" && followUp:
+		multiErr.Add("content", errortypes.ErrInvalid,
+			"A decision follow-up carries no message; the decision is its input")
 	}
 	page := req.Page.Normalized()
 	if page != nil {
@@ -330,6 +335,18 @@ func (s *Service) SendMessageStream(
 		return nil, err
 	}
 
+	if followUp {
+		content, err = s.decisionNote(ctx, decisionNoteParams{
+			thread:     thread,
+			proposalID: req.FollowUpProposalID,
+			history:    history,
+			tenant:     req.TenantInfo,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// The reader's choice is resolved against what they may actually pick, then
 	// kept on the thread so the picker still shows it after a reload. A choice
 	// that no longer resolves is cleared rather than carried, so the stored
@@ -374,6 +391,9 @@ func (s *Service) SendMessageStream(
 	if runErr != nil {
 		if turn != nil {
 			attachTurnContext(turn.Messages, turnCtx)
+			if followUp {
+				markDecisionNote(turn.Messages)
+			}
 			saved, saveErr := s.conversations.AppendTurn(keep, repositories.AppendTurnRequest{
 				ThreadID:   thread.ID,
 				TenantInfo: req.TenantInfo,
@@ -393,6 +413,9 @@ func (s *Service) SendMessageStream(
 	}
 
 	attachTurnContext(turn.Messages, turnCtx)
+	if followUp {
+		markDecisionNote(turn.Messages)
+	}
 
 	saved, err := s.conversations.AppendTurn(keep, repositories.AppendTurnRequest{
 		ThreadID:   thread.ID,
@@ -403,7 +426,9 @@ func (s *Service) SendMessageStream(
 		return nil, err
 	}
 
-	s.titleIfUnnamed(keep, thread, content)
+	if !followUp {
+		s.titleIfUnnamed(keep, thread, content)
+	}
 	artifacts.attachMessages(sourceMessageIndex(saved))
 
 	proposals, err := s.persistProposals(keep, persistProposalsParams{

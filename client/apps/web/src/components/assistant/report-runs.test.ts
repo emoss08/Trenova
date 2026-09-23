@@ -17,6 +17,7 @@ function exchange(name: string, content: string, toolFailed = false): ToolExchan
     result: {
       id: "amsg_1",
       threadId: "athr_1",
+      kind: "Message",
       sequence: 1,
       role: "Tool",
       content,

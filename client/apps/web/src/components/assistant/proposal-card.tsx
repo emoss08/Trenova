@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { m } from "motion/react";
 import { useState } from "react";
+import { useDecisionFollowUp } from "./decision-follow-up";
 import { ProposalEditor, type ProposalEditorRequest } from "./proposal-editor";
 import { presentProposal } from "./proposal-presenters";
 import { classifyProposal, type ProposalPresentation } from "./proposal-state";
@@ -48,13 +49,17 @@ export function ProposalCard({
   const state = classifyProposal(proposal);
   const view = presentProposal(proposal);
 
+  const followUp = useDecisionFollowUp();
   const decideMutation = useApiMutation({
     mutationFn: (decision: ProposalDecision) =>
       apiService.assistantService.decideProposal(proposal.id, decision),
-    onSuccess: (_result, decision) => {
+    onSuccess: async (_result, decision) => {
       markProposalDecided(queryClient, proposal.id, decision);
-
-      return invalidateProposalViews(queryClient, threadId);
+      await invalidateProposalViews(queryClient, threadId);
+      // The agent says what came of it. An approval used to end the
+      // conversation on a card that read "done", with no word on whether
+      // the change existed or where to find it.
+      followUp?.(proposal.id);
     },
     // A decision the server refuses almost always means this card is showing
     // a proposal somebody already resolved — in another tab, or by a click
@@ -80,6 +85,7 @@ export function ProposalCard({
         await apiService.assistantService.decideProposal(proposal.id, "Modified", modifications);
         markProposalDecided(queryClient, proposal.id, "Modified");
         await invalidateProposalViews(queryClient, threadId);
+        followUp?.(proposal.id);
       },
     });
 
