@@ -72,7 +72,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.46.0
 	go.starlark.net v0.0.0-20260908191801-89a6a09411d5
 	go.temporal.io/api v1.63.5
-	go.temporal.io/sdk v1.48.0
+	go.temporal.io/sdk v1.49.0
 	go.temporal.io/sdk/contrib/envconfig v1.0.2
 	go.uber.org/atomic v1.11.0
 	go.uber.org/fx v1.24.0
@@ -116,6 +116,8 @@ require (
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.71.0 // indirect
+	go.temporal.io/sdk/contrib/opentelemetry v0.8.1 // indirect
+	go.temporal.io/sdk/contrib/workflowstreams v0.1.1 // indirect
 	google.golang.org/genproto v0.0.0-20260908043556-f8649ddbbfe6 // indirect
 	gopkg.in/ini.v1 v1.67.3 // indirect
 	modernc.org/libc v1.75.7 // indirect
