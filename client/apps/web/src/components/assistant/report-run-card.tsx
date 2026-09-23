@@ -54,10 +54,10 @@ export function ReportRunCard({ run }: { run: ThreadReportRun }) {
     >
       <StatusMark status={status} working={query.isPending || active} landed={landed} />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5" aria-live="polite">
-        <span className="truncate text-sm font-medium">{reportLabel(run, t)}</span>
+        <span className="truncate text-sm font-semibold">{reportLabel(run, t)}</span>
         <span
           key={status}
-          className={cn("text-muted-foreground text-xs", landed && "animate-rise")}
+          className={cn("text-foreground-muted text-xs", landed && "animate-rise")}
         >
           {describe({ status, record, failure, t })}
         </span>

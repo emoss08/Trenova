@@ -1,5 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { cn } from "@trenova/shared/lib/utils";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -26,6 +25,13 @@ type VirtualThreadProps = {
   onLoadOlder: () => void;
   /** Space kept clear at the bottom for whatever floats over the thread. */
   paddingBottom: number;
+  /**
+   * Where the jump-to-latest control sits, from the bottom: the top of the
+   * box that floats over the thread. It sits just above that edge, in the
+   * band where the thread already fades, so it never covers a line the
+   * reader is reading. Defaults to just above the cleared space.
+   */
+  jumpOffset?: number;
   className?: string;
   contentClassName?: string;
   /** Applied to every row: the gap between messages lives here. */
@@ -49,6 +55,7 @@ export function VirtualThread({
   isLoadingOlder,
   onLoadOlder,
   paddingBottom,
+  jumpOffset,
   className,
   contentClassName,
   rowClassName,
@@ -156,24 +163,29 @@ export function VirtualThread({
         </div>
       </div>
 
+      {/* A small pill that floats over the thread, so it is the one thing
+          here allowed a lift. It rises into view when the reader leaves the
+          end and sinks away when they return; it does not move otherwise. */}
       <div
         className={cn(
-          "pointer-events-none absolute inset-x-0 flex justify-center transition-[opacity,translate] duration-200 ease-settle",
-          atEnd ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100",
+          "pointer-events-none absolute inset-x-0 z-20 flex justify-center transition-[opacity,translate] duration-200 ease-settle",
+          atEnd ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100",
         )}
-        style={{ bottom: paddingBottom + 12 }}
+        style={{ bottom: jumpOffset ?? paddingBottom + 12 }}
       >
-        <Button
-          variant="secondary"
-          size="sm"
-          className={cn("rounded-full", atEnd ? "pointer-events-none" : "pointer-events-auto")}
+        <button
+          type="button"
+          className={cn(
+            "ui-lift-whisper ui-focus-ring ui-press bg-raised text-foreground-muted hover:text-foreground flex h-6 items-center gap-1 rounded-full px-2.5 text-xs transition-colors",
+            atEnd ? "pointer-events-none" : "pointer-events-auto",
+          )}
           tabIndex={atEnd ? -1 : 0}
           aria-hidden={atEnd}
           onClick={jumpToLatest}
         >
-          <ArrowDownIcon className="size-3.5" />
+          <ArrowDownIcon className="size-3" />
           {t("Latest")}
-        </Button>
+        </button>
       </div>
     </div>
   );

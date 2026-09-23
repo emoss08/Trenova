@@ -1,6 +1,12 @@
 import { parseAssistantStreamEvent, type AssistantStreamEvent } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
-import { describeTurnFailure, initialTurnState, reduceTurn, type TurnState } from "../turn-stream";
+import {
+  advanceTurn,
+  describeTurnFailure,
+  initialTurnState,
+  reduceTurn,
+  type TurnState,
+} from "../turn-stream";
 
 function run(events: AssistantStreamEvent[], from: TurnState = initialTurnState("Where is S1?")) {
   return events.reduce(reduceTurn, from);
@@ -548,5 +554,127 @@ describe("a decision follow-up turn", () => {
     expect(state.followUp).toBe(true);
     expect(state.userContent).toBe("");
     expect(initialTurnState("hello").followUp).toBe(false);
+  });
+});
+
+/**
+ * The server says what each call did and, when it finishes, sums up what came
+ * back. Both ride on the tool events, and an older server sends neither.
+ */
+describe("reduceTurn tool effects and summaries", () => {
+  it("keeps the effect from the start and the summary from the finish", () => {
+    const state = run([
+      accepted,
+      {
+        event: "tool_started",
+        data: {
+          callId: "c1",
+          name: "open_page",
+          arguments: { page: "/reports" },
+          effect: "navigate",
+        },
+      },
+      {
+        event: "tool_finished",
+        data: {
+          callId: "c1",
+          name: "open_page",
+          failed: false,
+          proposed: false,
+          content: "{}",
+          effect: "navigate",
+          summary: "Report library",
+        },
+      },
+    ]);
+
+    const [tool] = state.segments;
+    expect(tool).toMatchObject({ kind: "tool", effect: "navigate", summary: "Report library" });
+  });
+
+  it("parses an effect this client does not know as absent rather than failing", () => {
+    const parsed = parseAssistantStreamEvent(
+      "tool_started",
+      '{"callId":"c1","name":"x","arguments":{},"effect":"teleport"}',
+    );
+
+    expect(parsed).toEqual({
+      event: "tool_started",
+      data: { callId: "c1", name: "x", arguments: {}, effect: undefined },
+    });
+  });
+
+  it("leaves effect and summary unset for an older server", () => {
+    const state = run([
+      accepted,
+      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+      {
+        event: "tool_finished",
+        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+      },
+    ]);
+
+    const [tool] = state.segments;
+    if (tool.kind !== "tool") throw new Error("expected a tool segment");
+    expect(tool.effect).toBeUndefined();
+    expect(tool.summary).toBeUndefined();
+  });
+});
+
+/**
+ * The turn in progress says how long each step took by the reader's own
+ * clock: a call is stamped when it starts and again when it finishes.
+ */
+describe("advanceTurn", () => {
+  it("stamps a call when it starts and when it finishes", () => {
+    let state = advanceTurn(
+      initialTurnState("Where is S1?", null, { startedAt: 1_000 }),
+      accepted,
+      1_000,
+    );
+    state = advanceTurn(
+      state,
+      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+      2_000,
+    );
+    state = advanceTurn(state, { event: "delta", data: { text: "…" } }, 2_500);
+    state = advanceTurn(
+      state,
+      {
+        event: "tool_finished",
+        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+      },
+      5_000,
+    );
+
+    const tool = state.segments.find((segment) => segment.kind === "tool");
+    expect(tool).toMatchObject({ startedAt: 2_000, finishedAt: 5_000 });
+    expect(state.startedAt).toBe(1_000);
+  });
+
+  it("does not restamp a call that has already finished", () => {
+    let state = advanceTurn(
+      initialTurnState("Q"),
+      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+      1_000,
+    );
+    state = advanceTurn(
+      state,
+      {
+        event: "tool_finished",
+        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+      },
+      2_000,
+    );
+    const settled = advanceTurn(state, { event: "delta", data: { text: "Done." } }, 9_000);
+
+    expect(settled.segments[0]).toMatchObject({ startedAt: 1_000, finishedAt: 2_000 });
+  });
+
+  it("returns the same state when nothing needed stamping", () => {
+    const state = initialTurnState("Q");
+    const next = advanceTurn(state, { event: "thread", data: undefined as never }, 1);
+
+    expect(next.segments).toBe(state.segments);
   });
 });

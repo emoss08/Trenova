@@ -17,7 +17,7 @@ import {
   describeTurnFailure,
   initialTurnState,
   isTurnActive,
-  reduceTurn,
+  advanceTurn,
   type TurnContext,
   type TurnFailureCause,
   type TurnFailureKind,
@@ -229,7 +229,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       setTurn(initial);
 
       const onEvent = (event: AssistantStreamEvent) => {
-        setTurn((state) => (state ? reduceTurn(state, event) : state));
+        setTurn((state) => (state ? advanceTurn(state, event) : state));
         if (event.event === "done") {
           terminal = true;
           ended = true;

@@ -650,6 +650,43 @@ come from `ARTIFACT_KINDS`, once, for every surface that names one; a body with 
 show is `ArtifactNotice`, never a bare grey sentence. Status is a tone
 (Pending is `info`, Sent is `success`, Failed is `danger`); the kind is never coloured.
 
+**The conversation says what the agent did, in the words of what it did.** A person's
+message sits in a `bg-sunken` well under "You" — never their name and avatar, which read
+as someone else once the thread was shared. The reply runs open across the column under
+the agent's mark and name, once: a reply that took four model steps is saved as four
+messages, and `turnPlacements` heads the first and continues the rest beneath it, with
+how long the whole reply took beside the time. Both share the left edge; the difference
+is voice, not side.
+
+Tool calls are drawn by their **effect** — `lookup`, `change`, `navigate`, `discover`,
+`present`, `ask` — which the server sends on every call and `toolEffect` derives from the
+name when it does not. Reads fold into one line ("Looked up 3 records", "Found 25+
+records"); an action never does, because "opened a page" counted as "looked up 1 record"
+is the report that started this. An action stands on its own line in ink with its mark in
+a small sunken well — "Opened Report library", "Ran Late loads", "Saved Shipments
+for Peak Distributing", "Proposed a change" — and a read is quieter, in muted text with a
+bare mark. The verb is the client's and translated; the server's one-line `summary` only
+ever supplies a name, and a count phrase from it ("3 customers") is read for its number,
+never shown. A line opens onto the call as labelled values — what was asked, what came
+back, list results named by their first few records — with the literal JSON behind a
+second "Details" click.
+
+While a reply is being written, one **working line** at its foot says what is happening
+now — "Looking up Peak Distributing…", "Writing the answer…" — with the step count and the
+elapsed time, beside the only breathing dot on screen. The words change when the work does
+and each change rises into place; a step joins the list above when it lands, as a check on
+the confirm spring. Nothing else moves: no shimmer on "Thinking", no spinner on a card.
+
+**Decisions and their outcomes are one card that changes.** A proposal or a plan waiting on
+someone is the artifact chrome in miniature — the kind's mark in a sunken well, the title
+in semibold, the state as a phase badge, the buttons under a hairline. Decided, it becomes
+a receipt of what came of it in place: the outcome line rises, the mark settles, and
+"approved" and "done" stay two facts. A write the agent may make on its own (a report saved
+to the person's own list) is recorded at the `AutoExecute` tier and reads "Done on its own",
+never as approved or waiting. The note that starts the turn after a decision is drawn as a
+decision between hairlines, first line only, whatever else the message carries: the lines
+after it are instructions to the agent.
+
 **Decisions are a queue with keys.** A row says who proposed what in one sentence; the
 detail beside it says why and what it would change. `j`/`k` walk the rows, `x` marks one
 for the batch, `a`/`r`/`m` act on the focused row, `Shift+A` approves the batch. The batch

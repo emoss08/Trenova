@@ -16,6 +16,30 @@ export function formatLatency(ms: number): string {
 }
 
 /**
+ * How long a step of an agent's work took, at the resolution a person reads
+ * a wait in: "<1s", "14s", "2m 5s", "1h 3m". Seconds are whole because the
+ * steps are stamped in whole seconds.
+ */
+export function formatWorkDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 1) {
+    return "<1s";
+  }
+  const whole = Math.floor(seconds);
+  if (whole < 60) {
+    return `${whole}s`;
+  }
+  if (whole < 3600) {
+    const rest = whole % 60;
+    const minutes = Math.floor(whole / 60);
+    return rest === 0 ? `${minutes}m` : `${minutes}m ${rest}s`;
+  }
+  const hours = Math.floor(whole / 3600);
+  const minutes = Math.floor((whole % 3600) / 60);
+
+  return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
+}
+
+/**
  * A cost in USD, keeping the cents that matter. A single turn is usually a
  * fraction of a cent, and rounding it to "$0.00" would say it was free.
  */

@@ -209,6 +209,24 @@ export const agentTemplateListSchema = z.object({
   templates: z.array(agentTemplateSchema),
 });
 
+/**
+ * What a tool call did, as the server classifies it: read records, change one,
+ * move the app to a page, find the tools for the job, put a result in front of
+ * the person, or ask them something. Absent for a tool the server no longer
+ * knows, and an effect this client has not heard of reads as absent, so a
+ * newer server cannot break an older reader.
+ */
+export const toolEffectSchema = z.enum([
+  "lookup",
+  "change",
+  "navigate",
+  "discover",
+  "present",
+  "ask",
+]);
+
+const optionalToolEffect = toolEffectSchema.optional().catch(undefined);
+
 export const toolCatalogEntrySchema = z.object({
   name: z.string(),
   description: z.string(),
@@ -222,6 +240,7 @@ export const toolCatalogEntrySchema = z.object({
   core: z.boolean().default(false),
   /** Tools this one takes its arguments from; the reads among them come with it. */
   prerequisites: z.array(z.string()).default([]),
+  effect: optionalToolEffect,
 });
 
 export const toolCatalogSchema = z.object({
@@ -287,6 +306,7 @@ export const toolCallRecordSchema = z.object({
   id: z.string(),
   name: z.string(),
   arguments: z.record(z.string(), z.unknown()).nullish(),
+  effect: optionalToolEffect,
 });
 
 /** One filter as a table carries it, in the shape the list tools take. */
@@ -373,6 +393,13 @@ export const assistantMessageSchema = z.object({
   toolCallId: z.string().optional().default(""),
   toolName: z.string().optional().default(""),
   toolFailed: z.boolean().default(false),
+  /** On a tool result: what the call did. */
+  effect: optionalToolEffect,
+  /**
+   * On a tool result: one line the server wrote about it, in English — a
+   * record's name, a page, a report, or a count. Never set on a failed call.
+   */
+  summary: z.string().optional(),
   /** Which guard layer decided this turn, kept so a refusal can be explained. */
   scopeStage: z.string().optional().default(""),
   scopeCategory: z.string().optional().default(""),
@@ -712,6 +739,7 @@ export const assistantToolStartedEventSchema = z.object({
   callId: z.string(),
   name: z.string(),
   arguments: z.record(z.string(), z.unknown()).nullish(),
+  effect: optionalToolEffect,
 });
 
 export const assistantToolFinishedEventSchema = z.object({
@@ -720,6 +748,8 @@ export const assistantToolFinishedEventSchema = z.object({
   failed: z.boolean().default(false),
   proposed: z.boolean().default(false),
   content: z.string().optional().default(""),
+  effect: optionalToolEffect,
+  summary: z.string().optional(),
 });
 
 export const assistantErrorEventSchema = z.object({ message: z.string() });
@@ -817,6 +847,7 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
 
 export type AgentTemplateKind = z.infer<typeof agentTemplateKindSchema>;
 export type AutonomyTier = z.infer<typeof autonomyTierSchema>;
+export type ToolEffect = z.infer<typeof toolEffectSchema>;
 export type TriggerMode = z.infer<typeof triggerModeSchema>;
 export type OutputMode = z.infer<typeof outputModeSchema>;
 export type ContextProvider = z.infer<typeof contextProviderSchema>;

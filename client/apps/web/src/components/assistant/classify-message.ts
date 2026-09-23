@@ -3,14 +3,22 @@ import type { AssistantMessage } from "@/types/assistant";
 /**
  * How a message should be presented.
  *
- * - `tool` — a lookup the assistant performed, shown collapsed
+ * - `tool` — a step the assistant took, shown collapsed under its turn
+ * - `decision` — the note the application wrote to start the turn after a
+ *   decision, shown as the decision it records and never as its text
  * - `refusal` — a boundary the guard enforced, shown as a notice rather than as
  *   something the assistant said
  * - `declined-prompt` — the user turn that was refused, shown muted so the
  *   conversation still reads in order without implying it was answered
  * - `user` / `assistant` — ordinary turns
  */
-export type MessagePresentation = "tool" | "refusal" | "declined-prompt" | "user" | "assistant";
+export type MessagePresentation =
+  | "tool"
+  | "decision"
+  | "refusal"
+  | "declined-prompt"
+  | "user"
+  | "assistant";
 
 /**
  * Decides how to render one message.
@@ -24,10 +32,20 @@ export type MessagePresentation = "tool" | "refusal" | "declined-prompt" | "user
  * Tool messages are checked first because the server never marks them refused —
  * the guard runs on the turn, not on individual lookups — so role is the only
  * signal that matters for them.
+ *
+ * A decision note is read next, ahead of the refusal flag. Its text is the
+ * application's instruction to the agent — the decision on its first line,
+ * then how to report it — and a person never typed it. Letting a refused note
+ * fall through to the muted "declined" turn printed those instructions in full
+ * under the person's name.
  */
 export function classifyMessage(message: AssistantMessage): MessagePresentation {
   if (message.role === "Tool") {
     return "tool";
+  }
+
+  if (message.kind === "DecisionNote") {
+    return "decision";
   }
 
   if (message.refused) {

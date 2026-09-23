@@ -2,7 +2,6 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { toneVar } from "@/components/kpi/tone";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { apiService } from "@/services/api";
@@ -15,19 +14,19 @@ import {
   CircleSlashIcon,
   FlaskConicalIcon,
   ListChecksIcon,
-  LoaderIcon,
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
-import { m } from "motion/react";
+import { DecisionFrame, DecisionReceipt, useWatchedChange } from "./decision-chrome";
 import {
   classifyPlan,
   planStepState,
   type PlanPresentation,
   type PlanStepState,
 } from "./plan-state";
-import { HoldLine, OutcomeIcon } from "./proposal-card";
+import { HoldLine } from "./proposal-card";
 import { presentProposal } from "./proposal-presenters";
+import { WorkingDot } from "./voice/working-dot";
 
 /**
  * Several writes the assistant is asking for as one.
@@ -37,7 +36,7 @@ import { presentProposal } from "./proposal-presenters";
  * the card lists the steps in the order they will run and takes one answer
  * for all of them. Once approved it keeps following the steps, because
  * "approved" and "done" are different facts and a step that failed stops the
- * ones after it.
+ * ones after it; each step's mark settles as it finishes.
  */
 export function PlanCard({
   plan,
@@ -60,95 +59,73 @@ export function PlanCard({
   });
 
   const awaiting = state === "awaiting";
+  const decidedHere = useWatchedChange(awaiting || state === "held");
   const permanent = steps.some((step) => !presentProposal(step).reversible);
 
   if (!awaiting && state !== "held") {
     return (
-      <m.div
-        layout
-        className="border-border/70 text-muted-foreground flex flex-col gap-1.5 rounded-lg border px-3 py-2 text-xs"
+      <DecisionReceipt
+        state={state}
+        summary={plan.title}
+        arrived={decidedHere}
+        footer={steps.length > 0 ? <StepList steps={steps} settled /> : null}
       >
-        <div className="flex items-start gap-2">
-          <OutcomeIcon state={state} />
-          <span className="min-w-0 flex-1">
-            <span className="text-foreground block">{plan.title}</span>
-            <PlanOutcomeLine plan={plan} state={state} />
-          </span>
-        </div>
-        {steps.length > 0 && <StepList steps={steps} settled />}
-      </m.div>
+        <PlanOutcomeLine plan={plan} state={state} />
+      </DecisionReceipt>
     );
   }
 
   return (
-    <m.div
-      layout
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-card ring-foreground/10 flex flex-col overflow-hidden rounded-xl ring-1"
-    >
-      <div className="flex flex-col gap-2 px-3.5 pt-3 pb-2.5">
-        <div className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className="size-1.5 shrink-0 rounded-full"
-            style={{ backgroundColor: toneVar("warning") }}
-          />
-          <span className="text-muted-foreground flex min-w-0 flex-1 items-center gap-1.5 truncate text-xs">
-            <ListChecksIcon className="size-3.5 shrink-0" />
-            {t("{0, plural, one {# change, in order} other {# changes, in order}}", plan.stepCount)}
-          </span>
-        </div>
-
-        <p className="text-sm leading-snug">{plan.title}</p>
-
-        {plan.summary !== "" && (
-          <p className="text-muted-foreground text-xs leading-relaxed whitespace-pre-wrap">
-            {plan.summary}
-          </p>
-        )}
-
-        {steps.length > 0 && <StepList steps={steps} settled={false} />}
-      </div>
-
-      {state === "held" ? (
-        <HoldLine hold={plan.hold} />
-      ) : (
-        <div className="flex items-center gap-2 px-3 pb-3">
-          <Button
-            size="sm"
-            onClick={() => decideMutation.mutate("Accepted")}
-            disabled={decideMutation.isPending}
-            isLoading={decideMutation.isPending && decideMutation.variables === "Accepted"}
-          >
-            <CheckIcon className="size-3.5" />
-            {t("Approve all")}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => decideMutation.mutate("Rejected")}
-            disabled={decideMutation.isPending}
-            isLoading={decideMutation.isPending && decideMutation.variables === "Rejected"}
-          >
-            <XIcon className="size-3.5" />
-            {t("Reject all")}
-          </Button>
-
-          <span className="ml-auto flex items-center gap-2">
+    <DecisionFrame
+      icon={ListChecksIcon}
+      title={plan.title}
+      state={state}
+      footer={
+        state === "held" ? (
+          <HoldLine hold={plan.hold} />
+        ) : (
+          <div className="border-border-subtle flex flex-wrap items-center gap-2 border-t px-3 py-2.5">
+            <Button
+              size="sm"
+              onClick={() => decideMutation.mutate("Accepted")}
+              disabled={decideMutation.isPending}
+              isLoading={decideMutation.isPending && decideMutation.variables === "Accepted"}
+            >
+              <CheckIcon className="size-3.5" />
+              {t("Approve all")}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => decideMutation.mutate("Rejected")}
+              disabled={decideMutation.isPending}
+              isLoading={decideMutation.isPending && decideMutation.variables === "Rejected"}
+            >
+              <XIcon className="size-3.5" />
+              {t("Reject all")}
+            </Button>
             {permanent && (
-              <span
-                className="flex items-center gap-1 text-xs"
-                style={{ color: toneVar("warning") }}
-              >
+              <span className="text-warning ml-auto flex items-center gap-1 text-xs">
                 <TriangleAlertIcon className="size-3" />
                 {t("Permanent")}
               </span>
             )}
-          </span>
-        </div>
+          </div>
+        )
+      }
+    >
+      <span className="text-foreground-muted -mt-1 text-xs">
+        {t("{0, plural, one {# change, in order} other {# changes, in order}}", plan.stepCount)}
+      </span>
+
+      {plan.summary !== "" && (
+        <p className="text-foreground-muted text-xs leading-relaxed whitespace-pre-wrap">
+          {plan.summary}
+        </p>
       )}
-    </m.div>
+
+      {steps.length > 0 && <StepList steps={steps} settled={false} />}
+    </DecisionFrame>
   );
 }
 
@@ -159,54 +136,64 @@ export function PlanCard({
  */
 function StepList({ steps, settled }: { steps: AssistantProposal[]; settled: boolean }) {
   return (
-    <ol className={cn("flex flex-col gap-1.5", settled ? "pl-5.5" : "text-xs")}>
-      {steps.map((step) => {
-        const view = presentProposal(step);
-        const stepState = planStepState(step);
-
-        return (
-          <li key={step.id} className="flex items-start gap-2">
-            {settled ? (
-              <StepIcon state={stepState} />
-            ) : (
-              <span className="text-muted-foreground w-4 shrink-0 text-right tabular-nums">
-                {step.planStep}.
-              </span>
-            )}
-            <span className="min-w-0 flex-1">
-              <span className={cn("block", stepState === "skipped" && "line-through")}>
-                {view.summary}
-              </span>
-              {settled && stepState === "failed" && step.executionError !== "" && (
-                <span className="block" style={{ color: toneVar("danger") }}>
-                  {step.executionError}
-                </span>
-              )}
-              {settled && stepState === "simulated" && step.simulation?.summary && (
-                <span className="text-muted-foreground block">{step.simulation.summary}</span>
-              )}
-            </span>
-          </li>
-        );
-      })}
+    <ol className={cn("flex flex-col gap-1.5 text-xs", settled && "pl-8.5")}>
+      {steps.map((step) => (
+        <PlanStep key={step.id} step={step} settled={settled} />
+      ))}
     </ol>
   );
 }
 
+function PlanStep({ step, settled }: { step: AssistantProposal; settled: boolean }) {
+  const view = presentProposal(step);
+  const stepState = planStepState(step);
+
+  return (
+    <li className="flex items-start gap-2">
+      {settled ? (
+        <StepIcon state={stepState} />
+      ) : (
+        <span className="text-foreground-subtle w-4 shrink-0 text-right tabular-nums">
+          {step.planStep}.
+        </span>
+      )}
+      <span className="min-w-0 flex-1">
+        <span
+          className={cn("block", stepState === "skipped" && "text-foreground-subtle line-through")}
+        >
+          {view.summary}
+        </span>
+        {settled && stepState === "failed" && step.executionError !== "" && (
+          <span className="text-danger block">{step.executionError}</span>
+        )}
+        {settled && stepState === "simulated" && step.simulation?.summary && (
+          <span className="text-foreground-muted block">{step.simulation.summary}</span>
+        )}
+      </span>
+    </li>
+  );
+}
+
+/** A step's mark; one that finishes while watched settles with the spring. */
 function StepIcon({ state }: { state: PlanStepState }) {
-  const className = "mt-px size-3.5 shrink-0";
+  const watched = useWatchedChange(state);
+  const className = cn("mt-px size-3.5 shrink-0", watched && "animate-confirm");
 
   switch (state) {
     case "failed":
-      return <CircleAlertIcon className={className} style={{ color: toneVar("danger") }} />;
+      return <CircleAlertIcon key={state} className={cn(className, "text-danger")} />;
     case "done":
-      return <CircleCheckIcon className={className} style={{ color: toneVar("success") }} />;
+      return <CircleCheckIcon key={state} className={cn(className, "text-success")} />;
     case "running":
-      return <LoaderIcon className={cn(className, "animate-spin")} />;
+      return (
+        <span className="flex size-3.5 shrink-0 items-center justify-center pt-px">
+          <WorkingDot working still />
+        </span>
+      );
     case "simulated":
-      return <FlaskConicalIcon className={className} style={{ color: toneVar("info") }} />;
+      return <FlaskConicalIcon key={state} className={cn(className, "text-foreground-muted")} />;
     default:
-      return <CircleSlashIcon className={cn(className, "text-muted-foreground")} />;
+      return <CircleSlashIcon key={state} className={cn(className, "text-foreground-subtle")} />;
   }
 }
 
@@ -221,7 +208,7 @@ function PlanOutcomeLine({ plan, state }: { plan: AssistantPlan; state: PlanPres
   switch (state) {
     case "failed":
       return (
-        <span className="block" style={{ color: toneVar("danger") }}>
+        <span className="text-danger block">
           {plan.failedStep
             ? t(
                 "Approved, but step {0} of {1} did not run and the rest were skipped.",

@@ -98,3 +98,28 @@ describe("classifyMessage", () => {
     expect(classifyMessage(toolCall)).toBe("assistant");
   });
 });
+
+/**
+ * The turn after a decision starts from a note the application wrote: the
+ * decision on its first line, then instructions to the agent. It is shown as
+ * the decision, whatever else the message carries, because every other
+ * presentation prints the instructions under the person's name.
+ */
+describe("classifyMessage with a decision note", () => {
+  const note =
+    "Approved: create report Late loads\nTell the person what was made and where to find it.";
+
+  it("renders a decision note as a decision", () => {
+    expect(classifyMessage(message({ role: "User", kind: "DecisionNote", content: note }))).toBe(
+      "decision",
+    );
+  });
+
+  it("renders a refused decision note as a decision, not a declined prompt", () => {
+    expect(
+      classifyMessage(
+        message({ role: "User", kind: "DecisionNote", refused: true, content: note }),
+      ),
+    ).toBe("decision");
+  });
+});

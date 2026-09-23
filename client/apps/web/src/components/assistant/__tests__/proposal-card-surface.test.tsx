@@ -155,3 +155,34 @@ describe("ProposalCard", () => {
     expect(screen.getByText("Rejected. Nothing was changed.")).toBeInTheDocument();
   });
 });
+
+/**
+ * A write the agent may make on its own — a report saved to the person's own
+ * list — is recorded like any proposal, at the AutoExecute tier, already
+ * executed. It was never a question, so it must not read as waiting or as
+ * something a person approved.
+ */
+describe("ProposalCard for a write that ran on its own", () => {
+  it("reads as done without approval, with no decision offered", () => {
+    renderCard(
+      proposal({ autonomyTier: "AutoExecute", status: "Executed", executedAt: 1_790_000_000 }),
+    );
+
+    expect(screen.queryByRole("button", { name: /approve/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/needs approval/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/^Done on its own .*No approval was needed\.$/u)).toBeInTheDocument();
+  });
+
+  it("says it is running on its own rather than waiting after an approval", () => {
+    renderCard(proposal({ autonomyTier: "AutoExecute", status: "Accepted" }));
+
+    expect(screen.getByText("Running on its own. No approval is needed.")).toBeInTheDocument();
+    expect(screen.queryByText("Approved. Waiting for it to run.")).not.toBeInTheDocument();
+  });
+
+  it("still says an approved write is approved", () => {
+    renderCard(proposal({ status: "Accepted" }));
+
+    expect(screen.getByText("Approved. Waiting for it to run.")).toBeInTheDocument();
+  });
+});

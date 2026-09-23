@@ -1,3 +1,4 @@
+import { toSentenceFragment, toTitleCase } from "@trenova/shared/lib/utils";
 import { humanizeToolName } from "./proposal-state";
 
 /**
@@ -58,6 +59,10 @@ const TOOL_TITLES: Record<string, string> = {
   list_location_categories: "List location categories",
   ask_user: "Ask you to choose",
   find_tools: "Look for a tool",
+  find_in_trenova: "Search the product guide",
+  open_page: "Open a page",
+  compose_table_view: "Build a table",
+  compare_report_runs: "Compare report runs",
   publish_artifact: "Publish a document",
   list_reports: "Browse reports",
   run_report: "Start report",
@@ -127,6 +132,8 @@ const SUBJECT_KEYS = [
   "workerNumber",
   "ptoId",
   "dataset",
+  "page",
+  "question",
   "query",
   "search",
   "shipmentId",
@@ -231,10 +238,11 @@ export function describeToolCall(
     if (typeof value === "string" && value.trim() !== "") {
       return {
         title,
-        subject: key === "query" || key === "search" ? `“${value}”` : value,
+        subject: key === "query" || key === "search" || key === "question" ? `“${value}”` : value,
       };
     }
-    if (typeof value === "number") {
+    // A number under "page" is a page of results, not a page of the app.
+    if (typeof value === "number" && key !== "page") {
       return { title, subject: String(value) };
     }
   }
@@ -325,4 +333,144 @@ export function parseToolResult(content: string): ParsedToolResult {
   }
 
   return { kind: "text", text: body, truncated };
+}
+
+/** A value as the details show it: text, or the shape of something nested. */
+export type ReadableValue =
+  | { kind: "text"; text: string }
+  | { kind: "items"; count: number }
+  | { kind: "fields"; count: number };
+
+export type ReadableEntry = { key: string; label: string; value: ReadableValue };
+
+/**
+ * A key as a label: "customerId" reads "Customer ID", "proNumber" reads
+ * "Pro number". Sentence case, and an initialism is left standing.
+ */
+export function humanizeKey(key: string): string {
+  const fragment = toSentenceFragment(toTitleCase(key));
+
+  return fragment.charAt(0).toUpperCase() + fragment.slice(1);
+}
+
+function readableValue(key: string, value: unknown): ReadableValue | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  if (typeof value === "string") {
+    return { kind: "text", text: value };
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return { kind: "text", text: String(value) };
+  }
+  if (Array.isArray(value)) {
+    if (key === "filters") {
+      const filters = describeFilters(value);
+      if (filters !== "") {
+        return { kind: "text", text: filters };
+      }
+    }
+    if (
+      value.length > 0 &&
+      value.every((item) => typeof item === "string" || typeof item === "number")
+    ) {
+      return { kind: "text", text: value.join(", ") };
+    }
+    return value.length === 0 ? null : { kind: "items", count: value.length };
+  }
+  if (typeof value === "object") {
+    const count = Object.keys(value).length;
+    return count === 0 ? null : { kind: "fields", count };
+  }
+
+  return null;
+}
+
+/** How many labelled values a record shows before the rest are left to Details. */
+export const READABLE_LIMIT = 10;
+
+/**
+ * An object as labelled values in its own order, empty values left out and
+ * nested values reduced to their shape, so a person reads a record rather
+ * than a wall of JSON. The whole object stays behind Details.
+ */
+export function readableEntries(
+  value: Record<string, unknown> | null | undefined,
+  limit: number = READABLE_LIMIT,
+): { entries: ReadableEntry[]; hidden: number } {
+  const all: ReadableEntry[] = [];
+  for (const [key, entry] of Object.entries(value ?? {})) {
+    const readable = readableValue(key, entry);
+    if (readable !== null) {
+      all.push({ key, label: humanizeKey(key), value: readable });
+    }
+  }
+
+  return { entries: all.slice(0, limit), hidden: Math.max(0, all.length - limit) };
+}
+
+const LABEL_KEYS = [
+  "name",
+  "displayName",
+  "fullName",
+  "title",
+  "label",
+  "proNumber",
+  "code",
+  "number",
+];
+
+/** What a record in a list is called, for naming the first few. */
+export function recordLabel(record: unknown): string {
+  if (typeof record !== "object" || record === null) {
+    return typeof record === "string" || typeof record === "number" ? String(record) : "";
+  }
+  const fields = record as Record<string, unknown>;
+  for (const key of LABEL_KEYS) {
+    const value = fields[key];
+    if (typeof value === "string" && value.trim() !== "") {
+      return value.trim();
+    }
+  }
+  const first = typeof fields.firstName === "string" ? fields.firstName : "";
+  const last = typeof fields.lastName === "string" ? fields.lastName : "";
+
+  return `${first} ${last}`.trim();
+}
+
+/** What a tool returned, shaped for reading. */
+export type ReadableResult =
+  | { kind: "list"; count: number; more: boolean; labels: string[] }
+  | { kind: "record"; entries: ReadableEntry[]; hidden: number }
+  | { kind: "text"; text: string };
+
+/** How many of a list's records are named before the rest are a count. */
+const LIST_LABELS = 5;
+
+function readableList(items: unknown[], count: number, more: boolean): ReadableResult {
+  return {
+    kind: "list",
+    count,
+    more,
+    labels: items
+      .map(recordLabel)
+      .filter((label) => label !== "")
+      .slice(0, LIST_LABELS),
+  };
+}
+
+export function readableResult(value: unknown): ReadableResult {
+  if (Array.isArray(value)) {
+    return readableList(value, value.length, false);
+  }
+  if (typeof value !== "object" || value === null) {
+    return { kind: "text", text: value === null || value === undefined ? "" : String(value) };
+  }
+  const record = value as Record<string, unknown>;
+  if (Array.isArray(record.items)) {
+    const declared = typeof record.count === "number" ? record.count : record.items.length;
+    return readableList(record.items, declared, record.hasMore === true);
+  }
+
+  return { kind: "record", ...readableEntries(record) };
 }

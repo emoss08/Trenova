@@ -1,8 +1,6 @@
 import { Button } from "@trenova/shared/components/ui/button";
 import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { toneVar } from "@/components/kpi/tone";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { invalidateProposalViews, markProposalDecided } from "@/lib/proposal-cache";
 import { apiService } from "@/services/api";
@@ -10,22 +8,18 @@ import type { AssistantProposal, ProposalDecision } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   CheckIcon,
-  CircleAlertIcon,
-  CircleCheckIcon,
-  CircleSlashIcon,
-  FlaskConicalIcon,
-  LoaderIcon,
   PauseCircleIcon,
+  PenLineIcon,
   PencilIcon,
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
-import { m } from "motion/react";
 import { useState } from "react";
+import { DecisionFrame, DecisionReceipt, useWatchedChange } from "./decision-chrome";
 import { useDecisionFollowUp } from "./decision-follow-up";
 import { ProposalEditor, type ProposalEditorRequest } from "./proposal-editor";
 import { presentProposal } from "./proposal-presenters";
-import { classifyProposal, type ProposalPresentation } from "./proposal-state";
+import { classifyProposal, ranWithoutApproval, type ProposalPresentation } from "./proposal-state";
 
 /**
  * A change the assistant is asking for.
@@ -36,6 +30,10 @@ import { classifyProposal, type ProposalPresentation } from "./proposal-state";
  * inputs to that decision: the first is jargon, the second is a storage key, and
  * the third is a number no model can calibrate. They are either dropped or put
  * behind Details, which still holds the literal payload for anyone who wants it.
+ *
+ * Once decided — or when it never needed deciding, because the write was one
+ * the agent may make on its own — the card becomes a receipt of what came of
+ * it, and changes into it in place.
  */
 export function ProposalCard({
   proposal,
@@ -71,6 +69,9 @@ export function ProposalCard({
   const [editor, setEditor] = useState<ProposalEditorRequest | null>(null);
 
   const awaiting = state === "awaiting";
+  // Decided while this card was on screen: the receipt that replaces the
+  // question rises into its place rather than swapping in.
+  const decidedHere = useWatchedChange(awaiting || state === "held");
   const fields = proposal.fields ?? [];
   const editable = awaiting && fields.length > 0;
 
@@ -95,115 +96,91 @@ export function ProposalCard({
   // so it keeps the full card and swaps the buttons for the reason.
   if (!awaiting && state !== "held") {
     return (
-      <m.div
-        layout
-        className="border-border/70 text-muted-foreground flex items-start gap-2 rounded-lg border px-3 py-2 text-xs"
-      >
-        <OutcomeIcon state={state} />
-        <span className="min-w-0 flex-1">
-          <span className="text-foreground block">{view.summary}</span>
-          <OutcomeLine proposal={proposal} state={state} />
-        </span>
-      </m.div>
+      <DecisionReceipt state={state} summary={view.summary} arrived={decidedHere}>
+        <OutcomeLine proposal={proposal} state={state} />
+      </DecisionReceipt>
     );
   }
 
   return (
-    <m.div
-      layout
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-card ring-foreground/10 flex flex-col overflow-hidden rounded-xl ring-1"
-    >
-      <div className="flex flex-col gap-2 px-3.5 pt-3 pb-2.5">
-        <div className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className="size-1.5 shrink-0 rounded-full"
-            style={{ backgroundColor: toneVar("warning") }}
-          />
-          <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
-            {view.title}
-          </span>
-          {view.severity && (
-            <span
-              className="shrink-0 text-xs font-medium"
-              style={{ color: toneVar(view.severity.tone) }}
-            >
-              {view.severity.label}
-            </span>
-          )}
-        </div>
-
-        <p className="text-sm leading-snug">{view.summary}</p>
-
-        {view.highlights.length > 0 && (
-          <dl className="flex flex-col gap-1.5 text-xs">
-            {view.highlights.map((entry) => (
-              <HighlightRow key={entry.label} label={entry.label} value={entry.value} />
-            ))}
-          </dl>
-        )}
-
-        {proposal.rationale !== "" && (
-          <p className="text-muted-foreground text-xs leading-relaxed whitespace-pre-wrap">
-            {proposal.rationale}
-          </p>
-        )}
-      </div>
-
-      {state === "held" ? (
-        <HoldLine hold={proposal.hold} />
-      ) : (
-        <div className="flex items-center gap-2 px-3 pb-3">
-          <Button
-            size="sm"
-            onClick={() => decideMutation.mutate("Accepted")}
-            disabled={decideMutation.isPending}
-            isLoading={decideMutation.isPending && decideMutation.variables === "Accepted"}
-          >
-            <CheckIcon className="size-3.5" />
-            {t("Approve")}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => decideMutation.mutate("Rejected")}
-            disabled={decideMutation.isPending}
-            isLoading={decideMutation.isPending && decideMutation.variables === "Rejected"}
-          >
-            <XIcon className="size-3.5" />
-            {t("Reject")}
-          </Button>
-          {editable && (
+    <DecisionFrame
+      icon={PenLineIcon}
+      title={view.title}
+      state={state}
+      footer={
+        state === "held" ? (
+          <HoldLine hold={proposal.hold} />
+        ) : (
+          <div className="border-border-subtle flex flex-wrap items-center gap-2 border-t px-3 py-2.5">
             <Button
               size="sm"
-              variant="ghost"
-              onClick={openEditor}
+              onClick={() => decideMutation.mutate("Accepted")}
               disabled={decideMutation.isPending}
+              isLoading={decideMutation.isPending && decideMutation.variables === "Accepted"}
             >
-              <PencilIcon className="size-3.5" />
-              {t("Modify")}
+              <CheckIcon className="size-3.5" />
+              {t("Approve")}
             </Button>
-          )}
-
-          <span className="ml-auto flex items-center gap-2">
-            {/* Reversibility is only news one way round. Saying a change can be
-              undone reassures nobody; saying it cannot is the thing to read. */}
-            {!view.reversible && (
-              <span
-                className="flex items-center gap-1 text-xs"
-                style={{ color: toneVar("warning") }}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => decideMutation.mutate("Rejected")}
+              disabled={decideMutation.isPending}
+              isLoading={decideMutation.isPending && decideMutation.variables === "Rejected"}
+            >
+              <XIcon className="size-3.5" />
+              {t("Reject")}
+            </Button>
+            {editable && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={openEditor}
+                disabled={decideMutation.isPending}
               >
+                <PencilIcon className="size-3.5" />
+                {t("Modify")}
+              </Button>
+            )}
+
+            {/* Reversibility is only news one way round. Saying a change can be
+                undone reassures nobody; saying it cannot is the thing to read. */}
+            {!view.reversible && (
+              <span className="text-warning ml-auto flex items-center gap-1 text-xs">
                 <TriangleAlertIcon className="size-3" />
                 {t("Permanent")}
               </span>
             )}
+          </div>
+        )
+      }
+    >
+      {view.severity && (
+        <span className="text-foreground-muted -mt-1 text-xs">
+          {t("Severity")}{" "}
+          <span className={view.severity.tone === "danger" ? "text-danger" : "text-foreground"}>
+            {view.severity.label}
           </span>
-        </div>
+        </span>
+      )}
+
+      <p className="text-sm leading-snug">{view.summary}</p>
+
+      {view.highlights.length > 0 && (
+        <dl className="flex flex-col gap-1.5 text-xs">
+          {view.highlights.map((entry) => (
+            <HighlightRow key={entry.label} label={entry.label} value={entry.value} />
+          ))}
+        </dl>
+      )}
+
+      {proposal.rationale !== "" && (
+        <p className="text-foreground-muted text-xs leading-relaxed whitespace-pre-wrap">
+          {proposal.rationale}
+        </p>
       )}
       <ProposalEditor request={editor} onClose={() => setEditor(null)} />
-    </m.div>
+    </DecisionFrame>
   );
 }
 
@@ -253,7 +230,7 @@ export function HoldLine({ hold }: { hold: AssistantProposal["hold"] }) {
   }
 
   return (
-    <p className="text-muted-foreground flex items-center gap-1.5 px-3.5 pb-3 text-xs">
+    <p className="border-border-subtle text-foreground-muted flex items-center gap-1.5 border-t px-3 py-2.5 text-xs">
       <PauseCircleIcon className="size-3.5 shrink-0" />
       <span>
         {hold.reason === "AgentShadow" && hold.agentName !== ""
@@ -275,7 +252,7 @@ function HighlightRow({ label, value }: { label: string; value: string }) {
   if (value.length > INLINE_VALUE_LIMIT) {
     return (
       <div>
-        <dt className="text-muted-foreground">{label}</dt>
+        <dt className="text-foreground-subtle">{label}</dt>
         <dd className="mt-0.5 break-words">{value}</dd>
       </div>
     );
@@ -283,27 +260,10 @@ function HighlightRow({ label, value }: { label: string; value: string }) {
 
   return (
     <div className="flex gap-3">
-      <dt className="text-muted-foreground w-24 shrink-0 truncate">{label}</dt>
+      <dt className="text-foreground-subtle w-24 shrink-0 truncate">{label}</dt>
       <dd className="min-w-0 flex-1 break-words">{value}</dd>
     </div>
   );
-}
-
-export function OutcomeIcon({ state }: { state: ProposalPresentation }) {
-  const className = "mt-px size-3.5 shrink-0";
-
-  switch (state) {
-    case "failed":
-      return <CircleAlertIcon className={className} style={{ color: toneVar("danger") }} />;
-    case "done":
-      return <CircleCheckIcon className={className} style={{ color: toneVar("success") }} />;
-    case "running":
-      return <LoaderIcon className={cn(className, "animate-spin")} />;
-    case "simulated":
-      return <FlaskConicalIcon className={className} style={{ color: toneVar("info") }} />;
-    default:
-      return <CircleSlashIcon className={className} />;
-  }
 }
 
 /**
@@ -321,35 +281,54 @@ function OutcomeLine({
   state: ProposalPresentation;
 }) {
   const t = useT();
+  // A write the agent may make on its own was never waiting on anyone, so it
+  // is not described as approved: it ran, and the line says so.
+  const own = ranWithoutApproval(proposal);
 
   switch (state) {
     case "failed":
       return (
         <>
           <ChangesLine modifications={proposal.modifications} />
-          <span className="block" style={{ color: toneVar("danger") }}>
-            {proposal.executionError === ""
-              ? t("Approved, but it did not run. Nothing was changed.")
-              : t("Approved, but it did not run: {0}", proposal.executionError)}
+          <span className="text-danger block">
+            {own
+              ? proposal.executionError === ""
+                ? t("It ran on its own but did not go through. Nothing was changed.")
+                : t("It ran on its own but did not go through: {0}", proposal.executionError)
+              : proposal.executionError === ""
+                ? t("Approved, but it did not run. Nothing was changed.")
+                : t("Approved, but it did not run: {0}", proposal.executionError)}
           </span>
         </>
       );
-    case "done":
+    case "done": {
+      const when = proposal.executedAt
+        ? generateDateTimeStringFromUnixTimestamp(proposal.executedAt)
+        : "";
       return (
         <>
           <ChangesLine modifications={proposal.modifications} />
           <span className="block">
-            {proposal.executedAt
-              ? t("Done {0}", generateDateTimeStringFromUnixTimestamp(proposal.executedAt))
-              : t("Done")}
+            {own
+              ? when !== ""
+                ? t("Done on its own {0}. No approval was needed.", when)
+                : t("Done on its own. No approval was needed.")
+              : when !== ""
+                ? t("Done {0}", when)
+                : t("Done")}
           </span>
         </>
       );
+    }
     case "running":
       return (
         <>
           <ChangesLine modifications={proposal.modifications} />
-          <span className="block">{t("Approved. Waiting for it to run.")}</span>
+          <span className="block">
+            {own
+              ? t("Running on its own. No approval is needed.")
+              : t("Approved. Waiting for it to run.")}
+          </span>
         </>
       );
     case "declined":

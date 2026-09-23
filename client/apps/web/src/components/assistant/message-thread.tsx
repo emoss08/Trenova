@@ -42,10 +42,10 @@ import {
   type ModelSwitchNotice as ModelSwitchNoticeValue,
 } from "./model-switch";
 import { StreamingTurn } from "./streaming-turn";
-import { suggestionsFor, type Suggestion } from "./suggestions";
+import { agentSuggestions, type Suggestion } from "./suggestions";
 import { arrivedSince, highestSequence, withDayMarkers } from "./thread-rows";
 import { composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
-import { groupThread } from "./thread-view";
+import { groupThread, turnPlacements } from "./thread-view";
 import { useAssistantTurn } from "./use-assistant-turn";
 import { useComposerContext } from "./use-composer-context";
 import { usePageContext } from "./use-page-context";
@@ -60,6 +60,15 @@ import { useLiveThreadIds } from "./use-active-turns";
  * reads as cut off.
  */
 const COMPOSER_CLEARANCE = 16;
+
+/**
+ * The height of the fade band at the top of the composer (h-10 and h-6 in
+ * composer.tsx). The jump-to-latest control sits in that band, where the
+ * thread is already fading under the box, rather than over the lines above
+ * it that the reader is trying to read.
+ */
+const COMPOSER_FADE = 40;
+const COMPOSER_FADE_COMPACT = 24;
 
 /** A stable empty list, so a thread with no live turn does not re-run the follower each render. */
 const NO_ARTIFACTS: readonly AssistantArtifactEvent[] = [];
@@ -206,6 +215,8 @@ export function MessageThread({
   );
 
   const entries = useMemo(() => groupThread(messages), [messages]);
+  // A reply of several steps is headed once and timed from its question.
+  const placements = useMemo(() => turnPlacements(entries), [entries]);
 
   // A question the assistant asked is settled by whatever the person said next,
   // whether they clicked one of its options or typed something else entirely.
@@ -344,10 +355,12 @@ export function MessageThread({
   const isEmpty = !history.isLoading && entries.length === 0 && turn === null;
   // The starter questions are listed on an empty thread and behind a slash
   // in the composer at any time; a dismissed one stays dismissed in both.
+  // They are the agent's own, from the server, so a Report Builder is never
+  // offered "Where is a shipment?".
   const suggestions = useMemo(
     () =>
       agent
-        ? suggestionsFor(agent.template, contextIncluded ? pageContext : null).filter(
+        ? agentSuggestions(agent, contextIncluded ? pageContext : null).filter(
             (item) => !dismissed.includes(item.prompt),
           )
         : [],
@@ -397,6 +410,7 @@ export function MessageThread({
             ) : (
               <AssistantEntry
                 entry={entry}
+                placement={placements.get(entry.message.id)}
                 proposals={proposalsByMessage.get(entry.message.id) ?? []}
                 plans={plansByMessage.get(entry.message.id) ?? []}
                 artifacts={artifactsByMessage.get(entry.message.id) ?? []}
@@ -450,6 +464,7 @@ export function MessageThread({
     looseProposals,
     now,
     onOpenArtifact,
+    placements,
     plansByMessage,
     proposalsByMessage,
     providerId,
@@ -525,6 +540,10 @@ export function MessageThread({
           isLoadingOlder={history.isLoadingOlder}
           onLoadOlder={history.loadOlder}
           paddingBottom={composerHeight + COMPOSER_CLEARANCE}
+          jumpOffset={Math.max(
+            0,
+            composerHeight - (expanded ? COMPOSER_FADE : COMPOSER_FADE_COMPACT),
+          )}
           className={expanded ? "px-4" : "px-3"}
           contentClassName={expanded ? "max-w-3xl pt-5" : "pt-4"}
           rowClassName={expanded ? "pb-5" : "pb-4"}

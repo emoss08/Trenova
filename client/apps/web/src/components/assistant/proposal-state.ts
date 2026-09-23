@@ -85,6 +85,16 @@ export function classifyProposal(
 }
 
 /**
+ * Whether the write ran without waiting on anyone: a call the agent may make
+ * on its own, such as a report saved to the person's own list. It is recorded
+ * like any other so the thread can say what it did, but it was never a
+ * question, and must not read as one that was approved.
+ */
+export function ranWithoutApproval(proposal: AssistantProposal): boolean {
+  return proposal.autonomyTier === "AutoExecute";
+}
+
+/**
  * Whether a proposal can still be decided.
  *
  * The server is the authority — approving a proposal someone else already

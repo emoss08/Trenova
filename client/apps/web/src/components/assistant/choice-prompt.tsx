@@ -49,7 +49,7 @@ export function ChoicePrompt({
   return (
     <div
       className={cn(
-        "border-border/70 flex flex-col gap-2.5 rounded-lg border px-3 py-2.5",
+        "border-border bg-card flex flex-col gap-2.5 rounded-lg border px-3 py-2.5 transition-opacity duration-300",
         // Answered, it stays on screen as the record of what was asked, but it
         // stops inviting a second answer to a question already settled.
         answered && "opacity-60",

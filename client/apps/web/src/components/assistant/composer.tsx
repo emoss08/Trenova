@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { EASE_SETTLE, EASE_SWIFT } from "@/lib/motion";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -111,10 +112,6 @@ const MENTION_DEBOUNCE_MS = 150;
 
 /** The most files one message may carry; the server refuses more. */
 export const MAX_ATTACHMENTS = 5;
-
-/** The house curves, for motion that is driven from script rather than a class. */
-const EASE_SWIFT = [0.2, 0.8, 0.2, 1] as const;
-const EASE_SETTLE = [0.16, 1, 0.3, 1] as const;
 
 /**
  * The @ token being typed at the caret: the text after an @ that opens a

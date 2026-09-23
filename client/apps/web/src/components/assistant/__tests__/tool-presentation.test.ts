@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { describeToolCall, parseToolResult } from "../tool-presentation";
+import {
+  describeToolCall,
+  humanizeKey,
+  parseToolResult,
+  readableEntries,
+  readableResult,
+} from "../tool-presentation";
 
 /**
  * A tool call is shown to a person, not to a model, so the wording comes from
@@ -270,5 +276,113 @@ describe("parseToolResult", () => {
       'Recorded a proposal to run "flag_for_manual_review". It is awaiting review at the Propose tier and has not run.';
 
     expect(parseToolResult(content)).toEqual({ kind: "text", text: content, truncated: false });
+  });
+});
+
+/**
+ * open_page was drawn as "Open page" with its path run into the title, which
+ * read as "Open pagereport". It has a title of its own and names the page.
+ */
+describe("describeToolCall for navigation and the guide", () => {
+  it("names the page a navigation asked for", () => {
+    expect(describeToolCall("open_page", { page: "/reports/library" })).toEqual({
+      title: "Open a page",
+      subject: "/reports/library",
+    });
+  });
+
+  it("quotes the question put to the product guide", () => {
+    expect(describeToolCall("find_in_trenova", { question: "Where are reports?" })).toEqual({
+      title: "Search the product guide",
+      subject: "“Where are reports?”",
+    });
+  });
+
+  it("does not take a page of results for a page of the app", () => {
+    expect(describeToolCall("list_customers", { page: 2, query: "Peak" }).subject).toBe("“Peak”");
+  });
+});
+
+describe("humanizeKey", () => {
+  it("reads a key as a sentence-case label that keeps its initialisms", () => {
+    expect(humanizeKey("customerId")).toBe("Customer ID");
+    expect(humanizeKey("proNumber")).toBe("Pro number");
+    expect(humanizeKey("dryRun")).toBe("Dry run");
+  });
+});
+
+/**
+ * A call's arguments and result are shown as labelled values. Nested values
+ * are reduced to their shape; the literal JSON stays behind Details.
+ */
+describe("readableEntries", () => {
+  it("labels scalars, joins scalar lists, describes filters and sizes the rest", () => {
+    const { entries, hidden } = readableEntries({
+      customerId: "cus_1",
+      tags: ["hazmat", "team"],
+      filters: [{ field: "status", operator: "eq", value: "Delivered" }],
+      definition: { entity: "shipments", columns: [] },
+      rows: [{ a: 1 }, { a: 2 }],
+      note: "",
+      archived: false,
+    });
+
+    expect(hidden).toBe(0);
+    expect(entries).toEqual([
+      { key: "customerId", label: "Customer ID", value: { kind: "text", text: "cus_1" } },
+      { key: "tags", label: "Tags", value: { kind: "text", text: "hazmat, team" } },
+      { key: "filters", label: "Filters", value: { kind: "text", text: "status Delivered" } },
+      { key: "definition", label: "Definition", value: { kind: "fields", count: 2 } },
+      { key: "rows", label: "Rows", value: { kind: "items", count: 2 } },
+      { key: "archived", label: "Archived", value: { kind: "text", text: "false" } },
+    ]);
+  });
+
+  it("stops at the limit and says how many more there are", () => {
+    const { entries, hidden } = readableEntries({ a: 1, b: 2, c: 3 }, 2);
+
+    expect(entries.map((entry) => entry.key)).toEqual(["a", "b"]);
+    expect(hidden).toBe(1);
+  });
+});
+
+describe("readableResult", () => {
+  it("reads a list by its count and the names of its first records", () => {
+    expect(
+      readableResult({
+        items: [
+          { name: "Peak Distributing" },
+          { proNumber: "PRO-1" },
+          { firstName: "Maria", lastName: "Ortiz" },
+        ],
+        count: 40,
+        hasMore: true,
+      }),
+    ).toEqual({
+      kind: "list",
+      count: 40,
+      more: true,
+      labels: ["Peak Distributing", "PRO-1", "Maria Ortiz"],
+    });
+  });
+
+  it("reads a bare array as a list", () => {
+    expect(readableResult([{ name: "A" }])).toEqual({
+      kind: "list",
+      count: 1,
+      more: false,
+      labels: ["A"],
+    });
+  });
+
+  it("reads a record as labelled values", () => {
+    expect(readableResult({ name: "Peak", status: "Active" })).toEqual({
+      kind: "record",
+      entries: [
+        { key: "name", label: "Name", value: { kind: "text", text: "Peak" } },
+        { key: "status", label: "Status", value: { kind: "text", text: "Active" } },
+      ],
+      hidden: 0,
+    });
   });
 });

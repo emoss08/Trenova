@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { runTurn, stopTurnQuietly, turnFailureDetail } from "./follow-turn";
 import { registerTurnReader } from "./turn-readers";
-import { initialTurnState, isTurnActive, reduceTurn, type TurnState } from "./turn-stream";
+import { initialTurnState, isTurnActive, advanceTurn, type TurnState } from "./turn-stream";
 
 /**
  * One quick question at a time, from anywhere. The answer streams into a
@@ -59,7 +59,7 @@ export function useAsk() {
 
       let terminal = false;
       const onEvent = (event: AssistantStreamEvent) => {
-        setTurn((state) => (state ? reduceTurn(state, event) : state));
+        setTurn((state) => (state ? advanceTurn(state, event) : state));
         if (event.event === "done" || event.event === "error") {
           terminal = true;
         }

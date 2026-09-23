@@ -1,3 +1,4 @@
+import { currentActivity, stepsFromSegments } from "@/components/assistant/activity";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -37,7 +38,9 @@ export function AskAnswerCard({
     turn?.segments
       .flatMap((segment) => (segment.kind === "text" ? [segment.text] : []))
       .join("\n\n") ?? "";
-  const tools = turn?.segments.filter((segment) => segment.kind === "tool") ?? [];
+  // What the agent did or is doing, in the words of what it did: an opened
+  // page reads as opened, never as a record looked up.
+  const activity = turn ? currentActivity(stepsFromSegments(turn.segments), t) : null;
   const canOpen = turn !== null && (turn.thread !== null || turn.result !== null);
   const answered = turn !== null && turn.userContent === question;
 
@@ -76,10 +79,12 @@ export function AskAnswerCard({
               <Spinner className="size-3" /> {t("Checking the question…")}
             </p>
           )}
-          {tools.length > 0 && (
-            <p className="text-muted-foreground text-xs">
-              {t("{0, plural, one {Looked up # record} other {Looked up # records}}", tools.length)}
-              {tools.some((tool) => tool.kind === "tool" && tool.status === "running") ? "…" : ""}
+          {activity && (
+            <p className="text-muted-foreground truncate text-xs">
+              {activity.phrase}
+              {activity.detail !== "" && (
+                <span className="text-foreground-subtle"> · {activity.detail}</span>
+              )}
             </p>
           )}
           {text !== "" && <AssistantProse content={text} streaming={turn.status === "streaming"} />}

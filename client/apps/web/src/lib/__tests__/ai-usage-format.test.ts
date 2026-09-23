@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatLatency, formatTokens, formatUsd } from "../ai-usage-format";
+import { formatLatency, formatTokens, formatUsd, formatWorkDuration } from "../ai-usage-format";
 
 describe("formatLatency", () => {
   it("reads in the unit a person uses", () => {
@@ -28,5 +28,20 @@ describe("formatTokens", () => {
     expect(formatTokens(48_200)).toBe("48k");
     expect(formatTokens(2_350_000)).toBe("2.4M");
     expect(formatTokens(12_000_000)).toBe("12M");
+  });
+});
+
+describe("formatWorkDuration", () => {
+  // Steps are stamped in whole seconds, so a step inside one reads as under
+  // a second rather than as a zero that looks like nothing happened.
+  it("reads a step's time at the resolution it was stamped", () => {
+    expect(formatWorkDuration(0)).toBe("<1s");
+    expect(formatWorkDuration(0.4)).toBe("<1s");
+    expect(formatWorkDuration(14)).toBe("14s");
+    expect(formatWorkDuration(60)).toBe("1m");
+    expect(formatWorkDuration(125)).toBe("2m 5s");
+    expect(formatWorkDuration(3600)).toBe("1h");
+    expect(formatWorkDuration(3780)).toBe("1h 3m");
+    expect(formatWorkDuration(Number.NaN)).toBe("<1s");
   });
 });

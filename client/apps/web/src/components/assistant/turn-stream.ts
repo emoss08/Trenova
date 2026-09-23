@@ -7,6 +7,7 @@ import type {
   AssistantThread,
   SendMessageResult,
   RetryKind,
+  ToolEffect,
 } from "@/types/assistant";
 
 /**
@@ -33,6 +34,13 @@ export type ToolSegment = {
   arguments: Record<string, unknown>;
   status: "running" | "done" | "failed" | "proposed";
   content: string;
+  /** What the call does, as the server classifies it; absent from an older server. */
+  effect?: ToolEffect;
+  /** The server's one-line account of the result, once it has finished. */
+  summary?: string;
+  /** When this reader saw the call start and finish, in epoch milliseconds. */
+  startedAt?: number;
+  finishedAt?: number;
 };
 
 /**
@@ -94,6 +102,8 @@ export type TurnState = {
   followUp: boolean;
   /** The thread a quick question was answered on, once the server names it. */
   thread: AssistantThread | null;
+  /** When this reader began following the turn, in epoch milliseconds. */
+  startedAt: number;
 };
 
 /** What a person hands over with a message besides the words. */
@@ -102,6 +112,8 @@ export type TurnContext = {
   mentions?: AssistantEntityRef[];
   /** The turn reports a decision rather than answering words of the person's own. */
   followUp?: boolean;
+  /** When the turn began, in epoch milliseconds; now when not given. */
+  startedAt?: number;
 };
 
 export function initialTurnState(
@@ -123,6 +135,7 @@ export function initialTurnState(
     mentions: context.mentions ?? [],
     followUp: context.followUp ?? false,
     thread: null,
+    startedAt: context.startedAt ?? Date.now(),
   };
 }
 
@@ -208,6 +221,7 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
             arguments: event.data.arguments ?? {},
             status: "running",
             content: "",
+            effect: event.data.effect,
           },
         ],
       };
@@ -220,7 +234,13 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
           : "done";
       const segments = state.segments.map((segment) =>
         segment.kind === "tool" && segment.callId === event.data.callId
-          ? { ...segment, status, content: event.data.content }
+          ? {
+              ...segment,
+              status,
+              content: event.data.content,
+              effect: event.data.effect ?? segment.effect,
+              summary: event.data.summary || undefined,
+            }
           : segment,
       );
       return { ...state, status: "working", segments };
@@ -270,6 +290,39 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
     default:
       return state;
   }
+}
+
+/**
+ * Applies one server event and stamps the tool calls it started or finished
+ * with the reader's clock, so the turn in progress can say how long each step
+ * took and how long the whole thing has run. Kept apart from `reduceTurn` so
+ * the reducer stays a pure function of the events alone.
+ */
+export function advanceTurn(
+  state: TurnState,
+  event: AssistantStreamEvent,
+  now: number = Date.now(),
+): TurnState {
+  return stampToolTimes(reduceTurn(state, event), now);
+}
+
+function stampToolTimes(state: TurnState, now: number): TurnState {
+  let changed = false;
+  const segments = state.segments.map((segment) => {
+    if (segment.kind !== "tool") {
+      return segment;
+    }
+    const startedAt = segment.startedAt ?? now;
+    const finishedAt =
+      segment.status === "running" ? segment.finishedAt : (segment.finishedAt ?? now);
+    if (startedAt === segment.startedAt && finishedAt === segment.finishedAt) {
+      return segment;
+    }
+    changed = true;
+    return { ...segment, startedAt, finishedAt };
+  });
+
+  return changed ? { ...state, segments } : state;
 }
 
 /** Why a turn stopped, from the reader's side. */
