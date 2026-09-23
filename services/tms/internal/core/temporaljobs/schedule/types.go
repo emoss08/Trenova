@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
@@ -95,6 +96,15 @@ func (s *Schedule) Hash() string {
 	h.Write([]byte(s.TaskQueue))
 	fmt.Fprintf(h, "%d", s.OverlapPolicy)
 	fmt.Fprintf(h, "%v", s.Paused)
+	if len(s.Args) > 0 {
+		if args, err := sonic.ConfigStd.Marshal(s.Args); err == nil {
+			h.Write(args)
+		} else {
+			for _, arg := range s.Args {
+				fmt.Fprintf(h, "%T", arg)
+			}
+		}
+	}
 	return hex.EncodeToString(h.Sum(nil))[:16]
 }
 

@@ -250,6 +250,28 @@ func TestSchedule_Hash(t *testing.T) {
 	assert.Len(t, schedule1.Hash(), 16)
 }
 
+// A schedule's arguments are part of what it runs. Leaving them out of the
+// hash meant a schedule registered without them was never updated to carry
+// them.
+func TestSchedule_HashChangesWithArgs(t *testing.T) {
+	type input struct {
+		After string `json:"after,omitempty"`
+	}
+	bare := &Schedule{
+		ID:        "test-schedule",
+		Spec:      Cron("0 9 * * *"),
+		Workflow:  dummyWorkflow,
+		TaskQueue: "test-queue",
+	}
+	withArgs := *bare
+	withArgs.Args = []any{&input{}}
+	again := *bare
+	again.Args = []any{&input{}}
+
+	assert.NotEqual(t, bare.Hash(), withArgs.Hash())
+	assert.Equal(t, withArgs.Hash(), again.Hash(), "the hash does not depend on where the args live")
+}
+
 func TestSchedule_ToScheduleOptions(t *testing.T) {
 	schedule := &Schedule{
 		ID:            "test-schedule",

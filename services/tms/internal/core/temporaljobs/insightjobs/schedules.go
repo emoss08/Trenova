@@ -24,6 +24,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			// a working day.
 			Spec:      schedule.Cron("20 */6 * * *"),
 			Workflow:  InsightRefreshWorkflow,
+			Args:      []any{&InsightRefreshInput{}},
 			TaskQueue: temporaltype.TaskQueueSystem.String(),
 			// A refresh that is still running when the next one fires means the
 			// previous window is still being computed. Starting a second would
