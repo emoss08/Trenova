@@ -1,6 +1,6 @@
 ---
 path: /admin/agent-control
-aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, automation agents, agent proposals, agent memory]
+aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, automation agents, agent proposals, agent memory, sub-agents, agent delegation]
 related:
   - /admin/document-intelligence
   - /admin/inbound-mailboxes
@@ -56,6 +56,15 @@ Keywords: new agent, build agent, automation, scheduled agent, agent template
 8. Optionally set a **Monthly budget**, **Runs per day** and a **Preferred provider**, leave
    **Enabled** on, and select **Save**.
 
+### Let an agent hand work to another agent
+Keywords: sub-agent, delegate, deploy a sub agent, ask another agent, report builder agent, agent can't reach another agent
+1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.
+2. Select the pencil button on the agent that should be able to ask for help.
+3. In **Can ask**, select **Add an agent** and pick each agent it may hand a task to, such as the
+   Report Builder for an agent that builds dashboards. An agent can ask up to eight others.
+4. Select **Save**. From its next reply the agent can hand those agents a task, and shows their
+   work step by step in the conversation.
+
 ### Turn an agent on or off, run it now, or remove it
 Keywords: disable agent, enable agent, start run, delete agent
 1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.
@@ -99,6 +108,11 @@ people who may read it (agents, AI providers, agent runs, agent proposals, agent
 agent memory); a section someone cannot open is left out. The organization-wide switches need
 update access to AI control, deciding proposals needs update access to agent proposals, and
 **Test** on a provider needs manage access to AI providers.
+
+An agent asks only the agents listed under **Can ask**; with none listed it works with its own
+tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot
+hand the task on. The agent asked works as the person in the conversation, with its own tools and
+approvals, so it can never do more than that person could.
 
 Removing a provider stops any task routed only to it until another provider is assigned.
 Removing an agent keeps its existing conversations but they cannot be continued, and its schedule

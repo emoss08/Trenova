@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // reportRunner is the slice of the reporting service these tools need.
@@ -111,24 +112,18 @@ func (t *listReportsTool) Description() string {
 func (t *listReportsTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
-		"properties": map[string]any{
+		"properties": withPaging(map[string]any{
 			"category": map[string]any{
 				"type": "string",
 				"description": "Optional area to narrow to, such as Accounting, Billing, " +
 					"Operations, Fleet, Workforce or Compliance.",
 			},
 			"query": map[string]any{
-				"type":        "string",
-				"description": "Optional text matched against the report name and description.",
+				"type": "string",
+				"description": "Optional words matched against the report's name, description " +
+					"and key; every word must begin a word there, in any order.",
 			},
-			"limit": map[string]any{
-				"type": "integer",
-				"description": fmt.Sprintf(
-					"How many reports to return, at most %d. The count says how many matched.",
-					maxReportsListed,
-				),
-			},
-		},
+		}, defaultReportsListed, maxReportsListed),
 		"additionalProperties": false,
 	}
 }
@@ -162,12 +157,13 @@ func (t *listReportsTool) Query(
 		return nil, err
 	}
 
+	words := stringutils.SearchWords(query)
 	rows := make([]reportCatalogRow, 0, len(entries)+len(saved))
 	for _, entry := range entries {
 		if category != "" && !strings.EqualFold(entry.Category, category) {
 			continue
 		}
-		if query != "" && !matchesReportText(entry.Name, entry.Description, query) {
+		if !stringutils.MatchesWordPrefixes(words, entry.Name, entry.Description, entry.Key) {
 			continue
 		}
 		rows = append(rows, toCatalogRow(entry))
@@ -176,34 +172,30 @@ func (t *listReportsTool) Query(
 		if category != "" && !strings.EqualFold(definition.Category, category) {
 			continue
 		}
-		if query != "" && !matchesReportText(definition.Name, definition.Description, query) {
+		if !stringutils.MatchesWordPrefixes(words, definition.Name, definition.Description) {
 			continue
 		}
 		rows = append(rows, toSavedRow(definition, params.Actor.UserID))
 	}
 
 	matched := len(rows)
-	limit := optionalInt(params.Params, "limit", defaultReportsListed)
-	if limit <= 0 {
-		limit = defaultReportsListed
-	}
-	if limit > maxReportsListed {
-		limit = maxReportsListed
-	}
-	if len(rows) > limit {
-		rows = rows[:limit]
+	window := readPage(params.Params, defaultReportsListed, maxReportsListed)
+	shown, more := slicePage(window, rows)
+	if shown == nil {
+		shown = []reportCatalogRow{}
 	}
 
-	outcome := searchResult(criteria, rows, matched)
-	if matched > len(rows) {
+	outcome := searchResult(criteria, shown, matched).paged(window, more)
+	if more {
 		// The count alone reads as "this is all of them" to a model that has
 		// no other signal, and it will then answer as though the rest do not
 		// exist. Saying what was withheld, and how to reach it, is the whole
 		// difference between a narrowed list and a wrong one.
 		outcome.Note = fmt.Sprintf(
-			"Showing %d of %d matching reports. Narrow with category or query, "+
-				"or raise limit, before concluding a report does not exist.",
-			len(rows), matched,
+			"Showing %d of %d matching reports. Call this again with offset %d for the "+
+				"next page, or narrow with category or query, before concluding a report "+
+				"does not exist.",
+			len(shown), matched, window.offset+window.limit,
 		)
 	}
 
@@ -232,13 +224,6 @@ const (
 	defaultReportsListed = 25
 	maxReportsListed     = 60
 )
-
-func matchesReportText(name, description, query string) bool {
-	needle := strings.ToLower(query)
-
-	return strings.Contains(strings.ToLower(name), needle) ||
-		strings.Contains(strings.ToLower(description), needle)
-}
 
 func toCatalogRow(entry *canned.Entry) reportCatalogRow {
 	return reportCatalogRow{

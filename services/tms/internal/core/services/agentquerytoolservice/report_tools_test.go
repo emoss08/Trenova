@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -321,6 +322,73 @@ func TestListReports_NamesTheKeyTheWayRunReportTakesIt(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, string(encoded), `"reportKey":"ar_aging_by_customer"`)
 	assert.NotContains(t, string(encoded), `"key":"ar_aging_by_customer"`)
+}
+
+/*
+A listing of 43 reports showed the first 25 and said hasMore false, so the only
+sign of the rest was a note, and there was no offset to reach them with.
+*/
+func TestListReports_PagesALongCatalog(t *testing.T) {
+	t.Parallel()
+
+	service, _, tools := reportingTools(t)
+	service.entries = make([]*canned.Entry, 0, 30)
+	for idx := range 30 {
+		entry := agingEntry()
+		entry.Key = fmt.Sprintf("report_%02d", idx)
+		service.entries = append(service.entries, entry)
+	}
+
+	result, err := tools["list_reports"].Query(t.Context(), testParams(map[string]any{}))
+	require.NoError(t, err)
+	first, ok := result.(searchOutcome)
+	require.True(t, ok)
+	assert.Equal(t, 30, first.Count)
+	assert.True(t, first.HasMore, "a cut list says there is more")
+	require.NotNil(t, first.NextOffset)
+	assert.Equal(t, 25, *first.NextOffset)
+	assert.Contains(t, first.Note, "offset 25")
+
+	result, err = tools["list_reports"].Query(
+		t.Context(),
+		testParams(map[string]any{"offset": *first.NextOffset}),
+	)
+	require.NoError(t, err)
+	rest, ok := result.(searchOutcome)
+	require.True(t, ok)
+	rows, ok := rest.Items.([]reportCatalogRow)
+	require.True(t, ok)
+	assert.Len(t, rows, 5)
+	assert.Equal(t, "report_25", rows[0].Key)
+	assert.False(t, rest.HasMore)
+	assert.Empty(t, rest.Note)
+}
+
+// "on-time" found nothing because the text was matched as one literal
+// string; words now match the start of words in the name, description or key.
+func TestListReports_MatchesQueryWords(t *testing.T) {
+	t.Parallel()
+
+	service, _, tools := reportingTools(t)
+	dwell := agingEntry()
+	dwell.Key = "stop-dwell-and-detention"
+	dwell.Name = "Dwell & Detention Exposure"
+	dwell.Description = "How far arrivals drift from the scheduled window, by facility."
+	service.entries = append(service.entries, dwell)
+
+	for _, query := range []string{"detention dwell", "arrival", "stop-dwell"} {
+		result, err := tools["list_reports"].Query(
+			t.Context(),
+			testParams(map[string]any{"query": query}),
+		)
+		require.NoError(t, err)
+		outcome, ok := result.(searchOutcome)
+		require.True(t, ok)
+		require.Equal(t, 1, outcome.Count, query)
+		rows, ok := outcome.Items.([]reportCatalogRow)
+		require.True(t, ok)
+		assert.Equal(t, "stop-dwell-and-detention", rows[0].Key, query)
+	}
 }
 
 func TestRunReport_AcceptsKeyAsTheReportKey(t *testing.T) {
