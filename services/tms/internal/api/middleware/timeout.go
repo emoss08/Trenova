@@ -85,7 +85,8 @@ func skipRequestTimeout(r *http.Request) bool {
 	if strings.Contains(path, "/ws/") ||
 		strings.Contains(path, "/websocket") ||
 		strings.Contains(path, "/live") ||
-		strings.Contains(path, "/stream") {
+		strings.Contains(path, "/stream") ||
+		strings.HasSuffix(strings.TrimSuffix(path, "/"), "-stream") {
 		return true
 	}
 

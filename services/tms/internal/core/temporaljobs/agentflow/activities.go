@@ -3,14 +3,12 @@ package agentflow
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"go.temporal.io/sdk/activity"
-	"go.temporal.io/sdk/contrib/workflowstreams"
 	"go.temporal.io/sdk/converter"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/worker"
@@ -66,11 +64,11 @@ func (a *Activities) ModelCallActivity(
 ) (*agentruntime.ModelReply, error) {
 	emit := func(serviceports.StreamEvent) {}
 	if in.Stream {
-		stream, events, err := openStream(ctx)
+		stream, events, err := OpenStream(ctx)
 		if err != nil {
 			return nil, err
 		}
-		defer closeStream(ctx, stream, a.l)
+		defer CloseStream(ctx, stream, a.l)
 
 		// Whatever an earlier attempt streamed is already in front of the
 		// reader. The retry starts the reply over, and the reader has to be
@@ -193,7 +191,7 @@ func (a *Activities) observing(
 		return nil, kept, func() {}
 	}
 
-	stream, events, openErr := openStream(ctx)
+	stream, events, openErr := OpenStream(ctx)
 	if openErr != nil {
 		// The call still counts; the reader misses its announcement and sees
 		// the artifact when the conversation is read.
@@ -215,32 +213,7 @@ func (a *Activities) observing(
 
 	return observe, kept, func() {
 		if stream != nil {
-			closeStream(ctx, stream, a.l)
+			CloseStream(ctx, stream, a.l)
 		}
-	}
-}
-
-func openStream(
-	ctx context.Context,
-) (*workflowstreams.Client, *workflowstreams.TopicHandle, error) {
-	stream, err := workflowstreams.NewClientFromActivity(ctx, workflowstreams.Options{
-		BatchInterval: streamBatchInterval,
-	})
-	if err != nil {
-		return nil, nil, fmt.Errorf("open the run's stream: %w", err)
-	}
-
-	return stream, stream.Topic(EventsTopic), nil
-}
-
-// closeStream flushes what is still buffered. It rides a context cancellation
-// cannot reach: a stopped reply's last words should still reach the reader who
-// stopped it.
-func closeStream(ctx context.Context, stream *workflowstreams.Client, l *zap.Logger) {
-	flushCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
-	defer cancel()
-
-	if err := stream.Close(flushCtx); err != nil {
-		l.Warn("could not flush the last of a run's stream", zap.Error(err))
 	}
 }

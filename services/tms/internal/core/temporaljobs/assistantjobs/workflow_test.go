@@ -254,7 +254,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestClosesAsSoonAsItsReaderIsDone() {
 	closedAt = s.env.Now()
 
 	s.NoError(s.env.GetWorkflowError())
-	s.Less(closedAt.Sub(started), drainWindow)
+	s.Less(closedAt.Sub(started), agentflow.DrainWindow)
 }
 
 func (s *AssistantTurnWorkflowTestSuite) TestFailsLoudlyWhenTheTurnCannotBeSaved() {

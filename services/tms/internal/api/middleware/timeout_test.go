@@ -83,6 +83,34 @@ func TestRequestTimeoutHandler_SkipsLiveAndWebSocketRoutes(t *testing.T) {
 	}
 }
 
+// A stream posted to, such as the import assistant's chat-stream, is a stream
+// however its path is spelled. Wrapped, its response was buffered to the end
+// and cut off at the request timeout, so nothing reached the reader until the
+// reply was over, or at all.
+func TestRequestTimeoutHandler_SkipsAPostedStream(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+
+	cfg := newRequestTimeoutTestConfig(time.Nanosecond)
+	router := gin.New()
+	router.POST("/api/v1/documents/:id/import-assistant/chat-stream/", func(c *gin.Context) {
+		_, hasDeadline := c.Request.Context().Deadline()
+		c.JSON(http.StatusOK, gin.H{"hasDeadline": hasDeadline})
+	})
+	handler := NewRequestTimeoutHandler(router, cfg, newRequestTimeoutTestErrorHandler(cfg))
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/documents/doc_1/import-assistant/chat-stream/",
+		nil,
+	)
+	handler.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	assert.JSONEq(t, `{"hasDeadline":false}`, w.Body.String())
+}
+
 func newRequestTimeoutTestConfig(timeout time.Duration) *config.Config {
 	return &config.Config{
 		App: config.AppConfig{

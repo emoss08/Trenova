@@ -10,17 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/temporaltype"
-	"go.temporal.io/sdk/contrib/workflowstreams"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
 const (
-	// drainWindow is how long a finished turn waits for its reader to say it
-	// has the last event. A reader that is there says so within a poll or
-	// two; one that is not is not coming, and the turn closes without it.
-	drainWindow = 15 * time.Second
-
 	// prepareTimeout bounds reading what a question needs: the thread, its
 	// history, its files, and the scope guard's verdict.
 	prepareTimeout = 2 * time.Minute
@@ -75,19 +69,12 @@ func (w *Workflows) AssistantTurnWorkflow(
 	ctx workflow.Context,
 	payload *AssistantTurnPayload,
 ) (*AssistantTurnResult, error) {
-	stream, err := workflowstreams.NewWorkflowStream(ctx, nil)
+	stream, err := agentflow.HostStream(ctx)
 	if err != nil {
 		return nil, err
 	}
-	events := stream.Topic(agentflow.EventsTopic)
 
-	drained := false
-	workflow.Go(ctx, func(ctx workflow.Context) {
-		workflow.GetSignalChannel(ctx, temporaltype.SignalStreamDrained).Receive(ctx, nil)
-		drained = true
-	})
-
-	finish := w.answer(ctx, events, payload)
+	finish := w.answer(ctx, stream, payload)
 
 	// Whatever happened above, the turn is saved on a context a stop cannot
 	// reach. A stopped turn is the one most worth keeping: the person saw
@@ -107,8 +94,8 @@ func (w *Workflows) AssistantTurnWorkflow(
 		ending = *failedEnding("Failed", failedMessage)
 	}
 
-	publish(keep, events, ending.Event)
-	close(keep, stream, &drained)
+	stream.Publish(keep, ending.Event)
+	stream.Close(keep)
 
 	if finish.Failure != nil && finish.Failure.Stopped {
 		// Recorded as cancelled rather than completed, which is what it was.
@@ -126,7 +113,7 @@ func (w *Workflows) AssistantTurnWorkflow(
 // of what is saved.
 func (w *Workflows) answer(
 	ctx workflow.Context,
-	events *workflowstreams.WorkflowTopicHandle,
+	stream *agentflow.Stream,
 	payload *AssistantTurnPayload,
 ) *FinishTurnInput {
 	finish := &FinishTurnInput{Payload: payload}
@@ -146,7 +133,7 @@ func (w *Workflows) answer(
 	finish.Plan = &plan
 
 	opening := plan.Opening()
-	publish(ctx, events, temporaltype.StreamItem{Event: opening.Event, Data: opening.Data})
+	stream.Publish(ctx, temporaltype.StreamItem{Event: opening.Event, Data: opening.Data})
 	finish.Events = append(finish.Events, temporaltype.StreamItem{
 		Event: opening.Event,
 		Data:  opening.Data,
@@ -161,7 +148,7 @@ func (w *Workflows) answer(
 		ID:   payload.TurnID,
 	}
 
-	outcome, err := agentflow.Run(ctx, w.runtime, events, run, plan.Turn)
+	outcome, err := agentflow.Run(ctx, w.runtime, stream.Events(), run, plan.Turn)
 	finish.Run = outcome.Result
 	finish.Artifacts = outcome.Artifacts
 	finish.Events = append(finish.Events, outcome.Events...)
@@ -191,43 +178,4 @@ func withPriority(
 	}
 
 	return options
-}
-
-func publish(
-	ctx workflow.Context,
-	events *workflowstreams.WorkflowTopicHandle,
-	item temporaltype.StreamItem,
-) {
-	if err := events.Publish(item); err != nil {
-		workflow.GetLogger(ctx).Warn("could not publish a turn event",
-			"event", item.Event,
-			"error", err.Error(),
-		)
-	}
-}
-
-// close hands the last events to the reader before the workflow ends.
-//
-// A stream is read by polling the workflow, so a workflow that has closed can
-// no longer be read. It waits, bounded, for the reader to say it has the last
-// event, then releases any poll still waiting and lets its handlers finish.
-func close(
-	ctx workflow.Context,
-	stream *workflowstreams.WorkflowStream,
-	drained *bool,
-) {
-	if _, err := workflow.AwaitWithTimeout(ctx, drainWindow, func() bool {
-		return *drained
-	}); err != nil {
-		workflow.GetLogger(ctx).Warn("waiting for the reader was cut short",
-			"error", err.Error())
-	}
-
-	stream.DetachPollers()
-	if err := workflow.Await(ctx, func() bool {
-		return workflow.AllHandlersFinished(ctx)
-	}); err != nil {
-		workflow.GetLogger(ctx).Warn("waiting for the turn's readers was cut short",
-			"error", err.Error())
-	}
 }

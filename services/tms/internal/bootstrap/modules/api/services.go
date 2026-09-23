@@ -597,6 +597,9 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	notificationservice.New,
 	aidocumentservice.New,
 	shipmentimportassistantservice.New,
+	func(s *shipmentimportassistantservice.Service) services.ShipmentImportAssistantService {
+		return s
+	},
 	tablechangealertservice.New,
 	tablechangealertservice.NewConsumer,
 	fx.Annotate(
