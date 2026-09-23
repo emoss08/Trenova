@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
@@ -32,6 +33,7 @@ const (
 	toolComposeView   = "compose_table_view"
 	toolExplainRate   = "explain_rate"
 	toolCompareRuns   = "compare_report_runs"
+	toolOpenPage      = "open_page"
 
 	maxArtifactTitleRunes = 120
 	minPreviewRows        = 1
@@ -280,6 +282,7 @@ func (r *artifactRecorder) save(
 			Status:           saved.Status,
 			Title:            saved.Title,
 			SourceToolCallID: saved.SourceToolCallID,
+			Path:             navigationPath(saved),
 		},
 	})
 
@@ -356,6 +359,8 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 		return rateArtifact(observation.Call.ID, result)
 	case name == toolCompareRuns:
 		return runDiffArtifact(observation.Call.ID, result)
+	case name == toolOpenPage:
+		return navigationArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, listToolPrefix), strings.HasPrefix(name, searchToolPrefix):
 		return tableArtifact(observation.Call.ID, name, result)
 	default:
@@ -516,6 +521,43 @@ func runDiffArtifact(callID string, result map[string]any) *assistantartifact.Ar
 	}
 }
 
+// navigationArtifact is where an agent took the person.
+//
+// open_page has already checked the page exists and that the person may open
+// it; the artifact is how the app hears about it. The live one moves the app
+// there once, and the one read back from history is a card with a link, so
+// reopening a conversation never drags anybody anywhere.
+func navigationArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
+	path := stringOf(result["path"])
+	if !strings.HasPrefix(path, "/") || strings.HasPrefix(path, "//") {
+		return nil
+	}
+
+	name := stringOf(result["name"])
+
+	return &assistantartifact.Artifact{
+		Kind:   assistantartifact.KindNavigation,
+		Status: assistantartifact.StatusReady,
+		Title:  artifactTitle(name),
+		Payload: map[string]any{
+			"path":     path,
+			"name":     name,
+			"location": stringOf(result["location"]),
+			"page":     stringOf(result["page"]),
+		},
+		SourceToolCallID: callID,
+	}
+}
+
+// navigationPath is where a navigation artifact goes; "" for any other kind.
+func navigationPath(artifact *assistantartifact.Artifact) string {
+	if artifact.Kind != assistantartifact.KindNavigation {
+		return ""
+	}
+
+	return stringOf(artifact.Payload["path"])
+}
+
 func runDiffTitle(result map[string]any) string {
 	side, _ := result["after"].(map[string]any)
 	if name := stringOf(side["reportName"]); name != "" {
@@ -630,6 +672,11 @@ func entityCardArtifact(callID, toolName string, result map[string]any) *assista
 	payload := map[string]any{
 		"entity": entity,
 		"record": result,
+	}
+	// Where the record opens, from the same registry the app's own links
+	// use, so the card leads to the record rather than only describing it.
+	if path, ok := productguide.RecordPath(entity, stringOf(result["id"])); ok {
+		payload["path"] = path
 	}
 	if payloadSize(payload) > assistantartifact.MaxPayloadBytes {
 		return nil

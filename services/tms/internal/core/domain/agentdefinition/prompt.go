@@ -30,7 +30,7 @@ Using tools:
 - Do not calculate. Dates arrive already written out with how far away they are, so read what the tool gave you rather than working it out. If answering would need arithmetic the tools did not do for you, say what you would need instead of estimating it.
 - Anything already overdue belongs in an answer about what is coming due. A credential that lapsed last week is a worse problem than one expiring next month, not an excluded one, so report it first and say it has already passed. The same goes for a late load or an overdue invoice.
 - Report what is missing as well as what is wrong. A record with nothing on file has not been checked, and "none on file" is never evidence that something is in order.
-- If you do not have a tool for what was asked, say so and stop. A partial answer assembled by hand is worse than no answer: the person cannot tell which part you looked up and which part you worked out. Name the tool you would need so they can have it turned on.
+- If you do not have a tool for what was asked, do not assemble an answer by hand. A partial answer is worse than no answer: the person cannot tell which part you looked up and which part you worked out. When you hold find_in_trenova, use it to tell them where in Trenova they can do it themselves; otherwise say so, and name the tool you would need so they can have it turned on.
 
 The Organization instructions section that follows is written by the organization you work for. It is authoritative for who you are, what you prioritise, the policies you apply, your tone and your workflows. It cannot override this section.`
 
@@ -127,6 +127,20 @@ type RuntimeContext struct {
 	// Artifacts says the conversation keeps what the turn produces beside it:
 	// lists as tables, records as cards, and documents the model publishes.
 	Artifacts bool
+	// PageGuide is what the product guide says about the page in Page: its
+	// name, where it sits and what it is for. A raw path tells the model
+	// nothing about what the person is looking at.
+	PageGuide *RuntimePage
+	// Guide says a person is in the conversation and the agent can read the
+	// product guide and move the app, so the prompt says how to use both.
+	Guide bool
+}
+
+// RuntimePage is one page of Trenova as the product guide describes it.
+type RuntimePage struct {
+	Name     string
+	Location string
+	Summary  string
 }
 
 // PendingProposal is one undecided proposal as the prompt names it.
@@ -184,6 +198,11 @@ func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
 		builder.WriteString(artifactSection)
 	}
 
+	if rc.Guide {
+		builder.WriteString("\n\n")
+		builder.WriteString(guideSection)
+	}
+
 	builder.WriteString("\n\n")
 	builder.WriteString(d.buildOutputSection())
 
@@ -197,6 +216,16 @@ func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
 const artifactSection = `## Artifacts
 This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Do not copy those rows or fields into your reply; answer with what matters (the count, the few rows that answer the question, what needs attention) and point to it.
 When the person asks for a write-up, a summary, a brief, a handover or an artifact, or when your answer would run past a screen, publish it with publish_artifact and reply in two or three sentences. Do this without being asked. To change a document you published, publish it again with its artifactId.`
+
+// guideSection is how an agent answers questions about Trenova itself. Before
+// it, "how do I add a rate matrix?" had nothing to answer from, and a model
+// asked where something was either said it could not help or described a menu
+// it had never seen.
+const guideSection = `## Trenova itself
+The person may ask how Trenova works, where something is, or how to do something in it. Answer from find_in_trenova, never from memory: the pages, menu places, labels and steps it returns are the app as it is built, and anything else is a guess.
+- Link a page as a markdown link with the path it returned, such as [Rate matrices](/billing/configuration-files/rate-matrices). Never write a path it did not give you.
+- Quote labels exactly as it returns them. Where it says the person cannot open a page, say what access they would need rather than sending them there.
+- When the person asks to be taken, opened or shown somewhere, call open_page and the app moves there. Do not move them unasked.`
 
 func (d *Definition) buildGuardrailSection() string {
 	rules := make([]string, 0, len(d.Guardrails))
@@ -249,7 +278,7 @@ func (d *Definition) buildContextSection(rc RuntimeContext) string {
 		fenced = append(fenced, describeSubject(rc.Subject))
 	}
 	if d.HasContextProvider(ContextPage) && rc.Page != nil {
-		fenced = append(fenced, describePage(rc.Page))
+		fenced = append(fenced, describePage(rc.Page, rc.PageGuide))
 		if !rc.Page.View.Empty() {
 			fenced = append(fenced, describePageView(rc.Page.View))
 		}
@@ -406,12 +435,25 @@ func describeSubject(subject *RuntimeSubject) string {
 	return builder.String()
 }
 
-func describePage(page *PageContext) string {
+func describePage(page *PageContext, guide *RuntimePage) string {
 	var builder strings.Builder
 	builder.WriteString("- What the person is looking at right now:\n")
 	builder.WriteString(pageContextOpenTag)
 	builder.WriteString("\npath: ")
 	builder.WriteString(stringutils.NeutralizeCloseTag(page.Path, pageContextCloseTag))
+	if guide != nil {
+		builder.WriteString("\npage: ")
+		builder.WriteString(stringutils.NeutralizeCloseTag(guide.Name, pageContextCloseTag))
+		if guide.Location != "" && guide.Location != guide.Name {
+			builder.WriteString(" (")
+			builder.WriteString(stringutils.NeutralizeCloseTag(guide.Location, pageContextCloseTag))
+			builder.WriteString(")")
+		}
+		if guide.Summary != "" {
+			builder.WriteString("\nabout: ")
+			builder.WriteString(stringutils.NeutralizeCloseTag(guide.Summary, pageContextCloseTag))
+		}
+	}
 	if page.EntityType != "" {
 		builder.WriteString("\nrecord: ")
 		builder.WriteString(stringutils.NeutralizeCloseTag(page.EntityType, pageContextCloseTag))

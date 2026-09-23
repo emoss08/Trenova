@@ -240,14 +240,56 @@ func TestSystemPrompt_TellsTheAgentNotToCalculate(t *testing.T) {
 		"the reason it need not calculate is that the tool already did")
 }
 
-func TestSystemPrompt_TellsTheAgentToStopWhenItLacksTheTool(t *testing.T) {
+// Lacking the tool is still no licence to work an answer out by hand, but it
+// is no longer a dead end either: the person is told where in Trenova they do
+// it themselves.
+func TestSystemPrompt_SendsThePersonToThePageWhenItLacksTheTool(t *testing.T) {
 	t.Parallel()
 
 	prompt := definitionWithInstructions("Help.").
 		BuildSystemPrompt(agentdefinition.RuntimeContext{})
 
-	assert.Contains(t, prompt, "say so and stop")
-	assert.Contains(t, prompt, "Name the tool you would need")
+	assert.Contains(t, prompt, "do not assemble an answer by hand")
+	assert.Contains(t, prompt, "use it to tell them where in Trenova they can do it themselves")
+	assert.Contains(t, prompt, "name the tool you would need")
+	assert.NotContains(t, prompt, "say so and stop")
+}
+
+func TestSystemPrompt_SaysHowToAnswerAboutTrenovaWhenAPersonIsThere(t *testing.T) {
+	t.Parallel()
+
+	definition := definitionWithInstructions("Help.")
+
+	with := definition.BuildSystemPrompt(agentdefinition.RuntimeContext{Guide: true})
+	assert.Contains(t, with, "## Trenova itself")
+	assert.Contains(t, with, "find_in_trenova")
+	assert.Contains(t, with, "open_page")
+
+	without := definition.BuildSystemPrompt(agentdefinition.RuntimeContext{})
+	assert.NotContains(t, without, "## Trenova itself",
+		"a run nobody is watching holds neither tool, so it is not told about them")
+}
+
+// The page is named and described from the product guide, inside the same
+// fence as the rest of the page context.
+func TestSystemPrompt_NamesThePageThePersonIsOn(t *testing.T) {
+	t.Parallel()
+
+	rc := fullContext()
+	rc.PageGuide = &agentdefinition.RuntimePage{
+		Name:     "Rate matrices",
+		Location: "Billing › Configuration files › Rate matrices",
+		Summary:  "Rates by lane.",
+	}
+
+	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
+
+	open := strings.Index(prompt, "<page_context>")
+	closing := strings.Index(prompt, "</page_context>")
+	require.True(t, open >= 0 && closing > open)
+	fenced := prompt[open:closing]
+	assert.Contains(t, fenced, "page: Rate matrices (Billing › Configuration files › Rate matrices)")
+	assert.Contains(t, fenced, "about: Rates by lane.")
 }
 
 // The reader is a dispatcher between calls, not someone following a

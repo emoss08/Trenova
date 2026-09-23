@@ -30,6 +30,9 @@ const (
 	// KindDocument is a write-up the agent published: a brief, a summary, a
 	// handover, kept as markdown beside the conversation.
 	KindDocument Kind = "document"
+	// KindNavigation is a page the agent took the person to, kept so the
+	// conversation still says where after a reload.
+	KindNavigation Kind = "navigation"
 )
 
 // AllKinds is the whole set, in the order they were added.
@@ -51,6 +54,7 @@ func AllKinds() []Kind {
 		KindInboundMessage,
 		KindRunDiff,
 		KindDocument,
+		KindNavigation,
 	}
 }
 

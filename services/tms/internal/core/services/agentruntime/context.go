@@ -2,10 +2,13 @@ package agentruntime
 
 import (
 	"context"
+	"slices"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -19,6 +22,7 @@ type ContextBuilderParams struct {
 	Users         repositories.UserRepository
 	Runtime       serviceports.AgentRuntime
 	Memories      serviceports.AgentMemoryService `optional:"true"`
+	Guide         serviceports.ProductGuide       `optional:"true"`
 }
 
 type ContextBuilder struct {
@@ -27,6 +31,7 @@ type ContextBuilder struct {
 	users         repositories.UserRepository
 	runtime       serviceports.AgentRuntime
 	memories      serviceports.AgentMemoryService
+	guide         serviceports.ProductGuide
 }
 
 func NewContextBuilder(p ContextBuilderParams) serviceports.RuntimeContextBuilder {
@@ -36,6 +41,7 @@ func NewContextBuilder(p ContextBuilderParams) serviceports.RuntimeContextBuilde
 		users:         p.Users,
 		runtime:       p.Runtime,
 		memories:      p.Memories,
+		guide:         p.Guide,
 	}
 }
 
@@ -53,6 +59,8 @@ func (b *ContextBuilder) Build(
 		Mentions:    req.Mentions,
 		Tools:       b.runtime.ToolSummaries(definition),
 	}
+
+	b.describeTrenova(&rc, req)
 
 	tenant := req.Actor.TenantInfo()
 
@@ -129,4 +137,35 @@ func (b *ContextBuilder) Build(
 	}
 
 	return rc, nil
+}
+
+// describeTrenova names the page the person is on from the product guide, and
+// says whether the turn can answer questions about Trenova itself: only with
+// a person in a conversation, the only turn that holds find_in_trenova and
+// open_page.
+func (b *ContextBuilder) describeTrenova(
+	rc *agentdefinition.RuntimeContext,
+	req *serviceports.RuntimeContextRequest,
+) {
+	if b.guide == nil {
+		return
+	}
+
+	rc.Guide = req.Trigger == agent.RunTriggerChat &&
+		req.Actor != nil &&
+		req.Actor.PrincipalType == serviceports.PrincipalTypeUser &&
+		slices.Contains(req.Definition.EffectiveToolNames(), agentdefinition.CoreToolFindInTrenova)
+
+	if req.Page == nil {
+		return
+	}
+	page, ok := b.guide.PageForPath(req.Page.Path)
+	if !ok {
+		return
+	}
+	rc.PageGuide = &agentdefinition.RuntimePage{
+		Name:     page.Name,
+		Location: page.Location(),
+		Summary:  stringutils.FirstNonEmpty(page.Summary, page.Description),
+	}
 }

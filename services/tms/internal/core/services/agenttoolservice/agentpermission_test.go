@@ -37,6 +37,9 @@ var (
 	methodOperation = regexp.MustCompile(
 		`func \(t \*(\w+)\) PermissionOperation\(\) permission\.Operation \{\s*return permission\.(\w+)`,
 	)
+	methodSelfScoped = regexp.MustCompile(
+		`func \(t \*(\w+)\) SelfScoped\(\) bool \{\s*return true`,
+	)
 	// The generated list and get tools carry their name and resource in a
 	// spec literal rather than methods: one type serves every entity.
 	specField = regexp.MustCompile(`(name|resource):\s+(?:permission\.)?"?(\w+)"?,`)
@@ -45,6 +48,9 @@ var (
 type toolPermission struct {
 	resource  permission.Resource
 	operation permission.Operation
+	// selfScoped tools act for the person in the conversation, and the
+	// runtime withholds them from any run nobody is watching.
+	selfScoped bool
 }
 
 // toolPermissions maps each tool's wire name to what it needs, read out of
@@ -58,6 +64,7 @@ func toolPermissions(t *testing.T) map[string]toolPermission {
 	byType := map[string]string{}
 	typeResource := map[string]string{}
 	typeOperation := map[string]string{}
+	selfScoped := map[string]bool{}
 	out := map[string]toolPermission{}
 
 	for _, dir := range []string{".", "../agentquerytoolservice"} {
@@ -80,6 +87,9 @@ func toolPermissions(t *testing.T) map[string]toolPermission {
 			}
 			for _, match := range methodOperation.FindAllStringSubmatch(source, -1) {
 				typeOperation[match[1]] = match[2]
+			}
+			for _, match := range methodSelfScoped.FindAllStringSubmatch(source, -1) {
+				selfScoped[match[1]] = true
 			}
 
 			// A spec's name comes before its resource, so the pending name
@@ -114,7 +124,11 @@ func toolPermissions(t *testing.T) map[string]toolPermission {
 			// thing it does, which is why the interface does not ask.
 			operation = permission.OpRead
 		}
-		out[name] = toolPermission{resource: resource, operation: operation}
+		out[name] = toolPermission{
+			resource:   resource,
+			operation:  operation,
+			selfScoped: selfScoped[toolType],
+		}
 	}
 
 	require.NotEmpty(t, out)
@@ -182,6 +196,11 @@ func TestEveryToolADeskRunsOnIsOneAnAgentMayCall(t *testing.T) {
 
 	permissions := toolPermissions(t)
 	for name, templates := range backgroundTools(t) {
+		// A core tool that acts for the person in the conversation is
+		// withheld from every run nobody is watching, so no desk runs on it.
+		if permissions[name].selfScoped {
+			continue
+		}
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 

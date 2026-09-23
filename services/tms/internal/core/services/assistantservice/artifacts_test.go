@@ -148,6 +148,12 @@ func TestArtifactFromObservation_RecordsBecomeCardsAndViewsDoNot(t *testing.T) {
 	assert.Equal(t, assistantartifact.KindEntityCard, card.Kind)
 	assert.Equal(t, "Shipment PRO-778", card.Title)
 	assert.Equal(t, "shipment", card.Payload["entity"])
+	assert.Equal(
+		t,
+		"/shipment-management/shipments?expanded=shp_1&panelEntityId=shp_1&panelType=edit",
+		card.Payload["path"],
+		"a card opens the record where the app's own links open it",
+	)
 
 	person := artifactFromObservation(observation("get_worker", map[string]any{
 		"id": "wrk_1", "firstName": "Ada", "lastName": "Lovelace",
@@ -274,6 +280,38 @@ func TestArtifactRecorder_KeepsAndAnnouncesWhatATurnProduced(t *testing.T) {
 	listed := recorder.artifacts()
 	require.Len(t, listed, 1)
 	assert.Equal(t, messageID, listed[0].MessageID)
+}
+
+// The app follows a navigation the moment it is announced, before it has
+// fetched the artifact, so the announcement carries where to go. Nothing
+// else does: a card's link is for a person to choose.
+func TestArtifactRecorder_AnnouncesWhereANavigationGoes(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubArtifactRepo{}
+	var events []serviceports.StreamEvent
+	svc := &Service{logger: zap.NewNop(), artifacts: repo}
+	thread := &conversation.Thread{ID: pulid.MustNew("thr_")}
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	recorder := svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(), func(event serviceports.StreamEvent) {
+		events = append(events, event)
+	})
+
+	recorder.observe(observation("open_page", map[string]any{
+		"path": "/billing/invoices",
+		"name": "Invoices",
+	}))
+	recorder.observe(observation("get_shipment", map[string]any{"id": "shp_1", "proNumber": "PRO-1"}))
+
+	require.Len(t, events, 2)
+	moved, ok := events[0].Data.(serviceports.AssistantArtifactEvent)
+	require.True(t, ok)
+	assert.Equal(t, assistantartifact.KindNavigation, moved.Kind)
+	assert.Equal(t, "/billing/invoices", moved.Path)
+
+	card, ok := events[1].Data.(serviceports.AssistantArtifactEvent)
+	require.True(t, ok)
+	assert.Empty(t, card.Path)
 }
 
 // A nil recorder is a turn without a pane: every call is a no-op and the
@@ -501,4 +539,40 @@ func TestArtifactFromObservation_AnUnratedShipmentGetsNoLedger(t *testing.T) {
 		"shipmentId": "shp_1",
 		"components": []any{},
 	})))
+}
+
+// Where an agent took the person is kept as a card with the link, so the
+// conversation read back later says where they went.
+func TestArtifactFromObservation_OpeningAPageLeavesWhereItWent(t *testing.T) {
+	t.Parallel()
+
+	artifact := artifactFromObservation(observation("open_page", map[string]any{
+		"path":     "/billing/configuration-files/rate-matrices?panelType=create",
+		"name":     "Rate matrices",
+		"location": "Billing › Configuration files › Rate matrices",
+		"page":     "/billing/configuration-files/rate-matrices",
+	}))
+
+	require.NotNil(t, artifact)
+	assert.Equal(t, assistantartifact.KindNavigation, artifact.Kind)
+	assert.Equal(t, "Rate matrices", artifact.Title)
+	assert.Equal(
+		t,
+		"/billing/configuration-files/rate-matrices?panelType=create",
+		artifact.Payload["path"],
+	)
+	assert.Equal(t, "Billing › Configuration files › Rate matrices", artifact.Payload["location"])
+}
+
+// The app follows a navigation artifact by itself, so only a path inside the
+// app is ever one: never another site, and never a protocol-relative one.
+func TestArtifactFromObservation_NavigationStaysInsideTheApp(t *testing.T) {
+	t.Parallel()
+
+	for _, path := range []string{"", "https://example.com", "//example.com/x", "javascript:alert(1)"} {
+		assert.Nil(t, artifactFromObservation(observation("open_page", map[string]any{
+			"path": path,
+			"name": "Somewhere",
+		})), path)
+	}
 }

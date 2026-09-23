@@ -194,6 +194,10 @@ type AssistantArtifactEvent struct {
 	Status           assistantartifact.Status `json:"status"`
 	Title            string                   `json:"title"`
 	SourceToolCallID string                   `json:"sourceToolCallId,omitempty"`
+	// Path is where a navigation artifact moves the app. It rides on the
+	// event because the app follows it the moment it arrives, before the
+	// artifact itself has been fetched.
+	Path string `json:"path,omitempty"`
 }
 
 // ProposalHold names the switch holding a proposal and, when it is an agent's

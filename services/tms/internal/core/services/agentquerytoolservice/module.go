@@ -93,6 +93,8 @@ func ToolProviders() []any {
 		provideListInboundMessagesTool,
 		newGetMyHomeLayoutTool,
 		newListHomeWidgetsTool,
+		newFindInTrenovaTool,
+		newOpenPageTool,
 	}
 }
 
