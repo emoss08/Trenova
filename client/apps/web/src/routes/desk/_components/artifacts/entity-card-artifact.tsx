@@ -25,11 +25,15 @@ export function EntityCardArtifact({ artifact }: { artifact: AssistantArtifact }
   const shown = card.facts.slice(0, FACT_LIMIT);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
-      <div className="flex items-center gap-2">
-        <span className="text-muted-foreground text-xs">
-          {humanizeToolName(card.entity)}
-          {card.id !== "" ? ` · ${card.id}` : ""}
+    <div className="animate-rise flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
+          <span className="shrink-0">{humanizeToolName(card.entity)}</span>
+          {card.id !== "" && (
+            <span className="bg-sunken text-foreground-muted truncate rounded-md px-1.5 py-0.5 font-mono text-2xs tabular-nums">
+              {card.id}
+            </span>
+          )}
         </span>
         {card.path !== "" && (
           <Button
@@ -54,7 +58,7 @@ export function EntityCardArtifact({ artifact }: { artifact: AssistantArtifact }
       </div>
 
       {raw ? (
-        <div className="bg-sunken scrollbar-overlay max-h-[60vh] overflow-auto rounded-md p-2">
+        <div className="bg-sunken scrollbar-overlay animate-rise max-h-[60vh] overflow-auto rounded-lg p-2">
           <JsonViewer data={card.record as never} collapsed={2} />
         </div>
       ) : shown.length === 0 ? (

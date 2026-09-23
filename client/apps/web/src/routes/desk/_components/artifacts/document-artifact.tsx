@@ -1,4 +1,5 @@
 import { AiMarkdown } from "@/components/elements/ai-markdown";
+import { ArtifactNotice } from "@/components/assistant/voice/artifact-chrome";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import type { AssistantArtifact } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -19,7 +20,7 @@ export function DocumentArtifact({ artifact }: { artifact: AssistantArtifact }) 
   const { copy, isCopied } = useCopyToClipboard();
 
   if (body === "") {
-    return <p className="text-muted-foreground p-4 text-sm">{t("This document is empty.")}</p>;
+    return <ArtifactNotice kind={artifact.kind}>{t("This document is empty.")}</ArtifactNotice>;
   }
 
   const fileName = `${slugify(artifact.title) || "document"}.md`;

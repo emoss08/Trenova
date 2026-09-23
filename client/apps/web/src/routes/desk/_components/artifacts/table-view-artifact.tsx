@@ -28,7 +28,7 @@ export function TableViewArtifact({ artifact }: { artifact: AssistantArtifact })
         emptyMessage={t("Nothing matched.")}
         className="min-h-0 flex-1"
       />
-      <p className="text-muted-foreground border-border flex h-8 shrink-0 items-center gap-2 border-t px-3 text-xs">
+      <p className="text-foreground-subtle border-border-subtle bg-sunken flex h-8 shrink-0 items-center gap-2 border-t px-3 text-xs tabular-nums">
         <span className="truncate">
           {t("{0, plural, one {# row} other {# rows}}", view.rowCount)}
           {view.searchedFor.length > 0 ? ` · ${view.searchedFor.join(", ")}` : ""}

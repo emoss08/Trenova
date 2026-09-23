@@ -1,4 +1,5 @@
 import { ReportRunCard } from "@/components/assistant/report-run-card";
+import { ArtifactNotice } from "@/components/assistant/voice/artifact-chrome";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useMemo } from "react";
@@ -14,7 +15,9 @@ export function ReportRunArtifact({ artifact }: { artifact: AssistantArtifact })
   const run = useMemo(() => reportRunFrom(artifact), [artifact]);
 
   if (run === null) {
-    return <p className="text-muted-foreground p-4 text-sm">{t("This run has no id to follow.")}</p>;
+    return (
+      <ArtifactNotice kind={artifact.kind}>{t("This run has no id to follow.")}</ArtifactNotice>
+    );
   }
 
   return (

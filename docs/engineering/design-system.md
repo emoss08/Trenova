@@ -643,9 +643,11 @@ travel.
 draft, a plan is a checklist, a record is a card. They render in the pane beside the
 conversation and the transcript only refers to them, as chips. Every artifact sits in
 `ArtifactChrome` (`components/assistant/voice/artifact-chrome.tsx`): `--radius-surface`,
-`border-border`, a 40px header with the kind, the title, a status badge only when the
-status is not Ready, and the pin. No shadow, no fill of its own. The kind's name and icon
-come from `ARTIFACT_KINDS`, once, for every surface that names one. Status is a tone
+`border-border`, a 48px header with the kind's mark in a sunken well, the title (semibold)
+over one provenance line — "Report · from Report builder · 2 minutes ago" — a status badge
+only when the status is not Ready, and the pin. No shadow. The kind's name, icon and source
+come from `ARTIFACT_KINDS`, once, for every surface that names one; a body with nothing to
+show is `ArtifactNotice`, never a bare grey sentence. Status is a tone
 (Pending is `info`, Sent is `success`, Failed is `danger`); the kind is never coloured.
 
 **Decisions are a queue with keys.** A row says who proposed what in one sentence; the
@@ -662,7 +664,13 @@ also says how many rows or filters it carries. A slash lists commands ahead of t
 questions; a command with slots is filled in the box, its empty slots shown as a hint row
 under the text in `font-mono`, never as a form. An at-sign opens a listbox over the
 organization's records in the same style as the command list. The dictation control is a
-plain icon button that turns `text-danger-foreground` while listening; nothing pulses.
+plain icon button until it is listening; then it is a `danger-subtle` pill with a stop square
+and a three-bar level meter that moves only while someone is speaking, so a quiet room is a
+still control. Where dictation cannot run the button stays, disabled, and its tooltip says why;
+a refused microphone or a browser without a speech service is said under the box, never
+swallowed. That line under the box says one thing at a time and never wraps — the keys to
+send while typing, the slash and the at-sign on an empty box, what the microphone is doing —
+and the full list is behind the keyboard button at its end.
 
 **The launcher is a signal, and it says what it means.** At rest the corner mark
 does nothing at all — it is on every page, so anything that moved would be

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ArtifactsPane } from "../artifacts-pane";
@@ -20,13 +20,32 @@ afterEach(() => {
   listArtifacts.mockReset();
 });
 
-function renderPane() {
+function renderPane(threadId = "athr_1") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <ArtifactsPane threadId="athr_1" liveArtifactIds={[]} onClose={() => undefined} />
+      <ArtifactsPane threadId={threadId} liveArtifactIds={[]} onClose={() => undefined} />
     </QueryClientProvider>,
   );
+}
+
+function documentArtifact(id: string, title: string, createdAt: number) {
+  return {
+    id,
+    threadId: "athr_tabs",
+    messageId: null,
+    runId: null,
+    proposalId: null,
+    planId: null,
+    kind: "document",
+    status: "Ready",
+    title,
+    payload: { body: "" },
+    sourceToolCallId: "",
+    pinned: false,
+    createdAt,
+    updatedAt: createdAt,
+  };
 }
 
 describe("the artifacts pane", () => {
@@ -60,5 +79,50 @@ describe("the artifacts pane", () => {
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));
 
     expect(await screen.findByText("Nothing here yet")).toBeInTheDocument();
+  });
+
+  /**
+   * The row of artifacts is a tab list, and walks like one: the arrows move
+   * the selection and wrap at the ends, so a keyboard can read a
+   * conversation's output without reaching for the pointer.
+   */
+  it("opens the newest artifact and walks the tabs with the arrows", async () => {
+    listArtifacts.mockResolvedValue({
+      results: [
+        documentArtifact("aart_old", "Morning brief", 10),
+        documentArtifact("aart_new", "Handover notes", 20),
+      ],
+    });
+
+    renderPane("athr_tabs");
+
+    const newest = await screen.findByRole("tab", { name: /Handover notes/ });
+    expect(newest).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("heading", { name: "Handover notes" })).toBeInTheDocument();
+
+    fireEvent.keyDown(newest, { key: "ArrowRight" });
+
+    expect(screen.getByRole("tab", { name: /Morning brief/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(await screen.findByRole("heading", { name: "Morning brief" })).toBeInTheDocument();
+  });
+
+  it("says where an artifact came from beneath its title", async () => {
+    listArtifacts.mockResolvedValue({
+      results: [
+        {
+          ...documentArtifact("aart_run", "Detention last week", 10),
+          kind: "report_run",
+          payload: {},
+        },
+      ],
+    });
+
+    renderPane("athr_provenance");
+
+    expect(await screen.findByText("Report · from Report builder")).toBeInTheDocument();
+    expect(screen.getByText("This run has no id to follow.")).toBeInTheDocument();
   });
 });

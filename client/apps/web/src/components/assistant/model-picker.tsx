@@ -21,6 +21,8 @@ export type ModelPickerProps = {
   value: string;
   onChange: (providerId: string) => void;
   disabled?: boolean;
+  /** The corner panel's width: the model's name is cut shorter so the row stays one row. */
+  compact?: boolean;
 };
 
 /**
@@ -35,7 +37,13 @@ export type ModelPickerProps = {
  * still falls through to the rest, which is why the reply says which model
  * actually answered rather than assuming it was this one.
  */
-export function ModelPicker({ options, value, onChange, disabled = false }: ModelPickerProps) {
+export function ModelPicker({
+  options,
+  value,
+  onChange,
+  disabled = false,
+  compact = false,
+}: ModelPickerProps) {
   const t = useT();
   const [open, setOpen] = useState(false);
 
@@ -66,10 +74,14 @@ export function ModelPicker({ options, value, onChange, disabled = false }: Mode
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         disabled={disabled}
+        // A quiet chip in the composer's control row, like its neighbours:
+        // no box of its own, a fill on hover and while its list is open.
         className={cn(
-          "ui-focus-ring inline-flex max-w-[14rem] items-center gap-1.5 rounded-md",
-          "border border-border bg-background px-2 py-1 text-xs text-muted-foreground",
-          "transition-colors hover:text-foreground disabled:opacity-50",
+          "ui-focus-ring ui-press inline-flex h-7 min-w-0 items-center gap-1.5 rounded-full px-2",
+          "text-xs text-foreground-muted hover:bg-surface-hover hover:text-foreground",
+          "data-popup-open:bg-surface-hover data-popup-open:text-foreground",
+          "disabled:pointer-events-none disabled:opacity-50",
+          compact ? "max-w-28" : "max-w-56",
         )}
         aria-label={t("Choose which model answers")}
       >
@@ -77,7 +89,7 @@ export function ModelPicker({ options, value, onChange, disabled = false }: Mode
           {selected ? kindMark(selected.kind) : <AssistMark />}
         </span>
         <span className="truncate">{label}</span>
-        <ChevronDownIcon className="size-3 shrink-0" />
+        <ChevronDownIcon className="size-3 shrink-0 opacity-60" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 p-0">
         <Command>

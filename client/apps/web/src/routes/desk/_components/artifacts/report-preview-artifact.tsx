@@ -22,12 +22,14 @@ export function ReportPreviewArtifact({ artifact }: { artifact: AssistantArtifac
         emptyMessage={t("The preview returned no rows.")}
         className="min-h-0 flex-1"
       />
-      <p className="text-muted-foreground border-border flex h-8 shrink-0 items-center gap-2 border-t px-3 text-xs">
-        <span>
+      <p className="text-foreground-subtle border-border-subtle bg-sunken flex h-8 shrink-0 items-center gap-2 border-t px-3 text-xs tabular-nums">
+        <span className="truncate">
           {t("{0, plural, one {# row} other {# rows}}", preview.rowCount)}
           {preview.dataset !== "" ? ` · ${preview.dataset}` : ""}
         </span>
-        {preview.truncated && <span>· {t("Cut short; the full set needs a run.")}</span>}
+        {preview.truncated && (
+          <span className="shrink-0">· {t("Cut short; the full set needs a run.")}</span>
+        )}
       </p>
     </div>
   );

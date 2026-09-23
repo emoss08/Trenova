@@ -1,7 +1,7 @@
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { toneVar } from "@/components/kpi/tone";
+import { useState } from "react";
 import { downloadReportRun, isReportRunActive, useReportRun } from "@/hooks/use-reports";
 import {
   CircleAlertIcon,
@@ -9,9 +9,9 @@ import {
   CircleSlashIcon,
   DownloadIcon,
   FileSpreadsheetIcon,
-  LoaderIcon,
 } from "lucide-react";
 import type { ThreadReportRun } from "./report-runs";
+import { WorkingDot } from "./voice/working-dot";
 
 /**
  * A report the assistant started, following itself to the finish.
@@ -38,30 +38,42 @@ export function ReportRunCard({ run }: { run: ThreadReportRun }) {
   const status = record?.status ?? "queued";
   const active = isReportRunActive(status);
   const failure = record?.error?.message ?? "";
+  // The finish is marked with a spring only when this card watched the run
+  // get there; a finished run opened from history simply is finished.
+  const [firstStatus, setFirstStatus] = useState<string | null>(null);
+  if (record && firstStatus === null) {
+    setFirstStatus(record.status);
+  }
+  const landed = firstStatus !== null && isReportRunActive(firstStatus) && !active;
 
   return (
-    <div className="border-border/70 rounded-lg flex flex-col gap-2 border px-3 py-2.5">
-      <div className="flex items-start gap-2">
-        <StatusIcon status={status} loading={query.isPending || active} />
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-sm">{reportLabel(run, t)}</span>
-          <span className="text-muted-foreground text-xs">
-            {describe({ status, record, failure, t })}
-          </span>
-        </div>
-        {record?.status === "succeeded" && (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="shrink-0"
-            onClick={() => downloadReportRun({ id: run.runId })}
-          >
-            <DownloadIcon className="size-3.5" />
-            {t("Download")}
-          </Button>
-        )}
+    <div
+      data-slot="report-run"
+      data-status={status}
+      className="border-border bg-card flex min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5"
+    >
+      <StatusMark status={status} working={query.isPending || active} landed={landed} />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5" aria-live="polite">
+        <span className="truncate text-sm font-medium">{reportLabel(run, t)}</span>
+        <span
+          key={status}
+          className={cn("text-muted-foreground text-xs", landed && "animate-rise")}
+        >
+          {describe({ status, record, failure, t })}
+        </span>
       </div>
+      {record?.status === "succeeded" && (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className={cn("shrink-0", landed && "animate-rise")}
+          onClick={() => downloadReportRun({ id: run.runId })}
+        >
+          <DownloadIcon className="size-3.5" />
+          {t("Download")}
+        </Button>
+      )}
     </div>
   );
 }
@@ -126,22 +138,38 @@ function describe({ status, record, failure, t }: DescribeArgs): string {
   }
 }
 
-function StatusIcon({ status, loading }: { status: string; loading: boolean }) {
-  const className = "mt-0.5 size-3.5 shrink-0";
+/**
+ * The run's state as a mark in a small well: the spreadsheet with a breathing
+ * dot while it is still going — the one loop the product allows, because the
+ * work it describes is still running — and a tone once it lands, which
+ * settles in with the confirm spring so the finish is felt, not just seen.
+ */
+function StatusMark({
+  status,
+  working,
+  landed,
+}: {
+  status: string;
+  working: boolean;
+  landed: boolean;
+}) {
+  const glyph = "size-4";
+  const settled = !working;
 
-  if (loading) {
-    return <LoaderIcon className={cn(className, "animate-spin")} />;
-  }
-
-  switch (status) {
-    case "succeeded":
-      return <CircleCheckIcon className={className} style={{ color: toneVar("success") }} />;
-    case "failed":
-      return <CircleAlertIcon className={className} style={{ color: toneVar("danger") }} />;
-    case "canceled":
-    case "expired":
-      return <CircleSlashIcon className={className} style={{ color: toneVar("warning") }} />;
-    default:
-      return <FileSpreadsheetIcon className={className} />;
-  }
+  return (
+    <span className="bg-sunken relative flex size-8 shrink-0 items-center justify-center rounded-md">
+      <span key={settled ? status : "working"} className={cn("flex", landed && "animate-confirm")}>
+        {settled && status === "succeeded" ? (
+          <CircleCheckIcon className={cn(glyph, "text-success")} />
+        ) : settled && status === "failed" ? (
+          <CircleAlertIcon className={cn(glyph, "text-danger")} />
+        ) : settled && (status === "canceled" || status === "expired") ? (
+          <CircleSlashIcon className={cn(glyph, "text-warning")} />
+        ) : (
+          <FileSpreadsheetIcon className={cn(glyph, "text-foreground-muted")} />
+        )}
+      </span>
+      {working && <WorkingDot working className="absolute -top-0.5 -right-0.5 ring-2 ring-card" />}
+    </span>
+  );
 }
