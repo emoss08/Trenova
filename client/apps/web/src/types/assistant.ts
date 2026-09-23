@@ -37,6 +37,8 @@ export const contextProviderSchema = z.enum([
 
 export const messageRoleSchema = z.enum(["User", "Assistant", "Tool"]);
 
+export const messageKindSchema = z.enum(["Message", "DecisionNote", "Delegated"]);
+
 export const threadStatusSchema = z.enum(["Active", "Archived"]);
 
 /**
@@ -182,6 +184,8 @@ export const agentDefinitionSchema = z.object({
   contextProviders: nullableList(contextProviderSchema),
   outputMode: outputModeSchema.default("Conversational"),
   preferredProviderId: optionalIdSchema,
+  /** The agents this one may hand a task to, in the order they were chosen. */
+  delegateIds: nullableList(z.string()),
   systemKey: z.string().optional().default(""),
   lastRunAt: z.number().nullish(),
   nextRunAt: z.number().nullish(),
@@ -223,6 +227,7 @@ export const toolEffectSchema = z.enum([
   "discover",
   "present",
   "ask",
+  "delegate",
 ]);
 
 const optionalToolEffect = toolEffectSchema.optional().catch(undefined);
@@ -262,6 +267,9 @@ export const previewPromptResponseSchema = z.object({
   prompt: z.string(),
 });
 
+/** The most agents one agent may hand work to, as the server enforces it. */
+export const MAX_DELEGATES = 8;
+
 export const saveAgentDefinitionRequestSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   description: z.string().optional().default(""),
@@ -299,6 +307,11 @@ export const saveAgentDefinitionRequestSchema = z.object({
   contextProviders: z.array(contextProviderSchema).default([]),
   outputMode: outputModeSchema.default("Conversational"),
   preferredProviderId: optionalIdSchema,
+  /**
+   * The agents this one may hand a task to. Absent keeps the saved list; a
+   * list, empty or not, replaces it.
+   */
+  delegateIds: z.array(z.string()).max(MAX_DELEGATES).optional(),
   version: z.number().default(0),
 });
 
@@ -385,9 +398,17 @@ export const assistantMessageSchema = z.object({
   role: messageRoleSchema,
   /**
    * Message for what a person or the model wrote; DecisionNote for the input
-   * of the turn that follows a decision, which the thread shows as a note.
+   * of the turn that follows a decision, which the thread shows as a note;
+   * Delegated for a step another agent took on a task this conversation's
+   * agent handed it, which the thread shows under the call that handed it.
    */
-  kind: z.enum(["Message", "DecisionNote"]).catch("Message").default("Message"),
+  kind: messageKindSchema.catch("Message").default("Message"),
+  /** On a Delegated message: the agent that took the step. */
+  agentId: z.string().nullish(),
+  /** On a Delegated message: the delegate_task call it answers. */
+  delegateCallId: z.string().nullish(),
+  /** On a Delegated message: the agent's name as the thread is served. */
+  agentName: z.string().nullish(),
   content: z.string().optional().default(""),
   toolCalls: z.array(toolCallRecordSchema).nullish(),
   toolCallId: z.string().optional().default(""),
@@ -659,6 +680,12 @@ export const assistantProposalSchema = z.object({
   fields: nullableList(proposalFieldSchema),
   /** The values the approver changed before approving, keyed by parameter. */
   modifications: z.record(z.string(), z.unknown()).nullish(),
+  /**
+   * The agent that proposed it: the conversation's own, or another agent it
+   * handed a task to. Absent from a server that does not say.
+   */
+  agentId: z.string().nullish(),
+  agentName: z.string().nullish(),
 });
 
 export const assistantProposalListSchema = z.object({
@@ -685,6 +712,9 @@ export const assistantPlanSchema = z.object({
   expiresAt: z.number().nullish().default(0),
   hold: proposalHoldSchema.nullish(),
   createdAt: z.number(),
+  /** The agent whose proposals the plan groups. */
+  agentId: z.string().nullish(),
+  agentName: z.string().nullish(),
 });
 
 export const assistantPlanListSchema = z.object({
@@ -729,10 +759,21 @@ export const assistantDeltaEventSchema = z.object({ text: z.string() });
 
 export const assistantReasoningEventSchema = z.object({ text: z.string() });
 
+/**
+ * Set on an event of another agent's turn, on a task the conversation's agent
+ * handed it: which agent, and the delegate_task call the event belongs under.
+ * Both are absent on the conversation's own events.
+ */
+const delegateScopeShape = {
+  agentId: z.string().optional(),
+  delegateCallId: z.string().optional(),
+};
+
 export const assistantMessageEventSchema = z.object({
   content: z.string().optional().default(""),
   toolCalls: z.array(toolCallRecordSchema).nullish(),
   model: z.string().optional().default(""),
+  ...delegateScopeShape,
 });
 
 export const assistantToolStartedEventSchema = z.object({
@@ -740,6 +781,7 @@ export const assistantToolStartedEventSchema = z.object({
   name: z.string(),
   arguments: z.record(z.string(), z.unknown()).nullish(),
   effect: optionalToolEffect,
+  ...delegateScopeShape,
 });
 
 export const assistantToolFinishedEventSchema = z.object({
@@ -750,6 +792,81 @@ export const assistantToolFinishedEventSchema = z.object({
   content: z.string().optional().default(""),
   effect: optionalToolEffect,
   summary: z.string().optional(),
+  ...delegateScopeShape,
+});
+
+/** The conversation's agent handed a task to another agent. */
+export const assistantDelegateStartedEventSchema = z.object({
+  delegateCallId: z.string(),
+  agentId: z.string(),
+  agentName: z.string().optional().default(""),
+  icon: z.string().optional().default(""),
+  accent: z.string().optional().default(""),
+  task: z.string().optional().default(""),
+});
+
+/** A piece of the other agent's reply or thinking, apart from the reply being shown. */
+export const assistantDelegateTextEventSchema = z.object({
+  agentId: z.string().optional().default(""),
+  delegateCallId: z.string(),
+  text: z.string(),
+});
+
+/**
+ * How a task handed to another agent ended. An ending this client has not
+ * heard of reads as failed, which is the reading that claims the least.
+ */
+export const delegateStatusSchema = z.enum([
+  "completed",
+  "exhausted",
+  "refused",
+  "declined",
+  "failed",
+  "stopped",
+]);
+
+/** What a write made, when its tool says: a past-tense verb, the kind in words, the name, the ids. */
+export const toolExecutionResultSchema = z.object({
+  action: z.string().optional().default(""),
+  kind: z.string().optional().default(""),
+  name: z.string().optional().default(""),
+  ids: z.preprocess((value) => value ?? {}, z.record(z.string(), z.string())),
+});
+
+/** One write the other agent made or proposed on the task. */
+export const delegateWriteSchema = z.object({
+  toolName: z.string(),
+  callId: z.string().optional().default(""),
+  tier: autonomyTierSchema.optional().catch(undefined),
+  summary: z.string().optional().default(""),
+  result: toolExecutionResultSchema.nullish(),
+  error: z.string().optional().default(""),
+  simulated: z.boolean().optional().default(false),
+});
+
+/** Something the other agent kept beside the conversation. */
+export const delegateDocumentSchema = z.object({
+  id: z.string(),
+  kind: z.string().optional().default(""),
+  title: z.string().optional().default(""),
+});
+
+/**
+ * The account of a task handed to another agent. The reader is shown it as
+ * delegate_finished; the delegating agent reads the same object as the call's
+ * result, which is how a saved conversation recovers it.
+ */
+export const assistantDelegateFinishedEventSchema = z.object({
+  delegateCallId: z.string(),
+  agentId: z.string().optional().default(""),
+  agentName: z.string().optional().default(""),
+  status: delegateStatusSchema.catch("failed"),
+  reply: z.string().optional().default(""),
+  reason: z.string().optional().default(""),
+  made: nullableList(delegateWriteSchema),
+  awaiting: nullableList(delegateWriteSchema),
+  published: nullableList(delegateDocumentSchema),
+  toolCallsUsed: z.number().int().nonnegative().optional().default(0),
 });
 
 export const assistantErrorEventSchema = z.object({ message: z.string() });
@@ -774,6 +891,12 @@ export const assistantRetryingEventSchema = z.object({
   waitSeconds: z.number().int().nonnegative().optional().default(0),
 });
 
+/** The other agent's reply died partway and is starting over; the reply being shown is untouched. */
+export const assistantDelegateRetryingEventSchema = assistantRetryingEventSchema.extend({
+  agentId: z.string().optional().default(""),
+  delegateCallId: z.string(),
+});
+
 export type AssistantStreamEvent =
   | { event: "accepted"; data: z.infer<typeof assistantAcceptedEventSchema> }
   | { event: "refused"; data: z.infer<typeof assistantRefusedEventSchema> }
@@ -783,6 +906,11 @@ export type AssistantStreamEvent =
   | { event: "tool_started"; data: z.infer<typeof assistantToolStartedEventSchema> }
   | { event: "tool_finished"; data: z.infer<typeof assistantToolFinishedEventSchema> }
   | { event: "retrying"; data: z.infer<typeof assistantRetryingEventSchema> }
+  | { event: "delegate_started"; data: z.infer<typeof assistantDelegateStartedEventSchema> }
+  | { event: "delegate_delta"; data: z.infer<typeof assistantDelegateTextEventSchema> }
+  | { event: "delegate_reasoning"; data: z.infer<typeof assistantDelegateTextEventSchema> }
+  | { event: "delegate_retrying"; data: z.infer<typeof assistantDelegateRetryingEventSchema> }
+  | { event: "delegate_finished"; data: z.infer<typeof assistantDelegateFinishedEventSchema> }
   | { event: "artifact"; data: z.infer<typeof assistantArtifactEventSchema> }
   | { event: "thread"; data: AssistantThread }
   /**
@@ -829,6 +957,15 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
       return { event, data: assistantToolFinishedEventSchema.parse(data) };
     case "retrying":
       return { event, data: assistantRetryingEventSchema.parse(data) };
+    case "delegate_started":
+      return { event, data: assistantDelegateStartedEventSchema.parse(data) };
+    case "delegate_delta":
+    case "delegate_reasoning":
+      return { event, data: assistantDelegateTextEventSchema.parse(data) };
+    case "delegate_retrying":
+      return { event, data: assistantDelegateRetryingEventSchema.parse(data) };
+    case "delegate_finished":
+      return { event, data: assistantDelegateFinishedEventSchema.parse(data) };
     case "artifact":
       return { event, data: assistantArtifactEventSchema.parse(data) };
     case "thread":
@@ -883,6 +1020,12 @@ export type ProposalStatus = z.infer<typeof proposalStatusSchema>;
 export type ProposalDecision = z.infer<typeof proposalDecisionSchema>;
 export type ProposalField = z.infer<typeof proposalFieldSchema>;
 export type RetryKind = z.infer<typeof retryKindSchema>;
+export type MessageKind = z.infer<typeof messageKindSchema>;
+export type DelegateStatus = z.infer<typeof delegateStatusSchema>;
+export type DelegateWrite = z.infer<typeof delegateWriteSchema>;
+export type DelegateDocument = z.infer<typeof delegateDocumentSchema>;
+export type DelegateReport = z.infer<typeof assistantDelegateFinishedEventSchema>;
+export type ToolExecutionResult = z.infer<typeof toolExecutionResultSchema>;
 export type ProposalFieldKind = z.infer<typeof proposalFieldKindSchema>;
 export type ProposalHold = z.infer<typeof proposalHoldSchema>;
 export type AssistantPlan = z.infer<typeof assistantPlanSchema>;

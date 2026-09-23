@@ -10,6 +10,7 @@ import type { AgentTemplate } from "@/types/assistant";
 import {
   EyeOffIcon,
   FlaskConicalIcon,
+  ForwardIcon,
   InboxIcon,
   LockIcon,
   PencilIcon,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import type { AgentShelf } from "./agent-roster";
+import { canDelegate, delegatesLine, savedDelegates } from "./delegates";
 import { TRIGGER_ICONS, TRIGGER_LABELS, TRIGGER_NOTES } from "./trigger-meta";
 
 const RUN_TIME_FORMAT = {
@@ -176,6 +178,7 @@ export function AgentRow({
             : t("{0, plural, one {# tool} other {# tools}}", agent.toolNames.length)}
         </span>
         <ScheduleSummary agent={agent} />
+        <DelegatesSummary agent={agent} />
         {agent.pendingProposals > 0 ? (
           <Badge variant="warning" className="gap-1">
             <InboxIcon className="size-3" />
@@ -274,6 +277,42 @@ export function AgentRow({
         )}
       </div>
     </li>
+  );
+}
+
+/**
+ * Who the agent may hand work to, in one line: "Can ask Report Builder,
+ * Dispatch desk +1". The whole list, with any agent disabled since it was
+ * added flagged, is behind a hover.
+ */
+function DelegatesSummary({ agent }: { agent: AgentDefinitionRow }) {
+  const t = useT();
+  const delegates = savedDelegates(agent);
+  const line = delegatesLine(delegates, t);
+  if (!canDelegate(agent.triggerMode) || line === "") {
+    return null;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span className="inline-flex min-w-0 cursor-default items-center gap-1">
+            <ForwardIcon className="size-3 shrink-0" />
+            <span className="truncate">{line}</span>
+          </span>
+        }
+      />
+      <TooltipContent>
+        <ul className="flex flex-col gap-0.5">
+          {delegates.map((delegate) => (
+            <li key={delegate.id}>
+              {delegate.enabled ? delegate.name : t("{0} (disabled)", delegate.name)}
+            </li>
+          ))}
+        </ul>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

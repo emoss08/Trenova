@@ -31,6 +31,8 @@ import { useCallback, useMemo } from "react";
 import { useController, useFormContext, useWatch } from "react-hook-form";
 import { providerBrandDomain } from "../providers/provider-brand";
 import { toSaveRequest, type AgentFormValues } from "./agent-form-schema";
+import { canDelegate, type DelegateSummary } from "./delegates";
+import { DelegatesField } from "./delegates-field";
 import { IdentityPicker } from "./identity-picker";
 import { PromptPreviewSheet } from "./prompt-preview-sheet";
 import { applyTemplateStarter } from "./template-fill";
@@ -46,7 +48,11 @@ type AgentFormProps = {
   agentId?: string;
   /** Set for the agents the platform itself fires; they cannot be deleted or re-triggered. */
   systemKey?: string;
+  /** The agents it may hand work to, as saved, with their names and marks. */
+  savedDelegates?: readonly DelegateSummary[];
 };
+
+const NO_DELEGATES: readonly DelegateSummary[] = [];
 
 /**
  * How long a change may sit undecided. The colour is the exposure, not the
@@ -61,7 +67,12 @@ const DECISION_TIMEOUTS = [
   { label: "7 days", value: 604800, tone: "danger" },
 ] as const;
 
-export function AgentForm({ mode, agentId = "", systemKey = "" }: AgentFormProps) {
+export function AgentForm({
+  mode,
+  agentId = "",
+  systemKey = "",
+  savedDelegates = NO_DELEGATES,
+}: AgentFormProps) {
   const t = useT();
   const { control, setValue, getValues } = useFormContext<AgentFormValues>();
 
@@ -80,6 +91,7 @@ export function AgentForm({ mode, agentId = "", systemKey = "" }: AgentFormProps
   const toolNames = useWatch({ control, name: "toolNames" });
   const toolTiers = useWatch({ control, name: "toolTiers" });
   const shadowMode = useWatch({ control, name: "shadowMode" });
+  const delegateIds = useWatch({ control, name: "delegateIds" });
   const { field: triggerField } = useController({ control, name: "triggerMode" });
   const { field: ceilingField } = useController({ control, name: "autonomyCeiling" });
   const { field: outputField } = useController({ control, name: "outputMode" });
@@ -263,6 +275,38 @@ export function AgentForm({ mode, agentId = "", systemKey = "" }: AgentFormProps
             setValue("toolTiers", next, { shouldDirty: true, shouldValidate: true })
           }
         />
+      </FormSection>
+
+      <FormSection
+        title={t("Can ask")}
+        titleCount={canDelegate(triggerMode) ? delegateIds.length : undefined}
+        description={t(
+          "Other agents this one may hand a task to, such as asking the Report Builder for a report and using the report it makes. Each works with its own tools and approvals, as the person talking, and cannot hand the task on.",
+        )}
+      >
+        {canDelegate(triggerMode) ? (
+          <DelegatesField agentId={agentId} saved={savedDelegates} />
+        ) : (
+          <>
+            <p className="text-muted-foreground text-xs">
+              {t(
+                "Only an agent people talk to can hand work to other agents. A scheduled, event or continuous run has nobody to hand the result back to.",
+              )}
+            </p>
+            {delegateIds.length > 0 && (
+              <Alert variant="warning" size="sm">
+                <ShieldAlertIcon className="size-4" />
+                <AlertTitle>{t("Saving clears the agents it can ask")}</AlertTitle>
+                <AlertDescription>
+                  {t(
+                    "{0, plural, one {It can ask # agent while it runs from chat. Switch back to Chat to keep it.} other {It can ask # agents while it runs from chat. Switch back to Chat to keep them.}}",
+                    delegateIds.length,
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+          </>
+        )}
       </FormSection>
 
       <FormSection

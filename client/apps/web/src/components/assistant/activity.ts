@@ -2,7 +2,12 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { AssistantMessage, ToolEffect } from "@/types/assistant";
 import type { ToolExchange } from "./thread-view";
 import { describeToolCall, parseToolResult } from "./tool-presentation";
-import type { TurnSegment } from "./turn-stream";
+import {
+  DELEGATE_TOOL,
+  emptyDelegateProgress,
+  type DelegateProgress,
+  type TurnSegment,
+} from "./turn-stream";
 
 export type ToolActivityStatus = "running" | "done" | "failed" | "proposed";
 
@@ -20,7 +25,17 @@ export type ToolStep = {
   summary: string;
   /** How long the call took, in seconds, when that is known. */
   durationSeconds: number | null;
+  /**
+   * On a delegate_task call: the other agent's work on the task, as the
+   * stream delivered it or as the thread saved it. The hand-off is drawn
+   * from it, under the call and never among the turn's own steps.
+   */
+  delegate?: DelegateSource;
 };
+
+export type DelegateSource =
+  | { kind: "live"; progress: DelegateProgress }
+  | { kind: "saved"; messages: readonly AssistantMessage[] };
 
 /**
  * The effects of tools that predate the server naming them, or that it no
@@ -37,6 +52,7 @@ const NAMED_EFFECTS: Readonly<Record<string, ToolEffect>> = {
   compare_report_runs: "present",
   compose_table_view: "present",
   ask_user: "ask",
+  [DELEGATE_TOOL]: "delegate",
 };
 
 const LOOKUP_PREFIXES = ["list_", "get_", "search_", "describe_", "preview_"];
@@ -66,7 +82,7 @@ function savedStatus(result: AssistantMessage | null): ToolActivityStatus {
  * result whose call is not in view has nothing to measure from.
  */
 export function stepsFromExchanges(tools: readonly ToolExchange[], askedAt: number): ToolStep[] {
-  return tools.map(({ call, result, orphan }) => {
+  return tools.map(({ call, result, orphan, delegated }) => {
     const name = call.name !== "" ? call.name : (result?.toolName ?? "");
     const timed = !orphan && result !== null && result.createdAt > 0 && askedAt > 0;
     return {
@@ -78,6 +94,9 @@ export function stepsFromExchanges(tools: readonly ToolExchange[], askedAt: numb
       effect: toolEffect(name, call.effect ?? result?.effect),
       summary: result?.summary ?? "",
       durationSeconds: timed ? Math.max(0, result.createdAt - askedAt) : null,
+      ...(name === DELEGATE_TOOL
+        ? { delegate: { kind: "saved" as const, messages: delegated ?? [] } }
+        : {}),
     };
   });
 }
@@ -98,12 +117,27 @@ export function segmentStep(segment: Extract<TurnSegment, { kind: "tool" }>): To
     effect: toolEffect(segment.name, segment.effect),
     summary: segment.summary ?? "",
     durationSeconds: timed ? (segment.finishedAt! - segment.startedAt!) / 1000 : null,
+    ...(segment.delegate || segment.name === DELEGATE_TOOL
+      ? {
+          delegate: {
+            kind: "live" as const,
+            progress:
+              segment.delegate ?? emptyDelegateProgress(stringOf(segment.arguments.agentId)),
+          },
+        }
+      : {}),
   };
+}
+
+function stringOf(value: unknown): string {
+  return typeof value === "string" ? value : "";
 }
 
 /** The effects that did something, as opposed to reading or asking. */
 export function isActionEffect(effect: ToolEffect): boolean {
-  return effect === "change" || effect === "navigate" || effect === "present";
+  return (
+    effect === "change" || effect === "navigate" || effect === "present" || effect === "delegate"
+  );
 }
 
 export type SummaryCount = { count: number; more: boolean };
@@ -460,7 +494,7 @@ function presentLine(step: ToolStep, t: TranslateFn): ActivityLine {
  * what was written from the model's own arguments; the verb is ours, so it
  * can be translated.
  */
-function madeChange(name: string, subject: string, t: TranslateFn): string {
+export function madeChange(name: string, subject: string, t: TranslateFn): string {
   if (subject === "") {
     return t("Made a change");
   }
@@ -553,6 +587,53 @@ function askLine(step: ToolStep, t: TranslateFn): ActivityLine {
   };
 }
 
+/**
+ * Who a hand-off went to. The stream names the agent when the task starts
+ * and the thread keeps the name on each of its steps; the call's own summary
+ * is the name too, for a hand-off whose steps are out of view.
+ */
+export function delegateName(step: ToolStep): string {
+  const source = step.delegate;
+  if (source?.kind === "live" && source.progress.agentName !== "") {
+    return source.progress.agentName;
+  }
+  if (source?.kind === "saved") {
+    const named = source.messages.find((message) => (message.agentName ?? "") !== "");
+    if (named?.agentName) {
+      return named.agentName;
+    }
+  }
+
+  return summaryName(step.summary);
+}
+
+/** Whether a hand-off is still under way: its account has not arrived and its call has not settled. */
+export function delegateRunning(step: ToolStep): boolean {
+  const report = step.delegate?.kind === "live" ? step.delegate.progress.report : null;
+
+  return step.status === "running" && report === null;
+}
+
+function delegateLine(step: ToolStep, t: TranslateFn): ActivityLine {
+  const name = delegateName(step);
+
+  if (delegateRunning(step)) {
+    return {
+      phrase: name !== "" ? t("Asking {0}…", name) : t("Asking another agent…"),
+      detail: "",
+      failure: "",
+      state: "running",
+    };
+  }
+
+  return {
+    phrase: name !== "" ? t("Asked {0}", name) : t("Asked another agent"),
+    detail: "",
+    failure: "",
+    state: step.status === "failed" ? "failed" : "done",
+  };
+}
+
 /** One line for a group: what happened, by what kind of thing happened. */
 export function describeActivity(group: ActivityGroup, t: TranslateFn): ActivityLine {
   const step = group.steps[0];
@@ -567,6 +648,8 @@ export function describeActivity(group: ActivityGroup, t: TranslateFn): Activity
       return presentLine(step, t);
     case "ask":
       return askLine(step, t);
+    case "delegate":
+      return delegateLine(step, t);
     default:
       return changeLine(step, t);
   }

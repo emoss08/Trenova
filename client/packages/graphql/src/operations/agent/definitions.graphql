@@ -36,6 +36,15 @@ fragment AgentDefinitionCardFields on AgentDefinition {
     label
     prompt
   }
+  delegateIds
+  delegates {
+    id
+    name
+    icon
+    accent
+    enabled
+    triggerMode
+  }
   lastRunAt
   nextRunAt
   pendingProposals

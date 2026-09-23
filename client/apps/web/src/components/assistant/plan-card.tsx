@@ -17,7 +17,7 @@ import {
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
-import { DecisionFrame, DecisionReceipt, useWatchedChange } from "./decision-chrome";
+import { DecisionFrame, DecisionReceipt, ProposedBy, useWatchedChange } from "./decision-chrome";
 import {
   classifyPlan,
   planStepState,
@@ -61,12 +61,14 @@ export function PlanCard({
   const awaiting = state === "awaiting";
   const decidedHere = useWatchedChange(awaiting || state === "held");
   const permanent = steps.some((step) => !presentProposal(step).reversible);
+  const byline = <ProposedBy agentId={plan.agentId} agentName={plan.agentName} />;
 
   if (!awaiting && state !== "held") {
     return (
       <DecisionReceipt
         state={state}
         summary={plan.title}
+        byline={byline}
         arrived={decidedHere}
         footer={steps.length > 0 ? <StepList steps={steps} settled /> : null}
       >
@@ -80,6 +82,7 @@ export function PlanCard({
       icon={ListChecksIcon}
       title={plan.title}
       state={state}
+      byline={byline}
       footer={
         state === "held" ? (
           <HoldLine hold={plan.hold} />

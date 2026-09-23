@@ -15,7 +15,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useState } from "react";
-import { DecisionFrame, DecisionReceipt, useWatchedChange } from "./decision-chrome";
+import { DecisionFrame, DecisionReceipt, ProposedBy, useWatchedChange } from "./decision-chrome";
 import { useDecisionFollowUp } from "./decision-follow-up";
 import { ProposalEditor, type ProposalEditorRequest } from "./proposal-editor";
 import { presentProposal } from "./proposal-presenters";
@@ -74,6 +74,7 @@ export function ProposalCard({
   const decidedHere = useWatchedChange(awaiting || state === "held");
   const fields = proposal.fields ?? [];
   const editable = awaiting && fields.length > 0;
+  const byline = <ProposedBy agentId={proposal.agentId} agentName={proposal.agentName} />;
 
   // The values open as a form built from the tool's schema; approval carries
   // only what was changed, and the server validates it before recording.
@@ -96,7 +97,7 @@ export function ProposalCard({
   // so it keeps the full card and swaps the buttons for the reason.
   if (!awaiting && state !== "held") {
     return (
-      <DecisionReceipt state={state} summary={view.summary} arrived={decidedHere}>
+      <DecisionReceipt state={state} summary={view.summary} byline={byline} arrived={decidedHere}>
         <OutcomeLine proposal={proposal} state={state} />
       </DecisionReceipt>
     );
@@ -107,6 +108,7 @@ export function ProposalCard({
       icon={PenLineIcon}
       title={view.title}
       state={state}
+      byline={byline}
       footer={
         state === "held" ? (
           <HoldLine hold={proposal.hold} />

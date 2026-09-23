@@ -9,6 +9,11 @@ export type ToolExchange = {
   result: AssistantMessage | null;
   /** The call is not in view; it was rebuilt from its result. */
   orphan?: boolean;
+  /**
+   * On a delegate_task call: the steps the other agent took on the task, in
+   * order, the task itself first. They belong under the call and nowhere else.
+   */
+  delegated?: AssistantMessage[];
 };
 
 export type ThreadEntry =
@@ -32,19 +37,36 @@ export function groupThread(messages: readonly AssistantMessage[]): ThreadEntry[
   const entries: ThreadEntry[] = [];
   const openCalls = new Map<string, ToolExchange>();
   let orphans: ToolExchange[] = [];
+  // Another agent's steps whose delegate_task call is not in view yet: the
+  // page of history that held it is older than this one. Its result follows
+  // them, and they go under it.
+  const strays = new Map<string, AssistantMessage[]>();
 
   for (const message of messages) {
     switch (classifyMessage(message)) {
+      case "delegated": {
+        const callId = message.delegateCallId ?? "";
+        const exchange = openCalls.get(callId);
+        if (exchange) {
+          exchange.delegated = [...(exchange.delegated ?? []), message];
+        } else {
+          strays.set(callId, [...(strays.get(callId) ?? []), message]);
+        }
+        break;
+      }
       case "tool": {
         const open = openCalls.get(message.toolCallId);
         if (open) {
           open.result = message;
           openCalls.delete(message.toolCallId);
         } else {
+          const stray = strays.get(message.toolCallId);
+          strays.delete(message.toolCallId);
           orphans.push({
             call: { id: message.toolCallId, name: message.toolName, arguments: {} },
             result: message,
             orphan: true,
+            ...(stray ? { delegated: stray } : {}),
           });
         }
         break;
@@ -85,6 +107,31 @@ export function groupThread(messages: readonly AssistantMessage[]): ThreadEntry[
   }
 
   return entries;
+}
+
+/**
+ * The entry each of another agent's saved messages is drawn under, keyed by
+ * the message and by every call it made. What that agent produced is tied to
+ * its own message, which is never an entry of its own, so an artifact or a
+ * card pointing at it is placed under the reply that handed the task over.
+ */
+export function delegatedOwners(entries: readonly ThreadEntry[]): Map<string, string> {
+  const owners = new Map<string, string>();
+  for (const entry of entries) {
+    if (entry.kind !== "assistant") {
+      continue;
+    }
+    for (const exchange of entry.tools) {
+      for (const message of exchange.delegated ?? []) {
+        owners.set(message.id, entry.message.id);
+        for (const call of message.toolCalls ?? []) {
+          owners.set(call.id, entry.message.id);
+        }
+      }
+    }
+  }
+
+  return owners;
 }
 
 /** Where an assistant entry sits in the reply it belongs to. */

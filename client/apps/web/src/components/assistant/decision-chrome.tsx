@@ -1,3 +1,5 @@
+import { useAssistantAgent, useDelegateIdentity } from "@/components/agent-identity/agent-context";
+import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -9,8 +11,8 @@ import {
   PauseCircleIcon,
   type LucideIcon,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
-import type { ProposalPresentation } from "./proposal-state";
+import { useMemo, useState, type ReactNode } from "react";
+import { proposedByOther, type ProposalPresentation } from "./proposal-state";
 import { WorkingDot } from "./voice/working-dot";
 
 /**
@@ -112,6 +114,39 @@ export function OutcomeIcon({
 }
 
 /**
+ * Who proposed a change, when it was not the agent the conversation is with:
+ * "Proposed by Report Builder", beside that agent's mark. The conversation's
+ * own agent heads the reply the card sits in, so its cards say nothing.
+ */
+export function ProposedBy({
+  agentId,
+  agentName,
+}: {
+  agentId?: string | null;
+  agentName?: string | null;
+}) {
+  const t = useT();
+  const conversation = useAssistantAgent();
+  const fallback = useMemo(
+    () => ({ id: agentId ?? "", name: agentName ?? "" }),
+    [agentId, agentName],
+  );
+  const identity = useDelegateIdentity(fallback);
+  const name = identity.name ?? "";
+
+  if (!proposedByOther(conversation?.id, agentId) || name === "") {
+    return null;
+  }
+
+  return (
+    <p className="text-foreground-subtle flex min-w-0 items-center gap-1.5 text-xs">
+      <AgentTile agent={identity} size="xs" />
+      <span className="min-w-0 truncate">{t("Proposed by {0}", name)}</span>
+    </p>
+  );
+}
+
+/**
  * The open card for a decision someone has to make: the artifact chrome in
  * miniature. The kind's mark in a sunken well, the title, and the state as
  * a badge; then the body and the buttons. A hairline and the surface radius
@@ -121,12 +156,15 @@ export function DecisionFrame({
   icon: Icon,
   title,
   state,
+  byline,
   children,
   footer,
 }: {
   icon: LucideIcon;
   title: string;
   state: ProposalPresentation;
+  /** Who proposed it, when that is not the conversation's own agent. */
+  byline?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
 }) {
@@ -143,7 +181,10 @@ export function DecisionFrame({
         <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">{title}</h3>
         <DecisionStateBadge state={state} />
       </header>
-      <div className="flex min-w-0 flex-col gap-2.5 px-3 pb-3">{children}</div>
+      <div className="flex min-w-0 flex-col gap-2.5 px-3 pb-3">
+        {byline}
+        {children}
+      </div>
       {footer}
     </section>
   );
@@ -158,12 +199,15 @@ export function DecisionFrame({
 export function DecisionReceipt({
   state,
   summary,
+  byline,
   arrived = false,
   children,
   footer,
 }: {
   state: ProposalPresentation;
   summary: ReactNode;
+  /** Who proposed it, when that is not the conversation's own agent. */
+  byline?: ReactNode;
   /** It has just replaced the open card, while someone watched. */
   arrived?: boolean;
   children: ReactNode;
@@ -186,6 +230,7 @@ export function DecisionReceipt({
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-0.5">
           <div className="text-foreground text-sm leading-snug">{summary}</div>
+          {byline}
           <div
             key={state}
             className={cn("text-foreground-muted leading-relaxed", watched && "animate-rise")}

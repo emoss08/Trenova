@@ -1,11 +1,13 @@
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import {
+  MAX_DELEGATES,
   autonomyTierSchema,
   saveAgentDefinitionRequestSchema,
   type AutonomyTier,
   type SaveAgentDefinitionRequest,
 } from "@/types/assistant";
 import { z } from "zod";
+import { canDelegate, savedDelegates, type DelegateSummary } from "./delegates";
 
 const TIER_RANK: Record<AutonomyTier, number> = { Propose: 0, ActWithApproval: 1, AutoExecute: 2 };
 
@@ -20,8 +22,25 @@ export function tierWithin(tier: AutonomyTier, ceiling: AutonomyTier): boolean {
 export const agentFormSchema = saveAgentDefinitionRequestSchema
   .extend({
     toolTiers: z.record(z.string(), autonomyTierSchema).default({}),
+    /** The agents this one may hand work to; the form always sends the whole list. */
+    delegateIds: z
+      .array(z.string())
+      .max(MAX_DELEGATES, `An agent can ask at most ${MAX_DELEGATES} other agents`)
+      .default([]),
   })
   .superRefine((values, ctx) => {
+    const seen = new Set<string>();
+    for (const [index, id] of values.delegateIds.entries()) {
+      if (seen.has(id)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["delegateIds", index],
+          message: "This agent is already on the list",
+        });
+      }
+      seen.add(id);
+    }
+
     if (values.triggerMode === "Scheduled" && values.cronExpression.trim() === "") {
       ctx.addIssue({
         code: "custom",
@@ -107,6 +126,7 @@ export const agentFormDefaults: AgentFormValues = {
   contextProviders: [],
   outputMode: "Conversational",
   preferredProviderId: "",
+  delegateIds: [],
   version: 0,
 };
 
@@ -115,32 +135,37 @@ export const agentFormDefaults: AgentFormValues = {
  * cleared so a switched agent does not carry a stale schedule, and tiers for
  * tools that were unselected go with them.
  */
-export function toSaveRequest(values: AgentFormValues): SaveAgentDefinitionRequest {
-  const selected = new Set(values.toolNames);
+export function toSaveRequest(
+  values: AgentFormValues & { delegates?: unknown },
+): SaveAgentDefinitionRequest {
+  // The allowlist's names and marks are for drawing it; only the ids are saved.
+  const { delegates: _drawn, ...form } = values;
+  const selected = new Set(form.toolNames);
   const toolTiers = Object.fromEntries(
-    Object.entries(values.toolTiers).filter(([tool]) => selected.has(tool)),
+    Object.entries(form.toolTiers).filter(([tool]) => selected.has(tool)),
   );
   // A limit of zero is no limit, and a limit on a tool the agent no longer
   // holds is a leftover; neither goes over the wire.
   const toolDailyLimits = Object.fromEntries(
-    Object.entries(values.toolDailyLimits).filter(
-      ([tool, limit]) => selected.has(tool) && limit > 0,
-    ),
+    Object.entries(form.toolDailyLimits).filter(([tool, limit]) => selected.has(tool) && limit > 0),
   );
-  const scheduled = values.triggerMode === "Scheduled";
-  const event = values.triggerMode === "Event";
-  const continuous = values.triggerMode === "Continuous";
+  const scheduled = form.triggerMode === "Scheduled";
+  const event = form.triggerMode === "Event";
+  const continuous = form.triggerMode === "Continuous";
 
   return {
-    ...values,
-    name: values.name.trim(),
+    ...form,
+    name: form.name.trim(),
     toolTiers,
     toolDailyLimits,
-    cronExpression: scheduled ? values.cronExpression.trim() : "",
-    cronTimezone: scheduled ? values.cronTimezone : "",
-    eventKinds: event ? values.eventKinds : [],
-    intervalSeconds: continuous ? values.intervalSeconds : 0,
-    endsAt: continuous || scheduled ? values.endsAt : null,
+    cronExpression: scheduled ? form.cronExpression.trim() : "",
+    cronTimezone: scheduled ? form.cronTimezone : "",
+    eventKinds: event ? form.eventKinds : [],
+    intervalSeconds: continuous ? form.intervalSeconds : 0,
+    endsAt: continuous || scheduled ? form.endsAt : null,
+    // Only an agent people talk to may ask others; the server refuses the
+    // list on any other trigger, so a switched agent sends it empty.
+    delegateIds: canDelegate(form.triggerMode) ? [...new Set(form.delegateIds)] : [],
   };
 }
 
@@ -149,6 +174,8 @@ export type AgentPanelRow = AgentFormValues & {
   id: string;
   updatedAt: number;
   systemKey: string;
+  /** The allowlist as saved, with each agent's name and mark, for drawing it. */
+  delegates: DelegateSummary[];
 };
 
 function limitsOf(value: unknown): Record<string, number> {
@@ -171,7 +198,11 @@ function tiersOf(value: unknown): Record<string, AutonomyTier> {
 }
 
 export function toAgentPanelRow(agent: AgentDefinitionRow): AgentPanelRow {
+  const delegates = savedDelegates(agent);
+
   return {
+    delegates,
+    delegateIds: delegates.map((delegate) => delegate.id),
     id: agent.id,
     updatedAt: agent.updatedAt,
     systemKey: agent.systemKey,

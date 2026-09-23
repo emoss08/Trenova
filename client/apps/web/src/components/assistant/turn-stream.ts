@@ -5,6 +5,7 @@ import type {
   AssistantPageContext,
   AssistantStreamEvent,
   AssistantThread,
+  DelegateReport,
   SendMessageResult,
   RetryKind,
   ToolEffect,
@@ -41,6 +42,34 @@ export type ToolSegment = {
   /** When this reader saw the call start and finish, in epoch milliseconds. */
   startedAt?: number;
   finishedAt?: number;
+  /** Set on a delegate_task call: the other agent's work on the task, nested under it. */
+  delegate?: DelegateProgress;
+};
+
+export type TurnRetry = {
+  attempt: number;
+  provider: string;
+  kind: RetryKind;
+  waitSeconds: number;
+};
+
+/**
+ * Another agent's work on a task the turn's agent handed it. Its words, its
+ * thinking and its calls are kept here, under the call that handed the task
+ * over, and never among the turn's own: a plain delta from it would read as
+ * the reply being written.
+ */
+export type DelegateProgress = {
+  agentId: string;
+  agentName: string;
+  icon: string;
+  accent: string;
+  task: string;
+  segments: TurnSegment[];
+  /** Set while its reply is starting over; its own, never the turn's. */
+  retrying: TurnRetry | null;
+  /** How the task ended and what it came to, once it has. */
+  report: DelegateReport | null;
 };
 
 /**
@@ -82,6 +111,163 @@ function withdrawAttempt(segments: TurnSegment[]): TurnSegment[] {
   return end === segments.length ? segments : segments.slice(0, end);
 }
 
+/** Thinking arrives: it grows the open thought or opens a new one. */
+function appendReasoning(segments: TurnSegment[], text: string): TurnSegment[] {
+  const last = segments.at(-1);
+  if (last && last.kind === "reasoning" && !last.closed) {
+    return [...segments.slice(0, -1), { ...last, text: last.text + text }];
+  }
+  return [...segments, { kind: "reasoning", text, closed: false }];
+}
+
+/** Reply text arrives: the thought before it is finished, and the open text grows. */
+function appendDelta(segments: TurnSegment[], text: string): TurnSegment[] {
+  const closed = closeReasoning(segments);
+  const last = closed.at(-1);
+  if (last && last.kind === "text" && !last.closed) {
+    return [...closed.slice(0, -1), { ...last, text: last.text + text }];
+  }
+  return [...closed, { kind: "text", text, closed: false }];
+}
+
+/** A message boundary: the open text is the model's finished message. */
+function closeMessage(segments: TurnSegment[], content: string): TurnSegment[] {
+  const closed = closeReasoning(segments);
+  const last = closed.at(-1);
+  if (last && last.kind === "text" && !last.closed) {
+    return [
+      ...closed.slice(0, -1),
+      { ...last, text: content !== "" ? content : last.text, closed: true },
+    ];
+  }
+  if (content !== "") {
+    return [...closed, { kind: "text", text: content, closed: true }];
+  }
+  return closed;
+}
+
+type ToolStartedData = Extract<AssistantStreamEvent, { event: "tool_started" }>["data"];
+type ToolFinishedData = Extract<AssistantStreamEvent, { event: "tool_finished" }>["data"];
+
+/**
+ * A call begins. A call already on the list — opened early by the hand-off
+ * it carries, or announced twice to a reader who rejoined — is updated in
+ * place rather than listed again.
+ */
+function startTool(segments: TurnSegment[], data: ToolStartedData): TurnSegment[] {
+  const closed = closeReasoning(segments);
+  const known = closed.findIndex(
+    (segment) => segment.kind === "tool" && segment.callId === data.callId,
+  );
+  if (known !== -1) {
+    return closed.map((segment, index) =>
+      index === known && segment.kind === "tool"
+        ? {
+            ...segment,
+            name: data.name,
+            arguments: data.arguments ?? segment.arguments,
+            effect: data.effect ?? segment.effect,
+          }
+        : segment,
+    );
+  }
+  return [
+    ...closed,
+    {
+      kind: "tool",
+      callId: data.callId,
+      name: data.name,
+      arguments: data.arguments ?? {},
+      status: "running",
+      content: "",
+      effect: data.effect,
+    },
+  ];
+}
+
+function finishTool(segments: TurnSegment[], data: ToolFinishedData): TurnSegment[] {
+  const status: ToolSegment["status"] = data.failed
+    ? "failed"
+    : data.proposed
+      ? "proposed"
+      : "done";
+  return segments.map((segment) =>
+    segment.kind === "tool" && segment.callId === data.callId
+      ? {
+          ...segment,
+          status,
+          content: data.content,
+          effect: data.effect ?? segment.effect,
+          summary: data.summary || undefined,
+        }
+      : segment,
+  );
+}
+
+/** The tool an agent hands a task to another agent with. */
+export const DELEGATE_TOOL = "delegate_task";
+
+/** A hand-off nothing has been heard of yet but the agent it went to. */
+export function emptyDelegateProgress(agentId: string): DelegateProgress {
+  return {
+    agentId,
+    agentName: "",
+    icon: "",
+    accent: "",
+    task: "",
+    segments: [],
+    retrying: null,
+    report: null,
+  };
+}
+
+/**
+ * Applies a change to the hand-off a delegate event belongs to. The event
+ * names the delegate_task call; a reader who joined after the call was
+ * announced has no step for it yet, so one is opened rather than the
+ * delegate's work being dropped or shown as the turn's own.
+ */
+function updateDelegate(
+  state: TurnState,
+  delegateCallId: string,
+  agentId: string,
+  update: (delegate: DelegateProgress) => DelegateProgress,
+): TurnState {
+  const known = state.segments.some(
+    (segment) => segment.kind === "tool" && segment.callId === delegateCallId,
+  );
+  const segments: TurnSegment[] = known
+    ? state.segments.map((segment) =>
+        segment.kind === "tool" && segment.callId === delegateCallId
+          ? {
+              ...segment,
+              effect: segment.effect ?? "delegate",
+              delegate: update(segment.delegate ?? emptyDelegateProgress(agentId)),
+            }
+          : segment,
+      )
+    : [
+        ...closeReasoning(state.segments),
+        {
+          kind: "tool",
+          callId: delegateCallId,
+          name: DELEGATE_TOOL,
+          arguments: agentId === "" ? {} : { agentId },
+          status: "running",
+          content: "",
+          effect: "delegate",
+          delegate: update(emptyDelegateProgress(agentId)),
+        },
+      ];
+
+  return { ...state, status: "working", segments };
+}
+
+/** The delegate_task call an event of another agent's turn belongs under; empty for the turn's own. */
+function delegateScope(data: { delegateCallId?: string }): string {
+  return data.delegateCallId ?? "";
+}
+
 export type TurnState = {
   status: TurnStatus;
   userContent: string;
@@ -92,7 +278,7 @@ export type TurnState = {
   error: string | null;
   result: SendMessageResult | null;
   /** Set while the reply is starting over after a model died partway. */
-  retrying: { attempt: number; provider: string; kind: RetryKind; waitSeconds: number } | null;
+  retrying: TurnRetry | null;
   /** What the turn has produced so far, as announced, so the pane can open it early. */
   artifacts: AssistantArtifactEvent[];
   /** The files and records the person handed over, shown on their provisional turn. */
@@ -163,87 +349,122 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
       };
 
     case "reasoning": {
+      // Thinking that continues an open thought is the same attempt; only a
+      // new thought says a retry has been answered.
       const last = state.segments.at(-1);
-      if (last && last.kind === "reasoning" && !last.closed) {
-        const segments = state.segments.slice(0, -1);
-        segments.push({ ...last, text: last.text + event.data.text });
-        return { ...state, status: "streaming", segments };
-      }
+      const continuing = last?.kind === "reasoning" && !last.closed;
       return {
         ...state,
         status: "streaming",
-        retrying: null,
-        segments: [...state.segments, { kind: "reasoning", text: event.data.text, closed: false }],
+        retrying: continuing ? state.retrying : null,
+        segments: appendReasoning(state.segments, event.data.text),
       };
     }
 
-    case "delta": {
-      const segments = closeReasoning(state.segments);
-      const last = segments.at(-1);
-      if (last && last.kind === "text" && !last.closed) {
-        const rest = segments.slice(0, -1);
-        rest.push({ ...last, text: last.text + event.data.text });
-        return { ...state, status: "streaming", retrying: null, segments: rest };
-      }
+    case "delta":
       return {
         ...state,
         status: "streaming",
         retrying: null,
-        segments: [...segments, { kind: "text", text: event.data.text, closed: false }],
+        segments: appendDelta(state.segments, event.data.text),
       };
-    }
 
     case "message": {
-      const segments = closeReasoning(state.segments);
-      const last = segments.at(-1);
-      if (last && last.kind === "text" && !last.closed) {
-        segments[segments.length - 1] = {
-          ...last,
-          text: event.data.content !== "" ? event.data.content : last.text,
-          closed: true,
-        };
-      } else if (event.data.content !== "") {
-        segments.push({ kind: "text", text: event.data.content, closed: true });
+      const scope = delegateScope(event.data);
+      if (scope !== "") {
+        const content = event.data.content;
+        return updateDelegate(state, scope, event.data.agentId ?? "", (delegate) => ({
+          ...delegate,
+          segments: closeMessage(delegate.segments, content),
+        }));
       }
-      return { ...state, status: "working", segments };
-    }
-
-    case "tool_started":
       return {
         ...state,
         status: "working",
-        segments: [
-          ...closeReasoning(state.segments),
-          {
-            kind: "tool",
-            callId: event.data.callId,
-            name: event.data.name,
-            arguments: event.data.arguments ?? {},
-            status: "running",
-            content: "",
-            effect: event.data.effect,
-          },
-        ],
+        segments: closeMessage(state.segments, event.data.content),
       };
+    }
+
+    case "tool_started": {
+      const scope = delegateScope(event.data);
+      if (scope !== "") {
+        const data = event.data;
+        return updateDelegate(state, scope, data.agentId ?? "", (delegate) => ({
+          ...delegate,
+          segments: startTool(delegate.segments, data),
+        }));
+      }
+      return { ...state, status: "working", segments: startTool(state.segments, event.data) };
+    }
 
     case "tool_finished": {
-      const status: ToolSegment["status"] = event.data.failed
-        ? "failed"
-        : event.data.proposed
-          ? "proposed"
-          : "done";
-      const segments = state.segments.map((segment) =>
-        segment.kind === "tool" && segment.callId === event.data.callId
-          ? {
-              ...segment,
-              status,
-              content: event.data.content,
-              effect: event.data.effect ?? segment.effect,
-              summary: event.data.summary || undefined,
-            }
-          : segment,
-      );
-      return { ...state, status: "working", segments };
+      const scope = delegateScope(event.data);
+      if (scope !== "") {
+        const data = event.data;
+        return updateDelegate(state, scope, data.agentId ?? "", (delegate) => ({
+          ...delegate,
+          segments: finishTool(delegate.segments, data),
+        }));
+      }
+      return { ...state, status: "working", segments: finishTool(state.segments, event.data) };
+    }
+
+    case "delegate_started": {
+      const data = event.data;
+      return updateDelegate(state, data.delegateCallId, data.agentId, (delegate) => ({
+        ...delegate,
+        agentId: data.agentId,
+        agentName: data.agentName,
+        icon: data.icon,
+        accent: data.accent,
+        task: data.task,
+      }));
+    }
+
+    case "delegate_reasoning": {
+      const data = event.data;
+      return updateDelegate(state, data.delegateCallId, data.agentId, (delegate) => ({
+        ...delegate,
+        retrying: null,
+        segments: appendReasoning(delegate.segments, data.text),
+      }));
+    }
+
+    case "delegate_delta": {
+      const data = event.data;
+      return updateDelegate(state, data.delegateCallId, data.agentId, (delegate) => ({
+        ...delegate,
+        retrying: null,
+        segments: appendDelta(delegate.segments, data.text),
+      }));
+    }
+
+    case "delegate_retrying": {
+      // The other agent's restart withdraws only what it had streamed; the
+      // reply being shown, and the turn's own steps, are untouched.
+      const data = event.data;
+      return updateDelegate(state, data.delegateCallId, data.agentId, (delegate) => ({
+        ...delegate,
+        retrying: {
+          attempt: data.attempt,
+          provider: data.provider,
+          kind: data.kind,
+          waitSeconds: data.waitSeconds,
+        },
+        segments: data.kind === "busy" ? delegate.segments : withdrawAttempt(delegate.segments),
+      }));
+    }
+
+    case "delegate_finished": {
+      const data = event.data;
+      return updateDelegate(state, data.delegateCallId, data.agentId, (delegate) => ({
+        ...delegate,
+        agentId: data.agentId !== "" ? data.agentId : delegate.agentId,
+        agentName: data.agentName !== "" ? data.agentName : delegate.agentName,
+        retrying: null,
+        segments: closeReasoning(delegate.segments),
+        report: data,
+      }));
     }
 
     case "retrying":
@@ -307,22 +528,42 @@ export function advanceTurn(
 }
 
 function stampToolTimes(state: TurnState, now: number): TurnState {
+  const segments = stampSegments(state.segments, now);
+
+  return segments === state.segments ? state : { ...state, segments };
+}
+
+/**
+ * Stamps every call on the list, and every call of a hand-off nested under
+ * one. Returns the same list when nothing needed a stamp, so a render keyed
+ * on it does not run again for an event that changed no call.
+ */
+function stampSegments(segments: TurnSegment[], now: number): TurnSegment[] {
   let changed = false;
-  const segments = state.segments.map((segment) => {
+  const stamped = segments.map((segment) => {
     if (segment.kind !== "tool") {
       return segment;
     }
     const startedAt = segment.startedAt ?? now;
     const finishedAt =
       segment.status === "running" ? segment.finishedAt : (segment.finishedAt ?? now);
-    if (startedAt === segment.startedAt && finishedAt === segment.finishedAt) {
+    const nested = segment.delegate ? stampSegments(segment.delegate.segments, now) : undefined;
+    const nestedChanged = segment.delegate !== undefined && nested !== segment.delegate.segments;
+    if (startedAt === segment.startedAt && finishedAt === segment.finishedAt && !nestedChanged) {
       return segment;
     }
     changed = true;
-    return { ...segment, startedAt, finishedAt };
+    return {
+      ...segment,
+      startedAt,
+      finishedAt,
+      ...(nestedChanged && segment.delegate && nested
+        ? { delegate: { ...segment.delegate, segments: nested } }
+        : {}),
+    };
   });
 
-  return changed ? { ...state, segments } : state;
+  return changed ? stamped : segments;
 }
 
 /** Why a turn stopped, from the reader's side. */

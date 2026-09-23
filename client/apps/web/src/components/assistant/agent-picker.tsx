@@ -132,17 +132,35 @@ export function AgentPicker({
   );
 }
 
-function AgentPickerList({
-  selectedId,
-  recentIds,
-  lastUsedAt,
-  onSelect,
-}: {
+const NO_HIDDEN: ReadonlySet<string> = new Set();
+
+export type AgentPickerListProps = {
   selectedId: string | null;
   recentIds: readonly string[];
   lastUsedAt?: ReadonlyMap<string, number>;
   onSelect: (agent: AgentChoice) => void;
-}) {
+  /**
+   * Agents left out of the list: the one being configured, and those already
+   * chosen where several are picked one at a time.
+   */
+  hiddenIds?: ReadonlySet<string>;
+  /** Said when there is nothing to pick before any search narrows the list. */
+  emptyMessage?: string;
+};
+
+/**
+ * The searchable, paged list of agents a person can ask, without the
+ * control that opens it. The composer's picker opens it to choose who a
+ * question goes to; AI Control opens it to choose who an agent may ask.
+ */
+export function AgentPickerList({
+  selectedId,
+  recentIds,
+  lastUsedAt,
+  onSelect,
+  hiddenIds = NO_HIDDEN,
+  emptyMessage,
+}: AgentPickerListProps) {
   const t = useT();
   const listId = useId();
   const [now] = useState(nowInSeconds);
@@ -152,17 +170,19 @@ function AgentPickerList({
   const choices = useAgentChoices({ search, origin: "all", recentIds });
 
   const rows = useMemo<PickerRow[]>(() => {
+    const recent = choices.recent.filter((agent) => !hiddenIds.has(agent.id));
+    const items = choices.items.filter((agent) => !hiddenIds.has(agent.id));
     const next: PickerRow[] = [];
-    if (choices.recent.length > 0) {
+    if (recent.length > 0) {
       next.push({ kind: "heading", key: "h-recent", label: t("Recent") });
-      for (const recentAgent of choices.recent) {
+      for (const recentAgent of recent) {
         next.push({ kind: "agent", key: `r-${recentAgent.id}`, agent: recentAgent, recent: true });
       }
-      if (choices.items.length > 0) {
+      if (items.length > 0) {
         next.push({ kind: "heading", key: "h-all", label: t("All agents") });
       }
     }
-    for (const item of choices.items) {
+    for (const item of items) {
       next.push({ kind: "agent", key: `a-${item.id}`, agent: item, recent: false });
     }
     if (choices.hasNextPage) {
@@ -170,7 +190,7 @@ function AgentPickerList({
     }
 
     return next;
-  }, [choices.hasNextPage, choices.items, choices.recent, t]);
+  }, [choices.hasNextPage, choices.items, choices.recent, hiddenIds, t]);
 
   const agentIndexes = useMemo(
     () => rows.flatMap((row, index) => (row.kind === "agent" ? [index] : [])),
@@ -284,7 +304,7 @@ function AgentPickerList({
       ) : empty ? (
         <p className="text-muted-foreground px-4 py-6 text-center text-sm">
           {choices.settledSearch === ""
-            ? t("No agents are available to talk to yet.")
+            ? (emptyMessage ?? t("No agents are available to talk to yet."))
             : t("No agents match “{0}”.", choices.settledSearch)}
         </p>
       ) : (

@@ -19,6 +19,7 @@ import {
   CodeIcon,
   CompassIcon,
   FileTextIcon,
+  ForwardIcon,
   GitCompareArrowsIcon,
   MessageCircleQuestionIcon,
   PenLineIcon,
@@ -30,6 +31,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
+  delegateRunning,
   describeActivity,
   groupActivity,
   isActionEffect,
@@ -46,6 +48,7 @@ import {
   type ReadableEntry,
   type ReadableValue,
 } from "./tool-presentation";
+import { DelegateStep } from "./delegate-step";
 import { DisplayValue } from "./display-value";
 import { WorkingDot } from "./voice/working-dot";
 
@@ -58,6 +61,7 @@ const EFFECT_ICONS: Record<ToolEffect, LucideIcon> = {
   present: PresentationIcon,
   change: PenLineIcon,
   ask: MessageCircleQuestionIcon,
+  delegate: ForwardIcon,
 };
 
 /** A few tools say more about themselves than their effect does. */
@@ -102,8 +106,15 @@ function groupDuration(group: ActivityGroup): number | null {
 export function ToolActivity({ steps, live = false }: { steps: ToolStep[]; live?: boolean }) {
   // While a reply is being written the step under way is told by the working
   // line beneath it; a step joins this list when it lands, with its check.
+  // A hand-off is the exception: it opens as soon as the task is handed
+  // over, because the other agent's own work is drawn inside it as it goes.
   const groups = useMemo(
-    () => groupActivity(live ? steps.filter((step) => step.status !== "running") : steps),
+    () =>
+      groupActivity(
+        live
+          ? steps.filter((step) => step.status !== "running" || step.effect === "delegate")
+          : steps,
+      ),
     [live, steps],
   );
   if (groups.length === 0) {
@@ -112,9 +123,18 @@ export function ToolActivity({ steps, live = false }: { steps: ToolStep[]; live?
 
   return (
     <ol className="flex min-w-0 flex-col gap-0.5">
-      {groups.map((group) => (
-        <ActivityRow key={group.key} group={group} live={live} />
-      ))}
+      {groups.map((group) =>
+        group.effect === "delegate" ? (
+          <DelegateStep
+            key={group.key}
+            step={group.steps[0]}
+            live={live}
+            running={live && delegateRunning(group.steps[0])}
+          />
+        ) : (
+          <ActivityRow key={group.key} group={group} live={live} />
+        ),
+      )}
     </ol>
   );
 }

@@ -45,7 +45,8 @@ import { StreamingTurn } from "./streaming-turn";
 import { agentSuggestions, type Suggestion } from "./suggestions";
 import { arrivedSince, highestSequence, withDayMarkers } from "./thread-rows";
 import { composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
-import { groupThread, turnPlacements } from "./thread-view";
+import { delegatedOwners, groupThread, turnPlacements } from "./thread-view";
+import { ArtifactOpenerProvider } from "./artifact-opener";
 import { useAssistantTurn } from "./use-assistant-turn";
 import { useComposerContext } from "./use-composer-context";
 import { usePageContext } from "./use-page-context";
@@ -199,7 +200,9 @@ export function MessageThread({
   const switchNotice = modelSwitchNotice({
     pickedId: providerId,
     savedId: thread.preferredProviderId ?? "",
-    hasReplies: messages.some((message) => message.role === "Assistant"),
+    hasReplies: messages.some(
+      (message) => message.role === "Assistant" && message.kind !== "Delegated",
+    ),
     providers,
   });
   // A plan's steps are shown inside the plan and nowhere else; only the
@@ -226,7 +229,7 @@ export function MessageThread({
     () =>
       messages.reduce(
         (latest, message) =>
-          message.role === "User" && message.kind !== "DecisionNote"
+          message.role === "User" && message.kind === "Message"
             ? Math.max(latest, message.sequence)
             : latest,
         -1,
@@ -270,15 +273,26 @@ export function MessageThread({
   useFollowNavigation(turn?.artifacts ?? NO_ARTIFACTS, onNavigate);
 
   // Each turn's artifacts, by the message that produced them or, before the
-  // message id was tied on, by the tool call that did.
+  // message id was tied on, by the tool call that did. What another agent
+  // produced on a task is tied to its own message, which is drawn inside the
+  // hand-off rather than as an entry, so it is shown under the reply that
+  // handed the task over.
   const artifactsByMessage = useMemo(() => {
+    const owners = delegatedOwners(entries);
     const byMessage = new Map<string, AssistantArtifact[]>();
     const byCall = new Map<string, AssistantArtifact>();
+    const add = (messageId: string, artifact: AssistantArtifact) =>
+      byMessage.set(messageId, [...(byMessage.get(messageId) ?? []), artifact]);
     for (const artifact of artifacts) {
       if (artifact.messageId) {
-        byMessage.set(artifact.messageId, [...(byMessage.get(artifact.messageId) ?? []), artifact]);
+        add(owners.get(artifact.messageId) ?? artifact.messageId, artifact);
       } else if (artifact.sourceToolCallId !== "") {
-        byCall.set(artifact.sourceToolCallId, artifact);
+        const owner = owners.get(artifact.sourceToolCallId);
+        if (owner) {
+          add(owner, artifact);
+        } else {
+          byCall.set(artifact.sourceToolCallId, artifact);
+        }
       }
     }
     for (const entry of entries) {
@@ -286,7 +300,7 @@ export function MessageThread({
       for (const exchange of entry.tools) {
         const artifact = byCall.get(exchange.call.id);
         if (artifact) {
-          byMessage.set(entry.message.id, [...(byMessage.get(entry.message.id) ?? []), artifact]);
+          add(entry.message.id, artifact);
         }
       }
     }
@@ -608,16 +622,18 @@ export function MessageThread({
   );
 
   return (
-    <AssistantAgentProvider agent={agent}>
-      <DecisionFollowUpProvider value={followUpDecision}>
-        {agentAccent ? (
-          <AgentGutter agent={agent} working={isActive}>
-            {body}
-          </AgentGutter>
-        ) : (
-          body
-        )}
-      </DecisionFollowUpProvider>
+    <AssistantAgentProvider agent={agent} delegates={agent?.delegates}>
+      <ArtifactOpenerProvider onOpen={onOpenArtifact}>
+        <DecisionFollowUpProvider value={followUpDecision}>
+          {agentAccent ? (
+            <AgentGutter agent={agent} working={isActive}>
+              {body}
+            </AgentGutter>
+          ) : (
+            body
+          )}
+        </DecisionFollowUpProvider>
+      </ArtifactOpenerProvider>
     </AssistantAgentProvider>
   );
 }

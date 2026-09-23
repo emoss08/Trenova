@@ -1,5 +1,11 @@
+import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { describe, expect, it } from "vitest";
-import { agentFormDefaults, agentFormSchema, toSaveRequest } from "../agent-form-schema";
+import {
+  agentFormDefaults,
+  agentFormSchema,
+  toAgentPanelRow,
+  toSaveRequest,
+} from "../agent-form-schema";
 
 function values(overrides: Record<string, unknown>) {
   return { ...agentFormDefaults, name: "Night desk", ...overrides };
@@ -108,3 +114,134 @@ describe("toSaveRequest", () => {
     expect(request.toolTiers).toEqual({ get_shipment: "Propose" });
   });
 });
+
+/**
+ * The allowlist (domain/agentdefinition Definition.Validate and the save
+ * handler): at most eight, no agent twice, only on an agent people talk to.
+ * The body's `delegateIds` replaces the list, so the form always sends the
+ * whole of it, and an absent list would keep a stale one.
+ */
+describe("delegateIds", () => {
+  const eight = Array.from({ length: 8 }, (_, index) => `agdef_${index}`);
+
+  it("accepts up to eight agents and refuses a ninth at the list", () => {
+    expect(issuesOf(values({ delegateIds: eight }))).toEqual({});
+    expect(issuesOf(values({ delegateIds: [...eight, "agdef_8"] }))).toHaveProperty("delegateIds");
+  });
+
+  it("points at the agent listed twice rather than at the list", () => {
+    expect(issuesOf(values({ delegateIds: ["agdef_a", "agdef_b", "agdef_a"] }))).toEqual({
+      "delegateIds.2": "This agent is already on the list",
+    });
+  });
+
+  it("reads an absent list as empty", () => {
+    const { delegateIds: _absent, ...rest } = values({});
+    const parsed = agentFormSchema.safeParse(rest);
+
+    expect(parsed.success && parsed.data.delegateIds).toEqual([]);
+  });
+
+  it("sends the whole list for a chat agent, once each, in order", () => {
+    const request = toSaveRequest(values({ delegateIds: ["agdef_b", "agdef_a", "agdef_b"] }));
+
+    expect(request.delegateIds).toEqual(["agdef_b", "agdef_a"]);
+  });
+
+  it("sends an empty list for an agent that does not run from chat", () => {
+    const request = toSaveRequest(
+      values({
+        triggerMode: "Scheduled",
+        cronExpression: "0 6 * * *",
+        delegateIds: ["agdef_a"],
+      }),
+    );
+
+    expect(request.delegateIds).toEqual([]);
+  });
+
+  // The roster's enable switch saves a row built from the agent itself; the
+  // names drawn beside the list must not ride along in the body.
+  it("saves a row's allowlist as ids only", () => {
+    const row = toAgentPanelRow({
+      ...agentRow(),
+      delegateIds: ["agdef_b", "agdef_gone", "agdef_a"],
+      delegates: [
+        {
+          id: "agdef_a",
+          name: "Dispatch desk",
+          icon: "",
+          accent: "",
+          enabled: true,
+          triggerMode: "Chat",
+        },
+        {
+          id: "agdef_b",
+          name: "Report Builder",
+          icon: "",
+          accent: "",
+          enabled: false,
+          triggerMode: "Chat",
+        },
+      ],
+    });
+
+    expect(row.delegateIds).toEqual(["agdef_b", "agdef_a"]);
+    expect(row.delegates.map((delegate) => [delegate.name, delegate.enabled])).toEqual([
+      ["Report Builder", false],
+      ["Dispatch desk", true],
+    ]);
+
+    const request = toSaveRequest(row);
+    expect(request.delegateIds).toEqual(["agdef_b", "agdef_a"]);
+    expect(request).not.toHaveProperty("delegates");
+  });
+});
+
+function agentRow(): AgentDefinitionRow {
+  return {
+    id: "agdef_widgets",
+    organizationId: "org_1",
+    businessUnitId: "bu_1",
+    name: "Homepage Widget Builder",
+    description: "",
+    template: null,
+    icon: "",
+    accent: "",
+    instructions: "",
+    guardrails: [],
+    toolNames: [],
+    toolTiers: {},
+    autonomyCeiling: "Propose",
+    enabled: true,
+    shadowMode: false,
+    decisionTimeoutSeconds: 86400,
+    triggerMode: "Chat",
+    cronExpression: "",
+    cronTimezone: "",
+    eventKinds: [],
+    intervalSeconds: 0,
+    endsAt: null,
+    maxConcurrentRuns: 1,
+    runTimeoutSeconds: 600,
+    maxToolCalls: 12,
+    monthlyBudgetUsd: null,
+    dailyRunLimit: 0,
+    toolDailyLimits: {},
+    simulationMode: false,
+    contextProviders: [],
+    outputMode: "Conversational",
+    preferredProviderId: "",
+    systemKey: "",
+    delegateIds: [],
+    delegates: [],
+    starters: [],
+    lastRunAt: null,
+    nextRunAt: null,
+    pendingProposals: 0,
+    openRuns: 0,
+    version: 3,
+    createdAt: 1_758_000_000,
+    updatedAt: 1_758_000_100,
+  };
+}

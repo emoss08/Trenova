@@ -39,6 +39,8 @@ function agentFixture(overrides: Partial<AgentDefinitionRow> = {}): AgentDefinit
     outputMode: "Conversational",
     preferredProviderId: "",
     systemKey: "",
+    delegateIds: [],
+    delegates: [],
     lastRunAt: null,
     nextRunAt: null,
     pendingProposals: 0,

@@ -105,6 +105,23 @@ export function isDecidable(proposal: AssistantProposal): boolean {
 }
 
 /**
+ * Whether a proposal or plan is another agent's: one the conversation's agent
+ * handed a task to. Only then does the card say who proposed it, because the
+ * conversation's own agent is already named at the head of the reply. A
+ * proposal that does not say who made it, or one shown where the
+ * conversation's agent is not known, is not attributed.
+ */
+export function proposedByOther(
+  conversationAgentId: string | null | undefined,
+  proposerId: string | null | undefined,
+): boolean {
+  const own = conversationAgentId ?? "";
+  const proposer = proposerId ?? "";
+
+  return own !== "" && proposer !== "" && proposer !== own;
+}
+
+/**
  * The last assistant message of the turn each message belongs to.
  *
  * A turn that proposes a change ends in words about it: "I've proposed a new
@@ -118,7 +135,9 @@ export function turnEndByMessage(messages: readonly AssistantMessage[]): Map<str
   let turn: string[] = [];
   let last = "";
   const close = () => {
-    for (const id of turn) {
+    // A turn with none of its own words in view has no end to anchor to;
+    // what it proposed is shown out of place rather than nowhere.
+    for (const id of last === "" ? [] : turn) {
       ends.set(id, last);
     }
     turn = [];
@@ -126,6 +145,13 @@ export function turnEndByMessage(messages: readonly AssistantMessage[]): Map<str
   };
 
   for (const message of messages) {
+    // Another agent's steps are part of the turn that handed it the task:
+    // its task does not start a new turn, and its words do not end this one.
+    // What it proposed is placed where the turn's own proposals are.
+    if (message.kind === "Delegated") {
+      turn.push(message.id);
+      continue;
+    }
     if (message.role === "User") {
       close();
       continue;

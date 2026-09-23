@@ -3,6 +3,8 @@ import type { AssistantMessage } from "@/types/assistant";
 /**
  * How a message should be presented.
  *
+ * - `delegated` — a step another agent took on a task this conversation's
+ *   agent handed it, shown only inside that hand-off and never as a turn
  * - `tool` — a step the assistant took, shown collapsed under its turn
  * - `decision` — the note the application wrote to start the turn after a
  *   decision, shown as the decision it records and never as its text
@@ -13,6 +15,7 @@ import type { AssistantMessage } from "@/types/assistant";
  * - `user` / `assistant` — ordinary turns
  */
 export type MessagePresentation =
+  | "delegated"
   | "tool"
   | "decision"
   | "refusal"
@@ -40,6 +43,13 @@ export type MessagePresentation =
  * under the person's name.
  */
 export function classifyMessage(message: AssistantMessage): MessagePresentation {
+  // Another agent's steps come first of all: its task is saved in the User
+  // role and its answer in the Assistant role, and drawn by role either
+  // would read as the person asking or the conversation's agent replying.
+  if (message.kind === "Delegated") {
+    return "delegated";
+  }
+
   if (message.role === "Tool") {
     return "tool";
   }
