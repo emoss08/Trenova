@@ -21,7 +21,9 @@
     "b:dev": "bunx --bun vite",
     "b:build": "bunx --bun vite build",
     "deploy": "pnpm run build && wrangler deploy",
-    "doctor": "npx react-doctor@latest"
+    "doctor": "npx react-doctor@latest",
+    "guide:generate": "node scripts/product-guide/generate.mjs",
+    "guide:check": "node scripts/product-guide/generate.mjs --check"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -140,6 +142,7 @@
     "graphql": "^17.0.2",
     "happy-dom": "^20.14.0",
     "lint-staged": "^17.5.0",
+    "oxc-parser": "0.148.0",
     "oxfmt": "^0.67.0",
     "oxlint": "^1.82.0",
     "oxlint-tsgolint": "^7.0.2001",

@@ -552,6 +552,9 @@ importers:
       lint-staged:
         specifier: ^17.5.0
         version: 17.5.0
+      oxc-parser:
+        specifier: 0.148.0
+        version: 0.148.0
       oxfmt:
         specifier: ^0.67.0
         version: 0.67.0

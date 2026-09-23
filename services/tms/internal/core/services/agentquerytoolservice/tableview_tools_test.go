@@ -88,7 +88,12 @@ func TestComposeTableView_GivesBackALinkThatOpensTheTable(t *testing.T) {
 	})
 
 	assert.Equal(t, "shipments", view.Entity)
-	assert.True(t, strings.HasPrefix(view.Path, "/shipments?"), "got %q", view.Path)
+	assert.True(
+		t,
+		strings.HasPrefix(view.Path, "/shipment-management/shipments?"),
+		"the link opens the page the router serves shipments on; got %q",
+		view.Path,
+	)
 	assert.Equal(t, 1, view.FilterCount)
 	assert.Equal(t, "shipments where status equals InTransit", view.Explanation)
 }
@@ -144,7 +149,7 @@ func TestComposeTableView_LeavesTheLinkBareWhenNothingNarrowedIt(t *testing.T) {
 		"description": "everything",
 	})
 
-	assert.Equal(t, "/shipments", view.Path)
+	assert.Equal(t, "/shipment-management/shipments", view.Path)
 	assert.Equal(t, 0, view.FilterCount)
 }
 

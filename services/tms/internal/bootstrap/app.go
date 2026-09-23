@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentruneventservice"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/core/services/productguideservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantfollowupservice"
@@ -135,6 +136,7 @@ func Options() fx.Option {
 		agenttoolservice.Module,
 		agentquerytoolservice.Module,
 		agenttoolcatalog.Module,
+		productguideservice.Module,
 		agentguard.Module,
 		agentruntime.Module,
 		runstepledger.Module,

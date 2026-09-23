@@ -285,6 +285,14 @@ GraphQL field to resolve to a column, an inferred relation, or a declared overri
 retiring a column while keeping its deprecated field breaks the build until the field is
 added to `virtuals`.
 
+## Product Guide
+
+Agents answer "where is…" and "how do I…" from a catalog generated from the web app and the
+guides in `docs/product-guide/`. **Adding a page, renaming a button a guide names, or changing a
+record link means regenerating it** (`pnpm --filter @trenova/web guide:generate`); CI fails
+otherwise. Record links are built from one registry, `client/apps/web/src/config/record-links.ts`
+(`recordPath`), never by hand. Read [docs/engineering/product-guide.md](docs/engineering/product-guide.md).
+
 ## GraphQL (gqlgen)
 
 - Schema lives in `services/tms/internal/api/graphql/schema/*.graphqls`; regenerate with `task gqlgen` (it retries once, because gqlgen can miss the `models_gen.go` it just wrote when a schema adds a model).

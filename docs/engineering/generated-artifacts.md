@@ -109,6 +109,24 @@ generator too. Never hand-write column references; see [docs/bun/buncolgen.md](.
   so a purely cosmetic reflow (an array collapsed onto one line) fails CI. Point the
   formatter at the directories you changed, or regenerate afterwards.
 
+## Product guide
+
+`services/tms/pkg/productguide/catalog_gen.json` is built from the web app's router,
+navigation, page headers and record-link registry plus `docs/product-guide/**.md`, and the
+server embeds it. `pnpm --filter @trenova/web guide:check` (the GraphQL Codegen job in
+`test-client.yml`) fails when:
+
+- a routed page has no guide — adding a page means writing its guide;
+- a guide bolds a label the app does not show. **Renaming a button or retitling a page
+  breaks every guide that names it**, and the message says which file. Fix the guide, not
+  the check: the bold is the promise that the words are on screen. A label the app builds
+  at runtime ("Publish {n} rows") or passes around untranslated is described in plain words;
+- the catalog differs from what the generator writes. Run
+  `pnpm --filter @trenova/web guide:generate` and commit the catalog with the change.
+
+The check also runs when only `i18n/messages.en.json` changes, because the label check reads
+it. See [product-guide.md](product-guide.md).
+
 ## i18n
 
 - **The English source string is the catalog key.** Editing English text creates a new key

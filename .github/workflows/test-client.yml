@@ -17,6 +17,11 @@ on:
       - "services/tms/pkg/errortypes/enums.go"
       - "services/tms/internal/api/helpers/problemtypes.go"
       - "services/tms/internal/core/domain/permission/resource_gen.go"
+      # The product guide is generated from the app and these two, into a file
+      # the server embeds; a guide or catalog edited alone must still be checked.
+      - "docs/product-guide/**"
+      - "services/tms/pkg/productguide/catalog_gen.json"
+      - "i18n/messages.en.json"
       - ".github/workflows/test-client.yml"
       - ".github/actions/setup-client/**"
   pull_request:
@@ -34,6 +39,11 @@ on:
       - "services/tms/pkg/errortypes/enums.go"
       - "services/tms/internal/api/helpers/problemtypes.go"
       - "services/tms/internal/core/domain/permission/resource_gen.go"
+      # The product guide is generated from the app and these two, into a file
+      # the server embeds; a guide or catalog edited alone must still be checked.
+      - "docs/product-guide/**"
+      - "services/tms/pkg/productguide/catalog_gen.json"
+      - "i18n/messages.en.json"
       - ".github/workflows/test-client.yml"
       - ".github/actions/setup-client/**"
   workflow_dispatch:
@@ -62,6 +72,12 @@ jobs:
       - name: Check GraphQL generated artifacts
         working-directory: ./client
         run: pnpm --filter @trenova/graphql codegen:check
+
+      # Every routed page needs a guide, every bold label in one must be text
+      # the app shows, and the catalog the server embeds must match the guides.
+      - name: Check the product guide
+        working-directory: ./client
+        run: pnpm --filter @trenova/web guide:check
 
   verify:
     name: ${{ matrix.task.name }}

@@ -12,6 +12,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/types/search"
@@ -316,10 +317,7 @@ func mapHit(entityType search.EntityType, document map[string]any) *serviceports
 			ID:         id,
 			EntityType: entityType,
 			Title:      title,
-			Href: fmt.Sprintf(
-				"/shipment-management/shipments?panelEntityId=%s&panelType=edit",
-				id,
-			),
+			Href:       recordHref("shipment", id),
 			Metadata: map[string]string{
 				"status": stringutils.FirstNonEmpty(stringValue(document, "status"), "Unknown"),
 			},
@@ -339,10 +337,7 @@ func mapHit(entityType search.EntityType, document map[string]any) *serviceports
 			EntityType: entityType,
 			Title:      title,
 			Subtitle:   subtitle,
-			Href: fmt.Sprintf(
-				"/billing/configuration-files/customers?panelEntityId=%s&panelType=edit",
-				id,
-			),
+			Href:       recordHref("customer", id),
 			Metadata: map[string]string{
 				"status": stringutils.FirstNonEmpty(stringValue(document, "status"), "Unknown"),
 			},
@@ -361,7 +356,7 @@ func mapHit(entityType search.EntityType, document map[string]any) *serviceports
 			EntityType: entityType,
 			Title:      title,
 			Subtitle:   subtitle,
-			Href:       fmt.Sprintf("/hr/workers?panelEntityId=%s&panelType=edit", id),
+			Href:       recordHref("worker", id),
 			Metadata: map[string]string{
 				"status": stringutils.FirstNonEmpty(stringValue(document, "status"), "Unknown"),
 			},
@@ -395,29 +390,18 @@ func mapHit(entityType search.EntityType, document map[string]any) *serviceports
 	}
 }
 
+// documentHref opens the record a document is attached to, where the app's
+// own links open it.
 func documentHref(document map[string]any) string {
-	resourceType := stringValue(document, "resource_type")
-	resourceID := stringValue(document, "resource_id")
-	if resourceID == "" {
-		return ""
-	}
+	return recordHref(stringValue(document, "resource_type"), stringValue(document, "resource_id"))
+}
 
-	switch resourceType {
-	case "shipment":
-		return fmt.Sprintf(
-			"/shipment-management/shipments?panelEntityId=%s&panelType=edit",
-			resourceID,
-		)
-	case "worker":
-		return fmt.Sprintf("/hr/workers?panelEntityId=%s&panelType=edit", resourceID)
-	case "customer":
-		return fmt.Sprintf(
-			"/billing/configuration-files/customers?panelEntityId=%s&panelType=edit",
-			resourceID,
-		)
-	default:
-		return ""
-	}
+// recordHref is where one record opens, from the registry the web app's own
+// links are built from; "" for a kind of record with no page of its own.
+func recordHref(entity, id string) string {
+	path, _ := productguide.RecordPath(entity, id)
+
+	return path
 }
 
 func tenantFilter(req *serviceports.GlobalSearchRequest) string {

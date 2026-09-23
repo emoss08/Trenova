@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tablequeryservice"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/productguide"
 )
 
 /*
@@ -175,13 +176,21 @@ func (t *composeTableViewTool) Query(
 // The path is built here rather than by the model for the same reason the
 // filters are: a fabricated link is indistinguishable from a real one until
 // somebody clicks it.
+// The page comes from the product guide, which reads it from the app's own
+// router: the page whose loader guards on reading the resource. The path used
+// to be the entity's plural with a slash in front, which named no page at all
+// ("/shipments", "/equipment types").
 func tableViewPath(
 	resource filtercatalog.Resource,
 	composed *tablequeryservice.ComposeResult,
 ) string {
+	page, ok := productguide.Default.PageForResource(resource.Resource.String())
+	if !ok {
+		return ""
+	}
+
 	var b strings.Builder
-	b.WriteString("/")
-	b.WriteString(strings.ReplaceAll(resource.Entity, "_", "-"))
+	b.WriteString(page.Path)
 
 	params := make([]string, 0, 3)
 	if composed.Query != "" {
