@@ -198,6 +198,10 @@ func (s *Service) writeRole(
 		})
 		entity.Headline = written.Headline
 		entity.Narrated = written.Narrated
+		if written.Narrated {
+			entity.ModelIdentifier = written.ModelIdentifier
+			entity.ProviderID = written.ProviderID
+		}
 		for index := range entity.Sections {
 			if body, ok := written.Bodies[entity.Sections[index].Key]; ok {
 				entity.Sections[index].Body = body

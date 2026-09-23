@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -24,10 +25,19 @@ type fakeQueryTool struct {
 	resource permission.Resource
 }
 
-func (t fakeQueryTool) Name() string                            { return t.name }
-func (fakeQueryTool) Description() string                       { return "" }
-func (fakeQueryTool) ParamSchema() map[string]any               { return nil }
-func (t fakeQueryTool) PermissionResource() permission.Resource { return t.resource }
+func (t fakeQueryTool) Name() string              { return t.name }
+func (fakeQueryTool) Description() string         { return "" }
+func (fakeQueryTool) ParamSchema() map[string]any { return nil }
+
+func (t fakeQueryTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.name,
+		Kind:          agent.ToolKindQuery,
+		Resource:      t.resource,
+		Operation:     permission.OpRead,
+		ReadsExternal: agent.ExternalReadNever,
+	}
+}
 func (fakeQueryTool) Query(context.Context, serviceports.QueryToolParams) (any, error) {
 	return nil, nil
 }

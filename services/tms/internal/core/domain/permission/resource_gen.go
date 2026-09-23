@@ -129,6 +129,7 @@ const (
 	ResourceAgentDefinition Resource = "agent_definition"
 	ResourceAgentMemory     Resource = "agent_memory"
 	ResourceAgentEvalSuite  Resource = "agent_eval_suite"
+	ResourceAgentFeedback   Resource = "agent_feedback"
 	ResourceAssistant       Resource = "assistant"
 	ResourceInsight         Resource = "insight"
 	ResourceWatchtower      Resource = "watchtower"

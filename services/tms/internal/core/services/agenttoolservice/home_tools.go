@@ -208,20 +208,6 @@ type homeToolBase struct {
 	editor homeEditor
 }
 
-func (homeToolBase) Reversible() bool { return true }
-
-func (homeToolBase) PermissionResource() permission.Resource {
-	return permission.ResourceHomeLayoutPreset
-}
-
-func (homeToolBase) PermissionOperation() permission.Operation { return permission.OpUpdate }
-
-func (homeToolBase) RequiresIdempotencyKey() bool { return false }
-
-func (homeToolBase) DefaultAutonomyTier() agent.AutonomyTier { return agent.TierPropose }
-
-func (homeToolBase) SelfScoped() bool { return true }
-
 func (homeToolBase) SearchTerms() []string { return homelayout.SpokenNames() }
 
 func versionProperty() map[string]any {
@@ -243,6 +229,23 @@ func newAddHomeWidgetTool(
 }
 
 func (t *addHomeWidgetTool) Name() string { return "add_home_widget" }
+
+func (t *addHomeWidgetTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceHomeLayoutPreset,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeSelf,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressPersonal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Changes only the caller's own home page.",
+	}
+}
 
 func (t *addHomeWidgetTool) Description() string {
 	return "Add a widget to the person's own home page. Use it when they want something on " +
@@ -579,6 +582,23 @@ func newRemoveHomeWidgetTool(layouts *homelayoutservice.Service) serviceports.Ag
 
 func (t *removeHomeWidgetTool) Name() string { return "remove_home_widget" }
 
+func (t *removeHomeWidgetTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceHomeLayoutPreset,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeSelf,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressPersonal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Changes only the caller's own home page.",
+	}
+}
+
 func (t *removeHomeWidgetTool) Description() string {
 	return "Take one widget off the person's own home page. Use it when they want something " +
 		"off \"my dashboard\"; the widget id and version come from get_my_home_layout."
@@ -659,6 +679,23 @@ func newArrangeHomeLayoutTool(layouts *homelayoutservice.Service) serviceports.A
 }
 
 func (t *arrangeHomeLayoutTool) Name() string { return "arrange_home_layout" }
+
+func (t *arrangeHomeLayoutTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceHomeLayoutPreset,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeSelf,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressPersonal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Changes only the caller's own home page.",
+	}
+}
 
 func (t *arrangeHomeLayoutTool) Description() string {
 	return "Put the widgets on the person's own home page in a new order. Use it when they " +

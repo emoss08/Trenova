@@ -49,43 +49,47 @@ var BriefingTable = TableInfo{
 //	q.Where(BriefingColumns.ID.Eq(), id)           // WHERE abrf.id = ?
 //	q.Order(BriefingColumns.CreatedAt.OrderDesc())  // ORDER BY abrf.created_at DESC
 var BriefingColumns = struct {
-	ID             Column // "id" → qualified: "abrf.id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "abrf.business_unit_id"
-	OrganizationID Column // "organization_id" → qualified: "abrf.organization_id"
-	RoleKey        Column // "role_key" → qualified: "abrf.role_key"
-	UserID         Column // "user_id" → qualified: "abrf.user_id"
-	BriefingDate   Column // "briefing_date" → qualified: "abrf.briefing_date"
-	RunID          Column // "run_id" → qualified: "abrf.run_id"
-	Status         Column // "status" → qualified: "abrf.status"
-	Headline       Column // "headline" → qualified: "abrf.headline"
-	Sections       Column // "sections" → qualified: "abrf.sections"
-	Facts          Column // "facts" → qualified: "abrf.facts"
-	Narrated       Column // "narrated" → qualified: "abrf.narrated"
-	FailureReason  Column // "failure_reason" → qualified: "abrf.failure_reason"
-	EmailedAt      Column // "emailed_at" → qualified: "abrf.emailed_at"
-	ReadAt         Column // "read_at" → qualified: "abrf.read_at"
-	Version        Column // "version" → qualified: "abrf.version"
-	CreatedAt      Column // "created_at" → qualified: "abrf.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "abrf.updated_at"
+	ID              Column // "id" → qualified: "abrf.id"
+	BusinessUnitID  Column // "business_unit_id" → qualified: "abrf.business_unit_id"
+	OrganizationID  Column // "organization_id" → qualified: "abrf.organization_id"
+	RoleKey         Column // "role_key" → qualified: "abrf.role_key"
+	UserID          Column // "user_id" → qualified: "abrf.user_id"
+	BriefingDate    Column // "briefing_date" → qualified: "abrf.briefing_date"
+	RunID           Column // "run_id" → qualified: "abrf.run_id"
+	Status          Column // "status" → qualified: "abrf.status"
+	Headline        Column // "headline" → qualified: "abrf.headline"
+	Sections        Column // "sections" → qualified: "abrf.sections"
+	Facts           Column // "facts" → qualified: "abrf.facts"
+	Narrated        Column // "narrated" → qualified: "abrf.narrated"
+	ModelIdentifier Column // "model_identifier" → qualified: "abrf.model_identifier"
+	ProviderID      Column // "provider_id" → qualified: "abrf.provider_id"
+	FailureReason   Column // "failure_reason" → qualified: "abrf.failure_reason"
+	EmailedAt       Column // "emailed_at" → qualified: "abrf.emailed_at"
+	ReadAt          Column // "read_at" → qualified: "abrf.read_at"
+	Version         Column // "version" → qualified: "abrf.version"
+	CreatedAt       Column // "created_at" → qualified: "abrf.created_at"
+	UpdatedAt       Column // "updated_at" → qualified: "abrf.updated_at"
 }{
-	ID:             NewColumn("id", "abrf"),
-	BusinessUnitID: NewColumn("business_unit_id", "abrf"),
-	OrganizationID: NewColumn("organization_id", "abrf"),
-	RoleKey:        NewColumn("role_key", "abrf"),
-	UserID:         NewColumn("user_id", "abrf"),
-	BriefingDate:   NewColumn("briefing_date", "abrf"),
-	RunID:          NewColumn("run_id", "abrf"),
-	Status:         NewColumn("status", "abrf"),
-	Headline:       NewColumn("headline", "abrf"),
-	Sections:       NewColumn("sections", "abrf"),
-	Facts:          NewColumn("facts", "abrf"),
-	Narrated:       NewColumn("narrated", "abrf"),
-	FailureReason:  NewColumn("failure_reason", "abrf"),
-	EmailedAt:      NewColumn("emailed_at", "abrf"),
-	ReadAt:         NewColumn("read_at", "abrf"),
-	Version:        NewColumn("version", "abrf"),
-	CreatedAt:      NewColumn("created_at", "abrf"),
-	UpdatedAt:      NewColumn("updated_at", "abrf"),
+	ID:              NewColumn("id", "abrf"),
+	BusinessUnitID:  NewColumn("business_unit_id", "abrf"),
+	OrganizationID:  NewColumn("organization_id", "abrf"),
+	RoleKey:         NewColumn("role_key", "abrf"),
+	UserID:          NewColumn("user_id", "abrf"),
+	BriefingDate:    NewColumn("briefing_date", "abrf"),
+	RunID:           NewColumn("run_id", "abrf"),
+	Status:          NewColumn("status", "abrf"),
+	Headline:        NewColumn("headline", "abrf"),
+	Sections:        NewColumn("sections", "abrf"),
+	Facts:           NewColumn("facts", "abrf"),
+	Narrated:        NewColumn("narrated", "abrf"),
+	ModelIdentifier: NewColumn("model_identifier", "abrf"),
+	ProviderID:      NewColumn("provider_id", "abrf"),
+	FailureReason:   NewColumn("failure_reason", "abrf"),
+	EmailedAt:       NewColumn("emailed_at", "abrf"),
+	ReadAt:          NewColumn("read_at", "abrf"),
+	Version:         NewColumn("version", "abrf"),
+	CreatedAt:       NewColumn("created_at", "abrf"),
+	UpdatedAt:       NewColumn("updated_at", "abrf"),
 }
 
 // BriefingFieldMap maps JSON API field names to database column names.
@@ -93,24 +97,26 @@ var BriefingColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Briefing.GetStaticFieldMap().
 var BriefingFieldMap = map[string]string{
-	"id":             "id",
-	"businessUnitId": "business_unit_id",
-	"organizationId": "organization_id",
-	"roleKey":        "role_key",
-	"userId":         "user_id",
-	"briefingDate":   "briefing_date",
-	"runId":          "run_id",
-	"status":         "status",
-	"headline":       "headline",
-	"sections":       "sections",
-	"facts":          "facts",
-	"narrated":       "narrated",
-	"failureReason":  "failure_reason",
-	"emailedAt":      "emailed_at",
-	"readAt":         "read_at",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":              "id",
+	"businessUnitId":  "business_unit_id",
+	"organizationId":  "organization_id",
+	"roleKey":         "role_key",
+	"userId":          "user_id",
+	"briefingDate":    "briefing_date",
+	"runId":           "run_id",
+	"status":          "status",
+	"headline":        "headline",
+	"sections":        "sections",
+	"facts":           "facts",
+	"narrated":        "narrated",
+	"modelIdentifier": "model_identifier",
+	"providerId":      "provider_id",
+	"failureReason":   "failure_reason",
+	"emailedAt":       "emailed_at",
+	"readAt":          "read_at",
+	"version":         "version",
+	"createdAt":       "created_at",
+	"updatedAt":       "updated_at",
 }
 
 // BriefingInsertableColumns lists column names suitable for INSERT statements on the "assistant_briefings" table.
@@ -128,6 +134,8 @@ var BriefingInsertableColumns = []string{
 	"sections",
 	"facts",
 	"narrated",
+	"model_identifier",
+	"provider_id",
 	"failure_reason",
 	"emailed_at",
 	"read_at",
@@ -186,24 +194,26 @@ func BriefingApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.S
 //	BriefingFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var BriefingFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	RoleKey        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roleKey" → DB: "role_key"
-	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
-	BriefingDate   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "briefingDate" → DB: "briefing_date"
-	RunID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
-	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	Headline       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "headline" → DB: "headline"
-	Sections       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sections" → DB: "sections"
-	Facts          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "facts" → DB: "facts"
-	Narrated       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "narrated" → DB: "narrated"
-	FailureReason  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureReason" → DB: "failure_reason"
-	EmailedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailedAt" → DB: "emailed_at"
-	ReadAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "readAt" → DB: "read_at"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	RoleKey         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roleKey" → DB: "role_key"
+	UserID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	BriefingDate    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "briefingDate" → DB: "briefing_date"
+	RunID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
+	Status          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Headline        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "headline" → DB: "headline"
+	Sections        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sections" → DB: "sections"
+	Facts           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "facts" → DB: "facts"
+	Narrated        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "narrated" → DB: "narrated"
+	ModelIdentifier func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modelIdentifier" → DB: "model_identifier"
+	ProviderID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
+	FailureReason   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureReason" → DB: "failure_reason"
+	EmailedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailedAt" → DB: "emailed_at"
+	ReadAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "readAt" → DB: "read_at"
+	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -240,6 +250,12 @@ var BriefingFilter = struct {
 	},
 	Narrated: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("narrated", op, value)
+	},
+	ModelIdentifier: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("modelIdentifier", op, value)
+	},
+	ProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerId", op, value)
 	},
 	FailureReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("failureReason", op, value)

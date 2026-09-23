@@ -78,11 +78,14 @@ const MEMORY_SOURCE: Record<AgentMemorySource, string> = {
   User: "A person",
   Agent: "An agent",
   Decision: "A decision",
+  Feedback: "Feedback",
 };
 
 const MEMORY_STATUS: Record<AgentMemoryStatus, { label: string; variant: Variant }> = {
   Active: { label: "Active", variant: "success" },
   Retired: { label: "Retired", variant: "neutral" },
+  Suggested: { label: "Suggested", variant: "warning" },
+  Dismissed: { label: "Dismissed", variant: "neutral" },
 };
 
 const TIER: Record<AgentAutonomyTier, { label: string; variant: Variant }> = {

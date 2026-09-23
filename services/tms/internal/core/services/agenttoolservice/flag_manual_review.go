@@ -77,20 +77,22 @@ func (t *flagManualReviewTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *flagManualReviewTool) Reversible() bool { return true }
-
-func (t *flagManualReviewTool) PermissionResource() permission.Resource {
-	return permission.ResourceAgentException
-}
-
-func (t *flagManualReviewTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *flagManualReviewTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *flagManualReviewTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *flagManualReviewTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceAgentException,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeRun,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Records an exception on the run for a person inside the organization to " +
+			"work.",
+	}
 }
 
 func (t *flagManualReviewTool) Execute(

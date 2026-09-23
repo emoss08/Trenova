@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -32,7 +31,7 @@ type AgentQueryTool interface {
 	Name() string
 	Description() string
 	ParamSchema() map[string]any
-	PermissionResource() permission.Resource
+	Policy() ToolPolicy
 	// Query returns data for the model to reason over. The result is serialized
 	// and handed back as untrusted content, since records carry customer-authored
 	// text.

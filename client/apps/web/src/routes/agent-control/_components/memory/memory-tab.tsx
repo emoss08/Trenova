@@ -16,6 +16,7 @@ import { useMemo } from "react";
 import { toast } from "sonner";
 import { getMemoryColumns } from "./memory-columns";
 import { MemoryPanel } from "./memory-panel";
+import { MemorySuggestions } from "./memory-suggestions";
 
 /**
  * What the organization has told its agents. Every row here is read into
@@ -58,15 +59,18 @@ export default function MemoryTab() {
   ];
 
   return (
-    <DataTable<AgentMemoryRow>
-      name="Memory"
-      queryKey={AGENT_MEMORY_LIST_KEY}
-      graphql={agentMemoryTableGraphQLConfig}
-      resource={Resource.AgentMemory}
-      columns={columns}
-      contextMenuActions={contextMenuActions}
-      TablePanel={MemoryPanel}
-      initialColumnVisibility={{ toolName: false, expiresAt: false, lastUsedAt: false }}
-    />
+    <div className="flex min-w-0 flex-col gap-4">
+      <MemorySuggestions canDecide={canUpdate} />
+      <DataTable<AgentMemoryRow>
+        name="Memory"
+        queryKey={AGENT_MEMORY_LIST_KEY}
+        graphql={agentMemoryTableGraphQLConfig}
+        resource={Resource.AgentMemory}
+        columns={columns}
+        contextMenuActions={contextMenuActions}
+        TablePanel={MemoryPanel}
+        initialColumnVisibility={{ toolName: false, expiresAt: false, lastUsedAt: false }}
+      />
+    </div>
   );
 }

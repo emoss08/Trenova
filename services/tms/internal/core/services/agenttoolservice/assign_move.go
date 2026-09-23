@@ -62,20 +62,22 @@ func (t *assignMoveTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *assignMoveTool) Reversible() bool { return true }
-
-func (t *assignMoveTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipmentMove
-}
-
-func (t *assignMoveTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *assignMoveTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *assignMoveTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *assignMoveTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceShipmentMove,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Assigns a driver and tractor to a move; the driver sees the assignment " +
+			"but no text the model wrote.",
+	}
 }
 
 func (t *assignMoveTool) Execute(

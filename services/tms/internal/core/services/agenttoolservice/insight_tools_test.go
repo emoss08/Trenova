@@ -70,8 +70,8 @@ func TestDismissInsight_IsAnApprovedUpdateOnTheInsight(t *testing.T) {
 	tool := newDismissInsightTool(&fakeInsightDismisser{})
 	id := pulid.MustNew("inst_")
 
-	assert.Equal(t, permission.ResourceInsight, tool.PermissionResource())
-	assert.Equal(t, permission.OpUpdate, tool.PermissionOperation())
+	assert.Equal(t, permission.ResourceInsight, tool.Policy().Resource)
+	assert.Equal(t, permission.OpUpdate, tool.Policy().Operation)
 
 	targeted, ok := tool.(serviceports.TargetedTool)
 	require.True(t, ok)

@@ -78,6 +78,8 @@ func buildUpsert(db bun.IDB, entity *briefing.Briefing) *bun.InsertQuery {
 		Set(cols.Sections.SetExcluded()).
 		Set(cols.Facts.SetExcluded()).
 		Set(cols.Narrated.SetExcluded()).
+		Set(cols.ModelIdentifier.SetExcluded()).
+		Set(cols.ProviderID.SetExcluded()).
 		Set(cols.FailureReason.SetExcluded()).
 		Set(cols.Version.IncConflict(1)).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).

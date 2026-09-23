@@ -58,8 +58,10 @@ func (t *listEmailProfilesTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listEmailProfilesTool) PermissionResource() permission.Resource {
-	return permission.ResourceEmailProfile
+func (t *listEmailProfilesTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceEmailProfile,
+	})
 }
 
 func (t *listEmailProfilesTool) Query(

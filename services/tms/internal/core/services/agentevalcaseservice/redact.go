@@ -46,12 +46,12 @@ func (r *redaction) record(tool, path string, sensitivity permission.FieldSensit
 func (r *Redactor) resourceOf(tool string) (permission.Resource, bool) {
 	if r.queryTools != nil {
 		if query, ok := r.queryTools.Get(tool); ok {
-			return query.PermissionResource(), true
+			return query.Policy().Resource, true
 		}
 	}
 	if r.actionTools != nil {
 		if action, ok := r.actionTools.Get(tool); ok {
-			return action.PermissionResource(), true
+			return action.Policy().Resource, true
 		}
 	}
 

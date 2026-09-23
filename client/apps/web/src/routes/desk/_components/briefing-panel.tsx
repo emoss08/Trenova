@@ -4,6 +4,9 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { ArrowRightIcon } from "lucide-react";
 import { Link } from "react-router";
+import { FeedbackControl } from "@/components/ai-feedback/feedback-control";
+
+const SECTION_FEEDBACK_REVEAL = "opacity-0 group-hover/section:opacity-100";
 
 /**
  * The morning's page, under the dateline.
@@ -40,33 +43,55 @@ export function BriefingPanel({ briefing }: { briefing: Briefing }) {
             <AssistMark className="size-3" />
           </span>
         )}
+        <FeedbackControl
+          target={{ targetType: "Briefing", targetId: briefing.id }}
+          className="ml-auto"
+        />
       </div>
 
       <div className="border-desk-hairline rounded-surface divide-desk-hairline divide-y border">
         {sections.map((section, index) => (
-          <SectionRow key={section.key} section={section} index={index} />
+          <SectionRow key={section.key} briefingId={briefing.id} section={section} index={index} />
         ))}
       </div>
     </section>
   );
 }
 
-function SectionRow({ section, index }: { section: BriefingSection; index: number }) {
+function SectionRow({
+  briefingId,
+  section,
+  index,
+}: {
+  briefingId: string;
+  section: BriefingSection;
+  index: number;
+}) {
   return (
     <div
       style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
-      className="animate-land flex flex-col gap-2 px-4 py-3"
+      className="group/section animate-land flex flex-col gap-2 px-4 py-3"
     >
-      <div className="flex items-baseline gap-2">
+      <div className="flex items-center gap-2">
         <h3 className="text-sm font-medium">{section.title}</h3>
-        {section.path && (
-          <Link
-            to={section.path}
-            className="ui-focus-ring text-muted-foreground hover:text-foreground ml-auto shrink-0 rounded-md text-xs transition-colors"
-          >
-            <ArrowRightIcon className="size-3.5" />
-          </Link>
-        )}
+        <span className="ml-auto flex shrink-0 items-center gap-1">
+          <FeedbackControl
+            target={{
+              targetType: "BriefingSection",
+              targetId: briefingId,
+              targetPart: section.key,
+            }}
+            revealClassName={SECTION_FEEDBACK_REVEAL}
+          />
+          {section.path && (
+            <Link
+              to={section.path}
+              className="ui-focus-ring text-muted-foreground hover:text-foreground shrink-0 rounded-md text-xs transition-colors"
+            >
+              <ArrowRightIcon className="size-3.5" />
+            </Link>
+          )}
+        </span>
       </div>
 
       {section.read !== "" && (

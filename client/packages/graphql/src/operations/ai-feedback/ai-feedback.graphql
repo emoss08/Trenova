@@ -1,0 +1,104 @@
+fragment MyAIFeedbackFields on AIFeedback {
+  id
+  targetType
+  targetId
+  targetPart
+  rating
+  reasons
+  comment
+  version
+  updatedAt
+}
+
+query MyAIFeedback($input: MyAIFeedbackInput!) {
+  myAIFeedback(input: $input) {
+    ...MyAIFeedbackFields
+  }
+}
+
+mutation SetMyAIFeedback($input: SetMyAIFeedbackInput!) {
+  setMyAIFeedback(input: $input) {
+    ...MyAIFeedbackFields
+  }
+}
+
+mutation ClearMyAIFeedback($input: AIFeedbackTargetInput!) {
+  clearMyAIFeedback(input: $input)
+}
+
+fragment AIFeedbackTableRowFields on AIFeedback {
+  id
+  userId
+  targetType
+  targetId
+  targetPart
+  threadId
+  turnId
+  runId
+  agentDefinitionId
+  definitionVersion
+  detectorKey
+  task
+  model
+  providerId
+  fingerprintSource
+  rating
+  reasons
+  comment
+  patternKey
+  turnSnapshot {
+    question
+    answer
+    tools {
+      name
+      summary
+      failed
+    }
+    omittedTools
+    redacted
+  }
+  createdAt
+  updatedAt
+}
+
+query AIFeedbackTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  aiFeedback(input: $input) {
+    edges {
+      node {
+        ...AIFeedbackTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentFeedbackSummary($agentDefinitionId: ID!, $window: Int) {
+  agentFeedbackSummary(agentDefinitionId: $agentDefinitionId, window: $window) {
+    agentDefinitionId
+    windowDays
+    since
+    positive
+    negative
+    satisfaction
+    days {
+      day
+      positive
+      negative
+      satisfaction
+    }
+    worstRated {
+      targetType
+      targetId
+      targetPart
+      positive
+      negative
+      lastRatedAt
+      sample {
+        ...AIFeedbackTableRowFields
+      }
+    }
+  }
+}

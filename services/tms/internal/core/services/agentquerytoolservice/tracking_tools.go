@@ -101,8 +101,10 @@ func (t *getShipmentTrackingTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getShipmentTrackingTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipment
+func (t *getShipmentTrackingTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceShipment,
+	})
 }
 
 func (t *getShipmentTrackingTool) Query(
@@ -376,8 +378,10 @@ func (t *listVehiclePositionsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listVehiclePositionsTool) PermissionResource() permission.Resource {
-	return permission.ResourceTractor
+func (t *listVehiclePositionsTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceTractor,
+	})
 }
 
 func (t *listVehiclePositionsTool) Query(
@@ -509,8 +513,10 @@ func (t *getWorkerHOSTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getWorkerHOSTool) PermissionResource() permission.Resource {
-	return permission.ResourceWorker
+func (t *getWorkerHOSTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceWorker,
+	})
 }
 
 func (t *getWorkerHOSTool) Query(

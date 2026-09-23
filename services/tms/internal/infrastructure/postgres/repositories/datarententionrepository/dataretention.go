@@ -115,6 +115,7 @@ func (r *repository) Upsert(
 		existing.EDIInboundFileRetentionPeriod = entity.EDIInboundFileRetentionPeriod
 		existing.EDIMessageRetentionPeriod = entity.EDIMessageRetentionPeriod
 		existing.AgentEvalCaseRetentionPeriod = entity.AgentEvalCaseRetentionPeriod
+		existing.AIFeedbackRetentionPeriod = entity.AIFeedbackRetentionPeriod
 		return r.Update(ctx, existing)
 	}
 	if !dberror.IsNotFoundError(err) {
@@ -129,6 +130,7 @@ func (r *repository) Upsert(
 		Set("edi_inbound_file_retention_period = EXCLUDED.edi_inbound_file_retention_period").
 		Set("edi_message_retention_period = EXCLUDED.edi_message_retention_period").
 		Set(buncolgen.DataRetentionColumns.AgentEvalCaseRetentionPeriod.SetExcluded()).
+		Set(buncolgen.DataRetentionColumns.AIFeedbackRetentionPeriod.SetExcluded()).
 		Returning("*").
 		Exec(ctx); err != nil {
 		log.Error("failed to upsert data retention", zap.Error(err))

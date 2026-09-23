@@ -204,33 +204,22 @@ func (t *createShipmentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *createShipmentTool) Reversible() bool { return false }
-
-func (t *createShipmentTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipment
-}
-
-func (t *createShipmentTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-// RequiresIdempotencyKey is true because a shipment created twice is two
-// loads on the board and two invoices, and the runtime retries writes.
-func (t *createShipmentTool) RequiresIdempotencyKey() bool { return true }
-
-func (t *createShipmentTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
-}
-
-// TierLimit holds a new load at a decision whatever the agent has earned. A
-// shipment commits a customer's freight and the money that follows it, and the
-// organization decided no desk creates one unattended — the mailbox that lets
-// the intake desk answer a status question on its own does not let it book.
-func (t *createShipmentTool) TierLimit(
-	context.Context,
-	serviceports.ToolExecuteParams,
-) agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *createShipmentTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceShipment,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Idempotent:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "A new load commits a customer's freight and the money that follows, so " +
+			"no desk books one unattended.",
+	}
 }
 
 func (t *createShipmentTool) Execute(
@@ -386,20 +375,22 @@ func (t *updateShipmentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *updateShipmentTool) Reversible() bool { return true }
-
-func (t *updateShipmentTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipment
-}
-
-func (t *updateShipmentTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *updateShipmentTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *updateShipmentTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *updateShipmentTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceShipment,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "A changed shipment is sent as an EDI tender change to the trading " +
+			"partners it was tendered to.",
+	}
 }
 
 // shipmentPatch is what update_shipment may change. Pointers say "absent

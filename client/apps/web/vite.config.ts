@@ -54,6 +54,10 @@ export default defineConfig({
       "@": path.resolve(dirname, "./src"),
       "@trenova/shared": path.resolve(dirname, "../../packages/shared/src"),
     },
+    // Shared components call router hooks. A second copy of react-router resolved from
+    // packages/shared carries its own context, and every hook in it then reports that it
+    // is outside a router.
+    dedupe: ["react-router"],
   },
   optimizeDeps: {
     // @foony/realtime builds its Node-only `ws` fallback specifier at runtime

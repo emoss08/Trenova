@@ -152,8 +152,8 @@ func TestRecordStopActual_IsIrreversibleAndNeedsApproval(t *testing.T) {
 
 	tool := newRecordStopActualTool(nil)
 
-	assert.False(t, tool.Reversible())
-	assert.Equal(t, agent.TierActWithApproval, tool.DefaultAutonomyTier())
-	assert.Equal(t, permission.ResourceShipmentMove, tool.PermissionResource())
-	assert.Equal(t, permission.OpUpdate, tool.PermissionOperation())
+	assert.False(t, tool.Policy().Reversible)
+	assert.Equal(t, agent.TierActWithApproval, tool.Policy().DefaultTier)
+	assert.Equal(t, permission.ResourceShipmentMove, tool.Policy().Resource)
+	assert.Equal(t, permission.OpUpdate, tool.Policy().Operation)
 }

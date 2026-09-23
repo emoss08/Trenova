@@ -161,14 +161,14 @@ func TestEquipmentStatusTools_DeclareTheirAuthorization(t *testing.T) {
 	t.Parallel()
 
 	tractorTool := newUpdateTractorStatusTool(&fakeTractorStatusUpdater{})
-	assert.Equal(t, permission.ResourceTractor, tractorTool.PermissionResource())
-	assert.Equal(t, permission.OpUpdate, tractorTool.PermissionOperation())
-	assert.True(t, tractorTool.Reversible())
+	assert.Equal(t, permission.ResourceTractor, tractorTool.Policy().Resource)
+	assert.Equal(t, permission.OpUpdate, tractorTool.Policy().Operation)
+	assert.True(t, tractorTool.Policy().Reversible)
 
 	trailerTool := newUpdateTrailerStatusTool(&fakeTrailerStatusUpdater{})
-	assert.Equal(t, permission.ResourceTrailer, trailerTool.PermissionResource())
-	assert.Equal(t, permission.OpUpdate, trailerTool.PermissionOperation())
-	assert.True(t, trailerTool.Reversible())
+	assert.Equal(t, permission.ResourceTrailer, trailerTool.Policy().Resource)
+	assert.Equal(t, permission.OpUpdate, trailerTool.Policy().Operation)
+	assert.True(t, trailerTool.Policy().Reversible)
 }
 
 // Every status the schema offers has to be one the parser accepts, or the model

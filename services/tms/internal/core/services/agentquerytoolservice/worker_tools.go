@@ -46,8 +46,10 @@ func (t *getWorkerTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getWorkerTool) PermissionResource() permission.Resource {
-	return permission.ResourceWorker
+func (t *getWorkerTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceWorker,
+	})
 }
 
 func (t *getWorkerTool) Query(
@@ -224,8 +226,10 @@ func (t *searchWorkerTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *searchWorkerTool) PermissionResource() permission.Resource {
-	return permission.ResourceWorker
+func (t *searchWorkerTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceWorker,
+	})
 }
 
 func (t *searchWorkerTool) Query(

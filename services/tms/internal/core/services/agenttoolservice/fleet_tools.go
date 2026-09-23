@@ -64,20 +64,21 @@ func (t *updateTractorStatusTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *updateTractorStatusTool) Reversible() bool { return true }
-
-func (t *updateTractorStatusTool) PermissionResource() permission.Resource {
-	return permission.ResourceTractor
-}
-
-func (t *updateTractorStatusTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *updateTractorStatusTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *updateTractorStatusTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *updateTractorStatusTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceTractor,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Changes a tractor's status inside Trenova.",
+	}
 }
 
 func (t *updateTractorStatusTool) Execute(
@@ -125,20 +126,21 @@ func (t *updateTrailerStatusTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *updateTrailerStatusTool) Reversible() bool { return true }
-
-func (t *updateTrailerStatusTool) PermissionResource() permission.Resource {
-	return permission.ResourceTrailer
-}
-
-func (t *updateTrailerStatusTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *updateTrailerStatusTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *updateTrailerStatusTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *updateTrailerStatusTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceTrailer,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Changes a trailer's status inside Trenova.",
+	}
 }
 
 func (t *updateTrailerStatusTool) Execute(

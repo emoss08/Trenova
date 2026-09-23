@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -75,11 +76,13 @@ func (t *getMyHomeLayoutTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getMyHomeLayoutTool) PermissionResource() permission.Resource {
-	return permission.ResourceHomeLayoutPreset
+func (t *getMyHomeLayoutTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource:  permission.ResourceHomeLayoutPreset,
+		scope:     agent.ToolScopeSelf,
+		rationale: "Reads the caller's own home page; nothing changes and nothing is sent.",
+	})
 }
-
-func (t *getMyHomeLayoutTool) SelfScoped() bool { return true }
 
 func (t *getMyHomeLayoutTool) SearchTerms() []string { return homelayout.SpokenNames() }
 
@@ -206,11 +209,14 @@ func (t *listHomeWidgetsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listHomeWidgetsTool) PermissionResource() permission.Resource {
-	return permission.ResourceHomeLayoutPreset
+func (t *listHomeWidgetsTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceHomeLayoutPreset,
+		scope:    agent.ToolScopeSelf,
+		rationale: "Lists the widgets the caller's home page can show; nothing changes and " +
+			"nothing is sent.",
+	})
 }
-
-func (t *listHomeWidgetsTool) SelfScoped() bool { return true }
 
 func (t *listHomeWidgetsTool) SearchTerms() []string { return homelayout.SpokenNames() }
 

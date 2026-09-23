@@ -32,7 +32,8 @@ func guardExecute(tool serviceports.AgentTool, params serviceports.ToolExecutePa
 		return ErrMissingActor
 	}
 
-	if params.Actor.IsAgent() && tool.PermissionOperation() == permission.OpApprove {
+	policy := tool.Policy()
+	if params.Actor.IsAgent() && policy.Operation == permission.OpApprove {
 		return ErrAgentCannotApprove
 	}
 
@@ -41,7 +42,7 @@ func guardExecute(tool serviceports.AgentTool, params serviceports.ToolExecutePa
 		return ErrTenantMismatch
 	}
 
-	if tool.RequiresIdempotencyKey() && strings.TrimSpace(params.IdempotencyKey) == "" {
+	if policy.Idempotent && strings.TrimSpace(params.IdempotencyKey) == "" {
 		return ErrMissingIdempotencyKey
 	}
 

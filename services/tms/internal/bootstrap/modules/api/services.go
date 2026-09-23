@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentsubjectservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttrustservice"
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
+	"github.com/emoss08/trenova/internal/core/services/aifeedbackservice"
 	"github.com/emoss08/trenova/internal/core/services/aiproviderservice"
 	"github.com/emoss08/trenova/internal/core/services/aiusageservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
@@ -326,6 +327,9 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentplanservice.New,
 	agentmemoryservice.NewLabeler,
 	agentmemoryservice.New,
+	aifeedbackservice.New,
+	aifeedbackservice.AsService,
+	aifeedbackservice.AsMaintenance,
 	agentbudgetservice.New,
 	agentevaluationservice.New,
 	agentevalcaseservice.New,

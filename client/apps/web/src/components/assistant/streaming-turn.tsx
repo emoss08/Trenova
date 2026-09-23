@@ -1,6 +1,7 @@
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
+import { cn } from "@trenova/shared/lib/utils";
 import { formatWorkDuration } from "@/lib/ai-usage-format";
 import { EASE_SETTLE } from "@/lib/motion";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
@@ -22,7 +23,8 @@ import { ReportRunCard } from "./report-run-card";
 import { reportRunsFromSteps } from "./report-runs";
 import { ToolActivity } from "./tool-activity";
 import { isTurnActive, type TurnState } from "./turn-stream";
-import { WorkingDot } from "./voice/working-dot";
+import { thinkingPose } from "./voice/desk-pose";
+import { DeskThinking, useThinkingPresence } from "./voice/desk-thinking";
 
 /**
  * The turn in progress, rendered straight from its state.
@@ -103,7 +105,7 @@ export function StreamingTurn({
           {asks.map((ask) => (
             <ChoicePrompt key={ask.callId} request={ask} answered={false} onAnswer={onAnswer} />
           ))}
-          {active && <WorkingLine turn={turn} steps={steps} />}
+          <WorkingLine turn={turn} steps={steps} active={active} opening={!hasBody} />
         </AssistantTurn>
       )}
 
@@ -139,12 +141,66 @@ export function StreamingTurn({
  * The words change only when the work does — a step starting, a step
  * finishing, the model turning to write — and each change rises into place
  * while the last one lifts away, so the line moves because something
- * happened and at no other time. The dot is the one loop the product allows,
- * and it stops the moment the reply does.
+ * happened and at no other time. The desk beside them is the one loop the
+ * product allows, and its pose follows the same moment: someone sitting down
+ * to it while the model thinks, a busy shake while a tool runs, the screen
+ * pulsing while the answer arrives.
+ *
+ * Before the first word or step there is nothing above the line to read, so
+ * the desk is drawn large and the line is the whole of the reply. When the
+ * turn ends the words go at once and the desk settles for a beat, then the
+ * line is gone.
  */
-function WorkingLine({ turn, steps }: { turn: TurnState; steps: ToolStep[] }) {
+function WorkingLine({
+  turn,
+  steps,
+  active,
+  opening,
+}: {
+  turn: TurnState;
+  steps: ToolStep[];
+  active: boolean;
+  /** Nothing has arrived yet; the desk is drawn at its larger size. */
+  opening: boolean;
+}) {
+  const reduceMotion = useReducedMotion() ?? false;
+  const presence = useThinkingPresence(active, !reduceMotion);
+  // A turn that has ended is drawn by the desk's own settle, not by a pose.
+  const pose = thinkingPose(turn, steps);
+
+  if (presence === "gone") {
+    return null;
+  }
+
+  return (
+    <div
+      className={cn(
+        "text-foreground-muted flex min-w-0 items-center gap-2 text-xs",
+        opening ? "h-10" : "h-6",
+      )}
+    >
+      <DeskThinking
+        working={active}
+        pose={pose === "settle" ? "arrive" : pose}
+        size={opening ? "lg" : "inline"}
+        className={opening ? "-ml-0.5" : "mx-0.5"}
+      />
+      {active && <WorkingWords turn={turn} steps={steps} reduceMotion={reduceMotion} />}
+    </div>
+  );
+}
+
+/** The sentence and the tally, announced politely as the sentence changes. */
+function WorkingWords({
+  turn,
+  steps,
+  reduceMotion,
+}: {
+  turn: TurnState;
+  steps: ToolStep[];
+  reduceMotion: boolean;
+}) {
   const t = useT();
-  const reduceMotion = useReducedMotion();
   const now = useNowSeconds(1000);
   const elapsed = Math.max(0, now - Math.floor(turn.startedAt / 1000));
   const label = workingLabel(turn, steps, t);
@@ -152,13 +208,8 @@ function WorkingLine({ turn, steps }: { turn: TurnState; steps: ToolStep[] }) {
   const travel = reduceMotion ? 0 : 6;
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="text-foreground-muted flex h-6 min-w-0 items-center gap-2 text-xs"
-    >
-      <WorkingDot working className="mx-0.75" />
-      <span className="relative flex min-w-0 flex-1 overflow-hidden">
+    <>
+      <span aria-live="polite" className="relative flex min-w-0 flex-1 overflow-hidden">
         <AnimatePresence mode="popLayout" initial={false}>
           <m.span
             key={label}
@@ -177,7 +228,7 @@ function WorkingLine({ turn, steps }: { turn: TurnState; steps: ToolStep[] }) {
           ? `${t("{0, plural, one {# step} other {# steps}}", taken)} · ${formatWorkDuration(elapsed)}`
           : formatWorkDuration(elapsed)}
       </span>
-    </div>
+    </>
   );
 }
 
