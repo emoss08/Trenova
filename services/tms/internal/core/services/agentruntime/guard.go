@@ -3,6 +3,7 @@ package agentruntime
 import (
 	"context"
 
+	"github.com/bytedance/sonic"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"go.uber.org/zap"
 )
@@ -132,6 +133,9 @@ func (s *Service) guardedDispatch(
 		Failed:  outcome.failed,
 		Action:  outcome.action,
 	}
+	if !outcome.failed && showsResults(req) {
+		step.Outcome.Data = stepData(outcome.data)
+	}
 	// The settle rides a context that cancellation cannot reach. The failures
 	// this ledger exists for — an activity timing out, a person pressing Stop —
 	// all cancel the turn's context, and a settle that honoured the
@@ -154,6 +158,10 @@ func (s *Service) guardedDispatch(
 // must not be re-pinned: the pin records the record as it stood when the
 // change was proposed, and taking it again now would silently approve a
 // proposal against a shipment that has moved on since.
+//
+// The result comes back too, when it was kept, so what the original call
+// showed beside the conversation is shown again rather than lost with the
+// attempt that made it.
 func replayedOutcome(recorded serviceports.RunStepOutcome) toolOutcome {
 	content := recorded.Content
 	if content == "" {
@@ -161,7 +169,45 @@ func replayedOutcome(recorded serviceports.RunStepOutcome) toolOutcome {
 			"Its answer was not kept, but it was not run again."
 	}
 
-	return toolOutcome{content: content, failed: recorded.Failed, action: recorded.Action}
+	outcome := toolOutcome{content: content, failed: recorded.Failed, action: recorded.Action}
+	// A nil map in an interface is not a nil interface, and an observer
+	// reading one would take the call for a query that returned something.
+	if len(recorded.Data) > 0 {
+		outcome.data = recorded.Data
+	}
+
+	return outcome
+}
+
+// maxStoredStepDataBytes bounds the result a step keeps for showing again.
+// It matches the bound on the answer the model is told: a result past it is
+// not kept at all, because a table missing its tail would read as complete.
+const maxStoredStepDataBytes = 64 * 1024
+
+// showsResults reports whether anything beside the run shows what its tools
+// return. Only a conversation does, and only there is a result worth keeping.
+func showsResults(req *serviceports.RunRequest) bool {
+	return req.ToolObserver != nil || !req.ThreadID.IsNil()
+}
+
+// stepData is a query's result in the JSON form the artifacts are built from,
+// or nil when there is none, it is not an object, or it is too large to keep.
+func stepData(data any) map[string]any {
+	if data == nil {
+		return nil
+	}
+
+	encoded, err := sonic.Marshal(data)
+	if err != nil || len(encoded) > maxStoredStepDataBytes {
+		return nil
+	}
+
+	var decoded map[string]any
+	if err = sonic.Unmarshal(encoded, &decoded); err != nil || len(decoded) == 0 {
+		return nil
+	}
+
+	return decoded
 }
 
 // unknownOutcome is what the model is told about a step an earlier attempt

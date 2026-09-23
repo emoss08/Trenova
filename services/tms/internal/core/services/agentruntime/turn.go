@@ -19,12 +19,18 @@ import (
 // Everything a Turn does outside itself goes through TurnEffects, so the loop
 // never reads a clock, a database or the network, which is what lets it replay.
 type Turn struct {
-	s         *Service
-	req       *serviceports.RunRequest
-	budget    int
-	system    string
-	messages  []serviceports.Message
-	tools     *toolSet
+	s        *Service
+	req      *serviceports.RunRequest
+	budget   int
+	system   string
+	messages []serviceports.Message
+	tools    *toolSet
+	// held is every tool the agent holds, taken when the turn opened. The
+	// loop decides from it whether a call is dispatched or refused, and in
+	// workflow code that decision has to replay the same way: working it out
+	// again from the catalog would give a different answer to a replay run
+	// by a release whose catalog or core tools changed.
+	held      []string
 	repeats   *repeatGuard
 	counts    *ordinals
 	questions map[string]struct{}
@@ -119,14 +125,20 @@ func (t *Turn) Request() *serviceports.RunRequest { return t.req }
 // Definition is the agent the turn runs as.
 func (t *Turn) Definition() *agentdefinition.Definition { return t.req.Definition }
 
+// holds reports whether the agent held a tool when the turn opened.
+func (t *Turn) holds(name string) bool { return slices.Contains(t.held, name) }
+
 // TurnState is a Turn as data, for handing a turn built in one place to a loop
 // running in another: built by an activity, which may read permissions and
 // history, and driven by workflow code, which may not.
 type TurnState struct {
-	Budget    int                    `json:"budget"`
-	System    string                 `json:"system"`
-	Messages  []serviceports.Message `json:"messages"`
-	Tools     ToolSetState           `json:"tools"`
+	Budget   int                    `json:"budget"`
+	System   string                 `json:"system"`
+	Messages []serviceports.Message `json:"messages"`
+	Tools    ToolSetState           `json:"tools"`
+	// Held is every tool the agent holds, as the turn opened. A state from
+	// before it was kept has none, and the turn works it out again.
+	Held      []string               `json:"held,omitempty"`
 	Failures  map[string]string      `json:"failures,omitempty"`
 	Ordinals  map[string]int         `json:"ordinals,omitempty"`
 	Questions []string               `json:"questions,omitempty"`
@@ -156,6 +168,7 @@ func (t *Turn) State() TurnState {
 		System:    t.system,
 		Messages:  t.messages,
 		Tools:     t.tools.state(),
+		Held:      slices.Clone(t.held),
 		Failures:  maps.Clone(t.repeats.failures),
 		Ordinals:  maps.Clone(t.counts.seen),
 		Questions: questions,
@@ -198,6 +211,12 @@ func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Tu
 	if seen == nil {
 		seen = make(map[string]int, 4)
 	}
+	// Every agent holds the core tools, so an empty set is a state written
+	// before the set was kept, and the turn is decided the way it was then.
+	held := state.Held
+	if len(held) == 0 {
+		held = s.heldTools(req.Definition)
+	}
 
 	return &Turn{
 		s:         s,
@@ -206,6 +225,7 @@ func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Tu
 		system:    state.System,
 		messages:  state.Messages,
 		tools:     restoreToolSet(state.Tools),
+		held:      held,
 		repeats:   &repeatGuard{failures: failures},
 		counts:    &ordinals{seen: seen},
 		questions: questions,
@@ -254,8 +274,10 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		runtimeContext.Tools = s.ToolSummaries(definition)
 	}
 
+	held := s.heldTools(definition)
 	tools := s.newToolSet(ctx, toolSetRequest{
 		definition: definition,
+		held:       held,
 		actor:      req.Actor,
 		input:      req.Input,
 		history:    req.History,
@@ -285,6 +307,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		system:    definition.BuildSystemPrompt(runtimeContext),
 		messages:  messages,
 		tools:     tools,
+		held:      held,
 		repeats:   repeats,
 		counts:    counts,
 		questions: askedQuestions(req.History),

@@ -107,6 +107,7 @@ func TestOpenAIChatAdapter_StreamsTextThenAssemblesToolCallFragments(t *testing.
 	assert.Equal(t, "Looking.", resp.Text)
 	require.Len(t, resp.ToolCalls, 1)
 	assert.Equal(t, "call_1", resp.ToolCalls[0].ID)
+	assert.False(t, resp.ToolCalls[0].SynthesizedID, "the provider's own id is its own")
 	assert.Equal(t, "lookup_shipment", resp.ToolCalls[0].Name)
 	assert.Equal(t, "S1", resp.ToolCalls[0].Arguments["number"])
 	assert.Equal(t, 7, resp.InputTokens)
@@ -291,9 +292,43 @@ func TestOllamaAdapter_StreamsNDJSONAndCollectsToolCalls(t *testing.T) {
 	require.Len(t, resp.ToolCalls, 1)
 	assert.Equal(t, "lookup_shipment", resp.ToolCalls[0].Name)
 	assert.Equal(t, "S7", resp.ToolCalls[0].Arguments["number"])
+	assert.True(t, resp.ToolCalls[0].SynthesizedID,
+		"the protocol gives no id, so the positional one is marked as made up")
 	assert.Equal(t, 11, resp.InputTokens)
 	assert.Equal(t, 6, resp.OutputTokens)
 	assert.Equal(t, true, (*captured)["stream"])
+}
+
+/*
+A streamed call the provider gave no id is numbered by its position, so the
+first call of every response is call_0. It is marked as made up, so the loop
+gives it an id of its own rather than letting call_0 of one turn overwrite the
+artifacts and pairing of call_0 of another.
+*/
+func TestOpenAIChatAdapter_MarksAPositionalIDAsSynthesized(t *testing.T) {
+	t.Parallel()
+
+	server, _ := streamServer(t, "text/event-stream", sse(
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"type":"function","function":{"name":"lookup_shipment","arguments":"{\"number\":\"S1\"}"}}]},"finish_reason":null}]}`,
+		},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}`,
+		},
+		[2]string{"", `[DONE]`},
+	))
+
+	resp, _ := streamWith(t, NewOpenAIChatAdapter(), callFor(
+		aiprovider.KindOpenAIChat, server.URL,
+		&Request{Messages: UserMessage("Where is S1?"), Tools: lookupTool()},
+	))
+
+	require.Len(t, resp.ToolCalls, 1)
+	assert.Equal(t, "call_0", resp.ToolCalls[0].ID)
+	assert.True(t, resp.ToolCalls[0].SynthesizedID)
+	assert.Equal(t, "S1", resp.ToolCalls[0].Arguments["number"])
 }
 
 // A stream that fails before the first byte is an ordinary transport failure

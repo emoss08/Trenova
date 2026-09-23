@@ -374,4 +374,72 @@ func TestRun_ARetriedAttemptDoesNotMakeTheSameWriteTwice(t *testing.T) {
 	assert.Equal(t, 1, action.Calls, "the second attempt replays the first attempt's write")
 }
 
+/*
+A step an earlier attempt already ran is shown again beside the conversation.
+
+The replay handed back what the model had been told and nothing else, so the
+observer was given no result, built no artifact, and the table or card the
+original call had put in the pane was missing from the reply that followed.
+*/
+func TestRun_AReplayedStepShowsWhatTheOriginalCallShowed(t *testing.T) {
+	t.Parallel()
+
+	ledger := newKeyedLedger()
+	search := queryTool("search_worker", map[string]any{
+		"results": []any{map[string]any{"name": "Maria Ortiz"}},
+	}, nil)
+	runID := pulid.MustNew("ar_")
+	threadID := pulid.MustNew("th_")
+
+	shown := make([]any, 0, 2)
+	for attempt := 1; attempt <= 2; attempt++ {
+		completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+			toolTurn("search_worker", map[string]any{"query": "Maria"}),
+			textTurn("Maria Ortiz."),
+		}}
+		rt := newRuntime(completion,
+			&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{search}},
+			&stubActionRegistry{}, nil)
+
+		_, err := rt.Run(t.Context(), &serviceports.RunRequest{
+			Definition: testDefinition("search_worker"),
+			Actor:      testActor(),
+			Input:      "Who is Maria?",
+			RunID:      runID,
+			ThreadID:   threadID,
+			Steps:      ledger,
+			StepOwner:  serviceports.RunStepOwner{Kind: serviceports.RunStepOwnerAgentRun, ID: runID},
+			Attempt:    attempt,
+			ToolObserver: func(
+				observation serviceports.ToolObservation,
+			) (*serviceports.ShownArtifact, error) {
+				shown = append(shown, observation.Data)
+				return nil, nil
+			},
+		})
+		require.NoError(t, err)
+	}
+
+	assert.Equal(t, 1, search.Calls, "the second attempt replays the first attempt's call")
+	require.Len(t, shown, 2)
+	require.NotNil(t, shown[1], "the replayed call is shown its result")
+	replayed, ok := shown[1].(map[string]any)
+	require.True(t, ok)
+	results, ok := replayed["results"].([]any)
+	require.True(t, ok)
+	require.Len(t, results, 1)
+	assert.Equal(t, "Maria Ortiz", results[0].(map[string]any)["name"])
+}
+
+func TestStepData_KeepsOnlyAnObjectSmallEnoughToShowAgain(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, stepData(nil))
+	assert.Nil(t, stepData([]any{"a"}), "a bare list builds no artifact")
+	assert.Nil(t, stepData(map[string]any{"cycle": make(chan int)}))
+	assert.Nil(t, stepData(map[string]any{"blob": string(make([]byte, maxStoredStepDataBytes))}),
+		"a result past the bound is dropped, not truncated")
+	assert.Equal(t, map[string]any{"count": float64(2)}, stepData(map[string]any{"count": 2}))
+}
+
 var _ serviceports.RunStepLedger = (*keyedLedger)(nil)

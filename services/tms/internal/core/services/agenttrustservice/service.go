@@ -19,15 +19,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -55,7 +58,10 @@ type actionLogger interface {
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
+	Logger *zap.Logger
+	// DB holds a tier change and the ledger's record of it in one
+	// transaction, so neither lands without the other.
+	DB           ports.DBConnection
 	Trust        repositories.AgentToolTrustRepository
 	Definitions  repositories.AgentDefinitionRepository
 	Controls     repositories.AgentControlRepository
@@ -69,6 +75,7 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
+	db            ports.DBConnection
 	trust         repositories.AgentToolTrustRepository
 	definitions   repositories.AgentDefinitionRepository
 	controls      repositories.AgentControlRepository
@@ -81,6 +88,7 @@ type Service struct {
 func New(p Params) services.AgentTrustService {
 	svc := &Service{
 		l:           p.Logger.Named("service.agenttrust"),
+		db:          p.DB,
 		trust:       p.Trust,
 		definitions: p.Definitions,
 		controls:    p.Controls,
@@ -232,17 +240,9 @@ func (s *Service) promote(
 		return nil
 	}
 
-	if err := s.setTier(ctx, change, next); err != nil {
+	moved, err := s.moveTier(ctx, change, next, true)
+	if err != nil || !moved {
 		return err
-	}
-	if _, err := s.trust.MarkTierChange(ctx, repositories.MarkToolTierChangeRequest{
-		ID:         change.row.ID,
-		TenantInfo: change.tenant,
-		EarnedTier: next,
-		Promoted:   true,
-		At:         change.at,
-	}); err != nil {
-		return fmt.Errorf("mark tool promotion: %w", err)
 	}
 
 	s.l.Info("agent tool promoted on a clean streak",
@@ -279,16 +279,9 @@ func (s *Service) demote(ctx context.Context, change tierChange) error {
 		return nil
 	}
 
-	if err := s.setTier(ctx, change, previous); err != nil {
+	moved, err := s.moveTier(ctx, change, previous, false)
+	if err != nil || !moved {
 		return err
-	}
-	if _, err := s.trust.MarkTierChange(ctx, repositories.MarkToolTierChangeRequest{
-		ID:         change.row.ID,
-		TenantInfo: change.tenant,
-		Promoted:   false,
-		At:         change.at,
-	}); err != nil {
-		return fmt.Errorf("mark tool demotion: %w", err)
 	}
 
 	s.l.Warn("agent tool demoted after a setback",
@@ -316,6 +309,62 @@ func (s *Service) demote(ctx context.Context, change tierChange) error {
 	})
 
 	return nil
+}
+
+// moveTier sets the tool's tier on the agent and records on the ledger row
+// that trust moved it, in one transaction. It reports false, with nothing
+// changed, when the row has moved on since the change was decided from it.
+//
+// The ledger row is written first and conditioned on the version the decision
+// read. Two approvals landing at once both used to read a streak past the
+// threshold and both promote, one tier each; a rejection recorded between the
+// read and the write was promoted over. Now only the decision that recorded
+// the row's latest state can move the tier, and it holds the row's lock until
+// the agent's tier is written, so the next decision reads the settled streak.
+func (s *Service) moveTier(
+	ctx context.Context,
+	change tierChange,
+	to agent.AutonomyTier,
+	promoted bool,
+) (bool, error) {
+	mark := repositories.MarkToolTierChangeRequest{
+		ID:         change.row.ID,
+		TenantInfo: change.tenant,
+		Version:    change.row.Version,
+		Promoted:   promoted,
+		At:         change.at,
+	}
+	label := "demotion"
+	if promoted {
+		mark.EarnedTier = to
+		label = "promotion"
+	}
+
+	moved := true
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if _, err := s.trust.MarkTierChange(txCtx, mark); err != nil {
+			if errortypes.IsVersionMismatchError(err) {
+				moved = false
+				return nil
+			}
+
+			return fmt.Errorf("mark tool %s: %w", label, err)
+		}
+
+		return s.setTier(txCtx, change, to)
+	})
+	if err != nil {
+		return false, err
+	}
+	if !moved {
+		s.l.Debug("a later decision moved the ledger on; leaving the tier to it",
+			zap.String("agent", change.definition.ID.String()),
+			zap.String("tool", change.row.ToolName),
+			zap.String("change", label),
+		)
+	}
+
+	return moved, nil
 }
 
 func (s *Service) setTier(ctx context.Context, change tierChange, tier agent.AutonomyTier) error {

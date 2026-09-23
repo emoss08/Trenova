@@ -197,16 +197,20 @@ func executedWhen(outcome serviceports.ProposalOutcome) string {
 
 // pendingDuplicate reports whether an identical write is already waiting
 // on the person, either from an earlier turn or from earlier in this one.
+//
+// Arguments that cannot be encoded are never a duplicate of anything. Two
+// such sets both encode to nothing, and comparing those nothings dropped a
+// second, different proposal as a copy of the first.
 func pendingDuplicate(
 	call serviceports.ToolCall,
 	earlier []serviceports.ProposalOutcome,
 	thisTurn []serviceports.PendingAction,
 ) bool {
 	key := argumentsKey(call.Arguments)
+	if key == "" {
+		return false
+	}
 	for _, outcome := range earlier {
-		if key == "" {
-			return false
-		}
 		if outcome.Pending() && outcome.ToolName == call.Name &&
 			argumentsKey(outcome.ToolParams) == key {
 			return true

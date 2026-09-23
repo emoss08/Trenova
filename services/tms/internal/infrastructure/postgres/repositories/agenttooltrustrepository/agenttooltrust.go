@@ -134,6 +134,9 @@ func (r *repository) ListByDefinition(
 	return rows, nil
 }
 
+// MarkTierChange moves the row's earned tier, conditioned on its version, so
+// a decision recorded after the one that asked for the change wins the race
+// and the stale one is told the row moved on.
 func (r *repository) MarkTierChange(
 	ctx context.Context,
 	req repositories.MarkToolTierChangeRequest,
@@ -144,7 +147,8 @@ func (r *repository) MarkTierChange(
 		Model((*agent.ToolTrust)(nil)).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return buncolgen.ToolTrustScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.ID)
+				Where(cols.ID.Eq(), req.ID).
+				Where(cols.Version.Eq(), req.Version)
 		}).
 		Set(cols.Streak.Set(), 0).
 		Set(cols.UpdatedAt.Set(), req.At).

@@ -135,7 +135,12 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 		result.ProviderID = completion.ProviderID
 		tagReasoning(completion)
 		tagToolCalls(completion)
-		distinctCallIDs(completion, t.callIDs, fx.NewCallID)
+		distinctCallIDs(completion, t.callIDs, callIDMinter{
+			mint: fx.NewCallID,
+			renewSynthesized: func() bool {
+				return fx.Supports(changeFreshSynthesizedCallIDs)
+			},
+		})
 
 		if len(completion.ToolCalls) == 0 {
 			// A turn that ends in silence reads as a hung screen. One that
@@ -275,7 +280,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				continue
 			}
 
-			if !s.holds(definition, call.Name) {
+			if !t.holds(call.Name) {
 				outcome := failedOutcome("%s", s.unheldRefusal(tools, call.Name))
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
@@ -624,25 +629,49 @@ func usedCallIDs(history []conversation.Message) map[string]struct{} {
 	return used
 }
 
+// changeFreshSynthesizedCallIDs is the loop giving every call whose id the
+// adapter made up an id of its own, not only one the conversation already
+// holds.
+const changeFreshSynthesizedCallIDs = "agent-loop-fresh-synthesized-call-ids"
+
+// callIDMinter is how distinctCallIDs comes by a new id. mint makes one: the
+// turn's effects supply it, because a fresh id is random and workflow code may
+// not be. renewSynthesized reports whether an id the adapter made up is
+// replaced even when nothing else in the conversation holds it; it is asked
+// only when a completion carries one, so a turn that never meets one records
+// no change marker.
+type callIDMinter struct {
+	mint             func() string
+	renewSynthesized func() bool
+}
+
 // distinctCallIDs gives every call in a completion an id no other call in the
-// conversation has. newID mints one: the turn's effects supply it, because a
-// fresh id is random and workflow code may not be.
+// conversation has.
 //
 // Providers that return no id get one synthesized from the call's position,
 // call_0 in every completion, so the same id named a different call on every
 // turn. The artifacts a call produces are keyed on it, the transcript pairs
 // results with calls by it, and a provider handed a history with two calls
-// under one id pairs the wrong result with the wrong call. A provider's own
-// unique ids are kept as they are.
+// under one id pairs the wrong result with the wrong call. Checking the id
+// against the conversation is not enough: the conversation the turn replays
+// is only its most recent messages, and an artifact keyed on a call_0 from
+// before them was overwritten by the next call_0. So a synthesized id is
+// always replaced. A provider's own unique ids are kept as they are.
 func distinctCallIDs(
 	completion *serviceports.ChatCompletionResult,
 	used map[string]struct{},
-	newID func() string,
+	minter callIDMinter,
 ) {
+	decided, renew := false, false
 	for idx := range completion.ToolCalls {
 		call := &completion.ToolCalls[idx]
-		if _, taken := used[call.ID]; call.ID == "" || taken {
-			call.ID = newID()
+		if call.SynthesizedID && !decided {
+			decided, renew = true, minter.renewSynthesized()
+		}
+		_, taken := used[call.ID]
+		if call.ID == "" || taken || (call.SynthesizedID && renew) {
+			call.ID = minter.mint()
+			call.SynthesizedID = false
 		}
 		used[call.ID] = struct{}{}
 	}

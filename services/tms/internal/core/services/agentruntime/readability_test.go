@@ -162,7 +162,10 @@ func TestDistinctCallIDs_ReplacesAnIDTheConversationAlreadyUsed(t *testing.T) {
 		{ID: "toolu_unique", Name: "get_tractor"},
 	}}
 
-	distinctCallIDs(completion, used, NewCallID)
+	distinctCallIDs(completion, used, callIDMinter{
+		mint:             NewCallID,
+		renewSynthesized: func() bool { return true },
+	})
 
 	ids := make(map[string]struct{}, len(completion.ToolCalls))
 	for _, call := range completion.ToolCalls {
@@ -172,4 +175,121 @@ func TestDistinctCallIDs_ReplacesAnIDTheConversationAlreadyUsed(t *testing.T) {
 	}
 	assert.Len(t, ids, 4, "every call has its own id")
 	assert.Equal(t, "toolu_unique", completion.ToolCalls[2].ID, "a provider's own id is kept")
+}
+
+/*
+An id the adapter made up is replaced even when the conversation does not hold
+it.
+
+The conversation a turn replays is only its most recent messages, so a call_0
+from before them was not among the ids checked, and the next call_0 overwrote
+the artifact that older call had produced. An execution that started before
+the change keeps the ids it was given, so its history still replays.
+*/
+func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
+	t.Parallel()
+
+	completion := func() *serviceports.ChatCompletionResult {
+		return &serviceports.ChatCompletionResult{ToolCalls: []serviceports.ToolCall{
+			{ID: "ollama_call_0_get_shipment", SynthesizedID: true, Name: "get_shipment"},
+			{ID: "ollama_call_1_get_customer", SynthesizedID: true, Name: "get_customer"},
+			{ID: "toolu_unique", Name: "get_worker"},
+		}}
+	}
+
+	asked := 0
+	minted := 0
+	current := completion()
+	distinctCallIDs(current, map[string]struct{}{}, callIDMinter{
+		mint: func() string {
+			minted++
+			return NewCallID()
+		},
+		renewSynthesized: func() bool {
+			asked++
+			return true
+		},
+	})
+
+	assert.Equal(t, 1, asked, "the change is asked about once per completion")
+	assert.Equal(t, 2, minted)
+	assert.NotEqual(t, "ollama_call_0_get_shipment", current.ToolCalls[0].ID)
+	assert.NotEqual(t, "ollama_call_1_get_customer", current.ToolCalls[1].ID)
+	assert.False(t, current.ToolCalls[0].SynthesizedID, "a minted id is the loop's own")
+	assert.Equal(t, "toolu_unique", current.ToolCalls[2].ID, "a provider's own id is kept")
+
+	before := completion()
+	distinctCallIDs(before, map[string]struct{}{}, callIDMinter{
+		mint: func() string {
+			t.Fatal("an execution from before the change mints nothing new here")
+			return ""
+		},
+		renewSynthesized: func() bool { return false },
+	})
+	assert.Equal(t, "ollama_call_0_get_shipment", before.ToolCalls[0].ID)
+
+	plain := &serviceports.ChatCompletionResult{ToolCalls: []serviceports.ToolCall{
+		{ID: "toolu_1", Name: "get_worker"},
+	}}
+	distinctCallIDs(plain, map[string]struct{}{}, callIDMinter{
+		mint: NewCallID,
+		renewSynthesized: func() bool {
+			t.Fatal("a completion with no synthesized id records no change marker")
+			return false
+		},
+	})
+	assert.Equal(t, "toolu_1", plain.ToolCalls[0].ID)
+}
+
+/*
+Two turns of a provider that gives no ids both start at call 0. Each call is
+still its own in the transcript, and in what its artifacts are keyed on.
+*/
+func TestRun_GivesSynthesizedCallIDsOfEachTurnTheirOwnID(t *testing.T) {
+	t.Parallel()
+
+	synthesized := func() *serviceports.ChatCompletionResult {
+		return &serviceports.ChatCompletionResult{
+			ToolCalls: []serviceports.ToolCall{{
+				ID:            "ollama_call_0_search_worker",
+				SynthesizedID: true,
+				Name:          "search_worker",
+				Arguments:     map[string]any{"query": "Maria"},
+			}},
+			ModelIdentifier: "test-model",
+		}
+	}
+	tool := queryTool("search_worker", map[string]any{"results": []any{}}, nil)
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		synthesized(),
+		synthesized(),
+		textTurn("Nobody by that name."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []serviceports.AgentQueryTool{tool}},
+		&stubActionRegistry{}, nil)
+
+	var observed []string
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("search_worker"),
+		Actor:      testActor(),
+		Input:      "Who is Maria?",
+		ToolObserver: func(observation serviceports.ToolObservation) (*serviceports.ShownArtifact, error) {
+			observed = append(observed, observation.Call.ID)
+			return nil, nil
+		},
+	})
+	require.NoError(t, err)
+
+	require.Len(t, observed, 2)
+	assert.NotEqual(t, observed[0], observed[1], "each call is keyed on an id of its own")
+	for _, id := range observed {
+		assert.NotContains(t, id, "ollama_call_", "a made-up id never reaches what keys on it")
+	}
+	pairs := map[string]int{}
+	for _, message := range result.Messages {
+		if message.ToolCallID != "" {
+			pairs[message.ToolCallID]++
+		}
+	}
+	assert.Len(t, pairs, 2, "each result pairs with its own call")
 }

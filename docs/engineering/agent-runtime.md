@@ -64,8 +64,15 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   `plan_dispatch` run on the heavy queue whichever queue called them.
 - `find_tools` and `publish_artifact` are activities of their own. Call ids
   are minted through `workflow.SideEffect`, so a replay reads back the same id.
+  An id an adapter made up from the call's position (Ollama, and an
+  OpenAI-compatible stream that sends none) is marked `SynthesizedID` and
+  always replaced: `call_0` of one completion would otherwise name the same
+  artifact as `call_0` of an earlier one that has left the replayed history.
 - Anything that reads a clock or the database happens in an activity. The
-  workflow holds only the turn and what its activities returned.
+  workflow holds only the turn and what its activities returned. That includes
+  the tools the agent holds: `TurnState.Held` is taken when the turn opens, and
+  the loop decides dispatch or refusal from it rather than from the catalog,
+  which a later release may have changed.
 
 A failure retries only the call that failed, and a lost worker's turn resumes
 from its last completed step.
@@ -330,6 +337,7 @@ before the change:
 | `daily-briefing-per-organization` | `writeInOneActivity` | `WriteDueBriefingsActivity` |
 | `agent-loop-final-answer` | a turn that spends its tool budget ends on the canned `exhaustedReply` without asking the model for an answer | nothing; the check itself is the only cost |
 | `assistant-turn-close-unsaved` | a turn whose save fails on every attempt leaves its record Running, and the conversation refuses every later question | nothing; the check itself is the only cost |
+| `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |
 
 Runs parked in a day-long decision wait are the slowest to drain; the recorded

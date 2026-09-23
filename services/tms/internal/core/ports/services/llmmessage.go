@@ -47,9 +47,13 @@ type ToolSpec struct {
 type ToolCall struct {
 	// ID ties a call to its result. Protocols that do not supply one get a
 	// synthesized ID so the loop can still pair them up.
-	ID        string         `json:"id"`
-	Name      string         `json:"name"`
-	Arguments map[string]any `json:"arguments"`
+	ID string `json:"id"`
+	// SynthesizedID marks an ID the adapter made up from the call's position
+	// because the protocol gave none. It is unique within one response and
+	// nowhere else, so the loop replaces it with an ID of its own.
+	SynthesizedID bool           `json:"synthesizedId,omitempty"`
+	Name          string         `json:"name"`
+	Arguments     map[string]any `json:"arguments"`
 	// ArgumentsError is set when the provider's argument text did not parse —
 	// usually because the reply hit its output limit partway through the JSON.
 	// The runtime refuses such a call rather than running the tool on the

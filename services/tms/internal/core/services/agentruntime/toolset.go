@@ -77,8 +77,11 @@ const maxFindCalls = 4
 // toolSetRequest is what a turn's tool set is built from.
 type toolSetRequest struct {
 	definition *agentdefinition.Definition
-	actor      *serviceports.RequestActor
-	input      string
+	// held is every tool the agent holds, when the caller has already worked
+	// it out; otherwise it is worked out from the definition.
+	held  []string
+	actor *serviceports.RequestActor
+	input string
 	// history is the replayed conversation. The tools the model used or
 	// loaded in its recent turns are loaded again, so a follow-up like "yes,
 	// do it" does not reopen with a toolbox that has forgotten the work.
@@ -109,7 +112,11 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	// ranked and offered, and denied only when called, which taught the
 	// model that the system refuses rather than that this person lacks the
 	// right; the denial also named the resource they lacked.
-	allowed := s.permittedTools(ctx, req.actor, s.heldTools(req.definition))
+	held := req.held
+	if held == nil {
+		held = s.heldTools(req.definition)
+	}
+	allowed := s.permittedTools(ctx, req.actor, held)
 	if req.unattended {
 		allowed = s.withoutSelfScoped(allowed)
 	}

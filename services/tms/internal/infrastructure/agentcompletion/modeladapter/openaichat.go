@@ -369,6 +369,7 @@ func (a openAIChatAdapter) Stream(
 		arguments, argumentsErr := decodeArguments(buffer.arguments.String())
 		toolCalls = append(toolCalls, ToolCall{
 			ID:             stringutils.FirstNonEmpty(buffer.id, fmt.Sprintf("call_%d", position)),
+			SynthesizedID:  buffer.id == "",
 			Name:           buffer.name,
 			Arguments:      arguments,
 			ArgumentsError: argumentsErr,

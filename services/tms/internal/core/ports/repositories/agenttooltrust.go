@@ -26,9 +26,16 @@ type ListToolTrustRequest struct {
 // MarkToolTierChangeRequest records that the ledger moved the tool to a
 // tier, or took one back. A promotion starts a fresh streak; a demotion
 // clears the earned tier so anything further has to be re-earned.
+//
+// Version is the row's version the change was decided from. The change is
+// made only while the row still stands there, so of two decisions that both
+// read a streak past the threshold only the later one moves the tier, and a
+// setback recorded in between stops a promotion outright. A row that has
+// moved on is a version mismatch.
 type MarkToolTierChangeRequest struct {
 	ID         pulid.ID
 	TenantInfo pagination.TenantInfo
+	Version    int64
 	EarnedTier agent.AutonomyTier
 	Promoted   bool
 	At         int64

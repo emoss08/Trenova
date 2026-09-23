@@ -69,6 +69,11 @@ type RunStepOutcome struct {
 	// taken, because re-pinning it would record the record as it is now and
 	// defeat the staleness check the pin exists for.
 	Action *PendingAction `json:"action,omitempty"`
+	// Data is what a query tool returned, in its JSON form, kept for a run
+	// whose results are shown beside it. A replayed step has no raw result to
+	// build its artifacts from, and without this the pane lost what the
+	// original call had shown.
+	Data map[string]any `json:"data,omitempty"`
 }
 
 // StepState is what a claim found.

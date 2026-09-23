@@ -7,6 +7,7 @@ import (
 	"github.com/shopspring/decimal"
 	"testing"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
@@ -1169,4 +1170,80 @@ func TestRun_KeepsThePlainLineWhenTheLastAskWantsAnotherTool(t *testing.T) {
 
 	assert.True(t, result.Exhausted)
 	assert.Equal(t, exhaustedReply, result.Reply)
+}
+
+// dispatchRecorder runs every effect in process except the tool calls, which
+// it records and answers, so a test sees what the loop decided to dispatch.
+type dispatchRecorder struct {
+	*localEffects
+
+	dispatched []string
+}
+
+func (fx *dispatchRecorder) Dispatch(_ *Turn, call DispatchCall) ToolOutcome {
+	fx.dispatched = append(fx.dispatched, call.Call.Name)
+
+	return ToolOutcome{Content: `{"results":[]}`}
+}
+
+/*
+A turn held as data is decided from the tools the agent held when it opened.
+
+Workflow code worked the held set out again from the definition and the
+catalog on every call, so a replay run by a release whose catalog or core
+tools had changed refused a call the original run dispatched, and the history
+no longer replayed. A state from before the set was kept is decided the way it
+was then.
+*/
+func TestRestoreTurn_DecidesFromTheToolsHeldWhenTheTurnOpened(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("search_worker", map[string]any{"results": []any{}}, nil)
+	script := func() *scriptedCompletion {
+		return &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+			toolTurn("search_worker", map[string]any{"query": "Maria"}),
+			textTurn("Nobody by that name."),
+		}}
+	}
+	rt := newRuntime(script(), &stubQueryRegistry{Tools: []serviceports.AgentQueryTool{tool}},
+		&stubActionRegistry{}, nil)
+
+	opened := &serviceports.RunRequest{
+		Definition: testDefinition("search_worker"),
+		Actor:      testActor(),
+		Input:      "Who is Maria?",
+	}
+	state := rt.OpenTurn(t.Context(), opened).State()
+	require.Contains(t, state.Held, "search_worker")
+
+	encoded, err := sonic.Marshal(state)
+	require.NoError(t, err)
+	var carried TurnState
+	require.NoError(t, sonic.Unmarshal(encoded, &carried))
+	require.Equal(t, state.Held, carried.Held, "the held set crosses the activity boundary")
+
+	// What the held set would be if it were worked out again now.
+	replayed := *opened
+	replayed.Definition = testDefinition()
+
+	drive := func(state TurnState) []string {
+		rt.completion = script()
+		fx := &dispatchRecorder{localEffects: &localEffects{
+			s:    rt,
+			ctx:  t.Context(),
+			emit: func(serviceports.StreamEvent) {},
+		}}
+		_, err := rt.Drive(rt.RestoreTurn(&replayed, state), fx)
+		require.NoError(t, err)
+
+		return fx.dispatched
+	}
+
+	assert.Equal(t, []string{"search_worker"}, drive(carried),
+		"the call is dispatched as it was when the turn opened")
+
+	before := carried
+	before.Held = nil
+	assert.Empty(t, drive(before),
+		"a state from before the set was kept is decided from the definition, as it was then")
 }

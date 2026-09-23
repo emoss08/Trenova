@@ -291,7 +291,9 @@ func toOllamaTools(tools []ToolSpec) []ollamaTool {
 }
 
 // fromOllamaToolCalls synthesizes an id per call. The protocol supplies none, and
-// the loop needs something stable to pair a result back to its request.
+// the loop needs something stable to pair a result back to its request. The id
+// comes from the call's position, so the first call of every response gets the
+// same one; it is marked as synthesized and the loop mints its own in its place.
 func fromOllamaToolCalls(calls []ollamaToolCall) []ToolCall {
 	if len(calls) == 0 {
 		return nil
@@ -304,9 +306,10 @@ func fromOllamaToolCalls(calls []ollamaToolCall) []ToolCall {
 			args = map[string]any{}
 		}
 		out = append(out, ToolCall{
-			ID:        fmt.Sprintf("ollama_call_%d_%s", idx, call.Function.Name),
-			Name:      call.Function.Name,
-			Arguments: args,
+			ID:            fmt.Sprintf("ollama_call_%d_%s", idx, call.Function.Name),
+			SynthesizedID: true,
+			Name:          call.Function.Name,
+			Arguments:     args,
 		})
 	}
 

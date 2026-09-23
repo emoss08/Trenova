@@ -236,6 +236,39 @@ func TestRun_DoesNotProposeTheSameWriteTwiceInOneTurn(t *testing.T) {
 	assert.Len(t, result.Actions, 1)
 }
 
+/*
+Arguments that cannot be encoded are no one's duplicate.
+
+Both sets encoded to the same empty key, so a second proposal whose arguments
+also failed to encode was dropped as a copy of the first, whatever it asked
+for.
+*/
+func TestPendingDuplicate_NeverMatchesArgumentsThatCannotBeEncoded(t *testing.T) {
+	t.Parallel()
+
+	call := serviceports.ToolCall{
+		ID:        "call_2",
+		Name:      "update_report",
+		Arguments: map[string]any{"definitionId": "rd_2", "cycle": make(chan int)},
+	}
+	earlier := []serviceports.ProposalOutcome{{
+		ToolName:   "update_report",
+		Status:     agent.ProposalStatusPending,
+		ToolParams: map[string]any{"definitionId": "rd_1", "cycle": make(chan int)},
+	}}
+	thisTurn := []serviceports.PendingAction{{
+		ToolName:  "update_report",
+		Arguments: map[string]any{"definitionId": "rd_1", "cycle": make(chan int)},
+	}}
+
+	require.Empty(t, argumentsKey(call.Arguments), "the arguments must fail to encode")
+	assert.False(t, pendingDuplicate(call, nil, thisTurn),
+		"a different proposal earlier in this turn is not this one")
+	assert.False(t, pendingDuplicate(call, earlier, nil),
+		"a different proposal from an earlier turn is not this one")
+	assert.False(t, pendingDuplicate(call, earlier, thisTurn))
+}
+
 type validatingActionTool struct {
 	*stubActionToolAlias
 
