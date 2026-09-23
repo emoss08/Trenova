@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/shared/pulid"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -37,6 +38,10 @@ type scheduleWriter interface {
 		ctx context.Context,
 		req *reporting.SaveScheduleRequest,
 	) (*report.ReportSchedule, error)
+	GetDefinition(
+		ctx context.Context,
+		req *reporting.GetDefinitionRequest,
+	) (*report.ReportDefinition, error)
 }
 
 type scheduleReportTool struct {
@@ -50,10 +55,14 @@ func newScheduleReportTool(schedules *reporting.Service) serviceports.AgentTool 
 func (t *scheduleReportTool) Name() string { return "schedule_report" }
 
 func (t *scheduleReportTool) Description() string {
-	return "Put a saved report on a schedule and mail it to people. Use it when somebody " +
+	return "Put a saved report on a schedule and email it to people. Use it when somebody " +
 		"wants a number regularly rather than now — \"send me the unbilled aging every " +
 		"Monday morning\". The report has to exist already; list_reports finds its id. " +
 		"Times are read in the timezone given, so \"Monday morning\" means theirs."
+}
+
+func (t *scheduleReportTool) Prerequisites() []string {
+	return []string{"list_reports"}
 }
 
 func (t *scheduleReportTool) ParamSchema() map[string]any {
@@ -63,7 +72,7 @@ func (t *scheduleReportTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"definitionId": map[string]any{
 				"type":        "string",
-				"description": "The saved report to run.",
+				"description": "The saved report to run, from list_reports.",
 			},
 			"cronExpression": map[string]any{
 				"type": "string",
@@ -76,9 +85,10 @@ func (t *scheduleReportTool) ParamSchema() map[string]any {
 					"(America/New_York). Defaults to the organization's.",
 			},
 			"emailRecipients": map[string]any{
-				"type":     "array",
-				"maxItems": 20,
-				"items":    map[string]any{"type": "string"},
+				"type":        "array",
+				"maxItems":    20,
+				"items":       map[string]any{"type": "string"},
+				"description": "The email addresses it goes to.",
 			},
 			"formats": map[string]any{
 				"type":        "array",
@@ -115,10 +125,34 @@ func (t *scheduleReportTool) DefaultAutonomyTier() agent.AutonomyTier {
 }
 
 func (t *scheduleReportTool) Validate(
-	_ context.Context,
+	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	return t.validateArgs(params.Params)
+	if err := t.validateArgs(params.Params); err != nil {
+		return err
+	}
+
+	// The report is looked up now, not when the schedule first fires: a
+	// schedule on a report that does not exist is refused at save anyway,
+	// and after approval is too late for the model to find the right one.
+	raw := optionalString(params.Params, "definitionId")
+	definitionID, err := pulid.Parse(raw)
+	if err == nil {
+		_, err = t.schedules.GetDefinition(ctx, &reporting.GetDefinitionRequest{
+			Request:      reporting.Request{TenantInfo: tenantFrom(params)},
+			DefinitionID: definitionID,
+		})
+	}
+	if err != nil {
+		multiErr := errortypes.NewMultiError()
+		multiErr.Add("definitionId", errortypes.ErrInvalid, fmt.Sprintf(
+			"%q is not a saved report you can open; find the one you mean with list_reports",
+			raw,
+		))
+		return multiErr
+	}
+
+	return nil
 }
 
 func (t *scheduleReportTool) validateArgs(params map[string]any) error {
@@ -210,7 +244,7 @@ func newCreateTableChangeAlertTool(
 func (t *createTableChangeAlertTool) Name() string { return "create_table_change_alert" }
 
 func (t *createTableChangeAlertTool) Description() string {
-	return "Be told when a record changes in a particular way: a shipment's status reaching " +
+	return "Be told when a record changes in a particular way: a shipment reaching " +
 		"Delayed, a customer's credit hold coming on, a rate agreement's expiry being set. " +
 		"Use it for \"let me know when...\" and \"flag it if...\". It watches the table " +
 		"itself, so it fires however the change was made — by a person, an import, an " +
@@ -233,6 +267,8 @@ func (t *createTableChangeAlertTool) ParamSchema() map[string]any {
 			"eventTypes": map[string]any{
 				"type":     "array",
 				"maxItems": 3,
+				"description": "Which changes to watch: INSERT for a new record, UPDATE for " +
+					"an edit, DELETE for a removal. A status change is an UPDATE.",
 				"items": map[string]any{
 					"type": "string",
 					"enum": []string{"INSERT", "UPDATE", "DELETE"},
@@ -247,6 +283,9 @@ func (t *createTableChangeAlertTool) ParamSchema() map[string]any {
 			"conditions": map[string]any{
 				"type":     "array",
 				"maxItems": 6,
+				"description": "Narrow when it fires: each compares a column (field) to a " +
+					"value, e.g. status changed_to Delayed. is_null, is_not_null and changed " +
+					"take no value. Leave empty to fire on every matching event.",
 				"items": map[string]any{
 					"type":     "object",
 					"required": []string{"field", "operator"},

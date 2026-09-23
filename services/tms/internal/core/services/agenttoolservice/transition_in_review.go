@@ -29,8 +29,9 @@ func (t *transitionToInReviewTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"billingQueueItemId": map[string]any{
-				"type":        "string",
-				"description": "The id of the billing queue item to transition to InReview.",
+				"type": "string",
+				"description": "The billing queue item to move to InReview: this run's subject " +
+					"or the record on the page. No tool lists queue items, so never guess one.",
 			},
 		},
 		"required":             []string{"billingQueueItemId"},

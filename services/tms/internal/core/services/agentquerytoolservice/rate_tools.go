@@ -49,10 +49,10 @@ func newExplainRateTool(quotes repositories.RateQuoteRepository) serviceports.Ag
 func (t *explainRateTool) Name() string { return "explain_rate" }
 
 func (t *explainRateTool) Description() string {
-	return "Explain how a shipment's rate was arrived at: which agreement and rule priced " +
-		"it, what separated that rule from the others, every charge with the arithmetic " +
-		"behind it and a running total, any floor or ceiling that changed the number, and " +
-		"anything the engine warned about. Use it for \"why is this priced at X\", for a " +
+	return "Explain how a saved shipment's rate was arrived at: the agreement and rule that " +
+		"priced it and every charge with its arithmetic. It also shows what separated that " +
+		"rule from the others, a running total, any floor or ceiling that changed the " +
+		"number, and anything the engine warned about. Use it for \"why is this priced at X\", for a " +
 		"customer disputing a charge, and before quoting a similar lane. It reads the " +
 		"rating that actually produced the shipment's price, not a fresh one, so the " +
 		"figures match the invoice even after the contract has since changed."
@@ -64,8 +64,9 @@ func (t *explainRateTool) ParamSchema() map[string]any {
 		"required": []string{"shipmentId"},
 		"properties": map[string]any{
 			"shipmentId": map[string]any{
-				"type":        "string",
-				"description": "The shipment whose rate to explain.",
+				"type": "string",
+				"description": "The shipment whose rate to explain, from search_shipments " +
+					"or list_shipments, or the page you are on.",
 			},
 			"side": map[string]any{
 				"type": "string",

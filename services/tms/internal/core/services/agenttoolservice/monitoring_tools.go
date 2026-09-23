@@ -57,9 +57,9 @@ func newEvaluateServiceFailuresTool(failures serviceFailureDecider) serviceports
 func (t *evaluateServiceFailuresTool) Name() string { return "evaluate_service_failures" }
 
 func (t *evaluateServiceFailuresTool) Description() string {
-	return "Run the service failure check on one shipment now: every stop is compared " +
-		"against its window and the grace period, and a late or missed stop that has " +
-		"no open failure gets one. Use it when get_shipment_tracking shows a stop " +
+	return "Run the service failure check on one shipment now, opening a failure for a " +
+		"late or missed stop that has none. Every stop is compared against its window " +
+		"and the grace period. Use it when get_shipment_tracking shows a stop " +
 		"late or overdue and list_service_failures shows nothing for it, so the " +
 		"failure is on record before anyone is told. It records what the stop " +
 		"actuals prove and nothing else; it cannot create a failure from a guess."
@@ -69,7 +69,11 @@ func (t *evaluateServiceFailuresTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": map[string]any{"type": "string", "description": "The shipment to check."},
+			"shipmentId": map[string]any{
+				"type": "string",
+				"description": "The shipment to check, from get_shipment_tracking, " +
+					"list_shipments or this run's subject.",
+			},
 			"force": map[string]any{
 				"type": "boolean",
 				"description": "Re-check stops that were already evaluated. Default false; " +
@@ -154,8 +158,8 @@ func (t *resolveServiceFailureTool) ParamSchema() map[string]any {
 			},
 			"reasonCodeId": map[string]any{
 				"type": "string",
-				"description": "The reason code id. Required when the failure has none; " +
-					"otherwise replaces it.",
+				"description": "The reason code, from list_service_failure_reason_codes. " +
+					"Required when the failure has none; otherwise replaces it.",
 			},
 			"notes": map[string]any{
 				"type":        "string",
@@ -300,8 +304,9 @@ func (t *notifyDriverTool) ParamSchema() map[string]any {
 				"description": "How urgently the phone should show it. Default medium.",
 			},
 			"shipmentId": map[string]any{
-				"type":        "string",
-				"description": "Optional: the shipment the message is about, so Dash can open it.",
+				"type": "string",
+				"description": "Optional: the shipment the message is about, so Dash can open " +
+					"it; from get_dispatch_board, get_shipment_tracking or search_shipments.",
 			},
 		},
 		"required":             []string{"workerId", "title", "message"},
@@ -445,8 +450,9 @@ func (t *emailCustomerTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"shipmentId": map[string]any{
-				"type":        "string",
-				"description": "The shipment the update is about. Its customer is who receives it.",
+				"type": "string",
+				"description": "The shipment the update is about, from search_shipments, " +
+					"list_shipments or this run's subject. Its customer is who receives it.",
 			},
 			"profileId": map[string]any{
 				"type": "string",

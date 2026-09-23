@@ -88,8 +88,15 @@ func (t *matchBankReceiptTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"bankReceiptId":     map[string]any{"type": "string", "description": "The bank receipt's id."},
-			"customerPaymentId": map[string]any{"type": "string", "description": "The posted customer payment's id."},
+			"bankReceiptId": map[string]any{
+				"type":        "string",
+				"description": "The bank receipt, from list_bank_receipt_exceptions or the page.",
+			},
+			"customerPaymentId": map[string]any{
+				"type": "string",
+				"description": "The posted payment, from get_bank_receipt's suggestions or " +
+					"list_customer_payments.",
+			},
 		},
 		"required":             []string{"bankReceiptId", "customerPaymentId"},
 		"additionalProperties": false,
@@ -234,7 +241,11 @@ func (t *postCustomerPaymentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"customerId": map[string]any{"type": "string", "description": "The paying customer's id."},
+			"customerId": map[string]any{
+				"type": "string",
+				"description": "The paying customer, from list_customers or get_bank_receipt's " +
+					"suggestions.",
+			},
 			"amount": map[string]any{
 				"type":        "string",
 				"description": "The payment amount as a decimal string, such as 1250.00.",
@@ -252,14 +263,21 @@ func (t *postCustomerPaymentTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "The bank's reference, so the payment can be found again.",
 			},
-			"memo": map[string]any{"type": "string"},
+			"memo": map[string]any{
+				"type": "string",
+				"description": "A note kept on the payment, such as the remittance text or why a " +
+					"remainder was left unapplied.",
+			},
 			"applications": map[string]any{
 				"type":        "array",
 				"description": "The invoices this payment pays and how much of it goes to each.",
 				"items": map[string]any{
 					"type": "object",
 					"properties": map[string]any{
-						"invoiceId": map[string]any{"type": "string"},
+						"invoiceId": map[string]any{
+							"type":        "string",
+							"description": "An open invoice of this customer, from list_invoices.",
+						},
 						"amount": map[string]any{
 							"type":        "string",
 							"description": "Applied to this invoice, as a decimal string.",
@@ -274,8 +292,10 @@ func (t *postCustomerPaymentTool) ParamSchema() map[string]any {
 				},
 			},
 			"bankReceiptId": map[string]any{
-				"type":        "string",
-				"description": "The unmatched bank receipt this payment records, to match it in the same step.",
+				"type": "string",
+				"description": "The unmatched bank receipt this payment records, from " +
+					"list_bank_receipt_exceptions or get_bank_receipt, to match it in the same " +
+					"step.",
 			},
 		},
 		"required":             []string{"customerId", "amount", "paymentDate"},
@@ -596,6 +616,8 @@ func (t *resolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
 					string(bankreceiptworkitem.ResolutionRequiresExternalFollowUp),
 					string(bankreceiptworkitem.ResolutionMarkedFalsePositive),
 				},
+				"description": "MarkedFalsePositive when the receipt is not a customer payment; " +
+					"RequiresExternalFollowUp when a person must ask the payer.",
 			},
 			"note": map[string]any{
 				"type":        "string",

@@ -29,10 +29,11 @@ func newGetDetentionOccurrenceTool(
 		name:     "get_detention_occurrence",
 		entity:   "detention occurrence",
 		resource: permission.ResourceDetentionPolicy,
-		summary: "Retrieve one detention occurrence by id: the stop, the clock, free time " +
-			"and billable minutes, the amounts, the notice status, and the evidence and " +
-			"notices on file. Use list_detention_desk first when you do not have an id.",
+		summary: "Retrieve one detention occurrence by id: the stop, the clock, free time, " +
+			"billable minutes, amounts, notice status, and the evidence and notices on file. " +
+			"Use list_detention_desk first when you do not have an id.",
 		paramName: "occurrenceId",
+		idSource:  "from list_detention_desk, the page you are on, or this run's subject",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
 				OccurrenceID:    id,
@@ -52,11 +53,12 @@ func newGetCarrierIntelEventTool(
 		entity:   "carrier intelligence event",
 		resource: permission.ResourceCarrierIntelligence,
 		summary: "Retrieve one carrier intelligence event by id: what changed on the " +
-			"carrier's authority, insurance or safety record, its severity, the prior " +
-			"and current values, and whether anyone has acknowledged or resolved it. " +
-			"The id comes from the page the person is looking at or a record they " +
-			"mentioned; use get_carrier for the carrier itself.",
+			"carrier's authority, insurance or safety record, and its severity. It also " +
+			"gives the prior and current values and whether anyone has acknowledged or " +
+			"resolved it. No tool lists these events; use get_carrier for the carrier itself.",
 		paramName: "eventId",
+		idSource: "from the page you are on, this run's subject, or a mentioned record " +
+			"(no tool lists these events)",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			events, err := repo.GetByIDs(ctx, tenant, []pulid.ID{id})
 			if err != nil {
@@ -81,6 +83,8 @@ func newGetAgentRunTool(repo repositories.AgentRunRepository) serviceports.Agent
 			"id comes from a proposal, the page the person is looking at, or a record " +
 			"they mentioned.",
 		paramName: "runId",
+		idSource: "from a proposal, the page you are on, or a mentioned record " +
+			"(no tool lists agent runs)",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, repositories.GetAgentRunByIDRequest{
 				ID:         id,
@@ -101,6 +105,7 @@ func newGetServiceFailureTool(
 			"the reason code, the notes, and who reviewed, resolved or voided it. Use " +
 			"list_service_failures first when you do not have an id.",
 		paramName: "serviceFailureId",
+		idSource:  "from list_service_failures or the page you are on",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
 				ID:         id,
@@ -129,8 +134,8 @@ func newGetWorkerCredentialTool(
 func (t *getWorkerCredentialTool) Name() string { return "get_worker_credential" }
 
 func (t *getWorkerCredentialTool) Description() string {
-	return "Retrieve one worker credential by id: the credential type, the worker who holds " +
-		"it, its status, when it was issued and when it expires, whether it was verified, " +
+	return "Retrieve one worker credential by id: its type, the worker who holds it, its " +
+		"status, and when it was issued and expires. It also says whether it was verified " +
 		"and whether a document is on file. Use list_expiring_credentials first when you " +
 		"do not have an id."
 }
@@ -140,8 +145,9 @@ func (t *getWorkerCredentialTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"credentialId": map[string]any{
-				"type":        "string",
-				"description": "The worker credential's id.",
+				"type": "string",
+				"description": "The worker credential's id, from list_expiring_credentials " +
+					"or the page you are on.",
 			},
 		},
 		"required":             []string{"credentialId"},
@@ -264,7 +270,7 @@ func newGetCustomerUpdatePreferencesTool(
 ) serviceports.AgentQueryTool {
 	return newGetTool(getSpec{
 		name:     "get_customer_update_preferences",
-		entity:   "customer update preferences",
+		entity:   "customer",
 		resource: permission.ResourceCustomer,
 		summary: "Retrieve what a customer asked to be told as their freight moves: " +
 			"whether they want arrivals, departures, both or nothing, and who receives " +
@@ -272,6 +278,7 @@ func newGetCustomerUpdatePreferencesTool(
 			"When the recipient list is empty the notice profile's own recipients are " +
 			"the fallback. Call this before writing any status update.",
 		paramName: "customerId",
+		idSource:  "from list_customers or the customerId on get_shipment",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			entity, err := repo.GetByID(ctx, repositories.GetCustomerByIDRequest{
 				ID:         id,

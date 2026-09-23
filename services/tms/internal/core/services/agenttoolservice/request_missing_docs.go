@@ -41,7 +41,10 @@ func newRequestMissingDocsTool(p requestMissingDocsParams) serviceports.AgentToo
 func (t *requestMissingDocsTool) Name() string { return "request_missing_docs" }
 
 func (t *requestMissingDocsTool) Description() string {
-	return "Request missing documentation from a party by sending them an email."
+	return "Request missing documentation from a party by sending them an email. Use it " +
+		"when a POD, BOL or other paper a shipment needs has not arrived. Call " +
+		"list_email_profiles first for profileId; the organization's template adds the " +
+		"greeting, letterhead and sign-off. The email is sent and cannot be recalled."
 }
 
 func (t *requestMissingDocsTool) ParamSchema() map[string]any {
@@ -49,8 +52,9 @@ func (t *requestMissingDocsTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"profileId": map[string]any{
-				"type":        "string",
-				"description": "The email profile id to send from.",
+				"type": "string",
+				"description": "The email profile to send from, from list_email_profiles; pick " +
+					"billing for a document request when there is one.",
 			},
 			"to": map[string]any{
 				"type":        "array",

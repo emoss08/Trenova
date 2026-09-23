@@ -1,8 +1,14 @@
 package agenttoolservice
 
 import (
+	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/report"
+	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -142,4 +148,44 @@ func TestCreateTableChangeAlert_NeedsSomethingToWatch(t *testing.T) {
 	require.Error(t, tool.validateArgs(map[string]any{
 		"tableName": "shipments", "eventTypes": []any{"UPDATE"},
 	}))
+}
+
+type fakeScheduleReports struct {
+	scheduleWriter
+	known map[pulid.ID]bool
+}
+
+func (f *fakeScheduleReports) GetDefinition(
+	_ context.Context,
+	req *reporting.GetDefinitionRequest,
+) (*report.ReportDefinition, error) {
+	if !f.known[req.DefinitionID] {
+		return nil, errortypes.NewNotFoundError("Report not found")
+	}
+
+	return &report.ReportDefinition{ID: req.DefinitionID}, nil
+}
+
+// A schedule on a report that does not exist is refused on the card, naming
+// the tool that has the real id, rather than after somebody approves it.
+func TestScheduleReport_RefusesAReportThatDoesNotExistBeforeProposing(t *testing.T) {
+	t.Parallel()
+
+	known := pulid.MustNew("rdef_")
+	tool := &scheduleReportTool{schedules: &fakeScheduleReports{known: map[pulid.ID]bool{known: true}}}
+	args := func(id string) map[string]any {
+		return map[string]any{
+			"definitionId":    id,
+			"cronExpression":  "0 7 * * 1",
+			"emailRecipients": []any{"ops@example.com"},
+		}
+	}
+
+	require.NoError(t, tool.Validate(t.Context(), executeParams(args(known.String()))))
+
+	err := tool.Validate(t.Context(), executeParams(args("unbilled_aging")))
+	assert.Contains(t, fieldErrors(t, err)["definitionId"], "list_reports")
+
+	err = tool.Validate(t.Context(), executeParams(args(pulid.MustNew("rdef_").String())))
+	assert.Contains(t, fieldErrors(t, err)["definitionId"], "list_reports")
 }

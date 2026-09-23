@@ -44,7 +44,7 @@ func (t *tenderToRoutingGuideTool) Name() string { return "tender_move_to_routin
 
 func (t *tenderToRoutingGuideTool) Description() string {
 	return "Offer an uncovered move to carriers down its routing guide, in the guide's " +
-		"order at the guide's rates, each carrier getting the guide's time to accept " +
+		"order at the guide's rates. Each carrier gets the guide's time to accept " +
 		"before the next is asked. The guide is matched from the move's lane unless " +
 		"one is named. The move must have no driver and no live tender. Use " +
 		"shop_carriers first when the choice of carrier matters."
@@ -54,10 +54,16 @@ func (t *tenderToRoutingGuideTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentMoveId": map[string]any{"type": "string", "description": "The move to tender."},
+			"shipmentMoveId": map[string]any{
+				"type": "string",
+				"description": "The move to tender, from get_dispatch_board (moveId) or " +
+					"get_shipment (its moves).",
+			},
 			"routingGuideId": map[string]any{
-				"type":        "string",
-				"description": "A specific routing guide to use instead of the one matched from the lane.",
+				"type": "string",
+				"description": "A specific routing guide to use instead of the one matched from " +
+					"the lane: the routingGuideId shop_carriers returns. Omit to match from the " +
+					"lane.",
 			},
 		},
 		"required":             []string{"shipmentMoveId"},
@@ -141,7 +147,11 @@ func (t *tenderToCarriersTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentMoveId": map[string]any{"type": "string", "description": "The move to tender."},
+			"shipmentMoveId": map[string]any{
+				"type": "string",
+				"description": "The move to tender, from get_dispatch_board (moveId) or " +
+					"get_shipment (its moves).",
+			},
 			"mode": map[string]any{
 				"type":        "string",
 				"enum":        []string{string(tender.ModeSpotBroadcast), string(tender.ModeSpotSequential)},
@@ -153,7 +163,10 @@ func (t *tenderToCarriersTool) ParamSchema() map[string]any {
 				"items": map[string]any{
 					"type": "object",
 					"properties": map[string]any{
-						"carrierId":  map[string]any{"type": "string"},
+						"carrierId": map[string]any{
+							"type":        "string",
+							"description": "The carrier, from shop_carriers or list_carriers.",
+						},
 						"rate":       map[string]any{"type": "string", "description": "The offered rate as a decimal string."},
 						"rateMethod": map[string]any{"type": "string", "enum": []string{"Flat", "PerMile"}},
 						"offerTtlSeconds": map[string]any{

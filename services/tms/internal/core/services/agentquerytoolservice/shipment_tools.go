@@ -37,8 +37,9 @@ func (t *getShipmentTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"shipmentId": map[string]any{
-				"type":        "string",
-				"description": "The shipment's id",
+				"type": "string",
+				"description": "The shipment's id, from search_shipments or list_shipments, " +
+					"the page you are on, or this run's subject.",
 			},
 		},
 		"required":             []string{"shipmentId"},

@@ -30,9 +30,9 @@ func newRememberTool(memories serviceports.AgentMemoryService) serviceports.Agen
 func (t *rememberTool) Name() string { return "remember" }
 
 func (t *rememberTool) Description() string {
-	return "Record something for every later run of every agent in this organization to " +
-		"know: a standing instruction a person gave you (kind Instruction), or a fact you " +
-		"were told or confirmed that is not in any record (kind Fact). Scope it to one " +
+	return "Record a standing instruction or a fact for every later run of every agent in " +
+		"this organization to know. Use kind Instruction for a rule a person gave you, Fact " +
+		"for something you were told or confirmed that is not in any record. Scope it to one " +
 		"customer, location, driver or carrier with subjectType and subjectId when it is " +
 		"about that record; leave both out for something organization-wide. Do not record " +
 		"what a record already says, a guess, or anything a person asked you to keep " +
@@ -59,8 +59,10 @@ func (t *rememberTool) ParamSchema() map[string]any {
 				"description": "The kind of record the memory is about, with subjectId. Omit for organization-wide.",
 			},
 			"subjectId": map[string]any{
-				"type":        "string",
-				"description": "The id of the record the memory is about, from a lookup, never guessed.",
+				"type": "string",
+				"description": "The record the memory is about: this run's subject, the page, or " +
+					"an id from list_customers, list_locations, list_workers or list_carriers. " +
+					"Never guessed.",
 			},
 			"expiresOn": map[string]any{
 				"type":        "string",
@@ -151,7 +153,10 @@ func (t *forgetMemoryTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"memoryId": map[string]any{"type": "string"},
+			"memoryId": map[string]any{
+				"type":        "string",
+				"description": "The memory to retire, by the id recall_memory returned.",
+			},
 		},
 		"required":             []string{"memoryId"},
 		"additionalProperties": false,

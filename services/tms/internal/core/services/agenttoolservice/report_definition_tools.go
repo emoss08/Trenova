@@ -213,13 +213,28 @@ func newCreateReportTool(reports reportDefinitionWriter) serviceports.AgentTool 
 func (t *createReportTool) Name() string { return "create_report" }
 
 func (t *createReportTool) Description() string {
-	return "Save a new custom report in the report builder, from a definition you " +
-		"wrote: a dataset from list_report_datasets, columns and filters over the " +
-		"fields describe_report_dataset lists, and parameters for values the person " +
-		"will choose at run time. Check the definition with preview_report first, so " +
-		"what you save is what you saw. The saved report appears on the Reports page " +
-		"and in list_reports, where run_report can produce it as a file. This " +
-		"creates a report and nothing else; it does not run one."
+	return "Save a new custom report from a definition you wrote. Pick the dataset with " +
+		"list_report_datasets, the fields with describe_report_dataset, and run " +
+		"preview_report on the definition before proposing it. For \"shipments for " +
+		"customer X\" build a list: dimension columns only, no measures and no bucket, " +
+		"which returns one row per record. Filter on a related record by name, " +
+		"{\"ref\": \"customer.name\", \"operator\": \"eq\", \"value\": \"Fresh Haul Foods\"}, " +
+		"after checking the exact name with list_customers. Totals by month or customer " +
+		"are the only reason to add a measure or bucket. It saves the report and does " +
+		"not run it; run_report does that."
+}
+
+func (t *createReportTool) Prerequisites() []string {
+	return []string{
+		"list_report_datasets",
+		"describe_report_dataset",
+		"preview_report",
+		"list_customers",
+	}
+}
+
+func (t *createReportTool) SearchTerms() []string {
+	return []string{"build report", "new report", "custom report"}
 }
 
 func (t *createReportTool) ParamSchema() map[string]any {

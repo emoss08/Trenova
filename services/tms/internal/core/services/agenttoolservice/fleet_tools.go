@@ -60,7 +60,7 @@ func (t *updateTractorStatusTool) Description() string {
 func (t *updateTractorStatusTool) ParamSchema() map[string]any {
 	return equipmentStatusSchema(
 		"tractorIds",
-		"The tractors to move, by id. One id is the normal case.",
+		"The tractors to move, by id from list_tractors. One id is the normal case.",
 	)
 }
 
@@ -121,7 +121,7 @@ func (t *updateTrailerStatusTool) Description() string {
 func (t *updateTrailerStatusTool) ParamSchema() map[string]any {
 	return equipmentStatusSchema(
 		"trailerIds",
-		"The trailers to move, by id. One id is the normal case.",
+		"The trailers to move, by id from list_trailers. One id is the normal case.",
 	)
 }
 

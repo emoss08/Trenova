@@ -50,8 +50,9 @@ func (t *addShipmentCommentTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"shipmentId": map[string]any{
-				"type":        "string",
-				"description": "The shipment to comment on.",
+				"type": "string",
+				"description": "The shipment to comment on, from the page, list_shipments or " +
+					"search_shipments.",
 			},
 			"comment": map[string]any{
 				"type":        "string",
@@ -66,6 +67,8 @@ func (t *addShipmentCommentTool) ParamSchema() map[string]any {
 			"priority": map[string]any{
 				"type": "string",
 				"enum": []string{"Low", "Normal", "High"},
+				"description": "How urgently dispatch should read it. Defaults to Normal; use " +
+					"High only for something that changes what happens to the load today.",
 			},
 		},
 		"required":             []string{"shipmentId", "comment"},
@@ -206,8 +209,9 @@ func (t *placeShipmentHoldTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"shipmentId": map[string]any{
-				"type":        "string",
-				"description": "The shipment to hold.",
+				"type": "string",
+				"description": "The shipment to hold, from the page, list_shipments or " +
+					"search_shipments.",
 			},
 			"holdReasonId": map[string]any{
 				"type":        "string",
@@ -294,12 +298,14 @@ func (t *releaseShipmentHoldTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"shipmentId": map[string]any{
-				"type":        "string",
-				"description": "The shipment the hold is on.",
+				"type": "string",
+				"description": "The shipment the hold is on, from the page, list_shipments or " +
+					"search_shipments.",
 			},
 			"holdId": map[string]any{
-				"type":        "string",
-				"description": "The hold to release.",
+				"type": "string",
+				"description": "The hold to release. No tool lists a shipment's holds, so it " +
+					"comes from the page or the event that started this run; never guess one.",
 			},
 		},
 		"required":             []string{"shipmentId", "holdId"},
@@ -377,8 +383,9 @@ func (t *cancelShipmentTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"shipmentId": map[string]any{
-				"type":        "string",
-				"description": "The shipment to cancel.",
+				"type": "string",
+				"description": "The shipment to cancel, from the page, list_shipments or " +
+					"search_shipments.",
 			},
 			"cancelReason": map[string]any{
 				"type": "string",

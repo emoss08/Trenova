@@ -54,7 +54,8 @@ func truncateToolResult(payload string) string {
 	builder.WriteString("\n\n[This result was cut off here: it was too long to return in full, " +
 		"so the text above ends mid-record and the records after it are missing entirely. " +
 		"Do not infer, complete, or count anything from the cut-off portion. " +
-		"Narrow your filters and call the tool again, and tell the person you are " +
+		"Narrow your filters, or where the tool takes limit and offset ask for a " +
+		"smaller page and continue from its nextOffset, and tell the person you are " +
 		"working from a partial result until you do.]")
 
 	return builder.String()

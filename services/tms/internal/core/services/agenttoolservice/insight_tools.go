@@ -32,9 +32,9 @@ func newDismissInsightTool(insights insightDismisser) serviceports.AgentTool {
 func (t *dismissInsightTool) Name() string { return "dismiss_insight" }
 
 func (t *dismissInsightTool) Description() string {
-	return "Dismiss an insight that is not worth acting on: a known seasonal pattern, a " +
-		"customer already being handled, a figure explained by something the detector " +
-		"cannot see. Give the reason a person would want to read later. The finding is " +
+	return "Dismiss an insight that is not worth acting on, with the reason a person would " +
+		"want to read later. Use it for a known seasonal pattern, a customer already being " +
+		"handled, a figure explained by something the detector cannot see. The finding is " +
 		"kept with the reason and can be restored; the detector will not raise it again " +
 		"for a while. Do not dismiss a finding because it is inconvenient or because you " +
 		"could not resolve it; leave those active."

@@ -36,8 +36,9 @@ func (t *getWorkerTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"workerId": map[string]any{
-				"type":        "string",
-				"description": "The worker's id",
+				"type": "string",
+				"description": "The worker's id, from search_worker or list_workers, " +
+					"the page you are on, or this run's subject.",
 			},
 		},
 		"required":             []string{"workerId"},

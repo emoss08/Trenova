@@ -20,21 +20,48 @@ func newFlagManualReviewTool(exceptions serviceports.AgentExceptionService) serv
 func (t *flagManualReviewTool) Name() string { return "flag_for_manual_review" }
 
 func (t *flagManualReviewTool) Description() string {
-	return "Flag the item for manual review by raising an agent exception with a category and evidence."
+	return "Flag a billing queue item for manual review by raising an agent exception " +
+		"with a category and evidence. Use it on a billing run when the item cannot be " +
+		"cleared without a person: missing paperwork, a rate that does not match, a " +
+		"charge in dispute. Not for any other kind of record (use raise_exception)."
 }
 
 func (t *flagManualReviewTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"runId":          map[string]any{"type": "string"},
-			"subjectId":      map[string]any{"type": "string"},
-			"category":       map[string]any{"type": "string"},
-			"severity":       map[string]any{"type": "string"},
-			"attemptSummary": map[string]any{"type": "string"},
-			"blastRadius":    map[string]any{"type": "integer"},
+			"runId": map[string]any{
+				"type": "string",
+				"description": "The id of the run you are in, the one working this run's " +
+					"subject; never invent one.",
+			},
+			"subjectId": map[string]any{
+				"type":        "string",
+				"description": "The billing queue item being flagged: this run's subject.",
+			},
+			"category": map[string]any{
+				"type": "string",
+				"description": "What kind of problem it is, such as MissingDocumentation, " +
+					"IncorrectRates, WeightDiscrepancy, AccessorialDispute, DuplicateCharge or " +
+					"RateNotOnFile.",
+			},
+			"severity": map[string]any{
+				"type":        "string",
+				"description": "Low, Medium, High or Critical: how much it holds up billing.",
+			},
+			"attemptSummary": map[string]any{
+				"type": "string",
+				"description": "What you checked and why it was not enough, for the biller who " +
+					"takes over.",
+			},
+			"blastRadius": map[string]any{
+				"type":        "integer",
+				"description": "How many records the problem affects, when more than this one.",
+			},
 			"evidence": map[string]any{
-				"type":  "array",
+				"type": "array",
+				"description": "At least one record that shows the problem, each as {type, id, " +
+					"note}: a document, a charge, a rate, the shipment.",
 				"items": map[string]any{"type": "object"},
 			},
 		},

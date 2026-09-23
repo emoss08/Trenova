@@ -48,9 +48,8 @@ var (
 // tanker AND hazmat, so a hazmat question answered with endorsement = 'H' alone
 // undercounts the fleet. No model infers that, and one that guesses "Hazmat"
 // gets an empty page it will report as nobody holding one.
-const endorsementNote = "single letter: O none, N tanker, H hazmat, " +
-	"X tanker and hazmat, P passenger, T doubles/triples. " +
-	"For hazmat match both H and X"
+const endorsementNote = "O none, N tanker, H hazmat, X tanker+hazmat, " +
+	"P passenger, T doubles/triples; hazmat is H or X"
 
 type workerRow struct {
 	ID         string `json:"id"`
@@ -87,15 +86,9 @@ func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQu
 	return newListTool(listSpec{
 		name:         "list_workers",
 		entityPlural: "workers",
-		summary: "List workers (drivers) narrowed by status, employment type, driver " +
-			"type, city or fleet, and by their qualification profile — endorsement, " +
-			"CDL class, compliance status, and licence, medical card or hazmat expiry. " +
-			"This answers who holds an endorsement and who is qualified to drive. Use " +
-			"search_worker when you have a name, and list_expiring_credentials for the " +
-			"separately tracked credential documents. A credential reading \"none on " +
-			"file\" means nothing was recorded, not that it is current — a driver with " +
-			"no medical card on file is a bigger problem than one expiring soon, so " +
-			"report them rather than passing over them.",
+		summary: "List workers (drivers) by employment or qualification. search_worker " +
+			"finds a name; list_expiring_credentials, credentials. \"none on file\" was " +
+			"never recorded: report it as worse than expiring soon.",
 		resource: permission.ResourceWorker,
 		config:   querybuilder.GetFieldConfiguration((*worker.Worker)(nil)),
 		fields: []listField{
@@ -103,16 +96,14 @@ func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQu
 				Name:   "status",
 				Kind:   filterEnum,
 				Values: statusValues,
-				Note: "employment state, not availability. A driver who left is " +
-					"Inactive — there is no Terminated. For who can be dispatched " +
-					"today use canBeAssigned, and for who is off use list_time_off",
+				Note:   "not availability; see canBeAssigned, list_time_off",
 			},
-			{Name: "type", Kind: filterEnum, Values: workerTypes, Note: "employee or contractor"},
+			{Name: "type", Kind: filterEnum, Values: workerTypes},
 			{Name: "driverType", Kind: filterEnum, Values: driverTypes},
 			{Name: "city", Kind: filterText, Sortable: true},
 			{Name: "lastName", Kind: filterText, Sortable: true},
 			{Name: "firstName", Kind: filterText},
-			{Name: "canBeAssigned", Kind: filterBool, Note: "false means dispatch is blocked"},
+			{Name: "canBeAssigned", Kind: filterBool, Note: "false = dispatch blocked"},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 			{
 				Name:   "profile.endorsement",
@@ -129,13 +120,12 @@ func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQu
 			{
 				Name: "profile.isQualified",
 				Kind: filterBool,
-				Note: "the roll-up: false means something is lapsed or missing",
+				Note: "false = lapsed or missing",
 			},
 			{
 				Name:     "profile.hazmatExpiry",
 				Kind:     filterDate,
 				Sortable: true,
-				Note:     "a current endorsement is one whose expiry is still ahead",
 			},
 			{Name: "profile.licenseExpiry", Kind: filterDate, Sortable: true},
 			{Name: "profile.medicalCardExpiry", Kind: filterDate, Sortable: true},
@@ -170,10 +160,9 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 	return newListTool(listSpec{
 		name:         "list_shipments",
 		entityPlural: "shipments",
-		summary: "List shipments narrowed by status, billing state, dates or charges. " +
-			"This is the tool for anything with a date or a threshold in it — delivered " +
-			"yesterday, not yet billed, over a dollar amount. Use search_shipments when " +
-			"you are matching text such as a pro number.",
+		summary: "List shipments by status, billing state, dates or charges: anything with " +
+			"a date or threshold, such as delivered yesterday or not yet billed. " +
+			"search_shipments matches text like a pro number.",
 		resource: permission.ResourceShipment,
 		config:   querybuilder.GetFieldConfiguration((*shipment.Shipment)(nil)),
 		fields: []listField{
@@ -181,18 +170,21 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 				Name:   "status",
 				Kind:   filterEnum,
 				Values: shipmentStatuses,
-				Note: "there is no Delivered: a delivered load is Completed, and " +
-					"ReadyToInvoice and Invoiced are further along, not earlier. " +
-					"For a question about when something delivered, filter on " +
-					"actualDeliveryDate rather than on status",
+				Note: "no Delivered; a delivered load is Completed, then ReadyToInvoice, " +
+					"then Invoiced. For when it delivered, filter actualDeliveryDate",
 			},
 			{
 				Name:   "billingTransferStatus",
 				Kind:   filterEnum,
 				Values: billingTransferStates,
-				Note:   "where the shipment sits in the billing handoff",
+				Note:   "the billing handoff stage",
 			},
 			{Name: "freightTerms", Kind: filterEnum, Values: freightTerms},
+			{
+				Name: "customerId",
+				Kind: filterText,
+				Note: "from list_customers, never guessed",
+			},
 			{Name: "proNumber", Kind: filterText, Sortable: true},
 			{Name: "bol", Kind: filterText},
 			{Name: "actualShipDate", Kind: filterDate, Sortable: true},
@@ -386,8 +378,9 @@ func newListCustomersTool(repo repositories.CustomerRepository) serviceports.Age
 	return newListTool(listSpec{
 		name:         "list_customers",
 		entityPlural: "customers",
-		summary: "List customers narrowed by status, code, name or city. Returns their " +
-			"ids, which shipment questions can then be filtered by.",
+		summary: "List customers narrowed by status, code, name or city, with their ids. " +
+			"Use it to turn a customer's name into an id: list_shipments filters on " +
+			"customerId, and a report filters on customer.name.",
 		resource: permission.ResourceCustomer,
 		config:   querybuilder.GetFieldConfiguration((*customer.Customer)(nil)),
 		fields: []listField{

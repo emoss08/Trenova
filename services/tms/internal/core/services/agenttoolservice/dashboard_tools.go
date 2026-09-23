@@ -10,6 +10,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -41,6 +42,11 @@ type dashboardWriter interface {
 		ctx context.Context,
 		req *reporting.GetDashboardRequest,
 	) (*report.Dashboard, error)
+	UnavailableTileTargets(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		tiles []report.DashboardTile,
+	) []reporting.UnavailableTile
 }
 
 type createDashboardTool struct {
@@ -54,11 +60,19 @@ func newCreateDashboardTool(dashboards *reporting.Service) serviceports.AgentToo
 func (t *createDashboardTool) Name() string { return "create_dashboard" }
 
 func (t *createDashboardTool) Description() string {
-	return "Create a dashboard from a description of what should be on it. Give it a name " +
-		"and the reports to show; the tiles are laid out on the page's own grid, so the " +
-		"result looks like one somebody built by hand. Use it when a person describes a " +
-		"screen they want rather than asking a question — \"a page showing this week's " +
-		"revenue, on-time percentage and the unbilled backlog\"."
+	return "Create a report dashboard: a page of saved or built-in reports under Reports. " +
+		"Use it when a person describes a screen of reports they want, such as \"this " +
+		"week's revenue, on-time percentage and the unbilled backlog\". Find each tile's " +
+		"report with list_reports first; never invent an id. Tiles are laid out for you. " +
+		"Not for the person's home page — get_my_home_layout and add_home_widget are for that."
+}
+
+func (t *createDashboardTool) Prerequisites() []string {
+	return []string{"list_reports", "describe_report"}
+}
+
+func (t *createDashboardTool) SearchTerms() []string {
+	return []string{"report dashboard", "reports page", "board"}
 }
 
 func (t *createDashboardTool) ParamSchema() map[string]any {
@@ -66,18 +80,25 @@ func (t *createDashboardTool) ParamSchema() map[string]any {
 		"type":     "object",
 		"required": []string{"name", "tiles"},
 		"properties": map[string]any{
-			"name":        map[string]any{"type": "string", "description": "What to call it."},
-			"description": map[string]any{"type": "string"},
-			"category":    map[string]any{"type": "string"},
+			"name": map[string]any{"type": "string", "description": "What to call it."},
+			"description": map[string]any{
+				"type":        "string",
+				"description": "One line on what the dashboard is for.",
+			},
+			"category": map[string]any{
+				"type":        "string",
+				"description": "Optional grouping on the dashboards page, such as Operations.",
+			},
 			"shared": map[string]any{
 				"type": "boolean",
 				"description": "Whether everyone in the organization sees it. " +
 					"Defaults to false.",
 			},
 			"tiles": map[string]any{
-				"type":     "array",
-				"maxItems": report.MaxDashboardTiles,
-				"items":    tileSchema(),
+				"type":        "array",
+				"maxItems":    report.MaxDashboardTiles,
+				"description": "What the page shows, in reading order.",
+				"items":       tileSchema(),
 			},
 		},
 		"additionalProperties": false,
@@ -90,7 +111,8 @@ func tileSchema() map[string]any {
 		"required": []string{"kind"},
 		"properties": map[string]any{
 			"kind": map[string]any{
-				"type": "string",
+				"type":        "string",
+				"description": "table, chart or kpi draws a report; text shows words.",
 				"enum": []string{
 					string(report.TileKindTable),
 					string(report.TileKindChart),
@@ -98,15 +120,25 @@ func tileSchema() map[string]any {
 					string(report.TileKindText),
 				},
 			},
-			"title":        map[string]any{"type": "string"},
-			"definitionId": map[string]any{"type": "string", "description": "The report to draw."},
+			"title": map[string]any{
+				"type":        "string",
+				"description": "Heading shown on the tile. Defaults to the report's name.",
+			},
+			"definitionId": map[string]any{
+				"type":        "string",
+				"description": "A saved report's id, from list_reports. Give this or cannedKey, not both.",
+			},
+			"cannedKey": map[string]any{
+				"type":        "string",
+				"description": "A built-in report's key, from list_reports. Give this or definitionId, not both.",
+			},
 			"chartId": map[string]any{
 				"type":        "string",
-				"description": "Which of the report's charts, for a chart tile.",
+				"description": "Which of the report's charts, for a chart tile; describe_report lists them.",
 			},
 			"columnId": map[string]any{
 				"type":        "string",
-				"description": "The output column a KPI tile reads.",
+				"description": "The output column a KPI tile reads; describe_report lists them.",
 			},
 			"text": map[string]any{
 				"type":        "string",
@@ -121,7 +153,12 @@ func tileSchema() map[string]any {
 						"width for the kind.", report.DashboardGridColumns,
 				),
 			},
-			"height": map[string]any{"type": "integer", "minimum": 1, "maximum": 12},
+			"height": map[string]any{
+				"type":        "integer",
+				"minimum":     1,
+				"maximum":     12,
+				"description": "Rows the tile spans. Defaults to a sensible height for the kind.",
+			},
 		},
 		"additionalProperties": false,
 	}
@@ -144,10 +181,14 @@ func (t *createDashboardTool) DefaultAutonomyTier() agent.AutonomyTier {
 }
 
 func (t *createDashboardTool) Validate(
-	_ context.Context,
+	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	return t.validateArgs(params.Params)
+	if err := t.validateArgs(params.Params); err != nil {
+		return err
+	}
+
+	return checkTileTargets(ctx, t.dashboards, tenantFrom(params), tileParams(params.Params), "tiles")
 }
 
 func (t *createDashboardTool) validateArgs(params map[string]any) error {
@@ -190,9 +231,16 @@ func validateTiles(tiles []map[string]any, multiErr *errortypes.MultiError) {
 					"A text tile needs something to say")
 			}
 		case report.TileKindTable, report.TileKindChart, report.TileKindKPI:
-			if optionalString(tile, "definitionId") == "" {
+			definitionID := optionalString(tile, "definitionId")
+			cannedKey := optionalString(tile, "cannedKey")
+			switch {
+			case definitionID == "" && cannedKey == "":
 				multiErr.Add(field+".definitionId", errortypes.ErrRequired,
-					"A "+string(kind)+" tile needs a report to draw")
+					"A "+string(kind)+" tile needs a report to draw: a definitionId or "+
+						"cannedKey from list_reports")
+			case definitionID != "" && cannedKey != "":
+				multiErr.Add(field, errortypes.ErrInvalid,
+					"Give a tile a definitionId or a cannedKey, not both")
 			}
 			if kind == report.TileKindKPI && optionalString(tile, "columnId") == "" {
 				multiErr.Add(field+".columnId", errortypes.ErrRequired,
@@ -246,18 +294,33 @@ func newAddDashboardTileTool(dashboards *reporting.Service) serviceports.AgentTo
 func (t *addDashboardTileTool) Name() string { return "add_dashboard_tile" }
 
 func (t *addDashboardTileTool) Description() string {
-	return "Add a tile to a dashboard that already exists. The tile goes after the ones " +
-		"already there, placed on the same grid, so the page stays laid out. Use it when " +
-		"somebody wants one more thing on a screen they already have rather than a new one."
+	return "Add one tile to a report dashboard that already exists, placed after the ones " +
+		"there. Use it when somebody wants one more report on a dashboard they have; " +
+		"list_dashboards gives the dashboard id and list_reports the report. Not for the " +
+		"person's home page — add_home_widget is for that."
+}
+
+func (t *addDashboardTileTool) Prerequisites() []string {
+	return []string{"list_dashboards", "list_reports", "describe_report"}
+}
+
+func (t *addDashboardTileTool) SearchTerms() []string {
+	return []string{"report dashboard", "reports page"}
 }
 
 func (t *addDashboardTileTool) ParamSchema() map[string]any {
+	tile := tileSchema()
+	tile["description"] = "The tile to add."
+
 	return map[string]any{
 		"type":     "object",
 		"required": []string{"dashboardId", "tile"},
 		"properties": map[string]any{
-			"dashboardId": map[string]any{"type": "string"},
-			"tile":        tileSchema(),
+			"dashboardId": map[string]any{
+				"type":        "string",
+				"description": "The dashboard to add to, from list_dashboards.",
+			},
+			"tile": tile,
 		},
 		"additionalProperties": false,
 	}
@@ -280,10 +343,33 @@ func (t *addDashboardTileTool) DefaultAutonomyTier() agent.AutonomyTier {
 }
 
 func (t *addDashboardTileTool) Validate(
-	_ context.Context,
+	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	return t.validateArgs(params.Params)
+	if err := t.validateArgs(params.Params); err != nil {
+		return err
+	}
+
+	tenant := tenantFrom(params)
+	dashboardID, err := pulid.Parse(optionalString(params.Params, "dashboardId"))
+	if err == nil {
+		_, err = t.dashboards.GetDashboard(ctx, &reporting.GetDashboardRequest{
+			Request:     reporting.Request{TenantInfo: tenant},
+			DashboardID: dashboardID,
+		})
+	}
+	if err != nil {
+		multiErr := errortypes.NewMultiError()
+		multiErr.Add("dashboardId", errortypes.ErrInvalid, fmt.Sprintf(
+			"%q is not a dashboard you can open; find it with list_dashboards",
+			optionalString(params.Params, "dashboardId"),
+		))
+		return multiErr
+	}
+
+	tile, _ := params.Params["tile"].(map[string]any)
+
+	return checkTileTargets(ctx, t.dashboards, tenant, []map[string]any{tile}, "tile")
 }
 
 func (t *addDashboardTileTool) validateArgs(params map[string]any) error {
@@ -435,6 +521,7 @@ func buildTiles(tiles []map[string]any, startRow int) ([]report.DashboardTile, e
 			W:        width,
 			H:        height,
 		}
+		next.CannedKey = optionalString(tile, "cannedKey")
 		if raw := optionalString(tile, "definitionId"); raw != "" {
 			definitionID, err := pulid.Parse(raw)
 			if err != nil {
@@ -459,4 +546,63 @@ func nextRow(tiles []report.DashboardTile) int {
 	}
 
 	return bottom
+}
+
+// checkTileTargets refuses a tile whose report does not exist, before anybody
+// is asked to approve the dashboard. A model that cannot find a report writes
+// a plausible name where its id belongs; the refusal names the id it wrote
+// and the tool that has the real one, while it can still fix the call.
+func checkTileTargets(
+	ctx context.Context,
+	dashboards dashboardWriter,
+	tenant pagination.TenantInfo,
+	tiles []map[string]any,
+	field string,
+) error {
+	multiErr := errortypes.NewMultiError()
+	parsed := make([]report.DashboardTile, 0, len(tiles))
+	positions := make([]int, 0, len(tiles))
+	for i, tile := range tiles {
+		path := tilePath(field, i, len(tiles))
+		built, err := buildTiles([]map[string]any{tile}, 0)
+		if err != nil {
+			multiErr.Add(path+".definitionId", errortypes.ErrInvalid, fmt.Sprintf(
+				"%q is not a report id. Find the report with list_reports and use its "+
+					"definitionId, or a built-in report's cannedKey",
+				optionalString(tile, "definitionId"),
+			))
+			continue
+		}
+		parsed = append(parsed, built[0])
+		positions = append(positions, i)
+	}
+
+	for _, missing := range dashboards.UnavailableTileTargets(ctx, tenant, parsed) {
+		path := tilePath(field, positions[missing.Index], len(tiles))
+		if missing.Canned {
+			multiErr.Add(path+".cannedKey", errortypes.ErrInvalid, fmt.Sprintf(
+				"%q is not a built-in report; list_reports names the ones that exist",
+				parsed[missing.Index].CannedKey,
+			))
+			continue
+		}
+		multiErr.Add(path+".definitionId", errortypes.ErrInvalid, fmt.Sprintf(
+			"There is no report %s that you can open; find the one you mean with list_reports",
+			parsed[missing.Index].DefinitionID,
+		))
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+func tilePath(field string, index, count int) string {
+	if field == "tile" && count == 1 {
+		return field
+	}
+
+	return fmt.Sprintf("%s[%d]", field, index)
 }

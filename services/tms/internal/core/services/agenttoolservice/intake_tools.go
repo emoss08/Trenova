@@ -80,11 +80,26 @@ func (t *createShipmentTool) ParamSchema() map[string]any {
 				"type":        "object",
 				"description": "The shipment, in the shape the shipment form sends.",
 				"properties": map[string]any{
-					"customerId":     map[string]any{"type": "string"},
-					"serviceTypeId":  map[string]any{"type": "string"},
-					"shipmentTypeId": map[string]any{"type": "string"},
-					"tractorTypeId":  map[string]any{"type": "string"},
-					"trailerTypeId":  map[string]any{"type": "string"},
+					"customerId": map[string]any{
+						"type":        "string",
+						"description": "The customer, from list_customers.",
+					},
+					"serviceTypeId": map[string]any{
+						"type":        "string",
+						"description": "From list_service_types.",
+					},
+					"shipmentTypeId": map[string]any{
+						"type":        "string",
+						"description": "From list_shipment_types.",
+					},
+					"tractorTypeId": map[string]any{
+						"type":        "string",
+						"description": "A tractor equipment type, from list_equipment_types.",
+					},
+					"trailerTypeId": map[string]any{
+						"type":        "string",
+						"description": "A trailer equipment type, from list_equipment_types.",
+					},
 					"bol":            map[string]any{"type": "string", "description": "The customer's BOL or reference."},
 					"pieces":         map[string]any{"type": "integer"},
 					"weight":         map[string]any{"type": "integer", "description": "Pounds."},
@@ -138,8 +153,10 @@ func (t *createShipmentTool) ParamSchema() map[string]any {
 				"additionalProperties": true,
 			},
 			"sourceDocumentId": map[string]any{
-				"type":        "string",
-				"description": "The uploaded document this shipment was read from, when there is one.",
+				"type": "string",
+				"description": "The uploaded document this shipment was read from, when there is " +
+					"one: the documentId you read with get_shipment_draft, usually this run's " +
+					"subject or the page.",
 			},
 		},
 		"required":             []string{"shipment"},
@@ -287,14 +304,39 @@ func (t *updateShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId":     map[string]any{"type": "string"},
-			"customerId":     map[string]any{"type": "string"},
-			"serviceTypeId":  map[string]any{"type": "string"},
-			"shipmentTypeId": map[string]any{"type": "string"},
-			"tractorTypeId":  map[string]any{"type": "string"},
-			"trailerTypeId":  map[string]any{"type": "string"},
-			"bol":            map[string]any{"type": "string"},
-			"pieces":         map[string]any{"type": "integer"},
+			"shipmentId": map[string]any{
+				"type": "string",
+				"description": "The shipment to change, from the page, list_shipments or " +
+					"search_shipments.",
+			},
+			"customerId": map[string]any{
+				"type":        "string",
+				"description": "The new customer, from list_customers.",
+			},
+			"serviceTypeId": map[string]any{
+				"type":        "string",
+				"description": "The new service type, from list_service_types.",
+			},
+			"shipmentTypeId": map[string]any{
+				"type":        "string",
+				"description": "The new shipment type, from list_shipment_types.",
+			},
+			"tractorTypeId": map[string]any{
+				"type":        "string",
+				"description": "The new tractor equipment type, from list_equipment_types.",
+			},
+			"trailerTypeId": map[string]any{
+				"type":        "string",
+				"description": "The new trailer equipment type, from list_equipment_types.",
+			},
+			"bol": map[string]any{
+				"type":        "string",
+				"description": "The customer's BOL or reference number.",
+			},
+			"pieces": map[string]any{
+				"type":        "integer",
+				"description": "The total piece or handling-unit count.",
+			},
 			"weight":         map[string]any{"type": "integer", "description": "Pounds."},
 			"temperatureMin": map[string]any{"type": "integer", "description": "Fahrenheit."},
 			"temperatureMax": map[string]any{"type": "integer", "description": "Fahrenheit."},

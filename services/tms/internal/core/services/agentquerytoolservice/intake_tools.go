@@ -43,10 +43,10 @@ func newGetShipmentDraftTool(drafts draftReader) serviceports.AgentQueryTool {
 func (t *getShipmentDraftTool) Name() string { return "get_shipment_draft" }
 
 func (t *getShipmentDraftTool) Description() string {
-	return "Read the shipment draft document intelligence extracted from an uploaded " +
-		"document: the fields it found (BOL, customer, rate, pieces, weight, dates), " +
-		"each with a confidence, the stops it found with their addresses and dates, " +
-		"and what it could not read. Use it before create_shipment so the record is " +
+	return "Read the shipment draft extracted from an uploaded document: the fields and " +
+		"stops it found, each with a confidence, and what it could not read. Fields " +
+		"include BOL, customer, rate, pieces, weight and dates; stops carry addresses " +
+		"and dates. Use it before create_shipment so the record is " +
 		"built from the document rather than from memory. Every id the draft names " +
 		"still has to be resolved with list_customers and list_locations; the draft " +
 		"carries names and addresses, not ids."
@@ -57,8 +57,10 @@ func (t *getShipmentDraftTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"documentId": map[string]any{
-				"type":        "string",
-				"description": "The id of the uploaded document the draft was read from.",
+				"type": "string",
+				"description": "The id of the uploaded document the draft was read from: " +
+					"an attachment on the message, a documentId in get_inbound_message, or " +
+					"this run's subject.",
 			},
 		},
 		"required":             []string{"documentId"},
@@ -252,7 +254,10 @@ func (t *quoteShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"customerId":     map[string]any{"type": "string", "description": "The customer being billed."},
+			"customerId": map[string]any{
+				"type":        "string",
+				"description": "The customer being billed, from list_customers.",
+			},
 			"serviceTypeId":  map[string]any{"type": "string", "description": "The service type, from list_service_types."},
 			"shipmentTypeId": map[string]any{"type": "string", "description": "The shipment type, from list_shipment_types."},
 			"stops": map[string]any{
@@ -531,9 +536,8 @@ func newShopCarriersTool(shopper carrierShopper) serviceports.AgentQueryTool {
 func (t *shopCarriersTool) Name() string { return "shop_carriers" }
 
 func (t *shopCarriersTool) Description() string {
-	return "Price a saved shipment against carriers and rank them: what each would " +
-		"charge under its contract, the margin against what the customer is being " +
-		"billed, and where the routing guide ranks it. Leave the carrier list empty to " +
+	return "Price a saved shipment against carriers and rank them by contract cost, " +
+		"margin against the customer's charge, and routing guide rank. Leave the carrier list empty to " +
 		"use the shipment's routing guide. Read this before tendering; nothing is " +
 		"tendered or written by it."
 }
@@ -542,7 +546,11 @@ func (t *shopCarriersTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": map[string]any{"type": "string", "description": "The saved shipment to price."},
+			"shipmentId": map[string]any{
+				"type": "string",
+				"description": "The saved shipment to price, from search_shipments or " +
+					"list_shipments, or the page you are on.",
+			},
 			"strategy": map[string]any{
 				"type": "string",
 				"enum": []string{
@@ -554,9 +562,10 @@ func (t *shopCarriersTool) ParamSchema() map[string]any {
 				"description": "How to rank the options. Defaults to the organization's own choice.",
 			},
 			"carrierIds": map[string]any{
-				"type":        "array",
-				"items":       map[string]any{"type": "string"},
-				"description": "An explicit shortlist of carrier ids. Empty means the routing guide's candidates.",
+				"type":  "array",
+				"items": map[string]any{"type": "string"},
+				"description": "An explicit shortlist of carrier ids from list_carriers. " +
+					"Empty means the routing guide's candidates.",
 			},
 			"limit": map[string]any{
 				"type":        "integer",

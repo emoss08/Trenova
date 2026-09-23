@@ -55,8 +55,9 @@ func (t *attachDocumentTool) ParamSchema() map[string]any {
 				"description": "The document to attach, from get_document_summary or a search.",
 			},
 			"shipmentId": map[string]any{
-				"type":        "string",
-				"description": "The shipment it belongs to.",
+				"type": "string",
+				"description": "The shipment it belongs to, from the page, list_shipments or " +
+					"search_shipments.",
 			},
 		},
 		"required":             []string{"documentId", "shipmentId"},

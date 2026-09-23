@@ -56,6 +56,9 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 			},
 			"kind": map[string]any{
 				"type": "string",
+				"description": "Optional: Instruction for standing rules to follow, Fact " +
+					"for things agents were told, or Correction for fixes people made to " +
+					"earlier proposals.",
 				"enum": []string{
 					string(agent.MemoryKindInstruction),
 					string(agent.MemoryKindFact),
@@ -64,6 +67,8 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 			},
 			"subjectType": map[string]any{
 				"type": "string",
+				"description": "Optional: the kind of record subjectId names. Give both " +
+					"or neither.",
 				"enum": []string{
 					string(agent.MemorySubjectCustomer),
 					string(agent.MemorySubjectLocation),
@@ -71,7 +76,12 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 					string(agent.MemorySubjectCarrier),
 				},
 			},
-			"subjectId": map[string]any{"type": "string"},
+			"subjectId": map[string]any{
+				"type": "string",
+				"description": "Optional: the record's id, from list_customers, " +
+					"list_locations, search_worker or list_carriers to match subjectType, " +
+					"or the page you are on. Give it with subjectType.",
+			},
 			"toolName": map[string]any{
 				"type":        "string",
 				"description": "Only memories about one tool, such as corrections to assign_move.",

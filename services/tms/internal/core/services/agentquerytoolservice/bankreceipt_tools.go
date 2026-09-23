@@ -148,9 +148,9 @@ func (t *listBankReceiptExceptionsTool) Name() string { return "list_bank_receip
 
 func (t *listBankReceiptExceptionsTool) Description() string {
 	return "List the bank receipts that could not be matched to a customer payment on " +
-		"their own and are waiting in the reconciliation queue, each with its amount, " +
-		"the bank's reference and memo, why it was not matched, and the queue entry with " +
-		"who it is assigned to. Narrow with query to match the reference, memo or reason. " +
+		"their own and are waiting in the reconciliation queue. Each has its amount, the " +
+		"bank's reference and memo, why it was not matched, and the queue entry with who " +
+		"it is assigned to. Narrow with query to match the reference, memo or reason. " +
 		"Use get_bank_receipt for one receipt's candidate payments."
 }
 
@@ -270,8 +270,8 @@ func (t *getBankReceiptTool) Name() string { return "get_bank_receipt" }
 
 func (t *getBankReceiptTool) Description() string {
 	return "Read one bank receipt with the customer payments that might be it, each scored " +
-		"out of 100 on how well its reference, amount and date agree with the receipt, " +
-		"and the reconciliation queue entry for it. A receipt in Exception has no match " +
+		"out of 100, and its reconciliation queue entry. The score says how well a " +
+		"payment's reference, amount and date agree with the receipt. A receipt in Exception has no match " +
 		"yet; a score of 90 or more with a clear lead is what the system would have " +
 		"matched on its own. Use the id from list_bank_receipt_exceptions or the run's subject."
 }
@@ -281,8 +281,9 @@ func (t *getBankReceiptTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"bankReceiptId": map[string]any{
-				"type":        "string",
-				"description": "The bank receipt's id.",
+				"type": "string",
+				"description": "The bank receipt's id, from list_bank_receipt_exceptions or " +
+					"this run's subject.",
 			},
 		},
 		"required":             []string{"bankReceiptId"},
@@ -449,7 +450,11 @@ func (t *listCustomerPaymentsTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "Words to look for in the reference number or the memo.",
 			},
-			"customerId": map[string]any{"type": "string"},
+			"customerId": map[string]any{
+				"type": "string",
+				"description": "Optional: only this customer's payments, by id from " +
+					"list_customers or a candidate's customerId in get_bank_receipt.",
+			},
 			"status": map[string]any{
 				"type":        "string",
 				"enum":        []string{string(customerpayment.StatusPosted), string(customerpayment.StatusReversed)},

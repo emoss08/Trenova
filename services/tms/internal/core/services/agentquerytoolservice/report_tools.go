@@ -98,9 +98,9 @@ func newListReportsTool(reports reportRunner) serviceports.AgentQueryTool {
 func (t *listReportsTool) Name() string { return "list_reports" }
 
 func (t *listReportsTool) Description() string {
-	return "List the reports this organization can run, naming what each one takes: " +
-		"the built-in catalog (each with a reportKey) and the reports people here " +
-		"have saved in the report builder (each with a definitionId). Call this " +
+	return "List the reports this organization can run and what each takes: built-in " +
+		"ones with a reportKey, and ones saved in the report builder with a definitionId. " +
+		"Call this " +
 		"before run_report so you name a real report rather than guessing, then " +
 		"describe_report for the one you picked to see each parameter's shape and " +
 		"allowed values. Narrow with category when the question is clearly about one " +
@@ -388,8 +388,9 @@ func (t *runReportTool) ParamSchema() map[string]any {
 				"description": "The reportKey of a built-in report from list_reports.",
 			},
 			"key": map[string]any{
-				"type":        "string",
-				"description": "Accepted as an alias of reportKey; prefer reportKey.",
+				"type": "string",
+				"description": "Accepted as an alias of reportKey, from list_reports; " +
+					"prefer reportKey.",
 			},
 			"definitionId": map[string]any{
 				"type":        "string",

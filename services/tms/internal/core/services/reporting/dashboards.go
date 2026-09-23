@@ -167,26 +167,33 @@ func (s *Service) DeleteDashboard(ctx context.Context, req *GetDashboardRequest)
 	})
 }
 
-// validateTileTargets fails a save that points at a report the author cannot
-// open, so a broken tile is caught at edit time instead of at view time.
-func (s *Service) validateTileTargets(
+// UnavailableTile is a tile whose report the caller cannot open.
+type UnavailableTile struct {
+	Index int
+	// Canned is true when the tile named a built-in report by key rather
+	// than a saved one by id.
+	Canned bool
+}
+
+// UnavailableTileTargets names the tiles that point at a report the caller
+// cannot open: a saved report that does not exist or is not theirs to read,
+// or a built-in key that names nothing. It is what a dashboard save checks,
+// exposed so an agent's proposal can be refused before anybody approves it.
+func (s *Service) UnavailableTileTargets(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	layout *report.DashboardLayout,
-) error {
-	multiErr := errortypes.NewMultiError()
-
-	for i := range layout.Tiles {
-		tile := &layout.Tiles[i]
+	tiles []report.DashboardTile,
+) []UnavailableTile {
+	var missing []UnavailableTile
+	for i := range tiles {
+		tile := &tiles[i]
 		if !tile.Kind.NeedsReport() {
 			continue
 		}
-		fieldPath := fmt.Sprintf("layout.tiles[%d]", i)
 
 		if tile.CannedKey != "" {
 			if _, ok := s.canned.Get(tile.CannedKey); !ok {
-				multiErr.Add(fieldPath+".cannedKey", errortypes.ErrInvalid,
-					"Unknown canned report \"{0}\"", tile.CannedKey)
+				missing = append(missing, UnavailableTile{Index: i, Canned: true})
 			}
 			continue
 		}
@@ -196,9 +203,31 @@ func (s *Service) validateTileTargets(
 			DefinitionID: tile.DefinitionID,
 		})
 		if err != nil {
-			multiErr.Add(fieldPath+".definitionId", errortypes.ErrInvalid,
-				"This report is not available")
+			missing = append(missing, UnavailableTile{Index: i})
 		}
+	}
+
+	return missing
+}
+
+// validateTileTargets fails a save that points at a report the author cannot
+// open, so a broken tile is caught at edit time instead of at view time.
+func (s *Service) validateTileTargets(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	layout *report.DashboardLayout,
+) error {
+	multiErr := errortypes.NewMultiError()
+
+	for _, missing := range s.UnavailableTileTargets(ctx, tenant, layout.Tiles) {
+		fieldPath := fmt.Sprintf("layout.tiles[%d]", missing.Index)
+		if missing.Canned {
+			multiErr.Add(fieldPath+".cannedKey", errortypes.ErrInvalid,
+				"Unknown canned report \"{0}\"", layout.Tiles[missing.Index].CannedKey)
+			continue
+		}
+		multiErr.Add(fieldPath+".definitionId", errortypes.ErrInvalid,
+			"This report is not available")
 	}
 
 	validateDashboardFilters(multiErr, layout.Filters)

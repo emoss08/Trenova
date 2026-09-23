@@ -36,6 +36,23 @@ type searchOutcome struct {
 	// Note is set only when nothing matched, because a full result speaks for
 	// itself and an extra sentence in front of it is noise in a context window.
 	Note string `json:"note,omitempty"`
+	// Offset, HasMore and NextOffset say where this page sits in the whole,
+	// so a full page is never mistaken for the whole set.
+	Offset     int  `json:"offset,omitempty"`
+	HasMore    bool `json:"hasMore"`
+	NextOffset *int `json:"nextOffset,omitempty"`
+}
+
+// paged records where a page sits in the whole list.
+func (o searchOutcome) paged(p page, hasMore bool) searchOutcome {
+	o.Offset = p.offset
+	o.HasMore = hasMore
+	if hasMore {
+		next := p.offset + p.limit
+		o.NextOffset = &next
+	}
+
+	return o
 }
 
 // searchResult wraps what a repository returned. count is taken from the

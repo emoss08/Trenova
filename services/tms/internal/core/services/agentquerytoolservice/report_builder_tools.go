@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"strconv"
 	"strings"
 	"time"
@@ -197,15 +198,26 @@ type datasetEdgeRow struct {
 	TargetFields []string `json:"targetFields,omitempty"`
 }
 
+// datasetRow is one dataset in the list. Edges are left to
+// describe_report_dataset: with them, the list of seventy ran past one tool
+// result and reached the model cut off.
 type datasetRow struct {
-	Dataset     string           `json:"dataset"`
-	Label       string           `json:"label"`
-	PluralLabel string           `json:"pluralLabel,omitempty"`
-	Description string           `json:"description,omitempty"`
-	Category    string           `json:"category,omitempty"`
-	FieldCount  int              `json:"fieldCount"`
-	Edges       []datasetEdgeRow `json:"edges,omitempty"`
+	Dataset     string `json:"dataset"`
+	Label       string `json:"label"`
+	Description string `json:"description,omitempty"`
+	Category    string `json:"category,omitempty"`
+	FieldCount  int    `json:"fieldCount"`
 }
+
+const (
+	defaultDatasetPage = 20
+	maxDatasetPage     = 70
+	defaultFieldPage   = 40
+	maxFieldPage       = 80
+	// maxEnumValuesShown keeps an enum's values in a field row while they
+	// are a short list to choose from, not a code table.
+	maxEnumValuesShown = 12
+)
 
 type listReportDatasetsTool struct {
 	access catalogAccess
@@ -220,26 +232,26 @@ func newListReportDatasetsTool(
 func (t *listReportDatasetsTool) Name() string { return "list_report_datasets" }
 
 func (t *listReportDatasetsTool) Description() string {
-	return "List the datasets a report can be built on — shipments, invoices, workers, " +
-		"tractors and so on — with the related datasets each one can reach. Call this " +
-		"first when you are going to create_report or change a report's dataset, then " +
-		"describe_report_dataset for the fields of the one you pick. Only datasets the " +
-		"person may read are listed."
+	return "List the datasets a new report can be built on, such as shipment, invoice or " +
+		"worker. Use it before create_report to pick the dataset, searching with query " +
+		"(\"shipment\", \"invoice\") rather than paging through all of them, then call " +
+		"describe_report_dataset for its fields. It lists kinds of data, not records: to " +
+		"find a customer or a shipment use list_customers or list_shipments."
 }
 
 func (t *listReportDatasetsTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
-		"properties": map[string]any{
+		"properties": withPaging(map[string]any{
 			"query": map[string]any{
 				"type":        "string",
-				"description": "Optional text matched against the dataset key, label and description.",
+				"description": "Text matched against the dataset key, label and description.",
 			},
 			"category": map[string]any{
 				"type":        "string",
 				"description": "Optional area to narrow to, such as Operations, Billing or Fleet.",
 			},
-		},
+		}, defaultDatasetPage, maxDatasetPage),
 		"additionalProperties": false,
 	}
 }
@@ -285,15 +297,16 @@ func (t *listReportDatasetsTool) Query(
 		rows = append(rows, datasetRow{
 			Dataset:     entity.Key,
 			Label:       entity.Label,
-			PluralLabel: entity.PluralLabel,
-			Description: entity.Description,
+			Description: stringutils.FirstSentence(entity.Description),
 			Category:    entity.Category,
 			FieldCount:  len(entity.Fields),
-			Edges:       edgeRows(entity, false),
 		})
 	}
 
-	return searchResult(criteria, rows, len(rows)), nil
+	window := readPage(params.Params, defaultDatasetPage, maxDatasetPage)
+	shown, more := slicePage(window, rows)
+
+	return searchResult(criteria, shown, len(shown)).paged(window, more), nil
 }
 
 func matchesDataset(entity *reportcatalog.Entity, needle string) bool {
@@ -327,22 +340,24 @@ func edgeRows(entity *reportcatalog.Entity, withTargetFields bool) []datasetEdge
 	return rows
 }
 
+// datasetFieldRow is one field, in as few characters as say what a report
+// needs: its key and type, what it aggregates by, and only the exceptions —
+// a field that cannot filter or group, or that this person may not read. The
+// widest datasets carry eighty fields, and a row that spelt out every flag and
+// its sensitivity pushed the shipment dataset past one tool result.
 type datasetFieldRow struct {
 	Key          string   `json:"key"`
-	Label        string   `json:"label"`
+	Label        string   `json:"label,omitempty"`
 	Description  string   `json:"description,omitempty"`
 	Type         string   `json:"type"`
-	Format       string   `json:"format,omitempty"`
-	Nullable     bool     `json:"nullable,omitempty"`
 	EnumValues   []string `json:"enumValues,omitempty"`
-	Aggregations []string `json:"aggregations,omitempty"`
-	Filterable   bool     `json:"filterable"`
-	Groupable    bool     `json:"groupable"`
-	Sensitivity  string   `json:"sensitivity"`
-	// Accessible is false for a field the person's role may not read. The
-	// compiler refuses a report that names one, so a model that knows this
-	// up front builds a report that compiles rather than one that is refused.
-	Accessible bool `json:"accessible"`
+	Aggregations []string `json:"aggs,omitempty"`
+	NoFilter     bool     `json:"noFilter,omitempty"`
+	NoGroup      bool     `json:"noGroup,omitempty"`
+	// Closed marks a field the person's role may not read. The compiler
+	// refuses a report that names one, so a model that knows this up front
+	// builds a report that compiles rather than one that is refused.
+	Closed bool `json:"closed,omitempty"`
 }
 
 type datasetDescription struct {
@@ -353,23 +368,13 @@ type datasetDescription struct {
 	Fields      []datasetFieldRow `json:"fields"`
 	FieldCount  int               `json:"fieldCount"`
 	// Shown is how many of them this result carries. It differs from
-	// FieldCount when the dataset is wider than one result can hold, and
-	// the note then says how to reach the rest.
-	Shown int              `json:"shownFieldCount"`
-	Edges []datasetEdgeRow `json:"edges,omitempty"`
-	Note  string           `json:"note"`
+	// FieldCount when the dataset is wider than one page, and NextOffset
+	// then says where the rest continue.
+	Shown      int              `json:"shownFieldCount"`
+	NextOffset *int             `json:"nextOffset,omitempty"`
+	Edges      []datasetEdgeRow `json:"edges,omitempty"`
+	Note       string           `json:"note"`
 }
-
-// maxDatasetFieldsDescribed bounds one description.
-//
-// The widest datasets carry eighty fields, each with its label, its
-// description, its aggregations and, for an enum, every value it takes.
-// Emitting all of them with every edge's target fields inlined ran past
-// the tool-result ceiling, and the result came back cut off mid-record —
-// so the model was left choosing fields from a list it had been told not
-// to trust. A bounded answer with a note is worth more than a complete
-// one that is discarded.
-const maxDatasetFieldsDescribed = 40
 
 type describeReportDatasetTool struct {
 	access catalogAccess
@@ -384,18 +389,16 @@ func newDescribeReportDatasetTool(
 func (t *describeReportDatasetTool) Name() string { return "describe_report_dataset" }
 
 func (t *describeReportDatasetTool) Description() string {
-	return "Describe one dataset from list_report_datasets: every field with its type, " +
-		"the aggregations it supports, whether it can filter or group, and whether the " +
-		"person may read it, plus the edges to related datasets. Use the field keys " +
-		"and edge names exactly as given when you write a report definition. Narrow " +
-		"with query when you know what you are looking for, such as \"revenue\" or " +
-		"\"delivered\"."
+	return "Describe one report dataset's fields, and the related datasets it can reach. " +
+		"Use it after list_report_datasets and before preview_report or create_report, and " +
+		"write field keys and edge names exactly as given. Narrow with query (\"revenue\", " +
+		"\"delivered\") when you know what you want; a wide dataset pages with offset."
 }
 
 func (t *describeReportDatasetTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
-		"properties": map[string]any{
+		"properties": withPaging(map[string]any{
 			"dataset": map[string]any{
 				"type":        "string",
 				"description": "The dataset key from list_report_datasets, such as shipment.",
@@ -404,7 +407,7 @@ func (t *describeReportDatasetTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "Optional text matched against field keys, labels and descriptions.",
 			},
-		},
+		}, defaultFieldPage, maxFieldPage),
 		"required":             []string{"dataset"},
 		"additionalProperties": false,
 	}
@@ -455,45 +458,33 @@ func (t *describeReportDatasetTool) Query(
 			continue
 		}
 
-		sensitivity, accessible := t.access.fieldAccessible(entity, field, detail)
+		_, accessible := t.access.fieldAccessible(entity, field, detail)
 		fields = append(fields, datasetFieldRow{
 			Key:          field.Key,
-			Label:        field.Label,
-			Description:  field.Description,
+			Label:        labelIfNotKey(field),
+			Description:  stringutils.FirstSentence(field.Description),
 			Type:         string(field.Type),
-			Format:       string(field.Format),
-			Nullable:     field.Nullable,
-			EnumValues:   enumValueKeys(field),
+			EnumValues:   shortEnum(field),
 			Aggregations: aggregationNames(field),
-			Filterable:   field.Filterable,
-			Groupable:    field.Groupable,
-			Sensitivity:  sensitivity.String(),
-			Accessible:   accessible,
+			NoFilter:     !field.Filterable,
+			NoGroup:      !field.Groupable,
+			Closed:       !accessible,
 		})
 	}
 
 	matched := len(fields)
-	withheld := 0
-	if len(fields) > maxDatasetFieldsDescribed {
-		withheld = len(fields) - maxDatasetFieldsDescribed
-		fields = fields[:maxDatasetFieldsDescribed]
-	}
+	window := readPage(params.Params, defaultFieldPage, maxFieldPage)
+	fields, more := slicePage(window, fields)
 
 	note := "Refer to a field of this dataset as {\"field\": \"<key>\"} and to a field " +
 		"of a related dataset as {\"path\": [\"<edge>\"], \"field\": \"<key>\"}, " +
 		"using only the keys each edge's targetFields lists; an edge two steps " +
 		"away needs describe_report_dataset on the first target. A measure " +
 		"column needs an agg the field lists; a dimension column groups the " +
-		"rows. A field marked accessible: false cannot be used by this person."
-	if withheld > 0 {
-		note += fmt.Sprintf(
-			" Showing %d of %d matching fields; call this again with query to reach "+
-				"the other %d rather than assuming they do not exist.",
-			len(fields), matched, withheld,
-		)
-	}
+		"rows, and a report of dimension columns alone lists rows. A field " +
+		"marked closed cannot be used by this person."
 
-	return datasetDescription{
+	description := datasetDescription{
 		Dataset:     entity.Key,
 		Label:       entity.Label,
 		Description: entity.Description,
@@ -503,7 +494,42 @@ func (t *describeReportDatasetTool) Query(
 		Shown:       len(fields),
 		Edges:       edgeRows(entity, true),
 		Note:        note,
-	}, nil
+	}
+	if more {
+		next := window.offset + window.limit
+		description.NextOffset = &next
+		description.Note += fmt.Sprintf(
+			" Showing %d of %d matching fields; call this again with offset %d, or with "+
+				"query, for the rest rather than assuming they do not exist.",
+			len(fields), matched, next,
+		)
+	}
+
+	return description, nil
+}
+
+// labelIfNotKey keeps a field's label only when it says something its key
+// does not: "Pro number" beside proNumber is noise, "Linehaul revenue" beside
+// freightChargeAmount is not.
+func labelIfNotKey(field *reportcatalog.Field) string {
+	squashed := strings.ReplaceAll(strings.ToLower(field.Label), " ", "")
+	if squashed == strings.ToLower(field.Key) {
+		return ""
+	}
+
+	return field.Label
+}
+
+// shortEnum keeps an enum's values while they are a short list to choose
+// from. A longer one is filtered by value anyway, and the model can ask
+// preview_report for the values it sees.
+func shortEnum(field *reportcatalog.Field) []string {
+	values := enumValueKeys(field)
+	if len(values) > maxEnumValuesShown {
+		return nil
+	}
+
+	return values
 }
 
 func matchesField(field *reportcatalog.Field, needle string) bool {

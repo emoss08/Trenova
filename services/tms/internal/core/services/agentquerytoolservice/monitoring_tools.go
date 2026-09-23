@@ -77,9 +77,9 @@ func newListServiceFailuresTool(failures serviceFailureLister) serviceports.Agen
 	spec := listSpec{
 		name:         "list_service_failures",
 		entityPlural: "service failures",
-		summary: "List service failures: the late and missed pickups and deliveries the " +
-			"system has detected or a person recorded, with how late, at which stop, and " +
-			"whether anyone has reviewed or resolved them. Filter on status Open for what " +
+		summary: "List service failures: late and missed pickups and deliveries, detected or " +
+			"recorded, with how late, which stop, and whether anyone reviewed or " +
+			"resolved them. Filter on status Open for what " +
 			"still needs attention, on detectedAt for a period, or give a shipmentId. " +
 			"Resolving one takes its id and version, which are in the row.",
 		resource: permission.ResourceServiceFailure,
@@ -91,7 +91,11 @@ func newListServiceFailuresTool(failures serviceFailureLister) serviceports.Agen
 			{Name: "stopType", Kind: filterEnum, Values: stopTypes},
 			{Name: "lateMinutes", Kind: filterNumber, Sortable: true},
 			{Name: "detectedAt", Kind: filterDate, Sortable: true},
-			{Name: "shipmentId", Kind: filterText, Note: "an exact shipment id"},
+			{
+				Name: "shipmentId",
+				Kind: filterText,
+				Note: "an exact shipment id, from search_shipments",
+			},
 		},
 	}
 	spec.fetchIn = func(
@@ -272,9 +276,9 @@ func newListDetentionDeskTool(desk detentionDeskReader) serviceports.AgentQueryT
 func (t *listDetentionDeskTool) Name() string { return "list_detention_desk" }
 
 func (t *listDetentionDeskTool) Description() string {
-	return "Every open detention occurrence: a truck sitting at a stop past its free " +
-		"time, with the minutes until free time ends, whether the customer notice is " +
-		"due or overdue, and the amount at risk. Urgency Lost means the notice window " +
+	return "List every open detention occurrence: a truck at a stop past its free time, " +
+		"with minutes until free time ends, notice status and the amount at risk. The " +
+		"notice status says whether the customer notice is due or overdue. Urgency Lost means the notice window " +
 		"closed without a notice and the charge may not be collectable; NoticeOverdue " +
 		"and NoticeDueSoon say what to send. send_detention_notice sends it."
 }

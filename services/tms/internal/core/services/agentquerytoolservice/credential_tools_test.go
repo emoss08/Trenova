@@ -119,6 +119,8 @@ func TestListExpiringCredentials_ReturnsReadableRows(t *testing.T) {
 	assert.Equal(t, "Maria Ortiz", rows[0].WorkerName)
 	assert.Equal(t, "Medical Card", rows[0].CredentialType)
 	assert.NotEmpty(t, rows[0].WorkerID)
+	assert.Equal(t, repo.items[0].ID.String(), rows[0].ID,
+		"get_worker_credential takes the credential's id, so the row has to carry it")
 }
 
 func TestListExpiringCredentials_EmptyResultSaysWhatItLookedFor(t *testing.T) {

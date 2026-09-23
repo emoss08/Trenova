@@ -24,7 +24,8 @@ func (t *raiseExceptionTool) Name() string { return "raise_exception" }
 
 func (t *raiseExceptionTool) Description() string {
 	return "Hand a case to a person when you cannot resolve it: say what you tried, how " +
-		"severe it is and which record it concerns. Use this instead of guessing."
+		"severe it is and which record it concerns. Use this instead of guessing. It only " +
+		"works inside an agent run."
 }
 
 func (t *raiseExceptionTool) ParamSchema() map[string]any {
@@ -37,8 +38,9 @@ func (t *raiseExceptionTool) ParamSchema() map[string]any {
 				"description": "The kind of record the case is about.",
 			},
 			"subjectId": map[string]any{
-				"type":        "string",
-				"description": "The id of that record.",
+				"type": "string",
+				"description": "The id of that record: usually this run's subject, or an id a " +
+					"tool such as get_shipment or list_shipments returned.",
 			},
 			"category": map[string]any{
 				"type":        "string",
@@ -48,6 +50,8 @@ func (t *raiseExceptionTool) ParamSchema() map[string]any {
 			"severity": map[string]any{
 				"type": "string",
 				"enum": []string{"Low", "Medium", "High", "Critical"},
+				"description": "How urgent it is for the person who takes over. Defaults to " +
+					"Medium.",
 			},
 			"attemptSummary": map[string]any{
 				"type":        "string",
