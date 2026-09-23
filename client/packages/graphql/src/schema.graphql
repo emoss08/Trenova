@@ -1069,6 +1069,62 @@ type AgentRunEdge {
   node: AgentRun!
 }
 
+"""
+One thing an agent did, in the order it did it.
+
+The runtime has always said this aloud; these are the rows that keep it. A
+background run's durable record used to be its final reply cut to two thousand
+characters, which answered what the agent concluded but never what it did.
+"""
+type AgentRunEvent {
+  businessUnitId: ID!
+  """Pairs a tool's start with its finish without opening the payload."""
+  callId: String!
+  createdAt: Timestamp!
+  id: ID!
+  """The runtime's own event name, unchanged."""
+  kind: String!
+  occurredAt: Timestamp!
+  organizationId: ID!
+  ownerId: ID!
+  """Whether this belongs to a background run or a conversation turn."""
+  ownerKind: AgentRunEventOwnerKind!
+  payload: JSON!
+  """
+  The event's place in its owner's account of itself. Ordering by time will not
+  do: several events share a second easily, and a trajectory read back in the
+  wrong order reports the agent doing things in an order it never did.
+  """
+  sequence: Int!
+  """
+  Joins a tool event to the ledger row that claimed it. Empty for everything
+  that is not a tool call.
+  """
+  stepKey: String!
+  """
+  Whether the payload was too large to keep. A reader that cannot tell a short
+  payload from a shortened one will eventually mistake one for the other.
+  """
+  truncated: Boolean!
+  updatedAt: Timestamp!
+}
+
+type AgentRunEventConnection {
+  edges: [AgentRunEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AgentRunEventEdge {
+  cursor: String!
+  node: AgentRunEvent!
+}
+
+enum AgentRunEventOwnerKind {
+  AgentRun
+  AssistantTurn
+}
+
 enum AgentRunStatus {
   AwaitingDecision
   Completed
@@ -13072,6 +13128,7 @@ type Query {
   agentProposal(id: ID!): AgentProposal
   agentProposals(input: DataTableConnectionInput!): AgentProposalConnection!
   agentRun(id: ID!): AgentRun
+  agentRunEvents(input: DataTableConnectionInput!): AgentRunEventConnection!
   agentRuns(input: DataTableConnectionInput!): AgentRunConnection!
   """How one agent has been doing."""
   agentScorecard(input: AgentScorecardInput!): AgentScorecard!
