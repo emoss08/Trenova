@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -193,4 +195,99 @@ func TestTestOfAMissingProviderStartsNothing(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Empty(t, tester.asked)
+}
+
+func strPtr(value string) *string { return &value }
+
+func saveRequest(provider *aiprovider.Provider, baseURL string, key *string) *services.SaveAIProviderRequest {
+	return &services.SaveAIProviderRequest{
+		ID:      provider.ID,
+		Name:    provider.Name,
+		Kind:    provider.Kind,
+		BaseURL: baseURL,
+		Model:   provider.Model,
+		APIKey:  key,
+		Enabled: true,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: provider.OrganizationID,
+			BuID:  provider.BusinessUnitID,
+		},
+	}
+}
+
+/*
+A stored key belongs to the endpoint it was entered for.
+
+Someone allowed to edit a provider but not to read its key could point it at
+their own server and press Test: the key was kept, decrypted and sent there
+in the Authorization header. Moving a provider now needs its key again.
+*/
+func TestUpdate_RefusesToKeepTheKeyForANewServer(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
+	provider := testProvider(t, svc)
+	provider.BaseURL = "https://api.openai.com/v1"
+	svc.repo = &fakeProviderRepo{provider: provider}
+
+	_, err := svc.Update(t.Context(), saveRequest(provider, "https://attacker.example/v1", nil), nil)
+
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	fields := make([]string, 0, len(multiErr.Errors))
+	for _, e := range multiErr.Errors {
+		fields = append(fields, e.Field)
+	}
+	assert.Contains(t, fields, "apiKey")
+}
+
+func TestKeptKeyForNewEndpoint(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
+	existing := testProvider(t, svc)
+	existing.BaseURL = "https://api.openai.com/v1"
+
+	moved := *existing
+	moved.BaseURL = "https://attacker.example/v1"
+	assert.True(t, keptKeyForNewEndpoint(existing, &moved, saveRequest(existing, moved.BaseURL, nil)))
+	assert.False(t,
+		keptKeyForNewEndpoint(existing, &moved, saveRequest(existing, moved.BaseURL, strPtr("sk-new"))),
+		"a key entered with the move is the new server's own")
+
+	repathed := *existing
+	repathed.BaseURL = "https://api.openai.com/v2"
+	assert.False(t, keptKeyForNewEndpoint(existing, &repathed, saveRequest(existing, repathed.BaseURL, nil)),
+		"the same server keeps its key")
+
+	rekinded := *existing
+	rekinded.Kind = aiprovider.KindOllama
+	assert.True(t, keptKeyForNewEndpoint(existing, &rekinded, saveRequest(existing, existing.BaseURL, nil)))
+
+	keyless := *existing
+	keyless.APIKey = ""
+	assert.False(t, keptKeyForNewEndpoint(&keyless, &moved, saveRequest(existing, moved.BaseURL, nil)),
+		"nothing stored, nothing to leak")
+}
+
+// A deployment that hosts many organizations turns private addresses off, so
+// no organization's administrator can make the server call into its network.
+func TestApply_RefusesAPrivateNetworkTheServerDisallows(t *testing.T) {
+	t.Parallel()
+
+	off := false
+	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
+	svc.ai = &config.AIConfig{PrivateNetworkProviders: &off}
+	provider := testProvider(t, svc)
+	req := saveRequest(provider, "http://10.0.0.5:11434", nil)
+	req.AllowPrivateNetwork = true
+
+	err := svc.apply(provider, req)
+
+	require.Error(t, err)
+	assert.False(t, provider.AllowPrivateNetwork)
+
+	svc.ai = nil
+	require.NoError(t, svc.apply(provider, req), "an absent setting keeps self-hosted models working")
+	assert.True(t, provider.AllowPrivateNetwork)
 }

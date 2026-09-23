@@ -192,3 +192,36 @@ func NewStreamingClientWithPolicy(p Policy) *http.Client {
 
 	return client
 }
+
+// SameOrigin reports whether two URLs reach the same server: the same scheme,
+// host and port. A credential stored for one origin must not be sent to
+// another, so a change of origin is a change of who receives it. An address
+// that does not parse is an origin of its own.
+func SameOrigin(a, b string) bool {
+	left, err := url.Parse(strings.TrimSpace(a))
+	if err != nil {
+		return false
+	}
+	right, err := url.Parse(strings.TrimSpace(b))
+	if err != nil {
+		return false
+	}
+
+	return strings.EqualFold(left.Scheme, right.Scheme) &&
+		strings.EqualFold(left.Hostname(), right.Hostname()) &&
+		effectivePort(left) == effectivePort(right)
+}
+
+func effectivePort(u *url.URL) string {
+	if port := u.Port(); port != "" {
+		return port
+	}
+	switch strings.ToLower(u.Scheme) {
+	case "http":
+		return "80"
+	case "https":
+		return "443"
+	default:
+		return ""
+	}
+}

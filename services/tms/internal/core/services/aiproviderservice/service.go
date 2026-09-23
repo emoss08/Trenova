@@ -10,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -28,6 +30,7 @@ type Params struct {
 	AuditService services.AuditService
 	// Tester runs a test on a worker, which calls back into RunTest.
 	Tester services.AIProviderTester
+	Config *config.Config
 }
 
 // EndpointProber issues a live call against a configured endpoint.
@@ -46,6 +49,7 @@ type Service struct {
 	prober     EndpointProber
 	audit      services.AuditService
 	tester     services.AIProviderTester
+	ai         *config.AIConfig
 }
 
 var (
@@ -54,6 +58,11 @@ var (
 )
 
 func New(p Params) *Service {
+	var ai *config.AIConfig
+	if p.Config != nil {
+		ai = p.Config.GetAIConfig()
+	}
+
 	return &Service{
 		l:          p.Logger.Named("service.aiprovider"),
 		repo:       p.Repo,
@@ -61,6 +70,7 @@ func New(p Params) *Service {
 		prober:     p.Prober,
 		audit:      p.AuditService,
 		tester:     p.Tester,
+		ai:         ai,
 	}
 }
 
@@ -165,6 +175,13 @@ func (s *Service) Update(
 	}
 
 	multiErr := errortypes.NewMultiError()
+	if keptKeyForNewEndpoint(existing, &updated, req) {
+		// The stored key belongs to the endpoint it was entered for. Kept
+		// across a change of address, the next test or call would send it,
+		// decrypted, to wherever the address now points.
+		multiErr.Add("apiKey", errortypes.ErrRequired,
+			"Enter the API key again: the endpoint changed, and the saved key is not sent to a new one")
+	}
 	updated.Validate(multiErr)
 	if multiErr.HasErrors() {
 		return nil, multiErr
@@ -278,6 +295,12 @@ func (s *Service) apply(
 	provider.Kind = req.Kind
 	provider.BaseURL = strings.TrimSpace(req.BaseURL)
 	provider.Model = strings.TrimSpace(req.Model)
+	if req.AllowPrivateNetwork && !s.ai.PrivateNetworkProvidersAllowed() {
+		return errortypes.NewValidationError(
+			"allowPrivateNetwork", errortypes.ErrForbidden,
+			"This server does not allow providers on private network addresses",
+		)
+	}
 	provider.AllowPrivateNetwork = req.AllowPrivateNetwork
 	provider.MaxTokens = req.MaxTokens
 	provider.Tasks = req.Tasks
@@ -318,6 +341,19 @@ func (s *Service) apply(
 	provider.APIKey = encrypted
 
 	return nil
+}
+
+// keptKeyForNewEndpoint reports a save that moves a provider to a different
+// server, or a different kind of API, while leaving its stored key in place.
+func keptKeyForNewEndpoint(
+	existing, updated *aiprovider.Provider,
+	req *services.SaveAIProviderRequest,
+) bool {
+	if req.APIKey != nil || !existing.HasStoredAPIKey() {
+		return false
+	}
+
+	return existing.Kind != updated.Kind || !httpsafe.SameOrigin(existing.BaseURL, updated.BaseURL)
 }
 
 func (s *Service) decryptAPIKey(provider *aiprovider.Provider) (string, error) {

@@ -163,6 +163,7 @@ ai:
   probeTimeout: 45s # Test Connection, which waits on a real generation; keep under server.requestTimeout
   completionTimeout: 5m # One blocking call to a model, including the wait before it answers
   streamIdleTimeout: 5m # How long a streamed reply may go silent; reasoning models think for minutes before their first token
+  privateNetworkProviders: true # Let organizations point a provider at a private or loopback address (self-hosted models). Set false when many organizations share this server
   maxRetries: 2 # Retries for transient failures
 
   # Reading uploaded documents with a model, and the OCR pipeline that feeds it.

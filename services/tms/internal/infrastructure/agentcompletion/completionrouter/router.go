@@ -519,7 +519,7 @@ func (s *Service) clientFor(provider *aiprovider.Provider) *http.Client {
 	s.clientsMu.Lock()
 	defer s.clientsMu.Unlock()
 
-	allowPrivate := provider.AllowPrivateNetwork
+	allowPrivate := provider.AllowPrivateNetwork && s.ai.PrivateNetworkProvidersAllowed()
 	if client, ok := s.clients[allowPrivate]; ok {
 		return client
 	}
@@ -555,7 +555,7 @@ func (s *Service) streamClientFor(provider *aiprovider.Provider) *http.Client {
 	s.clientsMu.Lock()
 	defer s.clientsMu.Unlock()
 
-	allowPrivate := provider.AllowPrivateNetwork
+	allowPrivate := provider.AllowPrivateNetwork && s.ai.PrivateNetworkProvidersAllowed()
 	if client, ok := s.streamClients[allowPrivate]; ok {
 		return client
 	}

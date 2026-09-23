@@ -290,7 +290,7 @@ func (p *Prober) clientFor(provider *aiprovider.Provider) *http.Client {
 	p.clientsMu.Lock()
 	defer p.clientsMu.Unlock()
 
-	allowPrivate := provider.AllowPrivateNetwork
+	allowPrivate := provider.AllowPrivateNetwork && p.cfg.PrivateNetworkProvidersAllowed()
 	if client, ok := p.clients[allowPrivate]; ok {
 		return client
 	}

@@ -181,3 +181,25 @@ func TestNewClientBlocksLoopbackAtDial(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "disallowed network")
 }
+
+func TestSameOrigin(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		a, b string
+		want bool
+	}{
+		{"https://api.openai.com/v1", "https://api.openai.com/v2", true},
+		{"https://API.openai.com", "https://api.openai.com:443/v1", true},
+		{"http://localhost:11434", "http://localhost:11434/api", true},
+		{"https://api.openai.com/v1", "https://attacker.example/v1", false},
+		{"https://api.openai.com", "http://api.openai.com", false},
+		{"http://localhost:11434", "http://localhost:8000", false},
+		{"https://api.openai.com", "", false},
+	}
+	for _, tc := range cases {
+		if got := SameOrigin(tc.a, tc.b); got != tc.want {
+			t.Errorf("SameOrigin(%q, %q) = %v, want %v", tc.a, tc.b, got, tc.want)
+		}
+	}
+}

@@ -646,7 +646,13 @@ type AIConfig struct {
 	CompletionTimeout time.Duration `mapstructure:"completionTimeout"`
 	// StreamIdleTimeout is how long a streaming reply may go silent.
 	StreamIdleTimeout time.Duration `mapstructure:"streamIdleTimeout"`
-	MaxRetries        int           `mapstructure:"maxRetries"        validate:"omitempty,min=0,max=10"`
+	// PrivateNetworkProviders lets an organization point a provider at a
+	// private or loopback address, which a self-hosted model needs. It is a
+	// pointer so an absent key keeps that working; a deployment that hosts
+	// many organizations sets it false, because otherwise any of their
+	// administrators can make the server call into its own network.
+	PrivateNetworkProviders *bool `mapstructure:"privateNetworkProviders"`
+	MaxRetries              int   `mapstructure:"maxRetries"        validate:"omitempty,min=0,max=10"`
 
 	// DocumentExtraction lets a model classify and extract uploaded
 	// documents. Off by default; the OCR pipeline below runs either way.
@@ -690,6 +696,12 @@ const AIEnabledKey = "ai.enabled"
 // forgets to wire it would — must fall to the same "available" default as an
 // absent key, rather than panicking inside a gate whose whole job is to answer
 // a yes-or-no question.
+// PrivateNetworkProvidersAllowed reports whether a provider may be reached
+// on a private or loopback address.
+func (c *AIConfig) PrivateNetworkProvidersAllowed() bool {
+	return c == nil || c.PrivateNetworkProviders == nil || *c.PrivateNetworkProviders
+}
+
 func (c *AIConfig) AIEnabled() bool {
 	return c == nil || c.Enabled == nil || *c.Enabled
 }
