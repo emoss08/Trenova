@@ -23,8 +23,11 @@ import {
   sortInsights,
 } from "./insight-presentation";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { FeedbackControl } from "@/components/ai-feedback/feedback-control";
 
 const INSIGHT_LIMIT = 6;
+
+const INSIGHT_FEEDBACK_REVEAL = "opacity-0 group-hover/insight:opacity-100";
 
 /**
  * Findings computed from the organization's own records.
@@ -107,6 +110,10 @@ function InsightCard({ insight, now }: { insight: Insight; now: number }) {
             <p className="text-2xs text-muted-foreground mt-0.5 truncate">{insight.subject}</p>
           )}
         </Link>
+        <FeedbackControl
+          target={{ targetType: "Insight", targetId: insight.id }}
+          revealClassName={INSIGHT_FEEDBACK_REVEAL}
+        />
         <Button
           variant="ghost"
           size="xs"

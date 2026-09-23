@@ -2133,6 +2133,7 @@ var MemoryColumns = struct {
 	ExpiresAt         Column // "expires_at" → qualified: "amem.expires_at"
 	UseCount          Column // "use_count" → qualified: "amem.use_count"
 	LastUsedAt        Column // "last_used_at" → qualified: "amem.last_used_at"
+	Evidence          Column // "evidence" → qualified: "amem.evidence"
 	Version           Column // "version" → qualified: "amem.version"
 	CreatedAt         Column // "created_at" → qualified: "amem.created_at"
 	UpdatedAt         Column // "updated_at" → qualified: "amem.updated_at"
@@ -2157,6 +2158,7 @@ var MemoryColumns = struct {
 	ExpiresAt:         NewColumn("expires_at", "amem"),
 	UseCount:          NewColumn("use_count", "amem"),
 	LastUsedAt:        NewColumn("last_used_at", "amem"),
+	Evidence:          NewColumn("evidence", "amem"),
 	Version:           NewColumn("version", "amem"),
 	CreatedAt:         NewColumn("created_at", "amem"),
 	UpdatedAt:         NewColumn("updated_at", "amem"),
@@ -2187,6 +2189,7 @@ var MemoryFieldMap = map[string]string{
 	"expiresAt":         "expires_at",
 	"useCount":          "use_count",
 	"lastUsedAt":        "last_used_at",
+	"evidence":          "evidence",
 	"version":           "version",
 	"createdAt":         "created_at",
 	"updatedAt":         "updated_at",
@@ -2215,6 +2218,7 @@ var MemoryInsertableColumns = []string{
 	"expires_at",
 	"use_count",
 	"last_used_at",
+	"evidence",
 	"version",
 	"created_at",
 	"updated_at",
@@ -2303,6 +2307,7 @@ var MemoryFilter = struct {
 	ExpiresAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
 	UseCount          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "useCount" → DB: "use_count"
 	LastUsedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastUsedAt" → DB: "last_used_at"
+	Evidence          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "evidence" → DB: "evidence"
 	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -2366,6 +2371,9 @@ var MemoryFilter = struct {
 	},
 	LastUsedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("lastUsedAt", op, value)
+	},
+	Evidence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("evidence", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

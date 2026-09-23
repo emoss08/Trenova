@@ -19,6 +19,17 @@ fragment AgentMemoryTableRowFields on AgentMemory {
   expiresAt
   useCount
   lastUsedAt
+  evidence {
+    feedbackIds
+    patternKey
+    ratingCount
+    distinctUsers
+    distinctThreads
+    reason
+    quotes
+    firstRatedAt
+    lastRatedAt
+  }
   version
   createdAt
   updatedAt
@@ -58,6 +69,18 @@ mutation UpdateAgentMemory($id: ID!, $input: AgentMemoryInput!) {
 
 mutation SetAgentMemoryStatus($id: ID!, $status: AgentMemoryStatus!) {
   setAgentMemoryStatus(id: $id, status: $status) {
+    ...AgentMemoryTableRowFields
+  }
+}
+
+mutation ApproveAgentMemorySuggestion($id: ID!, $input: ApproveAgentMemorySuggestionInput!) {
+  approveAgentMemorySuggestion(id: $id, input: $input) {
+    ...AgentMemoryTableRowFields
+  }
+}
+
+mutation DismissAgentMemorySuggestion($id: ID!, $version: Int!) {
+  dismissAgentMemorySuggestion(id: $id, version: $version) {
     ...AgentMemoryTableRowFields
   }
 }

@@ -260,6 +260,28 @@ func (s *Service) SetStatus(
 			fmt.Sprintf("%q is not a memory status", req.Status),
 		)
 	}
+	if req.Status.IsSuggestion() {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalid,
+			"A memory is suggested only by feedback; approve or dismiss the suggestion instead",
+		)
+	}
+
+	current, err := s.repo.GetByID(ctx, repositories.GetAgentMemoryByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if current.Status.IsSuggestion() {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalid,
+			"A suggested memory is approved or dismissed, not retired or restored",
+		)
+	}
 
 	byUser := pulid.Nil
 	if actor.IsUser() {
@@ -284,6 +306,128 @@ func (s *Service) SetStatus(
 	s.log(updated, actor, permission.OpUpdate, comment)
 
 	return updated, nil
+}
+
+func (s *Service) ApproveSuggestion(
+	ctx context.Context,
+	req *services.ApproveAgentMemorySuggestionRequest,
+	actor *services.RequestActor,
+) (*agent.Memory, error) {
+	if !actor.IsUser() {
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrForbidden,
+			"Only a person can approve a suggested memory",
+		)
+	}
+
+	current, err := s.suggestion(ctx, req.ID, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	kind := req.Kind
+	if kind == "" {
+		kind = current.Kind
+	}
+	candidate := *current
+	candidate.Kind = kind
+	candidate.Content = strings.TrimSpace(req.Content)
+	candidate.Status = agent.MemoryStatusActive
+
+	me := errortypes.NewMultiError()
+	candidate.Validate(me)
+	if me.HasErrors() {
+		return nil, me
+	}
+
+	approved, err := s.repo.ResolveSuggestion(ctx, repositories.ResolveAgentMemorySuggestionRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+		Status:     agent.MemoryStatusActive,
+		Kind:       candidate.Kind,
+		Content:    candidate.Content,
+		ByUserID:   actor.UserID,
+		At:         timeutils.NowUnix(),
+		Version:    req.Version,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.logChange(
+		approved,
+		jsonutils.MustToJSON(current),
+		actor,
+		permission.OpUpdate,
+		"Suggested agent memory approved",
+	)
+
+	return approved, nil
+}
+
+func (s *Service) DismissSuggestion(
+	ctx context.Context,
+	req services.DismissAgentMemorySuggestionRequest,
+	actor *services.RequestActor,
+) (*agent.Memory, error) {
+	if !actor.IsUser() {
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrForbidden,
+			"Only a person can dismiss a suggested memory",
+		)
+	}
+
+	current, err := s.suggestion(ctx, req.ID, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	dismissed, err := s.repo.ResolveSuggestion(ctx, repositories.ResolveAgentMemorySuggestionRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+		Status:     agent.MemoryStatusDismissed,
+		ByUserID:   actor.UserID,
+		At:         timeutils.NowUnix(),
+		Version:    req.Version,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.logChange(
+		dismissed,
+		jsonutils.MustToJSON(current),
+		actor,
+		permission.OpUpdate,
+		"Suggested agent memory dismissed",
+	)
+
+	return dismissed, nil
+}
+
+func (s *Service) suggestion(
+	ctx context.Context,
+	id pulid.ID,
+	tenant pagination.TenantInfo,
+) (*agent.Memory, error) {
+	current, err := s.repo.GetByID(ctx, repositories.GetAgentMemoryByIDRequest{
+		ID:         id,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if current.Status != agent.MemoryStatusSuggested {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalid,
+			"Only a suggested memory can be approved or dismissed",
+		)
+	}
+
+	return current, nil
 }
 
 func (s *Service) GetByID(
