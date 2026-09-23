@@ -47,6 +47,9 @@ const (
 	// turned out to be about: what a desk works on is the piece of mail, and
 	// two messages about one shipment are two things to answer.
 	SubjectInboundMessage = SubjectType("InboundMessage")
+	// SubjectReport is a saved report definition. A report that cannot be
+	// built as asked is a case about the report, not about an insight.
+	SubjectReport = SubjectType("Report")
 )
 
 // Resource is the permission a person needs to read a record of this kind.
@@ -76,6 +79,8 @@ func (s SubjectType) Resource() (permission.Resource, bool) {
 		return permission.ResourceEDI, true
 	case SubjectInboundMessage:
 		return permission.ResourceInboundMessage, true
+	case SubjectReport:
+		return permission.ResourceReport, true
 	default:
 		return "", false
 	}
@@ -118,7 +123,8 @@ func (s SubjectType) IsValid() bool {
 		SubjectWorker,
 		SubjectCarrierIntelEvent,
 		SubjectEDIInboundFile,
-		SubjectInboundMessage:
+		SubjectInboundMessage,
+		SubjectReport:
 		return true
 	default:
 		return false
@@ -140,6 +146,7 @@ func AllSubjectTypes() []SubjectType {
 		SubjectCarrierIntelEvent,
 		SubjectEDIInboundFile,
 		SubjectInboundMessage,
+		SubjectReport,
 	}
 }
 

@@ -73,6 +73,21 @@ describe("askRequestsFrom", () => {
     ]);
   });
 
+  it("answers a labelled option without a value with its label", () => {
+    const labelled = {
+      ...window,
+      options: [
+        { label: "Chicago to Dallas", detail: "the busiest lane" },
+        { value: "", label: "Atlanta to Miami" },
+        { detail: "neither a value nor a label" },
+      ],
+    };
+    expect(askRequestsFrom([exchange("ask_user", fenced(labelled))])[0].options).toEqual([
+      { value: "Chicago to Dallas", label: "Chicago to Dallas", detail: "the busiest lane" },
+      { value: "Atlanta to Miami", label: "Atlanta to Miami", detail: "" },
+    ]);
+  });
+
   it("drops a question nothing can answer rather than rendering an empty card", () => {
     const unanswerable = { ...window, options: [], allowOther: false };
     expect(askRequestsFrom([exchange("ask_user", fenced(unanswerable))])).toEqual([]);

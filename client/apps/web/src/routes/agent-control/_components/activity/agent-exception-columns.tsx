@@ -1,6 +1,10 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
+import {
+  DataTableDescription,
+  DataTableLink,
+} from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
+import { agentSubjectPath } from "@/lib/agent-subjects";
 import type { AgentExceptionRow } from "@/lib/graphql/agent-activity-tables";
 import { toTitleCase } from "@trenova/shared/lib/utils";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
@@ -60,14 +64,20 @@ export function getExceptionColumns(t: TranslateFn): ColumnDef<AgentExceptionRow
     {
       accessorKey: "subjectType",
       header: t("Subject"),
-      cell: ({ row }) => (
-        <span className="flex flex-col leading-tight">
-          <span>{row.original.subjectType}</span>
-          <span className="text-muted-foreground font-mono text-xs">
-            {row.original.subjectId}
+      cell: ({ row }) => {
+        const { subjectType, subjectId } = row.original;
+        const href = agentSubjectPath(subjectType, subjectId);
+        return (
+          <span className="flex flex-col leading-tight">
+            <span>{subjectType}</span>
+            {href === null ? (
+              <span className="text-muted-foreground font-mono text-xs">{subjectId}</span>
+            ) : (
+              <DataTableLink text={subjectId} href={href} className="font-mono text-xs" />
+            )}
           </span>
-        </span>
-      ),
+        );
+      },
       size: 220,
       meta: {
         label: t("Subject"),

@@ -224,6 +224,17 @@ func alreadyFollowedUp(history []conversation.Message, marker string) bool {
 	return false
 }
 
+// DecisionReported reports whether the thread already carries the note for a
+// decision on this proposal, or on this plan when one is named. A follow-up
+// resumed after a busy turn asks it first, so a decision is reported once.
+func DecisionReported(notes []conversation.Message, proposalID, planID pulid.ID) bool {
+	if planID.IsNotNil() {
+		return alreadyFollowedUp(notes, "plan "+planID.String())
+	}
+
+	return alreadyFollowedUp(notes, "proposal "+proposalID.String())
+}
+
 // decisionHeadline is the person-readable record of a decision: the note's
 // first line, which is all of it a reader is shown. The lines after it are
 // instructions to the agent, and no rendering of the thread shows them.

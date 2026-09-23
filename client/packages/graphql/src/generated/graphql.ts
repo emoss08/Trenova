@@ -280,6 +280,7 @@ export type AgentSubjectType =
   | 'InboundMessage'
   | 'Insight'
   | 'Organization'
+  | 'Report'
   | 'Shipment'
   | 'ShipmentMove'
   | 'Worker';

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -318,4 +319,63 @@ func TestCloseTurn_LeavesARecordThatAlreadyEnded(t *testing.T) {
 	closeTurn(t, a, turn)
 
 	assert.Empty(t, records.completed)
+}
+
+type resumedFollowUps struct {
+	mu      sync.Mutex
+	resumed []serviceports.ResumeFollowUpsRequest
+}
+
+func (r *resumedFollowUps) ResumeFollowUps(
+	_ context.Context,
+	req serviceports.ResumeFollowUpsRequest,
+) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.resumed = append(r.resumed, req)
+}
+
+// A decision made while this turn held the conversation found it busy, and
+// its report was dropped. The turn resumes it once its record is closed and
+// the conversation is free again.
+func TestFinishTurn_ResumesTheFollowUpsItKeptOut(t *testing.T) {
+	t.Parallel()
+
+	turn := runningTurn()
+	turn.Status = conversation.AssistantTurnStatusCompleted
+	steps := newLedger(serviceports.RunStep{
+		Kind:   serviceports.RunStepCompletion,
+		Key:    turnFinishKey + ":1",
+		Status: serviceports.RunStepCompleted,
+	})
+	a, _ := finishActivities(turn, steps)
+	followUps := &resumedFollowUps{}
+	a.followUps = followUps
+	in := finishInput(turn)
+	in.Rejection = ""
+	in.Plan = &assistantservice.TurnPlan{ThreadID: turn.ThreadID}
+
+	finish(t, a, in)
+
+	require.Len(t, followUps.resumed, 1)
+	assert.Equal(t, turn.ThreadID, followUps.resumed[0].ThreadID)
+	assert.Equal(t, turn.OrganizationID, followUps.resumed[0].TenantInfo.OrgID)
+}
+
+// A turn that never got as far as a plan saved nothing, a follow-up that
+// could not be prepared among them. Resuming from it would start the same
+// failing follow-up again, for ever.
+func TestFinishTurn_DoesNotResumeFromATurnThatNeverStarted(t *testing.T) {
+	t.Parallel()
+
+	turn := runningTurn()
+	a, records := finishActivities(turn, newLedger())
+	followUps := &resumedFollowUps{}
+	a.followUps = followUps
+
+	finish(t, a, finishInput(turn))
+
+	require.Len(t, records.completed, 1)
+	assert.Empty(t, followUps.resumed)
 }

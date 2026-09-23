@@ -67,7 +67,8 @@ type ActivitiesParams struct {
 	TurnRepo      repositories.AssistantTurnRepository
 	Steps         serviceports.RunStepLedger
 	Notifications *notificationservice.Service
-	Trajectory    serviceports.AgentRunEventRecorder `optional:"true"`
+	Trajectory    serviceports.AgentRunEventRecorder   `optional:"true"`
+	FollowUps     serviceports.DecisionFollowUpResumer `optional:"true"`
 }
 
 // Activities are a turn's first and last steps. Everything between them is
@@ -81,6 +82,7 @@ type Activities struct {
 	trajectory    serviceports.AgentRunEventRecorder
 	threads       replyThreads
 	notifications replyNotifications
+	followUps     serviceports.DecisionFollowUpResumer
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -91,6 +93,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		turnRepo:   p.TurnRepo,
 		steps:      p.Steps,
 		trajectory: p.Trajectory,
+		followUps:  p.FollowUps,
 	}
 	// Assigned only when present: a nil pointer held by an interface is not
 	// a nil interface, and the notice would dereference it.
@@ -176,7 +179,10 @@ func (a *Activities) FinishTurnActivity(
 			zap.String("turn", payload.TurnID.String()),
 		)
 
-		return a.alreadySaved(ctx, turn), nil
+		ending := a.alreadySaved(ctx, turn)
+		a.resumeFollowUps(ctx, in)
+
+		return ending, nil
 	}
 
 	ending, cause, err := a.finish(ctx, in)
@@ -190,8 +196,28 @@ func (a *Activities) FinishTurnActivity(
 	a.settle(ctx, payload, serviceports.RunStepCompleted, ending.Result.Status)
 	a.turns.Complete(ctx, turn, conversation.AssistantTurnStatus(ending.Result.Status), cause)
 	a.recordTrajectory(ctx, tenant, payload, in.Events, ending.Event)
+	a.resumeFollowUps(ctx, in)
 
 	return ending, nil
+}
+
+// resumeFollowUps starts the report of a decision made while this turn held
+// the conversation, now that the conversation is free. The turn read its
+// proposals before that decision, so it could not report it, and the
+// decision's own follow-up found the conversation busy.
+//
+// A turn that never got as far as a plan saved nothing, a follow-up that
+// could not be prepared among them; resuming from it would start the same
+// failing follow-up again, so the conversation's next turn resumes instead.
+func (a *Activities) resumeFollowUps(ctx context.Context, in *FinishTurnInput) {
+	if a.followUps == nil || in.Plan == nil {
+		return
+	}
+
+	a.followUps.ResumeFollowUps(ctx, serviceports.ResumeFollowUpsRequest{
+		TenantInfo: in.Payload.tenantInfo(),
+		ThreadID:   in.Payload.ThreadID,
+	})
 }
 
 // finish saves the turn and decides how it ended. cause is why the turn did
