@@ -508,7 +508,7 @@ func (r *repository) removeDelegate(
 				Where("?::text = ANY("+cols.DelegateIDs.Qualified()+")", req.ID.String())
 		}).
 		Set(
-			cols.DelegateIDs.SetExpr("NULLIF(array_remove({}, ?::text), '{}'::text[])"),
+			cols.DelegateIDs.SetExpr("NULLIF(array_remove({}, ?::text), ARRAY[]::text[])"),
 			req.ID.String(),
 		).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
