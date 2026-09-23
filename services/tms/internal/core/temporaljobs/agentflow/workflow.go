@@ -129,7 +129,7 @@ func (fx *workflowEffects) Emit(event serviceports.StreamEvent) {
 // raw result exist, and what it showed is already in the outcome.
 func (fx *workflowEffects) Observe(
 	_ *agentruntime.Turn,
-	call serviceports.ToolCall,
+	call *serviceports.ToolCall,
 	outcome agentruntime.ToolOutcome,
 ) agentruntime.ToolOutcome {
 	if !outcome.Publishes {
@@ -142,7 +142,7 @@ func (fx *workflowEffects) Observe(
 	var result ToolResult
 	err := workflow.ExecuteActivity(ctx, a.PublishArtifactActivity, &PublishInput{
 		Run:  fx.run,
-		Call: call,
+		Call: *call,
 	}).Get(ctx, &result)
 	if err != nil {
 		return agentruntime.ToolOutcome{

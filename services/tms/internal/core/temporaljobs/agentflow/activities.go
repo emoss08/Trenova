@@ -160,9 +160,9 @@ func (a *Activities) runTool(
 	req.Attempt = int(activity.GetInfo(ctx).Attempt)
 
 	outcome := a.runtime.DispatchStep(ctx, req, in.Call)
-	observe, kept, done := a.observing(ctx, in.Run)
+	observe, kept, done := a.observing(ctx, &in.Run)
 	defer done()
-	outcome = a.runtime.ObserveCall(observe, in.Call.Call, outcome)
+	outcome = a.runtime.ObserveCall(observe, &in.Call.Call, outcome)
 
 	return &ToolResult{Outcome: outcome, Artifacts: *kept}, nil
 }
@@ -173,9 +173,9 @@ func (a *Activities) PublishArtifactActivity(
 	ctx context.Context,
 	in *PublishInput,
 ) (*ToolResult, error) {
-	observe, kept, done := a.observing(ctx, in.Run)
+	observe, kept, done := a.observing(ctx, &in.Run)
 	defer done()
-	outcome := a.runtime.PublishStep(observe, in.Call)
+	outcome := a.runtime.PublishStep(observe, &in.Call)
 
 	return &ToolResult{Outcome: outcome, Artifacts: *kept}, nil
 }
@@ -185,19 +185,19 @@ func (a *Activities) PublishArtifactActivity(
 // beside it, a desk's most often, has no observer.
 func (a *Activities) observing(
 	ctx context.Context,
-	run RunContext,
+	run *RunContext,
 ) (serviceports.ToolObserver, *[]*assistantartifact.Artifact, func()) {
 	kept := new([]*assistantartifact.Artifact)
 	if a.observer == nil || run.ThreadID.IsNil() {
 		return nil, kept, func() {}
 	}
 
-	stream, events, err := openStream(ctx)
-	if err != nil {
+	stream, events, openErr := openStream(ctx)
+	if openErr != nil {
 		// The call still counts; the reader misses its announcement and sees
 		// the artifact when the conversation is read.
 		a.l.Warn("a run's stream could not be opened for what a call showed",
-			zap.String("run", run.ThreadID.String()), zap.Error(err))
+			zap.String("run", run.ThreadID.String()), zap.Error(openErr))
 	}
 	emit := func(event serviceports.StreamEvent) {
 		if events != nil {
@@ -206,7 +206,7 @@ func (a *Activities) observing(
 	}
 
 	observe := func(observation serviceports.ToolObservation) (*serviceports.ShownArtifact, error) {
-		shown, artifacts, err := a.observer.ObserveTool(ctx, run, observation, emit)
+		shown, artifacts, err := a.observer.ObserveTool(ctx, *run, observation, emit)
 		*kept = append(*kept, artifacts...)
 
 		return shown, err

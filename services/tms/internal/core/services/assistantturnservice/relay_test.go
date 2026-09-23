@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -87,7 +86,7 @@ func (s *stubReader) Read(
 }
 
 func newRelay(turns *stubTurns, reader *stubReader) *Service {
-	return &Service{l: zap.NewNop(), turns: turns, reader: reader, running: newRunningTurns()}
+	return &Service{l: zap.NewNop(), turns: turns, reader: reader}
 }
 
 func runningTurn() *conversation.AssistantTurn {

@@ -332,7 +332,7 @@ func (s *Service) recordToolResult(
 	if outcome.action != nil {
 		result.Actions = append(result.Actions, *outcome.action)
 	}
-	outcome = fx.Observe(t, call, outcome.exported()).internal()
+	outcome = fx.Observe(t, &call, outcome.exported()).internal()
 
 	fx.Emit(serviceports.StreamEvent{
 		Event: serviceports.AssistantEventToolFinished,

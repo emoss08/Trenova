@@ -48,7 +48,7 @@ type TurnEffects interface {
 	// Observe hands a finished call to whatever shows it to the person, and
 	// returns the outcome with what it showed folded into what the model
 	// reads. A published document is kept here.
-	Observe(t *Turn, call serviceports.ToolCall, outcome ToolOutcome) ToolOutcome
+	Observe(t *Turn, call *serviceports.ToolCall, outcome ToolOutcome) ToolOutcome
 	// NewCallID mints a tool call id, for a provider that gave none or reused
 	// one. Minting is random, so workflow code has it recorded.
 	NewCallID() string
@@ -381,10 +381,10 @@ func (fx *localEffects) Emit(event serviceports.StreamEvent) { fx.emit(event) }
 
 func (fx *localEffects) Observe(
 	_ *Turn,
-	call serviceports.ToolCall,
+	call *serviceports.ToolCall,
 	outcome ToolOutcome,
 ) ToolOutcome {
-	return fx.s.observe(fx.observer, call, outcome.internal()).exported()
+	return fx.s.observe(fx.observer, *call, outcome.internal()).exported()
 }
 
 func (*localEffects) NewCallID() string { return NewCallID() }
@@ -394,10 +394,10 @@ func (*localEffects) NewCallID() string { return NewCallID() }
 // after the call, where the call's raw result exists.
 func (s *Service) ObserveCall(
 	observe serviceports.ToolObserver,
-	call serviceports.ToolCall,
+	call *serviceports.ToolCall,
 	outcome ToolOutcome,
 ) ToolOutcome {
-	return s.observe(observe, call, outcome.internal()).exported()
+	return s.observe(observe, *call, outcome.internal()).exported()
 }
 
 // PublishStep keeps a document a publish call asked for, and says what the
@@ -406,9 +406,9 @@ func (s *Service) ObserveCall(
 // code.
 func (s *Service) PublishStep(
 	observe serviceports.ToolObserver,
-	call serviceports.ToolCall,
+	call *serviceports.ToolCall,
 ) ToolOutcome {
-	return s.observe(observe, call, publishOutcome(call.Arguments)).exported()
+	return s.observe(observe, *call, publishOutcome(call.Arguments)).exported()
 }
 
 func deltaEvent(text string) serviceports.StreamEvent {
