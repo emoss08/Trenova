@@ -6,6 +6,7 @@ import (
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/contrib/workflowstreams"
 	"go.temporal.io/sdk/temporal"
@@ -187,16 +188,7 @@ func (fx *workflowEffects) modelOptions() workflow.ActivityOptions {
 		WaitForCancellation: true,
 		Priority:            fx.priority(),
 		Summary:             "Ask the model",
-		RetryPolicy: &temporal.RetryPolicy{
-			InitialInterval:    time.Second,
-			BackoffCoefficient: 2,
-			MaximumInterval:    30 * time.Second,
-			MaximumAttempts:    modelCallAttempts,
-			NonRetryableErrorTypes: []string{
-				ErrTypeModelRejected,
-				ErrTypeNoProviderConfigured,
-			},
-		},
+		RetryPolicy:         modelcall.RetryPolicy(modelCallAttempts),
 	}
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -285,7 +286,7 @@ func (s *AgentRunWorkflowTestSuite) TestModelFailureFilesWhatRanAndFailsTheRun()
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).
 		Return(nil, temporal.NewNonRetryableApplicationError(
-			"provider rejected the request", agentflow.ErrTypeModelRejected, nil,
+			"provider rejected the request", modelcall.ErrTypeModelRejected, nil,
 		)).Once()
 	s.stubFinish(1)
 

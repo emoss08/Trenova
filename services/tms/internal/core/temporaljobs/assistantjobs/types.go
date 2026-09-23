@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -111,7 +111,7 @@ type FinishTurnInput struct {
 	// who asked.
 	Rejection string                        `json:"rejection,omitempty"`
 	Run       *serviceports.RunResult       `json:"run,omitempty"`
-	Failure   *agentflow.Failure            `json:"failure,omitempty"`
+	Failure   *modelcall.Failure            `json:"failure,omitempty"`
 	Artifacts []*assistantartifact.Artifact `json:"artifacts,omitempty"`
 	Events    []temporaltype.StreamItem     `json:"events,omitempty"`
 }

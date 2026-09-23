@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -198,7 +199,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestSavesATurnTheModelCouldNotFinish() 
 	s.prepares(s.plan(), nil)
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).Return(
-		nil, temporal.NewApplicationErrorWithOptions("bad request", agentflow.ErrTypeModelRejected,
+		nil, temporal.NewApplicationErrorWithOptions("bad request", modelcall.ErrTypeModelRejected,
 			temporal.ApplicationErrorOptions{
 				NonRetryable: true,
 				Details:      []any{map[string]any{"status": http.StatusBadRequest}},

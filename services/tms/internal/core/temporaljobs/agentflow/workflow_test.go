@@ -12,6 +12,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -269,7 +270,7 @@ func TestRunReturnsWhatTheTurnDidWhenTheModelFails(t *testing.T) {
 	h := newHarness(t, harnessParams{query: []serviceports.AgentQueryTool{lookup}})
 	h.replies(toolReply("get_shipment", map[string]any{"proNumber": "12345"}))
 	h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.Anything).
-		Return(nil, temporal.NewNonRetryableApplicationError("bad request", ErrTypeModelRejected, nil)).
+		Return(nil, temporal.NewNonRetryableApplicationError("bad request", modelcall.ErrTypeModelRejected, nil)).
 		Once()
 
 	result := h.run(t, runContext("get_shipment"))

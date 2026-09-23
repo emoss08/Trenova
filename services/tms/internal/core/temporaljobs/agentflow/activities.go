@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/contrib/workflowstreams"
 	"go.temporal.io/sdk/converter"
@@ -96,7 +97,7 @@ func (a *Activities) ModelCallActivity(
 
 	reply, err := a.runtime.StreamCompletion(ctx, in.Request, emit)
 	if err != nil {
-		return nil, retryPolicyFor(err)
+		return nil, modelcall.Classify(err)
 	}
 
 	return &reply, nil

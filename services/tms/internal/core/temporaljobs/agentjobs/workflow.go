@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -280,7 +281,7 @@ func (w *Workflows) AgentRunWorkflow(ctx workflow.Context, payload *AgentRunPayl
 		Definition: opened.Run.Definition,
 		Subject:    prepared.Subject,
 		Run:        outcome.Result,
-		Failure:    agentflow.FailureOf(runErr),
+		Failure:    modelcall.FailureOf(runErr),
 		Events:     outcome.Events,
 	}).Get(finishCtx, &finished); err != nil {
 		_ = failRun(ctx, a, payload.RunID, tenant, err)

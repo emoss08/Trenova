@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/contrib/workflowstreams"
 	"go.temporal.io/sdk/temporal"
@@ -137,7 +138,7 @@ func (w *Workflows) answer(
 		a.PrepareTurnActivity, payload,
 	).Get(ctx, &plan)
 	if err != nil {
-		finish.Failure = agentflow.FailureOf(err)
+		finish.Failure = modelcall.FailureOf(err)
 		finish.Rejection = rejectionOf(err)
 
 		return finish
@@ -164,7 +165,7 @@ func (w *Workflows) answer(
 	finish.Run = outcome.Result
 	finish.Artifacts = outcome.Artifacts
 	finish.Events = append(finish.Events, outcome.Events...)
-	finish.Failure = agentflow.FailureOf(err)
+	finish.Failure = modelcall.FailureOf(err)
 
 	return finish
 }

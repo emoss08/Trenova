@@ -74,15 +74,6 @@ const (
 	// findTimeout bounds a tool search, which is a catalog read plus
 	// permission checks.
 	findTimeout = 30 * time.Second
-
-	// maxProviderBackoff caps how long a provider's own Retry-After is
-	// honoured. A provider asking for longer is treated as unavailable rather
-	// than waited on.
-	maxProviderBackoff = time.Minute
-
-	// restingBackoff is how long to wait when every provider is resting after
-	// repeated failures, which is the length of the breaker's rest.
-	restingBackoff = time.Minute
 )
 
 // heavyTools run on the heavy queue rather than on the queue of the run that
@@ -104,13 +95,11 @@ const (
 	PriorityEvaluation  = 5
 )
 
-// Non-retryable error types. A model call that fails with one of these would
-// fail the same way however many times it was asked.
+// Non-retryable error types of a tool call. A call that fails with one of these
+// would fail the same way however many times it was asked.
 const (
-	ErrTypeModelRejected        = "ModelRejected"
-	ErrTypeNoProviderConfigured = "NoProviderConfigured"
-	ErrTypeUnknownTool          = "UnknownTool"
-	ErrTypeBadToolInput         = "BadToolInput"
+	ErrTypeUnknownTool  = "UnknownTool"
+	ErrTypeBadToolInput = "BadToolInput"
 )
 
 // StreamItem is one event on a run's stream, as the reader receives it.

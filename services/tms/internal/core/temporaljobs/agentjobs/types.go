@@ -6,6 +6,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -89,7 +90,7 @@ type FinishRunInput struct {
 	Definition *agentdefinition.Definition     `json:"definition"`
 	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
 	Run        *serviceports.RunResult         `json:"run,omitempty"`
-	Failure    *agentflow.Failure              `json:"failure,omitempty"`
+	Failure    *modelcall.Failure              `json:"failure,omitempty"`
 	Events     []temporaltype.StreamItem       `json:"events,omitempty"`
 }
 
