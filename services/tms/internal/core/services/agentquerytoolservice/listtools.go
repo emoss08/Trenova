@@ -107,34 +107,66 @@ func catalogResource(spec listSpec) filtercatalog.Resource {
 	}.Prepare()
 }
 
+// listDateRule is said once per tool rather than per date field: the server
+// resolves every relative window, so a model never does calendar arithmetic.
+const listDateRule = " Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; " +
+	"never Unix time."
+
+// buildListDescription renders the summary and every filterable field as
+// compactly as a model still reads them. A field with values or a note is
+// spelled out on its own; the rest are only names, grouped under their kind.
 func buildListDescription(spec listSpec) string {
 	var b strings.Builder
 	b.WriteString(spec.summary)
-	b.WriteString(" Filter on: ")
+	b.WriteString(" Filters: ")
 
-	for i, field := range spec.fields {
-		if i > 0 {
+	written := 0
+	separate := func() {
+		if written > 0 {
 			b.WriteString("; ")
 		}
+		written++
+	}
+
+	hasDate := false
+	kinds := make([]filterKind, 0, len(spec.fields))
+	plain := make(map[filterKind][]string, len(spec.fields))
+	for _, field := range spec.fields {
+		hasDate = hasDate || field.Kind == filterDate
+		if len(field.Values) == 0 && field.Note == "" {
+			if _, seen := plain[field.Kind]; !seen {
+				kinds = append(kinds, field.Kind)
+			}
+			plain[field.Kind] = append(plain[field.Kind], field.Name)
+			continue
+		}
+
+		separate()
 		b.WriteString(field.Name)
 		b.WriteString(" (")
-		b.WriteString(string(field.Kind))
 		if len(field.Values) > 0 {
-			b.WriteString(": ")
-			b.WriteString(strings.Join(field.Values, ", "))
+			b.WriteString(strings.Join(field.Values, "|"))
+		} else {
+			b.WriteString(string(field.Kind))
 		}
 		b.WriteString(")")
 		if field.Note != "" {
-			b.WriteString(" — ")
+			b.WriteString(": ")
 			b.WriteString(field.Note)
 		}
 	}
 
-	b.WriteString(
-		". Dates are resolved on the server: use nextndays or lastndays with a day " +
-			"count, or today, or a calendar date such as 2026-03-01. Never send a Unix " +
-			"timestamp you worked out yourself.",
-	)
+	for _, kind := range kinds {
+		separate()
+		b.WriteString(string(kind))
+		b.WriteString(": ")
+		b.WriteString(strings.Join(plain[kind], ", "))
+	}
+	b.WriteString(".")
+
+	if hasDate {
+		b.WriteString(listDateRule)
+	}
 
 	return b.String()
 }
@@ -182,13 +214,12 @@ func (t *listTool) ParamSchema() map[string]any {
 				"description": "Field to order by. Defaults to most recently created.",
 			},
 			"sortDirection": map[string]any{
-				"type": "string",
-				"enum": []string{"asc", "desc"},
+				"type":        "string",
+				"enum":        []string{"asc", "desc"},
+				"description": "asc for oldest or smallest first, desc for newest or largest.",
 			},
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": fmt.Sprintf("How many rows to return, at most %d.", maxListLimit),
-			},
+			"limit":  pageSchema(defaultListLimit, maxListLimit)["limit"],
+			"offset": pageSchema(defaultListLimit, maxListLimit)["offset"],
 		},
 		"additionalProperties": false,
 	}
@@ -217,13 +248,7 @@ func (t *listTool) Query(
 		return nil, err
 	}
 
-	limit := optionalInt(params.Params, "limit", defaultListLimit)
-	if limit <= 0 {
-		limit = defaultListLimit
-	}
-	if limit > maxListLimit {
-		limit = maxListLimit
-	}
+	window := readPage(params.Params, defaultListLimit, maxListLimit)
 
 	opts := &pagination.QueryOptions{
 		TenantInfo: pagination.TenantInfo{
@@ -231,7 +256,7 @@ func (t *listTool) Query(
 			BuID:   params.BusinessUnitID,
 			UserID: params.Actor.UserID,
 		},
-		Pagination:   pagination.Info{Limit: limit},
+		Pagination:   pagination.Info{Limit: window.fetch(), Offset: window.offset},
 		Query:        query,
 		FieldFilters: filters,
 		Sort:         sorting,
@@ -247,7 +272,9 @@ func (t *listTool) Query(
 		return nil, err
 	}
 
-	return searchResult(criteria, rows, len(rows)), nil
+	rows, more := trim(window, rows)
+
+	return searchResult(criteria, rows, len(rows)).paged(window, more), nil
 }
 
 func (t *listTool) buildFilters(

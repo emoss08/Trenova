@@ -19,8 +19,9 @@ return the whole record rather than a projection, because that is the question:
 a list already decided what was worth summarising, and a model that has narrowed
 to a single row needs the fields the summary left out.
 
-Each names the list tool that yields its id. Without that, a model holding a
-customer's name and no id has nowhere to go but guessing one.
+Each names the list tool that yields its id, in the summary and again in
+idSource on the parameter itself. Without that, a model holding a customer's
+name and no id has nowhere to go but guessing one.
 */
 type getSpec struct {
 	name      string
@@ -28,6 +29,7 @@ type getSpec struct {
 	summary   string
 	resource  permission.Resource
 	paramName string
+	idSource  string
 	fetch     func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error)
 }
 
@@ -51,12 +53,20 @@ func (t *getTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			t.spec.paramName: map[string]any{
 				"type":        "string",
-				"description": fmt.Sprintf("The %s's id.", t.spec.entity),
+				"description": t.spec.idDescription(),
 			},
 		},
 		"required":             []string{t.spec.paramName},
 		"additionalProperties": false,
 	}
+}
+
+func (s getSpec) idDescription() string {
+	if s.idSource == "" {
+		return fmt.Sprintf("The %s's id.", s.entity)
+	}
+
+	return fmt.Sprintf("The %s's id, %s.", s.entity, s.idSource)
 }
 
 func (t *getTool) Query(
@@ -91,6 +101,7 @@ func newGetCustomerTool(repo repositories.CustomerRepository) serviceports.Agent
 		summary: "Retrieve one customer by id, with their billing and email profiles. " +
 			"Use list_customers first when you have a name or a code rather than an id.",
 		paramName: "customerId",
+		idSource:  "from list_customers",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, repositories.GetCustomerByIDRequest{
 				ID:         id,
@@ -112,6 +123,7 @@ func newGetCarrierTool(repo repositories.CarrierRepository) serviceports.AgentQu
 		summary: "Retrieve one carrier by id, including its authority, insurance and " +
 			"compliance state. Use list_carriers first when you have a name or a code.",
 		paramName: "carrierId",
+		idSource:  "from list_carriers",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, repositories.GetCarrierByIDRequest{
 				ID:         id,
@@ -129,6 +141,7 @@ func newGetTractorTool(repo repositories.TractorRepository) serviceports.AgentQu
 		summary: "Retrieve one tractor by id, with its equipment details, fleet and " +
 			"assigned workers. Use list_tractors first when you have a unit code.",
 		paramName: "tractorId",
+		idSource:  "from list_tractors",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, repositories.GetTractorByIDRequest{
 				ID:                      id,
@@ -147,6 +160,7 @@ func newGetTrailerTool(repo repositories.TrailerRepository) serviceports.AgentQu
 		summary: "Retrieve one trailer by id, with its equipment details and fleet. " +
 			"Use list_trailers first when you have a unit code.",
 		paramName: "trailerId",
+		idSource:  "from list_trailers",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, repositories.GetTrailerByIDRequest{
 				ID:         id,
@@ -164,6 +178,7 @@ func newGetInvoiceTool(repo repositories.InvoiceRepository) serviceports.AgentQu
 		summary: "Retrieve one invoice by id, with its line items and totals. Use " +
 			"list_invoices first when you have a number or are looking for what is unpaid.",
 		paramName: "invoiceId",
+		idSource:  "from list_invoices",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
 				ID:         id,

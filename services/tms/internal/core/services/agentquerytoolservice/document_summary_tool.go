@@ -60,8 +60,10 @@ func (t *getDocumentSummaryTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"documentId": map[string]any{
-				"type":        "string",
-				"description": "The document's id, from the attachments on the message or a record.",
+				"type": "string",
+				"description": "The document's id, from the attachments on the message, a " +
+					"documentId in get_inbound_message or get_worker_credential, or this " +
+					"run's subject.",
 			},
 			"offset": map[string]any{
 				"type": "integer",

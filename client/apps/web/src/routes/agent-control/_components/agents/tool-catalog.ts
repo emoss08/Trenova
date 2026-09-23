@@ -20,6 +20,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   worker_pto: "Worker time off",
   hazardous_material: "Hazardous materials",
   bqi: "Billing queue",
+  home_layout_preset: "Home page",
 };
 
 export function resourceLabel(resource: string): string {
@@ -34,6 +35,63 @@ export type ToolGroup = {
   /** How many of the group's tools are chosen, for the rail. */
   chosen: number;
 };
+
+/**
+ * The catalog split into the tools every agent holds and the ones an
+ * administrator chooses. The server strips core tools from a saved selection,
+ * so offering one as a choice would be a checkbox that does nothing.
+ */
+export function splitCoreTools(tools: readonly ToolCatalogEntry[]): {
+  core: ToolCatalogEntry[];
+  selectable: ToolCatalogEntry[];
+} {
+  const core: ToolCatalogEntry[] = [];
+  const selectable: ToolCatalogEntry[] = [];
+  for (const tool of tools) {
+    (tool.core ? core : selectable).push(tool);
+  }
+  return { core, selectable };
+}
+
+export type ImpliedRead = {
+  tool: ToolCatalogEntry;
+  /** The chosen tools that take their arguments from it. */
+  neededBy: ToolCatalogEntry[];
+};
+
+/**
+ * The reads an agent holds because a chosen tool depends on them. The server
+ * grants a read a held tool takes its arguments from — create_dashboard needs
+ * report ids, which only list_reports hands out — so the form shows it rather
+ * than leaving an agent that looks unable to find one. Writes are never
+ * granted this way, and a read chosen outright is not repeated.
+ */
+export function impliedReads(
+  selected: readonly string[],
+  tools: readonly ToolCatalogEntry[],
+): ImpliedRead[] {
+  const byName = new Map(tools.map((tool) => [tool.name, tool]));
+  const chosen = new Set(selected);
+  const implied = new Map<string, ImpliedRead>();
+
+  for (const name of selected) {
+    const tool = byName.get(name);
+    if (!tool) {
+      continue;
+    }
+    for (const prerequisite of tool.prerequisites) {
+      const read = byName.get(prerequisite);
+      if (!read || read.kind !== "query" || read.core || chosen.has(prerequisite)) {
+        continue;
+      }
+      const entry = implied.get(prerequisite) ?? { tool: read, neededBy: [] };
+      entry.neededBy.push(tool);
+      implied.set(prerequisite, entry);
+    }
+  }
+
+  return [...implied.values()];
+}
 
 /** The title an administrator reads for a tool, from the same words the chat uses. */
 export function toolTitle(tool: ToolCatalogEntry): string {
@@ -135,6 +193,9 @@ export function summarizeSelection(
     const tool = byName.get(name);
     if (!tool) {
       summary.unknown.push(name);
+      continue;
+    }
+    if (tool.core) {
       continue;
     }
     if (tool.kind === "query") {

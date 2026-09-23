@@ -25,11 +25,13 @@ import {
   AgentAvatar,
   AssistantEntry,
   DayDivider,
+  DecisionNote,
   DeclinedTurn,
   PageContextChip,
   RefusalNotice,
   UserTurn,
 } from "./message-items";
+import { DecisionFollowUpProvider } from "./decision-follow-up";
 import { PlanCard } from "./plan-card";
 import { groupPlans } from "./plan-state";
 import { ProposalCard } from "./proposal-card";
@@ -201,7 +203,9 @@ export function MessageThread({
     () =>
       messages.reduce(
         (latest, message) =>
-          message.role === "User" ? Math.max(latest, message.sequence) : latest,
+          message.role === "User" && message.kind !== "DecisionNote"
+            ? Math.max(latest, message.sequence)
+            : latest,
         -1,
       ),
     [messages],
@@ -369,6 +373,8 @@ export function MessageThread({
                     : undefined
                 }
               />
+            ) : entry.kind === "decision" ? (
+              <DecisionNote content={entry.message.content} at={entry.message.createdAt} />
             ) : entry.kind === "declined" ? (
               <DeclinedTurn content={entry.message.content} sentAt={entry.message.createdAt} />
             ) : entry.kind === "refusal" ? (
@@ -438,6 +444,19 @@ export function MessageThread({
     timezone,
     turn,
   ]);
+
+  // After a decision on one of this thread's proposals the agent says what
+  // came of it. A reply still arriving is left alone: the decision rides into
+  // whatever the person asks next, as every outcome does.
+  const followUpDecision = useCallback(
+    (proposalId: string) => {
+      if (isActive) {
+        return;
+      }
+      void send("", undefined, providerId, { followUpProposalId: proposalId });
+    },
+    [isActive, providerId, send],
+  );
 
   const body = (
     <div className="relative flex min-h-0 flex-1 flex-col">
@@ -529,13 +548,15 @@ export function MessageThread({
 
   return (
     <AssistantAgentProvider agent={agent}>
-      {agentAccent ? (
-        <AgentGutter agent={agent} working={isActive}>
-          {body}
-        </AgentGutter>
-      ) : (
-        body
-      )}
+      <DecisionFollowUpProvider value={followUpDecision}>
+        {agentAccent ? (
+          <AgentGutter agent={agent} working={isActive}>
+            {body}
+          </AgentGutter>
+        ) : (
+          body
+        )}
+      </DecisionFollowUpProvider>
     </AssistantAgentProvider>
   );
 }

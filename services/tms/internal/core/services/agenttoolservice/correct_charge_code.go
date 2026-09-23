@@ -21,7 +21,11 @@ func newCorrectChargeCodeTool(billing serviceports.BillingQueueService) servicep
 func (t *correctChargeCodeTool) Name() string { return "correct_charge_code" }
 
 func (t *correctChargeCodeTool) Description() string {
-	return "Correct or normalize the accessorial charge codes on a billing queue item's charges."
+	return "Correct or normalize the accessorial charge codes on a billing queue item's charges. " +
+		"Use it when a charge carries the wrong accessorial; the set you send replaces the " +
+		"item's additional charges, so include every charge that should remain, each with " +
+		"an accessorialChargeId from list_accessorial_charges. The item must be InReview " +
+		"first (transition_item_to_in_review)."
 }
 
 func (t *correctChargeCodeTool) ParamSchema() map[string]any {
@@ -29,8 +33,10 @@ func (t *correctChargeCodeTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"billingQueueItemId": map[string]any{
-				"type":        "string",
-				"description": "The id of the billing queue item whose charges are corrected.",
+				"type": "string",
+				"description": "The billing queue item whose charges are corrected: this run's " +
+					"subject or the record on the page. No tool lists queue items, so never " +
+					"guess one.",
 			},
 			"additionalCharges": map[string]any{
 				"type":        "array",

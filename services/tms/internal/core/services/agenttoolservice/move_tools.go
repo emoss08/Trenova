@@ -33,12 +33,14 @@ func (t *recordStopActualTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"moveId": map[string]any{
-				"type":        "string",
-				"description": "The move the stop belongs to.",
+				"type": "string",
+				"description": "The move the stop belongs to, from get_shipment (its moves) or " +
+					"get_dispatch_board.",
 			},
 			"stopId": map[string]any{
-				"type":        "string",
-				"description": "The stop that was arrived at or departed from.",
+				"type": "string",
+				"description": "The stop that was arrived at or departed from, from the move's " +
+					"stops in get_shipment.",
 			},
 			"action": map[string]any{
 				"type":        "string",

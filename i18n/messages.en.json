@@ -2377,6 +2377,15 @@
       "domain/worker"
     ]
   },
+  "A decision follow-up carries no message; the decision is its input": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "A decision must reference exactly one proposal or exception": {
     "sites": 1,
     "scope": [
@@ -13172,6 +13181,15 @@
       "apps/web/lib"
     ]
   },
+  "Always on": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Always require approval": {
     "sites": 1,
     "scope": [
@@ -15105,26 +15123,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Answers only": {
-    "sites": 3,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components",
-      "routes/agent-control",
-      "routes/desk"
-    ]
-  },
-  "Answers only. It can look nothing up and change nothing.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Anthropic": {
@@ -44393,7 +44391,7 @@
     ]
   },
   "Decision": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -44456,6 +44454,15 @@
     ],
     "areas": [
       "domain/sidebarpreference"
+    ]
+  },
+  "Decisions cannot be followed up here": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
     ]
   },
   "Decisions must be attributed to a human user": {
@@ -67375,6 +67382,15 @@
       "routes/worker"
     ]
   },
+  "Following up on your decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Footer content displayed on invoices": {
     "sites": 1,
     "scope": [
@@ -70418,6 +70434,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "Give a tile a definitionId or a cannedKey, not both": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Give at least ten characters saying what the amendment corrects.": {
@@ -76000,6 +76025,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Included with your tools": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Income Statement": {
@@ -94132,6 +94166,15 @@
       "packages/shared/components"
     ]
   },
+  "Needed by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Needed to reach a model server on your own network. Link-local addresses stay blocked either way.": {
     "sites": 1,
     "scope": [
@@ -99627,6 +99670,26 @@
       "routes/worker"
     ]
   },
+  "No task tools": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/agent-control",
+      "routes/desk"
+    ]
+  },
+  "No task tools. It can still recall, remember and escalate.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No tasks assigned": {
     "sites": 1,
     "scope": [
@@ -104780,6 +104843,15 @@
       "service/agentmemoryservice"
     ]
   },
+  "Only a person has a home page to change": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Only a person has a place in the watchtower": {
     "sites": 1,
     "scope": [
@@ -106084,6 +106156,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Only the person this change is for can approve it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalexecutor"
     ]
   },
   "Only the person who started a transfer can stop it": {
@@ -156295,6 +156376,15 @@
       "go/other"
     ]
   },
+  "That decision has already been answered": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "That delegation has already been revoked": {
     "sites": 1,
     "scope": [
@@ -156410,6 +156500,24 @@
     ],
     "areas": [
       "service/orgstructureservice"
+    ]
+  },
+  "That proposal has not been decided yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
+  "That proposal is not part of this conversation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
     ]
   },
   "That reporting line loops back on itself": {
@@ -161730,6 +161838,15 @@
       "routes/agent-control"
     ]
   },
+  "The person's administrator manages this home page, so it cannot be changed here": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "The phone number for the emergency contact.": {
     "sites": 1,
     "scope": [
@@ -165128,6 +165245,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "This change is to someone else's home page; only they can approve it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "This changes what the reviewer is looking at, so the template returns to Draft and must be submitted again.": {

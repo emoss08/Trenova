@@ -235,20 +235,25 @@ func newListDashboardsTool(dashboards *reporting.Service) serviceports.AgentQuer
 func (t *listDashboardsTool) Name() string { return "list_dashboards" }
 
 func (t *listDashboardsTool) Description() string {
-	return "List the dashboards this organization has, with what is on each one. Use it to " +
-		"find the dashboard somebody means before adding to it, and to answer \"do we " +
-		"already have a page for this\" before building a second one."
+	return "List the report dashboards under Reports, with the tiles on each. Use it to find " +
+		"the dashboard somebody means before add_dashboard_tile, and to check whether a page " +
+		"for this already exists before create_dashboard. Not the person's home page — " +
+		"get_my_home_layout reads that."
+}
+
+func (t *listDashboardsTool) SearchTerms() []string {
+	return []string{"report dashboard", "reports page", "board"}
 }
 
 func (t *listDashboardsTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
-		"properties": map[string]any{
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": fmt.Sprintf("How many to return, at most %d.", maxDashboardRows),
+		"properties": withPaging(map[string]any{
+			"query": map[string]any{
+				"type":        "string",
+				"description": "Text matched against the dashboard's name, description and category.",
 			},
-		},
+		}, defaultDashboardRows, maxDashboardRows),
 		"additionalProperties": false,
 	}
 }
@@ -257,15 +262,31 @@ func (t *listDashboardsTool) PermissionResource() permission.Resource {
 	return permission.ResourceDashboard
 }
 
-const maxDashboardRows = 50
+const (
+	defaultDashboardRows = 20
+	maxDashboardRows     = 50
+	// maxDashboardsScanned is how many dashboards one search reads. A search
+	// narrows in memory, so it reads the organization's dashboards once
+	// rather than a page at a time.
+	maxDashboardsScanned = 500
+)
 
 type dashboardRow struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Category    string `json:"category,omitempty"`
-	Visibility  string `json:"visibility"`
-	TileCount   int    `json:"tileCount"`
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description,omitempty"`
+	Category    string             `json:"category,omitempty"`
+	Visibility  string             `json:"visibility"`
+	Tiles       []dashboardTileRow `json:"tiles"`
+}
+
+// dashboardTileRow is what one tile shows, so "is revenue already on the ops
+// page" is answered without opening it.
+type dashboardTileRow struct {
+	Kind         string `json:"kind"`
+	Title        string `json:"title,omitempty"`
+	DefinitionID string `json:"definitionId,omitempty"`
+	CannedKey    string `json:"cannedKey,omitempty"`
 }
 
 func (t *listDashboardsTool) Query(
@@ -276,12 +297,10 @@ func (t *listDashboardsTool) Query(
 		return nil, err
 	}
 
-	limit := optionalInt(params.Params, "limit", maxDashboardRows)
-	if limit <= 0 || limit > maxDashboardRows {
-		limit = maxDashboardRows
-	}
-
+	query := strings.ToLower(optionalString(params.Params, "query"))
 	criteria := filtercatalog.NewCriteria("dashboards").At(clockFor(params))
+	criteria.Text(query)
+
 	dashboards, err := t.dashboards.ListDashboards(ctx, &reporting.ListDashboardsRequest{
 		Request: reporting.Request{
 			TenantInfo: pagination.TenantInfo{
@@ -290,17 +309,16 @@ func (t *listDashboardsTool) Query(
 				UserID: params.Actor.UserID,
 			},
 		},
-		Limit: limit,
+		Limit: maxDashboardsScanned,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	rows := make([]any, 0, len(dashboards))
+	rows := make([]dashboardRow, 0, len(dashboards))
 	for _, dashboard := range dashboards {
-		tiles := 0
-		if dashboard.Layout != nil {
-			tiles = len(dashboard.Layout.Tiles)
+		if query != "" && !matchesDashboard(dashboard, query) {
+			continue
 		}
 		rows = append(rows, dashboardRow{
 			ID:          dashboard.ID.String(),
@@ -308,9 +326,40 @@ func (t *listDashboardsTool) Query(
 			Description: dashboard.Description,
 			Category:    dashboard.Category,
 			Visibility:  string(dashboard.Visibility),
-			TileCount:   tiles,
+			Tiles:       tileRows(dashboard.Layout),
 		})
 	}
 
-	return searchResult(criteria, rows, len(rows)), nil
+	window := readPage(params.Params, defaultDashboardRows, maxDashboardRows)
+	shown, more := slicePage(window, rows)
+
+	return searchResult(criteria, shown, len(shown)).paged(window, more), nil
+}
+
+func matchesDashboard(dashboard *report.Dashboard, needle string) bool {
+	return strings.Contains(strings.ToLower(dashboard.Name), needle) ||
+		strings.Contains(strings.ToLower(dashboard.Description), needle) ||
+		strings.Contains(strings.ToLower(dashboard.Category), needle)
+}
+
+func tileRows(layout *report.DashboardLayout) []dashboardTileRow {
+	if layout == nil {
+		return []dashboardTileRow{}
+	}
+
+	rows := make([]dashboardTileRow, 0, len(layout.Tiles))
+	for i := range layout.Tiles {
+		tile := &layout.Tiles[i]
+		row := dashboardTileRow{
+			Kind:      string(tile.Kind),
+			Title:     tile.Title,
+			CannedKey: tile.CannedKey,
+		}
+		if !tile.DefinitionID.IsNil() {
+			row.DefinitionID = tile.DefinitionID.String()
+		}
+		rows = append(rows, row)
+	}
+
+	return rows
 }

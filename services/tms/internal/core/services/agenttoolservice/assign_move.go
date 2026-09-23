@@ -22,7 +22,9 @@ func (t *assignMoveTool) Name() string { return "assign_move" }
 
 func (t *assignMoveTool) Description() string {
 	return "Assign a driver and equipment to a shipment move that has no driver yet. " +
-		"The move must be unassigned; use reassignment for a move that already has a driver."
+		"Use it once a driver is chosen, usually from rank_move_candidates or plan_dispatch, " +
+		"which hand back the move, driver, tractor and trailer ids together. The move " +
+		"must be unassigned; use reassignment for a move that already has a driver."
 }
 
 func (t *assignMoveTool) ParamSchema() map[string]any {
@@ -30,24 +32,29 @@ func (t *assignMoveTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"shipmentMoveId": map[string]any{
-				"type":        "string",
-				"description": "The id of the shipment move to cover.",
+				"type": "string",
+				"description": "The move to cover, from get_dispatch_board (moveId), " +
+					"get_shipment (its moves) or plan_dispatch.",
 			},
 			"primaryWorkerId": map[string]any{
-				"type":        "string",
-				"description": "The id of the driver to put on the move.",
+				"type": "string",
+				"description": "The driver to put on the move, from rank_move_candidates, " +
+					"plan_dispatch or list_workers.",
 			},
 			"tractorId": map[string]any{
-				"type":        "string",
-				"description": "The id of the tractor the driver will use.",
+				"type": "string",
+				"description": "The tractor the driver will use, from rank_move_candidates or " +
+					"list_tractors.",
 			},
 			"trailerId": map[string]any{
-				"type":        "string",
-				"description": "The id of the trailer, when the move needs one.",
+				"type": "string",
+				"description": "The trailer, when the move needs one, from rank_move_candidates " +
+					"or list_trailers.",
 			},
 			"secondaryWorkerId": map[string]any{
-				"type":        "string",
-				"description": "A second driver for a team move.",
+				"type": "string",
+				"description": "A second driver for a team move, from list_workers or " +
+					"search_worker.",
 			},
 		},
 		"required":             []string{"shipmentMoveId", "primaryWorkerId", "tractorId"},

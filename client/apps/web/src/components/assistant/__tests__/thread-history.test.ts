@@ -13,6 +13,7 @@ function message(sequence: number, id = `amsg_${sequence}`): AssistantMessage {
   return {
     id,
     threadId: "thr_1",
+    kind: "Message",
     sequence,
     role: sequence % 2 === 0 ? "User" : "Assistant",
     content: `m${sequence}`,

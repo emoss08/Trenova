@@ -140,6 +140,17 @@ function invalidated(client: QueryClient, queryKey: readonly unknown[]): boolean
 }
 
 describe("invalidateProposalViews", () => {
+  // A proposal can change the person's own home page. Approved from the
+  // assistant beside it, the page kept showing the old widgets until a reload.
+  it("makes the home page stale", async () => {
+    const client = seededClient();
+    client.setQueryData(queries.homeLayout.effective().queryKey, { homeLayout: null });
+
+    await invalidateProposalViews(client, THREAD);
+
+    expect(invalidated(client, queries.homeLayout.effective().queryKey)).toBe(true);
+  });
+
   it("makes the deciding thread's own views stale", async () => {
     const client = seededClient();
     client.setQueryData(queries.assistant.plans(THREAD).queryKey, { results: [] });

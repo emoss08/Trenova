@@ -20,60 +20,77 @@ import (
 	"go.uber.org/zap"
 )
 
-var Module = fx.Module("agent-tool-service",
-	fx.Provide(
-		fx.Annotate(newTransitionToInReviewTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newCorrectChargeCodeTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newSaveTableViewTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newCreateDashboardTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newAddDashboardTileTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newScheduleReportTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newCreateTableChangeAlertTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newRequestMissingDocsTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideAttachDocumentTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newFlagManualReviewTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newAssignMoveTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newRaiseExceptionTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newAddShipmentCommentTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newPlaceShipmentHoldTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newReleaseShipmentHoldTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newCancelShipmentTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newRecordStopActualTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideUpdateTractorStatusTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideUpdateTrailerStatusTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideApproveWorkerPTOTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideRejectWorkerPTOTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideCancelWorkerPTOTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideCreateReportTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideUpdateReportTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideForkReportTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideEvaluateServiceFailuresTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideResolveServiceFailureTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideNotifyDriverTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newEmailCustomerTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideLinkInboundMessageTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideMarkInboundMessageTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newReplyToInboundMessageTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideSendDetentionNoticeTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideWaiveDetentionTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideCreateShipmentTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideUpdateShipmentTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideTenderToRoutingGuideTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideTenderToCarriersTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newRememberTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(newForgetMemoryTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideDismissInsightTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideMatchBankReceiptTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(providePostCustomerPaymentTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideResolveBankReceiptWorkItemTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideEscalateDetentionTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideRequestCredentialRenewalTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(providePlaceWorkerDispatchHoldTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideAcknowledgeCarrierIntelEventTool, fx.ResultTags(`group:"agent_tools"`)),
-		fx.Annotate(provideResolveCarrierIntelEventTool, fx.ResultTags(`group:"agent_tools"`)),
-		NewRegistry,
-	),
-)
+var Module = fx.Module("agent-tool-service", fx.Provide(append(grouped(), NewRegistry)...))
+
+// ToolProviders are the constructors of every tool this package registers.
+// The module provides them into the group, and the description contract test
+// builds each one to read what a model is shown.
+func ToolProviders() []any {
+	return []any{
+		newTransitionToInReviewTool,
+		newCorrectChargeCodeTool,
+		newSaveTableViewTool,
+		newCreateDashboardTool,
+		newAddDashboardTileTool,
+		newScheduleReportTool,
+		newCreateTableChangeAlertTool,
+		newRequestMissingDocsTool,
+		provideAttachDocumentTool,
+		newFlagManualReviewTool,
+		newAssignMoveTool,
+		newRaiseExceptionTool,
+		newAddShipmentCommentTool,
+		newPlaceShipmentHoldTool,
+		newReleaseShipmentHoldTool,
+		newCancelShipmentTool,
+		newRecordStopActualTool,
+		provideUpdateTractorStatusTool,
+		provideUpdateTrailerStatusTool,
+		provideApproveWorkerPTOTool,
+		provideRejectWorkerPTOTool,
+		provideCancelWorkerPTOTool,
+		provideCreateReportTool,
+		provideUpdateReportTool,
+		provideForkReportTool,
+		provideEvaluateServiceFailuresTool,
+		provideResolveServiceFailureTool,
+		provideNotifyDriverTool,
+		newEmailCustomerTool,
+		provideLinkInboundMessageTool,
+		provideMarkInboundMessageTool,
+		newReplyToInboundMessageTool,
+		provideSendDetentionNoticeTool,
+		provideWaiveDetentionTool,
+		provideCreateShipmentTool,
+		provideUpdateShipmentTool,
+		provideTenderToRoutingGuideTool,
+		provideTenderToCarriersTool,
+		newRememberTool,
+		newForgetMemoryTool,
+		provideDismissInsightTool,
+		provideMatchBankReceiptTool,
+		providePostCustomerPaymentTool,
+		provideResolveBankReceiptWorkItemTool,
+		provideEscalateDetentionTool,
+		provideRequestCredentialRenewalTool,
+		providePlaceWorkerDispatchHoldTool,
+		provideAcknowledgeCarrierIntelEventTool,
+		provideResolveCarrierIntelEventTool,
+		newAddHomeWidgetTool,
+		newRemoveHomeWidgetTool,
+		newArrangeHomeLayoutTool,
+	}
+}
+
+func grouped() []any {
+	providers := ToolProviders()
+	annotated := make([]any, 0, len(providers)+1)
+	for _, provider := range providers {
+		annotated = append(annotated, fx.Annotate(provider, fx.ResultTags(`group:"agent_tools"`)))
+	}
+
+	return annotated
+}
 
 // The tools take the narrow interface they actually use, and the widening
 // happens here. That is also what lets each tool be tested without standing up

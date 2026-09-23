@@ -426,7 +426,7 @@ func (r *repository) MarkRun(
 // between their load and their save would be silently undone; a JSONB merge
 // touches only the one key. The tool must be one the agent holds, since a
 // tier for a tool the agent cannot call is a validation error on the next
-// save.
+// save. A core tool is held by every agent without being listed.
 func (r *repository) SetToolTier(
 	ctx context.Context,
 	req repositories.SetAgentDefinitionToolTierRequest,
@@ -437,9 +437,13 @@ func (r *repository) SetToolTier(
 		NewUpdate().
 		Model((*agentdefinition.Definition)(nil)).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.ID).
-				Where("? = ANY("+cols.ToolNames.Qualified()+")", req.ToolName)
+			uq = buncolgen.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+			if agentdefinition.IsCoreTool(req.ToolName) {
+				return uq
+			}
+
+			return uq.Where("? = ANY("+cols.ToolNames.Qualified()+")", req.ToolName)
 		}).
 		Set(
 			cols.ToolTiers.SetExpr("COALESCE({}, '{}'::jsonb) || jsonb_build_object(?::text, ?::text)"),

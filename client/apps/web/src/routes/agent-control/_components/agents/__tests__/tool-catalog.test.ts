@@ -4,6 +4,8 @@ import {
   effectiveTier,
   groupToolsByResource,
   resourceLabel,
+  impliedReads,
+  splitCoreTools,
   summarizeSelection,
   toggleTool,
 } from "../tool-catalog";
@@ -18,6 +20,8 @@ function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
     operation: "read",
     defaultAutonomyTier: "",
     reversible: false,
+    core: false,
+    prerequisites: [],
     ...overrides,
   };
 }
@@ -90,5 +94,74 @@ describe("toggleTool", () => {
     const removed = toggleTool(["a", "b"], { a: "Propose", b: "AutoExecute" }, "b", false);
     expect(removed.selected).toEqual(["a"]);
     expect(removed.tiers).toEqual({ a: "Propose" });
+  });
+});
+
+/**
+ * Memory, escalation and review are held by every agent. The server marks
+ * them core and strips them from a saved selection, so the picker must never
+ * offer them as a choice or count them as one.
+ */
+describe("core tools", () => {
+  const withCore = [
+    ...catalog,
+    tool({ name: "recall_memory", resource: "agent_memory", core: true }),
+    tool({ name: "remember", kind: "action", resource: "agent_memory", core: true }),
+  ];
+
+  it("splits the always-on tools from the ones an agent chooses", () => {
+    const { core, selectable } = splitCoreTools(withCore);
+
+    expect(core.map((t) => t.name)).toEqual(["recall_memory", "remember"]);
+    expect(selectable.map((t) => t.name)).toEqual(catalog.map((t) => t.name));
+  });
+
+  it("does not count a core tool an older agent still lists", () => {
+    const summary = summarizeSelection(
+      ["get_shipment", "recall_memory", "remember"],
+      withCore,
+      {},
+      "Propose",
+    );
+
+    expect(summary).toMatchObject({ reads: 1, changes: 0, unknown: [] });
+  });
+});
+
+/**
+ * A tool whose arguments come from another holds that read with it: the
+ * server grants it, so the form says so rather than leaving the agent looking
+ * like it cannot find a report id.
+ */
+describe("impliedReads", () => {
+  const withDependencies = [
+    tool({ name: "list_reports", resource: "report" }),
+    tool({ name: "delete_report", kind: "action", resource: "report" }),
+    tool({
+      name: "create_dashboard",
+      kind: "action",
+      resource: "report_dashboard",
+      prerequisites: ["list_reports", "delete_report", "missing_tool"],
+    }),
+    tool({
+      name: "add_dashboard_tile",
+      kind: "action",
+      resource: "report_dashboard",
+      prerequisites: ["list_reports"],
+    }),
+  ];
+
+  it("names each read a chosen tool depends on, with every tool that needs it", () => {
+    const implied = impliedReads(["create_dashboard", "add_dashboard_tile"], withDependencies);
+
+    expect(implied.map((entry) => entry.tool.name)).toEqual(["list_reports"]);
+    expect(implied[0].neededBy.map((entry) => entry.name)).toEqual([
+      "create_dashboard",
+      "add_dashboard_tile",
+    ]);
+  });
+
+  it("does not repeat a read that was chosen outright", () => {
+    expect(impliedReads(["create_dashboard", "list_reports"], withDependencies)).toEqual([]);
   });
 });

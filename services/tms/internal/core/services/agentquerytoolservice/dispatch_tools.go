@@ -44,9 +44,9 @@ func newRankMoveCandidatesTool(ranker candidateRanker) serviceports.AgentQueryTo
 func (t *rankMoveCandidatesTool) Name() string { return "rank_move_candidates" }
 
 func (t *rankMoveCandidatesTool) Description() string {
-	return "Rank the drivers who could cover a shipment move, scored the way the " +
-		"dispatch console scores them: hours of service left, deadhead to the pickup, " +
-		"slack against the window, equipment fit. Each candidate carries a verdict, " +
+	return "Rank the drivers who could cover a shipment move, scored as the dispatch " +
+		"console scores them: hours left, deadhead, slack against the window, equipment " +
+		"fit. Each candidate carries a verdict, " +
 		"the findings behind it and the factors that made its score. Call this before " +
 		"assign_move and propose from the top of the list unless a finding says why not."
 }
@@ -55,7 +55,11 @@ func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentMoveId": map[string]any{"type": "string", "description": "The move to cover."},
+			"shipmentMoveId": map[string]any{
+				"type": "string",
+				"description": "The move to cover: a moveId from get_dispatch_board, a " +
+					"move's id from get_shipment_tracking, or this run's subject.",
+			},
 			"limit": map[string]any{
 				"type":        "integer",
 				"description": "How many candidates to return; defaults to 5, at most 20.",
@@ -67,7 +71,7 @@ func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
 			"fleetCodeIds": map[string]any{
 				"type":        "array",
 				"items":       map[string]any{"type": "string"},
-				"description": "Limit candidates to these fleets.",
+				"description": "Limit candidates to these fleets, by id from list_fleet_codes.",
 			},
 		},
 		"required":             []string{"shipmentMoveId"},
@@ -243,9 +247,8 @@ func newPlanDispatchTool(planner dispatchPlanner) serviceports.AgentQueryTool {
 func (t *planDispatchTool) Name() string { return "plan_dispatch" }
 
 func (t *planDispatchTool) Description() string {
-	return "Run the dispatch optimizer over the uncovered moves in a window, as a dry " +
-		"run: which driver it would put on each move and why, and which moves it " +
-		"could not cover and what blocked them. Nothing is assigned. Use assign_move " +
+	return "Dry-run the dispatch optimizer over a window's uncovered moves: the driver it " +
+		"would put on each move and why, and what blocked the rest. Nothing is assigned. Use assign_move " +
 		"on the lines you agree with, and raise what stays uncovered."
 }
 
@@ -258,14 +261,15 @@ func (t *planDispatchTool) ParamSchema() map[string]any {
 				"description": "How far ahead to plan, from now; defaults to 24, at most 168.",
 			},
 			"shipmentMoveIds": map[string]any{
-				"type":        "array",
-				"items":       map[string]any{"type": "string"},
-				"description": "Plan only these moves. Empty means every uncovered move in the window.",
+				"type":  "array",
+				"items": map[string]any{"type": "string"},
+				"description": "Plan only these moves, by moveId from get_dispatch_board. " +
+					"Empty means every uncovered move in the window.",
 			},
 			"fleetCodeIds": map[string]any{
 				"type":        "array",
 				"items":       map[string]any{"type": "string"},
-				"description": "Limit drivers to these fleets.",
+				"description": "Limit drivers to these fleets, by id from list_fleet_codes.",
 			},
 		},
 		"additionalProperties": false,

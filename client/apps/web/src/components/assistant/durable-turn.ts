@@ -43,6 +43,7 @@ export type DurableTurnOptions = {
   providerId: string;
   attachmentDocumentIds: string[];
   mentions: unknown[];
+  followUpProposalId?: string;
   signal: AbortSignal;
   /** Called once the worker has the question, before any of the answer. */
   onTurnStarted: (turnId: string) => void;
@@ -60,16 +61,13 @@ export type DurableTurnOptions = {
  * side never folded in, and resuming past it would silently skip it.
  */
 export async function runDurableTurn(options: DurableTurnOptions): Promise<void> {
-  const started = await apiService.assistantService.startTurn(
-    options.threadId,
-    options.content,
-    {
-      context: options.context,
-      providerId: options.providerId,
-      attachmentDocumentIds: options.attachmentDocumentIds,
-      mentions: options.mentions as never,
-    },
-  );
+  const started = await apiService.assistantService.startTurn(options.threadId, options.content, {
+    context: options.context,
+    providerId: options.providerId,
+    attachmentDocumentIds: options.attachmentDocumentIds,
+    mentions: options.mentions as never,
+    followUpProposalId: options.followUpProposalId,
+  });
   options.onTurnStarted(started.turnId);
 
   await followTurn(started.turnId, "", options);

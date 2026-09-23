@@ -3,6 +3,7 @@ package agentruntime
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -41,21 +42,27 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	call := p.call
 	completionText := p.completionText
 	proposedSoFar := p.proposedSoFar
-	// A tool the agent holds but has not been sent this turn still resolves
-	// from the registry below: the configured list is the grant, and disclosure
-	// only decides what the model was shown. One it does not hold is refused,
-	// and told where to look rather than left to guess again.
-	if !req.Definition.AllowsTool(call.Name) {
+	// The loop refuses a tool the agent does not hold before it gets here, with
+	// the nearest tools it does hold; this is the backstop for any other caller.
+	if !s.holds(req.Definition, call.Name) {
+		return failedOutcome("Tool %q is not available to this agent.", call.Name)
+	}
+
+	selfScoped := serviceports.IsSelfScoped(s.toolNamed(call.Name))
+	if selfScoped && (req.Unattended || req.Actor == nil ||
+		req.Actor.PrincipalType != serviceports.PrincipalTypeUser) {
 		return failedOutcome(
-			"Tool %q is not available to this agent. Call find_tools to see what is, "+
-				"or use one of the tools already loaded.",
+			"Tool %q works only on the records of the person in the conversation, "+
+				"and nobody is in this one.",
 			call.Name,
 		)
 	}
 
 	if tool, ok := s.queryTools.Get(call.Name); ok {
-		if outcome, denied := s.authorize(ctx, req.Actor, call.Name, tool.PermissionResource(), permission.OpRead); denied {
-			return outcome
+		if !selfScoped {
+			if outcome, denied := s.authorize(ctx, req.Actor, call.Name, tool.PermissionResource(), permission.OpRead); denied {
+				return outcome
+			}
 		}
 
 		return s.runQueryTool(ctx, req, tool, call)
@@ -66,12 +73,23 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		return failedOutcome("Tool %q does not exist.", call.Name)
 	}
 
-	if outcome, denied := s.authorize(ctx, req.Actor, call.Name, tool.PermissionResource(), tool.PermissionOperation()); denied {
-		return outcome
+	if !selfScoped {
+		if outcome, denied := s.authorize(ctx, req.Actor, call.Name, tool.PermissionResource(), tool.PermissionOperation()); denied {
+			return outcome
+		}
 	}
 
 	tier := req.Definition.EffectiveTier(call.Name, tool.DefaultAutonomyTier())
 	call.Arguments = declaredArguments(tool.ParamSchema(), call.Arguments)
+	if selfScoped {
+		// Whose records these are is the runtime's to say, not the model's:
+		// anything the model sent under this key is overwritten. A copy, so
+		// the model's own call as recorded in the thread is left as it sent it.
+		owned := make(map[string]any, len(call.Arguments)+1)
+		maps.Copy(owned, call.Arguments)
+		owned[serviceports.SelfScopeOwnerParam] = req.Actor.UserID.String()
+		call.Arguments = owned
+	}
 	if limiter, limits := tool.(serviceports.ToolTierLimiter); limits {
 		tier = tier.AtMost(limiter.TierLimit(ctx, serviceports.ToolExecuteParams{
 			OrganizationID: req.Actor.OrganizationID,

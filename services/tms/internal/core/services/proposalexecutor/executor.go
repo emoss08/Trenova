@@ -436,6 +436,17 @@ func (s *Service) assertActorMayRun(
 	tool services.AgentTool,
 	actor *services.RequestActor,
 ) error {
+	// A self-scoped tool needs no grant: it runs only for the person it was
+	// proposed for, which the tool checks against the owner the runtime
+	// recorded, and only a person has records of that kind.
+	if services.IsSelfScoped(tool) {
+		if actor == nil || actor.PrincipalType != services.PrincipalTypeUser {
+			return errortypes.NewValidationError("actor", errortypes.ErrForbidden,
+				"Only the person this change is for can approve it")
+		}
+		return nil
+	}
+
 	result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,

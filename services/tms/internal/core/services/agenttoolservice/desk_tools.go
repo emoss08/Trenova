@@ -66,8 +66,8 @@ func (t *escalateDetentionTool) Name() string { return "escalate_detention" }
 
 func (t *escalateDetentionTool) Description() string {
 	return "Hand a detention clock to a person, with the reason it cannot be worked " +
-		"automatically: the notice window has closed, a gate is holding the notice " +
-		"back, or the customer has nobody on file to send it to. This does not change " +
+		"automatically. Use it when the notice window has closed, a gate is holding the " +
+		"notice back, or the customer has nobody on file to send it to. This does not change " +
 		"the charge — waiving, approving and disputing stay a person's decision — it " +
 		"only puts the occurrence in front of one."
 }
@@ -77,8 +77,9 @@ func (t *escalateDetentionTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"occurrenceId": map[string]any{
-				"type":        "string",
-				"description": "The occurrence id from get_detention_occurrence or the desk list.",
+				"type": "string",
+				"description": "The occurrence id, from list_detention_desk or " +
+					"get_detention_occurrence.",
 			},
 			"reason": map[string]any{
 				"type": "string",
@@ -256,10 +257,12 @@ func (t *requestCredentialRenewalTool) ParamSchema() map[string]any {
 				"description": "The driver whose papers are due, from get_worker.",
 			},
 			"credentialIds": map[string]any{
-				"type":        "array",
-				"description": "Every credential this ask covers, from the driver's list.",
-				"items":       map[string]any{"type": "string"},
-				"minItems":    1,
+				"type": "array",
+				"description": "Every credential this ask covers, by the id " +
+					"list_expiring_credentials or get_worker_credential returns, or the one " +
+					"the event that started this run names. Never invent one.",
+				"items":    map[string]any{"type": "string"},
+				"minItems": 1,
 			},
 			"note": map[string]any{
 				"type": "string",
@@ -626,10 +629,10 @@ func (t *carrierIntelEventTool) Description() string {
 			"finding that is still true hides it from the people who need it."
 	}
 
-	return "Mark a carrier finding as seen, for a change that does not bear on whether " +
-		"the carrier can be given freight: a new address, a changed contact, a score " +
+	return "Mark a carrier finding as seen when it does not bear on whether the carrier " +
+		"can be given freight. Use it for a new address, a changed contact, a score " +
 		"that moved within its band. A finding that does bear on eligibility is not " +
-		"acknowledged, it is acted on."
+		"acknowledged: it is acted on, then closed with resolve_carrier_intel_event."
 }
 
 func (t *carrierIntelEventTool) ParamSchema() map[string]any {

@@ -221,7 +221,7 @@ function AgentCard({
           <span className="truncate">{agent.name}</span>
           <Badge variant="neutral" className="text-2xs h-4 px-1">
             {agent.toolNames.length === 0
-              ? t("Answers only")
+              ? t("No task tools")
               : t("{0, plural, one {# tool} other {# tools}}", agent.toolNames.length)}
           </Badge>
         </span>

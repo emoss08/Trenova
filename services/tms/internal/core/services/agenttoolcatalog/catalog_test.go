@@ -193,3 +193,84 @@ func TestRank_AnEmptyAllowListYieldsNothing(t *testing.T) {
 	assert.Empty(t, catalog.Find([]string{}, "drivers", 8))
 	assert.NotEmpty(t, catalog.Rank(nil, "drivers", 8))
 }
+
+/*
+A search returns the tools that matched about as well as the best one, not
+every tool that shared a word with it.
+
+"list trailers" used to load the trailer tools and then four other list tools
+on the word "list", and a small model picked from all of them.
+*/
+func TestFind_KeepsOnlyTheToolsThatMatchedAboutAsWellAsTheBest(t *testing.T) {
+	t.Parallel()
+
+	catalog := New([]serviceports.AgentToolDescriptor{
+		descriptor("list_trailers", "List trailers by status or inspection date."),
+		descriptor("list_workers", "List workers by status."),
+		descriptor("list_tractors", "List tractors by status."),
+		descriptor("list_customers", "List customers by status or city."),
+		descriptor("update_trailer_status", "Change the status of trailers."),
+	})
+
+	found := names(catalog.Find(nil, "list trailers", 6))
+
+	assert.ElementsMatch(t, []string{"list_trailers", "update_trailer_status"}, found)
+}
+
+// A tool's own search terms count as its name. Nobody says "home layout";
+// they say "my dashboard".
+func TestFind_MatchesAToolsSearchTermsAsItsName(t *testing.T) {
+	t.Parallel()
+
+	home := descriptor("get_my_home_layout", "Read the widgets on the person's home page.")
+	home.SearchTerms = []string{"homepage", "landing page", "widgets"}
+	catalog := New([]serviceports.AgentToolDescriptor{
+		home,
+		descriptor("list_dashboards", "List the report dashboards on the Reports page."),
+		descriptor("list_workers", "List workers by status."),
+	})
+
+	found := names(catalog.Find(nil, "what's on my dashboard", 6))
+
+	assert.Contains(t, found, "get_my_home_layout")
+	assert.Contains(t, found, "list_dashboards")
+	assert.NotContains(t, found, "list_workers")
+}
+
+// A tool whose purpose lives only in what it takes is still found by it,
+// ranked below a tool that names the thing outright.
+func TestFind_ReachesAToolThroughItsParameters(t *testing.T) {
+	t.Parallel()
+
+	shipments := descriptor("list_shipments", "List shipments by status.")
+	shipments.Parameters = map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"customerId": map[string]any{"type": "string", "description": "The customer, from list_customers."},
+		},
+	}
+	catalog := New([]serviceports.AgentToolDescriptor{
+		shipments,
+		descriptor("list_customers", "List customers by status or city."),
+		descriptor("list_workers", "List workers by status."),
+	})
+
+	found := names(catalog.Rank(nil, "customer", 3))
+
+	assert.Equal(t, []string{"list_customers", "list_shipments", "list_workers"}, found)
+}
+
+func TestPrerequisitesAndQuery_ComeFromTheDescriptor(t *testing.T) {
+	t.Parallel()
+
+	dashboard := descriptor("create_dashboard", "Build a report dashboard.")
+	dashboard.Prerequisites = []string{"list_reports"}
+	reports := descriptor("list_reports", "List reports.")
+	reports.Query = true
+	catalog := New([]serviceports.AgentToolDescriptor{dashboard, reports})
+
+	assert.Equal(t, []string{"list_reports"}, catalog.Prerequisites("create_dashboard"))
+	assert.Nil(t, catalog.Prerequisites("missing"))
+	assert.True(t, catalog.IsQuery("list_reports"))
+	assert.False(t, catalog.IsQuery("create_dashboard"))
+}

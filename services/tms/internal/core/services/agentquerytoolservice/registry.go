@@ -81,11 +81,7 @@ func (r *registry) Descriptors() []serviceports.AgentToolDescriptor {
 	descriptors := make([]serviceports.AgentToolDescriptor, 0, len(r.ordered))
 
 	for _, tool := range r.ordered {
-		descriptors = append(descriptors, serviceports.AgentToolDescriptor{
-			Name:        tool.Name(),
-			Description: tool.Description(),
-			Parameters:  tool.ParamSchema(),
-		})
+		descriptors = append(descriptors, serviceports.DescribeTool(tool, "", true))
 	}
 
 	return descriptors

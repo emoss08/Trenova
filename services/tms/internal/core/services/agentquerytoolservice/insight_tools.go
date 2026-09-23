@@ -114,9 +114,8 @@ func newListInsightsTool(insights insightReader) serviceports.AgentQueryTool {
 func (t *listInsightsTool) Name() string { return "list_insights" }
 
 func (t *listInsightsTool) Description() string {
-	return "List what the insight detectors have found across the organization: service " +
-		"quality slipping for a customer, cash tied up in unbilled work, cost leaking at a " +
-		"location, compliance about to lapse. Each finding carries its measured numbers, " +
+	return "List insight detector findings: service slipping for a customer, cash tied " +
+		"up in unbilled work, cost leaking at a location, compliance about to lapse. Each finding carries its measured numbers, " +
 		"the records behind it and a recommendation. Active findings are returned unless " +
 		"status says otherwise; narrow by category or severity. Only findings the person " +
 		"you are working for may see are returned. Use get_insight for one finding's " +
@@ -253,10 +252,10 @@ func newGetInsightTool(insights insightReader) serviceports.AgentQueryTool {
 func (t *getInsightTool) Name() string { return "get_insight" }
 
 func (t *getInsightTool) Description() string {
-	return "Read one insight in full: the finding with its numbers and records, the " +
-		"earlier runs of the same finding so you can see whether it is getting worse, " +
-		"and what the detector measures, when it speaks and what it passes over. Use " +
-		"the id from list_insights or from the run's subject."
+	return "Read one insight in full: the finding with its numbers and records, its " +
+		"earlier runs, and the rule behind it. The earlier runs show whether it is " +
+		"getting worse; the rule says what the detector measures, when it speaks and " +
+		"what it passes over. Use the id from list_insights or from the run's subject."
 }
 
 func (t *getInsightTool) ParamSchema() map[string]any {
@@ -265,7 +264,7 @@ func (t *getInsightTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"insightId": map[string]any{
 				"type":        "string",
-				"description": "The insight's id.",
+				"description": "The insight's id, from list_insights or this run's subject.",
 			},
 		},
 		"required":             []string{"insightId"},

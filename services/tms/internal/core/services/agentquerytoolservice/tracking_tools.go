@@ -74,13 +74,13 @@ func newGetShipmentTrackingTool(
 func (t *getShipmentTrackingTool) Name() string { return "get_shipment_tracking" }
 
 func (t *getShipmentTrackingTool) Description() string {
-	return "Where a shipment is and whether it will be on time: every stop with its " +
-		"window, actual arrival and lateness, who is on each move and with what " +
-		"truck, the assigned tractor's last known position, the driver's remaining " +
-		"hours, and a rough arrival estimate for the next stop. The estimate is " +
-		"straight-line at a planning speed, so call it an estimate and never a " +
-		"promise. Start here for any \"where is\", \"is it late\" or \"when will it " +
-		"arrive\" question; get_shipment has the commercial detail instead."
+	return "Where a shipment is and whether it will be on time: each stop's window, actual " +
+		"arrival and lateness, the tractor's last position, and an arrival estimate. It " +
+		"also shows who is on each move with what truck and the driver's remaining " +
+		"hours. The next-stop estimate is straight-line at a planning speed, so call it " +
+		"an estimate and never a promise. Start here for any \"where is\", \"is it " +
+		"late\" or \"when will it arrive\" question; get_shipment has the commercial " +
+		"detail instead."
 }
 
 func (t *getShipmentTrackingTool) ParamSchema() map[string]any {
@@ -88,8 +88,9 @@ func (t *getShipmentTrackingTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"shipmentId": map[string]any{
-				"type":        "string",
-				"description": "The shipment's id, when you have it.",
+				"type": "string",
+				"description": "The shipment's id, from search_shipments or list_shipments, " +
+					"the page you are on, or this run's subject. Give this or proNumber.",
 			},
 			"proNumber": map[string]any{
 				"type":        "string",
@@ -361,7 +362,7 @@ func (t *listVehiclePositionsTool) ParamSchema() map[string]any {
 			"tractorIds": map[string]any{
 				"type":        "array",
 				"items":       map[string]any{"type": "string"},
-				"description": "Optional: only these tractors, by id.",
+				"description": "Optional: only these tractors, by id from list_tractors.",
 			},
 			"maxAgeMinutes": map[string]any{
 				"type": "integer",

@@ -6,6 +6,7 @@ import { CircleAlertIcon } from "lucide-react";
 import {
   AssistantProse,
   AssistantTurn,
+  DecisionNote,
   ReasoningDisclosure,
   RefusalNotice,
   UserTurn,
@@ -53,12 +54,16 @@ export function StreamingTurn({
 
   return (
     <div className="flex flex-col gap-4">
-      <UserTurn
-        content={turn.userContent}
-        pageContext={turn.pageContext}
-        attachments={turn.attachments}
-        mentions={turn.mentions}
-      />
+      {turn.followUp ? (
+        <DecisionNote content="" />
+      ) : (
+        <UserTurn
+          content={turn.userContent}
+          pageContext={turn.pageContext}
+          attachments={turn.attachments}
+          mentions={turn.mentions}
+        />
+      )}
 
       {turn.status === "refused" && turn.refusal && (
         <RefusalNotice message={turn.refusal.message} />

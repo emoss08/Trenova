@@ -13,9 +13,12 @@ type ScriptedCompletion struct {
 	Turns []*serviceports.ChatCompletionResult
 	// Errors fails the completion at that call index instead of answering, so
 	// a test can make the model die after a tool has already run.
-	Errors         map[int]error
-	CallCount      int
-	LastReq        *serviceports.ChatCompletionRequest
+	Errors    map[int]error
+	CallCount int
+	LastReq   *serviceports.ChatCompletionRequest
+	// Requests is every request, oldest first, so a test can see what a
+	// turn sent before the one that answered it.
+	Requests       []*serviceports.ChatCompletionRequest
 	Classification string
 	StructuredText string
 }
@@ -25,6 +28,7 @@ func (s *ScriptedCompletion) CompleteChat(
 	req *serviceports.ChatCompletionRequest,
 ) (*serviceports.ChatCompletionResult, error) {
 	s.LastReq = req
+	s.Requests = append(s.Requests, req)
 	idx := s.CallCount
 	s.CallCount++
 	if err, failed := s.Errors[idx]; failed {
@@ -158,11 +162,7 @@ func (r *StubQueryRegistry) All() []serviceports.AgentQueryTool { return r.Tools
 func (r *StubQueryRegistry) Descriptors() []serviceports.AgentToolDescriptor {
 	out := make([]serviceports.AgentToolDescriptor, 0, len(r.Tools))
 	for _, tool := range r.Tools {
-		out = append(out, serviceports.AgentToolDescriptor{
-			Name:        tool.Name(),
-			Description: tool.Description(),
-			Parameters:  tool.ParamSchema(),
-		})
+		out = append(out, serviceports.DescribeTool(tool, "", true))
 	}
 
 	return out
@@ -233,12 +233,7 @@ func (r *StubActionRegistry) All() []serviceports.AgentTool { return r.Tools }
 func (r *StubActionRegistry) Descriptors() []serviceports.AgentToolDescriptor {
 	out := make([]serviceports.AgentToolDescriptor, 0, len(r.Tools))
 	for _, tool := range r.Tools {
-		out = append(out, serviceports.AgentToolDescriptor{
-			Name:         tool.Name(),
-			Description:  tool.Description(),
-			Parameters:   tool.ParamSchema(),
-			AutonomyTier: tool.DefaultAutonomyTier(),
-		})
+		out = append(out, serviceports.DescribeTool(tool, tool.DefaultAutonomyTier(), false))
 	}
 
 	return out

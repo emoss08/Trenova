@@ -3,6 +3,7 @@ package agentruntime
 import (
 	"context"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -86,7 +87,13 @@ func (s *Service) Run(
 		}},
 	}
 
-	tools := s.newToolSet(ctx, definition, req.Actor, req.Input, req.Unattended)
+	tools := s.newToolSet(ctx, toolSetRequest{
+		definition: definition,
+		actor:      req.Actor,
+		input:      req.Input,
+		history:    req.History,
+		unattended: req.Unattended,
+	})
 	runtimeContext.ToolsDisclosed = tools.disclosed
 	// The prompt describes the set the person may use, not the agent's whole
 	// configuration: a tool named there and refused when called reads as
@@ -116,8 +123,13 @@ func (s *Service) Run(
 		})
 	}
 
+	retries := 0
+	asked := false
+	questions := askedQuestions(req.History)
 	for result.ToolCallsUsed < budget {
-		completion, err := s.completion.StreamChat(ctx, &serviceports.ChatCompletionRequest{
+		streamCtx, cancelStream := context.WithCancel(ctx)
+		guard := newReplyGuard(cancelStream)
+		completion, err := s.completion.StreamChat(streamCtx, &serviceports.ChatCompletionRequest{
 			TenantInfo:          req.Actor.TenantInfo(),
 			System:              system,
 			Messages:            messages,
@@ -143,7 +155,41 @@ func (s *Service) Run(
 				ThreadID:          req.ThreadID,
 				RunID:             req.RunID,
 			},
-		}, sink)
+		}, func(delta string) {
+			if guard.feed(delta) {
+				sink(delta)
+			}
+		})
+		cancelStream()
+		if err == nil && guard.looped(completion.Text) {
+			s.logger.Warn("agent reply fell into a loop; discarding it",
+				zap.String("agent", definition.Name),
+				zap.String("model", completion.ModelIdentifier),
+				zap.Int("retry", retries+1),
+			)
+			if retries < maxReplyRetries {
+				retries++
+				emit(serviceports.StreamEvent{
+					Event: serviceports.AssistantEventRetrying,
+					Data: serviceports.AssistantRetryingEvent{
+						Attempt: retries,
+						Reason:  loopRestartReason,
+						Kind:    serviceports.RetryKindRestart,
+					},
+				})
+				continue
+			}
+			emit(serviceports.StreamEvent{
+				Event: serviceports.AssistantEventRetrying,
+				Data: serviceports.AssistantRetryingEvent{
+					Attempt: retries + 1,
+					Reason:  loopRestartReason,
+					Kind:    serviceports.RetryKindRestart,
+				},
+			})
+			sink(loopedReply)
+			return s.finish(result, cannedCompletion(completion, loopedReply), emit), nil
+		}
 		if err != nil {
 			// What ran travels with the error. The caller decides whether to
 			// keep it, but it cannot keep what it was never handed: a model that
@@ -158,6 +204,18 @@ func (s *Service) Run(
 		tagToolCalls(completion)
 
 		if len(completion.ToolCalls) == 0 {
+			// A turn that ends in silence reads as a hung screen. One that
+			// asked the person a question has said what it needed to; any
+			// other is asked once more, then given a plain line.
+			if strings.TrimSpace(completion.Text) == "" && !asked {
+				if retries < maxReplyRetries {
+					retries++
+					continue
+				}
+				sink(emptyReply)
+				return s.finish(result, cannedCompletion(completion, emptyReply), emit), nil
+			}
+
 			return s.finish(result, completion, emit), nil
 		}
 
@@ -230,18 +288,54 @@ func (s *Service) Run(
 			}
 
 			if call.Name == findToolsName {
-				outcome := toolOutcome{content: s.resolveFind(tools, call.Arguments)}
-				result.ToolCallsUsed++
+				tools.findCalls++
+				var outcome toolOutcome
+				if tools.findCalls > maxFindCalls {
+					// Past the cap the search is charged, so a model that
+					// only ever searches still runs out of turn.
+					result.ToolCallsUsed++
+					outcome = failedOutcome(
+						"You have searched for tools %d times this turn. Use what is "+
+							"loaded, or tell the person what you could not find.",
+						maxFindCalls,
+					)
+				} else {
+					outcome = toolOutcome{content: s.resolveFind(tools, call.Arguments)}
+				}
 				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
 				continue
 			}
 
 			if call.Name == askUserName {
+				question := comparableQuestion(stringArg(call.Arguments, "question"))
+				_, repeated := questions[question]
 				outcome := toolOutcome{content: resolveAsk(call.Arguments)}
+				switch {
+				case !tools.offers(askUserName):
+					outcome = failedOutcome("%s", unattendedAskRefusal)
+				case question != "" && repeated:
+					outcome = failedOutcome("%s", repeatedAskRefusal)
+				default:
+					asked = true
+					if question != "" {
+						questions[question] = struct{}{}
+					}
+				}
 				result.ToolCallsUsed++
 				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
 				continue
 			}
+
+			if !s.holds(definition, call.Name) {
+				outcome := failedOutcome("%s", s.unheldRefusal(tools, call.Name))
+				result.ToolCallsUsed++
+				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
+				continue
+			}
+			// A tool the agent holds but was not sent runs anyway — the
+			// configuration is the grant, disclosure only decides what was
+			// shown — and is loaded, so the next request carries its schema.
+			s.load(tools, call.Name)
 
 			if previous, repeated := repeats.seen(call); repeated {
 				outcome := failedOutcome("%s", repeatRefusal(call.Name, previous))
@@ -402,6 +496,26 @@ func (s *Service) finish(
 	return result
 }
 
+// cannedCompletion stands a fixed line in for a reply the model could not
+// give, keeping the provider and usage the attempt was charged under.
+func cannedCompletion(
+	attempt *serviceports.ChatCompletionResult,
+	text string,
+) *serviceports.ChatCompletionResult {
+	canned := &serviceports.ChatCompletionResult{Text: text}
+	if attempt != nil {
+		canned.ModelIdentifier = attempt.ModelIdentifier
+		canned.ProviderID = attempt.ProviderID
+		canned.ProviderKind = attempt.ProviderKind
+		canned.InputTokens = attempt.InputTokens
+		canned.OutputTokens = attempt.OutputTokens
+		canned.LatencyMs = attempt.LatencyMs
+		canned.CostUSD = attempt.CostUSD
+	}
+
+	return canned
+}
+
 // truncationNotice marks a reply the provider stopped partway through.
 //
 // A model that dies mid-sentence used to take its whole answer with it: the
@@ -415,9 +529,10 @@ const truncationNotice = "\n\n_This reply was cut off before it finished. " +
 func (s *Service) ToolSummaries(
 	definition *agentdefinition.Definition,
 ) []agentdefinition.ToolSummary {
-	summaries := make([]agentdefinition.ToolSummary, 0, len(definition.ToolNames))
+	names := s.heldTools(definition)
+	summaries := make([]agentdefinition.ToolSummary, 0, len(names))
 
-	for _, name := range definition.ToolNames {
+	for _, name := range names {
 		if tool, ok := s.queryTools.Get(name); ok {
 			summaries = append(summaries, agentdefinition.ToolSummary{
 				Name:        tool.Name(),

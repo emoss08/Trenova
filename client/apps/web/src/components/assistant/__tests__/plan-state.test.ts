@@ -46,6 +46,7 @@ function message(id: string): AssistantMessage {
     id,
     threadId: "athr_1",
     sequence: 1,
+    kind: "Message",
     role: "Assistant",
     content: "",
     toolCalls: null,

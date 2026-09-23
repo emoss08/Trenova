@@ -193,7 +193,7 @@ func (s *Service) Status(
 		status.MonthlyBudget = &budget
 	}
 
-	for _, tool := range definition.ToolNames {
+	for _, tool := range definition.EffectiveToolNames() {
 		limit := definition.ToolDailyLimit(tool)
 		if limit <= 0 {
 			continue

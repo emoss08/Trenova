@@ -222,6 +222,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
             providerId,
             attachmentDocumentIds: attachments,
             mentions: extras.mentions ?? [],
+            followUpProposalId: extras.followUpProposalId,
             signal: controller.signal,
             onTurnStarted: (id) => {
               turnIdRef.current = id;
@@ -239,6 +240,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
               providerId,
               attachmentDocumentIds: attachments,
               mentions: extras.mentions ?? [],
+              followUpProposalId: extras.followUpProposalId,
             },
           );
         }

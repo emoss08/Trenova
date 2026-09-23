@@ -617,3 +617,12 @@ func metricExists(key string) bool {
 func densityAllowed(density string) bool {
 	return slices.Contains(Densities(), density)
 }
+
+// SpokenNames are the words people use for their home page. Most of them call
+// it "my dashboard", which is also what the report dashboards are called, so an
+// assistant asked about one has to be able to find the other.
+func SpokenNames() []string {
+	return []string{
+		"my dashboard", "home page", "homepage", "home screen", "landing page", "widgets",
+	}
+}

@@ -135,16 +135,19 @@ func (t *linkInboundMessageTool) ParamSchema() map[string]any {
 				"description": "The message, from the run's subject or list_inbound_messages.",
 			},
 			"shipmentId": map[string]any{
-				"type":        "string",
-				"description": "Optional: the shipment the message is about.",
+				"type": "string",
+				"description": "Optional: the shipment the message is about, from " +
+					"search_shipments or list_shipments.",
 			},
 			"customerId": map[string]any{
-				"type":        "string",
-				"description": "Optional: the customer who sent it or who it concerns.",
+				"type": "string",
+				"description": "Optional: the customer who sent it or who it concerns, from " +
+					"list_customers.",
 			},
 			"carrierId": map[string]any{
-				"type":        "string",
-				"description": "Optional: the carrier who sent it or who it concerns.",
+				"type": "string",
+				"description": "Optional: the carrier who sent it or who it concerns, from " +
+					"list_carriers.",
 			},
 			"reason": map[string]any{
 				"type":        "string",
@@ -306,11 +309,12 @@ func newMarkInboundMessageTool(inbox inboundMessageDesk) serviceports.AgentTool 
 func (t *markInboundMessageTool) Name() string { return "mark_inbound_message" }
 
 func (t *markInboundMessageTool) Description() string {
-	return "Settle a message that arrived on a monitored address: Actioned when what it " +
-		"asked for has been done — the load created, the document attached, the question " +
-		"answered — or Ignored when there was nothing to do. Say what happened in the note; " +
-		"it is what the person reading the inbox sees. Settling takes the message off the " +
-		"waiting lane. A quarantined message is a person's to clear and is refused."
+	return "Settle a message that arrived on a monitored address as Actioned or Ignored. " +
+		"Actioned when what it asked for has been done — the load created, the document " +
+		"attached, the question answered — Ignored when there was nothing to do. Say what " +
+		"happened in the note; it is what the person reading the inbox sees. Settling takes " +
+		"the message off the waiting lane. A quarantined message is a person's to clear and " +
+		"is refused."
 }
 
 func (t *markInboundMessageTool) ParamSchema() map[string]any {
@@ -524,8 +528,9 @@ func (t *replyToInboundMessageTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"messageId": map[string]any{
-				"type":        "string",
-				"description": "The message being answered.",
+				"type": "string",
+				"description": "The message being answered, from this run's subject or " +
+					"list_inbound_messages.",
 			},
 			"profileId": map[string]any{
 				"type": "string",

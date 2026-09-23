@@ -30,6 +30,7 @@ const (
 // and the user who verified it. None of that helps answer who needs a new
 // medical card, and all of it costs context the model needs for the answer.
 type expiringCredentialRow struct {
+	ID              string       `json:"id"`
 	WorkerID        string       `json:"workerId"`
 	WorkerName      string       `json:"workerName"`
 	CredentialType  string       `json:"credentialType"`
@@ -179,7 +180,10 @@ func toExpiringRow(credential *worker.WorkerCredential, clk clock) expiringCrede
 	// The credential's number is not on the row. Who needs a new medical
 	// card is answered without it, and a licence or TWIC number in a chat
 	// transcript is a leak with nobody to blame.
-	row := expiringCredentialRow{WorkerID: credential.WorkerID.String()}
+	row := expiringCredentialRow{
+		ID:       credential.ID.String(),
+		WorkerID: credential.WorkerID.String(),
+	}
 
 	row.ExpiresAt = pointerDate(credential.ExpiresAt)
 	if credential.ExpiresAt != nil {

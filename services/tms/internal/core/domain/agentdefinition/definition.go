@@ -3,6 +3,7 @@ package agentdefinition
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -200,13 +201,7 @@ func (d *Definition) WithinCeiling(tier agent.AutonomyTier) bool {
 }
 
 func (d *Definition) AllowsTool(name string) bool {
-	for _, tool := range d.ToolNames {
-		if tool == name {
-			return true
-		}
-	}
-
-	return false
+	return IsCoreTool(name) || slices.Contains(d.ToolNames, name)
 }
 
 func (d *Definition) IsSystem() bool {
@@ -378,7 +373,7 @@ func (d *Definition) validateBudget(multiErr *errortypes.MultiError) {
 	}
 	for tool, limit := range d.ToolDailyLimits {
 		field := "toolDailyLimits." + tool
-		if _, ok := held[tool]; !ok {
+		if _, ok := held[tool]; !ok && !IsCoreTool(tool) {
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalid,
@@ -459,7 +454,7 @@ func (d *Definition) validateTools(multiErr *errortypes.MultiError) {
 
 	for tool, tier := range d.ToolTiers {
 		field := "toolTiers." + tool
-		if _, enabled := seen[tool]; !enabled {
+		if _, enabled := seen[tool]; !enabled && !IsCoreTool(tool) {
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalid,

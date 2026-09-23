@@ -444,3 +444,13 @@ describe("a turn's context", () => {
     expect(state.status).toBe("working");
   });
 });
+
+describe("a decision follow-up turn", () => {
+  it("starts with no words of the person's own", () => {
+    const state = initialTurnState("", null, { followUpProposalId: "ap_1" });
+
+    expect(state.followUp).toBe(true);
+    expect(state.userContent).toBe("");
+    expect(initialTurnState("hello").followUp).toBe(false);
+  });
+});

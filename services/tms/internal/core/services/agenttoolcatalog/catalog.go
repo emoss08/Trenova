@@ -17,8 +17,14 @@ import (
 )
 
 const (
-	nameMatchWeight        = 3
-	descriptionMatchWeight = 1
+	nameMatchWeight        = 4
+	descriptionMatchWeight = 2
+	parameterMatchWeight   = 1
+
+	// findCutoffDivisor keeps a find_tools answer to the tools that matched
+	// about as well as the best one. Without it "list trailers" loaded the
+	// trailer tools and then every other list tool on the word "list".
+	findCutoffDivisor = 2
 )
 
 // vocabulary maps what an operator says to what the schema calls it.
@@ -98,6 +104,35 @@ var vocabulary = map[string][]string{
 	"shop":           {"status", "maintenance"},
 	"maintenance":    {"status", "maintenance"},
 	"breakdown":      {"status", "service"},
+	"report":         {"report", "dataset"},
+	"reports":        {"report", "dataset"},
+	"dataset":        {"report", "dataset"},
+	"datasets":       {"report", "dataset"},
+	"query":          {"report"},
+	"dashboard":      {"dashboard", "tile", "home"},
+	"dashboards":     {"dashboard", "tile", "home"},
+	"tile":           {"dashboard"},
+	"tiles":          {"dashboard"},
+	"home":           {"home", "widget"},
+	"homepage":       {"home", "widget"},
+	"landing":        {"home", "widget"},
+	"widget":         {"home", "widget"},
+	"widgets":        {"home", "widget"},
+	"chart":          {"chart", "report", "dashboard"},
+	"graph":          {"chart", "report", "dashboard"},
+	"kpi":            {"metric", "kpi"},
+	"metric":         {"metric", "kpi"},
+	"metrics":        {"metric", "kpi"},
+	"remember":       {"memory", "remember"},
+	"memory":         {"memory", "remember", "recall"},
+	"note":           {"memory", "remember"},
+	"forget":         {"memory", "forget"},
+	"escalate":       {"exception", "review"},
+	"stuck":          {"exception", "review"},
+	"email":          {"email", "message"},
+	"inbox":          {"inbound", "message"},
+	"view":           {"view", "table"},
+	"filter":         {"view", "table"},
 }
 
 // stopWords are the words a question is built from rather than about. They are
@@ -112,12 +147,16 @@ var stopWords = map[string]struct{}{
 	"these": {}, "this": {}, "those": {}, "to": {}, "us": {}, "was": {},
 	"were": {}, "what": {}, "when": {}, "where": {}, "which": {}, "who": {},
 	"whom": {}, "whose": {}, "why": {}, "with": {}, "would": {},
+	"list": {}, "find": {}, "look": {}, "see": {}, "need": {}, "want": {},
+	"tool": {}, "tools": {}, "data": {}, "record": {}, "records": {},
+	"all": {}, "some": {}, "one": {}, "up": {}, "about": {}, "currently": {},
 }
 
 type indexed struct {
 	descriptor  serviceports.AgentToolDescriptor
 	nameTokens  map[string]struct{}
 	bodyTokens  map[string]struct{}
+	paramTokens map[string]struct{}
 	catalogRank int
 }
 
@@ -139,9 +178,12 @@ func New(descriptors []serviceports.AgentToolDescriptor) *Catalog {
 	for i, descriptor := range sorted {
 		catalog.byName[descriptor.Name] = i
 		catalog.entries = append(catalog.entries, indexed{
-			descriptor:  descriptor,
-			nameTokens:  tokenSet(descriptor.Name),
+			descriptor: descriptor,
+			nameTokens: tokenSet(
+				descriptor.Name + " " + strings.Join(descriptor.SearchTerms, " "),
+			),
 			bodyTokens:  tokenSet(descriptor.Description),
+			paramTokens: tokenSet(parameterText(descriptor.Parameters)),
 			catalogRank: i,
 		})
 	}
@@ -217,6 +259,17 @@ func (c *Catalog) rank(
 		return candidates[i].entry.catalogRank < candidates[j].entry.catalogRank
 	})
 
+	if minScore > 0 && len(candidates) > 0 {
+		floor := candidates[0].score / findCutoffDivisor
+		kept := candidates[:0]
+		for _, candidate := range candidates {
+			if candidate.score >= floor {
+				kept = append(kept, candidate)
+			}
+		}
+		candidates = kept
+	}
+
 	if len(candidates) > limit {
 		candidates = candidates[:limit]
 	}
@@ -243,6 +296,23 @@ func (c *Catalog) Find(
 	limit int,
 ) []serviceports.AgentToolDescriptor {
 	return c.rank(allowed, query, limit, 1)
+}
+
+// Prerequisites names the tools a tool's arguments come from.
+func (c *Catalog) Prerequisites(name string) []string {
+	descriptor, ok := c.Descriptor(name)
+	if !ok {
+		return nil
+	}
+
+	return descriptor.Prerequisites
+}
+
+// IsQuery reports whether a tool only reads.
+func (c *Catalog) IsQuery(name string) bool {
+	descriptor, ok := c.Descriptor(name)
+
+	return ok && descriptor.Query
 }
 
 // Names lists every tool in the catalog, in a stable order.
@@ -280,10 +350,51 @@ func score(entry *indexed, terms map[string]struct{}) int {
 		}
 		if _, ok := entry.bodyTokens[term]; ok {
 			total += descriptionMatchWeight
+			continue
+		}
+		if _, ok := entry.paramTokens[term]; ok {
+			total += parameterMatchWeight
 		}
 	}
 
 	return total
+}
+
+// parameterText is the searchable text of a tool's parameters: their names
+// and descriptions, one level of properties deep. A tool whose purpose is
+// only in what it takes — a customerId filter on list_shipments — is found
+// by it, below anything that names the thing outright.
+func parameterText(schema map[string]any) string {
+	properties, _ := schema["properties"].(map[string]any)
+	if len(properties) == 0 {
+		return ""
+	}
+
+	var b strings.Builder
+	for name, raw := range properties {
+		b.WriteString(splitCamel(name))
+		b.WriteByte(' ')
+		if property, ok := raw.(map[string]any); ok {
+			if description, ok := property["description"].(string); ok {
+				b.WriteString(description)
+				b.WriteByte(' ')
+			}
+		}
+	}
+
+	return b.String()
+}
+
+func splitCamel(name string) string {
+	var b strings.Builder
+	for i, r := range name {
+		if i > 0 && 'A' <= r && r <= 'Z' {
+			b.WriteByte(' ')
+		}
+		b.WriteRune(r)
+	}
+
+	return b.String()
 }
 
 // expand adds the schema's word for each of the operator's words, keeping the

@@ -103,10 +103,10 @@ func newGetDispatchBoardTool(board boardReader) serviceports.AgentQueryTool {
 func (t *getDispatchBoardTool) Name() string { return "get_dispatch_board" }
 
 func (t *getDispatchBoardTool) Description() string {
-	return "The dispatch board as the desk sees it: every move in the window with its " +
-		"urgency (Late, Now, Today, Tomorrow, Planned), whether it is covered and by " +
-		"whom, the pickup and delivery windows, and every driver with availability, " +
-		"hours remaining and last position. This is the one call for \"what is late\", " +
+	return "The dispatch board: every move in the window with its urgency and coverage, " +
+		"and every driver with availability, hours remaining and last position. Urgency " +
+		"is Late, Now, Today, Tomorrow or Planned, and each move shows who covers it and " +
+		"its pickup and delivery windows. This is the one call for \"what is late\", " +
 		"\"what is uncovered\" and \"who is free\". Late means the pickup window has " +
 		"already opened with nobody there; check get_shipment_tracking on a late move " +
 		"before deciding it is a problem, since arrivals are sometimes recorded late."

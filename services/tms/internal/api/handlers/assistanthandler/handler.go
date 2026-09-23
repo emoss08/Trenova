@@ -540,6 +540,9 @@ type sendMessageRequest struct {
 	// Mentions the records named from the composer.
 	AttachmentDocumentIDs []pulid.ID        `json:"attachmentDocumentIds"`
 	Mentions              []agent.EntityRef `json:"mentions"`
+	// FollowUpProposalID asks for the turn that follows a decision on one of
+	// the thread's proposals, in place of content.
+	FollowUpProposalID pulid.ID `json:"followUpProposalId"`
 }
 
 // askRequest is a quick question from anywhere: the words, the page, and the
@@ -588,6 +591,7 @@ func (h *Handler) sendMessage(c *gin.Context) {
 		ProviderChosen:        providerChosen,
 		AttachmentDocumentIDs: body.AttachmentDocumentIDs,
 		Mentions:              body.Mentions,
+		FollowUpProposalID:    body.FollowUpProposalID,
 	}, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -668,6 +672,7 @@ func (h *Handler) sendMessageStream(c *gin.Context) {
 		ProviderChosen:        providerChosen,
 		AttachmentDocumentIDs: body.AttachmentDocumentIDs,
 		Mentions:              body.Mentions,
+		FollowUpProposalID:    body.FollowUpProposalID,
 	}, &actor, observed)
 	if err != nil {
 		ending := serviceports.StreamEvent{

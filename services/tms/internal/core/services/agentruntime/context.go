@@ -116,7 +116,7 @@ func (b *ContextBuilder) Build(
 	if definition.HasContextProvider(agentdefinition.ContextMemory) && b.memories != nil {
 		memories, err := b.memories.ForContext(ctx, serviceports.MemoryContextRequest{
 			TenantInfo: tenant,
-			ToolNames:  definition.ToolNames,
+			ToolNames:  definition.EffectiveToolNames(),
 		})
 		if err != nil {
 			b.logger.Warn("agent context: memory lookup failed",

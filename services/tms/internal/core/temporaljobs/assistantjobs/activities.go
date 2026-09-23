@@ -159,6 +159,7 @@ func (a *Activities) answer(
 		ProviderChosen:        payload.Request.ProviderChosen,
 		AttachmentDocumentIDs: payload.Request.AttachmentDocumentIDs,
 		Mentions:              payload.Request.Mentions,
+		FollowUpProposalID:    payload.Request.FollowUpProposalID,
 	}, &payload.Actor, beats)
 
 	status := assistantturnservice.StatusFor(false, runErr)

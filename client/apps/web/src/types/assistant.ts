@@ -216,6 +216,10 @@ export const toolCatalogEntrySchema = z.object({
   operation: z.string(),
   defaultAutonomyTier: z.string().optional().default(""),
   reversible: z.boolean().default(false),
+  /** Held by every agent without being chosen: memory, escalation, review. */
+  core: z.boolean().default(false),
+  /** Tools this one takes its arguments from; the reads among them come with it. */
+  prerequisites: z.array(z.string()).default([]),
 });
 
 export const toolCatalogSchema = z.object({
@@ -357,6 +361,11 @@ export const assistantMessageSchema = z.object({
   threadId: z.string(),
   sequence: z.number(),
   role: messageRoleSchema,
+  /**
+   * Message for what a person or the model wrote; DecisionNote for the input
+   * of the turn that follows a decision, which the thread shows as a note.
+   */
+  kind: z.enum(["Message", "DecisionNote"]).catch("Message").default("Message"),
   content: z.string().optional().default(""),
   toolCalls: z.array(toolCallRecordSchema).nullish(),
   toolCallId: z.string().optional().default(""),

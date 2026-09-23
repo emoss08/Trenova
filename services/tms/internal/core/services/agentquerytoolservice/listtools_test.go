@@ -284,7 +284,51 @@ func TestListTool_CapsTheLimit(t *testing.T) {
 	_, err := tool.Query(t.Context(), testParams(map[string]any{"limit": float64(10000)}))
 	require.NoError(t, err)
 
-	assert.Equal(t, maxListLimit, capture.opts.Pagination.Limit)
+	assert.Equal(t, maxListLimit+1, capture.opts.Pagination.Limit,
+		"the cap, plus the one row that says whether another page exists")
+}
+
+/*
+A full page says there is more, and where it continues.
+
+A list used to answer with rows and a count, and nothing that told 25 rows
+from the whole set. A model asked for every customer read the first page as
+all of them, and a long list had no way on past the result bound but to be
+cut off.
+*/
+func TestListTool_SaysWhenThereIsAnotherPage(t *testing.T) {
+	t.Parallel()
+
+	capture := &capturedList{rows: []any{"a", "b", "c"}}
+	tool := newListTool(probeSpec(capture))
+
+	result, err := tool.Query(t.Context(), testParams(map[string]any{
+		"limit":  float64(2),
+		"offset": float64(4),
+	}))
+	require.NoError(t, err)
+
+	outcome := result.(searchOutcome)
+	assert.Equal(t, 4, capture.opts.Pagination.Offset)
+	assert.Equal(t, 3, capture.opts.Pagination.Limit)
+	assert.Equal(t, 2, outcome.Count)
+	assert.True(t, outcome.HasMore)
+	require.NotNil(t, outcome.NextOffset)
+	assert.Equal(t, 6, *outcome.NextOffset)
+}
+
+func TestListTool_SaysWhenThisIsTheLastPage(t *testing.T) {
+	t.Parallel()
+
+	capture := &capturedList{rows: []any{"a"}}
+	tool := newListTool(probeSpec(capture))
+
+	result, err := tool.Query(t.Context(), testParams(map[string]any{"limit": float64(2)}))
+	require.NoError(t, err)
+
+	outcome := result.(searchOutcome)
+	assert.False(t, outcome.HasMore)
+	assert.Nil(t, outcome.NextOffset)
 }
 
 func TestListTool_ListsUnfilteredWithNoArguments(t *testing.T) {

@@ -20,6 +20,26 @@ func (r Role) IsValid() bool {
 	}
 }
 
+// MessageKind separates what a person wrote from what the application wrote on
+// their behalf. A decision note is the input of the turn that follows a
+// decision on a proposal: it is sent to the model like any user message, and
+// shown to the person as a note rather than as words they typed.
+type MessageKind string
+
+const (
+	MessageKindMessage      = MessageKind("Message")
+	MessageKindDecisionNote = MessageKind("DecisionNote")
+)
+
+func (k MessageKind) IsValid() bool {
+	switch k {
+	case MessageKindMessage, MessageKindDecisionNote:
+		return true
+	default:
+		return false
+	}
+}
+
 // ThreadStatus is a conversation's lifecycle.
 type ThreadStatus string
 

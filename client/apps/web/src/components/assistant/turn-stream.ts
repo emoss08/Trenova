@@ -73,6 +73,8 @@ export type TurnState = {
   /** The files and records the person handed over, shown on their provisional turn. */
   attachments: AssistantMessageAttachment[];
   mentions: AssistantEntityRef[];
+  /** The turn follows up a decision; it carries no words of the person's own. */
+  followUp: boolean;
   /** The thread a quick question was answered on, once the server names it. */
   thread: AssistantThread | null;
 };
@@ -81,6 +83,8 @@ export type TurnState = {
 export type TurnContext = {
   attachments?: AssistantMessageAttachment[];
   mentions?: AssistantEntityRef[];
+  /** The proposal whose decision this turn follows up, in place of words. */
+  followUpProposalId?: string;
 };
 
 export function initialTurnState(
@@ -100,6 +104,7 @@ export function initialTurnState(
     artifacts: [],
     attachments: context.attachments ?? [],
     mentions: context.mentions ?? [],
+    followUp: context.followUpProposalId !== undefined,
     thread: null,
   };
 }

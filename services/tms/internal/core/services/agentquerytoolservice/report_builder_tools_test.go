@@ -298,7 +298,9 @@ func TestListReportDatasets_ListsOnlyWhatTheActorMayRead(t *testing.T) {
 		},
 	}
 
-	result, err := tools["list_report_datasets"].Query(t.Context(), testParams(map[string]any{}))
+	result, err := tools["list_report_datasets"].Query(t.Context(), testParams(map[string]any{
+		"limit": float64(maxDatasetPage),
+	}))
 	require.NoError(t, err)
 
 	outcome, ok := result.(searchOutcome)
@@ -317,13 +319,6 @@ func TestListReportDatasets_ListsOnlyWhatTheActorMayRead(t *testing.T) {
 	assert.Positive(t, shipment.FieldCount)
 	_, customerListed := byKey["customer"]
 	assert.False(t, customerListed, "a dataset on a resource the role cannot read is not offered")
-
-	edges := make(map[string]datasetEdgeRow, len(shipment.Edges))
-	for _, edge := range shipment.Edges {
-		edges[edge.Name] = edge
-	}
-	assert.Equal(t, "customer", edges["customer"].Target)
-	assert.Equal(t, "one", edges["customer"].Cardinality)
 }
 
 func TestListReportDatasets_NarrowsByText(t *testing.T) {
@@ -371,13 +366,23 @@ func TestDescribeReportDataset_NamesFieldsAndWhatTheActorMayReadOfThem(t *testin
 	assert.Equal(t, len(description.Fields), description.Shown)
 	assert.GreaterOrEqual(t, description.FieldCount, description.Shown,
 		"the count is the dataset's, the shown count is this result's")
-	assert.LessOrEqual(t, description.Shown, maxDatasetFieldsDescribed)
+	assert.LessOrEqual(t, description.Shown, defaultFieldPage)
 	assert.Contains(t, description.Note, "{\"path\": [\"<edge>\"], \"field\": \"<key>\"}")
 	if description.Shown < description.FieldCount {
 		// A description that stops short has to say so, or the model
 		// reports that a field it never saw does not exist.
-		assert.Contains(t, description.Note, "call this again with query")
+		assert.Contains(t, description.Note, "call this again with offset")
+		require.NotNil(t, description.NextOffset)
 	}
+
+	edges := make(map[string]datasetEdgeRow, len(description.Edges))
+	for _, edge := range description.Edges {
+		edges[edge.Name] = edge
+	}
+	assert.Equal(t, "customer", edges["customer"].Target)
+	assert.Equal(t, "one", edges["customer"].Cardinality)
+	assert.Contains(t, edges["customer"].TargetFields, "name",
+		"a related dataset's keys are listed, so customer.name needs no second call")
 
 	fields := make(map[string]datasetFieldRow, len(description.Fields))
 	for _, field := range description.Fields {
@@ -387,13 +392,12 @@ func TestDescribeReportDataset_NamesFieldsAndWhatTheActorMayReadOfThem(t *testin
 	assert.Equal(t, "enum", status.Type)
 	assert.NotEmpty(t, status.EnumValues)
 	assert.Contains(t, status.Aggregations, "count")
-	assert.True(t, status.Filterable)
-	assert.True(t, status.Accessible)
-	assert.NotEmpty(t, status.Sensitivity)
+	assert.False(t, status.NoFilter)
+	assert.False(t, status.Closed)
 
 	other, found := fields["customerId"]
 	require.True(t, found)
-	assert.False(t, other.Accessible, "a field outside the role's allowlist is named but closed")
+	assert.True(t, other.Closed, "a field outside the role's allowlist is named but closed")
 }
 
 func TestDescribeReportDataset_NarrowsFieldsByText(t *testing.T) {

@@ -351,8 +351,6 @@ func (t Template) StarterTools() []string {
 			"release_shipment_hold",
 			"update_tractor_status",
 			"update_trailer_status",
-			"recall_memory",
-			"remember",
 			"list_insights",
 			"get_insight",
 		}
@@ -369,12 +367,9 @@ func (t Template) StarterTools() []string {
 			"get_report_run",
 			"list_email_profiles",
 			"request_missing_docs",
-			"flag_for_manual_review",
 			"transition_item_to_in_review",
 			"list_accessorial_charges",
 			"add_shipment_comment",
-			"recall_memory",
-			"remember",
 			"list_insights",
 			"get_insight",
 		}
@@ -392,9 +387,6 @@ func (t Template) StarterTools() []string {
 			"preview_report",
 			"run_report",
 			"get_report_run",
-			"flag_for_manual_review",
-			"recall_memory",
-			"remember",
 			"list_insights",
 			"get_insight",
 		}
@@ -406,8 +398,6 @@ func (t Template) StarterTools() []string {
 			"list_customers",
 			"list_invoices",
 			"add_shipment_comment",
-			"recall_memory",
-			"remember",
 			"list_insights",
 			"get_insight",
 		}
@@ -429,7 +419,6 @@ func (t Template) StarterTools() []string {
 			"list_email_profiles",
 			"email_customer",
 			"send_detention_notice",
-			"flag_for_manual_review",
 		}
 	case TemplateGeneralAssistant:
 		return nil
@@ -444,10 +433,6 @@ func (t Template) StarterTools() []string {
 			"send_detention_notice",
 			"escalate_detention",
 			"add_shipment_comment",
-			"raise_exception",
-			"flag_for_manual_review",
-			"recall_memory",
-			"remember",
 		}
 	case TemplateCredentialDesk:
 		return []string{
@@ -458,10 +443,6 @@ func (t Template) StarterTools() []string {
 			"request_credential_renewal",
 			"place_worker_dispatch_hold",
 			"notify_driver",
-			"raise_exception",
-			"flag_for_manual_review",
-			"recall_memory",
-			"remember",
 		}
 	case TemplateCustomerUpdateDesk:
 		return []string{
@@ -472,10 +453,6 @@ func (t Template) StarterTools() []string {
 			"list_email_profiles",
 			"email_customer",
 			"add_shipment_comment",
-			"raise_exception",
-			"flag_for_manual_review",
-			"recall_memory",
-			"remember",
 		}
 	case TemplateCarrierRiskDesk:
 		return []string{
@@ -484,10 +461,6 @@ func (t Template) StarterTools() []string {
 			"list_carriers",
 			"acknowledge_carrier_intel_event",
 			"resolve_carrier_intel_event",
-			"raise_exception",
-			"flag_for_manual_review",
-			"recall_memory",
-			"remember",
 		}
 	case TemplateIntakeDesk:
 		return []string{
@@ -508,10 +481,6 @@ func (t Template) StarterTools() []string {
 			"reply_to_inbound_message",
 			"attach_document_to_shipment",
 			"add_shipment_comment",
-			"raise_exception",
-			"flag_for_manual_review",
-			"recall_memory",
-			"remember",
 		}
 	case TemplateCashApplication:
 		return []string{
@@ -525,8 +494,6 @@ func (t Template) StarterTools() []string {
 			"match_bank_receipt",
 			"post_customer_payment",
 			"resolve_bank_receipt_work_item",
-			"recall_memory",
-			"remember",
 		}
 	case TemplateBillingException:
 		return []string{
@@ -536,8 +503,6 @@ func (t Template) StarterTools() []string {
 			"correct_charge_code",
 			"request_missing_docs",
 			"attach_document_to_shipment",
-			"flag_for_manual_review",
-			"raise_exception",
 		}
 	case TemplateDispatchAssignment:
 		return []string{
@@ -553,7 +518,6 @@ func (t Template) StarterTools() []string {
 			"assign_move",
 			"tender_move_to_routing_guide",
 			"tender_move_to_carriers",
-			"raise_exception",
 		}
 	case TemplateImportAssistant:
 		return []string{
@@ -578,7 +542,6 @@ func (t Template) StarterTools() []string {
 			"search_shipments",
 			"quote_shipment",
 			"create_shipment",
-			"raise_exception",
 		}
 	default:
 		return nil
