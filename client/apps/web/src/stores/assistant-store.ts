@@ -61,15 +61,12 @@ export function rememberDraft(
     return rest;
   }
   const next = { ...rest, [threadId]: draft };
-  const keys = Object.keys(next);
-  if (keys.length <= MAX_DRAFTS) {
+  const entries = Object.entries(next);
+  if (entries.length <= MAX_DRAFTS) {
     return next;
   }
-  for (const key of keys.slice(0, keys.length - MAX_DRAFTS)) {
-    delete next[key];
-  }
 
-  return next;
+  return Object.fromEntries(entries.slice(entries.length - MAX_DRAFTS));
 }
 
 export const useAssistantStore = create<AssistantState>()(

@@ -36,7 +36,7 @@ type AgentControl struct {
 	// hour is local rather than UTC because a briefing is read at the
 	// start of a working day, and a company with offices in two timezones
 	// would otherwise get one of them yesterday's page.
-	BriefingEnabled   bool `json:"briefingEnabled"   bun:"briefing_enabled,type:BOOLEAN,notnull,default:true"`
+	BriefingEnabled   bool `json:"briefingEnabled"   bun:"briefing_enabled,type:BOOLEAN,notnull"`
 	BriefingHourLocal int  `json:"briefingHourLocal" bun:"briefing_hour_local,type:INTEGER,notnull,default:6"`
 
 	BillingAgentEnabled    bool `json:"billingAgentEnabled"    bun:"-"`
