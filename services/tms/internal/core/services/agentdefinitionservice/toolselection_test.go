@@ -134,6 +134,22 @@ func TestBuildToolCatalog_ListsEveryRegisteredToolWithItsKind(t *testing.T) {
 	assert.Equal(t, permission.ResourceCustomer, byName["update_customer"].Resource)
 }
 
+func TestBuildToolCatalog_SaysWhatEachToolDoes(t *testing.T) {
+	t.Parallel()
+
+	actions, queries := testRegistries()
+	catalog := buildToolCatalog(actions, queries)
+
+	byName := make(map[string]serviceports.ToolCatalogEntry, len(catalog))
+	for _, entry := range catalog {
+		byName[entry.Name] = entry
+	}
+
+	assert.Equal(t, agent.ToolEffectLookup, byName["get_shipment"].Effect)
+	assert.Equal(t, agent.ToolEffectChange, byName["update_customer"].Effect)
+	assert.Equal(t, agent.ToolEffectChange, byName["reassign_move"].Effect)
+}
+
 func TestRegisteredStarterTools_DropsToolsNotYetRegistered(t *testing.T) {
 	t.Parallel()
 

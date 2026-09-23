@@ -52,3 +52,10 @@ func TestFirstSentence(t *testing.T) {
 		"a leading stop is not a sentence and the text is returned whole",
 	)
 }
+
+func TestCollapseWhitespace(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "Shipments for Peak", CollapseWhitespace("  Shipments\nfor\t\tPeak \r\n"))
+	assert.Empty(t, CollapseWhitespace(" \n\t "))
+}

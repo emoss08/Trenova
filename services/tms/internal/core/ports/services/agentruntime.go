@@ -22,6 +22,9 @@ type PendingAction struct {
 	// action is still recorded so the failure is visible next to the decision it
 	// would otherwise have needed.
 	ExecutionError string `json:"executionError"`
+	// ExecutionResult is what an auto-executing tool made, when it reports
+	// it, recorded on the proposal the action becomes.
+	ExecutionResult *agent.ToolExecutionResult `json:"executionResult,omitempty"`
 	// Simulated is set when the agent was in simulation and the write was
 	// previewed instead of made; Simulation is the preview.
 	Simulated  bool                  `json:"simulated"`
@@ -102,8 +105,14 @@ type ProposalOutcome struct {
 	ToolParams      map[string]any
 	Rationale       string
 	Status          agent.ProposalStatus
-	ExecutionError  string
-	ExecutedAt      *int64
+	// AutonomyTier is the tier the call was recorded at. An AutoExecute one
+	// ran without a decision, so nobody approved it.
+	AutonomyTier   agent.AutonomyTier
+	ExecutionError string
+	ExecutedAt     *int64
+	// ExecutionResult is what the executed proposal made, when its tool
+	// reported it.
+	ExecutionResult *agent.ToolExecutionResult
 	// Modifications are what the approver changed before approving, so the
 	// model learns what actually ran rather than what it asked for.
 	Modifications map[string]any

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -690,4 +691,126 @@ func TestRunReport_ReportsAFailureItSawWhileWaiting(t *testing.T) {
 	assert.True(t, status.Finished)
 	assert.Contains(t, status.Note, "did not finish")
 	assert.Contains(t, status.Note, "the dataset timed out")
+}
+
+func storedRows(count int) *reportrows.Envelope {
+	rows := make([][]any, 0, count)
+	for idx := range count {
+		rows = append(rows, []any{"Customer " + string(rune('A'+idx%26)), int64(1789996617)})
+	}
+
+	return &reportrows.Envelope{
+		Schema: []reportrows.Column{
+			{ID: "c1", Label: "Customer", Type: reportcatalog.FieldString},
+			{ID: "c2", Label: "Delivered", Type: reportcatalog.FieldEpoch},
+		},
+		Rows:    rows,
+		Summary: reportrows.Summary{RowCount: int64(count)},
+	}
+}
+
+func finishedRun(service *fakeReporting, rowCount int64) *report.ReportRun {
+	return &report.ReportRun{
+		ID:        service.run.ID,
+		CannedKey: service.run.CannedKey,
+		Status:    report.RunStatusSucceeded,
+		Format:    report.FormatXLSX,
+		RowCount:  rowCount,
+		RowsKey:   "reports/runs/" + service.run.ID.String() + ".rows.json",
+	}
+}
+
+/*
+Asked to show a few rows of a report that had just finished, the agent ran
+preview_report on the same definition again, because run_report had handed back
+a row count and nothing to read. A finished run now carries the first rows it
+stored, in preview_report's shape, and says they are a sample.
+*/
+func TestRunReport_HandsBackASampleOfAFinishedRunsRows(t *testing.T) {
+	t.Parallel()
+
+	service, _, tools := reportingTools(t)
+	service.settled = finishedRun(service, 25)
+	service.rows = map[pulid.ID]*reportrows.Envelope{service.run.ID: storedRows(25)}
+
+	params := testParams(map[string]any{
+		"reportKey":  "ar_aging_by_customer",
+		"parameters": map[string]any{"asOf": "2026-03-01"},
+	})
+	params.Timezone = "America/Chicago"
+
+	result, err := tools["run_report"].Query(t.Context(), params)
+	require.NoError(t, err)
+
+	status, ok := result.(reportRunStatus)
+	require.True(t, ok)
+	require.Len(t, status.Rows, maxRunSampleRows)
+	require.Len(t, status.Columns, 2)
+	assert.Equal(t, "Customer", status.Columns[0].Label)
+	assert.Equal(t, "Customer A", status.Rows[0]["Customer"])
+	assert.Equal(t, "2026-09-21 08:16 CDT", status.Rows[0]["Delivered"],
+		"dates read the way preview_report writes them")
+	assert.Contains(t, status.Note, "finished with 25 rows")
+	assert.Contains(t, status.Note, "already shown in this conversation")
+	assert.Contains(t, status.Note, "first 20 of its 25 rows as a sample")
+
+	encoded, err := sonic.Marshal(status)
+	require.NoError(t, err)
+	assert.LessOrEqual(t, len(encoded), toolResultBound)
+}
+
+func TestRunReport_SaysARunsRowsAreNotShownWhenTheyCannotBeRead(t *testing.T) {
+	t.Parallel()
+
+	service, _, tools := reportingTools(t)
+	service.settled = finishedRun(service, 9)
+
+	result, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+		"reportKey":  "ar_aging_by_customer",
+		"parameters": map[string]any{"asOf": "2026-03-01"},
+	}))
+	require.NoError(t, err)
+
+	status := result.(reportRunStatus)
+	assert.True(t, status.Finished)
+	assert.Empty(t, status.Rows)
+	assert.Contains(t, status.Note, "finished with 9 rows")
+	assert.Contains(t, status.Note, "could not be read back")
+}
+
+func TestRunReport_ReadsNoRowsForARunStillGoing(t *testing.T) {
+	t.Parallel()
+
+	service, _, tools := reportingTools(t)
+	service.rowsErr = map[pulid.ID]error{
+		service.run.ID: errortypes.NewBusinessError("rows were read for an unfinished run"),
+	}
+
+	result, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+		"reportKey":  "ar_aging_by_customer",
+		"parameters": map[string]any{"asOf": "2026-03-01"},
+	}))
+	require.NoError(t, err)
+
+	status := result.(reportRunStatus)
+	assert.False(t, status.Finished)
+	assert.Empty(t, status.Rows)
+	assert.NotContains(t, status.Note, "could not be read back")
+}
+
+func TestGetReportRun_HandsBackASampleOfAFinishedRunsRows(t *testing.T) {
+	t.Parallel()
+
+	service, _, tools := reportingTools(t)
+	service.run = finishedRun(service, 3)
+	service.rows = map[pulid.ID]*reportrows.Envelope{service.run.ID: storedRows(3)}
+
+	result, err := tools["get_report_run"].Query(t.Context(), testParams(map[string]any{
+		"runId": service.run.ID.String(),
+	}))
+	require.NoError(t, err)
+
+	status := result.(reportRunStatus)
+	assert.Len(t, status.Rows, 3)
+	assert.Contains(t, status.Note, "first 3 of its 3 rows")
 }

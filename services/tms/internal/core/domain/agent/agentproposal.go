@@ -45,9 +45,12 @@ type AgentProposal struct {
 
 	// ExecutedAt and ExecutionError record what happened after approval. An
 	// accepted proposal with neither set has been approved but has not run.
-	ExecutedAt      *int64   `json:"executedAt"      bun:"executed_at,type:BIGINT,nullzero"`
-	ExecutionError  string   `json:"executionError"  bun:"execution_error,type:TEXT,nullzero"`
-	SourceMessageID pulid.ID `json:"sourceMessageId" bun:"source_message_id,type:VARCHAR(100),nullzero"`
+	// ExecutionResult is what a successful run made, when the tool says: the
+	// record and its id, so later turns refer to it and not to the proposal.
+	ExecutedAt      *int64               `json:"executedAt"      bun:"executed_at,type:BIGINT,nullzero"`
+	ExecutionError  string               `json:"executionError"  bun:"execution_error,type:TEXT,nullzero"`
+	ExecutionResult *ToolExecutionResult `json:"executionResult" bun:"execution_result,type:JSONB,nullzero"`
+	SourceMessageID pulid.ID             `json:"sourceMessageId" bun:"source_message_id,type:VARCHAR(100),nullzero"`
 
 	// ExpiresAt is when a pending proposal stops being decidable. A proposal
 	// is a judgement about the world as it was; past this point that world is

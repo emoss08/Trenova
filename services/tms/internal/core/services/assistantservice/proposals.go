@@ -473,8 +473,10 @@ func (s *Service) proposalOutcomes(
 			ToolParams:      proposal.ToolParams,
 			Rationale:       proposal.Rationale,
 			Status:          proposal.Status,
+			AutonomyTier:    proposal.AutonomyTier,
 			ExecutionError:  proposal.ExecutionError,
 			ExecutedAt:      proposal.ExecutedAt,
+			ExecutionResult: proposal.ExecutionResult,
 			Modifications:   modifications[proposal.ID],
 		})
 	}

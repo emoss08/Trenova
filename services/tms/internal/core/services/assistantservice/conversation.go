@@ -160,6 +160,8 @@ func (s *Service) ListMessages(
 		return nil, err
 	}
 
+	s.runtime.MarkToolEffects(messages)
+
 	return &services.ThreadMessagesPage{
 		Results: messages,
 		HasMore: hasMore,

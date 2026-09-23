@@ -331,6 +331,7 @@ func (s *Service) FinishTurn(
 		return nil, err
 	}
 	artifacts.attachMessages(sourceMessageIndex(saved))
+	s.runtime.MarkToolEffects(saved)
 
 	if req.Failure == nil && !plan.FollowUp {
 		s.titleIfUnnamed(ctx, thread, plan.Input)

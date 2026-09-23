@@ -47,3 +47,9 @@ func FirstSentence(text string) string {
 
 	return text
 }
+
+// CollapseWhitespace folds every run of whitespace, line breaks included,
+// into one space and trims the ends, so a value fits on a single line.
+func CollapseWhitespace(value string) string {
+	return strings.Join(strings.Fields(value), " ")
+}

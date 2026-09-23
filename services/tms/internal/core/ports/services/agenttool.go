@@ -65,6 +65,59 @@ func CeilingOf(tool any) agent.AutonomyTier {
 	return agent.TierAutoExecute
 }
 
+// ToolResultReporter is a write whose caller needs to know what it made. A
+// saved report's id is what the next call takes; told only that the write
+// ran, a model reaches for the one id it holds, the proposal's, and passes
+// that instead. ExecuteWithResult does what Execute does and names the record
+// it made or changed.
+type ToolResultReporter interface {
+	ExecuteWithResult(
+		ctx context.Context,
+		params ToolExecuteParams,
+	) (*agent.ToolExecutionResult, error)
+}
+
+// ExecuteTool runs a write and returns what it reports making, bounded to
+// what a proposal keeps. A tool that reports nothing runs through Execute and
+// returns a nil result.
+func ExecuteTool(
+	ctx context.Context,
+	tool AgentTool,
+	params ToolExecuteParams,
+) (*agent.ToolExecutionResult, error) {
+	reporter, reports := tool.(ToolResultReporter)
+	if !reports {
+		return nil, tool.Execute(ctx, params)
+	}
+
+	result, err := reporter.ExecuteWithResult(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Bounded(), nil
+}
+
+type ToolEffectDeclarer interface {
+	Effect() agent.ToolEffect
+}
+
+func EffectOf(tool any) agent.ToolEffect {
+	if declarer, ok := tool.(ToolEffectDeclarer); ok {
+		if effect := declarer.Effect(); effect.IsValid() {
+			return effect
+		}
+	}
+	if _, writes := tool.(AgentTool); writes {
+		return agent.ToolEffectChange
+	}
+	if _, reads := tool.(AgentQueryTool); reads {
+		return agent.ToolEffectLookup
+	}
+
+	return ""
+}
+
 type AgentTool interface {
 	Name() string
 	Description() string

@@ -311,19 +311,22 @@ type AssistantMessageEvent struct {
 
 // AssistantToolStartedEvent says a tool is running with these arguments.
 type AssistantToolStartedEvent struct {
-	CallID    string         `json:"callId"`
-	Name      string         `json:"name"`
-	Arguments map[string]any `json:"arguments"`
+	CallID    string           `json:"callId"`
+	Name      string           `json:"name"`
+	Arguments map[string]any   `json:"arguments"`
+	Effect    agent.ToolEffect `json:"effect,omitempty"`
 }
 
 // AssistantToolFinishedEvent carries what the tool returned. Proposed means the
 // tool was a write and became a proposal rather than running.
 type AssistantToolFinishedEvent struct {
-	CallID   string `json:"callId"`
-	Name     string `json:"name"`
-	Failed   bool   `json:"failed"`
-	Proposed bool   `json:"proposed"`
-	Content  string `json:"content"`
+	CallID   string           `json:"callId"`
+	Name     string           `json:"name"`
+	Failed   bool             `json:"failed"`
+	Proposed bool             `json:"proposed"`
+	Content  string           `json:"content"`
+	Effect   agent.ToolEffect `json:"effect,omitempty"`
+	Summary  string           `json:"summary,omitempty"`
 }
 
 // AssistantStreamEmitter receives the events of one turn as they happen. It is

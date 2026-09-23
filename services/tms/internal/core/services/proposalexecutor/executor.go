@@ -252,7 +252,7 @@ func (s *Service) Execute(
 		return err
 	}
 
-	err = tool.Execute(ctx, execParams)
+	result, err := services.ExecuteTool(ctx, tool, execParams)
 	if err != nil {
 		s.l.Error("approved proposal failed to execute",
 			zap.String("proposal", proposal.ID.String()),
@@ -264,7 +264,12 @@ func (s *Service) Execute(
 		return err
 	}
 
-	s.recordSuccess(ctx, proposal, actor, params)
+	s.recordSuccess(ctx, executionSuccess{
+		proposal: proposal,
+		actor:    actor,
+		params:   params,
+		result:   result,
+	})
 
 	return nil
 }
@@ -557,20 +562,26 @@ func mergeParams(proposed, modifications map[string]any) map[string]any {
 	return merged
 }
 
-func (s *Service) recordSuccess(
-	ctx context.Context,
-	proposal *agent.AgentProposal,
-	actor *services.RequestActor,
-	params map[string]any,
-) {
+// executionSuccess is an approved proposal that ran: who ran it, with what,
+// and what the tool reports it made.
+type executionSuccess struct {
+	proposal *agent.AgentProposal
+	actor    *services.RequestActor
+	params   map[string]any
+	result   *agent.ToolExecutionResult
+}
+
+func (s *Service) recordSuccess(ctx context.Context, success executionSuccess) {
+	proposal := success.proposal
 	now := timeutils.NowUnix()
 	if _, err := s.proposalRepo.RecordExecution(
 		ctx,
 		repositories.RecordAgentProposalExecutionRequest{
-			ID:         proposal.ID,
-			Status:     agent.ProposalStatusExecuted,
-			ExecutedAt: &now,
-			TenantInfo: tenantOf(proposal),
+			ID:              proposal.ID,
+			Status:          agent.ProposalStatusExecuted,
+			ExecutedAt:      &now,
+			ExecutionResult: success.result,
+			TenantInfo:      tenantOf(proposal),
 		},
 	); err != nil {
 		// The tool already ran, so failing to record that is a reporting problem
@@ -582,18 +593,22 @@ func (s *Service) recordSuccess(
 		)
 	}
 
-	auditActor := actor.AuditActor()
+	auditActor := success.actor.AuditActor()
 	if err := s.audit.LogAction(&services.LogActionParams{
 		Resource:   permission.ResourceAgentProposal,
 		ResourceID: proposal.ID.String(),
 		// Recorded against approval rather than a dedicated execute operation:
 		// approving is the act a person took, and executing is its consequence.
-		Operation:      permission.OpApprove,
-		UserID:         auditActor.UserID,
-		PrincipalType:  auditActor.PrincipalType,
-		PrincipalID:    auditActor.PrincipalID,
-		APIKeyID:       auditActor.APIKeyID,
-		CurrentState:   jsonutils.MustToJSON(map[string]any{"tool": proposal.ToolName, "params": params}),
+		Operation:     permission.OpApprove,
+		UserID:        auditActor.UserID,
+		PrincipalType: auditActor.PrincipalType,
+		PrincipalID:   auditActor.PrincipalID,
+		APIKeyID:      auditActor.APIKeyID,
+		CurrentState: jsonutils.MustToJSON(map[string]any{
+			"tool":   proposal.ToolName,
+			"params": success.params,
+			"result": success.result,
+		}),
 		OrganizationID: proposal.OrganizationID,
 		BusinessUnitID: proposal.BusinessUnitID,
 		Critical:       true,

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 // Turn is one turn's working state: what the model is shown, what it may call,
@@ -63,6 +64,7 @@ type TurnEffects interface {
 	// started before the change keeps the shape it started with, so its
 	// history still replays.
 	Supports(change string) bool
+	Now() int64
 }
 
 // ModelReply is one completion as the loop sees it.
@@ -91,7 +93,8 @@ type ToolOutcome struct {
 	Action  *serviceports.PendingAction `json:"action,omitempty"`
 	// Publishes marks a document still to be kept. What the model reads is
 	// written once it has been.
-	Publishes bool `json:"publishes,omitempty"`
+	Publishes bool   `json:"publishes,omitempty"`
+	Summary   string `json:"summary,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -104,6 +107,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		Failed:    o.failed,
 		Action:    o.action,
 		Publishes: o.publishes,
+		Summary:   o.summary,
 		Data:      o.data,
 	}
 }
@@ -114,6 +118,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		failed:    o.Failed,
 		action:    o.Action,
 		publishes: o.Publishes,
+		summary:   o.Summary,
 		data:      o.Data,
 	}
 }
@@ -314,8 +319,9 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		callIDs:   usedCallIDs(req.History),
 		result: &serviceports.RunResult{
 			Messages: []conversation.Message{{
-				Role:    conversation.RoleUser,
-				Content: req.Input,
+				Role:      conversation.RoleUser,
+				Content:   req.Input,
+				CreatedAt: timeutils.NowUnix(),
 			}},
 		},
 	}
@@ -352,6 +358,8 @@ type localEffects struct {
 }
 
 func (fx *localEffects) Supports(string) bool { return true }
+
+func (*localEffects) Now() int64 { return timeutils.NowUnix() }
 
 func (fx *localEffects) Complete(
 	_ *Turn,
@@ -416,13 +424,7 @@ func (s *Service) StreamCompletion(
 func (s *Service) KnowsTool(name string) bool { return s.toolNamed(name) != nil }
 
 func (fx *localEffects) Dispatch(t *Turn, call DispatchCall) ToolOutcome {
-	return fx.s.guardedDispatch(fx.ctx, guardedDispatchParams{
-		req:            t.req,
-		call:           call.Call,
-		completionText: call.CompletionText,
-		proposedSoFar:  call.ProposedSoFar,
-		ordinal:        call.Ordinal,
-	}).exported()
+	return fx.s.DispatchStep(fx.ctx, t.req, call)
 }
 
 func (fx *localEffects) Find(t *Turn, arguments map[string]any) string {
@@ -499,13 +501,16 @@ func (s *Service) DispatchStep(
 	req *serviceports.RunRequest,
 	call DispatchCall,
 ) ToolOutcome {
-	return s.guardedDispatch(ctx, guardedDispatchParams{
+	outcome := s.guardedDispatch(ctx, guardedDispatchParams{
 		req:            req,
 		call:           call.Call,
 		completionText: call.CompletionText,
 		proposedSoFar:  call.ProposedSoFar,
 		ordinal:        call.Ordinal,
-	}).exported()
+	})
+	outcome.summary = summarizeOutcome(call.Call, outcome)
+
+	return outcome.exported()
 }
 
 // FindFor answers find_tools for a turn held as data, and names the tools it

@@ -116,7 +116,9 @@ func turnResultOf(
 	}
 
 	if len(result.Messages) > 0 {
+		asked := result.Messages[0].CreatedAt
 		result.Messages[0] = scopedMessage(conversation.RoleUser, input, decision, false)
+		result.Messages[0].CreatedAt = asked
 	}
 
 	if run.OutputRefused {
@@ -312,7 +314,11 @@ func interruptedTurn(
 	notice := closingNotice(err, len(run.Messages) > 1)
 
 	messages := make([]conversation.Message, 0, len(run.Messages)+2)
-	messages = append(messages, scopedMessage(conversation.RoleUser, input, decision, false))
+	question := scopedMessage(conversation.RoleUser, input, decision, false)
+	if len(run.Messages) > 0 {
+		question.CreatedAt = run.Messages[0].CreatedAt
+	}
+	messages = append(messages, question)
 	if len(run.Messages) > 1 {
 		messages = append(messages, run.Messages[1:]...)
 	}

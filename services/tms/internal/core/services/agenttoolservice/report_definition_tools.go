@@ -188,10 +188,43 @@ func readTags(raw any) ([]string, error) {
 	return tags, nil
 }
 
+// definitionParts are the parts of a definition a model also sends beside it.
+// Only definition is read, so a top-level columns list was dropped without a
+// word while the report saved with whatever definition.columns held.
+var definitionParts = [...]string{
+	"irVersion",
+	"entity",
+	"dataset",
+	"columns",
+	"filters",
+	"having",
+	"sort",
+	"limit",
+	"pivot",
+	"parameters",
+	"totals",
+	"charts",
+}
+
 // readDefinition decodes the definition argument. Its shape is checked here
 // and its meaning by the compiler, which knows the catalog and the person's
 // access and reports in its own words what a model got wrong.
 func readDefinition(params map[string]any, required bool) (*report.Definition, error) {
+	stray := make([]string, 0, len(definitionParts))
+	for _, part := range definitionParts {
+		if _, ok := params[part]; ok {
+			stray = append(stray, fmt.Sprintf("%q", part))
+		}
+	}
+	if len(stray) > 0 {
+		return nil, fmt.Errorf(
+			"%s was sent beside \"definition\" rather than inside it, and would be "+
+				"ignored. Send the report once: its dataset, columns, filters and sort "+
+				"all go inside definition, and none of them at the top level",
+			strings.Join(stray, ", "),
+		)
+	}
+
 	raw, ok := params["definition"]
 	if !ok || raw == nil {
 		if required {
@@ -220,13 +253,15 @@ func (t *createReportTool) Name() string { return "create_report" }
 func (t *createReportTool) Description() string {
 	return "Save a new custom report from a definition you wrote. Pick the dataset with " +
 		"list_report_datasets, the fields with describe_report_dataset, and run " +
-		"preview_report on the definition before proposing it. For \"shipments for " +
-		"customer X\" build a list: dimension columns only, no measures and no bucket, " +
-		"which returns one row per record. Filter on a related record by name, " +
-		"{\"ref\": \"customer.name\", \"operator\": \"eq\", \"value\": \"Fresh Haul Foods\"}, " +
-		"after checking the exact name with list_customers. Totals by month or customer " +
-		"are the only reason to add a measure or bucket. It saves the report and does " +
-		"not run it; run_report does that."
+		"preview_report on the definition before proposing it. Send the report once, " +
+		"inside definition: its dataset, columns, filters and sort never go beside it. " +
+		"For \"shipments for customer X\" build a list: dimension columns only, no " +
+		"measures and no bucket, which returns one row per record. Narrow to one " +
+		"related record by its id, from list_customers, on the dataset's own key " +
+		"for it — {\"ref\": {\"field\": \"customerId\"}, \"operator\": \"eq\", " +
+		"\"value\": \"cus_…\"} — not by its name, which two records can share and a " +
+		"rename changes. Totals by month or customer are the only reason to add a " +
+		"measure or bucket. It saves the report and does not run it; run_report does that."
 }
 
 func (t *createReportTool) Prerequisites() []string {
@@ -268,20 +303,16 @@ func (t *createReportTool) PermissionOperation() permission.Operation {
 
 func (t *createReportTool) RequiresIdempotencyKey() bool { return false }
 
+// A private report runs on its own; TierLimit holds a shared one for approval.
 func (t *createReportTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+	return agent.TierAutoExecute
 }
 
 func (t *createReportTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	save, err := t.prepare(params)
-	if err != nil {
-		return err
-	}
-
-	_, err = t.reports.CreateDefinition(ctx, save)
+	_, err := t.ExecuteWithResult(ctx, params)
 
 	return err
 }
@@ -614,28 +645,48 @@ func (t *forkReportTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
+	_, err := t.ExecuteWithResult(ctx, params)
+
+	return err
+}
+
+// ExecuteWithResult forks the built-in report and names the copy by the id
+// describe_report, run_report and update_report take.
+func (t *forkReportTool) ExecuteWithResult(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) (*agent.ToolExecutionResult, error) {
 	if err := guardExecute(t, params); err != nil {
-		return err
+		return nil, err
 	}
 
 	key, err := requireString(params.Params, "reportKey")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	key = strings.TrimSpace(key)
 
 	if _, err = t.reports.GetCanned(key); err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"there is no built-in report with the key %q; call list_reports for the keys that exist",
 			key,
 		)
 	}
 
-	_, err = t.reports.ForkCanned(ctx, &reporting.ForkCannedRequest{
+	forked, err := t.reports.ForkCanned(ctx, &reporting.ForkCannedRequest{
 		Request:   reportingRequestFrom(params),
 		CannedKey: key,
 		Name:      strings.TrimSpace(optionalString(params.Params, "name")),
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return err
+	result := &agent.ToolExecutionResult{Action: "created", Kind: "report"}
+	if forked != nil {
+		result.Name = forked.Name
+		result.IDs = map[string]string{"definitionId": forked.ID.String()}
+	}
+
+	return result, nil
 }

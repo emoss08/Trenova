@@ -73,6 +73,12 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   the tools the agent holds: `TurnState.Held` is taken when the turn opens, and
   the loop decides dispatch or refusal from it rather than from the catalog,
   which a later release may have changed.
+- Every message is stamped when it was produced, through `TurnEffects.Now`:
+  `workflow.Now` in workflow code, which reads back the same instant on replay
+  and records no command, so stamping takes no version gate. `AppendTurn`
+  keeps a message's own stamp; one without a stamp (a turn begun before
+  stamping, a closing note) takes the stamp of the message after it, or the
+  save's, and no stamp runs ahead of the message that follows it.
 
 A failure retries only the call that failed, and a lost worker's turn resumes
 from its last completed step.
@@ -168,6 +174,18 @@ A run's events go to a **Workflow Stream** its own workflow hosts
 model activity publishes the reply as it streams, batched every 100 ms; the
 workflow publishes every other event. The stream exists as soon as the workflow
 does, so a reader can never attach ahead of it.
+
+Every tool call a reader sees says what it does. `tool_started`, `tool_finished`
+and the tool calls on `message` carry `effect` (`lookup`, `change`, `navigate`,
+`discover`, `present` or `ask`), read from the tool's metadata
+(`serviceports.EffectOf`: a declared `Effect()`, else a write is a change and a
+read a lookup; `find_tools`, `ask_user` and `publish_artifact` are named by the
+runtime). `tool_finished` also carries `summary`, a one-line label worked out
+where the tool ran from what it returned, or from a write's name or title. The
+thread's saved messages carry the same fields: `summary` is stored on the
+result, and `effect` is read from the registry when the messages are served, so
+a tool that no longer exists has none. The labels are data only; the loop
+decides nothing from them.
 
 Each event's offset is its SSE event id, returned as `Last-Event-ID` to resume.
 The cursor is the last event the reader **applied**, not the last it received.

@@ -82,8 +82,26 @@ func (s *Service) decisionNote(ctx context.Context, p decisionNoteParams) (strin
 		return "", multiErr
 	}
 
-	return fmt.Sprintf("%s\nDecision on proposal %s (%s). %s",
-		decisionLine(proposal), proposal.ID, proposal.ToolName, followUpInstruction), nil
+	return fmt.Sprintf("%s\nDecision on proposal %s (%s). %s%s",
+		decisionLine(proposal), proposal.ID, proposal.ToolName, producedNote(proposal),
+		followUpInstruction), nil
+}
+
+// producedNote names the ids an executed proposal's write produced, for the
+// agent rather than the person, so it is on the note's second line. Without
+// it the only id the agent held was the proposal's, and it passed that to
+// describe_report in place of the report it had just saved.
+func producedNote(proposal *agent.AgentProposal) string {
+	if proposal.Status != agent.ProposalStatusExecuted {
+		return ""
+	}
+
+	note := proposal.ExecutionResult.IDNote()
+	if note == "" {
+		return ""
+	}
+
+	return note + " "
 }
 
 // decisionLine says in one line what was decided and how it went.
@@ -91,6 +109,9 @@ func decisionLine(proposal *agent.AgentProposal) string {
 	tool := proposal.ToolName
 	switch proposal.Status {
 	case agent.ProposalStatusExecuted:
+		if made := proposal.ExecutionResult.Describe(); made != "" {
+			return fmt.Sprintf("Approved %s, and it ran. %s", tool, made)
+		}
 		return fmt.Sprintf("Approved %s, and it ran.", tool)
 	case agent.ProposalStatusExecutionFailed:
 		reason, _, _ := strings.Cut(strings.TrimSpace(proposal.ExecutionError), "\n")
@@ -201,6 +222,15 @@ func alreadyFollowedUp(history []conversation.Message, marker string) bool {
 	}
 
 	return false
+}
+
+// decisionHeadline is the person-readable record of a decision: the note's
+// first line, which is all of it a reader is shown. The lines after it are
+// instructions to the agent, and no rendering of the thread shows them.
+func decisionHeadline(content string) string {
+	line, _, _ := strings.Cut(strings.TrimSpace(content), "\n")
+
+	return strings.TrimSpace(line)
 }
 
 // markDecisionNote marks the turn's input as the application's note rather

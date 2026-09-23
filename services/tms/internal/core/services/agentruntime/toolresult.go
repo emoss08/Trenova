@@ -185,20 +185,27 @@ func wholeNumber(value any) (int64, bool) {
 // reason. ConfigStd sorts the keys, which is what the repeat guard and the
 // transcript exporter already do for the same reason.
 func encodeToolResult(data any, now int64, timezone string) (string, error) {
+	encoded, _, err := encodeToolDocument(data, now, timezone)
+
+	return encoded, err
+}
+
+func encodeToolDocument(data any, now int64, timezone string) (string, any, error) {
 	encoded, err := sonic.Marshal(data)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	var document any
 	if err = sonic.Unmarshal(encoded, &document); err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	humanized, err := sonic.ConfigStd.Marshal(humanizeDates(trimRecord(document, 0), now, timezone))
+	document = humanizeDates(trimRecord(document, 0), now, timezone)
+	humanized, err := sonic.ConfigStd.Marshal(document)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return string(humanized), nil
+	return string(humanized), document, nil
 }

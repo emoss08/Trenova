@@ -340,9 +340,9 @@ func (r *repository) AppendTurn(
 			msg.OrganizationID = req.TenantInfo.OrgID
 			msg.BusinessUnitID = req.TenantInfo.BuID
 			msg.Sequence = maxSequence + 1 + idx
-			msg.CreatedAt = now
 			batch = append(batch, msg)
 		}
+		conversation.StampUnstamped(batch, now)
 
 		if _, err = tx.NewInsert().Model(&batch).Returning("*").Exec(txCtx); err != nil {
 			return fmt.Errorf("insert turn: %w", err)

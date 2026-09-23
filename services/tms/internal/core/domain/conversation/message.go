@@ -43,9 +43,11 @@ type Message struct {
 	// shape rather than any one provider's wire format.
 	ToolCalls []ToolCallRecord `json:"toolCalls"  bun:"tool_calls,type:jsonb,nullzero"`
 	// ToolCallID and ToolName tie a Tool-role message to the call it answers.
-	ToolCallID string `json:"toolCallId" bun:"tool_call_id,type:VARCHAR(200),nullzero"`
-	ToolName   string `json:"toolName"   bun:"tool_name,type:VARCHAR(200),nullzero"`
-	ToolFailed bool   `json:"toolFailed" bun:"tool_failed,type:BOOLEAN,notnull,default:false"`
+	ToolCallID  string           `json:"toolCallId" bun:"tool_call_id,type:VARCHAR(200),nullzero"`
+	ToolName    string           `json:"toolName"   bun:"tool_name,type:VARCHAR(200),nullzero"`
+	ToolFailed  bool             `json:"toolFailed" bun:"tool_failed,type:BOOLEAN,notnull,default:false"`
+	ToolEffect  agent.ToolEffect `json:"effect,omitempty" bun:"-"`
+	ToolSummary string           `json:"summary,omitempty" bun:"tool_summary,type:TEXT,nullzero"`
 
 	// ScopeStage, ScopeCategory and ScopeReason record the guard's verdict on a
 	// user turn, or on an assistant turn the output guard refused.
@@ -134,9 +136,10 @@ func (r *ReasoningTrace) Readable() bool {
 
 // ToolCallRecord is a persisted tool request.
 type ToolCallRecord struct {
-	ID        string         `json:"id"`
-	Name      string         `json:"name"`
-	Arguments map[string]any `json:"arguments"`
+	ID        string           `json:"id"`
+	Name      string           `json:"name"`
+	Arguments map[string]any   `json:"arguments"`
+	Effect    agent.ToolEffect `json:"effect,omitempty"`
 	// ProviderData and ProviderID keep what the provider attached to the
 	// call and which provider that was, so a later turn on the same provider
 	// can send it back. Gemini refuses a replayed call without its thought
@@ -159,6 +162,20 @@ func (m *Message) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func StampUnstamped(messages []Message, now int64) {
+	next := now
+	for idx := len(messages) - 1; idx >= 0; idx-- {
+		switch stamp := messages[idx].CreatedAt; {
+		case stamp <= 0:
+			messages[idx].CreatedAt = next
+		case stamp > next:
+			messages[idx].CreatedAt = next
+		default:
+			next = stamp
+		}
+	}
 }
 
 func (m *Message) GetID() pulid.ID { return m.ID }

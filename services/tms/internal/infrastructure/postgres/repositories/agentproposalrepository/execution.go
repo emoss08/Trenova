@@ -15,9 +15,10 @@ import (
 
 // RecordExecution stores the outcome of running an approved proposal.
 //
-// Both columns are always written, including on success where the error is
-// cleared: a proposal that failed, was re-approved, and then succeeded must not
-// keep showing the old failure.
+// Every outcome column is always written, including on success where the
+// error is cleared and on failure where the result is: a proposal that failed,
+// was re-approved, and then succeeded must not keep showing the old failure,
+// nor a failed one what an earlier run made.
 func (r *repository) RecordExecution(
 	ctx context.Context,
 	req repositories.RecordAgentProposalExecutionRequest,
@@ -40,6 +41,7 @@ func (r *repository) RecordExecution(
 		Set(cols.Status.Set(), req.Status).
 		Set(cols.ExecutedAt.Set(), req.ExecutedAt).
 		Set(cols.ExecutionError.Set(), req.ExecutionError).
+		Set(cols.ExecutionResult.Set(), req.ExecutionResult.Bounded()).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 		Returning("*").
 		Exec(ctx)

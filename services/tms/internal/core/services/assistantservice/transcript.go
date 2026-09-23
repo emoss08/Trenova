@@ -206,6 +206,12 @@ func writeSection(b *strings.Builder, section string) {
 }
 
 func writeTranscriptMessage(b *strings.Builder, m *conversation.Message, agentName string) {
+	if m.Role == conversation.RoleUser && m.Kind == conversation.MessageKindDecisionNote {
+		writeTranscriptDecision(b, m)
+
+		return
+	}
+
 	switch m.Role {
 	case conversation.RoleUser:
 		fmt.Fprintf(b, "## You · %s\n\n", transcriptTime(m.CreatedAt))
@@ -257,6 +263,21 @@ func writeTranscriptMessage(b *strings.Builder, m *conversation.Message, agentNa
 	}
 }
 
+// writeTranscriptDecision writes the note the application sent in place of
+// a person's message after a decision. It is not something they typed, so it
+// is not headed as theirs, and only its first line is shown: the lines after
+// it are instructions to the agent that the thread never shows either.
+func writeTranscriptDecision(b *strings.Builder, m *conversation.Message) {
+	fmt.Fprintf(b, "## Decision · %s\n\n", transcriptTime(m.CreatedAt))
+	writeRefusal(b, m, "Not answered")
+
+	headline := decisionHeadline(m.Content)
+	if headline == "" {
+		headline = "Following up on a decision."
+	}
+	writeText(b, headline)
+}
+
 // assistantMeta is what a reader checking a turn wants beside it: the model,
 // how long it took, what it cost in tokens.
 func assistantMeta(m *conversation.Message) []string {
@@ -301,11 +322,35 @@ func writeTranscriptProposal(b *strings.Builder, p *agent.AgentProposal) {
 	if p.ExecutedAt != nil && *p.ExecutedAt > 0 {
 		fmt.Fprintf(b, "- **Executed:** %s\n", transcriptTime(*p.ExecutedAt))
 	}
+	if result := transcriptResult(p.ExecutionResult); result != "" {
+		fmt.Fprintf(b, "- **Result:** %s\n", result)
+	}
 	if p.ExecutionError != "" {
 		fmt.Fprintf(b, "- **Error:** %s\n", p.ExecutionError)
 	}
 	b.WriteString("\n")
 	writeJSON(b, p.ToolParams)
+}
+
+// transcriptResult is what an executed proposal made, with its ids in code
+// so they can be copied: It created the report "Lanes" (definitionId `rd_…`).
+func transcriptResult(result *agent.ToolExecutionResult) string {
+	made := result.Describe()
+	keys := result.IDKeys()
+	if len(keys) == 0 {
+		return made
+	}
+
+	ids := make([]string, 0, len(keys))
+	for _, key := range keys {
+		ids = append(ids, fmt.Sprintf("%s `%s`", key, result.IDs[key]))
+	}
+	joined := strings.Join(ids, ", ")
+	if made == "" {
+		return joined
+	}
+
+	return strings.TrimSuffix(made, ".") + " (" + joined + ")."
 }
 
 func describePage(title, path string) string {

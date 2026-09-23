@@ -136,10 +136,18 @@ func proposalOutcomeText(toolName string, outcome serviceports.ProposalOutcome) 
 			toolName, modifiedHow(outcome),
 		)
 	case agent.ProposalStatusExecuted:
+		if outcome.AutonomyTier == agent.TierAutoExecute {
+			return fmt.Sprintf(
+				"The call to %q ran on its own, without needing approval, and succeeded%s.%s "+
+					"The change has been made; do not make it again.",
+				toolName, executedWhen(outcome), executedResult(outcome),
+			)
+		}
+
 		return fmt.Sprintf(
-			"The person approved the proposal to run %q%s and it ran successfully%s. "+
+			"The person approved the proposal to run %q%s and it ran successfully%s.%s "+
 				"The change has been made; do not propose it again.",
-			toolName, modifiedHow(outcome), executedWhen(outcome),
+			toolName, modifiedHow(outcome), executedWhen(outcome), executedResult(outcome),
 		)
 	case agent.ProposalStatusSimulated:
 		return fmt.Sprintf(
@@ -153,11 +161,16 @@ func proposalOutcomeText(toolName string, outcome serviceports.ProposalOutcome) 
 			reason = "no reason was recorded"
 		}
 
+		subject := fmt.Sprintf("The person approved the proposal to run %q", toolName)
+		if outcome.AutonomyTier == agent.TierAutoExecute {
+			subject = fmt.Sprintf("The call to %q ran on its own", toolName)
+		}
+
 		return fmt.Sprintf(
-			"The person approved the proposal to run %q but it FAILED when it ran: %s\n"+
+			"%s but it FAILED when it ran: %s\n"+
 				"Nothing was changed. Fix what the failure names before proposing again, "+
 				"and tell the person the change did not go through.",
-			toolName, stringutils.Ellipsize(reason, maxExecutionErrorChars),
+			subject, stringutils.Ellipsize(reason, maxExecutionErrorChars),
 		)
 	case agent.ProposalStatusRejected:
 		return fmt.Sprintf(
@@ -185,6 +198,24 @@ func proposalOutcomeText(toolName string, outcome serviceports.ProposalOutcome) 
 	default:
 		return fmt.Sprintf("The proposal to run %q is %s.", toolName, outcome.Status)
 	}
+}
+
+// executedResult says what the write made and which ids it produced, each
+// sentence led by a space, so a later turn refers to the record rather than
+// to the proposal that made it.
+func executedResult(outcome serviceports.ProposalOutcome) string {
+	var b strings.Builder
+	for _, sentence := range []string{
+		outcome.ExecutionResult.Describe(),
+		outcome.ExecutionResult.IDNote(),
+	} {
+		if sentence != "" {
+			b.WriteString(" ")
+			b.WriteString(sentence)
+		}
+	}
+
+	return b.String()
 }
 
 func executedWhen(outcome serviceports.ProposalOutcome) string {

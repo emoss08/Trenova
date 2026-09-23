@@ -79,6 +79,7 @@ type ToolCatalogEntry struct {
 	DefaultAutonomyTier agent.AutonomyTier   `json:"defaultAutonomyTier"`
 	Reversible          bool                 `json:"reversible"`
 	Core                bool                 `json:"core"`
+	Effect              agent.ToolEffect     `json:"effect"`
 	// Prerequisites are the tools this one takes its arguments from. The
 	// reads among them are held by any agent holding this tool.
 	Prerequisites []string `json:"prerequisites"`

@@ -39,6 +39,7 @@ type indexed struct {
 type Catalog struct {
 	entries []indexed
 	byName  map[string]int
+	family  map[string][]string
 }
 
 func New(descriptors []serviceports.AgentToolDescriptor) *Catalog {
@@ -49,6 +50,7 @@ func New(descriptors []serviceports.AgentToolDescriptor) *Catalog {
 	catalog := &Catalog{
 		entries: make([]indexed, 0, len(sorted)),
 		byName:  make(map[string]int, len(sorted)),
+		family:  indexFamilies(),
 	}
 
 	for i, descriptor := range sorted {
@@ -166,12 +168,16 @@ func (c *Catalog) rank(
 // but a search that answers a nonsense query with six arbitrary tools and the
 // words "these tools are now callable" is worse than an empty answer: it tells
 // the model it found what it was looking for.
+//
+// What it found brings its family along, after the matches and past the
+// limit, so one search that reaches run_report also makes list_reports and
+// describe_report callable.
 func (c *Catalog) Find(
 	allowed []string,
 	query string,
 	limit int,
 ) []serviceports.AgentToolDescriptor {
-	return c.rank(allowed, query, limit, 1)
+	return c.withFamilies(c.allowedSet(allowed), c.rank(allowed, query, limit, 1))
 }
 
 // Prerequisites names the tools a tool's arguments come from.

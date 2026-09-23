@@ -169,6 +169,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			OutputTokens: completion.OutputTokens,
 			LatencyMs:    completion.LatencyMs,
 			CostUSD:      completion.CostUSD,
+			CreatedAt:    fx.Now(),
 		}
 		result.Messages = append(result.Messages, assistantTurn)
 		// The thinking goes back with the calls it produced. Anthropic and the
@@ -183,7 +184,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			Event: serviceports.AssistantEventMessage,
 			Data: serviceports.AssistantMessageEvent{
 				Content:   assistantTurn.Content,
-				ToolCalls: assistantTurn.ToolCalls,
+				ToolCalls: s.callsWithEffects(assistantTurn.ToolCalls),
 				Model:     assistantTurn.Model,
 			},
 		})
@@ -195,6 +196,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 					CallID:    call.ID,
 					Name:      call.Name,
 					Arguments: call.Arguments,
+					Effect:    s.ToolEffect(call.Name),
 				},
 			})
 
@@ -327,8 +329,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 	result.Exhausted = true
 	result.Reply = exhaustedReply
 	result.Messages = append(result.Messages, conversation.Message{
-		Role:    conversation.RoleAssistant,
-		Content: exhaustedReply,
+		Role:      conversation.RoleAssistant,
+		Content:   exhaustedReply,
+		CreatedAt: fx.Now(),
 	})
 	fx.Emit(deltaEvent(exhaustedReply))
 
@@ -390,6 +393,8 @@ func (s *Service) recordToolResult(
 		result.Actions = append(result.Actions, *outcome.action)
 	}
 	outcome = fx.Observe(t, &call, outcome.exported()).internal()
+	effect := s.ToolEffect(call.Name)
+	summary := summarizeOutcome(call, outcome)
 
 	fx.Emit(serviceports.StreamEvent{
 		Event: serviceports.AssistantEventToolFinished,
@@ -399,15 +404,20 @@ func (s *Service) recordToolResult(
 			Failed:   outcome.failed,
 			Proposed: outcome.action != nil && !outcome.action.Executed,
 			Content:  outcome.content,
+			Effect:   effect,
+			Summary:  summary,
 		},
 	})
 
 	result.Messages = append(result.Messages, conversation.Message{
-		Role:       conversation.RoleTool,
-		Content:    outcome.content,
-		ToolCallID: call.ID,
-		ToolName:   call.Name,
-		ToolFailed: outcome.failed,
+		Role:        conversation.RoleTool,
+		Content:     outcome.content,
+		ToolCallID:  call.ID,
+		ToolName:    call.Name,
+		ToolFailed:  outcome.failed,
+		ToolEffect:  effect,
+		ToolSummary: summary,
+		CreatedAt:   fx.Now(),
 	})
 	t.messages = append(t.messages, serviceports.Message{
 		Role:       serviceports.RoleTool,
@@ -451,8 +461,12 @@ func (s *Service) observe(
 			"reply instead.", publishArtifactName)
 	case outcome.publishes:
 		outcome.content = publishedContent(shown)
+		outcome.summary = summaryLine(shown.Title)
 	case shown != nil && !outcome.failed:
 		outcome.content += shownNote(shown)
+		if outcome.summary == "" {
+			outcome.summary = summaryLine(shown.Title)
+		}
 	}
 
 	return outcome
@@ -484,6 +498,7 @@ func (s *Service) finish(
 			ProviderID:    completion.ProviderID,
 			InputTokens:   completion.InputTokens,
 			OutputTokens:  completion.OutputTokens,
+			CreatedAt:     fx.Now(),
 		})
 		fx.Emit(serviceports.StreamEvent{
 			Event: serviceports.AssistantEventRefused,
@@ -519,6 +534,7 @@ func (s *Service) finish(
 		OutputTokens: completion.OutputTokens,
 		LatencyMs:    completion.LatencyMs,
 		CostUSD:      completion.CostUSD,
+		CreatedAt:    fx.Now(),
 	})
 
 	return result

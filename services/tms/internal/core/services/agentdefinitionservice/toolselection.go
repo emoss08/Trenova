@@ -70,6 +70,7 @@ func buildToolCatalog(
 			Operation:     permission.OpRead,
 			Reversible:    true,
 			Core:          agentdefinition.IsCoreTool(tool.Name()),
+			Effect:        serviceports.EffectOf(tool),
 			Prerequisites: prerequisitesOf(tool),
 		})
 	}
@@ -85,6 +86,7 @@ func buildToolCatalog(
 			DefaultAutonomyTier: tool.DefaultAutonomyTier(),
 			Reversible:          tool.Reversible(),
 			Core:                agentdefinition.IsCoreTool(tool.Name()),
+			Effect:              serviceports.EffectOf(tool),
 			Prerequisites:       prerequisitesOf(tool),
 		})
 	}

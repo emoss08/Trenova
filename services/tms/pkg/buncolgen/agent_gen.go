@@ -749,6 +749,7 @@ var AgentProposalColumns = struct {
 	Status          Column // "status" → qualified: "ap.status"
 	ExecutedAt      Column // "executed_at" → qualified: "ap.executed_at"
 	ExecutionError  Column // "execution_error" → qualified: "ap.execution_error"
+	ExecutionResult Column // "execution_result" → qualified: "ap.execution_result"
 	SourceMessageID Column // "source_message_id" → qualified: "ap.source_message_id"
 	ExpiresAt       Column // "expires_at" → qualified: "ap.expires_at"
 	SimulatedAt     Column // "simulated_at" → qualified: "ap.simulated_at"
@@ -776,6 +777,7 @@ var AgentProposalColumns = struct {
 	Status:          NewColumn("status", "ap"),
 	ExecutedAt:      NewColumn("executed_at", "ap"),
 	ExecutionError:  NewColumn("execution_error", "ap"),
+	ExecutionResult: NewColumn("execution_result", "ap"),
 	SourceMessageID: NewColumn("source_message_id", "ap"),
 	ExpiresAt:       NewColumn("expires_at", "ap"),
 	SimulatedAt:     NewColumn("simulated_at", "ap"),
@@ -809,6 +811,7 @@ var AgentProposalFieldMap = map[string]string{
 	"status":          "status",
 	"executedAt":      "executed_at",
 	"executionError":  "execution_error",
+	"executionResult": "execution_result",
 	"sourceMessageId": "source_message_id",
 	"expiresAt":       "expires_at",
 	"simulatedAt":     "simulated_at",
@@ -840,6 +843,7 @@ var AgentProposalInsertableColumns = []string{
 	"status",
 	"executed_at",
 	"execution_error",
+	"execution_result",
 	"source_message_id",
 	"expires_at",
 	"simulated_at",
@@ -933,6 +937,7 @@ var AgentProposalFilter = struct {
 	Status          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	ExecutedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executedAt" → DB: "executed_at"
 	ExecutionError  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executionError" → DB: "execution_error"
+	ExecutionResult func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executionResult" → DB: "execution_result"
 	SourceMessageID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceMessageId" → DB: "source_message_id"
 	ExpiresAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
 	SimulatedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "simulatedAt" → DB: "simulated_at"
@@ -985,6 +990,9 @@ var AgentProposalFilter = struct {
 	},
 	ExecutionError: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("executionError", op, value)
+	},
+	ExecutionResult: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("executionResult", op, value)
 	},
 	SourceMessageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("sourceMessageId", op, value)

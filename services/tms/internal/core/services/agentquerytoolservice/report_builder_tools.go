@@ -196,6 +196,11 @@ type datasetEdgeRow struct {
 	Label       string `json:"label,omitempty"`
 	Target      string `json:"target"`
 	Cardinality string `json:"cardinality"`
+	// Key is the field on this dataset holding the id of the record the edge
+	// leads to, such as customerId for the customer edge. A model that had
+	// resolved a customer to its id still filtered on customer.name, because
+	// nothing said the id had a field of its own here.
+	Key string `json:"key,omitempty"`
 	// TargetFields are the keys on the dataset the edge leads to, given by
 	// describe_report_dataset so a report can reach one edge out without a
 	// second call. A model that had only the edge's name guessed the field
@@ -304,7 +309,7 @@ func (t *listReportDatasetsTool) Query(
 			Label:       entity.Label,
 			Description: stringutils.FirstSentence(entity.Description),
 			Category:    entity.Category,
-			FieldCount:  len(entity.Fields),
+			FieldCount:  describedFieldCount(entity),
 		})
 	}
 
@@ -334,9 +339,12 @@ func edgeRows(entity *reportcatalog.Entity, withTargetFields bool) []datasetEdge
 			Target:      edge.Target,
 			Cardinality: string(edge.Cardinality),
 		}
+		if key, ok := referenceKeyField(&reportcatalog.Default, entity, edge); ok {
+			row.Key = key
+		}
 		if withTargetFields {
 			if target, ok := reportcatalog.Default.Entity(edge.Target); ok {
-				row.TargetFields = fieldKeys(target)
+				row.TargetFields = describedFieldKeys(target)
 			}
 		}
 		rows = append(rows, row)
@@ -459,6 +467,9 @@ func (t *describeReportDatasetTool) Query(
 	fields := make([]datasetFieldRow, 0, len(entity.Fields))
 	for i := range entity.Fields {
 		field := &entity.Fields[i]
+		if !describedField(field) {
+			continue
+		}
 		if query != "" && !matchesField(field, query) {
 			continue
 		}
@@ -486,7 +497,10 @@ func (t *describeReportDatasetTool) Query(
 		"using only the keys each edge's targetFields lists; an edge two steps " +
 		"away needs describe_report_dataset on the first target. A measure " +
 		"column needs an agg the field lists; a dimension column groups the " +
-		"rows, and a report of dimension columns alone lists rows. A field " +
+		"rows, and a report of dimension columns alone lists rows. When you " +
+		"already know a related record's id, filter on the field the edge's key " +
+		"names with that id — customerId eq \"cus_…\" — not on the record's " +
+		"name, which two records can share and a rename changes. A field " +
 		"marked closed cannot be used by this person."
 
 	description := datasetDescription{
@@ -495,7 +509,7 @@ func (t *describeReportDatasetTool) Query(
 		Description: entity.Description,
 		Category:    entity.Category,
 		Fields:      fields,
-		FieldCount:  len(entity.Fields),
+		FieldCount:  describedFieldCount(entity),
 		Shown:       len(fields),
 		Edges:       edgeRows(entity, true),
 		Note:        note,
@@ -886,7 +900,10 @@ func (t *previewReportTool) Query(
 		)
 	}
 
-	return previewOf(source, result, clockFor(params)), nil
+	preview := previewOf(source, result, clockFor(params))
+	preview.Note += referenceKeyHint(&reportcatalog.Default, source.Definition)
+
+	return preview, nil
 }
 
 // source reads what to preview: an inline definition first, because that is
@@ -931,39 +948,17 @@ func previewOf(source reportSource, result *reporting.PreviewResult, clk clock) 
 		preview.Name = source.Name
 	}
 
-	labels := make([]string, 0, len(result.Columns))
+	shape := newSampleShape(len(result.Columns), clk)
 	for _, column := range result.Columns {
-		label := column.Label
-		if label == "" {
-			label = column.ID
-		}
-		labels = append(labels, label)
-		preview.Columns = append(preview.Columns, previewColumnRow{
-			ID:     column.ID,
-			Label:  label,
-			Type:   string(column.Type),
-			Format: string(column.Format),
-		})
+		preview.Columns = append(preview.Columns, shape.add(
+			column.ID, column.Label, column.Type, column.Format,
+		))
 	}
 
-	// A date column comes back from the dataset as epoch seconds, which the
-	// download renders and a model reading the preview does not. It is
-	// written as a date here so the preview reads the way the report will.
-	dated := make([]bool, len(result.Columns))
-	for idx, column := range result.Columns {
-		dated[idx] = column.Type == reportcatalog.FieldEpoch
-	}
-
-	shown := len(result.Rows)
-	if shown > maxPreviewRows {
-		shown = maxPreviewRows
-	}
-	preview.Rows = make([]map[string]any, 0, shown)
-	for _, row := range result.Rows[:shown] {
-		preview.Rows = append(preview.Rows, rowByLabel(labels, renderDates(row, dated, clk)))
-	}
+	preview.Rows = sampleRows(shape, result.Rows, maxPreviewRows)
+	shown := len(preview.Rows)
 	if len(result.Totals) > 0 {
-		preview.Totals = rowByLabel(labels, renderDates(result.Totals, dated, clk))
+		preview.Totals = shape.row(result.Totals)
 	}
 
 	switch {
@@ -986,12 +981,66 @@ func previewOf(source reportSource, result *reporting.PreviewResult, clk clock) 
 	if result.Truncated {
 		preview.Note += " The preview hit its row cap, so the count is a floor, not the total."
 	}
-	if hasDated(dated) {
+	if hasDated(shape.dated) {
 		preview.Note += " Date columns are shown here as dates in the organization's timezone, " +
 			"and the download renders them the same way; the stored value is epoch seconds."
 	}
 
 	return preview
+}
+
+// sampleShape is how a report's rows are handed to a model, by preview_report
+// and by a finished run alike: keyed by column label, so the model reads a
+// table rather than positional tuples, and with date columns written as dates.
+// A date comes back from the dataset as epoch seconds, which the download
+// renders and a model reading the rows does not.
+type sampleShape struct {
+	labels []string
+	dated  []bool
+	clk    clock
+}
+
+func newSampleShape(width int, clk clock) sampleShape {
+	return sampleShape{
+		labels: make([]string, 0, width),
+		dated:  make([]bool, 0, width),
+		clk:    clk,
+	}
+}
+
+// add records one column and returns the row that describes it.
+func (s *sampleShape) add(
+	id, label string,
+	fieldType reportcatalog.FieldType,
+	format reportcatalog.FormatHint,
+) previewColumnRow {
+	if label == "" {
+		label = id
+	}
+	s.labels = append(s.labels, label)
+	s.dated = append(s.dated, fieldType == reportcatalog.FieldEpoch)
+
+	return previewColumnRow{
+		ID:     id,
+		Label:  label,
+		Type:   string(fieldType),
+		Format: string(format),
+	}
+}
+
+func (s *sampleShape) row(row serviceports.ReportRow) map[string]any {
+	return rowByLabel(s.labels, renderDates(row, s.dated, s.clk))
+}
+
+// sampleRows renders at most limit rows from the top of a result.
+func sampleRows[R ~[]any](shape sampleShape, rows []R, limit int) []map[string]any {
+	shown := min(len(rows), limit)
+	out := make([]map[string]any, 0, shown)
+	for _, row := range rows[:shown] {
+		out = append(out, shape.row(serviceports.ReportRow(row)))
+	}
+
+	return out
 }
 
 func hasDated(dated []bool) bool {

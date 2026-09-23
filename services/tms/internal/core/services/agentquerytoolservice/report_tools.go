@@ -313,7 +313,13 @@ type reportRunStatus struct {
 	Format    string `json:"format,omitempty"`
 	RowCount  int64  `json:"rowCount,omitempty"`
 	Truncated bool   `json:"truncated,omitempty"`
-	Note      string `json:"note"`
+	// Columns and Rows are a sample from the top of a finished run, in the
+	// shape preview_report hands back. Without them a person asking to see
+	// a few rows of the report that had just finished watched the model run
+	// preview_report on the same definition again.
+	Columns []previewColumnRow `json:"columns,omitempty"`
+	Rows    []map[string]any   `json:"rows,omitempty"`
+	Note    string             `json:"note"`
 }
 
 // reportKeyOf reads the report's key under the name the schema declares, or
@@ -372,11 +378,12 @@ func (t *runReportTool) Description() string {
 		"from what the person already said — a request naming a window, a date range " +
 		"or a customer has supplied it — and ask_user for the rest, offering the " +
 		"allowed values list_reports gave rather than choices you made up. Reports " +
-		"always run in the background — this returns a run id immediately and no " +
-		"rows. Say that it has started and stop there: the conversation tracks the " +
-		"run itself and shows the person its progress, its row count and a download " +
-		"button as soon as it finishes, so there is nothing to poll and nowhere to " +
-		"send them. Never describe figures from a report you have only started."
+		"run in the background: a run that finishes within a few seconds comes " +
+		"back with its outcome and a sample of its first rows; otherwise this " +
+		"returns a run id, and you say that it has started and stop there. The " +
+		"conversation tracks the run and shows the person its progress, its row " +
+		"count and a download button as soon as it finishes, so there is nothing " +
+		"to poll and nowhere to send them. Never describe figures you have not seen."
 }
 
 func (t *runReportTool) ParamSchema() map[string]any {
@@ -469,6 +476,7 @@ func (t *runReportTool) Query(
 	var status reportRunStatus
 	if run.Status.IsTerminal() {
 		status = describeRun(run)
+		attachRunSample(ctx, t.reports, params, run, &status)
 	} else {
 		status = toRunStatus(run)
 		status.Note = fmt.Sprintf(
@@ -632,7 +640,8 @@ func (t *getReportRunTool) Name() string { return "get_report_run" }
 func (t *getReportRunTool) Description() string {
 	return "Check on a report started by run_report, when the person asks a question " +
 		"about the run that its own progress display does not answer. Returns whether " +
-		"it has finished, how many rows it produced, and why it failed if it did. The " +
+		"it has finished, how many rows it produced with a sample of the first, and " +
+		"why it failed if it did. The " +
 		"conversation already shows progress and offers the download, so do not call " +
 		"this on a loop to wait for a result. A run that is still queued or running has " +
 		"no rows yet — say so rather than guessing at figures."
@@ -677,7 +686,62 @@ func (t *getReportRunTool) Query(
 		return nil, err
 	}
 
-	return describeRun(run), nil
+	status := describeRun(run)
+	attachRunSample(ctx, t.reports, params, run, &status)
+
+	return status, nil
+}
+
+// maxRunSampleRows bounds the rows a finished run hands the model, for the
+// same reason preview_report is bounded: a sample shows what the report
+// holds, and the whole result is the download.
+const maxRunSampleRows = maxPreviewRows
+
+// attachRunSample puts the first rows of a finished run on its status, read
+// from the rows the run stored rather than by running the report again. A
+// run whose rows cannot be read keeps its outcome and says the rows are not
+// shown, so the model does not fill the gap with figures of its own.
+func attachRunSample(
+	ctx context.Context,
+	reports reportRunner,
+	params serviceports.QueryToolParams,
+	run *report.ReportRun,
+	status *reportRunStatus,
+) {
+	if run.Status != report.RunStatusSucceeded || run.RowCount == 0 || run.RowsKey == "" {
+		return
+	}
+
+	envelope, err := reports.ReadRunRows(ctx, &reporting.GetRunRequest{
+		Request: reportingRequestFor(params),
+		RunID:   run.ID,
+	})
+	if err != nil {
+		status.Note += " Its rows could not be read back here, so none are shown; do " +
+			"not describe figures from it."
+
+		return
+	}
+
+	shape := newSampleShape(len(envelope.Schema), clockFor(params))
+	status.Columns = make([]previewColumnRow, 0, len(envelope.Schema))
+	for idx := range envelope.Schema {
+		column := &envelope.Schema[idx]
+		status.Columns = append(
+			status.Columns,
+			shape.add(column.ID, column.Label, column.Type, column.Format),
+		)
+	}
+	status.Rows = sampleRows(shape, envelope.Rows, maxRunSampleRows)
+
+	status.Note += fmt.Sprintf(
+		" rows holds the first %d of its %d rows as a sample, keyed by column label, "+
+			"for answering questions about it; the rest are in the download.",
+		len(status.Rows), run.RowCount,
+	)
+	if hasDated(shape.dated) {
+		status.Note += " Date columns are written as dates in the organization's timezone."
+	}
 }
 
 func describeRun(run *report.ReportRun) reportRunStatus {

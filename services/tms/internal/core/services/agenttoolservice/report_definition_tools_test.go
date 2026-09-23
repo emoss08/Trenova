@@ -459,18 +459,25 @@ func TestForkReport_RefusesAnUnknownKey(t *testing.T) {
 }
 
 // Saving a report is a write against the report resource, gated the way the
-// Reports page gates it, and every one of them waits for a person to approve.
+// Reports page gates it. Changing or copying one waits for a person to
+// approve; creating one runs on its own only while it stays private, which
+// its TierLimit decides per call.
 func TestReportDefinitionTools_DeclareTheirGates(t *testing.T) {
 	t.Parallel()
 
 	writer := &fakeReportWriter{}
+	tiers := map[string]agent.AutonomyTier{
+		"create_report": agent.TierAutoExecute,
+		"update_report": agent.TierActWithApproval,
+		"fork_report":   agent.TierActWithApproval,
+	}
 	for _, tool := range []serviceports.AgentTool{
 		newCreateReportTool(writer),
 		newUpdateReportTool(writer),
 		newForkReportTool(writer),
 	} {
 		assert.Equal(t, permission.ResourceReport, tool.PermissionResource(), tool.Name())
-		assert.Equal(t, agent.TierActWithApproval, tool.DefaultAutonomyTier(), tool.Name())
+		assert.Equal(t, tiers[tool.Name()], tool.DefaultAutonomyTier(), tool.Name())
 		assert.True(t, tool.Reversible(), tool.Name())
 	}
 	assert.Equal(t, permission.OpCreate, newCreateReportTool(writer).PermissionOperation())
@@ -520,4 +527,67 @@ func TestCreateAndUpdateReport_ValidateTheDefinitionBeforeProposing(t *testing.T
 		"name":       "Lane revenue",
 		"definition": definitionArgument(),
 	})))
+}
+
+/*
+create_report was sent columns twice, once inside definition and once beside
+it. Only definition is read, so the top-level list was dropped without a word
+and the report saved with whichever columns definition held. A part of the
+definition sent beside it is refused before a proposal exists, naming the part
+and where it goes.
+*/
+func TestCreateAndUpdateReport_RefuseADefinitionPartSentBesideTheDefinition(t *testing.T) {
+	t.Parallel()
+
+	topLevel := []any{
+		map[string]any{"id": "c9", "ref": map[string]any{"field": "proNumber"}},
+	}
+
+	writer := &fakeReportWriter{}
+	create, ok := newCreateReportTool(writer).(serviceports.ToolValidator)
+	require.True(t, ok)
+	err := create.Validate(t.Context(), executeParams(map[string]any{
+		"name":       "Peak Distributing shipments",
+		"definition": definitionArgument(),
+		"columns":    topLevel,
+	}))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "\"columns\"")
+	assert.Contains(t, err.Error(), "inside definition")
+	assert.Nil(t, writer.validated, "nothing is compiled from half a call")
+
+	err = newCreateReportTool(writer).Execute(t.Context(), executeParams(map[string]any{
+		"name":    "Peak Distributing shipments",
+		"entity":  "shipment",
+		"columns": topLevel,
+	}))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "\"entity\", \"columns\"")
+	assert.Nil(t, writer.created)
+
+	params := executeParams(map[string]any{
+		"definitionId": pulid.MustNew("rdef_").String(),
+		"filters":      map[string]any{"op": "and"},
+	})
+	writer.definitions = []*report.ReportDefinition{ownedReport(params.Actor.UserID)}
+	params.Params["definitionId"] = writer.definitions[0].ID.String()
+	err = newUpdateReportTool(writer).Execute(t.Context(), params)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "\"filters\"")
+	assert.Nil(t, writer.updated)
+}
+
+// The schema says the same thing the refusal does, so a model reading it
+// sends the definition once.
+func TestCreateReport_DescribesSendingTheDefinitionOnceAndFilteringByID(t *testing.T) {
+	t.Parallel()
+
+	tool := newCreateReportTool(&fakeReportWriter{})
+
+	assert.Contains(t, tool.Description(), "Send the report once")
+	assert.Contains(t, tool.Description(), "customerId")
+	assert.NotContains(t, tool.Description(), "\"customer.name\"")
+	definition, ok := tool.ParamSchema()["properties"].(map[string]any)["definition"].(map[string]any)
+	require.True(t, ok)
+	assert.Contains(t, definition["description"], "nowhere else")
 }

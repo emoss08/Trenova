@@ -7,6 +7,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/emoss08/trenova/internal/core/domain/report"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 )
 
@@ -103,7 +105,11 @@ func unknownFieldHint(catalog *reportcatalog.Catalog, entityKey, fieldKey string
 		)
 	}
 	if len(own) == 0 && len(through) == 0 {
-		fmt.Fprintf(&builder, " Its fields: %s.", strings.Join(fieldKeys(entity), ", "))
+		fmt.Fprintf(
+			&builder,
+			" Its fields: %s.",
+			strings.Join(describedFieldKeys(entity), ", "),
+		)
 	}
 	fmt.Fprintf(
 		&builder,
@@ -199,6 +205,9 @@ func matchingFields(entity *reportcatalog.Entity, tokens []string) []string {
 	matches := make([]scored, 0, 4)
 	for i := range entity.Fields {
 		field := &entity.Fields[i]
+		if !describedField(field) {
+			continue
+		}
 		haystack := strings.ToLower(field.Key + " " + field.Label)
 		score := 0
 		for _, token := range tokens {
@@ -223,11 +232,166 @@ func matchingFields(entity *reportcatalog.Entity, tokens []string) []string {
 	return keys
 }
 
-func fieldKeys(entity *reportcatalog.Entity) []string {
+// bookkeepingFieldKeys are fields every dataset carries for the database
+// rather than for a report: the tenant keys every row the person can see
+// shares, and the counter that guards concurrent edits. Listed on every
+// dataset and again on every edge's targetFields, they pushed the fields a
+// report is built from past the first page of the description. They are
+// hidden from what the tools describe and nothing else: the compiler still
+// accepts them, so a saved report that names one keeps running.
+var bookkeepingFieldKeys = map[string]struct{}{
+	"businessUnitId": {},
+	"organizationId": {},
+	"version":        {},
+}
+
+// describedField reports whether the tools name a field to a model.
+func describedField(field *reportcatalog.Field) bool {
+	_, bookkeeping := bookkeepingFieldKeys[field.Key]
+
+	return !bookkeeping
+}
+
+func describedFieldKeys(entity *reportcatalog.Entity) []string {
 	keys := make([]string, 0, len(entity.Fields))
 	for i := range entity.Fields {
-		keys = append(keys, entity.Fields[i].Key)
+		if describedField(&entity.Fields[i]) {
+			keys = append(keys, entity.Fields[i].Key)
+		}
 	}
 
 	return keys
+}
+
+func describedFieldCount(entity *reportcatalog.Entity) int {
+	count := 0
+	for i := range entity.Fields {
+		if describedField(&entity.Fields[i]) {
+			count++
+		}
+	}
+
+	return count
+}
+
+// referenceKeyField names the field on source that holds the id of the
+// record a to-one edge leads to — customerId for shipment's customer edge.
+// An edge that picks one row of a to-many relationship, or joins through a
+// table, has no such field.
+func referenceKeyField(
+	catalog *reportcatalog.Catalog,
+	source *reportcatalog.Entity,
+	edge *reportcatalog.Edge,
+) (string, bool) {
+	if edge.Cardinality != reportcatalog.CardinalityOne || edge.Through != nil ||
+		edge.Pick != nil {
+		return "", false
+	}
+
+	target, ok := catalog.Entity(edge.Target)
+	if !ok {
+		return "", false
+	}
+	targetID, ok := target.Field("id")
+	if !ok {
+		return "", false
+	}
+
+	for _, pair := range edge.Join {
+		if pair.Remote != targetID.Column.Name {
+			continue
+		}
+		for i := range source.Fields {
+			field := &source.Fields[i]
+			if field.Column.Name == pair.Local && field.Type == reportcatalog.FieldRef &&
+				field.Filterable && describedField(field) {
+				return field.Key, true
+			}
+		}
+	}
+
+	return "", false
+}
+
+// identifyingFields are the fields of a related record a model reaches for
+// to name it — the words a person used — when the record's id says the same
+// thing and does not change when the record is renamed.
+var identifyingFields = map[string]struct{}{
+	"name": {},
+	"code": {},
+}
+
+// referenceKeyHint points a filter that names a related record by its name
+// or code at the reference key that names it by id. It is advice, not an
+// error: the filter compiled and may be exactly what was meant, but a name
+// matches every record sharing it and stops matching when it is corrected,
+// and a model that has just resolved the record to an id already holds the
+// better key.
+func referenceKeyHint(catalog *reportcatalog.Catalog, definition *report.Definition) string {
+	if definition == nil || definition.Filters == nil {
+		return ""
+	}
+
+	suggestions := make([]string, 0, 1)
+	seen := make(map[string]struct{}, 1)
+	err := definition.Filters.Walk(func(filter *report.FieldFilter) error {
+		suggestion, ok := referenceKeySuggestion(catalog, definition.Entity, filter)
+		if !ok {
+			return nil
+		}
+		if _, done := seen[suggestion]; done {
+			return nil
+		}
+		seen[suggestion] = struct{}{}
+		suggestions = append(suggestions, suggestion)
+
+		return nil
+	})
+	if err != nil || len(suggestions) == 0 {
+		return ""
+	}
+
+	return fmt.Sprintf(
+		" A filter matches a related record by its name or code, which two records "+
+			"can share and which stops matching when the record is renamed. If you "+
+			"already know the record's id, filter on its reference key with the id "+
+			"as the value: %s.",
+		strings.Join(suggestions, "; "),
+	)
+}
+
+// referenceKeySuggestion reads one filter and, when it compares a related
+// record's name or code, names the reference key to use instead.
+func referenceKeySuggestion(
+	catalog *reportcatalog.Catalog,
+	entity string,
+	filter *report.FieldFilter,
+) (string, bool) {
+	if filter.Operator != dbtype.OpEqual && filter.Operator != dbtype.OpIn {
+		return "", false
+	}
+	if len(filter.Ref.Path) == 0 {
+		return "", false
+	}
+	if _, identifying := identifyingFields[filter.Ref.Field]; !identifying {
+		return "", false
+	}
+
+	base, resolved, err := catalog.ResolvePath(entity, filter.Ref.Path)
+	if err != nil || len(resolved.Steps) == 0 {
+		return "", false
+	}
+	steps := len(resolved.Steps)
+	source := base
+	if steps > 1 {
+		source = resolved.Steps[steps-2].Entity
+	}
+	key, ok := referenceKeyField(catalog, source, resolved.Steps[steps-1].Edge)
+	if !ok {
+		return "", false
+	}
+
+	replacement := report.FieldRef{Path: filter.Ref.Path[:len(filter.Ref.Path)-1], Field: key}
+
+	return fmt.Sprintf("%s instead of %s", replacement.String(), filter.Ref.String()), true
 }

@@ -51,6 +51,8 @@ func (fx *workflowEffects) Supports(change string) bool {
 	return workflow.GetVersion(fx.ctx, change, workflow.DefaultVersion, 1) == 1
 }
 
+func (fx *workflowEffects) Now() int64 { return workflow.Now(fx.ctx).Unix() }
+
 func (fx *workflowEffects) Complete(
 	_ *agentruntime.Turn,
 	req *serviceports.ChatCompletionRequest,

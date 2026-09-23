@@ -294,3 +294,61 @@ func TestPrerequisitesAndQuery_ComeFromTheDescriptor(t *testing.T) {
 	assert.True(t, catalog.IsQuery("list_reports"))
 	assert.False(t, catalog.IsQuery("create_dashboard"))
 }
+
+func reportFamilyCatalog() *Catalog {
+	return New([]serviceports.AgentToolDescriptor{
+		descriptor("run_report", "Start a report run."),
+		descriptor("list_reports", "List the reports this organization can run."),
+		descriptor("describe_report", "Show what a report contains."),
+		descriptor("get_report_run", "Check on a report run."),
+		descriptor("list_workers", "List workers by status."),
+	})
+}
+
+/*
+Finding one tool of a family makes the rest callable.
+
+The Report Builder found run_report and then had to search again for
+list_reports, and a third time for describe_report, before it could name the
+report it was asked to run: three find_tools calls for one step of work.
+*/
+func TestFind_BringsAlongTheToolsUsedWithWhatItFound(t *testing.T) {
+	t.Parallel()
+
+	found := names(reportFamilyCatalog().Find(nil, "start", 6))
+
+	require.NotEmpty(t, found)
+	assert.Equal(t, "run_report", found[0], "what matched comes first")
+	assert.ElementsMatch(t,
+		[]string{"run_report", "list_reports", "describe_report", "get_report_run"},
+		found,
+	)
+	assert.NotContains(t, found, "list_workers")
+}
+
+// A family widens the answer, never the grant: a member the agent does not
+// hold is not offered.
+func TestFind_BringsAlongOnlyTheFamilyTheAgentHolds(t *testing.T) {
+	t.Parallel()
+
+	found := names(reportFamilyCatalog().Find(
+		[]string{"run_report", "list_reports", "list_workers"},
+		"start",
+		6,
+	))
+
+	assert.Equal(t, []string{"run_report", "list_reports"}, found)
+}
+
+func TestFind_AddsNoFamilyToAnEmptyAnswer(t *testing.T) {
+	t.Parallel()
+
+	assert.Empty(t, reportFamilyCatalog().Find(nil, "zzzz no such thing zzzz", 6))
+}
+
+// Pre-selection fills a fixed number of slots, so it is left to the ranking.
+func TestRank_DoesNotBringAlongFamilies(t *testing.T) {
+	t.Parallel()
+
+	assert.Len(t, reportFamilyCatalog().Rank(nil, "start", 1), 1)
+}

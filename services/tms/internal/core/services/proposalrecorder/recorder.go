@@ -415,6 +415,7 @@ func applyExecution(proposal *agent.AgentProposal, action serviceports.PendingAc
 	}
 
 	proposal.Status = agent.ProposalStatusExecuted
+	proposal.ExecutionResult = action.ExecutionResult.Bounded()
 }
 
 func proposalTier(tier agent.AutonomyTier) agent.AutonomyTier {

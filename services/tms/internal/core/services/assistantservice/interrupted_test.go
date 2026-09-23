@@ -207,3 +207,37 @@ func TestClosingNotice_SaysWhetherTheProviderRefusedOrWasUnavailable(t *testing.
 	plain := closingNotice(errors.New("something else"), false)
 	assert.Equal(t, failedBeforeStartNotice, plain, "an unclassified failure adds nothing")
 }
+
+func TestTurnResult_KeepsWhenEachMessageWasWritten(t *testing.T) {
+	t.Parallel()
+
+	run := &serviceports.RunResult{
+		Reply: "S1 is in Denver.",
+		Messages: []conversation.Message{
+			{Role: conversation.RoleUser, Content: "Where is S1?", CreatedAt: 100},
+			{Role: conversation.RoleAssistant, Content: "Looking it up.", CreatedAt: 130},
+			{Role: conversation.RoleTool, ToolName: "get_shipment", CreatedAt: 160},
+			{Role: conversation.RoleAssistant, Content: "S1 is in Denver.", CreatedAt: 250},
+		},
+	}
+
+	answered := turnResultOf("Where is S1?", agentguard.Decision{Allowed: true}, run, nil)
+	require.Len(t, answered.Messages, 4)
+	assert.Equal(t, []int64{100, 130, 160, 250}, []int64{
+		answered.Messages[0].CreatedAt,
+		answered.Messages[1].CreatedAt,
+		answered.Messages[2].CreatedAt,
+		answered.Messages[3].CreatedAt,
+	})
+
+	stopped := interruptedTurn(
+		"Where is S1?",
+		agentguard.Decision{Allowed: true},
+		&serviceports.RunResult{Messages: run.Messages[:3]},
+		context.Canceled,
+	)
+	require.Len(t, stopped.Messages, 4)
+	assert.Equal(t, int64(100), stopped.Messages[0].CreatedAt)
+	assert.Equal(t, int64(160), stopped.Messages[2].CreatedAt)
+	assert.Zero(t, stopped.Messages[3].CreatedAt, "the closing note is stamped when it is saved")
+}

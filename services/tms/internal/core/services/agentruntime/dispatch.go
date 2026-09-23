@@ -23,6 +23,7 @@ type toolOutcome struct {
 	// publishes marks a document the observer has to keep; its result is
 	// written once the observer says what it kept.
 	publishes bool
+	summary   string
 }
 
 func failedOutcome(format string, args ...any) toolOutcome {
@@ -333,12 +334,16 @@ func (s *Service) runQueryTool(
 		return failedOutcome("Tool %q failed: %s", call.Name, err.Error())
 	}
 
-	encoded, err := encodeToolResult(data, timeutils.NowUnix(), req.Context.Timezone)
+	encoded, document, err := encodeToolDocument(data, timeutils.NowUnix(), req.Context.Timezone)
 	if err != nil {
 		return failedOutcome("Tool %q returned data that could not be encoded.", call.Name)
 	}
 
-	return toolOutcome{content: FenceToolResult(call.Name, encoded), data: data}
+	return toolOutcome{
+		content: FenceToolResult(call.Name, encoded),
+		data:    data,
+		summary: summarizeResult(call.Name, document),
+	}
 }
 
 func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome {
@@ -347,7 +352,7 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 
 	action.Executed = true
 
-	err := a.tool.Execute(ctx, a.executeParams())
+	result, err := serviceports.ExecuteTool(ctx, a.tool, a.executeParams())
 	if err != nil {
 		action.ExecutionError = err.Error()
 
@@ -357,11 +362,27 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 			action:  action,
 		}
 	}
+	action.ExecutionResult = result
 
 	return toolOutcome{
-		content: fmt.Sprintf("Tool %q ran successfully.", call.Name),
+		content: ranContent(call.Name, result),
 		action:  action,
 	}
+}
+
+// ranContent tells the model a write ran and, when the tool says what it
+// made, which record that is and the id to refer to it by, so the next call
+// does not have to go looking for it.
+func ranContent(name string, result *agent.ToolExecutionResult) string {
+	content := fmt.Sprintf("Tool %q ran successfully.", name)
+	if describe := result.Describe(); describe != "" {
+		content += " " + describe
+	}
+	if note := result.IDNote(); note != "" {
+		content += " " + note
+	}
+
+	return content
 }
 
 // snapshotTarget pins the record a proposal would change, at the version it

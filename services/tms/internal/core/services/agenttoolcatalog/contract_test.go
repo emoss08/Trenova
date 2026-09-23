@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -168,4 +169,29 @@ func namesAnotherTool(text, self string, registered map[string]struct{}) bool {
 	}
 
 	return false
+}
+
+// A family names tools that exist, each in one family, and stays small. A
+// misspelt member would never load, and nothing else would say so.
+func TestEveryToolFamilyNamesRegisteredTools(t *testing.T) {
+	t.Parallel()
+
+	registered := make(map[string]struct{})
+	for _, tool := range buildTools(t) {
+		registered[tool.Name()] = struct{}{}
+	}
+
+	seen := make(map[string]int)
+	for idx, family := range agenttoolcatalog.Families() {
+		require.GreaterOrEqualf(t, len(family), 2, "family %d has nobody to bring along", idx)
+		require.LessOrEqualf(t, len(family), agenttoolcatalog.MaxFamilySize,
+			"family %d has %d tools", idx, len(family))
+		for _, name := range family {
+			_, ok := registered[name]
+			require.Truef(t, ok, "family %d names %q, which is not a registered tool", idx, name)
+			previous, twice := seen[name]
+			require.Falsef(t, twice, "%q is in families %d and %d", name, previous, idx)
+			seen[name] = idx
+		}
+	}
 }

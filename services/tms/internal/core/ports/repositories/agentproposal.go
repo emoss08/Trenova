@@ -38,11 +38,14 @@ type UpdateAgentProposalStatusRequest struct {
 // RecordAgentProposalExecutionRequest records what happened when an approved
 // proposal's tool ran, so "approved" and "approved and done" stay distinguishable.
 type RecordAgentProposalExecutionRequest struct {
-	ID             pulid.ID              `json:"id"`
-	Status         agent.ProposalStatus  `json:"status"`
-	ExecutedAt     *int64                `json:"executedAt"`
-	ExecutionError string                `json:"executionError"`
-	TenantInfo     pagination.TenantInfo `json:"-"`
+	ID             pulid.ID             `json:"id"`
+	Status         agent.ProposalStatus `json:"status"`
+	ExecutedAt     *int64               `json:"executedAt"`
+	ExecutionError string               `json:"executionError"`
+	// ExecutionResult is what the run made, when the tool reported it. It
+	// is written with the status, so a failure clears an earlier result.
+	ExecutionResult *agent.ToolExecutionResult `json:"executionResult"`
+	TenantInfo      pagination.TenantInfo      `json:"-"`
 }
 
 // RecordAgentProposalSimulationRequest stores what a write would have

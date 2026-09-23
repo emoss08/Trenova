@@ -281,6 +281,8 @@ func DefinitionJSONSchema() map[string]any {
 		"description": "An object, not a list: {\"op\": \"and\", \"filters\": [conditions]}. " +
 			"For workers whose driver type is OTR: {\"op\": \"and\", \"filters\": " +
 			"[{\"ref\": {\"field\": \"driverType\"}, \"operator\": \"eq\", \"value\": \"OTR\"}]}. " +
+			"For one related record whose id you know, compare the dataset's own " +
+			"reference key with it, {\"field\": \"customerId\"}, not the record's name. " +
 			"Leave it out for no filter.",
 		"properties": map[string]any{
 			"op":      map[string]any{"type": "string", "enum": []string{"and", "or"}},
@@ -297,9 +299,10 @@ func DefinitionJSONSchema() map[string]any {
 
 	return map[string]any{
 		"type": "object",
-		"description": "A report as the report builder saves it. Grouping is implied: a " +
-			"dimension column groups, a measure column aggregates. A report with " +
-			"only dimensions lists rows.",
+		"description": "A report as the report builder saves it, whole: its dataset, " +
+			"columns, filters and sort all go here and nowhere else. Grouping is " +
+			"implied: a dimension column groups, a measure column aggregates. A " +
+			"report with only dimensions lists rows.",
 		"properties": map[string]any{
 			"entity": map[string]any{
 				"type":        "string",
