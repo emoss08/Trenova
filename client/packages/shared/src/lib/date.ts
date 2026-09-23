@@ -446,6 +446,20 @@ export function formatDurationFromSeconds(durationInSeconds: number): string {
  * How long ago something happened, at the resolution a person cares about: a
  * few seconds reads as "just now", minutes and hours are rounded down.
  */
+export type PartOfDay = "morning" | "afternoon" | "evening";
+
+/** The part of the day an hour on a 24-hour clock falls in, for a greeting. */
+export function partOfDay(hour: number): PartOfDay {
+  if (hour < 12) {
+    return "morning";
+  }
+  if (hour < 18) {
+    return "afternoon";
+  }
+
+  return "evening";
+}
+
 export function formatSecondsAgo(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 5) {
     return "just now";

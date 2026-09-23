@@ -4,7 +4,7 @@ import { ATTENTION_ROWS, type AttentionSummary } from "@/config/attention-rows";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { resolveUserTimezone } from "@trenova/shared/lib/date";
+import { partOfDay, resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { TimeFormat } from "@trenova/shared/types/user";
@@ -13,10 +13,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
 
+const GREETINGS = {
+  morning: "Good morning",
+  afternoon: "Good afternoon",
+  evening: "Good evening",
+} as const;
+
 function greeting(hour: number): string {
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+  return GREETINGS[partOfDay(hour)];
 }
 
 /**

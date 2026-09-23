@@ -1,31 +1,32 @@
 import { AgentAsk, type AgentAskHandle } from "@/components/assistant/agent-ask";
-import { useAskableAgent } from "@/components/assistant/use-askable-agent";
-import { LiveReplyLabel } from "@/components/assistant/live-reply-label";
 import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
-import { conversationPath } from "@/lib/conversation-path";
-import { queries } from "@/lib/queries";
+import { useAskableAgent } from "@/components/assistant/use-askable-agent";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentChoice, AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import { queries } from "@/lib/queries";
 import type { AssistantThread } from "@/types/assistant";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { useT } from "@trenova/shared/i18n/use-t";
-import { formatSecondsAgo } from "@trenova/shared/lib/date";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { partOfDay, resolveUserTimezone, toUserWallClock } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ArrowRightIcon, BotIcon, InboxIcon, PlugZapIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
+import { BotIcon, PlugZapIcon } from "lucide-react";
+import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { BriefingPanel } from "./briefing-panel";
 import { DeskAgentDirectory } from "./desk-agent-directory";
+import { DeskDecisionsCallout } from "./desk-decisions-callout";
+import { DeskRecentConversations } from "./desk-recent-conversations";
 import { usePendingDecisionSummary } from "./decisions/use-pending-decisions";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 const RECENT_LIMIT = 5;
+/** The beat between one part of the page arriving and the next. */
+const ENTRANCE_STEP_MS = 45;
 
 export type DeskHomeProps = {
   agents: AgentDefinitionRow[];
@@ -35,23 +36,45 @@ export type DeskHomeProps = {
   onStart: (agentId: string, question?: string) => void;
 };
 
+function greeting(t: TranslateFn, hour: number, firstName: string): string {
+  switch (partOfDay(hour)) {
+    case "morning":
+      return firstName ? t("Good morning, {0}", firstName) : t("Good morning");
+    case "afternoon":
+      return firstName ? t("Good afternoon, {0}", firstName) : t("Good afternoon");
+    default:
+      return firstName ? t("Good evening, {0}", firstName) : t("Good evening");
+  }
+}
+
+/** Staggers a part of the page in behind the one above it. */
+function entrance(step: number): CSSProperties {
+  return { animationDelay: `${step * ENTRANCE_STEP_MS}ms` };
+}
+
 /**
  * The Desk's front page.
  *
- * It is laid out like one: a dateline, a headline that says what the day
- * looks like, and then the question. The question is the point — the Desk is
- * a workspace you talk to, so the first thing on it is the thing you talk
- * into, not a directory of places to go. Everything under it is there to be
- * read at a glance and then left alone.
+ * It is laid out like one: a greeting and a dateline, a headline that says
+ * what the day looks like, and then the question. The question is the point —
+ * the Desk is a workspace you talk to, so the largest thing on it is the box
+ * you talk into, with the chosen agent's own questions under it. What is
+ * waiting on the person and where they left off sit beside it on a wide
+ * screen and under it on a narrow one; the agents they could ask come last,
+ * a page at a time.
  *
- * The headline is composed from counts, never written by a model. A front
- * page that opens with a sentence nobody can trace is a front page people
- * stop reading, and the numbers here are cheap and exact.
+ * The headline is composed from counts, never written by a model, unless the
+ * morning's briefing wrote one and checked every figure in it. A front page
+ * that opens with a sentence nobody can trace is one people stop reading.
+ *
+ * Everything arrives once, in reading order, a beat apart, and then holds
+ * still. Nothing here moves again unless the person does something.
  */
 export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: DeskHomeProps) {
   const t = useT();
   const [now] = useState(nowInSeconds);
-  const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
+  const user = useAuthStore((state) => state.user);
+  const timezone = resolveUserTimezone(user?.timezone);
   const liveThreadIds = useLiveThreadIds();
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
@@ -64,12 +87,16 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   const summaryQuery = usePendingDecisionSummary(canDecide);
   const waiting = summaryQuery.data?.total ?? attention?.agentDecisions ?? 0;
   const recent = threads.slice(0, RECENT_LIMIT);
+  const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
+
   const askable = useAskableAgent({ threads });
   const askRef = useRef<AgentAskHandle>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
   const noAgents = !isLoading && (agents.length === 0 || askable.noneAvailable);
 
   const chooseAgent = (agent: AgentChoice) => {
     askable.choose(agent);
+    heroRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     askRef.current?.focus();
   };
 
@@ -83,131 +110,161 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
       }).format(new Date(now * 1000)),
     [now, timezone],
   );
+  const hour = toUserWallClock(now, timezone)?.getHours() ?? 9;
+  const firstName = user?.name?.trim().split(/\s+/)[0] ?? "";
+
+  const headline =
+    briefing?.headline ||
+    (canDecide && waiting > 0
+      ? t(
+          "{0, plural, one {One decision is waiting on you.} other {# decisions are waiting on you.}}",
+          waiting,
+        )
+      : noAgents
+        ? t("Nothing is running here yet.")
+        : t("Nothing is waiting on you."));
+
+  const showDecisions = canDecide && waiting > 0;
+  const showAside = showDecisions || recent.length > 0;
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-6 py-10">
-      <header className="flex flex-col gap-1">
-        <p className="text-muted-foreground text-xs">{dateline}</p>
-        {/* The briefing's headline when there is one: it was written from
-            figures gathered before a word of it, and every number in it was
-            checked against them. The computed sentence below is what a
-            morning reads like before the page has been written. */}
-        <h1 className="text-2xl font-semibold tracking-tight text-balance">
-          {briefing?.headline ||
-            (canDecide && waiting > 0
-              ? t(
-                  "{0, plural, one {One decision is waiting on you.} other {# decisions are waiting on you.}}",
-                  waiting,
-                )
-              : noAgents
-                ? t("Nothing is running here yet.")
-                : t("Nothing is waiting on you."))}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {noAgents
-            ? t("The Desk comes alive once an agent is enabled.")
-            : t("Ask an agent about the work in front of you. What it makes opens beside you.")}
-        </p>
-      </header>
+    <div className="mx-auto flex w-full max-w-6xl flex-col px-6 pt-12 pb-16 sm:px-10 lg:pt-16">
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-x-12 gap-y-10",
+          showAside && "xl:grid-cols-[minmax(0,1fr)_19rem]",
+        )}
+      >
+        <div ref={heroRef} className="flex min-w-0 scroll-mt-6 flex-col gap-7">
+          <header className="flex flex-col gap-2">
+            <p
+              className="text-muted-foreground animate-rise flex flex-wrap items-center gap-x-2 text-sm"
+              style={entrance(0)}
+            >
+              <span className="text-foreground">{greeting(t, hour, firstName)}</span>
+              <span aria-hidden>·</span>
+              <span>{dateline}</span>
+            </p>
+            {/* The briefing's headline when there is one: it was written from
+                figures gathered before a word of it, and every number in it was
+                checked against them. The computed sentence is what a morning
+                reads like before the page has been written. */}
+            <h1
+              className="animate-rise max-w-2xl text-3xl font-semibold text-balance"
+              style={entrance(1)}
+            >
+              {headline}
+            </h1>
+            <p
+              className="text-muted-foreground animate-rise max-w-xl text-base"
+              style={entrance(2)}
+            >
+              {noAgents
+                ? t("The Desk comes alive once an agent is enabled.")
+                : t("Ask an agent about the work in front of you. What it makes opens beside you.")}
+            </p>
+          </header>
 
-      {askable.agent ? (
-        <AgentAsk
-          ref={askRef}
-          agent={askable.agent}
-          onAgentChange={askable.choose}
-          recentIds={askable.recency.ids}
-          lastUsedAt={askable.recency.lastUsedAt}
-          disabled={isStarting}
-          onAsk={(agentId, question) => onStart(agentId, question)}
-        />
-      ) : (
-        !noAgents && <Skeleton className="h-28" />
-      )}
-
-      {briefing && <BriefingPanel briefing={briefing} />}
-
-      {canDecide && waiting > 0 && (
-        <Link
-          to="/desk/decisions"
-          className={cn(
-            "ui-focus-ring group border-desk-hairline flex items-center gap-3 rounded-surface border px-4 py-3",
-            "hover:bg-surface-hover transition-colors",
-          )}
-        >
-          <InboxIcon className="text-muted-foreground size-4 shrink-0" />
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-            <span className="text-sm">{t("Waiting on your decision")}</span>
-            {summaryQuery.data?.byAgent.map((row) => (
-              <Badge key={row.agentDefinitionId} variant="neutral" className="h-5 gap-1 px-1.5">
-                <span className="max-w-40 truncate">{row.agentName || t("Retired agent")}</span>
-                <span className="tabular-nums">{row.count}</span>
-              </Badge>
-            ))}
+          <div className="animate-rise" style={entrance(3)}>
+            {noAgents ? (
+              <NoAgents canManageAgents={canManageAgents} />
+            ) : askable.agent ? (
+              <AgentAsk
+                ref={askRef}
+                agent={askable.agent}
+                onAgentChange={askable.choose}
+                recentIds={askable.recency.ids}
+                lastUsedAt={askable.recency.lastUsedAt}
+                disabled={isStarting}
+                onAsk={(agentId, question) => onStart(agentId, question)}
+              />
+            ) : askable.choices.isError ? (
+              <AgentsUnavailable onRetry={askable.choices.refetch} />
+            ) : (
+              <div className="flex flex-col gap-3" aria-busy>
+                <Skeleton className="rounded-surface h-26" />
+                <div className="flex gap-1.5">
+                  <Skeleton className="h-7 w-44 rounded-full" />
+                  <Skeleton className="h-7 w-52 rounded-full" />
+                  <Skeleton className="h-7 w-36 rounded-full" />
+                </div>
+              </div>
+            )}
           </div>
-          <ArrowRightIcon className="text-muted-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
-        </Link>
-      )}
+        </div>
 
-      {noAgents ? (
-        <NoAgents canManageAgents={canManageAgents} />
-      ) : (
-        <DeskAgentDirectory
-          recency={askable.recency}
-          selectedId={askable.agent?.id ?? null}
-          disabled={isStarting}
-          onChoose={chooseAgent}
-        />
-      )}
+        {showAside && (
+          <aside
+            aria-label={t("Waiting on you and recent conversations")}
+            className="animate-rise flex min-w-0 flex-col gap-8 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-3 xl:row-start-1 xl:self-start"
+            style={entrance(4)}
+          >
+            {showDecisions && (
+              <DeskDecisionsCallout
+                waiting={waiting}
+                byAgent={summaryQuery.data?.byAgent ?? []}
+                oldestAt={summaryQuery.data?.oldestAt ?? null}
+                agentsById={agentsById}
+                now={now}
+              />
+            )}
+            <DeskRecentConversations
+              threads={recent}
+              agentsById={agentsById}
+              liveThreadIds={liveThreadIds}
+              now={now}
+              className="-mx-2"
+            />
+          </aside>
+        )}
 
-      {recent.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <SectionLabel>{t("Where you left off")}</SectionLabel>
-          <ul className="flex flex-col">
-            {recent.map((thread) => {
-              const touched = thread.lastMessageAt > 0 ? thread.lastMessageAt : thread.createdAt;
+        {briefing && (
+          <div className="animate-rise min-w-0" style={entrance(5)}>
+            <BriefingPanel briefing={briefing} />
+          </div>
+        )}
 
-              return (
-                <li key={thread.id}>
-                  <Link
-                    to={conversationPath(thread.id)}
-                    className="hover:bg-surface-hover ui-focus-ring flex items-center gap-3 rounded-md px-2 py-1.5 transition-colors"
-                  >
-                    <span className="min-w-0 flex-1 truncate text-sm">
-                      {thread.title || t("Untitled conversation")}
-                    </span>
-                    <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
-                      {liveThreadIds.has(thread.id) ? (
-                        <LiveReplyLabel />
-                      ) : (
-                        formatSecondsAgo(now - touched)
-                      )}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
+        {!noAgents && (
+          <div className="animate-rise min-w-0" style={entrance(6)}>
+            <DeskAgentDirectory
+              recency={askable.recency}
+              selectedId={askable.agent?.id ?? null}
+              disabled={isStarting}
+              onChoose={chooseAgent}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-muted-foreground text-xs font-medium">{children}</h2>;
+function AgentsUnavailable({ onRetry }: { onRetry: () => void }) {
+  const t = useT();
+
+  return (
+    <div className="border-desk-hairline rounded-surface flex items-center gap-3 border px-4 py-3">
+      <p className="text-muted-foreground min-w-0 flex-1 text-sm">
+        {t("The agents could not be loaded.")}
+      </p>
+      <Button size="sm" variant="outline" onClick={onRetry}>
+        {t("Try again")}
+      </Button>
+    </div>
+  );
 }
 
 function NoAgents({ canManageAgents }: { canManageAgents: boolean }) {
   const t = useT();
 
   return (
-    <div className="border-desk-hairline rounded-surface flex flex-col items-start gap-3 border p-4">
+    <div className="border-desk-hairline rounded-surface flex flex-col items-start gap-3 border border-dashed p-5">
       <span className="bg-sunken text-muted-foreground flex size-9 items-center justify-center rounded-md">
         <BotIcon className="size-4" />
       </span>
       <div className="flex flex-col gap-1">
-        <p className="text-sm font-medium">{t("No agents are available")}</p>
-        <p className="text-muted-foreground text-xs">
+        <p className="text-sm font-semibold">{t("No agents are available")}</p>
+        <p className="text-muted-foreground text-sm">
           {canManageAgents
             ? t("Connect an AI provider and enable an agent in AI Control, then come back here.")
             : t("An administrator needs to connect an AI provider and enable an agent first.")}

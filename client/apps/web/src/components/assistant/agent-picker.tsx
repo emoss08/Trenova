@@ -97,7 +97,14 @@ export function AgentPicker({
       >
         {trigger ? undefined : (
           <>
-            <AgentTile agent={agent} size="xs" />
+            {/* Re-keyed on the agent, so a new choice lands with a small
+                confirming settle rather than a silent swap. */}
+            <AgentTile
+              key={agent?.id ?? "none"}
+              agent={agent}
+              size="xs"
+              className="animate-confirm"
+            />
             <span className="min-w-0 truncate text-sm">{agent?.name ?? t("Choose an agent")}</span>
             <ChevronsUpDownIcon className="text-muted-foreground size-3.5" />
           </>

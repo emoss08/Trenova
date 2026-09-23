@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  partOfDay,
   daysUntil,
   formatUnixDate,
   formatUnixDateMedium,
@@ -562,5 +563,16 @@ describe("getUTCYearBounds", () => {
   it("covers the leap day in a leap year", () => {
     const { startDate, endDate } = getUTCYearBounds(2028);
     expect(endDate - startDate + 1).toBe(366 * 86_400);
+  });
+});
+
+describe("partOfDay", () => {
+  it("splits the day at noon and six in the evening", () => {
+    expect(partOfDay(0)).toBe("morning");
+    expect(partOfDay(11)).toBe("morning");
+    expect(partOfDay(12)).toBe("afternoon");
+    expect(partOfDay(17)).toBe("afternoon");
+    expect(partOfDay(18)).toBe("evening");
+    expect(partOfDay(23)).toBe("evening");
   });
 });
