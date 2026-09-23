@@ -202,12 +202,18 @@ func (s *Service) Execute(
 		return err
 	}
 
+	if err := refuseOwnerChange(modifications); err != nil {
+		s.recordFailure(ctx, proposal, err)
+
+		return err
+	}
+
 	params := mergeParams(proposal.ToolParams, modifications)
 	if len(modifications) > 0 {
 		// What the approver changed is checked against the tool's own
 		// schema once more here, where it runs: the decision that carried
 		// it was checked when it was made, and the tool may have changed.
-		if err := toolschema.Validate(tool.ParamSchema(), params); err != nil {
+		if err := validateParams(tool, params); err != nil {
 			s.recordFailure(ctx, proposal, err)
 
 			return err
@@ -288,8 +294,12 @@ func (s *Service) CheckModifications(
 		return nil, fmt.Errorf("%w: %s", ErrToolMissing, proposal.ToolName)
 	}
 
+	if err := refuseOwnerChange(modifications); err != nil {
+		return nil, err
+	}
+
 	params := mergeParams(proposal.ToolParams, modifications)
-	if err := toolschema.Validate(tool.ParamSchema(), params); err != nil {
+	if err := validateParams(tool, params); err != nil {
 		return nil, err
 	}
 
@@ -487,8 +497,48 @@ func (s *Service) assertActorMayRun(
 	return nil
 }
 
+// refuseOwnerChange keeps whose records a self-scoped call is about out of
+// an approver's reach. The runtime recorded the owner from the turn's actor;
+// a change that named someone else would let an approval land on another
+// person's records, so it is refused as a field error rather than merged.
+func refuseOwnerChange(modifications map[string]any) error {
+	if _, retargets := modifications[services.SelfScopeOwnerParam]; !retargets {
+		return nil
+	}
+
+	multiErr := errortypes.NewMultiError()
+	multiErr.Add(
+		services.SelfScopeOwnerParam,
+		errortypes.ErrForbidden,
+		"Whose records this change is for is set when it is proposed and cannot be changed",
+	)
+
+	return multiErr
+}
+
+// validateParams checks the parameters as they would run against the tool's
+// schema. The owner the runtime records on a self-scoped call is not one of
+// the tool's declared parameters, so it is set aside for the check and the
+// schema judges only what the model and the approver supplied.
+func validateParams(tool services.AgentTool, params map[string]any) error {
+	if _, owned := params[services.SelfScopeOwnerParam]; !owned || !services.IsSelfScoped(tool) {
+		return toolschema.Validate(tool.ParamSchema(), params)
+	}
+
+	declared := make(map[string]any, len(params)-1)
+	for key, value := range params {
+		if key != services.SelfScopeOwnerParam {
+			declared[key] = value
+		}
+	}
+
+	return toolschema.Validate(tool.ParamSchema(), declared)
+}
+
 // mergeParams overlays an approver's modifications onto the proposed parameters.
-// A nil or empty modification map leaves the proposal untouched.
+// A nil or empty modification map leaves the proposal untouched. The owner of a
+// self-scoped call is always the one stored on the proposal: it is taken from
+// the proposed parameters after the overlay, never from the modifications.
 func mergeParams(proposed, modifications map[string]any) map[string]any {
 	merged := make(map[string]any, len(proposed)+len(modifications))
 	for key, value := range proposed {
@@ -496,6 +546,12 @@ func mergeParams(proposed, modifications map[string]any) map[string]any {
 	}
 	for key, value := range modifications {
 		merged[key] = value
+	}
+
+	if owner, owned := proposed[services.SelfScopeOwnerParam]; owned {
+		merged[services.SelfScopeOwnerParam] = owner
+	} else {
+		delete(merged, services.SelfScopeOwnerParam)
 	}
 
 	return merged

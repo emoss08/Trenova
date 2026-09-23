@@ -216,7 +216,7 @@ func (r *repository) Create(
 ) (*agent.AgentRun, error) {
 	log := r.l.With(zap.String("operation", "Create"))
 
-	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
 		log.Error("failed to create agent run", zap.Error(err))
 		return nil, err
 	}

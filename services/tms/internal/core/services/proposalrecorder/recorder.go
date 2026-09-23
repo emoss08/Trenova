@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -28,10 +30,17 @@ type ProposalStore interface {
 	Create(ctx context.Context, entity *agent.AgentProposal) (*agent.AgentProposal, error)
 }
 
+// Transactor runs the run, the plan and its proposals as one write, so a
+// failure part way leaves none of them behind.
+type Transactor interface {
+	WithTx(ctx context.Context, opts ports.TxOptions, fn func(context.Context, bun.Tx) error) error
+}
+
 type Params struct {
 	fx.In
 
 	Logger    *zap.Logger
+	DB        ports.DBConnection
 	Runs      repositories.AgentRunRepository
 	Proposals repositories.AgentProposalRepository
 	// Trust learns from a tool that ran on its own and failed. Optional, so
@@ -57,6 +66,7 @@ type PlanStore interface {
 
 type Service struct {
 	logger     *zap.Logger
+	tx         Transactor
 	runs       RunOpener
 	proposals  ProposalStore
 	plans      PlanStore
@@ -68,6 +78,7 @@ type Service struct {
 
 func New(p Params) *Service {
 	svc := NewWithStores(p.Logger, p.Runs, p.Proposals)
+	svc.tx = p.DB
 	svc.trust = p.Trust
 	svc.notifier = p.Notifier
 	svc.plans = p.Plans
@@ -75,6 +86,14 @@ func New(p Params) *Service {
 	svc.watchtower = p.Watchtower
 
 	return svc
+}
+
+// WithTransactor gives a recorder built with NewWithStores the transaction
+// its writes run in. Without one each write stands on its own.
+func (s *Service) WithTransactor(tx Transactor) *Service {
+	s.tx = tx
+
+	return s
 }
 
 // WithPlans gives a recorder built with NewWithStores a plan store.
@@ -133,6 +152,46 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 		return &RecordResult{Run: req.Run}, nil
 	}
 
+	var result *RecordResult
+	err := s.inTx(ctx, func(txCtx context.Context) error {
+		written, err := s.write(txCtx, req)
+		if err != nil {
+			return err
+		}
+		result = written
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, proposal := range result.Proposals {
+		s.recordAutomaticFailure(ctx, proposal)
+	}
+	s.notifyPending(ctx, req.Definition, result.Run, result.Proposals)
+	s.announce(ctx, req.Actor, result.Proposals, result.Plan)
+	s.project(ctx, req.Definition, result.Proposals, result.Plan)
+
+	return result, nil
+}
+
+// inTx runs fn in the recorder's transaction. The run, the plan and every
+// proposal are one decision; a failure on the last of them must not leave the
+// first ones waiting on a person with the rest missing.
+func (s *Service) inTx(ctx context.Context, fn func(context.Context) error) error {
+	if s.tx == nil {
+		return fn(ctx)
+	}
+
+	return s.tx.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		return fn(txCtx)
+	})
+}
+
+// write stores the run, the plan and the proposals. Nothing here announces
+// what it wrote: that waits until the transaction has committed.
+func (s *Service) write(ctx context.Context, req *RecordRequest) (*RecordResult, error) {
 	run := req.Run
 	if run == nil {
 		opened, err := s.openRun(ctx, req)
@@ -193,13 +252,8 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 			return nil, err
 		}
 
-		s.recordAutomaticFailure(ctx, created)
 		proposals = append(proposals, created)
 	}
-
-	s.notifyPending(ctx, req.Definition, run, proposals)
-	s.announce(ctx, req.Actor, proposals, plan)
-	s.project(ctx, req.Definition, proposals, plan)
 
 	return &RecordResult{Run: run, Proposals: proposals, Plan: plan}, nil
 }
