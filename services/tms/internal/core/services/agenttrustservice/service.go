@@ -224,7 +224,8 @@ func (s *Service) promote(
 	control *tenant.AgentControl,
 ) error {
 	next, ok := change.current.Next()
-	if !ok || !change.definition.WithinCeiling(next) {
+	if !ok || !change.definition.WithinCeiling(next) ||
+		next.Above(s.toolCeiling(change.row.ToolName)) {
 		// At the ceiling there is nowhere to go. The streak keeps counting so
 		// the agent's page can show it, and a raised ceiling lets the next
 		// clean approval promote.
@@ -340,6 +341,20 @@ func (s *Service) defaultTier(toolName string) agent.AutonomyTier {
 	}
 
 	return tool.DefaultAutonomyTier()
+}
+
+// toolCeiling is the most a tool may ever be promoted to: a tool whose work
+// leaves the organization is never earned past a person's approval.
+func (s *Service) toolCeiling(toolName string) agent.AutonomyTier {
+	if s.tools == nil {
+		return agent.TierAutoExecute
+	}
+	tool, ok := s.tools.Get(toolName)
+	if !ok {
+		return agent.TierAutoExecute
+	}
+
+	return services.CeilingOf(tool)
 }
 
 func (s *Service) logTierChange(change tierChange, to agent.AutonomyTier, comment string) {

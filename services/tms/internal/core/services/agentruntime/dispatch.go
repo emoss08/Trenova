@@ -84,7 +84,8 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 	}
 
-	tier := req.Definition.EffectiveTier(call.Name, tool.DefaultAutonomyTier())
+	tier := req.Definition.EffectiveTier(call.Name, tool.DefaultAutonomyTier()).
+		AtMost(serviceports.CeilingOf(tool))
 	call.Arguments = declaredArguments(
 		tool.ParamSchema(),
 		aliasedArguments(tool.ParamSchema(), call.Arguments),

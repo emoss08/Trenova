@@ -522,7 +522,8 @@ func (s *Service) ToolSummaries(
 		summaries = append(summaries, agentdefinition.ToolSummary{
 			Name:        tool.Name(),
 			Description: tool.Description(),
-			Tier:        definition.EffectiveTier(name, tool.DefaultAutonomyTier()),
+			Tier: definition.EffectiveTier(name, tool.DefaultAutonomyTier()).
+				AtMost(serviceports.CeilingOf(tool)),
 		})
 	}
 

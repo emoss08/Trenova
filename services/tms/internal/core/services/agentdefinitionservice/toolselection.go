@@ -2,6 +2,8 @@ package agentdefinitionservice
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -29,6 +31,24 @@ func validateToolSelection(
 			errortypes.ErrInvalid,
 			fmt.Sprintf("%q is not a tool this system provides", name),
 		)
+	}
+
+	for _, name := range slices.Sorted(maps.Keys(definition.ToolTiers)) {
+		tier := definition.ToolTiers[name]
+		tool, ok := actions.Get(name)
+		if !ok {
+			continue
+		}
+		if ceiling := serviceports.CeilingOf(tool); tier.Above(ceiling) {
+			multiErr.Add(
+				fmt.Sprintf("toolTiers.%s", name),
+				errortypes.ErrInvalid,
+				fmt.Sprintf(
+					"%q sends work outside the organization, so a person approves it: it can be set to %s at most",
+					name, ceiling,
+				),
+			)
+		}
 	}
 }
 

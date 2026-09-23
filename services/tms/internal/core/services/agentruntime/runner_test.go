@@ -1034,3 +1034,48 @@ func TestRun_AToolsOwnLimitHoldsAnEarnedTierDown(t *testing.T) {
 		})
 	}
 }
+
+type cappedActionTool struct {
+	*agentruntimetest.StubActionTool
+
+	ceiling agent.AutonomyTier
+}
+
+func (t *cappedActionTool) TierCeiling() agent.AutonomyTier { return t.ceiling }
+
+/*
+What leaves the organization is a person's decision, however much trust the
+tool earned and however high the agent's ceiling is set. A desk that answered
+a hundred emails well still cannot send the hundred-and-first on its own: the
+run that wrote it may have been started by the email it answers.
+*/
+func TestRun_AToolsCeilingHoldsEvenAnAgentSetToActAlone(t *testing.T) {
+	t.Parallel()
+
+	action := &cappedActionTool{
+		StubActionTool: actionTool("email_customer", agent.TierPropose, nil),
+		ceiling:        agent.TierActWithApproval,
+	}
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("email_customer", map[string]any{"customerId": "cus_1"}),
+		textTurn("Drafted."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{},
+		&stubActionRegistry{Tools: []serviceports.AgentTool{action}}, nil)
+	definition := testDefinition("email_customer")
+	definition.AutonomyCeiling = agent.TierAutoExecute
+	definition.ToolTiers = map[string]agent.AutonomyTier{"email_customer": agent.TierAutoExecute}
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "Tell the customer",
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Actions, 1)
+	assert.Equal(t, agent.TierActWithApproval, result.Actions[0].Tier)
+	assert.False(t, result.Actions[0].Executed, "it waits for a person")
+	assert.Equal(t, agent.TierActWithApproval, rt.ToolSummaries(definition)[0].Tier,
+		"the prompt says what will actually happen")
+}

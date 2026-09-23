@@ -45,6 +45,26 @@ type ToolTierLimiter interface {
 	TierLimit(ctx context.Context, params ToolExecuteParams) agent.AutonomyTier
 }
 
+// ToolTierCeiling is a tool that never runs on its own past a tier, whatever
+// trust it earns and whatever an agent is set to. What leaves the
+// organization (mail to a customer, a note a driver reads, a tender a carrier
+// receives) stays a person's decision: the run that wrote it may have been
+// started by content an outsider wrote, and a model can be talked into
+// anything it is allowed to send.
+type ToolTierCeiling interface {
+	TierCeiling() agent.AutonomyTier
+}
+
+// CeilingOf is the most a tool may run at without a person: its declared
+// ceiling, or automatic execution when it declares none.
+func CeilingOf(tool any) agent.AutonomyTier {
+	if capped, ok := tool.(ToolTierCeiling); ok && capped.TierCeiling().IsValid() {
+		return capped.TierCeiling()
+	}
+
+	return agent.TierAutoExecute
+}
+
 type AgentTool interface {
 	Name() string
 	Description() string

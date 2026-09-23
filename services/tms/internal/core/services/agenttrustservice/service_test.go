@@ -397,3 +397,33 @@ func TestRecordDecision_NilInputsAreNoOps(t *testing.T) {
 
 	assert.Empty(t, h.trust.recorded)
 }
+
+type cappedRegistry struct {
+	services.AgentToolRegistry
+}
+
+type cappedTool struct {
+	services.AgentTool
+}
+
+func (cappedTool) DefaultAutonomyTier() agent.AutonomyTier { return agent.TierActWithApproval }
+func (cappedTool) TierCeiling() agent.AutonomyTier         { return agent.TierActWithApproval }
+
+func (cappedRegistry) Get(string) (services.AgentTool, bool) { return cappedTool{}, true }
+
+// A tool that sends work outside the organization is never earned past a
+// person's approval: the streak keeps counting, and nothing is promoted.
+func TestRecordDecision_NeverPromotesPastAToolsCeiling(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, harnessOptions{earned: true, threshold: 3})
+	h.svc.tools = cappedRegistry{}
+
+	for range 5 {
+		require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, accepted(nil)))
+	}
+
+	assert.Empty(t, h.definitions.tiers)
+	assert.Empty(t, h.trust.marks)
+	assert.Empty(t, h.notifier.created)
+}

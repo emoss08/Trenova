@@ -254,3 +254,41 @@ func TestBuildToolCatalog_MarksTheCoreTools(t *testing.T) {
 	assert.True(t, byName["recall_memory"].Core)
 	assert.False(t, byName["get_shipment"].Core)
 }
+
+type cappedStubTool struct {
+	*agentruntimetest.StubActionTool
+}
+
+func (cappedStubTool) TierCeiling() agent.AutonomyTier { return agent.TierActWithApproval }
+
+// A person approves anything that leaves the organization, so an agent cannot
+// be set to send it on its own.
+func TestValidateToolSelection_RefusesATierAboveAToolsCeiling(t *testing.T) {
+	t.Parallel()
+
+	actions := &agentruntimetest.StubActionRegistry{Tools: []serviceports.AgentTool{
+		cappedStubTool{&agentruntimetest.StubActionTool{
+			ToolName: "email_customer",
+			Resource: permission.ResourceCustomer,
+			Tier:     agent.TierActWithApproval,
+		}},
+	}}
+	queries := &agentruntimetest.StubQueryRegistry{}
+
+	for tier, refused := range map[agent.AutonomyTier]bool{
+		agent.TierPropose:         false,
+		agent.TierActWithApproval: false,
+		agent.TierAutoExecute:     true,
+	} {
+		d := definition("", "email_customer")
+		d.ToolTiers = map[string]agent.AutonomyTier{"email_customer": tier}
+		multiErr := errortypes.NewMultiError()
+		validateToolSelection(d, actions, queries, multiErr)
+
+		fields := make(map[string]bool)
+		for _, e := range multiErr.Errors {
+			fields[e.Field] = true
+		}
+		assert.Equal(t, refused, fields["toolTiers.email_customer"], tier)
+	}
+}
