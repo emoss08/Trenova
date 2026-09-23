@@ -209,5 +209,6 @@ func WorkerOptions() fx.Option {
 		modulesinfra.TemplatingModule,
 		api.ServiceModule,
 		temporaljobs.WorkerModule,
+		agentjobs.WorkerModule,
 	)
 }

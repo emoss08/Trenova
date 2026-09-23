@@ -63,32 +63,38 @@ func (a *Activities) ModelCallActivity(
 	ctx context.Context,
 	in *ModelCallInput,
 ) (*agentruntime.ModelReply, error) {
-	stream, events, err := openStream(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer closeStream(ctx, stream, a.l)
+	emit := func(serviceports.StreamEvent) {}
+	if in.Stream {
+		stream, events, err := openStream(ctx)
+		if err != nil {
+			return nil, err
+		}
+		defer closeStream(ctx, stream, a.l)
 
-	// Whatever an earlier attempt streamed is already in front of the reader.
-	// The retry starts the reply over, and the reader has to be told so before
-	// the first word of the new one arrives, or the two run together.
-	if attempt := activity.GetInfo(ctx).Attempt; attempt > 1 {
-		events.Publish(StreamItem{
-			Event: serviceports.AssistantEventRetrying,
-			Data: serviceports.AssistantRetryingEvent{
-				Attempt: int(attempt) - 1,
-				Reason:  "The reply is being written again after an interruption.",
-				Kind:    serviceports.RetryKindRestart,
-			},
-		}, true)
+		// Whatever an earlier attempt streamed is already in front of the
+		// reader. The retry starts the reply over, and the reader has to be
+		// told so before the first word of the new one arrives, or the two
+		// run together.
+		if attempt := activity.GetInfo(ctx).Attempt; attempt > 1 {
+			events.Publish(StreamItem{
+				Event: serviceports.AssistantEventRetrying,
+				Data: serviceports.AssistantRetryingEvent{
+					Attempt: int(attempt) - 1,
+					Reason:  "The reply is being written again after an interruption.",
+					Kind:    serviceports.RetryKindRestart,
+				},
+			}, true)
+		}
+
+		emit = func(event serviceports.StreamEvent) {
+			events.Publish(StreamItem{Event: event.Event, Data: event.Data}, false)
+		}
 	}
 
 	stopBeating := heartbeat(ctx)
 	defer stopBeating()
 
-	reply, err := a.runtime.StreamCompletion(ctx, in.Request, func(event serviceports.StreamEvent) {
-		events.Publish(StreamItem{Event: event.Event, Data: event.Data}, false)
-	})
+	reply, err := a.runtime.StreamCompletion(ctx, in.Request, emit)
 	if err != nil {
 		return nil, retryPolicyFor(err)
 	}
@@ -106,12 +112,11 @@ func (a *Activities) FindToolsActivity(
 	return &FindToolsResult{Content: content, Loaded: loaded}, nil
 }
 
-// RegisterActivities puts a turn's activities on a worker: the model call and
-// the tool search under their own names, and the tool call as the worker's
-// dynamic activity. It is not a method because the SDK refuses a registered
-// struct with any exported method that is not an activity.
-func RegisterActivities(w worker.ActivityRegistry, a *Activities) {
-	w.RegisterActivity(a)
+// RegisterDynamic registers the tool call as the worker's dynamic activity. The
+// worker's registry registers the struct itself for the model call, the tool
+// search and the publish. This is not a method because the SDK refuses a
+// registered struct with any exported method that is not an activity.
+func RegisterDynamic(w worker.ActivityRegistry, a *Activities) {
 	w.RegisterDynamicActivity(a.runTool, activity.DynamicRegisterOptions{})
 }
 

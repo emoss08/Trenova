@@ -66,6 +66,11 @@ const (
 	// toolTimeout bounds one tool call. Reports are the slowest tools.
 	toolTimeout = 5 * time.Minute
 
+	// heavyToolWait bounds how long a heavy tool may wait for a worker on
+	// the heavy queue before the model is told it could not be run. A
+	// deployment that polls no heavy queue would otherwise hang the turn.
+	heavyToolWait = 15 * time.Minute
+
 	// findTimeout bounds a tool search, which is a catalog read plus
 	// permission checks.
 	findTimeout = 30 * time.Second
@@ -79,6 +84,15 @@ const (
 	// repeated failures, which is the length of the breaker's rest.
 	restingBackoff = time.Minute
 )
+
+// heavyTools run on the heavy queue rather than on the queue of the run that
+// called them. Each builds or compares a report or an optimisation, which takes
+// a worker for minutes and would otherwise hold a slot a person's reply needs.
+var heavyTools = map[string]struct{}{
+	"run_report":          {},
+	"compare_report_runs": {},
+	"plan_dispatch":       {},
+}
 
 // Priority keys order a queue's work: lower runs first. They matter only
 // where kinds of work share a queue, and fairness keys by organization then
@@ -167,6 +181,10 @@ func (rc *RunContext) request() *serviceports.RunRequest {
 
 type ModelCallInput struct {
 	Request *serviceports.ChatCompletionRequest `json:"request"`
+	// Stream says somebody is reading the run live, so the reply is
+	// published as it arrives. A run nobody watches is not streamed: every
+	// publish is a signal in the run's history.
+	Stream bool `json:"stream"`
 }
 
 type FindToolsInput struct {

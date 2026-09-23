@@ -2,12 +2,15 @@ package agentjobs
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,6 +18,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/testsuite"
+	"go.temporal.io/sdk/workflow"
+	"go.uber.org/zap"
 )
 
 type AgentRunWorkflowTestSuite struct {
@@ -22,15 +27,27 @@ type AgentRunWorkflowTestSuite struct {
 	testsuite.WorkflowTestSuite
 
 	env       *testsuite.TestWorkflowEnvironment
+	runtime   *agentruntime.Service
 	payload   *AgentRunPayload
 	completed []CompleteRunInput
 	expired   []ExpireProposalsInput
+	opened    *OpenRunInput
+	finished  *FinishRunInput
 }
 
 func (s *AgentRunWorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
 	s.completed = nil
 	s.expired = nil
+	s.opened = nil
+	s.finished = nil
+	s.runtime = agentruntime.New(agentruntime.Params{
+		Logger:      zap.NewNop(),
+		Completion:  &agentruntimetest.ScriptedCompletion{},
+		QueryTools:  &agentruntimetest.StubQueryRegistry{},
+		ActionTools: &agentruntimetest.StubActionRegistry{},
+		Permissions: &agentruntimetest.StubPermissions{},
+	})
 	s.payload = &AgentRunPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: pulid.MustNew("org_"),
@@ -42,6 +59,11 @@ func (s *AgentRunWorkflowTestSuite) SetupTest() {
 		SubjectType:  agent.SubjectBillingQueueItem,
 		SubjectID:    pulid.MustNew("bqi_"),
 	}
+
+	s.env.RegisterActivity(&Activities{})
+	s.env.RegisterActivity(&agentflow.Activities{})
+	s.env.RegisterWorkflowWithOptions(NewWorkflows(s.runtime).AgentRunWorkflow,
+		workflow.RegisterOptions{Name: AgentRunWorkflowName})
 
 	var a *Activities
 	s.env.OnActivity(a.CompleteRunActivity, mock.Anything, mock.Anything).
@@ -60,14 +82,24 @@ func (s *AgentRunWorkflowTestSuite) AfterTest(_, _ string) {
 	s.env.AssertExpectations(s.T())
 }
 
+func (s *AgentRunWorkflowTestSuite) definition() *agentdefinition.Definition {
+	definition := &agentdefinition.Definition{
+		ID:              s.payload.DefinitionID,
+		OrganizationID:  s.payload.OrganizationID,
+		BusinessUnitID:  s.payload.BusinessUnitID,
+		Name:            "Billing exceptions",
+		Instructions:    "Clear the billing queue.",
+		AutonomyCeiling: agent.TierPropose,
+		Enabled:         true,
+	}
+	definition.ApplyDefaults()
+
+	return definition
+}
+
 func (s *AgentRunWorkflowTestSuite) prepared(shadow bool, decisionTimeout int) *PrepareRunResult {
 	return &PrepareRunResult{
-		Definition: &agentdefinition.Definition{
-			ID:             s.payload.DefinitionID,
-			OrganizationID: s.payload.OrganizationID,
-			BusinessUnitID: s.payload.BusinessUnitID,
-			Name:           "Billing exceptions",
-		},
+		Definition:             s.definition(),
 		ShadowMode:             shadow,
 		DecisionTimeoutSeconds: decisionTimeout,
 		RunTimeoutSeconds:      120,
@@ -83,18 +115,53 @@ func (s *AgentRunWorkflowTestSuite) stubPrepare(result *PrepareRunResult) {
 		}).Once()
 }
 
-func (s *AgentRunWorkflowTestSuite) stubRun(pending int) {
+// stubOpen opens the run as a real runtime turn, so the loop in workflow code
+// has something to drive.
+func (s *AgentRunWorkflowTestSuite) stubOpen() {
 	var a *Activities
-	s.env.OnActivity(a.RunAgentActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, input *RunAgentInput) (*RunAgentResult, error) {
-			s.Equal(s.payload.RunID, input.Payload.RunID)
-			s.NotNil(input.Definition)
-			return &RunAgentResult{
-				Reply:            "done",
-				ProposalsRaised:  pending,
-				PendingProposals: pending,
+	s.env.OnActivity(a.OpenRunActivity, mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, input *OpenRunInput) (*OpenRunResult, error) {
+			s.opened = input
+			req := &serviceports.RunRequest{
+				Definition: input.Definition,
+				Actor:      agentActor(input.Payload.tenantInfo()),
+				Input:      "A scheduled run.",
+				RunID:      input.Payload.RunID,
+				Unattended: true,
+			}
+
+			return &OpenRunResult{
+				Run:  agentflow.NewRunContext(req, agentflow.PriorityBackground),
+				Turn: s.runtime.OpenTurn(ctx, req).State(),
 			}, nil
 		}).Once()
+}
+
+func (s *AgentRunWorkflowTestSuite) stubAnswer(text string) {
+	var fa *agentflow.Activities
+	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, in *agentflow.ModelCallInput) (*agentruntime.ModelReply, error) {
+			s.False(in.Stream, "nobody watches a background run, so nothing is streamed")
+			return &agentruntime.ModelReply{Completion: &serviceports.ChatCompletionResult{
+				Text:            text,
+				ModelIdentifier: "test-model",
+			}}, nil
+		},
+	).Once()
+}
+
+func (s *AgentRunWorkflowTestSuite) stubFinish(pending int) {
+	var a *Activities
+	s.env.OnActivity(a.FinishRunActivity, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, input *FinishRunInput) (*FinishRunResult, error) {
+			s.finished = input
+			return &FinishRunResult{ProposalsRaised: pending, PendingProposals: pending}, nil
+		}).Once()
+}
+
+func (s *AgentRunWorkflowTestSuite) run() {
+	s.env.ExecuteWorkflow(AgentRunWorkflowName, s.payload)
+	s.True(s.env.IsWorkflowCompleted())
 }
 
 func (s *AgentRunWorkflowTestSuite) tenant() pagination.TenantInfo {
@@ -104,14 +171,44 @@ func (s *AgentRunWorkflowTestSuite) tenant() pagination.TenantInfo {
 	}
 }
 
-func (s *AgentRunWorkflowTestSuite) TestShadowRunCompletesAsShadow() {
-	s.stubPrepare(s.prepared(true, 600))
-	s.stubRun(2)
+func (s *AgentRunWorkflowTestSuite) decide() {
+	s.env.SignalWorkflow(AgentDecisionSignalName, DecisionSignal{
+		ProposalID:      pulid.MustNew("agp_"),
+		Decision:        agent.DecisionAccepted,
+		DecidedByUserID: pulid.MustNew("usr_"),
+	})
+}
 
-	s.env.ExecuteWorkflow(AgentRunWorkflow, s.payload)
+func (s *AgentRunWorkflowTestSuite) TestRunsTheLoopAndFilesWhatItDid() {
+	s.stubPrepare(s.prepared(false, 600))
+	s.stubOpen()
+	s.stubAnswer("Nothing needed attention.")
+	s.stubFinish(0)
 
-	s.True(s.env.IsWorkflowCompleted())
+	s.run()
+
 	s.NoError(s.env.GetWorkflowError())
+	s.Require().NotNil(s.finished)
+	s.Nil(s.finished.Failure)
+	s.Require().NotNil(s.finished.Run)
+	s.Equal("Nothing needed attention.", s.finished.Run.Reply)
+	s.Require().Len(s.completed, 1)
+	s.Equal(agent.RunStatusCompleted, s.completed[0].Status)
+}
+
+// Shadow mode means the agent is watched and not acted on. The run is opened
+// in simulation, so an automatic write is previewed rather than made.
+func (s *AgentRunWorkflowTestSuite) TestShadowRunIsOpenedInSimulationAndCompletesAsShadow() {
+	s.stubPrepare(s.prepared(true, 600))
+	s.stubOpen()
+	s.stubAnswer("Proposed two changes.")
+	s.stubFinish(2)
+
+	s.run()
+
+	s.NoError(s.env.GetWorkflowError())
+	s.Require().NotNil(s.opened)
+	s.True(s.opened.Shadow)
 	s.Require().Len(s.completed, 1)
 	s.Equal(agent.RunStatusShadowCompleted, s.completed[0].Status)
 	s.Equal(s.payload.RunID, s.completed[0].RunID)
@@ -119,25 +216,14 @@ func (s *AgentRunWorkflowTestSuite) TestShadowRunCompletesAsShadow() {
 	s.Empty(s.expired)
 }
 
-func (s *AgentRunWorkflowTestSuite) TestNoProposalsCompletesImmediately() {
-	s.stubPrepare(s.prepared(false, 600))
-	s.stubRun(0)
-
-	s.env.ExecuteWorkflow(AgentRunWorkflow, s.payload)
-
-	s.True(s.env.IsWorkflowCompleted())
-	s.NoError(s.env.GetWorkflowError())
-	s.Require().Len(s.completed, 1)
-	s.Equal(agent.RunStatusCompleted, s.completed[0].Status)
-}
-
 func (s *AgentRunWorkflowTestSuite) TestPendingProposalsExpireAfterTimeout() {
 	s.stubPrepare(s.prepared(false, 600))
-	s.stubRun(1)
+	s.stubOpen()
+	s.stubAnswer("Proposed a change.")
+	s.stubFinish(1)
 
-	s.env.ExecuteWorkflow(AgentRunWorkflow, s.payload)
+	s.run()
 
-	s.True(s.env.IsWorkflowCompleted())
 	s.NoError(s.env.GetWorkflowError())
 	s.Require().Len(s.expired, 1)
 	s.Equal(s.payload.RunID, s.expired[0].RunID)
@@ -145,22 +231,31 @@ func (s *AgentRunWorkflowTestSuite) TestPendingProposalsExpireAfterTimeout() {
 	s.Empty(s.completed, "an expired run is not also marked completed")
 }
 
-func (s *AgentRunWorkflowTestSuite) TestDecisionSignalCompletesRun() {
+// The first decision used to end the run, and every other proposal it raised
+// was left pending on a run that had stopped listening. The run now waits
+// until none is pending.
+func (s *AgentRunWorkflowTestSuite) TestWaitsForEveryDecision() {
 	s.stubPrepare(s.prepared(false, 600))
-	s.stubRun(1)
+	s.stubOpen()
+	s.stubAnswer("Proposed two changes.")
+	s.stubFinish(2)
 
-	s.env.RegisterDelayedCallback(func() {
-		s.env.SignalWorkflow(AgentDecisionSignalName, DecisionSignal{
-			ProposalID:      pulid.MustNew("agp_"),
-			Decision:        agent.DecisionAccepted,
-			DecidedByUserID: pulid.MustNew("usr_"),
-		})
-	}, time.Minute)
+	var a *Activities
+	counts := []int{1, 0}
+	s.env.OnActivity(a.PendingProposalsActivity, mock.Anything, mock.Anything).
+		Return(func(context.Context, *PendingProposalsInput) (int, error) {
+			next := counts[0]
+			counts = counts[1:]
+			return next, nil
+		}).Twice()
 
-	s.env.ExecuteWorkflow(AgentRunWorkflow, s.payload)
+	s.env.RegisterDelayedCallback(s.decide, time.Minute)
+	s.env.RegisterDelayedCallback(s.decide, 2*time.Minute)
 
-	s.True(s.env.IsWorkflowCompleted())
+	s.run()
+
 	s.NoError(s.env.GetWorkflowError())
+	s.Empty(counts, "each decision recounts what is left")
 	s.Require().Len(s.completed, 1)
 	s.Equal(agent.RunStatusCompleted, s.completed[0].Status)
 	s.Empty(s.expired)
@@ -173,25 +268,33 @@ func (s *AgentRunWorkflowTestSuite) TestPrepareFailureMarksRunFailed() {
 			"definition disabled", "AgentDefinitionUnavailable", nil,
 		)).Once()
 
-	s.env.ExecuteWorkflow(AgentRunWorkflow, s.payload)
+	s.run()
 
-	s.True(s.env.IsWorkflowCompleted())
 	s.Error(s.env.GetWorkflowError())
 	s.Require().Len(s.completed, 1)
 	s.Equal(agent.RunStatusFailed, s.completed[0].Status)
 	s.Contains(s.completed[0].Error, "definition disabled")
 }
 
-func (s *AgentRunWorkflowTestSuite) TestRunFailureMarksRunFailed() {
+// A model that fails for good fails the run, and what the run did before it
+// is still filed: a write it made is on the record, and a proposal it raised
+// is not left waiting on a run that will never hear its decision.
+func (s *AgentRunWorkflowTestSuite) TestModelFailureFilesWhatRanAndFailsTheRun() {
 	s.stubPrepare(s.prepared(false, 600))
-	var a *Activities
-	s.env.OnActivity(a.RunAgentActivity, mock.Anything, mock.Anything).
-		Return(nil, errors.New("provider unavailable"))
+	s.stubOpen()
+	var fa *agentflow.Activities
+	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).
+		Return(nil, temporal.NewNonRetryableApplicationError(
+			"provider rejected the request", agentflow.ErrTypeModelRejected, nil,
+		)).Once()
+	s.stubFinish(1)
 
-	s.env.ExecuteWorkflow(AgentRunWorkflow, s.payload)
+	s.run()
 
-	s.True(s.env.IsWorkflowCompleted())
 	s.Error(s.env.GetWorkflowError())
+	s.Require().NotNil(s.finished)
+	s.Require().NotNil(s.finished.Failure)
+	s.Require().Len(s.expired, 1)
 	s.Require().NotEmpty(s.completed)
 	s.Equal(agent.RunStatusFailed, s.completed[len(s.completed)-1].Status)
 }
@@ -200,92 +303,53 @@ func TestAgentRunWorkflowTestSuite(t *testing.T) {
 	suite.Run(t, new(AgentRunWorkflowTestSuite))
 }
 
-type AgentSweepWorkflowTestSuite struct {
+type AgentScheduledRunWorkflowTestSuite struct {
 	suite.Suite
 	testsuite.WorkflowTestSuite
 
 	env *testsuite.TestWorkflowEnvironment
 }
 
-func (s *AgentSweepWorkflowTestSuite) SetupTest() {
+func (s *AgentScheduledRunWorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
+	s.env.RegisterActivity(&Activities{})
 }
 
-func (s *AgentSweepWorkflowTestSuite) AfterTest(_, _ string) {
+func (s *AgentScheduledRunWorkflowTestSuite) AfterTest(_, _ string) {
 	s.env.AssertExpectations(s.T())
 }
 
-func dueFixture(n int) []DueDefinition {
-	due := make([]DueDefinition, 0, n)
-	for i := 0; i < n; i++ {
-		due = append(due, DueDefinition{
-			DefinitionID:   pulid.MustNew("agd_"),
-			OrganizationID: pulid.MustNew("org_"),
-			BusinessUnitID: pulid.MustNew("bu_"),
-			NextRunAt:      1_700_000_000,
-		})
-	}
-
-	return due
-}
-
-func (s *AgentSweepWorkflowTestSuite) TestStartsEachDueDefinitionIndependently() {
+// A schedule's firing starts the run for its slot. The slot names the run's
+// workflow, so the same slot cannot start two runs.
+func (s *AgentScheduledRunWorkflowTestSuite) TestStartsTheRunForTheSlot() {
 	var a *Activities
-	due := dueFixture(3)
-	started := make(map[pulid.ID]struct{}, 3)
-
-	s.env.OnActivity(a.ListDueDefinitionsActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, input *ListDueDefinitionsInput) (*ListDueDefinitionsResult, error) {
-			s.Equal(sweepDueLimit, input.Limit)
-			s.Positive(input.Now)
-			return &ListDueDefinitionsResult{Due: due}, nil
+	payload := &ScheduledRunPayload{
+		DefinitionID:   pulid.MustNew("agd_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	}
+	var slot int64
+	s.env.OnActivity(a.StartScheduledRunActivity, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, fired *ScheduledRunPayload) (*StartScheduledRunResult, error) {
+			s.Equal(payload.DefinitionID, fired.DefinitionID)
+			slot = fired.Slot
+			return &StartScheduledRunResult{Started: true, RunID: "ar_1"}, nil
 		}).
 		Once()
-	s.env.OnActivity(a.StartDueRunActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, item *DueDefinition) (*StartDueRunResult, error) {
-			started[item.DefinitionID] = struct{}{}
-			switch item.DefinitionID {
-			case due[0].DefinitionID:
-				return &StartDueRunResult{Started: true, RunID: "ar_1"}, nil
-			case due[1].DefinitionID:
-				return &StartDueRunResult{Started: false, Skipped: "concurrency"}, nil
-			default:
-				return nil, errors.New("temporal unavailable")
-			}
-		})
 
-	s.env.ExecuteWorkflow(AgentSweepWorkflow)
+	s.env.ExecuteWorkflow(AgentScheduledRunWorkflow, payload)
 
 	s.True(s.env.IsWorkflowCompleted())
 	s.NoError(s.env.GetWorkflowError())
+	s.Positive(slot, "the slot is filled in from the time the schedule fired")
 
-	var result *SweepResult
+	var result *StartScheduledRunResult
 	s.Require().NoError(s.env.GetWorkflowResult(&result))
-	s.Equal(3, result.Found)
-	s.Equal(1, result.Started)
-	s.Equal(1, result.Skipped)
-	s.Equal(1, result.Failed)
-	s.Len(started, 3, "one failure must not stop the other definitions from starting")
+	s.True(result.Started)
 }
 
-func (s *AgentSweepWorkflowTestSuite) TestNothingDueIsANoop() {
-	var a *Activities
-	s.env.OnActivity(a.ListDueDefinitionsActivity, mock.Anything, mock.Anything).
-		Return(&ListDueDefinitionsResult{Due: []DueDefinition{}}, nil).Once()
-
-	s.env.ExecuteWorkflow(AgentSweepWorkflow)
-
-	s.True(s.env.IsWorkflowCompleted())
-	s.NoError(s.env.GetWorkflowError())
-
-	var result *SweepResult
-	s.Require().NoError(s.env.GetWorkflowResult(&result))
-	s.Equal(0, result.Found)
-	s.Equal(0, result.Started)
-}
-
-func TestAgentSweepWorkflowTestSuite(t *testing.T) {
-	suite.Run(t, new(AgentSweepWorkflowTestSuite))
+func TestAgentScheduledRunWorkflowTestSuite(t *testing.T) {
+	suite.Run(t, new(AgentScheduledRunWorkflowTestSuite))
 }
 
 type DeleteStaleAskThreadsWorkflowTestSuite struct {

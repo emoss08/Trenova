@@ -6,14 +6,16 @@ import (
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/contrib/workflowstreams"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
-// Run drives one turn from workflow code and returns what it came to. The turn
-// was built by an activity, which may read permissions and history; from here
-// on nothing is read but the turn itself and what its activities return.
+// Run drives one turn from workflow code and returns what it came to. events
+// is the run's stream, or nil for a run nobody reads live. The turn was built
+// by an activity, which may read permissions and history; from here on nothing
+// is read but the turn itself and what its activities return.
 //
 // An error from the model ends the turn and is returned with what the turn had
 // already done, so the caller can keep the record of any write it made. A tool
@@ -52,8 +54,10 @@ func (fx *workflowEffects) Complete(
 	ctx := workflow.WithActivityOptions(fx.ctx, fx.modelOptions())
 
 	var reply agentruntime.ModelReply
-	err := workflow.ExecuteActivity(ctx, a.ModelCallActivity, &ModelCallInput{Request: req}).
-		Get(ctx, &reply)
+	err := workflow.ExecuteActivity(ctx, a.ModelCallActivity, &ModelCallInput{
+		Request: req,
+		Stream:  fx.events != nil,
+	}).Get(ctx, &reply)
 
 	return reply, err
 }
@@ -104,9 +108,11 @@ func (fx *workflowEffects) Find(t *agentruntime.Turn, arguments map[string]any) 
 
 func (fx *workflowEffects) Emit(event serviceports.StreamEvent) {
 	item := StreamItem{Event: event.Event, Data: event.Data}
-	if err := fx.events.Publish(item); err != nil {
-		workflow.GetLogger(fx.ctx).
-			Warn("could not publish a run event", "event", event.Event, "error", err)
+	if fx.events != nil {
+		if err := fx.events.Publish(item); err != nil {
+			workflow.GetLogger(fx.ctx).
+				Warn("could not publish a run event", "event", event.Event, "error", err)
+		}
 	}
 
 	// The reply's text is already in the transcript whole. Keeping each
@@ -195,7 +201,7 @@ func (fx *workflowEffects) modelOptions() workflow.ActivityOptions {
 }
 
 func (fx *workflowEffects) toolOptions(name string) workflow.ActivityOptions {
-	return workflow.ActivityOptions{
+	options := workflow.ActivityOptions{
 		StartToCloseTimeout: toolTimeout,
 		Priority:            fx.priority(),
 		Summary:             name,
@@ -210,6 +216,12 @@ func (fx *workflowEffects) toolOptions(name string) workflow.ActivityOptions {
 			NonRetryableErrorTypes: []string{ErrTypeUnknownTool, ErrTypeBadToolInput},
 		},
 	}
+	if _, heavy := heavyTools[name]; heavy {
+		options.TaskQueue = temporaltype.TaskQueueAgentHeavy.String()
+		options.ScheduleToStartTimeout = heavyToolWait
+	}
+
+	return options
 }
 
 func (fx *workflowEffects) publishOptions() workflow.ActivityOptions {

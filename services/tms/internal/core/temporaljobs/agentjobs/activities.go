@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -14,9 +15,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -40,7 +45,7 @@ type ActivitiesParams struct {
 	RunRepo       repositories.AgentRunRepository
 	ProposalRepo  repositories.AgentProposalRepository
 	Runs          serviceports.AgentRunService
-	Runtime       serviceports.AgentRuntime
+	Runtime       *agentruntime.Service
 	Steps         serviceports.RunStepLedger
 	Trajectory    serviceports.AgentRunEventRecorder `optional:"true"`
 	Contexts      serviceports.RuntimeContextBuilder
@@ -55,6 +60,7 @@ type ActivitiesParams struct {
 	// Watchtower puts a run that could not finish on the feed, so a
 	// failure nobody was watching for still reaches someone.
 	Watchtower serviceports.WatchtowerProjector `optional:"true"`
+	Schedules  *DefinitionSchedules
 }
 
 type Activities struct {
@@ -64,7 +70,7 @@ type Activities struct {
 	runRepo       repositories.AgentRunRepository
 	proposalRepo  repositories.AgentProposalRepository
 	runs          serviceports.AgentRunService
-	runtime       serviceports.AgentRuntime
+	runtime       *agentruntime.Service
 	steps         serviceports.RunStepLedger
 	trajectory    serviceports.AgentRunEventRecorder
 	contexts      serviceports.RuntimeContextBuilder
@@ -77,6 +83,7 @@ type Activities struct {
 	subjects      serviceports.AgentSubjectDescriber
 	activity      serviceports.AgentActivityPublisher
 	watchtower    serviceports.WatchtowerProjector
+	schedules     *DefinitionSchedules
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -102,6 +109,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		subjects:      p.Subjects,
 		activity:      p.Activity,
 		watchtower:    p.Watchtower,
+		schedules:     p.Schedules,
 	}
 }
 
@@ -177,67 +185,216 @@ func (a *Activities) trajectoryFor(
 	})
 }
 
-func (a *Activities) RunAgentActivity(
+// runRequest is what a background run asks the runtime: its subject, as the
+// agent, unattended, with every write claimed in the run's ledger.
+func (a *Activities) runRequest(
 	ctx context.Context,
-	input *RunAgentInput,
-) (*RunAgentResult, error) {
-	payload := input.Payload
+	payload *AgentRunPayload,
+	definition *agentdefinition.Definition,
+	subject *agentdefinition.RuntimeSubject,
+) (*serviceports.RunRequest, error) {
 	tenant := payload.tenantInfo()
 	actor := agentActor(tenant)
-	definition := input.Definition
 
 	runtimeContext, err := a.contexts.Build(ctx, &serviceports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      actor,
 		Trigger:    payload.Trigger,
-		Subject:    input.Subject,
+		Subject:    subject,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("build runtime context: %w", err)
 	}
 
-	activity.RecordHeartbeat(ctx, "running")
-
-	// A background run's account of itself used to end here. The runtime emitted
-	// every tool call, refusal and give-up, and the closure below used them as a
-	// heartbeat tick and dropped them — leaving the run's durable record as its
-	// final reply, cut to two thousand characters. Now they are written down.
-	//
-	// The writer rides a context cancellation cannot reach, for the same reason
-	// the chat side does: the events worth keeping are most often the ones
-	// emitted as something is going wrong.
-	keep := context.WithoutCancel(ctx)
-	trajectory := a.trajectoryFor(keep, tenant, payload.RunID)
-
-	outcome, err := a.runtime.Run(ctx, &serviceports.RunRequest{
+	return &serviceports.RunRequest{
 		Definition: definition,
 		Actor:      actor,
 		Context:    runtimeContext,
-		Input:      backgroundInput(payload, input.Subject),
+		Input:      backgroundInput(payload, subject),
 		RunID:      payload.RunID,
 		Unattended: true,
-		// The ledger is what makes this activity safe to retry. Without it a
-		// second attempt re-runs every write the first one made, and the tools
-		// do not dedupe: RequiresIdempotencyKey is checked for presence and,
-		// bar the two that forward it to an email provider, never looked up.
+		// The ledger is what makes a retried write safe. Without it a second
+		// attempt re-runs every write the first one made, and the tools do
+		// not dedupe: RequiresIdempotencyKey is checked for presence and, bar
+		// the two that forward it to an email provider, never looked up.
 		Steps: a.steps,
 		StepOwner: serviceports.RunStepOwner{
 			Kind: serviceports.RunStepOwnerAgentRun,
 			ID:   payload.RunID,
 		},
 		Attempt: int(activity.GetInfo(ctx).Attempt),
-		Emit: func(event serviceports.StreamEvent) {
-			activity.RecordHeartbeat(ctx, "working")
-			serviceports.RecordTrajectory(trajectory, keep, event)
-		},
-	})
+	}, nil
+}
+
+// RunAgentActivity is the whole loop in one activity, as a run was before the
+// loop moved into workflow code. Only runs that started on that code call it.
+func (a *Activities) RunAgentActivity(
+	ctx context.Context,
+	input *RunAgentInput,
+) (*RunAgentResult, error) {
+	payload := input.Payload
+	tenant := payload.tenantInfo()
+
+	req, err := a.runRequest(ctx, payload, input.Definition, input.Subject)
+	if err != nil {
+		return nil, err
+	}
+
+	activity.RecordHeartbeat(ctx, "running")
+
+	// The writer rides a context cancellation cannot reach: the events worth
+	// keeping are most often the ones emitted as something is going wrong.
+	keep := context.WithoutCancel(ctx)
+	trajectory := a.trajectoryFor(keep, tenant, payload.RunID)
+	req.Emit = func(event serviceports.StreamEvent) {
+		activity.RecordHeartbeat(ctx, "working")
+		serviceports.RecordTrajectory(trajectory, keep, event)
+	}
+
+	outcome, err := a.runtime.Run(ctx, req)
 	serviceports.FlushTrajectory(trajectory, keep)
 	if err != nil {
 		return nil, err
 	}
 
+	settled, err := a.settleRun(ctx, settleRunParams{
+		Payload:    payload,
+		Definition: input.Definition,
+		Subject:    input.Subject,
+		Outcome:    outcome,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &RunAgentResult{
+		Reply:            outcome.Reply,
+		Model:            outcome.Model,
+		ToolCallsUsed:    outcome.ToolCallsUsed,
+		Exhausted:        outcome.Exhausted,
+		ProposalsRaised:  settled.ProposalsRaised,
+		PendingProposals: settled.PendingProposals,
+	}, nil
+}
+
+// OpenRunActivity builds the run's turn, which reads permissions, the agent's
+// memory and the ledger, so it happens here rather than in workflow code.
+//
+// A run in shadow mode is opened in simulation. Shadow mode means the agent's
+// work is watched and not acted on, and an automatic write that ran anyway
+// would be exactly the action shadow mode exists to withhold.
+func (a *Activities) OpenRunActivity(
+	ctx context.Context,
+	input *OpenRunInput,
+) (*OpenRunResult, error) {
+	definition := input.Definition
+	if input.Shadow && !definition.SimulationMode {
+		simulated := *definition
+		simulated.SimulationMode = true
+		definition = &simulated
+	}
+
+	req, err := a.runRequest(ctx, input.Payload, definition, input.Subject)
+	if err != nil {
+		return nil, err
+	}
+
+	return &OpenRunResult{
+		Run:  agentflow.NewRunContext(req, agentflow.PriorityBackground),
+		Turn: a.runtime.OpenTurn(ctx, req).State(),
+	}, nil
+}
+
+// FinishRunActivity files what a run did: its proposals, its summary, and the
+// account of how it got there. It runs however the loop ended, so a write the
+// run made before a failure is still on the record.
+func (a *Activities) FinishRunActivity(
+	ctx context.Context,
+	input *FinishRunInput,
+) (*FinishRunResult, error) {
+	outcome := input.Run
+	if outcome == nil {
+		outcome = &serviceports.RunResult{}
+	}
+
+	settled, err := a.settleRun(ctx, settleRunParams{
+		Payload:    input.Payload,
+		Definition: input.Definition,
+		Subject:    input.Subject,
+		Outcome:    outcome,
+		Failed:     input.Failure != nil,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Last, so an attempt that fails before this is the one that writes it:
+	// written earlier, a retry would write the run's account twice.
+	a.recordTrajectory(ctx, input.Payload, input.Events)
+
+	return settled, nil
+}
+
+// PendingProposalsActivity counts the run's proposals still waiting on a
+// person.
+func (a *Activities) PendingProposalsActivity(
+	ctx context.Context,
+	input *PendingProposalsInput,
+) (int, error) {
+	proposals, err := a.proposalRepo.ListByRun(ctx, repositories.ListAgentProposalsByRunRequest{
+		RunID:      input.RunID,
+		TenantInfo: input.TenantInfo,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("list the run's proposals: %w", err)
+	}
+
+	return countPending(proposals), nil
+}
+
+func countPending(proposals []*agent.AgentProposal) int {
+	pending := 0
+	for _, proposal := range proposals {
+		if proposal.Status == agent.ProposalStatusPending {
+			pending++
+		}
+	}
+
+	return pending
+}
+
+func (a *Activities) recordTrajectory(
+	ctx context.Context,
+	payload *AgentRunPayload,
+	events []temporaltype.StreamItem,
+) {
+	writer := a.trajectoryFor(ctx, payload.tenantInfo(), payload.RunID)
+	for _, event := range events {
+		serviceports.RecordTrajectory(writer, ctx, serviceports.StreamEvent{
+			Event: event.Event,
+			Data:  event.Data,
+		})
+	}
+	serviceports.FlushTrajectory(writer, ctx)
+}
+
+// settleRunParams groups what filing a finished run needs.
+type settleRunParams struct {
+	Payload    *AgentRunPayload
+	Definition *agentdefinition.Definition
+	Subject    *agentdefinition.RuntimeSubject
+	Outcome    *serviceports.RunResult
+	// Failed says the loop did not finish. What it proposed is still filed,
+	// but the run is not left awaiting a decision it will never hear.
+	Failed bool
+}
+
+// settleRun files a run's proposals and summary.
+func (a *Activities) settleRun(ctx context.Context, p settleRunParams) (*FinishRunResult, error) {
+	tenant := p.Payload.tenantInfo()
+
 	run, err := a.runRepo.GetByID(ctx, repositories.GetAgentRunByIDRequest{
-		ID:         payload.RunID,
+		ID:         p.Payload.RunID,
 		TenantInfo: &tenant,
 	})
 	if err != nil {
@@ -250,27 +407,22 @@ func (a *Activities) RunAgentActivity(
 	// otherwise have its proposals recorded a second time, and the person
 	// would be asked to approve the same change on two cards.
 	recorded, err := a.recordProposals(ctx, recordProposalsParams{
-		Actor:      actor,
-		Definition: definition,
+		Actor:      agentActor(tenant),
+		Definition: p.Definition,
 		Run:        run,
-		Actions:    outcome.Actions,
-		Subject:    input.Subject,
+		Actions:    p.Outcome.Actions,
+		Subject:    p.Subject,
 		TenantInfo: tenant,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	pending := 0
-	for _, proposal := range recorded.Proposals {
-		if proposal.Status == agent.ProposalStatusPending {
-			pending++
-		}
-	}
+	pending := countPending(recorded.Proposals)
 
-	run.ModelIdentifier = outcome.Model
-	run.Summary = stringutils.Ellipsize(strings.TrimSpace(outcome.Reply), maxSummaryChars)
-	if pending > 0 {
+	run.ModelIdentifier = p.Outcome.Model
+	run.Summary = stringutils.Ellipsize(strings.TrimSpace(p.Outcome.Reply), maxSummaryChars)
+	if pending > 0 && !p.Failed {
 		run.Status = agent.RunStatusAwaitingDecision
 	}
 	if _, err = a.runRepo.Update(ctx, run); err != nil {
@@ -278,11 +430,7 @@ func (a *Activities) RunAgentActivity(
 	}
 	a.announceRun(ctx, run)
 
-	return &RunAgentResult{
-		Reply:            outcome.Reply,
-		Model:            outcome.Model,
-		ToolCallsUsed:    outcome.ToolCallsUsed,
-		Exhausted:        outcome.Exhausted,
+	return &FinishRunResult{
 		ProposalsRaised:  len(recorded.Proposals),
 		PendingProposals: pending,
 	}, nil
@@ -357,53 +505,35 @@ func (a *Activities) ExpireProposalsActivity(
 	})
 }
 
-func (a *Activities) ListDueDefinitionsActivity(
+// StartScheduledRunActivity starts the run a definition's schedule fired for,
+// when the definition may run now.
+//
+// The schedule decides when; this decides whether. The definition may have
+// been disabled or turned into a chat agent since the schedule last heard, it
+// may already have as many runs open as it is allowed, or it may be past its
+// budget; each is a slot skipped, not a failure. The slot names the run's
+// workflow, so the same slot cannot start two runs.
+func (a *Activities) StartScheduledRunActivity(
 	ctx context.Context,
-	input *ListDueDefinitionsInput,
-) (*ListDueDefinitionsResult, error) {
-	definitions, err := a.definitions.ListDueAcrossTenants(
-		ctx,
-		repositories.ListDueAcrossTenantsRequest{
-			Now:   input.Now,
-			Limit: input.Limit,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	due := make([]DueDefinition, 0, len(definitions))
-	for _, definition := range definitions {
-		if definition.NextRunAt == nil {
-			continue
-		}
-		due = append(due, DueDefinition{
-			DefinitionID:   definition.ID,
-			OrganizationID: definition.OrganizationID,
-			BusinessUnitID: definition.BusinessUnitID,
-			NextRunAt:      *definition.NextRunAt,
-		})
-	}
-
-	return &ListDueDefinitionsResult{Due: due}, nil
-}
-
-func (a *Activities) StartDueRunActivity(
-	ctx context.Context,
-	due *DueDefinition,
-) (*StartDueRunResult, error) {
-	tenant := pagination.TenantInfo{OrgID: due.OrganizationID, BuID: due.BusinessUnitID}
+	payload *ScheduledRunPayload,
+) (*StartScheduledRunResult, error) {
+	tenant := pagination.TenantInfo{OrgID: payload.OrganizationID, BuID: payload.BusinessUnitID}
 	now := timeutils.NowUnix()
 
 	definition, err := a.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
-		ID:         due.DefinitionID,
+		ID:         payload.DefinitionID,
 		TenantInfo: tenant,
 	})
 	if err != nil {
-		return nil, err
+		return nil, temporal.NewNonRetryableApplicationError(
+			"agent definition unavailable", "DefinitionUnavailable", err,
+		)
 	}
-	if !definition.Enabled || !definition.IsBackground() {
-		return &StartDueRunResult{Skipped: "not_runnable"}, nil
+	if !definition.Enabled || !definition.IsBackground() || !Scheduled(definition) {
+		return &StartScheduledRunResult{Skipped: "not_runnable"}, nil
+	}
+	if definition.EndsAt != nil && *definition.EndsAt <= now {
+		return &StartScheduledRunResult{Skipped: "ended"}, nil
 	}
 
 	open, err := a.runRepo.CountOpen(ctx, repositories.CountOpenAgentRunsRequest{
@@ -414,60 +544,52 @@ func (a *Activities) StartDueRunActivity(
 		return nil, err
 	}
 	if open >= definition.MaxConcurrentRuns {
-		return &StartDueRunResult{Skipped: "at_concurrency_limit"}, nil
+		return &StartScheduledRunResult{Skipped: "at_concurrency_limit"}, nil
 	}
 
+	// The next slot is kept on the definition for the screens that show it;
+	// the schedule, not this, is what fires it.
 	var next *int64
-	ended := definition.EndsAt != nil && *definition.EndsAt <= now
-	if !ended {
-		computed, cErr := definition.ComputeNextRun(now)
-		if cErr != nil {
-			return nil, fmt.Errorf("compute next run: %w", cErr)
-		}
-		if definition.EndsAt == nil || computed < *definition.EndsAt {
-			next = &computed
-		}
+	if computed, cErr := definition.ComputeNextRun(now); cErr == nil &&
+		(definition.EndsAt == nil || computed < *definition.EndsAt) {
+		next = &computed
 	}
-
-	expected := due.NextRunAt
-	claimed, err := a.definitions.MarkRun(ctx, repositories.MarkAgentDefinitionRunRequest{
+	if _, err = a.definitions.MarkRun(ctx, repositories.MarkAgentDefinitionRunRequest{
 		ID:                definition.ID,
 		TenantInfo:        tenant,
 		LastRunAt:         now,
 		NextRunAt:         next,
-		ExpectedNextRunAt: &expected,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !claimed {
-		return &StartDueRunResult{Skipped: "slot_already_claimed"}, nil
-	}
-
-	if ended {
-		definition.Enabled = false
-		definition.NextRunAt = nil
-		if _, uErr := a.definitions.Update(ctx, definition); uErr != nil {
-			a.logger.Warn("agent sweep: could not disable an ended definition",
-				zap.String("definitionId", definition.ID.String()),
-				zap.Error(uErr),
-			)
-		}
-
-		return &StartDueRunResult{Skipped: "ended"}, nil
+		ExpectedNextRunAt: definition.NextRunAt,
+	}); err != nil {
+		return nil, fmt.Errorf("record the scheduled run: %w", err)
 	}
 
 	run, err := a.runs.StartForDefinition(ctx, &serviceports.StartAgentRunForDefinitionRequest{
 		DefinitionID: definition.ID,
 		Trigger:      definition.TriggerMode.RunTrigger(),
-		Slot:         due.NextRunAt,
+		Slot:         payload.Slot,
 		TenantInfo:   tenant,
 	}, agentActor(tenant))
 	if err != nil {
+		if errors.Is(err, serviceports.ErrAgentRunAlreadyOpen) {
+			return &StartScheduledRunResult{Skipped: "slot_already_started"}, nil
+		}
+		if errortypes.IsBusinessError(err) {
+			return &StartScheduledRunResult{Skipped: err.Error()}, nil
+		}
+
 		return nil, err
 	}
 
-	return &StartDueRunResult{Started: true, RunID: run.ID.String()}, nil
+	return &StartScheduledRunResult{Started: true, RunID: run.ID.String()}, nil
+}
+
+// ReconcileDefinitionSchedulesActivity makes every agent's schedule match the
+// agent.
+func (a *Activities) ReconcileDefinitionSchedulesActivity(
+	ctx context.Context,
+) (*ReconcileResult, error) {
+	return a.schedules.Reconcile(ctx)
 }
 
 func (a *Activities) updateRun(

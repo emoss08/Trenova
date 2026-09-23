@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/temporaljobs/replaytest"
 	"go.temporal.io/sdk/worker"
+	"go.temporal.io/sdk/workflow"
 )
 
 // Executions like these are open in production right now, most of them parked
@@ -16,6 +17,9 @@ func TestAgentRunWorkflow_ReplaysRecordedHistories(t *testing.T) {
 	t.Parallel()
 
 	replaytest.Dir(t, filepath.Join("testdata", "replay"), func(r worker.WorkflowReplayer) {
-		r.RegisterWorkflow(AgentRunWorkflow)
+		r.RegisterWorkflowWithOptions(
+			NewWorkflows(nil).AgentRunWorkflow,
+			workflow.RegisterOptions{Name: AgentRunWorkflowName},
+		)
 	})
 }

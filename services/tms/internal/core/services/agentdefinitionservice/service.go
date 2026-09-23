@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -27,6 +28,9 @@ type Params struct {
 	QueryTools   services.AgentQueryToolRegistry
 	Contexts     services.RuntimeContextBuilder
 	AuditService services.AuditService
+	// Schedules keeps the schedule behind a scheduled or continuous agent
+	// in line with the agent as it is saved.
+	Schedules services.AgentDefinitionScheduler
 }
 
 type Service struct {
@@ -36,6 +40,7 @@ type Service struct {
 	queryTools services.AgentQueryToolRegistry
 	contexts   services.RuntimeContextBuilder
 	audit      services.AuditService
+	schedules  services.AgentDefinitionScheduler
 }
 
 func New(p Params) services.AgentDefinitionService {
@@ -46,6 +51,7 @@ func New(p Params) services.AgentDefinitionService {
 		queryTools: p.QueryTools,
 		contexts:   p.Contexts,
 		audit:      p.AuditService,
+		schedules:  p.Schedules,
 	}
 }
 
@@ -100,6 +106,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
+	s.schedules.Sync(ctx, created)
 	s.logAudit(created, nil, permission.OpCreate, actor, "Agent created")
 
 	return created, nil
@@ -137,6 +144,10 @@ func (s *Service) Update(
 		return nil, err
 	}
 
+	if scheduleChanged(&previous, saved) || !typeutils.EqualPtr(previous.EndsAt, saved.EndsAt) ||
+		previous.Name != saved.Name {
+		s.schedules.Sync(ctx, saved)
+	}
 	s.logAudit(saved, &previous, permission.OpUpdate, actor, "Agent updated")
 
 	return saved, nil
@@ -165,6 +176,7 @@ func (s *Service) Delete(
 		return err
 	}
 
+	s.schedules.Remove(ctx, existing.ID)
 	s.logAudit(existing, existing, permission.OpDelete, actor, "Agent deleted")
 
 	return nil

@@ -32,6 +32,7 @@ import (
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
+	"go.temporal.io/sdk/workflow"
 )
 
 type recordedRun struct {
@@ -106,7 +107,10 @@ func TestRecordAgentRunHistories(t *testing.T) {
 		t.Run(rec.name, func(t *testing.T) {
 			queue := "replay-record-" + rec.name
 			w := worker.New(c, queue, worker.Options{})
-			w.RegisterWorkflow(AgentRunWorkflow)
+			w.RegisterWorkflowWithOptions(
+				NewWorkflows(nil).AgentRunWorkflow,
+				workflow.RegisterOptions{Name: AgentRunWorkflowName},
+			)
 			registerStandIns(w, rec)
 			require.NoError(t, w.Start())
 			defer w.Stop()
@@ -124,7 +128,7 @@ func TestRecordAgentRunHistories(t *testing.T) {
 			run, err := c.ExecuteWorkflow(t.Context(), client.StartWorkflowOptions{
 				ID:        fmt.Sprintf("replay-record/%s/%d", rec.name, time.Now().UnixNano()),
 				TaskQueue: queue,
-			}, AgentRunWorkflow, payload)
+			}, AgentRunWorkflowName, payload)
 			require.NoError(t, err)
 
 			leaveOpen := rec.drive(t, c, run)

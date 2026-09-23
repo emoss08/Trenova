@@ -236,9 +236,9 @@ func (r *repository) ListEnabledByTrigger(
 	return entities, nil
 }
 
-func (r *repository) ListDueAcrossTenants(
+func (r *repository) ListScheduledAcrossTenants(
 	ctx context.Context,
-	req repositories.ListDueAcrossTenantsRequest,
+	req repositories.ListScheduledAcrossTenantsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	cols := buncolgen.DefinitionColumns
 	limit := req.Limit
@@ -247,21 +247,19 @@ func (r *repository) ListDueAcrossTenants(
 	}
 	entities := make([]*agentdefinition.Definition, 0, limit)
 
-	err := r.db.DBForContext(ctx).
+	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
-		Where(cols.Enabled.IsTrue()).
 		Where(cols.TriggerMode.In(), bun.In([]agentdefinition.TriggerMode{
 			agentdefinition.TriggerScheduled,
 			agentdefinition.TriggerContinuous,
-		})).
-		Where(cols.NextRunAt.IsNotNull()).
-		Where(cols.NextRunAt.Lte(), req.Now).
-		Order(cols.NextRunAt.OrderAsc()).
-		Limit(limit).
-		Scan(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list due agent definitions across tenants: %w", err)
+		}))
+	if req.AfterID.IsNotNil() {
+		query = query.Where(cols.ID.Gt(), req.AfterID)
+	}
+
+	if err := query.Order(cols.ID.OrderAsc()).Limit(limit).Scan(ctx); err != nil {
+		return nil, fmt.Errorf("list scheduled agent definitions across tenants: %w", err)
 	}
 
 	return entities, nil
