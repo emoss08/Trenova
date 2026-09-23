@@ -1025,52 +1025,13 @@ type TemporalScheduleConfig struct {
 	PersistOnStop bool `mapstructure:"persistOnStop"`
 }
 
+// TemporalWorkerConfig picks which task queues a worker process polls. It is
+// the one worker setting that is a deployment decision rather than a tuning
+// value: a process can be dedicated to interactive replies while another takes
+// everything else. Concurrency and pollers are set per queue in code, beside
+// the work they size, because the right numbers depend on what runs there.
 type TemporalWorkerConfig struct {
-	MaxConcurrentActivities int           `mapstructure:"maxConcurrentActivities" validate:"min=0,max=1000"`
-	MaxConcurrentWorkflows  int           `mapstructure:"maxConcurrentWorkflows"  validate:"min=0,max=1000"`
-	MaxActivityPollers      int           `mapstructure:"maxActivityPollers"      validate:"min=0,max=100"`
-	MaxWorkflowPollers      int           `mapstructure:"maxWorkflowPollers"      validate:"min=0,max=100"`
-	WorkerStopTimeout       time.Duration `mapstructure:"workerStopTimeout"`
-	Queues                  []string      `mapstructure:"queues"`
-}
-
-func (c *TemporalWorkerConfig) GetMaxConcurrentActivities() int {
-	if c.MaxConcurrentActivities == 0 {
-		return 10
-	}
-
-	return c.MaxConcurrentActivities
-}
-
-func (c *TemporalWorkerConfig) GetMaxConcurrentWorkflows() int {
-	if c.MaxConcurrentWorkflows == 0 {
-		return 10
-	}
-
-	return c.MaxConcurrentWorkflows
-}
-
-func (c *TemporalWorkerConfig) GetMaxActivityPollers() int {
-	if c.MaxActivityPollers == 0 {
-		return 2
-	}
-
-	return c.MaxActivityPollers
-}
-
-func (c *TemporalWorkerConfig) GetMaxWorkflowPollers() int {
-	if c.MaxWorkflowPollers == 0 {
-		return 2
-	}
-
-	return c.MaxWorkflowPollers
-}
-
-func (c *TemporalWorkerConfig) GetWorkerStopTimeout() time.Duration {
-	if c.WorkerStopTimeout == 0 {
-		return 30 * time.Second
-	}
-	return c.WorkerStopTimeout
+	Queues []string `mapstructure:"queues"`
 }
 
 type AuditConfig struct {
