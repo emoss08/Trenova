@@ -8,7 +8,9 @@ import { compression } from "vite-plugin-compression2";
 const proxyConfig = {
   target: "http://localhost:8080",
   changeOrigin: true,
-  configure(proxy: { on: (e: string, cb: (req: { setHeader: (k: string, v: string) => void }) => void) => void }) {
+  configure(proxy: {
+    on: (e: string, cb: (req: { setHeader: (k: string, v: string) => void }) => void) => void;
+  }) {
     proxy.on("proxyReq", (proxyReq) => {
       proxyReq.setHeader("accept-encoding", "identity");
     });
@@ -48,6 +50,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       "@trenova/shared": path.resolve(__dirname, "../../packages/shared/src"),
     },
+    // Shared components call router hooks. A second copy of react-router resolved from
+    // packages/shared carries its own context, and every hook in it then reports that it
+    // is outside a router.
+    dedupe: ["react-router"],
   },
   optimizeDeps: {
     // @foony/realtime builds its Node-only `ws` fallback specifier at runtime
