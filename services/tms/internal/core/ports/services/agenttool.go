@@ -85,6 +85,29 @@ type PrerequisiteTool interface {
 	Prerequisites() []string
 }
 
+// SelfScopedTool acts only on the records of the person driving the turn —
+// their own home screen — the way the application lets any signed-in person
+// arrange their own. It needs no role grant, is never offered to an agent
+// principal or a run nobody is watching, and runs only for the person it was
+// proposed for.
+type SelfScopedTool interface {
+	SelfScoped() bool
+}
+
+// SelfScopeOwnerParam is where the runtime records whose records a
+// self-scoped call is about. The runtime writes it from the turn's actor and
+// overwrites anything the model sent; the tool refuses to run for anyone else,
+// so a proposal approved from someone else's queue cannot land on their own
+// home screen instead.
+const SelfScopeOwnerParam = "_owner"
+
+// IsSelfScoped reports whether a tool acts only on its caller's own records.
+func IsSelfScoped(tool any) bool {
+	scoped, ok := tool.(SelfScopedTool)
+
+	return ok && scoped.SelfScoped()
+}
+
 // DescribeTool builds a tool's descriptor, reading the optional interfaces
 // both registries share.
 func DescribeTool(

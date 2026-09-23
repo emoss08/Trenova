@@ -7,6 +7,11 @@ import { humanizeToolName } from "./proposal-state";
  */
 const TOOL_TITLES: Record<string, string> = {
   recall_memory: "Recall what was recorded",
+  get_my_home_layout: "Read your home page",
+  list_home_widgets: "List home page widgets",
+  add_home_widget: "Add to your home page",
+  remove_home_widget: "Remove from your home page",
+  arrange_home_layout: "Rearrange your home page",
   remember: "Record for later",
   forget_memory: "Retire a memory",
   list_insights: "Review insights",

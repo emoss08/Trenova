@@ -107,6 +107,9 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	// model that the system refuses rather than that this person lacks the
 	// right; the denial also named the resource they lacked.
 	allowed := s.permittedTools(ctx, req.actor, s.heldTools(req.definition))
+	if req.unattended {
+		allowed = s.withoutSelfScoped(allowed)
+	}
 	selected := agentdefinition.WithoutCoreTools(allowed)
 
 	set := &toolSet{
@@ -417,6 +420,16 @@ func (s *Service) permittedTools(
 
 	verdicts := make(map[string]bool, len(names))
 	for _, name := range names {
+		// A self-scoped tool touches only the person's own records, which any
+		// signed-in person may arrange; it needs no grant, and nobody but a
+		// person has records of that kind.
+		if serviceports.IsSelfScoped(s.toolNamed(name)) {
+			if actor.PrincipalType == serviceports.PrincipalTypeUser {
+				permitted = append(permitted, name)
+			}
+			continue
+		}
+
 		resource, operation, ok := s.toolGate(name)
 		if !ok {
 			continue
@@ -447,6 +460,18 @@ func (s *Service) permittedTools(
 	}
 
 	return permitted
+}
+
+// toolNamed is the registered tool behind a name, read or write, or nil.
+func (s *Service) toolNamed(name string) any {
+	if tool, ok := s.queryTools.Get(name); ok {
+		return tool
+	}
+	if tool, ok := s.actionTools.Get(name); ok {
+		return tool
+	}
+
+	return nil
 }
 
 // toolGate is the permission a tool is used under.
@@ -501,4 +526,17 @@ func toSpec(descriptor serviceports.AgentToolDescriptor) serviceports.ToolSpec {
 
 func firstSentence(text string) string {
 	return stringutils.FirstSentence(text)
+}
+
+// withoutSelfScoped drops the tools that act on a person's own records. A run
+// nobody is watching has no person whose records they would be.
+func (s *Service) withoutSelfScoped(names []string) []string {
+	kept := make([]string, 0, len(names))
+	for _, name := range names {
+		if !serviceports.IsSelfScoped(s.toolNamed(name)) {
+			kept = append(kept, name)
+		}
+	}
+
+	return kept
 }

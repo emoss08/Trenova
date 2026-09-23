@@ -91,6 +91,8 @@ func ToolProviders() []any {
 		provideListCustomerPaymentsTool,
 		provideGetInboundMessageTool,
 		provideListInboundMessagesTool,
+		newGetMyHomeLayoutTool,
+		newListHomeWidgetsTool,
 	}
 }
 

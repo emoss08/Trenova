@@ -76,6 +76,9 @@ func ToolProviders() []any {
 		providePlaceWorkerDispatchHoldTool,
 		provideAcknowledgeCarrierIntelEventTool,
 		provideResolveCarrierIntelEventTool,
+		newAddHomeWidgetTool,
+		newRemoveHomeWidgetTool,
+		newArrangeHomeLayoutTool,
 	}
 }
 

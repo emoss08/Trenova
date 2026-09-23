@@ -104843,6 +104843,15 @@
       "service/agentmemoryservice"
     ]
   },
+  "Only a person has a home page to change": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Only a person has a place in the watchtower": {
     "sites": 1,
     "scope": [
@@ -106147,6 +106156,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Only the person this change is for can approve it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalexecutor"
     ]
   },
   "Only the person who started a transfer can stop it": {
@@ -161820,6 +161838,15 @@
       "routes/agent-control"
     ]
   },
+  "The person's administrator manages this home page, so it cannot be changed here": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "The phone number for the emergency contact.": {
     "sites": 1,
     "scope": [
@@ -165218,6 +165245,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "This change is to someone else's home page; only they can approve it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "This changes what the reviewer is looking at, so the template returns to Draft and must be submitted again.": {

@@ -20,6 +20,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   worker_pto: "Worker time off",
   hazardous_material: "Hazardous materials",
   bqi: "Billing queue",
+  home_layout_preset: "Home page",
 };
 
 export function resourceLabel(resource: string): string {

@@ -38,6 +38,8 @@ export async function invalidateProposalViews(queryClient: QueryClient, threadId
     ["pending-decisions"],
     ["pending-decision-summary"],
     ["attention"],
+    // A decision can change the person's own home page.
+    [...queries.homeLayout.effective().queryKey],
   ];
 
   const threadScoped = [
