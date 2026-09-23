@@ -252,6 +252,18 @@ func (h *Handler) askWorker(
 ) (*conversation.AssistantTurn, client.WorkflowRun, error) {
 	authCtx := authctx.GetAuthContext(c)
 
+	// The conversation is checked as the person's own before its one live
+	// slot is taken. Recording the turn first let anyone who knew a thread's
+	// id hold it, and the owner saw "already working on a reply" until the
+	// stranger's workflow failed.
+	if _, err := h.service.GetThread(c.Request.Context(), repositories.GetThreadRequest{
+		ID:         threadID,
+		UserID:     authCtx.UserID,
+		TenantInfo: tenantFromAuthContext(authCtx),
+	}); err != nil {
+		return nil, nil, err
+	}
+
 	var run client.WorkflowRun
 	turn, err := h.turns.StartTurn(
 		c.Request.Context(),

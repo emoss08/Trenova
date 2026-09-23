@@ -34,6 +34,10 @@ type ListAgentRunEventConnectionRequest struct {
 	Filter  *pagination.QueryOptions `json:"filter"`
 	Cursor  pagination.CursorInfo    `json:"-"`
 	Columns []string                 `json:"-"`
+	// OwnerKind keeps the list to one kind of owner. An assistant turn is one
+	// person's conversation, and its events are theirs; a list read by
+	// anyone who may read agent runs must not include them.
+	OwnerKind string `json:"-"`
 }
 
 // PruneAgentRunEventsRequest drops events older than a cutoff.

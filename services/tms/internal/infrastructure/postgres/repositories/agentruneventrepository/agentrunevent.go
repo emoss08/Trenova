@@ -151,7 +151,8 @@ func (r *repository) ListConnection(
 					(*agent.AgentRunEvent)(nil),
 				)
 
-				return sq.Apply(buncolgen.AgentRunEventApplyTenant(req.Filter.TenantInfo))
+				return ownedBy(sq, req.OwnerKind).
+					Apply(buncolgen.AgentRunEventApplyTenant(req.Filter.TenantInfo))
 			}).
 			Count(ctx)
 		if err != nil {
@@ -177,7 +178,7 @@ func (r *repository) ListConnection(
 		},
 		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 			return querybuilder.ApplyCursorFilters(
-				sq,
+				ownedBy(sq, req.OwnerKind),
 				buncolgen.AgentRunEventTable.Alias,
 				req.Filter,
 				req.Cursor,
@@ -192,6 +193,15 @@ func (r *repository) ListConnection(
 	}
 
 	return result, nil
+}
+
+// ownedBy keeps a list to one kind of owner, when one is named.
+func ownedBy(sq *bun.SelectQuery, ownerKind string) *bun.SelectQuery {
+	if ownerKind == "" {
+		return sq
+	}
+
+	return sq.Where(buncolgen.AgentRunEventColumns.OwnerKind.Eq(), ownerKind)
 }
 
 // Prune drops a batch of old events. Deliberately not tenant-scoped: the sweep
