@@ -402,16 +402,19 @@ func TestHazmatSegregationValidationAndServiceStayAligned(t *testing.T) {
 	validationErr := v.ValidateCreate(t.Context(), entity)
 	require.NotNil(t, validationErr)
 
-	serviceErr := svc.CheckHazmatSegregation(t.Context(), &repositories.CheckHazmatSegregationRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
+	serviceErr := svc.CheckHazmatSegregation(
+		t.Context(),
+		&repositories.CheckHazmatSegregationRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			CommodityIDs: []pulid.ID{
+				entity.Commodities[0].CommodityID,
+				entity.Commodities[1].CommodityID,
+			},
 		},
-		CommodityIDs: []pulid.ID{
-			entity.Commodities[0].CommodityID,
-			entity.Commodities[1].CommodityID,
-		},
-	})
+	)
 	require.Error(t, serviceErr)
 
 	var serviceMultiErr *errortypes.MultiError

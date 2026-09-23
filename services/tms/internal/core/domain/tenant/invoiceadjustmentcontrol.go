@@ -31,7 +31,7 @@ type InvoiceAdjustmentControl struct {
 	AdjustmentAccountingDatePolicy AdjustmentAccountingDatePolicy `json:"adjustmentAccountingDatePolicy" bun:"adjustment_accounting_date_policy,type:adjustment_accounting_date_policy_enum,notnull,default:'UseOriginalIfOpenElseNextOpen'"`
 	ClosedPeriodAdjustmentPolicy   ClosedPeriodAdjustmentPolicy   `json:"closedPeriodAdjustmentPolicy"   bun:"closed_period_adjustment_policy,type:closed_period_adjustment_policy_enum,notnull,default:'PostInNextOpenPeriodWithApproval'"`
 
-	AdjustmentReasonRequirement RequirementPolicy `json:"adjustmentReasonRequirement"     bun:"adjustment_reason_requirement,type:requirement_policy_enum,notnull,default:'Required'"`
+	AdjustmentReasonRequirement RequirementPolicy `json:"adjustmentReasonRequirement" bun:"adjustment_reason_requirement,type:requirement_policy_enum,notnull,default:'Required'"`
 
 	StandardAdjustmentApprovalPolicy    ApprovalPolicy         `json:"standardAdjustmentApprovalPolicy"    bun:"standard_adjustment_approval_policy,type:approval_policy_enum,notnull,default:'AmountThreshold'"`
 	StandardAdjustmentApprovalThreshold decimal.Decimal        `json:"standardAdjustmentApprovalThreshold" bun:"standard_adjustment_approval_threshold,type:NUMERIC(19,4),nullzero"`

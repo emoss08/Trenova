@@ -71,6 +71,9 @@ type AgentPlanRepository interface {
 		req *ListAgentPlanConnectionRequest,
 	) (*pagination.CursorListResult[*agent.AgentPlan], error)
 	UpdateStatus(ctx context.Context, req UpdateAgentPlanStatusRequest) (*agent.AgentPlan, error)
-	RecordProgress(ctx context.Context, req RecordAgentPlanProgressRequest) (*agent.AgentPlan, error)
+	RecordProgress(
+		ctx context.Context,
+		req RecordAgentPlanProgressRequest,
+	) (*agent.AgentPlan, error)
 	ExpirePending(ctx context.Context, req ExpireAgentPlansRequest) (int, error)
 }

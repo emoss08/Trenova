@@ -42,7 +42,11 @@ func (s *Sink) Initialize(ctx context.Context) error {
 	return err
 }
 
-func (s *Sink) Write(ctx context.Context, projection domain.Projection, record domain.SourceRecord) error {
+func (s *Sink) Write(
+	ctx context.Context,
+	projection domain.Projection,
+	record domain.SourceRecord,
+) error {
 	index := s.client.Index(projection.Destination.Index)
 	if err := s.ensureSearchableAttributes(ctx, index, projection); err != nil {
 		return err
@@ -247,7 +251,13 @@ func (s *Sink) waitForTask(
 
 	task, err := s.client.WaitForTaskWithContext(ctx, taskInfo.TaskUID, 100*time.Millisecond)
 	if err != nil {
-		return fmt.Errorf("%s for projection %s: wait for task %d: %w", action, projection.Name, taskInfo.TaskUID, err)
+		return fmt.Errorf(
+			"%s for projection %s: wait for task %d: %w",
+			action,
+			projection.Name,
+			taskInfo.TaskUID,
+			err,
+		)
 	}
 
 	if task.Status == meilisearch.TaskStatusFailed {

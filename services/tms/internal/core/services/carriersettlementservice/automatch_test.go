@@ -226,7 +226,11 @@ func TestAutoMatchWithinToleranceCreatesMatched(t *testing.T) {
 	assert.True(t, auditParams[0].UserID.IsNil())
 
 	require.NotNil(t, syncedInvoice)
-	assert.Equal(t, edi.CarrierInvoiceReconciliationStatusMatched, syncedInvoice.ReconciliationStatus)
+	assert.Equal(
+		t,
+		edi.CarrierInvoiceReconciliationStatusMatched,
+		syncedInvoice.ReconciliationStatus,
+	)
 	require.True(t, syncedInvoice.ExpectedAmount.Valid)
 	assert.True(t, syncedInvoice.ExpectedAmount.Decimal.Equal(decimal.NewFromFloat(1750.75)))
 	deps.matches.AssertNotCalled(t, "Update")

@@ -33,14 +33,18 @@ type rule struct {
 // language. Everything ambiguous is left to the classifier.
 var rules = []rule{
 	{
-		name:     "code_fence_with_language",
-		pattern:  regexp.MustCompile("(?i)```[ \\t]*(python|py|javascript|js|typescript|ts|go|golang|java|c\\+\\+|cpp|csharp|c#|ruby|rust|php|bash|sh|shell|sql|powershell|perl|swift|kotlin|scala|r|matlab|html|css)\\b"),
+		name: "code_fence_with_language",
+		pattern: regexp.MustCompile(
+			"(?i)```[ \\t]*(python|py|javascript|js|typescript|ts|go|golang|java|c\\+\\+|cpp|csharp|c#|ruby|rust|php|bash|sh|shell|sql|powershell|perl|swift|kotlin|scala|r|matlab|html|css)\\b",
+		),
 		reason:   ReasonCodeGeneration,
 		category: CategoryCodeGeneration,
 	},
 	{
-		name:     "function_definition_syntax",
-		pattern:  regexp.MustCompile(`(?m)^\s*(def\s+\w+\s*\(|function\s+\w+\s*\(|public\s+static\s+void\s+main|class\s+\w+\s*[:({]|func\s+\w+\s*\()`),
+		name: "function_definition_syntax",
+		pattern: regexp.MustCompile(
+			`(?m)^\s*(def\s+\w+\s*\(|function\s+\w+\s*\(|public\s+static\s+void\s+main|class\s+\w+\s*[:({]|func\s+\w+\s*\()`,
+		),
 		reason:   ReasonCodeGeneration,
 		category: CategoryCodeGeneration,
 	},
@@ -54,7 +58,9 @@ var rules = []rule{
 		name: "explicit_code_request",
 		// Requires both an authoring verb and a named language, so "write up the
 		// route plan" and "explain freight class 70" both pass.
-		pattern:  regexp.MustCompile(`(?i)\b(write|generate|create|produce|give me|show me|build|code|implement|refactor|debug|fix)\b[^.?!]{0,60}\b(python|javascript|typescript|golang|java|c\+\+|c#|csharp|ruby|rust|php|bash|shell script|powershell|sql query|regex|regular expression)\b`),
+		pattern: regexp.MustCompile(
+			`(?i)\b(write|generate|create|produce|give me|show me|build|code|implement|refactor|debug|fix)\b[^.?!]{0,60}\b(python|javascript|typescript|golang|java|c\+\+|c#|csharp|ruby|rust|php|bash|shell script|powershell|sql query|regex|regular expression)\b`,
+		),
 		reason:   ReasonCodeGeneration,
 		category: CategoryCodeGeneration,
 	},
@@ -64,25 +70,33 @@ var rules = []rule{
 		// program, and a compliance program are all ordinary freight requests, and
 		// the classifier is a better judge of "a program that calls your API" than
 		// a pattern that would also refuse "build a safety program".
-		pattern:  regexp.MustCompile(`(?i)\b(write|generate|create|produce|give me|show me|build|make)\b[^.?!]{0,40}\b(a |an |some )?(script|source code|code snippet|unit test|shell command|terminal command|cli command)\b`),
+		pattern: regexp.MustCompile(
+			`(?i)\b(write|generate|create|produce|give me|show me|build|make)\b[^.?!]{0,40}\b(a |an |some )?(script|source code|code snippet|unit test|shell command|terminal command|cli command)\b`,
+		),
 		reason:   ReasonCodeGeneration,
 		category: CategoryCodeGeneration,
 	},
 	{
-		name:     "instruction_override",
-		pattern:  regexp.MustCompile(`(?i)\b(ignore|disregard|forget|override|bypass)\b[^.?!]{0,40}\b(previous|prior|above|earlier|initial|original|all)\b[^.?!]{0,20}\b(instruction|instructions|prompt|prompts|rule|rules|direction|directions)\b`),
+		name: "instruction_override",
+		pattern: regexp.MustCompile(
+			`(?i)\b(ignore|disregard|forget|override|bypass)\b[^.?!]{0,40}\b(previous|prior|above|earlier|initial|original|all)\b[^.?!]{0,20}\b(instruction|instructions|prompt|prompts|rule|rules|direction|directions)\b`,
+		),
 		reason:   ReasonPromptManipulation,
 		category: CategoryPromptManipulation,
 	},
 	{
-		name:     "prompt_extraction",
-		pattern:  regexp.MustCompile(`(?i)\b(what|show|reveal|repeat|print|output|tell me)\b[^.?!]{0,40}\byour\b[^.?!]{0,30}\b(system prompt|initial prompt|instructions|system message|configuration prompt)\b`),
+		name: "prompt_extraction",
+		pattern: regexp.MustCompile(
+			`(?i)\b(what|show|reveal|repeat|print|output|tell me)\b[^.?!]{0,40}\byour\b[^.?!]{0,30}\b(system prompt|initial prompt|instructions|system message|configuration prompt)\b`,
+		),
 		reason:   ReasonPromptManipulation,
 		category: CategoryPromptManipulation,
 	},
 	{
-		name:     "persona_override",
-		pattern:  regexp.MustCompile(`(?i)\b(you are now|from now on you are|act as (a |an )?(?:general|unrestricted|uncensored)|pretend (that )?you are (a |an )?(?:general|unrestricted|uncensored)|developer mode|jailbreak|DAN mode)\b`),
+		name: "persona_override",
+		pattern: regexp.MustCompile(
+			`(?i)\b(you are now|from now on you are|act as (a |an )?(?:general|unrestricted|uncensored)|pretend (that )?you are (a |an )?(?:general|unrestricted|uncensored)|developer mode|jailbreak|DAN mode)\b`,
+		),
 		reason:   ReasonPromptManipulation,
 		category: CategoryPromptManipulation,
 	},

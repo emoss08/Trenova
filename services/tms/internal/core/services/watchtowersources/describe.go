@@ -87,7 +87,10 @@ func DescribeInsight(entity *insight.Insight) services.WatchtowerItemInput {
 	}
 
 	return services.WatchtowerItemInput{
-		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 		SourceKind:  watchtower.SourceInsight,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
@@ -110,7 +113,10 @@ func DescribeProposal(entity *agent.AgentProposal, agentName string) services.Wa
 	}
 
 	return services.WatchtowerItemInput{
-		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 		SourceKind: watchtower.SourceAgentProposal,
 		SourceID:   entity.ID.String(),
 		Severity:   watchtower.SeverityInfo,
@@ -133,7 +139,10 @@ func DescribePlan(entity *agent.AgentPlan, agentName string) services.Watchtower
 	}
 
 	return services.WatchtowerItemInput{
-		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 		SourceKind: watchtower.SourceAgentPlan,
 		SourceID:   entity.ID.String(),
 		Severity:   watchtower.SeverityInfo,
@@ -157,7 +166,10 @@ func DescribeFailedRun(entity *agent.AgentRun, agentName string) services.Watcht
 	}
 
 	return services.WatchtowerItemInput{
-		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 		SourceKind:  watchtower.SourceAgentRunFailed,
 		SourceID:    entity.ID.String(),
 		Severity:    watchtower.SeverityWarning,
@@ -179,7 +191,10 @@ func DescribeException(entity *agent.AgentException) services.WatchtowerItemInpu
 	}
 
 	return services.WatchtowerItemInput{
-		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 		SourceKind:  watchtower.SourceAgentException,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
@@ -195,16 +210,24 @@ func DescribeException(entity *agent.AgentException) services.WatchtowerItemInpu
 // DescribeServiceFailure is a late or missed stop.
 func DescribeServiceFailure(entity *servicefailure.ServiceFailure) services.WatchtowerItemInput {
 	severity := watchtower.SeverityWarning
-	if entity.Type == servicefailure.TypeMissedDelivery || entity.Type == servicefailure.TypeMissedPickup {
+	if entity.Type == servicefailure.TypeMissedDelivery ||
+		entity.Type == servicefailure.TypeMissedPickup {
 		severity = watchtower.SeverityCritical
 	}
-	summary := fmt.Sprintf("%s, %d minutes late", stringutils.HumanizeSnakeCase(string(entity.Type)), entity.LateMinutes)
+	summary := fmt.Sprintf(
+		"%s, %d minutes late",
+		stringutils.HumanizeSnakeCase(string(entity.Type)),
+		entity.LateMinutes,
+	)
 	if entity.Notes != "" {
 		summary += ". " + entity.Notes
 	}
 
 	return services.WatchtowerItemInput{
-		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 		SourceKind:  watchtower.SourceServiceFailure,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
@@ -232,7 +255,9 @@ func CarrierIntelEventOnTower(entity *carrierintel.CarrierIntelEvent) bool {
 
 // DescribeCarrierIntelEvent is a change on a carrier's authority, insurance
 // or safety record.
-func DescribeCarrierIntelEvent(entity *carrierintel.CarrierIntelEvent) services.WatchtowerItemInput {
+func DescribeCarrierIntelEvent(
+	entity *carrierintel.CarrierIntelEvent,
+) services.WatchtowerItemInput {
 	severity := watchtower.SeverityInfo
 	switch entity.Severity {
 	case carrierintel.SeverityCritical:
@@ -246,7 +271,10 @@ func DescribeCarrierIntelEvent(entity *carrierintel.CarrierIntelEvent) services.
 	}
 
 	return services.WatchtowerItemInput{
-		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 		SourceKind:  watchtower.SourceCarrierIntelEvent,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
@@ -262,7 +290,10 @@ func DescribeCarrierIntelEvent(entity *carrierintel.CarrierIntelEvent) services.
 
 // HOSViolationSourceID keys a violation, whose record has no id of its own.
 func HOSViolationSourceID(entity *telematics.WorkerHOSViolation) string {
-	return entity.WorkerID.String() + ":" + entity.ViolationType + ":" + strconv.FormatInt(entity.ViolationStartAt, 10)
+	return entity.WorkerID.String() + ":" + entity.ViolationType + ":" + strconv.FormatInt(
+		entity.ViolationStartAt,
+		10,
+	)
 }
 
 // DescribeHOSViolation is a driver over their hours.
@@ -273,7 +304,10 @@ func DescribeHOSViolation(entity *telematics.WorkerHOSViolation) services.Watcht
 	}
 
 	return services.WatchtowerItemInput{
-		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 		SourceKind: watchtower.SourceHOSViolation,
 		SourceID:   HOSViolationSourceID(entity),
 		Severity:   watchtower.SeverityWarning,
@@ -312,7 +346,10 @@ func DescribeWeatherAlert(entity *weatheralert.WeatherAlert) services.Watchtower
 	}
 
 	return services.WatchtowerItemInput{
-		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 		SourceKind: watchtower.SourceWeatherAlert,
 		SourceID:   entity.ID.String(),
 		Severity:   severity,
@@ -326,11 +363,17 @@ func DescribeWeatherAlert(entity *weatheralert.WeatherAlert) services.Watchtower
 // DescribeQuarantinedFile is an EDI file that could not be processed.
 func DescribeQuarantinedFile(entity *edi.EDIInboundFile) services.WatchtowerItemInput {
 	return services.WatchtowerItemInput{
-		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
-		SourceKind:  watchtower.SourceEDIInboundQuarantined,
-		SourceID:    entity.ID.String(),
-		Severity:    watchtower.SeverityWarning,
-		Title:       "EDI file quarantined: " + stringutils.FirstNonEmpty(entity.FileName, entity.ID.String()),
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		SourceKind: watchtower.SourceEDIInboundQuarantined,
+		SourceID:   entity.ID.String(),
+		Severity:   watchtower.SeverityWarning,
+		Title: "EDI file quarantined: " + stringutils.FirstNonEmpty(
+			entity.FileName,
+			entity.ID.String(),
+		),
 		Summary:     entity.FailureReason,
 		SubjectType: agent.SubjectEDIInboundFile,
 		SubjectID:   entity.ID,
@@ -349,7 +392,10 @@ func DescribeBillingException(entity *billingqueue.BillingQueueItem) services.Wa
 	}
 
 	return services.WatchtowerItemInput{
-		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 		SourceKind:  watchtower.SourceBillingException,
 		SourceID:    entity.ID.String(),
 		Severity:    watchtower.SeverityWarning,
@@ -364,7 +410,9 @@ func DescribeBillingException(entity *billingqueue.BillingQueueItem) services.Wa
 }
 
 // DescribeDetentionOccurrence is a clock running, or run out, at a stop.
-func DescribeDetentionOccurrence(entity *detention.DetentionOccurrence) services.WatchtowerItemInput {
+func DescribeDetentionOccurrence(
+	entity *detention.DetentionOccurrence,
+) services.WatchtowerItemInput {
 	severity := watchtower.SeverityInfo
 	if entity.BillableMinutes > 0 {
 		severity = watchtower.SeverityWarning
@@ -386,7 +434,10 @@ func DescribeDetentionOccurrence(entity *detention.DetentionOccurrence) services
 	}
 
 	return services.WatchtowerItemInput{
-		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 		SourceKind:  watchtower.SourceDetentionOccurrence,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
@@ -539,7 +590,10 @@ func DescribeInboundMessage(entity *inboundmessage.InboundMessage) services.Watc
 	}
 
 	return services.WatchtowerItemInput{
-		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 		SourceKind:  watchtower.SourceInboundMessage,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,

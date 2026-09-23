@@ -64,7 +64,11 @@ func TestColumnsFollowTheJSONTag(t *testing.T) {
 
 // Rows arrive as pointers from some projections and values from others.
 func TestColumnsReadThroughAPointerRow(t *testing.T) {
-	outcome := searchResult(filtercatalog.NewCriteria("shipments"), []any{&columnRow{ProNumber: "P1"}}, 1)
+	outcome := searchResult(
+		filtercatalog.NewCriteria("shipments"),
+		[]any{&columnRow{ProNumber: "P1"}},
+		1,
+	)
 
 	assert.Equal(t, []string{"proNumber", "customer", "status"}, outcome.Columns)
 }

@@ -71,7 +71,8 @@ func TestListVersions_ResolvesAccessorialNamesAtReadTime(t *testing.T) {
 		Method:         accessorialcharge.MethodFlat,
 		Amount:         decimal.NewFromInt(250),
 	}
-	_, err = db.NewInsert().Model(&[]*accessorialcharge.AccessorialCharge{keptCharge, droppedCharge}).
+	_, err = db.NewInsert().
+		Model(&[]*accessorialcharge.AccessorialCharge{keptCharge, droppedCharge}).
 		Exec(ctx)
 	require.NoError(t, err)
 

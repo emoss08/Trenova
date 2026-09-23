@@ -71,12 +71,30 @@ func TestOpenAIChatAdapter_StreamsTextThenAssemblesToolCallFragments(t *testing.
 	t.Parallel()
 
 	server, captured := streamServer(t, "text/event-stream", sse(
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"role":"assistant","content":"Look"},"finish_reason":null}]}`},
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"content":"ing."},"finish_reason":null}]}`},
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"lookup_shipment","arguments":"{\"num"}}]},"finish_reason":null}]}`},
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"ber\":\"S1\"}"}}]},"finish_reason":null}]}`},
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}`},
-		[2]string{"", `{"model":"m","choices":[],"usage":{"prompt_tokens":7,"completion_tokens":4}}`},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"role":"assistant","content":"Look"},"finish_reason":null}]}`,
+		},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"content":"ing."},"finish_reason":null}]}`,
+		},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"lookup_shipment","arguments":"{\"num"}}]},"finish_reason":null}]}`,
+		},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"ber\":\"S1\"}"}}]},"finish_reason":null}]}`,
+		},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}`,
+		},
+		[2]string{
+			"",
+			`{"model":"m","choices":[],"usage":{"prompt_tokens":7,"completion_tokens":4}}`,
+		},
 		[2]string{"", `[DONE]`},
 	))
 
@@ -100,7 +118,10 @@ func TestOpenAIChatAdapter_StreamReportsContentFilterAsRefusal(t *testing.T) {
 	t.Parallel()
 
 	server, _ := streamServer(t, "text/event-stream", sse(
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"content":"I"},"finish_reason":"content_filter"}]}`},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"content":"I"},"finish_reason":"content_filter"}]}`,
+		},
 		[2]string{"", `[DONE]`},
 	))
 
@@ -115,16 +136,40 @@ func TestAnthropicAdapter_StreamsTextBlocksAndToolUseInput(t *testing.T) {
 	t.Parallel()
 
 	server, captured := streamServer(t, "text/event-stream", sse(
-		[2]string{"message_start", `{"type":"message_start","message":{"model":"claude-x","usage":{"input_tokens":9,"output_tokens":1}}}`},
-		[2]string{"content_block_start", `{"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}`},
-		[2]string{"content_block_delta", `{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Looking"}}`},
-		[2]string{"content_block_delta", `{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" that up."}}`},
+		[2]string{
+			"message_start",
+			`{"type":"message_start","message":{"model":"claude-x","usage":{"input_tokens":9,"output_tokens":1}}}`,
+		},
+		[2]string{
+			"content_block_start",
+			`{"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}`,
+		},
+		[2]string{
+			"content_block_delta",
+			`{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Looking"}}`,
+		},
+		[2]string{
+			"content_block_delta",
+			`{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" that up."}}`,
+		},
 		[2]string{"content_block_stop", `{"type":"content_block_stop","index":0}`},
-		[2]string{"content_block_start", `{"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"toolu_1","name":"lookup_shipment","input":{}}}`},
-		[2]string{"content_block_delta", `{"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\"number\":"}}`},
-		[2]string{"content_block_delta", `{"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"\"S12345\"}"}}`},
+		[2]string{
+			"content_block_start",
+			`{"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"toolu_1","name":"lookup_shipment","input":{}}}`,
+		},
+		[2]string{
+			"content_block_delta",
+			`{"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\"number\":"}}`,
+		},
+		[2]string{
+			"content_block_delta",
+			`{"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"\"S12345\"}"}}`,
+		},
 		[2]string{"content_block_stop", `{"type":"content_block_stop","index":1}`},
-		[2]string{"message_delta", `{"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":12}}`},
+		[2]string{
+			"message_delta",
+			`{"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":12}}`,
+		},
 		[2]string{"message_stop", `{"type":"message_stop"}`},
 	))
 
@@ -148,8 +193,14 @@ func TestAnthropicAdapter_StreamErrorEventFails(t *testing.T) {
 	t.Parallel()
 
 	server, _ := streamServer(t, "text/event-stream", sse(
-		[2]string{"message_start", `{"type":"message_start","message":{"model":"claude-x","usage":{"input_tokens":1}}}`},
-		[2]string{"error", `{"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}`},
+		[2]string{
+			"message_start",
+			`{"type":"message_start","message":{"model":"claude-x","usage":{"input_tokens":1}}}`,
+		},
+		[2]string{
+			"error",
+			`{"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}`,
+		},
 	))
 
 	streamer := NewAnthropicAdapter().(Streamer)
@@ -167,10 +218,22 @@ func TestOpenAIResponsesAdapter_StreamsDeltasAndTakesFinalFromCompleted(t *testi
 
 	server, captured := streamServer(t, "text/event-stream", sse(
 		[2]string{"response.created", `{"type":"response.created","response":{"model":"gpt-x"}}`},
-		[2]string{"response.output_text.delta", `{"type":"response.output_text.delta","delta":"Sure"}`},
-		[2]string{"response.output_text.delta", `{"type":"response.output_text.delta","delta":", one moment."}`},
-		[2]string{"response.function_call_arguments.delta", `{"type":"response.function_call_arguments.delta","delta":"{\"number\":\"S9\"}"}`},
-		[2]string{"response.completed", `{"type":"response.completed","response":{"model":"gpt-x","status":"completed","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"Sure, one moment."}]},{"type":"function_call","call_id":"call_9","name":"lookup_shipment","arguments":"{\"number\":\"S9\"}"}],"usage":{"input_tokens":3,"output_tokens":8}}}`},
+		[2]string{
+			"response.output_text.delta",
+			`{"type":"response.output_text.delta","delta":"Sure"}`,
+		},
+		[2]string{
+			"response.output_text.delta",
+			`{"type":"response.output_text.delta","delta":", one moment."}`,
+		},
+		[2]string{
+			"response.function_call_arguments.delta",
+			`{"type":"response.function_call_arguments.delta","delta":"{\"number\":\"S9\"}"}`,
+		},
+		[2]string{
+			"response.completed",
+			`{"type":"response.completed","response":{"model":"gpt-x","status":"completed","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"Sure, one moment."}]},{"type":"function_call","call_id":"call_9","name":"lookup_shipment","arguments":"{\"number\":\"S9\"}"}],"usage":{"input_tokens":3,"output_tokens":8}}}`,
+		},
 	))
 
 	resp, deltas := streamWith(t, NewOpenAIResponsesAdapter(), callFor(
@@ -192,7 +255,10 @@ func TestOpenAIResponsesAdapter_StreamFailedEventSurfacesMessage(t *testing.T) {
 	t.Parallel()
 
 	server, _ := streamServer(t, "text/event-stream", sse(
-		[2]string{"response.failed", `{"type":"response.failed","response":{"status":"failed","error":{"code":"server_error","message":"upstream exploded"}}}`},
+		[2]string{
+			"response.failed",
+			`{"type":"response.failed","response":{"status":"failed","error":{"code":"server_error","message":"upstream exploded"}}}`,
+		},
 	))
 
 	streamer := NewOpenAIResponsesAdapter().(Streamer)
@@ -283,9 +349,18 @@ func TestOpenAIChatAdapter_StreamKeepsProviderDataOnTheCall(t *testing.T) {
 	t.Parallel()
 
 	server, _ := streamServer(t, "text/event-stream", sse(
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"lookup_shipment","arguments":"{\"num"},"extra_content":{"google":{"thought_signature":"sig-9"}}}]},"finish_reason":null}]}`},
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"ber\":\"S1\"}"}}]},"finish_reason":null}]}`},
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}`},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"lookup_shipment","arguments":"{\"num"},"extra_content":{"google":{"thought_signature":"sig-9"}}}]},"finish_reason":null}]}`,
+		},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"ber\":\"S1\"}"}}]},"finish_reason":null}]}`,
+		},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}`,
+		},
 		[2]string{"", `[DONE]`},
 	))
 
@@ -315,16 +390,24 @@ func TestTransportError_CarriesHowLongTheProviderAskedToWait(t *testing.T) {
 	dated.Set("Retry-After", time.Now().Add(90*time.Second).UTC().Format(http.TimeFormat))
 	assert.InDelta(t, 90, retryAfterFrom(dated, nil).Seconds(), 2)
 
-	google := []byte(`{"error":{"code":429,"message":"You exceeded your current quota","status":"RESOURCE_EXHAUSTED",` +
-		`"details":[{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"34s"}]}}`)
+	google := []byte(
+		`{"error":{"code":429,"message":"You exceeded your current quota","status":"RESOURCE_EXHAUSTED",` +
+			`"details":[{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"34s"}]}}`,
+	)
 	assert.Equal(t, 34*time.Second, retryAfterFrom(http.Header{}, google))
 
-	assert.Equal(t, time.Duration(0), retryAfterFrom(http.Header{}, []byte(`{"error":{"message":"overloaded"}}`)))
+	assert.Equal(
+		t,
+		time.Duration(0),
+		retryAfterFrom(http.Header{}, []byte(`{"error":{"message":"overloaded"}}`)),
+	)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Retry-After", "3")
 		w.WriteHeader(http.StatusServiceUnavailable)
-		_, _ = w.Write([]byte(`{"error":{"message":"The model is overloaded. Please try again later."}}`))
+		_, _ = w.Write(
+			[]byte(`{"error":{"message":"The model is overloaded. Please try again later."}}`),
+		)
 	}))
 	t.Cleanup(server.Close)
 

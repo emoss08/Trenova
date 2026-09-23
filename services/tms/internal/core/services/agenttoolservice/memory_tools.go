@@ -49,8 +49,11 @@ func (t *rememberTool) ParamSchema() map[string]any {
 					"written so a reader with no other context understands them.",
 			},
 			"kind": map[string]any{
-				"type":        "string",
-				"enum":        []string{string(agent.MemoryKindInstruction), string(agent.MemoryKindFact)},
+				"type": "string",
+				"enum": []string{
+					string(agent.MemoryKindInstruction),
+					string(agent.MemoryKindFact),
+				},
 				"description": "Instruction for a rule a person gave; Fact for something learned. Defaults to Fact.",
 			},
 			"subjectType": map[string]any{
@@ -177,7 +180,10 @@ func (t *forgetMemoryTool) DefaultAutonomyTier() agent.AutonomyTier {
 	return agent.TierActWithApproval
 }
 
-func (t *forgetMemoryTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *forgetMemoryTool) Execute(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
 	}
@@ -217,7 +223,9 @@ func memorySubject(params map[string]any) (agent.MemorySubjectType, pulid.ID, er
 		return "", pulid.Nil, nil
 	}
 	if subjectType == "" || rawID == "" {
-		return "", pulid.Nil, fmt.Errorf("subjectType and subjectId go together; give both or neither")
+		return "", pulid.Nil, fmt.Errorf(
+			"subjectType and subjectId go together; give both or neither",
+		)
 	}
 	if !subjectType.IsValid() {
 		return "", pulid.Nil, fmt.Errorf("subjectType %q is not one of %s",

@@ -72,7 +72,11 @@ func shipmentCatalog() *filtercatalog.Catalog {
 		Entity:   "shipments",
 		Summary:  "Shipments and their status.",
 		Fields: []filtercatalog.Field{
-			{Name: "status", Kind: filtercatalog.KindEnum, Values: []string{"InTransit", "Completed"}},
+			{
+				Name:   "status",
+				Kind:   filtercatalog.KindEnum,
+				Values: []string{"InTransit", "Completed"},
+			},
 			{Name: "proNumber", Kind: filtercatalog.KindText, Sortable: true},
 			{Name: "actualShipDate", Kind: filtercatalog.KindDate, Sortable: true},
 		},

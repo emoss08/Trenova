@@ -1441,7 +1441,12 @@ func (h *Handler) importAssistantChatStream(c *gin.Context) {
 	}
 
 	if err = h.importAssistant.ChatStream(c.Request.Context(), &body, emit); err != nil {
-		emit(serviceports.StreamEvent{Event: "error", Data: map[string]string{"message": err.Error()}})
+		emit(
+			serviceports.StreamEvent{
+				Event: "error",
+				Data:  map[string]string{"message": err.Error()},
+			},
+		)
 	}
 }
 

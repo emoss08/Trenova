@@ -42,7 +42,10 @@ func (s *settleRepo) Update(
 	return entity, nil
 }
 
-func staged(status inboundmessage.Status, policy inboundmessage.ReviewPolicy) *inboundmessage.InboundMessage {
+func staged(
+	status inboundmessage.Status,
+	policy inboundmessage.ReviewPolicy,
+) *inboundmessage.InboundMessage {
 	return &inboundmessage.InboundMessage{
 		ID:          pulid.MustNew("imsg_"),
 		Status:      status,
@@ -68,8 +71,13 @@ func settler(repo *settleRepo, reply string) *Service {
 func TestProcessMessage_SettlesAndStoresTheDecision(t *testing.T) {
 	t.Parallel()
 
-	repo := &settleRepo{message: staged(inboundmessage.StatusReceived, inboundmessage.ReviewAutoHandle)}
-	svc := settler(repo, `{"classification":"Tender","confidence":0.9,"reasoning":"Offers a load."}`)
+	repo := &settleRepo{
+		message: staged(inboundmessage.StatusReceived, inboundmessage.ReviewAutoHandle),
+	}
+	svc := settler(
+		repo,
+		`{"classification":"Tender","confidence":0.9,"reasoning":"Offers a load."}`,
+	)
 
 	result, err := svc.ProcessMessage(t.Context(), repo.message.ID, pagination.TenantInfo{})
 	require.NoError(t, err)
@@ -142,7 +150,9 @@ actually checks.
 func TestMarkFailed_PutsAStuckMessageInFrontOfAPerson(t *testing.T) {
 	t.Parallel()
 
-	repo := &settleRepo{message: staged(inboundmessage.StatusReceived, inboundmessage.ReviewAutoHandle)}
+	repo := &settleRepo{
+		message: staged(inboundmessage.StatusReceived, inboundmessage.ReviewAutoHandle),
+	}
 	svc := settler(repo, "")
 
 	require.NoError(t, svc.MarkFailed(
@@ -175,7 +185,10 @@ func TestProcessMessage_ReportsALookupFailure(t *testing.T) {
 
 	repo := &settleRepo{getErr: errors.New("database unreachable")}
 
-	_, err := settler(repo, "").ProcessMessage(t.Context(), pulid.MustNew("imsg_"), pagination.TenantInfo{})
+	_, err := settler(
+		repo,
+		"",
+	).ProcessMessage(t.Context(), pulid.MustNew("imsg_"), pagination.TenantInfo{})
 	require.Error(t, err)
 }
 
@@ -184,7 +197,9 @@ func TestProcessMessage_ReportsALookupFailure(t *testing.T) {
 func TestProcessMessage_DoesNotAutoHandleWhatItCouldNotRead(t *testing.T) {
 	t.Parallel()
 
-	repo := &settleRepo{message: staged(inboundmessage.StatusReceived, inboundmessage.ReviewAutoHandle)}
+	repo := &settleRepo{
+		message: staged(inboundmessage.StatusReceived, inboundmessage.ReviewAutoHandle),
+	}
 	svc := settler(repo, "not json at all")
 
 	result, err := svc.ProcessMessage(t.Context(), repo.message.ID, pagination.TenantInfo{})

@@ -153,7 +153,9 @@ func ConvertAmountSplitsToPercent(shp *Shipment, allocations []*ChargeAllocation
 		for i, row := range rows {
 			percent := decimalutils.Percent100.Sub(assigned)
 			if i < len(rows)-1 {
-				percent = row.Amount.Decimal.Mul(decimalutils.Percent100).Div(sum).Round(percentPlaces)
+				percent = row.Amount.Decimal.Mul(decimalutils.Percent100).
+					Div(sum).
+					Round(percentPlaces)
 				assigned = assigned.Add(percent)
 			}
 			row.Method = ChargeAllocationMethodPercent

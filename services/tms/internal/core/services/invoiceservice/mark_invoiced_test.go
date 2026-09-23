@@ -51,7 +51,9 @@ func TestMarkInvoicedLegsKeepsEachShipmentsAdditionalCharges(t *testing.T) {
 	repo := mocks.NewMockShipmentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
 		return req.ID == shipmentID && req.ShipmentOptions.ExpandShipmentDetails
-	})).Return(loaded, nil).Once()
+	})).
+		Return(loaded, nil).
+		Once()
 
 	var persisted *shipment.Shipment
 	repo.On("UpdateDerivedState", mock.Anything, mock.Anything).

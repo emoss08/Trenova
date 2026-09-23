@@ -52,28 +52,72 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 
 	seedRegistry := seeder.NewRegistry()
 	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(db, seedRegistry, &config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}})
+	engine := seeder.NewEngine(
+		db,
+		seedRegistry,
+		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
+	)
 	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
 	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
-	manualRepo := manualjournalrepository.New(manualjournalrepository.Params{DB: conn, Logger: logger})
-	journalRepo := journalpostingrepository.New(journalpostingrepository.Params{DB: conn, Logger: logger})
-	accountingRepo := accountingcontrolrepository.New(accountingcontrolrepository.Params{DB: conn, Logger: logger})
-	fiscalYearRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: logger})
-	fiscalPeriodRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: logger})
+	manualRepo := manualjournalrepository.New(
+		manualjournalrepository.Params{DB: conn, Logger: logger},
+	)
+	journalRepo := journalpostingrepository.New(
+		journalpostingrepository.Params{DB: conn, Logger: logger},
+	)
+	accountingRepo := accountingcontrolrepository.New(
+		accountingcontrolrepository.Params{DB: conn, Logger: logger},
+	)
+	fiscalYearRepo := fiscalyearrepository.New(
+		fiscalyearrepository.Params{DB: conn, Logger: logger},
+	)
+	fiscalPeriodRepo := fiscalperiodrepository.New(
+		fiscalperiodrepository.Params{DB: conn, Logger: logger},
+	)
 	glRepo := glaccountrepository.New(glaccountrepository.Params{DB: conn, Logger: logger})
 	store := seqgen.NewSequenceStore(seqgen.SequenceStoreParams{DB: conn, Logger: logger})
 	provider := seqgen.NewFormatProvider(seqgen.FormatProviderParams{DB: conn, Logger: logger})
-	generator := seqgen.NewGenerator(seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger})
+	generator := seqgen.NewGenerator(
+		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
+	)
 
 	var org seededOrg
-	require.NoError(t, db.NewSelect().Table("organizations").Column("id", "business_unit_id").Limit(1).Scan(ctx, &org))
+	require.NoError(
+		t,
+		db.NewSelect().
+			Table("organizations").
+			Column("id", "business_unit_id").
+			Limit(1).
+			Scan(ctx, &org),
+	)
 	var user seededUser
-	require.NoError(t, db.NewSelect().Table("users").Column("id").Where("current_organization_id = ?", org.ID).Where("business_unit_id = ?", org.BusinessUnitID).Limit(1).Scan(ctx, &user))
+	require.NoError(
+		t,
+		db.NewSelect().
+			Table("users").
+			Column("id").
+			Where("current_organization_id = ?", org.ID).
+			Where("business_unit_id = ?", org.BusinessUnitID).
+			Limit(1).
+			Scan(ctx, &user),
+	)
 	accounts := make([]seededAccount, 0, 2)
-	require.NoError(t, db.NewSelect().Table("gl_accounts").Column("id").Where("organization_id = ?", org.ID).Where("business_unit_id = ?", org.BusinessUnitID).Where("allow_manual_je = TRUE").Where("status = 'Active'").Order("account_code ASC").Limit(2).Scan(ctx, &accounts))
+	require.NoError(
+		t,
+		db.NewSelect().
+			Table("gl_accounts").
+			Column("id").
+			Where("organization_id = ?", org.ID).
+			Where("business_unit_id = ?", org.BusinessUnitID).
+			Where("allow_manual_je = TRUE").
+			Where("status = 'Active'").
+			Order("account_code ASC").
+			Limit(2).
+			Scan(ctx, &accounts),
+	)
 	require.Len(t, accounts, 2)
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
@@ -117,8 +161,10 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 		JournalRepo:    journalRepo,
 		AccountingRepo: accountingRepo,
 		Generator:      generator,
-		Validator:      NewValidator(ValidatorParams{FiscalRepo: fiscalPeriodRepo, GLAccountRepo: glRepo}),
-		AuditService:   &mocks.NoopAuditService{},
+		Validator: NewValidator(
+			ValidatorParams{FiscalRepo: fiscalPeriodRepo, GLAccountRepo: glRepo},
+		),
+		AuditService: &mocks.NoopAuditService{},
 	})
 
 	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID, UserID: user.ID}
@@ -130,23 +176,38 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 		AccountingDate: period.StartDate,
 		Lines: []*serviceports.ManualJournalLineInput{
 			{GLAccountID: accounts[0].ID, Description: "Debit accrued expense", DebitAmount: 2500},
-			{GLAccountID: accounts[1].ID, Description: "Credit accrued liability", CreditAmount: 2500},
+			{
+				GLAccountID:  accounts[1].ID,
+				Description:  "Credit accrued liability",
+				CreditAmount: 2500,
+			},
 		},
 		TenantInfo: tenantInfo,
 	}, actor)
 	require.NoError(t, err)
 	require.Equal(t, manualjournal.StatusDraft, draft.Status)
 
-	submitted, err := svc.Submit(ctx, &serviceports.GetManualJournalRequest{RequestID: draft.ID, TenantInfo: tenantInfo}, actor)
+	submitted, err := svc.Submit(
+		ctx,
+		&serviceports.GetManualJournalRequest{RequestID: draft.ID, TenantInfo: tenantInfo},
+		actor,
+	)
 	require.NoError(t, err)
 	require.Equal(t, manualjournal.StatusApproved, submitted.Status)
 
-	posted, err := svc.Post(ctx, &serviceports.GetManualJournalRequest{RequestID: draft.ID, TenantInfo: tenantInfo}, actor)
+	posted, err := svc.Post(
+		ctx,
+		&serviceports.GetManualJournalRequest{RequestID: draft.ID, TenantInfo: tenantInfo},
+		actor,
+	)
 	require.NoError(t, err)
 	require.Equal(t, manualjournal.StatusPosted, posted.Status)
 	require.True(t, posted.PostedBatchID.IsNotNil())
 
-	batchCount, err := db.NewSelect().Table("journal_batches").Where("id = ?", posted.PostedBatchID).Count(ctx)
+	batchCount, err := db.NewSelect().
+		Table("journal_batches").
+		Where("id = ?", posted.PostedBatchID).
+		Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 1, batchCount)
 
@@ -159,7 +220,15 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 		TotalCredit   int64    `bun:"total_credit"`
 		Status        string   `bun:"status"`
 	}
-	require.NoError(t, db.NewSelect().Table("journal_entries").Column("id", "batch_id", "reference_type", "reference_id", "total_debit", "total_credit", "status").Where("batch_id = ?", posted.PostedBatchID).Limit(1).Scan(ctx, &entry))
+	require.NoError(
+		t,
+		db.NewSelect().
+			Table("journal_entries").
+			Column("id", "batch_id", "reference_type", "reference_id", "total_debit", "total_credit", "status").
+			Where("batch_id = ?", posted.PostedBatchID).
+			Limit(1).
+			Scan(ctx, &entry),
+	)
 	assert.Equal(t, posted.PostedBatchID, entry.BatchID)
 	assert.Equal(t, "ManualJournalRequest", entry.ReferenceType)
 	assert.Equal(t, draft.ID.String(), entry.ReferenceID)
@@ -167,7 +236,10 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 	assert.Equal(t, int64(2500), entry.TotalCredit)
 	assert.Equal(t, "Posted", entry.Status)
 
-	lineCount, err := db.NewSelect().Table("journal_entry_lines").Where("journal_entry_id = ?", entry.ID).Count(ctx)
+	lineCount, err := db.NewSelect().
+		Table("journal_entry_lines").
+		Where("journal_entry_id = ?", entry.ID).
+		Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 2, lineCount)
 
@@ -176,7 +248,15 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 		SourceEventType  string `bun:"source_event_type"`
 		Status           string `bun:"status"`
 	}
-	require.NoError(t, db.NewSelect().Table("journal_sources").Column("source_object_type", "source_event_type", "status").Where("source_object_id = ?", draft.ID.String()).Limit(1).Scan(ctx, &source))
+	require.NoError(
+		t,
+		db.NewSelect().
+			Table("journal_sources").
+			Column("source_object_type", "source_event_type", "status").
+			Where("source_object_id = ?", draft.ID.String()).
+			Limit(1).
+			Scan(ctx, &source),
+	)
 	assert.Equal(t, "ManualJournalRequest", source.SourceObjectType)
 	assert.Equal(t, "ManualJournalPosted", source.SourceEventType)
 	assert.Equal(t, "Posted", source.Status)
@@ -186,7 +266,16 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 		PeriodCreditMinor int64 `bun:"period_credit_minor"`
 		NetChangeMinor    int64 `bun:"net_change_minor"`
 	}
-	require.NoError(t, db.NewSelect().Table("gl_account_balances_by_period").Column("period_debit_minor", "period_credit_minor", "net_change_minor").Where("gl_account_id = ?", accounts[0].ID).Where("fiscal_period_id = ?", period.ID).Limit(1).Scan(ctx, &balance))
+	require.NoError(
+		t,
+		db.NewSelect().
+			Table("gl_account_balances_by_period").
+			Column("period_debit_minor", "period_credit_minor", "net_change_minor").
+			Where("gl_account_id = ?", accounts[0].ID).
+			Where("fiscal_period_id = ?", period.ID).
+			Limit(1).
+			Scan(ctx, &balance),
+	)
 	assert.Equal(t, int64(2500), balance.PeriodDebitMinor)
 	assert.Equal(t, int64(0), balance.PeriodCreditMinor)
 	assert.Equal(t, int64(2500), balance.NetChangeMinor)

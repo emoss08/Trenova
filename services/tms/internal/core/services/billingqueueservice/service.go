@@ -919,10 +919,13 @@ func (s *service) guardSiblingPayersUnposted(
 		return nil
 	}
 
-	invoices, err := s.invoiceRepo.ListByShipmentIDs(ctx, repositories.ListInvoicesByShipmentIDsRequest{
-		TenantInfo:  tenantInfo,
-		ShipmentIDs: []pulid.ID{item.ShipmentID},
-	})
+	invoices, err := s.invoiceRepo.ListByShipmentIDs(
+		ctx,
+		repositories.ListInvoicesByShipmentIDsRequest{
+			TenantInfo:  tenantInfo,
+			ShipmentIDs: []pulid.ID{item.ShipmentID},
+		},
+	)
 	if err != nil {
 		return err
 	}

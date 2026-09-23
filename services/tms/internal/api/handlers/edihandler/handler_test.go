@@ -142,7 +142,15 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 
 	handler := setupEDIHandler(t, repo)
 
-	runEDIRequest(t, handler, http.MethodGet, "/api/v1/edi/catalog/partner-settings/schemas/", nil, nil, http.StatusOK)
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/catalog/partner-settings/schemas/",
+		nil,
+		nil,
+		http.StatusOK,
+	)
 	runEDIRequest(
 		t,
 		handler,
@@ -757,7 +765,8 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 
 	partnerRepo.EXPECT().
 		GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetEDIPartnerByIDRequest) bool {
-			return req.ID == partnerID && req.TenantInfo.OrgID.IsNotNil() && req.TenantInfo.BuID.IsNotNil()
+			return req.ID == partnerID && req.TenantInfo.OrgID.IsNotNil() &&
+				req.TenantInfo.BuID.IsNotNil()
 		})).
 		Return(&edi.EDIPartner{
 			ID:   partnerID,
@@ -768,7 +777,8 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 		Once()
 	repo.EXPECT().
 		GetTemplateByID(mock.Anything, mock.MatchedBy(func(req repositories.GetEDITemplateByIDRequest) bool {
-			return req.ID == templateID && req.TenantInfo.OrgID.IsNotNil() && req.TenantInfo.BuID.IsNotNil()
+			return req.ID == templateID && req.TenantInfo.OrgID.IsNotNil() &&
+				req.TenantInfo.BuID.IsNotNil()
 		})).
 		Return(&edi.EDITemplate{
 			ID:          templateID,
@@ -781,7 +791,8 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 		GetPartnerDocumentProfileByID(
 			mock.Anything,
 			mock.MatchedBy(func(req repositories.GetEDIPartnerDocumentProfileByIDRequest) bool {
-				return req.ID == profileID && req.TenantInfo.OrgID.IsNotNil() && req.TenantInfo.BuID.IsNotNil()
+				return req.ID == profileID && req.TenantInfo.OrgID.IsNotNil() &&
+					req.TenantInfo.BuID.IsNotNil()
 			}),
 		).
 		Return(&edi.EDIPartnerDocumentProfile{
@@ -809,7 +820,8 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 		Once()
 	profileRepo.EXPECT().
 		GetProfileByID(mock.Anything, mock.MatchedBy(func(req repositories.GetEDICommunicationProfileByIDRequest) bool {
-			return req.ID == communicationProfileID && req.TenantInfo.OrgID.IsNotNil() && req.TenantInfo.BuID.IsNotNil()
+			return req.ID == communicationProfileID && req.TenantInfo.OrgID.IsNotNil() &&
+				req.TenantInfo.BuID.IsNotNil()
 		})).
 		Return(&edi.EDICommunicationProfile{
 			ID:     communicationProfileID,
@@ -820,7 +832,8 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 		Once()
 	mappingProfileRepo.EXPECT().
 		GetMappingProfileByID(mock.Anything, mock.MatchedBy(func(req repositories.GetMappingProfileByIDRequest) bool {
-			return req.ProfileID == mappingProfileID && req.TenantInfo.OrgID.IsNotNil() && req.TenantInfo.BuID.IsNotNil()
+			return req.ProfileID == mappingProfileID && req.TenantInfo.OrgID.IsNotNil() &&
+				req.TenantInfo.BuID.IsNotNil()
 		})).
 		Return(&edi.EDIMappingProfile{
 			ID:   mappingProfileID,

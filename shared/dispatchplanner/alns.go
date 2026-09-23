@@ -55,7 +55,9 @@ func Improve(params ImproveParams) Result {
 		return best
 	}
 
-	rng := rand.New(rand.NewSource(params.Seed)) //nolint:gosec // plan reproducibility, not cryptography
+	rng := rand.New(
+		rand.NewSource(params.Seed),
+	) //nolint:gosec // plan reproducibility, not cryptography
 	ruinWeights := newOperatorWeights(int(ruinOperatorCount))
 	repairWeights := newOperatorWeights(int(repairOperatorCount))
 	current := cloneResult(best)

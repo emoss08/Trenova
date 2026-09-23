@@ -214,7 +214,8 @@ func restingError(resting []*aiprovider.Provider, wait time.Duration) error {
 	if len(resting) == 1 {
 		return errortypes.NewBusinessError(
 			"{0} is paused for {1} seconds after repeated failures. Try again then, or pick another model",
-			resting[0].Name, seconds,
+			resting[0].Name,
+			seconds,
 		).WithInternal(serviceports.ErrProvidersResting)
 	}
 

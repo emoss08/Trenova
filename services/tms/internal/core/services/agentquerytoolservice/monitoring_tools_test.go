@@ -170,10 +170,22 @@ func TestGetShipmentTracking_ComposesStopsAssignmentPositionAndHours(t *testing.
 	}}}
 	feed := &fakeTelematics{
 		positions: []*telematics.VehiclePosition{
-			{TractorID: tractorID, Latitude: 30.7235, Longitude: -95.5508, RecordedAt: 1_790_000_000 - 120},
-			{TractorID: pulid.MustNew("trc_"), Latitude: 0, Longitude: 0, RecordedAt: 1_790_000_000},
+			{
+				TractorID:  tractorID,
+				Latitude:   30.7235,
+				Longitude:  -95.5508,
+				RecordedAt: 1_790_000_000 - 120,
+			},
+			{
+				TractorID:  pulid.MustNew("trc_"),
+				Latitude:   0,
+				Longitude:  0,
+				RecordedAt: 1_790_000_000,
+			},
 		},
-		hos: []*telematics.WorkerHOSState{{WorkerID: workerID, DriveRemainingMs: 4 * 3_600_000, RecordedAt: 1_790_000_000 - 60}},
+		hos: []*telematics.WorkerHOSState{
+			{WorkerID: workerID, DriveRemainingMs: 4 * 3_600_000, RecordedAt: 1_790_000_000 - 60},
+		},
 	}
 	tool := newGetShipmentTrackingTool(shipments, board, feed)
 
@@ -189,7 +201,12 @@ func TestGetShipmentTracking_ComposesStopsAssignmentPositionAndHours(t *testing.
 	assert.Equal(t, "Maria Ortiz", snapshot.Moves[0].Driver)
 	assert.Equal(t, "T-104", snapshot.Moves[0].Tractor)
 	require.NotNil(t, snapshot.Position)
-	assert.Equal(t, tractorID.String(), snapshot.Position.TractorID, "only the assigned tractor's position is used")
+	assert.Equal(
+		t,
+		tractorID.String(),
+		snapshot.Position.TractorID,
+		"only the assigned tractor's position is used",
+	)
 	require.NotNil(t, snapshot.Driver)
 	assert.EqualValues(t, 240, snapshot.Driver.DriveRemainingMinutes)
 	require.NotNil(t, snapshot.Estimate)
@@ -237,7 +254,10 @@ func TestListVehiclePositions_NarrowsToTheTractorsAskedFor(t *testing.T) {
 		{
 			TractorID: wanted, Latitude: 32.7, Longitude: -96.8, SpeedMph: 61,
 			EngineState: telematics.EngineStateOn, RecordedAt: 1_790_000_000 - 300,
-			Tractor: &tractor.Tractor{Code: "T-104", PrimaryWorker: &worker.Worker{FirstName: "Maria", LastName: "Ortiz"}},
+			Tractor: &tractor.Tractor{
+				Code:          "T-104",
+				PrimaryWorker: &worker.Worker{FirstName: "Maria", LastName: "Ortiz"},
+			},
 		},
 		{TractorID: pulid.MustNew("trc_"), RecordedAt: 1_790_000_000},
 	}}
@@ -277,7 +297,10 @@ func TestGetWorkerHOS_ReadsTheClocksAndMarksAStaleReading(t *testing.T) {
 	}}}
 	tool := newGetWorkerHOSTool(feed)
 
-	result, err := tool.Query(t.Context(), testParams(map[string]any{"workerId": workerID.String()}))
+	result, err := tool.Query(
+		t.Context(),
+		testParams(map[string]any{"workerId": workerID.String()}),
+	)
 	require.NoError(t, err)
 
 	row, ok := result.(workerHOSRow)
@@ -287,7 +310,10 @@ func TestGetWorkerHOS_ReadsTheClocksAndMarksAStaleReading(t *testing.T) {
 	assert.True(t, row.Stale)
 	assert.NotEmpty(t, row.Note)
 
-	_, err = tool.Query(t.Context(), testParams(map[string]any{"workerId": pulid.MustNew("wrk_").String()}))
+	_, err = tool.Query(
+		t.Context(),
+		testParams(map[string]any{"workerId": pulid.MustNew("wrk_").String()}),
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no hours of service")
 }
@@ -312,11 +338,17 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 	board := &fakeBoard{board: &dispatchconsoleservice.Board{
 		WindowStart: 1_790_000_000,
 		WindowEnd:   1_790_000_000 + 86_400,
-		Summary:     &repositories.BoardSummary{UncoveredMoves: 1, LateMoves: 1, AvailableDrivers: 1},
+		Summary: &repositories.BoardSummary{
+			UncoveredMoves:   1,
+			LateMoves:        1,
+			AvailableDrivers: 1,
+		},
 		Moves: []*dispatchconsoleservice.BoardMove{
 			{
 				BoardMove: &repositories.BoardMove{
-					MoveID: pulid.MustNew("smv_"), ShipmentID: pulid.MustNew("shp_"), ProNumber: "S1",
+					MoveID: pulid.MustNew(
+						"smv_",
+					), ShipmentID: pulid.MustNew("shp_"), ProNumber: "S1",
 					CustomerName: "Acme", OriginName: "Dallas Yard", OriginCity: "Dallas", OriginState: "TX",
 					OriginWindowStart: 1_790_000_000 - 1800, DestinationCity: "Houston", DestinationState: "TX",
 					DestinationWindowStart: 1_790_000_000 + 7200,
@@ -325,21 +357,33 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 			},
 			{
 				BoardMove: &repositories.BoardMove{
-					MoveID: pulid.MustNew("smv_"), ProNumber: "S2", AssignedWorkerName: "Maria Ortiz",
-					AssignedWorkerID: pulid.MustNew("wrk_"), CoverageType: "driver", OriginWindowStart: 1_790_000_000 + 3600,
+					MoveID: pulid.MustNew(
+						"smv_",
+					), ProNumber: "S2", AssignedWorkerName: "Maria Ortiz",
+					AssignedWorkerID: pulid.MustNew(
+						"wrk_",
+					), CoverageType: "driver", OriginWindowStart: 1_790_000_000 + 3600,
 				},
 				Urgency: dispatchconsoleservice.UrgencyNow, IsCovered: true,
 			},
 		},
 		Drivers: []*dispatchconsoleservice.BoardDriver{{
-			BoardDriver:      &repositories.BoardDriver{WorkerID: pulid.MustNew("wrk_"), FirstName: "Dan", LastName: "Lee", TractorCode: "T-7"},
+			BoardDriver: &repositories.BoardDriver{
+				WorkerID:    pulid.MustNew("wrk_"),
+				FirstName:   "Dan",
+				LastName:    "Lee",
+				TractorCode: "T-7",
+			},
 			Availability:     dispatchconsoleservice.AvailabilityOpen,
 			DriveRemainingMs: 6 * 3_600_000, FormattedLocation: "Waco, TX", PositionAt: 1_790_000_000 - 600,
 		}},
 	}}
 	tool := newGetDispatchBoardTool(board)
 
-	result, err := tool.Query(t.Context(), testParams(map[string]any{"hoursAhead": 12, "uncoveredOnly": true}))
+	result, err := tool.Query(
+		t.Context(),
+		testParams(map[string]any{"hoursAhead": 12, "uncoveredOnly": true}),
+	)
 	require.NoError(t, err)
 
 	view, ok := result.(boardView)
@@ -375,7 +419,10 @@ func (f *fakeFailures) List(
 ) (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
 	f.request = req
 
-	return &pagination.ListResult[*servicefailure.ServiceFailure]{Items: f.items, Total: len(f.items)}, nil
+	return &pagination.ListResult[*servicefailure.ServiceFailure]{
+		Items: f.items,
+		Total: len(f.items),
+	}, nil
 }
 
 func TestListServiceFailures_FiltersOnStatusAndRendersTheRow(t *testing.T) {
@@ -417,7 +464,11 @@ func TestListServiceFailures_FiltersOnStatusAndRendersTheRow(t *testing.T) {
 	_, err = tool.Query(t.Context(), testParams(filterParams(
 		map[string]any{"field": "status", "operator": "eq", "value": "Closed"},
 	)))
-	require.Error(t, err, "a status outside the set is refused, not passed through to match nothing")
+	require.Error(
+		t,
+		err,
+		"a status outside the set is refused, not passed through to match nothing",
+	)
 	assert.Equal(t, permission.ResourceServiceFailure, tool.PermissionResource())
 }
 
@@ -439,12 +490,22 @@ func TestListServiceFailureReasonCodes_ListsActiveCodesForTheStopKind(t *testing
 	t.Parallel()
 
 	codes := &fakeReasonCodes{codes: []*servicefailure.ReasonCode{
-		{ID: pulid.MustNew("sfrc_"), Code: "WX", Label: "Weather", Category: servicefailure.ReasonCategoryWeather, AppliesTo: servicefailure.ReasonCodeAppliesToAll, Active: true},
+		{
+			ID:        pulid.MustNew("sfrc_"),
+			Code:      "WX",
+			Label:     "Weather",
+			Category:  servicefailure.ReasonCategoryWeather,
+			AppliesTo: servicefailure.ReasonCodeAppliesToAll,
+			Active:    true,
+		},
 		{ID: pulid.MustNew("sfrc_"), Code: "OLD", Label: "Retired", Active: false},
 	}}
 	tool := newListServiceFailureReasonCodesTool(codes)
 
-	result, err := tool.Query(t.Context(), testParams(map[string]any{"appliesTo": "Delivery", "query": "wea"}))
+	result, err := tool.Query(
+		t.Context(),
+		testParams(map[string]any{"appliesTo": "Delivery", "query": "wea"}),
+	)
 	require.NoError(t, err)
 
 	outcome, ok := result.(searchOutcome)
@@ -478,7 +539,9 @@ func TestListDetentionDesk_RendersTheOpenOccurrencesByUrgency(t *testing.T) {
 	desk := &fakeDesk{entries: []*detentionservice.DeskEntry{
 		{
 			Occurrence: &detention.DetentionOccurrence{
-				ID: pulid.MustNew("dto_"), ShipmentID: pulid.MustNew("shp_"), ShipmentProNumber: "S1",
+				ID: pulid.MustNew(
+					"dto_",
+				), ShipmentID: pulid.MustNew("shp_"), ShipmentProNumber: "S1",
 				CustomerName: "Acme", LocationName: "Houston DC", StopType: shipment.StopTypeDelivery,
 				Status: detention.OccurrenceStatusAccruing, NotificationStatus: detention.NotificationStatusPending,
 				ArrivedAt: &arrived, FreeTimeExpiresAt: 1_790_000_000 - 1800, BillableMinutes: 30,
@@ -488,8 +551,11 @@ func TestListDetentionDesk_RendersTheOpenOccurrencesByUrgency(t *testing.T) {
 			AmountAtRisk: decimal.NewFromFloat(37.5), Urgency: "NoticeOverdue",
 		},
 		{
-			Occurrence: &detention.DetentionOccurrence{ID: pulid.MustNew("dto_"), Status: detention.OccurrenceStatusAccruing},
-			Urgency:    "NoticeDueSoon",
+			Occurrence: &detention.DetentionOccurrence{
+				ID:     pulid.MustNew("dto_"),
+				Status: detention.OccurrenceStatusAccruing,
+			},
+			Urgency: "NoticeDueSoon",
 		},
 	}}
 	tool := newListDetentionDeskTool(desk)
@@ -526,8 +592,24 @@ func TestListWeatherAlerts_KeepsSevereAndWorseByDefault(t *testing.T) {
 
 	expires := int64(1_790_000_000 + 7200)
 	weather := &fakeWeather{features: []*serviceports.WeatherAlertFeature{
-		{Properties: serviceports.WeatherAlertFeatureProperties{ID: pulid.MustNew("wal_"), Event: "Ice Storm Warning", Severity: "Extreme", AreaDesc: "Dallas County, TX", AlertCategory: weatheralert.AlertCategoryWinterWeather, Expires: &expires}},
-		{Properties: serviceports.WeatherAlertFeatureProperties{ID: pulid.MustNew("wal_"), Event: "Wind Advisory", Severity: "Minor", AreaDesc: "Harris County, TX"}},
+		{
+			Properties: serviceports.WeatherAlertFeatureProperties{
+				ID:            pulid.MustNew("wal_"),
+				Event:         "Ice Storm Warning",
+				Severity:      "Extreme",
+				AreaDesc:      "Dallas County, TX",
+				AlertCategory: weatheralert.AlertCategoryWinterWeather,
+				Expires:       &expires,
+			},
+		},
+		{
+			Properties: serviceports.WeatherAlertFeatureProperties{
+				ID:       pulid.MustNew("wal_"),
+				Event:    "Wind Advisory",
+				Severity: "Minor",
+				AreaDesc: "Harris County, TX",
+			},
+		},
 	}}
 	tool := newListWeatherAlertsTool(weather)
 
@@ -542,7 +624,10 @@ func TestListWeatherAlerts_KeepsSevereAndWorseByDefault(t *testing.T) {
 	assert.Equal(t, "winter_weather", rows[0].Category)
 	assert.NotEmpty(t, rows[0].Expires)
 
-	result, err = tool.Query(t.Context(), testParams(map[string]any{"severity": "Minor", "query": "harris"}))
+	result, err = tool.Query(
+		t.Context(),
+		testParams(map[string]any{"severity": "Minor", "query": "harris"}),
+	)
 	require.NoError(t, err)
 	outcome, ok = result.(searchOutcome)
 	require.True(t, ok)
@@ -581,13 +666,22 @@ func TestListVehiclePositions_NamesTheDriverOnlyToAReaderOfWorkers(t *testing.T)
 
 	feed := &fakeTelematics{positions: []*telematics.VehiclePosition{{
 		TractorID: pulid.MustNew("trc_"), RecordedAt: 1_790_000_000,
-		Tractor: &tractor.Tractor{Code: "T-104", PrimaryWorker: &worker.Worker{FirstName: "Maria", LastName: "Ortiz"}},
+		Tractor: &tractor.Tractor{
+			Code:          "T-104",
+			PrimaryWorker: &worker.Worker{FirstName: "Maria", LastName: "Ortiz"},
+		},
 	}}}
 	noWorkers := &fakePermissions{readable: map[string]*serviceports.ResourcePermissionDetail{
-		permission.ResourceTractor.String(): {Operations: []permission.Operation{permission.OpRead}},
+		permission.ResourceTractor.String(): {
+			Operations: []permission.Operation{permission.OpRead},
+		},
 	}}
 
-	rows := vehicleRows(t, newListVehiclePositionsTool(feed, noWorkers), testParams(map[string]any{}))
+	rows := vehicleRows(
+		t,
+		newListVehiclePositionsTool(feed, noWorkers),
+		testParams(map[string]any{}),
+	)
 	require.Len(t, rows, 1)
 	assert.Equal(t, "T-104", rows[0].Tractor)
 	assert.Empty(t, rows[0].Driver, "a reader without worker access is not told who is driving")

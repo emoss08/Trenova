@@ -28,7 +28,10 @@ func Dir(t *testing.T, dir string, register func(worker.WorkflowReplayer)) {
 		t.Fatalf("list recorded histories in %s: %v", dir, err)
 	}
 	if len(files) == 0 {
-		t.Fatalf("no recorded histories in %s; a replay test that replays nothing proves nothing", dir)
+		t.Fatalf(
+			"no recorded histories in %s; a replay test that replays nothing proves nothing",
+			dir,
+		)
 	}
 
 	for _, file := range files {

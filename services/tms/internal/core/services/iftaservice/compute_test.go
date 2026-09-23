@@ -162,7 +162,11 @@ func problemCodes(result iftaservice.ComputeResult) []ifta.ProblemCode {
 	return codes
 }
 
-func mpgOf(t *testing.T, result iftaservice.ComputeResult, fuelType domaintypes.IFTAFuelType) ifta.FleetMPG {
+func mpgOf(
+	t *testing.T,
+	result iftaservice.ComputeResult,
+	fuelType domaintypes.IFTAFuelType,
+) ifta.FleetMPG {
 	t.Helper()
 	for _, entry := range result.FleetMPG {
 		if entry.FuelType == fuelType {

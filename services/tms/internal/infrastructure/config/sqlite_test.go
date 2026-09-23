@@ -70,7 +70,10 @@ func TestPostgresDSNUnchanged(t *testing.T) {
 
 	dsn := cfg.GetDSN("secret")
 
-	require.True(t, strings.HasPrefix(dsn, "postgres://postgres:secret@localhost:5432/trenova_go_db"))
+	require.True(
+		t,
+		strings.HasPrefix(dsn, "postgres://postgres:secret@localhost:5432/trenova_go_db"),
+	)
 	assert.Contains(t, dsn, "sslmode=disable")
 	assert.NotContains(t, cfg.GetDSNMasked(), "secret")
 }

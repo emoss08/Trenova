@@ -535,7 +535,11 @@ func TestRender204_TransformOutputUsesElementPostProcessing(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, result.Diagnostics, 1)
 		assert.Equal(t, "required", result.Diagnostics[0].Code)
-		assert.Contains(t, result.Diagnostics[0].Message, "Shipment Identification Number is required")
+		assert.Contains(
+			t,
+			result.Diagnostics[0].Message,
+			"Shipment Identification Number is required",
+		)
 	})
 
 	t.Run("max length validation applies and truncates after transform", func(t *testing.T) {

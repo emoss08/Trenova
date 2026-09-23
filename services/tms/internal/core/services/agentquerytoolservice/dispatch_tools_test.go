@@ -35,10 +35,14 @@ func TestRankMoveCandidates_ScoresDriversWithFindingsAndFactors(t *testing.T) {
 	deadhead := 12.5
 	ranker := &fakeRanker{scores: []*dispatchcandidateservice.CandidateScore{
 		{
-			WorkerID: pulid.MustNew("wrk_"), WorkerName: "Dana Ortiz", TractorID: pulid.MustNew("trk_"),
+			WorkerID: pulid.MustNew(
+				"wrk_",
+			), WorkerName: "Dana Ortiz", TractorID: pulid.MustNew("trk_"),
 			Score: 88, Verdict: "Recommended", DeadheadMiles: &deadhead, ProjectedArrival: 1_790_000_000,
 			MinutesOfSlack: 40, DriveRemainingMs: 7 * 3_600_000, ShiftRemainingMs: 9 * 3_600_000,
-			Factors: []dispatchcandidateservice.ScoreFactor{{Label: "Deadhead", Contribution: 30, Detail: "12.5 mi"}},
+			Factors: []dispatchcandidateservice.ScoreFactor{
+				{Label: "Deadhead", Contribution: 30, Detail: "12.5 mi"},
+			},
 		},
 		{
 			WorkerID: pulid.MustNew("wrk_"), WorkerName: "Lee Park", Score: 0, Verdict: "Blocked",
@@ -106,13 +110,17 @@ func TestPlanDispatch_IsAlwaysADryRunOverTheWindow(t *testing.T) {
 		PlanningMode: "Balanced",
 		TotalScore:   140,
 		Assignments: []*serviceports.DispatchPlannedAssignment{{
-			MoveID: pulid.MustNew("smv_"), ProNumber: "S1", WorkerID: pulid.MustNew("wrk_"), WorkerName: "Dana Ortiz",
+			MoveID: pulid.MustNew(
+				"smv_",
+			), ProNumber: "S1", WorkerID: pulid.MustNew("wrk_"), WorkerName: "Dana Ortiz",
 			Confidence: decimal.NewFromFloat(0.9), Rationale: "closest with hours",
 			Score: &dispatchcandidateservice.CandidateScore{Score: 88},
 		}},
 		Uncovered: []*serviceports.DispatchUncoveredMove{{
 			MoveID: pulid.MustNew("smv_"), ProNumber: "S2", Reason: "no eligible driver",
-			BestBlockedFindings: []dispatcheligibility.Finding{{Code: "HOS_DRIVE", Message: "No drive time left"}},
+			BestBlockedFindings: []dispatcheligibility.Finding{
+				{Code: "HOS_DRIVE", Message: "No drive time left"},
+			},
 		}},
 	}}
 	tool := newPlanDispatchTool(planner)

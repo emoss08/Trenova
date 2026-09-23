@@ -36,7 +36,10 @@ func testRegistries() (*agentruntimetest.StubActionRegistry, *agentruntimetest.S
 		},
 	}}
 	queries := &agentruntimetest.StubQueryRegistry{Tools: []serviceports.AgentQueryTool{
-		&agentruntimetest.StubQueryTool{ToolName: "get_shipment", Resource: permission.ResourceShipment},
+		&agentruntimetest.StubQueryTool{
+			ToolName: "get_shipment",
+			Resource: permission.ResourceShipment,
+		},
 	}}
 
 	return actions, queries
@@ -74,8 +77,17 @@ func validate(t *testing.T, d *agentdefinition.Definition) map[string]bool {
 func TestValidateToolSelection_AcceptsAnyRegisteredToolOnAnyTemplate(t *testing.T) {
 	t.Parallel()
 
-	assert.Empty(t, validate(t, definition(agentdefinition.TemplateCustomerAssistant, "correct_charge_code")))
-	assert.Empty(t, validate(t, definition(agentdefinition.TemplateGeneralAssistant, "reassign_move", "get_shipment")))
+	assert.Empty(
+		t,
+		validate(t, definition(agentdefinition.TemplateCustomerAssistant, "correct_charge_code")),
+	)
+	assert.Empty(
+		t,
+		validate(
+			t,
+			definition(agentdefinition.TemplateGeneralAssistant, "reassign_move", "get_shipment"),
+		),
+	)
 	assert.Empty(t, validate(t, definition("", "update_customer")))
 }
 
@@ -174,7 +186,11 @@ func TestDelete_RefusesASystemAgent(t *testing.T) {
 	}}
 	svc := &Service{l: zap.NewNop(), repo: repo, audit: stubAudit{}}
 
-	err := svc.Delete(t.Context(), repositories.DeleteAgentDefinitionRequest{ID: repo.existing.ID}, nil)
+	err := svc.Delete(
+		t.Context(),
+		repositories.DeleteAgentDefinitionRequest{ID: repo.existing.ID},
+		nil,
+	)
 
 	require.Error(t, err)
 	assert.Empty(t, repo.deleted)
@@ -222,8 +238,13 @@ func TestBuildToolCatalog_MarksTheCoreTools(t *testing.T) {
 	t.Parallel()
 
 	actions, queries := testRegistries()
-	queries.Tools = append(queries.Tools,
-		&agentruntimetest.StubQueryTool{ToolName: "recall_memory", Resource: permission.ResourceAgentMemory})
+	queries.Tools = append(
+		queries.Tools,
+		&agentruntimetest.StubQueryTool{
+			ToolName: "recall_memory",
+			Resource: permission.ResourceAgentMemory,
+		},
+	)
 
 	byName := make(map[string]serviceports.ToolCatalogEntry)
 	for _, entry := range buildToolCatalog(actions, queries) {

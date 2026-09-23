@@ -135,7 +135,12 @@ func TestCreateShipment_EntersTheShipmentUnderTheActorTenant(t *testing.T) {
 	assert.Equal(t, destID, created.Moves[0].Stops[1].LocationID)
 	assert.Same(t, params.Actor, writer.actor)
 
-	assert.Equal(t, []string{docID.String()}, imports.completed, "the import conversation closes once the shipment exists")
+	assert.Equal(
+		t,
+		[]string{docID.String()},
+		imports.completed,
+		"the import conversation closes once the shipment exists",
+	)
 	assert.Equal(t, params.OrganizationID, imports.tenant.OrgID)
 }
 
@@ -144,7 +149,12 @@ func TestCreateShipment_RefusesAWriteWithoutAnIdempotencyKeyOrAMismatchedActor(t
 
 	writer := &fakeShipmentWriter{}
 	tool := newCreateShipmentTool(writer, nil, nil)
-	payload := shipmentPayload(pulid.MustNew("cust_"), pulid.MustNew("st_"), pulid.MustNew("loc_"), pulid.MustNew("loc_"))
+	payload := shipmentPayload(
+		pulid.MustNew("cust_"),
+		pulid.MustNew("st_"),
+		pulid.MustNew("loc_"),
+		pulid.MustNew("loc_"),
+	)
 
 	params := executeParams(map[string]any{"shipment": payload})
 	require.ErrorIs(t, tool.Execute(t.Context(), params), ErrMissingIdempotencyKey)
@@ -185,7 +195,11 @@ func TestUpdateShipment_PatchesOnlyTheNamedFields(t *testing.T) {
 	assert.EqualValues(t, 22000, *writer.updated.Weight)
 	assert.Equal(t, "OLD", writer.updated.BOL, "a field not named is left alone")
 	assert.Equal(t, original.ServiceTypeID, writer.updated.ServiceTypeID)
-	assert.True(t, writer.lastGet.ExpandShipmentDetails, "the update carries the moves it read, so none are lost")
+	assert.True(
+		t,
+		writer.lastGet.ExpandShipmentDetails,
+		"the update carries the moves it read, so none are lost",
+	)
 	assert.Equal(t, params.OrganizationID, writer.lastGet.TenantInfo.OrgID)
 
 	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
@@ -200,7 +214,10 @@ func TestUpdateShipment_RefusesAnEmptyPatchAndABadID(t *testing.T) {
 	writer := &fakeShipmentWriter{existing: &shipment.Shipment{}}
 	tool := newUpdateShipmentTool(writer)
 
-	err := tool.Execute(t.Context(), executeParams(map[string]any{"shipmentId": pulid.MustNew("shp_").String()}))
+	err := tool.Execute(
+		t.Context(),
+		executeParams(map[string]any{"shipmentId": pulid.MustNew("shp_").String()}),
+	)
 	require.ErrorContains(t, err, "Nothing to change")
 	assert.Nil(t, writer.updated)
 
@@ -223,7 +240,9 @@ func (f *fakeTenders) CreateWaterfall(
 ) (*tenderservice.CreateWaterfallResult, error) {
 	f.waterfall = req
 
-	return &tenderservice.CreateWaterfallResult{Tender: &tender.Tender{ID: pulid.MustNew("tnd_")}}, nil
+	return &tenderservice.CreateWaterfallResult{
+		Tender: &tender.Tender{ID: pulid.MustNew("tnd_")},
+	}, nil
 }
 
 func (f *fakeTenders) CreateSpot(
@@ -244,7 +263,9 @@ func TestTenderToRoutingGuide_StartsAWaterfallForTheMove(t *testing.T) {
 	assert.Equal(t, permission.OpCreate, tool.PermissionOperation())
 
 	moveID, guideID := pulid.MustNew("smv_"), pulid.MustNew("rg_")
-	params := executeParams(map[string]any{"shipmentMoveId": moveID.String(), "routingGuideId": guideID.String()})
+	params := executeParams(
+		map[string]any{"shipmentMoveId": moveID.String(), "routingGuideId": guideID.String()},
+	)
 	params.IdempotencyKey = "idem-1"
 	require.NoError(t, tool.Execute(t.Context(), params))
 
@@ -264,7 +285,13 @@ func TestTenderToCarriers_BuildsEachLineAndRefusesJunk(t *testing.T) {
 	tenders := &fakeTenders{}
 	tool := newTenderToCarriersTool(tenders)
 
-	moveID, carrierA, carrierB := pulid.MustNew("smv_"), pulid.MustNew("carr_"), pulid.MustNew("carr_")
+	moveID, carrierA, carrierB := pulid.MustNew(
+		"smv_",
+	), pulid.MustNew(
+		"carr_",
+	), pulid.MustNew(
+		"carr_",
+	)
 	params := executeParams(map[string]any{
 		"shipmentMoveId": moveID.String(),
 		"mode":           "SpotSequential",
@@ -298,7 +325,13 @@ func TestTenderToCarriers_BuildsEachLineAndRefusesJunk(t *testing.T) {
 	bad.IdempotencyKey = "idem-2"
 	require.ErrorContains(t, tool.Execute(t.Context(), bad), "lines[0].rate")
 
-	empty := executeParams(map[string]any{"shipmentMoveId": moveID.String(), "mode": "SpotBroadcast", "lines": []any{}})
+	empty := executeParams(
+		map[string]any{
+			"shipmentMoveId": moveID.String(),
+			"mode":           "SpotBroadcast",
+			"lines":          []any{},
+		},
+	)
 	empty.IdempotencyKey = "idem-3"
 	require.ErrorContains(t, tool.Execute(t.Context(), empty), "between 1 and")
 }

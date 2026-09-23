@@ -204,7 +204,8 @@ func (h *harness) expectInvoiceAndSharer() {
 func (h *harness) expectUsers(users ...*tenant.User) {
 	h.users.On("GetByIDs", mock.Anything, mock.MatchedBy(func(req repositories.GetUsersByIDsRequest) bool {
 		return req.TenantInfo == h.tenant
-	})).Return(users, nil)
+	})).
+		Return(users, nil)
 }
 
 func (h *harness) allow(users ...*tenant.User) {
@@ -248,7 +249,11 @@ func (h *harness) expectAudit() {
 	h.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 }
 
-func (h *harness) request(userIDs []pulid.ID, note string, tab invoice.ShareTab) *servicesports.ShareInvoiceRequest {
+func (h *harness) request(
+	userIDs []pulid.ID,
+	note string,
+	tab invoice.ShareTab,
+) *servicesports.ShareInvoiceRequest {
 	return &servicesports.ShareInvoiceRequest{
 		TenantInfo: h.tenant,
 		InvoiceID:  h.invoice.ID,
@@ -289,7 +294,11 @@ func TestShareStoresNotifiesAndEmailsEveryRecipient(t *testing.T) {
 
 	result, err := h.svc.Share(
 		h.ctxWithSharerActivation(t),
-		h.request([]pulid.ID{dana.ID, priya.ID, dana.ID}, "  Check the detention line  ", invoice.ShareTabCharges),
+		h.request(
+			[]pulid.ID{dana.ID, priya.ID, dana.ID},
+			"  Check the detention line  ",
+			invoice.ShareTabCharges,
+		),
 		h.actor,
 	)
 	require.NoError(t, err)
@@ -312,7 +321,11 @@ func TestShareStoresNotifiesAndEmailsEveryRecipient(t *testing.T) {
 	for _, created := range h.notifications {
 		assert.Equal(t, notification.ChannelUser, created.Channel)
 		assert.Equal(t, invoiceSharedEventType, created.EventType)
-		assert.Equal(t, "/billing/invoices?item="+h.invoice.ID.String()+"&tab=charges", created.Data["link"])
+		assert.Equal(
+			t,
+			"/billing/invoices?item="+h.invoice.ID.String()+"&tab=charges",
+			created.Data["link"],
+		)
 		assert.NotContains(t, created.Title, "detention")
 		assert.NotContains(t, created.Message, "detention")
 		for _, value := range created.Data {
@@ -336,7 +349,11 @@ func TestShareRendersTheNoteOnlyIntoTheEmailInTheRecipientsLanguage(t *testing.T
 	h.expectAudit()
 	h.expectEmails(nil)
 
-	_, err := h.svc.Share(t.Context(), h.request([]pulid.ID{dana.ID}, "Look at line 3", ""), h.actor)
+	_, err := h.svc.Share(
+		t.Context(),
+		h.request([]pulid.ID{dana.ID}, "Look at line 3", ""),
+		h.actor,
+	)
 	require.NoError(t, err)
 
 	require.Len(t, h.renders, 2)
@@ -483,7 +500,11 @@ func TestShareValidatesTheRequestBeforeReadingAnything(t *testing.T) {
 		{
 			name: "unknown tab",
 			build: func(h *harness) *servicesports.ShareInvoiceRequest {
-				return h.request([]pulid.ID{pulid.MustNew("usr_")}, "", invoice.ShareTab("payments"))
+				return h.request(
+					[]pulid.ID{pulid.MustNew("usr_")},
+					"",
+					invoice.ShareTab("payments"),
+				)
 			},
 			field: "tab",
 		},
@@ -593,7 +614,11 @@ func TestEmailStatus(t *testing.T) {
 func TestInvoiceSharePathOmitsTheDefaultTab(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "/billing/invoices?item=inv_1", invoiceSharePath("inv_1", invoice.ShareTabOverview))
+	assert.Equal(
+		t,
+		"/billing/invoices?item=inv_1",
+		invoiceSharePath("inv_1", invoice.ShareTabOverview),
+	)
 	assert.Equal(t, "/billing/invoices?item=inv_1", invoiceSharePath("inv_1", ""))
 	assert.Equal(t,
 		"/billing/invoices?item=inv_1&tab=documents",
@@ -618,10 +643,11 @@ func TestListCandidatesOffersOnlyTeammatesWhoCanOpenTheLink(t *testing.T) {
 	h.expectInvoice()
 	h.users.On("SelectOptions", mock.Anything, mock.MatchedBy(func(req *pagination.SelectQueryRequest) bool {
 		return req.TenantInfo == h.tenant && req.Query == "a" && req.Pagination.Offset == 0
-	})).Return(&pagination.ListResult[*tenant.User]{
-		Items: []*tenant.User{h.sharer, dana, normal, locked},
-		Total: 4,
-	}, nil)
+	})).
+		Return(&pagination.ListResult[*tenant.User]{
+			Items: []*tenant.User{h.sharer, dana, normal, locked},
+			Total: 4,
+		}, nil)
 	h.expectPermission(dana, true)
 	h.expectPermission(normal, false)
 

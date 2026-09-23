@@ -79,10 +79,11 @@ func TestUpdate_DisableBrokerage_BlockedByEachDependency(t *testing.T) {
 			deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
 				TenantInfo: tenantInfo,
 				Lock:       repositories.CapabilityLockUpdate,
-			}).Return(&repositories.OrganizationCapabilities{
-				BrokerageEnabled:       stored.BrokerageEnabled,
-				AssetOperationsEnabled: stored.AssetOperationsEnabled,
-			}, nil)
+			}).
+				Return(&repositories.OrganizationCapabilities{
+					BrokerageEnabled:       stored.BrokerageEnabled,
+					AssetOperationsEnabled: stored.AssetOperationsEnabled,
+				}, nil)
 			deps.repo.On("CountBrokerageDependencies", mock.Anything, tenantInfo).
 				Return(tt.counts, nil)
 
@@ -309,10 +310,11 @@ func TestUpdate_DisableAssetOperations_BlockedByEachDependency(t *testing.T) {
 			deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
 				TenantInfo: tenantInfo,
 				Lock:       repositories.CapabilityLockUpdate,
-			}).Return(&repositories.OrganizationCapabilities{
-				BrokerageEnabled:       stored.BrokerageEnabled,
-				AssetOperationsEnabled: stored.AssetOperationsEnabled,
-			}, nil)
+			}).
+				Return(&repositories.OrganizationCapabilities{
+					BrokerageEnabled:       stored.BrokerageEnabled,
+					AssetOperationsEnabled: stored.AssetOperationsEnabled,
+				}, nil)
 			deps.repo.On("CountAssetDependencies", mock.Anything, tenantInfo).
 				Return(tt.counts, nil)
 

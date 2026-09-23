@@ -44,7 +44,11 @@ func (s *Service) ListForWorker(
 	}
 	if len(open) > 0 {
 		if err = s.refreshMany(ctx, tenantInfo, workerID, open); err != nil {
-			s.l.Warn("failed to refresh checklists", zap.String("workerId", workerID.String()), zap.Error(err))
+			s.l.Warn(
+				"failed to refresh checklists",
+				zap.String("workerId", workerID.String()),
+				zap.Error(err),
+			)
 		}
 	}
 	return checklists, nil
@@ -196,10 +200,13 @@ func (s *Service) SpawnForEvent(
 		return nil, nil //nolint:nilnil // informational events spawn nothing
 	}
 	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
-	template, err := s.repo.GetDefaultTemplate(ctx, &repositories.GetDefaultChecklistTemplateRequest{
-		TenantInfo: tenantInfo,
-		Trigger:    trigger,
-	})
+	template, err := s.repo.GetDefaultTemplate(
+		ctx,
+		&repositories.GetDefaultChecklistTemplateRequest{
+			TenantInfo: tenantInfo,
+			Trigger:    trigger,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil //nolint:nilnil // no default template configured
@@ -244,7 +251,10 @@ func (s *Service) CloseForEvent(
 	}
 
 	reason := "Superseded by " + strings.ToLower(string(event.Kind)) + " event"
-	log := s.l.With(zap.String("operation", "CloseForEvent"), zap.String("eventId", event.ID.String()))
+	log := s.l.With(
+		zap.String("operation", "CloseForEvent"),
+		zap.String("eventId", event.ID.String()),
+	)
 	closed := 0
 	for _, checklist := range open {
 		if checklist.Kind != kind || !checklist.IsOpen() {
@@ -267,7 +277,10 @@ type ItemRequest struct {
 	UserID             pulid.ID
 }
 
-func (s *Service) CompleteItem(ctx context.Context, req *ItemRequest) (*worker.WorkerChecklist, error) {
+func (s *Service) CompleteItem(
+	ctx context.Context,
+	req *ItemRequest,
+) (*worker.WorkerChecklist, error) {
 	return s.settleItem(ctx, req, worker.ChecklistItemDone, "Checklist item completed")
 }
 
@@ -293,7 +306,12 @@ func (s *Service) MarkItemNotApplicable(
 			"Say why this item does not apply",
 		)
 	}
-	return s.settleItem(ctx, req, worker.ChecklistItemNotApplicable, "Checklist item marked not applicable")
+	return s.settleItem(
+		ctx,
+		req,
+		worker.ChecklistItemNotApplicable,
+		"Checklist item marked not applicable",
+	)
 }
 
 func (s *Service) settleItem(
@@ -563,7 +581,14 @@ func (s *Service) refreshMany(
 			return err
 		}
 		if len(changed) > 0 {
-			s.publish(ctx, tenantInfo, realtimeResource, permission.OpUpdate, checklist.ID, pulid.Nil)
+			s.publish(
+				ctx,
+				tenantInfo,
+				realtimeResource,
+				permission.OpUpdate,
+				checklist.ID,
+				pulid.Nil,
+			)
 		}
 	}
 	return nil
@@ -593,7 +618,11 @@ func (s *Service) closeIfComplete(
 			WorkerID:   saved.WorkerID,
 			Qualified:  true,
 		}); err != nil {
-			s.l.Warn("failed to flag worker as qualified", zap.String("workerId", saved.WorkerID.String()), zap.Error(err))
+			s.l.Warn(
+				"failed to flag worker as qualified",
+				zap.String("workerId", saved.WorkerID.String()),
+				zap.Error(err),
+			)
 		} else {
 			s.publish(ctx, tenantInfo, realtimeWorkers, permission.OpUpdate, saved.WorkerID, pulid.Nil)
 		}
@@ -621,11 +650,14 @@ func (s *Service) collectEvidence(
 	}
 	evidence.HasPortalAccess = !wrk.UserID.IsNil()
 
-	credentials, err := s.credentialRepo.ListForWorker(ctx, &repositories.ListWorkerCredentialsRequest{
-		TenantInfo:  tenantInfo,
-		WorkerID:    workerID,
-		IncludeType: true,
-	})
+	credentials, err := s.credentialRepo.ListForWorker(
+		ctx,
+		&repositories.ListWorkerCredentialsRequest{
+			TenantInfo:  tenantInfo,
+			WorkerID:    workerID,
+			IncludeType: true,
+		},
+	)
 	if err != nil {
 		return evidence, err
 	}
@@ -635,11 +667,14 @@ func (s *Service) collectEvidence(
 		}
 	}
 
-	documents, err := s.documentRepo.GetByResourceID(ctx, &repositories.GetDocumentsByResourceRequest{
-		TenantInfo:   tenantInfo,
-		ResourceID:   workerID.String(),
-		ResourceType: workerResourceType,
-	})
+	documents, err := s.documentRepo.GetByResourceID(
+		ctx,
+		&repositories.GetDocumentsByResourceRequest{
+			TenantInfo:   tenantInfo,
+			ResourceID:   workerID.String(),
+			ResourceType: workerResourceType,
+		},
+	)
 	if err != nil {
 		return evidence, err
 	}

@@ -96,11 +96,13 @@ func TestGetDiagnostics(t *testing.T) {
 		LineageID:  lineageID,
 		TenantInfo: tenantInfo,
 	}).Return([]*document.Document{{ID: documentID, LineageID: lineageID}}, nil)
-	deps.sessionRepo.EXPECT().ListRelated(mock.Anything, &repositories.ListRelatedDocumentUploadSessionsRequest{
-		TenantInfo: tenantInfo,
-		DocumentID: documentID,
-		LineageID:  lineageID,
-	}).Return(nil, nil)
+	deps.sessionRepo.EXPECT().
+		ListRelated(mock.Anything, &repositories.ListRelatedDocumentUploadSessionsRequest{
+			TenantInfo: tenantInfo,
+			DocumentID: documentID,
+			LineageID:  lineageID,
+		}).
+		Return(nil, nil)
 	deps.contentService.EXPECT().GetContent(mock.Anything, documentID, tenantInfo).
 		Return(nil, errortypes.NewNotFoundError("content not found"))
 	deps.contentService.EXPECT().GetShipmentDraft(mock.Anything, documentID, tenantInfo).
@@ -126,7 +128,11 @@ func TestResyncSearchAccepted(t *testing.T) {
 
 	deps := setupHandler(t)
 	documentID := pulid.MustNew("doc_")
-	tenantInfo := pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID, UserID: testutil.TestUserID}
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  testutil.TestOrgID,
+		BuID:   testutil.TestBuID,
+		UserID: testutil.TestUserID,
+	}
 	doc := &document.Document{
 		ID:             documentID,
 		OrganizationID: testutil.TestOrgID,

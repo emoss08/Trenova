@@ -130,13 +130,17 @@ func TestNewToolSet_MyDashboardReachesTheHomePage(t *testing.T) {
 
 	service, names := wideRuntime(t)
 	query := service.queryTools.(*stubQueryRegistry)
-	query.Tools = append(query.Tools,
+	query.Tools = append(
+		query.Tools,
 		searchableQuery{
 			StubQueryTool: describedTool("get_my_home_layout",
 				"Read what is on the person's own home page: each widget and its settings."),
 			terms: []string{"my dashboard", "home page", "widgets"},
 		},
-		describedTool("list_dashboards", "List the report dashboards under Reports, with their tiles."),
+		describedTool(
+			"list_dashboards",
+			"List the report dashboards under Reports, with their tiles.",
+		),
 	)
 	service.catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
 		QueryTools:  query,

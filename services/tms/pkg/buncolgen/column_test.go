@@ -122,7 +122,11 @@ func TestExpr(t *testing.T) {
 
 	t.Run("three columns", func(t *testing.T) {
 		result := Expr("{0} = ? AND {1} LIKE ? AND {2} IS NOT NULL", testCol, testCol2, testCol3)
-		assert.Equal(t, "wrk.first_name = ? AND wrk.last_name LIKE ? AND wrk.status IS NOT NULL", result)
+		assert.Equal(
+			t,
+			"wrk.first_name = ? AND wrk.last_name LIKE ? AND wrk.status IS NOT NULL",
+			result,
+		)
 	})
 
 	t.Run("repeated placeholder", func(t *testing.T) {
@@ -161,7 +165,8 @@ func TestCountFilter(t *testing.T) {
 			testCol3.Eq(),
 			testCol.Expr("NULLIF(BTRIM({}), '') IS NOT NULL"),
 		)
-		assert.Equal(t,
+		assert.Equal(
+			t,
 			"COUNT(*) FILTER (WHERE wrk.status = ? AND NULLIF(BTRIM(wrk.first_name), '') IS NOT NULL) AS synced",
 			result,
 		)
@@ -230,7 +235,11 @@ func TestRel(t *testing.T) {
 	})
 
 	t.Run("three segments", func(t *testing.T) {
-		assert.Equal(t, "Memberships.Organization.State", Rel("Memberships", "Organization", "State"))
+		assert.Equal(
+			t,
+			"Memberships.Organization.State",
+			Rel("Memberships", "Organization", "State"),
+		)
 	})
 }
 

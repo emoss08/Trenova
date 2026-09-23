@@ -21,7 +21,13 @@ func TestTemplateCursorSQLIncludesBaseColumns(t *testing.T) {
 	q := db.NewSelect().
 		Model(&entities).
 		ColumnExpr(buncolgen.EDITemplateTable.All())
-	q, err := querybuilder.ApplyCursorFilters(q, "et", filter, pagination.CursorInfo{}, (*edi.EDITemplate)(nil))
+	q, err := querybuilder.ApplyCursorFilters(
+		q,
+		"et",
+		filter,
+		pagination.CursorInfo{},
+		(*edi.EDITemplate)(nil),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

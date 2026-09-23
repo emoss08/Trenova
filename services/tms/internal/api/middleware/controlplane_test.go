@@ -120,7 +120,14 @@ func TestControlPlaneAccessMiddleware_AuthorizesMappedRoute(t *testing.T) {
 	})
 
 	recorder := httptest.NewRecorder()
-	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/shipments/shp_01H00000000000000000000000", nil))
+	router.ServeHTTP(
+		recorder,
+		httptest.NewRequest(
+			http.MethodGet,
+			"/api/v1/shipments/shp_01H00000000000000000000000",
+			nil,
+		),
+	)
 
 	require.Equal(t, http.StatusNoContent, recorder.Code)
 	require.Equal(t, platformcatalog.FeatureDispatch, authorizer.req.FeatureKey)
@@ -174,7 +181,14 @@ func TestControlPlaneAccessMiddleware_DeniesInactiveProductRoute(t *testing.T) {
 	})
 
 	recorder := httptest.NewRecorder()
-	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/shipments/shp_01H00000000000000000000000", nil))
+	router.ServeHTTP(
+		recorder,
+		httptest.NewRequest(
+			http.MethodGet,
+			"/api/v1/shipments/shp_01H00000000000000000000000",
+			nil,
+		),
+	)
 
 	require.Equal(t, http.StatusForbidden, recorder.Code)
 	require.Contains(t, recorder.Body.String(), "subscription_inactive")
@@ -296,9 +310,14 @@ func TestControlPlaneAccessMiddleware_BypassesAccountShellRoutes(t *testing.T) {
 
 			router := gin.New()
 			router.Use(setEntitlementTestAuthContext())
-			router.Handle(tt.method, tt.routePattern, middleware.RequireAccess(), func(c *gin.Context) {
-				c.Status(http.StatusNoContent)
-			})
+			router.Handle(
+				tt.method,
+				tt.routePattern,
+				middleware.RequireAccess(),
+				func(c *gin.Context) {
+					c.Status(http.StatusNoContent)
+				},
+			)
 
 			recorder := httptest.NewRecorder()
 			router.ServeHTTP(recorder, httptest.NewRequest(tt.method, tt.path, nil))

@@ -40,7 +40,10 @@ func policyFor(definition *agentdefinition.Definition, organizationShadow bool) 
 	}
 }
 
-func (s *Service) loadPolicy(ctx context.Context, tenantInfo pagination.TenantInfo) (Policy, error) {
+func (s *Service) loadPolicy(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (Policy, error) {
 	control, err := s.agentControlRepo.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return Policy{}, err

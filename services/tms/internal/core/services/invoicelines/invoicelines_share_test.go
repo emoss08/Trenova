@@ -80,14 +80,26 @@ func TestForShipmentSharePartialFreightCarriesItsShare(t *testing.T) {
 	require.True(t, freight.AllocationPercent.Valid)
 	assert.True(t, freight.AllocationPercent.Decimal.Equal(dec("60")))
 	assert.True(t, freight.ChargeAllocationID.IsNotNil())
-	assert.True(t, freight.Rate.Decimal.Equal(dec("3.5")), "the rate is the shipment's, not the share's")
+	assert.True(
+		t,
+		freight.Rate.Decimal.Equal(dec("3.5")),
+		"the rate is the shipment's, not the share's",
+	)
 	assert.True(t, freight.IsPartialShare())
 
 	surcharge := lines[1]
 	assert.Equal(t, "Fuel Surcharge (60% share)", surcharge.Description)
-	assert.True(t, surcharge.Amount.Equal(dec("147")), "60% of the 245 surcharge on the full freight")
+	assert.True(
+		t,
+		surcharge.Amount.Equal(dec("147")),
+		"60% of the 245 surcharge on the full freight",
+	)
 	require.True(t, surcharge.RateBasisAmount.Valid)
-	assert.True(t, surcharge.RateBasisAmount.Decimal.Equal(dec("2450")), "the basis stays the whole freight")
+	assert.True(
+		t,
+		surcharge.RateBasisAmount.Decimal.Equal(dec("2450")),
+		"the basis stays the whole freight",
+	)
 	assert.True(t, surcharge.AllocationPercent.Valid)
 	assert.True(t, surcharge.ChargeAllocationID.IsNotNil())
 }
@@ -109,7 +121,12 @@ func TestForShipmentShareFullShareMatchesForShipment(t *testing.T) {
 	resolution, err := shipment.ResolveShares(shp, nil)
 	require.NoError(t, err)
 
-	viaShare := invoicelines.ForShipmentShare(billingqueue.BillTypeInvoice, shp, resolution.Shares[0], 1)
+	viaShare := invoicelines.ForShipmentShare(
+		billingqueue.BillTypeInvoice,
+		shp,
+		resolution.Shares[0],
+		1,
+	)
 	direct := invoicelines.ForShipment(billingqueue.BillTypeInvoice, shp, 1)
 	require.Len(t, viaShare, len(direct))
 	for i := range direct {
@@ -168,13 +185,17 @@ func TestForOrderChargeShare(t *testing.T) {
 	chargeID := pulid.MustNew("ordchg_")
 	allocationID := pulid.MustNew("chal_")
 
-	whole := invoicelines.ForOrderChargeShare(billingqueue.BillTypeInvoice, shipment.AllocatedCharge{
-		Kind:          shipment.ChargeAllocationKindOrderCharge,
-		OrderChargeID: chargeID,
-		Description:   "Customs brokerage",
-		ChargeTotal:   dec("250"),
-		Amount:        dec("250"),
-	}, 7)
+	whole := invoicelines.ForOrderChargeShare(
+		billingqueue.BillTypeInvoice,
+		shipment.AllocatedCharge{
+			Kind:          shipment.ChargeAllocationKindOrderCharge,
+			OrderChargeID: chargeID,
+			Description:   "Customs brokerage",
+			ChargeTotal:   dec("250"),
+			Amount:        dec("250"),
+		},
+		7,
+	)
 	assert.Equal(t, 7, whole.LineNumber)
 	assert.Equal(t, invoice.InvoiceLineTypeAccessorial, whole.Type)
 	assert.Equal(t, "Customs brokerage", whole.Description)
@@ -184,16 +205,20 @@ func TestForOrderChargeShare(t *testing.T) {
 	assert.True(t, whole.ShipmentID.IsNil(), "order charges carry no leg attribution")
 	assert.False(t, whole.AllocationPercent.Valid)
 
-	partial := invoicelines.ForOrderChargeShare(billingqueue.BillTypeCreditMemo, shipment.AllocatedCharge{
-		Kind:          shipment.ChargeAllocationKindOrderCharge,
-		OrderChargeID: chargeID,
-		AllocationID:  allocationID,
-		Description:   "Customs brokerage",
-		ChargeTotal:   dec("250"),
-		Amount:        dec("100"),
-		Percent:       decimal.NewNullDecimal(dec("40")),
-		Partial:       true,
-	}, 8)
+	partial := invoicelines.ForOrderChargeShare(
+		billingqueue.BillTypeCreditMemo,
+		shipment.AllocatedCharge{
+			Kind:          shipment.ChargeAllocationKindOrderCharge,
+			OrderChargeID: chargeID,
+			AllocationID:  allocationID,
+			Description:   "Customs brokerage",
+			ChargeTotal:   dec("250"),
+			Amount:        dec("100"),
+			Percent:       decimal.NewNullDecimal(dec("40")),
+			Partial:       true,
+		},
+		8,
+	)
 	assert.Equal(t, "Customs brokerage (40% share)", partial.Description)
 	assert.True(t, partial.Amount.Equal(dec("-100")))
 	assert.Equal(t, allocationID, partial.ChargeAllocationID)
@@ -214,14 +239,20 @@ func TestShareDescription(t *testing.T) {
 			want:   "Freight charge",
 		},
 		{
-			name:   "trailing zeros are trimmed",
-			charge: shipment.AllocatedCharge{Partial: true, Percent: decimal.NewNullDecimal(dec("33.50"))},
-			want:   "Freight charge (33.5% share)",
+			name: "trailing zeros are trimmed",
+			charge: shipment.AllocatedCharge{
+				Partial: true,
+				Percent: decimal.NewNullDecimal(dec("33.50")),
+			},
+			want: "Freight charge (33.5% share)",
 		},
 		{
-			name:   "whole percents read without decimals",
-			charge: shipment.AllocatedCharge{Partial: true, Percent: decimal.NewNullDecimal(dec("60.00"))},
-			want:   "Freight charge (60% share)",
+			name: "whole percents read without decimals",
+			charge: shipment.AllocatedCharge{
+				Partial: true,
+				Percent: decimal.NewNullDecimal(dec("60.00")),
+			},
+			want: "Freight charge (60% share)",
 		},
 		{
 			name:   "amount shares without a percent say partial",

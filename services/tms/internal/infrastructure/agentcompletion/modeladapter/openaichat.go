@@ -340,7 +340,8 @@ func (a openAIChatAdapter) Stream(
 			}
 			for _, fragment := range choice.Delta.ToolCalls {
 				key, ok := active[fragment.Index]
-				if !ok || (fragment.ID != "" && buffers[key].id != "" && buffers[key].id != fragment.ID) {
+				if !ok ||
+					(fragment.ID != "" && buffers[key].id != "" && buffers[key].id != fragment.ID) {
 					key = fmt.Sprintf("%d/%s", fragment.Index, fragment.ID)
 					active[fragment.Index] = key
 					buffers[key] = &chatToolCallBuffer{}

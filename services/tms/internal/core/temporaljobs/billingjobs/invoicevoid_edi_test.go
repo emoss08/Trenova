@@ -27,7 +27,9 @@ func TestInvoicePDFResourceAnchorsByWhatTheInvoiceHas(t *testing.T) {
 	orderID := pulid.MustNew("ord_")
 	customerID := pulid.MustNew("cus_")
 
-	resource, err := invoicePDFResource(&invoice.Invoice{ShipmentID: shipmentID, OrderID: orderID, CustomerID: customerID})
+	resource, err := invoicePDFResource(
+		&invoice.Invoice{ShipmentID: shipmentID, OrderID: orderID, CustomerID: customerID},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, invoicePDFDocumentResource{Type: "shipment", ID: shipmentID.String()}, resource)
 
@@ -35,11 +37,20 @@ func TestInvoicePDFResourceAnchorsByWhatTheInvoiceHas(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, invoicePDFDocumentResource{Type: "order", ID: orderID.String()}, resource)
 
-	resource, err = invoicePDFResource(&invoice.Invoice{CustomerID: customerID, Scope: invoice.ScopeMemo})
+	resource, err = invoicePDFResource(
+		&invoice.Invoice{CustomerID: customerID, Scope: invoice.ScopeMemo},
+	)
 	require.NoError(t, err)
-	assert.Equal(t, invoicePDFDocumentResource{Type: "customer", ID: customerID.String()}, resource, "memos and statements file under the customer")
+	assert.Equal(
+		t,
+		invoicePDFDocumentResource{Type: "customer", ID: customerID.String()},
+		resource,
+		"memos and statements file under the customer",
+	)
 
-	_, err = invoicePDFResource(&invoice.Invoice{ShipmentID: shipmentID, Status: invoice.StatusVoided})
+	_, err = invoicePDFResource(
+		&invoice.Invoice{ShipmentID: shipmentID, Status: invoice.StatusVoided},
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Voided invoices do not generate documents")
 
@@ -63,7 +74,11 @@ func autoPostPayload(invoiceID pulid.ID, tenantInfo pagination.TenantInfo) *Auto
 func TestAutoPostInvoiceActivityTreatsVoidedAsDone(t *testing.T) {
 	t.Parallel()
 
-	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_"), UserID: pulid.MustNew("usr_")}
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  pulid.MustNew("org_"),
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
+	}
 	invoiceID := pulid.MustNew("inv_")
 	invoiceService := mocks.NewMockInvoiceService(t)
 	invoiceService.EXPECT().
@@ -114,12 +129,20 @@ type ediActivityFixture struct {
 func newEDIActivityFixture(t *testing.T) *ediActivityFixture {
 	t.Helper()
 	f := &ediActivityFixture{
-		tenantInfo:     pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_"), UserID: pulid.MustNew("usr_")},
+		tenantInfo: pagination.TenantInfo{
+			OrgID:  pulid.MustNew("org_"),
+			BuID:   pulid.MustNew("bu_"),
+			UserID: pulid.MustNew("usr_"),
+		},
 		invoiceService: mocks.NewMockInvoiceService(t),
 		invoiceRepo:    mocks.NewMockInvoiceRepository(t),
 		ediService:     mocks.NewMockEDIService(t),
 	}
-	f.inv = &invoice.Invoice{ID: pulid.MustNew("inv_"), Status: invoice.StatusPosted, EDISendStatus: invoice.EDISendStatusQueued}
+	f.inv = &invoice.Invoice{
+		ID:            pulid.MustNew("inv_"),
+		Status:        invoice.StatusPosted,
+		EDISendStatus: invoice.EDISendStatusQueued,
+	}
 	f.invoiceService.EXPECT().
 		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: f.inv.ID, TenantInfo: f.tenantInfo}).
 		Return(f.inv, nil).
@@ -198,7 +221,9 @@ func TestSendInvoiceEDIActivityMarksNotConfiguredWithTheFirstBlocker(t *testing.
 	t.Parallel()
 
 	f := newEDIActivityFixture(t)
-	f.expectPlan(&services.InvoiceEDISendPlan{Enabled: true, Blockers: []string{"no partner", "no profile"}})
+	f.expectPlan(
+		&services.InvoiceEDISendPlan{Enabled: true, Blockers: []string{"no partner", "no profile"}},
+	)
 	f.invoiceRepo.EXPECT().
 		UpdateEDISendStatus(mock.Anything, repositories.UpdateInvoiceEDISendStatusRequest{
 			TenantInfo: f.tenantInfo,
@@ -225,10 +250,14 @@ func TestSendInvoiceEDIActivityRecordsGenerationFailures(t *testing.T) {
 		f.expectPlan(readyPlan(edi.ConnectionMethodSFTP))
 		multiErr := errortypes.NewMultiError()
 		multiErr.Add("payload.billTo", errortypes.ErrRequired, "Bill-to is required")
-		f.ediService.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(nil, multiErr).Once()
+		f.ediService.EXPECT().
+			GenerateDocument(mock.Anything, mock.Anything).
+			Return(nil, multiErr).
+			Once()
 		f.invoiceRepo.EXPECT().
 			UpdateEDISendStatus(mock.Anything, mock.MatchedBy(func(req repositories.UpdateInvoiceEDISendStatusRequest) bool {
-				return req.InvoiceID == f.inv.ID && req.Status == invoice.EDISendStatusFailed && req.Error != ""
+				return req.InvoiceID == f.inv.ID && req.Status == invoice.EDISendStatusFailed &&
+					req.Error != ""
 			})).
 			Return(nil).
 			Once()
@@ -244,7 +273,10 @@ func TestSendInvoiceEDIActivityRecordsGenerationFailures(t *testing.T) {
 		t.Parallel()
 		f := newEDIActivityFixture(t)
 		f.expectPlan(readyPlan(edi.ConnectionMethodSFTP))
-		f.ediService.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(nil, errors.New("control number store down")).Once()
+		f.ediService.EXPECT().
+			GenerateDocument(mock.Anything, mock.Anything).
+			Return(nil, errors.New("control number store down")).
+			Once()
 		f.invoiceRepo.EXPECT().UpdateEDISendStatus(mock.Anything, mock.Anything).Return(nil).Once()
 
 		_, err := f.activities.SendInvoiceEDIActivity(t.Context(), f.payload(false))
@@ -264,8 +296,18 @@ func TestSendInvoiceEDIActivityGeneratesForExternalAndSendsForInternalPartners(t
 		wantStatus invoice.EDISendStatus
 		wantSentAt bool
 	}{
-		{"external partner waits for delivery", edi.ConnectionMethodAS2, invoice.EDISendStatusGenerated, false},
-		{"internal partner is delivered by generation", edi.ConnectionMethodInternal, invoice.EDISendStatusSent, true},
+		{
+			"external partner waits for delivery",
+			edi.ConnectionMethodAS2,
+			invoice.EDISendStatusGenerated,
+			false,
+		},
+		{
+			"internal partner is delivered by generation",
+			edi.ConnectionMethodInternal,
+			invoice.EDISendStatusSent,
+			true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -31,9 +31,17 @@ func newStubRepo() *stubRepo {
 	return &stubRepo{items: map[string]*watchtower.Item{}}
 }
 
-func (r *stubRepo) key(kind watchtower.SourceKind, id string) string { return string(kind) + ":" + id }
+func (r *stubRepo) key(
+	kind watchtower.SourceKind,
+	id string,
+) string {
+	return string(kind) + ":" + id
+}
 
-func (r *stubRepo) Upsert(_ context.Context, item *watchtower.Item) (*watchtower.Item, bool, error) {
+func (r *stubRepo) Upsert(
+	_ context.Context,
+	item *watchtower.Item,
+) (*watchtower.Item, bool, error) {
 	key := r.key(item.SourceKind, item.SourceID)
 	existing, ok := r.items[key]
 	if ok {
@@ -47,7 +55,10 @@ func (r *stubRepo) Upsert(_ context.Context, item *watchtower.Item) (*watchtower
 	return item, !ok, nil
 }
 
-func (r *stubRepo) Resolve(_ context.Context, req repositories.ResolveWatchtowerItemRequest) (*watchtower.Item, error) {
+func (r *stubRepo) Resolve(
+	_ context.Context,
+	req repositories.ResolveWatchtowerItemRequest,
+) (*watchtower.Item, error) {
 	item, ok := r.items[r.key(req.SourceKind, req.SourceID)]
 	if !ok || item.ResolvedAt != nil {
 		return nil, nil
@@ -58,7 +69,11 @@ func (r *stubRepo) Resolve(_ context.Context, req repositories.ResolveWatchtower
 	return item, nil
 }
 
-func (r *stubRepo) ResolveByID(_ context.Context, req repositories.GetWatchtowerItemRequest, at int64) (*watchtower.Item, error) {
+func (r *stubRepo) ResolveByID(
+	_ context.Context,
+	req repositories.GetWatchtowerItemRequest,
+	at int64,
+) (*watchtower.Item, error) {
 	for _, item := range r.items {
 		if item.ID == req.ID {
 			item.ResolvedAt = &at
@@ -69,7 +84,10 @@ func (r *stubRepo) ResolveByID(_ context.Context, req repositories.GetWatchtower
 	return nil, errortypes.NewNotFoundError("Watchtower item not found")
 }
 
-func (r *stubRepo) ResolveMissing(_ context.Context, req repositories.ResolveMissingWatchtowerItemsRequest) (int, error) {
+func (r *stubRepo) ResolveMissing(
+	_ context.Context,
+	req repositories.ResolveMissingWatchtowerItemsRequest,
+) (int, error) {
 	r.resolved = append(r.resolved, req)
 	open := map[string]bool{}
 	for _, id := range req.OpenSourceIDs {
@@ -87,7 +105,10 @@ func (r *stubRepo) ResolveMissing(_ context.Context, req repositories.ResolveMis
 	return count, nil
 }
 
-func (r *stubRepo) GetByID(_ context.Context, req repositories.GetWatchtowerItemRequest) (*watchtower.Item, error) {
+func (r *stubRepo) GetByID(
+	_ context.Context,
+	req repositories.GetWatchtowerItemRequest,
+) (*watchtower.Item, error) {
 	for _, item := range r.items {
 		if item.ID == req.ID {
 			return item, nil
@@ -97,7 +118,10 @@ func (r *stubRepo) GetByID(_ context.Context, req repositories.GetWatchtowerItem
 	return nil, errortypes.NewNotFoundError("Watchtower item not found")
 }
 
-func (r *stubRepo) List(_ context.Context, req repositories.ListWatchtowerItemsRequest) ([]*watchtower.Item, error) {
+func (r *stubRepo) List(
+	_ context.Context,
+	req repositories.ListWatchtowerItemsRequest,
+) ([]*watchtower.Item, error) {
 	r.lastList = req
 	allowed := map[watchtower.SourceKind]bool{}
 	for _, kind := range req.Kinds {
@@ -116,7 +140,10 @@ func (r *stubRepo) List(_ context.Context, req repositories.ListWatchtowerItemsR
 	return out, nil
 }
 
-func (r *stubRepo) Counts(_ context.Context, req repositories.CountWatchtowerItemsRequest) (*repositories.WatchtowerCounts, error) {
+func (r *stubRepo) Counts(
+	_ context.Context,
+	req repositories.CountWatchtowerItemsRequest,
+) (*repositories.WatchtowerCounts, error) {
 	counts := &repositories.WatchtowerCounts{}
 	allowed := map[watchtower.SourceKind]bool{}
 	for _, kind := range req.Kinds {
@@ -138,7 +165,10 @@ func (r *stubRepo) Counts(_ context.Context, req repositories.CountWatchtowerIte
 	return counts, nil
 }
 
-func (r *stubRepo) GetCursor(_ context.Context, req repositories.GetWatchtowerCursorRequest) (*watchtower.Cursor, error) {
+func (r *stubRepo) GetCursor(
+	_ context.Context,
+	req repositories.GetWatchtowerCursorRequest,
+) (*watchtower.Cursor, error) {
 	if r.cursor != nil {
 		return r.cursor, nil
 	}
@@ -146,7 +176,10 @@ func (r *stubRepo) GetCursor(_ context.Context, req repositories.GetWatchtowerCu
 	return &watchtower.Cursor{UserID: req.UserID}, nil
 }
 
-func (r *stubRepo) SetCursor(_ context.Context, cursor *watchtower.Cursor) (*watchtower.Cursor, error) {
+func (r *stubRepo) SetCursor(
+	_ context.Context,
+	cursor *watchtower.Cursor,
+) (*watchtower.Cursor, error) {
 	r.cursor = cursor
 
 	return cursor, nil
@@ -208,7 +241,10 @@ type stubSource struct {
 
 func (s *stubSource) Kind() watchtower.SourceKind { return s.kind }
 
-func (s *stubSource) Snapshot(context.Context, pagination.TenantInfo) ([]services.WatchtowerItemInput, error) {
+func (s *stubSource) Snapshot(
+	context.Context,
+	pagination.TenantInfo,
+) ([]services.WatchtowerItemInput, error) {
 	return s.items, s.err
 }
 
@@ -222,7 +258,11 @@ func testActor() *services.RequestActor {
 	}
 }
 
-func newService(repo *stubRepo, perms *agentruntimetest.StubPermissions, sources ...services.WatchtowerSource) *Service {
+func newService(
+	repo *stubRepo,
+	perms *agentruntimetest.StubPermissions,
+	sources ...services.WatchtowerSource,
+) *Service {
 	projector := NewProjector(ProjectorParams{Logger: zap.NewNop(), Repo: repo})
 	projector.now = func() int64 { return 1_700_000_000 }
 
@@ -239,7 +279,13 @@ func newService(repo *stubRepo, perms *agentruntimetest.StubPermissions, sources
 	return svc
 }
 
-func input(tenant pagination.TenantInfo, kind watchtower.SourceKind, id string, severity watchtower.Severity, at int64) services.WatchtowerItemInput {
+func input(
+	tenant pagination.TenantInfo,
+	kind watchtower.SourceKind,
+	id string,
+	severity watchtower.Severity,
+	at int64,
+) services.WatchtowerItemInput {
 	return services.WatchtowerItemInput{
 		TenantInfo: tenant,
 		SourceKind: kind,
@@ -260,11 +306,24 @@ func TestList_ShowsOnlyKindsTheReaderMayOpen(t *testing.T) {
 	repo := newStubRepo()
 	actor := testActor()
 	tenant := actor.TenantInfo()
-	svc := newService(repo, &agentruntimetest.StubPermissions{Denied: map[string]bool{"billing_queue:read": true}})
-	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100))
-	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceBillingException, "bqi_1", watchtower.SeverityWarning, 200))
+	svc := newService(
+		repo,
+		&agentruntimetest.StubPermissions{Denied: map[string]bool{"billing_queue:read": true}},
+	)
+	svc.projector.Upsert(
+		t.Context(),
+		input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
+	)
+	svc.projector.Upsert(
+		t.Context(),
+		input(tenant, watchtower.SourceBillingException, "bqi_1", watchtower.SeverityWarning, 200),
+	)
 
-	page, err := svc.List(t.Context(), services.ListWatchtowerItemsRequest{TenantInfo: tenant, UnresolvedOnly: true}, actor)
+	page, err := svc.List(
+		t.Context(),
+		services.ListWatchtowerItemsRequest{TenantInfo: tenant, UnresolvedOnly: true},
+		actor,
+	)
 	require.NoError(t, err)
 	require.Len(t, page.Items, 1)
 	assert.Equal(t, watchtower.SourceServiceFailure, page.Items[0].SourceKind)
@@ -275,7 +334,11 @@ func TestList_ShowsOnlyKindsTheReaderMayOpen(t *testing.T) {
 		Kinds:      []watchtower.SourceKind{watchtower.SourceBillingException},
 	}, actor)
 	require.NoError(t, err)
-	assert.Empty(t, narrowed.Items, "asking for a kind you may not see yields nothing, not an error")
+	assert.Empty(
+		t,
+		narrowed.Items,
+		"asking for a kind you may not see yields nothing, not an error",
+	)
 }
 
 func TestList_MarksWhatTheReaderHasSeen(t *testing.T) {
@@ -285,15 +348,25 @@ func TestList_MarksWhatTheReaderHasSeen(t *testing.T) {
 	actor := testActor()
 	tenant := actor.TenantInfo()
 	svc := newService(repo, &agentruntimetest.StubPermissions{})
-	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceInsight, "ins_old", watchtower.SeverityInfo, 100))
-	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceInsight, "ins_new", watchtower.SeverityCritical, 300))
+	svc.projector.Upsert(
+		t.Context(),
+		input(tenant, watchtower.SourceInsight, "ins_old", watchtower.SeverityInfo, 100),
+	)
+	svc.projector.Upsert(
+		t.Context(),
+		input(tenant, watchtower.SourceInsight, "ins_new", watchtower.SeverityCritical, 300),
+	)
 
 	counts, err := svc.MarkSeen(t.Context(), tenant, actor, 200)
 	require.NoError(t, err)
 	assert.Equal(t, 1, counts.UnseenCritical)
 	assert.Equal(t, int64(200), counts.SeenAt)
 
-	page, err := svc.List(t.Context(), services.ListWatchtowerItemsRequest{TenantInfo: tenant}, actor)
+	page, err := svc.List(
+		t.Context(),
+		services.ListWatchtowerItemsRequest{TenantInfo: tenant},
+		actor,
+	)
 	require.NoError(t, err)
 	seen := map[string]bool{}
 	for _, item := range page.Items {
@@ -311,12 +384,18 @@ func TestUpsert_KeepsTheRowAndReopensIt(t *testing.T) {
 	tenant := actor.TenantInfo()
 	svc := newService(repo, &agentruntimetest.StubPermissions{})
 
-	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100))
+	svc.projector.Upsert(
+		t.Context(),
+		input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
+	)
 	first := repo.items[repo.key(watchtower.SourceServiceFailure, "sf_1")]
 	svc.projector.Resolve(t.Context(), tenant, watchtower.SourceServiceFailure, "sf_1")
 	require.NotNil(t, first.ResolvedAt)
 
-	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityCritical, 150))
+	svc.projector.Upsert(
+		t.Context(),
+		input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityCritical, 150),
+	)
 	again := repo.items[repo.key(watchtower.SourceServiceFailure, "sf_1")]
 	assert.Equal(t, first.ID, again.ID, "the same source keeps its item")
 	assert.Nil(t, again.ResolvedAt, "a source reported open again is open again")
@@ -360,10 +439,22 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 
 	// Nobody subscribes: the person is told who could take it.
 	definitions.enabled = []*agentdefinition.Definition{
-		{ID: pulid.MustNew("agdef_"), Name: "Load monitor", TriggerMode: agentdefinition.TriggerScheduled},
-		{ID: pulid.MustNew("agdef_"), Name: "Chat helper", TriggerMode: agentdefinition.TriggerChat},
+		{
+			ID:          pulid.MustNew("agdef_"),
+			Name:        "Load monitor",
+			TriggerMode: agentdefinition.TriggerScheduled,
+		},
+		{
+			ID:          pulid.MustNew("agdef_"),
+			Name:        "Chat helper",
+			TriggerMode: agentdefinition.TriggerChat,
+		},
 	}
-	result, err := svc.HandOff(t.Context(), services.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID}, actor)
+	result, err := svc.HandOff(
+		t.Context(),
+		services.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
+		actor,
+	)
 	require.NoError(t, err)
 	assert.Empty(t, events.published)
 	require.Len(t, result.Candidates, 1, "a chat agent is not a candidate to run on a record")
@@ -372,7 +463,11 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 
 	// A subscriber: the event is published to it.
 	definitions.subscribers = []*agentdefinition.Definition{{Name: "Service desk"}}
-	result, err = svc.HandOff(t.Context(), services.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID}, actor)
+	result, err = svc.HandOff(
+		t.Context(),
+		services.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
+		actor,
+	)
 	require.NoError(t, err)
 	require.Len(t, events.published, 1)
 	assert.Equal(t, subject, events.published[0].SubjectID)
@@ -398,14 +493,21 @@ func TestHandOff_RefusesAnItemTheReaderMayNotSee(t *testing.T) {
 	repo := newStubRepo()
 	actor := testActor()
 	tenant := actor.TenantInfo()
-	svc := newService(repo, &agentruntimetest.StubPermissions{Denied: map[string]bool{"billing_queue:read": true}})
+	svc := newService(
+		repo,
+		&agentruntimetest.StubPermissions{Denied: map[string]bool{"billing_queue:read": true}},
+	)
 	in := input(tenant, watchtower.SourceBillingException, "bqi_1", watchtower.SeverityWarning, 100)
 	in.SubjectType = agent.SubjectBillingQueueItem
 	in.SubjectID = pulid.MustNew("bqi_")
 	item, err := svc.projector.upsert(t.Context(), in)
 	require.NoError(t, err)
 
-	_, err = svc.HandOff(t.Context(), services.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID}, actor)
+	_, err = svc.HandOff(
+		t.Context(),
+		services.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
+		actor,
+	)
 	require.Error(t, err)
 	_, err = svc.Dismiss(t.Context(), tenant, item.ID, actor)
 	require.Error(t, err)
@@ -420,21 +522,42 @@ func TestReconcile_FollowsTheSourcesAndSurvivesOneFailing(t *testing.T) {
 	repo := newStubRepo()
 	actor := testActor()
 	tenant := actor.TenantInfo()
-	failures := &stubSource{kind: watchtower.SourceServiceFailure, items: []services.WatchtowerItemInput{
-		input(tenant, watchtower.SourceServiceFailure, "sf_2", watchtower.SeverityWarning, 200),
-	}}
+	failures := &stubSource{
+		kind: watchtower.SourceServiceFailure,
+		items: []services.WatchtowerItemInput{
+			input(tenant, watchtower.SourceServiceFailure, "sf_2", watchtower.SeverityWarning, 200),
+		},
+	}
 	broken := &stubSource{kind: watchtower.SourceInsight, err: assert.AnError}
 	svc := newService(repo, &agentruntimetest.StubPermissions{}, failures, broken)
-	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100))
-	svc.projector.Upsert(t.Context(), input(tenant, watchtower.SourceInsight, "ins_1", watchtower.SeverityInfo, 100))
+	svc.projector.Upsert(
+		t.Context(),
+		input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
+	)
+	svc.projector.Upsert(
+		t.Context(),
+		input(tenant, watchtower.SourceInsight, "ins_1", watchtower.SeverityInfo, 100),
+	)
 
 	result, err := svc.Reconcile(t.Context(), tenant)
 	require.NoError(t, err)
 	assert.Equal(t, 1, result.Upserted)
 	assert.Equal(t, 1, result.Resolved)
 	assert.Equal(t, []string{watchtower.SourceInsight.String()}, result.Failed)
-	assert.NotNil(t, repo.items[repo.key(watchtower.SourceServiceFailure, "sf_1")].ResolvedAt, "no longer reported, so resolved")
+	assert.NotNil(
+		t,
+		repo.items[repo.key(watchtower.SourceServiceFailure, "sf_1")].ResolvedAt,
+		"no longer reported, so resolved",
+	)
 	assert.Nil(t, repo.items[repo.key(watchtower.SourceServiceFailure, "sf_2")].ResolvedAt)
-	assert.Nil(t, repo.items[repo.key(watchtower.SourceInsight, "ins_1")].ResolvedAt, "a source that failed to read resolves nothing")
-	assert.Equal(t, []watchtower.SourceKind{watchtower.SourceInsight, watchtower.SourceServiceFailure}, svc.RegisteredKinds())
+	assert.Nil(
+		t,
+		repo.items[repo.key(watchtower.SourceInsight, "ins_1")].ResolvedAt,
+		"a source that failed to read resolves nothing",
+	)
+	assert.Equal(
+		t,
+		[]watchtower.SourceKind{watchtower.SourceInsight, watchtower.SourceServiceFailure},
+		svc.RegisteredKinds(),
+	)
 }

@@ -117,9 +117,21 @@ func TestServiceGetBillingReadiness_UsesTenantEnforcementOverride(t *testing.T) 
 
 	require.NoError(t, err)
 	require.NotNil(t, readiness)
-	assert.Equal(t, tenant.EnforcementLevelBlock, readiness.Policy.ShipmentBillingRequirementEnforcement)
-	assert.Equal(t, tenant.ReadyToBillAssignmentModeManualOnly, readiness.Policy.ReadyToBillAssignmentMode)
-	assert.Equal(t, tenant.BillingQueueTransferModeManualOnly, readiness.Policy.BillingQueueTransferMode)
+	assert.Equal(
+		t,
+		tenant.EnforcementLevelBlock,
+		readiness.Policy.ShipmentBillingRequirementEnforcement,
+	)
+	assert.Equal(
+		t,
+		tenant.ReadyToBillAssignmentModeManualOnly,
+		readiness.Policy.ReadyToBillAssignmentMode,
+	)
+	assert.Equal(
+		t,
+		tenant.BillingQueueTransferModeManualOnly,
+		readiness.Policy.BillingQueueTransferMode,
+	)
 	assert.False(t, readiness.CanMarkReadyToInvoice)
 	require.Len(t, readiness.MissingRequirements, 1)
 	assert.Equal(t, requiredType.ID.String(), readiness.MissingRequirements[0].DocumentTypeID)
@@ -198,8 +210,16 @@ func TestServiceGetBillingReadiness_FallsBackToCustomerSettings(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, readiness)
-	assert.Equal(t, tenant.EnforcementLevelBlock, readiness.Policy.ShipmentBillingRequirementEnforcement)
-	assert.Equal(t, tenant.ReadyToBillAssignmentModeAutomaticWhenEligible, readiness.Policy.ReadyToBillAssignmentMode)
+	assert.Equal(
+		t,
+		tenant.EnforcementLevelBlock,
+		readiness.Policy.ShipmentBillingRequirementEnforcement,
+	)
+	assert.Equal(
+		t,
+		tenant.ReadyToBillAssignmentModeAutomaticWhenEligible,
+		readiness.Policy.ReadyToBillAssignmentMode,
+	)
 	assert.True(t, readiness.CanMarkReadyToInvoice)
 	assert.True(t, readiness.ShouldAutoMarkReadyToInvoice)
 	assert.False(t, readiness.ShouldAutoTransferToBilling)
@@ -328,7 +348,9 @@ func TestBuildShipmentBillingReadiness_BlocksOnRateVarianceWhenConfigured(t *tes
 	assert.Equal(t, "rate_variance_requires_action", readiness.ValidationFailures[0].Code)
 }
 
-func TestBuildShipmentBillingReadiness_RequireReviewStopsAutoProgressButAllowsBillingReview(t *testing.T) {
+func TestBuildShipmentBillingReadiness_RequireReviewStopsAutoProgressButAllowsBillingReview(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	entity := validShipmentForValidation()
@@ -360,7 +382,9 @@ func TestBuildShipmentBillingReadiness_RequireReviewStopsAutoProgressButAllowsBi
 	assert.Equal(t, "rate_variance_requires_action", readiness.ValidationFailures[0].Code)
 }
 
-func TestBuildShipmentBillingReadiness_ReturnToOperationsBlocksManualProgressForReviewItems(t *testing.T) {
+func TestBuildShipmentBillingReadiness_ReturnToOperationsBlocksManualProgressForReviewItems(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	entity := validShipmentForValidation()

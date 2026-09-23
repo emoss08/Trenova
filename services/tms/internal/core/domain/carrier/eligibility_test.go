@@ -120,23 +120,35 @@ func TestEvaluateEligibility_IntelGate(t *testing.T) {
 		assert.Equal(t, "authority.revoked", result.Findings[0].Code)
 	})
 
-	t.Run("warn and overridden block become advisories that never need an override", func(t *testing.T) {
-		result := evaluate(&carrier.IntelGate{
-			Evaluated: true,
-			FetchedAt: now,
-			Findings: []carrier.IntelFinding{
-				{Code: "safety.iss_high", Action: carrier.IntelActionWarn, Message: "iss"},
-				{Code: "safety.oos_order", Action: carrier.IntelActionBlock, Message: "oos", Overridden: true},
-				{Code: "operations.mcs150_stale", Action: carrier.IntelActionNotify, Message: "mcs"},
-			},
-		})
-		assert.False(t, result.IsBlocked())
-		assert.False(t, result.HasWarnings())
-		assert.Len(t, result.Advisories, 2)
-		for _, f := range result.Findings {
-			assert.False(t, f.RequiresOverride)
-		}
-	})
+	t.Run(
+		"warn and overridden block become advisories that never need an override",
+		func(t *testing.T) {
+			result := evaluate(&carrier.IntelGate{
+				Evaluated: true,
+				FetchedAt: now,
+				Findings: []carrier.IntelFinding{
+					{Code: "safety.iss_high", Action: carrier.IntelActionWarn, Message: "iss"},
+					{
+						Code:       "safety.oos_order",
+						Action:     carrier.IntelActionBlock,
+						Message:    "oos",
+						Overridden: true,
+					},
+					{
+						Code:    "operations.mcs150_stale",
+						Action:  carrier.IntelActionNotify,
+						Message: "mcs",
+					},
+				},
+			})
+			assert.False(t, result.IsBlocked())
+			assert.False(t, result.HasWarnings())
+			assert.Len(t, result.Advisories, 2)
+			for _, f := range result.Findings {
+				assert.False(t, f.RequiresOverride)
+			}
+		},
+	)
 
 	t.Run("fail closed blocks past the hard max age", func(t *testing.T) {
 		result := evaluate(&carrier.IntelGate{
@@ -161,14 +173,17 @@ func TestEvaluateEligibility_IntelGate(t *testing.T) {
 		assert.True(t, result.HasAdvisories())
 	})
 
-	t.Run("fail closed with no intelligence ever fetched blocks when provider is down", func(t *testing.T) {
-		result := evaluate(&carrier.IntelGate{
-			Evaluated:           true,
-			ProviderUnavailable: true,
-			OutagePolicy:        carrier.IntelOutagePolicyFailClosed,
-		})
-		assert.True(t, result.IsBlocked())
-	})
+	t.Run(
+		"fail closed with no intelligence ever fetched blocks when provider is down",
+		func(t *testing.T) {
+			result := evaluate(&carrier.IntelGate{
+				Evaluated:           true,
+				ProviderUnavailable: true,
+				OutagePolicy:        carrier.IntelOutagePolicyFailClosed,
+			})
+			assert.True(t, result.IsBlocked())
+		},
+	)
 
 	t.Run("last known blocks persist during an outage", func(t *testing.T) {
 		result := evaluate(&carrier.IntelGate{

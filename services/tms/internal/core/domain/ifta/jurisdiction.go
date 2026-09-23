@@ -31,17 +31,17 @@ var (
 type Jurisdiction struct {
 	bun.BaseModel `bun:"table:ifta_jurisdictions,alias:ifj" json:"-"`
 
-	ID           pulid.ID           `json:"id"            bun:"id,pk,type:VARCHAR(100),notnull"`
-	CountryCode  string             `json:"countryCode"   bun:"country_code,type:CHAR(2),notnull"`
-	Code         string             `json:"code"          bun:"code,type:VARCHAR(2),notnull"`
-	Name         string             `json:"name"          bun:"name,type:VARCHAR(100),notnull"`
-	UsStateID    *pulid.ID          `json:"usStateId"     bun:"us_state_id,type:VARCHAR(100),nullzero"`
-	IsIftaMember bool               `json:"isIftaMember"  bun:"is_ifta_member,type:BOOLEAN,notnull"`
-	HasSurcharge bool               `json:"hasSurcharge"  bun:"has_surcharge,type:BOOLEAN,notnull"`
-	SortOrder    int                `json:"sortOrder"     bun:"sort_order,type:INTEGER,notnull,default:0"`
-	Status       JurisdictionStatus `json:"status"        bun:"status,type:ifta_jurisdiction_status_enum,notnull,default:'Active'"`
-	CreatedAt    int64              `json:"createdAt"     bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64              `json:"updatedAt"     bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID           pulid.ID           `json:"id"           bun:"id,pk,type:VARCHAR(100),notnull"`
+	CountryCode  string             `json:"countryCode"  bun:"country_code,type:CHAR(2),notnull"`
+	Code         string             `json:"code"         bun:"code,type:VARCHAR(2),notnull"`
+	Name         string             `json:"name"         bun:"name,type:VARCHAR(100),notnull"`
+	UsStateID    *pulid.ID          `json:"usStateId"    bun:"us_state_id,type:VARCHAR(100),nullzero"`
+	IsIftaMember bool               `json:"isIftaMember" bun:"is_ifta_member,type:BOOLEAN,notnull"`
+	HasSurcharge bool               `json:"hasSurcharge" bun:"has_surcharge,type:BOOLEAN,notnull"`
+	SortOrder    int                `json:"sortOrder"    bun:"sort_order,type:INTEGER,notnull,default:0"`
+	Status       JurisdictionStatus `json:"status"       bun:"status,type:ifta_jurisdiction_status_enum,notnull,default:'Active'"`
+	CreatedAt    int64              `json:"createdAt"    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt    int64              `json:"updatedAt"    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	UsState *usstate.UsState `json:"usState,omitempty" bun:"rel:belongs-to,join:us_state_id=id"`
 }

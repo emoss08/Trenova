@@ -124,7 +124,9 @@ func (a *Activities) WriteDueBriefingsActivity(
 
 // BriefingRetentionActivity removes briefings older than the window a reader can
 // page back through.
-func (a *Activities) BriefingRetentionActivity(ctx context.Context) (*BriefingRetentionResult, error) {
+func (a *Activities) BriefingRetentionActivity(
+	ctx context.Context,
+) (*BriefingRetentionResult, error) {
 	cutoff := time.Unix(timeutils.NowUnix(), 0).
 		UTC().
 		AddDate(0, 0, -retentionDays).

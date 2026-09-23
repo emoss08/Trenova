@@ -33,7 +33,10 @@ func (f *fakeUsage) Create(_ context.Context, record *aiusage.AIUsageRecord) err
 	return f.err
 }
 
-func (f *fakeUsage) Summary(context.Context, repositories.AIUsageSummaryRequest) (*repositories.AIUsageSummary, error) {
+func (f *fakeUsage) Summary(
+	context.Context,
+	repositories.AIUsageSummaryRequest,
+) (*repositories.AIUsageSummary, error) {
 	return &repositories.AIUsageSummary{}, nil
 }
 
@@ -99,7 +102,11 @@ func TestCompleteStructured_RecordsEveryAttempt(t *testing.T) {
 	assert.GreaterOrEqual(t, second.LatencyMs, int64(0))
 	require.NotNil(t, second.CostUSD)
 	// 11 in at $1/M plus 7 out at $10/M
-	assert.True(t, second.CostUSD.Equal(decimal.RequireFromString("0.000081")), second.CostUSD.String())
+	assert.True(
+		t,
+		second.CostUSD.Equal(decimal.RequireFromString("0.000081")),
+		second.CostUSD.String(),
+	)
 
 	require.NotNil(t, result.CostUSD)
 	assert.True(t, result.CostUSD.Equal(*second.CostUSD))

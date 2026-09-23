@@ -154,9 +154,17 @@ func TestAssessCollectability_NoticeStatusGradations(t *testing.T) {
 		status    detention.NotificationStatus
 		wantScore int
 	}{
-		{"not required earns full credit", detention.NotificationStatusNotRequired, detention.ScoreWeightNotice},
+		{
+			"not required earns full credit",
+			detention.NotificationStatusNotRequired,
+			detention.ScoreWeightNotice,
+		},
 		{"sent earns full credit", detention.NotificationStatusSent, detention.ScoreWeightNotice},
-		{"late earns partial credit", detention.NotificationStatusLate, detention.ScoreWeightNotice / 5},
+		{
+			"late earns partial credit",
+			detention.NotificationStatusLate,
+			detention.ScoreWeightNotice / 5,
+		},
 		{"pending earns nothing yet", detention.NotificationStatusPending, 0},
 		{"missed earns nothing", detention.NotificationStatusMissed, 0},
 		{"failed earns nothing", detention.NotificationStatusFailed, 0},

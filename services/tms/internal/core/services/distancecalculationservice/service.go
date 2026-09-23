@@ -205,8 +205,10 @@ func (s *Service) resolveForShipment(
 						"distanceProfileName": storedDistance.DistanceProfileName,
 						"storedDistanceUnits": storedDistance.DistanceUnits,
 					},
-					calculatedAt:  now,
-					jurisdictions: pcmilerJurisdictionsFromStored(storedDistance.JurisdictionDistances),
+					calculatedAt: now,
+					jurisdictions: pcmilerJurisdictionsFromStored(
+						storedDistance.JurisdictionDistances,
+					),
 				})
 				resp.Moves = append(resp.Moves, moveResult(move, idx, warnings))
 				resp.TotalDistance = addDistance(resp.TotalDistance, storedDistance.Distance)
@@ -893,11 +895,13 @@ func convertStoredJurisdictions(
 	converted := make([]storedmileage.JurisdictionDistance, 0, len(items))
 	for _, item := range items {
 		converted = append(converted, storedmileage.JurisdictionDistance{
-			Country:  item.Country,
-			Code:     item.Code,
-			Distance: roundDistance(storedmileage.ConvertDistance(item.Distance, fromUnits, toUnits)),
-			Toll:     roundDistance(storedmileage.ConvertDistance(item.Toll, fromUnits, toUnits)),
-			Ferry:    roundDistance(storedmileage.ConvertDistance(item.Ferry, fromUnits, toUnits)),
+			Country: item.Country,
+			Code:    item.Code,
+			Distance: roundDistance(
+				storedmileage.ConvertDistance(item.Distance, fromUnits, toUnits),
+			),
+			Toll:  roundDistance(storedmileage.ConvertDistance(item.Toll, fromUnits, toUnits)),
+			Ferry: roundDistance(storedmileage.ConvertDistance(item.Ferry, fromUnits, toUnits)),
 		})
 	}
 	return converted

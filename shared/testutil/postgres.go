@@ -285,7 +285,10 @@ func getSharedPostgres() (*PostgresContainer, error) {
 
 		dbName := fmt.Sprintf("trenova_shared_test_%d", os.Getpid())
 
-		_, _ = adminDB.ExecContext(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS %s WITH (FORCE)", dbName))
+		_, _ = adminDB.ExecContext(
+			ctx,
+			fmt.Sprintf("DROP DATABASE IF EXISTS %s WITH (FORCE)", dbName),
+		)
 		err = createDatabaseWithRetry(ctx, adminDB, dbName)
 		adminDB.Close()
 		if err != nil {

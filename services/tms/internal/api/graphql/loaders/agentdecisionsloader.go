@@ -48,10 +48,13 @@ func (f *AgentDecisionsByProposalIDLoaderFactory) batchFunc(
 ) batchFetchFunc[[]*agent.AgentDecision] {
 	return batchGroupFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*agent.AgentDecision, error) {
-			decisions, err := f.decisions.ListByProposals(ctx, repositories.ListAgentDecisionsByProposalsRequest{
-				ProposalIDs: ids,
-				TenantInfo:  tenantInfo,
-			})
+			decisions, err := f.decisions.ListByProposals(
+				ctx,
+				repositories.ListAgentDecisionsByProposalsRequest{
+					ProposalIDs: ids,
+					TenantInfo:  tenantInfo,
+				},
+			)
 			if err != nil {
 				return nil, err
 			}

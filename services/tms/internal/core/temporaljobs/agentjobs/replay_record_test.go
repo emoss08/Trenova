@@ -131,23 +131,31 @@ func TestRecordAgentRunHistories(t *testing.T) {
 			writeHistory(t, c, run, filepath.Join(out, rec.name+".json"))
 
 			if leaveOpen {
-				_ = c.TerminateWorkflow(context.WithoutCancel(t.Context()), run.GetID(), run.GetRunID(), "recorded")
+				_ = c.TerminateWorkflow(
+					context.WithoutCancel(t.Context()),
+					run.GetID(),
+					run.GetRunID(),
+					"recorded",
+				)
 			}
 		})
 	}
 }
 
 func registerStandIns(w worker.Worker, rec recordedRun) {
-	w.RegisterActivityWithOptions(func(_ context.Context, p *AgentRunPayload) (*PrepareRunResult, error) {
-		return &PrepareRunResult{
-			Definition: &agentdefinition.Definition{
-				ID:   p.DefinitionID,
-				Name: "Recorded desk",
-			},
-			DecisionTimeoutSeconds: rec.decisionTimeout,
-			RunTimeoutSeconds:      600,
-		}, nil
-	}, activity.RegisterOptions{Name: "PrepareRunActivity"})
+	w.RegisterActivityWithOptions(
+		func(_ context.Context, p *AgentRunPayload) (*PrepareRunResult, error) {
+			return &PrepareRunResult{
+				Definition: &agentdefinition.Definition{
+					ID:   p.DefinitionID,
+					Name: "Recorded desk",
+				},
+				DecisionTimeoutSeconds: rec.decisionTimeout,
+				RunTimeoutSeconds:      600,
+			}, nil
+		},
+		activity.RegisterOptions{Name: "PrepareRunActivity"},
+	)
 
 	w.RegisterActivityWithOptions(func(context.Context, *RunAgentInput) (*RunAgentResult, error) {
 		return &RunAgentResult{

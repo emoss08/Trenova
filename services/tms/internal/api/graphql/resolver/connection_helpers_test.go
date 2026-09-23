@@ -89,9 +89,12 @@ func (p testCursorValueProvider) CursorValuesAt(index int) ([]any, bool) {
 func TestPageInfo_EmptyEndCursorStaysNil(t *testing.T) {
 	t.Parallel()
 
-	info := pageInfo(true, lastEdgeCursor([]testConnectionEdge{}, func(edge testConnectionEdge) string {
-		return edge.cursor
-	}))
+	info := pageInfo(
+		true,
+		lastEdgeCursor([]testConnectionEdge{}, func(edge testConnectionEdge) string {
+			return edge.cursor
+		}),
+	)
 
 	assert.True(t, info.HasNextPage)
 	assert.Nil(t, info.EndCursor)

@@ -27,7 +27,12 @@ type fakeDisputeDB struct{}
 
 func (fakeDisputeDB) DB() *bun.DB                          { return nil }
 func (fakeDisputeDB) DBForContext(context.Context) bun.IDB { return nil }
-func (fakeDisputeDB) WithTx(ctx context.Context, _ ports.TxOptions, fn func(context.Context, bun.Tx) error) error {
+
+func (fakeDisputeDB) WithTx(
+	ctx context.Context,
+	_ ports.TxOptions,
+	fn func(context.Context, bun.Tx) error,
+) error {
 	return fn(ctx, bun.Tx{})
 }
 func (fakeDisputeDB) HealthCheck(context.Context) error { return nil }
@@ -187,11 +192,36 @@ func TestOpenDisputeInvoiceRules(t *testing.T) {
 		amount  string
 		wantErr string
 	}{
-		{"voided", func(inv *invoice.Invoice) { inv.Status = invoice.StatusVoided }, "10", "voided invoice"},
-		{"draft", func(inv *invoice.Invoice) { inv.Status = invoice.StatusDraft }, "10", "Only a posted invoice"},
-		{"credit memo", func(inv *invoice.Invoice) { inv.BillType = billingqueue.BillTypeCreditMemo }, "10", "invoices and debit memos"},
-		{"nothing owed", func(inv *invoice.Invoice) { inv.AppliedAmountMinor = 10000 }, "10", "no open balance"},
-		{"over the balance", func(inv *invoice.Invoice) { inv.AppliedAmountMinor = 6000; inv.AppliedAmount = decimal.NewFromInt(60) }, "40.01", "exceeds the open balance of 40.00"},
+		{
+			"voided",
+			func(inv *invoice.Invoice) { inv.Status = invoice.StatusVoided },
+			"10",
+			"voided invoice",
+		},
+		{
+			"draft",
+			func(inv *invoice.Invoice) { inv.Status = invoice.StatusDraft },
+			"10",
+			"Only a posted invoice",
+		},
+		{
+			"credit memo",
+			func(inv *invoice.Invoice) { inv.BillType = billingqueue.BillTypeCreditMemo },
+			"10",
+			"invoices and debit memos",
+		},
+		{
+			"nothing owed",
+			func(inv *invoice.Invoice) { inv.AppliedAmountMinor = 10000 },
+			"10",
+			"no open balance",
+		},
+		{
+			"over the balance",
+			func(inv *invoice.Invoice) { inv.AppliedAmountMinor = 6000; inv.AppliedAmount = decimal.NewFromInt(60) },
+			"40.01",
+			"exceeds the open balance of 40.00",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -213,7 +243,10 @@ func TestOpenDisputeRefusesASecondOpenCase(t *testing.T) {
 
 	f := newDisputeFixture(t)
 	f.lockInvoice()
-	f.repo.EXPECT().GetOpenByInvoiceID(mock.Anything, mock.Anything).Return(f.openCase(), nil).Once()
+	f.repo.EXPECT().
+		GetOpenByInvoiceID(mock.Anything, mock.Anything).
+		Return(f.openCase(), nil).
+		Once()
 
 	_, err := f.svc.Open(t.Context(), f.openRequest("10"), f.actor)
 
@@ -270,7 +303,16 @@ func TestResolveDisputeCreditIssuedNeedsAnExecutedAdjustmentOnTheInvoice(t *test
 		wantErr    string
 	}{
 		{"no adjustment named", nil, false, "Name the executed adjustment"},
-		{"adjustment on another invoice", &invoiceadjustment.InvoiceAdjustment{ID: adjustmentID, OriginalInvoiceID: pulid.MustNew("inv_"), Status: invoiceadjustment.StatusExecuted}, true, "does not belong to invoice INV-9"},
+		{
+			"adjustment on another invoice",
+			&invoiceadjustment.InvoiceAdjustment{
+				ID:                adjustmentID,
+				OriginalInvoiceID: pulid.MustNew("inv_"),
+				Status:            invoiceadjustment.StatusExecuted,
+			},
+			true,
+			"does not belong to invoice INV-9",
+		},
 		{"adjustment not executed", nil, true, "has not executed yet"},
 	}
 	for _, tt := range tests {
@@ -283,7 +325,11 @@ func TestResolveDisputeCreditIssuedNeedsAnExecutedAdjustmentOnTheInvoice(t *test
 			if tt.withID {
 				adjustment := tt.adjustment
 				if adjustment == nil {
-					adjustment = &invoiceadjustment.InvoiceAdjustment{ID: adjustmentID, OriginalInvoiceID: f.inv.ID, Status: invoiceadjustment.StatusPendingApproval}
+					adjustment = &invoiceadjustment.InvoiceAdjustment{
+						ID:                adjustmentID,
+						OriginalInvoiceID: f.inv.ID,
+						Status:            invoiceadjustment.StatusPendingApproval,
+					}
 				}
 				f.adjustmentRepo.EXPECT().
 					GetByID(mock.Anything, repositories.GetInvoiceAdjustmentRequest{ID: adjustmentID, TenantInfo: f.tenantInfo}).

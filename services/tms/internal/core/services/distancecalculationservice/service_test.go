@@ -41,7 +41,8 @@ func TestRouteOptionsFromDistanceProfile(t *testing.T) {
 func TestOptionsGranularity(t *testing.T) {
 	t.Parallel()
 
-	options := distanceprofile.NewDefault(pulid.MustNew("org_"), pulid.MustNew("bu_")).RouteOptions()
+	options := distanceprofile.NewDefault(pulid.MustNew("org_"), pulid.MustNew("bu_")).
+		RouteOptions()
 	options.LocationGranularity = "coordinates"
 	assert.Equal(t, "Coordinates", optionsGranularity(options))
 }
@@ -140,5 +141,9 @@ func TestHazmatTypesForShipment(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []string{"Caustic", "Flammable", "HarmfulToWater", "Inhalants"}, hazmatTypesForShipment(entity))
+	assert.Equal(
+		t,
+		[]string{"Caustic", "Flammable", "HarmfulToWater", "Inhalants"},
+		hazmatTypesForShipment(entity),
+	)
 }

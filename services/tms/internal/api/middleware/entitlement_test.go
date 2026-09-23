@@ -57,10 +57,15 @@ func TestEntitlementMiddleware_RequireFeatureAllowed(t *testing.T) {
 	})
 
 	router := gin.New()
-	router.GET("/test", setEntitlementTestAuthContext(), middleware.RequireFeature(platformcatalog.FeatureCoreTMS), func(c *gin.Context) {
-		require.NotNil(t, GetFeatureCheckResult(c))
-		c.Status(http.StatusNoContent)
-	})
+	router.GET(
+		"/test",
+		setEntitlementTestAuthContext(),
+		middleware.RequireFeature(platformcatalog.FeatureCoreTMS),
+		func(c *gin.Context) {
+			require.NotNil(t, GetFeatureCheckResult(c))
+			c.Status(http.StatusNoContent)
+		},
+	)
 
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/test", nil))
@@ -85,9 +90,14 @@ func TestEntitlementMiddleware_RequireFeatureDenied(t *testing.T) {
 	})
 
 	router := gin.New()
-	router.GET("/test", setEntitlementTestAuthContext(), middleware.RequireFeature(platformcatalog.FeatureCoreTMS), func(c *gin.Context) {
-		c.Status(http.StatusNoContent)
-	})
+	router.GET(
+		"/test",
+		setEntitlementTestAuthContext(),
+		middleware.RequireFeature(platformcatalog.FeatureCoreTMS),
+		func(c *gin.Context) {
+			c.Status(http.StatusNoContent)
+		},
+	)
 
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/test", nil))
@@ -104,9 +114,14 @@ func TestEntitlementMiddleware_OptionalFeaturePropagatesErrors(t *testing.T) {
 	})
 
 	router := gin.New()
-	router.GET("/test", setEntitlementTestAuthContext(), middleware.OptionalFeature(platformcatalog.FeatureCoreTMS), func(c *gin.Context) {
-		c.Status(http.StatusNoContent)
-	})
+	router.GET(
+		"/test",
+		setEntitlementTestAuthContext(),
+		middleware.OptionalFeature(platformcatalog.FeatureCoreTMS),
+		func(c *gin.Context) {
+			c.Status(http.StatusNoContent)
+		},
+	)
 
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/test", nil))

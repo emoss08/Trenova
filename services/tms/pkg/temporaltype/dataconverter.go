@@ -49,7 +49,10 @@ func NewEncryptionDataConverter(options DataConverterOptions) converter.DataConv
 	// first to last, so for those the decrypt above passes, zlib unwraps, and
 	// this last layer decrypts what zlib left. It never encodes.
 	if encrypt && options.EnableCompression {
-		codecs = append(codecs, legacyNestingCodec{inner: &EncryptionCodec{KeyID: options.EncryptionKeyID}})
+		codecs = append(
+			codecs,
+			legacyNestingCodec{inner: &EncryptionCodec{KeyID: options.EncryptionKeyID}},
+		)
 	}
 
 	if len(codecs) == 0 {

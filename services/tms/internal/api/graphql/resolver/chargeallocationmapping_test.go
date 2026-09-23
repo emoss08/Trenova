@@ -46,7 +46,11 @@ func TestShipmentChargeAllocationsFromInput_FlattensFreightAndChargeRows(t *test
 
 	rows, err := shipmentChargeAllocationsFromInput(&gqlmodel.ShipmentInput{
 		FreightAllocations: []*gqlmodel.ChargeAllocationInput{
-			{BillToCustomerID: intel.String(), Method: shipmentdomain.ChargeAllocationMethodPercent, Percent: new("60")},
+			{
+				BillToCustomerID: intel.String(),
+				Method:           shipmentdomain.ChargeAllocationMethodPercent,
+				Percent:          new("60"),
+			},
 			{
 				ID:               new(existingRowID.String()),
 				BillToCustomerID: amd.String(),
@@ -61,7 +65,11 @@ func TestShipmentChargeAllocationsFromInput_FlattensFreightAndChargeRows(t *test
 				ID:                  new(savedChargeID.String()),
 				AccessorialChargeID: pulid.MustNew("acc_").String(),
 				Allocations: []*gqlmodel.ChargeAllocationInput{
-					{BillToCustomerID: amd.String(), Method: shipmentdomain.ChargeAllocationMethodAmount, Amount: new("12.50")},
+					{
+						BillToCustomerID: amd.String(),
+						Method:           shipmentdomain.ChargeAllocationMethodAmount,
+						Amount:           new("12.50"),
+					},
 				},
 			},
 			{
@@ -70,7 +78,11 @@ func TestShipmentChargeAllocationsFromInput_FlattensFreightAndChargeRows(t *test
 			{
 				AccessorialChargeID: pulid.MustNew("acc_").String(),
 				Allocations: []*gqlmodel.ChargeAllocationInput{
-					{BillToCustomerID: amd.String(), Method: shipmentdomain.ChargeAllocationMethodPercent, Percent: new("100")},
+					{
+						BillToCustomerID: amd.String(),
+						Method:           shipmentdomain.ChargeAllocationMethodPercent,
+						Percent:          new("100"),
+					},
 				},
 			},
 		},
@@ -127,26 +139,49 @@ func TestChargeAllocationsFromInput_RejectsBadValues(t *testing.T) {
 	negative := -1
 
 	_, err := chargeAllocationsFromInput([]*gqlmodel.ChargeAllocationInput{
-		{BillToCustomerID: payer, Method: shipmentdomain.ChargeAllocationMethodPercent, Percent: new("sixty")},
+		{
+			BillToCustomerID: payer,
+			Method:           shipmentdomain.ChargeAllocationMethodPercent,
+			Percent:          new("sixty"),
+		},
 	}, shipmentdomain.ChargeAllocationKindFreight, "freightAllocations", authCtx, nil)
 	require.Error(t, err)
 
 	_, err = chargeAllocationsFromInput([]*gqlmodel.ChargeAllocationInput{
-		{BillToCustomerID: payer, Method: shipmentdomain.ChargeAllocationMethodAmount, Amount: new("ten")},
+		{
+			BillToCustomerID: payer,
+			Method:           shipmentdomain.ChargeAllocationMethodAmount,
+			Amount:           new("ten"),
+		},
 	}, shipmentdomain.ChargeAllocationKindFreight, "freightAllocations", authCtx, nil)
 	require.Error(t, err)
 
 	_, err = chargeAllocationsFromInput([]*gqlmodel.ChargeAllocationInput{
-		{BillToCustomerID: payer, Method: shipmentdomain.ChargeAllocationMethodPercent, Percent: new("60"), Sequence: &negative},
+		{
+			BillToCustomerID: payer,
+			Method:           shipmentdomain.ChargeAllocationMethodPercent,
+			Percent:          new("60"),
+			Sequence:         &negative,
+		},
 	}, shipmentdomain.ChargeAllocationKindFreight, "freightAllocations", authCtx, nil)
 	require.Error(t, err)
 
 	_, err = chargeAllocationsFromInput([]*gqlmodel.ChargeAllocationInput{
-		{BillToCustomerID: "", Method: shipmentdomain.ChargeAllocationMethodPercent, Percent: new("60")},
+		{
+			BillToCustomerID: "",
+			Method:           shipmentdomain.ChargeAllocationMethodPercent,
+			Percent:          new("60"),
+		},
 	}, shipmentdomain.ChargeAllocationKindFreight, "freightAllocations", authCtx, nil)
 	require.Error(t, err)
 
-	rows, err := chargeAllocationsFromInput([]*gqlmodel.ChargeAllocationInput{nil}, shipmentdomain.ChargeAllocationKindFreight, "freightAllocations", authCtx, nil)
+	rows, err := chargeAllocationsFromInput(
+		[]*gqlmodel.ChargeAllocationInput{nil},
+		shipmentdomain.ChargeAllocationKindFreight,
+		"freightAllocations",
+		authCtx,
+		nil,
+	)
 	require.NoError(t, err)
 	assert.Empty(t, rows)
 }

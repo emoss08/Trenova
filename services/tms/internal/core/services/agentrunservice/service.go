@@ -159,7 +159,11 @@ func (s *Service) StartForDefinition(
 		return nil, err
 	}
 
-	s.logStart(updated, actor, fmt.Sprintf("Run of agent %s started (%s)", definition.Name, trigger))
+	s.logStart(
+		updated,
+		actor,
+		fmt.Sprintf("Run of agent %s started (%s)", definition.Name, trigger),
+	)
 	if s.activity != nil {
 		s.activity.RunChanged(ctx, updated, actor.AuditActorOrSystem(), services.ActivityCreated)
 	}

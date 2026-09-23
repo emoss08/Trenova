@@ -27,10 +27,16 @@ func (s *Service) ApplyCreditMemo(
 	actor *serviceports.RequestActor,
 ) ([]*customerpayment.CreditMemoApplication, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError("Applying a credit memo requires an authenticated user")
+		return nil, errortypes.NewAuthorizationError(
+			"Applying a credit memo requires an authenticated user",
+		)
 	}
 	if multiErr := s.validateCreditApplications(req); multiErr != nil {
 		return nil, multiErr
@@ -42,7 +48,11 @@ func (s *Service) ApplyCreditMemo(
 		Date:  req.AccountingDate,
 	}); err != nil {
 		multiErr := errortypes.NewMultiError()
-		multiErr.Add("accountingDate", errortypes.ErrInvalid, "Accounting date must fall within a fiscal period")
+		multiErr.Add(
+			"accountingDate",
+			errortypes.ErrInvalid,
+			"Accounting date must fall within a fiscal period",
+		)
 		return nil, multiErr
 	}
 
@@ -74,10 +84,13 @@ func (s *Service) ApplyCreditMemo(
 
 		previousMemo := *memo
 		for idx, app := range req.Applications {
-			target, lockErr := s.invoiceRepo.LockForUpdate(txCtx, repositories.GetInvoiceByIDRequest{
-				ID:         app.InvoiceID,
-				TenantInfo: req.TenantInfo,
-			})
+			target, lockErr := s.invoiceRepo.LockForUpdate(
+				txCtx,
+				repositories.GetInvoiceByIDRequest{
+					ID:         app.InvoiceID,
+					TenantInfo: req.TenantInfo,
+				},
+			)
 			if lockErr != nil {
 				return lockErr
 			}
@@ -132,21 +145,34 @@ func (s *Service) UnapplyCreditMemoApplication(
 	actor *serviceports.RequestActor,
 ) (*customerpayment.CreditMemoApplication, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError("Unapplying a credit memo requires an authenticated user")
+		return nil, errortypes.NewAuthorizationError(
+			"Unapplying a credit memo requires an authenticated user",
+		)
 	}
 	if req.ApplicationID.IsNil() {
-		return nil, errortypes.NewValidationError("applicationId", errortypes.ErrRequired, "Application is required")
+		return nil, errortypes.NewValidationError(
+			"applicationId",
+			errortypes.ErrRequired,
+			"Application is required",
+		)
 	}
 
 	var updated *customerpayment.CreditMemoApplication
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		application, txErr := s.repo.GetCreditMemoApplicationByID(txCtx, repositories.GetCreditMemoApplicationRequest{
-			ID:         req.ApplicationID,
-			TenantInfo: req.TenantInfo,
-		})
+		application, txErr := s.repo.GetCreditMemoApplicationByID(
+			txCtx,
+			repositories.GetCreditMemoApplicationRequest{
+				ID:         req.ApplicationID,
+				TenantInfo: req.TenantInfo,
+			},
+		)
 		if txErr != nil {
 			return txErr
 		}
@@ -214,7 +240,9 @@ func (s *Service) UnapplyCreditMemoApplication(
 	return updated, nil
 }
 
-func (s *Service) validateCreditApplications(req *serviceports.ApplyCreditMemoRequest) *errortypes.MultiError {
+func (s *Service) validateCreditApplications(
+	req *serviceports.ApplyCreditMemoRequest,
+) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req.CreditMemoID.IsNil() {
 		multiErr.Add("creditMemoId", errortypes.ErrRequired, "Credit memo is required")
@@ -228,17 +256,21 @@ func (s *Service) validateCreditApplications(req *serviceports.ApplyCreditMemoRe
 	seen := make(map[pulid.ID]struct{}, len(req.Applications))
 	for idx, app := range req.Applications {
 		if app == nil {
-			multiErr.WithIndex("applications", idx).Add("invoiceId", errortypes.ErrRequired, "Application is required")
+			multiErr.WithIndex("applications", idx).
+				Add("invoiceId", errortypes.ErrRequired, "Application is required")
 			continue
 		}
 		if app.InvoiceID.IsNil() {
-			multiErr.WithIndex("applications", idx).Add("invoiceId", errortypes.ErrRequired, "Invoice is required")
+			multiErr.WithIndex("applications", idx).
+				Add("invoiceId", errortypes.ErrRequired, "Invoice is required")
 		}
 		if app.AppliedAmountMinor <= 0 {
-			multiErr.WithIndex("applications", idx).Add("appliedAmountMinor", errortypes.ErrInvalid, "Applied amount must be greater than zero")
+			multiErr.WithIndex("applications", idx).
+				Add("appliedAmountMinor", errortypes.ErrInvalid, "Applied amount must be greater than zero")
 		}
 		if _, dup := seen[app.InvoiceID]; dup {
-			multiErr.WithIndex("applications", idx).Add("invoiceId", errortypes.ErrInvalid, "Each invoice may appear once")
+			multiErr.WithIndex("applications", idx).
+				Add("invoiceId", errortypes.ErrInvalid, "Each invoice may appear once")
 		}
 		seen[app.InvoiceID] = struct{}{}
 	}
@@ -255,9 +287,17 @@ func validateCreditMemoSource(memo *invoice.Invoice) *errortypes.MultiError {
 	case memo.BillType != billingqueue.BillTypeCreditMemo:
 		multiErr.Add("creditMemoId", errortypes.ErrInvalid, "Only a credit memo can be applied")
 	case memo.Status != invoice.StatusPosted:
-		multiErr.Add("creditMemoId", errortypes.ErrInvalidOperation, "Only a posted credit memo can be applied")
+		multiErr.Add(
+			"creditMemoId",
+			errortypes.ErrInvalidOperation,
+			"Only a posted credit memo can be applied",
+		)
 	case memo.CreditRemainingMinor() <= 0:
-		multiErr.Add("creditMemoId", errortypes.ErrInvalidOperation, "This credit memo has nothing left to apply")
+		multiErr.Add(
+			"creditMemoId",
+			errortypes.ErrInvalidOperation,
+			"This credit memo has nothing left to apply",
+		)
 	}
 	if multiErr.HasErrors() {
 		return multiErr
@@ -276,13 +316,30 @@ func validateCreditTarget(
 	entry := multiErr.WithIndex("applications", idx)
 	switch {
 	case target.CustomerID != memo.CustomerID:
-		entry.Add("invoiceId", errortypes.ErrInvalid, "Invoice customer must match the credit memo customer")
+		entry.Add(
+			"invoiceId",
+			errortypes.ErrInvalid,
+			"Invoice customer must match the credit memo customer",
+		)
 	case target.Status != invoice.StatusPosted:
-		entry.Add("invoiceId", errortypes.ErrInvalidOperation, "Only posted invoices can take a credit")
+		entry.Add(
+			"invoiceId",
+			errortypes.ErrInvalidOperation,
+			"Only posted invoices can take a credit",
+		)
 	case target.BillType != billingqueue.BillTypeInvoice && target.BillType != billingqueue.BillTypeDebitMemo:
-		entry.Add("invoiceId", errortypes.ErrInvalidOperation, "A credit memo settles invoices and debit memos only")
+		entry.Add(
+			"invoiceId",
+			errortypes.ErrInvalidOperation,
+			"A credit memo settles invoices and debit memos only",
+		)
 	case amountMinor > target.OpenBalanceMinor():
-		entry.Add("appliedAmountMinor", errortypes.ErrInvalid, "Applied amount exceeds the invoice open balance by {0} minor units", amountMinor-target.OpenBalanceMinor())
+		entry.Add(
+			"appliedAmountMinor",
+			errortypes.ErrInvalid,
+			"Applied amount exceeds the invoice open balance by {0} minor units",
+			amountMinor-target.OpenBalanceMinor(),
+		)
 	}
 	if multiErr.HasErrors() {
 		return multiErr

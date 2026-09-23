@@ -46,10 +46,13 @@ func (f *FuelCardByIDLoaderFactory) NewForTenant(
 func (f *FuelCardByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
 ) batchFetchFunc[*fuelpurchase.FuelCard] {
-	return batchByIDFunc(func(ctx context.Context, ids []pulid.ID) ([]*fuelpurchase.FuelCard, error) {
-		return f.cards.GetCardsByIDs(ctx, &repositories.GetFuelCardsByIDsRequest{
-			TenantInfo: tenantInfo,
-			IDs:        ids,
-		})
-	}, "Fuel card not found within your organization")
+	return batchByIDFunc(
+		func(ctx context.Context, ids []pulid.ID) ([]*fuelpurchase.FuelCard, error) {
+			return f.cards.GetCardsByIDs(ctx, &repositories.GetFuelCardsByIDsRequest{
+				TenantInfo: tenantInfo,
+				IDs:        ids,
+			})
+		},
+		"Fuel card not found within your organization",
+	)
 }

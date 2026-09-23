@@ -21,8 +21,16 @@ request sort" — so "load more" would fail on every inbox longer than a page.
 func TestInboundMessageConnectionCursorsCarryTheArrivalSort(t *testing.T) {
 	t.Parallel()
 
-	first := &inboundmessage.InboundMessage{ID: pulid.MustNew("imsg_"), ReceivedAt: 200, CreatedAt: 10}
-	second := &inboundmessage.InboundMessage{ID: pulid.MustNew("imsg_"), ReceivedAt: 100, CreatedAt: 20}
+	first := &inboundmessage.InboundMessage{
+		ID:         pulid.MustNew("imsg_"),
+		ReceivedAt: 200,
+		CreatedAt:  10,
+	}
+	second := &inboundmessage.InboundMessage{
+		ID:         pulid.MustNew("imsg_"),
+		ReceivedAt: 100,
+		CreatedAt:  20,
+	}
 	sort := []pagination.CursorSortField{
 		{Field: "receivedAt", Direction: "desc"},
 		{Field: "id", Direction: "desc"},

@@ -75,12 +75,15 @@ func (s *Service) sweep(
 		if !resolveMissing {
 			continue
 		}
-		resolved, rErr := s.repo.ResolveMissing(ctx, repositories.ResolveMissingWatchtowerItemsRequest{
-			TenantInfo:    tenant,
-			SourceKind:    kind,
-			OpenSourceIDs: open,
-			ResolvedAt:    s.now(),
-		})
+		resolved, rErr := s.repo.ResolveMissing(
+			ctx,
+			repositories.ResolveMissingWatchtowerItemsRequest{
+				TenantInfo:    tenant,
+				SourceKind:    kind,
+				OpenSourceIDs: open,
+				ResolvedAt:    s.now(),
+			},
+		)
 		if rErr != nil {
 			s.l.Warn("watchtower reconcile could not resolve",
 				zap.String("kind", string(kind)), zap.Error(rErr))

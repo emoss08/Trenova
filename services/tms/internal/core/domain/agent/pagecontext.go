@@ -154,7 +154,11 @@ func (p *PageContext) Validate(prefix string, multiErr *errortypes.MultiError) {
 	}
 
 	if p.EntityID != "" && p.EntityType == "" {
-		multiErr.Add(field("entityType"), errortypes.ErrRequired, "Record type is required with a record identifier")
+		multiErr.Add(
+			field("entityType"),
+			errortypes.ErrRequired,
+			"Record type is required with a record identifier",
+		)
 	}
 
 	if p.View != nil {
@@ -211,10 +215,18 @@ func (v *PageView) Validate(prefix string, multiErr *errortypes.MultiError) {
 
 	if v.Selection != nil {
 		if v.Selection.Count < 0 {
-			multiErr.Add(field("selection.count"), errortypes.ErrInvalid, "Selection count cannot be negative")
+			multiErr.Add(
+				field("selection.count"),
+				errortypes.ErrInvalid,
+				"Selection count cannot be negative",
+			)
 		}
 		if len(v.Selection.IDs) > MaxPageViewSelectionIDs {
-			multiErr.Add(field("selection.ids"), errortypes.ErrInvalid, "Too many selected identifiers")
+			multiErr.Add(
+				field("selection.ids"),
+				errortypes.ErrInvalid,
+				"Too many selected identifiers",
+			)
 		} else {
 			for i, id := range v.Selection.IDs {
 				if _, err := pulid.Parse(id); err != nil {
@@ -227,7 +239,11 @@ func (v *PageView) Validate(prefix string, multiErr *errortypes.MultiError) {
 			}
 		}
 		if v.Selection.Count < len(v.Selection.IDs) {
-			multiErr.Add(field("selection.count"), errortypes.ErrInvalid, "Selection count is below the identifiers sent")
+			multiErr.Add(
+				field("selection.count"),
+				errortypes.ErrInvalid,
+				"Selection count is below the identifiers sent",
+			)
 		}
 	}
 
@@ -266,14 +282,22 @@ func (v *PageView) Validate(prefix string, multiErr *errortypes.MultiError) {
 	}
 }
 
-func validatePageFilters(prefix string, filters []domaintypes.FieldFilter, multiErr *errortypes.MultiError) {
+func validatePageFilters(
+	prefix string,
+	filters []domaintypes.FieldFilter,
+	multiErr *errortypes.MultiError,
+) {
 	for i, filter := range filters {
 		filterField := prefix + "[" + strconv.Itoa(i) + "]"
 		if !validFieldName(filter.Field) {
 			multiErr.Add(filterField+".field", errortypes.ErrInvalid, "Filter field is invalid")
 		}
 		if !filter.Operator.IsValid() {
-			multiErr.Add(filterField+".operator", errortypes.ErrInvalid, "Filter operator is invalid")
+			multiErr.Add(
+				filterField+".operator",
+				errortypes.ErrInvalid,
+				"Filter operator is invalid",
+			)
 		}
 		if len(FormatFilterValue(filter.Value)) > MaxPageViewFilterValueLn {
 			multiErr.Add(filterField+".value", errortypes.ErrInvalid, "Filter value is too long")

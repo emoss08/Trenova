@@ -33,7 +33,13 @@ func TestHTTPControlPlaneClient_SignsRequests(t *testing.T) {
 		require.Equal(t, bodyHash, r.Header.Get("X-Trenova-Body-SHA256"))
 		require.Equal(
 			t,
-			computeSignature(apiKey, http.MethodPost, "/v1/entitlements/check", bodyHash, timestamp),
+			computeSignature(
+				apiKey,
+				http.MethodPost,
+				"/v1/entitlements/check",
+				bodyHash,
+				timestamp,
+			),
 			r.Header.Get("X-Trenova-Signature"),
 		)
 
@@ -83,7 +89,13 @@ func TestHTTPControlPlaneClient_SignsHeartbeat(t *testing.T) {
 		require.Equal(t, bodyHash, r.Header.Get("X-Trenova-Body-SHA256"))
 		require.Equal(
 			t,
-			computeSignature(apiKey, http.MethodPost, "/v1/instances/heartbeat", bodyHash, timestamp),
+			computeSignature(
+				apiKey,
+				http.MethodPost,
+				"/v1/instances/heartbeat",
+				bodyHash,
+				timestamp,
+			),
 			r.Header.Get("X-Trenova-Signature"),
 		)
 

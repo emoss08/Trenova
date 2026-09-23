@@ -59,7 +59,11 @@ const (
 
 func (t RunTrigger) IsValid() bool {
 	switch t {
-	case RunTriggerManual, RunTriggerChat, RunTriggerScheduled, RunTriggerEvent, RunTriggerContinuous:
+	case RunTriggerManual,
+		RunTriggerChat,
+		RunTriggerScheduled,
+		RunTriggerEvent,
+		RunTriggerContinuous:
 		return true
 	default:
 		return false

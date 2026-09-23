@@ -1108,7 +1108,11 @@ func TestReconcile_LeavesSchedulesItDidNotCreate(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.False(t, desk.deleteCalled, "a schedule marked as another owner's must survive")
-	assert.True(t, legacy.deleteCalled, "an unmarked schedule predates the marker and is the registry's")
+	assert.True(
+		t,
+		legacy.deleteCalled,
+		"an unmarked schedule predates the marker and is the registry's",
+	)
 	assert.True(t, retired.deleteCalled)
 	assert.ElementsMatch(t, []string{legacy.id, retired.id}, result.Deleted)
 }
@@ -1122,7 +1126,10 @@ func TestNeedsUpdate_ReadsTheHashFromTheNote(t *testing.T) {
 	desired := &Schedule{ID: "s", Spec: Every(time.Minute), Workflow: dummyWorkflow, TaskQueue: "q"}
 	r := &Reconciler{}
 
-	assert.False(t, r.needsUpdate(&client.ScheduleListEntry{Note: registryNote(desired.Hash())}, desired))
+	assert.False(
+		t,
+		r.needsUpdate(&client.ScheduleListEntry{Note: registryNote(desired.Hash())}, desired),
+	)
 	assert.True(t, r.needsUpdate(&client.ScheduleListEntry{Note: registryNote("stale")}, desired))
 }
 

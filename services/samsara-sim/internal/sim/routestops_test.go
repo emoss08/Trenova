@@ -43,11 +43,15 @@ func stopRichSimTime() time.Time {
 }
 
 func newRouteStopLiveSimulator() *LiveSimulator {
-	return NewLiveSimulator(NewStore(newRouteStopFixture()), "route-stop-seed", LiveSimulationOptions{
-		FleetSize:    1,
-		TripHoursMin: 1,
-		TripHoursMax: 1,
-	})
+	return NewLiveSimulator(
+		NewStore(newRouteStopFixture()),
+		"route-stop-seed",
+		LiveSimulationOptions{
+			FleetSize:    1,
+			TripHoursMin: 1,
+			TripHoursMax: 1,
+		},
+	)
 }
 
 func TestRouteStopWebhookEmissionsArrivalAndDeparture(t *testing.T) {
@@ -133,7 +137,11 @@ func TestRouteStopWebhookEmissionsArrivalAndDeparture(t *testing.T) {
 		}
 	}
 	if !sawArrival || !sawDeparture {
-		t.Fatalf("expected both arrival and departure, arrival=%v departure=%v", sawArrival, sawDeparture)
+		t.Fatalf(
+			"expected both arrival and departure, arrival=%v departure=%v",
+			sawArrival,
+			sawDeparture,
+		)
 	}
 }
 

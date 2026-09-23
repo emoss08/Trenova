@@ -39,7 +39,9 @@ func (m *mockCustomFieldRepository) ListConnection(
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*pagination.CursorListResult[*customfield.CustomFieldDefinition]), args.Error(1)
+	return args.Get(0).(*pagination.CursorListResult[*customfield.CustomFieldDefinition]), args.Error(
+		1,
+	)
 }
 
 func (m *mockCustomFieldRepository) GetByID(

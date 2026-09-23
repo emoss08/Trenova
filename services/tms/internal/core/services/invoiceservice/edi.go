@@ -130,10 +130,13 @@ func (s *Service) outboundPartnersByCustomer(
 	if len(customerIDs) == 0 || s.ediPartnerRepo == nil {
 		return result, nil
 	}
-	partners, err := s.ediPartnerRepo.ListOutboundPartnersByCustomerIDs(ctx, repositories.ListEDIPartnersByCustomerIDsRequest{
-		CustomerIDs: customerIDs,
-		TenantInfo:  tenantInfo,
-	})
+	partners, err := s.ediPartnerRepo.ListOutboundPartnersByCustomerIDs(
+		ctx,
+		repositories.ListEDIPartnersByCustomerIDsRequest{
+			CustomerIDs: customerIDs,
+			TenantInfo:  tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -258,10 +261,18 @@ func (s *Service) SendEDI(
 	actor *servicesports.RequestActor,
 ) (*servicesports.InvoiceEDISendResult, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil {
-		return nil, errortypes.NewValidationError("actor", errortypes.ErrRequired, "Actor is required")
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrRequired,
+			"Actor is required",
+		)
 	}
 	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
@@ -290,7 +301,11 @@ func (s *Service) SendEDI(
 		if plan != nil && len(plan.Blockers) > 0 {
 			blocker = plan.Blockers[0]
 		}
-		return nil, errortypes.NewValidationError("invoiceId", errortypes.ErrInvalidOperation, blocker)
+		return nil, errortypes.NewValidationError(
+			"invoiceId",
+			errortypes.ErrInvalidOperation,
+			blocker,
+		)
 	}
 	if !req.Force {
 		switch entity.EDISendStatus {
@@ -337,7 +352,13 @@ func (s *Service) enqueueEDIAfterPost(
 		return
 	}
 	if len(plan.Blockers) > 0 {
-		s.recordEDIStatus(ctx, entity, tenantInfo, invoice.EDISendStatusNotConfigured, plan.Blockers[0])
+		s.recordEDIStatus(
+			ctx,
+			entity,
+			tenantInfo,
+			invoice.EDISendStatusNotConfigured,
+			plan.Blockers[0],
+		)
 		return
 	}
 	if !plan.AutoSend {
@@ -389,7 +410,8 @@ func (s *Service) startEDISendWorkflow(
 		},
 	)
 	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to start invoice EDI send").WithInternal(err)
+		return nil, errortypes.NewDatabaseError("Failed to start invoice EDI send").
+			WithInternal(err)
 	}
 	s.recordEDIStatus(ctx, entity, tenantInfo, invoice.EDISendStatusQueued, "")
 

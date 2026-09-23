@@ -28,32 +28,47 @@ func TestSeedBillToFromAgreement(t *testing.T) {
 		{
 			name:   "seeds when the agreement is newly applied and no bill-to is set",
 			entity: &shipment.Shipment{CustomerID: customerID},
-			rated:  &services.RatedShipment{AgreementID: &agreementID, BillToCustomerID: &thirdParty},
-			want:   &thirdParty,
+			rated: &services.RatedShipment{
+				AgreementID:      &agreementID,
+				BillToCustomerID: &thirdParty,
+			},
+			want: &thirdParty,
 		},
 		{
 			name:   "seeds when a different agreement priced the shipment before",
 			entity: &shipment.Shipment{CustomerID: customerID, RateAgreementID: &otherAgreement},
-			rated:  &services.RatedShipment{AgreementID: &agreementID, BillToCustomerID: &thirdParty},
-			want:   &thirdParty,
+			rated: &services.RatedShipment{
+				AgreementID:      &agreementID,
+				BillToCustomerID: &thirdParty,
+			},
+			want: &thirdParty,
 		},
 		{
 			name:   "never overwrites a bill-to somebody set",
 			entity: &shipment.Shipment{CustomerID: customerID, BillToCustomerID: &manual},
-			rated:  &services.RatedShipment{AgreementID: &agreementID, BillToCustomerID: &thirdParty},
-			want:   &manual,
+			rated: &services.RatedShipment{
+				AgreementID:      &agreementID,
+				BillToCustomerID: &thirdParty,
+			},
+			want: &manual,
 		},
 		{
 			name:   "does not re-seed on a recalculation under the same agreement",
 			entity: &shipment.Shipment{CustomerID: customerID, RateAgreementID: &agreementID},
-			rated:  &services.RatedShipment{AgreementID: &agreementID, BillToCustomerID: &thirdParty},
-			want:   nil,
+			rated: &services.RatedShipment{
+				AgreementID:      &agreementID,
+				BillToCustomerID: &thirdParty,
+			},
+			want: nil,
 		},
 		{
 			name:   "ignores an agreement that bills the customer themselves",
 			entity: &shipment.Shipment{CustomerID: customerID},
-			rated:  &services.RatedShipment{AgreementID: &agreementID, BillToCustomerID: &customerID},
-			want:   nil,
+			rated: &services.RatedShipment{
+				AgreementID:      &agreementID,
+				BillToCustomerID: &customerID,
+			},
+			want: nil,
 		},
 		{
 			name:   "ignores an agreement with no bill-to",

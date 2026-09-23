@@ -18,14 +18,26 @@ func TestDecodeDefinition_AcceptsAFlattenedDottedField(t *testing.T) {
 	definition, err := report.DecodeDefinition(map[string]any{
 		"entity": "shipment_move",
 		"columns": []any{
-			map[string]any{"id": "first_name", "kind": "dimension", "field": "assignment.primaryWorker.firstName"},
+			map[string]any{
+				"id":    "first_name",
+				"kind":  "dimension",
+				"field": "assignment.primaryWorker.firstName",
+			},
 			map[string]any{"id": "moves", "kind": "measure", "agg": "count", "field": "id"},
-			map[string]any{"id": "fleet", "kind": "dimension", "ref": map[string]any{"field": "assignment.primaryWorker.fleetCode.code"}},
+			map[string]any{
+				"id":   "fleet",
+				"kind": "dimension",
+				"ref":  map[string]any{"field": "assignment.primaryWorker.fleetCode.code"},
+			},
 		},
 		"filters": map[string]any{
 			"op": "and",
 			"filters": []any{
-				map[string]any{"operator": "eq", "ref": map[string]any{"field": "shipment.customer.name"}, "value": "Acme"},
+				map[string]any{
+					"operator": "eq",
+					"ref":      map[string]any{"field": "shipment.customer.name"},
+					"value":    "Acme",
+				},
 			},
 		},
 	})
@@ -36,7 +48,11 @@ func TestDecodeDefinition_AcceptsAFlattenedDottedField(t *testing.T) {
 	assert.Equal(t, "firstName", definition.Columns[0].Ref.Field)
 	assert.Empty(t, definition.Columns[1].Ref.Path)
 	assert.Equal(t, "id", definition.Columns[1].Ref.Field)
-	assert.Equal(t, []string{"assignment", "primaryWorker", "fleetCode"}, definition.Columns[2].Ref.Path)
+	assert.Equal(
+		t,
+		[]string{"assignment", "primaryWorker", "fleetCode"},
+		definition.Columns[2].Ref.Path,
+	)
 	assert.Equal(t, "code", definition.Columns[2].Ref.Field)
 
 	require.NotNil(t, definition.Filters)
@@ -54,13 +70,21 @@ func TestDecodeDefinition_LeavesACanonicalRefAlone(t *testing.T) {
 			map[string]any{
 				"id":   "fleet",
 				"kind": "dimension",
-				"ref":  map[string]any{"path": []any{"assignment", "primaryWorker"}, "field": "fleetCode.code"},
+				"ref": map[string]any{
+					"path":  []any{"assignment", "primaryWorker"},
+					"field": "fleetCode.code",
+				},
 			},
 		},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, []string{"assignment", "primaryWorker"}, definition.Columns[0].Ref.Path)
-	assert.Equal(t, "fleetCode.code", definition.Columns[0].Ref.Field, "a ref that already has a path is not second-guessed")
+	assert.Equal(
+		t,
+		"fleetCode.code",
+		definition.Columns[0].Ref.Field,
+		"a ref that already has a path is not second-guessed",
+	)
 }
 
 // A column with no field at all is refused up front, naming the column, so
@@ -70,8 +94,15 @@ func TestDecodeDefinition_RefusesAColumnWithNoField(t *testing.T) {
 	t.Parallel()
 
 	_, err := report.DecodeDefinition(map[string]any{
-		"entity":  "shipment_move",
-		"columns": []any{map[string]any{"id": "last_move", "kind": "measure", "agg": "max", "label": "Last Move"}},
+		"entity": "shipment_move",
+		"columns": []any{
+			map[string]any{
+				"id":    "last_move",
+				"kind":  "measure",
+				"agg":   "max",
+				"label": "Last Move",
+			},
+		},
 	})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `"last_move"`)
@@ -84,8 +115,17 @@ func TestDecodeDefinition_AllowsAComputedColumnWithoutAField(t *testing.T) {
 	definition, err := report.DecodeDefinition(map[string]any{
 		"entity": "shipment",
 		"columns": []any{
-			map[string]any{"id": "revenue", "kind": "measure", "agg": "sum", "ref": map[string]any{"field": "totalChargeAmount"}},
-			map[string]any{"id": "per_mile", "kind": "computed", "computed": map[string]any{"op": "divide", "leftId": "revenue", "rightValue": 100}},
+			map[string]any{
+				"id":   "revenue",
+				"kind": "measure",
+				"agg":  "sum",
+				"ref":  map[string]any{"field": "totalChargeAmount"},
+			},
+			map[string]any{
+				"id":       "per_mile",
+				"kind":     "computed",
+				"computed": map[string]any{"op": "divide", "leftId": "revenue", "rightValue": 100},
+			},
 		},
 	})
 	require.NoError(t, err)

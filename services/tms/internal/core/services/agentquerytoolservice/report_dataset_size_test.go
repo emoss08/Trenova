@@ -28,9 +28,12 @@ func TestDescribeReportDataset_EveryDatasetFitsInOneResult(t *testing.T) {
 
 	for i := range reportcatalog.Default.Entities {
 		key := reportcatalog.Default.Entities[i].Key
-		result, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
-			"dataset": key,
-		}))
+		result, err := tools["describe_report_dataset"].Query(
+			t.Context(),
+			testParams(map[string]any{
+				"dataset": key,
+			}),
+		)
 		require.NoError(t, err, key)
 
 		encoded, err := sonic.Marshal(result)

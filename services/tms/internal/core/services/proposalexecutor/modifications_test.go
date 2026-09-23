@@ -59,10 +59,19 @@ func TestCheckModifications_ReturnsTheParametersAsTheyWouldRun(t *testing.T) {
 	proposal := testProposal(tool.Name(), map[string]any{"workerId": "wrk_1", "message": "Call in"})
 	actor := testActor(proposal.OrganizationID, proposal.BusinessUnitID)
 
-	params, err := executor.CheckModifications(t.Context(), proposal, map[string]any{"priority": "high"}, actor)
+	params, err := executor.CheckModifications(
+		t.Context(),
+		proposal,
+		map[string]any{"priority": "high"},
+		actor,
+	)
 
 	require.NoError(t, err)
-	assert.Equal(t, map[string]any{"workerId": "wrk_1", "message": "Call in", "priority": "high"}, params)
+	assert.Equal(
+		t,
+		map[string]any{"workerId": "wrk_1", "message": "Call in", "priority": "high"},
+		params,
+	)
 }
 
 // A change that does not fit the tool is refused as a field error, before
@@ -98,7 +107,12 @@ func TestCheckModifications_LetsTheToolCheckItsOwnArguments(t *testing.T) {
 	proposal := testProposal(tool.Name(), map[string]any{"workerId": "wrk_1", "message": "Call in"})
 	actor := testActor(proposal.OrganizationID, proposal.BusinessUnitID)
 
-	_, err := executor.CheckModifications(t.Context(), proposal, map[string]any{"priority": "high"}, actor)
+	_, err := executor.CheckModifications(
+		t.Context(),
+		proposal,
+		map[string]any{"priority": "high"},
+		actor,
+	)
 
 	require.ErrorIs(t, err, refusal)
 }
@@ -112,7 +126,12 @@ func TestCheckModifications_RefusesAnApproverFromAnotherOrganization(t *testing.
 	actor := testActor(proposal.OrganizationID, proposal.BusinessUnitID)
 	actor.OrganizationID = pulid.MustNew("org_")
 
-	_, err := executor.CheckModifications(t.Context(), proposal, map[string]any{"priority": "high"}, actor)
+	_, err := executor.CheckModifications(
+		t.Context(),
+		proposal,
+		map[string]any{"priority": "high"},
+		actor,
+	)
 
 	require.ErrorIs(t, err, ErrTenantMismatch)
 }

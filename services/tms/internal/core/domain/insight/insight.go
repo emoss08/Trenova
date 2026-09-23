@@ -116,7 +116,7 @@ type Insight struct {
 	DedupeKey string `json:"dedupeKey" bun:"dedupe_key,type:VARCHAR(255),notnull"`
 	// Subject is what the finding is about in the reader's language — a customer
 	// name, a location, a lane.
-	Subject string `json:"subject" bun:"subject,type:VARCHAR(255),nullzero"`
+	Subject string `json:"subject"   bun:"subject,type:VARCHAR(255),nullzero"`
 
 	// Headline, Narrative and Recommendation are generated prose. Narrated says
 	// whether a model actually wrote them: when it is false these hold the
@@ -138,7 +138,7 @@ type Insight struct {
 	// StaleAt is when these numbers stop being worth trusting. The client says so
 	// rather than hiding the insight, because a stale finding is still evidence
 	// that something was wrong.
-	StaleAt int64 `json:"staleAt" bun:"stale_at,type:BIGINT,notnull"`
+	StaleAt int64 `json:"staleAt"     bun:"stale_at,type:BIGINT,notnull"`
 
 	DismissedAt   *int64   `json:"dismissedAt"   bun:"dismissed_at,type:BIGINT,nullzero"`
 	DismissedByID pulid.ID `json:"dismissedById" bun:"dismissed_by_id,type:VARCHAR(100),nullzero"`

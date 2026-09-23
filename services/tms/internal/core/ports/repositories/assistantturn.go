@@ -41,7 +41,10 @@ type CompleteAssistantTurnRequest struct {
 type AssistantTurnRepository interface {
 	// Start records a turn about to run. A conversation that already has one
 	// returns ErrTurnAlreadyRunning.
-	Start(ctx context.Context, turn *conversation.AssistantTurn) (*conversation.AssistantTurn, error)
+	Start(
+		ctx context.Context,
+		turn *conversation.AssistantTurn,
+	) (*conversation.AssistantTurn, error)
 	GetByID(ctx context.Context, req GetAssistantTurnRequest) (*conversation.AssistantTurn, error)
 	// Active is the turn a conversation is still producing, nil when it is
 	// not producing one. This is what lets a reopened tab rejoin a reply.
@@ -49,5 +52,10 @@ type AssistantTurnRepository interface {
 	Complete(ctx context.Context, req CompleteAssistantTurnRequest) error
 	// MarkWorkflow records the durable execution carrying the turn, so it can
 	// be cancelled when somebody presses stop.
-	MarkWorkflow(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo, workflowID string) error
+	MarkWorkflow(
+		ctx context.Context,
+		id pulid.ID,
+		tenant pagination.TenantInfo,
+		workflowID string,
+	) error
 }

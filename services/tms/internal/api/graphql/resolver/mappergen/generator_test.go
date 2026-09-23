@@ -85,7 +85,11 @@ type WorkerPatchInput struct {
 	Type graphql.Omittable[*worker.WorkerType] `+"`json:\"type,omitempty\"`"+`
 }
 `)
-	writeTestFile(t, root, "internal/core/domain/equipmentmanufacturer/equipmentmanufacturer.go", `package equipmentmanufacturer
+	writeTestFile(
+		t,
+		root,
+		"internal/core/domain/equipmentmanufacturer/equipmentmanufacturer.go",
+		`package equipmentmanufacturer
 
 import "example.com/app/shared/pulid"
 
@@ -99,7 +103,8 @@ type EquipmentManufacturer struct {
 	Version        int64    `+"`json:\"version\"`"+`
 	CreatedAt      int64    `+"`json:\"createdAt\"`"+`
 }
-`)
+`,
+	)
 	writeTestFile(t, root, "internal/core/domain/tractor/tractor.go", `package tractor
 
 import "example.com/app/shared/pulid"
@@ -118,7 +123,11 @@ type Tractor struct {
 	CustomFields   map[string]any `+"`json:\"customFields,omitempty\" bun:\"-\"`"+`
 }
 `)
-	writeTestFile(t, root, "internal/core/domain/equipmenttype/equipmenttype.go", `package equipmenttype
+	writeTestFile(
+		t,
+		root,
+		"internal/core/domain/equipmenttype/equipmenttype.go",
+		`package equipmenttype
 
 import "example.com/app/shared/pulid"
 
@@ -128,7 +137,8 @@ type EquipmentType struct {
 	BusinessUnitID pulid.ID `+"`json:\"businessUnitId\"`"+`
 	Code           string   `+"`json:\"code\"`"+`
 }
-`)
+`,
+	)
 	writeTestFile(t, root, "internal/core/domain/fleetcode/fleetcode.go", `package fleetcode
 
 import "example.com/app/shared/pulid"
@@ -189,16 +199,25 @@ func equipmentTypeFromInput() {}
 		ManifestPath: filepath.Join(resolverDir, "mappers.yml"),
 		OutputDir:    outputDir,
 		GqlgenPath:   filepath.Join(root, "gqlgen.yml"),
-		ModelPath:    filepath.Join(root, "internal", "api", "graphql", "gqlmodel", "models_gen.go"),
-		DomainDir:    filepath.Join(root, "internal", "core", "domain"),
-		ResolverDir:  resolverDir,
-		GoModPath:    filepath.Join(root, "go.mod"),
+		ModelPath: filepath.Join(
+			root,
+			"internal",
+			"api",
+			"graphql",
+			"gqlmodel",
+			"models_gen.go",
+		),
+		DomainDir:   filepath.Join(root, "internal", "core", "domain"),
+		ResolverDir: resolverDir,
+		GoModPath:   filepath.Join(root, "go.mod"),
 	})
 	if err != nil {
 		t.Fatalf("run() error = %v", err)
 	}
 
-	equipmentOutput, err := os.ReadFile(filepath.Join(outputDir, "equipment_manufacturer_mapping_gen.go"))
+	equipmentOutput, err := os.ReadFile(
+		filepath.Join(outputDir, "equipment_manufacturer_mapping_gen.go"),
+	)
 	if err != nil {
 		t.Fatalf("reading equipment manufacturer output: %v", err)
 	}
@@ -220,9 +239,17 @@ func equipmentTypeFromInput() {}
 	}
 	tractorGenerated := string(tractorOutput)
 	mustContain(t, tractorGenerated, "func TractorFromInput(")
-	mustContain(t, tractorGenerated, "primaryWorkerID, err := pulid.MustParse(input.PrimaryWorkerID)")
+	mustContain(
+		t,
+		tractorGenerated,
+		"primaryWorkerID, err := pulid.MustParse(input.PrimaryWorkerID)",
+	)
 	mustContain(t, tractorGenerated, "status := statusvalue.Available")
-	mustContain(t, tractorGenerated, "primaryWorkerID, err := pulid.MustParse(*input.PrimaryWorkerID)")
+	mustContain(
+		t,
+		tractorGenerated,
+		"primaryWorkerID, err := pulid.MustParse(*input.PrimaryWorkerID)",
+	)
 	mustNotContain(t, tractorGenerated, "optionalID(input.PrimaryWorkerID)")
 	mustContain(t, tractorGenerated, `"example.com/app/pkg/errortypes"`)
 	mustContain(t, tractorGenerated, "if codeValue, ok := input.Code.ValueOK(); ok {")

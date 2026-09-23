@@ -122,7 +122,12 @@ func (c *Client) mileageBatch(ctx context.Context, routes []RouteRequest) ([]Rou
 	query.Set("dataVersion", dataVersion)
 	endpoint.RawQuery = query.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint.String(), bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		endpoint.String(),
+		bytes.NewReader(body),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("create PC*Miler mileage request: %w", err)
 	}

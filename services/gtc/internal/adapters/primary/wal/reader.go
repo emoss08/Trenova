@@ -78,7 +78,11 @@ func NewReader(cfg Config, logger *zap.Logger) *Reader {
 	}
 }
 
-func (r *Reader) Start(ctx context.Context, startLSN string, handler ports.TransactionHandler) error {
+func (r *Reader) Start(
+	ctx context.Context,
+	startLSN string,
+	handler ports.TransactionHandler,
+) error {
 	r.logger.Info("starting WAL reader",
 		zap.String("slot_name", r.config.SlotName),
 		zap.String("publication", r.config.PublicationName),
@@ -260,7 +264,11 @@ func (r *Reader) ensurePublication(ctx context.Context) error {
 		return err
 	}
 
-	statement := fmt.Sprintf("CREATE PUBLICATION %s FOR TABLE %s", quoteIdentifier(r.config.PublicationName), tableList)
+	statement := fmt.Sprintf(
+		"CREATE PUBLICATION %s FOR TABLE %s",
+		quoteIdentifier(r.config.PublicationName),
+		tableList,
+	)
 	result := r.conn.Exec(ctx, statement)
 	if _, err = result.ReadAll(); err != nil {
 		return fmt.Errorf("create publication failed: %w", err)

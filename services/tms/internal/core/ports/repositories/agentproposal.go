@@ -138,7 +138,10 @@ type AgentProposalRepository interface {
 		ctx context.Context,
 		req ListAgentProposalsByThreadRequest,
 	) ([]*agent.AgentProposal, error)
-	ListByIDs(ctx context.Context, req ListAgentProposalsByIDsRequest) ([]*agent.AgentProposal, error)
+	ListByIDs(
+		ctx context.Context,
+		req ListAgentProposalsByIDsRequest,
+	) ([]*agent.AgentProposal, error)
 	UpdateStatus(
 		ctx context.Context,
 		req UpdateAgentProposalStatusRequest,
@@ -150,8 +153,14 @@ type AgentProposalRepository interface {
 		req ListPendingProposalsForReminderRequest,
 	) ([]*agent.AgentProposal, error)
 	MarkReminded(ctx context.Context, req MarkProposalsRemindedRequest) (int, error)
-	ListByPlan(ctx context.Context, req ListAgentProposalsByPlanRequest) ([]*agent.AgentProposal, error)
-	ListByRun(ctx context.Context, req ListAgentProposalsByRunRequest) ([]*agent.AgentProposal, error)
+	ListByPlan(
+		ctx context.Context,
+		req ListAgentProposalsByPlanRequest,
+	) ([]*agent.AgentProposal, error)
+	ListByRun(
+		ctx context.Context,
+		req ListAgentProposalsByRunRequest,
+	) ([]*agent.AgentProposal, error)
 	SkipPendingByPlan(ctx context.Context, req SkipPendingByPlanRequest) (int, error)
 	RecordExecution(
 		ctx context.Context,

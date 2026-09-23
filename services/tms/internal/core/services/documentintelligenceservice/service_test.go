@@ -66,24 +66,28 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 	).Return(nil)
 
 	contentRepo := mocks.NewMockDocumentContentRepository(t)
-	contentRepo.EXPECT().Upsert(mock.Anything, mock.MatchedBy(func(content *documentcontent.Content) bool {
-		return content.DocumentID == documentID &&
-			content.OrganizationID == orgID &&
-			content.BusinessUnitID == buID &&
-			content.Status == documentcontent.StatusPending
-	})).Return(&documentcontent.Content{
-		ID:             pulid.MustNew("dcc_"),
-		DocumentID:     documentID,
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		Status:         documentcontent.StatusPending,
-	}, nil)
+	contentRepo.EXPECT().
+		Upsert(mock.Anything, mock.MatchedBy(func(content *documentcontent.Content) bool {
+			return content.DocumentID == documentID &&
+				content.OrganizationID == orgID &&
+				content.BusinessUnitID == buID &&
+				content.Status == documentcontent.StatusPending
+		})).
+		Return(&documentcontent.Content{
+			ID:             pulid.MustNew("dcc_"),
+			DocumentID:     documentID,
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Status:         documentcontent.StatusPending,
+		}, nil)
 	contentRepo.EXPECT().ReplacePages(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	documentControlRepo := mocks.NewMockDocumentControlRepository(t)
-	documentControlRepo.EXPECT().GetOrCreate(mock.Anything, orgID, buID).Return(&tenant.DocumentControl{
-		EnableDocumentIntelligence: true,
-	}, nil)
+	documentControlRepo.EXPECT().
+		GetOrCreate(mock.Anything, orgID, buID).
+		Return(&tenant.DocumentControl{
+			EnableDocumentIntelligence: true,
+		}, nil)
 
 	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
 	searchProjection.EXPECT().Upsert(mock.Anything, doc, "").Return(nil)
@@ -136,9 +140,11 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 
 	documentControlRepo := mocks.NewMockDocumentControlRepository(t)
-	documentControlRepo.EXPECT().GetOrCreate(mock.Anything, orgID, buID).Return(&tenant.DocumentControl{
-		EnableDocumentIntelligence: false,
-	}, nil)
+	documentControlRepo.EXPECT().
+		GetOrCreate(mock.Anything, orgID, buID).
+		Return(&tenant.DocumentControl{
+			EnableDocumentIntelligence: false,
+		}, nil)
 
 	workflowStarter := mocks.NewMockWorkflowStarter(t)
 	workflowStarter.EXPECT().Enabled().Return(true)

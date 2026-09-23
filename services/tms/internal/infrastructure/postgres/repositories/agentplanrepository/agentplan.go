@@ -37,7 +37,10 @@ func New(p Params) repositories.AgentPlanRepository {
 	}
 }
 
-func (r *repository) Create(ctx context.Context, entity *agent.AgentPlan) (*agent.AgentPlan, error) {
+func (r *repository) Create(
+	ctx context.Context,
+	entity *agent.AgentPlan,
+) (*agent.AgentPlan, error) {
 	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
 		r.l.Error("failed to create agent plan", zap.Error(err))
 

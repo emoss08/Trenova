@@ -34,7 +34,7 @@ type OrganizationMembership struct {
 	// PositionID is the title the user holds in this organisation. It sits on
 	// the membership rather than the user because a position belongs to one
 	// organisation and the same person may hold different titles in two.
-	PositionID pulid.ID `json:"positionId" bun:"position_id,type:VARCHAR(100),nullzero"`
+	PositionID pulid.ID `json:"positionId"     bun:"position_id,type:VARCHAR(100),nullzero"`
 
 	// Relationships
 	User         *User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id"`

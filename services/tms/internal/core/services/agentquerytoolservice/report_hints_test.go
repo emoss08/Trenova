@@ -125,7 +125,11 @@ func TestListReportDatasets_LeavesTargetFieldsToTheDescription(t *testing.T) {
 	require.True(t, ok)
 	rows, ok := outcome.Items.([]datasetRow)
 	require.True(t, ok)
-	require.NotEmpty(t, rows, "the listing stays short: edges and their fields are describe_report_dataset's")
+	require.NotEmpty(
+		t,
+		rows,
+		"the listing stays short: edges and their fields are describe_report_dataset's",
+	)
 }
 
 func countOf(text, needle string) int {

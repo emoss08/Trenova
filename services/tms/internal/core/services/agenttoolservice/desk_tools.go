@@ -388,7 +388,9 @@ func (t *requestCredentialRenewalTool) Execute(
 	return t.credentials.RequestRenewal(ctx, request)
 }
 
-func (t *requestCredentialRenewalTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *requestCredentialRenewalTool) Target(
+	params map[string]any,
+) (serviceports.ToolTarget, bool) {
 	return targetOf(params, "workerId", permission.ResourceWorker)
 }
 
@@ -539,7 +541,9 @@ func (t *placeWorkerDispatchHoldTool) Execute(
 	return err
 }
 
-func (t *placeWorkerDispatchHoldTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *placeWorkerDispatchHoldTool) Target(
+	params map[string]any,
+) (serviceports.ToolTarget, bool) {
 	return targetOf(params, "workerId", permission.ResourceWorker)
 }
 

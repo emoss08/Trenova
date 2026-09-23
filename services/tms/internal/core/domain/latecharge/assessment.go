@@ -49,10 +49,16 @@ func (a *LateChargeAssessment) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&a.OrganizationID, validation.Required),
 		validation.Field(&a.BusinessUnitID, validation.Required),
 		validation.Field(&a.CustomerID, validation.Required.Error("Customer is required")),
-		validation.Field(&a.SourceInvoiceID, validation.Required.Error("Source invoice is required")),
+		validation.Field(
+			&a.SourceInvoiceID,
+			validation.Required.Error("Source invoice is required"),
+		),
 		validation.Field(&a.PeriodIndex, validation.Min(1).Error("Period index starts at 1")),
 		validation.Field(&a.AsOfDate, validation.Required.Error("As-of date is required")),
-		validation.Field(&a.ChargeMinor, validation.Min(int64(1)).Error("Charge must be greater than zero")),
+		validation.Field(
+			&a.ChargeMinor,
+			validation.Min(int64(1)).Error("Charge must be greater than zero"),
+		),
 		validation.Field(&a.RunKey, validation.Required.Error("Run key is required")),
 	))
 	if a.PeriodEnd < a.PeriodStart {

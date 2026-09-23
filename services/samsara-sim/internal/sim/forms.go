@@ -127,7 +127,13 @@ func (s *Server) handleFormSubmissionStream(writer http.ResponseWriter, request 
 
 	records := []Record{}
 	if s.live != nil {
-		records = s.live.GeneratedFormSubmissions(now, *startTime, windowEnd, templateIDs, submitterIDs)
+		records = s.live.GeneratedFormSubmissions(
+			now,
+			*startTime,
+			windowEnd,
+			templateIDs,
+			submitterIDs,
+		)
 	}
 	seedRecords, listErr := s.store.List(ResourceFormSubmissions)
 	if listErr != nil {
@@ -207,7 +213,10 @@ func (l *LiveSimulator) GeneratedFormSubmissions(
 					submittedAt > windowEnd.Format(time.RFC3339) {
 					continue
 				}
-				if !matchesStringFilter(templateFilter, nestedString(record, "formTemplate", "id")) {
+				if !matchesStringFilter(
+					templateFilter,
+					nestedString(record, "formTemplate", "id"),
+				) {
 					continue
 				}
 				out = append(out, record)
@@ -341,7 +350,9 @@ func (l *LiveSimulator) buildFormSubmission(
 		createdAt = spec.SubmittedAt.Add(
 			-time.Duration(
 				(4 + 10*l.hashFraction("form|created", spec.DriverID, spec.Day.Format("2006-01-02"), spec.Kind)) *
-					float64(time.Minute),
+					float64(
+						time.Minute,
+					),
 			),
 		).Truncate(time.Second)
 	}

@@ -44,10 +44,13 @@ func TestRecord_CarriesTheActorAndScope(t *testing.T) {
 	orgID, buID, userID := pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_")
 
 	auditservice.Record(auditService, zap.NewNop(), &auditservice.RecordParams{
-		Resource:       permission.ResourcePermit,
-		ResourceID:     "pmt_1",
-		Operation:      permission.OpCreate,
-		Actor:          services.AuditActor{UserID: userID, PrincipalType: services.PrincipalTypeUser},
+		Resource:   permission.ResourcePermit,
+		ResourceID: "pmt_1",
+		Operation:  permission.OpCreate,
+		Actor: services.AuditActor{
+			UserID:        userID,
+			PrincipalType: services.PrincipalTypeUser,
+		},
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Critical:       true,

@@ -17,7 +17,12 @@ func TestShipmentEventTypeParity_DomainMatchesSchema(t *testing.T) {
 	for _, v := range shipmentevent.AllTypes {
 		domain[string(v)] = struct{}{}
 	}
-	require.Len(t, domain, len(shipmentevent.AllTypes), "shipmentevent.AllTypes contains duplicates")
+	require.Len(
+		t,
+		domain,
+		len(shipmentevent.AllTypes),
+		"shipmentevent.AllTypes contains duplicates",
+	)
 
 	schema := make(map[string]struct{}, len(gqlmodel.AllShipmentEventType))
 	for _, v := range gqlmodel.AllShipmentEventType {
@@ -100,7 +105,13 @@ func TestShipmentEventTypeParity_EveryTypeMapsToOneConcreteModel(t *testing.T) {
 
 		model, err := shipmentEventToModel(&shipmentevent.Event{Type: eventType})
 		require.NoErrorf(t, err, "shipmentevent.Type(%q) failed to map", eventType)
-		assert.IsTypef(t, want, model, "shipmentevent.Type(%q) mapped to the wrong model", eventType)
+		assert.IsTypef(
+			t,
+			want,
+			model,
+			"shipmentevent.Type(%q) mapped to the wrong model",
+			eventType,
+		)
 		assert.Equal(t, gqlmodel.ShipmentEventType(eventType), model.GetType())
 		assert.NotNil(t, model.GetMetadata())
 	}

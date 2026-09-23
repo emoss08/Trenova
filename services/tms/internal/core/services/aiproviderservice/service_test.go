@@ -55,10 +55,12 @@ func (f *fakeProber) Probe(
 
 func newTestService(repo *fakeProviderRepo, prober *fakeProber) *Service {
 	return &Service{
-		l:          zap.NewNop(),
-		repo:       repo,
-		encryption: encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes")),
-		prober:     prober,
+		l:    zap.NewNop(),
+		repo: repo,
+		encryption: encryptionservice.NewWithKeyManager(
+			encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+		),
+		prober: prober,
 	}
 }
 
@@ -91,8 +93,11 @@ func TestTestRecordsProbeOutcomeOnProvider(t *testing.T) {
 	repo.provider = testProvider(t, svc)
 
 	result, err := svc.Test(t.Context(), repositories.GetAIProviderByIDRequest{
-		ID:         repo.provider.ID,
-		TenantInfo: pagination.TenantInfo{OrgID: repo.provider.OrganizationID, BuID: repo.provider.BusinessUnitID},
+		ID: repo.provider.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: repo.provider.OrganizationID,
+			BuID:  repo.provider.BusinessUnitID,
+		},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "sk-live", prober.seen, "the decrypted credential reaches the probe")
@@ -112,13 +117,18 @@ func TestTestRecordsProbeOutcomeOnProvider(t *testing.T) {
 
 func TestTestStillReturnsProbeResultWhenRecordingFails(t *testing.T) {
 	repo := &fakeProviderRepo{markErr: errors.New("db down")}
-	prober := &fakeProber{result: &services.TestAIProviderResult{Success: false, Message: "Refused"}}
+	prober := &fakeProber{
+		result: &services.TestAIProviderResult{Success: false, Message: "Refused"},
+	}
 	svc := newTestService(repo, prober)
 	repo.provider = testProvider(t, svc)
 
 	result, err := svc.Test(t.Context(), repositories.GetAIProviderByIDRequest{
-		ID:         repo.provider.ID,
-		TenantInfo: pagination.TenantInfo{OrgID: repo.provider.OrganizationID, BuID: repo.provider.BusinessUnitID},
+		ID: repo.provider.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: repo.provider.OrganizationID,
+			BuID:  repo.provider.BusinessUnitID,
+		},
 	})
 	require.NoError(t, err)
 	assert.False(t, result.Success)

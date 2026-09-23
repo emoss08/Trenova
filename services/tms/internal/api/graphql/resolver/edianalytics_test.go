@@ -54,7 +54,13 @@ func TestEDIVolumeSeriesToModel(t *testing.T) {
 	series := &ediservice.EDIVolumeSeries{
 		BucketSeconds: 3600,
 		Points: []*repositories.EDIVolumePoint{
-			{BucketStart: 1780000000, OutboundCount: 4, SentCount: 3, FailedCount: 1, ReceivedCount: 2},
+			{
+				BucketStart:   1780000000,
+				OutboundCount: 4,
+				SentCount:     3,
+				FailedCount:   1,
+				ReceivedCount: 2,
+			},
 		},
 	}
 	points := ediVolumeSeriesToModel(series)

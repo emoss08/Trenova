@@ -42,7 +42,10 @@ func (a *Activities) ReplayRunActivity(
 		)
 	}
 	if evaluation.Status.Terminal() {
-		return &ReplayRunResult{Model: evaluation.Model, ToolCallsUsed: evaluation.ToolCallsUsed}, nil
+		return &ReplayRunResult{
+			Model:         evaluation.Model,
+			ToolCallsUsed: evaluation.ToolCallsUsed,
+		}, nil
 	}
 
 	source, err := a.runRepo.GetByID(ctx, repositories.GetAgentRunByIDRequest{

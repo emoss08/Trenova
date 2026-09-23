@@ -88,7 +88,10 @@ func (f *fakeWorkItemResolver) Resolve(
 ) (*bankreceiptworkitem.WorkItem, error) {
 	f.resolved = req
 
-	return &bankreceiptworkitem.WorkItem{ID: req.WorkItemID, Status: bankreceiptworkitem.StatusResolved}, nil
+	return &bankreceiptworkitem.WorkItem{
+		ID:     req.WorkItemID,
+		Status: bankreceiptworkitem.StatusResolved,
+	}, nil
 }
 
 func (f *fakeWorkItemResolver) Dismiss(
@@ -98,7 +101,10 @@ func (f *fakeWorkItemResolver) Dismiss(
 ) (*bankreceiptworkitem.WorkItem, error) {
 	f.dismissed = req
 
-	return &bankreceiptworkitem.WorkItem{ID: req.WorkItemID, Status: bankreceiptworkitem.StatusDismissed}, nil
+	return &bankreceiptworkitem.WorkItem{
+		ID:     req.WorkItemID,
+		Status: bankreceiptworkitem.StatusDismissed,
+	}, nil
 }
 
 type allowingPermissions struct {
@@ -160,8 +166,15 @@ func TestMatchBankReceipt_PreviewRefusesAnAmountMismatch(t *testing.T) {
 	t.Parallel()
 
 	receipt := unmatchedReceipt(125_000)
-	payment := &customerpayment.Payment{ID: pulid.MustNew("cpay_"), AmountMinor: 120_000, Status: customerpayment.StatusPosted}
-	tool := newMatchBankReceiptTool(&fakeReceiptMatcher{receipt: receipt}, &fakePaymentReader{payment: payment})
+	payment := &customerpayment.Payment{
+		ID:          pulid.MustNew("cpay_"),
+		AmountMinor: 120_000,
+		Status:      customerpayment.StatusPosted,
+	}
+	tool := newMatchBankReceiptTool(
+		&fakeReceiptMatcher{receipt: receipt},
+		&fakePaymentReader{payment: payment},
+	)
 	simulator := tool.(serviceports.ToolSimulator)
 
 	_, err := simulator.Simulate(t.Context(), memoryParams(map[string]any{
@@ -186,7 +199,11 @@ func TestPostCustomerPayment_PostsAndAppliesInMinorUnits(t *testing.T) {
 	t.Parallel()
 
 	poster := &fakePaymentPoster{}
-	tool := newPostCustomerPaymentTool(poster, &fakeReceiptMatcher{}, &allowingPermissions{allowed: true})
+	tool := newPostCustomerPaymentTool(
+		poster,
+		&fakeReceiptMatcher{},
+		&allowingPermissions{allowed: true},
+	)
 	customerID, invoiceID := pulid.MustNew("cus_"), pulid.MustNew("inv_")
 
 	require.NoError(t, tool.Execute(t.Context(), memoryParams(map[string]any{
@@ -196,7 +213,11 @@ func TestPostCustomerPayment_PostsAndAppliesInMinorUnits(t *testing.T) {
 		"paymentMethod":   "Check",
 		"referenceNumber": "CHK 1002",
 		"applications": []any{
-			map[string]any{"invoiceId": invoiceID.String(), "amount": "1000.00", "shortPayAmount": "12.50"},
+			map[string]any{
+				"invoiceId":      invoiceID.String(),
+				"amount":         "1000.00",
+				"shortPayAmount": "12.50",
+			},
 		},
 	})))
 
@@ -215,7 +236,11 @@ func TestPostCustomerPayment_RefusesApplicationsBeyondTheAmount(t *testing.T) {
 	t.Parallel()
 
 	poster := &fakePaymentPoster{}
-	tool := newPostCustomerPaymentTool(poster, &fakeReceiptMatcher{}, &allowingPermissions{allowed: true})
+	tool := newPostCustomerPaymentTool(
+		poster,
+		&fakeReceiptMatcher{},
+		&allowingPermissions{allowed: true},
+	)
 
 	err := tool.Execute(t.Context(), memoryParams(map[string]any{
 		"customerId":  pulid.MustNew("cus_").String(),
@@ -271,7 +296,11 @@ func TestPostCustomerPayment_RefusesAReceiptOfADifferentAmountOrWithoutTheRight(
 
 	receipt := unmatchedReceipt(125_000)
 	poster := &fakePaymentPoster{}
-	tool := newPostCustomerPaymentTool(poster, &fakeReceiptMatcher{receipt: receipt}, &allowingPermissions{allowed: true})
+	tool := newPostCustomerPaymentTool(
+		poster,
+		&fakeReceiptMatcher{receipt: receipt},
+		&allowingPermissions{allowed: true},
+	)
 
 	err := tool.Execute(t.Context(), memoryParams(map[string]any{
 		"customerId":    pulid.MustNew("cus_").String(),
@@ -283,7 +312,11 @@ func TestPostCustomerPayment_RefusesAReceiptOfADifferentAmountOrWithoutTheRight(
 	assert.Contains(t, err.Error(), "same amount")
 	assert.Nil(t, poster.posted, "nothing is posted when the receipt could not be matched")
 
-	denied := newPostCustomerPaymentTool(poster, &fakeReceiptMatcher{receipt: receipt}, &allowingPermissions{allowed: false})
+	denied := newPostCustomerPaymentTool(
+		poster,
+		&fakeReceiptMatcher{receipt: receipt},
+		&allowingPermissions{allowed: false},
+	)
 	err = denied.Execute(t.Context(), memoryParams(map[string]any{
 		"customerId":    pulid.MustNew("cus_").String(),
 		"amount":        "1250.00",
@@ -299,17 +332,24 @@ func TestPostCustomerPayment_PreviewShowsWhatStaysUnapplied(t *testing.T) {
 	t.Parallel()
 
 	receipt := unmatchedReceipt(125_000)
-	tool := newPostCustomerPaymentTool(&fakePaymentPoster{}, &fakeReceiptMatcher{receipt: receipt}, &allowingPermissions{allowed: true})
+	tool := newPostCustomerPaymentTool(
+		&fakePaymentPoster{},
+		&fakeReceiptMatcher{receipt: receipt},
+		&allowingPermissions{allowed: true},
+	)
 
-	preview, err := tool.(serviceports.ToolSimulator).Simulate(t.Context(), memoryParams(map[string]any{
-		"customerId":    pulid.MustNew("cus_").String(),
-		"amount":        "1250.00",
-		"paymentDate":   "2026-09-18",
-		"bankReceiptId": receipt.ID.String(),
-		"applications": []any{
-			map[string]any{"invoiceId": pulid.MustNew("inv_").String(), "amount": "1000.00"},
-		},
-	}))
+	preview, err := tool.(serviceports.ToolSimulator).Simulate(
+		t.Context(),
+		memoryParams(map[string]any{
+			"customerId":    pulid.MustNew("cus_").String(),
+			"amount":        "1250.00",
+			"paymentDate":   "2026-09-18",
+			"bankReceiptId": receipt.ID.String(),
+			"applications": []any{
+				map[string]any{"invoiceId": pulid.MustNew("inv_").String(), "amount": "1000.00"},
+			},
+		}),
+	)
 	require.NoError(t, err)
 
 	described := preview.Describe()
@@ -341,7 +381,11 @@ func TestResolveBankReceiptWorkItem_DismissesAFalsePositiveAndResolvesTheRest(t 
 		"note":       "Payer unknown; ask the bank for the remittance advice.",
 	})))
 	require.NotNil(t, items.resolved)
-	assert.Equal(t, bankreceiptworkitem.ResolutionRequiresExternalFollowUp, items.resolved.ResolutionType)
+	assert.Equal(
+		t,
+		bankreceiptworkitem.ResolutionRequiresExternalFollowUp,
+		items.resolved.ResolutionType,
+	)
 }
 
 func TestResolveBankReceiptWorkItem_RefusesAMatchResolutionAndAnOverlongNote(t *testing.T) {
@@ -372,7 +416,10 @@ func TestResolveBankReceiptWorkItem_RefusesAMatchResolutionAndAnOverlongNote(t *
 func TestResolveBankReceiptWorkItem_PreviewRefusesAClosedItem(t *testing.T) {
 	t.Parallel()
 
-	closed := &bankreceiptworkitem.WorkItem{ID: pulid.MustNew("brwi_"), Status: bankreceiptworkitem.StatusResolved}
+	closed := &bankreceiptworkitem.WorkItem{
+		ID:     pulid.MustNew("brwi_"),
+		Status: bankreceiptworkitem.StatusResolved,
+	}
 	tool := newResolveBankReceiptWorkItemTool(&fakeWorkItemResolver{item: closed})
 
 	_, err := tool.(serviceports.ToolSimulator).Simulate(t.Context(), memoryParams(map[string]any{
@@ -384,11 +431,14 @@ func TestResolveBankReceiptWorkItem_PreviewRefusesAClosedItem(t *testing.T) {
 
 	open := &bankreceiptworkitem.WorkItem{ID: closed.ID, Status: bankreceiptworkitem.StatusOpen}
 	preview, err := newResolveBankReceiptWorkItemTool(&fakeWorkItemResolver{item: open}).(serviceports.ToolSimulator).
-		Simulate(t.Context(), memoryParams(map[string]any{
-			"workItemId": open.ID.String(),
-			"resolution": "MarkedFalsePositive",
-			"note":       "Bank interest.",
-		}))
+		Simulate(
+			t.Context(),
+			memoryParams(map[string]any{
+				"workItemId": open.ID.String(),
+				"resolution": "MarkedFalsePositive",
+				"note":       "Bank interest.",
+			}),
+		)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Describe(), "Dismissed")
 }

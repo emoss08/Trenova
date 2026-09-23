@@ -1628,7 +1628,14 @@ func (l *LiveSimulator) applyVehicleEventsToRouteState(
 		return base
 	}
 	geometry := l.routeGeometryForAsset(vehicleID, points)
-	return l.applyPrimaryEventToRouteState(vehicleID, &geometry, primaryEvent, windowStart, now, base)
+	return l.applyPrimaryEventToRouteState(
+		vehicleID,
+		&geometry,
+		primaryEvent,
+		windowStart,
+		now,
+		base,
+	)
 }
 
 func (l *LiveSimulator) applyVehicleEventsToGeometryState(
@@ -1644,7 +1651,14 @@ func (l *LiveSimulator) applyVehicleEventsToGeometryState(
 	if primaryEvent == nil {
 		return base
 	}
-	return l.applyPrimaryEventToRouteState(vehicleID, geometry, primaryEvent, windowStart, now, base)
+	return l.applyPrimaryEventToRouteState(
+		vehicleID,
+		geometry,
+		primaryEvent,
+		windowStart,
+		now,
+		base,
+	)
 }
 
 func (l *LiveSimulator) applyPrimaryEventToRouteState(

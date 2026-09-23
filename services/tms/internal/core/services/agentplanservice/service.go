@@ -47,7 +47,11 @@ type stepDecider interface {
 
 type shadowReader interface {
 	Organization(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error)
-	ForRun(ctx context.Context, tenantInfo pagination.TenantInfo, runID pulid.ID) (agentshadow.Verdict, error)
+	ForRun(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		runID pulid.ID,
+	) (agentshadow.Verdict, error)
 }
 
 type actionLogger interface {
@@ -156,7 +160,9 @@ func (s *Service) Decide(
 		)
 	}
 	if s.decisions == nil {
-		return nil, errortypes.NewBusinessError("Plans cannot be decided: no decision service is wired")
+		return nil, errortypes.NewBusinessError(
+			"Plans cannot be decided: no decision service is wired",
+		)
 	}
 
 	plan, err := s.plans.GetByID(ctx, repositories.GetAgentPlanByIDRequest{
@@ -236,7 +242,11 @@ func (s *Service) clearFromWatchtower(
 
 // announce tells connected clients the plan moved, so the queue drops it
 // and the pane shows its steps ticking or where it stopped.
-func (s *Service) announce(ctx context.Context, plan *agent.AgentPlan, actor *services.RequestActor) {
+func (s *Service) announce(
+	ctx context.Context,
+	plan *agent.AgentPlan,
+	actor *services.RequestActor,
+) {
 	if s.activity == nil || plan == nil {
 		return
 	}
@@ -325,7 +335,11 @@ func (s *Service) failAt(
 		PlanID:     plan.ID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
-		s.l.Error("failed to skip the steps after a failed one", zap.String("plan", plan.ID.String()), zap.Error(err))
+		s.l.Error(
+			"failed to skip the steps after a failed one",
+			zap.String("plan", plan.ID.String()),
+			zap.Error(err),
+		)
 	}
 
 	failedStep := step
@@ -338,7 +352,11 @@ func (s *Service) failAt(
 		FailureError:   cause.Error(),
 	})
 	if err != nil {
-		s.l.Error("failed to record the plan's failure", zap.String("plan", plan.ID.String()), zap.Error(err))
+		s.l.Error(
+			"failed to record the plan's failure",
+			zap.String("plan", plan.ID.String()),
+			zap.Error(err),
+		)
 
 		return plan
 	}

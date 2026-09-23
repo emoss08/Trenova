@@ -97,9 +97,11 @@ func TestPostmarkSenderClassifiesFailures(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				http.Error(w, "failure", tt.status)
-			}))
+			server := httptest.NewServer(
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					http.Error(w, "failure", tt.status)
+				}),
+			)
 			defer server.Close()
 
 			_, err := NewPostmarkSender().Send(t.Context(), SendProviderRequest{

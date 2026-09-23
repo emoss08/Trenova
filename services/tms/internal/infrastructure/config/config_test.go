@@ -420,8 +420,16 @@ func TestAppConfig_GetWebBaseURL(t *testing.T) {
 		expected string
 	}{
 		{name: "unset", base: "", expected: ""},
-		{name: "without trailing slash", base: "https://app.example.com", expected: "https://app.example.com"},
-		{name: "with trailing slash", base: "https://app.example.com/", expected: "https://app.example.com"},
+		{
+			name:     "without trailing slash",
+			base:     "https://app.example.com",
+			expected: "https://app.example.com",
+		},
+		{
+			name:     "with trailing slash",
+			base:     "https://app.example.com/",
+			expected: "https://app.example.com",
+		},
 	}
 
 	for _, tt := range tests {

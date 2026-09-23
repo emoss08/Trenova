@@ -63,7 +63,10 @@ func resolveReportSource(
 	if raw := optionalString(params.Params, "definitionId"); raw != "" {
 		id, err := pulid.Parse(raw)
 		if err != nil {
-			return reportSource{}, fmt.Errorf("parameter \"definitionId\" is not a valid id: %w", err)
+			return reportSource{}, fmt.Errorf(
+				"parameter \"definitionId\" is not a valid id: %w",
+				err,
+			)
 		}
 
 		definition, err := reports.GetDefinition(ctx, &reporting.GetDefinitionRequest{
@@ -146,7 +149,9 @@ func (c catalogAccess) entity(
 	entity *reportcatalog.Entity,
 ) (*serviceports.ResourcePermissionDetail, bool, error) {
 	if c.permissions == nil {
-		return nil, false, errors.New("datasets cannot be described because authorization is unavailable")
+		return nil, false, errors.New(
+			"datasets cannot be described because authorization is unavailable",
+		)
 	}
 
 	detail, err := c.permissions.GetResourcePermissions(

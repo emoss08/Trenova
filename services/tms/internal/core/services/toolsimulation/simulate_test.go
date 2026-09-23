@@ -32,7 +32,10 @@ type previewingTool struct {
 	err     error
 }
 
-func (t previewingTool) Simulate(context.Context, serviceports.ToolExecuteParams) (*agent.ToolSimulation, error) {
+func (t previewingTool) Simulate(
+	context.Context,
+	serviceports.ToolExecuteParams,
+) (*agent.ToolSimulation, error) {
 	return t.preview, t.err
 }
 
@@ -59,22 +62,37 @@ func TestSimulate_UsesTheToolsOwnPreview(t *testing.T) {
 func TestSimulate_DescribesAToolWithoutAPreview(t *testing.T) {
 	t.Parallel()
 
-	preview := Simulate(t.Context(), plainTool{name: "cancel_shipment"}, serviceports.ToolExecuteParams{
-		Params: map[string]any{"shipmentId": "shp_1", "cancelReason": "Customer pulled the load", "count": 2},
-	})
+	preview := Simulate(
+		t.Context(),
+		plainTool{name: "cancel_shipment"},
+		serviceports.ToolExecuteParams{
+			Params: map[string]any{
+				"shipmentId":   "shp_1",
+				"cancelReason": "Customer pulled the load",
+				"count":        2,
+			},
+		},
+	)
 
 	assert.False(t, preview.Previewed)
 	assert.Contains(t, preview.Summary, "Would run cancel_shipment")
 	assert.Contains(t, preview.Summary, "no preview of its own")
 	require.Len(t, preview.Changes, 3)
-	assert.Equal(t, agent.FieldChange{Field: "cancelReason", To: "Customer pulled the load"}, preview.Changes[0])
+	assert.Equal(
+		t,
+		agent.FieldChange{Field: "cancelReason", To: "Customer pulled the load"},
+		preview.Changes[0],
+	)
 	assert.Equal(t, agent.FieldChange{Field: "count", To: "2"}, preview.Changes[1])
 }
 
 func TestSimulate_KeepsTheRequestWhenAPreviewFails(t *testing.T) {
 	t.Parallel()
 
-	tool := previewingTool{plainTool: plainTool{name: "assign_move"}, err: errors.New("move not found")}
+	tool := previewingTool{
+		plainTool: plainTool{name: "assign_move"},
+		err:       errors.New("move not found"),
+	}
 
 	preview := Simulate(t.Context(), tool, serviceports.ToolExecuteParams{
 		Params: map[string]any{"shipmentMoveId": "smv_1"},

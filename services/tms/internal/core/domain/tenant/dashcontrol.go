@@ -57,20 +57,20 @@ type DashControl struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 
-	RequireLoadAcknowledgment  bool `json:"requireLoadAcknowledgment"  bun:"require_load_acknowledgment,type:BOOLEAN,notnull"`
-	AllowLoadRefusals          bool `json:"allowLoadRefusals"          bun:"allow_load_refusals,type:BOOLEAN,notnull"`
-	AllowStopActions           bool `json:"allowStopActions"           bun:"allow_stop_actions,type:BOOLEAN,notnull"`
-	AllowLoadDocumentUpload    bool `json:"allowLoadDocumentUpload"    bun:"allow_load_document_upload,type:BOOLEAN,notnull"`
-	AllowLoadComments          bool `json:"allowLoadComments"          bun:"allow_load_comments,type:BOOLEAN,notnull"`
-	ShowLoadPay                bool `json:"showLoadPay"                bun:"show_load_pay,type:BOOLEAN,notnull"`
-	ShowPayEstimates           bool `json:"showPayEstimates"           bun:"show_pay_estimates,type:BOOLEAN,notnull"`
-	AllowExpenseSubmission     bool `json:"allowExpenseSubmission"     bun:"allow_expense_submission,type:BOOLEAN,notnull"`
-	RequireExpenseReceipt      bool `json:"requireExpenseReceipt"      bun:"require_expense_receipt,type:BOOLEAN,notnull"`
-	AllowSettlementDisputes    bool `json:"allowSettlementDisputes"    bun:"allow_settlement_disputes,type:BOOLEAN,notnull"`
-	AllowProfileDocumentUpload bool `json:"allowProfileDocumentUpload" bun:"allow_profile_document_upload,type:BOOLEAN,notnull"`
-	AllowContactInfoEdit       bool `json:"allowContactInfoEdit"       bun:"allow_contact_info_edit,type:BOOLEAN,notnull"`
-	AllowPtoRequests           bool `json:"allowPtoRequests"           bun:"allow_pto_requests,type:BOOLEAN,notnull"`
-	SendCredentialReminders    bool `json:"sendCredentialReminders"    bun:"send_credential_reminders,type:BOOLEAN,notnull"`
+	RequireLoadAcknowledgment  bool `json:"requireLoadAcknowledgment"    bun:"require_load_acknowledgment,type:BOOLEAN,notnull"`
+	AllowLoadRefusals          bool `json:"allowLoadRefusals"            bun:"allow_load_refusals,type:BOOLEAN,notnull"`
+	AllowStopActions           bool `json:"allowStopActions"             bun:"allow_stop_actions,type:BOOLEAN,notnull"`
+	AllowLoadDocumentUpload    bool `json:"allowLoadDocumentUpload"      bun:"allow_load_document_upload,type:BOOLEAN,notnull"`
+	AllowLoadComments          bool `json:"allowLoadComments"            bun:"allow_load_comments,type:BOOLEAN,notnull"`
+	ShowLoadPay                bool `json:"showLoadPay"                  bun:"show_load_pay,type:BOOLEAN,notnull"`
+	ShowPayEstimates           bool `json:"showPayEstimates"             bun:"show_pay_estimates,type:BOOLEAN,notnull"`
+	AllowExpenseSubmission     bool `json:"allowExpenseSubmission"       bun:"allow_expense_submission,type:BOOLEAN,notnull"`
+	RequireExpenseReceipt      bool `json:"requireExpenseReceipt"        bun:"require_expense_receipt,type:BOOLEAN,notnull"`
+	AllowSettlementDisputes    bool `json:"allowSettlementDisputes"      bun:"allow_settlement_disputes,type:BOOLEAN,notnull"`
+	AllowProfileDocumentUpload bool `json:"allowProfileDocumentUpload"   bun:"allow_profile_document_upload,type:BOOLEAN,notnull"`
+	AllowContactInfoEdit       bool `json:"allowContactInfoEdit"         bun:"allow_contact_info_edit,type:BOOLEAN,notnull"`
+	AllowPtoRequests           bool `json:"allowPtoRequests"             bun:"allow_pto_requests,type:BOOLEAN,notnull"`
+	SendCredentialReminders    bool `json:"sendCredentialReminders"      bun:"send_credential_reminders,type:BOOLEAN,notnull"`
 	// RequireContactChangeApproval makes a driver's own contact edits wait on
 	// the office instead of landing straight on the record. Off keeps the
 	// behaviour every existing carrier relies on.

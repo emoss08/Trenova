@@ -157,7 +157,11 @@ func TestCreateMailbox_RefusesASecretInTheWrongScheme(t *testing.T) {
 			var validation *errortypes.Error
 			require.ErrorAs(t, err, &validation)
 			assert.Equal(t, "signingSecret", validation.Field)
-			assert.Nil(t, repo.stored, "nothing is created with a secret that would fail every delivery")
+			assert.Nil(
+				t,
+				repo.stored,
+				"nothing is created with a secret that would fail every delivery",
+			)
 		})
 	}
 }
@@ -260,7 +264,12 @@ func TestRotateMailboxToken_RetiresTheOldTokenAndReturnsTheNewOneOnce(t *testing
 
 	assert.NotEqual(t, hashutils.SHA256Hex("the-old-token"), repo.stored.TokenHash)
 	assert.Equal(t, hashutils.SHA256Hex(rotated.Token), repo.stored.TokenHash)
-	assert.Equal(t, sealedPrefix+resendSecret, repo.stored.SigningSecret, "rotation leaves the secret alone")
+	assert.Equal(
+		t,
+		sealedPrefix+resendSecret,
+		repo.stored.SigningSecret,
+		"rotation leaves the secret alone",
+	)
 }
 
 func TestSetMailboxSigningSecret_SealsASecretInTheMailboxesScheme(t *testing.T) {

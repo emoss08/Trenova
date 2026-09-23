@@ -357,7 +357,11 @@ func (r *PTOPolicyRule) Validate(multiErr *errortypes.MultiError) {
 		)
 	}
 	if r.OnTermination != "" && !r.OnTermination.IsValid() {
-		multiErr.Add("onTermination", errortypes.ErrInvalid, "onTermination must be Forfeit or PayOut")
+		multiErr.Add(
+			"onTermination",
+			errortypes.ErrInvalid,
+			"onTermination must be Forfeit or PayOut",
+		)
 	}
 	r.validateTiers(multiErr)
 }
@@ -379,17 +383,33 @@ func (r *PTOPolicyRule) validateTiers(multiErr *errortypes.MultiError) {
 	for i, tier := range r.Tiers {
 		prefix := "tiers[" + strconv.Itoa(i) + "]"
 		if tier.MinMonths <= 0 {
-			multiErr.Add(prefix+".minMonths", errortypes.ErrInvalid, "Tier must start after month 0")
+			multiErr.Add(
+				prefix+".minMonths",
+				errortypes.ErrInvalid,
+				"Tier must start after month 0",
+			)
 		}
 		if i > 0 && tier.MinMonths <= lastMin {
-			multiErr.Add(prefix+".minMonths", errortypes.ErrInvalid, "Tiers must be in ascending order of tenure")
+			multiErr.Add(
+				prefix+".minMonths",
+				errortypes.ErrInvalid,
+				"Tiers must be in ascending order of tenure",
+			)
 		}
 		lastMin = tier.MinMonths
 		if !tier.AccrualAmountDays.IsPositive() {
-			multiErr.Add(prefix+".accrualAmountDays", errortypes.ErrInvalid, "Tier accrual must be above zero")
+			multiErr.Add(
+				prefix+".accrualAmountDays",
+				errortypes.ErrInvalid,
+				"Tier accrual must be above zero",
+			)
 		}
 		if tier.MaxBalanceDays.Valid && !tier.MaxBalanceDays.Decimal.IsPositive() {
-			multiErr.Add(prefix+".maxBalanceDays", errortypes.ErrInvalid, "Tier maximum balance must be above zero")
+			multiErr.Add(
+				prefix+".maxBalanceDays",
+				errortypes.ErrInvalid,
+				"Tier maximum balance must be above zero",
+			)
 		}
 	}
 }

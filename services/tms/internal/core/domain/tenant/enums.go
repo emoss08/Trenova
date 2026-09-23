@@ -364,7 +364,9 @@ const (
 
 func (m LateChargeAssessmentMode) IsValid() bool {
 	switch m {
-	case LateChargeAssessmentModeDisabled, LateChargeAssessmentModePreview, LateChargeAssessmentModeAutomatic:
+	case LateChargeAssessmentModeDisabled,
+		LateChargeAssessmentModePreview,
+		LateChargeAssessmentModeAutomatic:
 		return true
 	default:
 		return false

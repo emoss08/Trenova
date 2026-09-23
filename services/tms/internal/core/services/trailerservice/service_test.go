@@ -83,7 +83,14 @@ func setupTest(t *testing.T) *testDeps {
 		realtime:                  &mocks.NoopRealtimeService{},
 		customFieldsValuesService: cfService,
 	}
-	return &testDeps{repo: repo, userRepo: userRepo, audit: auditSvc, valueRepo: valueRepo, defRepo: defRepo, svc: svc}
+	return &testDeps{
+		repo:      repo,
+		userRepo:  userRepo,
+		audit:     auditSvc,
+		valueRepo: valueRepo,
+		defRepo:   defRepo,
+		svc:       svc,
+	}
 }
 
 func newTestEntity() *trailer.Trailer {
@@ -418,8 +425,32 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 					BusinessUnitID: buID,
 					Status:         shipment.MoveStatusAssigned,
 					Stops: []*shipment.Stop{
-						{ID: pulid.MustNew("stp_"), ShipmentMoveID: sourceMoveID, OrganizationID: orgID, BusinessUnitID: buID, LocationID: currentLocationID, Type: shipment.StopTypePickup, ScheduleType: shipment.StopScheduleTypeOpen, Sequence: 0, ScheduledWindowStart: 1, ScheduledWindowEnd: new(int64(2)), Status: shipment.StopStatusNew},
-						{ID: pulid.MustNew("stp_"), ShipmentMoveID: sourceMoveID, OrganizationID: orgID, BusinessUnitID: buID, LocationID: currentLocationID, Type: shipment.StopTypeDelivery, ScheduleType: shipment.StopScheduleTypeOpen, Sequence: 1, ScheduledWindowStart: 3, ScheduledWindowEnd: new(int64(4)), Status: shipment.StopStatusNew},
+						{
+							ID:                   pulid.MustNew("stp_"),
+							ShipmentMoveID:       sourceMoveID,
+							OrganizationID:       orgID,
+							BusinessUnitID:       buID,
+							LocationID:           currentLocationID,
+							Type:                 shipment.StopTypePickup,
+							ScheduleType:         shipment.StopScheduleTypeOpen,
+							Sequence:             0,
+							ScheduledWindowStart: 1,
+							ScheduledWindowEnd:   new(int64(2)),
+							Status:               shipment.StopStatusNew,
+						},
+						{
+							ID:                   pulid.MustNew("stp_"),
+							ShipmentMoveID:       sourceMoveID,
+							OrganizationID:       orgID,
+							BusinessUnitID:       buID,
+							LocationID:           currentLocationID,
+							Type:                 shipment.StopTypeDelivery,
+							ScheduleType:         shipment.StopScheduleTypeOpen,
+							Sequence:             1,
+							ScheduledWindowStart: 3,
+							ScheduledWindowEnd:   new(int64(4)),
+							Status:               shipment.StopStatusNew,
+						},
 					},
 				},
 			},
@@ -444,9 +475,21 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 			require.NotNil(t, lastMove.Stops[1].ActualDeparture)
 			require.NotNil(t, lastMove.Stops[0].ScheduledWindowEnd)
 			require.NotNil(t, lastMove.Stops[1].ScheduledWindowEnd)
-			assert.Less(t, lastMove.Stops[0].ScheduledWindowStart, *lastMove.Stops[0].ScheduledWindowEnd)
-			assert.Less(t, *lastMove.Stops[0].ScheduledWindowEnd, lastMove.Stops[1].ScheduledWindowStart)
-			assert.LessOrEqual(t, lastMove.Stops[1].ScheduledWindowStart, *lastMove.Stops[1].ScheduledWindowEnd)
+			assert.Less(
+				t,
+				lastMove.Stops[0].ScheduledWindowStart,
+				*lastMove.Stops[0].ScheduledWindowEnd,
+			)
+			assert.Less(
+				t,
+				*lastMove.Stops[0].ScheduledWindowEnd,
+				lastMove.Stops[1].ScheduledWindowStart,
+			)
+			assert.LessOrEqual(
+				t,
+				lastMove.Stops[1].ScheduledWindowStart,
+				*lastMove.Stops[1].ScheduledWindowEnd,
+			)
 			return entity, nil
 		}).
 		Once()
@@ -603,11 +646,19 @@ func ptrInt16Trailer(v int16) *int16 {
 func TestResolveDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, shipmentstate.ResolveControlDelayThreshold(nil))
-	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
-		AutoDelayShipments:          false,
-		AutoDelayShipmentsThreshold: new(int16(30)),
-	}))
+	assert.Equal(
+		t,
+		shipmentstate.DisabledDelayThresholdMinutes,
+		shipmentstate.ResolveControlDelayThreshold(nil),
+	)
+	assert.Equal(
+		t,
+		shipmentstate.DisabledDelayThresholdMinutes,
+		shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
+			AutoDelayShipments:          false,
+			AutoDelayShipmentsThreshold: new(int16(30)),
+		}),
+	)
 	assert.Equal(t, int16(30), shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
 		AutoDelayShipments:          true,
 		AutoDelayShipmentsThreshold: new(int16(30)),

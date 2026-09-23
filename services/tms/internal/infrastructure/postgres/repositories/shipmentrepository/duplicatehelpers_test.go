@@ -68,7 +68,11 @@ func TestDuplicateStops_OverrideDatesPreservesRelativeOffsets(t *testing.T) {
 	duplicated := duplicateStops(source, moveID, offset, true)
 
 	require.Len(t, duplicated, 2)
-	assert.Equal(t, originalGap, duplicated[1].ScheduledWindowStart-duplicated[0].ScheduledWindowStart)
+	assert.Equal(
+		t,
+		originalGap,
+		duplicated[1].ScheduledWindowStart-duplicated[0].ScheduledWindowStart,
+	)
 	require.NotNil(t, source[0].ScheduledWindowEnd)
 	require.NotNil(t, duplicated[0].ScheduledWindowEnd)
 	assert.Equal(
@@ -81,7 +85,10 @@ func TestDuplicateStops_OverrideDatesPreservesRelativeOffsets(t *testing.T) {
 func TestDeriveDuplicateBOL_TruncatesToLimit(t *testing.T) {
 	t.Parallel()
 
-	bol := deriveDuplicateBOL("ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ", 12)
+	bol := deriveDuplicateBOL(
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ",
+		12,
+	)
 
 	assert.LessOrEqual(t, len([]rune(bol)), maxShipmentBOLLength)
 	assert.Contains(t, bol, "-COPY-12")

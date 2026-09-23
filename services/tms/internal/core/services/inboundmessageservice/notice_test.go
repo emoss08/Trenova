@@ -83,7 +83,9 @@ the same people; this notice would be the second.
 func TestProcessMessage_SaysNothingAboutAMessageNobodyHasToLookAt(t *testing.T) {
 	t.Parallel()
 
-	repo := &settleRepo{message: staged(inboundmessage.StatusReceived, inboundmessage.ReviewAutoHandle)}
+	repo := &settleRepo{
+		message: staged(inboundmessage.StatusReceived, inboundmessage.ReviewAutoHandle),
+	}
 	svc, notifier, realtime := noticed(repo,
 		`{"classification":"StatusRequest","confidence":0.95,"reasoning":"Asks where a load is."}`)
 

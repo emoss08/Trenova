@@ -156,7 +156,10 @@ func TestListAndGetJournalReversal(t *testing.T) {
 	repo.EXPECT().
 		GetByID(
 			mock.Anything,
-			repositories.GetJournalReversalByIDRequest{ID: entity.ID, TenantInfo: pagination.TenantInfo{}},
+			repositories.GetJournalReversalByIDRequest{
+				ID:         entity.ID,
+				TenantInfo: pagination.TenantInfo{},
+			},
 		).
 		Return(entity, nil)
 	svc := &Service{journalReversalRepo: repo}

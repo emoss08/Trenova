@@ -138,7 +138,12 @@ func TestCostingControl_Validate(t *testing.T) {
 			entity.Validate(multiErr)
 
 			if !tt.wantErr {
-				assert.False(t, multiErr.HasErrors(), "expected no errors, got %s", multiErr.Error())
+				assert.False(
+					t,
+					multiErr.HasErrors(),
+					"expected no errors, got %s",
+					multiErr.Error(),
+				)
 				return
 			}
 
@@ -251,7 +256,12 @@ func TestCostCategory_Validate(t *testing.T) {
 			entity.Validate(multiErr)
 
 			if !tt.wantErr {
-				assert.False(t, multiErr.HasErrors(), "expected no errors, got %s", multiErr.Error())
+				assert.False(
+					t,
+					multiErr.HasErrors(),
+					"expected no errors, got %s",
+					multiErr.Error(),
+				)
 				return
 			}
 

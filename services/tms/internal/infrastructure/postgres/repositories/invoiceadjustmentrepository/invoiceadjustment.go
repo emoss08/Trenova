@@ -771,7 +771,9 @@ func approvalQueueColumns(q *bun.SelectQuery) *bun.SelectQuery {
 
 func approvalQueueFilterJoins(q *bun.SelectQuery) *bun.SelectQuery {
 	return q.
-		Join("JOIN invoices AS orig ON orig.id = ia.original_invoice_id AND orig.organization_id = ia.organization_id AND orig.business_unit_id = ia.business_unit_id").
+		Join(
+			"JOIN invoices AS orig ON orig.id = ia.original_invoice_id AND orig.organization_id = ia.organization_id AND orig.business_unit_id = ia.business_unit_id",
+		).
 		Join("LEFT JOIN users AS submitter ON submitter.id = ia.submitted_by_id")
 }
 

@@ -546,11 +546,15 @@ func applyPayerReadiness(
 				known[requirement.DocumentTypeID] = struct{}{}
 				readiness.Requirements = append(readiness.Requirements, requirement)
 				if !requirement.Satisfied {
-					readiness.MissingRequirements = append(readiness.MissingRequirements, requirement)
+					readiness.MissingRequirements = append(
+						readiness.MissingRequirements,
+						requirement,
+					)
 				}
 			}
 			if readiness.Policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelBlock &&
-				profile.RequireBOLNumber && entity.BOL == "" &&
+				profile.RequireBOLNumber &&
+				entity.BOL == "" &&
 				!hasValidationCode(readiness.ValidationFailures, "missing_bol") {
 				readiness.ValidationFailures = append(readiness.ValidationFailures,
 					services.ShipmentBillingValidation{

@@ -52,7 +52,7 @@ type AgentPlan struct {
 	DecidedAt       *int64    `json:"decidedAt"       bun:"decided_at,type:BIGINT,nullzero"`
 	// ExpiresAt is the latest expiry among the plan's steps: while any step
 	// can still be decided, so can the plan.
-	ExpiresAt int64 `json:"expiresAt" bun:"expires_at,type:BIGINT,nullzero"`
+	ExpiresAt int64 `json:"expiresAt"       bun:"expires_at,type:BIGINT,nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -70,9 +70,11 @@ func (p *AgentPlan) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&p.OrganizationID, validation.Required.Error("Organization is required")),
 		validation.Field(&p.BusinessUnitID, validation.Required.Error("Business unit is required")),
 		validation.Field(&p.RunID, validation.Required.Error("Run is required")),
-		validation.Field(&p.Title,
+		validation.Field(
+			&p.Title,
 			validation.Required.Error("Title is required"),
-			validation.Length(1, maxPlanTitleLength).Error("Title cannot be longer than 200 characters"),
+			validation.Length(1, maxPlanTitleLength).
+				Error("Title cannot be longer than 200 characters"),
 		),
 		validation.Field(&p.Status,
 			validation.Required.Error("Status is required"),

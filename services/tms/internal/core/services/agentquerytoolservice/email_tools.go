@@ -74,13 +74,16 @@ func (t *listEmailProfilesTool) Query(
 	criteria := filtercatalog.NewCriteria("email profiles").At(clockFor(params))
 	criteria.Text(query)
 
-	result, err := t.profiles.SelectProfileOptions(ctx, &repositories.EmailProfileSelectOptionsRequest{
-		SelectQueryRequest: &pagination.SelectQueryRequest{
-			TenantInfo: tenantOf(params),
-			Pagination: pagination.Info{Limit: maxListLimit},
-			Query:      query,
+	result, err := t.profiles.SelectProfileOptions(
+		ctx,
+		&repositories.EmailProfileSelectOptionsRequest{
+			SelectQueryRequest: &pagination.SelectQueryRequest{
+				TenantInfo: tenantOf(params),
+				Pagination: pagination.Info{Limit: maxListLimit},
+				Query:      query,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}

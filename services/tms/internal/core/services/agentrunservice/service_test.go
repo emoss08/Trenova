@@ -329,7 +329,11 @@ func TestStartForDefinitionUsesSlotWorkflowID(t *testing.T) {
 		t.Fatalf("expected slot workflow id %s, got %s", want, started.ID)
 	}
 	if run.SubjectType != agent.SubjectOrganization || run.SubjectID != testTenant.OrgID {
-		t.Fatalf("expected organization subject by default, got %s %s", run.SubjectType, run.SubjectID)
+		t.Fatalf(
+			"expected organization subject by default, got %s %s",
+			run.SubjectType,
+			run.SubjectID,
+		)
 	}
 	if run.AgentType != agent.TypeGeneral {
 		t.Fatalf("expected general agent type for a custom definition, got %s", run.AgentType)

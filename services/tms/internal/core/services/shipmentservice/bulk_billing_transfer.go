@@ -220,13 +220,17 @@ func (s *service) attemptBillingTransfer(
 		billType = billingqueue.BillTypeInvoice
 	}
 
-	transferred, err := s.billingQueueService.TransferToBillingItems(ctx, &services.TransferToBillingRequest{
-		ShipmentID:          entity.ID,
-		BillType:            billType,
-		AutoApprove:         readiness.ShouldAutoApproveBilling,
-		AutoApprovePayerIDs: autoApprovePayerIDs(readiness),
-		TenantInfo:          tenantInfo,
-	}, p.Actor)
+	transferred, err := s.billingQueueService.TransferToBillingItems(
+		ctx,
+		&services.TransferToBillingRequest{
+			ShipmentID:          entity.ID,
+			BillType:            billType,
+			AutoApprove:         readiness.ShouldAutoApproveBilling,
+			AutoApprovePayerIDs: autoApprovePayerIDs(readiness),
+			TenantInfo:          tenantInfo,
+		},
+		p.Actor,
+	)
 	if err != nil {
 		if errortypes.IsConflictError(err) {
 			return attempt.fail(services.BillingTransferFailureAlreadyTransferred, err)

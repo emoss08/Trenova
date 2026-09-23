@@ -24,7 +24,11 @@ func TestWithPayloadRetention_KeepsEveryoneElsesRules(t *testing.T) {
 	assert.Equal(t, "someone-elses", merged.Rules[0].ID)
 	assert.Equal(t, temporalPayloadRuleID, merged.Rules[1].ID)
 	assert.Equal(t, temporalPayloadPrefix, merged.Rules[1].RuleFilter.Prefix)
-	assert.Equal(t, lifecycle.ExpirationDays(temporalPayloadRetention), merged.Rules[1].Expiration.Days)
+	assert.Equal(
+		t,
+		lifecycle.ExpirationDays(temporalPayloadRetention),
+		merged.Rules[1].Expiration.Days,
+	)
 }
 
 // Running twice must not stack two copies of the same rule.
@@ -47,9 +51,12 @@ func TestPayloadScope_FilesAPayloadUnderItsExecution(t *testing.T) {
 		want   string
 	}{
 		{
-			name:   "workflow",
-			target: converter.StorageDriverWorkflowInfo{Namespace: "default", WorkflowID: "assistant-thread/athr_1"},
-			want:   "default/assistant-thread%2Fathr_1",
+			name: "workflow",
+			target: converter.StorageDriverWorkflowInfo{
+				Namespace:  "default",
+				WorkflowID: "assistant-thread/athr_1",
+			},
+			want: "default/assistant-thread%2Fathr_1",
 		},
 		{
 			name:   "standalone activity",

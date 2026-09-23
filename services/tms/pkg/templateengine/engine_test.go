@@ -53,8 +53,11 @@ func newInvoiceSample() invoiceSample {
 		InvoiceDate:   1784131200,
 		Timezone:      "America/Chicago",
 		Memo:          "Thanks for your business",
-		BillTo:        addressSample{Name: "ACME, Inc.", Lines: []string{"1 Main St", "Austin, TX"}},
-		RemitTo:       addressSample{Name: "Trenova", Lines: []string{"PO Box 1"}},
+		BillTo: addressSample{
+			Name:  "ACME, Inc.",
+			Lines: []string{"1 Main St", "Austin, TX"},
+		},
+		RemitTo: addressSample{Name: "Trenova", Lines: []string{"PO Box 1"}},
 		ChargeRows: []chargeSample{
 			{Description: "Linehaul", Quantity: "1", Amount: "1200.00"},
 			{Description: "Fuel", Quantity: "1", Amount: "34.50"},
@@ -272,7 +275,11 @@ func TestConditionsAreAnalyzed(t *testing.T) {
 		{"else if condition", `{{ if .Memo }}a{{ else if .Timezone }}b{{ end }}`, "Timezone"},
 		{"with condition", `{{ with .BillTo }}{{ .Name }}{{ end }}`, "BillTo"},
 		{"range condition", `{{ range .ChargeRows }}x{{ end }}`, "ChargeRows"},
-		{"nested if inside range", `{{ range .ChargeRows }}{{ if .Amount }}x{{ end }}{{ end }}`, "ChargeRows.Amount"},
+		{
+			"nested if inside range",
+			`{{ range .ChargeRows }}{{ if .Amount }}x{{ end }}{{ end }}`,
+			"ChargeRows.Amount",
+		},
 	}
 
 	for _, tt := range tests {

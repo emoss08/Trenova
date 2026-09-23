@@ -60,7 +60,10 @@ func New(p Params) *Resolver {
 	}
 }
 
-func (r *Resolver) Organization(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
+func (r *Resolver) Organization(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (bool, error) {
 	control, err := r.control.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return false, err

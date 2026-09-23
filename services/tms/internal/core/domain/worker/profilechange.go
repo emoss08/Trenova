@@ -214,13 +214,17 @@ type WorkerProfileChangeRequest struct {
 }
 
 func (r *WorkerProfileChangeRequest) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(r,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
 		validation.Field(&r.WorkerID, validation.Required.Error("Worker is required")),
 		validation.Field(&r.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[ProfileChangeStatus]("Status is not valid"),
 		),
-		validation.Field(&r.SubmittedAt, validation.Required.Error("A submission date is required")),
+		validation.Field(
+			&r.SubmittedAt,
+			validation.Required.Error("A submission date is required"),
+		),
 		validation.Field(&r.Note,
 			validation.Length(0, 500).Error("Note cannot exceed 500 characters"),
 		),
@@ -254,7 +258,11 @@ func (r *WorkerProfileChangeRequest) Validate(multiErr *errortypes.MultiError) {
 	// A rejection with no reason leaves a driver with a record that did not
 	// change and no idea why.
 	if r.Status == ProfileChangeRejected && strings.TrimSpace(r.DecisionNote) == "" {
-		multiErr.Add("decisionNote", errortypes.ErrRequired, "Turning a request down needs a reason")
+		multiErr.Add(
+			"decisionNote",
+			errortypes.ErrRequired,
+			"Turning a request down needs a reason",
+		)
 	}
 }
 

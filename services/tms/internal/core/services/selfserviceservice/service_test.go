@@ -148,7 +148,11 @@ func (f *fakeWorkers) Update(
 
 type fakeChecksums struct{}
 
-func (fakeChecksums) Checksum(_ context.Context, _ pagination.TenantInfo, _ pulid.ID) (string, error) {
+func (fakeChecksums) Checksum(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	_ pulid.ID,
+) (string, error) {
 	return "abc123", nil
 }
 

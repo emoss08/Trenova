@@ -258,7 +258,10 @@ func (s *Service) schedule(definition *agentdefinition.Definition) error {
 		}
 		next, err := definition.ComputeNextRun(timeutils.NowUnix())
 		if err != nil {
-			return errortypes.NewBusinessError("The schedule could not be computed: {0}", err.Error())
+			return errortypes.NewBusinessError(
+				"The schedule could not be computed: {0}",
+				err.Error(),
+			)
 		}
 		definition.NextRunAt = &next
 	default:

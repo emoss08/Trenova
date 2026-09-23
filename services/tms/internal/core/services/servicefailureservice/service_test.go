@@ -30,8 +30,20 @@ func TestLateMinutesAfterGraceUsesCeilingSemantics(t *testing.T) {
 		want   int64
 	}{
 		{name: "not late at cutoff plus grace", actual: 1_300, cutoff: 1_000, grace: 5, want: 0},
-		{name: "one second late rounds to one minute", actual: 1_301, cutoff: 1_000, grace: 5, want: 1},
-		{name: "exact minute late stays one minute", actual: 1_360, cutoff: 1_000, grace: 5, want: 1},
+		{
+			name:   "one second late rounds to one minute",
+			actual: 1_301,
+			cutoff: 1_000,
+			grace:  5,
+			want:   1,
+		},
+		{
+			name:   "exact minute late stays one minute",
+			actual: 1_360,
+			cutoff: 1_000,
+			grace:  5,
+			want:   1,
+		},
 		{name: "partial second minute rounds up", actual: 1_361, cutoff: 1_000, grace: 5, want: 2},
 	}
 
@@ -54,9 +66,21 @@ func TestNormalizedGracePeriodFallsBackToDispatchDefault(t *testing.T) {
 		want    int
 	}{
 		{name: "nil control", want: dispatchcontrol.DefaultServiceFailureGracePeriod},
-		{name: "nil configured grace", control: &dispatchcontrol.DispatchControl{}, want: dispatchcontrol.DefaultServiceFailureGracePeriod},
-		{name: "zero configured grace", control: &dispatchcontrol.DispatchControl{ServiceFailureGracePeriod: &zero}, want: dispatchcontrol.DefaultServiceFailureGracePeriod},
-		{name: "positive configured grace", control: &dispatchcontrol.DispatchControl{ServiceFailureGracePeriod: &positive}, want: positive},
+		{
+			name:    "nil configured grace",
+			control: &dispatchcontrol.DispatchControl{},
+			want:    dispatchcontrol.DefaultServiceFailureGracePeriod,
+		},
+		{
+			name:    "zero configured grace",
+			control: &dispatchcontrol.DispatchControl{ServiceFailureGracePeriod: &zero},
+			want:    dispatchcontrol.DefaultServiceFailureGracePeriod,
+		},
+		{
+			name:    "positive configured grace",
+			control: &dispatchcontrol.DispatchControl{ServiceFailureGracePeriod: &positive},
+			want:    positive,
+		},
 	}
 
 	for _, tt := range tests {
@@ -107,17 +131,68 @@ func TestShouldEvaluateStopHonorsServiceIncidentPolicy(t *testing.T) {
 		policy dispatchcontrol.ServiceIncidentType
 		want   bool
 	}{
-		{name: "pickup policy accepts origin stop", stop: otherPickup, policy: dispatchcontrol.ServiceIncidentTypePickup, want: true},
-		{name: "pickup policy rejects delivery stop", stop: delivery, policy: dispatchcontrol.ServiceIncidentTypePickup},
-		{name: "delivery policy accepts destination stop", stop: delivery, policy: dispatchcontrol.ServiceIncidentTypeDelivery, want: true},
-		{name: "delivery policy accepts split delivery stop", stop: splitDelivery, policy: dispatchcontrol.ServiceIncidentTypeDelivery, want: true},
-		{name: "pickup delivery policy accepts pickup", stop: otherPickup, policy: dispatchcontrol.ServiceIncidentTypePickupDelivery, want: true},
-		{name: "pickup delivery policy accepts delivery", stop: delivery, policy: dispatchcontrol.ServiceIncidentTypePickupDelivery, want: true},
-		{name: "all except shipper excludes shipper stop", stop: shipperStop, policy: dispatchcontrol.ServiceIncidentTypeAllExceptShipper},
-		{name: "all except shipper accepts other pickup", stop: otherPickup, policy: dispatchcontrol.ServiceIncidentTypeAllExceptShipper, want: true},
-		{name: "count late override bypasses stop type policy", stop: overrideDelivery, policy: dispatchcontrol.ServiceIncidentTypePickup, want: true},
-		{name: "count late override false skips otherwise matching stop", stop: disabledPickup, policy: dispatchcontrol.ServiceIncidentTypePickup},
-		{name: "never policy skips stop", stop: delivery, policy: dispatchcontrol.ServiceIncidentTypeNever},
+		{
+			name:   "pickup policy accepts origin stop",
+			stop:   otherPickup,
+			policy: dispatchcontrol.ServiceIncidentTypePickup,
+			want:   true,
+		},
+		{
+			name:   "pickup policy rejects delivery stop",
+			stop:   delivery,
+			policy: dispatchcontrol.ServiceIncidentTypePickup,
+		},
+		{
+			name:   "delivery policy accepts destination stop",
+			stop:   delivery,
+			policy: dispatchcontrol.ServiceIncidentTypeDelivery,
+			want:   true,
+		},
+		{
+			name:   "delivery policy accepts split delivery stop",
+			stop:   splitDelivery,
+			policy: dispatchcontrol.ServiceIncidentTypeDelivery,
+			want:   true,
+		},
+		{
+			name:   "pickup delivery policy accepts pickup",
+			stop:   otherPickup,
+			policy: dispatchcontrol.ServiceIncidentTypePickupDelivery,
+			want:   true,
+		},
+		{
+			name:   "pickup delivery policy accepts delivery",
+			stop:   delivery,
+			policy: dispatchcontrol.ServiceIncidentTypePickupDelivery,
+			want:   true,
+		},
+		{
+			name:   "all except shipper excludes shipper stop",
+			stop:   shipperStop,
+			policy: dispatchcontrol.ServiceIncidentTypeAllExceptShipper,
+		},
+		{
+			name:   "all except shipper accepts other pickup",
+			stop:   otherPickup,
+			policy: dispatchcontrol.ServiceIncidentTypeAllExceptShipper,
+			want:   true,
+		},
+		{
+			name:   "count late override bypasses stop type policy",
+			stop:   overrideDelivery,
+			policy: dispatchcontrol.ServiceIncidentTypePickup,
+			want:   true,
+		},
+		{
+			name:   "count late override false skips otherwise matching stop",
+			stop:   disabledPickup,
+			policy: dispatchcontrol.ServiceIncidentTypePickup,
+		},
+		{
+			name:   "never policy skips stop",
+			stop:   delivery,
+			policy: dispatchcontrol.ServiceIncidentTypeNever,
+		},
 	}
 
 	for _, tt := range tests {
@@ -276,7 +351,14 @@ func TestEvaluateShipmentIncludesCreatedStopSummaries(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	gracePeriod := 5
 	actualArrival := int64(1_360)
-	stop := serviceFailureStopFixture(orgID, buID, moveID, stopID, shipment.StopTypeDelivery, actualArrival)
+	stop := serviceFailureStopFixture(
+		orgID,
+		buID,
+		moveID,
+		stopID,
+		shipment.StopTypeDelivery,
+		actualArrival,
+	)
 	source := serviceFailureShipmentWithStops(orgID, buID, shipmentID, moveID, stop)
 
 	repo := mocks.NewMockServiceFailureRepository(t)
@@ -324,16 +406,20 @@ func TestEvaluateShipmentIncludesCreatedStopSummaries(t *testing.T) {
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
-	result, err := svc.EvaluateShipment(t.Context(), &serviceports.EvaluateShipmentServiceFailuresRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-		ShipmentID: shipmentID,
-	}, &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
-		PrincipalID:    userID,
-		UserID:         userID,
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-	})
+	result, err := svc.EvaluateShipment(
+		t.Context(),
+		&serviceports.EvaluateShipmentServiceFailuresRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+			ShipmentID: shipmentID,
+		},
+		&serviceports.RequestActor{
+			PrincipalType:  serviceports.PrincipalTypeUser,
+			PrincipalID:    userID,
+			UserID:         userID,
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+		},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, result.CreatedIDs, 1)
@@ -363,7 +449,14 @@ func TestEvaluateShipmentIncludesUpdatedStopSummaries(t *testing.T) {
 	stopID := pulid.MustNew("stp_")
 	gracePeriod := 5
 	actualArrival := int64(1_360)
-	stop := serviceFailureStopFixture(orgID, buID, moveID, stopID, shipment.StopTypeDelivery, actualArrival)
+	stop := serviceFailureStopFixture(
+		orgID,
+		buID,
+		moveID,
+		stopID,
+		shipment.StopTypeDelivery,
+		actualArrival,
+	)
 	source := serviceFailureShipmentWithStops(orgID, buID, shipmentID, moveID, stop)
 	existing := &servicefailure.ServiceFailure{
 		ID:                 pulid.MustNew("sf_"),
@@ -421,10 +514,14 @@ func TestEvaluateShipmentIncludesUpdatedStopSummaries(t *testing.T) {
 		}).
 		Once()
 
-	result, err := svc.EvaluateShipment(t.Context(), &serviceports.EvaluateShipmentServiceFailuresRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-		ShipmentID: shipmentID,
-	}, nil)
+	result, err := svc.EvaluateShipment(
+		t.Context(),
+		&serviceports.EvaluateShipmentServiceFailuresRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+			ShipmentID: shipmentID,
+		},
+		nil,
+	)
 
 	require.NoError(t, err)
 	require.Len(t, result.UpdatedIDs, 1)
@@ -472,10 +569,14 @@ func TestEvaluateShipmentSkippedStopsIncludeStopContext(t *testing.T) {
 		}, nil).
 		Once()
 
-	result, err := svc.EvaluateShipment(t.Context(), &serviceports.EvaluateShipmentServiceFailuresRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-		ShipmentID: shipmentID,
-	}, nil)
+	result, err := svc.EvaluateShipment(
+		t.Context(),
+		&serviceports.EvaluateShipmentServiceFailuresRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+			ShipmentID: shipmentID,
+		},
+		nil,
+	)
 
 	require.NoError(t, err)
 	require.Equal(t, 1, result.Skipped)
@@ -648,7 +749,10 @@ func TestPreflightServiceFailure214AllowsNonMandatoryBlockedAndSkipped(t *testin
 				Return(tt.result, nil).
 				Once()
 
-			err := svc.preflightServiceFailure214(t.Context(), serviceFailure214Params{current: failure})
+			err := svc.preflightServiceFailure214(
+				t.Context(),
+				serviceFailure214Params{current: failure},
+			)
 
 			require.NoError(t, err)
 		})
@@ -663,8 +767,16 @@ func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T)
 		action      serviceports.ServiceFailureEDIAction
 		wantComment bool
 	}{
-		{name: "generated", action: serviceports.ServiceFailureEDIActionGenerated, wantComment: true},
-		{name: "duplicate", action: serviceports.ServiceFailureEDIActionDuplicate, wantComment: true},
+		{
+			name:        "generated",
+			action:      serviceports.ServiceFailureEDIActionGenerated,
+			wantComment: true,
+		},
+		{
+			name:        "duplicate",
+			action:      serviceports.ServiceFailureEDIActionDuplicate,
+			wantComment: true,
+		},
 		{name: "skipped", action: serviceports.ServiceFailureEDIActionSkipped},
 		{name: "blocked", action: serviceports.ServiceFailureEDIActionBlocked},
 	}
@@ -692,7 +804,10 @@ func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T)
 				}, nil).
 				Once()
 			if tt.wantComment {
-				audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+				audit.EXPECT().
+					LogAction(mock.Anything, mock.Anything, mock.Anything).
+					Return(nil).
+					Once()
 				comments.EXPECT().
 					CreateSystem(mock.Anything, mock.AnythingOfType("*services.CreateSystemShipmentCommentRequest")).
 					Return(&shipment.ShipmentComment{}, nil).

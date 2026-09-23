@@ -188,7 +188,13 @@ func (t *createDashboardTool) Validate(
 		return err
 	}
 
-	return checkTileTargets(ctx, t.dashboards, tenantFrom(params), tileParams(params.Params), "tiles")
+	return checkTileTargets(
+		ctx,
+		t.dashboards,
+		tenantFrom(params),
+		tileParams(params.Params),
+		"tiles",
+	)
 }
 
 func (t *createDashboardTool) validateArgs(params map[string]any) error {

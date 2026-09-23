@@ -239,7 +239,8 @@ func (s *AgentSweepWorkflowTestSuite) TestStartsEachDueDefinitionIndependently()
 			s.Equal(sweepDueLimit, input.Limit)
 			s.Positive(input.Now)
 			return &ListDueDefinitionsResult{Due: due}, nil
-		}).Once()
+		}).
+		Once()
 	s.env.OnActivity(a.StartDueRunActivity, mock.Anything, mock.Anything).
 		Return(func(_ context.Context, item *DueDefinition) (*StartDueRunResult, error) {
 			started[item.DefinitionID] = struct{}{}

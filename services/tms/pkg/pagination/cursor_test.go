@@ -199,10 +199,20 @@ func TestCursorInt64Value(t *testing.T) {
 		want  int64
 		ok    bool
 	}{
-		{name: "int64 from a database scan", value: int64(1_700_000_000), want: 1_700_000_000, ok: true},
+		{
+			name:  "int64 from a database scan",
+			value: int64(1_700_000_000),
+			want:  1_700_000_000,
+			ok:    true,
+		},
 		{name: "int", value: 42, want: 42, ok: true},
 		{name: "int32", value: int32(42), want: 42, ok: true},
-		{name: "float64 from a decoded cursor", value: float64(1_700_000_000), want: 1_700_000_000, ok: true},
+		{
+			name:  "float64 from a decoded cursor",
+			value: float64(1_700_000_000),
+			want:  1_700_000_000,
+			ok:    true,
+		},
 		{name: "numeric string", value: "1700000000", want: 1_700_000_000, ok: true},
 		{name: "non-numeric string", value: "yesterday", ok: false},
 		{name: "nil", value: nil, ok: false},

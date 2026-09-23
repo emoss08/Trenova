@@ -76,8 +76,8 @@ type ImportBatch struct {
 	CommittedAt   *int64   `json:"committedAt"   bun:"committed_at,type:BIGINT,nullzero"`
 	CommittedByID pulid.ID `json:"committedById" bun:"committed_by_id,type:VARCHAR(100),nullzero"`
 
-	SearchVector string `json:"-"       bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"       bun:"rank,type:VARCHAR(100),scanonly"`
+	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

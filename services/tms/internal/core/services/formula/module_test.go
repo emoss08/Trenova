@@ -62,7 +62,10 @@ func TestShipmentSchema_ExposesStopAndCommodityCollections(t *testing.T) {
 		assert.NotEmpty(t, prop.Items.Properties)
 	}
 	assert.NotEmpty(t, definition.Properties["stops"].Items.Properties["state"].Description)
-	assert.NotEmpty(t, definition.Properties["commodities"].Items.Properties["freightClass"].Description)
+	assert.NotEmpty(
+		t,
+		definition.Properties["commodities"].Items.Properties["freightClass"].Description,
+	)
 }
 
 func TestShipmentSchema_ExposesServiceAndShipmentTypesAndDimensionRollups(t *testing.T) {

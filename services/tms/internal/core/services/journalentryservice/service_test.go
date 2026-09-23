@@ -42,7 +42,11 @@ func TestGetEntryDelegatesToRepository(t *testing.T) {
 		})
 	svc := &Service{entryRepo: repo}
 
-	result, err := svc.GetEntry(t.Context(), pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}, entry.ID)
+	result, err := svc.GetEntry(
+		t.Context(),
+		pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		entry.ID,
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, entry, result)
@@ -63,7 +67,12 @@ func TestGetSourceByObjectDelegatesToRepository(t *testing.T) {
 		})
 	svc := &Service{sourceRepo: repo}
 
-	result, err := svc.GetSourceByObject(t.Context(), pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}, "Invoice", "inv_123")
+	result, err := svc.GetSourceByObject(
+		t.Context(),
+		pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		"Invoice",
+		"inv_123",
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, source, result)
@@ -75,8 +84,13 @@ func TestListEntriesDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockJournalEntryRepository(t)
-	req := &repositories.ListJournalEntriesRequest{Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 10}}}
-	expected := &pagination.ListResult[*journalentry.JournalEntry]{Items: []*journalentry.JournalEntry{{ID: pulid.MustNew("je_")}}, Total: 1}
+	req := &repositories.ListJournalEntriesRequest{
+		Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 10}},
+	}
+	expected := &pagination.ListResult[*journalentry.JournalEntry]{
+		Items: []*journalentry.JournalEntry{{ID: pulid.MustNew("je_")}},
+		Total: 1,
+	}
 	repo.EXPECT().List(mock.Anything, req).Return(expected, nil).Once()
 	svc := &Service{entryRepo: repo}
 

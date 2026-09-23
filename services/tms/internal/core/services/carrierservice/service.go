@@ -288,7 +288,11 @@ func (s *Service) Update(
 
 	if auditActor.PrincipalType != services.PrincipalTypeSystem {
 		s.notifyObserver(ctx, &services.CarrierLifecycleEvent{
-			TenantInfo:     pagination.TenantInfo{OrgID: updatedEntity.OrganizationID, BuID: updatedEntity.BusinessUnitID, UserID: auditActor.UserID},
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  updatedEntity.OrganizationID,
+				BuID:   updatedEntity.BusinessUnitID,
+				UserID: auditActor.UserID,
+			},
 			Carrier:        updatedEntity,
 			PreviousStatus: original.Status,
 		})

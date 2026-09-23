@@ -136,7 +136,11 @@ func TestValidate_RejectsToolTiersForToolsNotEnabled(t *testing.T) {
 	}
 
 	errs := fieldErrors(t, d)
-	assert.True(t, errs["toolTiers.assign_move"], "a tier for a tool the agent cannot use is a mistake")
+	assert.True(
+		t,
+		errs["toolTiers.assign_move"],
+		"a tier for a tool the agent cannot use is a mistake",
+	)
 	assert.False(t, errs["toolTiers.get_shipment"])
 
 	d = validDefinition()
@@ -248,13 +252,55 @@ func TestEffectiveTier_HonoursOverridesUnderTheCeiling(t *testing.T) {
 		toolTier agent.AutonomyTier
 		want     agent.AutonomyTier
 	}{
-		{"ceiling lowers auto-execute", agent.TierPropose, "", agent.TierAutoExecute, agent.TierPropose},
-		{"ceiling lowers approval tier", agent.TierPropose, "", agent.TierActWithApproval, agent.TierPropose},
-		{"tool default kept when it is under the ceiling", agent.TierAutoExecute, "", agent.TierPropose, agent.TierPropose},
-		{"override lowers a tool", agent.TierAutoExecute, agent.TierPropose, agent.TierAutoExecute, agent.TierPropose},
-		{"override raises a tool up to the ceiling", agent.TierAutoExecute, agent.TierAutoExecute, agent.TierPropose, agent.TierAutoExecute},
-		{"override cannot pass the ceiling", agent.TierActWithApproval, agent.TierAutoExecute, agent.TierPropose, agent.TierActWithApproval},
-		{"equal tiers are unchanged", agent.TierActWithApproval, "", agent.TierActWithApproval, agent.TierActWithApproval},
+		{
+			"ceiling lowers auto-execute",
+			agent.TierPropose,
+			"",
+			agent.TierAutoExecute,
+			agent.TierPropose,
+		},
+		{
+			"ceiling lowers approval tier",
+			agent.TierPropose,
+			"",
+			agent.TierActWithApproval,
+			agent.TierPropose,
+		},
+		{
+			"tool default kept when it is under the ceiling",
+			agent.TierAutoExecute,
+			"",
+			agent.TierPropose,
+			agent.TierPropose,
+		},
+		{
+			"override lowers a tool",
+			agent.TierAutoExecute,
+			agent.TierPropose,
+			agent.TierAutoExecute,
+			agent.TierPropose,
+		},
+		{
+			"override raises a tool up to the ceiling",
+			agent.TierAutoExecute,
+			agent.TierAutoExecute,
+			agent.TierPropose,
+			agent.TierAutoExecute,
+		},
+		{
+			"override cannot pass the ceiling",
+			agent.TierActWithApproval,
+			agent.TierAutoExecute,
+			agent.TierPropose,
+			agent.TierActWithApproval,
+		},
+		{
+			"equal tiers are unchanged",
+			agent.TierActWithApproval,
+			"",
+			agent.TierActWithApproval,
+			agent.TierActWithApproval,
+		},
 	}
 
 	for _, tc := range cases {
@@ -276,7 +322,11 @@ func TestAllowsTool(t *testing.T) {
 
 	d := validDefinition()
 	assert.True(t, d.AllowsTool("flag_for_manual_review"))
-	assert.True(t, d.AllowsTool("get_shipment"), "read tools are enabled the same way write tools are")
+	assert.True(
+		t,
+		d.AllowsTool("get_shipment"),
+		"read tools are enabled the same way write tools are",
+	)
 	assert.False(t, d.AllowsTool("correct_charge_code"))
 }
 
@@ -359,8 +409,16 @@ func TestTemplates_DescribeEveryStarter(t *testing.T) {
 		assert.True(t, template.StarterTrigger().IsValid())
 	}
 
-	assert.Equal(t, agentdefinition.TriggerEvent, agentdefinition.TemplateBillingException.StarterTrigger())
-	assert.Contains(t, agentdefinition.TemplateBillingException.StarterEvents(), agent.EventBillingQueueItemException)
+	assert.Equal(
+		t,
+		agentdefinition.TriggerEvent,
+		agentdefinition.TemplateBillingException.StarterTrigger(),
+	)
+	assert.Contains(
+		t,
+		agentdefinition.TemplateBillingException.StarterEvents(),
+		agent.EventBillingQueueItemException,
+	)
 	assert.Empty(t, agentdefinition.TemplateGeneralAssistant.StarterTools())
 }
 

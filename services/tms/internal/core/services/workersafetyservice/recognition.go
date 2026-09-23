@@ -37,7 +37,10 @@ func (s *Service) GiveRecognition(
 	entity *worker.WorkerRecognition,
 	userID pulid.ID,
 ) (*worker.WorkerRecognition, error) {
-	log := s.l.With(zap.String("operation", "GiveRecognition"), zap.String("workerId", entity.WorkerID.String()))
+	log := s.l.With(
+		zap.String("operation", "GiveRecognition"),
+		zap.String("workerId", entity.WorkerID.String()),
+	)
 
 	wrk, err := s.loadWorker(ctx, recognitionTenant(entity), entity.WorkerID)
 	if err != nil {
@@ -66,11 +69,23 @@ func (s *Service) GiveRecognition(
 		operation: permission.OpCreate, userID: userID, tenant: recognitionTenant(created),
 		current: created, comment: "Recognition given: " + created.Title, log: log,
 	})
-	s.publish(ctx, recognitionTenant(created), realtimeRecognition, permission.OpCreate, created.ID, userID)
+	s.publish(
+		ctx,
+		recognitionTenant(created),
+		realtimeRecognition,
+		permission.OpCreate,
+		created.ID,
+		userID,
+	)
 	s.refreshRollupQuietly(ctx, recognitionTenant(created), created.WorkerID)
 
 	if created.VisibleToWorker && !wrk.UserID.IsNil() {
-		s.notifyDriver(ctx, recognitionTenant(created), created.WorkerID, eventRecognition, notification.PriorityMedium,
+		s.notifyDriver(
+			ctx,
+			recognitionTenant(created),
+			created.WorkerID,
+			eventRecognition,
+			notification.PriorityMedium,
 			documenttemplate.DriverNotificationContext{
 				RecognitionTitle:   created.Title,
 				RecognitionMessage: created.Message,

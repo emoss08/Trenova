@@ -39,7 +39,11 @@ func TestPCMilerConnectionTesterUsesRouteReportsForCurrentDataVersion(t *testing
 		switch r.URL.Path {
 		case "/Service.svc/pcmversion":
 			calledPCMVersion = true
-			http.Error(w, `"This type of request is not allowed for Trial Keys."`, http.StatusMethodNotAllowed)
+			http.Error(
+				w,
+				`"This type of request is not allowed for Trial Keys."`,
+				http.StatusMethodNotAllowed,
+			)
 		case "/Service.svc/route/routeReports":
 			calledRouteReports = true
 			require.Equal(t, "Current", r.URL.Query().Get("dataVersion"))
@@ -77,7 +81,11 @@ func TestPCMilerConnectionTesterIgnoresRoutingPolicyFields(t *testing.T) {
 		switch r.URL.Path {
 		case "/Service.svc/pcmversion":
 			calledPCMVersion = true
-			http.Error(w, `"This type of request is not allowed for Trial Keys."`, http.StatusMethodNotAllowed)
+			http.Error(
+				w,
+				`"This type of request is not allowed for Trial Keys."`,
+				http.StatusMethodNotAllowed,
+			)
 		case "/Service.svc/route/routeReports":
 			calledRouteReports = true
 			require.Equal(t, "Current", r.URL.Query().Get("dataVersion"))

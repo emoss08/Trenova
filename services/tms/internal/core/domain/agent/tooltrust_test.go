@@ -37,8 +37,16 @@ func TestOutcomeOfDecision(t *testing.T) {
 	assert.Equal(t, TrustOutcomeApproved, OutcomeOfDecision(DecisionAccepted, nil))
 	assert.Equal(t, TrustOutcomeApproved, OutcomeOfDecision(DecisionAccepted, map[string]any{}))
 	// An acceptance that carried changes is a modification whatever it was called.
-	assert.Equal(t, TrustOutcomeModified, OutcomeOfDecision(DecisionAccepted, map[string]any{"reason": "x"}))
-	assert.Equal(t, TrustOutcomeModified, OutcomeOfDecision(DecisionModified, map[string]any{"reason": "x"}))
+	assert.Equal(
+		t,
+		TrustOutcomeModified,
+		OutcomeOfDecision(DecisionAccepted, map[string]any{"reason": "x"}),
+	)
+	assert.Equal(
+		t,
+		TrustOutcomeModified,
+		OutcomeOfDecision(DecisionModified, map[string]any{"reason": "x"}),
+	)
 	assert.Equal(t, TrustOutcomeRejected, OutcomeOfDecision(DecisionRejected, nil))
 	assert.Equal(t, TrustOutcomeRejected, OutcomeOfDecision(DecisionType("unknown"), nil))
 }

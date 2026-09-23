@@ -114,7 +114,8 @@ func TestUpdateWritesZeroValuedEditableColumns(t *testing.T) {
 		Version:               3,
 	}
 
-	mock.ExpectQuery("UPDATE").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(entity.ID.String()))
+	mock.ExpectQuery("UPDATE").
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(entity.ID.String()))
 
 	_, err := repo.Update(t.Context(), entity)
 	require.NoError(t, err)

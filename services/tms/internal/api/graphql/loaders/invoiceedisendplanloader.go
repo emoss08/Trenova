@@ -20,7 +20,10 @@ type invoiceEDISendPlanResolver interface {
 }
 
 type ediPlanInvoicesGetter interface {
-	GetByIDs(ctx context.Context, req repositories.GetInvoicesByIDsRequest) ([]*invoice.Invoice, error)
+	GetByIDs(
+		ctx context.Context,
+		req repositories.GetInvoicesByIDsRequest,
+	) ([]*invoice.Invoice, error)
 }
 
 type InvoiceEDISendPlanByInvoiceIDLoaderFactoryParams struct {
@@ -41,7 +44,10 @@ type InvoiceEDISendPlanByInvoiceIDLoaderFactory struct {
 func NewInvoiceEDISendPlanByInvoiceIDLoaderFactory(
 	p InvoiceEDISendPlanByInvoiceIDLoaderFactoryParams,
 ) *InvoiceEDISendPlanByInvoiceIDLoaderFactory {
-	return &InvoiceEDISendPlanByInvoiceIDLoaderFactory{plans: p.InvoiceService, invoices: p.InvoiceRepo}
+	return &InvoiceEDISendPlanByInvoiceIDLoaderFactory{
+		plans:    p.InvoiceService,
+		invoices: p.InvoiceRepo,
+	}
 }
 
 func (f *InvoiceEDISendPlanByInvoiceIDLoaderFactory) NewForTenant(

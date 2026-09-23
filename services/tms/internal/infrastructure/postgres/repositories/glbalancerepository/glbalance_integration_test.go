@@ -45,12 +45,18 @@ func TestListTrialBalanceByPeriodReturnsOrderedBalances(t *testing.T) {
 
 	seedRegistry := seeder.NewRegistry()
 	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(db, seedRegistry, &config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}})
+	engine := seeder.NewEngine(
+		db,
+		seedRegistry,
+		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
+	)
 	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
 	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
-	postingRepo := journalpostingrepository.New(journalpostingrepository.Params{DB: conn, Logger: zap.NewNop()})
+	postingRepo := journalpostingrepository.New(
+		journalpostingrepository.Params{DB: conn, Logger: zap.NewNop()},
+	)
 	balanceRepo := New(Params{DB: conn, Logger: zap.NewNop()})
 	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupGLBalanceFixture(t, ctx, conn)
 	now := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
@@ -87,16 +93,33 @@ func TestListTrialBalanceByPeriodReturnsOrderedBalances(t *testing.T) {
 		ApprovedByID:     userID,
 		ApprovedAt:       &now,
 		Lines: []repositories.JournalPostingLine{
-			{ID: pulid.MustNew("jel_"), GLAccountID: accountIDs[0], LineNumber: 1, Description: "Debit", DebitAmount: 3000, NetAmount: 3000},
-			{ID: pulid.MustNew("jel_"), GLAccountID: accountIDs[1], LineNumber: 2, Description: "Credit", CreditAmount: 3000, NetAmount: -3000},
+			{
+				ID:          pulid.MustNew("jel_"),
+				GLAccountID: accountIDs[0],
+				LineNumber:  1,
+				Description: "Debit",
+				DebitAmount: 3000,
+				NetAmount:   3000,
+			},
+			{
+				ID:           pulid.MustNew("jel_"),
+				GLAccountID:  accountIDs[1],
+				LineNumber:   2,
+				Description:  "Credit",
+				CreditAmount: 3000,
+				NetAmount:    -3000,
+			},
 		},
 	})
 	require.NoError(t, err)
 
-	balances, err := balanceRepo.ListTrialBalanceByPeriod(ctx, repositories.ListTrialBalanceByPeriodRequest{
-		TenantInfo:     pagination.TenantInfo{OrgID: orgID, BuID: buID},
-		FiscalPeriodID: periodID,
-	})
+	balances, err := balanceRepo.ListTrialBalanceByPeriod(
+		ctx,
+		repositories.ListTrialBalanceByPeriodRequest{
+			TenantInfo:     pagination.TenantInfo{OrgID: orgID, BuID: buID},
+			FiscalPeriodID: periodID,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, balances, 2)
 	assert.LessOrEqual(t, balances[0].AccountCode, balances[1].AccountCode)
@@ -114,13 +137,21 @@ func TestListCumulativeBalancesThroughPeriodSumsPriorPeriods(t *testing.T) {
 
 	seedRegistry := seeder.NewRegistry()
 	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(db, seedRegistry, &config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}})
+	engine := seeder.NewEngine(
+		db,
+		seedRegistry,
+		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
+	)
 	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
 	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
-	postingRepo := journalpostingrepository.New(journalpostingrepository.Params{DB: conn, Logger: zap.NewNop()})
-	periodRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()})
+	postingRepo := journalpostingrepository.New(
+		journalpostingrepository.Params{DB: conn, Logger: zap.NewNop()},
+	)
+	periodRepo := fiscalperiodrepository.New(
+		fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},
+	)
 	balanceRepo := New(Params{DB: conn, Logger: zap.NewNop()})
 	orgID, buID, userID, fiscalYearID, januaryID, accountIDs := setupGLBalanceFixture(t, ctx, conn)
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
@@ -179,8 +210,22 @@ func TestListCumulativeBalancesThroughPeriodSumsPriorPeriods(t *testing.T) {
 			TotalCredit:      amount,
 			IsPosted:         true,
 			Lines: []repositories.JournalPostingLine{
-				{ID: pulid.MustNew("jel_"), GLAccountID: accountIDs[0], LineNumber: 1, Description: "Debit", DebitAmount: amount, NetAmount: amount},
-				{ID: pulid.MustNew("jel_"), GLAccountID: accountIDs[1], LineNumber: 2, Description: "Credit", CreditAmount: amount, NetAmount: -amount},
+				{
+					ID:          pulid.MustNew("jel_"),
+					GLAccountID: accountIDs[0],
+					LineNumber:  1,
+					Description: "Debit",
+					DebitAmount: amount,
+					NetAmount:   amount,
+				},
+				{
+					ID:           pulid.MustNew("jel_"),
+					GLAccountID:  accountIDs[1],
+					LineNumber:   2,
+					Description:  "Credit",
+					CreditAmount: amount,
+					NetAmount:    -amount,
+				},
 			},
 		}))
 	}
@@ -190,10 +235,13 @@ func TestListCumulativeBalancesThroughPeriodSumsPriorPeriods(t *testing.T) {
 	post(adjusting.ID, 250, "3")
 
 	debitFor := func(periodID pulid.ID) int64 {
-		balances, listErr := balanceRepo.ListCumulativeBalancesThroughPeriod(ctx, repositories.ListCumulativeBalancesThroughPeriodRequest{
-			TenantInfo:     tenantInfo,
-			FiscalPeriodID: periodID,
-		})
+		balances, listErr := balanceRepo.ListCumulativeBalancesThroughPeriod(
+			ctx,
+			repositories.ListCumulativeBalancesThroughPeriodRequest{
+				TenantInfo:     tenantInfo,
+				FiscalPeriodID: periodID,
+			},
+		)
 		require.NoError(t, listErr)
 		for _, balance := range balances {
 			if balance.GLAccountID == accountIDs[0] {
@@ -213,19 +261,57 @@ func TestListCumulativeBalancesThroughPeriodSumsPriorPeriods(t *testing.T) {
 	)
 }
 
-func setupGLBalanceFixture(t *testing.T, ctx context.Context, conn *postgres.Connection) (pulid.ID, pulid.ID, pulid.ID, pulid.ID, pulid.ID, []pulid.ID) {
+func setupGLBalanceFixture(
+	t *testing.T,
+	ctx context.Context,
+	conn *postgres.Connection,
+) (pulid.ID, pulid.ID, pulid.ID, pulid.ID, pulid.ID, []pulid.ID) {
 	t.Helper()
 
 	logger := zap.NewNop()
-	fiscalYearRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: logger})
-	fiscalPeriodRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: logger})
+	fiscalYearRepo := fiscalyearrepository.New(
+		fiscalyearrepository.Params{DB: conn, Logger: logger},
+	)
+	fiscalPeriodRepo := fiscalperiodrepository.New(
+		fiscalperiodrepository.Params{DB: conn, Logger: logger},
+	)
 
 	var org seededBalanceOrg
-	require.NoError(t, conn.DB().NewSelect().Table("organizations").Column("id", "business_unit_id").Limit(1).Scan(ctx, &org))
+	require.NoError(
+		t,
+		conn.DB().
+			NewSelect().
+			Table("organizations").
+			Column("id", "business_unit_id").
+			Limit(1).
+			Scan(ctx, &org),
+	)
 	var user seededBalanceUser
-	require.NoError(t, conn.DB().NewSelect().Table("users").Column("id").Where("current_organization_id = ?", org.ID).Where("business_unit_id = ?", org.BusinessUnitID).Limit(1).Scan(ctx, &user))
+	require.NoError(
+		t,
+		conn.DB().
+			NewSelect().
+			Table("users").
+			Column("id").
+			Where("current_organization_id = ?", org.ID).
+			Where("business_unit_id = ?", org.BusinessUnitID).
+			Limit(1).
+			Scan(ctx, &user),
+	)
 	accounts := make([]seededBalanceAccount, 0, 2)
-	require.NoError(t, conn.DB().NewSelect().Table("gl_accounts").Column("id").Where("organization_id = ?", org.ID).Where("business_unit_id = ?", org.BusinessUnitID).Where("status = 'Active'").Order("account_code ASC").Limit(2).Scan(ctx, &accounts))
+	require.NoError(
+		t,
+		conn.DB().
+			NewSelect().
+			Table("gl_accounts").
+			Column("id").
+			Where("organization_id = ?", org.ID).
+			Where("business_unit_id = ?", org.BusinessUnitID).
+			Where("status = 'Active'").
+			Order("account_code ASC").
+			Limit(2).
+			Scan(ctx, &accounts),
+	)
 	require.Len(t, accounts, 2)
 
 	fy, err := fiscalYearRepo.Create(ctx, &fiscalyear.FiscalYear{
@@ -254,5 +340,8 @@ func setupGLBalanceFixture(t *testing.T, ctx context.Context, conn *postgres.Con
 	})
 	require.NoError(t, err)
 
-	return org.ID, org.BusinessUnitID, user.ID, fy.ID, period.ID, []pulid.ID{accounts[0].ID, accounts[1].ID}
+	return org.ID, org.BusinessUnitID, user.ID, fy.ID, period.ID, []pulid.ID{
+		accounts[0].ID,
+		accounts[1].ID,
+	}
 }

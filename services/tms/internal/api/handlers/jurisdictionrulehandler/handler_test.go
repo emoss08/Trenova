@@ -67,7 +67,10 @@ func (s *serviceStub) Verify(
 	return &jurisdictionrule.JurisdictionRule{}, nil
 }
 
-func setupHandler(t *testing.T, service services.JurisdictionRuleService) *jurisdictionrulehandler.Handler {
+func setupHandler(
+	t *testing.T,
+	service services.JurisdictionRuleService,
+) *jurisdictionrulehandler.Handler {
 	t.Helper()
 
 	logger := zap.NewNop()

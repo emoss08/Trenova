@@ -16,13 +16,17 @@ func TestMinorUnitFieldsAreNotFormattedAsMoney(t *testing.T) {
 			if field.Format != FormatNone {
 				t.Errorf(
 					"%s.%s is a minor-unit column formatted as %q; the money hint applies currency styling without scaling, so cents would render as whole units",
-					entity.Key, field.Key, field.Format,
+					entity.Key,
+					field.Key,
+					field.Format,
 				)
 			}
 			if !strings.Contains(field.Label, "Minor") {
 				t.Errorf(
 					"%s.%s is a minor-unit column labelled %q; the unit belongs in the label because no format hint carries it",
-					entity.Key, field.Key, field.Label,
+					entity.Key,
+					field.Key,
+					field.Label,
 				)
 			}
 		}
@@ -55,7 +59,9 @@ func TestInstantsTheColumnHeuristicMissesAreDeclaredEpoch(t *testing.T) {
 			if field.Type != FieldEpoch {
 				t.Errorf(
 					"%s.%s type = %s, want epoch; its column name ends in none of the suffixes the epoch heuristic reads, so it must be declared",
-					entityKey, fieldKey, field.Type,
+					entityKey,
+					fieldKey,
+					field.Type,
 				)
 			}
 		}
@@ -83,7 +89,9 @@ func TestGLAccountBalanceIsKeyedByAccountAndPeriod(t *testing.T) {
 	}
 
 	if _, found := entity.Field("id"); found {
-		t.Error("gl_account_balance has an id field; a count of these rows counts account-periods, not documents, and any measure keyed on id would be wrong")
+		t.Error(
+			"gl_account_balance has an id field; a count of these rows counts account-periods, not documents, and any measure keyed on id would be wrong",
+		)
 	}
 }
 

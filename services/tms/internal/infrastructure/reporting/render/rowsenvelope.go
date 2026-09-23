@@ -112,7 +112,11 @@ func (e *rowsEnvelope) WriteRow(row serviceports.ReportRow) error {
 //
 // totals may be nil: not every report has a total row, and a report that does
 // not is different from one whose totals are zero.
-func (e *rowsEnvelope) WriteTail(totals serviceports.ReportRow, rowCount int64, truncated bool) error {
+func (e *rowsEnvelope) WriteTail(
+	totals serviceports.ReportRow,
+	rowCount int64,
+	truncated bool,
+) error {
 	if _, err := e.out.WriteString(`]`); err != nil {
 		return err
 	}

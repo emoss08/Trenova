@@ -49,7 +49,7 @@ type RateAgreementVersion struct {
 	ContractRef   string        `json:"contractRef"   bun:"contract_ref,type:VARCHAR(100),nullzero"`
 	DocumentID    *pulid.ID     `json:"documentId"    bun:"document_id,type:VARCHAR(100),nullzero"`
 
-	Priority int16 `json:"priority" bun:"priority,type:SMALLINT,notnull,default:0"`
+	Priority int16 `json:"priority"               bun:"priority,type:SMALLINT,notnull,default:0"`
 	// The agreement's own window, distinct from EffectiveFrom/EffectiveTo above,
 	// which say when this *version* of the terms governed. Moving the contract's
 	// dates is a renegotiation like any other and diffs under these names.
@@ -74,7 +74,7 @@ type RateAgreementVersion struct {
 	// the contract said.
 	AccessorialTerms map[string]AccessorialTermSnapshot `json:"accessorialTerms" bun:"accessorial_terms,type:JSONB,nullzero"`
 	// The fuel binding's negotiated terms as they stood.
-	FuelTerms *FuelTermSnapshot `json:"fuelTerms" bun:"fuel_terms,type:JSONB,nullzero"`
+	FuelTerms *FuelTermSnapshot `json:"fuelTerms"        bun:"fuel_terms,type:JSONB,nullzero"`
 
 	// Read-time only: accessorial charge id → code, resolved by the repository
 	// for every id the snapshot and change summary mention. Never persisted.

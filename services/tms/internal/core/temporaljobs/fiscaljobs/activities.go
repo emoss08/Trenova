@@ -125,11 +125,14 @@ func (a *Activities) CloseExpiredPeriodsActivity(
 	now := timeutils.NowUnix()
 	result := &AutoClosePeriodsResult{}
 
-	periods, err := a.fpRepo.GetExpiredUnclosedPeriods(ctx, repositories.GetExpiredUnclosedPeriodsRequest{
-		OrgID:      payload.OrganizationID,
-		BuID:       payload.BusinessUnitID,
-		BeforeDate: now,
-	})
+	periods, err := a.fpRepo.GetExpiredUnclosedPeriods(
+		ctx,
+		repositories.GetExpiredUnclosedPeriodsRequest{
+			OrgID:      payload.OrganizationID,
+			BuID:       payload.BusinessUnitID,
+			BeforeDate: now,
+		},
+	)
 	if err != nil {
 		logger.Error("Failed to get expired open periods", "error", err)
 		return nil, temporaltype.NewRetryableError("Failed to get expired open periods", err).

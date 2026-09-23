@@ -89,7 +89,12 @@ func TestGetStamped_InvalidateForcesARebuild(t *testing.T) {
 
 	_, err = ratetablecache.GetStamped(t.Context(), org, bu, source.Stamp, source.Build)
 	require.NoError(t, err)
-	assert.EqualValues(t, 2, source.builds.Load(), "the write path can evict without a stamp change")
+	assert.EqualValues(
+		t,
+		2,
+		source.builds.Load(),
+		"the write path can evict without a stamp change",
+	)
 }
 
 func TestGetStamped_PerContextMemoWinsOverTheStamp(t *testing.T) {

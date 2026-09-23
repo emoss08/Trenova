@@ -30,7 +30,11 @@ func validateShareInput(input *shareInput, actorID pulid.ID) *errortypes.MultiEr
 
 	switch {
 	case len(input.userIDs) == 0:
-		multiErr.Add("userIds", errortypes.ErrRequired, "Choose at least one teammate to share with")
+		multiErr.Add(
+			"userIds",
+			errortypes.ErrRequired,
+			"Choose at least one teammate to share with",
+		)
 	case len(input.userIDs) > invoice.MaxShareRecipients:
 		multiErr.Add(
 			"userIds",

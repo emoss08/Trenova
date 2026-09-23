@@ -15,7 +15,9 @@ var (
 	custB = pulid.MustNew("cus_")
 )
 
-func candidate(mutate func(*repositories.ConsolidationCandidate)) *repositories.ConsolidationCandidate {
+func candidate(
+	mutate func(*repositories.ConsolidationCandidate),
+) *repositories.ConsolidationCandidate {
 	c := &repositories.ConsolidationCandidate{
 		CustomerID:   custA,
 		CustomerName: "Acme Foods",
@@ -31,9 +33,12 @@ func TestGroupKeyCustomerNeverSpansCustomers(t *testing.T) {
 	t.Parallel()
 
 	a := GroupKeyFor(customer.InvoiceSplitKeyCustomer, candidate(nil))
-	b := GroupKeyFor(customer.InvoiceSplitKeyCustomer, candidate(func(c *repositories.ConsolidationCandidate) {
-		c.CustomerID = custB
-	}))
+	b := GroupKeyFor(
+		customer.InvoiceSplitKeyCustomer,
+		candidate(func(c *repositories.ConsolidationCandidate) {
+			c.CustomerID = custB
+		}),
+	)
 
 	assert.NotEqual(t, a.Key, b.Key)
 	assert.Equal(t, "Acme Foods", a.Label)

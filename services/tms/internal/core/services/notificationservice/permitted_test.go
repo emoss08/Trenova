@@ -98,7 +98,10 @@ func TestNotifyPermitted_TellsEachPermittedUserOnceWithinTheLimit(t *testing.T) 
 	}}
 	repo := &recordingNotificationRepo{}
 
-	sent, err := permittedService(repo, roles).NotifyPermitted(t.Context(), permittedRequest(tenant))
+	sent, err := permittedService(
+		repo,
+		roles,
+	).NotifyPermitted(t.Context(), permittedRequest(tenant))
 	require.NoError(t, err)
 
 	require.NotNil(t, roles.asked)

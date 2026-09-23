@@ -49,9 +49,9 @@ type InboundMessage struct {
 	ProviderMessageID string `json:"providerMessageId" bun:"provider_message_id,type:VARCHAR(255),notnull"`
 	// MessageID, InReplyTo and References are the mail headers a reply has to
 	// carry to land in the same thread rather than starting a new one.
-	MessageID  string   `json:"messageId"  bun:"message_id,type:VARCHAR(500),nullzero"`
-	InReplyTo  string   `json:"inReplyTo"  bun:"in_reply_to,type:VARCHAR(500),nullzero"`
-	References []string `json:"references" bun:"references,type:JSONB,nullzero"`
+	MessageID  string   `json:"messageId"         bun:"message_id,type:VARCHAR(500),nullzero"`
+	InReplyTo  string   `json:"inReplyTo"         bun:"in_reply_to,type:VARCHAR(500),nullzero"`
+	References []string `json:"references"        bun:"references,type:JSONB,nullzero"`
 
 	FromAddress string   `json:"fromAddress" bun:"from_address,type:VARCHAR(255),notnull"`
 	FromName    string   `json:"fromName"    bun:"from_name,type:VARCHAR(255),nullzero"`
@@ -60,10 +60,10 @@ type InboundMessage struct {
 	Subject     string   `json:"subject"     bun:"subject,type:VARCHAR(500),nullzero"`
 	// TextBody is the bounded plain text. HTMLKey points at the whole message
 	// in object storage.
-	TextBody   string  `json:"textBody"   bun:"text_body,type:TEXT,nullzero"`
-	HTMLKey    string  `json:"htmlKey"    bun:"html_key,type:VARCHAR(512),nullzero"`
-	ReceivedAt int64   `json:"receivedAt" bun:"received_at,type:BIGINT,notnull"`
-	SpamScore  float64 `json:"spamScore"  bun:"spam_score,type:NUMERIC(6,3),nullzero"`
+	TextBody   string  `json:"textBody"    bun:"text_body,type:TEXT,nullzero"`
+	HTMLKey    string  `json:"htmlKey"     bun:"html_key,type:VARCHAR(512),nullzero"`
+	ReceivedAt int64   `json:"receivedAt"  bun:"received_at,type:BIGINT,notnull"`
+	SpamScore  float64 `json:"spamScore"   bun:"spam_score,type:NUMERIC(6,3),nullzero"`
 
 	Classification Classification `json:"classification" bun:"classification,type:VARCHAR(30),nullzero"`
 	Confidence     float64        `json:"confidence"     bun:"confidence,type:NUMERIC(4,3),nullzero"`

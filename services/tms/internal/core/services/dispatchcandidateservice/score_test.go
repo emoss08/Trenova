@@ -317,17 +317,23 @@ func TestVerdictFor(t *testing.T) {
 	assert.Equal(
 		t,
 		telematics.FeasibilityVerdictInfeasible,
-		verdictFor(&verdictInput{Eval: blocked, SlackMinutes: 500, HOSKnown: true, HOSExpected: true}),
+		verdictFor(
+			&verdictInput{Eval: blocked, SlackMinutes: 500, HOSKnown: true, HOSExpected: true},
+		),
 	)
 	assert.Equal(
 		t,
 		telematics.FeasibilityVerdictUnknown,
-		verdictFor(&verdictInput{Eval: clean, SlackMinutes: 500, HOSKnown: false, HOSExpected: true}),
+		verdictFor(
+			&verdictInput{Eval: clean, SlackMinutes: 500, HOSKnown: false, HOSExpected: true},
+		),
 	)
 	assert.Equal(
 		t,
 		telematics.FeasibilityVerdictInfeasible,
-		verdictFor(&verdictInput{Eval: clean, SlackMinutes: -30, HOSKnown: true, HOSExpected: true}),
+		verdictFor(
+			&verdictInput{Eval: clean, SlackMinutes: -30, HOSKnown: true, HOSExpected: true},
+		),
 	)
 	assert.Equal(
 		t,
@@ -337,7 +343,9 @@ func TestVerdictFor(t *testing.T) {
 	assert.Equal(
 		t,
 		telematics.FeasibilityVerdictFeasible,
-		verdictFor(&verdictInput{Eval: clean, SlackMinutes: 500, HOSKnown: true, HOSExpected: true}),
+		verdictFor(
+			&verdictInput{Eval: clean, SlackMinutes: 500, HOSKnown: true, HOSExpected: true},
+		),
 	)
 }
 
@@ -349,12 +357,16 @@ func TestVerdictFor_NoTelematicsIsNeverUnknown(t *testing.T) {
 	assert.Equal(
 		t,
 		telematics.FeasibilityVerdictFeasible,
-		verdictFor(&verdictInput{Eval: clean, SlackMinutes: 500, HOSKnown: false, HOSExpected: false}),
+		verdictFor(
+			&verdictInput{Eval: clean, SlackMinutes: 500, HOSKnown: false, HOSExpected: false},
+		),
 	)
 	assert.Equal(
 		t,
 		telematics.FeasibilityVerdictTight,
-		verdictFor(&verdictInput{Eval: clean, SlackMinutes: 45, HOSKnown: false, HOSExpected: false}),
+		verdictFor(
+			&verdictInput{Eval: clean, SlackMinutes: 45, HOSKnown: false, HOSExpected: false},
+		),
 	)
 }
 

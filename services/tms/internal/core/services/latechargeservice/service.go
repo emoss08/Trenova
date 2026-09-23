@@ -72,10 +72,18 @@ func (s *Service) Assess(
 	actor *servicesports.RequestActor,
 ) (*servicesports.LateChargeAssessmentResult, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil {
-		return nil, errortypes.NewValidationError("actor", errortypes.ErrRequired, "Actor is required")
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrRequired,
+			"Actor is required",
+		)
 	}
 	asOf := req.AsOfDate
 	if asOf <= 0 {
@@ -256,7 +264,10 @@ func (s *Service) raiseMemo(
 		plan.result.TotalChargeMinor = 0
 		return nil
 	}
-	plan.result.Lines, plan.result.TotalChargeMinor = linesFromAssessments(inserted, plan.result.Lines)
+	plan.result.Lines, plan.result.TotalChargeMinor = linesFromAssessments(
+		inserted,
+		plan.result.Lines,
+	)
 
 	memo, err := s.invoiceService.CreateMemo(ctx, &servicesports.CreateMemoRequest{
 		ID:          memoID,
@@ -272,14 +283,22 @@ func (s *Service) raiseMemo(
 	}, actor)
 	if err != nil {
 		if _, delErr := s.repo.DeleteByRunKey(ctx, tenantInfo, runKey); delErr != nil {
-			s.l.Error("failed to roll back late charge assessments", zap.String("runKey", runKey), zap.Error(delErr))
+			s.l.Error(
+				"failed to roll back late charge assessments",
+				zap.String("runKey", runKey),
+				zap.Error(delErr),
+			)
 		}
 		return err
 	}
 
 	stampMemoLines(inserted, memo)
 	if err = s.repo.SetDebitMemoLines(ctx, inserted); err != nil {
-		s.l.Warn("failed to stamp late charge memo lines", zap.String("runKey", runKey), zap.Error(err))
+		s.l.Warn(
+			"failed to stamp late charge memo lines",
+			zap.String("runKey", runKey),
+			zap.Error(err),
+		)
 	}
 
 	plan.result.DebitMemoID = memo.ID
@@ -374,7 +393,9 @@ func (s *Service) logAudit(
 		PrincipalID:    auditActor.PrincipalID,
 		OrganizationID: memo.OrganizationID,
 		BusinessUnitID: memo.BusinessUnitID,
-		CurrentState:   jsonutils.MustToJSON(map[string]any{"invoiceId": memo.ID.String(), "assessments": inserted}),
+		CurrentState: jsonutils.MustToJSON(
+			map[string]any{"invoiceId": memo.ID.String(), "assessments": inserted},
+		),
 	}
 	if err := s.auditService.LogAction(
 		params,

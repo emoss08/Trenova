@@ -41,18 +41,22 @@ func benefitPlanFromInput(
 	}
 
 	entity := &driverpay.BenefitPlan{
-		OrganizationID:    tenantInfo.OrgID,
-		BusinessUnitID:    tenantInfo.BuID,
-		Code:              f.code,
-		Name:              f.name,
-		Description:       stringValue(f.description),
-		PlanType:          f.planType,
-		Carrier:           stringValue(f.carrier),
-		PolicyNumber:      stringValue(f.policyNumber),
-		PayCodeID:         payCodeID,
-		PlanYear:          int16(f.planYear),                    //nolint:gosec // a calendar year
-		EmployeeCostMinor: int64(f.employeeCostMinor),           //nolint:gosec // a minor-unit amount
-		EmployerCostMinor: int64(f.employerCostMinor),           //nolint:gosec // a minor-unit amount
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		Code:           f.code,
+		Name:           f.name,
+		Description:    stringValue(f.description),
+		PlanType:       f.planType,
+		Carrier:        stringValue(f.carrier),
+		PolicyNumber:   stringValue(f.policyNumber),
+		PayCodeID:      payCodeID,
+		PlanYear:       int16(f.planYear), //nolint:gosec // a calendar year
+		EmployeeCostMinor: int64(
+			f.employeeCostMinor,
+		), //nolint:gosec // a minor-unit amount
+		EmployerCostMinor: int64(
+			f.employerCostMinor,
+		), //nolint:gosec // a minor-unit amount
 		WaitingPeriodDays: int32(intValue(f.waitingPeriodDays)), //nolint:gosec // bounded 0..365
 	}
 	if f.status != nil {

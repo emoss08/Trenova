@@ -265,7 +265,13 @@ func (s *Service) Scorecard(
 	if err != nil {
 		return nil, err
 	}
-	return worker.BuildSafetyScorecard(workerID, events, actions, recognitions, timeutils.NowUnix()), nil
+	return worker.BuildSafetyScorecard(
+		workerID,
+		events,
+		actions,
+		recognitions,
+		timeutils.NowUnix(),
+	), nil
 }
 
 func eventTenant(entity *worker.WorkerSafetyEvent) pagination.TenantInfo {

@@ -56,7 +56,12 @@ func postStream(
 	// when the caller is done, so neither leaves the connection open.
 	streamCtx, cancel := context.WithCancel(ctx)
 
-	req, err := http.NewRequestWithContext(streamCtx, http.MethodPost, url, bytes.NewReader(encoded))
+	req, err := http.NewRequestWithContext(
+		streamCtx,
+		http.MethodPost,
+		url,
+		bytes.NewReader(encoded),
+	)
 	if err != nil {
 		cancel()
 

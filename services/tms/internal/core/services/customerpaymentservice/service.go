@@ -314,7 +314,11 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 			return txErr
 		}
 		if s.customerLedgerRepo != nil {
-			ledgerEntries := make([]*customerledger.CustomerLedgerEntry, 0, len(created.Applications)*2)
+			ledgerEntries := make(
+				[]*customerledger.CustomerLedgerEntry,
+				0,
+				len(created.Applications)*2,
+			)
 			line := 1
 			for _, app := range created.Applications {
 				if app == nil {

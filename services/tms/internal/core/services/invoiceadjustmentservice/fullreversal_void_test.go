@@ -17,7 +17,9 @@ import (
 	"go.uber.org/zap"
 )
 
-func reversalFixture(t *testing.T) (*Service, *mocks.MockInvoiceRepository, *mocks.MockBillingQueueRepository, *invoiceadjustment.InvoiceAdjustment, *invoice.Invoice) {
+func reversalFixture(
+	t *testing.T,
+) (*Service, *mocks.MockInvoiceRepository, *mocks.MockBillingQueueRepository, *invoiceadjustment.InvoiceAdjustment, *invoice.Invoice) {
 	t.Helper()
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -53,7 +55,11 @@ func TestVoidReversedInvoiceDefaultsToDoNotRebillWithTheAdjustmentReason(t *test
 	t.Parallel()
 
 	svc, invoiceRepo, queueRepo, adjustment, original := reversalFixture(t)
-	actor := testutil.NewSessionActor(pulid.MustNew("usr_"), original.OrganizationID, original.BusinessUnitID)
+	actor := testutil.NewSessionActor(
+		pulid.MustNew("usr_"),
+		original.OrganizationID,
+		original.BusinessUnitID,
+	)
 
 	invoiceRepo.EXPECT().
 		Update(mock.Anything, mock.MatchedBy(func(updated *invoice.Invoice) bool {
@@ -92,7 +98,11 @@ func TestVoidReversedInvoiceHonoursTheRequestedDispositionAndReason(t *testing.T
 	svc, invoiceRepo, queueRepo, adjustment, original := reversalFixture(t)
 	original.VoidDisposition = invoice.VoidDispositionRebill
 	original.VoidReason = "Rebill to the right customer"
-	actor := testutil.NewSessionActor(pulid.MustNew("usr_"), original.OrganizationID, original.BusinessUnitID)
+	actor := testutil.NewSessionActor(
+		pulid.MustNew("usr_"),
+		original.OrganizationID,
+		original.BusinessUnitID,
+	)
 
 	invoiceRepo.EXPECT().
 		Update(mock.Anything, mock.MatchedBy(func(updated *invoice.Invoice) bool {
@@ -114,17 +124,28 @@ func TestVoidReversedInvoiceHonoursTheRequestedDispositionAndReason(t *testing.T
 		Return([]*billingqueue.BillingQueueItem{}, nil).
 		Once()
 
-	require.NoError(t, svc.voidReversedInvoice(t.Context(), adjustment, original, actor, 1_700_000_000))
+	require.NoError(
+		t,
+		svc.voidReversedInvoice(t.Context(), adjustment, original, actor, 1_700_000_000),
+	)
 }
 
 func TestVoidReversedInvoiceIsIdempotentAndGuardsTheTransition(t *testing.T) {
 	t.Parallel()
 
 	svc, _, _, adjustment, original := reversalFixture(t)
-	actor := testutil.NewSessionActor(pulid.MustNew("usr_"), original.OrganizationID, original.BusinessUnitID)
+	actor := testutil.NewSessionActor(
+		pulid.MustNew("usr_"),
+		original.OrganizationID,
+		original.BusinessUnitID,
+	)
 
 	original.Status = invoice.StatusVoided
-	require.NoError(t, svc.voidReversedInvoice(t.Context(), adjustment, original, actor, 1), "already voided is a no-op")
+	require.NoError(
+		t,
+		svc.voidReversedInvoice(t.Context(), adjustment, original, actor, 1),
+		"already voided is a no-op",
+	)
 
 	original.Status = invoice.Status("Archived")
 	err := svc.voidReversedInvoice(t.Context(), adjustment, original, actor, 1)

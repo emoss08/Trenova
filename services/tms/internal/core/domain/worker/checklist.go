@@ -204,7 +204,7 @@ var (
 
 type WorkerChecklistTemplate struct {
 	bun.BaseModel             `bun:"table:worker_checklist_templates,alias:wclt" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                     json:"-"`
+	pagination.CursorValueSet `bun:",embed"                                      json:"-"`
 
 	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
@@ -234,9 +234,12 @@ func (t *WorkerChecklistTemplate) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
 		),
-		validation.Field(&t.Kind,
+		validation.Field(
+			&t.Kind,
 			validation.Required.Error("Kind is required"),
-			domainvalidation.ValidEnum[ChecklistKind]("kind must be Onboarding, Offboarding or Custom"),
+			domainvalidation.ValidEnum[ChecklistKind](
+				"kind must be Onboarding, Offboarding or Custom",
+			),
 		),
 		validation.Field(&t.Trigger,
 			validation.Required.Error("Trigger is required"),
@@ -259,7 +262,11 @@ func (t *WorkerChecklistTemplate) Validate(multiErr *errortypes.MultiError) {
 		)
 	}
 	if t.IsDefault && t.Status != domaintypes.StatusActive {
-		multiErr.Add("isDefault", errortypes.ErrInvalid, "Only an active template can be the default")
+		multiErr.Add(
+			"isDefault",
+			errortypes.ErrInvalid,
+			"Only an active template can be the default",
+		)
 	}
 	if len(t.Items) == 0 {
 		multiErr.Add("items", errortypes.ErrRequired, "Add at least one item")
@@ -439,9 +446,12 @@ func (c *WorkerChecklist) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
 		),
-		validation.Field(&c.Kind,
+		validation.Field(
+			&c.Kind,
 			validation.Required.Error("Kind is required"),
-			domainvalidation.ValidEnum[ChecklistKind]("kind must be Onboarding, Offboarding or Custom"),
+			domainvalidation.ValidEnum[ChecklistKind](
+				"kind must be Onboarding, Offboarding or Custom",
+			),
 		),
 		validation.Field(&c.StartedAt,
 			validation.Required.Error("Start date is required"),
@@ -659,7 +669,10 @@ type ChecklistEvidence struct {
 // AutoSatisfy marks auto-satisfiable pending items Done when their evidence
 // exists and returns the items it changed. PortalAccess reads differently per
 // checklist kind: onboarding wants access granted, offboarding wants it gone.
-func (c *WorkerChecklist) AutoSatisfy(evidence ChecklistEvidence, now int64) []*WorkerChecklistItem {
+func (c *WorkerChecklist) AutoSatisfy(
+	evidence ChecklistEvidence,
+	now int64,
+) []*WorkerChecklistItem {
 	changed := make([]*WorkerChecklistItem, 0, 2)
 	for _, item := range c.Items {
 		if item == nil || item.Status != ChecklistItemPending || !item.Kind.AutoSatisfiable() {

@@ -28,14 +28,37 @@ func TestToAdapterMessages_ReplaysWhatBecameOfEachProposal(t *testing.T) {
 			ID:   sourceID,
 			Role: conversation.RoleAssistant,
 			ToolCalls: []conversation.ToolCallRecord{
-				{ID: "c1", Name: "update_report", Arguments: map[string]any{"definitionId": "rd_1"}},
-				{ID: "c2", Name: "update_report", Arguments: map[string]any{"definitionId": "rd_2"}},
+				{
+					ID:        "c1",
+					Name:      "update_report",
+					Arguments: map[string]any{"definitionId": "rd_1"},
+				},
+				{
+					ID:        "c2",
+					Name:      "update_report",
+					Arguments: map[string]any{"definitionId": "rd_2"},
+				},
 				{ID: "c3", Name: "get_report_run", Arguments: map[string]any{"runId": "rrun_1"}},
 			},
 		},
-		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "update_report", Content: "Recorded a proposal to run \"update_report\". It is awaiting a person's review."},
-		{Role: conversation.RoleTool, ToolCallID: "c2", ToolName: "update_report", Content: "Recorded a proposal to run \"update_report\". It is awaiting a person's review."},
-		{Role: conversation.RoleTool, ToolCallID: "c3", ToolName: "get_report_run", Content: "{\"status\":\"succeeded\"}"},
+		{
+			Role:       conversation.RoleTool,
+			ToolCallID: "c1",
+			ToolName:   "update_report",
+			Content:    "Recorded a proposal to run \"update_report\". It is awaiting a person's review.",
+		},
+		{
+			Role:       conversation.RoleTool,
+			ToolCallID: "c2",
+			ToolName:   "update_report",
+			Content:    "Recorded a proposal to run \"update_report\". It is awaiting a person's review.",
+		},
+		{
+			Role:       conversation.RoleTool,
+			ToolCallID: "c3",
+			ToolName:   "get_report_run",
+			Content:    "{\"status\":\"succeeded\"}",
+		},
 		{Role: conversation.RoleAssistant, Content: "Proposed two updates."},
 	}
 	outcomes := []serviceports.ProposalOutcome{
@@ -59,7 +82,12 @@ func TestToAdapterMessages_ReplaysWhatBecameOfEachProposal(t *testing.T) {
 	assert.Contains(t, messages[2].Content, "FAILED")
 	assert.Contains(t, messages[2].Content, "unknown field")
 	assert.Contains(t, messages[3].Content, "ran successfully")
-	assert.Equal(t, "{\"status\":\"succeeded\"}", messages[4].Content, "a plain tool result is left alone")
+	assert.Equal(
+		t,
+		"{\"status\":\"succeeded\"}",
+		messages[4].Content,
+		"a plain tool result is left alone",
+	)
 }
 
 func TestToAdapterMessages_TellsTheModelAPendingProposalIsStillWaiting(t *testing.T) {
@@ -68,10 +96,21 @@ func TestToAdapterMessages_TellsTheModelAPendingProposalIsStillWaiting(t *testin
 	sourceID := pulid.MustNew("amsg_")
 	history := []conversation.Message{
 		{Role: conversation.RoleUser, Content: "Copy it"},
-		{ID: sourceID, Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "fork_report"}}},
-		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "fork_report", Content: "Recorded a proposal"},
+		{
+			ID:        sourceID,
+			Role:      conversation.RoleAssistant,
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "fork_report"}},
+		},
+		{
+			Role:       conversation.RoleTool,
+			ToolCallID: "c1",
+			ToolName:   "fork_report",
+			Content:    "Recorded a proposal",
+		},
 	}
-	outcomes := []serviceports.ProposalOutcome{{SourceMessageID: sourceID, ToolName: "fork_report", Status: agent.ProposalStatusPending}}
+	outcomes := []serviceports.ProposalOutcome{
+		{SourceMessageID: sourceID, ToolName: "fork_report", Status: agent.ProposalStatusPending},
+	}
 
 	messages := toAdapterMessages(history, outcomes)
 	require.Len(t, messages, 3)
@@ -84,8 +123,17 @@ func TestToAdapterMessages_LeavesResultsAloneWithNoOutcomes(t *testing.T) {
 
 	history := []conversation.Message{
 		{Role: conversation.RoleUser, Content: "Copy it"},
-		{ID: pulid.MustNew("amsg_"), Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "fork_report"}}},
-		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "fork_report", Content: "Recorded a proposal"},
+		{
+			ID:        pulid.MustNew("amsg_"),
+			Role:      conversation.RoleAssistant,
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "fork_report"}},
+		},
+		{
+			Role:       conversation.RoleTool,
+			ToolCallID: "c1",
+			ToolName:   "fork_report",
+			Content:    "Recorded a proposal",
+		},
 	}
 
 	messages := toAdapterMessages(history, nil)
@@ -164,7 +212,11 @@ func TestRun_DoesNotProposeTheSameWriteTwiceInOneTurn(t *testing.T) {
 		{
 			ToolCalls: []serviceports.ToolCall{
 				{ID: "call_1", Name: "update_report", Arguments: args},
-				{ID: "call_2", Name: "update_report", Arguments: map[string]any{"definitionId": "rd_1"}},
+				{
+					ID:        "call_2",
+					Name:      "update_report",
+					Arguments: map[string]any{"definitionId": "rd_1"},
+				},
 			},
 			ModelIdentifier: "test-model",
 		},
@@ -194,7 +246,10 @@ type validatingActionTool struct {
 
 type stubActionToolAlias = agentruntimetest.StubActionTool
 
-func (t *validatingActionTool) Validate(_ context.Context, params serviceports.ToolExecuteParams) error {
+func (t *validatingActionTool) Validate(
+	_ context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	t.checked++
 	t.lastSeen = params
 
@@ -209,7 +264,9 @@ func TestRun_RefusesAProposalItsToolSaysWouldFail(t *testing.T) {
 
 	tool := &validatingActionTool{
 		stubActionToolAlias: actionTool("update_report", agent.TierActWithApproval, nil),
-		invalid:             errors.New("unknown field \"assignment.primaryWorker.firstName\" on entity \"shipment_move\""),
+		invalid: errors.New(
+			"unknown field \"assignment.primaryWorker.firstName\" on entity \"shipment_move\"",
+		),
 	}
 	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
 		toolTurn("update_report", map[string]any{"definitionId": "rd_1"}),
@@ -242,7 +299,10 @@ func TestRun_RefusesAProposalItsToolSaysWouldFail(t *testing.T) {
 	}}
 	rt = newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
-	result, err = rt.Run(t.Context(), &serviceports.RunRequest{Definition: definition, Actor: actor, Input: "update"})
+	result, err = rt.Run(
+		t.Context(),
+		&serviceports.RunRequest{Definition: definition, Actor: actor, Input: "update"},
+	)
 	require.NoError(t, err)
 	assert.Len(t, result.Actions, 1)
 }
@@ -261,6 +321,9 @@ func TestProposalOutcomeText_SaysWhatTheApproverChanged(t *testing.T) {
 	assert.Contains(t, text, `after changing message = "Call dispatch now", priority = "high"`)
 	assert.Contains(t, text, "ran successfully")
 
-	plain := proposalOutcomeText("notify_driver", serviceports.ProposalOutcome{Status: agent.ProposalStatusExecuted})
+	plain := proposalOutcomeText(
+		"notify_driver",
+		serviceports.ProposalOutcome{Status: agent.ProposalStatusExecuted},
+	)
 	assert.NotContains(t, plain, "after changing")
 }

@@ -40,7 +40,11 @@ func TestDefaultCatalogIsIndexed(t *testing.T) {
 		t.Fatal("shipment.totalChargeAmount not found")
 	}
 	if charge.Type != FieldDecimal || charge.Format != FormatMoney {
-		t.Errorf("totalChargeAmount type/format = %s/%s, want decimal/money", charge.Type, charge.Format)
+		t.Errorf(
+			"totalChargeAmount type/format = %s/%s, want decimal/money",
+			charge.Type,
+			charge.Format,
+		)
 	}
 	if !charge.SupportsAggregation(AggSum) {
 		t.Error("totalChargeAmount must support SUM")
@@ -75,7 +79,12 @@ func TestEveryEntityIsInternallyConsistent(t *testing.T) {
 				t.Errorf("entity %q edge %q has source %q", entity.Key, edge.Name, edge.Source)
 			}
 			if _, ok := Default.Entity(edge.Target); !ok {
-				t.Errorf("entity %q edge %q targets unknown entity %q", entity.Key, edge.Name, edge.Target)
+				t.Errorf(
+					"entity %q edge %q targets unknown entity %q",
+					entity.Key,
+					edge.Name,
+					edge.Target,
+				)
 			}
 			if edge.Cardinality == CardinalityM2M && edge.Through == nil {
 				t.Errorf("entity %q m2m edge %q has no through join", entity.Key, edge.Name)

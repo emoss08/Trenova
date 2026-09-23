@@ -349,8 +349,12 @@ func TestNewEncryptionDataConverter_CompressesBeforeEncrypting(t *testing.T) {
 	payload, err := dc.ToPayload(transcript)
 	require.NoError(t, err)
 
-	assert.Equal(t, []byte(MetadataEncodingEncrypted), payload.GetMetadata()[converter.MetadataEncoding],
-		"the outer layer must be encryption")
+	assert.Equal(
+		t,
+		[]byte(MetadataEncodingEncrypted),
+		payload.GetMetadata()[converter.MetadataEncoding],
+		"the outer layer must be encryption",
+	)
 	assert.Less(t, len(payload.GetData()), len(transcript)/10,
 		"a repetitive payload must be compressed before it is encrypted")
 

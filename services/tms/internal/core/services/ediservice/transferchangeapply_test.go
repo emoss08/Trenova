@@ -24,7 +24,10 @@ func TestService_ApplyTransferChange_CancelsLinkedShipment(t *testing.T) {
 	t.Parallel()
 
 	fixture := newTransferChangeApplyFixture(t, edi.TransferChangeDirectionSourceToTarget)
-	change := fixture.pendingChange(edi.TransferChangeTypeShipmentCancel214, shipment.StatusCanceled)
+	change := fixture.pendingChange(
+		edi.TransferChangeTypeShipmentCancel214,
+		shipment.StatusCanceled,
+	)
 	change.Payload["cancellationReason"] = "Customer canceled"
 	fixture.target.Status = shipment.StatusInTransit
 
@@ -62,7 +65,10 @@ func TestService_RejectTransferChange_DoesNotCancelLinkedShipment(t *testing.T) 
 	t.Parallel()
 
 	fixture := newTransferChangeApplyFixture(t, edi.TransferChangeDirectionSourceToTarget)
-	change := fixture.pendingChange(edi.TransferChangeTypeShipmentCancel214, shipment.StatusCanceled)
+	change := fixture.pendingChange(
+		edi.TransferChangeTypeShipmentCancel214,
+		shipment.StatusCanceled,
+	)
 
 	fixture.expectLoadPendingChange(change)
 	fixture.expectLoadLink(2)
@@ -87,7 +93,10 @@ func TestService_ApplyTransferChange_StatusRegressionAppliesLinkedShipmentStatus
 	t.Parallel()
 
 	fixture := newTransferChangeApplyFixture(t, edi.TransferChangeDirectionTargetToSource)
-	change := fixture.pendingChange(edi.TransferChangeTypeShipmentStatus214, shipment.StatusInTransit)
+	change := fixture.pendingChange(
+		edi.TransferChangeTypeShipmentStatus214,
+		shipment.StatusInTransit,
+	)
 	fixture.source.Status = shipment.StatusNew
 	fixture.target.Status = shipment.StatusInTransit
 
@@ -131,7 +140,10 @@ func TestService_ApplyTransferChange_LifecycleAppliesActualsThroughCoordinator(t
 	departure := int64(1_100)
 	fixture.target.Moves[0].Stops[0].ActualArrival = &arrival
 	fixture.target.Moves[0].Stops[0].ActualDeparture = &departure
-	change := fixture.pendingChange(edi.TransferChangeTypeShipmentLifecycle214, shipment.StatusInTransit)
+	change := fixture.pendingChange(
+		edi.TransferChangeTypeShipmentLifecycle214,
+		shipment.StatusInTransit,
+	)
 
 	fixture.expectLoadPendingChange(change)
 	fixture.expectLoadLink(3)
@@ -354,7 +366,9 @@ func (f *transferChangeApplyFixture) canceledTarget() *shipment.Shipment {
 	return &updated
 }
 
-func (f *transferChangeApplyFixture) statusUpdatedSource(status shipment.Status) *shipment.Shipment {
+func (f *transferChangeApplyFixture) statusUpdatedSource(
+	status shipment.Status,
+) *shipment.Shipment {
 	updated := *f.source
 	updated.Status = status
 	return &updated

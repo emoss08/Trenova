@@ -166,7 +166,11 @@ func TestGetHistoryIncludesCompletedConversationMetadata(t *testing.T) {
 	assert.Equal(t, documentID.String(), resp.DocumentID)
 	assert.Equal(t, "resp_123", resp.ConversationID)
 	assert.Equal(t, string(shipmentimportchat.ConversationStatusCompleted), resp.Status)
-	assert.Equal(t, string(shipmentimportchat.ConversationStatusReasonShipmentCreated), resp.StatusReason)
+	assert.Equal(
+		t,
+		string(shipmentimportchat.ConversationStatusReasonShipmentCreated),
+		resp.StatusReason,
+	)
 	assert.Equal(t, 1, resp.TurnCount)
 	require.NotNil(t, resp.LastMessageAt)
 	assert.Equal(t, lastMessageAt, *resp.LastMessageAt)

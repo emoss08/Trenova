@@ -100,7 +100,10 @@ func grouped() []any {
 	providers := ToolProviders()
 	annotated := make([]any, 0, len(providers)+1)
 	for _, provider := range providers {
-		annotated = append(annotated, fx.Annotate(provider, fx.ResultTags(`group:"agent_query_tools"`)))
+		annotated = append(
+			annotated,
+			fx.Annotate(provider, fx.ResultTags(`group:"agent_query_tools"`)),
+		)
 	}
 
 	return annotated
@@ -228,7 +231,9 @@ func provideShopCarriersTool(quotes *ratequoteservice.Service) services.AgentQue
 	return newShopCarriersTool(quotes)
 }
 
-func provideRankMoveCandidatesTool(console services.DispatchConsoleService) services.AgentQueryTool {
+func provideRankMoveCandidatesTool(
+	console services.DispatchConsoleService,
+) services.AgentQueryTool {
 	return newRankMoveCandidatesTool(console)
 }
 
@@ -258,7 +263,9 @@ func provideGetBankReceiptTool(
 	return newGetBankReceiptTool(receipts, items)
 }
 
-func provideListCustomerPaymentsTool(payments services.CustomerPaymentService) services.AgentQueryTool {
+func provideListCustomerPaymentsTool(
+	payments services.CustomerPaymentService,
+) services.AgentQueryTool {
 	return newListCustomerPaymentsTool(payments)
 }
 

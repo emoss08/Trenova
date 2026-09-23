@@ -62,7 +62,7 @@ type PayEvent struct {
 	CreatedAt        int64               `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt        int64               `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
-	Worker     *worker.Worker     `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Worker     *worker.Worker     `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	Shipment   *shipment.Shipment `json:"shipment,omitempty"   bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	Settlement *Settlement        `json:"settlement,omitempty" bun:"rel:belongs-to,join:settlement_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 }

@@ -93,7 +93,9 @@ func (a *Activities) BackfillActivity(
 
 // WatchtowerRetentionActivity removes items resolved more than a month ago, a batch
 // at a time across every tenant.
-func (a *Activities) WatchtowerRetentionActivity(ctx context.Context) (*WatchtowerRetentionResult, error) {
+func (a *Activities) WatchtowerRetentionActivity(
+	ctx context.Context,
+) (*WatchtowerRetentionResult, error) {
 	before := timeutils.NowUnix() - retentionDays*24*60*60
 	result := &WatchtowerRetentionResult{}
 
@@ -102,7 +104,10 @@ func (a *Activities) WatchtowerRetentionActivity(ctx context.Context) (*Watchtow
 
 		deleted, err := a.repo.DeleteResolvedBefore(
 			ctx,
-			repositories.DeleteResolvedWatchtowerItemsRequest{Before: before, Limit: retentionBatch},
+			repositories.DeleteResolvedWatchtowerItemsRequest{
+				Before: before,
+				Limit:  retentionBatch,
+			},
 		)
 		if err != nil {
 			return nil, fmt.Errorf("delete resolved watchtower items: %w", err)

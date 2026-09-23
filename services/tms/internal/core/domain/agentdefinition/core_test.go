@@ -74,7 +74,13 @@ func TestWithoutCoreTools_KeepsOnlyTheSelection(t *testing.T) {
 	assert.Equal(t,
 		[]string{"list_reports", "create_report"},
 		agentdefinition.WithoutCoreTools(
-			[]string{"recall_memory", "list_reports", "remember", "create_report", "raise_exception"},
+			[]string{
+				"recall_memory",
+				"list_reports",
+				"remember",
+				"create_report",
+				"raise_exception",
+			},
 		),
 	)
 }

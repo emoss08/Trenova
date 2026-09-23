@@ -189,9 +189,16 @@ type AgentProposalNotifier interface {
 // tier on the agent when the organization allows it, and a setback takes an
 // earned tier back.
 type AgentTrustService interface {
-	RecordDecision(ctx context.Context, proposal *agent.AgentProposal, decision *agent.AgentDecision) error
+	RecordDecision(
+		ctx context.Context,
+		proposal *agent.AgentProposal,
+		decision *agent.AgentDecision,
+	) error
 	RecordExecutionFailure(ctx context.Context, proposal *agent.AgentProposal) error
-	ListForDefinition(ctx context.Context, req repositories.ListToolTrustRequest) ([]*agent.ToolTrust, error)
+	ListForDefinition(
+		ctx context.Context,
+		req repositories.ListToolTrustRequest,
+	) ([]*agent.ToolTrust, error)
 }
 
 // DecisionOutcome is a recorded decision plus what happened when it ran.
@@ -316,7 +323,12 @@ type AgentBudgetService interface {
 // changed, so a queue or a pane refreshes without polling. Every method is
 // best effort: a lost invalidation costs a refresh, never the write.
 type AgentActivityPublisher interface {
-	ProposalChanged(ctx context.Context, proposal *agent.AgentProposal, actor AuditActor, action string)
+	ProposalChanged(
+		ctx context.Context,
+		proposal *agent.AgentProposal,
+		actor AuditActor,
+		action string,
+	)
 	PlanChanged(ctx context.Context, plan *agent.AgentPlan, actor AuditActor, action string)
 	RunChanged(ctx context.Context, run *agent.AgentRun, actor AuditActor, action string)
 	ArtifactChanged(
@@ -384,7 +396,10 @@ type AgentDecisionQueueService interface {
 	ListPending(ctx context.Context, req ListPendingDecisionsRequest) (*PendingDecisionsPage, error)
 	// Count is the size of the queue, for a badge.
 	Count(ctx context.Context, tenant pagination.TenantInfo) (int, error)
-	Summary(ctx context.Context, tenant pagination.TenantInfo) (*repositories.PendingDecisionSummary, error)
+	Summary(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) (*repositories.PendingDecisionSummary, error)
 	DecideMany(
 		ctx context.Context,
 		req *DecideAgentProposalsRequest,

@@ -177,7 +177,12 @@ func (s *Service) IssueAction(
 	}
 
 	if !wrk.UserID.IsNil() {
-		s.notifyDriver(ctx, req.TenantInfo, req.WorkerID, eventDisciplinary, notification.PriorityHigh,
+		s.notifyDriver(
+			ctx,
+			req.TenantInfo,
+			req.WorkerID,
+			eventDisciplinary,
+			notification.PriorityHigh,
 			documenttemplate.DriverNotificationContext{
 				DisciplineLevel:  created.Level.String(),
 				DisciplineReason: created.Reason,

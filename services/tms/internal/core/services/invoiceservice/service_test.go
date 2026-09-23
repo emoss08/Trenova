@@ -581,11 +581,19 @@ func TestBuildInvoicePDFDataMapsBillToAndRemitSeparately(t *testing.T) {
 	require.Equal(t, "Snapshot Customer", data.BillTo.Name)
 	require.Contains(t, data.BillTo.Lines, "100 Snapshot Ave")
 	require.Contains(t, data.BillTo.Lines, "Suite AP")
-	require.NotContains(t, append([]string{data.BillTo.Name}, data.BillTo.Lines...), "Carrier Organization")
+	require.NotContains(
+		t,
+		append([]string{data.BillTo.Name}, data.BillTo.Lines...),
+		"Carrier Organization",
+	)
 	require.Equal(t, "Carrier Organization", data.RemitTo.Name)
 	require.Contains(t, data.RemitTo.Lines, "500 Remit St")
 	require.Contains(t, data.RemitTo.Lines, "ACH preferred")
-	require.NotContains(t, append([]string{data.RemitTo.Name}, data.RemitTo.Lines...), "Fallback Customer")
+	require.NotContains(
+		t,
+		append([]string{data.RemitTo.Name}, data.RemitTo.Lines...),
+		"Fallback Customer",
+	)
 }
 
 func TestBuildInvoicePDFDataMapsShipmentStopsToShipperAndConsignee(t *testing.T) {
@@ -638,7 +646,10 @@ func TestBuildInvoicePDFDataMapsShipmentStopsToShipperAndConsignee(t *testing.T)
 		},
 	}
 
-	data := buildInvoicePDFData(&invoice.Invoice{CurrencyCode: "USD"}, &invoiceDeliveryProfile{Shipment: shp})
+	data := buildInvoicePDFData(
+		&invoice.Invoice{CurrencyCode: "USD"},
+		&invoiceDeliveryProfile{Shipment: shp},
+	)
 
 	require.Equal(t, "Shipper Plant", data.Shipper.Name)
 	require.Contains(t, data.Shipper.Lines, "100 Pickup Rd")
@@ -1011,7 +1022,11 @@ func TestPlanSendRendersTemplatesAndOrganizationAlias(t *testing.T) {
 	require.Len(t, plan.Parts[0].Attachments, 1)
 	assert.Equal(t, "Invoice #INV-1001 for Acme Logistics from Trenova Freight", plan.Subject)
 	assert.Equal(t, "Invoice INV-1001 for Acme Logistics from Trenova Freight", plan.Body)
-	assert.Equal(t, "Invoice-INV-1001-Acme Logistics-Trenova Freight.pdf", plan.Parts[0].Attachments[0].FileName)
+	assert.Equal(
+		t,
+		"Invoice-INV-1001-Acme Logistics-Trenova Freight.pdf",
+		plan.Parts[0].Attachments[0].FileName,
+	)
 }
 
 func TestGeneratePDFStartsWorkflow(t *testing.T) {
@@ -1242,7 +1257,10 @@ func TestAutoSendInvoiceAfterPDFGenerationRecordsSendFailure(t *testing.T) {
 		Update(mock.Anything, mock.MatchedBy(func(updated *invoice.Invoice) bool {
 			return updated.ID == invoiceID &&
 				updated.SendStatus == invoice.SendStatusFailed &&
-				strings.Contains(updated.LastSendError, "Invoice email delivery is not configured") &&
+				strings.Contains(
+					updated.LastSendError,
+					"Invoice email delivery is not configured",
+				) &&
 				updated.SentByID == userID
 		})).
 		Return(entity, nil).

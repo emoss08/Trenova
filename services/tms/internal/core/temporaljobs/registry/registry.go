@@ -116,7 +116,9 @@ func (m *WorkerManager) Register(registry WorkerRegistry) error {
 	// whether or not Temporal is configured, and before the SDK can panic
 	// over it.
 	if namer, ok := registry.(ActivityNamer); ok {
-		if conflicts := conflictingActivities(m.queueActivities[taskQueue], namer.ActivityNames()); len(conflicts) > 0 {
+		if conflicts := conflictingActivities(m.queueActivities[taskQueue], namer.ActivityNames()); len(
+			conflicts,
+		) > 0 {
 			return fmt.Errorf(
 				"worker %s cannot share task queue %q: %s is already registered by %s",
 				name,

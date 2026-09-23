@@ -103,13 +103,23 @@ func TestStreamChat_SkipsAProviderRestingAfterRepeatedFailures(t *testing.T) {
 
 	_, err := service.CompleteChat(t.Context(), chatRequest(pulid.Nil))
 	require.NoError(t, err)
-	assert.EqualValues(t, breakerThreshold*perTurn, downCalls.Load(), "the resting provider is not asked")
+	assert.EqualValues(
+		t,
+		breakerThreshold*perTurn,
+		downCalls.Load(),
+		"the resting provider is not asked",
+	)
 	assert.EqualValues(t, breakerThreshold+1, upCalls.Load())
 
 	now = now.Add(breakerCooldown)
 	_, err = service.CompleteChat(t.Context(), chatRequest(pulid.Nil))
 	require.NoError(t, err)
-	assert.EqualValues(t, (breakerThreshold+1)*perTurn, downCalls.Load(), "after the cooldown it is tried again")
+	assert.EqualValues(
+		t,
+		(breakerThreshold+1)*perTurn,
+		downCalls.Load(),
+		"after the cooldown it is tried again",
+	)
 }
 
 // When the only provider, or the one the person pinned, is resting, the turn

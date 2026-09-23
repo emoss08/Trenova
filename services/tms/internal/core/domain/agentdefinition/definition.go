@@ -306,17 +306,21 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Output mode is required"),
 			domainvalidation.ValidEnum[OutputMode]("Output mode is invalid"),
 		),
-		validation.Field(&d.DecisionTimeoutSeconds,
-			validation.Min(minDecisionTimeout).Error("Decision timeout must be at least one minute"),
+		validation.Field(
+			&d.DecisionTimeoutSeconds,
+			validation.Min(minDecisionTimeout).
+				Error("Decision timeout must be at least one minute"),
 			validation.Max(maxDecisionTimeout).Error("Decision timeout cannot exceed 30 days"),
 		),
 		validation.Field(&d.RunTimeoutSeconds,
 			validation.Min(minRunTimeoutSeconds).Error("Run timeout must be at least one minute"),
 			validation.Max(maxRunTimeoutSeconds).Error("Run timeout cannot exceed one hour"),
 		),
-		validation.Field(&d.MaxToolCalls,
+		validation.Field(
+			&d.MaxToolCalls,
 			validation.Min(1).Error("An agent needs at least one tool call per run"),
-			validation.Max(maxToolCallsCeiling).Error("An agent cannot make more than 64 tool calls per run"),
+			validation.Max(maxToolCallsCeiling).
+				Error("An agent cannot make more than 64 tool calls per run"),
 		),
 		validation.Field(&d.MaxConcurrentRuns,
 			validation.Min(1).Error("At least one concurrent run is required"),
@@ -382,7 +386,11 @@ func (d *Definition) validateBudget(multiErr *errortypes.MultiError) {
 			continue
 		}
 		if limit < 0 || limit > maxDailyRunLimit {
-			multiErr.Add(field, errortypes.ErrInvalid, "A daily tool limit must be between 0 and 10000")
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalid,
+				"A daily tool limit must be between 0 and 10000",
+			)
 		}
 	}
 }

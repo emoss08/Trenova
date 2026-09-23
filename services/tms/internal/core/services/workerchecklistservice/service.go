@@ -123,7 +123,11 @@ func (s *Service) publish(
 		Action:         string(operation),
 		RecordID:       recordID,
 	}); err != nil {
-		s.l.Warn("failed to publish checklist invalidation", zap.String("resource", resource), zap.Error(err))
+		s.l.Warn(
+			"failed to publish checklist invalidation",
+			zap.String("resource", resource),
+			zap.Error(err),
+		)
 	}
 }
 

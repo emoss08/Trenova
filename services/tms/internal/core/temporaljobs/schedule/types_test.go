@@ -179,15 +179,26 @@ func TestSchedule_Validate_Args(t *testing.T) {
 		sched   *Schedule
 		wantErr bool
 	}{
-		{name: "context and input with one arg", sched: base(contextWorkflowWithInput, argsTestInput{})},
-		{name: "context and input without args", sched: base(contextWorkflowWithInput), wantErr: true},
+		{
+			name:  "context and input with one arg",
+			sched: base(contextWorkflowWithInput, argsTestInput{}),
+		},
+		{
+			name:    "context and input without args",
+			sched:   base(contextWorkflowWithInput),
+			wantErr: true,
+		},
 		{
 			name:    "context and input with extra args",
 			sched:   base(contextWorkflowWithInput, argsTestInput{}, argsTestInput{}),
 			wantErr: true,
 		},
 		{name: "context only without args", sched: base(contextWorkflowWithoutInput)},
-		{name: "context only with args", sched: base(contextWorkflowWithoutInput, 1), wantErr: true},
+		{
+			name:    "context only with args",
+			sched:   base(contextWorkflowWithoutInput, 1),
+			wantErr: true,
+		},
 		{name: "no context without args", sched: base(dummyWorkflow)},
 		{name: "variadic with required arg", sched: base(variadicWorkflow, "x")},
 		{

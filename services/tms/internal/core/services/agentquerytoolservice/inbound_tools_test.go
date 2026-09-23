@@ -142,10 +142,13 @@ func TestListInboundMessages_TranslatesTheFilters(t *testing.T) {
 		mailbox        pulid.ID
 	}{
 		{
-			name:     "waiting means both states a person has to clear",
-			params:   map[string]any{"status": "waiting"},
-			statuses: []inboundmessage.Status{inboundmessage.StatusInReview, inboundmessage.StatusQuarantined},
-			limit:    inboundListDefaultLimit,
+			name:   "waiting means both states a person has to clear",
+			params: map[string]any{"status": "waiting"},
+			statuses: []inboundmessage.Status{
+				inboundmessage.StatusInReview,
+				inboundmessage.StatusQuarantined,
+			},
+			limit: inboundListDefaultLimit,
 		},
 		{
 			name:     "a single status reads case-insensitively",
@@ -208,7 +211,9 @@ func TestListInboundMessages_RowsCarryAPreviewNotTheBody(t *testing.T) {
 		TextBody:    strings.Repeat("word ", 400),
 	}}}
 
-	result, err := newListInboundMessagesTool(messages).Query(t.Context(), testParams(map[string]any{}))
+	result, err := newListInboundMessagesTool(
+		messages,
+	).Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
 	outcome := result.(searchOutcome)

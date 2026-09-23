@@ -89,7 +89,11 @@ func (t *PerformanceReviewTemplate) Validate(multiErr *errortypes.MultiError) {
 		multiErr.Add("items", errortypes.ErrRequired, "Add at least one rating item")
 	}
 	if t.IsDefault && t.Status != domaintypes.StatusActive {
-		multiErr.Add("isDefault", errortypes.ErrInvalid, "Only an active template can be the default")
+		multiErr.Add(
+			"isDefault",
+			errortypes.ErrInvalid,
+			"Only an active template can be the default",
+		)
 	}
 	seen := make(map[string]struct{}, len(t.Items))
 	for i, item := range t.Items {
@@ -272,9 +276,12 @@ func (r *PerformanceReview) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(r,
 		validation.Field(&r.WorkerID, validation.Required.Error("Worker is required")),
 		validation.Field(&r.TemplateID, validation.Required.Error("Template is required")),
-		validation.Field(&r.Status,
+		validation.Field(
+			&r.Status,
 			validation.Required.Error("Status is required"),
-			domainvalidation.ValidEnum[ReviewStatus]("status must be Draft, Submitted, Acknowledged or Closed"),
+			domainvalidation.ValidEnum[ReviewStatus](
+				"status must be Draft, Submitted, Acknowledged or Closed",
+			),
 		),
 		validation.Field(&r.Title,
 			validation.Required.Error("Give the review a title"),
@@ -289,11 +296,16 @@ func (r *PerformanceReview) Validate(multiErr *errortypes.MultiError) {
 	}
 	for i, rating := range r.Ratings {
 		prefix := "ratings[" + strconv.Itoa(i) + "]."
-		if rating.Score != nil && (*rating.Score < reviewRatingMin || *rating.Score > reviewRatingMax) {
+		if rating.Score != nil &&
+			(*rating.Score < reviewRatingMin || *rating.Score > reviewRatingMax) {
 			multiErr.Add(prefix+"score", errortypes.ErrInvalid, "Scores run from 1 to 5")
 		}
 		if len(rating.Comment) > 2000 {
-			multiErr.Add(prefix+"comment", errortypes.ErrInvalid, "Comment cannot exceed 2000 characters")
+			multiErr.Add(
+				prefix+"comment",
+				errortypes.ErrInvalid,
+				"Comment cannot exceed 2000 characters",
+			)
 		}
 	}
 	for i, goal := range r.Goals {
@@ -302,7 +314,11 @@ func (r *PerformanceReview) Validate(multiErr *errortypes.MultiError) {
 			multiErr.Add(prefix+"title", errortypes.ErrRequired, "Goal needs a title")
 		}
 		if goal.Status != "" && !goal.Status.IsValid() {
-			multiErr.Add(prefix+"status", errortypes.ErrInvalid, "Goal status must be Open, Done or Dropped")
+			multiErr.Add(
+				prefix+"status",
+				errortypes.ErrInvalid,
+				"Goal status must be Open, Done or Dropped",
+			)
 		}
 	}
 }
@@ -336,7 +352,10 @@ func RatingsFromTemplate(template *PerformanceReviewTemplate) []ReviewRating {
 	}
 	ratings := make([]ReviewRating, 0, len(template.Items))
 	for _, item := range template.Items {
-		ratings = append(ratings, ReviewRating{Key: item.Key, Label: item.Label, Weight: item.Weight})
+		ratings = append(
+			ratings,
+			ReviewRating{Key: item.Key, Label: item.Label, Weight: item.Weight},
+		)
 	}
 	return ratings
 }

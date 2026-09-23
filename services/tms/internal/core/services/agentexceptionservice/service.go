@@ -128,7 +128,12 @@ func (s *Service) Resolve(
 
 	s.logAction(actor, permission.OpUpdate, updated, nil, "Agent exception resolved")
 	if s.watchtower != nil && updated.ResolutionState != agent.ResolutionStateOpen {
-		s.watchtower.Resolve(ctx, req.TenantInfo, watchtower.SourceAgentException, updated.ID.String())
+		s.watchtower.Resolve(
+			ctx,
+			req.TenantInfo,
+			watchtower.SourceAgentException,
+			updated.ID.String(),
+		)
 	}
 
 	return updated, nil

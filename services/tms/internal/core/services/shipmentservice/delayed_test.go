@@ -150,10 +150,14 @@ func TestDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *testing.T)
 	t.Parallel()
 
 	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, delayThresholdMinutes(nil))
-	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, delayThresholdMinutes(&tenant.ShipmentControl{
-		AutoDelayShipments:          false,
-		AutoDelayShipmentsThreshold: new(int16(15)),
-	}))
+	assert.Equal(
+		t,
+		shipmentstate.DisabledDelayThresholdMinutes,
+		delayThresholdMinutes(&tenant.ShipmentControl{
+			AutoDelayShipments:          false,
+			AutoDelayShipmentsThreshold: new(int16(15)),
+		}),
+	)
 	assert.Equal(t, int16(15), delayThresholdMinutes(&tenant.ShipmentControl{
 		AutoDelayShipments:          true,
 		AutoDelayShipmentsThreshold: new(int16(15)),

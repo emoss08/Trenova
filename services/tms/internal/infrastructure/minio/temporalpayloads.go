@@ -64,7 +64,10 @@ var _ converter.StorageDriver = (*TemporalPayloadStore)(nil)
 func NewTemporalPayloadStore(client storage.Client) (*TemporalPayloadStore, error) {
 	c, ok := client.(*Client)
 	if !ok {
-		return nil, fmt.Errorf("temporal payload store needs the object storage client, got %T", client)
+		return nil, fmt.Errorf(
+			"temporal payload store needs the object storage client, got %T",
+			client,
+		)
 	}
 
 	return &TemporalPayloadStore{client: c, l: c.l.Named("temporal-payloads")}, nil
@@ -180,7 +183,8 @@ func (s *TemporalPayloadStore) ensureRetention(ctx context.Context) {
 	if err != nil {
 		var resp minio.ErrorResponse
 		if !errors.As(err, &resp) || resp.Code != "NoSuchLifecycleConfiguration" {
-			s.l.Warn("could not read the bucket lifecycle; offloaded temporal payloads will not expire",
+			s.l.Warn(
+				"could not read the bucket lifecycle; offloaded temporal payloads will not expire",
 				zap.String("bucket", s.client.bucket),
 				zap.Error(err),
 			)

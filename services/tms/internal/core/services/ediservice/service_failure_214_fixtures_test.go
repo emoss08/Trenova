@@ -146,7 +146,9 @@ type serviceFailure214FixtureParams struct {
 	WantDiagnosticPaths []string
 }
 
-func serviceFailure214Fixture(params serviceFailure214FixtureParams) serviceFailure214CertificationFixture {
+func serviceFailure214Fixture(
+	params serviceFailure214FixtureParams,
+) serviceFailure214CertificationFixture {
 	status := params.Status
 	applyServiceFailure214FixtureDefaults(&status)
 	return serviceFailure214CertificationFixture{

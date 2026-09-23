@@ -827,7 +827,12 @@ func (r *Resolver) resolveOrganizationSelectOptions(
 			return nil, err
 		}
 
-		items := orderedSelectOptionItems(req.ids, entities, organizationID, organizationSelectOptionItem)
+		items := orderedSelectOptionItems(
+			req.ids,
+			entities,
+			organizationID,
+			organizationSelectOptionItem,
+		)
 		return selectOptionConnection(items, len(items), 0)
 	}
 
@@ -1360,7 +1365,12 @@ func (r *Resolver) resolveEDIDocumentTypeSelectOptions(
 		if err != nil {
 			return nil, err
 		}
-		items := orderedSelectOptionItems(req.ids, result.Items, func(e *edi.EDIDocumentType) pulid.ID { return e.ID }, ediDocumentTypeSelectOptionItem)
+		items := orderedSelectOptionItems(
+			req.ids,
+			result.Items,
+			func(e *edi.EDIDocumentType) pulid.ID { return e.ID },
+			ediDocumentTypeSelectOptionItem,
+		)
 		return selectOptionConnection(items, len(items), 0)
 	}
 
@@ -1530,8 +1540,12 @@ func (r *Resolver) resolveEDIPartnerDocumentProfileSelectOptions(
 		&repositories.EDIPartnerDocumentProfileSelectOptionsRequest{
 			SelectQueryRequest: req.selectQuery,
 			PartnerID:          selectOptionIDFilter(req.filters, "partnerId"),
-			TransactionSet:     edi.TransactionSet(selectOptionStringFilter(req.filters, "transactionSet")),
-			Direction:          edi.DocumentDirection(selectOptionStringFilter(req.filters, "direction")),
+			TransactionSet: edi.TransactionSet(
+				selectOptionStringFilter(req.filters, "transactionSet"),
+			),
+			Direction: edi.DocumentDirection(
+				selectOptionStringFilter(req.filters, "direction"),
+			),
 		},
 	)
 	if err != nil {
@@ -1572,8 +1586,12 @@ func (r *Resolver) resolveEDITemplateSelectOptions(
 		ctx,
 		&repositories.EDITemplateSelectOptionsRequest{
 			SelectQueryRequest: req.selectQuery,
-			TransactionSet:     edi.TransactionSet(selectOptionStringFilter(req.filters, "transactionSet")),
-			Direction:          edi.DocumentDirection(selectOptionStringFilter(req.filters, "direction")),
+			TransactionSet: edi.TransactionSet(
+				selectOptionStringFilter(req.filters, "transactionSet"),
+			),
+			Direction: edi.DocumentDirection(
+				selectOptionStringFilter(req.filters, "direction"),
+			),
 		},
 	)
 	if err != nil {
@@ -2219,7 +2237,9 @@ func serviceTypeSelectOption(entity *servicetype.ServiceType) *gqlmodel.SelectOp
 	}
 }
 
-func locationCategorySelectOptionItem(entity *locationcategory.LocationCategory) selectOptionConnectionItem {
+func locationCategorySelectOptionItem(
+	entity *locationcategory.LocationCategory,
+) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		locationCategorySelectOption(entity),
 		entity.CreatedAt,
@@ -2227,7 +2247,9 @@ func locationCategorySelectOptionItem(entity *locationcategory.LocationCategory)
 	)
 }
 
-func locationCategorySelectOption(entity *locationcategory.LocationCategory) *gqlmodel.SelectOption {
+func locationCategorySelectOption(
+	entity *locationcategory.LocationCategory,
+) *gqlmodel.SelectOption {
 	return &gqlmodel.SelectOption{
 		ID:          entity.ID.String(),
 		Label:       entity.Name,
@@ -2238,7 +2260,9 @@ func locationCategorySelectOption(entity *locationcategory.LocationCategory) *gq
 	}
 }
 
-func distanceProfileSelectOptionItem(entity *distanceprofile.DistanceProfile) selectOptionConnectionItem {
+func distanceProfileSelectOptionItem(
+	entity *distanceprofile.DistanceProfile,
+) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		distanceProfileSelectOption(entity),
 		entity.CreatedAt,
@@ -2370,7 +2394,9 @@ func rateAgreementSelectOption(entity *rateagreement.RateAgreement) *gqlmodel.Se
 	}
 }
 
-func accessorialChargeSelectOptionItem(entity *accessorialcharge.AccessorialCharge) selectOptionConnectionItem {
+func accessorialChargeSelectOptionItem(
+	entity *accessorialcharge.AccessorialCharge,
+) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		accessorialChargeSelectOption(entity),
 		entity.CreatedAt,
@@ -2378,7 +2404,9 @@ func accessorialChargeSelectOptionItem(entity *accessorialcharge.AccessorialChar
 	)
 }
 
-func accessorialChargeSelectOption(entity *accessorialcharge.AccessorialCharge) *gqlmodel.SelectOption {
+func accessorialChargeSelectOption(
+	entity *accessorialcharge.AccessorialCharge,
+) *gqlmodel.SelectOption {
 	return &gqlmodel.SelectOption{
 		ID:          entity.ID.String(),
 		Label:       entity.Code,
@@ -2468,7 +2496,9 @@ func detentionPolicySelectOption(entity *detention.DetentionPolicy) *gqlmodel.Se
 	}
 }
 
-func formulaTemplateSelectOptionItem(entity *formulatemplate.FormulaTemplate) selectOptionConnectionItem {
+func formulaTemplateSelectOptionItem(
+	entity *formulatemplate.FormulaTemplate,
+) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		formulaTemplateSelectOption(entity),
 		entity.CreatedAt,
@@ -2484,7 +2514,9 @@ func formulaTemplateSelectOption(entity *formulatemplate.FormulaTemplate) *gqlmo
 	}
 }
 
-func hazardousMaterialSelectOptionItem(entity *hazardousmaterial.HazardousMaterial) selectOptionConnectionItem {
+func hazardousMaterialSelectOptionItem(
+	entity *hazardousmaterial.HazardousMaterial,
+) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		hazardousMaterialSelectOption(entity),
 		entity.CreatedAt,
@@ -2492,7 +2524,9 @@ func hazardousMaterialSelectOptionItem(entity *hazardousmaterial.HazardousMateri
 	)
 }
 
-func hazardousMaterialSelectOption(entity *hazardousmaterial.HazardousMaterial) *gqlmodel.SelectOption {
+func hazardousMaterialSelectOption(
+	entity *hazardousmaterial.HazardousMaterial,
+) *gqlmodel.SelectOption {
 	return &gqlmodel.SelectOption{
 		ID:          entity.ID.String(),
 		Label:       entity.Name,
@@ -2503,7 +2537,9 @@ func hazardousMaterialSelectOption(entity *hazardousmaterial.HazardousMaterial) 
 	}
 }
 
-func serviceFailureReasonCodeSelectOptionItem(entity *servicefailure.ReasonCode) selectOptionConnectionItem {
+func serviceFailureReasonCodeSelectOptionItem(
+	entity *servicefailure.ReasonCode,
+) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		serviceFailureReasonCodeSelectOption(entity),
 		entity.CreatedAt,
@@ -2511,7 +2547,9 @@ func serviceFailureReasonCodeSelectOptionItem(entity *servicefailure.ReasonCode)
 	)
 }
 
-func serviceFailureReasonCodeSelectOption(entity *servicefailure.ReasonCode) *gqlmodel.SelectOption {
+func serviceFailureReasonCodeSelectOption(
+	entity *servicefailure.ReasonCode,
+) *gqlmodel.SelectOption {
 	return &gqlmodel.SelectOption{
 		ID:          entity.ID.String(),
 		Label:       entity.Code,
@@ -2523,7 +2561,9 @@ func serviceFailureReasonCodeSelectOption(entity *servicefailure.ReasonCode) *gq
 	}
 }
 
-func ediCommunicationProfileSelectOptionItem(entity *edi.EDICommunicationProfile) selectOptionConnectionItem {
+func ediCommunicationProfileSelectOptionItem(
+	entity *edi.EDICommunicationProfile,
+) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		ediCommunicationProfileSelectOption(entity),
 		entity.CreatedAt,
@@ -2531,7 +2571,9 @@ func ediCommunicationProfileSelectOptionItem(entity *edi.EDICommunicationProfile
 	)
 }
 
-func ediCommunicationProfileSelectOption(entity *edi.EDICommunicationProfile) *gqlmodel.SelectOption {
+func ediCommunicationProfileSelectOption(
+	entity *edi.EDICommunicationProfile,
+) *gqlmodel.SelectOption {
 	return &gqlmodel.SelectOption{
 		ID:          entity.ID.String(),
 		Label:       entity.Name,
@@ -2623,7 +2665,9 @@ func ediPartnerSelectOption(entity *edi.EDIPartner) *gqlmodel.SelectOption {
 	}
 }
 
-func ediPartnerDocumentProfileSelectOptionItem(entity *edi.EDIPartnerDocumentProfile) selectOptionConnectionItem {
+func ediPartnerDocumentProfileSelectOptionItem(
+	entity *edi.EDIPartnerDocumentProfile,
+) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		ediPartnerDocumentProfileSelectOption(entity),
 		entity.CreatedAt,
@@ -2631,7 +2675,9 @@ func ediPartnerDocumentProfileSelectOptionItem(entity *edi.EDIPartnerDocumentPro
 	)
 }
 
-func ediPartnerDocumentProfileSelectOption(entity *edi.EDIPartnerDocumentProfile) *gqlmodel.SelectOption {
+func ediPartnerDocumentProfileSelectOption(
+	entity *edi.EDIPartnerDocumentProfile,
+) *gqlmodel.SelectOption {
 	label := entity.Name
 	if entity.Partner != nil {
 		label = entity.Partner.Code + " - " + entity.Name

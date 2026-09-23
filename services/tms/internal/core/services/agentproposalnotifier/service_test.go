@@ -47,7 +47,10 @@ func (f *fakeNotifications) Create(
 
 type fakeMailer struct{ sent []*services.SendEmailRequest }
 
-func (f *fakeMailer) Send(_ context.Context, req *services.SendEmailRequest) (*email.Message, error) {
+func (f *fakeMailer) Send(
+	_ context.Context,
+	req *services.SendEmailRequest,
+) (*email.Message, error) {
 	f.sent = append(f.sent, req)
 
 	return &email.Message{}, nil
@@ -98,7 +101,10 @@ func (f *fakeProposals) MarkReminded(
 
 type fakeRuns struct{ runs map[pulid.ID]*agent.AgentRun }
 
-func (f fakeRuns) GetByID(_ context.Context, req repositories.GetAgentRunByIDRequest) (*agent.AgentRun, error) {
+func (f fakeRuns) GetByID(
+	_ context.Context,
+	req repositories.GetAgentRunByIDRequest,
+) (*agent.AgentRun, error) {
 	return f.runs[req.ID], nil
 }
 
@@ -142,7 +148,12 @@ func newHarness(shadow bool) *harness {
 
 	h := &harness{
 		roles: &fakeRoles{users: []repositories.PermittedUser{
-			{UserID: pulid.MustNew("usr_"), Name: "Dana Ortiz", EmailAddress: "dana@example.com", Locale: "en"},
+			{
+				UserID:       pulid.MustNew("usr_"),
+				Name:         "Dana Ortiz",
+				EmailAddress: "dana@example.com",
+				Locale:       "en",
+			},
 			{UserID: pulid.MustNew("usr_"), Name: "Lee Park", EmailAddress: "", Locale: "es"},
 		}},
 		notifications: &fakeNotifications{},
@@ -168,7 +179,11 @@ func newHarness(shadow bool) *harness {
 	return h
 }
 
-func (h *harness) proposal(tool string, status agent.ProposalStatus, createdAt int64) *agent.AgentProposal {
+func (h *harness) proposal(
+	tool string,
+	status agent.ProposalStatus,
+	createdAt int64,
+) *agent.AgentProposal {
 	return &agent.AgentProposal{
 		ID:             pulid.MustNew("ap_"),
 		OrganizationID: h.run.OrganizationID,
@@ -205,7 +220,11 @@ func TestNotifyPending_TellsEveryDeciderOnce(t *testing.T) {
 	assert.Equal(t, notification.ChannelUser, first.Channel)
 	assert.Equal(t, h.roles.users[0].UserID, *first.TargetUserID)
 	assert.Equal(t, "Dispatch coverage has 2 changes waiting for a decision", first.Title)
-	assert.Equal(t, "It proposed assign move and add shipment comment. Nothing runs until someone decides.", first.Message)
+	assert.Equal(
+		t,
+		"It proposed assign move and add shipment comment. Nothing runs until someone decides.",
+		first.Message,
+	)
 	assert.Equal(t, 2, first.Data["count"], "the executed proposal is not waiting on anyone")
 
 	link, ok := first.Data["link"].(string)
@@ -229,7 +248,9 @@ func TestNotifyPending_SkipsChatRunsAndShadow(t *testing.T) {
 	require.NoError(t, h.svc.NotifyPending(t.Context(), services.PendingProposalsNotice{
 		Definition: h.definition,
 		Run:        &chat,
-		Proposals:  []*agent.AgentProposal{h.proposal("assign_move", agent.ProposalStatusPending, 1)},
+		Proposals: []*agent.AgentProposal{
+			h.proposal("assign_move", agent.ProposalStatusPending, 1),
+		},
 	}))
 	assert.Empty(t, h.notifications.created, "the person who asked is looking at the answer")
 
@@ -237,7 +258,9 @@ func TestNotifyPending_SkipsChatRunsAndShadow(t *testing.T) {
 	require.NoError(t, shadowed.svc.NotifyPending(t.Context(), services.PendingProposalsNotice{
 		Definition: shadowed.definition,
 		Run:        shadowed.run,
-		Proposals:  []*agent.AgentProposal{shadowed.proposal("assign_move", agent.ProposalStatusPending, 1)},
+		Proposals: []*agent.AgentProposal{
+			shadowed.proposal("assign_move", agent.ProposalStatusPending, 1),
+		},
 	}))
 	assert.Empty(t, shadowed.notifications.created, "hidden proposals are nothing to decide")
 }
@@ -265,13 +288,20 @@ func TestRemindPending_NotifiesAtHighPriorityAndEmailsThoseWithAnAddress(t *test
 	require.Len(t, h.notifications.created, 2)
 	assert.Equal(t, EventProposalsReminder, h.notifications.created[0].EventType)
 	assert.Equal(t, notification.PriorityHigh, h.notifications.created[0].Priority)
-	assert.Equal(t, "Dispatch coverage still has 2 changes waiting after 6 hours", h.notifications.created[0].Title)
+	assert.Equal(
+		t,
+		"Dispatch coverage still has 2 changes waiting after 6 hours",
+		h.notifications.created[0].Title,
+	)
 
 	require.Len(t, h.mailer.sent, 1, "only the decider with an address is emailed")
 	assert.Equal(t, []string{"dana@example.com"}, h.mailer.sent[0].To)
 	assert.Equal(t, email.PurposeNotifications, h.mailer.sent[0].Purpose)
-	assert.Equal(t, "agent-proposal-reminder-"+h.run.ID.String()+"-"+h.roles.users[0].UserID.String(),
-		h.mailer.sent[0].IdempotencyKey)
+	assert.Equal(
+		t,
+		"agent-proposal-reminder-"+h.run.ID.String()+"-"+h.roles.users[0].UserID.String(),
+		h.mailer.sent[0].IdempotencyKey,
+	)
 
 	require.Len(t, h.renderer.requests, 1)
 	assert.Equal(t, "agent.proposal_reminder.email", string(h.renderer.requests[0].Kind))
@@ -282,7 +312,9 @@ func TestRemindPending_MarksShadowedProposalsWithoutTellingAnyone(t *testing.T) 
 
 	h := newHarness(true)
 	now := int64(1_700_100_000)
-	h.proposals.pending = []*agent.AgentProposal{h.proposal("assign_move", agent.ProposalStatusPending, now-9*3600)}
+	h.proposals.pending = []*agent.AgentProposal{
+		h.proposal("assign_move", agent.ProposalStatusPending, now-9*3600),
+	}
 
 	reminded, err := h.svc.RemindPending(t.Context(), services.RemindPendingProposalsRequest{
 		Now: now, OlderThan: 4 * time.Hour, Limit: 100,
@@ -307,7 +339,11 @@ func TestDescribeTools(t *testing.T) {
 	}
 
 	assert.Equal(t, "assign move", describeTools(mk("assign_move")))
-	assert.Equal(t, "assign move and notify driver", describeTools(mk("assign_move", "notify_driver", "assign_move")))
+	assert.Equal(
+		t,
+		"assign move and notify driver",
+		describeTools(mk("assign_move", "notify_driver", "assign_move")),
+	)
 	assert.Equal(t, "a, b, c and 2 more", describeTools(mk("a", "b", "c", "d", "e")))
 	assert.Equal(t, "a change", countChanges(1))
 	assert.Equal(t, "3 changes", countChanges(3))

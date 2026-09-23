@@ -96,7 +96,10 @@ func (a *Activities) walkTraining(
 		}
 		for _, record := range page {
 			state.result.RecordsChecked++
-			state.touchedWorkers[record.WorkerID] = pagination.TenantInfo{OrgID: record.OrganizationID, BuID: record.BusinessUnitID}
+			state.touchedWorkers[record.WorkerID] = pagination.TenantInfo{
+				OrgID: record.OrganizationID,
+				BuID:  record.BusinessUnitID,
+			}
 			if err = handle(ctx, state, record); err != nil {
 				state.result.Failed++
 				a.logger.Error("training sweep failed",
@@ -173,7 +176,13 @@ func (a *Activities) sweepExpiringTraining(
 			if _, err := a.training.AssignRequired(ctx, tenantInfo, record.WorkerID, record.AssignedByID); err != nil {
 				return err
 			}
-			sent, alertErr := a.alertTraining(ctx, tenantInfo, record, daysLeft, eventTrainingExpired)
+			sent, alertErr := a.alertTraining(
+				ctx,
+				tenantInfo,
+				record,
+				daysLeft,
+				eventTrainingExpired,
+			)
 			if alertErr != nil {
 				return alertErr
 			}
@@ -291,15 +300,18 @@ func (a *Activities) alertTraining(
 	correlationID := correlation
 	name := record.Worker.FirstName + " " + record.Worker.LastName
 	entity := &notification.Notification{
-		OrganizationID:  tenantInfo.OrgID,
-		BusinessUnitID:  &buID,
-		EventType:       eventType,
-		Channel:         notification.ChannelGlobal,
-		Priority:        notification.PriorityHigh,
-		Data:            map[string]any{"link": trainingLink, "workerId": record.WorkerID.String()},
-		RelatedEntities: map[string]any{"workerId": record.WorkerID.String(), "trainingRecordId": record.ID.String()},
-		CorrelationID:   &correlationID,
-		Source:          "compliance_sweep",
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: &buID,
+		EventType:      eventType,
+		Channel:        notification.ChannelGlobal,
+		Priority:       notification.PriorityHigh,
+		Data:           map[string]any{"link": trainingLink, "workerId": record.WorkerID.String()},
+		RelatedEntities: map[string]any{
+			"workerId":         record.WorkerID.String(),
+			"trainingRecordId": record.ID.String(),
+		},
+		CorrelationID: &correlationID,
+		Source:        "compliance_sweep",
 	}
 	if eventType == eventTrainingExpired {
 		entity.Title = "Driver training lapsed"

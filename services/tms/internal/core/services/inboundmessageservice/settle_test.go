@@ -13,7 +13,10 @@ func mailboxOn(policy inboundmessage.ReviewPolicy, bar float64) *inboundmessage.
 	return &inboundmessage.Mailbox{ReviewPolicy: policy, MinConfidence: bar}
 }
 
-func read(class inboundmessage.Classification, confidence float64) inboundmessageservice.Classification {
+func read(
+	class inboundmessage.Classification,
+	confidence float64,
+) inboundmessageservice.Classification {
 	return inboundmessageservice.Classification{
 		Class:      class,
 		Confidence: confidence,

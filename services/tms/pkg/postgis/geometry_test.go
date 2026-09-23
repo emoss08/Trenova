@@ -13,7 +13,9 @@ import (
 func TestGeometryScanPolygon(t *testing.T) {
 	t.Parallel()
 
-	polygon := orb.Polygon{{{-97.0, 32.0}, {-96.0, 32.0}, {-96.0, 33.0}, {-97.0, 33.0}, {-97.0, 32.0}}}
+	polygon := orb.Polygon{
+		{{-97.0, 32.0}, {-96.0, 32.0}, {-96.0, 33.0}, {-97.0, 33.0}, {-97.0, 32.0}},
+	}
 	data, err := ewkb.Marshal(polygon, 4326)
 	require.NoError(t, err)
 
@@ -40,7 +42,9 @@ func TestGeometryGeoJSON(t *testing.T) {
 	t.Parallel()
 
 	geom := &Geometry{
-		Geometry: orb.Polygon{{{-97.0, 32.0}, {-96.0, 32.0}, {-96.0, 33.0}, {-97.0, 33.0}, {-97.0, 32.0}}},
+		Geometry: orb.Polygon{
+			{{-97.0, 32.0}, {-96.0, 32.0}, {-96.0, 33.0}, {-97.0, 33.0}, {-97.0, 32.0}},
+		},
 	}
 
 	result, err := geom.GeoJSON()

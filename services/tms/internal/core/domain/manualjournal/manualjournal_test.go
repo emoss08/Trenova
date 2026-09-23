@@ -64,7 +64,11 @@ func TestRequestValidateCollectsErrors(t *testing.T) {
 
 	require.True(t, multiErr.HasErrors())
 	assert.Contains(t, multiErr.Error(), "cannot be blank")
-	assert.Contains(t, multiErr.Error(), "Exactly one of debit or credit amount must be greater than zero")
+	assert.Contains(
+		t,
+		multiErr.Error(),
+		"Exactly one of debit or credit amount must be greater than zero",
+	)
 }
 
 func TestLineValidateAcceptsSingleSidedAmount(t *testing.T) {

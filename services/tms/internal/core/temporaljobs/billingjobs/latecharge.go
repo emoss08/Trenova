@@ -102,7 +102,9 @@ func LateChargeAssessmentWorkflow(ctx workflow.Context) (*LateChargeAssessmentRe
 	return result, nil
 }
 
-func (a *Activities) ListLateChargeTenantsActivity(ctx context.Context) ([]pagination.TenantInfo, error) {
+func (a *Activities) ListLateChargeTenantsActivity(
+	ctx context.Context,
+) ([]pagination.TenantInfo, error) {
 	if a.lateChargeRepo == nil {
 		return []pagination.TenantInfo{}, nil
 	}

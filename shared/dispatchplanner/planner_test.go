@@ -245,13 +245,21 @@ func TestSolve_HandlesDegenerateInput(t *testing.T) {
 		wantUnassigned []int
 	}{
 		{
-			name:           "no tasks",
-			params:         dispatchplanner.SolveParams{Tasks: 0, Resources: 3, Oracle: &staticOracle{}},
+			name: "no tasks",
+			params: dispatchplanner.SolveParams{
+				Tasks:     0,
+				Resources: 3,
+				Oracle:    &staticOracle{},
+			},
 			wantUnassigned: []int{},
 		},
 		{
-			name:           "no resources",
-			params:         dispatchplanner.SolveParams{Tasks: 2, Resources: 0, Oracle: &staticOracle{}},
+			name: "no resources",
+			params: dispatchplanner.SolveParams{
+				Tasks:     2,
+				Resources: 0,
+				Oracle:    &staticOracle{},
+			},
 			wantUnassigned: []int{0, 1},
 		},
 		{

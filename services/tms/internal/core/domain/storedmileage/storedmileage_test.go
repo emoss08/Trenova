@@ -23,7 +23,10 @@ func TestHasJurisdictionBreakdown(t *testing.T) {
 	require.False(t, nilMileage.HasJurisdictionBreakdown())
 
 	require.False(t, (&StoredMileage{}).HasJurisdictionBreakdown())
-	require.False(t, (&StoredMileage{JurisdictionDistances: []JurisdictionDistance{}}).HasJurisdictionBreakdown())
+	require.False(
+		t,
+		(&StoredMileage{JurisdictionDistances: []JurisdictionDistance{}}).HasJurisdictionBreakdown(),
+	)
 
 	withBreakdown := &StoredMileage{
 		JurisdictionDistances: []JurisdictionDistance{

@@ -16,7 +16,12 @@ import (
 
 // busyThenOK answers the first n requests with the given status and a
 // Retry-After, then answers properly.
-func busyThenOK(t *testing.T, failures int, status int, retryAfter string) (*httptest.Server, *atomic.Int32) {
+func busyThenOK(
+	t *testing.T,
+	failures int,
+	status int,
+	retryAfter string,
+) (*httptest.Server, *atomic.Int32) {
 	t.Helper()
 
 	var calls atomic.Int32
@@ -28,11 +33,17 @@ func busyThenOK(t *testing.T, failures int, status int, retryAfter string) (*htt
 				w.Header().Set("Retry-After", retryAfter)
 			}
 			w.WriteHeader(status)
-			_, _ = w.Write([]byte(`{"error":{"message":"The model is overloaded. Please try again later."}}`))
+			_, _ = w.Write(
+				[]byte(`{"error":{"message":"The model is overloaded. Please try again later."}}`),
+			)
 
 			return
 		}
-		_, _ = w.Write([]byte(`{"model":"m","choices":[{"finish_reason":"stop","message":{"role":"assistant","content":"Answered."}}]}`))
+		_, _ = w.Write(
+			[]byte(
+				`{"model":"m","choices":[{"finish_reason":"stop","message":{"role":"assistant","content":"Answered."}}]}`,
+			),
+		)
 	}))
 	t.Cleanup(server.Close)
 
@@ -94,7 +105,12 @@ func TestCompleteChat_BoundsTheWaitOnABusyProvider(t *testing.T) {
 	_, err := service.CompleteChat(t.Context(), chatRequest(pulid.Nil))
 
 	require.Error(t, err)
-	assert.Equal(t, []time.Duration{maxRetryWait}, *waits, "one capped wait fits the budget; a second would not")
+	assert.Equal(
+		t,
+		[]time.Duration{maxRetryWait},
+		*waits,
+		"one capped wait fits the budget; a second would not",
+	)
 	assert.EqualValues(t, 2, calls.Load())
 }
 

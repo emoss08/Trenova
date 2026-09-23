@@ -166,9 +166,12 @@ func (a *WorkerDisciplinaryAction) Validate(multiErr *errortypes.MultiError) {
 				"level must be one of: Coaching, VerbalWarning, WrittenWarning, FinalWarning, Suspension, Termination",
 			),
 		),
-		validation.Field(&a.Status,
+		validation.Field(
+			&a.Status,
 			validation.Required.Error("Status is required"),
-			domainvalidation.ValidEnum[DisciplinaryStatus]("status must be Active, Expired or Rescinded"),
+			domainvalidation.ValidEnum[DisciplinaryStatus](
+				"status must be Active, Expired or Rescinded",
+			),
 		),
 		validation.Field(&a.Reason,
 			validation.Required.Error("Say why the action is being taken"),
@@ -180,7 +183,8 @@ func (a *WorkerDisciplinaryAction) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 
-	if a.Level == DisciplinaryLevelSuspension && (a.SuspensionDays == nil || *a.SuspensionDays <= 0) {
+	if a.Level == DisciplinaryLevelSuspension &&
+		(a.SuspensionDays == nil || *a.SuspensionDays <= 0) {
 		multiErr.Add("suspensionDays", errortypes.ErrRequired, "How many days is the suspension?")
 	}
 	if a.Level != DisciplinaryLevelSuspension && a.SuspensionDays != nil {

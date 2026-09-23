@@ -57,7 +57,10 @@ func TestDecidable_RefusesAPendingProposalPastItsExpiry(t *testing.T) {
 func TestDecidable_AllowsAPendingProposalWithNoExpiry(t *testing.T) {
 	t.Parallel()
 
-	assert.NoError(t, decidable(&agent.AgentProposal{Status: agent.ProposalStatusPending, ExpiresAt: 0}))
+	assert.NoError(
+		t,
+		decidable(&agent.AgentProposal{Status: agent.ProposalStatusPending, ExpiresAt: 0}),
+	)
 }
 
 // The old message said "the agent is in shadow mode" whichever switch was on.

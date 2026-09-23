@@ -63,7 +63,10 @@ func TestImportAnnouncesAnExceptionAndOpensItsWorkItem(t *testing.T) {
 			return &updated, nil
 		}).
 		Once()
-	paymentRepo.EXPECT().FindSuggestedMatchCandidates(mock.Anything, mock.Anything).Return(nil, nil).Once()
+	paymentRepo.EXPECT().
+		FindSuggestedMatchCandidates(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Once()
 	workItemRepo.EXPECT().
 		GetActiveByReceiptID(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("bank receipt work item not found")).

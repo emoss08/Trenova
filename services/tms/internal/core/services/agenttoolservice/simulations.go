@@ -110,7 +110,8 @@ func (t *cancelShipmentTool) Simulate(
 	return &agent.ToolSimulation{
 		Summary: fmt.Sprintf(
 			"Would cancel shipment %s, releasing its assignments and stopping it being billed. Reason: %s",
-			entity.ProNumber, reason,
+			entity.ProNumber,
+			reason,
 		),
 		Changes: []agent.FieldChange{
 			{Field: "status", From: string(entity.Status), To: "Canceled"},
@@ -152,7 +153,12 @@ func (t *assignMoveTool) Simulate(
 	}
 
 	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf("Would put driver %s on move %s with tractor %s.", workerID, moveID, tractorID),
+		Summary: fmt.Sprintf(
+			"Would put driver %s on move %s with tractor %s.",
+			workerID,
+			moveID,
+			tractorID,
+		),
 		Changes: changes,
 	}, nil
 }

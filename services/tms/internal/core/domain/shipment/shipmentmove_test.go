@@ -94,26 +94,38 @@ func TestShipmentMove_CoveragePredicatesAreCoverageTypeAgnostic(t *testing.T) {
 			move: &ShipmentMove{CoverageType: MoveCoverageTypeUnassigned},
 		},
 		{
-			name:          "driver covered move",
-			move:          &ShipmentMove{CoverageType: MoveCoverageTypeDriver, Assignment: driverAssignment},
+			name: "driver covered move",
+			move: &ShipmentMove{
+				CoverageType: MoveCoverageTypeDriver,
+				Assignment:   driverAssignment,
+			},
 			hasCoverage:   true,
 			hasAssignment: true,
 		},
 		{
-			name:            "carrier covered move",
-			move:            &ShipmentMove{CoverageType: MoveCoverageTypeCarrier, CarrierAssignment: activeCarrier},
+			name: "carrier covered move",
+			move: &ShipmentMove{
+				CoverageType:      MoveCoverageTypeCarrier,
+				CarrierAssignment: activeCarrier,
+			},
 			hasCoverage:     true,
 			carrierCovered:  true,
 			hasCarrierAssig: true,
 		},
 		{
-			name:           "carrier label with a canceled carrier assignment is uncovered",
-			move:           &ShipmentMove{CoverageType: MoveCoverageTypeCarrier, CarrierAssignment: canceledCarrier},
+			name: "carrier label with a canceled carrier assignment is uncovered",
+			move: &ShipmentMove{
+				CoverageType:      MoveCoverageTypeCarrier,
+				CarrierAssignment: canceledCarrier,
+			},
 			carrierCovered: true,
 		},
 		{
-			name:          "unassigned label still reports the driver assignment it carries",
-			move:          &ShipmentMove{CoverageType: MoveCoverageTypeUnassigned, Assignment: driverAssignment},
+			name: "unassigned label still reports the driver assignment it carries",
+			move: &ShipmentMove{
+				CoverageType: MoveCoverageTypeUnassigned,
+				Assignment:   driverAssignment,
+			},
 			hasCoverage:   true,
 			hasAssignment: true,
 		},

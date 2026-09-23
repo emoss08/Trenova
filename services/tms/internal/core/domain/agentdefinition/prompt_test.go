@@ -322,7 +322,11 @@ func TestBuildSystemPrompt_RendersMemoryFencedWithHowToReadIt(t *testing.T) {
 	})
 
 	assert.Contains(t, prompt, "## What this organization has recorded for its agents")
-	assert.Contains(t, prompt, "<organization_memory>\n- [Instruction] Acme Freight (customer): Needs the POD within one day.")
+	assert.Contains(
+		t,
+		prompt,
+		"<organization_memory>\n- [Instruction] Acme Freight (customer): Needs the POD within one day.",
+	)
 	assert.Contains(t, prompt, "- [Fact] The yard closes at 18:00.\n</organization_memory>")
 	assert.Contains(t, prompt, "Follow each Instruction")
 	assert.Equal(t, 1, strings.Count(prompt, "</organization_memory>"),
@@ -333,7 +337,11 @@ func TestBuildSystemPrompt_LeavesMemoryOutWhenNotAskedForOrEmpty(t *testing.T) {
 	t.Parallel()
 
 	d := definitionWithInstructions("Be brief.")
-	assert.NotContains(t, d.BuildSystemPrompt(agentdefinition.RuntimeContext{}), "organization_memory")
+	assert.NotContains(
+		t,
+		d.BuildSystemPrompt(agentdefinition.RuntimeContext{}),
+		"organization_memory",
+	)
 
 	d.ContextProviders = []agentdefinition.ContextProvider{agentdefinition.ContextClock}
 	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
@@ -353,7 +361,10 @@ func TestBuildSystemPrompt_NamesTheProposalsStillWaitingOnThePerson(t *testing.T
 
 	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
 		PendingProposals: []agentdefinition.PendingProposal{
-			{ToolName: "update_report", Rationale: "Asked to update report in reply to: “Approved”"},
+			{
+				ToolName:  "update_report",
+				Rationale: "Asked to update report in reply to: “Approved”",
+			},
 		},
 	})
 
@@ -362,7 +373,11 @@ func TestBuildSystemPrompt_NamesTheProposalsStillWaitingOnThePerson(t *testing.T
 	assert.Contains(t, prompt, "not by typing")
 	assert.Contains(t, prompt, "Do not propose any of them again")
 
-	assert.NotContains(t, d.BuildSystemPrompt(agentdefinition.RuntimeContext{}), "Proposals awaiting")
+	assert.NotContains(
+		t,
+		d.BuildSystemPrompt(agentdefinition.RuntimeContext{}),
+		"Proposals awaiting",
+	)
 }
 
 // A model handed eight of forty tools and a bare list of names told the
@@ -372,22 +387,48 @@ func TestBuildSystemPrompt_NamesTheProposalsStillWaitingOnThePerson(t *testing.T
 func TestBuildSystemPrompt_DisclosedSectionNamesWhatFindToolsCanLoad(t *testing.T) {
 	t.Parallel()
 
-	d := &agentdefinition.Definition{Name: "Ops", Instructions: "Help.", ContextProviders: []agentdefinition.ContextProvider{agentdefinition.ContextClock}}
+	d := &agentdefinition.Definition{
+		Name:             "Ops",
+		Instructions:     "Help.",
+		ContextProviders: []agentdefinition.ContextProvider{agentdefinition.ContextClock},
+	}
 	d.ApplyDefaults()
 	d.ContextProviders = []agentdefinition.ContextProvider{agentdefinition.ContextClock}
 
 	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
 		ToolsDisclosed: true,
 		Tools: []agentdefinition.ToolSummary{
-			{Name: "get_shipment", Description: "Look up one shipment by PRO. Returns stops and charges.", Query: true, Loaded: true},
-			{Name: "list_reports", Description: "Browse the reports a person can run. Each has parameters.", Query: true},
+			{
+				Name:        "get_shipment",
+				Description: "Look up one shipment by PRO. Returns stops and charges.",
+				Query:       true,
+				Loaded:      true,
+			},
+			{
+				Name:        "list_reports",
+				Description: "Browse the reports a person can run. Each has parameters.",
+				Query:       true,
+			},
 		},
 	})
 
 	assert.Contains(t, prompt, "Loaded now:\n- get_shipment")
-	assert.Contains(t, prompt, "Callable after find_tools:\n- list_reports — Browse the reports a person can run.")
-	assert.NotContains(t, prompt, "Each has parameters", "one sentence per unloaded tool, not the whole description")
+	assert.Contains(
+		t,
+		prompt,
+		"Callable after find_tools:\n- list_reports — Browse the reports a person can run.",
+	)
+	assert.NotContains(
+		t,
+		prompt,
+		"Each has parameters",
+		"one sentence per unloaded tool, not the whole description",
+	)
 	assert.Contains(t, prompt, "call find_tools first")
 	assert.Contains(t, prompt, "never tell")
-	assert.False(t, d.HasContextProvider(agentdefinition.ContextTools), "the section is emitted even without the Tools provider when the turn is disclosed")
+	assert.False(
+		t,
+		d.HasContextProvider(agentdefinition.ContextTools),
+		"the section is emitted even without the Tools provider when the turn is disclosed",
+	)
 }

@@ -883,8 +883,18 @@ func TestCompute_IsDeterministic(t *testing.T) {
 	snap := baseSnapshot()
 	snap.RateSource = detention.RateSourceTiers
 	snap.Tiers = []detention.TierSnapshot{
-		{FromMinute: 0, ToMinute: ptr(int32(60)), Rate: money("75.00"), RateUnit: detention.TierRateUnitHour},
-		{FromMinute: 60, ToMinute: nil, Rate: money("110.00"), RateUnit: detention.TierRateUnitHour},
+		{
+			FromMinute: 0,
+			ToMinute:   ptr(int32(60)),
+			Rate:       money("75.00"),
+			RateUnit:   detention.TierRateUnitHour,
+		},
+		{
+			FromMinute: 60,
+			ToMinute:   nil,
+			Rate:       money("110.00"),
+			RateUnit:   detention.TierRateUnitHour,
+		},
 	}
 	snap.MaxChargePerDay = nullMoney("500.00")
 

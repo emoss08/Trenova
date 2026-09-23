@@ -26,7 +26,11 @@ func TestPlanTerminationSettlement(t *testing.T) {
 		{WorkerID: workerID, PTOType: worker.PTOTypeSick, BalanceDays: decimal.NewFromFloat(3.5)},
 		{WorkerID: workerID, PTOType: worker.PTOTypeVacation, BalanceDays: decimal.NewFromInt(12)},
 		{WorkerID: workerID, PTOType: worker.PTOTypePersonal, BalanceDays: decimal.NewFromInt(2)},
-		{WorkerID: workerID, PTOType: worker.PTOTypeBereavement, BalanceDays: decimal.NewFromInt(-1)},
+		{
+			WorkerID:    workerID,
+			PTOType:     worker.PTOTypeBereavement,
+			BalanceDays: decimal.NewFromInt(-1),
+		},
 	}
 
 	plan := ptoledgerservice.PlanTerminationSettlement(balances, settlementPolicy())
@@ -39,7 +43,11 @@ func TestPlanTerminationSettlement(t *testing.T) {
 	assert.Equal(t, worker.PTOLedgerEntryPayout, plan[1].EntryType)
 	assert.True(t, plan[1].Days.Equal(decimal.NewFromInt(12)))
 
-	assert.Empty(t, ptoledgerservice.PlanTerminationSettlement(balances, nil), "no policy, nothing to settle")
+	assert.Empty(
+		t,
+		ptoledgerservice.PlanTerminationSettlement(balances, nil),
+		"no policy, nothing to settle",
+	)
 }
 
 func TestAggregateLiability(t *testing.T) {
@@ -59,9 +67,21 @@ func TestAggregateLiability(t *testing.T) {
 
 	assert.Equal(t, int64(1_800_000_000), report.AsOf)
 	assert.Equal(t, 3, report.WorkersTracked)
-	assert.True(t, report.TotalBalanceDays.Equal(decimal.NewFromInt(23)), report.TotalBalanceDays.String())
-	assert.True(t, report.LiabilityDays.Equal(decimal.NewFromInt(14)), "only pay-out rules owe money")
-	assert.True(t, report.ForfeitableDays.Equal(decimal.NewFromInt(11)), "sick days and unpoliced workers forfeit")
+	assert.True(
+		t,
+		report.TotalBalanceDays.Equal(decimal.NewFromInt(23)),
+		report.TotalBalanceDays.String(),
+	)
+	assert.True(
+		t,
+		report.LiabilityDays.Equal(decimal.NewFromInt(14)),
+		"only pay-out rules owe money",
+	)
+	assert.True(
+		t,
+		report.ForfeitableDays.Equal(decimal.NewFromInt(11)),
+		"sick days and unpoliced workers forfeit",
+	)
 
 	require.Len(t, report.Rows, 5)
 	assert.Equal(t, bob, report.Rows[0].WorkerID, "largest liability first")

@@ -361,10 +361,13 @@ func (a *Activities) ListDueDefinitionsActivity(
 	ctx context.Context,
 	input *ListDueDefinitionsInput,
 ) (*ListDueDefinitionsResult, error) {
-	definitions, err := a.definitions.ListDueAcrossTenants(ctx, repositories.ListDueAcrossTenantsRequest{
-		Now:   input.Now,
-		Limit: input.Limit,
-	})
+	definitions, err := a.definitions.ListDueAcrossTenants(
+		ctx,
+		repositories.ListDueAcrossTenantsRequest{
+			Now:   input.Now,
+			Limit: input.Limit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -536,9 +539,11 @@ func backgroundInput(payload *AgentRunPayload, subject *agentdefinition.RuntimeS
 		builder.WriteString(subject.ID)
 		builder.WriteString("), described in the runtime context.")
 	}
-	builder.WriteString(" Follow your instructions: look up what you need, act through your tools " +
-		"where you are allowed to, propose what needs a person, and finish with a short report of " +
-		"what you found and did.")
+	builder.WriteString(
+		" Follow your instructions: look up what you need, act through your tools " +
+			"where you are allowed to, propose what needs a person, and finish with a short report of " +
+			"what you found and did.",
+	)
 
 	return builder.String()
 }
@@ -565,7 +570,10 @@ func subjectEvidence(
 	}
 }
 
-func hashSubject(definition *agentdefinition.Definition, subject *agentdefinition.RuntimeSubject) string {
+func hashSubject(
+	definition *agentdefinition.Definition,
+	subject *agentdefinition.RuntimeSubject,
+) string {
 	encoded, err := sonic.Marshal(map[string]any{
 		"definition": definition.ID,
 		"version":    definition.Version,

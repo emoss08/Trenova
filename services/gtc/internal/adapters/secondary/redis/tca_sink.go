@@ -37,8 +37,17 @@ func (s *TCAStreamSink) Initialize(ctx context.Context) error {
 	return s.client.Ping(ctx).Err()
 }
 
-func (s *TCAStreamSink) Write(ctx context.Context, projection domain.Projection, record domain.SourceRecord) error {
-	stream, err := s.renderTemplate(projection.Name, projection.Destination.Stream, projection.PrimaryKeys, record)
+func (s *TCAStreamSink) Write(
+	ctx context.Context,
+	projection domain.Projection,
+	record domain.SourceRecord,
+) error {
+	stream, err := s.renderTemplate(
+		projection.Name,
+		projection.Destination.Stream,
+		projection.PrimaryKeys,
+		record,
+	)
 	if err != nil {
 		s.logger.Error("tca sink: template render failed",
 			zap.String("projection", projection.Name),

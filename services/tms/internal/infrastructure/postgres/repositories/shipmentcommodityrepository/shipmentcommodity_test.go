@@ -69,7 +69,8 @@ func TestSyncForShipment_UpdatesExistingCommodityAndDeletesRemovedCommodity(t *t
 			"id", "organization_id", "business_unit_id", "shipment_id", "commodity_id", "weight", "pieces", "version",
 		}).
 			AddRow(keepID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, entity.Commodities[0].CommodityID, entity.Commodities[0].Weight, entity.Commodities[0].Pieces, 1).
-			AddRow(deleteID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, pulid.MustNew("com_"), 50, 5, 1))
+			AddRow(deleteID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, pulid.MustNew("com_"), 50, 5, 1),
+		)
 	mock.ExpectExec(`UPDATE "shipment_commodities" AS "sc".*`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec(`DELETE FROM "shipment_commodities" AS "sc".*id IN .*shipment_id = .*organization_id = .*business_unit_id = .*`).
@@ -99,7 +100,8 @@ func TestSyncForShipment_UpdatesExistingCommodityID(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "organization_id", "business_unit_id", "shipment_id", "commodity_id", "weight", "pieces", "version",
 		}).
-			AddRow(existingID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, originalCommodityID, entity.Commodities[0].Weight, entity.Commodities[0].Pieces, 1))
+			AddRow(existingID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, originalCommodityID, entity.Commodities[0].Weight, entity.Commodities[0].Pieces, 1),
+		)
 	mock.ExpectExec(`UPDATE "shipment_commodities" AS "sc" SET commodity_id = .*`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -147,7 +149,8 @@ func TestSyncForShipment_UpdatesExistingCommodityDimensions(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "organization_id", "business_unit_id", "shipment_id", "commodity_id", "weight", "pieces", "version",
 		}).
-			AddRow(existingID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, entity.Commodities[0].CommodityID, entity.Commodities[0].Weight, entity.Commodities[0].Pieces, 1))
+			AddRow(existingID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, entity.Commodities[0].CommodityID, entity.Commodities[0].Weight, entity.Commodities[0].Pieces, 1),
+		)
 	mock.ExpectExec(`UPDATE "shipment_commodities" AS "sc" SET .*length_feet = .*width_feet = .*height_feet = .*`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -171,7 +174,8 @@ func TestSyncForShipment_ClearsExistingCommodityDimensions(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "organization_id", "business_unit_id", "shipment_id", "commodity_id", "weight", "pieces", "version",
 		}).
-			AddRow(existingID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, entity.Commodities[0].CommodityID, entity.Commodities[0].Weight, entity.Commodities[0].Pieces, 1))
+			AddRow(existingID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, entity.Commodities[0].CommodityID, entity.Commodities[0].Weight, entity.Commodities[0].Pieces, 1),
+		)
 	mock.ExpectExec(`UPDATE "shipment_commodities" AS "sc" SET .*length_feet = NULL.*width_feet = NULL.*height_feet = NULL.*`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 

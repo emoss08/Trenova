@@ -25,12 +25,14 @@ func applyCreditMemoRequestFromInput(
 	multiErr := errortypes.NewMultiError()
 	for idx, app := range input.Applications {
 		if app == nil {
-			multiErr.WithIndex("applications", idx).Add("invoiceId", errortypes.ErrRequired, "Application is required")
+			multiErr.WithIndex("applications", idx).
+				Add("invoiceId", errortypes.ErrRequired, "Application is required")
 			continue
 		}
 		invoiceID, parseErr := pulid.MustParse(app.InvoiceID)
 		if parseErr != nil {
-			multiErr.WithIndex("applications", idx).Add("invoiceId", errortypes.ErrInvalid, "Invalid invoice")
+			multiErr.WithIndex("applications", idx).
+				Add("invoiceId", errortypes.ErrInvalid, "Invalid invoice")
 			continue
 		}
 		applications = append(applications, &serviceports.CreditMemoApplicationInput{

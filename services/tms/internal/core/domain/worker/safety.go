@@ -225,9 +225,12 @@ func (e *WorkerSafetyEvent) Validate(multiErr *errortypes.MultiError) {
 				"severity must be one of: Minor, Moderate, Major, Critical",
 			),
 		),
-		validation.Field(&e.Status,
+		validation.Field(
+			&e.Status,
 			validation.Required.Error("Status is required"),
-			domainvalidation.ValidEnum[SafetyEventStatus]("status must be Open, UnderReview or Closed"),
+			domainvalidation.ValidEnum[SafetyEventStatus](
+				"status must be Open, UnderReview or Closed",
+			),
 		),
 		validation.Field(&e.OccurredAt, validation.Required.Error("When it happened is required")),
 		validation.Field(&e.Description,
@@ -251,7 +254,11 @@ func (e *WorkerSafetyEvent) Validate(multiErr *errortypes.MultiError) {
 	}
 	if e.Kind == SafetyEventInspection {
 		if !e.InspectionResult.IsSet() {
-			multiErr.Add("inspectionResult", errortypes.ErrRequired, "Record how the inspection went")
+			multiErr.Add(
+				"inspectionResult",
+				errortypes.ErrRequired,
+				"Record how the inspection went",
+			)
 		}
 		if e.InspectionLevel != nil && (*e.InspectionLevel < 1 || *e.InspectionLevel > 6) {
 			multiErr.Add("inspectionLevel", errortypes.ErrInvalid, "Inspection level is 1 to 6")

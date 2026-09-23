@@ -86,15 +86,24 @@ func TestRemember_RefusesACorrectionAndHalfASubject(t *testing.T) {
 
 	tool := newRememberTool(&fakeMemories{})
 
-	err := tool.Execute(t.Context(), memoryParams(map[string]any{"content": "x", "kind": "Correction"}))
+	err := tool.Execute(
+		t.Context(),
+		memoryParams(map[string]any{"content": "x", "kind": "Correction"}),
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Instruction or Fact")
 
-	err = tool.Execute(t.Context(), memoryParams(map[string]any{"content": "x", "subjectType": "Customer"}))
+	err = tool.Execute(
+		t.Context(),
+		memoryParams(map[string]any{"content": "x", "subjectType": "Customer"}),
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "both or neither")
 
-	err = tool.Execute(t.Context(), memoryParams(map[string]any{"content": "x", "expiresOn": "tomorrow"}))
+	err = tool.Execute(
+		t.Context(),
+		memoryParams(map[string]any{"content": "x", "expiresOn": "tomorrow"}),
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "YYYY-MM-DD")
 }
@@ -106,7 +115,10 @@ func TestForgetMemory_RetiresRatherThanDeletes(t *testing.T) {
 	tool := newForgetMemoryTool(memories)
 	memoryID := pulid.MustNew("amem_")
 
-	require.NoError(t, tool.Execute(t.Context(), memoryParams(map[string]any{"memoryId": memoryID.String()})))
+	require.NoError(
+		t,
+		tool.Execute(t.Context(), memoryParams(map[string]any{"memoryId": memoryID.String()})),
+	)
 
 	assert.Equal(t, memoryID, memories.status.ID)
 	assert.Equal(t, agent.MemoryStatusRetired, memories.status.Status)

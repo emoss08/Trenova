@@ -63,7 +63,7 @@ type Item struct {
 	Seen bool `json:"seen" bun:"-"`
 	// Inserted is set by an upsert that reports whether the row was created
 	// rather than replaced; it is never selected on its own.
-	Inserted bool `json:"-" bun:"inserted,scanonly"`
+	Inserted bool `json:"-"    bun:"inserted,scanonly"`
 }
 
 func (i *Item) GetID() pulid.ID { return i.ID }
@@ -135,7 +135,11 @@ func (i *Item) Validate(multiErr *errortypes.MultiError) {
 		multiErr.Add("path", errortypes.ErrInvalid, "Path must be an application path")
 	}
 	if i.SubjectID.IsNotNil() && i.SubjectType == "" {
-		multiErr.Add("subjectType", errortypes.ErrRequired, "Subject type is required with a subject")
+		multiErr.Add(
+			"subjectType",
+			errortypes.ErrRequired,
+			"Subject type is required with a subject",
+		)
 	}
 	if i.EventKind != "" && !i.EventKind.IsValid() {
 		multiErr.Add("eventKind", errortypes.ErrInvalid, "Event kind is invalid")

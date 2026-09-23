@@ -71,7 +71,12 @@ func TestComputeStops_ExposesEveryStopWithItsLocation(t *testing.T) {
 				},
 			}},
 			{Stops: []CollectionStop{
-				{Type: "Delivery", Status: "New", Sequence: 1, Location: laneLocation("Dallas", "75201", "TX")},
+				{
+					Type:     "Delivery",
+					Status:   "New",
+					Sequence: 1,
+					Location: laneLocation("Dallas", "75201", "TX"),
+				},
 			}},
 		},
 	}

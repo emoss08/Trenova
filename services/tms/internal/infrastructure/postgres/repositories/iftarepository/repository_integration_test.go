@@ -121,7 +121,11 @@ func (f *fixture) scalar(t *testing.T, table, column, where string, value any) p
 	return id
 }
 
-func (f *fixture) tenantScalar(t *testing.T, table, column string, tenant pagination.TenantInfo) pulid.ID {
+func (f *fixture) tenantScalar(
+	t *testing.T,
+	table, column string,
+	tenant pagination.TenantInfo,
+) pulid.ID {
 	t.Helper()
 	var id pulid.ID
 	require.NoError(t, f.db.NewSelect().
@@ -257,7 +261,12 @@ func (f *fixture) manualEntry(
 	return created
 }
 
-func (f *fixture) draft(t *testing.T, tenant pagination.TenantInfo, amendment int, amends *pulid.ID) *ifta.Return {
+func (f *fixture) draft(
+	t *testing.T,
+	tenant pagination.TenantInfo,
+	amendment int,
+	amends *pulid.ID,
+) *ifta.Return {
 	t.Helper()
 	ret := &ifta.Return{
 		OrganizationID:  tenant.OrgID,
@@ -294,45 +303,135 @@ func TestAccumulateMiles(t *testing.T) {
 	miles := shipment.JurisdictionDistanceUnitsMiles
 	km := shipment.JurisdictionDistanceUnitsKilometers
 
-	m1 := f.insertMove(t, moveSpec{status: shipment.MoveStatusCompleted, loaded: true, distance: 500, units: miles, completedAt: inside})
+	m1 := f.insertMove(
+		t,
+		moveSpec{
+			status:      shipment.MoveStatusCompleted,
+			loaded:      true,
+			distance:    500,
+			units:       miles,
+			completedAt: inside,
+		},
+	)
 	f.insertRow(t, m1, "US", "TX", 300, miles)
 	f.insertRow(t, m1, "US", "OK", 200, miles)
 	f.assign(t, m1, false)
 
-	m2 := f.insertMove(t, moveSpec{status: shipment.MoveStatusCompleted, loaded: false, distance: 200, units: miles, completedAt: inside})
+	m2 := f.insertMove(
+		t,
+		moveSpec{
+			status:      shipment.MoveStatusCompleted,
+			loaded:      false,
+			distance:    200,
+			units:       miles,
+			completedAt: inside,
+		},
+	)
 	f.insertRow(t, m2, "US", "OK", 120, miles)
 	f.insertRow(t, m2, "US", "TX", 80, miles)
 	f.assign(t, m2, false)
 
-	m3 := f.insertMove(t, moveSpec{status: shipment.MoveStatusCompleted, loaded: true, distance: 150, units: miles, completedAt: inside})
+	m3 := f.insertMove(
+		t,
+		moveSpec{
+			status:      shipment.MoveStatusCompleted,
+			loaded:      true,
+			distance:    150,
+			units:       miles,
+			completedAt: inside,
+		},
+	)
 	f.assign(t, m3, false)
 
-	m4 := f.insertMove(t, moveSpec{status: shipment.MoveStatusCompleted, loaded: true, distance: 100, units: miles, completedAt: inside})
+	m4 := f.insertMove(
+		t,
+		moveSpec{
+			status:      shipment.MoveStatusCompleted,
+			loaded:      true,
+			distance:    100,
+			units:       miles,
+			completedAt: inside,
+		},
+	)
 	f.insertRow(t, m4, "US", "TX", 100, miles)
 	f.assign(t, m4, true)
 
-	m5 := f.insertMove(t, moveSpec{status: shipment.MoveStatusCompleted, loaded: true, distance: 250, units: miles, completedAt: inside})
+	m5 := f.insertMove(
+		t,
+		moveSpec{
+			status:      shipment.MoveStatusCompleted,
+			loaded:      true,
+			distance:    250,
+			units:       miles,
+			completedAt: inside,
+		},
+	)
 	f.insertRow(t, m5, "US", "TX", 250, miles)
 	f.assign(t, m5, false)
 	f.manualEntry(t, f.tenantA, "250", &m5.ID)
 
-	m6 := f.insertMove(t, moveSpec{status: shipment.MoveStatusCompleted, loaded: true, distance: 100, units: miles, completedAt: inside})
+	m6 := f.insertMove(
+		t,
+		moveSpec{
+			status:      shipment.MoveStatusCompleted,
+			loaded:      true,
+			distance:    100,
+			units:       miles,
+			completedAt: inside,
+		},
+	)
 	f.insertRow(t, m6, "US", "TX", 160.9344, km)
 	f.assign(t, m6, false)
 
-	m7 := f.insertMove(t, moveSpec{status: shipment.MoveStatusCompleted, loaded: true, distance: 100, units: miles, updatedAt: ptr(f.start + 7200)})
+	m7 := f.insertMove(
+		t,
+		moveSpec{
+			status:    shipment.MoveStatusCompleted,
+			loaded:    true,
+			distance:  100,
+			units:     miles,
+			updatedAt: ptr(f.start + 7200),
+		},
+	)
 	f.insertRow(t, m7, "US", "TX", 100, miles)
 	f.assign(t, m7, false)
 
-	boundary := f.insertMove(t, moveSpec{status: shipment.MoveStatusCompleted, loaded: true, distance: 100, units: miles, completedAt: ptr(f.end)})
+	boundary := f.insertMove(
+		t,
+		moveSpec{
+			status:      shipment.MoveStatusCompleted,
+			loaded:      true,
+			distance:    100,
+			units:       miles,
+			completedAt: ptr(f.end),
+		},
+	)
 	f.insertRow(t, boundary, "US", "TX", 100, miles)
 	f.assign(t, boundary, false)
 
-	m9 := f.insertMove(t, moveSpec{status: shipment.MoveStatusCompleted, loaded: true, distance: 300, units: miles, completedAt: inside})
+	m9 := f.insertMove(
+		t,
+		moveSpec{
+			status:      shipment.MoveStatusCompleted,
+			loaded:      true,
+			distance:    300,
+			units:       miles,
+			completedAt: inside,
+		},
+	)
 	f.insertRow(t, m9, "US", "TX", 100, miles)
 	f.assign(t, m9, false)
 
-	inTransit := f.insertMove(t, moveSpec{status: shipment.MoveStatusInTransit, loaded: true, distance: 100, units: miles, completedAt: inside})
+	inTransit := f.insertMove(
+		t,
+		moveSpec{
+			status:      shipment.MoveStatusInTransit,
+			loaded:      true,
+			distance:    100,
+			units:       miles,
+			completedAt: inside,
+		},
+	)
 	f.insertRow(t, inTransit, "US", "TX", 100, miles)
 	f.assign(t, inTransit, false)
 
@@ -515,9 +614,12 @@ func TestReturns_AmendmentCoexistsWithTheFiledOriginal(t *testing.T) {
 	amendment := f.draft(t, f.tenantA, 1, &amendsID)
 	assert.Equal(t, 1, amendment.AmendmentNumber)
 
-	latest, err := f.repo.GetLatestReturnForPeriod(f.ctx, &repositories.GetLatestReturnForPeriodRequest{
-		TenantInfo: f.tenantA, Year: f.period.Year, Quarter: f.period.Quarter,
-	})
+	latest, err := f.repo.GetLatestReturnForPeriod(
+		f.ctx,
+		&repositories.GetLatestReturnForPeriodRequest{
+			TenantInfo: f.tenantA, Year: f.period.Year, Quarter: f.period.Quarter,
+		},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, latest)
 	assert.Equal(t, amendment.ID, latest.ID)
@@ -669,7 +771,10 @@ func TestJurisdictions_LookupByCode(t *testing.T) {
 	_, unknown := found["MX_CH"]
 	assert.False(t, unknown)
 
-	members, err := f.repo.ListJurisdictions(f.ctx, &repositories.ListJurisdictionsRequest{MembersOnly: true})
+	members, err := f.repo.ListJurisdictions(
+		f.ctx,
+		&repositories.ListJurisdictionsRequest{MembersOnly: true},
+	)
 	require.NoError(t, err)
 	all, err := f.repo.ListJurisdictions(f.ctx, &repositories.ListJurisdictionsRequest{})
 	require.NoError(t, err)

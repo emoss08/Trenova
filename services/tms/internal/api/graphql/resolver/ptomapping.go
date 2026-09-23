@@ -144,11 +144,18 @@ func ptoTiersFromInput(
 			continue
 		}
 		tierPrefix := prefix + "tiers[" + strconv.Itoa(i) + "]."
-		amount, err := parseDecimalField(tierPrefix+"accrualAmountDays", tierInput.AccrualAmountDays, true)
+		amount, err := parseDecimalField(
+			tierPrefix+"accrualAmountDays",
+			tierInput.AccrualAmountDays,
+			true,
+		)
 		if err != nil {
 			return nil, err
 		}
-		maxBalance, err := parseNullDecimalField(tierPrefix+"maxBalanceDays", tierInput.MaxBalanceDays)
+		maxBalance, err := parseNullDecimalField(
+			tierPrefix+"maxBalanceDays",
+			tierInput.MaxBalanceDays,
+		)
 		if err != nil {
 			return nil, err
 		}

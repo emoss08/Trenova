@@ -97,7 +97,11 @@ func (s *Service) ListPending(
 	if req.After != "" {
 		after, decodeErr := decodeCursor(req.After)
 		if decodeErr != nil {
-			return nil, errortypes.NewValidationError("after", errortypes.ErrInvalid, "Cursor is invalid")
+			return nil, errortypes.NewValidationError(
+				"after",
+				errortypes.ErrInvalid,
+				"Cursor is invalid",
+			)
 		}
 		listReq.After = &after
 	}
@@ -274,7 +278,11 @@ func (s *Service) DecideMany(
 		case !ok:
 			multiErr.Add(field, errortypes.ErrNotFound, "Proposal not found")
 		case proposal.PlanID != nil:
-			multiErr.Add(field, errortypes.ErrInvalid, "This proposal is a step of a plan; decide the plan")
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalid,
+				"This proposal is a step of a plan; decide the plan",
+			)
 		default:
 			tools[proposal.ToolName] = struct{}{}
 		}
@@ -295,12 +303,16 @@ func (s *Service) DecideMany(
 	results := make([]services.AgentProposalDecisionResult, 0, len(req.ProposalIDs))
 	for _, id := range req.ProposalIDs {
 		result := services.AgentProposalDecisionResult{ProposalID: id}
-		outcome, decideErr := s.decisions.DecideWithOutcome(ctx, &services.DecideAgentProposalRequest{
-			ProposalID: id,
-			Decision:   req.Decision,
-			ReasonCode: req.ReasonCode,
-			TenantInfo: req.TenantInfo,
-		}, actor)
+		outcome, decideErr := s.decisions.DecideWithOutcome(
+			ctx,
+			&services.DecideAgentProposalRequest{
+				ProposalID: id,
+				Decision:   req.Decision,
+				ReasonCode: req.ReasonCode,
+				TenantInfo: req.TenantInfo,
+			},
+			actor,
+		)
 		switch {
 		case decideErr != nil:
 			result.Error = decisionErrorMessage(decideErr)
@@ -334,7 +346,11 @@ func validateBatch(req *services.DecideAgentProposalsRequest) error {
 	seen := make(map[pulid.ID]struct{}, len(req.ProposalIDs))
 	for i, id := range req.ProposalIDs {
 		if _, dup := seen[id]; dup {
-			multiErr.Add(fmt.Sprintf("proposalIds[%d]", i), errortypes.ErrInvalid, "Proposal listed twice")
+			multiErr.Add(
+				fmt.Sprintf("proposalIds[%d]", i),
+				errortypes.ErrInvalid,
+				"Proposal listed twice",
+			)
 		}
 		seen[id] = struct{}{}
 	}

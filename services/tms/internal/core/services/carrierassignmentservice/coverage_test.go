@@ -28,10 +28,12 @@ func TestApplyCoverageChangeStampsCoverageExplicitly(t *testing.T) {
 		want       shipment.MoveCoverageType
 	}{
 		{
-			name:       "assigning a carrier marks the move carrier covered",
-			initial:    shipment.MoveCoverageTypeUnassigned,
-			assignment: &shipment.CarrierAssignment{Status: shipment.CarrierAssignmentStatusPending},
-			want:       shipment.MoveCoverageTypeCarrier,
+			name:    "assigning a carrier marks the move carrier covered",
+			initial: shipment.MoveCoverageTypeUnassigned,
+			assignment: &shipment.CarrierAssignment{
+				Status: shipment.CarrierAssignmentStatusPending,
+			},
+			want: shipment.MoveCoverageTypeCarrier,
 		},
 		{
 			name:    "canceling a carrier returns the move to uncovered, not driver covered",
@@ -75,7 +77,9 @@ func TestApplyCoverageChangeStampsCoverageExplicitly(t *testing.T) {
 				shipmentRepo:      shipmentRepo,
 				controlRepo:       controlRepo,
 				shipmentValidator: shipmentservice.NewTestValidator(t),
-				coordinator:       shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
+				coordinator: shipmentstate.NewCoordinatorWithClock(
+					func() int64 { return 10 },
+				),
 			}
 
 			require.NoError(

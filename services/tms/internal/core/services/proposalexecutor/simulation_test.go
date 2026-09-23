@@ -68,12 +68,21 @@ func approver(proposal *agent.AgentProposal) *services.RequestActor {
 func TestExecute_SimulatesInsteadOfRunningForAnAgentInSimulation(t *testing.T) {
 	t.Parallel()
 
-	tool := &recordingTool{name: "cancel_shipment", resource: permission.ResourceShipment, operation: permission.OpCancel}
+	tool := &recordingTool{
+		name:      "cancel_shipment",
+		resource:  permission.ResourceShipment,
+		operation: permission.OpCancel,
+	}
 	repo := &fakeProposalRepo{}
 	svc := newExecutor(tool, repo, &fakePermissions{allowed: true})
-	svc.definitions = fixedDefinition{definition: &agentdefinition.Definition{Name: "Night desk", SimulationMode: true}}
+	svc.definitions = fixedDefinition{
+		definition: &agentdefinition.Definition{Name: "Night desk", SimulationMode: true},
+	}
 
-	proposal := testProposal("cancel_shipment", map[string]any{"shipmentId": "shp_1", "cancelReason": "Dead load"})
+	proposal := testProposal(
+		"cancel_shipment",
+		map[string]any{"shipmentId": "shp_1", "cancelReason": "Dead load"},
+	)
 	require.NoError(t, svc.Execute(t.Context(), proposal, nil, approver(proposal)))
 
 	assert.Zero(t, tool.calls, "the write must not happen")
@@ -87,7 +96,11 @@ func TestExecute_SimulatesInsteadOfRunningForAnAgentInSimulation(t *testing.T) {
 func TestExecute_RefusesAWritePastTheToolsDailyCap(t *testing.T) {
 	t.Parallel()
 
-	tool := &recordingTool{name: "assign_move", resource: permission.ResourceShipmentMove, operation: permission.OpUpdate}
+	tool := &recordingTool{
+		name:      "assign_move",
+		resource:  permission.ResourceShipmentMove,
+		operation: permission.OpUpdate,
+	}
 	repo := &fakeProposalRepo{}
 	svc := newExecutor(tool, repo, &fakePermissions{allowed: true})
 	svc.definitions = fixedDefinition{definition: &agentdefinition.Definition{Name: "Night desk"}}
@@ -110,7 +123,11 @@ func TestExecute_RefusesAWritePastTheToolsDailyCap(t *testing.T) {
 func TestExecute_RunsWhenThereIsNoCapAndNoSimulation(t *testing.T) {
 	t.Parallel()
 
-	tool := &recordingTool{name: "assign_move", resource: permission.ResourceShipmentMove, operation: permission.OpUpdate}
+	tool := &recordingTool{
+		name:      "assign_move",
+		resource:  permission.ResourceShipmentMove,
+		operation: permission.OpUpdate,
+	}
 	repo := &fakeProposalRepo{}
 	svc := newExecutor(tool, repo, &fakePermissions{allowed: true})
 	svc.definitions = fixedDefinition{definition: &agentdefinition.Definition{Name: "Night desk"}}

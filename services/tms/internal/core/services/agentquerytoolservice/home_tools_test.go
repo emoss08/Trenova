@@ -60,7 +60,12 @@ func TestGetMyHomeLayout_ReadsThePersonsOwnHomePage(t *testing.T) {
 	require.NoError(t, err)
 
 	view := result.(homeLayoutView)
-	assert.Equal(t, params.Actor.UserID, reader.asked.Principal.UserID, "the page resolves for the reader")
+	assert.Equal(
+		t,
+		params.Actor.UserID,
+		reader.asked.Principal.UserID,
+		"the page resolves for the reader",
+	)
 	assert.Equal(t, "rolePreset", view.Source)
 	assert.Equal(t, int64(4), view.Version)
 	require.Len(t, view.Widgets, 1)
@@ -90,11 +95,13 @@ func TestListHomeWidgets_NamesWhatEachNeeds(t *testing.T) {
 
 	kpi, _ := homelayout.WidgetDefinitionFor(homelayout.WidgetKPI)
 	attention, _ := homelayout.WidgetDefinitionFor(homelayout.WidgetAttention)
-	tool := &listHomeWidgetsTool{layouts: &fakeHomeLayoutReader{catalog: &homelayoutservice.WidgetCatalog{
-		Widgets:    []homelayout.WidgetDefinition{kpi, attention},
-		Metrics:    []homelayout.MetricDefinition{{Key: "onTimePercent", Label: "On-Time %"}},
-		MaxWidgets: homelayout.MaxWidgets,
-	}}}
+	tool := &listHomeWidgetsTool{
+		layouts: &fakeHomeLayoutReader{catalog: &homelayoutservice.WidgetCatalog{
+			Widgets:    []homelayout.WidgetDefinition{kpi, attention},
+			Metrics:    []homelayout.MetricDefinition{{Key: "onTimePercent", Label: "On-Time %"}},
+			MaxWidgets: homelayout.MaxWidgets,
+		}},
+	}
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{"category": kpi.Category}))
 	require.NoError(t, err)

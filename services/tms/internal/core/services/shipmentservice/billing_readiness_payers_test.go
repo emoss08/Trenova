@@ -60,8 +60,16 @@ func TestApplyPayerReadiness_UnionsTheSecondPayersRequirements(t *testing.T) {
 	t.Parallel()
 
 	entity, resolution, amd := splitReadinessFixture(t)
-	podType := &documenttype.DocumentType{ID: pulid.MustNew("dt_"), Code: "POD", Name: "Proof of Delivery"}
-	poType := &documenttype.DocumentType{ID: pulid.MustNew("dt_"), Code: "PO", Name: "Purchase Order"}
+	podType := &documenttype.DocumentType{
+		ID:   pulid.MustNew("dt_"),
+		Code: "POD",
+		Name: "Proof of Delivery",
+	}
+	poType := &documenttype.DocumentType{
+		ID:   pulid.MustNew("dt_"),
+		Code: "PO",
+		Name: "Purchase Order",
+	}
 	control := autoTransferControl()
 	docs := []*document.Document{{ID: pulid.MustNew("doc_"), DocumentTypeID: &podType.ID}}
 
@@ -119,7 +127,11 @@ func TestApplyPayerReadiness_UnionsTheSecondPayersRequirements(t *testing.T) {
 	assert.False(t, readiness.Payers[1].IsPrimary)
 	assert.Equal(t, "400.00", readiness.Payers[1].ShareAmount.StringFixed(2))
 
-	assert.False(t, readiness.ShouldAutoApproveBilling, "a missing requirement stops auto-approval for everybody")
+	assert.False(
+		t,
+		readiness.ShouldAutoApproveBilling,
+		"a missing requirement stops auto-approval for everybody",
+	)
 	assert.False(t, readiness.CanMarkReadyToInvoice)
 }
 
@@ -161,7 +173,11 @@ func TestApplyPayerReadiness_BlocksOnASecondaryPayersCreditHold(t *testing.T) {
 	assert.True(t, readiness.Payers[1].CreditHold)
 	assert.Equal(t, customer.CreditStatusHold, readiness.Payers[1].CreditStatus)
 	assert.False(t, readiness.ShouldAutoApproveBilling)
-	assert.False(t, readiness.CanMarkReadyToInvoice, "Block enforcement treats a held payer like a missing document")
+	assert.False(
+		t,
+		readiness.CanMarkReadyToInvoice,
+		"Block enforcement treats a held payer like a missing document",
+	)
 }
 
 func TestApplyPayerReadiness_CreditHoldWithoutEnforcementIsOnlyReported(t *testing.T) {
@@ -170,13 +186,21 @@ func TestApplyPayerReadiness_CreditHoldWithoutEnforcementIsOnlyReported(t *testi
 	entity, resolution, amd := splitReadinessFixture(t)
 
 	payers := map[pulid.ID]*customer.Customer{
-		entity.CustomerID: {ID: entity.CustomerID, BillingProfile: &customer.CustomerBillingProfile{}},
+		entity.CustomerID: {
+			ID:             entity.CustomerID,
+			BillingProfile: &customer.CustomerBillingProfile{},
+		},
 		amd: {ID: amd, Name: "AMD", BillingProfile: &customer.CustomerBillingProfile{
 			CreditStatus: customer.CreditStatusHold,
 		}},
 	}
 
-	readiness := buildShipmentBillingReadiness(entity, payers[entity.CustomerID].BillingProfile, nil, nil)
+	readiness := buildShipmentBillingReadiness(
+		entity,
+		payers[entity.CustomerID].BillingProfile,
+		nil,
+		nil,
+	)
 	applyPayerReadiness(readiness, entity, resolution, payers, nil)
 
 	assert.Empty(t, readiness.ValidationFailures)
@@ -197,16 +221,38 @@ func TestApplyPayerReadiness_AutoApprovalNeedsEveryPayer(t *testing.T) {
 		wantApproval bool
 	}{
 		{name: "both opt in", intelOptsIn: true, amdOptsIn: true, wantApproval: true},
-		{name: "only the primary opts in", intelOptsIn: true, amdOptsIn: false, wantApproval: false},
-		{name: "only the secondary opts in", intelOptsIn: false, amdOptsIn: true, wantApproval: false},
+		{
+			name:         "only the primary opts in",
+			intelOptsIn:  true,
+			amdOptsIn:    false,
+			wantApproval: false,
+		},
+		{
+			name:         "only the secondary opts in",
+			intelOptsIn:  false,
+			amdOptsIn:    true,
+			wantApproval: false,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			intel := &customer.Customer{ID: entity.CustomerID, BillingProfile: &customer.CustomerBillingProfile{AutoTransfer: true, AutoApprove: tc.intelOptsIn}}
-			amdCustomer := &customer.Customer{ID: amd, BillingProfile: &customer.CustomerBillingProfile{AutoTransfer: true, AutoApprove: tc.amdOptsIn}}
+			intel := &customer.Customer{
+				ID: entity.CustomerID,
+				BillingProfile: &customer.CustomerBillingProfile{
+					AutoTransfer: true,
+					AutoApprove:  tc.intelOptsIn,
+				},
+			}
+			amdCustomer := &customer.Customer{
+				ID: amd,
+				BillingProfile: &customer.CustomerBillingProfile{
+					AutoTransfer: true,
+					AutoApprove:  tc.amdOptsIn,
+				},
+			}
 
 			readiness := buildShipmentBillingReadiness(entity, intel.BillingProfile, control, nil)
 			applyPayerReadiness(readiness, entity, resolution, map[pulid.ID]*customer.Customer{
@@ -242,7 +288,12 @@ func TestPreviewForResolutionMapsPositionalAllocationsToPlaceholderIDs(t *testin
 
 	entity := validShipmentForValidation()
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(500))
-	saved := &shipment.AdditionalCharge{ID: pulid.MustNew("ac_"), Method: "Flat", Amount: decimal.NewFromInt(50), Unit: 1}
+	saved := &shipment.AdditionalCharge{
+		ID:     pulid.MustNew("ac_"),
+		Method: "Flat",
+		Amount: decimal.NewFromInt(50),
+		Unit:   1,
+	}
 	unsaved := &shipment.AdditionalCharge{Method: "Flat", Amount: decimal.NewFromInt(80), Unit: 1}
 	entity.AdditionalCharges = []*shipment.AdditionalCharge{saved, nil, unsaved}
 
@@ -272,17 +323,33 @@ func TestPreviewForResolutionMapsPositionalAllocationsToPlaceholderIDs(t *testin
 	require.Len(t, preview.AdditionalCharges, 3)
 	assert.Equal(t, saved.ID, preview.AdditionalCharges[0].ID)
 	assert.Nil(t, preview.AdditionalCharges[1])
-	assert.True(t, preview.AdditionalCharges[2].ID.IsNotNil(), "the id-less charge gets a placeholder")
+	assert.True(
+		t,
+		preview.AdditionalCharges[2].ID.IsNotNil(),
+		"the id-less charge gets a placeholder",
+	)
 	assert.True(t, unsaved.ID.IsNil(), "the caller's charge is untouched")
 
 	require.Len(t, preview.ChargeAllocations, 2)
 	require.NotNil(t, preview.ChargeAllocations[1].AdditionalChargeID)
-	assert.Equal(t, preview.AdditionalCharges[2].ID, *preview.ChargeAllocations[1].AdditionalChargeID)
-	assert.Nil(t, entity.ChargeAllocations[1].AdditionalChargeID, "the caller's allocation is untouched")
+	assert.Equal(
+		t,
+		preview.AdditionalCharges[2].ID,
+		*preview.ChargeAllocations[1].AdditionalChargeID,
+	)
+	assert.Nil(
+		t,
+		entity.ChargeAllocations[1].AdditionalChargeID,
+		"the caller's allocation is untouched",
+	)
 
 	resolution, err := shipment.ResolveShares(preview, preview.ChargeAllocations)
 	require.NoError(t, err)
 	share := resolution.ShareFor(payer)
 	require.NotNil(t, share)
-	assert.True(t, share.AccessorialAmount.Equal(decimal.NewFromInt(130)), "both charges resolve against the payer")
+	assert.True(
+		t,
+		share.AccessorialAmount.Equal(decimal.NewFromInt(130)),
+		"both charges resolve against the payer",
+	)
 }
