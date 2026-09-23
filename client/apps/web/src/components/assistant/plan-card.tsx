@@ -26,7 +26,7 @@ import {
 } from "./plan-state";
 import { HoldLine } from "./proposal-card";
 import { presentProposal } from "./proposal-presenters";
-import { DeskThinking } from "./voice/desk-thinking";
+import { WorkingDot } from "./voice/working-dot";
 
 /**
  * Several writes the assistant is asking for as one.
@@ -188,7 +188,11 @@ function StepIcon({ state }: { state: PlanStepState }) {
     case "done":
       return <CircleCheckIcon key={state} className={cn(className, "text-success")} />;
     case "running":
-      return <DeskThinking working pose="busy" still decorative className="-mx-0.75 mt-px h-3.5" />;
+      return (
+        <span className="flex size-3.5 shrink-0 items-center justify-center pt-px">
+          <WorkingDot working still />
+        </span>
+      );
     case "simulated":
       return <FlaskConicalIcon key={state} className={cn(className, "text-foreground-muted")} />;
     default:
