@@ -124,6 +124,18 @@ func (h *providerHealth) Observe(id pulid.ID, err error) {
 	}
 }
 
+// observe hands an attempt to the breaker, unless its caller had gone by the
+// time it returned. An attempt cut short by its own caller says nothing about
+// the provider, whatever the severed connection surfaced as: a reset or a
+// deadline it did not set would otherwise rest a provider that was answering.
+func (s *Service) observe(ctx context.Context, provider *aiprovider.Provider, err error) {
+	if err != nil && ctx.Err() != nil {
+		return
+	}
+
+	s.health.Observe(provider.ID, err)
+}
+
 // unavailability reports a failure that says the provider, not the request,
 // is the problem. A cancellation is the person's doing and counts for
 // nothing.

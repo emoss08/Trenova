@@ -372,15 +372,15 @@ func (s *Service) StreamCompletion(
 		}
 	})
 	cancelStream()
-	// A loop in the thinking cancels the stream, so the call returns the
-	// cancellation rather than a completion. The turn itself is fine and is
-	// asked again, exactly as for a reply that looped.
-	if thinking.tripped && ctx.Err() == nil {
+	// A loop in the reply or the thinking cancels the stream, so the call
+	// returns the cancellation rather than a completion. The turn itself is
+	// fine and is asked again.
+	if (guard.tripped || thinking.tripped) && ctx.Err() == nil {
 		if completion == nil {
 			completion = &serviceports.ChatCompletionResult{}
 		}
 
-		return ModelReply{Completion: completion, Looped: true, InReasoning: true}, nil
+		return ModelReply{Completion: completion, Looped: true, InReasoning: thinking.tripped}, nil
 	}
 	if err != nil {
 		return ModelReply{Completion: completion}, err

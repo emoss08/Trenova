@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -31,6 +32,12 @@ func (s *Service) CompleteChat(
 }
 
 // StreamChat is CompleteChat with the text handed to sink as it arrives.
+//
+// A reply whose context ends partway returns an error wrapping the context's
+// own, so a person who pressed Stop is recorded as having stopped the turn
+// rather than as having read a finished one. The result is still returned
+// alongside when text had arrived, marked Truncated, holding what the reader
+// was shown.
 func (s *Service) StreamChat(
 	ctx context.Context,
 	req *serviceports.ChatCompletionRequest,
@@ -90,11 +97,20 @@ func (s *Service) runChat(
 	queue := append(make([]*aiprovider.Provider, 0, len(usable)+maxMidReplyRetries), usable...)
 	midReplyRetries := 0
 	for idx := 0; idx < len(queue); idx++ {
+		// A person who pressed Stop is not answered by the next provider
+		// either. Every further attempt would fail at once on the dead
+		// context, and each would be a failure charged to a provider that
+		// did nothing wrong.
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
 		provider := queue[idx]
 		started := time.Now()
-		result, emitted, attemptErr := s.attemptChat(ctx, provider, req, sink)
+		result, streamed, attemptErr := s.attemptChat(ctx, provider, req, sink)
 		latency := time.Since(started)
-		s.health.Observe(provider.ID, attemptErr)
+		attemptErr = stopped(ctx, attemptErr)
+		s.observe(ctx, provider, attemptErr)
 		s.record(ctx, usageAttempt{
 			provider:    provider,
 			task:        aiprovider.TaskAssistantChat,
@@ -103,15 +119,22 @@ func (s *Service) runChat(
 			tenant:      req.TenantInfo,
 			latency:     latency,
 			streamed:    sink != nil,
-			outcome:     chatOutcome(result),
+			outcome:     chatOutcome(provider, result, streamed, attemptErr),
 			err:         attemptErr,
 		})
 		if attemptErr == nil {
 			result.LatencyMs = latency.Milliseconds()
 			result.CostUSD = provider.CostFor(result.InputTokens, result.OutputTokens)
-		}
-		if attemptErr == nil {
+
 			return result, nil
+		}
+
+		// A stopped reply is an error, never a finished one: the turn is
+		// recorded as Stopped only when the cancellation reaches it. The
+		// words that had arrived still travel with it, for a caller that
+		// keeps what the reader was shown.
+		if ctx.Err() != nil {
+			return partialReply(provider, streamed.text, attemptErr), attemptErr
 		}
 
 		if errors.Is(attemptErr, errRefused) {
@@ -121,10 +144,9 @@ func (s *Service) runChat(
 		// A provider that died partway through a reply gets replaced, not
 		// spliced: the reader is told the reply is starting over and the words
 		// that arrived are discarded, because half an answer followed by a
-		// second model's whole one reads as neither. The retries are bounded,
-		// and a person who pressed Stop is not retried at all.
-		if emitted != "" {
-			if ctx.Err() == nil && midReplyRetries < maxMidReplyRetries {
+		// second model's whole one reads as neither. The retries are bounded.
+		if emitted := streamed.text; emitted != "" {
+			if midReplyRetries < maxMidReplyRetries {
 				midReplyRetries++
 				if idx == len(queue)-1 && modeladapter.IsRetryable(attemptErr) {
 					queue = append(queue, provider)
@@ -161,13 +183,7 @@ func (s *Service) runChat(
 				zap.Error(attemptErr),
 			)
 
-			return &serviceports.ChatCompletionResult{
-				Text:            emitted,
-				ModelIdentifier: modeladapter.ServedModel(attemptErr, provider.Model),
-				ProviderID:      provider.ID,
-				ProviderKind:    provider.Kind,
-				Truncated:       true,
-			}, nil
+			return partialReply(provider, emitted, attemptErr), nil
 		}
 
 		lastErr = attemptErr
@@ -180,22 +196,34 @@ func (s *Service) runChat(
 	return nil, fmt.Errorf("every configured chat provider failed: %w", lastErr)
 }
 
-// attemptChat runs the turn on one provider. The returned flag reports whether
-// any text reached the sink, which decides whether a failure may fall through.
+// chatStream is what one attempt put in front of the reader before it ended.
+// A failed attempt has no result, but it may well have had these, and they
+// decide both whether the failure may fall through and what it cost.
+type chatStream struct {
+	// text is the reply that reached the sink.
+	text string
+	// reasoningRunes is how much thinking the provider streamed.
+	reasoningRunes int
+}
+
+// attemptChat runs the turn on one provider. The returned stream says what
+// reached the reader, which decides whether a failure may fall through.
 func (s *Service) attemptChat(
 	ctx context.Context,
 	provider *aiprovider.Provider,
 	req *serviceports.ChatCompletionRequest,
 	sink serviceports.ChatStreamSink,
-) (*serviceports.ChatCompletionResult, string, error) {
+) (*serviceports.ChatCompletionResult, chatStream, error) {
+	var streamed chatStream
+
 	adapter, err := s.adapters.Get(provider.Kind)
 	if err != nil {
-		return nil, "", err
+		return nil, streamed, err
 	}
 
 	apiKey, err := s.resolveAPIKey(provider)
 	if err != nil {
-		return nil, "", err
+		return nil, streamed, err
 	}
 
 	maxTokens := req.MaxTokens
@@ -221,14 +249,17 @@ func (s *Service) attemptChat(
 		},
 	}
 
-	if req.ReasoningSink != nil {
-		call.Reasoning = modeladapter.StreamSink(req.ReasoningSink)
+	// The thinking is counted whether or not anyone is shown it: a stream
+	// cut off before its usage frame reports no tokens, and thinking is
+	// billed as output all the same.
+	call.Reasoning = func(delta string) {
+		streamed.reasoningRunes += utf8.RuneCountInString(delta)
+		if req.ReasoningSink != nil {
+			req.ReasoningSink(delta)
+		}
 	}
 
-	var (
-		resp    *modeladapter.Response
-		emitted string
-	)
+	var resp *modeladapter.Response
 	// A busy provider being asked again is told to the reader, who is
 	// otherwise watching nothing happen for the length of the wait.
 	busy := func(attempt int, wait time.Duration, cause error) {
@@ -245,26 +276,26 @@ func (s *Service) attemptChat(
 	}
 
 	if streamer, ok := adapter.(modeladapter.Streamer); ok && sink != nil {
-		resp, emitted, err = s.executeStreamWithRetry(ctx, streamer, call, sink, busy)
+		resp, streamed.text, err = s.executeStreamWithRetry(ctx, streamer, call, sink, busy)
 	} else {
 		resp, err = s.executeWithRetryNoticed(ctx, adapter, call, busy)
 		if err == nil && sink != nil && resp.Text != "" {
 			sink(resp.Text)
-			emitted = resp.Text
+			streamed.text = resp.Text
 		}
 	}
 	if err != nil {
-		return nil, emitted, err
+		return nil, streamed, err
 	}
 
 	if resp.Refused {
-		return nil, emitted, errRefused
+		return nil, streamed, errRefused
 	}
 
 	// A turn with neither text nor a tool call is a dead end rather than an
 	// answer, so it counts as a failure and the next provider gets a try.
 	if resp.Text == "" && len(resp.ToolCalls) == 0 {
-		return nil, emitted, errors.New("provider returned neither content nor a tool call")
+		return nil, streamed, errors.New("provider returned neither content nor a tool call")
 	}
 
 	return &serviceports.ChatCompletionResult{
@@ -278,7 +309,28 @@ func (s *Service) attemptChat(
 		Truncated:       resp.Truncated,
 		Reasoning:       resp.Reasoning,
 		ReasoningTokens: resp.ReasoningTokens,
-	}, emitted, nil
+	}, streamed, nil
+}
+
+// partialReply is the reply that arrived before a provider stopped writing,
+// marked as cut off. It is nil when nothing arrived, since an empty reply
+// marked as truncated would read as an answer that said nothing.
+func partialReply(
+	provider *aiprovider.Provider,
+	text string,
+	cause error,
+) *serviceports.ChatCompletionResult {
+	if text == "" {
+		return nil
+	}
+
+	return &serviceports.ChatCompletionResult{
+		Text:            text,
+		ModelIdentifier: modeladapter.ServedModel(cause, provider.Model),
+		ProviderID:      provider.ID,
+		ProviderKind:    provider.Kind,
+		Truncated:       true,
+	}
 }
 
 // executeStreamWithRetry retries a stream only while nothing has reached the
@@ -413,11 +465,17 @@ func preferFirst(providers []*aiprovider.Provider, preferred pulid.ID) []*aiprov
 	return providers
 }
 
-// chatOutcome is what the usage record reads off a chat result: nil for a
-// failed attempt, whose tokens the provider never reported.
-func chatOutcome(result *serviceports.ChatCompletionResult) *runOutcome {
+// chatOutcome is what the usage record reads off a chat attempt. A finished
+// attempt carries the provider's own count; one that failed or was stopped
+// carries what was counted from its stream.
+func chatOutcome(
+	provider *aiprovider.Provider,
+	result *serviceports.ChatCompletionResult,
+	streamed chatStream,
+	cause error,
+) *runOutcome {
 	if result == nil {
-		return nil
+		return streamedOutcome(provider, streamed, cause)
 	}
 
 	return &runOutcome{

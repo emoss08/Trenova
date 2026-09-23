@@ -241,10 +241,17 @@ func (s *Service) runAmong(
 ) (*runOutcome, error) {
 	var lastErr error
 	for _, provider := range usable {
+		// A caller that has gone is not answered by the next provider: the
+		// attempt would fail at once and be charged to that provider.
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
 		started := time.Now()
 		outcome, attemptErr := s.attempt(ctx, provider, req)
 		latency := time.Since(started)
-		s.health.Observe(provider.ID, attemptErr)
+		attemptErr = stopped(ctx, attemptErr)
+		s.observe(ctx, provider, attemptErr)
 		s.record(ctx, usageAttempt{
 			provider:    provider,
 			task:        req.Task,
@@ -260,6 +267,10 @@ func (s *Service) runAmong(
 			outcome.CostUSD = provider.CostFor(outcome.InputTokens, outcome.OutputTokens)
 
 			return outcome, nil
+		}
+
+		if ctx.Err() != nil {
+			return nil, attemptErr
 		}
 
 		// A refusal is the model's decision, not a fault in the endpoint. Asking
@@ -282,6 +293,21 @@ func (s *Service) runAmong(
 }
 
 var errRefused = errors.New("model declined the request")
+
+// stopped makes the failure of an attempt whose caller has gone read as that
+// caller's own cancellation. A severed stream surfaces as whatever the
+// connection happened to report — a reset, an EOF, a closed body — and a Stop
+// that reads as any of those is recorded as a failed turn and charged to the
+// provider. Wrapping the context's error is what lets everything downstream
+// see it as a Stop. An error while the caller is still there is returned as is.
+func stopped(ctx context.Context, err error) error {
+	ctxErr := ctx.Err()
+	if err == nil || ctxErr == nil || errors.Is(err, ctxErr) {
+		return err
+	}
+
+	return fmt.Errorf("%w: %w", ctxErr, err)
+}
 
 func (s *Service) attempt(
 	ctx context.Context,
