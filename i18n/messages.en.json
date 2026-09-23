@@ -1584,6 +1584,15 @@
       "service/reporting"
     ]
   },
+  "A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A canceled carrier assignment must record its reason": {
     "sites": 1,
     "scope": [
@@ -71256,6 +71265,15 @@
       "routes/admin"
     ]
   },
+  "Getting started…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Getting worse": {
     "sites": 1,
     "scope": [
@@ -122384,6 +122402,15 @@
       "routes/fleet-safety"
     ]
   },
+  "Pulling up a chair…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Pulls the carrier's profile from {0}, re-evaluates every rule and records what changed.": {
     "sites": 1,
     "scope": [
@@ -122712,6 +122739,15 @@
     ]
   },
   "Putting a result together…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Putting it into words…": {
     "sites": 1,
     "scope": [
       "ts"
@@ -167061,8 +167097,17 @@
       "apps/web/components"
     ]
   },
+  "Thinking it through…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Thinking…": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -187383,6 +187428,15 @@
       "apps/web/components"
     ]
   },
+  "Writing…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Written by {0}": {
     "sites": 1,
     "scope": [
@@ -198477,6 +198531,15 @@
     ],
     "areas": [
       "routes/fuel-feed-run"
+    ]
+  },
+  "{0} running": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} running between them": {
