@@ -37,6 +37,8 @@ import {
   type WriteLine,
 } from "./delegation";
 import { ToolActivity } from "./tool-activity";
+import { FeedbackControl } from "@/components/ai-feedback/feedback-control";
+import { delegatedAnswerId } from "@/components/ai-feedback/feedback-targets";
 import { ArtifactKindIcon } from "./voice/artifact-chrome";
 import { WorkingDot } from "./voice/working-dot";
 
@@ -92,6 +94,8 @@ export function DelegateStep({
 
   const expandable = handOffHasDetail(view);
   const settled = !running;
+  const answerId =
+    settled && step.delegate?.kind === "saved" ? delegatedAnswerId(step.delegate.messages) : null;
 
   return (
     <li className={cn("min-w-0", live && "animate-land")}>
@@ -145,7 +149,7 @@ export function DelegateStep({
 
         {expandable && (
           <CollapsibleContent className="h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 ease-settle data-ending-style:h-0 data-starting-style:h-0">
-            <HandOffDetails view={view} running={running} />
+            <HandOffDetails view={view} running={running} answerId={answerId} />
           </CollapsibleContent>
         )}
       </Collapsible>
@@ -351,7 +355,16 @@ function PublishedRow({ document }: { document: DelegateDocument }) {
  * it, every step it took, and its answer. Its steps open onto their own
  * details the same way the turn's do.
  */
-function HandOffDetails({ view, running }: { view: DelegateView; running: boolean }) {
+function HandOffDetails({
+  view,
+  running,
+  answerId,
+}: {
+  view: DelegateView;
+  running: boolean;
+  /** The saved message holding the other agent's answer, which the person may rate. */
+  answerId: string | null;
+}) {
   const t = useT();
 
   return (
@@ -372,7 +385,15 @@ function HandOffDetails({ view, running }: { view: DelegateView; running: boolea
       )}
       {view.reply.trim() !== "" && (
         <section className="flex min-w-0 flex-col gap-1">
-          <h4 className="text-foreground-subtle font-medium">{t("Its answer")}</h4>
+          <div className="flex min-w-0 items-center gap-2">
+            <h4 className="text-foreground-subtle font-medium">{t("Its answer")}</h4>
+            {answerId !== null && (
+              <FeedbackControl
+                target={{ targetType: "DelegatedAnswer", targetId: answerId }}
+                className="ml-auto"
+              />
+            )}
+          </div>
           <AiMarkdown
             content={view.reply}
             className="text-foreground-muted text-xs leading-relaxed"

@@ -1,11 +1,17 @@
+import { getFragmentData } from "@trenova/graphql/fragment-data";
 import {
   AgentMemoryCountDocument,
   AgentMemoryTableDocument,
+  AgentMemoryTableRowFieldsFragmentDoc,
+  ApproveAgentMemorySuggestionDocument,
   CreateAgentMemoryDocument,
+  DismissAgentMemorySuggestionDocument,
   SetAgentMemoryStatusDocument,
   UpdateAgentMemoryDocument,
   type AgentMemoryInput,
+  type AgentMemoryKind,
   type AgentMemoryStatus,
+  type AgentMemoryTableRowFieldsFragment,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
@@ -65,4 +71,57 @@ export async function fetchActiveAgentMemoryCount(options?: {
   });
 
   return data.agentMemories.totalCount ?? 0;
+}
+
+export type AgentMemorySuggestion = AgentMemoryTableRowFieldsFragment;
+
+export const AGENT_MEMORY_SUGGESTIONS_KEY = "agent-memory-suggestions";
+
+/** The most suggestions the review list reads at once. */
+const SUGGESTION_PAGE_SIZE = 50;
+
+/** Memories drawn from feedback that wait for an administrator, newest first. */
+export async function fetchAgentMemorySuggestions(options?: {
+  signal?: AbortSignal;
+}): Promise<AgentMemorySuggestion[]> {
+  const data = await requestGraphQL({
+    document: AgentMemoryTableDocument,
+    operationName: "AgentMemoryTable",
+    variables: {
+      input: {
+        first: SUGGESTION_PAGE_SIZE,
+        fieldFilters: [{ field: "status", operator: "eq", value: "Suggested" }],
+        sort: [{ field: "createdAt", direction: "desc" }],
+      },
+      includeTotalCount: false,
+    },
+    signal: options?.signal,
+  });
+
+  return data.agentMemories.edges.map((edge) =>
+    getFragmentData(AgentMemoryTableRowFieldsFragmentDoc, edge.node),
+  );
+}
+
+export async function approveAgentMemorySuggestion(
+  id: string,
+  input: { content: string; kind?: AgentMemoryKind; version: number },
+) {
+  const data = await requestGraphQL({
+    document: ApproveAgentMemorySuggestionDocument,
+    operationName: "ApproveAgentMemorySuggestion",
+    variables: { id, input },
+  });
+
+  return getFragmentData(AgentMemoryTableRowFieldsFragmentDoc, data.approveAgentMemorySuggestion);
+}
+
+export async function dismissAgentMemorySuggestion(id: string, version: number) {
+  const data = await requestGraphQL({
+    document: DismissAgentMemorySuggestionDocument,
+    operationName: "DismissAgentMemorySuggestion",
+    variables: { id, version },
+  });
+
+  return getFragmentData(AgentMemoryTableRowFieldsFragmentDoc, data.dismissAgentMemorySuggestion);
 }

@@ -64,6 +64,20 @@ type MemoryContextRequest struct {
 	Limit      int
 }
 
+type ApproveAgentMemorySuggestionRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+	Kind       agent.MemoryKind
+	Content    string
+	Version    int64
+}
+
+type DismissAgentMemorySuggestionRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+	Version    int64
+}
+
 type AgentMemoryService interface {
 	Remember(ctx context.Context, req *RememberRequest, actor *RequestActor) (*agent.Memory, error)
 	Update(
@@ -91,5 +105,15 @@ type AgentMemoryService interface {
 		ctx context.Context,
 		proposal *agent.AgentProposal,
 		decision *agent.AgentDecision,
+	) (*agent.Memory, error)
+	ApproveSuggestion(
+		ctx context.Context,
+		req *ApproveAgentMemorySuggestionRequest,
+		actor *RequestActor,
+	) (*agent.Memory, error)
+	DismissSuggestion(
+		ctx context.Context,
+		req DismissAgentMemorySuggestionRequest,
+		actor *RequestActor,
 	) (*agent.Memory, error)
 }

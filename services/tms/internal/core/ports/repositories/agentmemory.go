@@ -73,6 +73,25 @@ type MarkAgentMemoriesUsedRequest struct {
 	At         int64
 }
 
+type ListAgentMemorySuggestionContextRequest struct {
+	TenantInfo        pagination.TenantInfo
+	AgentDefinitionID pulid.ID
+	Now               int64
+	DismissedSince    int64
+	Limit             int
+}
+
+type ResolveAgentMemorySuggestionRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+	Status     agent.MemoryStatus
+	Kind       agent.MemoryKind
+	Content    string
+	ByUserID   pulid.ID
+	At         int64
+	Version    int64
+}
+
 type AgentMemoryRepository interface {
 	Create(ctx context.Context, entity *agent.Memory) (*agent.Memory, error)
 	Update(ctx context.Context, entity *agent.Memory) (*agent.Memory, error)
@@ -86,4 +105,12 @@ type AgentMemoryRepository interface {
 	FindActive(ctx context.Context, req FindActiveAgentMemoryRequest) (*agent.Memory, error)
 	SetStatus(ctx context.Context, req SetAgentMemoryStatusRequest) (*agent.Memory, error)
 	MarkUsed(ctx context.Context, req MarkAgentMemoriesUsedRequest) error
+	ListSuggestionContext(
+		ctx context.Context,
+		req ListAgentMemorySuggestionContextRequest,
+	) ([]*agent.Memory, error)
+	ResolveSuggestion(
+		ctx context.Context,
+		req ResolveAgentMemorySuggestionRequest,
+	) (*agent.Memory, error)
 }

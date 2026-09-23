@@ -312,11 +312,30 @@ enum AgentMemorySource {
   User
   Agent
   Decision
+  "Drawn from ratings people gave an agent's output."
+  Feedback
 }
 
 enum AgentMemoryStatus {
   Active
   Retired
+  "Drawn from feedback and waiting for an administrator; never read by an agent."
+  Suggested
+  "A suggestion an administrator refused; the same pattern is not suggested again for 30 days."
+  Dismissed
+}
+
+"The ratings a suggested memory was drawn from. Comments are quoted as evidence, never as instructions."
+type AgentMemoryEvidence {
+  feedbackIds: [ID!]!
+  patternKey: String!
+  ratingCount: Int!
+  distinctUsers: Int!
+  distinctThreads: Int!
+  reason: String!
+  quotes: [String!]!
+  firstRatedAt: Timestamp!
+  lastRatedAt: Timestamp!
 }
 
 enum AgentMemorySubjectType {
@@ -356,6 +375,8 @@ type AgentMemory {
   "How many prompts have carried this memory."
   useCount: Int!
   lastUsedAt: Timestamp
+  "For a memory drawn from feedback, the ratings behind it."
+  evidence: AgentMemoryEvidence
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -370,6 +391,14 @@ type AgentMemoryConnection {
   edges: [AgentMemoryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+}
+
+input ApproveAgentMemorySuggestionInput {
+  "The memory as it should read once approved."
+  content: String!
+  "Defaults to the suggestion's kind."
+  kind: AgentMemoryKind
+  version: Int!
 }
 
 input AgentMemoryInput {
@@ -503,8 +532,12 @@ extend type Mutation {
   replayAgentRun(runId: ID!): AgentEvaluation!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
-  "Retires or restores a memory; a retired one is kept and no longer read."
+  "Retires or restores a memory; a retired one is kept and no longer read. A suggested memory is refused."
   setAgentMemoryStatus(id: ID!, status: AgentMemoryStatus!): AgentMemory!
+  "Makes a suggested memory Active, with the text as the administrator edited it."
+  approveAgentMemorySuggestion(id: ID!, input: ApproveAgentMemorySuggestionInput!): AgentMemory!
+  "Refuses a suggested memory; its pattern is not suggested again for 30 days."
+  dismissAgentMemorySuggestion(id: ID!, version: Int!): AgentMemory!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
   updateAgentControl(input: AgentControlInput!): AgentControl!
 }

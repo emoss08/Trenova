@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -113,6 +114,7 @@ func (r *repository) Upsert(
 		existing.AuditRetentionPeriod = entity.AuditRetentionPeriod
 		existing.EDIInboundFileRetentionPeriod = entity.EDIInboundFileRetentionPeriod
 		existing.EDIMessageRetentionPeriod = entity.EDIMessageRetentionPeriod
+		existing.AIFeedbackRetentionPeriod = entity.AIFeedbackRetentionPeriod
 		return r.Update(ctx, existing)
 	}
 	if !dberror.IsNotFoundError(err) {
@@ -126,6 +128,7 @@ func (r *repository) Upsert(
 		Set("audit_retention_period = EXCLUDED.audit_retention_period").
 		Set("edi_inbound_file_retention_period = EXCLUDED.edi_inbound_file_retention_period").
 		Set("edi_message_retention_period = EXCLUDED.edi_message_retention_period").
+		Set(buncolgen.DataRetentionColumns.AIFeedbackRetentionPeriod.SetExcluded()).
 		Returning("*").
 		Exec(ctx); err != nil {
 		log.Error("failed to upsert data retention", zap.Error(err))
