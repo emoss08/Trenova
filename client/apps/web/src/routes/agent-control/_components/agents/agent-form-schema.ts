@@ -68,27 +68,11 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
       });
     }
 
+    // A limit or tier left behind by a tool the agent no longer holds has no
+    // box to clear it from, so it is not an error: the save drops it.
     const selected = new Set(values.toolNames);
-    for (const [tool, limit] of Object.entries(values.toolDailyLimits)) {
-      if (!selected.has(tool) && hasLimit(limit)) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["toolDailyLimits"],
-          message: `${tool} has a daily limit but is not one of this agent's tools`,
-        });
-        break;
-      }
-    }
     for (const [tool, tier] of Object.entries(values.toolTiers)) {
-      if (!selected.has(tool)) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["toolTiers"],
-          message: `${tool} has a tier but is not one of this agent's tools`,
-        });
-        break;
-      }
-      if (!tierWithin(tier, values.autonomyCeiling)) {
+      if (selected.has(tool) && !tierWithin(tier, values.autonomyCeiling)) {
         ctx.addIssue({
           code: "custom",
           path: ["toolTiers"],
