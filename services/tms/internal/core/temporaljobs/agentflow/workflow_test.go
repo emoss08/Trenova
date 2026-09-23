@@ -435,7 +435,8 @@ func TestToolActivityRefusesWhatIsNotATool(t *testing.T) {
 			})
 
 			require.True(t, h.env.IsWorkflowCompleted())
-			appErr := applicationError(t, h.env.GetWorkflowError())
+			var appErr *temporal.ApplicationError
+			require.ErrorAs(t, h.env.GetWorkflowError(), &appErr)
 			assert.Equal(t, tt.errType, appErr.Type())
 			assert.True(t, appErr.NonRetryable(), "it is refused once, not retried")
 			assert.Zero(t, move.Calls)
