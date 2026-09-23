@@ -293,6 +293,7 @@ var MessageColumns = struct {
 	Kind              Column // "kind" → qualified: "amsg.kind"
 	AgentDefinitionID Column // "agent_definition_id" → qualified: "amsg.agent_definition_id"
 	DelegateCallID    Column // "delegate_call_id" → qualified: "amsg.delegate_call_id"
+	DelegateReport    Column // "delegate_report" → qualified: "amsg.delegate_report"
 	Content           Column // "content" → qualified: "amsg.content"
 	ToolCalls         Column // "tool_calls" → qualified: "amsg.tool_calls"
 	ToolCallID        Column // "tool_call_id" → qualified: "amsg.tool_call_id"
@@ -324,6 +325,7 @@ var MessageColumns = struct {
 	Kind:              NewColumn("kind", "amsg"),
 	AgentDefinitionID: NewColumn("agent_definition_id", "amsg"),
 	DelegateCallID:    NewColumn("delegate_call_id", "amsg"),
+	DelegateReport:    NewColumn("delegate_report", "amsg"),
 	Content:           NewColumn("content", "amsg"),
 	ToolCalls:         NewColumn("tool_calls", "amsg"),
 	ToolCallID:        NewColumn("tool_call_id", "amsg"),
@@ -361,6 +363,7 @@ var MessageFieldMap = map[string]string{
 	"kind":           "kind",
 	"agentId":        "agent_definition_id",
 	"delegateCallId": "delegate_call_id",
+	"delegateReport": "delegate_report",
 	"content":        "content",
 	"toolCalls":      "tool_calls",
 	"toolCallId":     "tool_call_id",
@@ -396,6 +399,7 @@ var MessageInsertableColumns = []string{
 	"kind",
 	"agent_definition_id",
 	"delegate_call_id",
+	"delegate_report",
 	"content",
 	"tool_calls",
 	"tool_call_id",
@@ -489,6 +493,7 @@ var MessageFilter = struct {
 	Kind              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
 	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentId" → DB: "agent_definition_id"
 	DelegateCallID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateCallId" → DB: "delegate_call_id"
+	DelegateReport    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateReport" → DB: "delegate_report"
 	Content           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "content" → DB: "content"
 	ToolCalls         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCalls" → DB: "tool_calls"
 	ToolCallID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCallId" → DB: "tool_call_id"
@@ -537,6 +542,9 @@ var MessageFilter = struct {
 	},
 	DelegateCallID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("delegateCallId", op, value)
+	},
+	DelegateReport: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("delegateReport", op, value)
 	},
 	Content: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("content", op, value)

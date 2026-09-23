@@ -6,6 +6,7 @@ import (
 	"maps"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolsimulation"
@@ -24,6 +25,9 @@ type toolOutcome struct {
 	// written once the observer says what it kept.
 	publishes bool
 	summary   string
+	// delegateReport is the bounded account of a delegate_task call, kept on
+	// the call's result message.
+	delegateReport *conversation.DelegateReport
 }
 
 func failedOutcome(format string, args ...any) toolOutcome {

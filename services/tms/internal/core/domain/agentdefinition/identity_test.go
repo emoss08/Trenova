@@ -41,6 +41,22 @@ func TestResolvedIcon_FallsBackToTheTemplate(t *testing.T) {
 	require.Equal(t, agentdefinition.IconBot, bare.ResolvedIcon())
 }
 
+func TestChosenIcon_IsEmptyForAnAgentWithNoIconOfItsOwn(t *testing.T) {
+	t.Parallel()
+
+	chosen := &agentdefinition.Definition{Icon: agentdefinition.IconShield}
+	require.Equal(t, agentdefinition.IconShield, chosen.ChosenIcon())
+
+	fromTemplate := &agentdefinition.Definition{Template: agentdefinition.TemplateBillingException}
+	require.Equal(t, agentdefinition.IconReceipt, fromTemplate.ChosenIcon())
+
+	unknown := &agentdefinition.Definition{Icon: "not-an-icon"}
+	require.Empty(t, unknown.ChosenIcon())
+
+	bare := &agentdefinition.Definition{}
+	require.Empty(t, bare.ChosenIcon(), "a reader draws its initials, not the generic icon")
+}
+
 func TestResolvedAccent_IsStableAndSpread(t *testing.T) {
 	t.Parallel()
 

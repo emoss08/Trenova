@@ -99,7 +99,23 @@ func TestRenderTranscript_NamesADeletedDelegatePlainly(t *testing.T) {
 type delegateDefinitions struct {
 	repositories.AgentDefinitionRepository
 
-	byID map[pulid.ID]*agentdefinition.Definition
+	byID   map[pulid.ID]*agentdefinition.Definition
+	listed int
+}
+
+func (s *delegateDefinitions) ListByIDs(
+	_ context.Context,
+	req repositories.ListAgentDefinitionsByIDsRequest,
+) ([]*agentdefinition.Definition, error) {
+	s.listed++
+	found := make([]*agentdefinition.Definition, 0, len(req.IDs))
+	for _, id := range req.IDs {
+		if definition, ok := s.byID[id]; ok {
+			found = append(found, definition)
+		}
+	}
+
+	return found, nil
 }
 
 func (s *delegateDefinitions) GetByID(
@@ -252,4 +268,80 @@ func TestOpenDelegate_DeclinesWhatThePersonOrTheAllowlistNoLongerAllows(t *testi
 			assert.Contains(t, refusal.Reason, tt.reason)
 		})
 	}
+}
+
+// A delegate's steps and the account of its task are served with the agent's
+// name and mark, read for the whole page in one query. An agent with no icon
+// of its own is served none, so the reader draws its initials; one deleted
+// since keeps what the turn recorded.
+func TestNameDelegatedSteps_ServesTheDelegatesMarkInOneQuery(t *testing.T) {
+	t.Parallel()
+
+	f := newDelegateFixture()
+	f.delegate.Icon = agentdefinition.IconReceipt
+	f.delegate.Accent = agentdefinition.AccentTeal
+	plain := &agentdefinition.Definition{ID: pulid.MustNew("agdef_"), Name: "Plain Agent"}
+	deleted := pulid.MustNew("agdef_")
+	definitions := f.svc.definitions.(*delegateDefinitions)
+	definitions.byID[plain.ID] = plain
+
+	messages := []conversation.Message{
+		{Role: conversation.RoleUser, Content: "Build it."},
+		{
+			Role:              conversation.RoleUser,
+			Kind:              conversation.MessageKindDelegated,
+			AgentDefinitionID: f.delegate.ID,
+			DelegateCallID:    "call_1",
+		},
+		{
+			Role:              conversation.RoleAssistant,
+			Kind:              conversation.MessageKindDelegated,
+			AgentDefinitionID: plain.ID,
+			DelegateCallID:    "call_2",
+		},
+		{
+			Role:       conversation.RoleTool,
+			ToolName:   "delegate_task",
+			ToolCallID: "call_1",
+			DelegateReport: &conversation.DelegateReport{
+				DelegateCallID: "call_1",
+				AgentID:        f.delegate.ID,
+				AgentName:      "Report Builder",
+				Status:         conversation.DelegateStatusCompleted,
+			},
+		},
+		{
+			Role:       conversation.RoleTool,
+			ToolName:   "delegate_task",
+			ToolCallID: "call_3",
+			DelegateReport: &conversation.DelegateReport{
+				DelegateCallID: "call_3",
+				AgentID:        deleted,
+				AgentName:      "Gone Agent",
+				Icon:           agentdefinition.IconTruck,
+				Accent:         agentdefinition.AccentRose,
+				Status:         conversation.DelegateStatusCompleted,
+			},
+		},
+	}
+
+	f.svc.nameDelegatedSteps(t.Context(), f.request.Actor.TenantInfo(), messages)
+
+	assert.Equal(t, 1, definitions.listed, "one query for the whole page")
+
+	assert.Empty(t, messages[0].AgentName, "the conversation's own messages are left alone")
+	assert.Equal(t, "Report Builder", messages[1].AgentName)
+	assert.Equal(t, agentdefinition.IconReceipt, messages[1].AgentIcon)
+	assert.Equal(t, agentdefinition.AccentTeal, messages[1].AgentAccent)
+
+	assert.Equal(t, "Plain Agent", messages[2].AgentName)
+	assert.Empty(t, messages[2].AgentIcon, "no icon of its own: the reader draws its initials")
+	assert.Equal(t, plain.ResolvedAccent(), messages[2].AgentAccent)
+
+	assert.Equal(t, agentdefinition.IconReceipt, messages[3].DelegateReport.Icon)
+	assert.Equal(t, agentdefinition.AccentTeal, messages[3].DelegateReport.Accent)
+
+	assert.Equal(t, agentdefinition.IconTruck, messages[4].DelegateReport.Icon,
+		"a deleted agent keeps the mark the turn recorded")
+	assert.Equal(t, agentdefinition.AccentRose, messages[4].DelegateReport.Accent)
 }

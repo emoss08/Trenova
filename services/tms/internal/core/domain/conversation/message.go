@@ -40,10 +40,19 @@ type Message struct {
 	// AgentDefinitionID and DelegateCallID mark a step another agent took on
 	// a task this conversation's agent handed it: which agent, and the
 	// delegate_task call it answers. Both are empty on the conversation's own
-	// messages. AgentName is the agent's name as the thread is served.
+	// messages. AgentName, AgentIcon and AgentAccent are the agent's name
+	// and mark as the thread is served.
 	AgentDefinitionID pulid.ID `json:"agentId,omitempty"        bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
 	DelegateCallID    string   `json:"delegateCallId,omitempty" bun:"delegate_call_id,type:VARCHAR(200),nullzero"`
 	AgentName         string   `json:"agentName,omitempty"      bun:"-"`
+	AgentIcon         string   `json:"agentIcon,omitempty"      bun:"-"`
+	AgentAccent       string   `json:"agentAccent,omitempty"    bun:"-"`
+
+	// DelegateReport is the account of the task a delegate_task call handed
+	// out, kept on that call's result: how it ended, what the other agent
+	// answered, made, left waiting and published. Nil on every other message
+	// and on a call refused before anybody was asked.
+	DelegateReport *DelegateReport `json:"delegateReport,omitempty" bun:"delegate_report,type:JSONB,nullzero"`
 
 	Content string `json:"content" bun:"content,type:TEXT,nullzero"`
 

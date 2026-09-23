@@ -309,6 +309,8 @@ func delegateReport(
 		DelegateCallID: callID,
 		AgentID:        delegate.ID,
 		AgentName:      delegate.Name,
+		Icon:           delegate.Icon,
+		Accent:         delegate.Accent,
 		Made:           []serviceports.DelegateWrite{},
 		Awaiting:       []serviceports.DelegateWrite{},
 		Published:      slices.Clone(run.Documents),
@@ -381,11 +383,17 @@ func delegateOutcome(report serviceports.AssistantDelegateFinishedEvent) toolOut
 	outcome := toolOutcome{
 		content: FenceToolResult(delegateTaskName, encoded) + "\n\n" + delegateNote(report),
 		summary: summaryLine(report.AgentName),
+		// The saved account is bounded so the message row stays small; the
+		// model reads the whole account above.
+		delegateReport: report.Bounded(),
 	}
 
 	switch report.Status {
 	case serviceports.DelegateStatusDeclined:
-		return failedOutcome("Tool %q was not run: %s", delegateTaskName, report.Reason)
+		declined := failedOutcome("Tool %q was not run: %s", delegateTaskName, report.Reason)
+		declined.delegateReport = outcome.delegateReport
+
+		return declined
 	case serviceports.DelegateStatusFailed, serviceports.DelegateStatusStopped:
 		outcome.failed = true
 	case serviceports.DelegateStatusCompleted,

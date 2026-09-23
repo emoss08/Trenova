@@ -36,6 +36,49 @@ type ToolExecutionResult struct {
 	// IDs holds each id by the parameter other tools take it as, such as
 	// {"definitionId": "rd_…"}.
 	IDs map[string]string `json:"ids,omitempty"`
+	// Record names the one record the write made or changed, when there is
+	// exactly one, by the record-link registry's entity and its id, so a
+	// reader links to it without guessing from Kind and IDs. Kind, Name and
+	// IDs stay for the model.
+	Record *RecordRef `json:"record,omitempty"`
+}
+
+// RecordRef points at one record the way the app opens it: EntityType is a
+// key of the record-link registry (client/apps/web/src/config/record-links.ts,
+// served as productguide.Default.Record), such as "report".
+type RecordRef struct {
+	EntityType string `json:"entityType"`
+	ID         string `json:"id"`
+}
+
+// Bounded is the reference kept on a result: an entity key of lower-case
+// letters, digits and underscores, as the registry writes them, and an id on
+// one line. A reference that names no entity or no id is nil.
+func (r *RecordRef) Bounded() *RecordRef {
+	if r == nil {
+		return nil
+	}
+
+	entity := strings.TrimSpace(r.EntityType)
+	id := stringutils.OneLine(r.ID, maxResultIDChars)
+	if entity == "" || id == "" || len(entity) > maxResultKeyChars ||
+		!isRecordEntityKey(entity) {
+		return nil
+	}
+
+	return &RecordRef{EntityType: entity, ID: id}
+}
+
+func isRecordEntityKey(value string) bool {
+	for _, char := range value {
+		switch {
+		case char >= 'a' && char <= 'z', char >= '0' && char <= '9', char == '_':
+		default:
+			return false
+		}
+	}
+
+	return true
 }
 
 // Bounded is the result cut to what a proposal keeps: single-line words
@@ -47,9 +90,10 @@ func (r *ToolExecutionResult) Bounded() *ToolExecutionResult {
 	}
 
 	bounded := &ToolExecutionResult{
-		Action: oneLine(r.Action, maxResultWordChars),
-		Kind:   oneLine(r.Kind, maxResultWordChars),
-		Name:   oneLine(r.Name, maxResultNameChars),
+		Action: stringutils.OneLine(r.Action, maxResultWordChars),
+		Kind:   stringutils.OneLine(r.Kind, maxResultWordChars),
+		Name:   stringutils.OneLine(r.Name, maxResultNameChars),
+		Record: r.Record.Bounded(),
 	}
 
 	keys := make([]string, 0, len(r.IDs))
@@ -65,7 +109,7 @@ func (r *ToolExecutionResult) Bounded() *ToolExecutionResult {
 	if len(keys) > 0 {
 		bounded.IDs = make(map[string]string, len(keys))
 		for _, key := range keys {
-			bounded.IDs[oneLine(key, maxResultKeyChars)] = oneLine(
+			bounded.IDs[stringutils.OneLine(key, maxResultKeyChars)] = stringutils.OneLine(
 				r.IDs[key],
 				maxResultIDChars,
 			)
@@ -73,7 +117,7 @@ func (r *ToolExecutionResult) Bounded() *ToolExecutionResult {
 	}
 
 	if bounded.Action == "" && bounded.Kind == "" && bounded.Name == "" &&
-		len(bounded.IDs) == 0 {
+		len(bounded.IDs) == 0 && bounded.Record == nil {
 		return nil
 	}
 
@@ -153,10 +197,4 @@ func (r *ToolExecutionResult) IDNote() string {
 		"It produced %s; use %s, not the proposal's, when you refer to what it made.",
 		references, those,
 	)
-}
-
-// oneLine keeps a reported value to one line of at most limit runes, so
-// nothing a tool reports can break the line a note puts it on.
-func oneLine(value string, limit int) string {
-	return stringutils.TruncateRunes(stringutils.CollapseWhitespace(value), limit)
 }

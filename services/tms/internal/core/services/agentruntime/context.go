@@ -232,8 +232,8 @@ func (b *ContextBuilder) delegates(
 			ID:          delegate.ID,
 			Name:        delegate.Name,
 			Description: delegate.Description,
-			Icon:        delegate.Icon,
-			Accent:      delegate.Accent,
+			Icon:        delegate.ChosenIcon(),
+			Accent:      delegate.ResolvedAccent(),
 			Tools:       b.delegateTools(ctx, req.Actor, delegate),
 		})
 	}

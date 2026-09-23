@@ -396,7 +396,9 @@ before the change:
 
 Agent delegation (`delegate_task`) took no gate: whether a turn holds the tool
 is decided when it opens, in an activity, and kept in `TurnState.Held`, so an
-execution opened before it never takes the new branch. See
+execution opened before it never takes the new branch. Keeping the hand-off's
+account structured on the saved result (`delegateReport`) and `record` on write
+results added only optional data, no command. See
 [agent-delegation.md](agent-delegation.md#versioning).
 
 Runs parked in a day-long decision wait are the slowest to drain; the recorded

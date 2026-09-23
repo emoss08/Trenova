@@ -112,6 +112,18 @@ func IsKnownAccent(name string) bool {
 // ResolvedIcon is what an agent should be drawn with: its own choice, else the
 // icon its starter implies, else the generic one.
 func (d *Definition) ResolvedIcon() string {
+	if icon := d.ChosenIcon(); icon != "" {
+		return icon
+	}
+
+	return IconBot
+}
+
+// ChosenIcon is the agent's own icon, else the one its starter implies, and
+// empty when it has neither. A reader that is handed only an agent's id and
+// name draws an agent with no icon of its own by its initials, which the
+// generic icon would hide, so this is what is served beside the name.
+func (d *Definition) ChosenIcon() string {
 	if icon := strings.TrimSpace(d.Icon); IsKnownIcon(icon) {
 		return icon
 	}
@@ -119,7 +131,7 @@ func (d *Definition) ResolvedIcon() string {
 		return icon
 	}
 
-	return IconBot
+	return ""
 }
 
 // ResolvedAccent is the agent's own accent, else one derived from its identity.

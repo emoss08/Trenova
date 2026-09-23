@@ -391,6 +391,83 @@ export const reasoningTraceSchema = z.object({
   text: z.string().optional().default(""),
 });
 
+/**
+ * How a task handed to another agent ended. An ending this client has not
+ * heard of reads as failed, which is the reading that claims the least.
+ */
+export const delegateStatusSchema = z.enum([
+  "completed",
+  "exhausted",
+  "refused",
+  "declined",
+  "failed",
+  "stopped",
+]);
+
+/**
+ * The one record a write made or changed, as the app opens it: `entityType` is
+ * a key of the record-link registry (`RECORD_LINKS`), `id` the record's id.
+ */
+export const recordRefSchema = z.object({
+  entityType: z.string(),
+  id: z.string(),
+});
+
+/**
+ * What a write made, when its tool says: a past-tense verb, the kind in words,
+ * the name, the ids, and — from a tool that names it — the record to link to.
+ */
+export const toolExecutionResultSchema = z.object({
+  action: z.string().optional().default(""),
+  kind: z.string().optional().default(""),
+  name: z.string().optional().default(""),
+  ids: z.preprocess((value) => value ?? {}, z.record(z.string(), z.string())),
+  record: recordRefSchema.nullish().catch(null),
+});
+
+/** One write the other agent made or proposed on the task. */
+export const delegateWriteSchema = z.object({
+  toolName: z.string(),
+  callId: z.string().optional().default(""),
+  tier: autonomyTierSchema.optional().catch(undefined),
+  summary: z.string().optional().default(""),
+  result: toolExecutionResultSchema.nullish(),
+  error: z.string().optional().default(""),
+  simulated: z.boolean().optional().default(false),
+});
+
+/** Something the other agent kept beside the conversation. */
+export const delegateDocumentSchema = z.object({
+  id: z.string(),
+  kind: z.string().optional().default(""),
+  title: z.string().optional().default(""),
+});
+
+/**
+ * The account of a task handed to another agent. The reader is shown it as
+ * delegate_finished; the delegating agent reads the same object as the call's
+ * result; and the call's saved result keeps it, bounded, as `delegateReport`.
+ */
+export const assistantDelegateFinishedEventSchema = z.object({
+  delegateCallId: z.string(),
+  agentId: z.string().optional().default(""),
+  agentName: z.string().optional().default(""),
+  /** The agent's mark; empty when the server did not say. */
+  icon: z.string().optional().default(""),
+  accent: z.string().optional().default(""),
+  status: delegateStatusSchema.catch("failed"),
+  reply: z.string().optional().default(""),
+  reason: z.string().optional().default(""),
+  made: nullableList(delegateWriteSchema),
+  awaiting: nullableList(delegateWriteSchema),
+  published: nullableList(delegateDocumentSchema),
+  toolCallsUsed: z.number().int().nonnegative().optional().default(0),
+  /** What a saved, bounded account left out of each list. */
+  moreMade: z.number().int().nonnegative().optional().default(0),
+  moreAwaiting: z.number().int().nonnegative().optional().default(0),
+  morePublished: z.number().int().nonnegative().optional().default(0),
+});
+
 export const assistantMessageSchema = z.object({
   id: z.string(),
   threadId: z.string(),
@@ -409,6 +486,18 @@ export const assistantMessageSchema = z.object({
   delegateCallId: z.string().nullish(),
   /** On a Delegated message: the agent's name as the thread is served. */
   agentName: z.string().nullish(),
+  /**
+   * On a Delegated message: the agent's mark as the thread is served. The
+   * icon is empty for an agent with none of its own, which draws its initials.
+   */
+  agentIcon: z.string().nullish(),
+  agentAccent: z.string().nullish(),
+  /**
+   * On a delegate_task call's result: the account of the task, as
+   * delegate_finished delivered it, bounded. Absent from a conversation saved
+   * before it was kept, whose account is read back out of `content`.
+   */
+  delegateReport: assistantDelegateFinishedEventSchema.nullish().catch(null),
   content: z.string().optional().default(""),
   toolCalls: z.array(toolCallRecordSchema).nullish(),
   toolCallId: z.string().optional().default(""),
@@ -812,63 +901,6 @@ export const assistantDelegateTextEventSchema = z.object({
   text: z.string(),
 });
 
-/**
- * How a task handed to another agent ended. An ending this client has not
- * heard of reads as failed, which is the reading that claims the least.
- */
-export const delegateStatusSchema = z.enum([
-  "completed",
-  "exhausted",
-  "refused",
-  "declined",
-  "failed",
-  "stopped",
-]);
-
-/** What a write made, when its tool says: a past-tense verb, the kind in words, the name, the ids. */
-export const toolExecutionResultSchema = z.object({
-  action: z.string().optional().default(""),
-  kind: z.string().optional().default(""),
-  name: z.string().optional().default(""),
-  ids: z.preprocess((value) => value ?? {}, z.record(z.string(), z.string())),
-});
-
-/** One write the other agent made or proposed on the task. */
-export const delegateWriteSchema = z.object({
-  toolName: z.string(),
-  callId: z.string().optional().default(""),
-  tier: autonomyTierSchema.optional().catch(undefined),
-  summary: z.string().optional().default(""),
-  result: toolExecutionResultSchema.nullish(),
-  error: z.string().optional().default(""),
-  simulated: z.boolean().optional().default(false),
-});
-
-/** Something the other agent kept beside the conversation. */
-export const delegateDocumentSchema = z.object({
-  id: z.string(),
-  kind: z.string().optional().default(""),
-  title: z.string().optional().default(""),
-});
-
-/**
- * The account of a task handed to another agent. The reader is shown it as
- * delegate_finished; the delegating agent reads the same object as the call's
- * result, which is how a saved conversation recovers it.
- */
-export const assistantDelegateFinishedEventSchema = z.object({
-  delegateCallId: z.string(),
-  agentId: z.string().optional().default(""),
-  agentName: z.string().optional().default(""),
-  status: delegateStatusSchema.catch("failed"),
-  reply: z.string().optional().default(""),
-  reason: z.string().optional().default(""),
-  made: nullableList(delegateWriteSchema),
-  awaiting: nullableList(delegateWriteSchema),
-  published: nullableList(delegateDocumentSchema),
-  toolCallsUsed: z.number().int().nonnegative().optional().default(0),
-});
-
 export const assistantErrorEventSchema = z.object({ message: z.string() });
 
 /**
@@ -1026,6 +1058,7 @@ export type DelegateWrite = z.infer<typeof delegateWriteSchema>;
 export type DelegateDocument = z.infer<typeof delegateDocumentSchema>;
 export type DelegateReport = z.infer<typeof assistantDelegateFinishedEventSchema>;
 export type ToolExecutionResult = z.infer<typeof toolExecutionResultSchema>;
+export type RecordRef = z.infer<typeof recordRefSchema>;
 export type ProposalFieldKind = z.infer<typeof proposalFieldKindSchema>;
 export type ProposalHold = z.infer<typeof proposalHoldSchema>;
 export type AssistantPlan = z.infer<typeof assistantPlanSchema>;

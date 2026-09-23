@@ -3,6 +3,7 @@ package assistantservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,9 +26,53 @@ func (s *Service) agentNames(
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
 ) map[pulid.ID]string {
-	names := make(map[pulid.ID]string, len(ids))
+	definitions := s.agentDefinitions(ctx, tenant, ids)
+	names := make(map[pulid.ID]string, len(definitions))
+	for _, definition := range definitions {
+		names[definition.ID] = definition.Name
+	}
+
+	return names
+}
+
+// agentIdentity is how an agent is named and drawn where its work is shown.
+type agentIdentity struct {
+	name   string
+	icon   string
+	accent string
+}
+
+// agentIdentities reads the name and mark of the agents with the given ids,
+// in one query. The icon is the agent's own or its starter's, empty when it
+// has neither, so a reader draws its initials; the accent is always one.
+func (s *Service) agentIdentities(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	ids []pulid.ID,
+) map[pulid.ID]agentIdentity {
+	definitions := s.agentDefinitions(ctx, tenant, ids)
+	identities := make(map[pulid.ID]agentIdentity, len(definitions))
+	for _, definition := range definitions {
+		identities[definition.ID] = agentIdentity{
+			name:   definition.Name,
+			icon:   definition.ChosenIcon(),
+			accent: definition.ResolvedAccent(),
+		}
+	}
+
+	return identities
+}
+
+// agentDefinitions reads the agents with the given ids in the tenant, in one
+// query. None are returned when they cannot be read: what is being served
+// still stands without them.
+func (s *Service) agentDefinitions(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	ids []pulid.ID,
+) []*agentdefinition.Definition {
 	if s.definitions == nil || len(ids) == 0 {
-		return names
+		return nil
 	}
 
 	definitions, err := s.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
@@ -35,15 +80,12 @@ func (s *Service) agentNames(
 		TenantInfo: tenant,
 	})
 	if err != nil {
-		s.logger.Warn("could not read the names of the agents in a conversation", zap.Error(err))
+		s.logger.Warn("could not read the agents in a conversation", zap.Error(err))
 
-		return names
-	}
-	for _, definition := range definitions {
-		names[definition.ID] = definition.Name
+		return nil
 	}
 
-	return names
+	return definitions
 }
 
 // proposersOf reads which agent raised each run's proposals: the
@@ -92,7 +134,11 @@ func (s *Service) proposersOf(
 }
 
 // nameDelegatedSteps names the agent behind each step another agent took on
-// a task this conversation's agent handed it, as the thread is served.
+// a task this conversation's agent handed it, and gives it the agent's mark,
+// as the thread is served. A delegate_task result's account is given the same
+// mark, so the hand-off and its steps are drawn alike; an agent that no
+// longer exists keeps the mark the turn recorded. One query for the whole
+// page.
 func (s *Service) nameDelegatedSteps(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
@@ -103,16 +149,28 @@ func (s *Service) nameDelegatedSteps(
 		if id := messages[idx].AgentDefinitionID; id.IsNotNil() {
 			ids = append(ids, id)
 		}
+		if report := messages[idx].DelegateReport; report != nil && report.AgentID.IsNotNil() {
+			ids = append(ids, report.AgentID)
+		}
 	}
 	if len(ids) == 0 {
 		return
 	}
 
-	names := s.agentNames(ctx, tenant, sliceutils.Dedupe(ids))
+	identities := s.agentIdentities(ctx, tenant, sliceutils.Dedupe(ids))
 	for idx := range messages {
 		message := &messages[idx]
 		if message.AgentDefinitionID.IsNotNil() {
-			message.AgentName = names[message.AgentDefinitionID]
+			identity := identities[message.AgentDefinitionID]
+			message.AgentName = identity.name
+			message.AgentIcon = identity.icon
+			message.AgentAccent = identity.accent
+		}
+		if report := message.DelegateReport; report != nil {
+			if identity, ok := identities[report.AgentID]; ok {
+				report.Icon = identity.icon
+				report.Accent = identity.accent
+			}
 		}
 	}
 }

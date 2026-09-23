@@ -102,6 +102,8 @@ type ToolOutcome struct {
 	// written once it has been.
 	Publishes bool   `json:"publishes,omitempty"`
 	Summary   string `json:"summary,omitempty"`
+	// DelegateReport is the bounded account of a delegate_task call.
+	DelegateReport *conversation.DelegateReport `json:"delegateReport,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -110,23 +112,25 @@ type ToolOutcome struct {
 
 func (o toolOutcome) exported() ToolOutcome {
 	return ToolOutcome{
-		Content:   o.content,
-		Failed:    o.failed,
-		Action:    o.action,
-		Publishes: o.publishes,
-		Summary:   o.summary,
-		Data:      o.data,
+		Content:        o.content,
+		Failed:         o.failed,
+		Action:         o.action,
+		Publishes:      o.publishes,
+		Summary:        o.summary,
+		DelegateReport: o.delegateReport,
+		Data:           o.data,
 	}
 }
 
 func (o ToolOutcome) internal() toolOutcome {
 	return toolOutcome{
-		content:   o.Content,
-		failed:    o.Failed,
-		action:    o.Action,
-		publishes: o.Publishes,
-		summary:   o.Summary,
-		data:      o.Data,
+		content:        o.Content,
+		failed:         o.Failed,
+		action:         o.Action,
+		publishes:      o.Publishes,
+		summary:        o.Summary,
+		delegateReport: o.DelegateReport,
+		data:           o.Data,
 	}
 }
 

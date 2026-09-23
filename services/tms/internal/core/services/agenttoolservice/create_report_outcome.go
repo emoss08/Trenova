@@ -8,6 +8,10 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 )
 
+// reportRecordEntity is the record-link registry's name for a saved report
+// definition, which opens on the report explorer.
+const reportRecordEntity = "report"
+
 var (
 	_ serviceports.ToolTierLimiter    = (*createReportTool)(nil)
 	_ serviceports.ToolResultReporter = (*createReportTool)(nil)
@@ -71,11 +75,21 @@ func (t *createReportTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	result := &agent.ToolExecutionResult{Action: "created", Kind: "report"}
-	if created != nil {
-		result.Name = created.Name
-		result.IDs = map[string]string{"definitionId": created.ID.String()}
+	if created == nil {
+		return &agent.ToolExecutionResult{Action: "created", Kind: "report"}, nil
 	}
 
-	return result, nil
+	return reportResult(created.ID.String(), created.Name), nil
+}
+
+// reportResult names a report definition a tool created, by the id the
+// report tools take and as the record it opens as.
+func reportResult(id, name string) *agent.ToolExecutionResult {
+	return &agent.ToolExecutionResult{
+		Action: "created",
+		Kind:   "report",
+		Name:   name,
+		IDs:    map[string]string{"definitionId": id},
+		Record: &agent.RecordRef{EntityType: reportRecordEntity, ID: id},
+	}
 }

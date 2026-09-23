@@ -196,7 +196,14 @@ function HandOffSummary({ view, arrived }: { view: DelegateView; arrived: boolea
   const awaiting = report?.awaiting ?? [];
   const published = report?.published ?? [];
 
-  if (!status && made.length === 0 && awaiting.length === 0 && published.length === 0) {
+  const more = (report?.moreMade ?? 0) + (report?.moreAwaiting ?? 0) + (report?.morePublished ?? 0);
+  if (
+    !status &&
+    made.length === 0 &&
+    awaiting.length === 0 &&
+    published.length === 0 &&
+    more === 0
+  ) {
     return null;
   }
 
@@ -215,17 +222,47 @@ function HandOffSummary({ view, arrived }: { view: DelegateView; arrived: boolea
       {made.map((write, index) => (
         <WriteRow key={write.callId || `made-${index}`} line={madeLine(write, t)} />
       ))}
-      {awaiting.length > 0 && (
+      {report && report.moreMade > 0 && (
+        <MoreRow
+          text={t("{0, plural, one {# more change} other {# more changes}}", report.moreMade)}
+        />
+      )}
+      {(awaiting.length > 0 || (report?.moreAwaiting ?? 0) > 0) && (
         <li className="text-foreground-subtle pt-0.5">{t("Waiting for your approval")}</li>
       )}
       {awaiting.map((write, index) => (
         <WriteRow key={write.callId || `awaiting-${index}`} line={awaitingLine(write, t)} />
       ))}
+      {report && report.moreAwaiting > 0 && (
+        <MoreRow
+          text={t(
+            "{0, plural, one {# more proposal} other {# more proposals}}",
+            report.moreAwaiting,
+          )}
+        />
+      )}
       {published.map((document) => (
         <PublishedRow key={document.id} document={document} />
       ))}
+      {report && report.morePublished > 0 && (
+        <MoreRow
+          text={t(
+            "{0, plural, one {# more document} other {# more documents}}",
+            report.morePublished,
+          )}
+        />
+      )}
     </ul>
   );
+}
+
+/**
+ * What a saved account left out of a list, counted: the thread keeps only the
+ * first few writes of a long task, and says so rather than implying it made
+ * no more.
+ */
+function MoreRow({ text }: { text: string }) {
+  return <li className="text-foreground-subtle pl-4.5">{text}</li>;
 }
 
 function WriteMark({ state }: { state: WriteLine["state"] }) {

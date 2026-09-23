@@ -167,13 +167,16 @@ note on how to read it. It is the same object the reader receives as
   "delegateCallId": "call_…",
   "agentId": "agdef_…",
   "agentName": "Report Builder",
+  "icon": "receipt",
+  "accent": "teal",
   "status": "completed",
   "reply": "I saved the report \"On-time this month\".",
   "reason": "",
   "made": [{"toolName": "create_report", "callId": "call_…", "tier": "AutoExecute",
             "summary": "On-time this month",
             "result": {"action": "created", "kind": "report", "name": "On-time this month",
-                       "ids": {"definitionId": "rd_…"}}}],
+                       "ids": {"definitionId": "rd_…"},
+                       "record": {"entityType": "report", "id": "rd_…"}}}],
   "awaiting": [{"toolName": "share_report", "callId": "call_…", "tier": "Propose",
                 "summary": "On-time this month"}],
   "published": [{"id": "aart_…", "kind": "document", "title": "Report notes"}],
@@ -190,6 +193,33 @@ note on how to read it. It is the same object the reader receives as
 | `failed` | Its turn ended partway; `reason` says why. | failed |
 | `stopped` | The person stopped the reply. | failed |
 
+`icon` and `accent` are the delegate's mark: its own icon or the one its starter
+implies (empty when it has neither, so a reader draws its initials, as
+`Definition.ChosenIcon`), and its accent, chosen or derived from its id
+(`ResolvedAccent`). They come from `RuntimeDelegate`, resolved when the turn's
+context is built.
+
+### Record references
+
+A write's `result` is `agent.ToolExecutionResult`. `action`, `kind`, `name` and
+`ids` are for the model: `ids` names each id by the parameter the next tool
+takes it as. `record` is for a reader: the **one** record the write made or
+changed, as `entityType` — a key of the record-link registry
+(`client/apps/web/src/config/record-links.ts`, `productguide.Default.Record` on
+the server) — and its `id`. A tool that creates or changes one identifiable
+record sets it from `ExecuteWithResult`; today that is `create_report` and
+`fork_report`, whose saved report definition is the registry's `report`
+(`/reports/explore/{id}`). A tool that touches several records, or none a page
+opens, leaves it out. `Bounded()` keeps it only when the entity is a registry
+key (lower-case letters, digits and underscores) and the id is non-empty, cut to
+one line. The same result is kept on the proposal (`agent_proposals.execution_result`)
+and served wherever the proposal or the account is.
+
+The client links a made write by `recordPath(record.entityType, record.id)` when
+`record` names a registry entity, and only otherwise falls back to reading
+`kind` as an entity and picking the id (`{entity}Id`, then `id`, then the only
+one).
+
 A delegate that failed or was stopped is a failed call whose writes are still
 named under `made`: they happened. Anything else it may have begun is
 **unconfirmed** — the same rule as `unsettledToolOutcome` — and the note says
@@ -204,7 +234,29 @@ so; nothing ever claims a write did not happen.
   thread's reader for history passes `ExcludeKinds: ModelHiddenKinds()` before
   the limit is applied, and `OpenTurn` drops any that reach it anyway
   (`modelHistory`). The primary only ever sees its own call and its result.
-  The messages API returns them with `agentName` filled in.
+  The messages API (and `done.messages`) returns them with `agentName`,
+  `agentIcon` and `agentAccent` filled in, read for the whole page with one
+  `ListByIDs` (`assistantservice.nameDelegatedSteps`). `agentIcon` is empty for
+  an agent with no icon of its own or its starter's, so the client draws its
+  initials; the client uses these before the conversation agent's delegate list
+  and, last, a mark derived from the id.
+- **The account.** The `delegate_task` call's result message (role `Tool`)
+  keeps the account structured in `assistant_messages.delegate_report` (JSONB),
+  served as `delegateReport` in the same shape as `delegate_finished`. It is
+  written with the turn, from the `toolOutcome` the loop built, so a declined
+  hand-off keeps one too; a call refused before anybody was asked (not offered,
+  over the cap, from a delegate) has none. It is **bounded**
+  (`conversation.DelegateReport.Bounded`): `reply` at 2 000 runes and `reason`
+  at 500, each ellipsized; `made` and `awaiting` at 20 writes and `published` at
+  10 documents, with what was left out counted in `moreMade`, `moreAwaiting`
+  and `morePublished`; labels to one line; each write's `result` bounded as a
+  proposal's. The model still reads the whole account in the result's text.
+  When served, the account's `icon` and `accent` are refreshed from the agent as
+  it is now, as the steps' are; an agent deleted since keeps what the turn
+  recorded. The client reads `delegateReport` first and parses the fenced JSON
+  in `content` only for a conversation saved before the column existed. Where
+  the account cut the reply short and the delegate's own saved answer is longer,
+  the client shows the saved answer.
 - **Proposals.** The delegate's writes are recorded as its own:
   `RunResult.Delegations` carries each task's definition and actions, and
   `FinishTurn` records them through `persistDelegatedProposals` as a run of the
@@ -252,6 +304,17 @@ turn exists only in executions whose turn opened after the release. Every other
 change is either data the loop only reads when delegating (`TurnState.Delegates`,
 `RunContext.Delegation`, `ModelCallInput.Scope`), an activity input, or a step
 key that is unchanged when no scope is set.
+
+The structured account, the delegate's mark in it and `record` on write results
+took no gate either. The account is built in workflow code, but only from data
+the workflow already holds, and what changed is data: an optional field on the
+tool result message and `ToolOutcome` (both activity inputs), optional fields on
+the `delegate_finished` payload (published to the Workflow Stream, which records
+no command) and in the text of the `delegate_task` result (an input of the next
+model activity, whose inputs replay does not compare). No command is added,
+removed or reordered, and no branch reads the new fields. `record` is set by a
+tool inside its activity, and `RuntimeDelegate`'s resolved icon and accent are
+worked out by the context activity.
 
 A rolling deploy is the one exposure: a turn opened by a new worker and replayed
 by an old one would dispatch `delegate_task` as a tool. Finish rolling the

@@ -49,6 +49,8 @@ func reportBuilder() agentdefinition.RuntimeDelegate {
 		ID:          pulid.MustNew("agdef_"),
 		Name:        "Report Builder",
 		Description: "Builds and saves reports. It knows every dataset.",
+		Icon:        "receipt",
+		Accent:      "teal",
 		Tools:       []string{"create_report", "run_report"},
 	}
 }
@@ -139,6 +141,7 @@ func scriptedDelegateRun(delegate agentdefinition.RuntimeDelegate) DelegateRun {
 						Kind:   "report",
 						Name:   "On-time this month",
 						IDs:    map[string]string{"definitionId": "rd_123"},
+						Record: &agent.RecordRef{EntityType: "report", ID: "rd_123"},
 					},
 				},
 				{
@@ -204,6 +207,25 @@ func TestDelegate_HandsTheTaskAndFoldsBackWhatTheDelegateDid(t *testing.T) {
 	assert.Contains(t, answer.Content, "Report notes", "the published document is named")
 	assert.Equal(t, "The report is saved and the tile is ready.", result.Reply)
 
+	saved := answer.DelegateReport
+	require.NotNil(t, saved, "the account is kept structured on the call's result")
+	assert.Equal(t, conversation.DelegateStatusCompleted, saved.Status)
+	assert.Equal(t, "call_1", saved.DelegateCallID)
+	assert.Equal(t, delegate.ID, saved.AgentID)
+	assert.Equal(t, "Report Builder", saved.AgentName)
+	assert.Equal(t, "receipt", saved.Icon)
+	assert.Equal(t, "teal", saved.Accent)
+	assert.Equal(t, "I saved the report \"On-time this month\".", saved.Reply)
+	require.Len(t, saved.Made, 1)
+	assert.Equal(t, &agent.RecordRef{EntityType: "report", ID: "rd_123"},
+		saved.Made[0].Result.Record)
+	require.Len(t, saved.Awaiting, 1)
+	assert.Len(t, saved.Published, 1)
+	assert.Equal(t, 2, saved.ToolCallsUsed)
+	for _, message := range result.Messages[2:7] {
+		assert.Nil(t, message.DelegateReport, "only the call's result carries the account")
+	}
+
 	require.Len(t, result.Delegations, 1)
 	assert.Equal(t, delegate.ID, result.Delegations[0].Definition.ID)
 	assert.Equal(t, "call_1", result.Delegations[0].CallID)
@@ -222,8 +244,11 @@ func TestDelegate_HandsTheTaskAndFoldsBackWhatTheDelegateDid(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, serviceports.DelegateStatusCompleted, finished.Status)
 	assert.Equal(t, "Report Builder", finished.AgentName)
+	assert.Equal(t, "receipt", finished.Icon)
+	assert.Equal(t, "teal", finished.Accent)
 	require.Len(t, finished.Made, 1)
 	assert.Equal(t, "rd_123", finished.Made[0].Result.IDs["definitionId"])
+	assert.Equal(t, "report", finished.Made[0].Result.Record.EntityType)
 	require.Len(t, finished.Awaiting, 1)
 	assert.Equal(t, "share_report", finished.Awaiting[0].ToolName)
 	assert.Len(t, finished.Published, 1)
@@ -307,6 +332,7 @@ func TestDelegate_RefusesAnAgentItWasNotOffered(t *testing.T) {
 	assert.True(t, result.Messages[2].ToolFailed)
 	assert.Contains(t, result.Messages[2].Content, "is not an agent you can ask")
 	assert.Contains(t, result.Messages[2].Content, "Report Builder (agentId "+delegate.ID.String())
+	assert.Nil(t, result.Messages[2].DelegateReport, "nobody was asked, so there is no account")
 }
 
 // A turn hands out at most a few tasks. The one past the cap is refused and
@@ -380,6 +406,12 @@ func TestDelegate_ADeclinedDelegatePassesOnTheReason(t *testing.T) {
 	assert.True(t, result.Messages[2].ToolFailed)
 	assert.Contains(t, result.Messages[2].Content, "is disabled")
 	assert.Empty(t, result.Delegations)
+
+	saved := result.Messages[2].DelegateReport
+	require.NotNil(t, saved, "a declined hand-off keeps its account too")
+	assert.Equal(t, conversation.DelegateStatusDeclined, saved.Status)
+	assert.Equal(t, "Report Builder is disabled, so it cannot take tasks.", saved.Reason)
+	assert.Empty(t, saved.Made)
 }
 
 // The delegate's steps are the thread's to show and never the model's to read
@@ -460,4 +492,28 @@ func TestDelegatedSearchNote_NamesTheAgentThatHoldsIt(t *testing.T) {
 	assert.NotContains(t, note, "list_invoices")
 	assert.Contains(t, note, delegateTaskName)
 	assert.Empty(t, delegatedSearchNote(nil, []string{"create_report"}))
+}
+
+// The saved account is bounded, while the delegating model reads the whole
+// answer: a long reply is cut with an ellipsis on the message only.
+func TestDelegate_TheSavedAccountIsBoundedAndTheModelReadsItWhole(t *testing.T) {
+	t.Parallel()
+
+	delegate := reportBuilder()
+	run := scriptedDelegateRun(delegate)
+	run.Result.Reply = strings.Repeat("word ", 1000) + "end"
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		delegateTurn(delegate.ID, "Build it."),
+		textTurn("Done."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	fx := &delegateRecorder{run: run}
+
+	result := driveWith(t, rt, delegatingRequest(delegate), fx)
+
+	answer := result.Messages[7]
+	assert.Contains(t, answer.Content, "word end", "the model reads the whole answer")
+	require.NotNil(t, answer.DelegateReport)
+	assert.True(t, strings.HasSuffix(answer.DelegateReport.Reply, "…"))
+	assert.Less(t, len(answer.DelegateReport.Reply), len(run.Result.Reply))
 }

@@ -47,7 +47,11 @@ export type DelegateView = {
   callId: string;
   agentId: string;
   agentName: string;
-  /** As the stream announced them; empty from a saved thread, which names only the agent. */
+  /**
+   * The agent's mark as the stream announced it or the thread served it; empty
+   * when neither said, and the transcript falls back to the conversation
+   * agent's list of delegates, then to a mark derived from the id.
+   */
   icon: string;
   accent: string;
   task: string;
@@ -66,11 +70,13 @@ export type DelegateView = {
 const NOT_RUN = /^Tool "[^"]*" was not run: /u;
 
 /**
- * The account of a task, taken back out of the delegate_task call's result.
- * The delegating agent reads the same object the reader was shown, fenced as
- * untrusted data with a note after it, so a saved conversation recovers it
- * from there. A result that is not the account — one cut short, or a refusal
- * to hand the task over at all — reads as none.
+ * The account of a task, taken back out of the delegate_task call's result
+ * text. A conversation saved since the account was kept on the result reads
+ * `delegateReport` instead; this is only for one saved before. The delegating
+ * agent reads the same object the reader was shown, fenced as untrusted data
+ * with a note after it, so an older conversation recovers it from there. A
+ * result that is not the account — one cut short, or a refusal to hand the
+ * task over at all — reads as none.
  */
 export function parseDelegateReport(content: string): DelegateReport | null {
   if (content === "") {
@@ -217,6 +223,38 @@ function savedReply(messages: readonly AssistantMessage[]): string {
 }
 
 /**
+ * The other agent's answer from a saved thread: the account's, unless the
+ * account kept it cut short and its own saved message holds more of it.
+ */
+function savedAnswer(report: DelegateReport | null, messages: readonly AssistantMessage[]): string {
+  const kept = report?.reply ?? "";
+  const written = savedReply(messages);
+  if (kept === "") {
+    return written;
+  }
+
+  return kept.endsWith("…") && written.length > kept.length ? written : kept;
+}
+
+/**
+ * The other agent's mark from a saved thread: the one its steps were served
+ * with, else the one its account carries. Empty when neither says.
+ */
+function savedMark(
+  messages: readonly AssistantMessage[],
+  report: DelegateReport | null,
+): { icon: string; accent: string } {
+  const step = messages.find(
+    (message) => (message.agentIcon ?? "") !== "" || (message.agentAccent ?? "") !== "",
+  );
+
+  return {
+    icon: step?.agentIcon || report?.icon || "",
+    accent: step?.agentAccent || report?.accent || "",
+  };
+}
+
+/**
  * A hand-off as the transcript draws it, from the delegate_task call it
  * hangs under. Null for any other call.
  */
@@ -233,8 +271,8 @@ export function delegateView(step: ToolStep): DelegateView | null {
       callId: step.id,
       agentId: progress.agentId || stringArgument(step, "agentId"),
       agentName: delegateName(step),
-      icon: progress.icon,
-      accent: progress.accent,
+      icon: progress.icon || report?.icon || "",
+      accent: progress.accent || report?.accent || "",
       task: progress.task || stringArgument(step, "task"),
       steps: stepsFromSegments(progress.segments),
       reply: report?.reply || lastText(progress.segments),
@@ -247,20 +285,22 @@ export function delegateView(step: ToolStep): DelegateView | null {
   }
 
   const { messages } = source;
-  const report = parseDelegateReport(step.content);
+  const report = source.report ?? parseDelegateReport(step.content);
   const task = messages.find((message) => message.role === "User")?.content.trim() ?? "";
+  const mark = savedMark(messages, report);
 
   return {
     callId: step.id,
     agentId:
-      messages.find((message) => (message.agentId ?? "") !== "")?.agentId ??
+      messages.find((message) => (message.agentId ?? "") !== "")?.agentId ||
+      report?.agentId ||
       stringArgument(step, "agentId"),
     agentName: delegateName(step),
-    icon: "",
-    accent: "",
+    icon: mark.icon,
+    accent: mark.accent,
     task: task || stringArgument(step, "task"),
     steps: savedSteps(messages),
-    reply: report?.reply || savedReply(messages),
+    reply: savedAnswer(report, messages),
     phase: "reading",
     retrying: null,
     report,
@@ -354,15 +394,34 @@ function camelKey(entity: RecordEntityType): string {
   return `${entity.replaceAll(/_([a-z])/gu, (_match, letter: string) => letter.toUpperCase())}Id`;
 }
 
+/** The registry entity a result names outright, when it names one the app opens. */
+function namedRecord(result: ToolExecutionResult): { entity: RecordEntityType; id: string } | null {
+  const record = result.record;
+  if (!record) {
+    return null;
+  }
+  const id = record.id.trim();
+
+  return id !== "" && isRecordEntityType(record.entityType)
+    ? { entity: record.entityType, id }
+    : null;
+}
+
 /**
- * Where the record a write made opens, from the registry, when its kind is a
- * record the app has a page for and its ids say which one. The id is taken
- * by the name the record's own tools use (`reportId`), then a plain `id`,
- * then the only id there is; several unnamed ids name nothing certain.
+ * Where the record a write made opens, from the registry. A result that
+ * names its record (`record`) is linked by it. One from a tool that does not
+ * is read the old way: its kind must be a record the app has a page for, and
+ * its id is taken by the name the record's own tools use (`reportId`), then a
+ * plain `id`, then the only id there is; several unnamed ids name nothing
+ * certain.
  */
 export function madeRecordPath(result: ToolExecutionResult | null | undefined): string | null {
   if (!result) {
     return null;
+  }
+  const named = namedRecord(result);
+  if (named !== null) {
+    return recordPath(named.entity, named.id);
   }
   const entity = recordEntityOf(result.kind);
   if (entity === null) {
@@ -377,7 +436,7 @@ export function madeRecordPath(result: ToolExecutionResult | null | undefined): 
 
 /** A record kind in the words of the registry, as a fragment: "report", "rate matrix". */
 function kindWord(result: ToolExecutionResult | null | undefined, t: TranslateFn): string {
-  const entity = result ? recordEntityOf(result.kind) : null;
+  const entity = result ? (namedRecord(result)?.entity ?? recordEntityOf(result.kind)) : null;
 
   return entity === null ? "" : toSentenceFragment(t(RECORD_LINKS[entity].label));
 }

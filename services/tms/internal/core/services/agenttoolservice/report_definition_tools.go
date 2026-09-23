@@ -682,11 +682,9 @@ func (t *forkReportTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	result := &agent.ToolExecutionResult{Action: "created", Kind: "report"}
-	if forked != nil {
-		result.Name = forked.Name
-		result.IDs = map[string]string{"definitionId": forked.ID.String()}
+	if forked == nil {
+		return &agent.ToolExecutionResult{Action: "created", Kind: "report"}, nil
 	}
 
-	return result, nil
+	return reportResult(forked.ID.String(), forked.Name), nil
 }

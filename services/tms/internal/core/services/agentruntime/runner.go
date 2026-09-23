@@ -424,14 +424,15 @@ func (s *Service) recordToolResult(
 	})
 
 	result.Messages = append(result.Messages, conversation.Message{
-		Role:        conversation.RoleTool,
-		Content:     outcome.content,
-		ToolCallID:  call.ID,
-		ToolName:    call.Name,
-		ToolFailed:  outcome.failed,
-		ToolEffect:  effect,
-		ToolSummary: summary,
-		CreatedAt:   fx.Now(),
+		Role:           conversation.RoleTool,
+		Content:        outcome.content,
+		ToolCallID:     call.ID,
+		ToolName:       call.Name,
+		ToolFailed:     outcome.failed,
+		ToolEffect:     effect,
+		ToolSummary:    summary,
+		DelegateReport: outcome.delegateReport,
+		CreatedAt:      fx.Now(),
 	})
 	t.messages = append(t.messages, serviceports.Message{
 		Role:       serviceports.RoleTool,

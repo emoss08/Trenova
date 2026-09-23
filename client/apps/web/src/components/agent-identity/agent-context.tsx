@@ -18,8 +18,8 @@ const AssistantAgentContext = createContext<AssistantAgentValue>({
  * The agent a thread belongs to. Every turn in the thread draws that agent's
  * mark, but only the thread knows which agent it is, so it publishes it rather
  * than threading it through every message component. The agents it may hand
- * work to ride along, because a saved hand-off names its agent and nothing
- * else about it.
+ * work to ride along, for a hand-off that carries no mark of its own: one
+ * saved before the thread served agents' marks.
  */
 export function AssistantAgentProvider({
   agent,
@@ -51,26 +51,26 @@ export function useAssistantAgent(): AgentIdentityInput | null {
 }
 
 /**
- * Another agent as a hand-off draws it: its mark from the thread's list of
- * agents it may ask, or from what the hand-off itself carries, which is
- * always its id and name and, while it streams, its icon and accent. An
- * agent removed from the list since still has a mark of its own, derived
- * from its id.
+ * Another agent as a hand-off draws it. What the hand-off itself carries
+ * comes first: always its id and name, and its icon and accent as the stream
+ * announced them or the thread served them. Where it carries no mark, the
+ * thread's list of agents it may ask fills it in; and an agent in neither
+ * still has a mark of its own, derived from its id.
  */
-export function useDelegateIdentity(fallback: AgentIdentityInput): AgentIdentityInput {
+export function useDelegateIdentity(own: AgentIdentityInput): AgentIdentityInput {
   const { delegates } = use(AssistantAgentContext);
-  const known = fallback.id ? delegates.get(fallback.id) : undefined;
+  const known = own.id ? delegates.get(own.id) : undefined;
 
   return useMemo(() => {
     if (!known) {
-      return fallback;
+      return own;
     }
     return {
       id: known.id,
-      name: known.name || fallback.name,
-      icon: known.icon || fallback.icon,
-      accent: known.accent || fallback.accent,
-      template: known.template ?? fallback.template,
+      name: own.name || known.name,
+      icon: own.icon || known.icon,
+      accent: own.accent || known.accent,
+      template: own.template ?? known.template,
     };
-  }, [fallback, known]);
+  }, [own, known]);
 }

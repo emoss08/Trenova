@@ -3,7 +3,7 @@ import { assistantMessageSchema, type AssistantMessage } from "@/types/assistant
 import { describe, expect, it } from "vitest";
 import { stepsFromExchanges } from "../activity";
 import { classifyMessage } from "../classify-message";
-import { delegateView, handOffHeadline, handOffStatus } from "../delegation";
+import { delegateView, handOffHeadline, handOffStatus, madeLine } from "../delegation";
 import { turnEndByMessage } from "../proposal-state";
 import { delegatedOwners, groupThread, turnPlacements } from "../thread-view";
 
@@ -280,5 +280,138 @@ describe("delegateView from a saved thread", () => {
       text: "Stopped partway: The model stopped.",
       tone: "danger",
     });
+  });
+});
+
+/**
+ * A conversation saved since the account was kept on the call's result reads
+ * it from there: structured, whole where the text was cut, and carrying the
+ * agent's mark. The fenced text is read only for one saved before.
+ */
+describe("delegateView from the account the result keeps", () => {
+  function withAccount(
+    thread: AssistantMessage[],
+    account: Record<string, unknown>,
+    stepFields: Record<string, unknown> = {},
+  ): AssistantMessage[] {
+    return thread.map((message) => {
+      if (message.role === "Tool" && message.toolName === "delegate_task") {
+        return assistantMessageSchema.parse({ ...message, delegateReport: account });
+      }
+      if (message.kind === "Delegated") {
+        return assistantMessageSchema.parse({ ...message, ...stepFields });
+      }
+      return message;
+    });
+  }
+
+  function firstStep(thread: AssistantMessage[]) {
+    const [, turn] = groupThread(thread);
+    if (turn.kind !== "assistant") throw new Error("expected an assistant entry");
+    const [step] = stepsFromExchanges(turn.tools, turn.message.createdAt);
+    return step;
+  }
+
+  const ACCOUNT = { ...REPORT, icon: "receipt", accent: "teal" };
+
+  it("reads the account first, even when the result's text was cut short", () => {
+    const view = delegateView(
+      firstStep(
+        withAccount(handOffThread("Result from delegate_task:\n<untrusted_data>\n{"), ACCOUNT),
+      ),
+    );
+
+    expect(view).toMatchObject({
+      outcome: "completed",
+      reply: 'I saved the report "On-time this month".',
+      icon: "receipt",
+      accent: "teal",
+    });
+    expect(view?.report?.made).toHaveLength(1);
+    expect(view?.report?.awaiting).toHaveLength(1);
+  });
+
+  it("draws the mark the thread served on the other agent's steps before the account's", () => {
+    const view = delegateView(
+      firstStep(withAccount(handOffThread(), ACCOUNT, { agentIcon: "truck", agentAccent: "rose" })),
+    );
+
+    expect(view).toMatchObject({ icon: "truck", accent: "rose" });
+  });
+
+  it("names the agent and its id from the account when its steps are out of view", () => {
+    const thread = withAccount(handOffThread(), ACCOUNT).filter(
+      (message) => message.kind !== "Delegated",
+    );
+    const step = firstStep(
+      thread.map((message) =>
+        message.role === "Tool"
+          ? assistantMessageSchema.parse({ ...message, summary: "" })
+          : message,
+      ),
+    );
+    const view = delegateView(step);
+
+    expect(view).toMatchObject({ agentId: AGENT, agentName: "Report Builder", icon: "receipt" });
+    expect(handOffHeadline(view!, t)).toBe("Asked Report Builder");
+  });
+
+  it("prefers the other agent's own saved answer to an account that cut it short", () => {
+    const view = delegateView(
+      firstStep(withAccount(handOffThread(), { ...ACCOUNT, reply: "I saved the rep…" })),
+    );
+
+    expect(view?.reply).toBe("I saved the report.");
+  });
+
+  it("keeps what a bounded account says it left out", () => {
+    const view = delegateView(
+      firstStep(withAccount(handOffThread(), { ...ACCOUNT, moreMade: 3, morePublished: 1 })),
+    );
+
+    expect(view?.report).toMatchObject({ moreMade: 3, moreAwaiting: 0, morePublished: 1 });
+  });
+
+  it("reads a declined hand-off from its account", () => {
+    const view = delegateView(
+      firstStep(
+        withAccount(
+          handOffThread('Tool "delegate_task" was not run: Report Builder is disabled.', true),
+          {
+            ...ACCOUNT,
+            status: "declined",
+            reply: "",
+            reason: "Report Builder is disabled.",
+            made: [],
+            awaiting: [],
+          },
+        ),
+      ),
+    );
+
+    expect(view).toMatchObject({ outcome: "declined", reason: "Report Builder is disabled." });
+  });
+
+  it("links a write by the record its result names", () => {
+    const view = delegateView(
+      firstStep(
+        withAccount(handOffThread(), {
+          ...ACCOUNT,
+          made: [
+            {
+              ...REPORT.made[0],
+              result: {
+                ...REPORT.made[0].result,
+                ids: { definitionId: "rd_1", folderId: "f_1" },
+                record: { entityType: "report", id: "rd_1" },
+              },
+            },
+          ],
+        }),
+      ),
+    );
+
+    expect(view?.report?.made[0].result?.record).toEqual({ entityType: "report", id: "rd_1" });
+    expect(madeLine(view!.report!.made[0], t).path).toBe("/reports/explore/rd_1");
   });
 });

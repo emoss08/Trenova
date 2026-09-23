@@ -53,3 +53,9 @@ func FirstSentence(text string) string {
 func CollapseWhitespace(value string) string {
 	return strings.Join(strings.Fields(value), " ")
 }
+
+// OneLine folds a value onto one line and cuts it to at most limit runes, so
+// it cannot break the line it is written on.
+func OneLine(value string, limit int) string {
+	return TruncateRunes(CollapseWhitespace(value), limit)
+}

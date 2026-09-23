@@ -89,6 +89,8 @@ describe("hand-off effect", () => {
             delegateCallId: "call_delegate_1",
             agentId: "agdef_rb",
             agentName: "Report Builder",
+            icon: "",
+            accent: "",
             status: "exhausted",
             reply: "Here is what I have.",
             reason: "Report Builder used every tool call its settings allow.",
@@ -96,6 +98,9 @@ describe("hand-off effect", () => {
             awaiting: [],
             published: [],
             toolCallsUsed: 12,
+            moreMade: 0,
+            moreAwaiting: 0,
+            morePublished: 0,
           },
         },
       },
@@ -142,6 +147,33 @@ describe("madeLine", () => {
     });
   });
 
+  it("names the kind from the record a result names, in the registry's words", () => {
+    const line = madeLine(
+      write({
+        result: {
+          action: "created",
+          kind: "",
+          name: "Lanes",
+          ids: {},
+          record: { entityType: "rate_matrix", id: "rm_1" },
+        },
+      }),
+      t,
+    );
+
+    expect(line.text).toBe("Created rate matrix Lanes");
+    expect(line.path).toContain("panelEntityId=rm_1");
+  });
+
+  it("reads a result from a server that sends no record the old way", () => {
+    const parsed = write({
+      result: { action: "created", kind: "report", name: "Ops", ids: { definitionId: "rd_1" } },
+    });
+
+    expect(parsed.result?.record ?? null).toBeNull();
+    expect(madeLine(parsed, t).path).toBe("/reports/explore/rd_1");
+  });
+
   it("words a write whose tool says nothing from the tool, unlinked", () => {
     const line = madeLine(write({ toolName: "update_customer", summary: "Peak Distributing" }), t);
 
@@ -175,6 +207,39 @@ describe("madeLine", () => {
 });
 
 describe("madeRecordPath", () => {
+  it("links the record a result names outright, whatever its kind and ids say", () => {
+    expect(
+      madeRecordPath({
+        action: "created",
+        kind: "saved query",
+        name: "Ops",
+        ids: { definitionId: "rd_9", folderId: "f_1" },
+        record: { entityType: "report", id: "rd_9" },
+      }),
+    ).toBe("/reports/explore/rd_9");
+  });
+
+  it("falls back to the kind and ids when the named record is not one the app opens", () => {
+    expect(
+      madeRecordPath({
+        action: "created",
+        kind: "report",
+        name: "Ops",
+        ids: { definitionId: "rd_1" },
+        record: { entityType: "not_a_page", id: "x_1" },
+      }),
+    ).toBe("/reports/explore/rd_1");
+    expect(
+      madeRecordPath({
+        action: "created",
+        kind: "report",
+        name: "Ops",
+        ids: { definitionId: "rd_1" },
+        record: { entityType: "report", id: "  " },
+      }),
+    ).toBe("/reports/explore/rd_1");
+  });
+
   it("takes the id named for the record's own kind first", () => {
     expect(
       madeRecordPath({

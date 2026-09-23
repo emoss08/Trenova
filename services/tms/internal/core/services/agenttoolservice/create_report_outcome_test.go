@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -160,6 +161,23 @@ func TestCreateReport_ExecuteWithResultNamesTheSavedReport(t *testing.T) {
 	assert.Equal(t, "report", result.Kind)
 	assert.Equal(t, "Shipments for Peak Distributing", result.Name)
 	assert.Equal(t, map[string]string{"definitionId": writer.id.String()}, result.IDs)
+	assert.Equal(t, &agent.RecordRef{EntityType: "report", ID: writer.id.String()}, result.Record,
+		"the saved report is named as the record it opens as")
+}
+
+// The record a report tool names must be one the app can open: an entity the
+// record-link registry holds.
+func TestReportResult_NamesARecordTheAppOpens(t *testing.T) {
+	t.Parallel()
+
+	result := reportResult("rd_1", "Lane revenue")
+
+	require.NotNil(t, result.Record)
+	path, ok := productguide.RecordPath(result.Record.EntityType, result.Record.ID)
+	require.True(t, ok, "the registry has no %q entity", result.Record.EntityType)
+	assert.Contains(t, path, "rd_1")
+	assert.Equal(t, map[string]string{"definitionId": "rd_1"}, result.IDs,
+		"the model still reads the id under the parameter the report tools take")
 }
 
 func TestCreateReport_ExecuteWithResultReportsNothingWhenTheSaveFails(t *testing.T) {

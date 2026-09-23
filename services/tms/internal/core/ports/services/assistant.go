@@ -315,23 +315,15 @@ type AssistantDelegateTextEvent struct {
 }
 
 // DelegateStatus is how a task handed to another agent ended.
-type DelegateStatus string
+type DelegateStatus = conversation.DelegateStatus
 
 const (
-	// DelegateStatusCompleted is a task the other agent finished and
-	// answered.
-	DelegateStatusCompleted = DelegateStatus("completed")
-	// DelegateStatusExhausted is one it spent its tool budget on.
-	DelegateStatusExhausted = DelegateStatus("exhausted")
-	// DelegateStatusRefused is one whose answer the output guard withheld.
-	DelegateStatusRefused = DelegateStatus("refused")
-	// DelegateStatusDeclined is one that never started: the agent could not
-	// be asked, for the reason given.
-	DelegateStatusDeclined = DelegateStatus("declined")
-	// DelegateStatusFailed is one that ended partway, for the reason given.
-	DelegateStatusFailed = DelegateStatus("failed")
-	// DelegateStatusStopped is one the person stopped.
-	DelegateStatusStopped = DelegateStatus("stopped")
+	DelegateStatusCompleted = conversation.DelegateStatusCompleted
+	DelegateStatusExhausted = conversation.DelegateStatusExhausted
+	DelegateStatusRefused   = conversation.DelegateStatusRefused
+	DelegateStatusDeclined  = conversation.DelegateStatusDeclined
+	DelegateStatusFailed    = conversation.DelegateStatusFailed
+	DelegateStatusStopped   = conversation.DelegateStatusStopped
 )
 
 // AssistantDelegateStartedEvent says the turn's agent handed a task to
@@ -347,45 +339,14 @@ type AssistantDelegateStartedEvent struct {
 
 // AssistantDelegateFinishedEvent says how a task handed to another agent
 // ended and what it came to. The same account is what the delegating agent
-// reads as its tool result.
-type AssistantDelegateFinishedEvent struct {
-	DelegateCallID string         `json:"delegateCallId"`
-	AgentID        pulid.ID       `json:"agentId"`
-	AgentName      string         `json:"agentName"`
-	Status         DelegateStatus `json:"status"`
-	// Reply is the other agent's answer; Reason is why it did not finish.
-	Reply  string `json:"reply,omitempty"`
-	Reason string `json:"reason,omitempty"`
-	// Made are the writes it made, Awaiting those waiting on a person's
-	// decision, and Published the documents it kept beside the conversation.
-	Made          []DelegateWrite    `json:"made"`
-	Awaiting      []DelegateWrite    `json:"awaiting"`
-	Published     []DelegateDocument `json:"published"`
-	ToolCallsUsed int                `json:"toolCallsUsed"`
-}
+// reads as its tool result, and what the call's result message keeps.
+type AssistantDelegateFinishedEvent = conversation.DelegateReport
 
 // DelegateWrite is one write another agent made or proposed on a task.
-type DelegateWrite struct {
-	ToolName string             `json:"toolName"`
-	CallID   string             `json:"callId"`
-	Tier     agent.AutonomyTier `json:"tier"`
-	// Summary names what the write is about, from its arguments.
-	Summary string `json:"summary,omitempty"`
-	// Result is what an executed write made, when its tool says.
-	Result *agent.ToolExecutionResult `json:"result,omitempty"`
-	// Error is why an executed write failed.
-	Error string `json:"error,omitempty"`
-	// Simulated says the agent was in simulation, so the write was
-	// previewed rather than made.
-	Simulated bool `json:"simulated,omitempty"`
-}
+type DelegateWrite = conversation.DelegateWrite
 
 // DelegateDocument is something another agent kept beside the conversation.
-type DelegateDocument struct {
-	ID    pulid.ID `json:"id"`
-	Kind  string   `json:"kind"`
-	Title string   `json:"title"`
-}
+type DelegateDocument = conversation.DelegateDocument
 
 // AssistantTurnEvent names the turn a reply is being produced by.
 type AssistantTurnEvent struct {

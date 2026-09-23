@@ -194096,7 +194096,34 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# more change} other {# more changes}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# more document} other {# more documents}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {# more finding} other {# more findings}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# more proposal} other {# more proposals}}": {
     "sites": 1,
     "scope": [
       "ts"

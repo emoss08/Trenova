@@ -47,6 +47,46 @@ func TestToolExecutionResult_BoundedDropsAnEmptyResult(t *testing.T) {
 	assert.Nil(t, (&ToolExecutionResult{Name: " \n ", IDs: map[string]string{"x": ""}}).Bounded())
 }
 
+func TestToolExecutionResult_BoundedKeepsTheRecordItNames(t *testing.T) {
+	t.Parallel()
+
+	bounded := (&ToolExecutionResult{
+		Action: "created",
+		Kind:   "report",
+		IDs:    map[string]string{"definitionId": "rd_1"},
+		Record: &RecordRef{EntityType: " report ", ID: "rd_1\n"},
+	}).Bounded()
+
+	require.NotNil(t, bounded)
+	assert.Equal(t, &RecordRef{EntityType: "report", ID: "rd_1"}, bounded.Record)
+
+	onlyRecord := (&ToolExecutionResult{Record: &RecordRef{EntityType: "rate_matrix", ID: "rm_1"}}).
+		Bounded()
+	require.NotNil(t, onlyRecord, "a result that names a record says something")
+	assert.Equal(t, "rate_matrix", onlyRecord.Record.EntityType)
+}
+
+func TestRecordRef_BoundedDropsAReferenceThatNamesNothingOpenable(t *testing.T) {
+	t.Parallel()
+
+	var missing *RecordRef
+	assert.Nil(t, missing.Bounded())
+
+	for name, ref := range map[string]*RecordRef{
+		"no entity": {ID: "rd_1"},
+		"no id":     {EntityType: "report", ID: "  "},
+		"not a key": {EntityType: "Saved Report", ID: "rd_1"},
+		"a path":    {EntityType: "../reports", ID: "rd_1"},
+		"too long":  {EntityType: strings.Repeat("a", maxResultKeyChars+1), ID: "rd_1"},
+	} {
+		assert.Nil(t, ref.Bounded(), name)
+	}
+
+	long := (&RecordRef{EntityType: "report", ID: strings.Repeat("x", 500)}).Bounded()
+	require.NotNil(t, long)
+	assert.Len(t, long.ID, maxResultIDChars)
+}
+
 func TestToolExecutionResult_DescribesWhatWasMade(t *testing.T) {
 	t.Parallel()
 

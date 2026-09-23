@@ -1,5 +1,5 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import type { AssistantMessage, ToolEffect } from "@/types/assistant";
+import type { AssistantMessage, DelegateReport, ToolEffect } from "@/types/assistant";
 import type { ToolExchange } from "./thread-view";
 import { describeToolCall, parseToolResult } from "./tool-presentation";
 import {
@@ -35,7 +35,12 @@ export type ToolStep = {
 
 export type DelegateSource =
   | { kind: "live"; progress: DelegateProgress }
-  | { kind: "saved"; messages: readonly AssistantMessage[] };
+  | {
+      kind: "saved";
+      messages: readonly AssistantMessage[];
+      /** The account the call's result kept; null for a conversation saved before it was kept. */
+      report: DelegateReport | null;
+    };
 
 /**
  * The effects of tools that predate the server naming them, or that it no
@@ -95,7 +100,13 @@ export function stepsFromExchanges(tools: readonly ToolExchange[], askedAt: numb
       summary: result?.summary ?? "",
       durationSeconds: timed ? Math.max(0, result.createdAt - askedAt) : null,
       ...(name === DELEGATE_TOOL
-        ? { delegate: { kind: "saved" as const, messages: delegated ?? [] } }
+        ? {
+            delegate: {
+              kind: "saved" as const,
+              messages: delegated ?? [],
+              report: result?.delegateReport ?? null,
+            },
+          }
         : {}),
     };
   });
@@ -589,8 +600,9 @@ function askLine(step: ToolStep, t: TranslateFn): ActivityLine {
 
 /**
  * Who a hand-off went to. The stream names the agent when the task starts
- * and the thread keeps the name on each of its steps; the call's own summary
- * is the name too, for a hand-off whose steps are out of view.
+ * and the thread keeps the name on each of its steps and in the call's saved
+ * account; the call's own summary is the name too, for a hand-off saved
+ * before the account was kept whose steps are out of view.
  */
 export function delegateName(step: ToolStep): string {
   const source = step.delegate;
@@ -601,6 +613,9 @@ export function delegateName(step: ToolStep): string {
     const named = source.messages.find((message) => (message.agentName ?? "") !== "");
     if (named?.agentName) {
       return named.agentName;
+    }
+    if (source.report && source.report.agentName !== "") {
+      return source.report.agentName;
     }
   }
 
