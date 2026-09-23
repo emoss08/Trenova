@@ -2,6 +2,7 @@ package inboundjobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -9,6 +10,7 @@ import (
 	"go.temporal.io/sdk/activity"
 
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.uber.org/fx"
@@ -61,7 +63,16 @@ func (a *Activities) SettleInboundMessageActivity(
 			OrgID: payload.OrganizationID,
 			BuID:  payload.BusinessUnitID,
 		},
+		// A model that could not be asked is asked again, the way the
+		// provider's answer says, until the last attempt sends the message
+		// to review.
+		inboundmessageservice.RetryModelFailures(func(err error) bool {
+			return modelcall.Transient(err) && !modelcall.FinalAttempt(ctx, settleAttempts)
+		}),
 	)
+	if errors.Is(err, inboundmessageservice.ErrClassificationUnavailable) {
+		return nil, modelcall.Classify(err)
+	}
 	if err != nil {
 		a.l.Error("failed to settle an inbound message",
 			zap.String("messageId", payload.MessageID.String()), zap.Error(err))

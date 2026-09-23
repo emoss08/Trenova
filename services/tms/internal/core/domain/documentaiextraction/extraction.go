@@ -33,6 +33,9 @@ type Extraction struct {
 	WorkflowID     string   `json:"workflowId"     bun:"workflow_id,type:VARCHAR(255),notnull"`
 	WorkflowRunID  string   `json:"workflowRunId"  bun:"workflow_run_id,type:VARCHAR(255),notnull"`
 	ActivityID     string   `json:"activityId"     bun:"activity_id,type:VARCHAR(255),notnull"`
+	// TaskToken is the activity the old poller completes, kept only by an
+	// execution that waits on one. An execution that polls on its own timer
+	// stores it empty.
 	TaskToken      []byte   `json:"taskToken"      bun:"task_token,type:BYTEA,notnull"`
 	ResponseID     string   `json:"responseId"     bun:"response_id,type:VARCHAR(255),nullzero"`
 	ProviderID     pulid.ID `json:"providerId"     bun:"provider_id,type:VARCHAR(100),nullzero"`
@@ -100,7 +103,6 @@ func (e *Extraction) Validate(multiErr *errortypes.MultiError) {
 			validation.Length(1, maxWorkflowFieldLength).
 				Error("Activity cannot be longer than 255 characters"),
 		),
-		validation.Field(&e.TaskToken, validation.Required.Error("Task token is required")),
 		validation.Field(&e.Status,
 			validation.Required.Error("Status is required"),
 			validation.In(

@@ -6,10 +6,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	services "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/boolutils"
@@ -109,9 +110,18 @@ func (a *Activities) startAIExtractionWorkflow(
 	return err
 }
 
-func (a *Activities) SubmitAndAwaitDocumentAIExtractionActivity( //nolint:funlen // async submission with idempotency checks
+// submitAIExtraction records the extraction and submits it to the model once.
+// It returns the completion when there is nothing to wait for: the extraction
+// was superseded or already settled, or the router answered inline. A nil
+// completion means the model is still working on it.
+//
+// taskToken is kept on the record for an execution that waits on the old
+// poller to complete its activity. An execution that polls on its own timer
+// keeps none, which is also what keeps the old poller away from its record.
+func (a *Activities) submitAIExtraction( //nolint:funlen // async submission with idempotency checks
 	ctx context.Context,
 	payload *ProcessDocumentAIExtractionPayload,
+	taskToken []byte,
 ) (*AsyncAIExtractionCompletion, error) {
 	if a.aiExtractionRepo == nil {
 		return nil, temporal.NewNonRetryableApplicationError(
@@ -166,7 +176,7 @@ func (a *Activities) SubmitAndAwaitDocumentAIExtractionActivity( //nolint:funlen
 		WorkflowID:     info.WorkflowExecution.ID,
 		WorkflowRunID:  info.WorkflowExecution.RunID,
 		ActivityID:     info.ActivityID,
-		TaskToken:      append([]byte(nil), info.TaskToken...),
+		TaskToken:      taskToken,
 		Status:         documentaiextraction.StatusPending,
 	}
 	row, err = a.aiExtractionRepo.SavePending(ctx, row)
@@ -220,7 +230,7 @@ func (a *Activities) SubmitAndAwaitDocumentAIExtractionActivity( //nolint:funlen
 			},
 		)
 		if submitErr != nil {
-			return nil, submitErr
+			return nil, modelcall.Classify(submitErr)
 		}
 
 		now := timeutils.NowUnix()
@@ -267,10 +277,92 @@ func (a *Activities) SubmitAndAwaitDocumentAIExtractionActivity( //nolint:funlen
 		}
 	}
 
-	return nil, activity.ErrResultPending
+	return nil, nil
 }
 
-func (a *Activities) PollPendingDocumentAIExtractionsActivity( //nolint:gocognit,funlen // polling loop with per-row branching
+// SubmitAndAwaitDocumentAIExtractionActivity submits the extraction and leaves
+// the activity open for the poller to complete with its task token. It serves
+// only executions started before the workflow polled on its own timer.
+func (a *Activities) SubmitAndAwaitDocumentAIExtractionActivity(
+	ctx context.Context,
+	payload *ProcessDocumentAIExtractionPayload,
+) (*AsyncAIExtractionCompletion, error) {
+	completion, err := a.submitAIExtraction(
+		ctx, payload, append([]byte(nil), activity.GetInfo(ctx).TaskToken...),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if completion == nil {
+		return nil, activity.ErrResultPending
+	}
+
+	return completion, nil
+}
+
+// SubmitDocumentAIExtractionActivity submits the extraction and returns at
+// once. The workflow waits on a durable timer and polls for the answer.
+func (a *Activities) SubmitDocumentAIExtractionActivity(
+	ctx context.Context,
+	payload *ProcessDocumentAIExtractionPayload,
+) (*AIExtractionProgress, error) {
+	stop := modelcall.Heartbeat(ctx)
+	defer stop()
+
+	completion, err := a.submitAIExtraction(ctx, payload, []byte{})
+	if err != nil {
+		return nil, err
+	}
+
+	return &AIExtractionProgress{Completion: completion}, nil
+}
+
+// PollDocumentAIExtractionActivity asks the model once whether the extraction
+// is done. A poll that fails is reported as still pending, since the next
+// poll asks again; the last poll the workflow allows gives up instead, and
+// the extraction is recorded as timed out.
+func (a *Activities) PollDocumentAIExtractionActivity(
+	ctx context.Context,
+	input *PollDocumentAIExtractionInput,
+) (*AIExtractionProgress, error) {
+	payload := input.Payload
+	row, err := a.aiExtractionRepo.GetByDocumentExtractedAt(
+		ctx,
+		repositories.GetDocumentAIExtractionRequest{
+			DocumentID:  payload.DocumentID,
+			ExtractedAt: payload.ExtractedAt,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  payload.OrganizationID,
+				BuID:   payload.BusinessUnitID,
+				UserID: payload.UserID,
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	completion := a.pollExtraction(ctx, row, now)
+	if completion == nil && input.GiveUp {
+		completion = timedOutExtraction(row)
+	}
+	if completion == nil {
+		a.touchExtraction(ctx, row)
+
+		return &AIExtractionProgress{}, nil
+	}
+
+	a.settleExtraction(ctx, row, completion, now.Unix())
+
+	return &AIExtractionProgress{Completion: completion}, nil
+}
+
+// PollPendingDocumentAIExtractionsActivity completes the activities of
+// executions that wait on a task token. It serves only executions started
+// before the workflow polled on its own timer, and records without a task
+// token are not listed for it.
+func (a *Activities) PollPendingDocumentAIExtractionsActivity(
 	ctx context.Context,
 	payload *PollPendingDocumentAIExtractionsPayload,
 ) (*PollPendingDocumentAIExtractionsResult, error) {
@@ -296,122 +388,145 @@ func (a *Activities) PollPendingDocumentAIExtractionsActivity( //nolint:gocognit
 	}
 
 	for _, row := range rows {
-		polledAt := now.Unix()
-		row.LastPolledAt = &polledAt
-
-		if row.SubmittedAt != nil &&
-			now.Sub(time.Unix(*row.SubmittedAt, 0)) > documentAIExtractionMaxWait {
-			completion := &AsyncAIExtractionCompletion{
-				ResponseID:      row.ResponseID,
-				Model:           row.Model,
-				ExtractedAt:     row.ExtractedAt,
-				Status:          services.AIBackgroundExtractionStatusFailed,
-				RawStatus:       "expired",
-				FailureCode:     "ai_extract_timeout",
-				FailureMessage:  "Background AI extraction exceeded the maximum wait time",
-				SubmittedAt:     row.SubmittedAt,
-				LastPolledAt:    row.LastPolledAt,
-				AcceptanceState: string(aiAcceptanceStatusRejected),
-			}
-			if a.completeAsyncAIActivity(ctx, row, completion) {
-				row.Status = documentaiextraction.StatusFailed
-				row.FailureCode = completion.FailureCode
-				row.FailureMessage = completion.FailureMessage
-				row.CompletedAt = &polledAt
-				if _, err = a.aiExtractionRepo.Update(ctx, row); err == nil {
-					result.Failed++
-				}
-			}
-			continue
-		}
-
-		poll, pollErr := a.aiDocumentService.PollRateConfirmationBackgroundExtraction(
-			ctx,
-			&services.AIBackgroundExtractPollRequest{
-				TenantInfo: pagination.TenantInfo{
-					OrgID:  row.OrganizationID,
-					BuID:   row.BusinessUnitID,
-					UserID: row.UserID,
-				},
-				DocumentID: row.DocumentID,
-				ResponseID: row.ResponseID,
-				ProviderID: row.ProviderID,
-			},
-		)
-		if pollErr != nil {
-			a.logger.Warn(
-				"failed to poll background AI extraction",
-				zap.String("documentId", row.DocumentID.String()),
-				zap.Error(pollErr),
-			)
-			if _, err = a.aiExtractionRepo.Update(ctx, row); err != nil {
-				a.logger.Warn(
-					"failed to touch pending AI extraction poll time",
-					zap.String("documentId", row.DocumentID.String()),
-					zap.Error(err),
-				)
-			}
-			continue
-		}
-
-		if poll.Status == services.AIBackgroundExtractionStatusPending {
-			if _, err = a.aiExtractionRepo.Update(ctx, row); err != nil {
-				a.logger.Error(
-					"failed to update pending AI extraction poll time",
-					zap.String("documentId", row.DocumentID.String()),
-					zap.Error(err),
-				)
-			}
+		completion := a.pollExtraction(ctx, row, now)
+		if completion == nil {
+			a.touchExtraction(ctx, row)
 			result.Pending++
-			continue
-		}
 
-		completion := &AsyncAIExtractionCompletion{
-			ResponseID:      poll.ResponseID,
-			Model:           poll.Model,
-			ExtractedAt:     row.ExtractedAt,
-			Status:          poll.Status,
-			RawStatus:       poll.RawStatus,
-			ExtractResult:   poll.ExtractResult,
-			FailureCode:     poll.FailureCode,
-			FailureMessage:  poll.FailureMessage,
-			SubmittedAt:     row.SubmittedAt,
-			LastPolledAt:    row.LastPolledAt,
-			AcceptanceState: string(aiAcceptanceStatusRejected),
-		}
-		if poll.Status == services.AIBackgroundExtractionStatusCompleted {
-			completion.AcceptanceState = string(aiAcceptanceStatusAccepted)
+			continue
 		}
 
 		if !a.completeAsyncAIActivity(ctx, row, completion) {
 			continue
 		}
 
-		row.CompletedAt = &polledAt
-		switch poll.Status {
-		case services.AIBackgroundExtractionStatusCompleted:
-			row.Status = documentaiextraction.StatusCompleted
-			row.FailureCode = ""
-			row.FailureMessage = ""
+		a.settleExtraction(ctx, row, completion, now.Unix())
+		if completion.Status == services.AIBackgroundExtractionStatusCompleted {
 			result.Completed++
-		case services.AIBackgroundExtractionStatusFailed:
-			row.Status = documentaiextraction.StatusFailed
-			row.FailureCode = poll.FailureCode
-			row.FailureMessage = poll.FailureMessage
+		} else {
 			result.Failed++
-		case services.AIBackgroundExtractionStatusPending:
-			result.Pending++
-		}
-		if _, err = a.aiExtractionRepo.Update(ctx, row); err != nil {
-			a.logger.Warn(
-				"failed to update terminal AI extraction row",
-				zap.String("documentId", row.DocumentID.String()),
-				zap.Error(err),
-			)
 		}
 	}
 
 	return result, nil
+}
+
+// pollExtraction asks the model whether a submitted extraction is done, and
+// returns its completion when it is. An extraction past the longest wait is
+// complete as timed out; one the model is still working on, or that could not
+// be asked about just now, returns nil.
+func (a *Activities) pollExtraction(
+	ctx context.Context,
+	row *documentaiextraction.Extraction,
+	now time.Time,
+) *AsyncAIExtractionCompletion {
+	polledAt := now.Unix()
+	row.LastPolledAt = &polledAt
+
+	if row.SubmittedAt != nil &&
+		now.Sub(time.Unix(*row.SubmittedAt, 0)) > documentAIExtractionMaxWait {
+		return timedOutExtraction(row)
+	}
+
+	poll, err := a.aiDocumentService.PollRateConfirmationBackgroundExtraction(
+		ctx,
+		&services.AIBackgroundExtractPollRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  row.OrganizationID,
+				BuID:   row.BusinessUnitID,
+				UserID: row.UserID,
+			},
+			DocumentID: row.DocumentID,
+			ResponseID: row.ResponseID,
+			ProviderID: row.ProviderID,
+		},
+	)
+	if err != nil {
+		a.logger.Warn(
+			"failed to poll background AI extraction",
+			zap.String("documentId", row.DocumentID.String()),
+			zap.Error(err),
+		)
+
+		return nil
+	}
+	if poll.Status == services.AIBackgroundExtractionStatusPending {
+		return nil
+	}
+
+	completion := &AsyncAIExtractionCompletion{
+		ResponseID:      poll.ResponseID,
+		Model:           poll.Model,
+		ExtractedAt:     row.ExtractedAt,
+		Status:          poll.Status,
+		RawStatus:       poll.RawStatus,
+		ExtractResult:   poll.ExtractResult,
+		FailureCode:     poll.FailureCode,
+		FailureMessage:  poll.FailureMessage,
+		SubmittedAt:     row.SubmittedAt,
+		LastPolledAt:    row.LastPolledAt,
+		AcceptanceState: string(aiAcceptanceStatusRejected),
+	}
+	if poll.Status == services.AIBackgroundExtractionStatusCompleted {
+		completion.AcceptanceState = string(aiAcceptanceStatusAccepted)
+	}
+
+	return completion
+}
+
+// timedOutExtraction is an extraction that waited as long as it may.
+func timedOutExtraction(row *documentaiextraction.Extraction) *AsyncAIExtractionCompletion {
+	return &AsyncAIExtractionCompletion{
+		ResponseID:      row.ResponseID,
+		Model:           row.Model,
+		ExtractedAt:     row.ExtractedAt,
+		Status:          services.AIBackgroundExtractionStatusFailed,
+		RawStatus:       "expired",
+		FailureCode:     "ai_extract_timeout",
+		FailureMessage:  "Background AI extraction exceeded the maximum wait time",
+		SubmittedAt:     row.SubmittedAt,
+		LastPolledAt:    row.LastPolledAt,
+		AcceptanceState: string(aiAcceptanceStatusRejected),
+	}
+}
+
+// touchExtraction records that a pending extraction was polled, so the next
+// poll of many goes to the one asked about longest ago.
+func (a *Activities) touchExtraction(ctx context.Context, row *documentaiextraction.Extraction) {
+	if _, err := a.aiExtractionRepo.Update(ctx, row); err != nil {
+		a.logger.Warn(
+			"failed to record a pending AI extraction's poll",
+			zap.String("documentId", row.DocumentID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+// settleExtraction records how an extraction ended.
+func (a *Activities) settleExtraction(
+	ctx context.Context,
+	row *documentaiextraction.Extraction,
+	completion *AsyncAIExtractionCompletion,
+	settledAt int64,
+) {
+	row.CompletedAt = &settledAt
+	if completion.Status == services.AIBackgroundExtractionStatusCompleted {
+		row.Status = documentaiextraction.StatusCompleted
+		row.FailureCode = ""
+		row.FailureMessage = ""
+	} else {
+		row.Status = documentaiextraction.StatusFailed
+		row.FailureCode = completion.FailureCode
+		row.FailureMessage = completion.FailureMessage
+	}
+
+	if _, err := a.aiExtractionRepo.Update(ctx, row); err != nil {
+		a.logger.Warn(
+			"failed to record how an AI extraction ended",
+			zap.String("documentId", row.DocumentID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func (a *Activities) ListPollableDocumentAIExtractionTenantsActivity(

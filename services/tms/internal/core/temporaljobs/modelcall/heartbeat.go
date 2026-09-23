@@ -21,8 +21,13 @@ const (
 )
 
 // Heartbeat tells Temporal the activity is alive on a timer rather than on
-// output, and stops when the returned function is called.
+// output, and stops when the returned function is called. Outside an activity
+// there is nobody to tell, and it does nothing.
 func Heartbeat(ctx context.Context) func() {
+	if !activity.IsActivity(ctx) {
+		return func() {}
+	}
+
 	done := make(chan struct{})
 	go func() {
 		ticker := time.NewTicker(heartbeatEvery)

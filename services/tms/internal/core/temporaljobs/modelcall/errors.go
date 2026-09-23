@@ -65,7 +65,13 @@ func Transient(err error) bool {
 // last under a policy of attempts. An activity that falls back to a
 // deterministic answer when the model fails does so only here: before the
 // last attempt, a transient failure is Temporal's to retry.
+//
+// Outside an activity nothing retries the call, so every attempt is the last.
 func FinalAttempt(ctx context.Context, attempts int32) bool {
+	if !activity.IsActivity(ctx) {
+		return true
+	}
+
 	return attempts > 0 && activity.GetInfo(ctx).Attempt >= attempts
 }
 

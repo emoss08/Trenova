@@ -242,3 +242,11 @@ func TestErrRebuildsWhatTheCallReturned(t *testing.T) {
 	plain := errors.New("not a model call")
 	assert.Same(t, plain, Err(plain))
 }
+
+// Outside an activity nothing retries a call, so a service that falls back on
+// its last attempt falls back at once.
+func TestFinalAttemptOutsideAnActivity(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, FinalAttempt(t.Context(), 3))
+}

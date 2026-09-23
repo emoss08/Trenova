@@ -209,3 +209,47 @@ func TestProcessMessage_DoesNotAutoHandleWhatItCouldNotRead(t *testing.T) {
 	assert.False(t, result.Handled)
 	assert.Equal(t, inboundmessage.ClassificationOther, repo.saved.Classification)
 }
+
+// Inside a workflow, a model that could not be asked is asked again rather
+// than sending the message to review: the message is left unsettled and the
+// caller told why.
+func TestProcessMessage_LeavesTheMessageForAnotherAttemptWhenAsked(t *testing.T) {
+	t.Parallel()
+
+	repo := &settleRepo{
+		message: staged(inboundmessage.StatusReceived, inboundmessage.ReviewAutoHandle),
+	}
+	unavailable := errors.New("provider answered 503")
+	svc := &Service{
+		l:           zap.NewNop(),
+		messageRepo: repo,
+		completion:  &stubCompletion{err: unavailable},
+	}
+
+	_, err := svc.ProcessMessage(t.Context(), repo.message.ID, pagination.TenantInfo{},
+		RetryModelFailures(func(error) bool { return true }))
+	require.ErrorIs(t, err, ErrClassificationUnavailable)
+	require.ErrorIs(t, err, unavailable)
+	assert.Zero(t, repo.writes, "the message waits for the next attempt, unsettled")
+}
+
+// On the last attempt, or for a failure no attempt would change, the message
+// goes to review as it always has.
+func TestProcessMessage_SendsTheMessageToReviewWhenNotRetrying(t *testing.T) {
+	t.Parallel()
+
+	repo := &settleRepo{
+		message: staged(inboundmessage.StatusReceived, inboundmessage.ReviewAutoHandle),
+	}
+	svc := &Service{
+		l:           zap.NewNop(),
+		messageRepo: repo,
+		completion:  &stubCompletion{err: errors.New("provider answered 400")},
+	}
+
+	result, err := svc.ProcessMessage(t.Context(), repo.message.ID, pagination.TenantInfo{},
+		RetryModelFailures(func(error) bool { return false }))
+	require.NoError(t, err)
+	assert.Equal(t, inboundmessage.ClassificationOther, result.Classification)
+	assert.Equal(t, 1, repo.writes)
+}
