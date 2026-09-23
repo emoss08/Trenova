@@ -18,6 +18,7 @@ import { ExternalLinkIcon, TriangleAlertIcon } from "lucide-react";
 import { Link } from "react-router";
 import { InvoiceAdjustmentRuntimeSection } from "./invoice-adjustment-runtime-section";
 import { InvoiceArContextSection } from "./invoice-ar-context-section";
+import { recordPath } from "@/config/record-links";
 
 export function InvoiceOverviewTab({
   invoice,
@@ -52,9 +53,7 @@ export function InvoiceOverviewTab({
         {invoice.offCycleReason ? (
           <Alert variant="warning" size="sm">
             <TriangleAlertIcon />
-            <AlertTitle>
-              {t("Billed outside this customer's statement")}
-            </AlertTitle>
+            <AlertTitle>{t("Billed outside this customer's statement")}</AlertTitle>
             <AlertDescription>{invoice.offCycleReason}</AlertDescription>
           </Alert>
         ) : null}
@@ -120,7 +119,7 @@ export function InvoiceOverviewTab({
                 {invoice.orderId ? (
                   <DescriptionItem label={t("Order")}>
                     <Link
-                      to={`/shipment-management/orders?panelType=edit&panelEntityId=${invoice.orderId}`}
+                      to={recordPath("order", invoice.orderId)}
                       className="inline-flex items-center gap-1 hover:underline"
                     >
                       {invoice.orderNumber || invoice.orderId.slice(0, 12)}

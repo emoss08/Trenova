@@ -21,6 +21,7 @@ import { AlertTriangleIcon, ExternalLinkIcon, PlugZapIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { ModuleCard } from "./module-card";
+import { workerRecordHref } from "@/lib/route-utils";
 
 const HOS_FETCH_LIMIT = 12;
 const HOS_DISPLAY_LIMIT = 8;
@@ -93,7 +94,7 @@ function HosRow({ state, withDivider }: { state: WorkerHosState; withDivider: bo
             </Tooltip>
           )}
           <Link
-            to={`/hr/workers?panelType=edit&panelEntityId=${state.workerId}&tab=hos`}
+            to={workerRecordHref(state.workerId, "hos")}
             className={cn(
               "truncate text-xs font-semibold hover:underline",
               severity !== "normal" && SEVERITY_TEXT[severity],

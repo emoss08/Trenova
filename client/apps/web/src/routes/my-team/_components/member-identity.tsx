@@ -6,9 +6,10 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import type { WorkerHealthMeta } from "@trenova/shared/lib/worker-health";
+import { workerRecordHref } from "@/lib/route-utils";
 
 export function memberHref(workerId: string): string {
-  return `/hr/workers?panelEntityId=${workerId}&panelType=edit`;
+  return workerRecordHref(workerId);
 }
 
 type MemberAvatarProps = {

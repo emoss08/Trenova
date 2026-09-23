@@ -14,6 +14,7 @@ import {
 } from "@/lib/choices";
 import type { ServiceFailureRow } from "@/lib/graphql/service-failure-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
+import { recordPath } from "@/config/record-links";
 
 function statusBadge(value: ServiceFailureRow["status"]) {
   const choice = findChoice(serviceFailureStatusChoices, value);
@@ -110,10 +111,7 @@ export function getColumns(t: TranslateFn): ColumnDef<ServiceFailureRow>[] {
         const label =
           row.original.shipment?.proNumber || row.original.shipment?.bol || row.original.shipmentId;
         return (
-          <DataTableLink
-            text={label}
-            href={`/shipment-management/shipments?panelType=edit&panelEntityId=${row.original.shipmentId}`}
-          />
+          <DataTableLink text={label} href={recordPath("shipment", row.original.shipmentId)} />
         );
       },
       size: 190,

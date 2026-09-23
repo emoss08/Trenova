@@ -32,6 +32,7 @@ import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { workerRecordHref } from "@/lib/route-utils";
 
 type PickerValues = { holderId: string };
 
@@ -44,7 +45,7 @@ export function positionHoldersQuery(positionId: string) {
 
 function holderHref(holder: PositionHolderRow): string {
   return holder.kind === "Worker"
-    ? `/hr/workers?entityId=${holder.id}&modType=edit`
+    ? workerRecordHref(holder.id)
     : `/admin/users?entityId=${holder.id}&modType=edit`;
 }
 

@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { LastSuccessfulSyncCard } from "./last-successful-sync-card";
 import { RunConsoleLoadingState } from "./run-console-state";
+import { workerRecordHref } from "@/lib/route-utils";
 
 const RunConsole = lazy(() => import("./run-console"));
 
@@ -682,11 +683,7 @@ export function SamsaraWorkerSyncCard({
       return;
     }
 
-    window.open(
-      `/workers?panelEntityId=${workerID}&panelType=edit`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    window.open(workerRecordHref(workerID), "_blank", "noopener,noreferrer");
   };
 
   const activeStatusVariant = getStatusVariant(normalizedStatus, failedRecords);

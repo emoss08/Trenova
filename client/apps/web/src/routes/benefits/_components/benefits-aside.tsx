@@ -8,11 +8,12 @@ import { CalendarClockIcon, CalendarPlusIcon, CircleSlashIcon } from "lucide-rea
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { enrollmentWorkerName } from "./plan-enrollments-sheet";
+import { workerRecordHref } from "@/lib/route-utils";
 
 const SHOWN_LIMIT = 6;
 
 function workerHref(workerId: string): string {
-  return `/hr/workers?entityId=${workerId}&modType=edit`;
+  return workerRecordHref(workerId);
 }
 
 function Loading() {

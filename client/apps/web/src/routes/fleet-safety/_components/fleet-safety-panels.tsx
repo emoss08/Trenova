@@ -10,7 +10,7 @@ import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { AwardIcon, Building2Icon, ShieldAlertIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
-
+import { workerRecordHref } from "@/lib/route-utils";
 
 type TerminalsPanelProps = {
   terminals: readonly FleetSafetyTerminalRow[];
@@ -148,11 +148,9 @@ export function RankList({ title, kind, empty, rows }: RankListProps) {
       ) : (
         <ul className="divide-y">
           {rows.map((row) => (
-            <li
-              key={row.workerId}
-            >
+            <li key={row.workerId}>
               <Link
-                to={`/hr/workers?entityId=${row.workerId}&modType=edit&tab=safety`}
+                to={workerRecordHref(row.workerId, "safety")}
                 className="hover:bg-accent grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 transition-colors"
               >
                 <span className="flex min-w-0 items-center gap-2.5">

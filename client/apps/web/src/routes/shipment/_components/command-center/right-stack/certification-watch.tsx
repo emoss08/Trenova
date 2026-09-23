@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { ModuleCard } from "./module-card";
 import { userWallClockNow } from "@trenova/shared/lib/date";
+import { workerRecordHref } from "@/lib/route-utils";
 
 const DAY_KEY_FORMAT = "yyyy-MM-dd";
 const CERTIFICATION_WINDOW_DAYS = 8;
@@ -37,7 +38,7 @@ function CertificationRow({
       <div className="flex min-w-0 items-center gap-1">
         <AlertTriangleIcon className="text-warning size-3 shrink-0" />
         <Link
-          to={`/hr/workers?panelType=edit&panelEntityId=${summary.workerId}&tab=hos`}
+          to={workerRecordHref(summary.workerId, "hos")}
           className="truncate text-xs font-semibold hover:underline"
         >
           {summary.workerName}

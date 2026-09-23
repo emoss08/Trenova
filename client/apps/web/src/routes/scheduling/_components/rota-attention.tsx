@@ -13,11 +13,12 @@ import { formatShiftDate, rotaStateTone } from "@trenova/shared/lib/scheduling";
 import { AlertTriangleIcon, ChevronRightIcon, CircleCheckIcon, RepeatIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
+import { workerRecordHref } from "@/lib/route-utils";
 
 const SHOWN_LIMIT = 6;
 
 function workerHref(workerId: string): string {
-  return `/hr/workers?entityId=${workerId}&modType=edit`;
+  return workerRecordHref(workerId);
 }
 
 type RotaAttentionProps = {

@@ -28,6 +28,29 @@ describe("derivePageContext", () => {
     ).toMatchObject({ entityType: "worker", entityId: "wrk_1" });
   });
 
+  it("reads the invoice the invoices page has open", () => {
+    expect(
+      derivePageContext({
+        pathname: "/billing/invoices",
+        search: "?item=inv_1",
+        title: "Invoices",
+      }),
+    ).toMatchObject({ entityType: "invoice", entityId: "inv_1" });
+  });
+
+  it("names the customer on the page customers actually open on", () => {
+    expect(
+      derivePageContext({
+        pathname: "/billing/configuration-files/customers",
+        search: "?panelType=edit&panelEntityId=cus_1",
+        title: "Customers",
+      }),
+    ).toMatchObject({ entityType: "customer", entityId: "cus_1" });
+    expect(
+      derivePageContext({ pathname: "/customers", search: "?panelEntityId=cus_1", title: "" }),
+    ).toMatchObject({ entityType: "", entityId: "" });
+  });
+
   it("sends the kind without an id when no record is open", () => {
     expect(
       derivePageContext({ pathname: "/billing/queue", search: "", title: "Billing queue" }),

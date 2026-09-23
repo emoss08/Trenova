@@ -20,6 +20,7 @@ import { LaneCell } from "./command-center/cells/lane-cell";
 import { MarginCell } from "./command-center/cells/margin-cell";
 import { RevenueCell } from "./command-center/cells/revenue-cell";
 import { StatusCell } from "./command-center/cells/status-cell";
+import { recordPath } from "@/config/record-links";
 
 function formatAppointment(stop: Stop | null) {
   const appointment = getAppointmentStop(stop);
@@ -156,7 +157,7 @@ export function getColumns(
         if (!orderId) return "—";
         return (
           <Link
-            to={`/shipment-management/orders?panelType=edit&panelEntityId=${orderId}`}
+            to={recordPath("order", orderId)}
             className="font-table truncate tabular-nums hover:underline"
             onClick={(event) => event.stopPropagation()}
           >

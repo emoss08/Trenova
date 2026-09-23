@@ -26,6 +26,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { PTO_TERMINATION_ACTION_LABELS } from "@trenova/shared/types/pto-policy";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
+import { recordPath } from "@/config/record-links";
 
 export function formatPtoDays(value: string): string {
   const parsed = Number(value);
@@ -117,7 +118,7 @@ export function PTOLiabilityDialog({
                       <TableRow key={`${row.workerId}-${row.ptoType}`}>
                         <TableCell className="font-medium">
                           <Link
-                            to={`/hr/workers?panelType=edit&panelEntityId=${row.workerId}&pageTab=pto`}
+                            to={recordPath("worker", row.workerId, { pageTab: "pto" })}
                             className="hover:underline"
                           >
                             {workerName(row)}

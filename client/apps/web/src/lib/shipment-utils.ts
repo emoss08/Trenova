@@ -1,3 +1,4 @@
+import { recordPath } from "@/config/record-links";
 import {
   shipmentStatusSchema,
   stopTypeSchema,
@@ -142,10 +143,5 @@ export function canTransferShipmentToBilling(shipment: Shipment) {
  * panel showing.
  */
 export function shipmentPanelPath(shipmentId: string): string {
-  const params = new URLSearchParams({
-    expanded: shipmentId,
-    panelType: "edit",
-    panelEntityId: shipmentId,
-  });
-  return `/shipment-management/shipments?${params.toString()}`;
+  return recordPath("shipment", shipmentId);
 }

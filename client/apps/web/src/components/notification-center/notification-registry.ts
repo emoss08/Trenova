@@ -34,6 +34,7 @@ import {
   TriangleAlertIcon,
   type LucideIcon,
 } from "lucide-react";
+import { workerRecordHref } from "@/lib/route-utils";
 
 export function notificationDataString(
   notification: Pick<Notification, "data">,
@@ -131,9 +132,7 @@ const REPORT_READY: NotificationDescriptor = {
 
 function workerCredentialsLink(notification: Pick<Notification, "data">): string {
   const workerId = notificationDataString(notification, "workerId");
-  return workerId
-    ? `/hr/workers?panelType=edit&panelEntityId=${encodeURIComponent(workerId)}&tab=credentials`
-    : "/hr/workers";
+  return workerId ? workerRecordHref(workerId, "credentials") : "/hr/workers";
 }
 
 const aiControlLink = (notification: Notification) =>

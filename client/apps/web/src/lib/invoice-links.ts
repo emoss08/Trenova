@@ -1,13 +1,8 @@
+import { recordPath } from "@/config/record-links";
 import type { InvoiceDetailTab } from "@trenova/shared/types/invoice-share";
 
-const INVOICES_PATH = "/billing/invoices";
-
 export function invoicePanelPath(invoiceId: string, tab: InvoiceDetailTab = "overview"): string {
-  const params = new URLSearchParams({ item: invoiceId });
-  if (tab !== "overview") {
-    params.set("tab", tab);
-  }
-  return `${INVOICES_PATH}?${params.toString()}`;
+  return recordPath("invoice", invoiceId, tab === "overview" ? undefined : { tab });
 }
 
 export function absoluteAppUrl(path: string): string {

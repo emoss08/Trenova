@@ -1,3 +1,5 @@
+import { recordAtLocation } from "@/config/record-links";
+
 /**
  * What the person is looking at, in the shape the server accepts.
  *
@@ -15,26 +17,12 @@ export type PageContext = {
 const MAX_PATH_LENGTH = 500;
 const MAX_TITLE_LENGTH = 200;
 
-/** Route prefixes and the record kind their panels open, longest prefix first. */
-const PAGE_ENTITY_ROUTES: readonly { prefix: string; entityType: string }[] = [
-  { prefix: "/shipment-management/shipments", entityType: "shipment" },
-  { prefix: "/shipment-management/orders", entityType: "order" },
-  { prefix: "/shipment-management/recurring-shipments", entityType: "shipment" },
-  { prefix: "/hr/workers", entityType: "worker" },
-  { prefix: "/equipment/tractors", entityType: "tractor" },
-  { prefix: "/equipment/trailers", entityType: "trailer" },
-  { prefix: "/dispatch/carriers", entityType: "carrier" },
-  { prefix: "/dispatch/locations", entityType: "location" },
-  { prefix: "/dispatch/console", entityType: "shipment_move" },
-  { prefix: "/billing/queue", entityType: "billing_queue_item" },
-  { prefix: "/billing/invoices", entityType: "invoice" },
-  { prefix: "/billing/rate-matrices", entityType: "rate_matrix" },
-  { prefix: "/customers", entityType: "customer" },
-  { prefix: "/documents", entityType: "document" },
-  { prefix: "/admin/agent-control", entityType: "agent_definition" },
-];
-
-const ENTITY_ID_PARAMS = ["panelEntityId", "entityId"] as const;
+/**
+ * Older links name the open record in `entityId`; bookmarks and sent links
+ * still carry it after every in-app link moved to the registry's parameters.
+ */
+const LEGACY_ENTITY_ID_PARAM = "entityId";
+const MAX_ENTITY_ID_LENGTH = 100;
 
 export function stripAppTitle(title: string): string {
   const trimmed = title.trim();
@@ -44,24 +32,15 @@ export function stripAppTitle(title: string): string {
   return stripped.slice(0, MAX_TITLE_LENGTH);
 }
 
-function entityTypeFor(pathname: string): string {
-  const match = PAGE_ENTITY_ROUTES.find(
-    (route) => pathname === route.prefix || pathname.startsWith(route.prefix + "/"),
-  );
-
-  return match?.entityType ?? "";
-}
-
-function entityIdFrom(search: string): string {
-  const params = new URLSearchParams(search);
-  for (const key of ENTITY_ID_PARAMS) {
-    const value = params.get(key)?.trim();
-    if (value) {
-      return value.slice(0, 100);
-    }
+function recordAt(pathname: string, search: string): { entityType: string; entityId: string } {
+  const record = recordAtLocation(pathname, search);
+  if (record === null) {
+    return { entityType: "", entityId: "" };
   }
 
-  return "";
+  const entityId =
+    record.entityId || (new URLSearchParams(search).get(LEGACY_ENTITY_ID_PARAM)?.trim() ?? "");
+  return { entityType: record.entityType, entityId: entityId.slice(0, MAX_ENTITY_ID_LENGTH) };
 }
 
 export function derivePageContext(location: {
@@ -74,8 +53,7 @@ export function derivePageContext(location: {
     return null;
   }
 
-  const entityType = entityTypeFor(pathname);
-  const entityId = entityType === "" ? "" : entityIdFrom(location.search);
+  const { entityType, entityId } = recordAt(pathname, location.search);
 
   let path = pathname + location.search;
   if (path.length > MAX_PATH_LENGTH) {

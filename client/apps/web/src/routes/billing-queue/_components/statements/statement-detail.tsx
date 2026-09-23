@@ -29,6 +29,7 @@ import { invalidateStatements, statementDetailQuery } from "../../statement-quer
 import { BillStatementDialog } from "./bill-statement-dialog";
 import { StatementGroupCard } from "./statement-group-card";
 import { StatementTimeline } from "./statement-timeline";
+import { recordPath } from "@/config/record-links";
 
 /** Beyond a handful of invoices, opening every one buries the totals. */
 const AUTO_EXPAND_LIMIT = 3;
@@ -214,7 +215,7 @@ export function StatementDetail({
                       statement.customerName,
                     )}{" "}
                     <Link
-                      to={`/billing/configuration-files/customers?panelType=edit&panelEntityId=${statement.customerId}`}
+                      to={recordPath("customer", statement.customerId)}
                       className="text-foreground font-medium underline underline-offset-2"
                     >
                       {t("change how they're split")}

@@ -21,6 +21,7 @@ import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/dat
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
 import { ExternalLinkIcon, FileTextIcon, PackageIcon, SendIcon } from "lucide-react";
+import { recordPath } from "@/config/record-links";
 
 export function InvoiceItemCard({
   invoice,
@@ -40,6 +41,7 @@ export function InvoiceItemCard({
   const totalAmount = Number(invoice.totalAmount ?? 0);
   const billsSingleShipment = invoiceBillsSingleShipment(invoice.scope);
   const shipmentId = invoice.shipmentId;
+  const orderId = invoice.scope === "Order" ? invoice.orderId : null;
   const billingPeriod = invoiceBillingPeriod(invoice);
   const scopeDetail = billingPeriod
     ? t(
@@ -102,15 +104,8 @@ export function InvoiceItemCard({
             {t("View shipment")}
           </ContextMenuItem>
         ) : null}
-        {invoice.scope === "Order" && invoice.orderId ? (
-          <ContextMenuItem
-            onClick={() =>
-              window.open(
-                `/shipment-management/orders?panelType=edit&panelEntityId=${invoice.orderId}`,
-                "_blank",
-              )
-            }
-          >
+        {orderId ? (
+          <ContextMenuItem onClick={() => window.open(recordPath("order", orderId), "_blank")}>
             <PackageIcon className="size-3.5" />
             {t("View order")}
           </ContextMenuItem>

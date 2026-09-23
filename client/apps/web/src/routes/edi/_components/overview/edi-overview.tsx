@@ -15,6 +15,7 @@ import { EDIOverviewEmpty } from "./edi-overview-empty";
 import { EDIPartnerScorecards } from "./edi-partner-scorecards";
 import { EDITrendCharts } from "./edi-trend-charts";
 import { useEDIPartnerScorecards, useEDISummary, useEDIVolumeSeries } from "./use-edi-summary";
+import { recordPath } from "@/config/record-links";
 
 type EDISummaryResult = ResultOf<typeof EdiSummaryDocument>["ediSummary"];
 type EDISummaryAttentionItem = EDISummaryResult["attentionItems"][number];
@@ -224,7 +225,7 @@ function AttentionRow({ item }: { item: EDISummaryAttentionItem }) {
   const isMessage = item.kind === "Message";
   const target = isMessage
     ? `/edi/messages?panelType=edit&panelEntityId=${item.id}`
-    : `/edi/inbound-files?panelType=edit&panelEntityId=${item.id}`;
+    : recordPath("edi_inbound_file", item.id);
 
   return (
     <Link to={target} className="hover:bg-muted/40 flex items-start gap-3 p-3 transition-colors">

@@ -25,9 +25,10 @@ import { SearchIcon } from "lucide-react";
 import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { planEnrollmentsQuery } from "./queries";
+import { workerRecordHref } from "@/lib/route-utils";
 
 function workerHref(workerId: string): string {
-  return `/hr/workers?entityId=${workerId}&modType=edit`;
+  return workerRecordHref(workerId);
 }
 
 export function enrollmentWorkerName(entry: BenefitEnrollmentListRow): string {

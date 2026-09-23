@@ -1,4 +1,5 @@
 import { adminLinks, navigationConfig } from "@/config/navigation.config";
+import { recordPath } from "@/config/record-links";
 import type { NavGroup, NavItem } from "@/config/navigation.types";
 
 interface RouteTitleEntry {
@@ -292,6 +293,5 @@ export function getPageTitle(pathname: string): string {
  * reads the entity from the query string, so a tab can be named as well.
  */
 export function workerRecordHref(workerId: string, tab?: string): string {
-  const base = `/hr/workers?entityId=${encodeURIComponent(workerId)}&modType=edit`;
-  return tab ? `${base}&tab=${encodeURIComponent(tab)}` : base;
+  return recordPath("worker", workerId, tab ? { tab } : undefined);
 }
