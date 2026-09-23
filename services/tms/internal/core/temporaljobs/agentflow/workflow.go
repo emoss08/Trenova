@@ -1,9 +1,11 @@
 package agentflow
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
@@ -29,7 +31,7 @@ func Run(
 	rc RunContext,
 	state agentruntime.TurnState,
 ) (*Outcome, error) {
-	fx := &workflowEffects{ctx: ctx, run: rc, events: events}
+	fx := &workflowEffects{ctx: ctx, runtime: runtime, run: rc, events: events}
 	result, err := runtime.Drive(runtime.RestoreTurn(rc.request(), state), fx)
 
 	return &Outcome{Result: result, Artifacts: fx.outcome.Artifacts, Events: fx.outcome.Events}, err
@@ -42,6 +44,7 @@ func Publish(events *workflowstreams.WorkflowTopicHandle, event serviceports.Str
 
 type workflowEffects struct {
 	ctx     workflow.Context
+	runtime *agentruntime.Service
 	run     RunContext
 	events  *workflowstreams.WorkflowTopicHandle
 	outcome Outcome
@@ -64,6 +67,7 @@ func (fx *workflowEffects) Complete(
 	err := workflow.ExecuteActivity(ctx, a.ModelCallActivity, &ModelCallInput{
 		Request: req,
 		Stream:  fx.events != nil,
+		Scope:   fx.run.Scope(),
 	}).Get(ctx, &reply)
 
 	return reply, err
@@ -132,6 +136,10 @@ func (fx *workflowEffects) Find(t *agentruntime.Turn, arguments map[string]any) 
 }
 
 func (fx *workflowEffects) Emit(event serviceports.StreamEvent) {
+	event, shown := fx.run.Scope().Tag(event)
+	if !shown {
+		return
+	}
 	item := StreamItem{Event: event.Event, Data: event.Data}
 	if fx.events != nil {
 		if err := fx.events.Publish(item); err != nil {
@@ -143,9 +151,22 @@ func (fx *workflowEffects) Emit(event serviceports.StreamEvent) {
 	// The reply's text is already in the transcript whole. Keeping each
 	// streamed fragment of it as well would record the same words hundreds of
 	// times over.
-	if event.Event != serviceports.AssistantEventDelta &&
-		event.Event != serviceports.AssistantEventReasoning {
+	if !streamedText(event.Event) {
 		fx.outcome.Events = append(fx.outcome.Events, item)
+	}
+}
+
+// streamedText reports an event carrying a piece of a reply or of thinking,
+// which the transcript keeps whole.
+func streamedText(event string) bool {
+	switch event {
+	case serviceports.AssistantEventDelta,
+		serviceports.AssistantEventReasoning,
+		serviceports.AssistantEventDelegateDelta,
+		serviceports.AssistantEventDelegateReasoning:
+		return true
+	default:
+		return false
 	}
 }
 
@@ -194,6 +215,132 @@ func (fx *workflowEffects) NewCallID() string {
 	}
 
 	return id
+}
+
+// Delegate opens another agent's turn on the task, in an activity, and drives
+// it here, in this workflow, with the same effects: each of its model and tool
+// calls is an activity of this execution, its events reach this run's reader
+// tagged with the task, and a stop that cancels this run cancels them too.
+func (fx *workflowEffects) Delegate(
+	_ *agentruntime.Turn,
+	call agentruntime.DelegateCall,
+) agentruntime.DelegateRun {
+	var a *Activities
+	ctx := workflow.WithActivityOptions(fx.ctx, fx.openDelegateOptions(call.Delegate.Name))
+
+	var opened DelegateOpening
+	err := workflow.ExecuteActivity(ctx, a.OpenDelegateActivity, &OpenDelegateInput{
+		Run:  fx.run,
+		Call: call,
+	}).Get(ctx, &opened)
+	if err != nil {
+		return declinedDelegate(call, err)
+	}
+
+	sub := &workflowEffects{
+		ctx:     fx.ctx,
+		runtime: fx.runtime,
+		run:     opened.Run,
+		events:  fx.events,
+	}
+	turn := fx.runtime.RestoreTurn(opened.Run.request(), opened.Turn)
+	turn.ReserveCallIDs(call.CallIDs)
+	result, err := fx.runtime.Drive(turn, sub)
+
+	fx.outcome.Artifacts = append(fx.outcome.Artifacts, sub.outcome.Artifacts...)
+	fx.outcome.Events = append(fx.outcome.Events, sub.outcome.Events...)
+
+	run := agentruntime.DelegateRun{
+		Definition: opened.Run.Definition,
+		Result:     result,
+		Documents:  publishedDocuments(sub.outcome.Artifacts),
+	}
+	if err != nil {
+		failure := modelcall.FailureOf(err)
+		run.Stopped = failure.Stopped
+		if !failure.Stopped {
+			run.Failure = delegateFailureReason(call.Delegate.Name, failure)
+		}
+	}
+
+	return run
+}
+
+// declinedDelegate is a task whose agent's turn could not be opened. A
+// refusal is passed on as it was written; anything else never reached the
+// agent, so nothing it could have written happened.
+func declinedDelegate(call agentruntime.DelegateCall, err error) agentruntime.DelegateRun {
+	if temporal.IsCanceledError(err) {
+		return agentruntime.DelegateRun{Stopped: true}
+	}
+
+	var appErr *temporal.ApplicationError
+	if errors.As(err, &appErr) && appErr.Type() == ErrTypeDelegateDeclined {
+		return agentruntime.DelegateRun{Declined: appErr.Message()}
+	}
+
+	return agentruntime.DelegateRun{
+		Declined: call.Delegate.Name + " could not be started just now. Nothing was asked " +
+			"of it; try again, or tell the person.",
+	}
+}
+
+// delegateFailureReason says why another agent's turn ended partway, in words
+// the asking agent can pass on, without the provider's own message.
+func delegateFailureReason(name string, failure *modelcall.Failure) string {
+	switch {
+	case failure == nil:
+		return name + " stopped before it finished."
+	case failure.Refusal != nil:
+		return failure.Err().Error()
+	case failure.NoProvider:
+		return name + " has no model provider it may use."
+	case failure.Resting:
+		return "Every model provider " + name + " may use is paused after repeated failures."
+	case failure.TimedOut:
+		return "The model provider did not answer " + name + " in time."
+	case failure.Status != 0:
+		return fmt.Sprintf("The model provider could not answer %s (status %d).",
+			name, failure.Status)
+	default:
+		return name + "'s model call failed before it finished."
+	}
+}
+
+// publishedDocuments are the documents a delegate kept beside the
+// conversation, for the account of what it did. Its tables and cards are
+// shown to the person as they always are; they are not what it made.
+func publishedDocuments(
+	artifacts []*assistantartifact.Artifact,
+) []serviceports.DelegateDocument {
+	documents := make([]serviceports.DelegateDocument, 0, len(artifacts))
+	for _, artifact := range artifacts {
+		if artifact == nil || artifact.Kind != assistantartifact.KindDocument {
+			continue
+		}
+		documents = append(documents, serviceports.DelegateDocument{
+			ID:    artifact.ID,
+			Kind:  string(artifact.Kind),
+			Title: artifact.Title,
+		})
+	}
+
+	return documents
+}
+
+func (fx *workflowEffects) openDelegateOptions(name string) workflow.ActivityOptions {
+	return workflow.ActivityOptions{
+		StartToCloseTimeout: openDelegateTimeout,
+		Priority:            fx.priority(),
+		Summary:             "Hand a task to " + name,
+		RetryPolicy: &temporal.RetryPolicy{
+			InitialInterval:        time.Second,
+			BackoffCoefficient:     2,
+			MaximumInterval:        10 * time.Second,
+			MaximumAttempts:        3,
+			NonRetryableErrorTypes: []string{ErrTypeDelegateDeclined},
+		},
+	}
 }
 
 func (fx *workflowEffects) priority() temporal.Priority {

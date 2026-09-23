@@ -41,6 +41,10 @@ type ListMessagesRequest struct {
 	// order, so a page cut here never repeats or skips a message however
 	// many turns land while the reader scrolls.
 	BeforeSequence *int
+	// ExcludeKinds leaves messages of these kinds out, before Limit counts:
+	// the history replayed to the model leaves out another agent's steps, so
+	// they neither reach the model nor crowd its window.
+	ExcludeKinds []conversation.MessageKind
 }
 
 // CountMessagesRequest counts a thread's messages, which is how long the

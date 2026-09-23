@@ -21,6 +21,10 @@ type StepKeyParams struct {
 	// byte-identical call that failed; it exists so a tool legitimately asked
 	// for twice — two reminders to the same person — is not collapsed into one.
 	Ordinal int
+	// Scope separates the steps of another agent's turn, on a task the
+	// owner's agent handed it, from the owner's own. Empty for the owner's
+	// own steps, whose keys are what they always were.
+	Scope string
 }
 
 // StepKey identifies a tool call by what it does rather than by the id the
@@ -45,9 +49,11 @@ func StepKey(p StepKeyParams) string {
 		return ""
 	}
 
-	sum := sha256.Sum256([]byte(
-		p.OwnerID.String() + "\x00" + base + "\x00" + strconv.Itoa(p.Ordinal),
-	))
+	material := p.OwnerID.String() + "\x00" + base + "\x00" + strconv.Itoa(p.Ordinal)
+	if p.Scope != "" {
+		material += "\x00" + p.Scope
+	}
+	sum := sha256.Sum256([]byte(material))
 
 	return hex.EncodeToString(sum[:])
 }

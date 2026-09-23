@@ -1981,6 +1981,8 @@ models:
         resolver: true
       openRuns:
         resolver: true
+      delegates:
+        resolver: true
   AgentTemplate:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.Template

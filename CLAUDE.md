@@ -316,6 +316,9 @@ turn stream, per-agent schedules, the one-shot and batch workflows, and the
 **Read [docs/engineering/agent-runtime.md](docs/engineering/agent-runtime.md)
 before changing anything under `internal/core/services/agentruntime/`,
 `assistantservice/`, or `internal/core/temporaljobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs,importassistantjobs}/`.**
+An agent handing a task to another agent (`delegate_task`, the per-agent
+allowlist, one level only, same person) is described in
+[docs/engineering/agent-delegation.md](docs/engineering/agent-delegation.md).
 
 ## Bun ORM
 

@@ -69,3 +69,42 @@ func agentDefinitionStats(
 
 	return loadersForRequest.AgentDefinitionStatsByID.Load(ctx, obj.ID.String())
 }
+
+// agentDefinitionDelegates reads the agents a definition may hand work to
+// through the request's definition loader, so a page of agents costs one
+// query for all their delegates. One deleted since it was added is left out.
+func agentDefinitionDelegates(
+	ctx context.Context,
+	obj *agentdefinition.Definition,
+) ([]*agentdefinition.Definition, error) {
+	if len(obj.DelegateIDs) == 0 {
+		return []*agentdefinition.Definition{}, nil
+	}
+
+	loadersForRequest, ok := loaders.FromContext(ctx)
+	if !ok || loadersForRequest == nil {
+		return nil, errortypes.NewDatabaseError("Agent definition loader is not configured")
+	}
+
+	thunks := make([]func() (*agentdefinition.Definition, error), 0, len(obj.DelegateIDs))
+	for _, id := range obj.DelegateIDs {
+		thunks = append(thunks, loadersForRequest.AgentDefinitionByID.LoadThunk(ctx, id.String()))
+	}
+
+	delegates := make([]*agentdefinition.Definition, 0, len(thunks))
+	for _, thunk := range thunks {
+		delegate, err := thunk()
+		if err != nil {
+			if errortypes.IsNotFoundError(err) {
+				continue
+			}
+
+			return nil, err
+		}
+		if delegate != nil {
+			delegates = append(delegates, delegate)
+		}
+	}
+
+	return delegates, nil
+}

@@ -61,6 +61,10 @@ func (r *agentDefinitionResolver) ToolDailyLimits(ctx context.Context, obj *agen
 	return out, nil
 }
 
+func (r *agentDefinitionResolver) Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error) {
+	return agentDefinitionDelegates(ctx, obj)
+}
+
 func (r *agentDefinitionResolver) PendingProposals(ctx context.Context, obj *agentdefinition.Definition) (int, error) {
 	stats, err := agentDefinitionStats(ctx, obj)
 	if err != nil {

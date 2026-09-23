@@ -97,6 +97,17 @@ type AgentDefinition {
   "Set on the agents the platform itself creates and fires; they cannot be deleted."
   systemKey: String!
   """
+  The agents this one may hand a task to when a person is talking to it, in the
+  order configured. Each works with its own tools, approvals and budget, as the
+  same person, and never hands the task on.
+  """
+  delegateIds: [ID!]!
+  """
+  The agents in delegateIds that still exist. One disabled since it was added is
+  listed, and refused when asked.
+  """
+  delegates: [AgentDefinition!]!
+  """
   Up to four opening questions: the template's own when the agent was made from
   one, otherwise drawn from the tools it holds. Only questions the agent can
   answer with its tools are offered.

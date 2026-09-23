@@ -3,11 +3,13 @@ package agentruntime
 import (
 	"context"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -23,6 +25,10 @@ type ContextBuilderParams struct {
 	Runtime       serviceports.AgentRuntime
 	Memories      serviceports.AgentMemoryService `optional:"true"`
 	Guide         serviceports.ProductGuide       `optional:"true"`
+	// Definitions and Permissions name the agents a conversation's agent may
+	// hand work to. Without them it is offered none.
+	Definitions repositories.AgentDefinitionRepository `optional:"true"`
+	Permissions serviceports.PermissionEngine          `optional:"true"`
 }
 
 type ContextBuilder struct {
@@ -32,6 +38,8 @@ type ContextBuilder struct {
 	runtime       serviceports.AgentRuntime
 	memories      serviceports.AgentMemoryService
 	guide         serviceports.ProductGuide
+	definitions   repositories.AgentDefinitionRepository
+	permissions   serviceports.PermissionEngine
 }
 
 func NewContextBuilder(p ContextBuilderParams) serviceports.RuntimeContextBuilder {
@@ -42,6 +50,8 @@ func NewContextBuilder(p ContextBuilderParams) serviceports.RuntimeContextBuilde
 		runtime:       p.Runtime,
 		memories:      p.Memories,
 		guide:         p.Guide,
+		definitions:   p.Definitions,
+		permissions:   p.Permissions,
 	}
 }
 
@@ -61,6 +71,11 @@ func (b *ContextBuilder) Build(
 	}
 
 	b.describeTrenova(&rc, req)
+	if delegator := strings.TrimSpace(req.DelegatedBy); delegator != "" {
+		rc.DelegatedBy = delegator
+	} else {
+		rc.Delegates = b.delegates(ctx, req)
+	}
 
 	tenant := req.Actor.TenantInfo()
 
@@ -168,4 +183,78 @@ func (b *ContextBuilder) describeTrenova(
 		Location: page.Location(),
 		Summary:  stringutils.FirstNonEmpty(page.Summary, page.Description),
 	}
+}
+
+// delegates are the agents on the definition's allowlist that the person may
+// hand work to through it: in the tenant, enabled, ones a person talks to,
+// and only when the person may use the assistant at all. Each names the tools
+// it holds that the person may use, so a delegate is never described by what
+// the person could not have it do. A lookup that fails offers none; the turn
+// still answers with its own tools.
+func (b *ContextBuilder) delegates(
+	ctx context.Context,
+	req *serviceports.RuntimeContextRequest,
+) []agentdefinition.RuntimeDelegate {
+	definition := req.Definition
+	if req.Trigger != agent.RunTriggerChat || !definition.Delegates() ||
+		b.definitions == nil || req.Actor == nil {
+		return nil
+	}
+	if !MayUseAssistant(ctx, b.permissions, req.Actor, b.logger) {
+		return nil
+	}
+
+	found, err := b.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
+		IDs:        definition.DelegateIDs,
+		TenantInfo: req.Actor.TenantInfo(),
+	})
+	if err != nil {
+		b.logger.Warn("agent context: the agents it may hand work to could not be read",
+			zap.String("agent", definition.ID.String()),
+			zap.Error(err),
+		)
+
+		return nil
+	}
+
+	byID := make(map[pulid.ID]*agentdefinition.Definition, len(found))
+	for _, delegate := range found {
+		byID[delegate.ID] = delegate
+	}
+
+	delegates := make([]agentdefinition.RuntimeDelegate, 0, len(definition.DelegateIDs))
+	for _, id := range definition.DelegateIDs {
+		delegate, ok := byID[id]
+		if !ok || definition.DelegateRefusal(delegate) != "" {
+			continue
+		}
+		delegates = append(delegates, agentdefinition.RuntimeDelegate{
+			ID:          delegate.ID,
+			Name:        delegate.Name,
+			Description: delegate.Description,
+			Icon:        delegate.Icon,
+			Accent:      delegate.Accent,
+			Tools:       b.delegateTools(ctx, req.Actor, delegate),
+		})
+	}
+
+	return delegates
+}
+
+// delegateTools names the tools a delegate holds beyond the core ones every
+// agent has, narrowed to those the person may use.
+func (b *ContextBuilder) delegateTools(
+	ctx context.Context,
+	actor *serviceports.RequestActor,
+	delegate *agentdefinition.Definition,
+) []string {
+	summaries := b.runtime.ToolSummaries(delegate)
+	names := make([]string, 0, len(summaries))
+	for _, summary := range summaries {
+		if !agentdefinition.IsCoreTool(summary.Name) {
+			names = append(names, summary.Name)
+		}
+	}
+
+	return b.runtime.PermittedTools(ctx, actor, names)
 }

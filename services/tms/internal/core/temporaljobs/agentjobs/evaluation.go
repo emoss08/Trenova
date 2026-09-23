@@ -380,8 +380,9 @@ func (a *Activities) chatReplayInput(
 	}
 
 	messages, err := a.conversations.ListMessages(ctx, repositories.ListMessagesRequest{
-		ThreadID:   source.SubjectID,
-		TenantInfo: tenant,
+		ThreadID:     source.SubjectID,
+		TenantInfo:   tenant,
+		ExcludeKinds: conversation.ModelHiddenKinds(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list thread messages: %w", err)

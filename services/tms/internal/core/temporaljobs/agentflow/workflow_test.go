@@ -47,6 +47,9 @@ type harnessParams struct {
 	query  []serviceports.AgentQueryTool
 	action []serviceports.AgentTool
 	ledger serviceports.RunStepLedger
+	// delegates opens another agent's turn when the run's agent hands it a
+	// task.
+	delegates DelegateOpener
 	// wrapTool, when set, stands between the worker and the real tool
 	// activity, so a test can fail an attempt after the tool has run.
 	wrapTool func(
@@ -67,7 +70,12 @@ func newHarness(t *testing.T, p harnessParams) *harness {
 		ActionTools: &agentruntimetest.StubActionRegistry{Tools: p.action},
 		Permissions: &agentruntimetest.StubPermissions{},
 	})
-	acts := NewActivities(ActivitiesParams{Logger: zap.NewNop(), Runtime: rt, Steps: p.ledger})
+	acts := NewActivities(ActivitiesParams{
+		Logger:    zap.NewNop(),
+		Runtime:   rt,
+		Steps:     p.ledger,
+		Delegates: p.delegates,
+	})
 
 	env.RegisterActivity(acts)
 	tool := acts.runTool

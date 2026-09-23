@@ -145,6 +145,11 @@ type AssistantProposal struct {
 	// Modifications are the values the approver changed before approving,
 	// keyed by parameter. Nil when it was approved as proposed.
 	Modifications map[string]any `json:"modifications"`
+	// AgentID and AgentName are the agent that proposed it: the
+	// conversation's own, or another agent it handed a task to, whose
+	// proposal it is and whose trust a decision on it teaches.
+	AgentID   pulid.ID `json:"agentId,omitempty"`
+	AgentName string   `json:"agentName,omitempty"`
 }
 
 // AssistantPlan is several of a turn's proposals as one decision, as the
@@ -163,6 +168,9 @@ type AssistantPlan struct {
 	ExpiresAt      int64            `json:"expiresAt"`
 	Hold           *ProposalHold    `json:"hold"`
 	CreatedAt      int64            `json:"createdAt"`
+	// AgentID and AgentName are the agent whose proposals the plan groups.
+	AgentID   pulid.ID `json:"agentId,omitempty"`
+	AgentName string   `json:"agentName,omitempty"`
 }
 
 // AssistantArtifact is what a turn produced besides words, as the Desk shows
@@ -235,7 +243,149 @@ const (
 	// was the handler's own; once the events travel through a relay, the name
 	// has to be one thing both ends agree on.
 	AssistantEventError = "error"
+	// AssistantEventDelegateStarted and AssistantEventDelegateFinished open
+	// and close a task the turn's agent handed another agent. Everything the
+	// other agent does in between carries the same delegateCallId.
+	AssistantEventDelegateStarted  = "delegate_started"
+	AssistantEventDelegateFinished = "delegate_finished"
+	// AssistantEventDelegateDelta, AssistantEventDelegateReasoning and
+	// AssistantEventDelegateRetrying are delta, reasoning and retrying from
+	// the other agent. They are named apart because a reader applies the
+	// plain ones to the reply it is showing: another agent's words appended
+	// to it, or its restart discarding it.
+	AssistantEventDelegateDelta     = "delegate_delta"
+	AssistantEventDelegateReasoning = "delegate_reasoning"
+	AssistantEventDelegateRetrying  = "delegate_retrying"
 )
+
+// DelegateScope tags what another agent did on a task the turn's agent
+// handed it, so a reader can nest it under the call that handed it over.
+// Both fields are empty on the turn's own events.
+type DelegateScope struct {
+	AgentID        pulid.ID `json:"agentId,omitempty"`
+	DelegateCallID string   `json:"delegateCallId,omitempty"`
+}
+
+// Empty reports the turn's own scope.
+func (s DelegateScope) Empty() bool { return s.DelegateCallID == "" }
+
+// Tag returns an event of another agent's turn as the reader of the turn
+// that delegated sees it. ok is false for an event the reader must not see
+// as it is: a refusal of the other agent's answer is reported when the task
+// finishes, since on its own it reads as a refusal of the reply being shown.
+func (s DelegateScope) Tag(event StreamEvent) (StreamEvent, bool) {
+	if s.Empty() {
+		return event, true
+	}
+
+	switch data := event.Data.(type) {
+	case AssistantDeltaEvent:
+		return StreamEvent{
+			Event: AssistantEventDelegateDelta,
+			Data:  AssistantDelegateTextEvent{DelegateScope: s, Text: data.Text},
+		}, true
+	case AssistantReasoningEvent:
+		return StreamEvent{
+			Event: AssistantEventDelegateReasoning,
+			Data:  AssistantDelegateTextEvent{DelegateScope: s, Text: data.Text},
+		}, true
+	case AssistantRetryingEvent:
+		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
+		return StreamEvent{Event: AssistantEventDelegateRetrying, Data: data}, true
+	case AssistantMessageEvent:
+		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
+		return StreamEvent{Event: event.Event, Data: data}, true
+	case AssistantToolStartedEvent:
+		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
+		return StreamEvent{Event: event.Event, Data: data}, true
+	case AssistantToolFinishedEvent:
+		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
+		return StreamEvent{Event: event.Event, Data: data}, true
+	case AssistantRefusedEvent:
+		return StreamEvent{}, false
+	default:
+		return event, true
+	}
+}
+
+// AssistantDelegateTextEvent is a piece of another agent's reply or thinking.
+type AssistantDelegateTextEvent struct {
+	DelegateScope
+	Text string `json:"text"`
+}
+
+// DelegateStatus is how a task handed to another agent ended.
+type DelegateStatus string
+
+const (
+	// DelegateStatusCompleted is a task the other agent finished and
+	// answered.
+	DelegateStatusCompleted = DelegateStatus("completed")
+	// DelegateStatusExhausted is one it spent its tool budget on.
+	DelegateStatusExhausted = DelegateStatus("exhausted")
+	// DelegateStatusRefused is one whose answer the output guard withheld.
+	DelegateStatusRefused = DelegateStatus("refused")
+	// DelegateStatusDeclined is one that never started: the agent could not
+	// be asked, for the reason given.
+	DelegateStatusDeclined = DelegateStatus("declined")
+	// DelegateStatusFailed is one that ended partway, for the reason given.
+	DelegateStatusFailed = DelegateStatus("failed")
+	// DelegateStatusStopped is one the person stopped.
+	DelegateStatusStopped = DelegateStatus("stopped")
+)
+
+// AssistantDelegateStartedEvent says the turn's agent handed a task to
+// another agent.
+type AssistantDelegateStartedEvent struct {
+	DelegateCallID string   `json:"delegateCallId"`
+	AgentID        pulid.ID `json:"agentId"`
+	AgentName      string   `json:"agentName"`
+	Icon           string   `json:"icon,omitempty"`
+	Accent         string   `json:"accent,omitempty"`
+	Task           string   `json:"task"`
+}
+
+// AssistantDelegateFinishedEvent says how a task handed to another agent
+// ended and what it came to. The same account is what the delegating agent
+// reads as its tool result.
+type AssistantDelegateFinishedEvent struct {
+	DelegateCallID string         `json:"delegateCallId"`
+	AgentID        pulid.ID       `json:"agentId"`
+	AgentName      string         `json:"agentName"`
+	Status         DelegateStatus `json:"status"`
+	// Reply is the other agent's answer; Reason is why it did not finish.
+	Reply  string `json:"reply,omitempty"`
+	Reason string `json:"reason,omitempty"`
+	// Made are the writes it made, Awaiting those waiting on a person's
+	// decision, and Published the documents it kept beside the conversation.
+	Made          []DelegateWrite    `json:"made"`
+	Awaiting      []DelegateWrite    `json:"awaiting"`
+	Published     []DelegateDocument `json:"published"`
+	ToolCallsUsed int                `json:"toolCallsUsed"`
+}
+
+// DelegateWrite is one write another agent made or proposed on a task.
+type DelegateWrite struct {
+	ToolName string             `json:"toolName"`
+	CallID   string             `json:"callId"`
+	Tier     agent.AutonomyTier `json:"tier"`
+	// Summary names what the write is about, from its arguments.
+	Summary string `json:"summary,omitempty"`
+	// Result is what an executed write made, when its tool says.
+	Result *agent.ToolExecutionResult `json:"result,omitempty"`
+	// Error is why an executed write failed.
+	Error string `json:"error,omitempty"`
+	// Simulated says the agent was in simulation, so the write was
+	// previewed rather than made.
+	Simulated bool `json:"simulated,omitempty"`
+}
+
+// DelegateDocument is something another agent kept beside the conversation.
+type DelegateDocument struct {
+	ID    pulid.ID `json:"id"`
+	Kind  string   `json:"kind"`
+	Title string   `json:"title"`
+}
 
 // AssistantTurnEvent names the turn a reply is being produced by.
 type AssistantTurnEvent struct {
@@ -269,6 +419,10 @@ type AssistantRetryingEvent struct {
 	// the wait, for the reader.
 	Kind        RetryKind `json:"kind,omitempty"`
 	WaitSeconds int       `json:"waitSeconds,omitempty"`
+	// AgentID and DelegateCallID are set when it is another agent's reply
+	// starting over, on a task this turn's agent handed it.
+	AgentID        pulid.ID `json:"agentId,omitempty"`
+	DelegateCallID string   `json:"delegateCallId,omitempty"`
 }
 
 // AssistantAcceptedEvent says the question passed the scope guard and a model is
@@ -307,6 +461,10 @@ type AssistantMessageEvent struct {
 	Content   string                        `json:"content"`
 	ToolCalls []conversation.ToolCallRecord `json:"toolCalls"`
 	Model     string                        `json:"model"`
+	// AgentID and DelegateCallID are set on another agent's message, on a
+	// task this turn's agent handed it.
+	AgentID        pulid.ID `json:"agentId,omitempty"`
+	DelegateCallID string   `json:"delegateCallId,omitempty"`
 }
 
 // AssistantToolStartedEvent says a tool is running with these arguments.
@@ -315,6 +473,10 @@ type AssistantToolStartedEvent struct {
 	Name      string           `json:"name"`
 	Arguments map[string]any   `json:"arguments"`
 	Effect    agent.ToolEffect `json:"effect,omitempty"`
+	// AgentID and DelegateCallID are set on another agent's call, on a task
+	// this turn's agent handed it.
+	AgentID        pulid.ID `json:"agentId,omitempty"`
+	DelegateCallID string   `json:"delegateCallId,omitempty"`
 }
 
 // AssistantToolFinishedEvent carries what the tool returned. Proposed means the
@@ -327,6 +489,10 @@ type AssistantToolFinishedEvent struct {
 	Content  string           `json:"content"`
 	Effect   agent.ToolEffect `json:"effect,omitempty"`
 	Summary  string           `json:"summary,omitempty"`
+	// AgentID and DelegateCallID are set on another agent's call, on a task
+	// this turn's agent handed it.
+	AgentID        pulid.ID `json:"agentId,omitempty"`
+	DelegateCallID string   `json:"delegateCallId,omitempty"`
 }
 
 // AssistantStreamEmitter receives the events of one turn as they happen. It is

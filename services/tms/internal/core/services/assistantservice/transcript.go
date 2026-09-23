@@ -3,6 +3,7 @@ package assistantservice
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -67,6 +69,7 @@ func (s *Service) Transcript(
 		Body: renderTranscript(transcriptInput{
 			Thread:     thread,
 			AgentName:  s.agentName(ctx, req, thread),
+			Delegates:  s.agentNames(ctx, req.TenantInfo, delegatedAgents(messages)),
 			Messages:   messages,
 			Proposals:  proposals,
 			ExportedAt: timeutils.NowUnix(),
@@ -156,11 +159,35 @@ func transcriptFileName(thread *conversation.Thread) string {
 }
 
 type transcriptInput struct {
-	Thread     *conversation.Thread
-	AgentName  string
+	Thread    *conversation.Thread
+	AgentName string
+	// Delegates names the agents the conversation's agent handed tasks to.
+	Delegates  map[pulid.ID]string
 	Messages   []conversation.Message
 	Proposals  []*agent.AgentProposal
 	ExportedAt int64
+}
+
+// delegatedAgents are the agents whose steps the conversation holds.
+func delegatedAgents(messages []conversation.Message) []pulid.ID {
+	ids := make([]pulid.ID, 0, 2)
+	for idx := range messages {
+		if id := messages[idx].AgentDefinitionID; id.IsNotNil() && !slices.Contains(ids, id) {
+			ids = append(ids, id)
+		}
+	}
+
+	return ids
+}
+
+// delegateName is the name of an agent the conversation's agent handed a
+// task to, or a plain one when it has since been deleted.
+func (in *transcriptInput) delegateName(id pulid.ID) string {
+	if name := strings.TrimSpace(in.Delegates[id]); name != "" {
+		return name
+	}
+
+	return "Another agent"
 }
 
 func renderTranscript(in transcriptInput) string {
@@ -181,10 +208,28 @@ func renderTranscript(in transcriptInput) string {
 	fmt.Fprintf(&b, "- **Exported:** %s\n", transcriptTime(in.ExportedAt))
 	fmt.Fprintf(&b, "- **Conversation id:** `%s`\n", in.Thread.ID.String())
 
-	for i := range in.Messages {
+	for i := 0; i < len(in.Messages); {
+		message := &in.Messages[i]
+		if message.Delegated() {
+			end := i + 1
+			for end < len(in.Messages) && in.Messages[end].Delegated() &&
+				in.Messages[end].DelegateCallID == message.DelegateCallID {
+				end++
+			}
+			var section strings.Builder
+			writeTranscriptDelegation(
+				&section, in.Messages[i:end], in.delegateName(message.AgentDefinitionID),
+			)
+			writeSection(&b, section.String())
+			i = end
+
+			continue
+		}
+
 		var section strings.Builder
-		writeTranscriptMessage(&section, &in.Messages[i], in.AgentName)
+		writeTranscriptMessage(&section, message, in.AgentName)
 		writeSection(&b, section.String())
+		i++
 	}
 
 	if len(in.Proposals) > 0 {
@@ -261,6 +306,31 @@ func writeTranscriptMessage(b *strings.Builder, m *conversation.Message, agentNa
 		fmt.Fprintf(b, "## %s · %s\n\n", m.Role, transcriptTime(m.CreatedAt))
 		writeText(b, m.Content)
 	}
+}
+
+// writeTranscriptDelegation writes what another agent did on a task the
+// conversation's agent handed it, quoted under the call that handed it over:
+// the task, then each of its steps, in the order they happened.
+func writeTranscriptDelegation(
+	b *strings.Builder,
+	steps []conversation.Message,
+	agentName string,
+) {
+	fmt.Fprintf(b, "## Handed to %s\n\n", agentName)
+
+	var inner strings.Builder
+	for idx := range steps {
+		step := &steps[idx]
+		if step.Role == conversation.RoleUser {
+			fmt.Fprintf(&inner, "### Task · %s\n\n", transcriptTime(step.CreatedAt))
+			writeText(&inner, step.Content)
+
+			continue
+		}
+		writeTranscriptMessage(&inner, step, agentName)
+	}
+
+	writeQuoted(b, inner.String())
 }
 
 // writeTranscriptDecision writes the note the application sent in place of

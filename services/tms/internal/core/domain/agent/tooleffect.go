@@ -9,6 +9,8 @@ const (
 	ToolEffectDiscover = ToolEffect("discover")
 	ToolEffectPresent  = ToolEffect("present")
 	ToolEffectAsk      = ToolEffect("ask")
+	// ToolEffectDelegate hands a task to another agent.
+	ToolEffectDelegate = ToolEffect("delegate")
 )
 
 func (e ToolEffect) IsValid() bool {
@@ -18,7 +20,8 @@ func (e ToolEffect) IsValid() bool {
 		ToolEffectNavigate,
 		ToolEffectDiscover,
 		ToolEffectPresent,
-		ToolEffectAsk:
+		ToolEffectAsk,
+		ToolEffectDelegate:
 		return true
 	default:
 		return false

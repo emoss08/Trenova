@@ -96,6 +96,53 @@ type RunRequest struct {
 	// Attempt is which try of this run is executing, recorded on each step so
 	// the ledger can be read back when something went wrong. One-based.
 	Attempt int
+	// Delegation is set on a turn working on a task another agent handed it.
+	// Such a turn runs as the same person with its own agent's tools, tiers
+	// and budget, and never hands the task on.
+	Delegation *Delegation
+}
+
+// Delegation is the task another agent handed a turn.
+type Delegation struct {
+	// ParentAgentID and ParentAgentName are the agent that handed the task
+	// over: the one the person is talking to.
+	ParentAgentID   pulid.ID `json:"parentAgentId"`
+	ParentAgentName string   `json:"parentAgentName"`
+	// CallID is the delegate_task call the turn answers, which the thread
+	// and the stream nest its steps under.
+	CallID string `json:"callId"`
+	// StepScope separates the turn's steps from those of the turn that
+	// delegated, in the ledger both share. It is derived from what the
+	// delegating model asked for, never from a provider's call id.
+	StepScope string `json:"stepScope"`
+}
+
+// Scope is how the turn's events and saved steps are tagged.
+func (d *Delegation) Scope(agentID pulid.ID) DelegateScope {
+	if d == nil {
+		return DelegateScope{}
+	}
+
+	return DelegateScope{AgentID: agentID, DelegateCallID: d.CallID}
+}
+
+// MayDelegate reports whether the turn may hand a task to another agent: a
+// person is reading, in a conversation that keeps what the other agent does,
+// it is not itself working for another agent, and at least one agent on its
+// allowlist is one the person may use.
+func (r *RunRequest) MayDelegate() bool {
+	return r.Delegation == nil && !r.Unattended && r.ThreadID.IsNotNil() &&
+		len(r.Context.Delegates) > 0
+}
+
+// StepScope is what the turn's step keys are namespaced by: empty for a turn
+// working for the person directly.
+func (r *RunRequest) StepScope() string {
+	if r.Delegation == nil {
+		return ""
+	}
+
+	return r.Delegation.StepScope
 }
 
 // ProposalOutcome is the current state of a proposal an earlier turn raised.
@@ -176,6 +223,24 @@ type RunResult struct {
 	// Truncated reports that the provider stopped partway through the reply.
 	// The turn still counts as finished and Reply holds what arrived.
 	Truncated bool
+	// Delegations are the tasks the turn handed to other agents, with what
+	// each one's writes came to. Their steps are among Messages, tagged; their
+	// writes are recorded as their own agent's, not this one's.
+	Delegations []DelegatedRun `json:",omitempty"`
+}
+
+// DelegatedRun is one task a turn handed to another agent, as it is saved:
+// the agent it ran as, and every write it proposed or made.
+type DelegatedRun struct {
+	// Definition is the delegate as it ran. Its proposals are recorded
+	// against it, so a decision on one is a decision on that agent.
+	Definition *agentdefinition.Definition `json:"definition"`
+	CallID     string                      `json:"callId"`
+	Actions    []PendingAction             `json:"actions,omitempty"`
+	Model      string                      `json:"model,omitempty"`
+	Input      string                      `json:"input"`
+	// Failed says the delegate's turn ended before it finished.
+	Failed bool `json:"failed,omitempty"`
 }
 
 type AgentRuntime interface {
@@ -184,6 +249,9 @@ type AgentRuntime interface {
 	// prompt lists them. A configured tool that is no longer registered is
 	// omitted rather than described.
 	ToolSummaries(definition *agentdefinition.Definition) []agentdefinition.ToolSummary
+	// PermittedTools keeps the named tools the actor may use, the check a
+	// turn's own tool set is narrowed by.
+	PermittedTools(ctx context.Context, actor *RequestActor, names []string) []string
 }
 
 // AgentSubjectDescriber renders the record a run or a conversation is about
@@ -213,4 +281,7 @@ type RuntimeContextRequest struct {
 	// message that started this turn.
 	Attachments []agentdefinition.RuntimeAttachment
 	Mentions    []agentdefinition.RuntimeMention
+	// DelegatedBy names the agent that handed this turn its task, when it is
+	// working for another agent. Such a turn is offered no delegates.
+	DelegatedBy string
 }

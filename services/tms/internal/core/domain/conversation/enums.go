@@ -29,15 +29,33 @@ type MessageKind string
 const (
 	MessageKindMessage      = MessageKind("Message")
 	MessageKindDecisionNote = MessageKind("DecisionNote")
+	// MessageKindDelegated is a step another agent took on a task the
+	// conversation's agent handed it: the task, its model's messages and its
+	// tool results. The conversation shows them nested under the delegate
+	// call; the model is never sent them again, because the agent that
+	// delegated only ever saw its own call and the answer it got back.
+	MessageKindDelegated = MessageKind("Delegated")
 )
 
 func (k MessageKind) IsValid() bool {
 	switch k {
-	case MessageKindMessage, MessageKindDecisionNote:
+	case MessageKindMessage, MessageKindDecisionNote, MessageKindDelegated:
 		return true
 	default:
 		return false
 	}
+}
+
+// AllMessageKinds is every kind a message may be, in the order they were
+// added.
+func AllMessageKinds() []MessageKind {
+	return []MessageKind{MessageKindMessage, MessageKindDecisionNote, MessageKindDelegated}
+}
+
+// ModelHiddenKinds are the kinds a conversation keeps and never replays to
+// the model.
+func ModelHiddenKinds() []MessageKind {
+	return []MessageKind{MessageKindDelegated}
 }
 
 // ThreadStatus is a conversation's lifecycle.

@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/stretchr/testify/require"
 )
 
@@ -47,6 +48,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_assistant_artifacts_kind",
 			values: stringsOf(assistantartifact.AllKinds()),
+		},
+		{
+			name:   "ck_assistant_messages_kind",
+			values: stringsOf(conversation.AllMessageKinds()),
 		},
 	}
 

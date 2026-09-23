@@ -28,6 +28,8 @@ func (s *Service) ToolEffect(name string) agent.ToolEffect {
 		return agent.ToolEffectAsk
 	case publishArtifactName:
 		return agent.ToolEffectPresent
+	case delegateTaskName:
+		return agent.ToolEffectDelegate
 	}
 
 	return serviceports.EffectOf(s.toolNamed(name))

@@ -2,6 +2,7 @@ package assistantservice
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -181,10 +182,14 @@ func (s *Service) prepareTurn(
 		return nil, nil, err
 	}
 
+	// Another agent's steps on a task this one handed it are the thread's to
+	// show, not the model's to read again: it only ever saw its own call and
+	// the answer that came back.
 	history, err := s.conversations.ListMessages(ctx, repositories.ListMessagesRequest{
-		ThreadID:   thread.ID,
-		TenantInfo: req.TenantInfo,
-		Limit:      historyLimit,
+		ThreadID:     thread.ID,
+		TenantInfo:   req.TenantInfo,
+		Limit:        historyLimit,
+		ExcludeKinds: conversation.ModelHiddenKinds(),
 	})
 	if err != nil {
 		return nil, nil, err
@@ -332,6 +337,7 @@ func (s *Service) FinishTurn(
 	}
 	artifacts.attachMessages(sourceMessageIndex(saved))
 	s.runtime.MarkToolEffects(saved)
+	s.nameDelegatedSteps(ctx, req.TenantInfo, saved)
 
 	if req.Failure == nil && !plan.FollowUp {
 		s.titleIfUnnamed(ctx, thread, plan.Input)
@@ -347,7 +353,7 @@ func (s *Service) FinishTurn(
 	// A turn that failed or was stopped is recorded too. A write it made
 	// before it ended happened, and without its proposal it would leave no
 	// audit row, count against no cap, and earn no trust.
-	proposals, err := s.persistProposals(ctx, persistProposalsParams{
+	own := persistProposalsParams{
 		Failed:     req.Failure != nil,
 		Definition: plan.Definition,
 		Thread:     thread,
@@ -357,7 +363,13 @@ func (s *Service) FinishTurn(
 		Model:      turn.Model,
 		Input:      plan.Input,
 		Artifacts:  artifacts,
-	})
+	}
+	proposals, err := s.persistProposals(ctx, own)
+	if req.Run != nil && len(req.Run.Delegations) > 0 {
+		delegated, delegatedErr := s.persistDelegatedProposals(ctx, own, req.Run.Delegations)
+		proposals = append(proposals, delegated...)
+		err = errors.Join(err, delegatedErr)
+	}
 	if err != nil {
 		s.logProposalPersistFailure(thread, err)
 	}

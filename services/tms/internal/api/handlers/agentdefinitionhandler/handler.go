@@ -220,7 +220,10 @@ type saveAgentRequest struct {
 	ContextProviders       []agentdefinition.ContextProvider `json:"contextProviders"`
 	OutputMode             agentdefinition.OutputMode        `json:"outputMode"`
 	PreferredProviderID    pulid.ID                          `json:"preferredProviderId"`
-	Version                int64                             `json:"version"`
+	// DelegateIDs is absent to keep the agents this one may hand work to,
+	// and a list, empty or not, to replace them.
+	DelegateIDs *[]pulid.ID `json:"delegateIds"`
+	Version     int64       `json:"version"`
 }
 
 func (r *saveAgentRequest) toServiceRequest(
@@ -258,6 +261,7 @@ func (r *saveAgentRequest) toServiceRequest(
 		ContextProviders:       r.ContextProviders,
 		OutputMode:             r.OutputMode,
 		PreferredProviderID:    r.PreferredProviderID,
+		DelegateIDs:            r.DelegateIDs,
 		Version:                r.Version,
 		TenantInfo:             tenantInfo,
 	}

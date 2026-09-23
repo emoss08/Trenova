@@ -177,10 +177,10 @@ does, so a reader can never attach ahead of it.
 
 Every tool call a reader sees says what it does. `tool_started`, `tool_finished`
 and the tool calls on `message` carry `effect` (`lookup`, `change`, `navigate`,
-`discover`, `present` or `ask`), read from the tool's metadata
+`discover`, `present`, `ask` or `delegate`), read from the tool's metadata
 (`serviceports.EffectOf`: a declared `Effect()`, else a write is a change and a
-read a lookup; `find_tools`, `ask_user` and `publish_artifact` are named by the
-runtime). `tool_finished` also carries `summary`, a one-line label worked out
+read a lookup; `find_tools`, `ask_user`, `publish_artifact` and `delegate_task`
+are named by the runtime). `tool_finished` also carries `summary`, a one-line label worked out
 where the tool ran from what it returned, or from a write's name or title. The
 thread's saved messages carry the same fields: `summary` is stored on the
 result, and `effect` is read from the registry when the messages are served, so
@@ -217,6 +217,17 @@ Each publish is a signal in the turn's history and each read a poll update, so a
 streamed reply adds a few hundred history events. That is why chat is one
 workflow per turn rather than one per thread, and why a run nobody watches
 publishes nothing.
+
+### Handing a task to another agent
+
+The agent a person is talking to may hand a task to another agent on its
+allowlist with `delegate_task`. The other agent's turn runs inline in the same
+`AssistantTurnWorkflow`, through the same `Drive` and effects, as its own agent
+and as the same person; its events reach the same stream tagged with
+`agentId` and `delegateCallId`, its steps are saved to the thread as
+`Delegated` messages the model never reads again, and its writes are recorded as
+its own. One level only. **Read [agent-delegation.md](agent-delegation.md)
+before changing it.**
 
 ### Decision follow-ups
 
@@ -382,6 +393,11 @@ before the change:
 | `assistant-turn-notify-unseen` | a turn that ends with nobody reading its stream ends without telling the person who asked | nothing; the check itself is the only cost, and it is asked only of a turn nobody drained |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |
+
+Agent delegation (`delegate_task`) took no gate: whether a turn holds the tool
+is decided when it opens, in an activity, and kept in `TurnState.Held`, so an
+execution opened before it never takes the new branch. See
+[agent-delegation.md](agent-delegation.md#versioning).
 
 Runs parked in a day-long decision wait are the slowest to drain; the recorded
 histories under `agentjobs/testdata/replay` replay against the old branch and must

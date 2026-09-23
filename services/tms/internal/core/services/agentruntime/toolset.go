@@ -87,9 +87,14 @@ type toolSetRequest struct {
 	// do it" does not reopen with a toolbox that has forgotten the work.
 	history    []conversation.Message
 	unattended bool
+	// delegated says the turn is working on a task another agent handed it.
+	// Nobody reads it but that agent, so it has nobody to ask.
+	delegated bool
 	// publishes says the turn has somewhere to put a document: a
 	// conversation with artifacts beside it.
 	publishes bool
+	// delegates are the agents the turn may hand a task to.
+	delegates []agentdefinition.RuntimeDelegate
 }
 
 // toolSet is the live set of tools a turn may call. It starts from the agent's
@@ -104,6 +109,9 @@ type toolSet struct {
 	// usable answers whether the person may use a tool at all, for naming
 	// what exists beyond the agent's configuration.
 	usable func(name string) bool
+	// delegates are the agents the turn may ask, for naming one that holds
+	// what a search could not load.
+	delegates []agentdefinition.RuntimeDelegate
 }
 
 func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
@@ -129,6 +137,7 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 		usable: func(name string) bool {
 			return len(s.permittedTools(ctx, req.actor, []string{name})) == 1
 		},
+		delegates: req.delegates,
 	}
 
 	// The core tools ride on every turn and do not count toward narrowing: a
@@ -170,9 +179,14 @@ func (t *toolSet) addConversational(req toolSetRequest) {
 	if req.unattended {
 		return
 	}
-	t.add(askUserSpec())
+	if !req.delegated {
+		t.add(askUserSpec())
+	}
 	if req.publishes {
 		t.add(publishArtifactSpec())
+	}
+	if len(req.delegates) > 0 && !req.delegated {
+		t.add(delegateTaskSpec(req.delegates))
 	}
 }
 
@@ -236,7 +250,7 @@ func (s *Service) carryOver(set *toolSet, history []conversation.Message) {
 		}
 		for _, call := range message.ToolCalls {
 			switch call.Name {
-			case askUserName, publishArtifactName:
+			case askUserName, publishArtifactName, delegateTaskName:
 			case findToolsName:
 				need, _ := call.Arguments["need"].(string)
 				if strings.TrimSpace(need) == "" {
@@ -383,6 +397,7 @@ func (s *Service) holds(definition *agentdefinition.Definition, name string) boo
 // refuses a call to anything outside the allowlist.
 func (s *Service) nothingLoaded(set *toolSet, need string) string {
 	elsewhere := make([]serviceports.AgentToolDescriptor, 0, foundToolsLimit)
+	unheld := make([]string, 0, foundToolsLimit)
 	for _, descriptor := range s.catalog.Find(nil, need, foundToolsLimit) {
 		if _, held := set.loaded[descriptor.Name]; held {
 			continue
@@ -390,12 +405,17 @@ func (s *Service) nothingLoaded(set *toolSet, need string) string {
 		if slices.Contains(set.allowed, descriptor.Name) {
 			continue
 		}
+		unheld = append(unheld, descriptor.Name)
 		// A tool the person may not use is not worth naming: an
 		// administrator adding it to the agent would change nothing for them.
 		if set.usable != nil && !set.usable(descriptor.Name) {
 			continue
 		}
 		elsewhere = append(elsewhere, descriptor)
+	}
+
+	if note := delegatedSearchNote(set.delegates, unheld); note != "" {
+		return note
 	}
 
 	if len(elsewhere) == 0 {

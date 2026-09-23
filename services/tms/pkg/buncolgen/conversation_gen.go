@@ -284,63 +284,67 @@ var MessageTable = TableInfo{
 //	q.Where(MessageColumns.ID.Eq(), id)           // WHERE amsg.id = ?
 //	q.Order(MessageColumns.CreatedAt.OrderDesc())  // ORDER BY amsg.created_at DESC
 var MessageColumns = struct {
-	ID             Column // "id" → qualified: "amsg.id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "amsg.business_unit_id"
-	OrganizationID Column // "organization_id" → qualified: "amsg.organization_id"
-	ThreadID       Column // "thread_id" → qualified: "amsg.thread_id"
-	Sequence       Column // "sequence" → qualified: "amsg.sequence"
-	Role           Column // "role" → qualified: "amsg.role"
-	Kind           Column // "kind" → qualified: "amsg.kind"
-	Content        Column // "content" → qualified: "amsg.content"
-	ToolCalls      Column // "tool_calls" → qualified: "amsg.tool_calls"
-	ToolCallID     Column // "tool_call_id" → qualified: "amsg.tool_call_id"
-	ToolName       Column // "tool_name" → qualified: "amsg.tool_name"
-	ToolFailed     Column // "tool_failed" → qualified: "amsg.tool_failed"
-	ToolSummary    Column // "tool_summary" → qualified: "amsg.tool_summary"
-	ScopeStage     Column // "scope_stage" → qualified: "amsg.scope_stage"
-	ScopeCategory  Column // "scope_category" → qualified: "amsg.scope_category"
-	ScopeReason    Column // "scope_reason" → qualified: "amsg.scope_reason"
-	Refused        Column // "refused" → qualified: "amsg.refused"
-	PageContext    Column // "page_context" → qualified: "amsg.page_context"
-	Attachments    Column // "attachments" → qualified: "amsg.attachments"
-	Mentions       Column // "mentions" → qualified: "amsg.mentions"
-	Reasoning      Column // "reasoning" → qualified: "amsg.reasoning"
-	Model          Column // "model" → qualified: "amsg.model"
-	ProviderID     Column // "provider_id" → qualified: "amsg.provider_id"
-	InputTokens    Column // "input_tokens" → qualified: "amsg.input_tokens"
-	OutputTokens   Column // "output_tokens" → qualified: "amsg.output_tokens"
-	LatencyMs      Column // "latency_ms" → qualified: "amsg.latency_ms"
-	CostUSD        Column // "cost_usd" → qualified: "amsg.cost_usd"
-	CreatedAt      Column // "created_at" → qualified: "amsg.created_at"
+	ID                Column // "id" → qualified: "amsg.id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "amsg.business_unit_id"
+	OrganizationID    Column // "organization_id" → qualified: "amsg.organization_id"
+	ThreadID          Column // "thread_id" → qualified: "amsg.thread_id"
+	Sequence          Column // "sequence" → qualified: "amsg.sequence"
+	Role              Column // "role" → qualified: "amsg.role"
+	Kind              Column // "kind" → qualified: "amsg.kind"
+	AgentDefinitionID Column // "agent_definition_id" → qualified: "amsg.agent_definition_id"
+	DelegateCallID    Column // "delegate_call_id" → qualified: "amsg.delegate_call_id"
+	Content           Column // "content" → qualified: "amsg.content"
+	ToolCalls         Column // "tool_calls" → qualified: "amsg.tool_calls"
+	ToolCallID        Column // "tool_call_id" → qualified: "amsg.tool_call_id"
+	ToolName          Column // "tool_name" → qualified: "amsg.tool_name"
+	ToolFailed        Column // "tool_failed" → qualified: "amsg.tool_failed"
+	ToolSummary       Column // "tool_summary" → qualified: "amsg.tool_summary"
+	ScopeStage        Column // "scope_stage" → qualified: "amsg.scope_stage"
+	ScopeCategory     Column // "scope_category" → qualified: "amsg.scope_category"
+	ScopeReason       Column // "scope_reason" → qualified: "amsg.scope_reason"
+	Refused           Column // "refused" → qualified: "amsg.refused"
+	PageContext       Column // "page_context" → qualified: "amsg.page_context"
+	Attachments       Column // "attachments" → qualified: "amsg.attachments"
+	Mentions          Column // "mentions" → qualified: "amsg.mentions"
+	Reasoning         Column // "reasoning" → qualified: "amsg.reasoning"
+	Model             Column // "model" → qualified: "amsg.model"
+	ProviderID        Column // "provider_id" → qualified: "amsg.provider_id"
+	InputTokens       Column // "input_tokens" → qualified: "amsg.input_tokens"
+	OutputTokens      Column // "output_tokens" → qualified: "amsg.output_tokens"
+	LatencyMs         Column // "latency_ms" → qualified: "amsg.latency_ms"
+	CostUSD           Column // "cost_usd" → qualified: "amsg.cost_usd"
+	CreatedAt         Column // "created_at" → qualified: "amsg.created_at"
 }{
-	ID:             NewColumn("id", "amsg"),
-	BusinessUnitID: NewColumn("business_unit_id", "amsg"),
-	OrganizationID: NewColumn("organization_id", "amsg"),
-	ThreadID:       NewColumn("thread_id", "amsg"),
-	Sequence:       NewColumn("sequence", "amsg"),
-	Role:           NewColumn("role", "amsg"),
-	Kind:           NewColumn("kind", "amsg"),
-	Content:        NewColumn("content", "amsg"),
-	ToolCalls:      NewColumn("tool_calls", "amsg"),
-	ToolCallID:     NewColumn("tool_call_id", "amsg"),
-	ToolName:       NewColumn("tool_name", "amsg"),
-	ToolFailed:     NewColumn("tool_failed", "amsg"),
-	ToolSummary:    NewColumn("tool_summary", "amsg"),
-	ScopeStage:     NewColumn("scope_stage", "amsg"),
-	ScopeCategory:  NewColumn("scope_category", "amsg"),
-	ScopeReason:    NewColumn("scope_reason", "amsg"),
-	Refused:        NewColumn("refused", "amsg"),
-	PageContext:    NewColumn("page_context", "amsg"),
-	Attachments:    NewColumn("attachments", "amsg"),
-	Mentions:       NewColumn("mentions", "amsg"),
-	Reasoning:      NewColumn("reasoning", "amsg"),
-	Model:          NewColumn("model", "amsg"),
-	ProviderID:     NewColumn("provider_id", "amsg"),
-	InputTokens:    NewColumn("input_tokens", "amsg"),
-	OutputTokens:   NewColumn("output_tokens", "amsg"),
-	LatencyMs:      NewColumn("latency_ms", "amsg"),
-	CostUSD:        NewColumn("cost_usd", "amsg"),
-	CreatedAt:      NewColumn("created_at", "amsg"),
+	ID:                NewColumn("id", "amsg"),
+	BusinessUnitID:    NewColumn("business_unit_id", "amsg"),
+	OrganizationID:    NewColumn("organization_id", "amsg"),
+	ThreadID:          NewColumn("thread_id", "amsg"),
+	Sequence:          NewColumn("sequence", "amsg"),
+	Role:              NewColumn("role", "amsg"),
+	Kind:              NewColumn("kind", "amsg"),
+	AgentDefinitionID: NewColumn("agent_definition_id", "amsg"),
+	DelegateCallID:    NewColumn("delegate_call_id", "amsg"),
+	Content:           NewColumn("content", "amsg"),
+	ToolCalls:         NewColumn("tool_calls", "amsg"),
+	ToolCallID:        NewColumn("tool_call_id", "amsg"),
+	ToolName:          NewColumn("tool_name", "amsg"),
+	ToolFailed:        NewColumn("tool_failed", "amsg"),
+	ToolSummary:       NewColumn("tool_summary", "amsg"),
+	ScopeStage:        NewColumn("scope_stage", "amsg"),
+	ScopeCategory:     NewColumn("scope_category", "amsg"),
+	ScopeReason:       NewColumn("scope_reason", "amsg"),
+	Refused:           NewColumn("refused", "amsg"),
+	PageContext:       NewColumn("page_context", "amsg"),
+	Attachments:       NewColumn("attachments", "amsg"),
+	Mentions:          NewColumn("mentions", "amsg"),
+	Reasoning:         NewColumn("reasoning", "amsg"),
+	Model:             NewColumn("model", "amsg"),
+	ProviderID:        NewColumn("provider_id", "amsg"),
+	InputTokens:       NewColumn("input_tokens", "amsg"),
+	OutputTokens:      NewColumn("output_tokens", "amsg"),
+	LatencyMs:         NewColumn("latency_ms", "amsg"),
+	CostUSD:           NewColumn("cost_usd", "amsg"),
+	CreatedAt:         NewColumn("created_at", "amsg"),
 }
 
 // MessageFieldMap maps JSON API field names to database column names.
@@ -355,6 +359,8 @@ var MessageFieldMap = map[string]string{
 	"sequence":       "sequence",
 	"role":           "role",
 	"kind":           "kind",
+	"agentId":        "agent_definition_id",
+	"delegateCallId": "delegate_call_id",
 	"content":        "content",
 	"toolCalls":      "tool_calls",
 	"toolCallId":     "tool_call_id",
@@ -388,6 +394,8 @@ var MessageInsertableColumns = []string{
 	"sequence",
 	"role",
 	"kind",
+	"agent_definition_id",
+	"delegate_call_id",
 	"content",
 	"tool_calls",
 	"tool_call_id",
@@ -472,34 +480,36 @@ func MessageApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.Se
 //	MessageFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var MessageFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	ThreadID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
-	Sequence       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sequence" → DB: "sequence"
-	Role           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "role" → DB: "role"
-	Kind           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
-	Content        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "content" → DB: "content"
-	ToolCalls      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCalls" → DB: "tool_calls"
-	ToolCallID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCallId" → DB: "tool_call_id"
-	ToolName       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
-	ToolFailed     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolFailed" → DB: "tool_failed"
-	ToolSummary    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summary" → DB: "tool_summary"
-	ScopeStage     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scopeStage" → DB: "scope_stage"
-	ScopeCategory  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scopeCategory" → DB: "scope_category"
-	ScopeReason    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scopeReason" → DB: "scope_reason"
-	Refused        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "refused" → DB: "refused"
-	PageContext    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pageContext" → DB: "page_context"
-	Attachments    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attachments" → DB: "attachments"
-	Mentions       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mentions" → DB: "mentions"
-	Reasoning      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoning" → DB: "reasoning"
-	Model          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
-	ProviderID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
-	InputTokens    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
-	OutputTokens   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
-	LatencyMs      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latencyMs" → DB: "latency_ms"
-	CostUSD        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ThreadID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
+	Sequence          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sequence" → DB: "sequence"
+	Role              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "role" → DB: "role"
+	Kind              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
+	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentId" → DB: "agent_definition_id"
+	DelegateCallID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateCallId" → DB: "delegate_call_id"
+	Content           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "content" → DB: "content"
+	ToolCalls         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCalls" → DB: "tool_calls"
+	ToolCallID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCallId" → DB: "tool_call_id"
+	ToolName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
+	ToolFailed        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolFailed" → DB: "tool_failed"
+	ToolSummary       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summary" → DB: "tool_summary"
+	ScopeStage        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scopeStage" → DB: "scope_stage"
+	ScopeCategory     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scopeCategory" → DB: "scope_category"
+	ScopeReason       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scopeReason" → DB: "scope_reason"
+	Refused           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "refused" → DB: "refused"
+	PageContext       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pageContext" → DB: "page_context"
+	Attachments       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attachments" → DB: "attachments"
+	Mentions          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mentions" → DB: "mentions"
+	Reasoning         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoning" → DB: "reasoning"
+	Model             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
+	ProviderID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
+	InputTokens       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
+	OutputTokens      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
+	LatencyMs         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latencyMs" → DB: "latency_ms"
+	CostUSD           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -521,6 +531,12 @@ var MessageFilter = struct {
 	},
 	Kind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("kind", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentId", op, value)
+	},
+	DelegateCallID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("delegateCallId", op, value)
 	},
 	Content: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("content", op, value)

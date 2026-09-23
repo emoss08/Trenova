@@ -39,6 +39,10 @@ type Turn struct {
 	// that reuses one is given a fresh id rather than a clash.
 	callIDs map[string]struct{}
 	result  *serviceports.RunResult
+	// delegates are the agents the turn may hand a task to, taken when it
+	// opened, and delegations how many tasks it has handed out.
+	delegates   []agentdefinition.RuntimeDelegate
+	delegations int
 }
 
 // TurnEffects is everything a turn does outside itself.
@@ -59,6 +63,9 @@ type TurnEffects interface {
 	// NewCallID mints a tool call id, for a provider that gave none or reused
 	// one. Minting is random, so workflow code has it recorded.
 	NewCallID() string
+	// Delegate hands a task to another agent and runs that agent's turn to
+	// its end, reporting what it did. The loop has already checked the call.
+	Delegate(t *Turn, call DelegateCall) DelegateRun
 	// Supports reports whether a change to the loop's shape applies to this
 	// turn. In process every change does; in workflow code an execution
 	// started before the change keeps the shape it started with, so its
@@ -149,6 +156,10 @@ type TurnState struct {
 	Questions []string               `json:"questions,omitempty"`
 	CallIDs   []string               `json:"callIds,omitempty"`
 	Result    serviceports.RunResult `json:"result"`
+	// Delegates are the agents the turn may hand a task to, and Delegations
+	// how many it has handed out.
+	Delegates   []agentdefinition.RuntimeDelegate `json:"delegates,omitempty"`
+	Delegations int                               `json:"delegations,omitempty"`
 }
 
 // ToolSetState is a turn's tool set as data. Which tools are loaded follows
@@ -159,6 +170,9 @@ type ToolSetState struct {
 	Disclosed  bool                    `json:"disclosed"`
 	Unattended bool                    `json:"unattended"`
 	FindCalls  int                     `json:"findCalls"`
+	// Delegates are the agents the turn may ask, so a search that finds
+	// nothing the turn can call can name one that holds it.
+	Delegates []agentdefinition.RuntimeDelegate `json:"delegates,omitempty"`
 }
 
 // State captures the turn as data.
@@ -169,16 +183,18 @@ func (t *Turn) State() TurnState {
 	callIDs := slices.Sorted(maps.Keys(t.callIDs))
 
 	return TurnState{
-		Budget:    t.budget,
-		System:    t.system,
-		Messages:  t.messages,
-		Tools:     t.tools.state(),
-		Held:      slices.Clone(t.held),
-		Failures:  maps.Clone(t.repeats.failures),
-		Ordinals:  maps.Clone(t.counts.seen),
-		Questions: questions,
-		CallIDs:   callIDs,
-		Result:    *t.result,
+		Budget:      t.budget,
+		System:      t.system,
+		Messages:    t.messages,
+		Tools:       t.tools.state(),
+		Held:        slices.Clone(t.held),
+		Failures:    maps.Clone(t.repeats.failures),
+		Ordinals:    maps.Clone(t.counts.seen),
+		Questions:   questions,
+		CallIDs:     callIDs,
+		Result:      *t.result,
+		Delegates:   slices.Clone(t.delegates),
+		Delegations: t.delegations,
 	}
 }
 
@@ -224,18 +240,20 @@ func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Tu
 	}
 
 	return &Turn{
-		s:         s,
-		req:       req,
-		budget:    state.Budget,
-		system:    state.System,
-		messages:  state.Messages,
-		tools:     restoreToolSet(state.Tools),
-		held:      held,
-		repeats:   &repeatGuard{failures: failures},
-		counts:    &ordinals{seen: seen},
-		questions: questions,
-		callIDs:   callIDs,
-		result:    &result,
+		s:           s,
+		req:         req,
+		budget:      state.Budget,
+		system:      state.System,
+		messages:    state.Messages,
+		tools:       restoreToolSet(state.Tools),
+		held:        held,
+		repeats:     &repeatGuard{failures: failures},
+		counts:      &ordinals{seen: seen},
+		questions:   questions,
+		callIDs:     callIDs,
+		result:      &result,
+		delegates:   state.Delegates,
+		delegations: state.Delegations,
 	}
 }
 
@@ -246,6 +264,7 @@ func (t *toolSet) state() ToolSetState {
 		Disclosed:  t.disclosed,
 		Unattended: t.unattended,
 		FindCalls:  t.findCalls,
+		Delegates:  slices.Clone(t.delegates),
 	}
 }
 
@@ -256,6 +275,7 @@ func restoreToolSet(state ToolSetState) *toolSet {
 		disclosed:  state.Disclosed,
 		unattended: state.Unattended,
 		findCalls:  state.FindCalls,
+		delegates:  state.Delegates,
 	}
 	for _, spec := range state.Specs {
 		set.add(spec)
@@ -279,15 +299,38 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		runtimeContext.Tools = s.ToolSummaries(definition)
 	}
 
+	// Another agent's steps on a task this one handed it are never replayed:
+	// the model only ever saw its own call and the answer it got back. The
+	// thread's reader leaves them out already; this holds for any caller.
+	history := modelHistory(req.History)
+
 	held := s.heldTools(definition)
+	// Moving the person around the app is for the agent they are talking
+	// to. A delegate that navigated would pull them away mid-answer to a
+	// page they never asked for.
+	if req.Delegation != nil {
+		held = slices.DeleteFunc(held, func(name string) bool { return name == agentdefinition.CoreToolOpenPage })
+	}
+	// Only the agent a person is talking to delegates, and only to agents
+	// they may use; the tool is held on that turn and on no other, so a
+	// turn working for another agent cannot hand its task on.
+	var delegates []agentdefinition.RuntimeDelegate
+	if req.MayDelegate() {
+		delegates = slices.Clone(runtimeContext.Delegates)
+		held = append(held, delegateTaskName)
+	} else {
+		runtimeContext.Delegates = nil
+	}
 	tools := s.newToolSet(ctx, toolSetRequest{
 		definition: definition,
 		held:       held,
 		actor:      req.Actor,
 		input:      req.Input,
-		history:    req.History,
+		history:    history,
 		unattended: req.Unattended,
+		delegated:  req.Delegation != nil,
 		publishes:  req.KeepsDocuments(),
+		delegates:  delegates,
 	})
 	runtimeContext.ToolsDisclosed = tools.disclosed
 	runtimeContext.Artifacts = tools.offers(publishArtifactName)
@@ -297,9 +340,14 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	runtimeContext.Tools = usableSummaries(runtimeContext.Tools, tools)
 	repeats := newRepeatGuard()
 	counts := newOrdinals()
-	s.seedFromLedger(ctx, req, repeats)
+	// A delegate's turn shares the ledger of the turn that delegated, and is
+	// opened once per task, so there is no earlier attempt of it to learn
+	// from; the ledger's lessons are the other turn's.
+	if req.Delegation == nil {
+		s.seedFromLedger(ctx, req, repeats)
+	}
 
-	messages := toAdapterMessages(req.History, req.Proposals)
+	messages := toAdapterMessages(history, req.Proposals)
 	messages = append(messages, serviceports.Message{
 		Role:    serviceports.RoleUser,
 		Content: req.Input,
@@ -315,7 +363,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		held:      held,
 		repeats:   repeats,
 		counts:    counts,
-		questions: askedQuestions(req.History),
+		questions: askedQuestions(history),
 		callIDs:   usedCallIDs(req.History),
 		result: &serviceports.RunResult{
 			Messages: []conversation.Message{{
@@ -324,6 +372,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 				CreatedAt: timeutils.NowUnix(),
 			}},
 		},
+		delegates: delegates,
 	}
 }
 
@@ -442,6 +491,16 @@ func (fx *localEffects) Observe(
 }
 
 func (*localEffects) NewCallID() string { return NewCallID() }
+
+// Delegate declines in process. A turn is offered delegate_task only when it
+// is driven as a workflow, where the delegate's turn runs as activities of its
+// own; this answers a model that names the tool anyway.
+func (*localEffects) Delegate(_ *Turn, call DelegateCall) DelegateRun {
+	return DelegateRun{
+		Declined: "handing a task to " + call.Delegate.Name + " is not available here. " +
+			"Do what you can with your own tools.",
+	}
+}
 
 // ObserveCall hands a finished call to observe and folds what it showed the
 // person into what the model reads. It is what a durable tool activity runs

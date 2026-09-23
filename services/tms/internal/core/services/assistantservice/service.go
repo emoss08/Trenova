@@ -42,6 +42,9 @@ type Params struct {
 	// Permissions decides whether the person may read the record a
 	// conversation is about before any of it reaches the model.
 	Permissions serviceports.PermissionEngine
+	// Runs says which agent raised each of a conversation's proposals: its
+	// own, or one it handed a task to.
+	Runs repositories.AgentRunRepository `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -71,6 +74,7 @@ type Service struct {
 	documents     repositories.DocumentRepository
 	contents      serviceports.DocumentContentService
 	permissions   serviceports.PermissionEngine
+	runs          repositories.AgentRunRepository
 }
 
 func New(p Params) *Service {
@@ -95,5 +99,6 @@ func New(p Params) *Service {
 		documents:     p.Documents,
 		contents:      p.Contents,
 		permissions:   p.Permissions,
+		runs:          p.Runs,
 	}
 }

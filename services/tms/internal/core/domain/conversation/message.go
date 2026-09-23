@@ -34,8 +34,16 @@ type Message struct {
 	Sequence int  `json:"sequence" bun:"sequence,type:INTEGER,notnull"`
 	Role     Role `json:"role"     bun:"role,type:VARCHAR(50),notnull"`
 	// Kind is Message for everything but the note that starts the turn after
-	// a decision; see MessageKind.
+	// a decision and the steps of another agent the turn handed work to; see
+	// MessageKind.
 	Kind MessageKind `json:"kind"     bun:"kind,type:VARCHAR(50),notnull,default:'Message'"`
+	// AgentDefinitionID and DelegateCallID mark a step another agent took on
+	// a task this conversation's agent handed it: which agent, and the
+	// delegate_task call it answers. Both are empty on the conversation's own
+	// messages. AgentName is the agent's name as the thread is served.
+	AgentDefinitionID pulid.ID `json:"agentId,omitempty"        bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
+	DelegateCallID    string   `json:"delegateCallId,omitempty" bun:"delegate_call_id,type:VARCHAR(200),nullzero"`
+	AgentName         string   `json:"agentName,omitempty"      bun:"-"`
 
 	Content string `json:"content" bun:"content,type:TEXT,nullzero"`
 
@@ -176,6 +184,12 @@ func StampUnstamped(messages []Message, now int64) {
 			next = stamp
 		}
 	}
+}
+
+// Delegated reports a step another agent took on a task this conversation's
+// agent handed it.
+func (m *Message) Delegated() bool {
+	return m.Kind == MessageKindDelegated
 }
 
 func (m *Message) GetID() pulid.ID { return m.ID }

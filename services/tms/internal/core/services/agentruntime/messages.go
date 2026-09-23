@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -254,4 +255,20 @@ func proposalRationale(in rationaleInput) string {
 		"The agent asked to run %s without explaining why.",
 		in.ToolName,
 	)
+}
+
+// modelHistory is the conversation as the model is shown it: without the
+// steps another agent took on a task this one handed it. The history is
+// returned as it is when it holds none, which is every conversation without a
+// delegate.
+func modelHistory(history []conversation.Message) []conversation.Message {
+	if !slices.ContainsFunc(history, func(message conversation.Message) bool {
+		return message.Delegated()
+	}) {
+		return history
+	}
+
+	return slices.DeleteFunc(slices.Clone(history), func(message conversation.Message) bool {
+		return message.Delegated()
+	})
 }

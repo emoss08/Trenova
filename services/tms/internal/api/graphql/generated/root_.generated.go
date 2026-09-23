@@ -604,6 +604,8 @@ type ComplexityRoot struct {
 		CronTimezone           func(childComplexity int) int
 		DailyRunLimit          func(childComplexity int) int
 		DecisionTimeoutSeconds func(childComplexity int) int
+		DelegateIDs            func(childComplexity int) int
+		Delegates              func(childComplexity int) int
 		Description            func(childComplexity int) int
 		Enabled                func(childComplexity int) int
 		EndsAt                 func(childComplexity int) int
@@ -13624,6 +13626,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDefinition.DecisionTimeoutSeconds(childComplexity), true
+	case "AgentDefinition.delegateIds":
+		if e.ComplexityRoot.AgentDefinition.DelegateIDs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.DelegateIDs(childComplexity), true
+	case "AgentDefinition.delegates":
+		if e.ComplexityRoot.AgentDefinition.Delegates == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.Delegates(childComplexity), true
 	case "AgentDefinition.description":
 		if e.ComplexityRoot.AgentDefinition.Description == nil {
 			break
@@ -72636,6 +72650,17 @@ type AgentDefinition {
   "Set on the agents the platform itself creates and fires; they cannot be deleted."
   systemKey: String!
   """
+  The agents this one may hand a task to when a person is talking to it, in the
+  order configured. Each works with its own tools, approvals and budget, as the
+  same person, and never hands the task on.
+  """
+  delegateIds: [ID!]!
+  """
+  The agents in delegateIds that still exist. One disabled since it was added is
+  listed, and refused when asked.
+  """
+  delegates: [AgentDefinition!]!
+  """
   Up to four opening questions: the template's own when the agent was made from
   one, otherwise drawn from the tools it holds. Only questions the agent can
   answer with its tools are offered.
@@ -93977,6 +94002,10 @@ func (ec *executionContext) childFields_AgentDefinition(ctx context.Context, fie
 		return ec.fieldContext_AgentDefinition_preferredProviderId(ctx, field)
 	case "systemKey":
 		return ec.fieldContext_AgentDefinition_systemKey(ctx, field)
+	case "delegateIds":
+		return ec.fieldContext_AgentDefinition_delegateIds(ctx, field)
+	case "delegates":
+		return ec.fieldContext_AgentDefinition_delegates(ctx, field)
 	case "starters":
 		return ec.fieldContext_AgentDefinition_starters(ctx, field)
 	case "lastRunAt":

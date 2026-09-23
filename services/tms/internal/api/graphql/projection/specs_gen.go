@@ -1040,6 +1040,14 @@ func init() {
 				FieldMapKey: "systemKey",
 			},
 			{
+				Name:        "delegateIds",
+				FieldMapKey: "delegateIds",
+			},
+			{
+				Name:        "delegates",
+				FieldMapKey: "delegateIds",
+			},
+			{
 				Name:    "starters",
 				Special: "starters",
 			},

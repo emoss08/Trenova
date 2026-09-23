@@ -63,6 +63,11 @@ const (
 	// findTimeout bounds a tool search, which is a catalog read plus
 	// permission checks.
 	findTimeout = 30 * time.Second
+
+	// openDelegateTimeout bounds opening another agent's turn on a task:
+	// reading it, checking the person may use it and its budget, and
+	// building its prompt and tools.
+	openDelegateTimeout = time.Minute
 )
 
 // heavyTools run on the heavy queue rather than on the queue of the run that
@@ -89,6 +94,9 @@ const (
 const (
 	ErrTypeUnknownTool  = "UnknownTool"
 	ErrTypeBadToolInput = "BadToolInput"
+	// ErrTypeDelegateDeclined is another agent that may not be handed the
+	// task: its message says why, for the agent that asked.
+	ErrTypeDelegateDeclined = "DelegateDeclined"
 )
 
 // StreamItem is one event on a run's stream, as the reader receives it.
@@ -116,6 +124,20 @@ type RunContext struct {
 	// PriorityKey orders this run's work against other kinds of work on the
 	// same queue. The organization is its fairness key.
 	PriorityKey int `json:"priorityKey"`
+	// Delegation is set on the turn of an agent working on a task the run's
+	// own agent handed it.
+	Delegation *serviceports.Delegation `json:"delegation,omitempty"`
+}
+
+// Scope is how the run's events are tagged for its reader: empty for the
+// run's own agent, the agent and the delegate call for one working on a task
+// it was handed.
+func (rc *RunContext) Scope() serviceports.DelegateScope {
+	if rc.Delegation == nil || rc.Definition == nil {
+		return serviceports.DelegateScope{}
+	}
+
+	return rc.Delegation.Scope(rc.Definition.ID)
 }
 
 // NewRunContext is a run request as the data a run's activities carry. The
@@ -135,6 +157,7 @@ func NewRunContext(req *serviceports.RunRequest, priorityKey int) RunContext {
 		PreferredProviderID: req.PreferredProviderID,
 		PinProvider:         req.PinProvider,
 		PriorityKey:         priorityKey,
+		Delegation:          req.Delegation,
 	}
 }
 
@@ -154,6 +177,7 @@ func (rc *RunContext) request() *serviceports.RunRequest {
 		StepOwner:           rc.StepOwner,
 		PreferredProviderID: rc.PreferredProviderID,
 		PinProvider:         rc.PinProvider,
+		Delegation:          rc.Delegation,
 	}
 }
 
@@ -163,6 +187,23 @@ type ModelCallInput struct {
 	// published as it arrives. A run nobody watches is not streamed: every
 	// publish is a signal in the run's history.
 	Stream bool `json:"stream"`
+	// Scope tags what is streamed when the reply is another agent's, on a
+	// task the run's own agent handed it.
+	Scope serviceports.DelegateScope `json:"scope,omitzero"`
+}
+
+// OpenDelegateInput asks for another agent's turn on a task the run's agent
+// handed it.
+type OpenDelegateInput struct {
+	Run  RunContext                `json:"run"`
+	Call agentruntime.DelegateCall `json:"call"`
+}
+
+// DelegateOpening is the other agent's turn, ready to drive: its run as data
+// and its turn as the activity built it.
+type DelegateOpening struct {
+	Run  RunContext             `json:"run"`
+	Turn agentruntime.TurnState `json:"turn"`
 }
 
 type FindToolsInput struct {

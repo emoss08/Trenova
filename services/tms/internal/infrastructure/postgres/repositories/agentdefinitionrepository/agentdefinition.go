@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -366,6 +367,7 @@ func (r *repository) Update(
 		Set(cols.ContextProviders.Set(), dbhelper.TextArray(entity.ContextProviders)).
 		Set(cols.OutputMode.Set(), entity.OutputMode).
 		Set(cols.PreferredProviderID.Set(), entity.PreferredProviderID).
+		Set(cols.DelegateIDs.Set(), dbhelper.TextArray(entity.DelegateIDs)).
 		Set(cols.NextRunAt.Set(), entity.NextRunAt).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 		Set(cols.Version.Set(), entity.Version).
@@ -458,23 +460,64 @@ func (r *repository) SetToolTier(
 	return dberror.CheckRowsAffected(res, "AgentDefinition", req.ID.String())
 }
 
+// Delete removes an agent and, in the same transaction, takes it off every
+// allowlist in its tenant that names it. An array column cannot carry a
+// foreign key, so this is the cascade: no agent is left able to ask one that
+// no longer exists.
 func (r *repository) Delete(
 	ctx context.Context,
 	req repositories.DeleteAgentDefinitionRequest,
 ) error {
-	res, err := r.db.DBForContext(ctx).
-		NewDelete().
+	return r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if err := r.removeDelegate(txCtx, req); err != nil {
+			return err
+		}
+
+		res, err := r.db.DBForContext(txCtx).
+			NewDelete().
+			Model((*agentdefinition.Definition)(nil)).
+			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+				return buncolgen.DefinitionScopeTenantDelete(dq, req.TenantInfo).
+					Where(buncolgen.DefinitionColumns.ID.Eq(), req.ID)
+			}).
+			Exec(txCtx)
+		if err != nil {
+			return fmt.Errorf("delete agent definition: %w", err)
+		}
+
+		return dberror.CheckRowsAffected(res, "AgentDefinition", req.ID.String())
+	})
+}
+
+// removeDelegate takes an agent off the allowlist of every agent in its
+// tenant that may hand it work. Each one changed is a new version, so a save
+// made from a copy loaded before the delete is refused rather than putting
+// the deleted agent back.
+func (r *repository) removeDelegate(
+	ctx context.Context,
+	req repositories.DeleteAgentDefinitionRequest,
+) error {
+	cols := buncolgen.DefinitionColumns
+
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
 		Model((*agentdefinition.Definition)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.DefinitionScopeTenantDelete(dq, req.TenantInfo).
-				Where(buncolgen.DefinitionColumns.ID.Eq(), req.ID)
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
+				Where("?::text = ANY("+cols.DelegateIDs.Qualified()+")", req.ID.String())
 		}).
+		Set(
+			cols.DelegateIDs.SetExpr("NULLIF(array_remove({}, ?::text), '{}'::text[])"),
+			req.ID.String(),
+		).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Set(cols.Version.Inc(1)).
 		Exec(ctx)
 	if err != nil {
-		return fmt.Errorf("delete agent definition: %w", err)
+		return fmt.Errorf("remove a deleted agent from the agents that delegate to it: %w", err)
 	}
 
-	return dberror.CheckRowsAffected(res, "AgentDefinition", req.ID.String())
+	return nil
 }
 
 func (r *repository) StatsByIDs(

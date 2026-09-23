@@ -2,6 +2,7 @@ package agentdefinitionservice
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -94,7 +95,7 @@ func (s *Service) Create(
 	}
 	apply(definition, req)
 
-	if err := s.validate(definition); err != nil {
+	if err := s.validate(ctx, definition, nil); err != nil {
 		return nil, err
 	}
 	if err := s.schedule(definition); err != nil {
@@ -130,7 +131,7 @@ func (s *Service) Update(
 	updated.Version = req.Version
 	apply(&updated, req)
 
-	if err = s.validate(&updated); err != nil {
+	if err = s.validate(ctx, &updated, &previous); err != nil {
 		return nil, err
 	}
 	if scheduleChanged(&previous, &updated) {
@@ -249,10 +250,18 @@ func (s *Service) PreviewPrompt(
 	return definition.BuildSystemPrompt(runtimeContext), nil
 }
 
-func (s *Service) validate(definition *agentdefinition.Definition) error {
+// validate checks the definition as it would be saved. previous is the
+// definition as stored, nil for a new one.
+func (s *Service) validate(
+	ctx context.Context,
+	definition, previous *agentdefinition.Definition,
+) error {
 	multiErr := errortypes.NewMultiError()
 	definition.Validate(multiErr)
 	validateToolSelection(definition, s.tools, s.queryTools, multiErr)
+	if err := s.validateDelegates(ctx, definition, previous, multiErr); err != nil {
+		return err
+	}
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -322,6 +331,9 @@ func apply(definition *agentdefinition.Definition, req *services.SaveAgentDefini
 	definition.ContextProviders = req.ContextProviders
 	definition.OutputMode = req.OutputMode
 	definition.PreferredProviderID = req.PreferredProviderID
+	if req.DelegateIDs != nil {
+		definition.DelegateIDs = slices.Clone(*req.DelegateIDs)
+	}
 	definition.ApplyDefaults()
 
 	if definition.TriggerMode != agentdefinition.TriggerScheduled {

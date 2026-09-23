@@ -115,7 +115,10 @@ func (s *Service) persistProposals(
 
 	persisted := make([]services.AssistantProposal, 0, len(recorded.Proposals))
 	for _, proposal := range recorded.Proposals {
-		persisted = append(persisted, toAssistantProposal(proposal, hold))
+		out := toAssistantProposal(proposal, hold)
+		out.AgentID = params.Definition.ID
+		out.AgentName = params.Definition.Name
+		persisted = append(persisted, out)
 	}
 
 	return persisted, nil
@@ -255,16 +258,32 @@ func (s *Service) ListThreadProposals(
 	}
 
 	modifications := s.modificationsFor(ctx, stored, req.TenantInfo)
+	proposers := s.proposersOf(ctx, req.TenantInfo, runsOf(stored))
 
 	proposals := make([]services.AssistantProposal, 0, len(stored))
 	for _, proposal := range stored {
 		out := toAssistantProposal(proposal, holdFor(verdicts[proposal.RunID]))
 		out.Fields = s.editableFields(proposal)
 		out.Modifications = modifications[proposal.ID]
+		if by, ok := proposers[proposal.RunID]; ok {
+			out.AgentID, out.AgentName = by.id, by.name
+		}
 		proposals = append(proposals, out)
 	}
 
 	return proposals, nil
+}
+
+// runsOf is the run behind each proposal.
+func runsOf(stored []*agent.AgentProposal) []pulid.ID {
+	ids := make([]pulid.ID, 0, len(stored))
+	for _, proposal := range stored {
+		if proposal != nil {
+			ids = append(ids, proposal.RunID)
+		}
+	}
+
+	return ids
 }
 
 // editableFields is what a person may change on a pending proposal, from
@@ -381,9 +400,19 @@ func (s *Service) ListThreadPlans(
 		return nil, err
 	}
 
+	planRuns := make([]pulid.ID, 0, len(stored))
+	for _, plan := range stored {
+		planRuns = append(planRuns, plan.RunID)
+	}
+	proposers := s.proposersOf(ctx, req.TenantInfo, planRuns)
+
 	plans := make([]services.AssistantPlan, 0, len(stored))
 	for _, plan := range stored {
-		plans = append(plans, toAssistantPlan(plan, holdFor(verdicts[plan.RunID])))
+		out := toAssistantPlan(plan, holdFor(verdicts[plan.RunID]))
+		if by, ok := proposers[plan.RunID]; ok {
+			out.AgentID, out.AgentName = by.id, by.name
+		}
+		plans = append(plans, out)
 	}
 
 	return plans, nil

@@ -257,6 +257,8 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				_, repeated := t.questions[question]
 				outcome := toolOutcome{content: resolveAsk(call.Arguments)}
 				switch {
+				case !tools.offers(askUserName) && t.req.Delegation != nil:
+					outcome = failedOutcome("%s", delegatedAskRefusal)
 				case !tools.offers(askUserName):
 					outcome = failedOutcome("%s", unattendedAskRefusal)
 				case question != "" && repeated:
@@ -277,6 +279,18 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				if !tools.offers(publishArtifactName) {
 					outcome = failedOutcome("%s", unpublishableRefusal)
 				}
+				result.ToolCallsUsed++
+				s.recordToolResult(t, fx, call, outcome)
+				continue
+			}
+
+			// Only a turn that holds delegate_task hands out work, and a turn
+			// working for another agent is told why it cannot. Any other turn
+			// that names it is answered as for any tool it does not hold, as
+			// it was before the tool existed.
+			if call.Name == delegateTaskName &&
+				(t.holds(delegateTaskName) || t.req.Delegation != nil) {
+				outcome := s.delegate(t, fx, call)
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
 				continue

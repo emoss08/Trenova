@@ -2,6 +2,7 @@ package agentflow
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
@@ -30,29 +31,51 @@ type ToolObserver interface {
 	) (*serviceports.ShownArtifact, []*assistantartifact.Artifact, error)
 }
 
+// DelegateOpener opens another agent's turn on a task the run's agent handed
+// it: it checks the agent may be asked, by that agent and by the person, and
+// builds the turn as its own agent, with its own tools, tiers and budget. A
+// refusal is a *DelegateDeclinedError, whose reason the asking agent is told.
+type DelegateOpener interface {
+	OpenDelegate(
+		ctx context.Context,
+		run RunContext,
+		call agentruntime.DelegateCall,
+	) (*DelegateOpening, error)
+}
+
+// DelegateDeclinedError is another agent that may not be handed the task.
+type DelegateDeclinedError struct {
+	Reason string
+}
+
+func (e *DelegateDeclinedError) Error() string { return e.Reason }
+
 type ActivitiesParams struct {
 	fx.In
 
-	Logger   *zap.Logger
-	Runtime  *agentruntime.Service
-	Steps    serviceports.RunStepLedger
-	Observer ToolObserver `optional:"true"`
+	Logger    *zap.Logger
+	Runtime   *agentruntime.Service
+	Steps     serviceports.RunStepLedger
+	Observer  ToolObserver   `optional:"true"`
+	Delegates DelegateOpener `optional:"true"`
 }
 
 // Activities are a turn's effects, one activity each.
 type Activities struct {
-	l        *zap.Logger
-	runtime  *agentruntime.Service
-	steps    serviceports.RunStepLedger
-	observer ToolObserver
+	l         *zap.Logger
+	runtime   *agentruntime.Service
+	steps     serviceports.RunStepLedger
+	observer  ToolObserver
+	delegates DelegateOpener
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		l:        p.Logger.Named("agentflow"),
-		runtime:  p.Runtime,
-		steps:    p.Steps,
-		observer: p.Observer,
+		l:         p.Logger.Named("agentflow"),
+		runtime:   p.Runtime,
+		steps:     p.Steps,
+		observer:  p.Observer,
+		delegates: p.Delegates,
 	}
 }
 
@@ -70,12 +93,19 @@ func (a *Activities) ModelCallActivity(
 		}
 		defer CloseStream(ctx, stream, a.l)
 
+		publish := func(event serviceports.StreamEvent, force bool) {
+			tagged, shown := in.Scope.Tag(event)
+			if shown {
+				events.Publish(StreamItem{Event: tagged.Event, Data: tagged.Data}, force)
+			}
+		}
+
 		// Whatever an earlier attempt streamed is already in front of the
 		// reader. The retry starts the reply over, and the reader has to be
 		// told so before the first word of the new one arrives, or the two
 		// run together.
 		if attempt := activity.GetInfo(ctx).Attempt; attempt > 1 {
-			events.Publish(StreamItem{
+			publish(serviceports.StreamEvent{
 				Event: serviceports.AssistantEventRetrying,
 				Data: serviceports.AssistantRetryingEvent{
 					Attempt: int(attempt) - 1,
@@ -85,9 +115,7 @@ func (a *Activities) ModelCallActivity(
 			}, true)
 		}
 
-		emit = func(event serviceports.StreamEvent) {
-			events.Publish(StreamItem{Event: event.Event, Data: event.Data}, false)
-		}
+		emit = func(event serviceports.StreamEvent) { publish(event, false) }
 	}
 
 	stopBeating := modelcall.Heartbeat(ctx)
@@ -109,6 +137,35 @@ func (a *Activities) FindToolsActivity(
 	content, loaded := a.runtime.FindFor(ctx, in.Run.request(), in.Tools, in.Arguments)
 
 	return &FindToolsResult{Content: content, Loaded: loaded}, nil
+}
+
+// OpenDelegateActivity opens another agent's turn on a task the run's agent
+// handed it. A refusal is not retried: the agent that asked is told why, and
+// asking again would be refused the same way.
+func (a *Activities) OpenDelegateActivity(
+	ctx context.Context,
+	in *OpenDelegateInput,
+) (*DelegateOpening, error) {
+	if a.delegates == nil {
+		return nil, temporal.NewNonRetryableApplicationError(
+			in.Call.Delegate.Name+" cannot be asked from here.",
+			ErrTypeDelegateDeclined, nil,
+		)
+	}
+
+	opening, err := a.delegates.OpenDelegate(ctx, in.Run, in.Call)
+	if err != nil {
+		var declined *DelegateDeclinedError
+		if errors.As(err, &declined) {
+			return nil, temporal.NewNonRetryableApplicationError(
+				declined.Reason, ErrTypeDelegateDeclined, nil,
+			)
+		}
+
+		return nil, fmt.Errorf("open %s's turn: %w", in.Call.Delegate.Name, err)
+	}
+
+	return opening, nil
 }
 
 // RegisterDynamic registers the tool call as the worker's dynamic activity. The

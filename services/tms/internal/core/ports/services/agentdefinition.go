@@ -43,8 +43,12 @@ type SaveAgentDefinitionRequest struct {
 	ContextProviders       []agentdefinition.ContextProvider
 	OutputMode             agentdefinition.OutputMode
 	PreferredProviderID    pulid.ID
-	Version                int64
-	TenantInfo             pagination.TenantInfo
+	// DelegateIDs replaces the agents this one may hand a task to. Nil keeps
+	// the ones it has, so a save from a form that does not show them cannot
+	// clear them; an empty list clears them.
+	DelegateIDs *[]pulid.ID
+	Version     int64
+	TenantInfo  pagination.TenantInfo
 }
 
 type AgentTemplateDescriptor struct {

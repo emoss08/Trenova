@@ -38,6 +38,10 @@ const (
 	maxToolCallsCeiling  = 64
 	maxConcurrentRuns    = 10
 
+	// MaxDelegates bounds the agents one agent may hand work to. Each is
+	// described in the agent's prompt, so the list is paid for on every turn.
+	MaxDelegates = 8
+
 	DefaultDecisionTimeoutSeconds = 86400
 	DefaultRunTimeoutSeconds      = 600
 	DefaultMaxToolCalls           = 12
@@ -99,6 +103,12 @@ type Definition struct {
 	OutputMode          OutputMode        `json:"outputMode"          bun:"output_mode,type:VARCHAR(20),notnull"`
 	PreferredProviderID pulid.ID          `json:"preferredProviderId" bun:"preferred_provider_id,type:VARCHAR(100),nullzero"`
 	SystemKey           string            `json:"systemKey"           bun:"system_key,type:VARCHAR(50),nullzero"`
+
+	// DelegateIDs are the agents this one may hand a task to when a person is
+	// talking to it: the ones it asks when the work needs tools it does not
+	// hold. Each delegate works with its own tools, tiers, ceiling and budget,
+	// as the same person, and never delegates further.
+	DelegateIDs []pulid.ID `json:"delegateIds" bun:"delegate_ids,type:TEXT[],array,nullzero"`
 
 	LastRunAt *int64 `json:"lastRunAt" bun:"last_run_at,type:BIGINT,nullzero"`
 	NextRunAt *int64 `json:"nextRunAt" bun:"next_run_at,type:BIGINT,nullzero"`
@@ -364,6 +374,81 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 	d.validateTrigger(multiErr)
 	d.validateContextProviders(multiErr)
 	d.validateBudget(multiErr)
+	d.validateDelegates(multiErr)
+}
+
+// Delegates reports whether the agent may hand work to another agent at all:
+// it names at least one, and it is an agent a person talks to. A run nobody
+// is watching never delegates.
+func (d *Definition) Delegates() bool {
+	return len(d.DelegateIDs) > 0 && !d.IsBackground()
+}
+
+// MayDelegateTo reports whether the agent's allowlist names the agent.
+func (d *Definition) MayDelegateTo(id pulid.ID) bool {
+	return id.IsNotNil() && slices.Contains(d.DelegateIDs, id)
+}
+
+// DelegateRefusal says why the agent may not hand a task to delegate, in
+// words the agent can pass on, or "" when it may. Whether the person may use
+// the delegate, and whether it is in the same tenant, are the caller's to
+// check: a delegate is read within the tenant, and a permission needs the
+// person.
+func (d *Definition) DelegateRefusal(delegate *Definition) string {
+	switch {
+	case delegate == nil:
+		return "That agent no longer exists."
+	case !d.MayDelegateTo(delegate.ID):
+		return delegate.Name + " is not one of the agents you may hand work to."
+	case delegate.ID == d.ID:
+		return "You cannot hand a task to yourself."
+	case !delegate.Enabled:
+		return delegate.Name + " is disabled, so it cannot take tasks. An administrator " +
+			"can enable it in AI Control."
+	case delegate.IsBackground():
+		return delegate.Name + " runs on its own and cannot be handed a task."
+	default:
+		return ""
+	}
+}
+
+// validateDelegates checks what the allowlist can say about itself. Whether
+// each delegate exists in the tenant, is enabled and can be talked to needs
+// the database, so the service checks that.
+func (d *Definition) validateDelegates(multiErr *errortypes.MultiError) {
+	if len(d.DelegateIDs) == 0 {
+		return
+	}
+	if d.IsBackground() {
+		multiErr.Add(
+			"delegateIds",
+			errortypes.ErrInvalid,
+			"Only an agent people talk to can hand work to other agents",
+		)
+	}
+	if len(d.DelegateIDs) > MaxDelegates {
+		multiErr.Add(
+			"delegateIds",
+			errortypes.ErrInvalid,
+			"An agent can hand work to at most 8 other agents",
+		)
+	}
+
+	seen := make(map[pulid.ID]struct{}, len(d.DelegateIDs))
+	for idx, id := range d.DelegateIDs {
+		field := fmt.Sprintf("delegateIds[%d]", idx)
+		switch {
+		case id.IsNil():
+			multiErr.Add(field, errortypes.ErrInvalid, "Agent cannot be empty")
+			continue
+		case d.ID.IsNotNil() && id == d.ID:
+			multiErr.Add(field, errortypes.ErrInvalid, "An agent cannot hand work to itself")
+		}
+		if _, duplicate := seen[id]; duplicate {
+			multiErr.Add(field, errortypes.ErrDuplicate, "Agent is listed more than once")
+		}
+		seen[id] = struct{}{}
+	}
 }
 
 const maxDailyRunLimit = 10000

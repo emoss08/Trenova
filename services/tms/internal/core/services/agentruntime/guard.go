@@ -66,6 +66,7 @@ func (s *Service) guardedDispatch(
 			ToolName: p.call.Name,
 			Args:     p.call.Arguments,
 			Ordinal:  p.ordinal,
+			Scope:    req.StepScope(),
 		})
 	}
 
