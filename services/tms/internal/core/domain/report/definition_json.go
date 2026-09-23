@@ -64,6 +64,18 @@ func normalizeDefinitionShape(value any) any {
 		return value
 	}
 
+	for _, key := range [...]string{"filters", "having"} {
+		group, present := root[key]
+		if !present {
+			continue
+		}
+		if normalized := normalizeFilterGroup(group); normalized != nil {
+			root[key] = normalized
+		} else {
+			delete(root, key)
+		}
+	}
+
 	columns, ok := root["columns"].([]any)
 	if !ok {
 		return normalizeRefs(root)
@@ -82,6 +94,91 @@ func normalizeDefinitionShape(value any) any {
 	}
 
 	return normalizeRefs(root)
+}
+
+// normalizeFilterGroup reads a filter group in the forms a caller writes one.
+//
+// The builder saves {"op": "and", "filters": [...], "groups": [...]}. A model
+// asked for "workers whose driver type is OTR" writes the conditions as a
+// bare list, which has one meaning — all of them must hold — and was refused
+// as the wrong shape at the proposal, with an error about a type mismatch at
+// a byte offset that the model could not act on. A list is read as an "and"
+// group, a group with no op as "and", and null as no filter at all. Nested
+// groups are read the same way. Anything else is left for the decoder to
+// report.
+func normalizeFilterGroup(value any) any {
+	switch typed := value.(type) {
+	case nil:
+		return nil
+	case []any:
+		if len(typed) == 0 {
+			return nil
+		}
+		group := map[string]any{"op": "and"}
+		filters := make([]any, 0, len(typed))
+		groups := make([]any, 0)
+		for _, item := range typed {
+			if isFilterGroupShape(item) {
+				if nested := normalizeFilterGroup(item); nested != nil {
+					groups = append(groups, nested)
+				}
+				continue
+			}
+			filters = append(filters, item)
+		}
+		if len(filters) > 0 {
+			group["filters"] = filters
+		}
+		if len(groups) > 0 {
+			group["groups"] = groups
+		}
+
+		return group
+	case map[string]any:
+		if op, _ := typed["op"].(string); strings.TrimSpace(op) == "" {
+			typed["op"] = "and"
+		} else {
+			typed["op"] = strings.ToLower(strings.TrimSpace(op))
+		}
+		if filters, present := typed["filters"]; present && filters == nil {
+			delete(typed, "filters")
+		}
+		if nested, present := typed["groups"]; present {
+			switch groups := nested.(type) {
+			case nil:
+				delete(typed, "groups")
+			case []any:
+				kept := make([]any, 0, len(groups))
+				for _, group := range groups {
+					if normalized := normalizeFilterGroup(group); normalized != nil {
+						kept = append(kept, normalized)
+					}
+				}
+				typed["groups"] = kept
+			}
+		}
+
+		return typed
+	default:
+		return value
+	}
+}
+
+// isFilterGroupShape tells a nested group from a condition inside a list:
+// a condition names a field to compare, a group holds conditions.
+func isFilterGroupShape(value any) bool {
+	item, ok := value.(map[string]any)
+	if !ok {
+		return false
+	}
+	if _, hasRef := item["ref"]; hasRef {
+		return false
+	}
+	_, hasFilters := item["filters"]
+	_, hasGroups := item["groups"]
+	_, hasOp := item["op"]
+
+	return hasFilters || hasGroups || hasOp
 }
 
 // normalizeRefs walks the definition and splits every dotted ref field
@@ -181,6 +278,10 @@ func DefinitionJSONSchema() map[string]any {
 	}
 	filterGroup := map[string]any{
 		"type": "object",
+		"description": "An object, not a list: {\"op\": \"and\", \"filters\": [conditions]}. " +
+			"For workers whose driver type is OTR: {\"op\": \"and\", \"filters\": " +
+			"[{\"ref\": {\"field\": \"driverType\"}, \"operator\": \"eq\", \"value\": \"OTR\"}]}. " +
+			"Leave it out for no filter.",
 		"properties": map[string]any{
 			"op":      map[string]any{"type": "string", "enum": []string{"and", "or"}},
 			"filters": map[string]any{"type": "array", "items": filter},

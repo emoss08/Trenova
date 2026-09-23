@@ -118,11 +118,20 @@ func (s *Service) Run(
 			Data:  serviceports.AssistantDeltaEvent{Text: delta},
 		})
 	}
-	reasoningSink := func(delta string) {
-		emit(serviceports.StreamEvent{
-			Event: serviceports.AssistantEventReasoning,
-			Data:  serviceports.AssistantReasoningEvent{Text: delta},
-		})
+	// The thinking is watched the way the reply is. A small model that falls
+	// into a loop does it in its reasoning as readily as in its answer, and
+	// an unwatched trace streamed thousands of repeated fragments to the
+	// reader before the provider ran out of tokens.
+	reasoningSink := func(guard *replyGuard) func(string) {
+		return func(delta string) {
+			if !guard.feed(delta) {
+				return
+			}
+			emit(serviceports.StreamEvent{
+				Event: serviceports.AssistantEventReasoning,
+				Data:  serviceports.AssistantReasoningEvent{Text: delta},
+			})
+		}
 	}
 
 	retries := 0
@@ -132,6 +141,7 @@ func (s *Service) Run(
 	for result.ToolCallsUsed < budget {
 		streamCtx, cancelStream := context.WithCancel(ctx)
 		guard := newReplyGuard(cancelStream)
+		thinking := newReplyGuard(cancelStream)
 		completion, err := s.completion.StreamChat(streamCtx, &serviceports.ChatCompletionRequest{
 			TenantInfo:          req.Actor.TenantInfo(),
 			System:              system,
@@ -139,7 +149,7 @@ func (s *Service) Run(
 			Tools:               tools.specs,
 			PreferredProviderID: preferredProvider(req, definition),
 			PinPreferred:        req.PinProvider && !req.PreferredProviderID.IsNil(),
-			ReasoningSink:       reasoningSink,
+			ReasoningSink:       reasoningSink(thinking),
 			RetrySink: func(notice serviceports.ChatRetryNotice) {
 				emit(serviceports.StreamEvent{
 					Event: serviceports.AssistantEventRetrying,
@@ -164,10 +174,19 @@ func (s *Service) Run(
 			}
 		})
 		cancelStream()
-		if err == nil && guard.looped(completion.Text) {
+		// A loop in the thinking cancels the stream, so the call returns the
+		// cancellation rather than a completion; the turn itself is fine and is
+		// asked again, exactly as for a reply that looped.
+		thoughtLooped := thinking.tripped && ctx.Err() == nil
+		if thoughtLooped || (err == nil && guard.looped(completion.Text)) {
+			model := ""
+			if completion != nil {
+				model = completion.ModelIdentifier
+			}
 			s.logger.Warn("agent reply fell into a loop; discarding it",
 				zap.String("agent", definition.Name),
-				zap.String("model", completion.ModelIdentifier),
+				zap.String("model", model),
+				zap.Bool("in_reasoning", thoughtLooped),
 				zap.Int("retry", retries+1),
 			)
 			if retries < maxReplyRetries {
