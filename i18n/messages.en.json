@@ -1869,6 +1869,15 @@
       "service/agentdecisionqueueservice"
     ]
   },
+  "A change didn't go through": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A change or finding needs someone to look at it and sign off.": {
     "sites": 2,
     "scope": [
@@ -5239,15 +5248,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "A structured record; use Show raw to read it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "A subject id needs its type": {
@@ -9362,12 +9362,14 @@
     ]
   },
   "Add an agent": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "domain/permission"
+      "domain/permission",
+      "routes/agent-control"
     ]
   },
   "Add an email and press Enter": {
@@ -10571,7 +10573,7 @@
     ]
   },
   "Added {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -11515,6 +11517,24 @@
       "routes/agent-control"
     ]
   },
+  "Agent cannot be empty": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
+  "Agent definition loader is not configured": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Agent definition stats loader is not configured": {
     "sites": 1,
     "scope": [
@@ -11558,6 +11578,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Agent is listed more than once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Agent is required": {
@@ -11724,6 +11753,15 @@
     ],
     "areas": [
       "service/watchtowerservice"
+    ]
+  },
+  "Agents it can ask": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Agents keep running and keep recording what they would do, but nothing they propose is offered for a decision and nothing they propose can be executed. Each agent also has its own shadow switch.": {
@@ -13828,7 +13866,34 @@
       "routes/desk"
     ]
   },
+  "An agent can ask at most {0} others": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "An agent can hand work to at most 8 other agents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "An agent cannot be given more than 64 tools": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
+  "An agent cannot hand work to itself": {
     "sites": 1,
     "scope": [
       "go"
@@ -13889,6 +13954,15 @@
     ],
     "areas": [
       "domain/agentdefinition"
+    ]
+  },
+  "An agent that could not be found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "An agreement to import into is required": {
@@ -17904,6 +17978,15 @@
       "apps/web/components"
     ]
   },
+  "Asked another agent": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Asked for": {
     "sites": 1,
     "scope": [
@@ -17923,12 +18006,22 @@
     ]
   },
   "Asked {0}": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/worker"
+    ]
+  },
+  "Asking another agent…": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Asking you…": {
@@ -17958,7 +18051,25 @@
       "apps/web/components"
     ]
   },
+  "Asking {0}…": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Turn it on only for a model that reasons; others reject the request.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Asks nobody. It works only with its own tools.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -25696,6 +25807,33 @@
     "areas": [
       "apps/dash/_components",
       "routes/worker"
+    ]
+  },
+  "Can ask": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Can ask {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Can ask {0} +{1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Can be assigned": {
@@ -38216,6 +38354,24 @@
       "routes/worker"
     ]
   },
+  "Could not be asked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Could not be asked: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Could not be priced": {
     "sites": 1,
     "scope": [
@@ -38730,7 +38886,25 @@
       "routes/worker"
     ]
   },
+  "Couldn't ask another agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Couldn't ask you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Couldn't ask {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -40651,7 +40825,7 @@
     ]
   },
   "Created {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -49308,7 +49482,7 @@
     ]
   },
   "Disabled": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -66858,11 +67032,12 @@
     ]
   },
   "Finished": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control",
       "routes/time-attendance"
     ]
@@ -72833,12 +73008,13 @@
     ]
   },
   "Hide details": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Hide findings": {
@@ -80686,6 +80862,15 @@
       "routes/fuel-card"
     ]
   },
+  "It stays on the list, and is refused when asked until it is enabled again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "It will come back if the condition is still there in a month.": {
     "sites": 1,
     "scope": [
@@ -80823,6 +81008,24 @@
     ],
     "areas": [
       "routes/review-template"
+    ]
+  },
+  "Its answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Its answer was withheld": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Its checksum is copied onto every signature": {
@@ -96318,7 +96521,7 @@
     ]
   },
   "No": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -99109,6 +99312,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No other agents people talk to are left to add.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No other carrier shares this carrier's identifiers.": {
@@ -102409,6 +102621,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Nothing in these results can be shown as a table; the reply has the answer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nothing in this import is ready to commit": {
@@ -105866,6 +106087,15 @@
       "domain/carriersettlement"
     ]
   },
+  "Only agents people talk to can be asked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Only alert me when it changes": {
     "sites": 1,
     "scope": [
@@ -105904,6 +106134,24 @@
     "areas": [
       "domain/worker",
       "packages/shared/types"
+    ]
+  },
+  "Only an agent people talk to can hand work to other agents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
+  "Only an agent people talk to can hand work to other agents. A scheduled, event or continuous run has nobody to hand the result back to.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Only an archived version can record when it was archived": {
@@ -107997,7 +108245,7 @@
     ]
   },
   "Open {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -110151,6 +110399,15 @@
       "routes/shipment",
       "routes/worker",
       "template/invoice.pdf"
+    ]
+  },
+  "Other agents this one may hand a task to, such as asking the Report Builder for a report and using the report it makes. Each works with its own tools and approvals, as the person talking, and cannot hand the task on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Other alerts": {
@@ -119227,6 +119484,24 @@
       "apps/web/components"
     ]
   },
+  "Previewed a change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Previewed a change to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Previewing — widgets are read-only and drawn against your own permissions.": {
     "sites": 1,
     "scope": [
@@ -120784,6 +121059,15 @@
       "apps/web/components"
     ]
   },
+  "Proposed by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Proposed change": {
     "sites": 2,
     "scope": [
@@ -121620,11 +121904,12 @@
     ]
   },
   "Published": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin"
     ]
   },
@@ -121665,7 +121950,7 @@
     ]
   },
   "Published {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -124886,8 +125171,17 @@
       "routes/rate-agreement"
     ]
   },
-  "Reading what came back…": {
+  "Reading the task…": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Reading what came back…": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -129884,7 +130178,7 @@
     ]
   },
   "Remove {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -129931,7 +130225,7 @@
     ]
   },
   "Removed {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -138929,7 +139223,7 @@
     ]
   },
   "Saved {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -138944,6 +139238,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Saving clears the agents it can ask": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Saving creates a new revision — runs always execute against a specific revision.": {
@@ -144422,7 +144725,7 @@
     ]
   },
   "Sent {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -148496,6 +148799,15 @@
       "apps/web/lib"
     ]
   },
+  "Show details": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Show details for {0}": {
     "sites": 1,
     "scope": [
@@ -148524,22 +148836,14 @@
     ]
   },
   "Show fewer": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/detention-intelligence",
       "routes/scheduling"
-    ]
-  },
-  "Show fields": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Show findings": {
@@ -148630,15 +148934,6 @@
     ],
     "areas": [
       "routes/billing-queue"
-    ]
-  },
-  "Show raw": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Show the earlier thread": {
@@ -152053,6 +152348,15 @@
       "routes/hold-reason"
     ]
   },
+  "Starting over…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Starting sequence number for this stop type": {
     "sites": 1,
     "scope": [
@@ -153237,6 +153541,24 @@
     ]
   },
   "Stopped before a reply started.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Stopped partway": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Stopped partway: {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -155693,6 +156015,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Task": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Task is not one this system routes": {
@@ -166167,7 +166498,7 @@
     ]
   },
   "Thinking…": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -166274,6 +166605,15 @@
       "routes/agent-control"
     ]
   },
+  "This agent does not exist in this organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentdefinitionservice"
+    ]
+  },
   "This agent has been disabled, so the conversation cannot continue.": {
     "sites": 1,
     "scope": [
@@ -166284,6 +166624,15 @@
     ]
   },
   "This agent has not run in this window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "This agent is already on the list": {
     "sites": 1,
     "scope": [
       "ts"
@@ -168280,6 +168629,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This record has nothing more to show here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "This record has nothing more to show here; open it to see all of it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This records that someone checked these limits against the state, and does not change them. If the numbers are wrong, edit the rule instead — that clears the verification on its own.": {
@@ -175668,6 +176035,15 @@
       "routes/my-team"
     ]
   },
+  "Untitled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Untitled conversation": {
     "sites": 8,
     "scope": [
@@ -175989,7 +176365,7 @@
     ]
   },
   "Updated {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -177034,6 +177410,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Used every step its settings allow before it finished": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Used for rows the statement cannot match to a card of their own.": {
@@ -180362,6 +180747,15 @@
       "apps/web/components"
     ]
   },
+  "Waiting for the model…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Waiting for the result…": {
     "sites": 1,
     "scope": [
@@ -180387,6 +180781,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Waiting for your approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Waiting for your result": {
@@ -181979,6 +182382,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "What it did": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "What it is": {
@@ -185831,7 +186243,7 @@
     ]
   },
   "Working…": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -186275,6 +186687,15 @@
       "apps/web/components"
     ]
   },
+  "Writing its answer…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Writing the answer…": {
     "sites": 1,
     "scope": [
@@ -186595,7 +187016,7 @@
     ]
   },
   "Yes": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -187074,6 +187495,15 @@
       "apps/web/components",
       "routes/admin",
       "routes/home"
+    ]
+  },
+  "You stopped it before it finished": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "You stopped the transfer. The remaining shipments were not sent.": {
@@ -194025,7 +194455,7 @@
     ]
   },
   "{0, plural, one {# step} other {# steps}}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -194228,6 +194658,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {It can ask # agent while it runs from chat. Switch back to Chat to keep it.} other {It can ask # agents while it runs from chat. Switch back to Chat to keep them.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0, plural, one {Looked up # record} other {Looked up # records}}": {
     "sites": 1,
     "scope": [
@@ -194253,6 +194692,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {Show # more field} other {Show # more fields}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {The desk has handled # message. It is under Handled.} other {The desk has handled # messages. They are under Handled.}}": {
@@ -194298,6 +194746,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} (disabled)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} ({1} days)": {
@@ -195046,6 +195503,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "{0} didn't go through": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} disputed": {
@@ -196232,15 +196698,6 @@
       "routes/agent-control"
     ]
   },
-  "{0} more fields in the raw view.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "{0} more in Details": {
     "sites": 1,
     "scope": [
@@ -196508,6 +196965,15 @@
       "routes/dispatch-console",
       "routes/scheduling",
       "routes/time-attendance"
+    ]
+  },
+  "{0} of {1} agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} of {1} approved": {
