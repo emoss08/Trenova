@@ -31,17 +31,6 @@ func (o *ordinals) next(call serviceports.ToolCall) int {
 	return ordinal
 }
 
-// count registers a call recovered from the ledger without returning an
-// ordinal, so the numbering a resumed attempt assigns carries on from what the
-// earlier attempt used.
-func (o *ordinals) count(toolName string, args map[string]any) {
-	key, ok := callKey(serviceports.ToolCall{Name: toolName, Arguments: args})
-	if !ok {
-		return
-	}
-	o.seen[key]++
-}
-
 // guardedDispatchParams groups what running one guarded call needs.
 type guardedDispatchParams struct {
 	req            *serviceports.RunRequest
@@ -193,17 +182,19 @@ func unknownOutcome(toolName string) toolOutcome {
 
 // seedFromLedger puts back what earlier attempts of this run already learned.
 //
-// The repeat guard and the ordinal counter are both per-attempt and in memory,
-// so a retry starts blank. Without this, a resumed run re-asks for a call that
-// already failed identically — spending budget to re-learn a refusal — and
-// numbers a repeated call as though it were the first, which would mint a step
-// key that collides with the earlier attempt's and refuse a call that was
-// never made.
+// The repeat guard is per-attempt and in memory, so a retry starts blank and
+// would re-ask for a call that already failed identically, spending budget to
+// re-learn a refusal. Only the refusals are put back.
+//
+// The ordinals are not. An attempt that starts over asks the model afresh,
+// and the model asks for the same writes again: the first assign_move of the
+// retry is the first assign_move of the run, and has to mint the same step
+// key so the ledger answers with what already happened. Numbering it after the
+// earlier attempt's calls minted a new key, and the write ran a second time.
 func (s *Service) seedFromLedger(
 	ctx context.Context,
 	req *serviceports.RunRequest,
 	repeats *repeatGuard,
-	counts *ordinals,
 ) {
 	if req.Steps == nil || req.StepOwner.ID.IsNil() {
 		return
@@ -230,7 +221,6 @@ func (s *Service) seedFromLedger(
 		if step.Kind != serviceports.RunStepTool {
 			continue
 		}
-		counts.count(step.ToolName, step.Args)
 		replayed++
 
 		if step.Status == serviceports.RunStepFailed && step.Outcome.Content != "" {

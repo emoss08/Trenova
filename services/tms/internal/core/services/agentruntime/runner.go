@@ -204,6 +204,11 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 					call.Name, call.ArgumentsError,
 				)
 				s.recordToolResult(t, fx, call, outcome)
+				// It counts against the budget like any call. A model whose output
+				// limit cuts every call short sends the same broken call each time,
+				// and a loop that did not count it asked the model again, and paid for
+				// it, without end.
+				result.ToolCallsUsed++
 				continue
 			}
 
@@ -308,6 +313,12 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 		)
 	}
 
+	if fx.Supports(changeFinalAnswer) {
+		if final := s.finalAnswer(t, fx, result); final != nil {
+			return s.finish(result, final, fx), nil
+		}
+	}
+
 	result.Exhausted = true
 	result.Reply = exhaustedReply
 	result.Messages = append(result.Messages, conversation.Message{
@@ -317,6 +328,46 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 	fx.Emit(deltaEvent(exhaustedReply))
 
 	return result, nil
+}
+
+// changeFinalAnswer is the loop asking for an answer once its tool budget is
+// spent, rather than ending on a canned line.
+const changeFinalAnswer = "agent-loop-final-answer"
+
+// budgetSpentNote is what the model is told when its tool budget is spent.
+const budgetSpentNote = "You have used every tool call this turn allows. Answer the person " +
+	"now from what the tools already returned. Say plainly what you could not finish or " +
+	"check, and do not ask for another tool."
+
+// finalAnswer asks the model once more with no tools, so a turn that spent its
+// budget answers from what it gathered. Ending on "I could not finish" threw
+// away every lookup the turn had paid for. Nothing is returned when that ask
+// fails, loops, comes back empty or asks for a tool anyway: the canned line is
+// still better than any of those.
+func (s *Service) finalAnswer(
+	t *Turn,
+	fx TurnEffects,
+	result *serviceports.RunResult,
+) *serviceports.ChatCompletionResult {
+	req := t.completionRequest()
+	req.Tools = nil
+	req.Messages = append(slices.Clone(req.Messages), serviceports.Message{
+		Role:    serviceports.RoleUser,
+		Content: budgetSpentNote,
+	})
+
+	reply, err := fx.Complete(t, req)
+	completion := reply.Completion
+	if err != nil || reply.Looped || completion == nil ||
+		len(completion.ToolCalls) > 0 || strings.TrimSpace(completion.Text) == "" {
+		return nil
+	}
+
+	result.Model = completion.ModelIdentifier
+	result.ProviderID = completion.ProviderID
+	tagReasoning(completion)
+
+	return completion
 }
 
 // recordToolResult files one tool's outcome into the run, the adapter history

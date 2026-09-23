@@ -1079,3 +1079,94 @@ func TestRun_AToolsCeilingHoldsEvenAnAgentSetToActAlone(t *testing.T) {
 	assert.Equal(t, agent.TierActWithApproval, rt.ToolSummaries(definition)[0].Tier,
 		"the prompt says what will actually happen")
 }
+
+// A model whose output limit cuts every call short sends the same broken call
+// each time. Those calls count against the budget like any other, so the turn
+// ends instead of asking the model again, and paying for it, without end.
+func TestRun_BrokenArgumentsCountAgainstTheBudget(t *testing.T) {
+	t.Parallel()
+
+	broken := &serviceports.ChatCompletionResult{
+		ToolCalls: []serviceports.ToolCall{{
+			ID:             "call_1",
+			Name:           "get_shipment",
+			ArgumentsError: "unexpected end of JSON input",
+		}},
+		ModelIdentifier: "test-model",
+	}
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{broken}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	definition := testDefinition("get_shipment")
+	definition.MaxToolCalls = 3
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "Where is shipment S-1?",
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, 3, result.ToolCallsUsed)
+	assert.LessOrEqual(t, completion.CallCount, 4, "the loop stops at the budget")
+}
+
+/*
+A turn that spends its tool budget answers from what it gathered.
+
+It used to end on "I gathered information but could not finish", which threw
+away every lookup the turn had paid for. It now asks the model once more with
+no tools, and keeps that answer.
+*/
+func TestRun_AnswersFromWhatItGatheredWhenTheBudgetRunsOut(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("get_shipment", map[string]any{"shipmentId": "shp_1"}),
+		textTurn("Shipment S-1 is in transit; I did not get to its stops."),
+	}}
+	rt := newRuntime(completion,
+		&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{
+			queryTool("get_shipment", map[string]any{"status": "InTransit"}, nil),
+		}},
+		&stubActionRegistry{}, nil)
+	definition := testDefinition("get_shipment")
+	definition.MaxToolCalls = 1
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "Where is S-1 and what are its stops?",
+	})
+	require.NoError(t, err)
+
+	assert.False(t, result.Exhausted)
+	assert.Equal(t, "Shipment S-1 is in transit; I did not get to its stops.", result.Reply)
+	require.NotNil(t, completion.LastReq)
+	assert.Empty(t, completion.LastReq.Tools, "the last ask offers no tools")
+}
+
+// An answer that still asks for a tool is no answer; the plain line stands.
+func TestRun_KeepsThePlainLineWhenTheLastAskWantsAnotherTool(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("get_shipment", map[string]any{"shipmentId": "shp_1"}),
+	}}
+	rt := newRuntime(completion,
+		&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{
+			queryTool("get_shipment", map[string]any{"status": "InTransit"}, nil),
+		}},
+		&stubActionRegistry{}, nil)
+	definition := testDefinition("get_shipment")
+	definition.MaxToolCalls = 1
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "Where is S-1?",
+	})
+	require.NoError(t, err)
+
+	assert.True(t, result.Exhausted)
+	assert.Equal(t, exhaustedReply, result.Reply)
+}

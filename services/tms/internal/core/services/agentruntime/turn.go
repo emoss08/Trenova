@@ -52,6 +52,11 @@ type TurnEffects interface {
 	// NewCallID mints a tool call id, for a provider that gave none or reused
 	// one. Minting is random, so workflow code has it recorded.
 	NewCallID() string
+	// Supports reports whether a change to the loop's shape applies to this
+	// turn. In process every change does; in workflow code an execution
+	// started before the change keeps the shape it started with, so its
+	// history still replays.
+	Supports(change string) bool
 }
 
 // ModelReply is one completion as the loop sees it.
@@ -265,7 +270,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	runtimeContext.Tools = usableSummaries(runtimeContext.Tools, tools)
 	repeats := newRepeatGuard()
 	counts := newOrdinals()
-	s.seedFromLedger(ctx, req, repeats, counts)
+	s.seedFromLedger(ctx, req, repeats)
 
 	messages := toAdapterMessages(req.History, req.Proposals)
 	messages = append(messages, serviceports.Message{
@@ -322,6 +327,8 @@ type localEffects struct {
 	emit     serviceports.AssistantStreamEmitter
 	observer serviceports.ToolObserver
 }
+
+func (fx *localEffects) Supports(string) bool { return true }
 
 func (fx *localEffects) Complete(
 	_ *Turn,

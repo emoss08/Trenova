@@ -274,3 +274,104 @@ func TestRun_LeavesAnUnguardedRunOnTheProvidersCallID(t *testing.T) {
 	require.Equal(t, 1, action.Calls)
 	assert.Equal(t, "call_1", action.LastParams.IdempotencyKey)
 }
+
+// keyedLedger answers by key, the way the real ledger does: a key it has
+// settled is replayed, and any other key is fresh. The fixed-verdict stub
+// above answers the same for every key, which is how a retry that minted a
+// new key for an old write passed.
+type keyedLedger struct {
+	steps map[string]serviceports.RunStep
+}
+
+func newKeyedLedger() *keyedLedger {
+	return &keyedLedger{steps: map[string]serviceports.RunStep{}}
+}
+
+func (l *keyedLedger) Claim(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	step serviceports.RunStep,
+) (serviceports.StepVerdict, error) {
+	recorded, seen := l.steps[step.Key]
+	switch {
+	case !seen:
+		l.steps[step.Key] = step
+		return serviceports.StepVerdict{State: serviceports.StepFresh}, nil
+	case recorded.Status == serviceports.RunStepCompleted:
+		return serviceports.StepVerdict{State: serviceports.StepCompleted, Outcome: recorded.Outcome}, nil
+	case recorded.Status == serviceports.RunStepFailed:
+		return serviceports.StepVerdict{State: serviceports.StepFailed, Outcome: recorded.Outcome}, nil
+	default:
+		return serviceports.StepVerdict{State: serviceports.StepUnknown}, nil
+	}
+}
+
+func (l *keyedLedger) Settle(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	step serviceports.RunStep,
+) error {
+	l.steps[step.Key] = step
+
+	return nil
+}
+
+func (l *keyedLedger) Record(context.Context, pagination.TenantInfo, serviceports.RunStep) error {
+	return nil
+}
+
+func (l *keyedLedger) Loaded(
+	context.Context,
+	pagination.TenantInfo,
+	serviceports.RunStepOwner,
+) ([]serviceports.RunStep, error) {
+	steps := make([]serviceports.RunStep, 0, len(l.steps))
+	for _, step := range l.steps {
+		steps = append(steps, step)
+	}
+
+	return steps, nil
+}
+
+/*
+An attempt that starts over asks the model afresh, and the model asks for the
+same write again. It has to reach the same step key as the first attempt did,
+so the ledger answers with what already happened.
+
+Numbering the retry's calls after the ones on record minted a new key for the
+same write, and a move was assigned twice.
+*/
+func TestRun_ARetriedAttemptDoesNotMakeTheSameWriteTwice(t *testing.T) {
+	t.Parallel()
+
+	ledger := newKeyedLedger()
+	action := actionTool("assign_move", agent.TierAutoExecute, nil)
+	runID := pulid.MustNew("ar_")
+	definition := testDefinition("assign_move")
+	definition.AutonomyCeiling = agent.TierAutoExecute
+	definition.ToolTiers = map[string]agent.AutonomyTier{"assign_move": agent.TierAutoExecute}
+
+	for attempt := 1; attempt <= 2; attempt++ {
+		completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+			toolTurn("assign_move", map[string]any{"moveId": "mv_1"}),
+			textTurn("Assigned."),
+		}}
+		rt := newRuntime(completion, &stubQueryRegistry{},
+			&stubActionRegistry{Tools: []serviceports.AgentTool{action}}, nil)
+
+		_, err := rt.Run(t.Context(), &serviceports.RunRequest{
+			Definition: definition,
+			Actor:      testActor(),
+			Input:      "Assign mv_1",
+			RunID:      runID,
+			Steps:      ledger,
+			StepOwner:  serviceports.RunStepOwner{Kind: serviceports.RunStepOwnerAgentRun, ID: runID},
+			Attempt:    attempt,
+		})
+		require.NoError(t, err)
+	}
+
+	assert.Equal(t, 1, action.Calls, "the second attempt replays the first attempt's write")
+}
+
+var _ serviceports.RunStepLedger = (*keyedLedger)(nil)

@@ -320,6 +320,7 @@ before the change:
 | `agent-loop-in-workflow` | `runInOneActivity`, `replayInOneActivity` | `RunAgentActivity`, `ReplayRunActivity`, `awaitDecision` |
 | `insight-refresh-per-organization` | `refreshInOneActivity` | `RefreshInsightsActivity` |
 | `daily-briefing-per-organization` | `writeInOneActivity` | `WriteDueBriefingsActivity` |
+| `agent-loop-final-answer` | a turn that spends its tool budget ends on the canned `exhaustedReply` without asking the model for an answer | nothing; the check itself is the only cost |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |
 
 Runs parked in a day-long decision wait are the slowest to drain; the recorded
