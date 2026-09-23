@@ -11,6 +11,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
@@ -36,6 +37,7 @@ type ResolverRoot interface {
 	AIProvider() AIProviderResolver
 	AccessorialCharge() AccessorialChargeResolver
 	AgentDefinition() AgentDefinitionResolver
+	AgentEvalCase() AgentEvalCaseResolver
 	AgentEvaluation() AgentEvaluationResolver
 	AgentPlan() AgentPlanResolver
 	AgentProposal() AgentProposalResolver
@@ -651,17 +653,74 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	AgentEvalCase struct {
+		AgentDefinitionID   func(childComplexity int) int
+		BusinessUnitID      func(childComplexity int) int
+		CapturedFingerprint func(childComplexity int) int
+		ContentHash         func(childComplexity int) int
+		CreatedAt           func(childComplexity int) int
+		CreatedByUserID     func(childComplexity int) int
+		Expected            func(childComplexity int) int
+		ExpiresAt           func(childComplexity int) int
+		HeldTools           func(childComplexity int) int
+		History             func(childComplexity int) int
+		ID                  func(childComplexity int) int
+		Input               func(childComplexity int) int
+		Mentions            func(childComplexity int) int
+		OrganizationID      func(childComplexity int) int
+		PageContext         func(childComplexity int) int
+		Redaction           func(childComplexity int) int
+		Rubric              func(childComplexity int) int
+		Source              func(childComplexity int) int
+		SourceFeedbackID    func(childComplexity int) int
+		SourceMessageID     func(childComplexity int) int
+		SourceProposalID    func(childComplexity int) int
+		SourceRunID         func(childComplexity int) int
+		SourceThreadID      func(childComplexity int) int
+		SourceTurnID        func(childComplexity int) int
+		Status              func(childComplexity int) int
+		SubjectID           func(childComplexity int) int
+		SubjectType         func(childComplexity int) int
+		Title               func(childComplexity int) int
+		ToolFixtures        func(childComplexity int) int
+		Trigger             func(childComplexity int) int
+		UpdatedAt           func(childComplexity int) int
+		Version             func(childComplexity int) int
+		Weight              func(childComplexity int) int
+	}
+
+	AgentEvalCaseCapture struct {
+		Duplicate func(childComplexity int) int
+		EvalCase  func(childComplexity int) int
+	}
+
+	AgentEvalCaseConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AgentEvalCaseEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	AgentEvaluation struct {
 		Actions           func(childComplexity int) int
 		AgentDefinitionID func(childComplexity int) int
 		BusinessUnitID    func(childComplexity int) int
+		CaseScore         func(childComplexity int) int
+		Checks            func(childComplexity int) int
 		Comparison        func(childComplexity int) int
 		CompletedAt       func(childComplexity int) int
 		CreatedAt         func(childComplexity int) int
 		DefinitionVersion func(childComplexity int) int
 		ErrorMessage      func(childComplexity int) int
+		EvalCaseID        func(childComplexity int) int
+		Fingerprint       func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Input             func(childComplexity int) int
+		Judge             func(childComplexity int) int
 		Model             func(childComplexity int) int
 		OrganizationID    func(childComplexity int) int
 		OriginalProposals func(childComplexity int) int
@@ -6384,6 +6443,7 @@ type ComplexityRoot struct {
 		CompleteClearinghouseQuery            func(childComplexity int, input gqlmodel.CompleteClearinghouseQueryInput) int
 		CompleteWorkerChecklistItem           func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
 		CompleteWorkerTraining                func(childComplexity int, input gqlmodel.CompleteWorkerTrainingInput) int
+		CreateAgentEvalCase                   func(childComplexity int, input gqlmodel.CreateAgentEvalCaseInput) int
 		CreateAgentMemory                     func(childComplexity int, input gqlmodel.AgentMemoryInput) int
 		CreateBenefitPlan                     func(childComplexity int, input gqlmodel.BenefitPlanInput) int
 		CreateCarrierInvoiceMatch             func(childComplexity int, input gqlmodel.CreateCarrierInvoiceMatchInput) int
@@ -6572,6 +6632,7 @@ type ComplexityRoot struct {
 		ReopenPerformanceReview               func(childComplexity int, input gqlmodel.PerformanceReviewStatusInput) int
 		ReopenWorkerChecklistItem             func(childComplexity int, id string, version *int) int
 		ReopenWorkerSafetyEvent               func(childComplexity int, input gqlmodel.SafetyEventStatusInput) int
+		ReplayAgentEvalCase                   func(childComplexity int, id string) int
 		ReplayAgentRun                        func(childComplexity int, runID string) int
 		RequestLeaveCertification             func(childComplexity int, caseID string, dueAt *int) int
 		RequestMyPTO                          func(childComplexity int, input gqlmodel.RequestMyPTOInput) int
@@ -6612,6 +6673,7 @@ type ComplexityRoot struct {
 		SendDetentionNotice                   func(childComplexity int, occurrenceID string) int
 		SendInvoiceEDI                        func(childComplexity int, invoiceID string, force *bool) int
 		SendTestMessageTemplate               func(childComplexity int, input gqlmodel.SendTestMessageTemplateInput) int
+		SetAgentEvalCaseStatus                func(childComplexity int, id string, status agentquality.CaseStatus) int
 		SetAgentMemoryStatus                  func(childComplexity int, id string, status agent.MemoryStatus) int
 		SetCarrierMonitoring                  func(childComplexity int, carrierIds []string, enabled bool) int
 		SetDefaultTableConfiguration          func(childComplexity int, id string) int
@@ -6644,6 +6706,7 @@ type ComplexityRoot struct {
 		UnpinShipmentComment                  func(childComplexity int, shipmentID string, commentID string) int
 		UnresolveShipmentComment              func(childComplexity int, shipmentID string, commentID string) int
 		UpdateAgentControl                    func(childComplexity int, input gqlmodel.AgentControlInput) int
+		UpdateAgentEvalCase                   func(childComplexity int, id string, input gqlmodel.UpdateAgentEvalCaseInput) int
 		UpdateAgentMemory                     func(childComplexity int, id string, input gqlmodel.AgentMemoryInput) int
 		UpdateBenefitPlan                     func(childComplexity int, input gqlmodel.UpdateBenefitPlanInput) int
 		UpdateBillingQueueStatus              func(childComplexity int, id string, input gqlmodel.BillingQueueUpdateStatusInput) int
@@ -7603,6 +7666,8 @@ type ComplexityRoot struct {
 		AgentControl                        func(childComplexity int) int
 		AgentDefinition                     func(childComplexity int, id string) int
 		AgentDefinitions                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AgentEvalCase                       func(childComplexity int, id string) int
+		AgentEvalCases                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentEvaluation                     func(childComplexity int, id string) int
 		AgentEvaluations                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentException                      func(childComplexity int, id string) int
@@ -13863,6 +13928,250 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentDefinitionEdge.Node(childComplexity), true
 
+	case "AgentEvalCase.agentDefinitionId":
+		if e.ComplexityRoot.AgentEvalCase.AgentDefinitionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.AgentDefinitionID(childComplexity), true
+	case "AgentEvalCase.businessUnitId":
+		if e.ComplexityRoot.AgentEvalCase.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.BusinessUnitID(childComplexity), true
+	case "AgentEvalCase.capturedFingerprint":
+		if e.ComplexityRoot.AgentEvalCase.CapturedFingerprint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.CapturedFingerprint(childComplexity), true
+	case "AgentEvalCase.contentHash":
+		if e.ComplexityRoot.AgentEvalCase.ContentHash == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.ContentHash(childComplexity), true
+	case "AgentEvalCase.createdAt":
+		if e.ComplexityRoot.AgentEvalCase.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.CreatedAt(childComplexity), true
+	case "AgentEvalCase.createdByUserId":
+		if e.ComplexityRoot.AgentEvalCase.CreatedByUserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.CreatedByUserID(childComplexity), true
+	case "AgentEvalCase.expected":
+		if e.ComplexityRoot.AgentEvalCase.Expected == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.Expected(childComplexity), true
+	case "AgentEvalCase.expiresAt":
+		if e.ComplexityRoot.AgentEvalCase.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.ExpiresAt(childComplexity), true
+	case "AgentEvalCase.heldTools":
+		if e.ComplexityRoot.AgentEvalCase.HeldTools == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.HeldTools(childComplexity), true
+	case "AgentEvalCase.history":
+		if e.ComplexityRoot.AgentEvalCase.History == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.History(childComplexity), true
+	case "AgentEvalCase.id":
+		if e.ComplexityRoot.AgentEvalCase.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.ID(childComplexity), true
+	case "AgentEvalCase.input":
+		if e.ComplexityRoot.AgentEvalCase.Input == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.Input(childComplexity), true
+	case "AgentEvalCase.mentions":
+		if e.ComplexityRoot.AgentEvalCase.Mentions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.Mentions(childComplexity), true
+	case "AgentEvalCase.organizationId":
+		if e.ComplexityRoot.AgentEvalCase.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.OrganizationID(childComplexity), true
+	case "AgentEvalCase.pageContext":
+		if e.ComplexityRoot.AgentEvalCase.PageContext == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.PageContext(childComplexity), true
+	case "AgentEvalCase.redaction":
+		if e.ComplexityRoot.AgentEvalCase.Redaction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.Redaction(childComplexity), true
+	case "AgentEvalCase.rubric":
+		if e.ComplexityRoot.AgentEvalCase.Rubric == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.Rubric(childComplexity), true
+	case "AgentEvalCase.source":
+		if e.ComplexityRoot.AgentEvalCase.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.Source(childComplexity), true
+	case "AgentEvalCase.sourceFeedbackId":
+		if e.ComplexityRoot.AgentEvalCase.SourceFeedbackID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.SourceFeedbackID(childComplexity), true
+	case "AgentEvalCase.sourceMessageId":
+		if e.ComplexityRoot.AgentEvalCase.SourceMessageID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.SourceMessageID(childComplexity), true
+	case "AgentEvalCase.sourceProposalId":
+		if e.ComplexityRoot.AgentEvalCase.SourceProposalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.SourceProposalID(childComplexity), true
+	case "AgentEvalCase.sourceRunId":
+		if e.ComplexityRoot.AgentEvalCase.SourceRunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.SourceRunID(childComplexity), true
+	case "AgentEvalCase.sourceThreadId":
+		if e.ComplexityRoot.AgentEvalCase.SourceThreadID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.SourceThreadID(childComplexity), true
+	case "AgentEvalCase.sourceTurnId":
+		if e.ComplexityRoot.AgentEvalCase.SourceTurnID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.SourceTurnID(childComplexity), true
+	case "AgentEvalCase.status":
+		if e.ComplexityRoot.AgentEvalCase.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.Status(childComplexity), true
+	case "AgentEvalCase.subjectId":
+		if e.ComplexityRoot.AgentEvalCase.SubjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.SubjectID(childComplexity), true
+	case "AgentEvalCase.subjectType":
+		if e.ComplexityRoot.AgentEvalCase.SubjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.SubjectType(childComplexity), true
+	case "AgentEvalCase.title":
+		if e.ComplexityRoot.AgentEvalCase.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.Title(childComplexity), true
+	case "AgentEvalCase.toolFixtures":
+		if e.ComplexityRoot.AgentEvalCase.ToolFixtures == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.ToolFixtures(childComplexity), true
+	case "AgentEvalCase.trigger":
+		if e.ComplexityRoot.AgentEvalCase.Trigger == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.Trigger(childComplexity), true
+	case "AgentEvalCase.updatedAt":
+		if e.ComplexityRoot.AgentEvalCase.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.UpdatedAt(childComplexity), true
+	case "AgentEvalCase.version":
+		if e.ComplexityRoot.AgentEvalCase.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.Version(childComplexity), true
+	case "AgentEvalCase.weight":
+		if e.ComplexityRoot.AgentEvalCase.Weight == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCase.Weight(childComplexity), true
+
+	case "AgentEvalCaseCapture.duplicate":
+		if e.ComplexityRoot.AgentEvalCaseCapture.Duplicate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCaseCapture.Duplicate(childComplexity), true
+	case "AgentEvalCaseCapture.evalCase":
+		if e.ComplexityRoot.AgentEvalCaseCapture.EvalCase == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCaseCapture.EvalCase(childComplexity), true
+
+	case "AgentEvalCaseConnection.edges":
+		if e.ComplexityRoot.AgentEvalCaseConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCaseConnection.Edges(childComplexity), true
+	case "AgentEvalCaseConnection.pageInfo":
+		if e.ComplexityRoot.AgentEvalCaseConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCaseConnection.PageInfo(childComplexity), true
+	case "AgentEvalCaseConnection.totalCount":
+		if e.ComplexityRoot.AgentEvalCaseConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCaseConnection.TotalCount(childComplexity), true
+
+	case "AgentEvalCaseEdge.cursor":
+		if e.ComplexityRoot.AgentEvalCaseEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCaseEdge.Cursor(childComplexity), true
+	case "AgentEvalCaseEdge.node":
+		if e.ComplexityRoot.AgentEvalCaseEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvalCaseEdge.Node(childComplexity), true
+
 	case "AgentEvaluation.actions":
 		if e.ComplexityRoot.AgentEvaluation.Actions == nil {
 			break
@@ -13881,6 +14190,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentEvaluation.BusinessUnitID(childComplexity), true
+	case "AgentEvaluation.caseScore":
+		if e.ComplexityRoot.AgentEvaluation.CaseScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvaluation.CaseScore(childComplexity), true
+	case "AgentEvaluation.checks":
+		if e.ComplexityRoot.AgentEvaluation.Checks == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvaluation.Checks(childComplexity), true
 	case "AgentEvaluation.comparison":
 		if e.ComplexityRoot.AgentEvaluation.Comparison == nil {
 			break
@@ -13911,6 +14232,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentEvaluation.ErrorMessage(childComplexity), true
+	case "AgentEvaluation.evalCaseId":
+		if e.ComplexityRoot.AgentEvaluation.EvalCaseID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvaluation.EvalCaseID(childComplexity), true
+	case "AgentEvaluation.fingerprint":
+		if e.ComplexityRoot.AgentEvaluation.Fingerprint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvaluation.Fingerprint(childComplexity), true
 	case "AgentEvaluation.id":
 		if e.ComplexityRoot.AgentEvaluation.ID == nil {
 			break
@@ -13923,6 +14256,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentEvaluation.Input(childComplexity), true
+	case "AgentEvaluation.judge":
+		if e.ComplexityRoot.AgentEvaluation.Judge == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvaluation.Judge(childComplexity), true
 	case "AgentEvaluation.model":
 		if e.ComplexityRoot.AgentEvaluation.Model == nil {
 			break
@@ -41103,6 +41442,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CompleteWorkerTraining(childComplexity, args["input"].(gqlmodel.CompleteWorkerTrainingInput)), true
+	case "Mutation.createAgentEvalCase":
+		if e.ComplexityRoot.Mutation.CreateAgentEvalCase == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createAgentEvalCase_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateAgentEvalCase(childComplexity, args["input"].(gqlmodel.CreateAgentEvalCaseInput)), true
 	case "Mutation.createAgentMemory":
 		if e.ComplexityRoot.Mutation.CreateAgentMemory == nil {
 			break
@@ -43161,6 +43511,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ReopenWorkerSafetyEvent(childComplexity, args["input"].(gqlmodel.SafetyEventStatusInput)), true
+	case "Mutation.replayAgentEvalCase":
+		if e.ComplexityRoot.Mutation.ReplayAgentEvalCase == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_replayAgentEvalCase_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ReplayAgentEvalCase(childComplexity, args["id"].(string)), true
 	case "Mutation.replayAgentRun":
 		if e.ComplexityRoot.Mutation.ReplayAgentRun == nil {
 			break
@@ -43591,6 +43952,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SendTestMessageTemplate(childComplexity, args["input"].(gqlmodel.SendTestMessageTemplateInput)), true
+	case "Mutation.setAgentEvalCaseStatus":
+		if e.ComplexityRoot.Mutation.SetAgentEvalCaseStatus == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setAgentEvalCaseStatus_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetAgentEvalCaseStatus(childComplexity, args["id"].(string), args["status"].(agentquality.CaseStatus)), true
 	case "Mutation.setAgentMemoryStatus":
 		if e.ComplexityRoot.Mutation.SetAgentMemoryStatus == nil {
 			break
@@ -43943,6 +44315,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateAgentControl(childComplexity, args["input"].(gqlmodel.AgentControlInput)), true
+	case "Mutation.updateAgentEvalCase":
+		if e.ComplexityRoot.Mutation.UpdateAgentEvalCase == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateAgentEvalCase_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateAgentEvalCase(childComplexity, args["id"].(string), args["input"].(gqlmodel.UpdateAgentEvalCaseInput)), true
 	case "Mutation.updateAgentMemory":
 		if e.ComplexityRoot.Mutation.UpdateAgentMemory == nil {
 			break
@@ -48823,6 +49206,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentDefinitions(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentEvalCase":
+		if e.ComplexityRoot.Query.AgentEvalCase == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentEvalCase_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentEvalCase(childComplexity, args["id"].(string)), true
+	case "Query.agentEvalCases":
+		if e.ComplexityRoot.Query.AgentEvalCases == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentEvalCases_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentEvalCases(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.agentEvaluation":
 		if e.ComplexityRoot.Query.AgentEvaluation == nil {
 			break
@@ -71306,6 +71711,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAdjustEscrowAccountInput,
 		ec.unmarshalInputAdjustWorkerPTOBalanceInput,
 		ec.unmarshalInputAgentControlInput,
+		ec.unmarshalInputAgentEvalCaseCuratedInput,
+		ec.unmarshalInputAgentEvalCaseFromMessageInput,
+		ec.unmarshalInputAgentEvalCaseFromProposalInput,
 		ec.unmarshalInputAgentExceptionResolveInput,
 		ec.unmarshalInputAgentMemoryInput,
 		ec.unmarshalInputAgentPlanDecisionInput,
@@ -71355,6 +71763,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCompleteWorkerTrainingInput,
 		ec.unmarshalInputCostCategoryUpdateInput,
 		ec.unmarshalInputCostingControlInput,
+		ec.unmarshalInputCreateAgentEvalCaseInput,
 		ec.unmarshalInputCreateCarrierInvoiceMatchInput,
 		ec.unmarshalInputCreateDocumentTemplateVersionInput,
 		ec.unmarshalInputCreateFuelPurchaseImportInput,
@@ -71597,6 +72006,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUnapplyCreditMemoApplicationInput,
 		ec.unmarshalInputUnassignDocumentTemplateInput,
 		ec.unmarshalInputUpcomingWorkerPTOInput,
+		ec.unmarshalInputUpdateAgentEvalCaseInput,
 		ec.unmarshalInputUpdateBenefitPlanInput,
 		ec.unmarshalInputUpdateCarrierSettlementControlInput,
 		ec.unmarshalInputUpdateDOTRandomDrawEntryInput,
@@ -72431,6 +72841,8 @@ enum AgentEvaluationStatus {
   Running
   Completed
   Failed
+  "The replay could not run as the original did; errorMessage says why."
+  Skipped
 }
 
 """
@@ -72443,7 +72855,10 @@ type AgentEvaluation {
   organizationId: ID!
   businessUnitId: ID!
   agentDefinitionId: ID!
+  "Empty when the evaluation replays an evaluation case."
   sourceRunId: ID!
+  "The evaluation case replayed, when the evaluation replays one rather than a run."
+  evalCaseId: ID
   status: AgentEvaluationStatus!
   trigger: AgentRunTrigger!
   subjectType: String!
@@ -72462,6 +72877,14 @@ type AgentEvaluation {
   comparison: JSON
   originalProposals: Int!
   toolCallsUsed: Int!
+  "Each hard and soft check a case replay was scored on."
+  checks: JSON
+  "A judge model's score and rationale, when one was asked."
+  judge: JSON
+  "The case score from 0 to 1; zero on a hard failure."
+  caseScore: Float
+  "The agent version, prompt version, instructions hash and tools the replay ran against."
+  fingerprint: JSON
   errorMessage: String!
   requestedByUserId: ID
   startedAt: Timestamp
@@ -72691,6 +73114,143 @@ type AgentDefinitionConnection {
 extend type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
   agentDefinition(id: ID!): AgentDefinition
+}
+`, BuiltIn: false},
+	{Name: "../schema/agentquality.graphqls", Input: `enum AgentEvalCaseSource {
+  DecidedProposal
+  ThumbsUp
+  Curated
+}
+
+enum AgentEvalCaseStatus {
+  Candidate
+  Active
+  Quarantined
+  Retired
+}
+
+"""
+A question an agent was asked, frozen with what it was given and what a good
+answer does. Active cases are replayed against the agent after every change
+and scored.
+"""
+type AgentEvalCase {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  agentDefinitionId: ID!
+  title: String!
+  source: AgentEvalCaseSource!
+  status: AgentEvalCaseStatus!
+  trigger: AgentRunTrigger!
+  sourceRunId: ID
+  sourceTurnId: ID
+  sourceThreadId: ID
+  sourceMessageId: ID
+  sourceProposalId: ID
+  sourceFeedbackId: ID
+  "The question the agent is asked."
+  input: String!
+  "The conversation before the question, redacted when captured."
+  history: [JSON!]!
+  pageContext: JSON
+  mentions: [JSON!]!
+  subjectType: String!
+  subjectId: ID
+  "The tools the agent held when the case was captured; calling any other fails the case."
+  heldTools: [String!]!
+  "Each tool call the original made, with restricted fields redacted."
+  toolFixtures: [JSON!]!
+  "Expected tools with tolerance rules, forbidden tools, proposals, refusal and mention rules."
+  expected: JSON!
+  rubric: String!
+  "Which fields were replaced when the case was captured."
+  redaction: JSON
+  contentHash: String!
+  capturedFingerprint: JSON
+  expiresAt: Timestamp
+  createdByUserId: ID
+  "How much the case counts toward a suite score: 0.6 for a liked reply, 1 otherwise."
+  weight: Float!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AgentEvalCaseEdge {
+  node: AgentEvalCase!
+  cursor: String!
+}
+
+type AgentEvalCaseConnection {
+  edges: [AgentEvalCaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"A case as it was created, or the case that already asked the same thing."
+type AgentEvalCaseCapture {
+  evalCase: AgentEvalCase!
+  duplicate: Boolean!
+}
+
+input AgentEvalCaseFromMessageInput {
+  threadId: ID!
+  messageId: ID!
+  feedbackId: ID
+  title: String
+}
+
+input AgentEvalCaseFromProposalInput {
+  proposalId: ID!
+  title: String
+}
+
+input AgentEvalCaseCuratedInput {
+  agentDefinitionId: ID!
+  title: String
+  trigger: AgentRunTrigger
+  input: String!
+  pageContext: JSON
+  mentions: [JSON!]
+  subjectType: String
+  subjectId: ID
+  "Defaults to every tool the agent holds now."
+  heldTools: [String!]
+  expected: JSON!
+  rubric: String
+  expiresAt: Timestamp
+}
+
+"Exactly one of the three."
+input CreateAgentEvalCaseInput {
+  fromMessage: AgentEvalCaseFromMessageInput
+  fromProposal: AgentEvalCaseFromProposalInput
+  curated: AgentEvalCaseCuratedInput
+}
+
+input UpdateAgentEvalCaseInput {
+  version: Int!
+  title: String
+  input: String
+  heldTools: [String!]
+  expected: JSON
+  rubric: String
+  "Absent leaves the expiry alone; null clears it."
+  expiresAt: Timestamp @goField(omittable: true)
+}
+
+extend type Query {
+  agentEvalCases(input: DataTableConnectionInput!): AgentEvalCaseConnection!
+  agentEvalCase(id: ID!): AgentEvalCase
+}
+
+extend type Mutation {
+  createAgentEvalCase(input: CreateAgentEvalCaseInput!): AgentEvalCaseCapture!
+  updateAgentEvalCase(id: ID!, input: UpdateAgentEvalCaseInput!): AgentEvalCase!
+  setAgentEvalCaseStatus(id: ID!, status: AgentEvalCaseStatus!): AgentEvalCase!
+  "Replays a case against its agent as it is now, writes simulated, and scores it."
+  replayAgentEvalCase(id: ID!): AgentEvaluation!
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentrunevent.graphqls", Input: `"""
@@ -94048,6 +94608,110 @@ func (ec *executionContext) childFields_AgentDefinitionEdge(ctx context.Context,
 	return nil, fmt.Errorf("no field named %q was found under type AgentDefinitionEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentEvalCase(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AgentEvalCase_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_AgentEvalCase_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_AgentEvalCase_businessUnitId(ctx, field)
+	case "agentDefinitionId":
+		return ec.fieldContext_AgentEvalCase_agentDefinitionId(ctx, field)
+	case "title":
+		return ec.fieldContext_AgentEvalCase_title(ctx, field)
+	case "source":
+		return ec.fieldContext_AgentEvalCase_source(ctx, field)
+	case "status":
+		return ec.fieldContext_AgentEvalCase_status(ctx, field)
+	case "trigger":
+		return ec.fieldContext_AgentEvalCase_trigger(ctx, field)
+	case "sourceRunId":
+		return ec.fieldContext_AgentEvalCase_sourceRunId(ctx, field)
+	case "sourceTurnId":
+		return ec.fieldContext_AgentEvalCase_sourceTurnId(ctx, field)
+	case "sourceThreadId":
+		return ec.fieldContext_AgentEvalCase_sourceThreadId(ctx, field)
+	case "sourceMessageId":
+		return ec.fieldContext_AgentEvalCase_sourceMessageId(ctx, field)
+	case "sourceProposalId":
+		return ec.fieldContext_AgentEvalCase_sourceProposalId(ctx, field)
+	case "sourceFeedbackId":
+		return ec.fieldContext_AgentEvalCase_sourceFeedbackId(ctx, field)
+	case "input":
+		return ec.fieldContext_AgentEvalCase_input(ctx, field)
+	case "history":
+		return ec.fieldContext_AgentEvalCase_history(ctx, field)
+	case "pageContext":
+		return ec.fieldContext_AgentEvalCase_pageContext(ctx, field)
+	case "mentions":
+		return ec.fieldContext_AgentEvalCase_mentions(ctx, field)
+	case "subjectType":
+		return ec.fieldContext_AgentEvalCase_subjectType(ctx, field)
+	case "subjectId":
+		return ec.fieldContext_AgentEvalCase_subjectId(ctx, field)
+	case "heldTools":
+		return ec.fieldContext_AgentEvalCase_heldTools(ctx, field)
+	case "toolFixtures":
+		return ec.fieldContext_AgentEvalCase_toolFixtures(ctx, field)
+	case "expected":
+		return ec.fieldContext_AgentEvalCase_expected(ctx, field)
+	case "rubric":
+		return ec.fieldContext_AgentEvalCase_rubric(ctx, field)
+	case "redaction":
+		return ec.fieldContext_AgentEvalCase_redaction(ctx, field)
+	case "contentHash":
+		return ec.fieldContext_AgentEvalCase_contentHash(ctx, field)
+	case "capturedFingerprint":
+		return ec.fieldContext_AgentEvalCase_capturedFingerprint(ctx, field)
+	case "expiresAt":
+		return ec.fieldContext_AgentEvalCase_expiresAt(ctx, field)
+	case "createdByUserId":
+		return ec.fieldContext_AgentEvalCase_createdByUserId(ctx, field)
+	case "weight":
+		return ec.fieldContext_AgentEvalCase_weight(ctx, field)
+	case "version":
+		return ec.fieldContext_AgentEvalCase_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_AgentEvalCase_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AgentEvalCase_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentEvalCase", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentEvalCaseCapture(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "evalCase":
+		return ec.fieldContext_AgentEvalCaseCapture_evalCase(ctx, field)
+	case "duplicate":
+		return ec.fieldContext_AgentEvalCaseCapture_duplicate(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentEvalCaseCapture", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentEvalCaseConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AgentEvalCaseConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AgentEvalCaseConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AgentEvalCaseConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentEvalCaseConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentEvalCaseEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AgentEvalCaseEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AgentEvalCaseEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentEvalCaseEdge", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentEvaluation(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -94060,6 +94724,8 @@ func (ec *executionContext) childFields_AgentEvaluation(ctx context.Context, fie
 		return ec.fieldContext_AgentEvaluation_agentDefinitionId(ctx, field)
 	case "sourceRunId":
 		return ec.fieldContext_AgentEvaluation_sourceRunId(ctx, field)
+	case "evalCaseId":
+		return ec.fieldContext_AgentEvaluation_evalCaseId(ctx, field)
 	case "status":
 		return ec.fieldContext_AgentEvaluation_status(ctx, field)
 	case "trigger":
@@ -94088,6 +94754,14 @@ func (ec *executionContext) childFields_AgentEvaluation(ctx context.Context, fie
 		return ec.fieldContext_AgentEvaluation_originalProposals(ctx, field)
 	case "toolCallsUsed":
 		return ec.fieldContext_AgentEvaluation_toolCallsUsed(ctx, field)
+	case "checks":
+		return ec.fieldContext_AgentEvaluation_checks(ctx, field)
+	case "judge":
+		return ec.fieldContext_AgentEvaluation_judge(ctx, field)
+	case "caseScore":
+		return ec.fieldContext_AgentEvaluation_caseScore(ctx, field)
+	case "fingerprint":
+		return ec.fieldContext_AgentEvaluation_fingerprint(ctx, field)
 	case "errorMessage":
 		return ec.fieldContext_AgentEvaluation_errorMessage(ctx, field)
 	case "requestedByUserId":

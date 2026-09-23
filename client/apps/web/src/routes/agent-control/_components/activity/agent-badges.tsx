@@ -55,6 +55,7 @@ const EVALUATION_STATUS: Record<AgentEvaluationStatus, { label: string; variant:
   Running: { label: "Replaying", variant: "info" },
   Completed: { label: "Completed", variant: "success" },
   Failed: { label: "Failed", variant: "danger" },
+  Skipped: { label: "Skipped", variant: "neutral" },
 };
 
 const VERDICT: Record<string, { label: string; variant: Variant }> = {

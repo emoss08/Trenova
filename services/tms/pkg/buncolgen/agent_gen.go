@@ -1795,6 +1795,7 @@ var EvaluationColumns = struct {
 	OrganizationID    Column // "organization_id" → qualified: "aeval.organization_id"
 	AgentDefinitionID Column // "agent_definition_id" → qualified: "aeval.agent_definition_id"
 	SourceRunID       Column // "source_run_id" → qualified: "aeval.source_run_id"
+	EvalCaseID        Column // "eval_case_id" → qualified: "aeval.eval_case_id"
 	Status            Column // "status" → qualified: "aeval.status"
 	Trigger           Column // "trigger" → qualified: "aeval.trigger"
 	SubjectType       Column // "subject_type" → qualified: "aeval.subject_type"
@@ -1809,6 +1810,10 @@ var EvaluationColumns = struct {
 	Comparison        Column // "comparison" → qualified: "aeval.comparison"
 	OriginalProposals Column // "original_proposals" → qualified: "aeval.original_proposals"
 	ToolCallsUsed     Column // "tool_calls_used" → qualified: "aeval.tool_calls_used"
+	Checks            Column // "checks" → qualified: "aeval.checks"
+	Judge             Column // "judge" → qualified: "aeval.judge"
+	CaseScore         Column // "case_score" → qualified: "aeval.case_score"
+	Fingerprint       Column // "fingerprint" → qualified: "aeval.fingerprint"
 	WorkflowID        Column // "workflow_id" → qualified: "aeval.workflow_id"
 	ErrorMessage      Column // "error_message" → qualified: "aeval.error_message"
 	RequestedByUserID Column // "requested_by_user_id" → qualified: "aeval.requested_by_user_id"
@@ -1823,6 +1828,7 @@ var EvaluationColumns = struct {
 	OrganizationID:    NewColumn("organization_id", "aeval"),
 	AgentDefinitionID: NewColumn("agent_definition_id", "aeval"),
 	SourceRunID:       NewColumn("source_run_id", "aeval"),
+	EvalCaseID:        NewColumn("eval_case_id", "aeval"),
 	Status:            NewColumn("status", "aeval"),
 	Trigger:           NewColumn("trigger", "aeval"),
 	SubjectType:       NewColumn("subject_type", "aeval"),
@@ -1837,6 +1843,10 @@ var EvaluationColumns = struct {
 	Comparison:        NewColumn("comparison", "aeval"),
 	OriginalProposals: NewColumn("original_proposals", "aeval"),
 	ToolCallsUsed:     NewColumn("tool_calls_used", "aeval"),
+	Checks:            NewColumn("checks", "aeval"),
+	Judge:             NewColumn("judge", "aeval"),
+	CaseScore:         NewColumn("case_score", "aeval"),
+	Fingerprint:       NewColumn("fingerprint", "aeval"),
 	WorkflowID:        NewColumn("workflow_id", "aeval"),
 	ErrorMessage:      NewColumn("error_message", "aeval"),
 	RequestedByUserID: NewColumn("requested_by_user_id", "aeval"),
@@ -1857,6 +1867,7 @@ var EvaluationFieldMap = map[string]string{
 	"organizationId":    "organization_id",
 	"agentDefinitionId": "agent_definition_id",
 	"sourceRunId":       "source_run_id",
+	"evalCaseId":        "eval_case_id",
 	"status":            "status",
 	"trigger":           "trigger",
 	"subjectType":       "subject_type",
@@ -1871,6 +1882,10 @@ var EvaluationFieldMap = map[string]string{
 	"comparison":        "comparison",
 	"originalProposals": "original_proposals",
 	"toolCallsUsed":     "tool_calls_used",
+	"checks":            "checks",
+	"judge":             "judge",
+	"caseScore":         "case_score",
+	"fingerprint":       "fingerprint",
 	"workflowId":        "workflow_id",
 	"errorMessage":      "error_message",
 	"requestedByUserId": "requested_by_user_id",
@@ -1889,6 +1904,7 @@ var EvaluationInsertableColumns = []string{
 	"organization_id",
 	"agent_definition_id",
 	"source_run_id",
+	"eval_case_id",
 	"status",
 	"trigger",
 	"subject_type",
@@ -1903,6 +1919,10 @@ var EvaluationInsertableColumns = []string{
 	"comparison",
 	"original_proposals",
 	"tool_calls_used",
+	"checks",
+	"judge",
+	"case_score",
+	"fingerprint",
 	"workflow_id",
 	"error_message",
 	"requested_by_user_id",
@@ -1981,6 +2001,7 @@ var EvaluationFilter = struct {
 	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
 	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
 	SourceRunID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceRunId" → DB: "source_run_id"
+	EvalCaseID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "evalCaseId" → DB: "eval_case_id"
 	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	Trigger           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trigger" → DB: "trigger"
 	SubjectType       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
@@ -1995,6 +2016,10 @@ var EvaluationFilter = struct {
 	Comparison        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comparison" → DB: "comparison"
 	OriginalProposals func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "originalProposals" → DB: "original_proposals"
 	ToolCallsUsed     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCallsUsed" → DB: "tool_calls_used"
+	Checks            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "checks" → DB: "checks"
+	Judge             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "judge" → DB: "judge"
+	CaseScore         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "caseScore" → DB: "case_score"
+	Fingerprint       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fingerprint" → DB: "fingerprint"
 	WorkflowID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workflowId" → DB: "workflow_id"
 	ErrorMessage      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
 	RequestedByUserID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedByUserId" → DB: "requested_by_user_id"
@@ -2018,6 +2043,9 @@ var EvaluationFilter = struct {
 	},
 	SourceRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("sourceRunId", op, value)
+	},
+	EvalCaseID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("evalCaseId", op, value)
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)
@@ -2060,6 +2088,18 @@ var EvaluationFilter = struct {
 	},
 	ToolCallsUsed: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("toolCallsUsed", op, value)
+	},
+	Checks: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("checks", op, value)
+	},
+	Judge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("judge", op, value)
+	},
+	CaseScore: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("caseScore", op, value)
+	},
+	Fingerprint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fingerprint", op, value)
 	},
 	WorkflowID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("workflowId", op, value)

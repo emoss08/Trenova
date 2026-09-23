@@ -2,15 +2,19 @@ package agentjobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentscoring"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -25,6 +29,20 @@ type replay struct {
 	evaluation *agent.Evaluation
 	originals  []agent.OriginalProposal
 	request    *serviceports.RunRequest
+}
+
+type replaySkipped struct {
+	reason string
+}
+
+func (e *replaySkipped) Error() string { return e.reason }
+
+func skip(reason string) error { return &replaySkipped{reason: reason} }
+
+type replaySource struct {
+	actor     *serviceports.RequestActor
+	input     *replayInput
+	originals []agent.OriginalProposal
 }
 
 // openReplay reads what an evaluation replays and marks it running. It returns
@@ -53,16 +71,6 @@ func (a *Activities) openReplay(
 		return nil, nil
 	}
 
-	source, err := a.runRepo.GetByID(ctx, repositories.GetAgentRunByIDRequest{
-		ID:         evaluation.SourceRunID,
-		TenantInfo: &tenant,
-	})
-	if err != nil {
-		return nil, temporal.NewNonRetryableApplicationError(
-			"source run unavailable", "SourceRunUnavailable", err,
-		)
-	}
-
 	definition, err := a.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
 		ID:         evaluation.AgentDefinitionID,
 		TenantInfo: tenant,
@@ -73,12 +81,15 @@ func (a *Activities) openReplay(
 		)
 	}
 
-	originals, err := a.originalProposals(ctx, tenant, source.ID)
-	if err != nil {
-		return nil, err
+	var source *replaySource
+	if evaluation.ReplaysCase() {
+		source, err = a.caseSource(ctx, tenant, evaluation, definition)
+	} else {
+		source, err = a.runSource(ctx, tenant, evaluation, definition)
 	}
-
-	input, err := a.replayInput(ctx, tenant, source, definition)
+	if skipped, ok := errors.AsType[*replaySkipped](err); ok {
+		return nil, a.skipEvaluation(ctx, evaluation, skipped.reason)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -86,10 +97,11 @@ func (a *Activities) openReplay(
 	startedAt := timeutils.NowUnix()
 	evaluation.Status = agent.EvaluationStatusRunning
 	evaluation.StartedAt = &startedAt
-	evaluation.Input = input.input
+	evaluation.Input = source.input.input
 	evaluation.DefinitionVersion = definition.Version
 	evaluation.PromptVersion = promptVersion
-	evaluation.OriginalProposals = len(originals)
+	evaluation.OriginalProposals = len(source.originals)
+	evaluation.Fingerprint = agentquality.FingerprintOf(definition, promptVersion)
 	if evaluation, err = a.evaluations.Update(ctx, evaluation); err != nil {
 		return nil, fmt.Errorf("mark evaluation running: %w", err)
 	}
@@ -102,17 +114,245 @@ func (a *Activities) openReplay(
 
 	return &replay{
 		evaluation: evaluation,
-		originals:  originals,
+		originals:  source.originals,
 		request: &serviceports.RunRequest{
-			Definition: &replayed,
-			Actor:      agentActor(tenant),
-			Context:    input.context,
-			History:    input.history,
-			Input:      input.input,
-			RunID:      evaluation.ID,
-			Unattended: true,
+			Definition:   &replayed,
+			Actor:        source.actor,
+			Context:      source.input.context,
+			History:      source.input.history,
+			Input:        source.input.input,
+			RunID:        evaluation.ID,
+			Unattended:   true,
+			UsagePurpose: serviceports.AIUsagePurposeEvaluation,
 		},
 	}, nil
+}
+
+func (a *Activities) runSource(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	evaluation *agent.Evaluation,
+	definition *agentdefinition.Definition,
+) (*replaySource, error) {
+	source, err := a.runRepo.GetByID(ctx, repositories.GetAgentRunByIDRequest{
+		ID:         evaluation.SourceRunID,
+		TenantInfo: &tenant,
+	})
+	if err != nil {
+		return nil, temporal.NewNonRetryableApplicationError(
+			"source run unavailable", "SourceRunUnavailable", err,
+		)
+	}
+
+	originals, err := a.originalProposals(ctx, tenant, source.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	actor := agentActor(tenant)
+	if source.SubjectType == agent.SubjectAssistantThread {
+		if actor, err = a.threadActor(ctx, tenant, source.SubjectID); err != nil {
+			return nil, err
+		}
+	}
+
+	input, err := a.replayInput(ctx, tenant, source, definition, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	return &replaySource{actor: actor, input: input, originals: originals}, nil
+}
+
+func (a *Activities) caseSource(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	evaluation *agent.Evaluation,
+	definition *agentdefinition.Definition,
+) (*replaySource, error) {
+	evalCase, err := a.evalCases.GetByID(ctx, repositories.GetAgentEvalCaseByIDRequest{
+		ID:         *evaluation.EvalCaseID,
+		TenantInfo: tenant,
+	})
+	if errortypes.IsNotFoundError(err) {
+		return nil, skip("The evaluation case no longer exists")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read evaluation case: %w", err)
+	}
+
+	originals := expectedOriginals(evalCase)
+	if !evalCase.IsChat() {
+		actor := agentActor(tenant)
+		input, inputErr := a.caseBackgroundInput(ctx, tenant, evalCase, definition, actor)
+		if inputErr != nil {
+			return nil, inputErr
+		}
+
+		return &replaySource{actor: actor, input: input, originals: originals}, nil
+	}
+
+	actor, err := a.caseActor(ctx, tenant, evalCase)
+	if err != nil {
+		return nil, err
+	}
+
+	runtimeContext, err := a.contexts.Build(ctx, &serviceports.RuntimeContextRequest{
+		Definition: definition,
+		Actor:      actor,
+		Trigger:    agent.RunTriggerChat,
+		Page:       evalCase.PageContext,
+		Mentions:   evalCase.Mentions,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("build runtime context: %w", err)
+	}
+
+	return &replaySource{
+		actor: actor,
+		input: &replayInput{
+			input:   evalCase.Input,
+			history: evalCase.Conversation(),
+			context: runtimeContext,
+		},
+		originals: originals,
+	}, nil
+}
+
+func (a *Activities) caseBackgroundInput(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	evalCase *agentquality.EvalCase,
+	definition *agentdefinition.Definition,
+	actor *serviceports.RequestActor,
+) (*replayInput, error) {
+	var subject *agentdefinition.RuntimeSubject
+	if evalCase.SubjectType != "" {
+		described, err := a.subjects.Describe(ctx, tenant, evalCase.SubjectType, evalCase.SubjectID)
+		if errortypes.IsNotFoundError(err) {
+			return nil, skip("The record this case concerns no longer exists")
+		}
+		if err != nil {
+			return nil, fmt.Errorf("describe subject: %w", err)
+		}
+		subject = described
+	}
+
+	runtimeContext, err := a.contexts.Build(ctx, &serviceports.RuntimeContextRequest{
+		Definition: definition,
+		Actor:      actor,
+		Trigger:    evalCase.Trigger,
+		Subject:    subject,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("build runtime context: %w", err)
+	}
+
+	return &replayInput{input: evalCase.Input, context: runtimeContext}, nil
+}
+
+func (a *Activities) caseActor(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	evalCase *agentquality.EvalCase,
+) (*serviceports.RequestActor, error) {
+	if evalCase.SourceThreadID != nil && evalCase.SourceThreadID.IsNotNil() {
+		return a.threadActor(ctx, tenant, *evalCase.SourceThreadID)
+	}
+	if evalCase.CreatedByUserID != nil && evalCase.CreatedByUserID.IsNotNil() {
+		return a.memberActor(ctx, tenant, *evalCase.CreatedByUserID)
+	}
+
+	return nil, skip("Nobody is left to ask this case's question as")
+}
+
+func (a *Activities) threadActor(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	threadID pulid.ID,
+) (*serviceports.RequestActor, error) {
+	if a.conversations == nil {
+		return nil, temporal.NewNonRetryableApplicationError(
+			"conversation history unavailable", "HistoryUnavailable", nil,
+		)
+	}
+
+	thread, err := a.conversations.GetThreadOwned(ctx, repositories.GetThreadOwnedRequest{
+		ID:         threadID,
+		TenantInfo: tenant,
+	})
+	if errortypes.IsNotFoundError(err) {
+		return nil, skip("The conversation this was asked in has been deleted")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read conversation: %w", err)
+	}
+
+	return a.memberActor(ctx, tenant, thread.UserID)
+}
+
+func (a *Activities) memberActor(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	userID pulid.ID,
+) (*serviceports.RequestActor, error) {
+	user, err := a.users.GetTenantMember(ctx, repositories.GetTenantMemberRequest{
+		UserID:     userID,
+		TenantInfo: tenant,
+		Now:        timeutils.NowUnix(),
+	})
+	if errortypes.IsNotFoundError(err) {
+		return nil, skip("The person who asked no longer belongs to this organization")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read the person who asked: %w", err)
+	}
+	if !user.IsActive() {
+		return nil, skip("The person who asked no longer has an active account")
+	}
+
+	return &serviceports.RequestActor{
+		PrincipalType:  serviceports.PrincipalTypeUser,
+		PrincipalID:    user.ID,
+		UserID:         user.ID,
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+	}, nil
+}
+
+func (a *Activities) skipEvaluation(
+	ctx context.Context,
+	evaluation *agent.Evaluation,
+	reason string,
+) error {
+	evaluation.Skip(stringutils.Ellipsize(reason, maxSummaryChars), timeutils.NowUnix())
+	if _, err := a.evaluations.Update(ctx, evaluation); err != nil {
+		return fmt.Errorf("mark evaluation skipped: %w", err)
+	}
+
+	return nil
+}
+
+func expectedOriginals(evalCase *agentquality.EvalCase) []agent.OriginalProposal {
+	originals := make([]agent.OriginalProposal, 0, len(evalCase.Expected.Proposals))
+	for _, proposal := range evalCase.Expected.Proposals {
+		original := agent.OriginalProposal{
+			ToolName: proposal.ToolName,
+			Params:   proposal.Params,
+			Status:   agent.ProposalStatusAccepted,
+			Decision: agent.DecisionAccepted,
+		}
+		if id, err := pulid.Parse(proposal.SourceProposalID); err == nil {
+			original.ID = id
+		}
+		if proposal.Rejected {
+			original.Status = agent.ProposalStatusRejected
+			original.Decision = agent.DecisionRejected
+		}
+		originals = append(originals, original)
+	}
+
+	return originals
 }
 
 // storeReplay files what the replay would have done beside what the original
@@ -143,6 +383,11 @@ func (a *Activities) storeReplay(
 	evaluation.Actions = actions
 	evaluation.Comparison = agent.CompareReplay(originals, actions)
 	evaluation.ToolCallsUsed = outcome.ToolCallsUsed
+	if evaluation.ReplaysCase() {
+		if err := a.scoreReplay(ctx, evaluation, outcome, actions); err != nil {
+			return nil, err
+		}
+	}
 	if _, err := a.evaluations.Update(ctx, evaluation); err != nil {
 		return nil, fmt.Errorf("store evaluation outcome: %w", err)
 	}
@@ -152,6 +397,74 @@ func (a *Activities) storeReplay(
 		ToolCallsUsed: outcome.ToolCallsUsed,
 		Actions:       len(actions),
 	}, nil
+}
+
+func (a *Activities) scoreReplay(
+	ctx context.Context,
+	evaluation *agent.Evaluation,
+	outcome *serviceports.RunResult,
+	actions []agent.ReplayAction,
+) error {
+	evalCase, err := a.evalCases.GetByID(ctx, repositories.GetAgentEvalCaseByIDRequest{
+		ID: *evaluation.EvalCaseID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: evaluation.OrganizationID,
+			BuID:  evaluation.BusinessUnitID,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("read evaluation case to score: %w", err)
+	}
+
+	observed := observeReplay(outcome)
+	checks := a.scorer.Score(&agentscoring.Input{
+		Case:         evalCase,
+		Reply:        outcome.Reply,
+		Calls:        observed.calls,
+		Actions:      actions,
+		Refused:      observed.refused,
+		Judge:        evaluation.Judge,
+		ObservedText: observed.results,
+	})
+	score := checks.Final
+	evaluation.Checks = checks
+	evaluation.CaseScore = &score
+
+	return nil
+}
+
+type observedReplay struct {
+	calls   []agent.ObservedCall
+	results []string
+	refused bool
+}
+
+func observeReplay(outcome *serviceports.RunResult) observedReplay {
+	observed := observedReplay{refused: outcome.OutputRefused}
+	for i := range outcome.Messages {
+		message := &outcome.Messages[i]
+		if message.Delegated() {
+			continue
+		}
+		if message.Refused {
+			observed.refused = true
+		}
+		switch message.Role {
+		case conversation.RoleAssistant:
+			for _, call := range message.ToolCalls {
+				observed.calls = append(observed.calls, agent.ObservedCall{
+					ToolName:  call.Name,
+					Arguments: call.Arguments,
+				})
+			}
+		case conversation.RoleTool:
+			if !message.ToolFailed && message.Content != "" {
+				observed.results = append(observed.results, message.Content)
+			}
+		}
+	}
+
+	return observed
 }
 
 // ReplayRunActivity replays a run in one activity, as an evaluation did before
@@ -297,25 +610,19 @@ func (a *Activities) originalProposals(
 	}
 
 	// Newest first, so the first decision seen for a proposal is its latest.
-	latest := make(map[pulid.ID]agent.DecisionType, len(decisions))
+	latest := make(map[pulid.ID]*agent.AgentDecision, len(decisions))
 	for _, decision := range decisions {
 		if decision.ProposalID == nil {
 			continue
 		}
 		if _, seen := latest[*decision.ProposalID]; !seen {
-			latest[*decision.ProposalID] = decision.Decision
+			latest[*decision.ProposalID] = decision
 		}
 	}
 
 	originals := make([]agent.OriginalProposal, 0, len(proposals))
 	for _, proposal := range proposals {
-		originals = append(originals, agent.OriginalProposal{
-			ID:       proposal.ID,
-			ToolName: proposal.ToolName,
-			Params:   proposal.ToolParams,
-			Status:   proposal.Status,
-			Decision: latest[proposal.ID],
-		})
+		originals = append(originals, agent.NewOriginalProposal(proposal, latest[proposal.ID]))
 	}
 
 	return originals, nil
@@ -338,9 +645,8 @@ func (a *Activities) replayInput(
 	tenant pagination.TenantInfo,
 	source *agent.AgentRun,
 	definition *agentdefinition.Definition,
+	actor *serviceports.RequestActor,
 ) (*replayInput, error) {
-	actor := agentActor(tenant)
-
 	if source.SubjectType == agent.SubjectAssistantThread {
 		return a.chatReplayInput(ctx, tenant, source, definition, actor)
 	}
@@ -410,6 +716,7 @@ func (a *Activities) chatReplayInput(
 		Actor:      actor,
 		Trigger:    agent.RunTriggerChat,
 		Page:       messages[turn].PageContext,
+		Mentions:   messages[turn].Mentions,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("build runtime context: %w", err)

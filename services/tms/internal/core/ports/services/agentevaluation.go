@@ -16,7 +16,17 @@ type ReplayAgentRunRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+type ReplayAgentEvalCaseRequest struct {
+	CaseID     pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type AgentEvaluationService interface {
+	ReplayCase(
+		ctx context.Context,
+		req *ReplayAgentEvalCaseRequest,
+		actor *RequestActor,
+	) (*agent.Evaluation, error)
 	Replay(
 		ctx context.Context,
 		req *ReplayAgentRunRequest,

@@ -389,6 +389,8 @@ enum AgentEvaluationStatus {
   Running
   Completed
   Failed
+  "The replay could not run as the original did; errorMessage says why."
+  Skipped
 }
 
 """
@@ -401,7 +403,10 @@ type AgentEvaluation {
   organizationId: ID!
   businessUnitId: ID!
   agentDefinitionId: ID!
+  "Empty when the evaluation replays an evaluation case."
   sourceRunId: ID!
+  "The evaluation case replayed, when the evaluation replays one rather than a run."
+  evalCaseId: ID
   status: AgentEvaluationStatus!
   trigger: AgentRunTrigger!
   subjectType: String!
@@ -420,6 +425,14 @@ type AgentEvaluation {
   comparison: JSON
   originalProposals: Int!
   toolCallsUsed: Int!
+  "Each hard and soft check a case replay was scored on."
+  checks: JSON
+  "A judge model's score and rationale, when one was asked."
+  judge: JSON
+  "The case score from 0 to 1; zero on a hard failure."
+  caseScore: Float
+  "The agent version, prompt version, instructions hash and tools the replay ran against."
+  fingerprint: JSON
   errorMessage: String!
   requestedByUserId: ID
   startedAt: Timestamp

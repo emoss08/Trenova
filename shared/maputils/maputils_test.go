@@ -105,3 +105,14 @@ func TestWithoutFuncValues(t *testing.T) {
 	assert.Nil(t, WithoutFuncValues(nil))
 	assert.Nil(t, WithoutFuncValues(map[string]any{}))
 }
+
+func TestOverlay(t *testing.T) {
+	t.Parallel()
+
+	base := map[string]any{"rate": 10, "note": "keep"}
+	merged := Overlay(base, map[string]any{"rate": 12, "extra": true})
+
+	assert.Equal(t, map[string]any{"rate": 12, "note": "keep", "extra": true}, merged)
+	assert.Equal(t, 10, base["rate"])
+	assert.Equal(t, base, Overlay(base, nil))
+}

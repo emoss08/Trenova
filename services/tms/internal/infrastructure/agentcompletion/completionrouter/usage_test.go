@@ -114,6 +114,41 @@ func TestCompleteStructured_RecordsEveryAttempt(t *testing.T) {
 	assert.Equal(t, req.TenantInfo.OrgID, second.OrganizationID)
 }
 
+func TestCompleteStructured_RecordsAnEvaluationApartFromTheLiveAgent(t *testing.T) {
+	t.Parallel()
+
+	healthy, _ := chatServer(t, http.StatusOK, `{"answer":"replayed"}`)
+	usage := &fakeUsage{}
+	svc := newTestService(t, priced(openAIChatProvider("only", healthy.URL, 10), "1", "10"))
+	svc.usage = usage
+
+	req := generalRequest()
+	req.Attribution = serviceports.AIUsageAttribution{
+		AgentDefinitionID: pulid.MustNew("agd_"),
+		RunID:             pulid.MustNew("aeval_"),
+	}
+	_, err := svc.CompleteStructured(t.Context(), req)
+	require.NoError(t, err)
+
+	rows := usage.recorded(t, 1)
+	require.Len(t, rows, 1)
+	assert.Equal(t, aiusage.SurfaceEvaluation, rows[0].Surface)
+	assert.Equal(t, req.Attribution.AgentDefinitionID, rows[0].AgentDefinitionID)
+}
+
+func TestSurfaceFor(t *testing.T) {
+	t.Parallel()
+
+	live := serviceports.AIUsageAttribution{RunID: pulid.MustNew("ar_")}
+	byRun := serviceports.AIUsageAttribution{RunID: pulid.MustNew("aeval_")}
+	byPurpose := serviceports.AIUsageAttribution{Purpose: serviceports.AIUsagePurposeEvaluation}
+
+	assert.Equal(t, aiusage.SurfaceChat, surfaceFor(aiusage.SurfaceChat, live))
+	assert.Equal(t, aiusage.SurfaceStructured, surfaceFor(aiusage.SurfaceStructured, live))
+	assert.Equal(t, aiusage.SurfaceEvaluation, surfaceFor(aiusage.SurfaceChat, byRun))
+	assert.Equal(t, aiusage.SurfaceEvaluation, surfaceFor(aiusage.SurfaceStructured, byPurpose))
+}
+
 // A slow or failing usage table never slows an answer or turns it into an
 // error: the row is telemetry, not the transaction.
 func TestCompleteStructured_AnswersWhenTheUsageWriteFails(t *testing.T) {

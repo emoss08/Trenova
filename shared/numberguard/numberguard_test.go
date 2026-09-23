@@ -174,3 +174,36 @@ func TestFormatForPrompt_RoundTripsThroughTheGuard(t *testing.T) {
 		)
 	}
 }
+
+func TestSupportedFromText_CollectsEveryFigureOnce(t *testing.T) {
+	t.Parallel()
+
+	supported := numberguard.SupportedFromText(
+		`{"totalCharge": 12400.50, "stops": 3}`,
+		"",
+		"Invoice total is $12,400.50 across 1.2k miles",
+	)
+
+	require.Len(t, supported, 3)
+	assert.True(t, supported[0].Equal(decimal.NewFromFloat(12400.50)))
+	assert.True(t, supported[1].Equal(decimal.NewFromInt(3)))
+	assert.True(t, supported[2].Equal(decimal.NewFromInt(1200)))
+}
+
+func TestSupportedFromText_BacksCheckNumbers(t *testing.T) {
+	t.Parallel()
+
+	supported := numberguard.SupportedFromText(`{"revenue": 48210}`, "Show me revenue")
+
+	assert.True(t, numberguard.CheckNumbers("Revenue was $48,210 this week.", supported).OK)
+	check := numberguard.CheckNumbers("Revenue was $95,000 this week.", supported)
+	assert.False(t, check.OK)
+	assert.Equal(t, []string{"95,000"}, check.Unsupported)
+}
+
+func TestSupportedFromText_EmptyInputSupportsNothing(t *testing.T) {
+	t.Parallel()
+
+	assert.Empty(t, numberguard.SupportedFromText())
+	assert.Empty(t, numberguard.SupportedFromText("", "no figures here"))
+}

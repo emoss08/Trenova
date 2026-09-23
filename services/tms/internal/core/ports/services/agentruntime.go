@@ -100,6 +100,16 @@ type RunRequest struct {
 	// Such a turn runs as the same person with its own agent's tools, tiers
 	// and budget, and never hands the task on.
 	Delegation *Delegation
+
+	UsagePurpose AIUsagePurpose
+}
+
+func (r *RunRequest) AttributedPurpose() AIUsagePurpose {
+	if r.UsagePurpose != AIUsagePurposeLive {
+		return r.UsagePurpose
+	}
+
+	return UsagePurposeForRun(r.RunID)
 }
 
 // Delegation is the task another agent handed a turn.

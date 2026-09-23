@@ -22,6 +22,10 @@ const dataRetentionFormSchema = z.object({
     .int()
     .min(0, "EDI inbound file retention cannot be negative"),
   ediMessageRetentionPeriod: z.number().int().min(0, "EDI message retention cannot be negative"),
+  agentEvalCaseRetentionPeriod: z
+    .number()
+    .int()
+    .min(0, "Agent evaluation case retention cannot be negative"),
 });
 
 type DataRetentionFormValues = z.infer<typeof dataRetentionFormSchema>;
@@ -44,6 +48,7 @@ export function DataRetentionPage() {
       auditRetentionPeriod: 120,
       ediInboundFileRetentionPeriod: 0,
       ediMessageRetentionPeriod: 0,
+      agentEvalCaseRetentionPeriod: 365,
     },
     mode: "onChange",
   });
@@ -55,6 +60,7 @@ export function DataRetentionPage() {
       auditRetentionPeriod: data.auditRetentionPeriod,
       ediInboundFileRetentionPeriod: data.ediInboundFileRetentionPeriod,
       ediMessageRetentionPeriod: data.ediMessageRetentionPeriod,
+      agentEvalCaseRetentionPeriod: data.agentEvalCaseRetentionPeriod,
     });
   }, [data, reset]);
 
@@ -120,6 +126,16 @@ export function DataRetentionPage() {
                   label={t("EDI Message Retention (days)")}
                   description={t(
                     "Raw X12 and payload snapshots for delivered/inbound messages older than this are blanked. 0 keeps raw payloads forever. Purged messages can no longer be replayed.",
+                  )}
+                />
+              </FormControl>
+              <FormControl>
+                <NumberField
+                  control={control}
+                  name="agentEvalCaseRetentionPeriod"
+                  label={t("Agent evaluation case retention (days)")}
+                  description={t(
+                    "Evaluation cases captured longer ago than this are purged with their replays, since they keep a redacted copy of what the agent was given. 0 keeps cases until they expire or their conversation is deleted.",
                   )}
                 />
               </FormControl>

@@ -129,3 +129,15 @@ func StringValue(input map[string]any, key string) string {
 		return strings.TrimSpace(fmt.Sprint(value))
 	}
 }
+
+func Overlay(base, overlay map[string]any) map[string]any {
+	if len(overlay) == 0 {
+		return base
+	}
+
+	merged := make(map[string]any, len(base)+len(overlay))
+	maps.Copy(merged, base)
+	maps.Copy(merged, overlay)
+
+	return merged
+}

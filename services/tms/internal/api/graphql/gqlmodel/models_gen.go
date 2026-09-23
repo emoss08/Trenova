@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
@@ -200,6 +201,51 @@ type AgentDefinitionConnection struct {
 type AgentDefinitionEdge struct {
 	Node   *agentdefinition.Definition `json:"node"`
 	Cursor string                      `json:"cursor"`
+}
+
+// A case as it was created, or the case that already asked the same thing.
+type AgentEvalCaseCapture struct {
+	EvalCase  *agentquality.EvalCase `json:"evalCase"`
+	Duplicate bool                   `json:"duplicate"`
+}
+
+type AgentEvalCaseConnection struct {
+	Edges      []*AgentEvalCaseEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount *int                 `json:"totalCount,omitempty"`
+}
+
+type AgentEvalCaseCuratedInput struct {
+	AgentDefinitionID string            `json:"agentDefinitionId"`
+	Title             *string           `json:"title,omitempty"`
+	Trigger           *agent.RunTrigger `json:"trigger,omitempty"`
+	Input             string            `json:"input"`
+	PageContext       map[string]any    `json:"pageContext,omitempty"`
+	Mentions          []map[string]any  `json:"mentions,omitempty"`
+	SubjectType       *string           `json:"subjectType,omitempty"`
+	SubjectID         *string           `json:"subjectId,omitempty"`
+	// Defaults to every tool the agent holds now.
+	HeldTools []string       `json:"heldTools,omitempty"`
+	Expected  map[string]any `json:"expected"`
+	Rubric    *string        `json:"rubric,omitempty"`
+	ExpiresAt *int           `json:"expiresAt,omitempty"`
+}
+
+type AgentEvalCaseEdge struct {
+	Node   *agentquality.EvalCase `json:"node"`
+	Cursor string                 `json:"cursor"`
+}
+
+type AgentEvalCaseFromMessageInput struct {
+	ThreadID   string  `json:"threadId"`
+	MessageID  string  `json:"messageId"`
+	FeedbackID *string `json:"feedbackId,omitempty"`
+	Title      *string `json:"title,omitempty"`
+}
+
+type AgentEvalCaseFromProposalInput struct {
+	ProposalID string  `json:"proposalId"`
+	Title      *string `json:"title,omitempty"`
 }
 
 type AgentEvaluationConnection struct {
@@ -1109,6 +1155,13 @@ type CostingControlInput struct {
 	PlannedMonthlyMiles  *int    `json:"plannedMonthlyMiles,omitempty"`
 	TargetMarginPercent  *string `json:"targetMarginPercent,omitempty"`
 	Version              int     `json:"version"`
+}
+
+// Exactly one of the three.
+type CreateAgentEvalCaseInput struct {
+	FromMessage  *AgentEvalCaseFromMessageInput  `json:"fromMessage,omitempty"`
+	FromProposal *AgentEvalCaseFromProposalInput `json:"fromProposal,omitempty"`
+	Curated      *AgentEvalCaseCuratedInput      `json:"curated,omitempty"`
 }
 
 type CreateCarrierInvoiceMatchInput struct {
@@ -7543,6 +7596,17 @@ type UpcomingWorkerPTOInput struct {
 	WorkerID    *string           `json:"workerId,omitempty"`
 	FleetCodeID *string           `json:"fleetCodeId,omitempty"`
 	Timezone    *string           `json:"timezone,omitempty"`
+}
+
+type UpdateAgentEvalCaseInput struct {
+	Version   int            `json:"version"`
+	Title     *string        `json:"title,omitempty"`
+	Input     *string        `json:"input,omitempty"`
+	HeldTools []string       `json:"heldTools,omitempty"`
+	Expected  map[string]any `json:"expected,omitempty"`
+	Rubric    *string        `json:"rubric,omitempty"`
+	// Absent leaves the expiry alone; null clears it.
+	ExpiresAt graphql.Omittable[*int] `json:"expiresAt,omitempty"`
 }
 
 type UpdateBenefitPlanInput struct {

@@ -1,0 +1,136 @@
+enum AgentEvalCaseSource {
+  DecidedProposal
+  ThumbsUp
+  Curated
+}
+
+enum AgentEvalCaseStatus {
+  Candidate
+  Active
+  Quarantined
+  Retired
+}
+
+"""
+A question an agent was asked, frozen with what it was given and what a good
+answer does. Active cases are replayed against the agent after every change
+and scored.
+"""
+type AgentEvalCase {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  agentDefinitionId: ID!
+  title: String!
+  source: AgentEvalCaseSource!
+  status: AgentEvalCaseStatus!
+  trigger: AgentRunTrigger!
+  sourceRunId: ID
+  sourceTurnId: ID
+  sourceThreadId: ID
+  sourceMessageId: ID
+  sourceProposalId: ID
+  sourceFeedbackId: ID
+  "The question the agent is asked."
+  input: String!
+  "The conversation before the question, redacted when captured."
+  history: [JSON!]!
+  pageContext: JSON
+  mentions: [JSON!]!
+  subjectType: String!
+  subjectId: ID
+  "The tools the agent held when the case was captured; calling any other fails the case."
+  heldTools: [String!]!
+  "Each tool call the original made, with restricted fields redacted."
+  toolFixtures: [JSON!]!
+  "Expected tools with tolerance rules, forbidden tools, proposals, refusal and mention rules."
+  expected: JSON!
+  rubric: String!
+  "Which fields were replaced when the case was captured."
+  redaction: JSON
+  contentHash: String!
+  capturedFingerprint: JSON
+  expiresAt: Timestamp
+  createdByUserId: ID
+  "How much the case counts toward a suite score: 0.6 for a liked reply, 1 otherwise."
+  weight: Float!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AgentEvalCaseEdge {
+  node: AgentEvalCase!
+  cursor: String!
+}
+
+type AgentEvalCaseConnection {
+  edges: [AgentEvalCaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"A case as it was created, or the case that already asked the same thing."
+type AgentEvalCaseCapture {
+  evalCase: AgentEvalCase!
+  duplicate: Boolean!
+}
+
+input AgentEvalCaseFromMessageInput {
+  threadId: ID!
+  messageId: ID!
+  feedbackId: ID
+  title: String
+}
+
+input AgentEvalCaseFromProposalInput {
+  proposalId: ID!
+  title: String
+}
+
+input AgentEvalCaseCuratedInput {
+  agentDefinitionId: ID!
+  title: String
+  trigger: AgentRunTrigger
+  input: String!
+  pageContext: JSON
+  mentions: [JSON!]
+  subjectType: String
+  subjectId: ID
+  "Defaults to every tool the agent holds now."
+  heldTools: [String!]
+  expected: JSON!
+  rubric: String
+  expiresAt: Timestamp
+}
+
+"Exactly one of the three."
+input CreateAgentEvalCaseInput {
+  fromMessage: AgentEvalCaseFromMessageInput
+  fromProposal: AgentEvalCaseFromProposalInput
+  curated: AgentEvalCaseCuratedInput
+}
+
+input UpdateAgentEvalCaseInput {
+  version: Int!
+  title: String
+  input: String
+  heldTools: [String!]
+  expected: JSON
+  rubric: String
+  "Absent leaves the expiry alone; null clears it."
+  expiresAt: Timestamp @goField(omittable: true)
+}
+
+extend type Query {
+  agentEvalCases(input: DataTableConnectionInput!): AgentEvalCaseConnection!
+  agentEvalCase(id: ID!): AgentEvalCase
+}
+
+extend type Mutation {
+  createAgentEvalCase(input: CreateAgentEvalCaseInput!): AgentEvalCaseCapture!
+  updateAgentEvalCase(id: ID!, input: UpdateAgentEvalCaseInput!): AgentEvalCase!
+  setAgentEvalCaseStatus(id: ID!, status: AgentEvalCaseStatus!): AgentEvalCase!
+  "Replays a case against its agent as it is now, writes simulated, and scores it."
+  replayAgentEvalCase(id: ID!): AgentEvaluation!
+}

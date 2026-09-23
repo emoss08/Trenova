@@ -2286,6 +2286,31 @@ func (r *Registry) registerBillingResources() {
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAgentEvalSuite.String(),
+		DisplayName: "Agent Evaluation Suite",
+		Description: "Evaluation cases agents are replayed against and scored on",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View evaluation cases and scores",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Capture or write an evaluation case and replay it",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Edit what a case expects, and activate, quarantine or retire it",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
 	// unattended, so it sits at the same sensitivity as provider configuration.
 	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceAgentDefinition.String(),
