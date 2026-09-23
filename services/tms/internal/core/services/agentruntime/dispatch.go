@@ -25,13 +25,22 @@ func failedOutcome(format string, args ...any) toolOutcome {
 	return toolOutcome{content: fmt.Sprintf(format, args...), failed: true}
 }
 
-func (s *Service) dispatch(
-	ctx context.Context,
-	req *serviceports.RunRequest,
-	call serviceports.ToolCall,
-	completionText string,
-	proposedSoFar []serviceports.PendingAction,
-) toolOutcome {
+// dispatchParams groups one tool call and everything deciding how it runs.
+type dispatchParams struct {
+	req            *serviceports.RunRequest
+	call           serviceports.ToolCall
+	completionText string
+	proposedSoFar  []serviceports.PendingAction
+	// idempotencyKey names this operation to the tool. It is the run's step
+	// key where there is a ledger, and the provider's call id otherwise.
+	idempotencyKey string
+}
+
+func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
+	req := p.req
+	call := p.call
+	completionText := p.completionText
+	proposedSoFar := p.proposedSoFar
 	// The loop refuses a tool the agent does not hold before it gets here, with
 	// the nearest tools it does hold; this is the backstop for any other caller.
 	if !s.holds(req.Definition, call.Name) {
@@ -97,7 +106,7 @@ func (s *Service) dispatch(
 				OrganizationID: req.Actor.OrganizationID,
 				BusinessUnitID: req.Actor.BusinessUnitID,
 				Actor:          req.Actor,
-				IdempotencyKey: call.ID,
+				IdempotencyKey: p.idempotencyKey,
 				RunID:          req.RunID,
 				Params:         call.Arguments,
 			}); vErr != nil {
@@ -126,14 +135,14 @@ func (s *Service) dispatch(
 	// and recorded as such, so a person can read what the agent would have
 	// done at full reach before it is given any.
 	if req.Definition.SimulationMode {
-		return s.simulateAction(ctx, req, tool, call, action)
+		return s.simulateAction(ctx, actionParams{dispatchParams: p, tool: tool, action: action})
 	}
 
 	if outcome, refused := s.withinBudget(ctx, req, call.Name); refused {
 		return outcome
 	}
 
-	return s.executeAction(ctx, req, tool, call, action)
+	return s.executeAction(ctx, actionParams{dispatchParams: p, tool: tool, action: action})
 }
 
 // withinBudget refuses an automatic write past its tool's daily cap. The
@@ -162,22 +171,33 @@ func (s *Service) withinBudget(
 		toolName, refusal.Message(req.Definition.Name)), true
 }
 
-func (s *Service) simulateAction(
-	ctx context.Context,
-	req *serviceports.RunRequest,
-	tool serviceports.AgentTool,
-	call serviceports.ToolCall,
-	action *serviceports.PendingAction,
-) toolOutcome {
+// actionParams groups one write and the tool that would make it.
+type actionParams struct {
+	dispatchParams
+
+	tool   serviceports.AgentTool
+	action *serviceports.PendingAction
+}
+
+// executeParams is what the tool is handed, built once so the simulated and
+// the executed path cannot drift apart in what they pass.
+func (a actionParams) executeParams() serviceports.ToolExecuteParams {
+	return serviceports.ToolExecuteParams{
+		OrganizationID: a.req.Actor.OrganizationID,
+		BusinessUnitID: a.req.Actor.BusinessUnitID,
+		Actor:          a.req.Actor,
+		IdempotencyKey: a.idempotencyKey,
+		RunID:          a.req.RunID,
+		Params:         a.call.Arguments,
+	}
+}
+
+func (s *Service) simulateAction(ctx context.Context, a actionParams) toolOutcome {
+	call := a.call
+	action := a.action
+
 	action.Simulated = true
-	action.Simulation = toolsimulation.Simulate(ctx, tool, serviceports.ToolExecuteParams{
-		OrganizationID: req.Actor.OrganizationID,
-		BusinessUnitID: req.Actor.BusinessUnitID,
-		Actor:          req.Actor,
-		IdempotencyKey: call.ID,
-		RunID:          req.RunID,
-		Params:         call.Arguments,
-	})
+	action.Simulation = toolsimulation.Simulate(ctx, a.tool, a.executeParams())
 
 	return toolOutcome{
 		content: fmt.Sprintf(
@@ -264,23 +284,13 @@ func (s *Service) runQueryTool(
 	return toolOutcome{content: FenceToolResult(call.Name, encoded), data: data}
 }
 
-func (s *Service) executeAction(
-	ctx context.Context,
-	req *serviceports.RunRequest,
-	tool serviceports.AgentTool,
-	call serviceports.ToolCall,
-	action *serviceports.PendingAction,
-) toolOutcome {
+func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome {
+	call := a.call
+	action := a.action
+
 	action.Executed = true
 
-	err := tool.Execute(ctx, serviceports.ToolExecuteParams{
-		OrganizationID: req.Actor.OrganizationID,
-		BusinessUnitID: req.Actor.BusinessUnitID,
-		Actor:          req.Actor,
-		IdempotencyKey: call.ID,
-		RunID:          req.RunID,
-		Params:         call.Arguments,
-	})
+	err := a.tool.Execute(ctx, a.executeParams())
 	if err != nil {
 		action.ExecutionError = err.Error()
 

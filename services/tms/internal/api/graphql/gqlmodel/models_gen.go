@@ -307,6 +307,17 @@ type AgentRunEdge struct {
 	Cursor string          `json:"cursor"`
 }
 
+type AgentRunEventConnection struct {
+	Edges      []*AgentRunEventEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount *int                 `json:"totalCount,omitempty"`
+}
+
+type AgentRunEventEdge struct {
+	Node   *agent.AgentRunEvent `json:"node"`
+	Cursor string               `json:"cursor"`
+}
+
 // One agent's record, counted at read time from its runs, its proposals and its
 // usage. Nothing here is stored, so there is no second copy to drift out of step
 // with the rows a person can audit.
@@ -8382,6 +8393,61 @@ type WorkerSafetyEventInput struct {
 type WriteOffPayAdvanceInput struct {
 	AdvanceID string `json:"advanceId"`
 	Reason    string `json:"reason"`
+}
+
+type AgentRunEventOwnerKind string
+
+const (
+	AgentRunEventOwnerKindAgentRun      AgentRunEventOwnerKind = "AgentRun"
+	AgentRunEventOwnerKindAssistantTurn AgentRunEventOwnerKind = "AssistantTurn"
+)
+
+var AllAgentRunEventOwnerKind = []AgentRunEventOwnerKind{
+	AgentRunEventOwnerKindAgentRun,
+	AgentRunEventOwnerKindAssistantTurn,
+}
+
+func (e AgentRunEventOwnerKind) IsValid() bool {
+	switch e {
+	case AgentRunEventOwnerKindAgentRun, AgentRunEventOwnerKindAssistantTurn:
+		return true
+	}
+	return false
+}
+
+func (e AgentRunEventOwnerKind) String() string {
+	return string(e)
+}
+
+func (e *AgentRunEventOwnerKind) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AgentRunEventOwnerKind(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AgentRunEventOwnerKind", str)
+	}
+	return nil
+}
+
+func (e AgentRunEventOwnerKind) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *AgentRunEventOwnerKind) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e AgentRunEventOwnerKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 type AssignmentStatus string

@@ -1916,6 +1916,9 @@ models:
   AgentAutonomyTier:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyTier
+  AgentRunEvent:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.AgentRunEvent
   AgentScorecardWindow:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.ScorecardWindow

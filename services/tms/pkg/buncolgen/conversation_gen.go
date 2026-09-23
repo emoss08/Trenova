@@ -24,6 +24,225 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// AssistantTurn — table "assistant_turns", alias "atrn"
+// ---------------------------------------------------------------------------
+
+// AssistantTurnTable holds the table name, alias, and primary key columns
+// for the "assistant_turns" table. The alias "atrn" is used in all generated
+// SQL fragments (e.g. "atrn.id = ?").
+var AssistantTurnTable = TableInfo{
+	Name:       "assistant_turns",
+	Alias:      "atrn",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AssistantTurnColumns provides type-safe column references for the "assistant_turns" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AssistantTurnColumns.ID.String())
+//	// SELECT atrn.id FROM assistant_turns AS atrn
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AssistantTurnColumns.ID.Eq(), id)           // WHERE atrn.id = ?
+//	q.Order(AssistantTurnColumns.CreatedAt.OrderDesc())  // ORDER BY atrn.created_at DESC
+var AssistantTurnColumns = struct {
+	ID             Column // "id" → qualified: "atrn.id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "atrn.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "atrn.organization_id"
+	ThreadID       Column // "thread_id" → qualified: "atrn.thread_id"
+	UserID         Column // "user_id" → qualified: "atrn.user_id"
+	RunID          Column // "run_id" → qualified: "atrn.run_id"
+	WorkflowID     Column // "workflow_id" → qualified: "atrn.workflow_id"
+	Status         Column // "status" → qualified: "atrn.status"
+	ErrorMessage   Column // "error_message" → qualified: "atrn.error_message"
+	StartedAt      Column // "started_at" → qualified: "atrn.started_at"
+	CompletedAt    Column // "completed_at" → qualified: "atrn.completed_at"
+	Version        Column // "version" → qualified: "atrn.version"
+	CreatedAt      Column // "created_at" → qualified: "atrn.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "atrn.updated_at"
+}{
+	ID:             NewColumn("id", "atrn"),
+	BusinessUnitID: NewColumn("business_unit_id", "atrn"),
+	OrganizationID: NewColumn("organization_id", "atrn"),
+	ThreadID:       NewColumn("thread_id", "atrn"),
+	UserID:         NewColumn("user_id", "atrn"),
+	RunID:          NewColumn("run_id", "atrn"),
+	WorkflowID:     NewColumn("workflow_id", "atrn"),
+	Status:         NewColumn("status", "atrn"),
+	ErrorMessage:   NewColumn("error_message", "atrn"),
+	StartedAt:      NewColumn("started_at", "atrn"),
+	CompletedAt:    NewColumn("completed_at", "atrn"),
+	Version:        NewColumn("version", "atrn"),
+	CreatedAt:      NewColumn("created_at", "atrn"),
+	UpdatedAt:      NewColumn("updated_at", "atrn"),
+}
+
+// AssistantTurnFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AssistantTurn.GetStaticFieldMap().
+var AssistantTurnFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"threadId":       "thread_id",
+	"userId":         "user_id",
+	"runId":          "run_id",
+	"workflowId":     "workflow_id",
+	"status":         "status",
+	"errorMessage":   "error_message",
+	"startedAt":      "started_at",
+	"completedAt":    "completed_at",
+	"version":        "version",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// AssistantTurnInsertableColumns lists column names suitable for INSERT statements on the "assistant_turns" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AssistantTurnInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"thread_id",
+	"user_id",
+	"run_id",
+	"workflow_id",
+	"status",
+	"error_message",
+	"started_at",
+	"completed_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// AssistantTurnRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(AssistantTurnRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var AssistantTurnRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// AssistantTurnScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE atrn.organization_id = ? AND atrn.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.AssistantTurnScopeTenant(sq, ti).
+//		Where(buncolgen.AssistantTurnColumns.ID.Eq(), id)
+func AssistantTurnScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, AssistantTurnColumns.OrganizationID, AssistantTurnColumns.BusinessUnitID, ti)
+}
+
+// AssistantTurnScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.AssistantTurnScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.AssistantTurnColumns.ID.In(), bun.List(ids))
+//	})
+func AssistantTurnScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, AssistantTurnColumns.OrganizationID, AssistantTurnColumns.BusinessUnitID, ti)
+}
+
+// AssistantTurnScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.AssistantTurnScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.AssistantTurnColumns.ID.Eq(), id)
+//	})
+func AssistantTurnScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, AssistantTurnColumns.OrganizationID, AssistantTurnColumns.BusinessUnitID, ti)
+}
+
+// AssistantTurnApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.AssistantTurnApplyTenant(tenantInfo))
+func AssistantTurnApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(AssistantTurnColumns.OrganizationID, AssistantTurnColumns.BusinessUnitID, ti)
+}
+
+// AssistantTurnFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "assistant_turns" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AssistantTurnFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AssistantTurnFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ThreadID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
+	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	RunID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
+	WorkflowID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workflowId" → DB: "workflow_id"
+	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	ErrorMessage   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
+	StartedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
+	CompletedAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "completedAt" → DB: "completed_at"
+	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	ThreadID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("threadId", op, value)
+	},
+	UserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("userId", op, value)
+	},
+	RunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("runId", op, value)
+	},
+	WorkflowID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("workflowId", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	ErrorMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("errorMessage", op, value)
+	},
+	StartedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("startedAt", op, value)
+	},
+	CompletedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("completedAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // Message — table "assistant_messages", alias "amsg"
 // ---------------------------------------------------------------------------
 

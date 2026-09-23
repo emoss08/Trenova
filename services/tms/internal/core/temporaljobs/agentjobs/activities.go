@@ -41,6 +41,8 @@ type ActivitiesParams struct {
 	ProposalRepo  repositories.AgentProposalRepository
 	Runs          serviceports.AgentRunService
 	Runtime       serviceports.AgentRuntime
+	Steps         serviceports.RunStepLedger
+	Trajectory    serviceports.AgentRunEventRecorder `optional:"true"`
 	Contexts      serviceports.RuntimeContextBuilder
 	Recorder      *proposalrecorder.Service
 	Subjects      serviceports.AgentSubjectDescriber
@@ -63,6 +65,8 @@ type Activities struct {
 	proposalRepo  repositories.AgentProposalRepository
 	runs          serviceports.AgentRunService
 	runtime       serviceports.AgentRuntime
+	steps         serviceports.RunStepLedger
+	trajectory    serviceports.AgentRunEventRecorder
 	contexts      serviceports.RuntimeContextBuilder
 	recorder      *proposalrecorder.Service
 	notifier      serviceports.AgentProposalNotifier
@@ -86,6 +90,8 @@ func NewActivities(p ActivitiesParams) *Activities {
 		proposalRepo:  p.ProposalRepo,
 		runs:          p.Runs,
 		runtime:       p.Runtime,
+		steps:         p.Steps,
+		trajectory:    p.Trajectory,
 		contexts:      p.Contexts,
 		recorder:      p.Recorder,
 		notifier:      p.Notifier,
@@ -151,6 +157,26 @@ func (a *Activities) PrepareRunActivity(
 	}, nil
 }
 
+// trajectoryFor opens the durable event writer, when one is configured.
+//
+// Optional, like the metrics collector: an installation without it still runs
+// its agents, it simply keeps no account of how. Every call through the writer
+// is nil-safe.
+func (a *Activities) trajectoryFor(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	runID pulid.ID,
+) serviceports.AgentRunEventWriter {
+	if a.trajectory == nil {
+		return nil
+	}
+
+	return a.trajectory.Recorder(ctx, tenant, serviceports.RunStepOwner{
+		Kind: serviceports.RunStepOwnerAgentRun,
+		ID:   runID,
+	})
+}
+
 func (a *Activities) RunAgentActivity(
 	ctx context.Context,
 	input *RunAgentInput,
@@ -172,6 +198,17 @@ func (a *Activities) RunAgentActivity(
 
 	activity.RecordHeartbeat(ctx, "running")
 
+	// A background run's account of itself used to end here. The runtime emitted
+	// every tool call, refusal and give-up, and the closure below used them as a
+	// heartbeat tick and dropped them — leaving the run's durable record as its
+	// final reply, cut to two thousand characters. Now they are written down.
+	//
+	// The writer rides a context cancellation cannot reach, for the same reason
+	// the chat side does: the events worth keeping are most often the ones
+	// emitted as something is going wrong.
+	keep := context.WithoutCancel(ctx)
+	trajectory := a.trajectoryFor(keep, tenant, payload.RunID)
+
 	outcome, err := a.runtime.Run(ctx, &serviceports.RunRequest{
 		Definition: definition,
 		Actor:      actor,
@@ -179,10 +216,22 @@ func (a *Activities) RunAgentActivity(
 		Input:      backgroundInput(payload, input.Subject),
 		RunID:      payload.RunID,
 		Unattended: true,
-		Emit: func(serviceports.StreamEvent) {
+		// The ledger is what makes this activity safe to retry. Without it a
+		// second attempt re-runs every write the first one made, and the tools
+		// do not dedupe: RequiresIdempotencyKey is checked for presence and,
+		// bar the two that forward it to an email provider, never looked up.
+		Steps: a.steps,
+		StepOwner: serviceports.RunStepOwner{
+			Kind: serviceports.RunStepOwnerAgentRun,
+			ID:   payload.RunID,
+		},
+		Attempt: int(activity.GetInfo(ctx).Attempt),
+		Emit: func(event serviceports.StreamEvent) {
 			activity.RecordHeartbeat(ctx, "working")
+			serviceports.RecordTrajectory(trajectory, keep, event)
 		},
 	})
+	serviceports.FlushTrajectory(trajectory, keep)
 	if err != nil {
 		return nil, err
 	}
@@ -195,15 +244,21 @@ func (a *Activities) RunAgentActivity(
 		return nil, fmt.Errorf("load agent run: %w", err)
 	}
 
-	recorded, err := a.recorder.Record(ctx, &proposalrecorder.RecordRequest{
+	// The step ledger keeps a retry from running a tool twice, but the
+	// proposals those tools raised are written here, after the loop. An
+	// attempt that got this far and then failed on the update below would
+	// otherwise have its proposals recorded a second time, and the person
+	// would be asked to approve the same change on two cards.
+	recorded, err := a.recordProposals(ctx, recordProposalsParams{
 		Actor:      actor,
 		Definition: definition,
 		Run:        run,
 		Actions:    outcome.Actions,
-		Evidence:   subjectEvidence(input.Subject, payload.RunID),
+		Subject:    input.Subject,
+		TenantInfo: tenant,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("record proposals: %w", err)
+		return nil, err
 	}
 
 	pending := 0
@@ -616,4 +671,54 @@ func (a *Activities) RemindPendingProposalsActivity(
 	}
 
 	return &RemindPendingProposalsResult{Reminded: reminded}, nil
+}
+
+// recordProposalsParams groups what filing a run's proposed writes needs.
+type recordProposalsParams struct {
+	Actor      *serviceports.RequestActor
+	Definition *agentdefinition.Definition
+	Run        *agent.AgentRun
+	Actions    []serviceports.PendingAction
+	Subject    *agentdefinition.RuntimeSubject
+	TenantInfo pagination.TenantInfo
+}
+
+// recordProposals files the run's proposed writes, once.
+//
+// A run records its proposals in one batch at the end, so a run that already
+// has any is one whose earlier attempt got here. Re-recording them would put a
+// second identical card in front of whoever has to decide, which is the same
+// duplicate the step ledger prevents one layer down.
+func (a *Activities) recordProposals(
+	ctx context.Context,
+	p recordProposalsParams,
+) (*proposalrecorder.RecordResult, error) {
+	existing, err := a.proposalRepo.ListByRun(ctx, repositories.ListAgentProposalsByRunRequest{
+		RunID:      p.Run.ID,
+		TenantInfo: p.TenantInfo,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("read the proposals this run already raised: %w", err)
+	}
+	if len(existing) > 0 {
+		a.logger.Info("this run had already recorded its proposals; they are not recorded again",
+			zap.String("run", p.Run.ID.String()),
+			zap.Int("proposals", len(existing)),
+		)
+
+		return &proposalrecorder.RecordResult{Run: p.Run, Proposals: existing}, nil
+	}
+
+	recorded, err := a.recorder.Record(ctx, &proposalrecorder.RecordRequest{
+		Actor:      p.Actor,
+		Definition: p.Definition,
+		Run:        p.Run,
+		Actions:    p.Actions,
+		Evidence:   subjectEvidence(p.Subject, p.Run.ID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("record proposals: %w", err)
+	}
+
+	return recorded, nil
 }

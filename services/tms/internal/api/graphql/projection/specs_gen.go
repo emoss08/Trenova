@@ -28,6 +28,8 @@ var AgentProposalSpec TypeSpec
 
 var AgentRunSpec TypeSpec
 
+var AgentRunEventSpec TypeSpec
+
 var AgentToolTrustSpec TypeSpec
 
 var ApiKeySpec TypeSpec
@@ -1630,6 +1632,73 @@ func init() {
 			{
 				Name:    "definition",
 				Special: "definition",
+			},
+		},
+	}
+
+	AgentRunEventSpec = TypeSpec{
+		TypeName: "AgentRunEvent",
+		FieldMap: buncolgen.AgentRunEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "ownerKind",
+				FieldMapKey: "ownerKind",
+			},
+			{
+				Name:        "ownerId",
+				FieldMapKey: "ownerId",
+			},
+			{
+				Name:        "sequence",
+				FieldMapKey: "sequence",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "stepKey",
+				FieldMapKey: "stepKey",
+			},
+			{
+				Name:        "callId",
+				FieldMapKey: "callId",
+			},
+			{
+				Name:        "payload",
+				FieldMapKey: "payload",
+			},
+			{
+				Name:        "truncated",
+				FieldMapKey: "truncated",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}

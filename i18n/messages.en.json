@@ -15071,6 +15071,15 @@
       "apps/web/components"
     ]
   },
+  "Answer one question in a conversation, publishing the reply as it is written": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Answer questions and drive the tool loop in the assistant.": {
     "sites": 1,
     "scope": [
@@ -77907,6 +77916,15 @@
       "service/accountingcontrolservice"
     ]
   },
+  "Invalid kind": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Invalid line": {
     "sites": 2,
     "scope": [
@@ -78008,6 +78026,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Invalid owner kind": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Invalid part number": {
@@ -78194,11 +78221,12 @@
     ]
   },
   "Invalid status": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agent",
       "domain/email"
     ]
   },
@@ -81365,7 +81393,7 @@
     ]
   },
   "Kind is required": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "go"
     ],
@@ -103135,11 +103163,12 @@
     ]
   },
   "Occurred at is required": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agent",
       "domain/email",
       "domain/iam",
       "domain/shipmentevent",
@@ -110261,6 +110290,15 @@
       "service/shipmentservice"
     ]
   },
+  "Owner id is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Owner is required": {
     "sites": 4,
     "scope": [
@@ -110279,6 +110317,15 @@
     "areas": [
       "domain/tractor",
       "domain/trailer"
+    ]
+  },
+  "Owner kind is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Owner may only be set on owner-operator equipment": {
@@ -143495,6 +143542,15 @@
       "routes/admin"
     ]
   },
+  "Sequence starts at one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Sequence type can only appear once": {
     "sites": 1,
     "scope": [
@@ -151357,7 +151413,7 @@
     ]
   },
   "Status is required": {
-    "sites": 125,
+    "sites": 127,
     "scope": [
       "go"
     ],
@@ -151638,6 +151694,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Step key is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Step rounding": {
@@ -152270,7 +152335,7 @@
     ]
   },
   "Streaming is not supported": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -165254,6 +165319,15 @@
       "apps/web/components"
     ]
   },
+  "This conversation is already working on a reply. Wait for it to finish, or stop it first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantturnservice"
+    ]
+  },
   "This conversation is full. Start a new one to continue.": {
     "sites": 1,
     "scope": [
@@ -167844,7 +167918,7 @@
     ]
   },
   "Thread is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -175726,7 +175800,7 @@
     ]
   },
   "User is required": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go"
     ],

@@ -153,3 +153,70 @@ func TestEventStream_ReportsAValueItCannotEncode(t *testing.T) {
 	assert.Contains(t, body, "event: error")
 	assert.Contains(t, body, "event: done", "the stream carries on after the lost event")
 }
+
+// The id has to precede the event it belongs to. A conforming parser applies
+// the last id it saw to the next event it completes, so writing it after the
+// data would attribute the cursor to the following event and a resume would
+// replay one frame twice.
+func TestEventStream_WritesTheResumeCursorBeforeItsEvent(t *testing.T) {
+	url := serve(t, 0, func(c *gin.Context) {
+		stream, err := helpers.OpenEventStream(c, helpers.EventStreamOptions{Heartbeat: -1})
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+		defer stream.Close()
+
+		_ = stream.EmitWithID("1738-0", "delta", map[string]string{"text": "hi"})
+		_ = stream.EmitWithID("1738-1", "done", map[string]string{"ok": "yes"})
+	})
+
+	body := readAll(t, url)
+
+	assert.Less(t,
+		strings.Index(body, "id: 1738-0"),
+		strings.Index(body, "event: delta"),
+		"the cursor is written before the event it names",
+	)
+	assert.Contains(t, body, "id: 1738-1\nevent: done")
+}
+
+// A stream with nothing to resume from must not invite a reader to try.
+func TestEventStream_OmitsTheCursorLineWhenThereIsNone(t *testing.T) {
+	url := serve(t, 0, func(c *gin.Context) {
+		stream, err := helpers.OpenEventStream(c, helpers.EventStreamOptions{Heartbeat: -1})
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+		defer stream.Close()
+
+		_ = stream.Emit("delta", map[string]string{"text": "hi"})
+	})
+
+	body := readAll(t, url)
+
+	assert.Contains(t, body, "event: delta")
+	assert.NotContains(t, body, "id:")
+}
+
+// A relay's frames arrive encoded and leave encoded. Decoding one to encode it
+// again would cost the stream's throughput to learn nothing, and would let a
+// frame the relay cannot parse kill a turn it was only meant to carry.
+func TestEventStream_PassesAnEncodedFrameThroughUntouched(t *testing.T) {
+	url := serve(t, 0, func(c *gin.Context) {
+		stream, err := helpers.OpenEventStream(c, helpers.EventStreamOptions{Heartbeat: -1})
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+		defer stream.Close()
+
+		stream.EmitRaw("9-0", "delta", []byte(`{"text":"verbatim","odd":[1,2]}`))
+	})
+
+	body := readAll(t, url)
+
+	assert.Contains(t, body, `data: {"text":"verbatim","odd":[1,2]}`)
+	assert.Contains(t, body, "id: 9-0")
+}

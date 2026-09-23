@@ -191,6 +191,53 @@ services:
             timeout: 5s
             retries: 5
 
+    temporal:
+        # The durable side of the product runs here: agent runs, the nightly
+        # sweeps, and — once ai.durableTurns is on — every assistant reply.
+        #
+        # The dev server keeps its state in memory, which is the right trade
+        # locally: a workflow history is an execution artifact, and losing it
+        # on a restart costs nothing that the database does not already hold.
+        # It is emphatically not the right trade anywhere else.
+        image: temporalio/auto-setup:1.29
+        container_name: temporal
+        ports:
+            - "7233:7233"
+        environment:
+            # Sqlite rather than the postgres above, so bringing temporal up
+            # cannot touch the product's own database.
+            DB: sqlite
+            SQLITE_MODE: memory
+            SKIP_DEFAULT_NAMESPACE_CREATION: "false"
+            DEFAULT_NAMESPACE: default
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 1G
+        healthcheck:
+            test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "localhost:7233"]
+            interval: 15s
+            timeout: 5s
+            retries: 10
+
+    temporal-ui:
+        # Reading a stuck turn's history is most of how this work gets
+        # debugged, so the UI is not optional equipment.
+        image: temporalio/ui:2.42.0
+        container_name: temporal-ui
+        profiles:
+            - temporal-ui
+        ports:
+            - "8233:8080"
+        environment:
+            TEMPORAL_ADDRESS: temporal:7233
+            TEMPORAL_CORS_ORIGINS: http://localhost:3000
+        depends_on:
+            temporal:
+                condition: service_started
+        restart: unless-stopped
+
     samsara-sim:
         build:
             context: ./services/samsara-sim

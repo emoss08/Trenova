@@ -1067,16 +1067,19 @@ func agentAutomationRouteRefs() []RouteRef {
 			// A plan is one approval over several writes, read and resolved
 			// alongside the proposals it is made of.
 			"/api/v1/agent-plans/:planID/",
-			"/api/v1/assistant/threads/",
-			"/api/v1/assistant/threads/:threadID/",
-			"/api/v1/assistant/threads/:threadID/messages/",
+			// Whether a reply can be answered on a worker, asked once per
+			// session: a client that finds no worker still asks in the request
+			// it came in on, so this has to be readable wherever asking is.
+			"/api/v1/assistant/capabilities/",
 			// Which models the assistant can be pointed at, read by the picker
 			// in the composer rather than by provider administration.
 			"/api/v1/assistant/providers/",
-			// Describing a table in words is a model call like any other here,
-			// so it belongs to this feature rather than becoming a pack an
-			// organization could hold without a provider to answer it.
-			"/api/v1/tables/",
+			"/api/v1/assistant/threads/",
+			"/api/v1/assistant/threads/:threadID/",
+			"/api/v1/assistant/threads/:threadID/messages/",
+			// Watching a reply arrive is reading the conversation it belongs
+			// to, so it rides with the rest rather than being sold apart.
+			"/api/v1/assistant/turns/:turnID/stream/",
 			// The insights panel rides with this feature rather than becoming a
 			// pack of its own. Its findings are computed without a model and its
 			// narration goes through the same provider configuration as everything
@@ -1085,6 +1088,12 @@ func agentAutomationRouteRefs() []RouteRef {
 			"/api/v1/insights/",
 			"/api/v1/insights/browse/",
 			"/api/v1/insights/:insightID/",
+			// Narrowing a table by describing what you want is a model writing
+			// a filter, so it is sold with the rest of the agent work rather
+			// than with the grid it narrows. The catalogue is listed here too:
+			// it says which tables can be asked, which is only meaningful to an
+			// organization that can ask them.
+			"/api/v1/tables/",
 		),
 		routeRefsFor("POST",
 			"/api/v1/agent-exceptions/:exceptionID/resolve/",
@@ -1096,11 +1105,15 @@ func agentAutomationRouteRefs() []RouteRef {
 			"/api/v1/ai-providers/:providerID/test/",
 			"/api/v1/agent-definitions/",
 			"/api/v1/agent-plans/:planID/resolve/",
-			"/api/v1/assistant/threads/",
-			"/api/v1/assistant/threads/:threadID/messages/",
 			// Ask is the same turn pipeline on a hidden thread, not a second
 			// assistant, and is sold with the one it rides on.
 			"/api/v1/assistant/ask/",
+			"/api/v1/assistant/threads/",
+			"/api/v1/assistant/threads/:threadID/messages/",
+			// Starting a turn and stopping one are the two ends of the same
+			// reply, so they are sold with the thread it belongs to.
+			"/api/v1/assistant/threads/:threadID/turns/",
+			"/api/v1/assistant/turns/:turnID/stop/",
 			"/api/v1/tables/:resource/compose/",
 		),
 		routeRefsFor("PATCH",

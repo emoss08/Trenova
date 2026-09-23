@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
+import { durableTurnsAvailable, runDurableTurn } from "./durable-turn";
 import { AssistantStreamError } from "@/services/assistant";
 import type {
   AssistantPageContext,
@@ -36,6 +37,9 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
 
   const [turn, setTurn] = useState<TurnState | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // The turn a worker is producing, when one is. Stopping needs it: with the
+  // work off this request, aborting the reader stops nothing.
+  const turnIdRef = useRef<string | null>(null);
   const lastContextRef = useRef<AssistantPageContext | null>(null);
   // The model the last send asked for, so a retry asks the same one rather
   // than silently falling back to automatic.
@@ -207,19 +211,37 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         }
       };
 
+      turnIdRef.current = null;
       try {
-        await apiService.assistantService.streamMessage(
-          threadId,
-          content,
-          onEvent,
-          controller.signal,
-          {
+        const attachments = (extras.attachments ?? []).map((item) => item.documentId);
+        if (await durableTurnsAvailable()) {
+          await runDurableTurn({
+            threadId,
+            content,
             context: pageContext,
             providerId,
-            attachmentDocumentIds: (extras.attachments ?? []).map((item) => item.documentId),
+            attachmentDocumentIds: attachments,
             mentions: extras.mentions ?? [],
-          },
-        );
+            signal: controller.signal,
+            onTurnStarted: (id) => {
+              turnIdRef.current = id;
+            },
+            onEvent,
+          });
+        } else {
+          await apiService.assistantService.streamMessage(
+            threadId,
+            content,
+            onEvent,
+            controller.signal,
+            {
+              context: pageContext,
+              providerId,
+              attachmentDocumentIds: attachments,
+              mentions: extras.mentions ?? [],
+            },
+          );
+        }
       } catch (error) {
         if (controller.signal.aborted) {
           return;
@@ -271,6 +293,16 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
   );
 
   const stop = useCallback(() => {
+    // A turn on a worker has to be told. Aborting the reader used to stop the
+    // model, because the model was running on the request being aborted; with
+    // the work moved off it, abandoning the reader leaves the turn running and
+    // billing for an answer nobody will read.
+    const running = turnIdRef.current;
+    if (running !== null) {
+      turnIdRef.current = null;
+      void apiService.assistantService.stopTurn(running).catch(() => undefined);
+    }
+
     abortRef.current?.abort();
     abortRef.current = null;
     // The server saves what had run when the stream was cut; the refetch

@@ -140,7 +140,7 @@ func (s *Service) Replay(
 	}
 	if _, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID:                    workflowID,
-		TaskQueue:             temporaltype.TaskQueueAgent.String(),
+		TaskQueue:             temporaltype.TaskQueueAgentHeavy.String(),
 		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 	}, agentjobs.AgentEvaluationWorkflowName, payload); err != nil {
 		completedAt := timeutils.NowUnix()

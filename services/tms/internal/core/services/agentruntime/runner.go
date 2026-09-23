@@ -99,6 +99,8 @@ func (s *Service) Run(
 	// the system refusing rather than the person lacking the right.
 	runtimeContext.Tools = usableSummaries(runtimeContext.Tools, tools)
 	repeats := newRepeatGuard()
+	counts := newOrdinals()
+	s.seedFromLedger(ctx, req, repeats, counts)
 
 	system := definition.BuildSystemPrompt(runtimeContext)
 	messages := toAdapterMessages(req.History, req.Proposals)
@@ -280,7 +282,13 @@ func (s *Service) Run(
 				continue
 			}
 
-			outcome := s.dispatch(ctx, req, call, completion.Text, result.Actions)
+			outcome := s.guardedDispatch(ctx, guardedDispatchParams{
+				req:            req,
+				call:           call,
+				completionText: completion.Text,
+				proposedSoFar:  result.Actions,
+				ordinals:       counts,
+			})
 			if outcome.failed {
 				repeats.record(call, outcome.content)
 			}

@@ -20,7 +20,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			Description:   "Start scheduled and continuous agents whose slot has come",
 			Spec:          schedule.Cron("* * * * *"),
 			Workflow:      AgentSweepWorkflow,
-			TaskQueue:     temporaltype.TaskQueueAgent.String(),
+			TaskQueue:     temporaltype.TaskQueueAgentBackground.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
 				"purpose": SweepScheduleID,
@@ -31,7 +31,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			Description:   "Mark pending agent proposals whose decision window has closed as expired",
 			Spec:          schedule.Every(15 * time.Minute),
 			Workflow:      ExpireStaleProposalsWorkflow,
-			TaskQueue:     temporaltype.TaskQueueAgent.String(),
+			TaskQueue:     temporaltype.TaskQueueAgentBackground.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
 				"purpose": ExpireStaleProposalsScheduleID,
@@ -42,7 +42,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			Description:   "Remove quick questions nobody kept once they have gone quiet for a month",
 			Spec:          schedule.Cron("30 4 * * *"),
 			Workflow:      DeleteStaleAskThreadsWorkflow,
-			TaskQueue:     temporaltype.TaskQueueAgent.String(),
+			TaskQueue:     temporaltype.TaskQueueAgentBackground.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
 				"purpose": DeleteStaleAskThreadsScheduleID,
