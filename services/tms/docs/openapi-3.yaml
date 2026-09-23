@@ -446,6 +446,12 @@ components:
                     items:
                         $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_carrier.CarrierInsurancePolicy'
                     type: array
+                intelBlockingCount:
+                    type: integer
+                intelReviewRequired:
+                    type: boolean
+                intelRiskLevel:
+                    type: string
                 is1099Eligible:
                     type: boolean
                 mcNumber:
@@ -610,11 +616,32 @@ components:
                 - ComplianceStatusQualified
                 - ComplianceStatusDisqualified
                 - ComplianceStatusExpired
+        github_com_emoss08_trenova_internal_core_domain_carrier.EligibilityFinding:
+            properties:
+                code:
+                    type: string
+                message:
+                    type: string
+                requiresOverride:
+                    type: boolean
+                severity:
+                    type: string
+                source:
+                    type: string
+            type: object
         github_com_emoss08_trenova_internal_core_domain_carrier.EligibilityResult:
             properties:
+                advisories:
+                    items:
+                        type: string
+                    type: array
                 blockers:
                     items:
                         type: string
+                    type: array
+                findings:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_carrier.EligibilityFinding'
                     type: array
                 warnings:
                     items:
@@ -822,6 +849,8 @@ components:
                     type: boolean
                 billingProfile:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.CustomerBillingProfile'
+                brokerVettingEnabled:
+                    type: boolean
                 businessUnit:
                     allOf:
                         - $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_tenant.BusinessUnit'
@@ -836,6 +865,8 @@ components:
                     type: integer
                 createdAt:
                     type: integer
+                dotNumber:
+                    type: string
                 emailProfile:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.CustomerEmailProfile'
                 exclusiveConsolidation:
@@ -850,6 +881,8 @@ components:
                     type: number
                 longitude:
                     type: number
+                mcNumber:
+                    type: string
                 name:
                     type: string
                 organization:
@@ -866,6 +899,10 @@ components:
                     type: string
                 status:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_domaintypes.Status'
+                statusUpdatePreference:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.StatusUpdatePreference'
+                statusUpdateRecipients:
+                    type: string
                 updatedAt:
                     type: integer
                 version:
@@ -1127,6 +1164,18 @@ components:
                 - PaymentTermNet60
                 - PaymentTermNet90
                 - PaymentTermDueOnReceipt
+        github_com_emoss08_trenova_internal_core_domain_customer.StatusUpdatePreference:
+            enum:
+                - None
+                - Arrivals
+                - Departures
+                - ArrivalsAndDepartures
+            type: string
+            x-enum-varnames:
+                - StatusUpdateNone
+                - StatusUpdateArrivals
+                - StatusUpdateDepartures
+                - StatusUpdateArrivalsAndDepartures
         github_com_emoss08_trenova_internal_core_domain_customfield.CustomFieldDefinition:
             properties:
                 businessUnitId:
@@ -2091,6 +2140,8 @@ components:
                     type: string
                 complianceEnforcementLevel:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_dispatchcontrol.ComplianceEnforcementLevel'
+                coverageRiskWindowHours:
+                    type: integer
                 createdAt:
                     type: integer
                 enableAutoAssignment:
@@ -2326,10 +2377,14 @@ components:
             enum:
                 - none
                 - rate_confirmation_import
+                - assistant_attachment
+                - inbound_attachment
             type: string
             x-enum-varnames:
                 - ProcessingProfileNone
                 - ProcessingProfileRateConfirmationImport
+                - ProcessingProfileAssistantAttachment
+                - ProcessingProfileInboundAttachment
         github_com_emoss08_trenova_internal_core_domain_document.ShipmentDraftStatus:
             enum:
                 - Unavailable

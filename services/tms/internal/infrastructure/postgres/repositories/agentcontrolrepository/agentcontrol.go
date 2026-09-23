@@ -54,6 +54,8 @@ func (r *repository) GetOrCreate(
 		OrganizationID:     tenantInfo.OrgID,
 		ShadowMode:         true,
 		PromotionThreshold: tenant.DefaultPromotionThreshold,
+		BriefingEnabled:    true,
+		BriefingHourLocal:  tenant.DefaultBriefingHourLocal,
 	}
 	if _, err = r.db.DBForContext(ctx).
 		NewInsert().

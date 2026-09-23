@@ -446,7 +446,7 @@ func (r *repository) SetToolTier(
 			return uq.Where("? = ANY("+cols.ToolNames.Qualified()+")", req.ToolName)
 		}).
 		Set(
-			cols.ToolTiers.SetExpr("COALESCE({}, '{}'::jsonb) || jsonb_build_object(?::text, ?::text)"),
+			cols.ToolTiers.SetExpr("COALESCE({}, jsonb_build_object()) || jsonb_build_object(?::text, ?::text)"),
 			req.ToolName,
 			string(req.Tier),
 		).
