@@ -727,8 +727,26 @@ export type AssistantStreamEvent =
   | { event: "retrying"; data: z.infer<typeof assistantRetryingEventSchema> }
   | { event: "artifact"; data: z.infer<typeof assistantArtifactEventSchema> }
   | { event: "thread"; data: AssistantThread }
-  | { event: "done"; data: SendMessageResult }
+  /**
+   * The turn is over. Data is null when the server rebuilt the ending from the
+   * turn's record rather than forwarding the turn's own: the saved
+   * conversation holds the answer, and the client reads it from there.
+   */
+  | { event: "done"; data: SendMessageResult | null }
   | { event: "error"; data: z.infer<typeof assistantErrorEventSchema> };
+
+/**
+ * An ending the server rebuilt from the turn's record, for a reader who came
+ * back after the turn closed. It names the turn and nothing more.
+ */
+function isReplayedEnding(data: unknown): boolean {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "replay" in data &&
+    (data as { replay: unknown }).replay === true
+  );
+}
 
 /**
  * Parses one raw SSE frame into a typed event. An event name this client does
@@ -760,6 +778,9 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
     case "thread":
       return { event, data: assistantThreadSchema.parse(data) };
     case "done":
+      if (isReplayedEnding(data)) {
+        return { event, data: null };
+      }
       return { event, data: sendMessageResultSchema.parse(data) };
     case "error":
       return { event, data: assistantErrorEventSchema.parse(data) };

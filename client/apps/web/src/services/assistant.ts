@@ -1,8 +1,9 @@
-import { api, withCsrfHeader } from "@trenova/shared/lib/api";
+import { api } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { readEventStream } from "@trenova/shared/lib/sse";
 import { downloadFromUrl } from "@trenova/shared/lib/utils";
+import { z } from "zod";
 import {
   agentDefinitionSchema,
   agentEventListSchema,
@@ -49,13 +50,19 @@ export function downloadAssistantTranscript(threadId: AssistantThread["id"]): vo
   downloadFromUrl(assistantTranscriptUrl(threadId));
 }
 
-/** A turn handed to a worker, and where to watch it. */
-export type StartedTurn = {
-  turnId: string;
-  threadId: string;
-  streamUrl: string;
-  status: string;
-};
+/**
+ * A turn handed to a worker, and where to watch it. A quick question also
+ * carries the thread the server made for it.
+ */
+const startedTurnSchema = z.object({
+  turnId: z.string(),
+  threadId: z.string(),
+  streamUrl: z.string(),
+  status: z.string(),
+  thread: assistantThreadSchema.optional(),
+});
+
+export type StartedTurn = z.infer<typeof startedTurnSchema>;
 
 /** A reply a conversation is still producing. */
 export type ActiveTurn = {
@@ -216,66 +223,6 @@ export class AssistantService {
   }
 
   /**
-   * Sends a message and reports the turn as it happens. Resolves when the
-   * stream closes or the signal aborts; a stream that could not be opened at
-   * all rejects with the server's message, so the caller can offer a retry.
-   */
-  public async streamMessage(
-    threadId: AssistantThread["id"],
-    content: string,
-    onEvent: (event: AssistantStreamEvent) => void,
-    signal?: AbortSignal,
-    options: SendMessageOptions = {},
-  ): Promise<void> {
-    await this.stream(
-      `/assistant/threads/${threadId}/messages/stream/`,
-      messageBody(content, options),
-      onEvent,
-      signal,
-    );
-  }
-
-  /**
-   * A quick question from the palette. The server names the thread it
-   * answers on before the answer, as a `thread` event, so the reader can
-   * keep the conversation even when the answer fails partway.
-   */
-  public async ask(
-    content: string,
-    onEvent: (event: AssistantStreamEvent) => void,
-    signal?: AbortSignal,
-    options: AskOptions = {},
-  ): Promise<void> {
-    await this.stream(
-      "/assistant/ask/",
-      {
-        content,
-        context: options.context ?? null,
-        mentions: options.mentions ?? [],
-      },
-      onEvent,
-      signal,
-    );
-  }
-
-  /**
-   * Whether this server answers questions on a worker.
-   *
-   * The two paths roll forward independently, so the client asks rather than
-   * assumes: one that asked durably against a server with no Temporal client
-   * would fail every question.
-   */
-  public async capabilities(): Promise<{ durableTurns: boolean }> {
-    const response = await api.get("/assistant/capabilities/");
-    const durable =
-      typeof response === "object" && response !== null && "durableTurns" in response
-        ? Boolean((response as { durableTurns: unknown }).durableTurns)
-        : false;
-
-    return { durableTurns: durable };
-  }
-
-  /**
    * Hands a question to a worker and returns the turn to watch.
    *
    * The reply is not on this response. It arrives on the turn's stream, which
@@ -292,7 +239,22 @@ export class AssistantService {
       messageBody(content, options),
     );
 
-    return response as StartedTurn;
+    return safeParse(startedTurnSchema, response, "Assistant Turn");
+  }
+
+  /**
+   * A quick question from the palette. It is answered on a hidden thread the
+   * server makes for it, returned with the turn so the reader can keep the
+   * conversation even when the answer fails partway.
+   */
+  public async startAsk(content: string, options: AskOptions = {}): Promise<StartedTurn> {
+    const response = await api.post("/assistant/ask/", {
+      content,
+      context: options.context ?? null,
+      mentions: options.mentions ?? [],
+    });
+
+    return safeParse(startedTurnSchema, response, "Assistant Turn");
   }
 
   /**
@@ -357,40 +319,6 @@ export class AssistantService {
     }
 
     return ((response as { turn: ActiveTurn | null }).turn as ActiveTurn) ?? null;
-  }
-
-  private async stream(
-    path: string,
-    body: Record<string, unknown>,
-    onEvent: (event: AssistantStreamEvent) => void,
-    signal?: AbortSignal,
-  ): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}${path}`, {
-      method: "POST",
-      headers: await withCsrfHeader(
-        "POST",
-        { "Content-Type": "application/json", Accept: "text/event-stream" },
-        path,
-      ),
-      body: JSON.stringify(body),
-      credentials: "include",
-      signal,
-    });
-
-    if (!response.ok || !response.body) {
-      throw new AssistantStreamError(await streamFailureMessage(response), response.status);
-    }
-
-    await readEventStream(
-      response.body,
-      (message) => {
-        const event = parseAssistantStreamEvent(message.event, message.data);
-        if (event) {
-          onEvent(event);
-        }
-      },
-      signal,
-    );
   }
 
   /**

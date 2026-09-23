@@ -66,59 +66,76 @@ alternative — assuming it failed and retrying — would double a write.
 Outcomes over 64 KiB are dropped rather than truncated, because half a fenced
 JSON document handed back to a model is worse than none.
 
-## Durable chat turns
+## Chat turns
 
-A reply can run in the request that asked for it, or on a worker.
+Every assistant question is answered by `AssistantTurnWorkflow` on
+`agent-chat-queue`, ID `assistant-turn:<turnID>`. There is no in-request path
+and no flag: the API records the turn, starts the workflow and returns the turn
+to watch. `POST /threads/:id/messages/` starts the same workflow and waits for
+its result; `POST /ask/` opens the hidden thread and starts a turn on it.
 
-`ai.durableTurns` decides, and it defaults to **off**. Off is the original
-behaviour and is what an installation without a reachable Temporal gets. On
-hands the turn to `agent-chat-queue`, so the reply survives an API restart and
-somebody who closes the tab can come back to it.
+The workflow runs in three steps:
 
-The client does not assume. It asks `GET /assistant/capabilities/` once per
-session and falls back to the in-request path when the answer is no — turning
-the flag on without a worker polling `agent-chat-queue` means nothing is
-answered durably, but nothing breaks either.
+1. **Prepare** (`PrepareTurnActivity`) reads the thread, history, files and
+   mentions, checks budget and room, and runs the scope guard. A refusal the
+   person can act on — an empty message, a full thread — is non-retryable and
+   its message reaches the reader as written.
+2. **The loop** runs in workflow code (`agentflow`). Each model call is an
+   activity that streams its reply and heartbeats on a timer. Each tool call is
+   an activity named for the tool (the worker's dynamic activity), claimed in
+   the step ledger under the key the workflow computed. A tool that fails after
+   its retries is reported to the model as a failed call; the turn goes on.
+3. **Finish** (`FinishTurnActivity`) saves the turn, its proposals and
+   artifacts, closes the turn's record and writes the trajectory. It claims one
+   ledger key per attempt, after checking no earlier attempt saved or began to
+   save, so a retried save never appends a turn twice.
+
+Model failures are mapped the way the Temporal AI cookbook maps HTTP responses:
+a rejected request (4xx other than 408/409/429), a refusal or a missing
+provider is not retried; a rate limit waits out the provider's `Retry-After`,
+capped at a minute. The failure's kind travels in the error's details, so the
+saved turn still says whether the provider refused or was unavailable.
 
 `assistant_turns` gives a reply an identity while it is still being written.
 A partial unique index enforces one live turn per thread.
 
 ### Stopping
 
-Stop is an operation now, not an abandonment. It used to work by aborting the
-reader, because the model ran on the context that abort cancelled. With the work
-on a worker, abandoning the reader stops nothing and the turn keeps billing, so
-`POST /assistant/turns/:id/stop/` cancels the execution. The local abort stays,
-so the person sees it stop immediately rather than waiting for a round trip to
-confirm what they already decided.
-
-The activity heartbeats on every event, because Temporal only delivers
-cancellation through a heartbeat.
+`POST /assistant/turns/:id/stop/` cancels the workflow. The model call in
+flight is cancelled; what had happened by then is saved on a disconnected
+context, and the execution is recorded as cancelled. The client aborts its
+reader at once so the person sees it stop without waiting for the round trip.
 
 ### The turn stream
 
-A turn's events go to a Redis stream, one per turn, keyed `<prefix>:<org>:<turn>`.
-It is a **tail buffer, never the transcript** — the transcript is in postgres and
-outlives all of this. The stream is trimmed by length and dropped a quarter of an
-hour after the turn ends.
+A turn's events go to a **Workflow Stream** hosted by the turn's own workflow
+(`go.temporal.io/sdk/contrib/workflowstreams`). The model activity publishes the
+reply as it streams, batched every 100 ms; the workflow publishes every other
+event. The stream exists as soon as the workflow does, before the start request
+returns, so a reader can never attach ahead of it.
 
-A stream rather than pub/sub, because a reader needs to resume. Each event
-carries the Redis entry id as its SSE event id, and a reader returns it as
-`Last-Event-ID` to pick up where it stopped. The cursor is the last event the
-reader **applied**, not the last it received: a connection that dies mid-frame
-delivers something the client never folded in, and resuming past it would skip
-it silently.
+Each event's offset in the stream is its SSE event id, and a reader returns it
+as `Last-Event-ID` to resume. The cursor is the last event the reader
+**applied**, not the last it received: a connection that dies mid-frame delivers
+something the client never folded in.
 
-Workflow history is deliberately not used for this. Sixty tokens a second is not
-what a workflow history is for, and the issue this came from says so directly.
+A stream is read by polling the workflow, so a closed workflow cannot be read.
+When the relay forwards the last event it signals `stream-drained`; the
+workflow waits for that, at most 15 s, before it closes. A reader who arrives
+after the workflow closed gets an ending rebuilt from the turn's record
+(`done` with `replay: true`), which tells the client to read the conversation.
+
+Each publish is a signal in the turn's history and each read a poll update, so
+a streamed reply adds a few hundred history events. That is why chat is one
+workflow per turn rather than one per thread.
 
 ## What is written down
 
 The runtime narrates its own work — every tool it reaches for, every refusal,
 every give-up — and `agent_run_events` is what keeps that narration.
 
-Before it existed, a conversation's events went to the stream above and were
-gone within the hour, and a background run's went to a function that used them
+Before it existed, a conversation's events went to a stream that was gone
+within the hour, and a background run's went to a function that used them
 as a heartbeat tick and dropped them. A background run's durable record was its
 final reply, cut to two thousand characters: what it concluded, never what it
 did.
@@ -157,14 +174,10 @@ run may see how it got there.
 
 ## Measuring it
 
-Every turn metric carries `transport="inprocess"|"durable"`, and the in-process
-path is instrumented too. A comparison cannot be made from figures that do not
-say which runtime produced them.
-
 `turn_first_event_seconds` is separate from `turn_duration_seconds` on purpose:
-duration says how long the answer took, first-event says how long the person
-stared at nothing, and that is the one thing a durable hop plus event coalescing
-could plausibly have made worse.
+duration says how long the answer took, first-event says how long a reader who
+attached as the turn began stared at nothing, which a slow worker or a
+backed-up queue makes worse first.
 
 `trajectory_events_total{result}` counts dropped events. They are invisible by
 design — the run carries on — so this is the only place they show up at all.
@@ -183,6 +196,7 @@ design — the run carries on — so this is the only place they show up at all.
   own words on a background run are still thrown away.
 - **Permission denials are not distinct events.** A refusal arrives as a failed
   tool result whose content is prose, so it is recorded as one.
-- **Redis is on the chat path.** An outage silences in-flight replies. The
-  transcript still saves and the relay degrades to reading the turn record, but
-  that is a fallback, not equivalence.
+- **Temporal is on the chat path.** An outage means no question is answered;
+  the API says so rather than answering some other way. The client connects
+  lazily, so the API still starts, and the first call after Temporal returns
+  succeeds.

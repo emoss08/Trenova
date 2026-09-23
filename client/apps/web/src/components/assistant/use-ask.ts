@@ -1,7 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { AssistantStreamError } from "@/services/assistant";
 import type {
   AssistantEntityRef,
   AssistantPageContext,
@@ -9,6 +8,7 @@ import type {
 } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { runTurn, turnFailureDetail } from "./follow-turn";
 import { initialTurnState, isTurnActive, reduceTurn, type TurnState } from "./turn-stream";
 
 /**
@@ -21,6 +21,9 @@ export function useAsk() {
   const queryClient = useQueryClient();
   const [turn, setTurn] = useState<TurnState | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // The turn a worker is answering. Stopping has to reach it: closing the
+  // reader leaves the turn running and billing.
+  const turnIdRef = useRef<string | null>(null);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -38,21 +41,30 @@ export function useAsk() {
       let terminal = false;
       const onEvent = (event: AssistantStreamEvent) => {
         setTurn((state) => (state ? reduceTurn(state, event) : state));
-        if (event.event === "done" || event.event === "refused" || event.event === "error") {
+        if (event.event === "done" || event.event === "error") {
           terminal = true;
         }
       };
 
+      turnIdRef.current = null;
       try {
-        await apiService.assistantService.ask(content, onEvent, controller.signal, options);
+        await runTurn(() => apiService.assistantService.startAsk(content, options), {
+          signal: controller.signal,
+          onTurnStarted: (started) => {
+            turnIdRef.current = started.turnId;
+            // The thread is named before the answer, so the question can be
+            // kept whatever happens to the answer.
+            if (started.thread) {
+              onEvent({ event: "thread", data: started.thread });
+            }
+          },
+          onEvent,
+        });
       } catch (error) {
         if (controller.signal.aborted) {
           return;
         }
-        const detail =
-          error instanceof AssistantStreamError
-            ? error.message
-            : t("The connection to the assistant was lost.");
+        const detail = turnFailureDetail(error, t("The connection to the assistant was lost."));
         setTurn((state) => (state ? { ...state, status: "error", error: detail } : state));
         return;
       }
@@ -71,6 +83,11 @@ export function useAsk() {
   );
 
   const stop = useCallback(() => {
+    const running = turnIdRef.current;
+    if (running !== null) {
+      turnIdRef.current = null;
+      void apiService.assistantService.stopTurn(running).catch(() => undefined);
+    }
     abortRef.current?.abort();
     abortRef.current = null;
     setTurn((state) =>
@@ -79,6 +96,7 @@ export function useAsk() {
   }, [t]);
 
   const reset = useCallback(() => {
+    turnIdRef.current = null;
     abortRef.current?.abort();
     abortRef.current = null;
     setTurn(null);

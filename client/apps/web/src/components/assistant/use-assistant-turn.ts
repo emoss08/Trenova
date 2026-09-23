@@ -1,8 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { durableTurnsAvailable, runDurableTurn } from "./durable-turn";
-import { AssistantStreamError } from "@/services/assistant";
+import { runTurn, turnFailureDetail } from "./follow-turn";
 import type {
   AssistantPageContext,
   AssistantStreamEvent,
@@ -37,8 +36,8 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
 
   const [turn, setTurn] = useState<TurnState | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  // The turn a worker is producing, when one is. Stopping needs it: with the
-  // work off this request, aborting the reader stops nothing.
+  // The turn a worker is producing, when one is. Stopping needs it: the work
+  // is not on this request, so aborting the reader stops nothing.
   const turnIdRef = useRef<string | null>(null);
   const lastContextRef = useRef<AssistantPageContext | null>(null);
   // The model the last send asked for, so a retry asks the same one rather
@@ -198,6 +197,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       lastContextExtrasRef.current = extras;
 
       let terminal = false;
+      let finished = false;
       let done: SendMessageResult | null = null;
       setTurn(initialTurnState(content, pageContext, extras));
 
@@ -205,6 +205,9 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         setTurn((state) => (state ? reduceTurn(state, event) : state));
         if (event.event === "done") {
           terminal = true;
+          finished = true;
+          // Null when the server rebuilt the ending from the turn's record:
+          // the saved conversation has the answer, and settling refetches it.
           done = event.data;
         } else if (event.event === "refused" || event.event === "error") {
           terminal = true;
@@ -214,46 +217,29 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       turnIdRef.current = null;
       try {
         const attachments = (extras.attachments ?? []).map((item) => item.documentId);
-        if (await durableTurnsAvailable()) {
-          await runDurableTurn({
-            threadId,
-            content,
-            context: pageContext,
-            providerId,
-            attachmentDocumentIds: attachments,
-            mentions: extras.mentions ?? [],
-            followUpProposalId: extras.followUpProposalId,
-            signal: controller.signal,
-            onTurnStarted: (id) => {
-              turnIdRef.current = id;
-            },
-            onEvent,
-          });
-        } else {
-          await apiService.assistantService.streamMessage(
-            threadId,
-            content,
-            onEvent,
-            controller.signal,
-            {
+        await runTurn(
+          () =>
+            apiService.assistantService.startTurn(threadId, content, {
               context: pageContext,
               providerId,
               attachmentDocumentIds: attachments,
               mentions: extras.mentions ?? [],
               followUpProposalId: extras.followUpProposalId,
+            }),
+          {
+            signal: controller.signal,
+            onTurnStarted: (started) => {
+              turnIdRef.current = started.turnId;
             },
-          );
-        }
+            onEvent,
+          },
+        );
       } catch (error) {
         if (controller.signal.aborted) {
           return;
         }
         release();
-        const detail =
-          error instanceof AssistantStreamError
-            ? error.message
-            : t("The connection to the assistant was lost.");
-        fail("failed", detail);
+        fail("failed", turnFailureDetail(error, t("The connection to the assistant was lost.")));
         void refreshThread();
         return;
       }
@@ -272,7 +258,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         return;
       }
 
-      if (done !== null) {
+      if (finished) {
         await settle(done);
       } else {
         // A refusal is complete in itself and has been saved. A server error
