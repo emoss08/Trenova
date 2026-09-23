@@ -1,6 +1,7 @@
 package temporaltype
 
 import (
+	"strings"
 	"testing"
 
 	commonpb "go.temporal.io/api/common/v1"
@@ -331,4 +332,59 @@ func TestCustomCompressionCodec_Decode_InvalidGzip(t *testing.T) {
 
 	_, err := codec.Decode([]*commonpb.Payload{payload})
 	assert.Error(t, err)
+}
+
+// A payload that compresses well must actually shrink. Compressing after
+// encrypting would leave it the size of its ciphertext.
+func TestNewEncryptionDataConverter_CompressesBeforeEncrypting(t *testing.T) {
+	t.Setenv("TEMPORAL_ENCRYPTION_KEY_order", "12345678901234567890123456789012")
+
+	dc := NewEncryptionDataConverter(DataConverterOptions{
+		EnableEncryption:  true,
+		EncryptionKeyID:   "order",
+		EnableCompression: true,
+	})
+
+	transcript := strings.Repeat("the same assistant turn, over and over. ", 2000)
+	payload, err := dc.ToPayload(transcript)
+	require.NoError(t, err)
+
+	assert.Equal(
+		t,
+		[]byte(MetadataEncodingEncrypted),
+		payload.GetMetadata()[converter.MetadataEncoding],
+		"the outer layer must be encryption",
+	)
+	assert.Less(t, len(payload.GetData()), len(transcript)/10,
+		"a repetitive payload must be compressed before it is encrypted")
+
+	var decoded string
+	require.NoError(t, dc.FromPayload(payload, &decoded))
+	assert.Equal(t, transcript, decoded)
+}
+
+// Histories written before the order was corrected still hold zlib-outside,
+// ciphertext-inside payloads, and a replay has to read them.
+func TestNewEncryptionDataConverter_ReadsPayloadsNestedTheOldWay(t *testing.T) {
+	t.Setenv("TEMPORAL_ENCRYPTION_KEY_legacy", "12345678901234567890123456789012")
+
+	oldOrder := converter.NewCodecDataConverter(
+		converter.GetDefaultDataConverter(),
+		converter.NewZlibCodec(converter.ZlibCodecOptions{AlwaysEncode: true}),
+		&EncryptionCodec{KeyID: "legacy"},
+	)
+	written, err := oldOrder.ToPayload("written before the fix")
+	require.NoError(t, err)
+	require.Equal(t, []byte("binary/zlib"), written.GetMetadata()[converter.MetadataEncoding],
+		"the old order leaves zlib outermost")
+
+	current := NewEncryptionDataConverter(DataConverterOptions{
+		EnableEncryption:  true,
+		EncryptionKeyID:   "legacy",
+		EnableCompression: true,
+	})
+
+	var decoded string
+	require.NoError(t, current.FromPayload(written, &decoded))
+	assert.Equal(t, "written before the fix", decoded)
 }

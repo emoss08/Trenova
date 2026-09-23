@@ -122,7 +122,11 @@ func actor() *services.RequestActor {
 }
 
 func proposal(tool string) *agent.AgentProposal {
-	return &agent.AgentProposal{ID: pulid.MustNew("ap_"), ToolName: tool, Status: agent.ProposalStatusPending}
+	return &agent.AgentProposal{
+		ID:       pulid.MustNew("ap_"),
+		ToolName: tool,
+		Status:   agent.ProposalStatusPending,
+	}
 }
 
 func newService(proposals *stubProposals, decider *stubDecider) *Service {
@@ -190,7 +194,9 @@ func TestDecideMany_ReportsEachOutcomeAndCarriesOn(t *testing.T) {
 		first.ID: first, second.ID: second, third.ID: third,
 	}}
 	decider := &stubDecider{
-		fail:    map[pulid.ID]error{second.ID: errortypes.NewBusinessError("Someone else decided this one")},
+		fail: map[pulid.ID]error{
+			second.ID: errortypes.NewBusinessError("Someone else decided this one"),
+		},
 		execErr: map[pulid.ID]error{third.ID: errors.New("move is no longer open")},
 	}
 	svc := newService(proposals, decider)
@@ -223,7 +229,10 @@ func TestDecideMany_KeepsInternalFaultsOutOfTheRow(t *testing.T) {
 
 	only := proposal("assign_move")
 	decider := &stubDecider{fail: map[pulid.ID]error{only.ID: errors.New("pq: connection reset")}}
-	svc := newService(&stubProposals{byID: map[pulid.ID]*agent.AgentProposal{only.ID: only}}, decider)
+	svc := newService(
+		&stubProposals{byID: map[pulid.ID]*agent.AgentProposal{only.ID: only}},
+		decider,
+	)
 
 	results, err := svc.DecideMany(t.Context(), &services.DecideAgentProposalsRequest{
 		ProposalIDs: []pulid.ID{only.ID},
@@ -244,14 +253,35 @@ func TestValidateBatch(t *testing.T) {
 		req  services.DecideAgentProposalsRequest
 		want string
 	}{
-		"empty":     {services.DecideAgentProposalsRequest{Decision: agent.DecisionAccepted}, "at least one"},
-		"duplicate": {services.DecideAgentProposalsRequest{ProposalIDs: []pulid.ID{id, id}, Decision: agent.DecisionAccepted}, "listed twice"},
-		"modified":  {services.DecideAgentProposalsRequest{ProposalIDs: []pulid.ID{id}, Decision: agent.DecisionModified}, "one proposal"},
+		"empty": {
+			services.DecideAgentProposalsRequest{Decision: agent.DecisionAccepted},
+			"at least one",
+		},
+		"duplicate": {
+			services.DecideAgentProposalsRequest{
+				ProposalIDs: []pulid.ID{id, id},
+				Decision:    agent.DecisionAccepted,
+			},
+			"listed twice",
+		},
+		"modified": {
+			services.DecideAgentProposalsRequest{
+				ProposalIDs: []pulid.ID{id},
+				Decision:    agent.DecisionModified,
+			},
+			"one proposal",
+		},
 		"reject without reason": {
-			services.DecideAgentProposalsRequest{ProposalIDs: []pulid.ID{id}, Decision: agent.DecisionRejected},
+			services.DecideAgentProposalsRequest{
+				ProposalIDs: []pulid.ID{id},
+				Decision:    agent.DecisionRejected,
+			},
 			"Say why",
 		},
-		"unknown decision": {services.DecideAgentProposalsRequest{ProposalIDs: []pulid.ID{id}, Decision: "Maybe"}, "invalid"},
+		"unknown decision": {
+			services.DecideAgentProposalsRequest{ProposalIDs: []pulid.ID{id}, Decision: "Maybe"},
+			"invalid",
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -266,7 +296,12 @@ func TestValidateBatch(t *testing.T) {
 	for range MaxBatch + 1 {
 		tooMany = append(tooMany, pulid.MustNew("ap_"))
 	}
-	err := validateBatch(&services.DecideAgentProposalsRequest{ProposalIDs: tooMany, Decision: agent.DecisionAccepted})
+	err := validateBatch(
+		&services.DecideAgentProposalsRequest{
+			ProposalIDs: tooMany,
+			Decision:    agent.DecisionAccepted,
+		},
+	)
 	require.Error(t, err)
 
 	require.NoError(t, validateBatch(&services.DecideAgentProposalsRequest{
@@ -282,7 +317,11 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 	t.Parallel()
 
 	first := proposal("assign_move")
-	plan := &agent.AgentPlan{ID: pulid.MustNew("apl_"), Title: "Cover the move", Status: agent.PlanStatusPending}
+	plan := &agent.AgentPlan{
+		ID:     pulid.MustNew("apl_"),
+		Title:  "Cover the move",
+		Status: agent.PlanStatusPending,
+	}
 	gone := pulid.MustNew("ap_")
 	queue := &stubQueue{
 		page: &repositories.PendingDecisionsPage{
@@ -323,7 +362,10 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 	assert.Equal(t, first.ID, decoded.ID)
 	assert.EqualValues(t, 10, decoded.CreatedAt)
 
-	_, err = svc.ListPending(t.Context(), services.ListPendingDecisionsRequest{After: "not-a-cursor"})
+	_, err = svc.ListPending(
+		t.Context(),
+		services.ListPendingDecisionsRequest{After: "not-a-cursor"},
+	)
 	require.Error(t, err)
 }
 
@@ -332,7 +374,11 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 func TestListPending_IsEmptyUnderOrganizationShadow(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{l: zap.NewNop(), queue: &stubQueue{page: &repositories.PendingDecisionsPage{}}, shadow: stubShadow{shadow: true}}
+	svc := &Service{
+		l:      zap.NewNop(),
+		queue:  &stubQueue{page: &repositories.PendingDecisionsPage{}},
+		shadow: stubShadow{shadow: true},
+	}
 	page, err := svc.ListPending(t.Context(), services.ListPendingDecisionsRequest{})
 	require.NoError(t, err)
 	assert.Empty(t, page.Items)

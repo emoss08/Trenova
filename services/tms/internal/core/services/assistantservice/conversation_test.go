@@ -109,7 +109,7 @@ func TestSendMessageStream_StoresThePageContextOnTheUserTurn(t *testing.T) {
 	svc, conversations := newConversationService(completion, testDefinition())
 	actor := testActor()
 
-	result, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	result, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID: conversations.thread.ID,
 		Content:  "Where is this shipment?",
 		Page: &agent.PageContext{
@@ -153,7 +153,7 @@ func TestSendMessageStream_RejectsAPageContextItCouldNotTrust(t *testing.T) {
 	svc, conversations := newConversationService(completion, testDefinition())
 	actor := testActor()
 
-	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID: conversations.thread.ID,
 		Content:  "Where is this?",
 		Page: &agent.PageContext{
@@ -269,7 +269,7 @@ func TestSendMessageStream_RefusesATurnOnAFullThread(t *testing.T) {
 	conversations.count = maxThreadMessages
 	actor := testActor()
 
-	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Where is it?",
 		TenantInfo: actor.TenantInfo(),
@@ -294,25 +294,34 @@ func TestSendMessageStream_KeepsTheSavedModelUnlessTheSendChoosesOne(t *testing.
 	conversations.thread.PreferredProviderID = chosen
 	actor := testActor()
 
-	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "hello",
 		TenantInfo: actor.TenantInfo(),
 	}, actor, nil)
 	require.NoError(t, err)
 
-	assert.Equal(t, chosen, conversations.thread.PreferredProviderID, "a send with no choice keeps the saved one")
+	assert.Equal(
+		t,
+		chosen,
+		conversations.thread.PreferredProviderID,
+		"a send with no choice keeps the saved one",
+	)
 	require.NotNil(t, completion.LastReq)
 	assert.Equal(t, chosen, completion.LastReq.PreferredProviderID)
 	assert.True(t, completion.LastReq.PinPreferred, "the person's own choice is the model they get")
 
-	_, err = svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	_, err = svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:       conversations.thread.ID,
 		Content:        "hello again",
 		TenantInfo:     actor.TenantInfo(),
 		ProviderChosen: true,
 	}, actor, nil)
 	require.NoError(t, err)
-	assert.True(t, conversations.thread.PreferredProviderID.IsNil(), "choosing automatic clears the saved model")
+	assert.True(
+		t,
+		conversations.thread.PreferredProviderID.IsNil(),
+		"choosing automatic clears the saved model",
+	)
 	assert.False(t, completion.LastReq.PinPreferred)
 }

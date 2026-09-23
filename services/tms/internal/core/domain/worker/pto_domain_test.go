@@ -26,21 +26,61 @@ func TestComputePTODays(t *testing.T) {
 	mon := time.Date(2026, time.March, 2, 9, 0, 0, 0, ny)
 	sun := time.Date(2026, time.March, 8, 17, 0, 0, 0, ny)
 
-	assert.True(t, ComputePTODays(mon.Unix(), sun.Unix(), ny, true, nil).Equal(decimal.NewFromInt(7)))
-	assert.True(t, ComputePTODays(mon.Unix(), sun.Unix(), ny, false, nil).Equal(decimal.NewFromInt(5)))
-	assert.True(t, ComputePTODays(mon.Unix(), mon.Add(time.Hour).Unix(), ny, false, nil).Equal(decimal.NewFromInt(1)),
-		"same-day request counts as one day")
-	assert.True(t, ComputePTODays(sun.Unix(), mon.Unix(), ny, true, nil).IsZero(), "reversed range is zero")
+	assert.True(
+		t,
+		ComputePTODays(mon.Unix(), sun.Unix(), ny, true, nil).Equal(decimal.NewFromInt(7)),
+	)
+	assert.True(
+		t,
+		ComputePTODays(mon.Unix(), sun.Unix(), ny, false, nil).Equal(decimal.NewFromInt(5)),
+	)
+	assert.True(
+		t,
+		ComputePTODays(
+			mon.Unix(),
+			mon.Add(time.Hour).Unix(),
+			ny,
+			false,
+			nil,
+		).Equal(decimal.NewFromInt(1)),
+		"same-day request counts as one day",
+	)
+	assert.True(
+		t,
+		ComputePTODays(sun.Unix(), mon.Unix(), ny, true, nil).IsZero(),
+		"reversed range is zero",
+	)
 
 	dstStart := time.Date(2026, time.March, 7, 23, 30, 0, 0, ny)
 	dstEnd := time.Date(2026, time.March, 9, 0, 30, 0, 0, ny)
-	assert.True(t, ComputePTODays(dstStart.Unix(), dstEnd.Unix(), ny, true, nil).Equal(decimal.NewFromInt(3)),
-		"DST transition does not drop a day")
+	assert.True(
+		t,
+		ComputePTODays(dstStart.Unix(), dstEnd.Unix(), ny, true, nil).Equal(decimal.NewFromInt(3)),
+		"DST transition does not drop a day",
+	)
 
 	utcEveningStart := time.Date(2026, time.March, 2, 23, 30, 0, 0, time.UTC)
-	assert.True(t, ComputePTODays(utcEveningStart.Unix(), utcEveningStart.Unix(), time.UTC, true, nil).Equal(decimal.NewFromInt(1)))
-	assert.True(t, ComputePTODays(utcEveningStart.Unix(), utcEveningStart.Unix(), nil, true, nil).Equal(decimal.NewFromInt(1)),
-		"nil location falls back to UTC")
+	assert.True(
+		t,
+		ComputePTODays(
+			utcEveningStart.Unix(),
+			utcEveningStart.Unix(),
+			time.UTC,
+			true,
+			nil,
+		).Equal(decimal.NewFromInt(1)),
+	)
+	assert.True(
+		t,
+		ComputePTODays(
+			utcEveningStart.Unix(),
+			utcEveningStart.Unix(),
+			nil,
+			true,
+			nil,
+		).Equal(decimal.NewFromInt(1)),
+		"nil location falls back to UTC",
+	)
 }
 
 func validPolicy() *PTOPolicy {
@@ -174,19 +214,28 @@ func TestBalanceApplyKeepsRunningTotals(t *testing.T) {
 
 	bal := &WorkerPTOBalance{BalanceDays: decimal.NewFromInt(3), EntryCount: 4}
 
-	accrual := &WorkerPTOLedgerEntry{EntryType: PTOLedgerEntryAccrual, AmountDays: decimal.NewFromInt(2)}
+	accrual := &WorkerPTOLedgerEntry{
+		EntryType:  PTOLedgerEntryAccrual,
+		AmountDays: decimal.NewFromInt(2),
+	}
 	bal.Apply(accrual)
 	assert.EqualValues(t, 5, accrual.Sequence)
 	assert.True(t, accrual.BalanceAfterDays.Equal(decimal.NewFromInt(5)))
 	assert.True(t, bal.AccruedYTDDays.Equal(decimal.NewFromInt(2)))
 
-	usage := &WorkerPTOLedgerEntry{EntryType: PTOLedgerEntryUsage, AmountDays: decimal.NewFromInt(-4)}
+	usage := &WorkerPTOLedgerEntry{
+		EntryType:  PTOLedgerEntryUsage,
+		AmountDays: decimal.NewFromInt(-4),
+	}
 	bal.Apply(usage)
 	assert.EqualValues(t, 6, usage.Sequence)
 	assert.True(t, bal.BalanceDays.Equal(decimal.NewFromInt(1)))
 	assert.True(t, bal.UsedYTDDays.Equal(decimal.NewFromInt(4)))
 
-	reversal := &WorkerPTOLedgerEntry{EntryType: PTOLedgerEntryReversal, AmountDays: decimal.NewFromInt(4)}
+	reversal := &WorkerPTOLedgerEntry{
+		EntryType:  PTOLedgerEntryReversal,
+		AmountDays: decimal.NewFromInt(4),
+	}
 	bal.Apply(reversal)
 	assert.True(t, bal.BalanceDays.Equal(decimal.NewFromInt(5)))
 	assert.True(t, bal.UsedYTDDays.IsZero())

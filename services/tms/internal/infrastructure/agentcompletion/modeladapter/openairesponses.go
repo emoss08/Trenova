@@ -474,7 +474,8 @@ func responsesTruncated(envelope *responsesEnvelope) bool {
 	if envelope == nil {
 		return false
 	}
-	if envelope.IncompleteDetails != nil && envelope.IncompleteDetails.Reason == "max_output_tokens" {
+	if envelope.IncompleteDetails != nil &&
+		envelope.IncompleteDetails.Reason == "max_output_tokens" {
 		return true
 	}
 

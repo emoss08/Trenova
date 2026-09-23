@@ -129,7 +129,10 @@ func (s *Service) SettleOnTermination(
 				result.ForfeitedDays = result.ForfeitedDays.Add(posted.AmountDays.Neg())
 			}
 		case errors.Is(postErr, repositories.ErrDuplicatePTOLedgerEntry):
-			log.Info("termination settlement already posted", zap.String("ptoType", string(planned.PTOType)))
+			log.Info(
+				"termination settlement already posted",
+				zap.String("ptoType", string(planned.PTOType)),
+			)
 		default:
 			return nil, postErr
 		}

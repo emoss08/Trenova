@@ -29,13 +29,22 @@ func TestListEntries(t *testing.T) {
 	entryRepo := mocks.NewMockJournalEntryRepository(t)
 	sourceRepo := mocks.NewMockJournalSourceRepository(t)
 	entry := &journalentry.JournalEntry{ID: pulid.MustNew("je_"), EntryNumber: "JE-1"}
-	entryRepo.EXPECT().List(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, req *repositories.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.JournalEntry], error) {
-		assert.Equal(t, sharedtestutil.TestOrgID, req.Filter.TenantInfo.OrgID)
-		return &pagination.ListResult[*journalentry.JournalEntry]{Items: []*journalentry.JournalEntry{entry}, Total: 1}, nil
-	}).Once()
+	entryRepo.EXPECT().
+		List(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, req *repositories.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.JournalEntry], error) {
+			assert.Equal(t, sharedtestutil.TestOrgID, req.Filter.TenantInfo.OrgID)
+			return &pagination.ListResult[*journalentry.JournalEntry]{
+				Items: []*journalentry.JournalEntry{entry},
+				Total: 1,
+			}, nil
+		}).
+		Once()
 	handler := newJournalEntryHandler(t, entryRepo, sourceRepo)
 
-	ginCtx := sharedtestutil.NewGinTestContext().WithMethod(http.MethodGet).WithPath("/api/v1/accounting/journal-entries/").WithDefaultAuthContext()
+	ginCtx := sharedtestutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/accounting/journal-entries/").
+		WithDefaultAuthContext()
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
@@ -52,10 +61,16 @@ func TestGetEntry(t *testing.T) {
 	entryRepo := mocks.NewMockJournalEntryRepository(t)
 	sourceRepo := mocks.NewMockJournalSourceRepository(t)
 	entryID := pulid.MustNew("je_")
-	entryRepo.EXPECT().GetByID(mock.Anything, repositories.GetJournalEntryByIDRequest{ID: entryID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}}).Return(&journalentry.JournalEntry{ID: entryID}, nil).Once()
+	entryRepo.EXPECT().
+		GetByID(mock.Anything, repositories.GetJournalEntryByIDRequest{ID: entryID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}}).
+		Return(&journalentry.JournalEntry{ID: entryID}, nil).
+		Once()
 	handler := newJournalEntryHandler(t, entryRepo, sourceRepo)
 
-	ginCtx := sharedtestutil.NewGinTestContext().WithMethod(http.MethodGet).WithPath("/api/v1/accounting/journal-entries/" + entryID.String() + "/").WithDefaultAuthContext()
+	ginCtx := sharedtestutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/accounting/journal-entries/" + entryID.String() + "/").
+		WithDefaultAuthContext()
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
@@ -67,23 +82,51 @@ func TestGetSource(t *testing.T) {
 
 	entryRepo := mocks.NewMockJournalEntryRepository(t)
 	sourceRepo := mocks.NewMockJournalSourceRepository(t)
-	sourceRepo.EXPECT().GetByObject(mock.Anything, repositories.GetJournalSourceByObjectRequest{TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}, SourceObjectType: "Invoice", SourceObjectID: "inv_1"}).Return(&journalsource.Source{ID: pulid.MustNew("jsrc_")}, nil).Once()
+	sourceRepo.EXPECT().
+		GetByObject(mock.Anything, repositories.GetJournalSourceByObjectRequest{TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}, SourceObjectType: "Invoice", SourceObjectID: "inv_1"}).
+		Return(&journalsource.Source{ID: pulid.MustNew("jsrc_")}, nil).
+		Once()
 	handler := newJournalEntryHandler(t, entryRepo, sourceRepo)
 
-	ginCtx := sharedtestutil.NewGinTestContext().WithMethod(http.MethodGet).WithPath("/api/v1/accounting/journal-entries/source/Invoice/inv_1/").WithDefaultAuthContext()
+	ginCtx := sharedtestutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/accounting/journal-entries/source/Invoice/inv_1/").
+		WithDefaultAuthContext()
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 }
 
-func newJournalEntryHandler(t *testing.T, entryRepo *mocks.MockJournalEntryRepository, sourceRepo *mocks.MockJournalSourceRepository) *journalentryhandler.Handler {
+func newJournalEntryHandler(
+	t *testing.T,
+	entryRepo *mocks.MockJournalEntryRepository,
+	sourceRepo *mocks.MockJournalSourceRepository,
+) *journalentryhandler.Handler {
 	t.Helper()
 
 	logger := zap.NewNop()
-	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, Config: &config.Config{App: config.AppConfig{Debug: true}}})
-	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{PermissionEngine: &mocks.AllowAllPermissionEngine{}, ErrorHandler: errorHandler})
-	service := journalentryservice.New(journalentryservice.Params{Logger: logger, EntryRepo: entryRepo, SourceRepo: sourceRepo})
+	errorHandler := helpers.NewErrorHandler(
+		helpers.ErrorHandlerParams{
+			Logger: logger,
+			Config: &config.Config{App: config.AppConfig{Debug: true}},
+		},
+	)
+	pm := middleware.NewPermissionMiddleware(
+		middleware.PermissionMiddlewareParams{
+			PermissionEngine: &mocks.AllowAllPermissionEngine{},
+			ErrorHandler:     errorHandler,
+		},
+	)
+	service := journalentryservice.New(
+		journalentryservice.Params{Logger: logger, EntryRepo: entryRepo, SourceRepo: sourceRepo},
+	)
 
-	return journalentryhandler.New(journalentryhandler.Params{Service: service, ErrorHandler: errorHandler, PermissionMiddleware: pm})
+	return journalentryhandler.New(
+		journalentryhandler.Params{
+			Service:              service,
+			ErrorHandler:         errorHandler,
+			PermissionMiddleware: pm,
+		},
+	)
 }

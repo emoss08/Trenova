@@ -152,23 +152,74 @@ func TestRenderPageGeometry(t *testing.T) {
 		wantHeight  string
 		wantLand    string
 	}{
-		{"letter portrait", documenttemplate.PageSizeLetter, documenttemplate.OrientationPortrait, "8.50", "11.00", "false"},
-		{"letter landscape", documenttemplate.PageSizeLetter, documenttemplate.OrientationLandscape, "8.50", "11.00", "true"},
-		{"a4 portrait", documenttemplate.PageSizeA4, documenttemplate.OrientationPortrait, "8.27", "11.69", "false"},
-		{"a4 landscape", documenttemplate.PageSizeA4, documenttemplate.OrientationLandscape, "8.27", "11.69", "true"},
-		{"legal portrait", documenttemplate.PageSizeLegal, documenttemplate.OrientationPortrait, "8.50", "14.00", "false"},
-		{"legal landscape", documenttemplate.PageSizeLegal, documenttemplate.OrientationLandscape, "8.50", "14.00", "true"},
+		{
+			"letter portrait",
+			documenttemplate.PageSizeLetter,
+			documenttemplate.OrientationPortrait,
+			"8.50",
+			"11.00",
+			"false",
+		},
+		{
+			"letter landscape",
+			documenttemplate.PageSizeLetter,
+			documenttemplate.OrientationLandscape,
+			"8.50",
+			"11.00",
+			"true",
+		},
+		{
+			"a4 portrait",
+			documenttemplate.PageSizeA4,
+			documenttemplate.OrientationPortrait,
+			"8.27",
+			"11.69",
+			"false",
+		},
+		{
+			"a4 landscape",
+			documenttemplate.PageSizeA4,
+			documenttemplate.OrientationLandscape,
+			"8.27",
+			"11.69",
+			"true",
+		},
+		{
+			"legal portrait",
+			documenttemplate.PageSizeLegal,
+			documenttemplate.OrientationPortrait,
+			"8.50",
+			"14.00",
+			"false",
+		},
+		{
+			"legal landscape",
+			documenttemplate.PageSizeLegal,
+			documenttemplate.OrientationLandscape,
+			"8.50",
+			"14.00",
+			"true",
+		},
 		// An unset page size must not produce a zero-area page.
-		{"unset falls back to letter", documenttemplate.PageSize(""), documenttemplate.OrientationPortrait, "8.50", "11.00", "false"},
+		{
+			"unset falls back to letter",
+			documenttemplate.PageSize(""),
+			documenttemplate.OrientationPortrait,
+			"8.50",
+			"11.00",
+			"false",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var captured capturedRequest
-			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				captured = parseMultipart(t, r)
-				_, _ = w.Write([]byte("pdf"))
-			}))
+			srv := httptest.NewServer(
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					captured = parseMultipart(t, r)
+					_, _ = w.Write([]byte("pdf"))
+				}),
+			)
 			defer srv.Close()
 
 			_, err := newTestClient(t, srv.URL, nil).Render(t.Context(), &services.PDFRenderRequest{
@@ -223,11 +274,13 @@ func TestRenderRetryMatrix(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var calls atomic.Int32
-			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				calls.Add(1)
-				w.WriteHeader(tt.status)
-				_, _ = w.Write([]byte("renderer detail"))
-			}))
+			srv := httptest.NewServer(
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					calls.Add(1)
+					w.WriteHeader(tt.status)
+					_, _ = w.Write([]byte("renderer detail"))
+				}),
+			)
 			defer srv.Close()
 
 			client := newTestClient(t, srv.URL, func(c *config.RendererConfig) {
@@ -351,10 +404,12 @@ func TestHealthy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, healthPath, r.URL.Path)
-				w.WriteHeader(tt.status)
-			}))
+			srv := httptest.NewServer(
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, healthPath, r.URL.Path)
+					w.WriteHeader(tt.status)
+				}),
+			)
 			defer srv.Close()
 
 			err := newTestClient(t, srv.URL, nil).Healthy(t.Context())

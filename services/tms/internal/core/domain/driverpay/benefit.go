@@ -139,18 +139,18 @@ type BenefitPlan struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 
-	Status       domaintypes.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code         string             `json:"code"        bun:"code,type:VARCHAR(20),notnull"`
-	Name         string             `json:"name"        bun:"name,type:VARCHAR(100),notnull"`
-	Description  string             `json:"description" bun:"description,type:TEXT,nullzero"`
-	PlanType     BenefitPlanType    `json:"planType"    bun:"plan_type,type:benefit_plan_type_enum,notnull,default:'Medical'"`
+	Status       domaintypes.Status `json:"status"       bun:"status,type:status_enum,notnull,default:'Active'"`
+	Code         string             `json:"code"         bun:"code,type:VARCHAR(20),notnull"`
+	Name         string             `json:"name"         bun:"name,type:VARCHAR(100),notnull"`
+	Description  string             `json:"description"  bun:"description,type:TEXT,nullzero"`
+	PlanType     BenefitPlanType    `json:"planType"     bun:"plan_type,type:benefit_plan_type_enum,notnull,default:'Medical'"`
 	Carrier      string             `json:"carrier"      bun:"carrier,type:VARCHAR(150),nullzero"`
 	PolicyNumber string             `json:"policyNumber" bun:"policy_number,type:VARCHAR(100),nullzero"`
 	// PayCodeID is what a contribution shows up as on a settlement. Required
 	// rather than optional: a deduction nobody can categorise is a deduction
 	// nobody can explain.
-	PayCodeID pulid.ID `json:"payCodeId" bun:"pay_code_id,type:VARCHAR(100),notnull"`
-	PlanYear  int16    `json:"planYear"  bun:"plan_year,type:SMALLINT,notnull"`
+	PayCodeID pulid.ID `json:"payCodeId"    bun:"pay_code_id,type:VARCHAR(100),notnull"`
+	PlanYear  int16    `json:"planYear"     bun:"plan_year,type:SMALLINT,notnull"`
 
 	EmployeeCostMinor int64 `json:"employeeCostMinor" bun:"employee_cost_minor,type:BIGINT,notnull"`
 	// EmployerCostMinor is never deducted. It is carried so a
@@ -180,8 +180,11 @@ func (p *BenefitPlan) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Plan type is required"),
 			domainvalidation.ValidEnum[BenefitPlanType]("Plan type is not valid"),
 		),
-		validation.Field(&p.PayCodeID,
-			validation.Required.Error("A pay code is required so a contribution can be categorised"),
+		validation.Field(
+			&p.PayCodeID,
+			validation.Required.Error(
+				"A pay code is required so a contribution can be categorised",
+			),
 		),
 		validation.Field(&p.PlanYear,
 			validation.Required.Error("Plan year is required"),

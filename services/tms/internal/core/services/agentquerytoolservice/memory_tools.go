@@ -130,7 +130,10 @@ func (t *recallMemoryTool) Query(
 	}
 	if subjectType != "" {
 		if !subjectType.IsValid() {
-			return nil, fmt.Errorf("subjectType %q is not Customer, Location, Worker or Carrier", subjectType)
+			return nil, fmt.Errorf(
+				"subjectType %q is not Customer, Location, Worker or Carrier",
+				subjectType,
+			)
 		}
 		subjectID, err := pulid.Parse(rawID)
 		if err != nil {

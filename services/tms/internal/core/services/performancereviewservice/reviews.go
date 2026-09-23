@@ -60,7 +60,10 @@ func (s *Service) CreateReview(
 	ctx context.Context,
 	req *CreateReviewRequest,
 ) (*worker.PerformanceReview, error) {
-	log := s.l.With(zap.String("operation", "CreateReview"), zap.String("workerId", req.WorkerID.String()))
+	log := s.l.With(
+		zap.String("operation", "CreateReview"),
+		zap.String("workerId", req.WorkerID.String()),
+	)
 
 	if _, err := s.loadWorker(ctx, req.TenantInfo, req.WorkerID); err != nil {
 		return nil, err
@@ -280,7 +283,12 @@ func (s *Service) SubmitReview(
 		current: saved, previous: original, comment: "Review submitted to the worker", log: log,
 	})
 	s.publish(ctx, req.TenantInfo, realtimeReview, permission.OpSubmit, saved.ID, req.UserID)
-	s.notifyDriver(ctx, req.TenantInfo, saved, s.reviewerName(ctx, req.TenantInfo, saved.ReviewerID))
+	s.notifyDriver(
+		ctx,
+		req.TenantInfo,
+		saved,
+		s.reviewerName(ctx, req.TenantInfo, saved.ReviewerID),
+	)
 	return saved, nil
 }
 
@@ -391,7 +399,8 @@ func (s *Service) CloseReview(
 	if err != nil {
 		return nil, err
 	}
-	if original.Status != worker.ReviewStatusSubmitted && original.Status != worker.ReviewStatusAcknowledged {
+	if original.Status != worker.ReviewStatusSubmitted &&
+		original.Status != worker.ReviewStatusAcknowledged {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,

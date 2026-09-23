@@ -166,7 +166,10 @@ func (e *extractor) parseFile(path string) error {
 				return true
 			}
 			if isErrortypesConstructor(name) {
-				e.unknown[name] = append(e.unknown[name], fmt.Sprintf("%s:%d", rel, e.fset.Position(call.Pos()).Line))
+				e.unknown[name] = append(
+					e.unknown[name],
+					fmt.Sprintf("%s:%d", rel, e.fset.Position(call.Pos()).Line),
+				)
 			}
 			return true
 		}
@@ -392,7 +395,10 @@ func main() {
 	}
 
 	if reportDynamic {
-		sort.Slice(e.dynamic, func(i, j int) bool { return e.dynamic[i].Where < e.dynamic[j].Where })
+		sort.Slice(
+			e.dynamic,
+			func(i, j int) bool { return e.dynamic[i].Where < e.dynamic[j].Where },
+		)
 		for _, d := range e.dynamic {
 			fmt.Printf("%s\t%s\t%s\n", d.Where, d.Callee, d.Expr)
 		}

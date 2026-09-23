@@ -70,7 +70,12 @@ func TestRun_WritesAgainAReplyThatLooped(t *testing.T) {
 func TestRun_EndsOnAPlainLineWhenTheReplyLoopsAgain(t *testing.T) {
 	t.Parallel()
 
-	result, completion, _ := runReplies(t, loopingTurn(), loopingTurn(), textTurn("never asked for"))
+	result, completion, _ := runReplies(
+		t,
+		loopingTurn(),
+		loopingTurn(),
+		textTurn("never asked for"),
+	)
 
 	assert.Equal(t, loopedReply, result.Reply)
 	assert.Equal(t, 2, completion.CallCount)
@@ -161,4 +166,26 @@ func TestRun_AsksANewQuestion(t *testing.T) {
 	)
 
 	assert.False(t, result.Messages[2].ToolFailed)
+}
+
+// A model loops in its thinking as readily as in its reply. The loop is cut
+// off before it reaches the reader, and the turn is asked again rather than
+// ending on thousands of repeated fragments.
+func TestRun_AsksAgainWhenTheThinkingLoops(t *testing.T) {
+	t.Parallel()
+
+	looping := textTurn("You have three tiles.")
+	looping.Reasoning = &conversation.ReasoningTrace{Text: "The user wants time-" + strings.Repeat("time-", 400)}
+
+	result, completion, events := runReplies(t, looping, textTurn("You have three tiles."))
+
+	assert.Equal(t, "You have three tiles.", result.Reply)
+	assert.Equal(t, 2, completion.CallCount)
+	assert.Equal(t, 1, restarts(events))
+	for _, event := range events {
+		thought, ok := event.Data.(serviceports.AssistantReasoningEvent)
+		if ok {
+			assert.NotContains(t, thought.Text, "time-time-time", "the loop never reaches the reader")
+		}
+	}
 }

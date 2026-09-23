@@ -31,24 +31,38 @@ func (s *repoStub) ListTenants(context.Context) ([]pagination.TenantInfo, error)
 	return s.tenants, nil
 }
 
-func (s *repoStub) GetActiveAlerts(context.Context, pagination.TenantInfo) ([]*weatheralert.WeatherAlert, error) {
+func (s *repoStub) GetActiveAlerts(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*weatheralert.WeatherAlert, error) {
 	return s.activeAlerts, nil
 }
 
-func (s *repoStub) GetByID(context.Context, repositories.GetWeatherAlertByIDRequest) (*weatheralert.WeatherAlert, error) {
+func (s *repoStub) GetByID(
+	context.Context,
+	repositories.GetWeatherAlertByIDRequest,
+) (*weatheralert.WeatherAlert, error) {
 	return s.alert, nil
 }
 
-func (s *repoStub) GetActivities(context.Context, repositories.GetWeatherAlertByIDRequest) ([]*weatheralert.Activity, error) {
+func (s *repoStub) GetActivities(
+	context.Context,
+	repositories.GetWeatherAlertByIDRequest,
+) ([]*weatheralert.Activity, error) {
 	return s.activities, nil
 }
 
-func (s *repoStub) UpsertAlert(_ context.Context, alert *weatheralert.WeatherAlert) (*repositories.UpsertWeatherAlertResult, error) {
+func (s *repoStub) UpsertAlert(
+	_ context.Context,
+	alert *weatheralert.WeatherAlert,
+) (*repositories.UpsertWeatherAlertResult, error) {
 	s.upserted = append(s.upserted, alert)
 	return &repositories.UpsertWeatherAlertResult{Alert: alert}, nil
 }
 
-func (s *repoStub) ExpireStaleAlerts(context.Context) (*repositories.ExpireWeatherAlertsResult, error) {
+func (s *repoStub) ExpireStaleAlerts(
+	context.Context,
+) (*repositories.ExpireWeatherAlertsResult, error) {
 	s.expireCalls++
 	return &repositories.ExpireWeatherAlertsResult{}, nil
 }
@@ -64,14 +78,42 @@ func TestMapAlertCategory(t *testing.T) {
 
 	service := New(Params{Logger: zap.NewNop(), Repo: &repoStub{}})
 
-	assert.Equal(t, weatheralert.AlertCategoryWinterWeather, service.mapAlertCategory("Winter Storm Warning"))
-	assert.Equal(t, weatheralert.AlertCategoryWindStorm, service.mapAlertCategory("High Wind Watch"))
-	assert.Equal(t, weatheralert.AlertCategoryFloodWater, service.mapAlertCategory("Flash Flood Warning"))
+	assert.Equal(
+		t,
+		weatheralert.AlertCategoryWinterWeather,
+		service.mapAlertCategory("Winter Storm Warning"),
+	)
+	assert.Equal(
+		t,
+		weatheralert.AlertCategoryWindStorm,
+		service.mapAlertCategory("High Wind Watch"),
+	)
+	assert.Equal(
+		t,
+		weatheralert.AlertCategoryFloodWater,
+		service.mapAlertCategory("Flash Flood Warning"),
+	)
 	assert.Equal(t, weatheralert.AlertCategoryFire, service.mapAlertCategory("Red Flag Warning"))
-	assert.Equal(t, weatheralert.AlertCategoryHeat, service.mapAlertCategory("Excessive Heat Warning"))
-	assert.Equal(t, weatheralert.AlertCategoryTornadoSevereStorm, service.mapAlertCategory("Severe Thunderstorm Warning"))
-	assert.Equal(t, weatheralert.AlertCategoryTropicalStormHurricane, service.mapAlertCategory("Tropical Storm Warning"))
-	assert.Equal(t, weatheralert.AlertCategoryWindStorm, service.mapAlertCategory("Marine Weather Statement"))
+	assert.Equal(
+		t,
+		weatheralert.AlertCategoryHeat,
+		service.mapAlertCategory("Excessive Heat Warning"),
+	)
+	assert.Equal(
+		t,
+		weatheralert.AlertCategoryTornadoSevereStorm,
+		service.mapAlertCategory("Severe Thunderstorm Warning"),
+	)
+	assert.Equal(
+		t,
+		weatheralert.AlertCategoryTropicalStormHurricane,
+		service.mapAlertCategory("Tropical Storm Warning"),
+	)
+	assert.Equal(
+		t,
+		weatheralert.AlertCategoryWindStorm,
+		service.mapAlertCategory("Marine Weather Statement"),
+	)
 	assert.Equal(t, weatheralert.AlertCategoryOther, service.mapAlertCategory("Dense Fog Advisory"))
 }
 
@@ -217,7 +259,10 @@ func TestGetAlertDetailReturnsActivities(t *testing.T) {
 	}
 	service := New(Params{Logger: zap.NewNop(), Repo: repo})
 
-	result, err := service.GetAlertDetail(t.Context(), &serviceports.GetWeatherAlertDetailRequest{ID: alertID})
+	result, err := service.GetAlertDetail(
+		t.Context(),
+		&serviceports.GetWeatherAlertDetailRequest{ID: alertID},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, result.Feature)
 	require.Len(t, result.Activities, 1)

@@ -38,16 +38,20 @@ func TestValidateDraftUpsertDefaultsCurrencyAndAssignsPeriod(t *testing.T) {
 	}
 
 	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
-	fiscalRepo.EXPECT().GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: entity.AccountingDate}).Return(&fiscalperiod.FiscalPeriod{
-		ID:           periodID,
-		FiscalYearID: fyID,
-		PeriodType:   fiscalperiod.PeriodTypeAdjusting,
-	}, nil)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: entity.AccountingDate}).
+		Return(&fiscalperiod.FiscalPeriod{
+			ID:           periodID,
+			FiscalYearID: fyID,
+			PeriodType:   fiscalperiod.PeriodTypeAdjusting,
+		}, nil)
 	glRepo := mocks.NewMockGLAccountRepository(t)
-	glRepo.EXPECT().GetByIDs(mock.Anything, repositories.GetGLAccountsByIDsRequest{TenantInfo: repositoriesTenantInfo(orgID, buID), GLAccountIDs: []pulid.ID{accountID1, accountID2}}).Return([]*glaccount.GLAccount{
-		{ID: accountID1, Status: domaintypes.StatusActive, AllowManualJE: true},
-		{ID: accountID2, Status: domaintypes.StatusActive, AllowManualJE: true},
-	}, nil)
+	glRepo.EXPECT().
+		GetByIDs(mock.Anything, repositories.GetGLAccountsByIDsRequest{TenantInfo: repositoriesTenantInfo(orgID, buID), GLAccountIDs: []pulid.ID{accountID1, accountID2}}).
+		Return([]*glaccount.GLAccount{
+			{ID: accountID1, Status: domaintypes.StatusActive, AllowManualJE: true},
+			{ID: accountID2, Status: domaintypes.StatusActive, AllowManualJE: true},
+		}, nil)
 
 	v := &Validator{fiscalRepo: fiscalRepo, glAccountRepo: glRepo}
 	err := v.ValidateDraftUpsert(t.Context(), entity, &tenant.AccountingControl{
@@ -82,11 +86,13 @@ func TestValidateDraftUpsertBlocksNonAdjustingPeriodWhenPolicyRequiresIt(t *test
 	}
 
 	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
-	fiscalRepo.EXPECT().GetPeriodByDate(mock.Anything, mock.Anything).Return(&fiscalperiod.FiscalPeriod{
-		ID:           pulid.MustNew("fp_"),
-		FiscalYearID: pulid.MustNew("fy_"),
-		PeriodType:   fiscalperiod.PeriodTypeMonth,
-	}, nil)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, mock.Anything).
+		Return(&fiscalperiod.FiscalPeriod{
+			ID:           pulid.MustNew("fp_"),
+			FiscalYearID: pulid.MustNew("fy_"),
+			PeriodType:   fiscalperiod.PeriodTypeMonth,
+		}, nil)
 	glRepo := mocks.NewMockGLAccountRepository(t)
 	glRepo.EXPECT().GetByIDs(mock.Anything, mock.Anything).Return([]*glaccount.GLAccount{
 		{ID: accountID1, Status: domaintypes.StatusActive, AllowManualJE: true},

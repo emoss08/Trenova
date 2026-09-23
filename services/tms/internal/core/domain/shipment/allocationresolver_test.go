@@ -257,7 +257,10 @@ func TestResolveShares_AmountRowsMustAddUpToTheCharge(t *testing.T) {
 	other := pulid.MustNew("cus_")
 
 	_, err := ResolveShares(shp, []*ChargeAllocation{
-		forCharge(amountAllocation(ChargeAllocationKindAccessorial, shp.CustomerID, "60", 0), charge),
+		forCharge(
+			amountAllocation(ChargeAllocationKindAccessorial, shp.CustomerID, "60", 0),
+			charge,
+		),
 		forCharge(amountAllocation(ChargeAllocationKindAccessorial, other, "39.99", 1), charge),
 	})
 	require.Error(t, err)
@@ -317,7 +320,11 @@ func TestResolveShares_OrdersTheDefaultPayerFirstThenByID(t *testing.T) {
 
 	require.Len(t, resolution.Shares, 3)
 	assert.Equal(t, shp.CustomerID, resolution.Shares[0].PayerID)
-	assert.True(t, resolution.Shares[0].TotalAmount.IsZero(), "the default payer keeps an empty share")
+	assert.True(
+		t,
+		resolution.Shares[0].TotalAmount.IsZero(),
+		"the default payer keeps an empty share",
+	)
 	assert.Equal(t, payerA, resolution.Shares[1].PayerID)
 	assert.Equal(t, payerZ, resolution.Shares[2].PayerID)
 	assert.Equal(t, []pulid.ID{shp.CustomerID, payerA, payerZ}, resolution.PayerIDs())
@@ -394,8 +401,16 @@ func TestResolveOrderChargeShares(t *testing.T) {
 
 	defaultPayer := pulid.MustNew("cus_")
 	other := pulid.MustNew("cus_")
-	brokerage := OrderChargeRef{ID: pulid.MustNew("ordchg_"), Description: "Customs brokerage", Amount: allocDec("250")}
-	fuel := OrderChargeRef{ID: pulid.MustNew("ordchg_"), Description: "Order fuel", Amount: allocDec("80")}
+	brokerage := OrderChargeRef{
+		ID:          pulid.MustNew("ordchg_"),
+		Description: "Customs brokerage",
+		Amount:      allocDec("250"),
+	}
+	fuel := OrderChargeRef{
+		ID:          pulid.MustNew("ordchg_"),
+		Description: "Order fuel",
+		Amount:      allocDec("80"),
+	}
 	fuelID := fuel.ID
 
 	resolution, err := ResolveOrderChargeShares(
@@ -464,11 +479,30 @@ func TestValidateAllocations(t *testing.T) {
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
-	active := &customer.Customer{ID: pulid.MustNew("cus_"), OrganizationID: orgID, BusinessUnitID: buID, Status: domaintypes.StatusActive}
-	inactive := &customer.Customer{ID: pulid.MustNew("cus_"), OrganizationID: orgID, BusinessUnitID: buID, Status: domaintypes.StatusInactive}
-	foreign := &customer.Customer{ID: pulid.MustNew("cus_"), OrganizationID: pulid.MustNew("org_"), BusinessUnitID: buID, Status: domaintypes.StatusActive}
+	active := &customer.Customer{
+		ID:             pulid.MustNew("cus_"),
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Status:         domaintypes.StatusActive,
+	}
+	inactive := &customer.Customer{
+		ID:             pulid.MustNew("cus_"),
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Status:         domaintypes.StatusInactive,
+	}
+	foreign := &customer.Customer{
+		ID:             pulid.MustNew("cus_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: buID,
+		Status:         domaintypes.StatusActive,
+	}
 	missing := pulid.MustNew("cus_")
-	customers := map[pulid.ID]*customer.Customer{active.ID: active, inactive.ID: inactive, foreign.ID: foreign}
+	customers := map[pulid.ID]*customer.Customer{
+		active.ID:   active,
+		inactive.ID: inactive,
+		foreign.ID:  foreign,
+	}
 
 	locked := percentAllocation(ChargeAllocationKindFreight, active.ID, "100", 0)
 	rows := []*ChargeAllocation{
@@ -477,7 +511,11 @@ func TestValidateAllocations(t *testing.T) {
 		percentAllocation(ChargeAllocationKindFreight, foreign.ID, "25", 2),
 		percentAllocation(ChargeAllocationKindFreight, missing, "25", 3),
 		locked,
-		{ChargeKind: ChargeAllocationKindFreight, BillToCustomerID: active.ID, Method: ChargeAllocationMethodPercent},
+		{
+			ChargeKind:       ChargeAllocationKindFreight,
+			BillToCustomerID: active.ID,
+			Method:           ChargeAllocationMethodPercent,
+		},
 	}
 
 	multiErr := ValidateAllocations(&ValidateAllocationsParams{
@@ -505,8 +543,10 @@ func TestValidateAllocations(t *testing.T) {
 	assert.False(t, ValidateAllocations(&ValidateAllocationsParams{
 		TenantOrgID: orgID,
 		TenantBuID:  buID,
-		Allocations: []*ChargeAllocation{percentAllocation(ChargeAllocationKindFreight, active.ID, "100", 0)},
-		Customers:   customers,
+		Allocations: []*ChargeAllocation{
+			percentAllocation(ChargeAllocationKindFreight, active.ID, "100", 0),
+		},
+		Customers: customers,
 	}).HasErrors())
 }
 
@@ -517,9 +557,21 @@ func TestChargeAllocation_TargetIDAndValidation(t *testing.T) {
 	chargeID := pulid.MustNew("ac_")
 	orderChargeID := pulid.MustNew("ordchg_")
 
-	assert.Equal(t, shipmentID, (&ChargeAllocation{ChargeKind: ChargeAllocationKindFreight, ShipmentID: &shipmentID}).TargetID())
-	assert.Equal(t, chargeID, (&ChargeAllocation{ChargeKind: ChargeAllocationKindAccessorial, AdditionalChargeID: &chargeID}).TargetID())
-	assert.Equal(t, orderChargeID, (&ChargeAllocation{ChargeKind: ChargeAllocationKindOrderCharge, OrderChargeID: &orderChargeID}).TargetID())
+	assert.Equal(
+		t,
+		shipmentID,
+		(&ChargeAllocation{ChargeKind: ChargeAllocationKindFreight, ShipmentID: &shipmentID}).TargetID(),
+	)
+	assert.Equal(
+		t,
+		chargeID,
+		(&ChargeAllocation{ChargeKind: ChargeAllocationKindAccessorial, AdditionalChargeID: &chargeID}).TargetID(),
+	)
+	assert.Equal(
+		t,
+		orderChargeID,
+		(&ChargeAllocation{ChargeKind: ChargeAllocationKindOrderCharge, OrderChargeID: &orderChargeID}).TargetID(),
+	)
 	assert.True(t, (&ChargeAllocation{}).TargetID().IsNil())
 	var none *ChargeAllocation
 	assert.True(t, none.TargetID().IsNil())

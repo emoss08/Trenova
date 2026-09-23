@@ -174,8 +174,14 @@ type WorkerSafetyRepository interface {
 		ctx context.Context,
 		req *GetWorkerSafetyEventByIDRequest,
 	) (*worker.WorkerSafetyEvent, error)
-	CreateEvent(ctx context.Context, entity *worker.WorkerSafetyEvent) (*worker.WorkerSafetyEvent, error)
-	UpdateEvent(ctx context.Context, entity *worker.WorkerSafetyEvent) (*worker.WorkerSafetyEvent, error)
+	CreateEvent(
+		ctx context.Context,
+		entity *worker.WorkerSafetyEvent,
+	) (*worker.WorkerSafetyEvent, error)
+	UpdateEvent(
+		ctx context.Context,
+		entity *worker.WorkerSafetyEvent,
+	) (*worker.WorkerSafetyEvent, error)
 	DeleteEvent(ctx context.Context, req *GetWorkerSafetyEventByIDRequest) error
 
 	ListActions(

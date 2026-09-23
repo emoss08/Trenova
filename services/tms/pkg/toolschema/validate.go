@@ -97,7 +97,11 @@ func normalize(value map[string]any) (any, error) {
 // the field it is about. A missing required value is filed under the value
 // that is missing, not under the object that lacks it, which is where a
 // form has a place to say so.
-func collect(invalid *jsonschema.ValidationError, multiErr *errortypes.MultiError, printer *message.Printer) {
+func collect(
+	invalid *jsonschema.ValidationError,
+	multiErr *errortypes.MultiError,
+	printer *message.Printer,
+) {
 	if len(invalid.Causes) > 0 {
 		for _, cause := range invalid.Causes {
 			collect(cause, multiErr, printer)

@@ -25,7 +25,10 @@ type fakeRepo struct {
 	reviews   []*worker.PerformanceReview
 }
 
-func (f *fakeRepo) GetTemplateByID(_ context.Context, req *repositories.GetReviewTemplateByIDRequest) (*worker.PerformanceReviewTemplate, error) {
+func (f *fakeRepo) GetTemplateByID(
+	_ context.Context,
+	req *repositories.GetReviewTemplateByIDRequest,
+) (*worker.PerformanceReviewTemplate, error) {
 	for _, t := range f.templates {
 		if t.ID == req.ID {
 			return t, nil
@@ -34,11 +37,18 @@ func (f *fakeRepo) GetTemplateByID(_ context.Context, req *repositories.GetRevie
 	return nil, errortypes.NewNotFoundError("PerformanceReviewTemplate not found")
 }
 
-func (f *fakeRepo) TemplateCodeExists(context.Context, *repositories.ReviewTemplateCodeExistsRequest) (bool, error) {
+func (f *fakeRepo) TemplateCodeExists(
+	context.Context,
+	*repositories.ReviewTemplateCodeExistsRequest,
+) (bool, error) {
 	return false, nil
 }
 
-func (f *fakeRepo) ClearDefaultTemplate(_ context.Context, _ pagination.TenantInfo, exceptID pulid.ID) error {
+func (f *fakeRepo) ClearDefaultTemplate(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	exceptID pulid.ID,
+) error {
 	for _, t := range f.templates {
 		if t.ID != exceptID {
 			t.IsDefault = false
@@ -47,13 +57,19 @@ func (f *fakeRepo) ClearDefaultTemplate(_ context.Context, _ pagination.TenantIn
 	return nil
 }
 
-func (f *fakeRepo) CreateTemplate(_ context.Context, t *worker.PerformanceReviewTemplate) (*worker.PerformanceReviewTemplate, error) {
+func (f *fakeRepo) CreateTemplate(
+	_ context.Context,
+	t *worker.PerformanceReviewTemplate,
+) (*worker.PerformanceReviewTemplate, error) {
 	t.ID = pulid.MustNew("prt_")
 	f.templates = append(f.templates, t)
 	return t, nil
 }
 
-func (f *fakeRepo) ListReviews(_ context.Context, req *repositories.ListPerformanceReviewsRequest) ([]*worker.PerformanceReview, error) {
+func (f *fakeRepo) ListReviews(
+	_ context.Context,
+	req *repositories.ListPerformanceReviewsRequest,
+) ([]*worker.PerformanceReview, error) {
 	out := make([]*worker.PerformanceReview, 0, len(f.reviews))
 	for _, r := range f.reviews {
 		if r.WorkerID != req.WorkerID {
@@ -75,7 +91,10 @@ func (f *fakeRepo) ListReviews(_ context.Context, req *repositories.ListPerforma
 	return out, nil
 }
 
-func (f *fakeRepo) GetReviewByID(_ context.Context, req *repositories.GetPerformanceReviewByIDRequest) (*worker.PerformanceReview, error) {
+func (f *fakeRepo) GetReviewByID(
+	_ context.Context,
+	req *repositories.GetPerformanceReviewByIDRequest,
+) (*worker.PerformanceReview, error) {
 	for _, r := range f.reviews {
 		if r.ID == req.ID {
 			copied := *r
@@ -92,9 +111,13 @@ func (f *fakeRepo) GetReviewByID(_ context.Context, req *repositories.GetPerform
 	return nil, errortypes.NewNotFoundError("PerformanceReview not found")
 }
 
-func (f *fakeRepo) CreateReview(_ context.Context, r *worker.PerformanceReview) (*worker.PerformanceReview, error) {
+func (f *fakeRepo) CreateReview(
+	_ context.Context,
+	r *worker.PerformanceReview,
+) (*worker.PerformanceReview, error) {
 	for _, existing := range f.reviews {
-		if existing.WorkerID == r.WorkerID && existing.TemplateID == r.TemplateID && existing.Status.IsOpen() {
+		if existing.WorkerID == r.WorkerID && existing.TemplateID == r.TemplateID &&
+			existing.Status.IsOpen() {
 			return nil, errortypes.NewValidationError("templateId", errortypes.ErrDuplicate, "open")
 		}
 	}
@@ -103,7 +126,10 @@ func (f *fakeRepo) CreateReview(_ context.Context, r *worker.PerformanceReview) 
 	return r, nil
 }
 
-func (f *fakeRepo) UpdateReview(_ context.Context, r *worker.PerformanceReview) (*worker.PerformanceReview, error) {
+func (f *fakeRepo) UpdateReview(
+	_ context.Context,
+	r *worker.PerformanceReview,
+) (*worker.PerformanceReview, error) {
 	for i, existing := range f.reviews {
 		if existing.ID == r.ID {
 			r.Version = existing.Version + 1
@@ -114,7 +140,10 @@ func (f *fakeRepo) UpdateReview(_ context.Context, r *worker.PerformanceReview) 
 	return nil, errortypes.NewNotFoundError("PerformanceReview not found")
 }
 
-func (f *fakeRepo) DeleteReview(_ context.Context, req *repositories.GetPerformanceReviewByIDRequest) error {
+func (f *fakeRepo) DeleteReview(
+	_ context.Context,
+	req *repositories.GetPerformanceReviewByIDRequest,
+) error {
 	for i, r := range f.reviews {
 		if r.ID == req.ID {
 			f.reviews = append(f.reviews[:i], f.reviews[i+1:]...)
@@ -136,7 +165,12 @@ type harness struct {
 func newHarness(t *testing.T) *harness {
 	t.Helper()
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	wrk := &worker.Worker{ID: pulid.MustNew("wrk_"), OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, Status: domaintypes.StatusActive}
+	wrk := &worker.Worker{
+		ID:             pulid.MustNew("wrk_"),
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		Status:         domaintypes.StatusActive,
+	}
 	workerRepo := mocks.NewMockWorkerRepository(t)
 	workerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(wrk, nil).Maybe()
 	audit := mocks.NewMockAuditService(t)
@@ -157,17 +191,27 @@ func newHarness(t *testing.T) *harness {
 		WorkerRepo:   workerRepo,
 		AuditService: audit,
 	})
-	return &harness{svc: svc, repo: repo, tenant: tenant, wrk: wrk, template: repo.templates[0], userID: pulid.MustNew("usr_")}
+	return &harness{
+		svc:      svc,
+		repo:     repo,
+		tenant:   tenant,
+		wrk:      wrk,
+		template: repo.templates[0],
+		userID:   pulid.MustNew("usr_"),
+	}
 }
 
 func TestReviewLifecycle(t *testing.T) {
 	h := newHarness(t)
 	now := timeutils.NowUnix()
 
-	draft, err := h.svc.CreateReview(context.Background(), &performancereviewservice.CreateReviewRequest{
-		TenantInfo: h.tenant, WorkerID: h.wrk.ID, TemplateID: h.template.ID,
-		PeriodStart: now - 180*86400, PeriodEnd: now, UserID: h.userID,
-	})
+	draft, err := h.svc.CreateReview(
+		context.Background(),
+		&performancereviewservice.CreateReviewRequest{
+			TenantInfo: h.tenant, WorkerID: h.wrk.ID, TemplateID: h.template.ID,
+			PeriodStart: now - 180*86400, PeriodEnd: now, UserID: h.userID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, worker.ReviewStatusDraft, draft.Status)
 	assert.Equal(t, h.userID, draft.ReviewerID)
@@ -187,17 +231,20 @@ func TestReviewLifecycle(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr, "unrated items block submission")
 
 	five, three := int32(5), int32(3)
-	saved, err := h.svc.UpdateReview(context.Background(), &performancereviewservice.UpdateReviewRequest{
-		TenantInfo: h.tenant, ID: draft.ID,
-		Ratings: []worker.ReviewRating{
-			{Key: "safety", Score: &five, Comment: "Spotless"},
-			{Key: "service", Score: &three},
-			{Key: "bogus", Score: &five},
+	saved, err := h.svc.UpdateReview(
+		context.Background(),
+		&performancereviewservice.UpdateReviewRequest{
+			TenantInfo: h.tenant, ID: draft.ID,
+			Ratings: []worker.ReviewRating{
+				{Key: "safety", Score: &five, Comment: "Spotless"},
+				{Key: "service", Score: &three},
+				{Key: "bogus", Score: &five},
+			},
+			Summary: "Strong year on the road.",
+			Goals:   []worker.ReviewGoal{{Title: "Complete hazmat refresher"}, {Title: "  "}},
+			UserID:  h.userID,
 		},
-		Summary: "Strong year on the road.",
-		Goals:   []worker.ReviewGoal{{Title: "Complete hazmat refresher"}, {Title: "  "}},
-		UserID:  h.userID,
-	})
+	)
 	require.NoError(t, err)
 	require.Len(t, saved.Ratings, 2, "unknown keys are ignored")
 	assert.Equal(t, "Spotless", saved.Ratings[0].Comment)
@@ -207,9 +254,12 @@ func TestReviewLifecycle(t *testing.T) {
 	assert.NotEmpty(t, saved.Goals[0].ID)
 	assert.Equal(t, worker.ReviewGoalStatusOpen, saved.Goals[0].Status)
 
-	submitted, err := h.svc.SubmitReview(context.Background(), &performancereviewservice.ReviewStatusRequest{
-		ID: draft.ID, TenantInfo: h.tenant, UserID: h.userID,
-	})
+	submitted, err := h.svc.SubmitReview(
+		context.Background(),
+		&performancereviewservice.ReviewStatusRequest{
+			ID: draft.ID, TenantInfo: h.tenant, UserID: h.userID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, worker.ReviewStatusSubmitted, submitted.Status)
 	require.NotNil(t, submitted.SubmittedAt)
@@ -220,22 +270,47 @@ func TestReviewLifecycle(t *testing.T) {
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr, "submitted reviews are read-only")
 
-	_, err = h.svc.AcknowledgeReview(context.Background(), h.tenant, draft.ID, pulid.MustNew("wrk_"), "")
+	_, err = h.svc.AcknowledgeReview(
+		context.Background(),
+		h.tenant,
+		draft.ID,
+		pulid.MustNew("wrk_"),
+		"",
+	)
 	require.Error(t, err, "another worker cannot sign it")
-	acked, err := h.svc.AcknowledgeReview(context.Background(), h.tenant, draft.ID, h.wrk.ID, "Thanks — agreed on the goal.")
+	acked, err := h.svc.AcknowledgeReview(
+		context.Background(),
+		h.tenant,
+		draft.ID,
+		h.wrk.ID,
+		"Thanks — agreed on the goal.",
+	)
 	require.NoError(t, err)
 	assert.Equal(t, worker.ReviewStatusAcknowledged, acked.Status)
 	assert.True(t, acked.IsAcknowledged())
 
-	closed, err := h.svc.CloseReview(context.Background(), &performancereviewservice.ReviewStatusRequest{
-		ID: draft.ID, TenantInfo: h.tenant, UserID: h.userID,
-	})
+	closed, err := h.svc.CloseReview(
+		context.Background(),
+		&performancereviewservice.ReviewStatusRequest{
+			ID: draft.ID, TenantInfo: h.tenant, UserID: h.userID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, worker.ReviewStatusClosed, closed.Status)
 	require.NotNil(t, closed.NextReviewAt)
-	assert.Equal(t, timeutils.AddMonthsUTC(closed.PeriodEnd, 6), *closed.NextReviewAt, "next review comes from the cadence")
+	assert.Equal(
+		t,
+		timeutils.AddMonthsUTC(closed.PeriodEnd, 6),
+		*closed.NextReviewAt,
+		"next review comes from the cadence",
+	)
 
-	visible, err := h.svc.ListReviews(context.Background(), h.tenant, h.wrk.ID, []worker.ReviewStatus{worker.ReviewStatusSubmitted, worker.ReviewStatusClosed})
+	visible, err := h.svc.ListReviews(
+		context.Background(),
+		h.tenant,
+		h.wrk.ID,
+		[]worker.ReviewStatus{worker.ReviewStatusSubmitted, worker.ReviewStatusClosed},
+	)
 	require.NoError(t, err)
 	assert.Len(t, visible, 1)
 }
@@ -243,23 +318,43 @@ func TestReviewLifecycle(t *testing.T) {
 func TestReopenAndDelete(t *testing.T) {
 	h := newHarness(t)
 	now := timeutils.NowUnix()
-	draft, err := h.svc.CreateReview(context.Background(), &performancereviewservice.CreateReviewRequest{
-		TenantInfo: h.tenant, WorkerID: h.wrk.ID, TemplateID: h.template.ID,
-		Title: "Probation review", PeriodStart: now - 90*86400, PeriodEnd: now, UserID: h.userID,
-	})
+	draft, err := h.svc.CreateReview(
+		context.Background(),
+		&performancereviewservice.CreateReviewRequest{
+			TenantInfo: h.tenant, WorkerID: h.wrk.ID, TemplateID: h.template.ID,
+			Title: "Probation review", PeriodStart: now - 90*86400, PeriodEnd: now, UserID: h.userID,
+		},
+	)
 	require.NoError(t, err)
 
 	four := int32(4)
 	_, err = h.svc.UpdateReview(context.Background(), &performancereviewservice.UpdateReviewRequest{
 		TenantInfo: h.tenant, ID: draft.ID, Summary: "Solid start.",
-		Ratings: []worker.ReviewRating{{Key: "safety", Score: &four}, {Key: "service", Score: &four}},
-		UserID:  h.userID,
+		Ratings: []worker.ReviewRating{
+			{Key: "safety", Score: &four},
+			{Key: "service", Score: &four},
+		},
+		UserID: h.userID,
 	})
 	require.NoError(t, err)
-	_, err = h.svc.SubmitReview(context.Background(), &performancereviewservice.ReviewStatusRequest{ID: draft.ID, TenantInfo: h.tenant, UserID: h.userID})
+	_, err = h.svc.SubmitReview(
+		context.Background(),
+		&performancereviewservice.ReviewStatusRequest{
+			ID:         draft.ID,
+			TenantInfo: h.tenant,
+			UserID:     h.userID,
+		},
+	)
 	require.NoError(t, err)
 
-	reopened, err := h.svc.ReopenReview(context.Background(), &performancereviewservice.ReviewStatusRequest{ID: draft.ID, TenantInfo: h.tenant, UserID: h.userID})
+	reopened, err := h.svc.ReopenReview(
+		context.Background(),
+		&performancereviewservice.ReviewStatusRequest{
+			ID:         draft.ID,
+			TenantInfo: h.tenant,
+			UserID:     h.userID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, worker.ReviewStatusDraft, reopened.Status)
 	assert.Nil(t, reopened.SubmittedAt)

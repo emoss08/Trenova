@@ -109,7 +109,10 @@ func TestValidatePartnerSettingsWithIndex(t *testing.T) {
 				"carrier": map[string]any{"scac": "ABCD"},
 				"secrets": map[string]any{"apiToken": "plain-token"},
 			},
-			fields:       append(testPartnerSettingFields(), testSecretPartnerSettingField("secrets.apiToken")),
+			fields: append(
+				testPartnerSettingFields(),
+				testSecretPartnerSettingField("secrets.apiToken"),
+			),
 			wantCode:     partnerSettingSecretPlaintextCode,
 			wantSeverity: edi.ValidationSeverityError,
 		},

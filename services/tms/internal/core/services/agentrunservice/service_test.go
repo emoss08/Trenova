@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
+	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
@@ -190,11 +191,11 @@ func TestStartForDefinitionRejectsDisabledDefinition(t *testing.T) {
 func TestStartForDefinitionLaunchesWorkflow(t *testing.T) {
 	t.Parallel()
 
-	runID := pulid.MustNew("ar_")
 	def := definitionFixture(true)
 	var started client.StartWorkflowOptions
 	var startedName any
 	var payload *agentjobs.AgentRunPayload
+	var createdAfterStart bool
 	audit := &fakeAuditService{}
 	svc := &Service{
 		l:           zap.NewNop(),
@@ -202,7 +203,7 @@ func TestStartForDefinitionLaunchesWorkflow(t *testing.T) {
 		definitions: definitionRepoFor(def),
 		repo: &fakeAgentRunRepo{
 			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
-				entity.ID = runID
+				createdAfterStart = started.ID != ""
 				return entity, nil
 			},
 			update: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
@@ -228,17 +229,33 @@ func TestStartForDefinitionLaunchesWorkflow(t *testing.T) {
 		audit: audit,
 	}
 
-	run, err := svc.StartForDefinition(t.Context(), startRequest(def), nil)
+	req := startRequest(def)
+	run, err := svc.StartForDefinition(t.Context(), req, nil)
 	if err != nil {
 		t.Fatalf("expected start to succeed, got %v", err)
 	}
 	if run == nil {
 		t.Fatalf("expected a run to be returned")
 	}
+	if !createdAfterStart {
+		t.Fatalf("expected the run to be recorded only once its workflow had started")
+	}
+	runID := run.ID
 
-	wantWorkflowID := workflowIDPrefix + runID.String()
+	// An event run is keyed by its subject, so a second event about a
+	// subject whose run is still open is refused by Temporal.
+	wantWorkflowID := workflowIDPrefix + def.ID.String() + "-subject-" + req.SubjectID.String()
 	if started.ID != wantWorkflowID {
 		t.Fatalf("expected workflow id %s, got %s", wantWorkflowID, started.ID)
+	}
+	if started.WorkflowIDConflictPolicy != enums.WORKFLOW_ID_CONFLICT_POLICY_FAIL {
+		t.Fatalf(
+			"expected a second open run to be refused, got %v",
+			started.WorkflowIDConflictPolicy,
+		)
+	}
+	if !started.WorkflowExecutionErrorWhenAlreadyStarted {
+		t.Fatalf("expected a refused start to be reported, not handed back as the open run")
 	}
 	// A run belongs on the background queue, not the one a person's chat turn
 	// waits in: a research run that takes ten minutes must not hold a slot
@@ -246,8 +263,9 @@ func TestStartForDefinitionLaunchesWorkflow(t *testing.T) {
 	if started.TaskQueue != temporaltype.TaskQueueAgentBackground.String() {
 		t.Fatalf("expected the agent background task queue, got %s", started.TaskQueue)
 	}
-	if started.WorkflowIDReusePolicy != enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE {
-		t.Fatalf("expected reject-duplicate reuse policy, got %v", started.WorkflowIDReusePolicy)
+	if started.WorkflowIDReusePolicy != enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE {
+		t.Fatalf("expected a subject to take a new run once its last one ended, got %v",
+			started.WorkflowIDReusePolicy)
 	}
 	if startedName != agentjobs.AgentRunWorkflowName {
 		t.Fatalf("expected workflow %s, got %v", agentjobs.AgentRunWorkflowName, startedName)
@@ -290,7 +308,6 @@ func TestStartForDefinitionUsesSlotWorkflowID(t *testing.T) {
 		definitions: definitionRepoFor(def),
 		repo: &fakeAgentRunRepo{
 			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
-				entity.ID = pulid.MustNew("ar_")
 				return entity, nil
 			},
 			update: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
@@ -329,29 +346,31 @@ func TestStartForDefinitionUsesSlotWorkflowID(t *testing.T) {
 		t.Fatalf("expected slot workflow id %s, got %s", want, started.ID)
 	}
 	if run.SubjectType != agent.SubjectOrganization || run.SubjectID != testTenant.OrgID {
-		t.Fatalf("expected organization subject by default, got %s %s", run.SubjectType, run.SubjectID)
+		t.Fatalf(
+			"expected organization subject by default, got %s %s",
+			run.SubjectType,
+			run.SubjectID,
+		)
 	}
 	if run.AgentType != agent.TypeGeneral {
 		t.Fatalf("expected general agent type for a custom definition, got %s", run.AgentType)
 	}
 }
 
-func TestStartForDefinitionMarksRunFailedWhenWorkflowStartFails(t *testing.T) {
+// A run is recorded only once its workflow has started, so a start that fails
+// leaves nothing behind for anybody to wonder about.
+func TestStartForDefinitionRecordsNothingWhenWorkflowStartFails(t *testing.T) {
 	t.Parallel()
 
 	def := definitionFixture(true)
-	var last *agent.AgentRun
+	created := false
 	svc := &Service{
 		l:           zap.NewNop(),
 		validator:   NewValidator(ValidatorParams{}),
 		definitions: definitionRepoFor(def),
 		repo: &fakeAgentRunRepo{
 			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
-				entity.ID = pulid.MustNew("ar_")
-				return entity, nil
-			},
-			update: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
-				last = entity
+				created = true
 				return entity, nil
 			},
 		},
@@ -372,8 +391,51 @@ func TestStartForDefinitionMarksRunFailedWhenWorkflowStartFails(t *testing.T) {
 	if _, err := svc.StartForDefinition(t.Context(), startRequest(def), nil); err == nil {
 		t.Fatalf("expected the workflow start error to surface")
 	}
-	if last == nil || last.Status != agent.RunStatusFailed {
-		t.Fatalf("expected the run to be marked failed, got %+v", last)
+	if created {
+		t.Fatalf("expected no run to be recorded")
+	}
+}
+
+// Two events about one subject, arriving together, start one run. The second
+// is refused by Temporal on the run's workflow id, where a count of open runs
+// read by both would have let both through.
+func TestStartForDefinitionRefusesASecondRunForAnOpenSubject(t *testing.T) {
+	t.Parallel()
+
+	def := definitionFixture(true)
+	created := false
+	svc := &Service{
+		l:           zap.NewNop(),
+		validator:   NewValidator(ValidatorParams{}),
+		definitions: definitionRepoFor(def),
+		repo: &fakeAgentRunRepo{
+			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
+				created = true
+				return entity, nil
+			},
+		},
+		workflows: &fakeWorkflowStarter{
+			enabled: true,
+			startWorkflow: func(
+				context.Context,
+				client.StartWorkflowOptions,
+				any,
+				...any,
+			) (client.WorkflowRun, error) {
+				return nil, serviceerror.NewWorkflowExecutionAlreadyStarted(
+					"already started", "", "",
+				)
+			},
+		},
+		audit: &fakeAuditService{},
+	}
+
+	_, err := svc.StartForDefinition(t.Context(), startRequest(def), nil)
+	if !errors.Is(err, serviceports.ErrAgentRunAlreadyOpen) {
+		t.Fatalf("expected the open run to refuse the start, got %v", err)
+	}
+	if created {
+		t.Fatalf("expected no second run to be recorded")
 	}
 }
 

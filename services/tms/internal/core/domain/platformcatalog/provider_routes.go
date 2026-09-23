@@ -1067,10 +1067,6 @@ func agentAutomationRouteRefs() []RouteRef {
 			// A plan is one approval over several writes, read and resolved
 			// alongside the proposals it is made of.
 			"/api/v1/agent-plans/:planID/",
-			// Whether a reply can be answered on a worker, asked once per
-			// session: a client that finds no worker still asks in the request
-			// it came in on, so this has to be readable wherever asking is.
-			"/api/v1/assistant/capabilities/",
 			// Which models the assistant can be pointed at, read by the picker
 			// in the composer rather than by provider administration.
 			"/api/v1/assistant/providers/",

@@ -28,7 +28,15 @@ func TestAdoptContractRate_AppliesAgreementAccessorials(t *testing.T) {
 	calculator := agreementCalculator(t, agreement, nil)
 
 	adoptContract(t, calculator, entity)
-	require.NoError(t, calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")))
+	require.NoError(
+		t,
+		calculator.Recalculate(
+			t.Context(),
+			entity,
+			&tenant.ShipmentControl{},
+			pulid.MustNew("usr_"),
+		),
+	)
 
 	require.Len(t, entity.AdditionalCharges, 1)
 	charge := entity.AdditionalCharges[0]
@@ -83,7 +91,12 @@ func TestRecalculate_LeavesContractAccessorialsAlone(t *testing.T) {
 
 	require.NoError(
 		t,
-		calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")),
+		calculator.Recalculate(
+			t.Context(),
+			entity,
+			&tenant.ShipmentControl{},
+			pulid.MustNew("usr_"),
+		),
 	)
 
 	require.Len(t, entity.AdditionalCharges, 1)
@@ -196,7 +209,15 @@ func TestSyncFuelSurcharge_PassesAgreementFuelBinding(t *testing.T) {
 	calculator := agreementCalculator(t, agreement, nil)
 	calculator.fuelSurcharge = fuel
 
-	require.NoError(t, calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")))
+	require.NoError(
+		t,
+		calculator.Recalculate(
+			t.Context(),
+			entity,
+			&tenant.ShipmentControl{},
+			pulid.MustNew("usr_"),
+		),
+	)
 
 	require.NotNil(t, captured)
 	assert.Equal(t, programID, captured.ProgramID)

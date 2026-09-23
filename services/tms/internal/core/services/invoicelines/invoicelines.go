@@ -208,7 +208,8 @@ func accessorialLine(
 }
 
 func matchingAccessorial(charge *shipment.AdditionalCharge) *accessorialcharge.AccessorialCharge {
-	if charge.AccessorialCharge == nil || charge.AccessorialCharge.ID != charge.AccessorialChargeID {
+	if charge.AccessorialCharge == nil ||
+		charge.AccessorialCharge.ID != charge.AccessorialChargeID {
 		return nil
 	}
 

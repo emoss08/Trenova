@@ -128,11 +128,11 @@ type WorkerSafetyViolation struct {
 	SafetyEventID  pulid.ID `json:"safetyEventId"  bun:"safety_event_id,type:VARCHAR(100),notnull"`
 	// WorkerID is denormalised from the event so a per-driver violation list
 	// does not need the join. The event owns the date; nothing here does.
-	WorkerID pulid.ID `json:"workerId" bun:"worker_id,type:VARCHAR(100),notnull"`
+	WorkerID pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
 
-	Basic       CSABasic `json:"basic"       bun:"basic,type:csa_basic_enum,notnull"`
-	Code        string   `json:"code"        bun:"code,type:VARCHAR(20),nullzero"`
-	Description string   `json:"description" bun:"description,type:VARCHAR(255),notnull"`
+	Basic       CSABasic `json:"basic"          bun:"basic,type:csa_basic_enum,notnull"`
+	Code        string   `json:"code"           bun:"code,type:VARCHAR(20),nullzero"`
+	Description string   `json:"description"    bun:"description,type:VARCHAR(255),notnull"`
 	// SeverityWeight is the FMCSA weight, 1 to 10. Out of service adds two more
 	// when the BASIC is scored, which is why the flag stays beside it rather
 	// than being folded in — folding it in would make the weight unreadable

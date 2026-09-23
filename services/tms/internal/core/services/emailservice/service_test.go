@@ -133,7 +133,8 @@ func (r *assignmentRepo) GetProfile(
 	if !ok {
 		return nil, errortypes.NewNotFoundError("EmailProfile not found")
 	}
-	if profile.OrganizationID != req.TenantInfo.OrgID || profile.BusinessUnitID != req.TenantInfo.BuID {
+	if profile.OrganizationID != req.TenantInfo.OrgID ||
+		profile.BusinessUnitID != req.TenantInfo.BuID {
 		return nil, errortypes.NewNotFoundError("EmailProfile not found")
 	}
 	return profile, nil
@@ -179,7 +180,10 @@ func (noopAuditService) LogActions([]services.BulkLogEntry) error {
 	return nil
 }
 
-func (noopAuditService) RegisterSensitiveFields(permission.Resource, []services.SensitiveField) error {
+func (noopAuditService) RegisterSensitiveFields(
+	permission.Resource,
+	[]services.SensitiveField,
+) error {
 	return nil
 }
 

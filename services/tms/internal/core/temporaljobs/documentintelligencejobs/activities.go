@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/fitzdoc"
@@ -434,7 +435,7 @@ func (a *Activities) runExtractionPipeline(
 		extracted,
 		intelligence,
 	)
-	result := a.enrichWithAI(
+	result, err := a.enrichWithAI(
 		ctx,
 		&EnrichmentPayload{
 			Payload:        payload,
@@ -447,6 +448,9 @@ func (a *Activities) runExtractionPipeline(
 			Intelligence:   intelligence,
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	return &ExtractionPipelineOutcome{
 		Extracted:      extracted,
@@ -891,11 +895,16 @@ func (a *Activities) syncSearchProjection(
 	a.metrics.Document.RecordSearchProjectionSync(true)
 }
 
+// enrichWithAI asks the model to route the document. A transient failure is
+// returned for Temporal to retry the activity, the way the provider's answer
+// says; on the last attempt, or for a failure no retry would change, the
+// document keeps what the deterministic pass found.
+//
 //nolint:funlen // multi-step AI enrichment pipeline
 func (a *Activities) enrichWithAI(
 	ctx context.Context,
 	payload *EnrichmentPayload,
-) *EnrichmentResult {
+) (*EnrichmentResult, error) {
 	diagnostics := &AIDiagnostics{
 		FallbackAnalysis: payload.Intelligence,
 		AcceptanceStatus: aiAcceptanceStatusNotAttempted,
@@ -947,6 +956,10 @@ func (a *Activities) enrichWithAI(
 		return routeErr
 	})
 	if err != nil {
+		if modelcall.Transient(err) &&
+			!modelcall.FinalAttempt(ctx, defaultRetryPolicy.MaximumAttempts) {
+			return nil, modelcall.Classify(err)
+		}
 		a.logger.Warn(
 			"ai route failed",
 			zap.String("documentId", payload.Document.ID.String()),
@@ -962,7 +975,7 @@ func (a *Activities) enrichWithAI(
 			DocumentIntelligence: payload.Intelligence,
 			AIDiagnostics:        diagnostics,
 			EnqueueAsyncAI:       false,
-		}
+		}, nil
 	}
 	if route == nil || strings.TrimSpace(route.DocumentKind) == "" {
 		diagnostics.RejectionReason = "ai_route_empty"
@@ -971,7 +984,7 @@ func (a *Activities) enrichWithAI(
 			DocumentIntelligence: payload.Intelligence,
 			AIDiagnostics:        diagnostics,
 			EnqueueAsyncAI:       false,
-		}
+		}, nil
 	}
 
 	routedClassification := payload.Classification
@@ -1010,7 +1023,7 @@ func (a *Activities) enrichWithAI(
 			DocumentIntelligence: routedAnalysis,
 			AIDiagnostics:        diagnostics,
 			EnqueueAsyncAI:       false,
-		}
+		}, nil
 	}
 
 	diagnostics.AcceptanceStatus = aiAcceptanceStatusPending
@@ -1020,7 +1033,7 @@ func (a *Activities) enrichWithAI(
 		DocumentIntelligence: routedAnalysis,
 		AIDiagnostics:        diagnostics,
 		EnqueueAsyncAI:       true,
-	}
+	}, nil
 }
 
 func (a *Activities) runWithHeartbeat(

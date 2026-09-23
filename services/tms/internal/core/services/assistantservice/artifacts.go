@@ -184,6 +184,18 @@ func (r *artifactRecorder) publish(
 	return shownArtifact(saved), nil
 }
 
+// adopt takes on artifacts kept earlier in the turn, where the tools that made
+// them ran, so they are tied to their messages and reported with the rest.
+func (r *artifactRecorder) adopt(artifacts []*assistantartifact.Artifact) {
+	if r == nil {
+		return
+	}
+
+	for _, artifact := range artifacts {
+		r.remember(artifact)
+	}
+}
+
 // fromProposals views the turn's recorded proposals as drafts and its plan
 // as a checklist, so a person decides them where they can read them.
 func (r *artifactRecorder) fromProposals(proposals []*agent.AgentProposal, plan *agent.AgentPlan) {
@@ -320,7 +332,10 @@ var (
 )
 
 // documentArtifact is a write-up the model published, kept as markdown.
-func documentArtifact(callID string, document services.PublishedDocument) *assistantartifact.Artifact {
+func documentArtifact(
+	callID string,
+	document services.PublishedDocument,
+) *assistantartifact.Artifact {
 	return &assistantartifact.Artifact{
 		Kind:   assistantartifact.KindDocument,
 		Status: assistantartifact.StatusReady,
@@ -402,9 +417,11 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 	fitRows(payload, "rows")
 
 	return &assistantartifact.Artifact{
-		Kind:             assistantartifact.KindTableView,
-		Status:           assistantartifact.StatusReady,
-		Title:            artifactTitle(stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity))),
+		Kind:   assistantartifact.KindTableView,
+		Status: assistantartifact.StatusReady,
+		Title: artifactTitle(
+			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)),
+		),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
@@ -631,7 +648,9 @@ func runArtifact(callID string, result map[string]any) *assistantartifact.Artifa
 
 	title := stringOf(result["reportName"])
 	if title == "" {
-		title = stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(stringOf(result["reportKey"])))
+		title = stringutils.CapitalizeFirst(
+			stringutils.HumanizeSnakeCase(stringOf(result["reportKey"])),
+		)
 	}
 	if title == "" {
 		title = "Report run"
@@ -663,7 +682,10 @@ func runStatus(finished bool, status string) assistantartifact.Status {
 // entityCardArtifact shows one record a get tool fetched. A result without
 // an id is a view rather than a record (a board, a schedule) and is left to
 // the transcript.
-func entityCardArtifact(callID, toolName string, result map[string]any) *assistantartifact.Artifact {
+func entityCardArtifact(
+	callID, toolName string,
+	result map[string]any,
+) *assistantartifact.Artifact {
 	if stringOf(result["id"]) == "" {
 		return nil
 	}
@@ -686,7 +708,11 @@ func entityCardArtifact(callID, toolName string, result map[string]any) *assista
 		Kind:   assistantartifact.KindEntityCard,
 		Status: assistantartifact.StatusReady,
 		Title: artifactTitle(
-			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)) + " " + recordLabel(result),
+			stringutils.CapitalizeFirst(
+				stringutils.HumanizeSnakeCase(entity),
+			) + " " + recordLabel(
+				result,
+			),
 		),
 		Payload:          payload,
 		SourceToolCallID: callID,
@@ -743,7 +769,10 @@ func draftArtifact(proposal *agent.AgentProposal) *assistantartifact.Artifact {
 	return artifact
 }
 
-func planArtifact(plan *agent.AgentPlan, proposals []*agent.AgentProposal) *assistantartifact.Artifact {
+func planArtifact(
+	plan *agent.AgentPlan,
+	proposals []*agent.AgentProposal,
+) *assistantartifact.Artifact {
 	steps := make([]map[string]any, 0, len(proposals))
 	for _, proposal := range proposals {
 		if proposal == nil || proposal.PlanID == nil || *proposal.PlanID != plan.ID {
@@ -852,7 +881,8 @@ func recordLabel(record map[string]any) string {
 			return value
 		}
 	}
-	if first, last := stringOf(record["firstName"]), stringOf(record["lastName"]); first != "" || last != "" {
+	if first, last := stringOf(record["firstName"]), stringOf(record["lastName"]); first != "" ||
+		last != "" {
 		return strings.TrimSpace(first + " " + last)
 	}
 
@@ -942,14 +972,18 @@ func (s *Service) followDecisions(
 	var wantProposals, wantPlans bool
 	for _, artifact := range artifacts {
 		wantProposals = wantProposals || !artifact.ProposalID.IsNil()
-		wantPlans = wantPlans || (artifact.Kind == assistantartifact.KindPlan && !artifact.PlanID.IsNil())
+		wantPlans = wantPlans ||
+			(artifact.Kind == assistantartifact.KindPlan && !artifact.PlanID.IsNil())
 	}
 
 	if wantProposals && s.proposals != nil {
-		proposals, err := s.proposals.ListByThread(ctx, repositories.ListAgentProposalsByThreadRequest{
-			ThreadID:   req.ID,
-			TenantInfo: req.TenantInfo,
-		})
+		proposals, err := s.proposals.ListByThread(
+			ctx,
+			repositories.ListAgentProposalsByThreadRequest{
+				ThreadID:   req.ID,
+				TenantInfo: req.TenantInfo,
+			},
+		)
 		if err != nil {
 			s.logger.Warn("artifact statuses could not follow proposals", zap.Error(err))
 		} else {

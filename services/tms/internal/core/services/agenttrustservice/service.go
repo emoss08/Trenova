@@ -42,7 +42,10 @@ const (
 
 // notifier is the one call this service makes on the notification service.
 type notifier interface {
-	Create(ctx context.Context, entity *notification.Notification) (*notification.Notification, error)
+	Create(
+		ctx context.Context,
+		entity *notification.Notification,
+	) (*notification.Notification, error)
 }
 
 type actionLogger interface {
@@ -134,7 +137,10 @@ func (s *Service) record(
 	outcome agent.TrustOutcome,
 	decidedBy pulid.ID,
 ) error {
-	tenantInfo := pagination.TenantInfo{OrgID: proposal.OrganizationID, BuID: proposal.BusinessUnitID}
+	tenantInfo := pagination.TenantInfo{
+		OrgID: proposal.OrganizationID,
+		BuID:  proposal.BusinessUnitID,
+	}
 
 	run, err := s.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{
 		ID:         proposal.RunID,
@@ -212,7 +218,11 @@ type tierChange struct {
 	at         int64
 }
 
-func (s *Service) promote(ctx context.Context, change tierChange, control *tenant.AgentControl) error {
+func (s *Service) promote(
+	ctx context.Context,
+	change tierChange,
+	control *tenant.AgentControl,
+) error {
 	next, ok := change.current.Next()
 	if !ok || !change.definition.WithinCeiling(next) {
 		// At the ceiling there is nowhere to go. The streak keeps counting so
@@ -248,7 +258,9 @@ func (s *Service) promote(ctx context.Context, change tierChange, control *tenan
 		priority:  notification.PriorityMedium,
 		title: fmt.Sprintf(
 			"%s now runs %s at \"%s\"",
-			change.definition.Name, stringutils.HumanizeSnakeCase(change.row.ToolName), tierLabel(next),
+			change.definition.Name,
+			stringutils.HumanizeSnakeCase(change.row.ToolName),
+			tierLabel(next),
 		),
 		message: fmt.Sprintf(
 			"%d approvals in a row without a change met the organization's threshold of %d, "+
@@ -291,7 +303,9 @@ func (s *Service) demote(ctx context.Context, change tierChange) error {
 		priority:  notification.PriorityHigh,
 		title: fmt.Sprintf(
 			"%s lost \"%s\" on %s",
-			change.definition.Name, tierLabel(change.current), stringutils.HumanizeSnakeCase(change.row.ToolName),
+			change.definition.Name,
+			tierLabel(change.current),
+			stringutils.HumanizeSnakeCase(change.row.ToolName),
 		),
 		message: fmt.Sprintf(
 			"The tier was earned from a streak of approvals, and a rejection or a failed run ended the streak. "+
@@ -373,7 +387,12 @@ type tierNotice struct {
 	message   string
 }
 
-func (s *Service) notify(ctx context.Context, change tierChange, to agent.AutonomyTier, notice tierNotice) {
+func (s *Service) notify(
+	ctx context.Context,
+	change tierChange,
+	to agent.AutonomyTier,
+	notice tierNotice,
+) {
 	if s.notifications == nil {
 		return
 	}

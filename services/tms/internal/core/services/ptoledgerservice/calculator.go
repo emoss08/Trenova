@@ -117,7 +117,11 @@ func yearStarts(in CalcInput, hire, floor, horizon time.Time, loc *time.Location
 }
 
 // accrualAt resolves the tiered amount and cap in force on a given day.
-func accrualAt(in CalcInput, at time.Time, loc *time.Location) (decimal.Decimal, decimal.NullDecimal) {
+func accrualAt(
+	in CalcInput,
+	at time.Time,
+	loc *time.Location,
+) (decimal.Decimal, decimal.NullDecimal) {
 	tenure := worker.TenureMonths(in.HireDate, at.Unix(), loc)
 	return in.Rule.AmountFor(tenure), in.Rule.MaxBalanceFor(tenure)
 }

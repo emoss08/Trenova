@@ -49,7 +49,13 @@ func setupTest(t *testing.T) *testDeps {
 		realtime:     &mocks.NoopRealtimeService{},
 		transformer:  transformer,
 	}
-	return &testDeps{repo: repo, audit: auditSvc, transformer: transformer, cacheRepo: cacheRepo, svc: svc}
+	return &testDeps{
+		repo:        repo,
+		audit:       auditSvc,
+		transformer: transformer,
+		cacheRepo:   cacheRepo,
+		svc:         svc,
+	}
 }
 
 func newTestEntity() *customer.Customer {
@@ -145,7 +151,10 @@ func TestGet_FallsBackToDatabaseOnCacheMiss(t *testing.T) {
 		},
 	}
 
-	deps.cacheRepo.EXPECT().GetByID(mock.Anything, req).Return(nil, repositories.ErrCacheMiss).Once()
+	deps.cacheRepo.EXPECT().
+		GetByID(mock.Anything, req).
+		Return(nil, repositories.ErrCacheMiss).
+		Once()
 	deps.repo.On("GetByID", mock.Anything, req).Return(entity, nil)
 
 	result, err := deps.svc.Get(t.Context(), req)
@@ -510,7 +519,10 @@ func TestGet_Success(t *testing.T) {
 		},
 	}
 
-	deps.cacheRepo.EXPECT().GetByID(mock.Anything, req).Return(nil, repositories.ErrCacheMiss).Once()
+	deps.cacheRepo.EXPECT().
+		GetByID(mock.Anything, req).
+		Return(nil, repositories.ErrCacheMiss).
+		Once()
 	deps.repo.On("GetByID", mock.Anything, req).Return(entity, nil)
 
 	result, err := deps.svc.Get(ctx, req)
@@ -534,7 +546,10 @@ func TestGet_NotFound(t *testing.T) {
 		},
 	}
 
-	deps.cacheRepo.EXPECT().GetByID(mock.Anything, req).Return(nil, repositories.ErrCacheMiss).Once()
+	deps.cacheRepo.EXPECT().
+		GetByID(mock.Anything, req).
+		Return(nil, repositories.ErrCacheMiss).
+		Once()
 	deps.repo.On("GetByID", mock.Anything, req).Return(nil, notFoundErr)
 
 	result, err := deps.svc.Get(ctx, req)

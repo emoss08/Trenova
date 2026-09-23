@@ -12,7 +12,11 @@ import (
 )
 
 // streamWithReasoning is streamWith with the thinking captured too.
-func streamWithReasoning(t *testing.T, adapter Adapter, call *Call) (*Response, []string, []string) {
+func streamWithReasoning(
+	t *testing.T,
+	adapter Adapter,
+	call *Call,
+) (*Response, []string, []string) {
 	t.Helper()
 
 	thoughts := []string{}
@@ -22,7 +26,12 @@ func streamWithReasoning(t *testing.T, adapter Adapter, call *Call) (*Response, 
 	return resp, deltas, thoughts
 }
 
-func reasoningCall(kind aiprovider.Kind, url string, effort aiprovider.ReasoningEffort, req *Request) *Call {
+func reasoningCall(
+	kind aiprovider.Kind,
+	url string,
+	effort aiprovider.ReasoningEffort,
+	req *Request,
+) *Call {
 	call := callFor(kind, url, req)
 	call.Provider.ReasoningEffort = effort
 
@@ -36,16 +45,40 @@ func TestAnthropicAdapter_StreamsThinkingSeparatelyAndKeepsTheSignature(t *testi
 	t.Parallel()
 
 	server, captured := streamServer(t, "text/event-stream", sse(
-		[2]string{"message_start", `{"type":"message_start","message":{"model":"claude-x","usage":{"input_tokens":9}}}`},
-		[2]string{"content_block_start", `{"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":""}}`},
-		[2]string{"content_block_delta", `{"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"The card "}}`},
-		[2]string{"content_block_delta", `{"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"expires soon."}}`},
-		[2]string{"content_block_delta", `{"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":"sig_abc"}}`},
+		[2]string{
+			"message_start",
+			`{"type":"message_start","message":{"model":"claude-x","usage":{"input_tokens":9}}}`,
+		},
+		[2]string{
+			"content_block_start",
+			`{"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":""}}`,
+		},
+		[2]string{
+			"content_block_delta",
+			`{"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"The card "}}`,
+		},
+		[2]string{
+			"content_block_delta",
+			`{"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"expires soon."}}`,
+		},
+		[2]string{
+			"content_block_delta",
+			`{"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":"sig_abc"}}`,
+		},
 		[2]string{"content_block_stop", `{"type":"content_block_stop","index":0}`},
-		[2]string{"content_block_start", `{"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}`},
-		[2]string{"content_block_delta", `{"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"It expires Friday."}}`},
+		[2]string{
+			"content_block_start",
+			`{"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}`,
+		},
+		[2]string{
+			"content_block_delta",
+			`{"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"It expires Friday."}}`,
+		},
 		[2]string{"content_block_stop", `{"type":"content_block_stop","index":1}`},
-		[2]string{"message_delta", `{"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":12}}`},
+		[2]string{
+			"message_delta",
+			`{"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":12}}`,
+		},
 		[2]string{"message_stop", `{"type":"message_stop"}`},
 	))
 
@@ -71,9 +104,18 @@ func TestAnthropicAdapter_SendsNoThinkingWhenTheProviderIsOff(t *testing.T) {
 	t.Parallel()
 
 	server, captured := streamServer(t, "text/event-stream", sse(
-		[2]string{"message_start", `{"type":"message_start","message":{"model":"claude-x","usage":{"input_tokens":1}}}`},
-		[2]string{"content_block_start", `{"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}`},
-		[2]string{"content_block_delta", `{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hi"}}`},
+		[2]string{
+			"message_start",
+			`{"type":"message_start","message":{"model":"claude-x","usage":{"input_tokens":1}}}`,
+		},
+		[2]string{
+			"content_block_start",
+			`{"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}`,
+		},
+		[2]string{
+			"content_block_delta",
+			`{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hi"}}`,
+		},
 		[2]string{"content_block_stop", `{"type":"content_block_stop","index":0}`},
 		[2]string{"message_stop", `{"type":"message_stop"}`},
 	))
@@ -87,7 +129,13 @@ func TestAnthropicAdapter_SendsNoThinkingWhenTheProviderIsOff(t *testing.T) {
 
 	_, asked := (*captured)["thinking"]
 	assert.False(t, asked)
-	assert.InDelta(t, 1000, (*captured)["max_tokens"], 0, "untouched when nothing asks for thinking")
+	assert.InDelta(
+		t,
+		1000,
+		(*captured)["max_tokens"],
+		0,
+		"untouched when nothing asks for thinking",
+	)
 	assert.Empty(t, thoughts)
 	assert.Nil(t, resp.Reasoning)
 }
@@ -103,7 +151,11 @@ func TestToAnthropicMessages_ReplaysSignedThinkingAheadOfToolCalls(t *testing.T)
 		{
 			Role:      RoleAssistant,
 			ToolCalls: []ToolCall{{ID: "toolu_1", Name: "place_hold", Arguments: map[string]any{}}},
-			Reasoning: &ReasoningTrace{Text: "Hold seems right.", Signature: "sig_1", Redacted: []string{"blob"}},
+			Reasoning: &ReasoningTrace{
+				Text:      "Hold seems right.",
+				Signature: "sig_1",
+				Redacted:  []string{"blob"},
+			},
 		},
 		{Role: RoleTool, ToolCallID: "toolu_1", Content: "{}"},
 	})
@@ -140,9 +192,18 @@ func TestOpenAIChatAdapter_ReadsReasoningContentAndSendsEffortOnlyWhenAsked(t *t
 	t.Parallel()
 
 	server, captured := streamServer(t, "text/event-stream", sse(
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"reasoning_content":"Let me check "},"finish_reason":null}]}`},
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"reasoning_content":"the dates."},"finish_reason":null}]}`},
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"content":"Friday."},"finish_reason":"stop"}]}`},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"reasoning_content":"Let me check "},"finish_reason":null}]}`,
+		},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"reasoning_content":"the dates."},"finish_reason":null}]}`,
+		},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"content":"Friday."},"finish_reason":"stop"}]}`,
+		},
 		[2]string{"", "[DONE]"},
 	))
 
@@ -162,12 +223,18 @@ func TestOpenAIChatAdapter_SendsNoEffortWhenOff(t *testing.T) {
 	t.Parallel()
 
 	server, captured := streamServer(t, "text/event-stream", sse(
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"content":"Hi"},"finish_reason":"stop"}]}`},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"content":"Hi"},"finish_reason":"stop"}]}`,
+		},
 		[2]string{"", "[DONE]"},
 	))
 
 	_, _, _ = streamWithReasoning(t, NewOpenAIChatAdapter(), reasoningCall(
-		aiprovider.KindOpenAIChat, server.URL, aiprovider.ReasoningOff, &Request{Messages: UserMessage("hi")},
+		aiprovider.KindOpenAIChat,
+		server.URL,
+		aiprovider.ReasoningOff,
+		&Request{Messages: UserMessage("hi")},
 	))
 
 	_, sent := (*captured)["reasoning_effort"]
@@ -197,10 +264,22 @@ func TestOpenAIResponsesAdapter_ReadsReasoningSummaryAndKeepsTheEncryptedChain(t
 
 	server, captured := streamServer(t, "text/event-stream", sse(
 		[2]string{"response.created", `{"type":"response.created","response":{"model":"gpt-x"}}`},
-		[2]string{"response.reasoning_summary_text.delta", `{"type":"response.reasoning_summary_text.delta","delta":"Checking "}`},
-		[2]string{"response.reasoning_summary_text.delta", `{"type":"response.reasoning_summary_text.delta","delta":"the hold."}`},
-		[2]string{"response.output_text.delta", `{"type":"response.output_text.delta","delta":"Placing it."}`},
-		[2]string{"response.completed", `{"type":"response.completed","response":{"model":"gpt-x","status":"completed","output":[{"type":"reasoning","id":"rs_1","summary":[{"type":"summary_text","text":"Checking the hold."}],"encrypted_content":"enc_1"},{"type":"function_call","call_id":"call_1","name":"place_hold","arguments":"{}"}],"usage":{"input_tokens":3,"output_tokens":8}}}`},
+		[2]string{
+			"response.reasoning_summary_text.delta",
+			`{"type":"response.reasoning_summary_text.delta","delta":"Checking "}`,
+		},
+		[2]string{
+			"response.reasoning_summary_text.delta",
+			`{"type":"response.reasoning_summary_text.delta","delta":"the hold."}`,
+		},
+		[2]string{
+			"response.output_text.delta",
+			`{"type":"response.output_text.delta","delta":"Placing it."}`,
+		},
+		[2]string{
+			"response.completed",
+			`{"type":"response.completed","response":{"model":"gpt-x","status":"completed","output":[{"type":"reasoning","id":"rs_1","summary":[{"type":"summary_text","text":"Checking the hold."}],"encrypted_content":"enc_1"},{"type":"function_call","call_id":"call_1","name":"place_hold","arguments":"{}"}],"usage":{"input_tokens":3,"output_tokens":8}}}`,
+		},
 	))
 
 	resp, _, thoughts := streamWithReasoning(t, NewOpenAIResponsesAdapter(), reasoningCall(
@@ -253,7 +332,10 @@ func TestOllamaAdapter_ReadsThinkingAndAsksForItWhenConfigured(t *testing.T) {
 	server, captured := streamServer(t, "application/x-ndjson", body)
 
 	resp, deltas, thoughts := streamWithReasoning(t, NewOllamaAdapter(), reasoningCall(
-		aiprovider.KindOllama, server.URL, aiprovider.ReasoningMedium, &Request{Messages: UserMessage("when?")},
+		aiprovider.KindOllama,
+		server.URL,
+		aiprovider.ReasoningMedium,
+		&Request{Messages: UserMessage("when?")},
 	))
 
 	assert.Equal(t, []string{"Weighing ", "the options."}, thoughts)
@@ -271,8 +353,17 @@ func TestOllamaAdapter_ReadsThinkingAndAsksForItWhenConfigured(t *testing.T) {
 func TestReplay_SendsATraceOnlyToTheProtocolThatProducedIt(t *testing.T) {
 	t.Parallel()
 
-	fromResponses := &ReasoningTrace{Text: "t", Signature: "rs_1", Encrypted: "enc", ProviderKind: string(aiprovider.KindOpenAIResponses)}
-	fromAnthropic := &ReasoningTrace{Text: "t", Signature: "sig_1", ProviderKind: string(aiprovider.KindAnthropicMessages)}
+	fromResponses := &ReasoningTrace{
+		Text:         "t",
+		Signature:    "rs_1",
+		Encrypted:    "enc",
+		ProviderKind: string(aiprovider.KindOpenAIResponses),
+	}
+	fromAnthropic := &ReasoningTrace{
+		Text:         "t",
+		Signature:    "sig_1",
+		ProviderKind: string(aiprovider.KindAnthropicMessages),
+	}
 	untagged := &ReasoningTrace{Text: "t", Signature: "sig_0"}
 
 	assert.Empty(t, replayThinking(fromResponses))

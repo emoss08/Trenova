@@ -292,7 +292,9 @@ func TestWorkerRow_KeepsAMoreSpecificBlockReason(t *testing.T) {
 	row := toWorkerRow(&worker.Worker{
 		ID: pulid.MustNew("wrk_"), CanBeAssigned: false,
 		AssignmentBlocked: "On unpaid leave",
-		Profile:           &worker.WorkerProfile{ComplianceStatus: worker.ComplianceStatusNonCompliant},
+		Profile: &worker.WorkerProfile{
+			ComplianceStatus: worker.ComplianceStatusNonCompliant,
+		},
 	})
 
 	assert.Equal(t, "On unpaid leave", row.AssignmentBlocked)

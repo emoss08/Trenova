@@ -66,10 +66,18 @@ func TestDefaultFixtureDriverEldSettingsRoster(t *testing.T) {
 			)
 		}
 		if stringValue(ruleset, "restart") != "34-hour Restart" {
-			t.Fatalf("unexpected restart %q on driver %q", stringValue(ruleset, "restart"), recordID(driver))
+			t.Fatalf(
+				"unexpected restart %q on driver %q",
+				stringValue(ruleset, "restart"),
+				recordID(driver),
+			)
 		}
 		if stringValue(ruleset, "break") != "Property (off-duty/sleeper)" {
-			t.Fatalf("unexpected break %q on driver %q", stringValue(ruleset, "break"), recordID(driver))
+			t.Fatalf(
+				"unexpected break %q on driver %q",
+				stringValue(ruleset, "break"),
+				recordID(driver),
+			)
 		}
 
 		switch cycle {

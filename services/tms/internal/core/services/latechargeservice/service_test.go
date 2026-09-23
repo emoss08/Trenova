@@ -29,7 +29,13 @@ var (
 	dueDate = int64(1_700_000_000)
 )
 
-func candidate(customerID pulid.ID, name string, number string, openMinor int64, assessed ...int) *repositories.LateChargeCandidate {
+func candidate(
+	customerID pulid.ID,
+	name string,
+	number string,
+	openMinor int64,
+	assessed ...int,
+) *repositories.LateChargeCandidate {
 	return &repositories.LateChargeCandidate{
 		CustomerID:       customerID,
 		CustomerName:     name,
@@ -51,7 +57,11 @@ func TestBuildPlansGroupsByCustomerAndChargesEachPendingPeriod(t *testing.T) {
 	amd := pulid.MustNew("cus_")
 	// Grace ends at due + 5 days; as-of is 61 days after that, so periods 1-3 have begun.
 	asOf := dueDate + 5*day + 61*day
-	actor := testutil.NewSessionActor(pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("bu_"))
+	actor := testutil.NewSessionActor(
+		pulid.MustNew("usr_"),
+		pulid.MustNew("org_"),
+		pulid.MustNew("bu_"),
+	)
 
 	plans := buildPlans([]*repositories.LateChargeCandidate{
 		candidate(intel, "Intel", "INV-1", 120_000, 1),
@@ -66,7 +76,11 @@ func TestBuildPlansGroupsByCustomerAndChargesEachPendingPeriod(t *testing.T) {
 
 	// INV-1 owes periods 2 and 3 at 1.5% of 1,200.00 each; INV-3 is fully assessed.
 	require.Len(t, intelPlan.result.Lines, 2)
-	assert.Equal(t, []int{2, 3}, []int{intelPlan.result.Lines[0].PeriodIndex, intelPlan.result.Lines[1].PeriodIndex})
+	assert.Equal(
+		t,
+		[]int{2, 3},
+		[]int{intelPlan.result.Lines[0].PeriodIndex, intelPlan.result.Lines[1].PeriodIndex},
+	)
 	assert.Equal(t, int64(1800), intelPlan.result.Lines[0].ChargeMinor)
 	assert.Equal(t, int64(3600), intelPlan.result.TotalChargeMinor)
 	assert.False(t, intelPlan.result.Skipped)
@@ -85,7 +99,11 @@ func TestBuildPlansSkipsFullyAssessedAndBelowMinimum(t *testing.T) {
 	t.Parallel()
 
 	asOf := dueDate + 5*day + 1
-	actor := testutil.NewSessionActor(pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("bu_"))
+	actor := testutil.NewSessionActor(
+		pulid.MustNew("usr_"),
+		pulid.MustNew("org_"),
+		pulid.MustNew("bu_"),
+	)
 
 	plans := buildPlans([]*repositories.LateChargeCandidate{
 		candidate(pulid.MustNew("cus_"), "Done", "INV-1", 120_000, 1),
@@ -135,7 +153,10 @@ func newLateChargeFixture(t *testing.T, control *tenant.BillingControl) *lateCha
 	return f
 }
 
-func (f *lateChargeFixture) expectCandidates(asOf int64, candidates ...*repositories.LateChargeCandidate) {
+func (f *lateChargeFixture) expectCandidates(
+	asOf int64,
+	candidates ...*repositories.LateChargeCandidate,
+) {
 	f.repo.EXPECT().
 		ListCandidates(mock.Anything, &repositories.ListLateChargeCandidatesRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf}).
 		Return(candidates, nil).
@@ -145,7 +166,10 @@ func (f *lateChargeFixture) expectCandidates(asOf int64, candidates ...*reposito
 func TestAssessPreviewWritesNothing(t *testing.T) {
 	t.Parallel()
 
-	f := newLateChargeFixture(t, &tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeDisabled})
+	f := newLateChargeFixture(
+		t,
+		&tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeDisabled},
+	)
 	asOf := dueDate + 5*day + 1
 	f.expectCandidates(asOf, candidate(pulid.MustNew("cus_"), "AMD", "INV-2", 50_000))
 
@@ -167,9 +191,16 @@ func TestAssessPreviewWritesNothing(t *testing.T) {
 func TestAssessRefusesARealRunWhenDisabled(t *testing.T) {
 	t.Parallel()
 
-	f := newLateChargeFixture(t, &tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeDisabled})
+	f := newLateChargeFixture(
+		t,
+		&tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeDisabled},
+	)
 
-	_, err := f.svc.Assess(t.Context(), &servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: dueDate}, f.actor)
+	_, err := f.svc.Assess(
+		t.Context(),
+		&servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: dueDate},
+		f.actor,
+	)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "disabled")
@@ -216,22 +247,37 @@ func TestAssessRaisesOneLateChargeMemoPerCustomer(t *testing.T) {
 				req.Lines[0].Description != ""
 		}), f.actor).
 		RunAndReturn(func(_ context.Context, req *servicesports.CreateMemoRequest, _ *servicesports.RequestActor) (*invoice.Invoice, error) {
-			return &invoice.Invoice{ID: req.ID, Number: "DM-5", Status: invoice.StatusPosted, Lines: []*invoice.InvoiceLine{memoLine}}, nil
+			return &invoice.Invoice{
+				ID:     req.ID,
+				Number: "DM-5",
+				Status: invoice.StatusPosted,
+				Lines:  []*invoice.InvoiceLine{memoLine},
+			}, nil
 		}).
 		Once()
 	f.repo.EXPECT().
 		SetDebitMemoLines(mock.Anything, mock.MatchedBy(func(rows []*latecharge.LateChargeAssessment) bool {
-			return len(rows) == 1 && rows[0].DebitMemoLineID == memoLine.ID && rows[0].DebitMemoInvoiceID == memoID
+			return len(rows) == 1 && rows[0].DebitMemoLineID == memoLine.ID &&
+				rows[0].DebitMemoInvoiceID == memoID
 		})).
 		Return(nil).
 		Once()
 
-	result, err := f.svc.Assess(t.Context(), &servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf}, f.actor)
+	result, err := f.svc.Assess(
+		t.Context(),
+		&servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf},
+		f.actor,
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, result.MemosCreated)
 	assert.Equal(t, 1, result.MemosPosted)
-	assert.Equal(t, int64(750), result.TotalChargeMinor, "only the period this run inserted is billed")
+	assert.Equal(
+		t,
+		int64(750),
+		result.TotalChargeMinor,
+		"only the period this run inserted is billed",
+	)
 	require.Len(t, result.Customers, 1)
 	assert.Equal(t, "DM-5", result.Customers[0].DebitMemoNumber)
 	assert.True(t, result.Customers[0].Posted)
@@ -256,12 +302,21 @@ func TestAssessDoesNotAutoPostUnderManualReview(t *testing.T) {
 	f.invoiceService.EXPECT().
 		CreateMemo(mock.Anything, mock.MatchedBy(func(req *servicesports.CreateMemoRequest) bool { return !req.AutoPost }), f.actor).
 		RunAndReturn(func(_ context.Context, req *servicesports.CreateMemoRequest, _ *servicesports.RequestActor) (*invoice.Invoice, error) {
-			return &invoice.Invoice{ID: req.ID, Number: "DM-6", Status: invoice.StatusDraft, Lines: []*invoice.InvoiceLine{{ID: pulid.MustNew("invl_")}}}, nil
+			return &invoice.Invoice{
+				ID:     req.ID,
+				Number: "DM-6",
+				Status: invoice.StatusDraft,
+				Lines:  []*invoice.InvoiceLine{{ID: pulid.MustNew("invl_")}},
+			}, nil
 		}).
 		Once()
 	f.repo.EXPECT().SetDebitMemoLines(mock.Anything, mock.Anything).Return(nil).Once()
 
-	result, err := f.svc.Assess(t.Context(), &servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf}, f.actor)
+	result, err := f.svc.Assess(
+		t.Context(),
+		&servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf},
+		f.actor,
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, result.MemosCreated)
@@ -271,7 +326,10 @@ func TestAssessDoesNotAutoPostUnderManualReview(t *testing.T) {
 func TestAssessRollsBackAssessmentsWhenTheMemoFails(t *testing.T) {
 	t.Parallel()
 
-	f := newLateChargeFixture(t, &tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeAutomatic})
+	f := newLateChargeFixture(
+		t,
+		&tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeAutomatic},
+	)
 	asOf := dueDate + 5*day + 1
 	f.expectCandidates(asOf, candidate(pulid.MustNew("cus_"), "AMD", "INV-2", 50_000))
 	var runKey string
@@ -289,7 +347,11 @@ func TestAssessRollsBackAssessmentsWhenTheMemoFails(t *testing.T) {
 		Return(1, nil).
 		Once()
 
-	result, err := f.svc.Assess(t.Context(), &servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf}, f.actor)
+	result, err := f.svc.Assess(
+		t.Context(),
+		&servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf},
+		f.actor,
+	)
 
 	require.NoError(t, err, "one customer failing does not fail the run")
 	assert.Equal(t, 0, result.MemosCreated)
@@ -302,14 +364,21 @@ func TestAssessRollsBackAssessmentsWhenTheMemoFails(t *testing.T) {
 func TestAssessSkipsACustomerAnotherRunGotToFirst(t *testing.T) {
 	t.Parallel()
 
-	f := newLateChargeFixture(t, &tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeAutomatic})
+	f := newLateChargeFixture(
+		t,
+		&tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeAutomatic},
+	)
 	asOf := dueDate + 5*day + 1
 	f.expectCandidates(asOf, candidate(pulid.MustNew("cus_"), "AMD", "INV-2", 50_000))
 	f.repo.EXPECT().InsertAssessments(mock.Anything, mock.Anything).
 		Return([]*latecharge.LateChargeAssessment{}, nil).
 		Once()
 
-	result, err := f.svc.Assess(t.Context(), &servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf}, f.actor)
+	result, err := f.svc.Assess(
+		t.Context(),
+		&servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf},
+		f.actor,
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, 0, result.MemosCreated)

@@ -36,7 +36,10 @@ func newSplitFixture() *splitFixture {
 		Method:              accessorialcharge.MethodFlat,
 		Amount:              dec("1154.38"),
 		Unit:                1,
-		AccessorialCharge:   &accessorialcharge.AccessorialCharge{Code: "DET", Description: "Detention Fee"},
+		AccessorialCharge: &accessorialcharge.AccessorialCharge{
+			Code:        "DET",
+			Description: "Detention Fee",
+		},
 	}
 	shipmentID := pulid.MustNew("shp_")
 	shp := &shipment.Shipment{

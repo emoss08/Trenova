@@ -366,10 +366,12 @@ func (s *Service) sendResetEmail(
 		TenantInfo: tenantInfo,
 		Kind:       documenttemplate.KindPasswordResetEmail,
 		Data: documenttemplate.PasswordResetContext{
-			FirstName:        stringutils.FirstName(user.Name),
-			FullName:         user.Name,
-			CompanyName:      s.companyName(ctx, user),
-			ResetURL:         template.URL(resetURL), //nolint:gosec // built from configured base URL + generated token
+			FirstName:   stringutils.FirstName(user.Name),
+			FullName:    user.Name,
+			CompanyName: s.companyName(ctx, user),
+			ResetURL: template.URL(
+				resetURL,
+			), //nolint:gosec // built from configured base URL + generated token
 			ExpiresInMinutes: int(ttl.Minutes()),
 			ExpiresAt:        timeutils.FormatStampIn(expiresAt, user.Timezone),
 		},

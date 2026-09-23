@@ -24,7 +24,10 @@ type fakePlans struct {
 	progress []repositories.RecordAgentPlanProgressRequest
 }
 
-func (f *fakePlans) GetByID(context.Context, repositories.GetAgentPlanByIDRequest) (*agent.AgentPlan, error) {
+func (f *fakePlans) GetByID(
+	context.Context,
+	repositories.GetAgentPlanByIDRequest,
+) (*agent.AgentPlan, error) {
 	return f.plan, nil
 }
 
@@ -58,11 +61,17 @@ type fakeSteps struct {
 	skipped int
 }
 
-func (f *fakeSteps) ListByPlan(context.Context, repositories.ListAgentProposalsByPlanRequest) ([]*agent.AgentProposal, error) {
+func (f *fakeSteps) ListByPlan(
+	context.Context,
+	repositories.ListAgentProposalsByPlanRequest,
+) ([]*agent.AgentProposal, error) {
 	return f.steps, nil
 }
 
-func (f *fakeSteps) SkipPendingByPlan(context.Context, repositories.SkipPendingByPlanRequest) (int, error) {
+func (f *fakeSteps) SkipPendingByPlan(
+	context.Context,
+	repositories.SkipPendingByPlanRequest,
+) (int, error) {
 	f.skipped++
 
 	return 1, nil
@@ -107,7 +116,11 @@ func (f fakeShadow) Organization(context.Context, pagination.TenantInfo) (bool, 
 	return f.shadow, nil
 }
 
-func (f fakeShadow) ForRun(context.Context, pagination.TenantInfo, pulid.ID) (agentshadow.Verdict, error) {
+func (f fakeShadow) ForRun(
+	context.Context,
+	pagination.TenantInfo,
+	pulid.ID,
+) (agentshadow.Verdict, error) {
 	if f.shadow {
 		return agentshadow.Verdict{Cause: agentshadow.CauseOrganization}, nil
 	}
@@ -182,7 +195,12 @@ func TestDecide_ApprovesEveryStepInOrderAndSignalsOnce(t *testing.T) {
 
 	require.Len(t, h.plans.statuses, 1)
 	assert.Equal(t, agent.PlanStatusApproved, h.plans.statuses[0].Status)
-	assert.Equal(t, agent.PlanStatusPending, h.plans.statuses[0].FromStatus, "the claim is conditional")
+	assert.Equal(
+		t,
+		agent.PlanStatusPending,
+		h.plans.statuses[0].FromStatus,
+		"the claim is conditional",
+	)
 	assert.Equal(t, h.actor.UserID, h.plans.statuses[0].DecidedByUserID)
 }
 

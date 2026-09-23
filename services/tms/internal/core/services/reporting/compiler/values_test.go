@@ -126,8 +126,10 @@ func TestRelativePeriodOperators(t *testing.T) {
 			Entity:    "shipment",
 			Columns:   []report.ColumnSpec{dim("c_pro", "proNumber")},
 			Filters: &report.FilterGroup{
-				Op:      report.BoolOpAnd,
-				Filters: []report.FieldFilter{{Ref: report.FieldRef{Field: "createdAt"}, Operator: op}},
+				Op: report.BoolOpAnd,
+				Filters: []report.FieldFilter{
+					{Ref: report.FieldRef{Field: "createdAt"}, Operator: op},
+				},
 			},
 		}))
 		require.NoError(t, cErr, op)

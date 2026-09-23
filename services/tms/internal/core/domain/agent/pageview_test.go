@@ -38,8 +38,13 @@ func TestPageViewValidateAcceptsWhatATableShows(t *testing.T) {
 		FilterGroups: []domaintypes.FilterGroup{{Filters: []domaintypes.FieldFilter{
 			{Field: "createdAt", Operator: dbtype.OpLastNDays, Value: 7},
 		}}},
-		Sort:           []domaintypes.SortField{{Field: "createdAt", Direction: dbtype.SortDirectionDesc}},
-		Selection:      &agent.PageSelection{Count: 3, IDs: []string{pulid.MustNew("shp_").String()}},
+		Sort: []domaintypes.SortField{
+			{Field: "createdAt", Direction: dbtype.SortDirectionDesc},
+		},
+		Selection: &agent.PageSelection{
+			Count: 3,
+			IDs:   []string{pulid.MustNew("shp_").String()},
+		},
 		KPIs:           []agent.PageKPI{{Label: "In transit", Value: "12", Sub: "of 42"}},
 		VisibleColumns: []string{"proNumber", "status"},
 		RowCount:       &rows,
@@ -51,8 +56,16 @@ func TestPageViewValidateAcceptsWhatATableShows(t *testing.T) {
 func TestPageViewValidateRejectsWhatAPageCouldNotHaveShown(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, viewErrors(agent.PageView{Resource: "secrets"})["context.view.resource"], "an unknown resource")
-	assert.True(t, viewErrors(agent.PageView{Resource: ""})["context.view.resource"], "a missing resource")
+	assert.True(
+		t,
+		viewErrors(agent.PageView{Resource: "secrets"})["context.view.resource"],
+		"an unknown resource",
+	)
+	assert.True(
+		t,
+		viewErrors(agent.PageView{Resource: ""})["context.view.resource"],
+		"a missing resource",
+	)
 
 	assert.True(t, viewErrors(agent.PageView{
 		Resource:     "shipment",
@@ -73,7 +86,10 @@ func TestPageViewValidateRejectsWhatAPageCouldNotHaveShown(t *testing.T) {
 	for i := range tooMany {
 		tooMany[i] = domaintypes.FieldFilter{Field: "status", Operator: dbtype.OpEqual, Value: "x"}
 	}
-	assert.True(t, viewErrors(agent.PageView{Resource: "shipment", FieldFilters: tooMany})["context.view.fieldFilters"])
+	assert.True(
+		t,
+		viewErrors(agent.PageView{Resource: "shipment", FieldFilters: tooMany})["context.view.fieldFilters"],
+	)
 
 	assert.True(t, viewErrors(agent.PageView{
 		Resource: "shipment",
@@ -101,7 +117,10 @@ func TestPageViewValidateRejectsWhatAPageCouldNotHaveShown(t *testing.T) {
 	})["context.view.visibleColumns[0]"])
 
 	negative := -1
-	assert.True(t, viewErrors(agent.PageView{Resource: "shipment", RowCount: &negative})["context.view.rowCount"])
+	assert.True(
+		t,
+		viewErrors(agent.PageView{Resource: "shipment", RowCount: &negative})["context.view.rowCount"],
+	)
 }
 
 func TestPageContextNormalizedKeepsTheViewAndDropsAnEmptySelection(t *testing.T) {
@@ -129,7 +148,11 @@ func TestFormatFilterValueReadsLikeAChip(t *testing.T) {
 
 	assert.Equal(t, "InTransit, Delayed", agent.FormatFilterValue([]any{"InTransit", "Delayed"}))
 	assert.Equal(t, "7", agent.FormatFilterValue(7))
-	assert.Equal(t, "from=2026-01-01 to=2026-01-31", agent.FormatFilterValue(map[string]any{"to": "2026-01-31", "from": "2026-01-01"}))
+	assert.Equal(
+		t,
+		"from=2026-01-01 to=2026-01-31",
+		agent.FormatFilterValue(map[string]any{"to": "2026-01-31", "from": "2026-01-01"}),
+	)
 	assert.Equal(t, "", agent.FormatFilterValue(nil))
 	assert.Equal(t, "true", agent.FormatFilterValue(true))
 }

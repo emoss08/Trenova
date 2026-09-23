@@ -155,9 +155,18 @@ func processFile(path string, write bool) (int, []failure, error) {
 		}
 
 		last := call.Args[len(call.Args)-1]
-		edits = append(edits,
-			edit{start: offset(arg.Pos()), end: offset(arg.End()), text: strconv.Quote(built.message)},
-			edit{start: offset(last.End()), end: offset(last.End()), text: ", " + strings.Join(built.args, ", ")},
+		edits = append(
+			edits,
+			edit{
+				start: offset(arg.Pos()),
+				end:   offset(arg.End()),
+				text:  strconv.Quote(built.message),
+			},
+			edit{
+				start: offset(last.End()),
+				end:   offset(last.End()),
+				text:  ", " + strings.Join(built.args, ", "),
+			},
 		)
 		return true
 	})
@@ -259,7 +268,11 @@ func fromFormat(
 	return &rewrite{message: message.String(), args: out}, ""
 }
 
-func fromConcat(expr *ast.BinaryExpr, source string, offset func(token.Pos) int) (*rewrite, string) {
+func fromConcat(
+	expr *ast.BinaryExpr,
+	source string,
+	offset func(token.Pos) int,
+) (*rewrite, string) {
 	parts, ok := flatten(expr)
 	if !ok {
 		return nil, ""

@@ -66,7 +66,10 @@ func (o AssistantTurnOrigin) IsValid() bool {
 // Terminal reports a turn that will produce nothing more.
 func (s AssistantTurnStatus) Terminal() bool {
 	switch s {
-	case AssistantTurnStatusCompleted, AssistantTurnStatusRefused, AssistantTurnStatusStopped, AssistantTurnStatusFailed:
+	case AssistantTurnStatusCompleted,
+		AssistantTurnStatusRefused,
+		AssistantTurnStatusStopped,
+		AssistantTurnStatusFailed:
 		return true
 	default:
 		return false
@@ -87,11 +90,11 @@ type AssistantTurn struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 
-	ThreadID pulid.ID `json:"threadId" bun:"thread_id,type:VARCHAR(100),notnull"`
-	UserID   pulid.ID `json:"userId"   bun:"user_id,type:VARCHAR(100),notnull"`
+	ThreadID pulid.ID `json:"threadId"   bun:"thread_id,type:VARCHAR(100),notnull"`
+	UserID   pulid.ID `json:"userId"     bun:"user_id,type:VARCHAR(100),notnull"`
 	// RunID points at the agent run opened for this turn, which happens only
 	// when it proposed a change somebody has to decide on.
-	RunID pulid.ID `json:"runId" bun:"run_id,type:VARCHAR(100),nullzero"`
+	RunID pulid.ID `json:"runId"      bun:"run_id,type:VARCHAR(100),nullzero"`
 	// WorkflowID is the durable execution carrying the turn, empty while it
 	// still runs in the request that asked for it.
 	WorkflowID string `json:"workflowId" bun:"workflow_id,type:VARCHAR(255),nullzero"`
@@ -106,10 +109,6 @@ type AssistantTurn struct {
 	ErrorMessage string              `json:"errorMessage" bun:"error_message,type:TEXT,nullzero"`
 	StartedAt    int64               `json:"startedAt"    bun:"started_at,type:BIGINT,nullzero"`
 	CompletedAt  *int64              `json:"completedAt"  bun:"completed_at,type:BIGINT,nullzero"`
-	// HeartbeatAt is when a turn running inside an API process last proved it
-	// was alive. Nothing outside the process notices it dying, so a live
-	// in-process turn whose heartbeat has gone quiet is one that died with it.
-	HeartbeatAt int64 `json:"heartbeatAt" bun:"heartbeat_at,type:BIGINT,nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -167,9 +166,6 @@ func (t *AssistantTurn) BeforeAppendModel(_ context.Context, query bun.Query) er
 		}
 		if t.StartedAt == 0 {
 			t.StartedAt = now
-		}
-		if t.HeartbeatAt == 0 {
-			t.HeartbeatAt = now
 		}
 		t.CreatedAt = now
 		t.UpdatedAt = now

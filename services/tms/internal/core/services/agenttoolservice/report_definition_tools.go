@@ -81,8 +81,11 @@ func reportMetadataProperties() map[string]any {
 			"description": "Optional short labels, at most ten.",
 		},
 		"visibility": map[string]any{
-			"type":        "string",
-			"enum":        []string{string(report.VisibilityPrivate), string(report.VisibilityShared)},
+			"type": "string",
+			"enum": []string{
+				string(report.VisibilityPrivate),
+				string(report.VisibilityShared),
+			},
 			"description": reportVisibilityNote,
 		},
 		"defaultFormat": map[string]any{
@@ -137,7 +140,9 @@ func readReportMetadata(params map[string]any) (reportMetadata, error) {
 	}
 
 	if meta.given["defaultFormat"] {
-		meta.DefaultFormat = report.Format(strings.TrimSpace(optionalString(params, "defaultFormat")))
+		meta.DefaultFormat = report.Format(
+			strings.TrimSpace(optionalString(params, "defaultFormat")),
+		)
 		if !meta.DefaultFormat.IsValid() {
 			return meta, errors.New(
 				"parameter \"defaultFormat\" must be one of csv, xlsx, pdf or json",
@@ -285,7 +290,10 @@ func (t *createReportTool) Execute(
 // access before the proposal is recorded, so a column naming a field that
 // does not exist is refused to the model now rather than failing after a
 // person approved it.
-func (t *createReportTool) Validate(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *createReportTool) Validate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	save, err := t.prepare(params)
 	if err != nil {
 		return err
@@ -294,7 +302,9 @@ func (t *createReportTool) Validate(ctx context.Context, params serviceports.Too
 	return t.reports.ValidateDefinition(ctx, save)
 }
 
-func (t *createReportTool) prepare(params serviceports.ToolExecuteParams) (*reporting.SaveDefinitionRequest, error) {
+func (t *createReportTool) prepare(
+	params serviceports.ToolExecuteParams,
+) (*reporting.SaveDefinitionRequest, error) {
 	if err := guardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -412,7 +422,10 @@ func (t *updateReportTool) Execute(
 // Validate reads the saved report and compiles the edited definition, so a
 // change that would not save is refused to the model before anyone is asked
 // to approve it.
-func (t *updateReportTool) Validate(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *updateReportTool) Validate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	save, err := t.prepare(ctx, params)
 	if err != nil {
 		return err
@@ -535,7 +548,9 @@ func readDefinitionStatus(params map[string]any) (report.DefinitionStatus, error
 
 	status := report.DefinitionStatus(raw)
 	switch status {
-	case report.DefinitionStatusDraft, report.DefinitionStatusActive, report.DefinitionStatusArchived:
+	case report.DefinitionStatusDraft,
+		report.DefinitionStatusActive,
+		report.DefinitionStatusArchived:
 		return status, nil
 	default:
 		return "", errors.New("parameter \"status\" must be draft, active or archived")

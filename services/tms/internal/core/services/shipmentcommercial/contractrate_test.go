@@ -53,7 +53,12 @@ func TestRecalculate_PricesFormulaOnlyAndPersistsNoQuote(t *testing.T) {
 
 	require.NoError(
 		t,
-		calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")),
+		calculator.Recalculate(
+			t.Context(),
+			entity,
+			&tenant.ShipmentControl{},
+			pulid.MustNew("usr_"),
+		),
 	)
 
 	require.NotNil(t, captured)
@@ -81,7 +86,12 @@ func TestRecalculate_KeepsTheContractProvenanceOnAnAutoRatedShipment(t *testing.
 
 	require.NoError(
 		t,
-		calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")),
+		calculator.Recalculate(
+			t.Context(),
+			entity,
+			&tenant.ShipmentControl{},
+			pulid.MustNew("usr_"),
+		),
 	)
 
 	require.NotNil(t, entity.RatingDetail)
@@ -104,7 +114,12 @@ func TestRecalculate_DropsTheContractProvenanceOnceEdited(t *testing.T) {
 
 	require.NoError(
 		t,
-		calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")),
+		calculator.Recalculate(
+			t.Context(),
+			entity,
+			&tenant.ShipmentControl{},
+			pulid.MustNew("usr_"),
+		),
 	)
 
 	require.NotNil(t, entity.RatingDetail)
@@ -127,7 +142,12 @@ func TestRecalculate_LockedShipmentKeepsItsCharges(t *testing.T) {
 
 	require.NoError(
 		t,
-		calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")),
+		calculator.Recalculate(
+			t.Context(),
+			entity,
+			&tenant.ShipmentControl{},
+			pulid.MustNew("usr_"),
+		),
 	)
 
 	assert.True(t, decimal.NewFromInt(1234).Equal(entity.FreightChargeAmount.Decimal))
@@ -340,7 +360,10 @@ func TestRecordRateDeparture_WritesNoQuoteWhenNothingJustDeparted(t *testing.T) 
 	})
 	calculator.now = func() int64 { return ratedAt }
 
-	require.NoError(t, calculator.RecordRateDeparture(t.Context(), entity, pulid.MustNew("usr_"), false))
+	require.NoError(
+		t,
+		calculator.RecordRateDeparture(t.Context(), entity, pulid.MustNew("usr_"), false),
+	)
 
 	assert.True(t, decimal.NewFromInt(850).Equal(entity.RateOverrideAmount.Decimal),
 		"the recorded amount tracks what is actually charged")
@@ -362,7 +385,10 @@ func TestRecordRateDeparture_IgnoresAnAutoRatedShipment(t *testing.T) {
 	})
 	calculator.now = func() int64 { return ratedAt }
 
-	require.NoError(t, calculator.RecordRateDeparture(t.Context(), entity, pulid.MustNew("usr_"), true))
+	require.NoError(
+		t,
+		calculator.RecordRateDeparture(t.Context(), entity, pulid.MustNew("usr_"), true),
+	)
 
 	assert.False(t, entity.HasRateOverride())
 }
@@ -393,7 +419,11 @@ func TestRateAndAdoptContract_KeepsTheContractAccessorialsOnADeparture(t *testin
 	assert.True(t, decimal.NewFromInt(75).Equal(charge.Amount))
 	assert.True(t, decimal.NewFromInt(75).Equal(entity.OtherChargeAmount.Decimal))
 
-	assert.False(t, entity.AutoRated, "the rate departed, so the shipment does not carry the contract's")
+	assert.False(
+		t,
+		entity.AutoRated,
+		"the rate departed, so the shipment does not carry the contract's",
+	)
 }
 
 // No contract covering the lane means no schedule to apply. A shipment priced

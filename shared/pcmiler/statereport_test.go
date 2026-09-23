@@ -89,9 +89,27 @@ func TestParseStCntry(t *testing.T) {
 		wantOK      bool
 	}{
 		{name: "country and code", value: "US_TX", wantCountry: "US", wantCode: "TX", wantOK: true},
-		{name: "canadian province", value: "CA_ON", wantCountry: "CA", wantCode: "ON", wantOK: true},
-		{name: "bare code defaults to US", value: "TX", wantCountry: "US", wantCode: "TX", wantOK: true},
-		{name: "lowercase and padded", value: " us_nj ", wantCountry: "US", wantCode: "NJ", wantOK: true},
+		{
+			name:        "canadian province",
+			value:       "CA_ON",
+			wantCountry: "CA",
+			wantCode:    "ON",
+			wantOK:      true,
+		},
+		{
+			name:        "bare code defaults to US",
+			value:       "TX",
+			wantCountry: "US",
+			wantCode:    "TX",
+			wantOK:      true,
+		},
+		{
+			name:        "lowercase and padded",
+			value:       " us_nj ",
+			wantCountry: "US",
+			wantCode:    "NJ",
+			wantOK:      true,
+		},
 		{name: "blank", value: "   ", wantOK: false},
 		{name: "total line upper", value: "TOTAL", wantOK: false},
 		{name: "total line mixed", value: "Total", wantOK: false},

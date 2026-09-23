@@ -71,7 +71,8 @@ func TestSyncForShipment_UpdatesExistingAdditionalChargeAndDeletesRemovedCharge(
 			"id", "organization_id", "business_unit_id", "shipment_id", "accessorial_charge_id", "method", "amount", "unit", "version",
 		}).
 			AddRow(keepID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, entity.AdditionalCharges[0].AccessorialChargeID, entity.AdditionalCharges[0].Method, entity.AdditionalCharges[0].Amount.String(), entity.AdditionalCharges[0].Unit, 1).
-			AddRow(deleteID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, pulid.MustNew("acc_"), accessorialcharge.MethodFlat, decimal.NewFromInt(5).String(), 1, 1))
+			AddRow(deleteID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, pulid.MustNew("acc_"), accessorialcharge.MethodFlat, decimal.NewFromInt(5).String(), 1, 1),
+		)
 	mock.ExpectExec(`UPDATE "additional_charges" AS "ac".*`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec(`DELETE FROM "additional_charges" AS "ac".*id IN .*shipment_id = .*organization_id = .*business_unit_id = .*`).
@@ -101,7 +102,8 @@ func TestSyncForShipment_UpdatesExistingAccessorialChargeID(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "organization_id", "business_unit_id", "shipment_id", "accessorial_charge_id", "method", "amount", "unit", "version",
 		}).
-			AddRow(existingID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, originalAccessorialChargeID, entity.AdditionalCharges[0].Method, entity.AdditionalCharges[0].Amount.String(), entity.AdditionalCharges[0].Unit, 1))
+			AddRow(existingID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, originalAccessorialChargeID, entity.AdditionalCharges[0].Method, entity.AdditionalCharges[0].Amount.String(), entity.AdditionalCharges[0].Unit, 1),
+		)
 	mock.ExpectExec(`UPDATE "additional_charges" AS "ac" SET "accessorial_charge_id" = .*`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -176,7 +178,8 @@ func TestSyncForShipment_DeletesEveryRowForAnEmptyPayloadAndZeroesTheHeader(t *t
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "organization_id", "business_unit_id", "shipment_id", "accessorial_charge_id", "method", "amount", "unit", "version",
 		}).
-			AddRow(staleID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, pulid.MustNew("acc_"), accessorialcharge.MethodFlat, decimal.NewFromInt(10).String(), 1, 1))
+			AddRow(staleID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, pulid.MustNew("acc_"), accessorialcharge.MethodFlat, decimal.NewFromInt(10).String(), 1, 1),
+		)
 	mock.ExpectExec(`DELETE FROM "additional_charges" AS "ac".*`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec(`UPDATE "shipments" AS "sp" SET other_charge_amount = .0., total_charge_amount = .100. WHERE .*`).

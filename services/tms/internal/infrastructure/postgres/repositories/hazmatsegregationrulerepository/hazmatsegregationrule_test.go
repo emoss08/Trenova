@@ -39,8 +39,10 @@ func TestListActiveByTenant_ReturnsOnlyTenantScopedActiveRules(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "organization_id", "business_unit_id", "status", "name", "class_a", "class_b", "segregation_type",
 		}).AddRow(
-			pulid.MustNew("hsr_"), orgID, buID, domaintypes.StatusActive, "Rule A", "Class1", "Class3", "Prohibited",
-		))
+			pulid.MustNew("hsr_"),
+			orgID, buID, domaintypes.StatusActive, "Rule A", "Class1", "Class3", "Prohibited",
+		),
+		)
 
 	entities, err := repo.ListActiveByTenant(t.Context(), pagination.TenantInfo{
 		OrgID: orgID,

@@ -140,11 +140,19 @@ func (d *InvoiceDispute) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&d.OpenedAt, validation.Required.Error("Opened at is required")),
 	))
 	if d.DisputedAmount.LessThanOrEqual(decimal.Zero) {
-		multiErr.Add("disputedAmount", errortypes.ErrInvalid, "Disputed amount must be greater than zero")
+		multiErr.Add(
+			"disputedAmount",
+			errortypes.ErrInvalid,
+			"Disputed amount must be greater than zero",
+		)
 	}
 	if d.Status == DisputeCaseStatusResolved {
 		if !d.Resolution.IsValid() {
-			multiErr.Add("resolution", errortypes.ErrRequired, "A resolved dispute needs a resolution")
+			multiErr.Add(
+				"resolution",
+				errortypes.ErrRequired,
+				"A resolved dispute needs a resolution",
+			)
 		}
 		if d.Resolution.RequiresAdjustment() && d.ResolutionAdjustmentID.IsNil() {
 			multiErr.Add(

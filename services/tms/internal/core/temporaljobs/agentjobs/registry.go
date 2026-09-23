@@ -1,22 +1,32 @@
 package agentjobs
 
 import (
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"go.temporal.io/sdk/worker"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 // The agent's work is split across queues so one class cannot starve another.
-// A registry binds one set of workflows to one queue; the worker manager shares
-// a worker between registries that name the same queue, and registering an
-// activity on a queue it is never called from costs nothing, so all three
-// registries hand it the same activity set.
+// A registry binds one set of workflows to one queue, and each queue's worker
+// registers the whole activity set: a run's model and tool calls run on the
+// queue the run is on, and a heavy tool on the heavy queue, whichever queue
+// called it.
 var (
 	BackgroundDomainConfig = registry.DomainConfig{
-		Name:         "agent-background-worker",
-		TaskQueue:    temporaltype.TaskQueueAgentBackground.String(),
-		WorkerConfig: registry.DefaultWorkerConfig(),
+		Name:      "agent-background-worker",
+		TaskQueue: temporaltype.TaskQueueAgentBackground.String(),
+		// A run now schedules an activity per model call and per tool call,
+		// most of them waiting on a model or a database rather than a CPU.
+		WorkerConfig: registry.WorkerConfig{
+			MaxConcurrentActivityExecutionSize:     50,
+			MaxConcurrentWorkflowTaskExecutionSize: 20,
+			MaxConcurrentWorkflowTaskPollers:       2,
+			MaxConcurrentActivityTaskPollers:       4,
+			WorkerStopTimeout:                      registry.DefaultWorkerConfig().WorkerStopTimeout,
+		},
 	}
 
 	HeavyDomainConfig = registry.DomainConfig{
@@ -34,55 +44,39 @@ var (
 	}
 )
 
-var (
-	BackgroundWorkflows = convertWorkflows(RegisterBackgroundWorkflows())
-	HeavyWorkflows      = convertWorkflows(RegisterHeavyWorkflows())
-	DrainWorkflows      = convertWorkflows(RegisterDrainWorkflows())
-)
-
-func convertWorkflows(wfs []temporaltype.WorkflowDefinition) []registry.WorkflowDefinition {
-	result := make([]registry.WorkflowDefinition, len(wfs))
-	for i, wf := range wfs {
-		result[i] = registry.WorkflowDefinition{
-			Name:        wf.Name,
-			Fn:          wf.Fn,
-			Description: wf.Description,
-		}
-	}
-
-	return result
-}
-
 type RegistryParams struct {
 	fx.In
 
 	Activities *Activities
+	Flow       *agentflow.Activities
+	Workflows  *Workflows
 	Logger     *zap.Logger
 }
 
+func newRegistry(
+	p RegistryParams,
+	config *registry.DomainConfig,
+	workflows []registry.WorkflowDefinition,
+) *registry.ComposedRegistry {
+	return registry.NewComposedRegistry(registry.ComposedParams{
+		Config:     config,
+		Activities: []any{p.Activities, p.Flow},
+		Register: func(w worker.ActivityRegistry) {
+			agentflow.RegisterDynamic(w, p.Flow)
+		},
+		Workflows: workflows,
+		Logger:    p.Logger,
+	})
+}
+
 func NewBackgroundRegistry(p RegistryParams) registry.WorkerRegistry {
-	return registry.NewDomainRegistry(
-		&BackgroundDomainConfig,
-		p.Activities,
-		BackgroundWorkflows,
-		p.Logger,
-	)
+	return newRegistry(p, &BackgroundDomainConfig, p.Workflows.background())
 }
 
 func NewHeavyRegistry(p RegistryParams) registry.WorkerRegistry {
-	return registry.NewDomainRegistry(
-		&HeavyDomainConfig,
-		p.Activities,
-		HeavyWorkflows,
-		p.Logger,
-	)
+	return newRegistry(p, &HeavyDomainConfig, p.Workflows.heavy())
 }
 
 func NewDrainRegistry(p RegistryParams) registry.WorkerRegistry {
-	return registry.NewDomainRegistry(
-		&DrainDomainConfig,
-		p.Activities,
-		DrainWorkflows,
-		p.Logger,
-	)
+	return newRegistry(p, &DrainDomainConfig, p.Workflows.drain())
 }

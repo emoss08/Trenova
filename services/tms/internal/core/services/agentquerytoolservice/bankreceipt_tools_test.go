@@ -82,7 +82,10 @@ func (f *fakePayments) List(
 ) (*pagination.ListResult[*customerpayment.Payment], error) {
 	f.captured = req
 
-	return &pagination.ListResult[*customerpayment.Payment]{Items: f.items, Total: len(f.items)}, nil
+	return &pagination.ListResult[*customerpayment.Payment]{
+		Items: f.items,
+		Total: len(f.items),
+	}, nil
 }
 
 func exceptionReceipt(reference string) *bankreceipt.BankReceipt {
@@ -169,7 +172,10 @@ func TestGetBankReceipt_ReturnsTheScoredCandidatesAndTheQueueEntry(t *testing.T)
 	}}}
 	tool := newGetBankReceiptTool(receipts, items)
 
-	result, err := tool.Query(t.Context(), testParams(map[string]any{"bankReceiptId": receipt.ID.String()}))
+	result, err := tool.Query(
+		t.Context(),
+		testParams(map[string]any{"bankReceiptId": receipt.ID.String()}),
+	)
 	require.NoError(t, err)
 
 	row, ok := result.(bankReceiptDetailRow)
@@ -226,7 +232,9 @@ func TestListCustomerPayments_DefaultsToPostedAndPassesTheFiltersThrough(t *test
 		Status:               customerpayment.StatusPosted,
 		PaymentMethod:        customerpayment.MethodACH,
 		ReferenceNumber:      "ACH4471",
-		Applications:         []*customerpayment.Application{{InvoiceID: invoiceID, AppliedAmountMinor: 100_000}},
+		Applications: []*customerpayment.Application{
+			{InvoiceID: invoiceID, AppliedAmountMinor: 100_000},
+		},
 	}}}
 	tool := newListCustomerPaymentsTool(payments)
 

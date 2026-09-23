@@ -81,7 +81,10 @@ func TestServerVehicleStatsFeedCursorPagination(t *testing.T) {
 		t.Fatal("expected non-empty endCursor from initial feed call")
 	}
 	if hasNext, ok := firstPagination["hasNextPage"].(bool); !ok || hasNext {
-		t.Fatalf("expected hasNextPage false on initial call, got %v", firstPagination["hasNextPage"])
+		t.Fatalf(
+			"expected hasNextPage false on initial call, got %v",
+			firstPagination["hasNextPage"],
+		)
 	}
 	cursorTime, _, err := decodeStatsFeedCursor(cursor)
 	if err != nil {

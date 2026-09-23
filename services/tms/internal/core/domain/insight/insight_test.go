@@ -30,7 +30,9 @@ func validInsight() *insight.Insight {
 			Unit:      insight.UnitPercent,
 			Direction: insight.DirectionLowerIsWorse,
 		}},
-		Links:       []insight.Link{{Label: "Late stops", Path: "/shipment?customerId=cus_1", Count: 14}},
+		Links: []insight.Link{
+			{Label: "Late stops", Path: "/shipment?customerId=cus_1", Count: 14},
+		},
 		WindowStart: 1700000000,
 		WindowEnd:   1702592000,
 		DetectedAt:  1702592000,

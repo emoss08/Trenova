@@ -572,7 +572,11 @@ func (s *Service) AddChargeWithAllocations(
 	actor *services.RequestActor,
 ) (*order.Order, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	tenantInfo := req.TenantInfo
 	orderID := req.OrderID
@@ -783,7 +787,11 @@ func (s *Service) SetChargeAllocations(
 	actor *services.RequestActor,
 ) (*order.Order, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	allocations := req.Allocations
 	if allocations == nil {
@@ -908,7 +916,11 @@ func (s *Service) validateChargeAllocations(
 		found, err := s.chargeAllocationRepo.LockedIDs(ctx, tenantInfo, rowIDs)
 		if err != nil {
 			multiErr := errortypes.NewMultiError()
-			multiErr.Add("allocations", errortypes.ErrInvalid, "Unable to verify invoiced allocations")
+			multiErr.Add(
+				"allocations",
+				errortypes.ErrInvalid,
+				"Unable to verify invoiced allocations",
+			)
 			return multiErr
 		}
 		locked = found
@@ -975,12 +987,16 @@ func (s *Service) syncChargeAllocations(
 		return nil
 	}
 
-	return s.chargeAllocationRepo.SyncForOrderCharge(ctx, tx, &repositories.SyncOrderChargeAllocationsRequest{
-		TenantInfo:    tenantInfo,
-		OrderID:       charge.OrderID,
-		OrderChargeID: charge.ID,
-		Allocations:   allocations,
-	})
+	return s.chargeAllocationRepo.SyncForOrderCharge(
+		ctx,
+		tx,
+		&repositories.SyncOrderChargeAllocationsRequest{
+			TenantInfo:    tenantInfo,
+			OrderID:       charge.OrderID,
+			OrderChargeID: charge.ID,
+			Allocations:   allocations,
+		},
+	)
 }
 
 func (s *Service) ListCharges(

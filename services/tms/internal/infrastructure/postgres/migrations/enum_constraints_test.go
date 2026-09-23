@@ -62,8 +62,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 	})
 
 	for _, constraint := range constraints {
-		adds := regexp.MustCompile(`(?s)ADD CONSTRAINT "` + constraint.name + `"(.*?);|CONSTRAINT "` +
-			constraint.name + `" CHECK(.*?)\)\s*,?\s*\n`)
+		adds := regexp.MustCompile(
+			`(?s)ADD CONSTRAINT "` + constraint.name + `"(.*?);|CONSTRAINT "` +
+				constraint.name + `" CHECK(.*?)\)\s*,?\s*\n`,
+		)
 
 		var latest string
 		for _, file := range files {

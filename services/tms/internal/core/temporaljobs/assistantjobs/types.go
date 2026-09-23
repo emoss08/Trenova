@@ -1,22 +1,28 @@
-// Package assistantjobs runs an interactive assistant turn on a worker
-// instead of on the request that asked for it.
+// Package assistantjobs answers an assistant turn as a workflow.
 //
 // A chat turn used to occupy a Gin goroutine for its whole life, which made
 // the reply a property of the connection carrying it: a deploy ended every
-// conversation in flight, and the server's write deadline had to be lifted
-// by hand because a reasoning model plus two tool calls outlives it. Moving
-// the work here leaves the API holding nothing but a relay.
+// conversation in flight. The turn is now a workflow of its own, answered in
+// three steps:
 //
-// The turn's events reach the reader through its redis stream rather than
-// through this workflow's history. Workflow history is a durable record of
-// decisions, not a pipe for sixty tokens a second, and a reader rejoining a
-// reply needs a cursor into the text — which is what the stream's entry ids
-// already are.
+//  1. Prepare reads what the question needs, checks it may be answered and
+//     runs the scope guard.
+//  2. The agent loop runs in workflow code (agentflow), one activity per
+//     model call and per tool call, so a failure retries the step that
+//     failed and a lost worker's turn resumes where it was.
+//  3. Finish saves what the turn came to and closes its record.
+//
+// The reader follows the turn on a Workflow Stream the workflow hosts. The
+// stream exists as soon as the workflow does, which is before the request
+// that started it returns, so a reader can never arrive ahead of it.
 package assistantjobs
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/assistantservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,6 +65,21 @@ func (p *AssistantTurnPayload) tenantInfo() pagination.TenantInfo {
 	}
 }
 
+func (p *AssistantTurnPayload) sendRequest() *serviceports.SendMessageRequest {
+	return &serviceports.SendMessageRequest{
+		ThreadID:              p.ThreadID,
+		Content:               p.Content,
+		Page:                  p.Request.Page,
+		TenantInfo:            p.tenantInfo(),
+		PreferredProviderID:   p.Request.PreferredProviderID,
+		ProviderChosen:        p.Request.ProviderChosen,
+		AttachmentDocumentIDs: p.Request.AttachmentDocumentIDs,
+		Mentions:              p.Request.Mentions,
+		FollowUpProposalID:    p.Request.FollowUpProposalID,
+		FollowUpPlanID:        p.Request.FollowUpPlanID,
+	}
+}
+
 // AssistantTurnRequest is what the person handed over with the message.
 type AssistantTurnRequest struct {
 	Page                  *agent.PageContext `json:"page,omitempty"`
@@ -74,7 +95,30 @@ type AssistantTurnRequest struct {
 type AssistantTurnResult struct {
 	Status  string `json:"status"`
 	Refused bool   `json:"refused"`
-	// Replayed says a later attempt found the turn already answered and did
-	// not answer it again.
-	Replayed bool `json:"replayed"`
+	// Result is the saved turn, when it finished. A turn that failed or was
+	// stopped has Message instead, written for the person who asked.
+	Result  *serviceports.SendMessageResult `json:"result,omitempty"`
+	Message string                          `json:"message,omitempty"`
+}
+
+// FinishTurnInput is everything the turn did, for saving.
+type FinishTurnInput struct {
+	Payload *AssistantTurnPayload `json:"payload"`
+	// Plan is nil when the question was turned away before it was planned:
+	// then there is nothing to save, only the turn's record to close.
+	Plan *assistantservice.TurnPlan `json:"plan,omitempty"`
+	// Rejection is why the question was turned away, written for the person
+	// who asked.
+	Rejection string                        `json:"rejection,omitempty"`
+	Run       *serviceports.RunResult       `json:"run,omitempty"`
+	Failure   *modelcall.Failure            `json:"failure,omitempty"`
+	Artifacts []*assistantartifact.Artifact `json:"artifacts,omitempty"`
+	Events    []temporaltype.StreamItem     `json:"events,omitempty"`
+}
+
+// TurnEnding is how the turn ended: its result, and the last event its reader
+// is sent.
+type TurnEnding struct {
+	Result AssistantTurnResult     `json:"result"`
+	Event  temporaltype.StreamItem `json:"event"`
 }

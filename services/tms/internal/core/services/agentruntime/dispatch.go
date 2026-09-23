@@ -85,7 +85,10 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	}
 
 	tier := req.Definition.EffectiveTier(call.Name, tool.DefaultAutonomyTier())
-	call.Arguments = declaredArguments(tool.ParamSchema(), aliasedArguments(tool.ParamSchema(), call.Arguments))
+	call.Arguments = declaredArguments(
+		tool.ParamSchema(),
+		aliasedArguments(tool.ParamSchema(), call.Arguments),
+	)
 	if selfScoped {
 		// Whose records these are is the runtime's to say, not the model's:
 		// anything the model sent under this key is overwritten. A copy, so
@@ -151,7 +154,8 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 
 		content := fmt.Sprintf(
 			"Recorded a proposal to run %q. It is awaiting a person's review at the %s tier and has not run.",
-			call.Name, tier,
+			call.Name,
+			tier,
 		)
 		if req.Definition.SimulationMode {
 			content += " This agent is in simulation: an approval will preview the change, not make it."
@@ -190,7 +194,10 @@ func (s *Service) withinBudget(
 		s.logger.Error("agent tool budget check failed",
 			zap.String("tool", toolName), zap.Error(err))
 
-		return failedOutcome("Tool %q was not run: its budget could not be checked. Try again later.", toolName), true
+		return failedOutcome(
+			"Tool %q was not run: its budget could not be checked. Try again later.",
+			toolName,
+		), true
 	}
 	if !refusal.Refused() {
 		return toolOutcome{}, false
@@ -281,7 +288,9 @@ func (s *Service) authorize(
 
 		return failedOutcome(
 			"Tool %q is not permitted: the person you are working for does not have %s access to %s.",
-			toolName, operation, resource.String(),
+			toolName,
+			operation,
+			resource.String(),
 		), true
 	}
 

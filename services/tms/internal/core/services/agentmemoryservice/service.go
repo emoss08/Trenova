@@ -47,7 +47,11 @@ const (
 // SubjectLabeler names the record a memory is about, so the prompt can say
 // "Acme Freight (customer)" rather than an id.
 type SubjectLabeler interface {
-	Label(ctx context.Context, tenant pagination.TenantInfo, ref repositories.MemorySubjectRef) (string, error)
+	Label(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		ref repositories.MemorySubjectRef,
+	) (string, error)
 }
 
 type runReader interface {
@@ -92,7 +96,11 @@ func (s *Service) Remember(
 	actor *services.RequestActor,
 ) (*agent.Memory, error) {
 	if actor == nil {
-		return nil, errortypes.NewValidationError("actor", errortypes.ErrRequired, "An actor is required")
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrRequired,
+			"An actor is required",
+		)
 	}
 
 	kind := req.Kind
@@ -131,7 +139,11 @@ func (s *Service) Remember(
 			ID:         req.RunID,
 			TenantInfo: &req.TenantInfo,
 		}); err != nil {
-			s.l.Warn("agent memory: run lookup failed", zap.String("run", req.RunID.String()), zap.Error(err))
+			s.l.Warn(
+				"agent memory: run lookup failed",
+				zap.String("run", req.RunID.String()),
+				zap.Error(err),
+			)
 		} else if run.AgentDefinitionID.IsNotNil() {
 			definitionID := run.AgentDefinitionID
 			entity.AgentDefinitionID = &definitionID
@@ -235,7 +247,11 @@ func (s *Service) SetStatus(
 	actor *services.RequestActor,
 ) (*agent.Memory, error) {
 	if actor == nil {
-		return nil, errortypes.NewValidationError("actor", errortypes.ErrRequired, "An actor is required")
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrRequired,
+			"An actor is required",
+		)
 	}
 	if !req.Status.IsValid() {
 		return nil, errortypes.NewValidationError(
@@ -413,7 +429,11 @@ func (s *Service) RecordCorrection(
 // which customer or driver the memory is about. A subject that cannot be
 // found is refused: a memory about a record that does not exist would be
 // read by nobody and mislead anyone who saw it.
-func (s *Service) label(ctx context.Context, tenant pagination.TenantInfo, entity *agent.Memory) error {
+func (s *Service) label(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	entity *agent.Memory,
+) error {
 	if entity.SubjectType == "" || entity.SubjectID == nil || s.labeler == nil {
 		return nil
 	}
@@ -426,7 +446,10 @@ func (s *Service) label(ctx context.Context, tenant pagination.TenantInfo, entit
 		return errortypes.NewValidationError(
 			"subjectId",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("No %s with that id is visible to you", strings.ToLower(string(entity.SubjectType))),
+			fmt.Sprintf(
+				"No %s with that id is visible to you",
+				strings.ToLower(string(entity.SubjectType)),
+			),
 		)
 	}
 	entity.SubjectLabel = stringutils.Ellipsize(label, 200)

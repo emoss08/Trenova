@@ -42,7 +42,10 @@ func TestListPendingExtractionTenants_UsesQualifiedTenantGrouping(t *testing.T) 
 
 		if strings.Contains(actualSQL, "doc.status = $1) OR") ||
 			strings.Contains(actualSQL, "doc.status = 'Active') OR") {
-			return fmt.Errorf("status filter must not be ORed with eligibility filters, got %s", actualSQL)
+			return fmt.Errorf(
+				"status filter must not be ORed with eligibility filters, got %s",
+				actualSQL,
+			)
 		}
 
 		return nil

@@ -18,7 +18,11 @@ type DeadLetterWriter struct {
 
 var _ ports.DeadLetterWriter = (*DeadLetterWriter)(nil)
 
-func NewDeadLetterWriter(redisURL string, stream string, logger *zap.Logger) (*DeadLetterWriter, error) {
+func NewDeadLetterWriter(
+	redisURL string,
+	stream string,
+	logger *zap.Logger,
+) (*DeadLetterWriter, error) {
 	base, err := newBaseSink(redisURL, logger.With(zap.String("mode", "dlq")))
 	if err != nil {
 		return nil, err

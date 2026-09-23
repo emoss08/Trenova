@@ -42,7 +42,11 @@ func TestPostmarkProviderEventIDFallsBackToDeterministicFields(t *testing.T) {
 		DeliveredAt: "2026-05-29T12:00:00Z",
 	}
 
-	require.Equal(t, "Delivery:message-id:ops@example.com:2026-05-29T12:00:00Z", postmarkProviderEventID(payload))
+	require.Equal(
+		t,
+		"Delivery:message-id:ops@example.com:2026-05-29T12:00:00Z",
+		postmarkProviderEventID(payload),
+	)
 }
 
 func TestPostmarkProviderEventIDUsesProviderIDWhenPresent(t *testing.T) {

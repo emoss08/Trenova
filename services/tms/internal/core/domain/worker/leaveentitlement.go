@@ -87,7 +87,7 @@ type LeaveControl struct {
 	// WorkweekHours is what a week of entitlement is worth. Intermittent leave
 	// is taken in hours (29 CFR 825.205), so weeks only become a usable balance
 	// once there is a week's length to convert them with.
-	WorkweekHours decimal.Decimal `json:"workweekHours" bun:"workweek_hours,type:NUMERIC(5,2),notnull"`
+	WorkweekHours decimal.Decimal `json:"workweekHours"          bun:"workweek_hours,type:NUMERIC(5,2),notnull"`
 
 	EligibilityMonths    int32 `json:"eligibilityMonths"    bun:"eligibility_months,type:INTEGER,notnull"`
 	EligibilityHours     int32 `json:"eligibilityHours"     bun:"eligibility_hours,type:INTEGER,notnull"`

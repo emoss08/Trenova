@@ -162,7 +162,10 @@ func (t *explainRateTool) Query(
 
 	shipmentID, err := pulid.Parse(optionalString(params.Params, "shipmentId"))
 	if err != nil {
-		return nil, fmt.Errorf("%q is not a shipment id", optionalString(params.Params, "shipmentId"))
+		return nil, fmt.Errorf(
+			"%q is not a shipment id",
+			optionalString(params.Params, "shipmentId"),
+		)
 	}
 
 	side := rateagreement.PartyTypeCustomer

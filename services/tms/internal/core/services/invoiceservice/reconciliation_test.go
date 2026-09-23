@@ -28,10 +28,20 @@ func TestReconciliationExpectedTotalUsesThePayersShareOnASplitInvoice(t *testing
 	}
 
 	expected := reconciliationExpectedTotal(entity, []*shipment.Shipment{leg})
-	assert.True(t, expected.Equal(decimal.NewFromInt(400)), "AMD owes 40% of the leg, not all of it")
+	assert.True(
+		t,
+		expected.Equal(decimal.NewFromInt(400)),
+		"AMD owes 40% of the leg, not all of it",
+	)
 
 	entity.BillType = billingqueue.BillTypeCreditMemo
-	assert.True(t, reconciliationExpectedTotal(entity, []*shipment.Shipment{leg}).Equal(decimal.NewFromInt(-400)))
+	assert.True(
+		t,
+		reconciliationExpectedTotal(
+			entity,
+			[]*shipment.Shipment{leg},
+		).Equal(decimal.NewFromInt(-400)),
+	)
 }
 
 func TestReconciliationExpectedTotalUsesTheLegTotalOnAnOrdinaryInvoice(t *testing.T) {
@@ -49,7 +59,13 @@ func TestReconciliationExpectedTotalUsesTheLegTotalOnAnOrdinaryInvoice(t *testin
 	}
 
 	// Not flagged as split, so the whole leg is expected however its rows are allocated.
-	assert.True(t, reconciliationExpectedTotal(entity, []*shipment.Shipment{leg}).Equal(decimal.NewFromInt(1000)))
+	assert.True(
+		t,
+		reconciliationExpectedTotal(
+			entity,
+			[]*shipment.Shipment{leg},
+		).Equal(decimal.NewFromInt(1000)),
+	)
 }
 
 func TestReconciliationLegTotalFallsBackWhenThePayerHasNoShare(t *testing.T) {
@@ -79,5 +95,11 @@ func TestReconciliationExpectedTotalAddsUnattributedLinesOnWiderScopes(t *testin
 			{Amount: decimal.NewFromInt(25)},
 		},
 	}
-	require.True(t, reconciliationExpectedTotal(entity, []*shipment.Shipment{leg}).Equal(decimal.NewFromInt(425)))
+	require.True(
+		t,
+		reconciliationExpectedTotal(
+			entity,
+			[]*shipment.Shipment{leg},
+		).Equal(decimal.NewFromInt(425)),
+	)
 }

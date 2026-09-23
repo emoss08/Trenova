@@ -85,7 +85,9 @@ func TestSelectPartnerDocumentProfileOptions_AppliesTenantSearchAndFilters(t *te
 			edi.TransactionSet204,
 			"",
 			"SM",
-			[]byte(`{"elementSeparator":"*","segmentTerminator":"~","componentSeparator":">","repetitionSeparator":"^"}`),
+			[]byte(
+				`{"elementSeparator":"*","segmentTerminator":"~","componentSeparator":">","repetitionSeparator":"^"}`,
+			),
 			[]byte(`{"expected":false}`),
 			edi.ValidationModeStrict,
 			[]byte(`{}`),
@@ -94,7 +96,8 @@ func TestSelectPartnerDocumentProfileOptions_AppliesTenantSearchAndFilters(t *te
 			0,
 			1,
 			1,
-		))
+		),
+		)
 
 	result, err := repo.SelectPartnerDocumentProfileOptions(
 		t.Context(),

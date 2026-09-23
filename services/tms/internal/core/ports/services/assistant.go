@@ -417,29 +417,14 @@ type AssistantService interface {
 		req repositories.GetThreadRequest,
 	) (*ThreadTranscript, error)
 	DeleteThread(ctx context.Context, req repositories.GetThreadRequest) error
-	// SendMessage runs a guarded turn and persists it.
-	SendMessage(
-		ctx context.Context,
-		req *SendMessageRequest,
-		actor *RequestActor,
-	) (*SendMessageResult, error)
-	// SendMessageStream is SendMessage reported live: the guard's verdict, the
-	// reply as it is written, and each tool as it runs, before the saved result.
-	SendMessageStream(
-		ctx context.Context,
-		req *SendMessageRequest,
-		actor *RequestActor,
-		emit AssistantStreamEmitter,
-	) (*SendMessageResult, error)
-	// Ask answers a quick question on a hidden thread, streamed like any
-	// turn. The thread is created for the question and listed only when the
+	// StartAsk opens the hidden thread a quick question is answered on. The
+	// answer is a turn like any other; the thread is listed only when the
 	// person keeps it.
-	Ask(
+	StartAsk(
 		ctx context.Context,
 		req *AskRequest,
 		actor *RequestActor,
-		emit AssistantStreamEmitter,
-	) (*SendMessageResult, error)
+	) (*conversation.Thread, error)
 }
 
 // AssistantProviderOption is one entry in the model picker: enough to render a

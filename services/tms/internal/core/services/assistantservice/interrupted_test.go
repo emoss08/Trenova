@@ -53,7 +53,7 @@ func TestSendMessageStream_KeepsWhatRanWhenTheModelFailsPartway(t *testing.T) {
 	svc.definitions = &stubDefinitions{definition: testDefinition("get_shipment")}
 	actor := testActor()
 
-	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Where is S1?",
 		TenantInfo: actor.TenantInfo(),
@@ -86,7 +86,7 @@ func TestSendMessageStream_SavesTheTurnOnACancelledRequest(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
-	_, _ = svc.SendMessageStream(ctx, &serviceports.SendMessageRequest{
+	_, _ = svc.sendMessage(ctx, &serviceports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Where is it?",
 		TenantInfo: actor.TenantInfo(),
@@ -107,13 +107,23 @@ func TestInterruptedTurn_SaysNothingRanWhenNothingDid(t *testing.T) {
 		Messages: []conversation.Message{{Role: conversation.RoleUser, Content: "Where is S1?"}},
 	}
 
-	stopped := interruptedTurn(req, agentguard.Decision{Allowed: true}, nothingRan, context.Canceled)
+	stopped := interruptedTurn(
+		req.Input,
+		agentguard.Decision{Allowed: true},
+		nothingRan,
+		context.Canceled,
+	)
 	require.NotNil(t, stopped, "the question is kept")
 	require.Len(t, stopped.Messages, 2)
 	assert.NotContains(t, stopped.Reply, "shown above")
 	assert.Contains(t, stopped.Reply, "before a reply started")
 
-	failed := interruptedTurn(req, agentguard.Decision{Allowed: true}, nothingRan, errors.New("provider down"))
+	failed := interruptedTurn(
+		req.Input,
+		agentguard.Decision{Allowed: true},
+		nothingRan,
+		errors.New("provider down"),
+	)
 	require.NotNil(t, failed)
 	assert.NotContains(t, failed.Reply, "shown above")
 	assert.Contains(t, failed.Reply, "before it started")
@@ -123,7 +133,7 @@ func TestInterruptedTurn_SaysNothingRanWhenNothingDid(t *testing.T) {
 		{Role: conversation.RoleUser, Content: "Where is S1?"},
 		{Role: conversation.RoleAssistant, Content: "Looking it up."},
 	}}
-	partial := interruptedTurn(req, agentguard.Decision{Allowed: true}, ran, context.Canceled)
+	partial := interruptedTurn(req.Input, agentguard.Decision{Allowed: true}, ran, context.Canceled)
 	require.NotNil(t, partial)
 	assert.Contains(t, partial.Reply, "shown above", "with something above, the note points at it")
 }
@@ -137,7 +147,12 @@ func TestInterruptedTurn_KeepsTheQuestionWhenNoRunCameBack(t *testing.T) {
 
 	req := &TurnRequest{Input: "Where is S1?"}
 
-	turn := interruptedTurn(req, agentguard.Decision{Allowed: true}, nil, errors.New("provider down"))
+	turn := interruptedTurn(
+		req.Input,
+		agentguard.Decision{Allowed: true},
+		nil,
+		errors.New("provider down"),
+	)
 	require.NotNil(t, turn)
 	require.Len(t, turn.Messages, 2)
 	assert.Equal(t, conversation.RoleUser, turn.Messages[0].Role)
@@ -145,7 +160,12 @@ func TestInterruptedTurn_KeepsTheQuestionWhenNoRunCameBack(t *testing.T) {
 	assert.Equal(t, conversation.RoleAssistant, turn.Messages[1].Role)
 	assert.Contains(t, turn.Reply, "before it started")
 
-	empty := interruptedTurn(req, agentguard.Decision{Allowed: true}, &serviceports.RunResult{}, context.Canceled)
+	empty := interruptedTurn(
+		req.Input,
+		agentguard.Decision{Allowed: true},
+		&serviceports.RunResult{},
+		context.Canceled,
+	)
 	require.NotNil(t, empty)
 	require.Len(t, empty.Messages, 2)
 	assert.Contains(t, empty.Reply, "before a reply started")

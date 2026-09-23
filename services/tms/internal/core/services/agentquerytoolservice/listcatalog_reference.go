@@ -595,9 +595,14 @@ func newListHoldReasonsTool(
 		config:   querybuilder.GetFieldConfiguration((*holdreason.HoldReason)(nil)),
 		fields: []listField{
 			{
-				Name:   "type",
-				Kind:   filterEnum,
-				Values: []string{"OperationalHold", "ComplianceHold", "CustomerHold", "FinanceHold"},
+				Name: "type",
+				Kind: filterEnum,
+				Values: []string{
+					"OperationalHold",
+					"ComplianceHold",
+					"CustomerHold",
+					"FinanceHold",
+				},
 			},
 			{Name: "code", Kind: filterText, Sortable: true},
 			{Name: "label", Kind: filterText, Sortable: true},

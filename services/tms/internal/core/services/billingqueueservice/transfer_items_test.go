@@ -126,7 +126,10 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 	customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
 		RunAndReturn(func(_ context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
-			return &customer.Customer{ID: req.ID, BillingProfile: &customer.CustomerBillingProfile{}}, nil
+			return &customer.Customer{
+				ID:             req.ID,
+				BillingProfile: &customer.CustomerBillingProfile{},
+			}, nil
 		}).
 		Twice()
 
@@ -164,7 +167,12 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 	require.Len(t, result.Items, 2)
 	require.Len(t, created, 2)
 	require.NotNil(t, result.Primary)
-	assert.Equal(t, shp.CustomerID, result.Primary.BillToCustomerID, "the shipment's own payer is primary")
+	assert.Equal(
+		t,
+		shp.CustomerID,
+		result.Primary.BillToCustomerID,
+		"the shipment's own payer is primary",
+	)
 
 	byPayer := make(map[pulid.ID]*billingqueue.BillingQueueItem, 2)
 	for _, item := range created {
@@ -180,7 +188,12 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 	assert.Equal(t, int64(100_000), byPayer[shp.CustomerID].AllocatedTotalAmountMinor)
 	assert.True(t, byPayer[amd].AllocatedTotalAmount.Equal(decimal.NewFromInt(120)))
 	assert.Equal(t, int64(12_000), byPayer[amd].AllocatedTotalAmountMinor)
-	assert.NotEqual(t, byPayer[shp.CustomerID].Number, byPayer[amd].Number, "every payer's item gets its own number")
+	assert.NotEqual(
+		t,
+		byPayer[shp.CustomerID].Number,
+		byPayer[amd].Number,
+		"every payer's item gets its own number",
+	)
 }
 
 func TestTransferToBillingItemsRefusesWhenAPayerIsAlreadyQueued(t *testing.T) {
@@ -213,7 +226,11 @@ func TestTransferToBillingItemsRefusesWhenAPayerIsAlreadyQueued(t *testing.T) {
 	}, &services.RequestActor{})
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.True(t, errortypes.IsConflictError(err), "nothing is written when any payer is already queued")
+	assert.True(
+		t,
+		errortypes.IsConflictError(err),
+		"nothing is written when any payer is already queued",
+	)
 }
 
 func TestTransferToBillingItemsRequiresAReadyToInvoiceShipment(t *testing.T) {
@@ -245,9 +262,24 @@ func TestShouldAutoApprove(t *testing.T) {
 	intel := pulid.MustNew("cus_")
 	amd := pulid.MustNew("cus_")
 
-	assert.True(t, svc.shouldAutoApprove(&services.TransferToBillingRequest{AutoApprove: true}, amd))
-	assert.True(t, svc.shouldAutoApprove(&services.TransferToBillingRequest{AutoApprovePayerIDs: []pulid.ID{intel, amd}}, amd))
-	assert.False(t, svc.shouldAutoApprove(&services.TransferToBillingRequest{AutoApprovePayerIDs: []pulid.ID{intel}}, amd))
+	assert.True(
+		t,
+		svc.shouldAutoApprove(&services.TransferToBillingRequest{AutoApprove: true}, amd),
+	)
+	assert.True(
+		t,
+		svc.shouldAutoApprove(
+			&services.TransferToBillingRequest{AutoApprovePayerIDs: []pulid.ID{intel, amd}},
+			amd,
+		),
+	)
+	assert.False(
+		t,
+		svc.shouldAutoApprove(
+			&services.TransferToBillingRequest{AutoApprovePayerIDs: []pulid.ID{intel}},
+			amd,
+		),
+	)
 	assert.False(t, svc.shouldAutoApprove(&services.TransferToBillingRequest{}, amd))
 }
 
@@ -289,7 +321,10 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 	customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
 		RunAndReturn(func(_ context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
-			return &customer.Customer{ID: req.ID, BillingProfile: &customer.CustomerBillingProfile{}}, nil
+			return &customer.Customer{
+				ID:             req.ID,
+				BillingProfile: &customer.CustomerBillingProfile{},
+			}, nil
 		}).
 		Maybe()
 	audit := mocks.NewMockAuditService(t)

@@ -81,7 +81,10 @@ func TestNormalizeReportParameters_WillNotReachIntoARealObject(t *testing.T) {
 	t.Parallel()
 
 	value := map[string]any{"item": []any{"Completed"}, "mode": "any"}
-	normalized := normalizeReportParameters(unbilledEntry().Definition, map[string]any{"statuses": value})
+	normalized := normalizeReportParameters(
+		unbilledEntry().Definition,
+		map[string]any{"statuses": value},
+	)
 
 	assert.Equal(t, value, normalized["statuses"])
 }
@@ -102,7 +105,10 @@ func TestNormalizeReportParameters_UnwrapsAOneItemListForASingleValue(t *testing
 func TestNormalizeReportParameters_AddsNothing(t *testing.T) {
 	t.Parallel()
 
-	normalized := normalizeReportParameters(unbilledEntry().Definition, map[string]any{"windowDays": 90})
+	normalized := normalizeReportParameters(
+		unbilledEntry().Definition,
+		map[string]any{"windowDays": 90},
+	)
 
 	assert.NotContains(t, normalized, "statuses")
 	assert.Len(t, normalized, 1)

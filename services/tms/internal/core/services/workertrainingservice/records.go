@@ -178,7 +178,14 @@ func (s *Service) Assign(
 	}
 	created.Course = course
 
-	s.auditRecord(created, nil, permission.OpAssign, req.UserID, "Training assigned: "+course.Name, log)
+	s.auditRecord(
+		created,
+		nil,
+		permission.OpAssign,
+		req.UserID,
+		"Training assigned: "+course.Name,
+		log,
+	)
 	s.publish(ctx, req.TenantInfo, realtimeResource, permission.OpAssign, created.ID, req.UserID)
 	s.refreshRollupQuietly(ctx, req.TenantInfo, created.WorkerID)
 
@@ -196,7 +203,10 @@ func (s *Service) AssignRequired(
 	workerID pulid.ID,
 	userID pulid.ID,
 ) ([]*worker.WorkerTrainingRecord, error) {
-	log := s.l.With(zap.String("operation", "AssignRequired"), zap.String("workerId", workerID.String()))
+	log := s.l.With(
+		zap.String("operation", "AssignRequired"),
+		zap.String("workerId", workerID.String()),
+	)
 
 	wrk, err := s.loadWorker(ctx, tenantInfo, workerID)
 	if err != nil {
@@ -428,8 +438,10 @@ func (s *Service) requireWorkerDocument(
 	if err != nil {
 		return err
 	}
-	ownedByRecord := doc.ResourceType == trainingResourceType && doc.ResourceID == record.ID.String()
-	ownedByWorker := doc.ResourceType == workerResourceType && doc.ResourceID == record.WorkerID.String()
+	ownedByRecord := doc.ResourceType == trainingResourceType &&
+		doc.ResourceID == record.ID.String()
+	ownedByWorker := doc.ResourceType == workerResourceType &&
+		doc.ResourceID == record.WorkerID.String()
 	if !ownedByRecord && !ownedByWorker {
 		return errortypes.NewValidationError(
 			"documentId",
@@ -526,7 +538,14 @@ func (s *Service) Cancel(
 	}
 	saved.Course = original.Course
 
-	s.auditRecord(saved, original, permission.OpCancel, req.UserID, "Training assignment cancelled", log)
+	s.auditRecord(
+		saved,
+		original,
+		permission.OpCancel,
+		req.UserID,
+		"Training assignment cancelled",
+		log,
+	)
 	s.publish(ctx, req.TenantInfo, realtimeResource, permission.OpCancel, saved.ID, req.UserID)
 	s.refreshRollupQuietly(ctx, req.TenantInfo, saved.WorkerID)
 

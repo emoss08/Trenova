@@ -460,7 +460,11 @@ func (r *Registry) registerBillingKinds() {
 				Fields: []VariableDefinition{
 					{Path: "ProNumber", Type: VariableString, Description: "Pro number."},
 					{Path: "BOL", Type: VariableString, Description: "Bill of lading number."},
-					{Path: "PONumber", Type: VariableString, Description: "Customer purchase order number."},
+					{
+						Path:        "PONumber",
+						Type:        VariableString,
+						Description: "Customer purchase order number.",
+					},
 					{
 						Path:        "ServiceDate",
 						Type:        VariableString,

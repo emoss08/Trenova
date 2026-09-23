@@ -43,7 +43,8 @@ func TestServiceCancel_Success(t *testing.T) {
 
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
-			return req.ID == shipmentID && req.TenantInfo.OrgID == orgID && req.TenantInfo.BuID == buID
+			return req.ID == shipmentID && req.TenantInfo.OrgID == orgID &&
+				req.TenantInfo.BuID == buID
 		})).
 		Return(original, nil).
 		Once()
@@ -68,10 +69,14 @@ func TestServiceCancel_Success(t *testing.T) {
 		}).
 		Return(nil).
 		Once()
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	audit.EXPECT().
+		LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).
+		Once()
 	realtime.EXPECT().
 		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *services.PublishResourceInvalidationRequest) bool {
-			return req.Resource == "shipments" && req.Action == "canceled" && req.RecordID == shipmentID
+			return req.Resource == "shipments" && req.Action == "canceled" &&
+				req.RecordID == shipmentID
 		})).
 		Return(nil).
 		Once()
@@ -165,14 +170,19 @@ func TestServiceUncancel_Success(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(original, nil).Once()
 	repo.EXPECT().
 		Uncancel(mock.Anything, mock.MatchedBy(func(req *repositories.UncancelShipmentRequest) bool {
-			return req.ShipmentID == shipmentID && req.TenantInfo.OrgID == orgID && req.TenantInfo.BuID == buID
+			return req.ShipmentID == shipmentID && req.TenantInfo.OrgID == orgID &&
+				req.TenantInfo.BuID == buID
 		})).
 		Return(updated, nil).
 		Once()
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	audit.EXPECT().
+		LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).
+		Once()
 	realtime.EXPECT().
 		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *services.PublishResourceInvalidationRequest) bool {
-			return req.Resource == "shipments" && req.Action == "uncanceled" && req.RecordID == shipmentID
+			return req.Resource == "shipments" && req.Action == "uncanceled" &&
+				req.RecordID == shipmentID
 		})).
 		Return(nil).
 		Once()

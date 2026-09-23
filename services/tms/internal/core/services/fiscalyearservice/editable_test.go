@@ -74,7 +74,12 @@ func TestValidateEditableRejectsCalendarChanges(t *testing.T) {
 	messages := fieldMessages(t, validateEditable(original, &updated))
 
 	for _, field := range []string{"year", "startDate", "endDate", "isCalendarYear"} {
-		assert.Contains(t, messages[field], "cannot be changed after the fiscal year is created", field)
+		assert.Contains(
+			t,
+			messages[field],
+			"cannot be changed after the fiscal year is created",
+			field,
+		)
 	}
 }
 

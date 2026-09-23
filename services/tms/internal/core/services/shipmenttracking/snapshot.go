@@ -244,7 +244,8 @@ func Build(in Input) *Snapshot {
 				"The last position is %d minutes old", snapshot.Position.AgeMinutes,
 			))
 		}
-		if snapshot.Position == nil && nextMove.Coverage == string(shipment.MoveCoverageTypeDriver) {
+		if snapshot.Position == nil &&
+			nextMove.Coverage == string(shipment.MoveCoverageTypeDriver) {
 			snapshot.Flags = append(snapshot.Flags,
 				"No telematics position is on file for the assigned tractor")
 		}
@@ -515,7 +516,10 @@ func summarize(s *Snapshot) string {
 	}
 	if s.Estimate != nil && s.Estimate.Verdict != VerdictUnknown {
 		fmt.Fprintf(
-			&b, " Estimated arrival %s, %s.", s.Estimate.EstimatedArrivalText, verdictText(s.Estimate),
+			&b,
+			" Estimated arrival %s, %s.",
+			s.Estimate.EstimatedArrivalText,
+			verdictText(s.Estimate),
 		)
 	}
 

@@ -112,10 +112,18 @@ func validateReassignRequest(
 	case shipment.ChargeAllocationKindFreight:
 	case shipment.ChargeAllocationKindAccessorial:
 		if req.AdditionalChargeID.IsNil() {
-			multiErr.Add("additionalChargeId", errortypes.ErrRequired, "Choose the accessorial charge to reassign")
+			multiErr.Add(
+				"additionalChargeId",
+				errortypes.ErrRequired,
+				"Choose the accessorial charge to reassign",
+			)
 		}
 	default:
-		multiErr.Add("chargeKind", errortypes.ErrInvalid, "Only freight or an accessorial charge can be reassigned")
+		multiErr.Add(
+			"chargeKind",
+			errortypes.ErrInvalid,
+			"Only freight or an accessorial charge can be reassigned",
+		)
 	}
 	if multiErr.HasErrors() {
 		return multiErr
@@ -243,7 +251,10 @@ func reassignTarget(
 	)
 }
 
-func targetsCharge(allocation *shipment.ChargeAllocation, req *services.ReassignChargeRequest) bool {
+func targetsCharge(
+	allocation *shipment.ChargeAllocation,
+	req *services.ReassignChargeRequest,
+) bool {
 	if allocation.ChargeKind != req.ChargeKind {
 		return false
 	}
@@ -308,7 +319,8 @@ func reassignRows(
 		rows = append(rows, row)
 	}
 
-	if len(rows) == 1 && rows[0].BillToCustomerID == shp.PayerID() && wholeCharge(rows[0], chargeTotal) {
+	if len(rows) == 1 && rows[0].BillToCustomerID == shp.PayerID() &&
+		wholeCharge(rows[0], chargeTotal) {
 		return []*shipment.ChargeAllocation{}, nil
 	}
 
@@ -321,7 +333,11 @@ func wholeCharge(row *shipment.ChargeAllocation, total decimal.Decimal) bool {
 		return row.Percent.Valid && row.Percent.Decimal.Equal(decimalutils.Percent100)
 	case shipment.ChargeAllocationMethodAmount:
 		return row.Amount.Valid &&
-			decimalutils.SumEquals([]decimal.Decimal{row.Amount.Decimal}, total, shipment.SharePlaces)
+			decimalutils.SumEquals(
+				[]decimal.Decimal{row.Amount.Decimal},
+				total,
+				shipment.SharePlaces,
+			)
 	default:
 		return false
 	}
@@ -457,7 +473,14 @@ func (s *service) reassignmentResult(
 		result.CreatedItemIDs = append(result.CreatedItemIDs, entity.ID)
 	}
 	for _, entity := range canceled {
-		s.logAction(entity, auditActor, permission.OpUpdate, nil, entity, comment+". "+reassignCancelReason)
+		s.logAction(
+			entity,
+			auditActor,
+			permission.OpUpdate,
+			nil,
+			entity,
+			comment+". "+reassignCancelReason,
+		)
 		s.publishInvalidation(ctx, entity, auditActor, "updated", entity)
 		result.CanceledItemIDs = append(result.CanceledItemIDs, entity.ID)
 	}
@@ -476,10 +499,13 @@ func (s *service) reassignmentResult(
 	}
 	result.Item = reloaded
 
-	active, err := s.repo.ListActiveInvoiceItemsByShipmentIDs(ctx, &repositories.ListActiveInvoiceItemsRequest{
-		TenantInfo:  req.TenantInfo,
-		ShipmentIDs: []pulid.ID{plan.shipment.ID},
-	})
+	active, err := s.repo.ListActiveInvoiceItemsByShipmentIDs(
+		ctx,
+		&repositories.ListActiveInvoiceItemsRequest{
+			TenantInfo:  req.TenantInfo,
+			ShipmentIDs: []pulid.ID{plan.shipment.ID},
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -40,32 +40,56 @@ func TestEvaluateConditions_NumericGt(t *testing.T) {
 	conds := []tablechangealert.Condition{
 		{Field: "amount", Operator: tablechangealert.OpGt, Value: float64(100)},
 	}
-	assert.True(t, EvaluateConditions(conds, "all", map[string]any{"amount": float64(150)}, nil, nil))
-	assert.False(t, EvaluateConditions(conds, "all", map[string]any{"amount": float64(50)}, nil, nil))
+	assert.True(
+		t,
+		EvaluateConditions(conds, "all", map[string]any{"amount": float64(150)}, nil, nil),
+	)
+	assert.False(
+		t,
+		EvaluateConditions(conds, "all", map[string]any{"amount": float64(50)}, nil, nil),
+	)
 }
 
 func TestEvaluateConditions_NumericGte(t *testing.T) {
 	conds := []tablechangealert.Condition{
 		{Field: "amount", Operator: tablechangealert.OpGte, Value: float64(100)},
 	}
-	assert.True(t, EvaluateConditions(conds, "all", map[string]any{"amount": float64(100)}, nil, nil))
-	assert.False(t, EvaluateConditions(conds, "all", map[string]any{"amount": float64(99)}, nil, nil))
+	assert.True(
+		t,
+		EvaluateConditions(conds, "all", map[string]any{"amount": float64(100)}, nil, nil),
+	)
+	assert.False(
+		t,
+		EvaluateConditions(conds, "all", map[string]any{"amount": float64(99)}, nil, nil),
+	)
 }
 
 func TestEvaluateConditions_NumericLt(t *testing.T) {
 	conds := []tablechangealert.Condition{
 		{Field: "amount", Operator: tablechangealert.OpLt, Value: float64(100)},
 	}
-	assert.True(t, EvaluateConditions(conds, "all", map[string]any{"amount": float64(50)}, nil, nil))
-	assert.False(t, EvaluateConditions(conds, "all", map[string]any{"amount": float64(150)}, nil, nil))
+	assert.True(
+		t,
+		EvaluateConditions(conds, "all", map[string]any{"amount": float64(50)}, nil, nil),
+	)
+	assert.False(
+		t,
+		EvaluateConditions(conds, "all", map[string]any{"amount": float64(150)}, nil, nil),
+	)
 }
 
 func TestEvaluateConditions_NumericLte(t *testing.T) {
 	conds := []tablechangealert.Condition{
 		{Field: "amount", Operator: tablechangealert.OpLte, Value: float64(100)},
 	}
-	assert.True(t, EvaluateConditions(conds, "all", map[string]any{"amount": float64(100)}, nil, nil))
-	assert.False(t, EvaluateConditions(conds, "all", map[string]any{"amount": float64(101)}, nil, nil))
+	assert.True(
+		t,
+		EvaluateConditions(conds, "all", map[string]any{"amount": float64(100)}, nil, nil),
+	)
+	assert.False(
+		t,
+		EvaluateConditions(conds, "all", map[string]any{"amount": float64(101)}, nil, nil),
+	)
 }
 
 func TestEvaluateConditions_IsNull(t *testing.T) {
@@ -74,7 +98,10 @@ func TestEvaluateConditions_IsNull(t *testing.T) {
 	}
 	assert.True(t, EvaluateConditions(conds, "all", map[string]any{}, nil, nil))
 	assert.True(t, EvaluateConditions(conds, "all", map[string]any{"notes": nil}, nil, nil))
-	assert.False(t, EvaluateConditions(conds, "all", map[string]any{"notes": "something"}, nil, nil))
+	assert.False(
+		t,
+		EvaluateConditions(conds, "all", map[string]any{"notes": "something"}, nil, nil),
+	)
 }
 
 func TestEvaluateConditions_IsNotNull(t *testing.T) {

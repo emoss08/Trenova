@@ -75,7 +75,10 @@ func (f *releaseFixture) deps() invoicevoid.Deps {
 	}
 }
 
-func (f *releaseFixture) expectCommonReleases(rebill bool, released ...*billingqueue.BillingQueueItem) {
+func (f *releaseFixture) expectCommonReleases(
+	rebill bool,
+	released ...*billingqueue.BillingQueueItem,
+) {
 	f.queueRepo.EXPECT().
 		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *repositories.ReleaseForInvoiceRequest) bool {
 			return req.Rebill == rebill &&
@@ -98,7 +101,10 @@ func (f *releaseFixture) expectCommonReleases(rebill bool, released ...*billingq
 		Once()
 }
 
-func (f *releaseFixture) params(disposition invoice.VoidDisposition, wasPosted bool) invoicevoid.Params {
+func (f *releaseFixture) params(
+	disposition invoice.VoidDisposition,
+	wasPosted bool,
+) invoicevoid.Params {
 	return invoicevoid.Params{
 		Invoice:     f.inv,
 		Disposition: disposition,
@@ -130,7 +136,11 @@ func TestReleaseDraftRebillReleasesItemsWithoutTouchingShipments(t *testing.T) {
 		&billingqueue.BillingQueueItem{ID: second},
 	)
 
-	released, err := invoicevoid.Release(t.Context(), f.deps(), f.params(invoice.VoidDispositionRebill, false))
+	released, err := invoicevoid.Release(
+		t.Context(),
+		f.deps(),
+		f.params(invoice.VoidDispositionRebill, false),
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, []pulid.ID{first, second}, released, "nil rows are skipped")
@@ -143,7 +153,12 @@ func TestReleasePostedRebillReturnsShipmentsToReadyToInvoice(t *testing.T) {
 	f := newReleaseFixture(t)
 	f.expectCommonReleases(true)
 	billedAt := int64(1_699_000_000)
-	shp := &shipment.Shipment{ID: f.shipmentID, OrderID: f.orderID, Status: shipment.StatusInvoiced, BilledAt: &billedAt}
+	shp := &shipment.Shipment{
+		ID:       f.shipmentID,
+		OrderID:  f.orderID,
+		Status:   shipment.StatusInvoiced,
+		BilledAt: &billedAt,
+	}
 	f.invoiceRepo.EXPECT().
 		ListByShipmentIDs(mock.Anything, repositories.ListInvoicesByShipmentIDsRequest{TenantInfo: f.tenantInfo, ShipmentIDs: []pulid.ID{f.shipmentID}}).
 		Return(map[pulid.ID][]*invoice.Invoice{}, nil).
@@ -158,13 +173,18 @@ func TestReleasePostedRebillReturnsShipmentsToReadyToInvoice(t *testing.T) {
 		Once()
 	f.shipmentRepo.EXPECT().
 		UpdateDerivedState(mock.Anything, mock.MatchedBy(func(updated *shipment.Shipment) bool {
-			return updated.ID == f.shipmentID && updated.Status == shipment.StatusReadyToInvoice && updated.BilledAt == nil
+			return updated.ID == f.shipmentID && updated.Status == shipment.StatusReadyToInvoice &&
+				updated.BilledAt == nil
 		})).
 		Return(shp, nil).
 		Once()
 	f.derivation.EXPECT().RecomputeOrder(mock.Anything, f.tenantInfo, f.orderID).Return(nil).Once()
 
-	_, err := invoicevoid.Release(t.Context(), f.deps(), f.params(invoice.VoidDispositionRebill, true))
+	_, err := invoicevoid.Release(
+		t.Context(),
+		f.deps(),
+		f.params(invoice.VoidDispositionRebill, true),
+	)
 
 	require.NoError(t, err)
 }
@@ -175,7 +195,10 @@ func TestReleasePostedDoNotRebillCompletesShipments(t *testing.T) {
 	f := newReleaseFixture(t)
 	f.expectCommonReleases(false)
 	shp := &shipment.Shipment{ID: f.shipmentID, Status: shipment.StatusInvoiced}
-	f.invoiceRepo.EXPECT().ListByShipmentIDs(mock.Anything, mock.Anything).Return(map[pulid.ID][]*invoice.Invoice{}, nil).Once()
+	f.invoiceRepo.EXPECT().
+		ListByShipmentIDs(mock.Anything, mock.Anything).
+		Return(map[pulid.ID][]*invoice.Invoice{}, nil).
+		Once()
 	f.shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(shp, nil).Once()
 	f.shipmentRepo.EXPECT().
 		UpdateDerivedState(mock.Anything, mock.MatchedBy(func(updated *shipment.Shipment) bool {
@@ -184,7 +207,11 @@ func TestReleasePostedDoNotRebillCompletesShipments(t *testing.T) {
 		Return(shp, nil).
 		Once()
 
-	_, err := invoicevoid.Release(t.Context(), f.deps(), f.params(invoice.VoidDispositionDoNotRebill, true))
+	_, err := invoicevoid.Release(
+		t.Context(),
+		f.deps(),
+		f.params(invoice.VoidDispositionDoNotRebill, true),
+	)
 
 	require.NoError(t, err)
 	f.derivation.AssertNotCalled(t, "RecomputeOrder", mock.Anything, mock.Anything, mock.Anything)
@@ -200,8 +227,16 @@ func TestReleaseDoNotRebillKeepsALegAnotherPayersInvoiceStillBills(t *testing.T)
 		Return(map[pulid.ID][]*invoice.Invoice{
 			f.shipmentID: {
 				f.inv,
-				{ID: pulid.MustNew("inv_"), Status: invoice.StatusPosted, BillType: billingqueue.BillTypeCreditMemo},
-				{ID: pulid.MustNew("inv_"), Status: invoice.StatusPosted, BillType: billingqueue.BillTypeInvoice},
+				{
+					ID:       pulid.MustNew("inv_"),
+					Status:   invoice.StatusPosted,
+					BillType: billingqueue.BillTypeCreditMemo,
+				},
+				{
+					ID:       pulid.MustNew("inv_"),
+					Status:   invoice.StatusPosted,
+					BillType: billingqueue.BillTypeInvoice,
+				},
 			},
 		}, nil).
 		Once()
@@ -213,7 +248,11 @@ func TestReleaseDoNotRebillKeepsALegAnotherPayersInvoiceStillBills(t *testing.T)
 		Return(shp, nil).
 		Once()
 
-	_, err := invoicevoid.Release(t.Context(), f.deps(), f.params(invoice.VoidDispositionDoNotRebill, true))
+	_, err := invoicevoid.Release(
+		t.Context(),
+		f.deps(),
+		f.params(invoice.VoidDispositionDoNotRebill, true),
+	)
 
 	require.NoError(t, err)
 }
@@ -233,7 +272,11 @@ func TestReleaseCancelReasonIsPrefixedAndCapped(t *testing.T) {
 
 	params := f.params(invoice.VoidDispositionDoNotRebill, false)
 	params.Reason = strings.Repeat("x", 200)
-	_, err := invoicevoid.Release(t.Context(), invoicevoid.Deps{BillingQueueRepo: f.queueRepo}, params)
+	_, err := invoicevoid.Release(
+		t.Context(),
+		invoicevoid.Deps{BillingQueueRepo: f.queueRepo},
+		params,
+	)
 
 	require.NoError(t, err)
 	assert.True(t, strings.HasPrefix(got, "Invoice voided: "))

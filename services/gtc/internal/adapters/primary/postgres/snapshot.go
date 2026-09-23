@@ -143,7 +143,11 @@ func (r *SnapshotReader) snapshotTable(
 		return fmt.Errorf("parse snapshot cursor for %s: %w", tableName, err)
 	}
 
-	r.logger.Info("snapshotting table", zap.String("table", tableName), zap.Any("cursor", cursor.Values))
+	r.logger.Info(
+		"snapshotting table",
+		zap.String("table", tableName),
+		zap.Any("cursor", cursor.Values),
+	)
 
 	for {
 		query, args := buildSnapshotQuery(binding, cursor, r.batchSize)
@@ -207,13 +211,21 @@ func (r *SnapshotReader) snapshotTable(
 		}
 
 		if count < r.batchSize {
-			r.logger.Info("snapshot complete", zap.String("table", tableName), zap.Any("cursor", cursor.Values))
+			r.logger.Info(
+				"snapshot complete",
+				zap.String("table", tableName),
+				zap.Any("cursor", cursor.Values),
+			)
 			return nil
 		}
 	}
 }
 
-func buildSnapshotQuery(binding domain.SnapshotBinding, cursor domain.Cursor, batchSize int) (string, []any) {
+func buildSnapshotQuery(
+	binding domain.SnapshotBinding,
+	cursor domain.Cursor,
+	batchSize int,
+) (string, []any) {
 	var (
 		predicate string
 		args      []any
@@ -248,7 +260,10 @@ func buildCursorPredicate(fields []string, values []any) (string, []any) {
 	for idx := range fields {
 		clauses := make([]string, 0, idx+1)
 		for prev := 0; prev < idx; prev++ {
-			clauses = append(clauses, fmt.Sprintf("%s = $%d", quoteIdentifier(fields[prev]), argIndex))
+			clauses = append(
+				clauses,
+				fmt.Sprintf("%s = $%d", quoteIdentifier(fields[prev]), argIndex),
+			)
 			args = append(args, values[prev])
 			argIndex++
 		}

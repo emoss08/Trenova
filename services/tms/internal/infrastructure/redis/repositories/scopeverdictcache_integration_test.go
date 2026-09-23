@@ -25,7 +25,10 @@ func setupScopeVerdictCache(t *testing.T) *scopeVerdictCacheRepository {
 func TestScopeVerdictCache_SetAndGet_Integration(t *testing.T) {
 	repo := setupScopeVerdictCache(t)
 
-	verdict := &repositories.CachedScopeVerdict{Category: "TransportationOperations", Reasoning: "asks about drivers"}
+	verdict := &repositories.CachedScopeVerdict{
+		Category:  "TransportationOperations",
+		Reasoning: "asks about drivers",
+	}
 	require.NoError(t, repo.Set(t.Context(), "org_1:abc", verdict, time.Minute))
 
 	got, err := repo.Get(t.Context(), "org_1:abc")
@@ -44,7 +47,15 @@ func TestScopeVerdictCache_MissIsNilAndNoError_Integration(t *testing.T) {
 func TestScopeVerdictCache_Expires_Integration(t *testing.T) {
 	repo := setupScopeVerdictCache(t)
 
-	require.NoError(t, repo.Set(t.Context(), "org_1:short", &repositories.CachedScopeVerdict{Category: "x"}, time.Second))
+	require.NoError(
+		t,
+		repo.Set(
+			t.Context(),
+			"org_1:short",
+			&repositories.CachedScopeVerdict{Category: "x"},
+			time.Second,
+		),
+	)
 	time.Sleep(1500 * time.Millisecond)
 
 	got, err := repo.Get(t.Context(), "org_1:short")
@@ -56,7 +67,10 @@ func TestScopeVerdictCache_Expires_Integration(t *testing.T) {
 // reader, so the next classification replaces it.
 func TestScopeVerdictCache_DropsAnUndecodableRow_Integration(t *testing.T) {
 	repo := setupScopeVerdictCache(t)
-	require.NoError(t, repo.client.Set(t.Context(), repo.key("org_1:bad"), "not json", time.Minute).Err())
+	require.NoError(
+		t,
+		repo.client.Set(t.Context(), repo.key("org_1:bad"), "not json", time.Minute).Err(),
+	)
 
 	_, err := repo.Get(t.Context(), "org_1:bad")
 	require.Error(t, err)

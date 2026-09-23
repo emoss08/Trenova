@@ -156,7 +156,10 @@ func TestWaiveRequirement_RecordsWhoAcceptedTheRiskAndWhy(t *testing.T) {
 		RequirementID: requirement.ID,
 		WaivedByID:    waiver,
 		Reason:        reason,
-		Actor:         &services.RequestActor{UserID: waiver, PrincipalType: services.PrincipalTypeUser},
+		Actor: &services.RequestActor{
+			UserID:        waiver,
+			PrincipalType: services.PrincipalTypeUser,
+		},
 	})
 	require.NoError(t, err)
 

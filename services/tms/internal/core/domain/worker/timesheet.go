@@ -143,7 +143,7 @@ type TimeClockEntry struct {
 	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
 	TimesheetID    pulid.ID `json:"timesheetId"    bun:"timesheet_id,type:VARCHAR(100),nullzero"`
 
-	Source TimeEntrySource `json:"source" bun:"source,type:time_entry_source_enum,notnull,default:'Clock'"`
+	Source TimeEntrySource `json:"source"       bun:"source,type:time_entry_source_enum,notnull,default:'Clock'"`
 	// ClockedOutAt of nil means the worker is still on the clock.
 	ClockedInAt  int64    `json:"clockedInAt"  bun:"clocked_in_at,type:BIGINT,notnull"`
 	ClockedOutAt *int64   `json:"clockedOutAt" bun:"clocked_out_at,type:BIGINT,nullzero"`
@@ -170,7 +170,9 @@ func (e *TimeClockEntry) PaidMinutes() int32 {
 	if e.IsOpen() {
 		return 0
 	}
-	minutes := int32((*e.ClockedOutAt - e.ClockedInAt) / secondsPerMinute) //nolint:gosec // bounded below
+	minutes := int32(
+		(*e.ClockedOutAt - e.ClockedInAt) / secondsPerMinute,
+	) //nolint:gosec // bounded below
 	minutes -= e.BreakMinutes
 	if minutes < 0 {
 		return 0
@@ -209,7 +211,9 @@ func (e *TimeClockEntry) Validate(multiErr *errortypes.MultiError) {
 		return
 	}
 
-	span := int32((*e.ClockedOutAt - e.ClockedInAt) / secondsPerMinute) //nolint:gosec // checked above
+	span := int32(
+		(*e.ClockedOutAt - e.ClockedInAt) / secondsPerMinute,
+	) //nolint:gosec // checked above
 	// A punch nobody closed until the next day is a forgotten clock-out rather
 	// than a day somebody worked straight through.
 	if span > maxTimeEntryMinutes {
@@ -288,10 +292,10 @@ type Timesheet struct {
 	PeriodStart int64           `json:"periodStart" bun:"period_start,type:BIGINT,notnull"`
 	PeriodEnd   int64           `json:"periodEnd"   bun:"period_end,type:BIGINT,notnull"`
 
-	RegularMinutes   int32 `json:"regularMinutes"   bun:"regular_minutes,type:INTEGER,notnull"`
-	OvertimeMinutes  int32 `json:"overtimeMinutes"  bun:"overtime_minutes,type:INTEGER,notnull"`
-	PaidLeaveMinutes int32 `json:"paidLeaveMinutes" bun:"paid_leave_minutes,type:INTEGER,notnull"`
-	EntryCount       int32 `json:"entryCount"       bun:"entry_count,type:INTEGER,notnull"`
+	RegularMinutes   int32 `json:"regularMinutes"           bun:"regular_minutes,type:INTEGER,notnull"`
+	OvertimeMinutes  int32 `json:"overtimeMinutes"          bun:"overtime_minutes,type:INTEGER,notnull"`
+	PaidLeaveMinutes int32 `json:"paidLeaveMinutes"         bun:"paid_leave_minutes,type:INTEGER,notnull"`
+	EntryCount       int32 `json:"entryCount"               bun:"entry_count,type:INTEGER,notnull"`
 	// OvertimeThresholdMinutes is copied onto the sheet rather than read from a
 	// setting, so changing the rule next quarter cannot restate a week that was
 	// already approved.

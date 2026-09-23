@@ -83,37 +83,6 @@ func (s *Service) replayTurns(
 	return messages
 }
 
-// toolRound appends what a round of tool calls did, in the shape the next call
-// needs: the assistant turn that asked, then one result per call.
-func toolRound(
-	calls []serviceports.ToolCall,
-	results map[string]toolResult,
-) []serviceports.Message {
-	messages := make([]serviceports.Message, 0, len(calls)+1)
-	messages = append(messages, serviceports.Message{
-		Role:      serviceports.RoleAssistant,
-		ToolCalls: calls,
-	})
-
-	for _, call := range calls {
-		result := results[call.ID]
-		messages = append(messages, serviceports.Message{
-			Role:       serviceports.RoleTool,
-			ToolCallID: call.ID,
-			ToolName:   call.Name,
-			Content:    result.output,
-			IsError:    result.status == toolStatusError,
-		})
-	}
-
-	return messages
-}
-
-type toolResult struct {
-	output string
-	status string
-}
-
 const (
 	toolStatusCompleted = "completed"
 	toolStatusError     = "error"

@@ -61,7 +61,11 @@ func (f fakeDefinitions) GetByID(
 
 var tenantInfo = pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-func resolver(orgShadow bool, run *agent.AgentRun, def *agentdefinition.Definition) *agentshadow.Resolver {
+func resolver(
+	orgShadow bool,
+	run *agent.AgentRun,
+	def *agentdefinition.Definition,
+) *agentshadow.Resolver {
 	return agentshadow.New(agentshadow.Params{
 		Control:     fakeControl{shadow: orgShadow},
 		Runs:        fakeRuns{run: run},
@@ -108,7 +112,12 @@ func TestForRun_DefinitionShadowApplies(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, verdict.Shadow(), "a definition in shadow mode keeps its proposals hidden")
 	require.Equal(t, agentshadow.CauseDefinition, verdict.Cause)
-	require.Equal(t, "Dispatch desk", verdict.AgentName, "the refusal names the agent to go and change")
+	require.Equal(
+		t,
+		"Dispatch desk",
+		verdict.AgentName,
+		"the refusal names the agent to go and change",
+	)
 }
 
 func TestForRun_LiveDefinitionIsNotShadow(t *testing.T) {
@@ -188,14 +197,26 @@ func TestForRuns_NothingToDecideReadsNothing(t *testing.T) {
 func TestForDefinition_UsesTheDefinitionInHand(t *testing.T) {
 	t.Parallel()
 
-	def := &agentdefinition.Definition{ID: pulid.MustNew("agd_"), Name: "Billing desk", ShadowMode: true}
+	def := &agentdefinition.Definition{
+		ID:         pulid.MustNew("agd_"),
+		Name:       "Billing desk",
+		ShadowMode: true,
+	}
 
 	verdict, err := resolver(false, nil, nil).ForDefinition(t.Context(), tenantInfo, def)
 
 	require.NoError(t, err)
-	require.Equal(t, agentshadow.Verdict{Cause: agentshadow.CauseDefinition, AgentName: "Billing desk"}, verdict)
+	require.Equal(
+		t,
+		agentshadow.Verdict{Cause: agentshadow.CauseDefinition, AgentName: "Billing desk"},
+		verdict,
+	)
 
-	live, err := resolver(false, nil, nil).ForDefinition(t.Context(), tenantInfo, &agentdefinition.Definition{})
+	live, err := resolver(
+		false,
+		nil,
+		nil,
+	).ForDefinition(t.Context(), tenantInfo, &agentdefinition.Definition{})
 	require.NoError(t, err)
 	require.False(t, live.Shadow())
 }

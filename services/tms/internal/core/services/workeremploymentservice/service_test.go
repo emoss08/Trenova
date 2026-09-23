@@ -330,7 +330,11 @@ func (f *fakeChecklists) CloseForEvent(
 	return 0, nil
 }
 
-func (h *harness) record(kind worker.EmploymentEventKind, effective int64, mutate func(*workeremploymentservice.RecordRequest)) (*workeremploymentservice.RecordResult, error) {
+func (h *harness) record(
+	kind worker.EmploymentEventKind,
+	effective int64,
+	mutate func(*workeremploymentservice.RecordRequest),
+) (*workeremploymentservice.RecordResult, error) {
 	req := &workeremploymentservice.RecordRequest{
 		TenantInfo:  h.tenant,
 		WorkerID:    h.wrk.ID,
@@ -398,10 +402,14 @@ func TestRecord_NonTerminationLeavesPortalAlone(t *testing.T) {
 	} {
 		t.Run(kind.String(), func(t *testing.T) {
 			h := newHarness(t)
-			_, err := h.record(kind, 1_800_000_000, func(req *workeremploymentservice.RecordRequest) {
-				leave := worker.LeaveTypeMedical
-				req.LeaveType = &leave
-			})
+			_, err := h.record(
+				kind,
+				1_800_000_000,
+				func(req *workeremploymentservice.RecordRequest) {
+					leave := worker.LeaveTypeMedical
+					req.LeaveType = &leave
+				},
+			)
 			require.NoError(t, err)
 			assert.Empty(t, h.portal.revoked)
 		})
@@ -416,13 +424,31 @@ func TestRecord_TerminationCascades(t *testing.T) {
 		EffectiveFrom: 1_700_000_000,
 		Version:       3,
 	}
-	payAssignment := &driverpay.WorkerPayAssignment{ID: pulid.MustNew("wpa_"), EffectiveFrom: 1_700_000_000}
+	payAssignment := &driverpay.WorkerPayAssignment{
+		ID:            pulid.MustNew("wpa_"),
+		EffectiveFrom: 1_700_000_000,
+	}
 	h.payRepo.assignment = payAssignment
 	h.payRepo.err = nil
 	h.pto.upcoming = []*worker.WorkerPTO{
-		{ID: pulid.MustNew("wrkpto_"), Status: worker.PTOStatusApproved, StartDate: effective + 86400, Version: 1},
-		{ID: pulid.MustNew("wrkpto_"), Status: worker.PTOStatusRequested, StartDate: effective + 5*86400, Version: 2},
-		{ID: pulid.MustNew("wrkpto_"), Status: worker.PTOStatusApproved, StartDate: effective - 86400, Version: 1},
+		{
+			ID:        pulid.MustNew("wrkpto_"),
+			Status:    worker.PTOStatusApproved,
+			StartDate: effective + 86400,
+			Version:   1,
+		},
+		{
+			ID:        pulid.MustNew("wrkpto_"),
+			Status:    worker.PTOStatusRequested,
+			StartDate: effective + 5*86400,
+			Version:   2,
+		},
+		{
+			ID:        pulid.MustNew("wrkpto_"),
+			Status:    worker.PTOStatusApproved,
+			StartDate: effective - 86400,
+			Version:   1,
+		},
 	}
 	h.ledger.settlement = &ptoledgerservice.TerminationSettlement{
 		PaidOutDays:   decimal.NewFromFloat(6.5),
@@ -446,12 +472,22 @@ func TestRecord_TerminationCascades(t *testing.T) {
 	assert.True(t, result.Cascade.PayAssignmentEnded)
 	assert.Equal(t, []pulid.ID{payAssignment.ID}, h.pay.ended)
 
-	assert.Equal(t, 2, result.Cascade.UpcomingPTOCancelled, "only time off starting on or after the termination is cancelled")
+	assert.Equal(
+		t,
+		2,
+		result.Cascade.UpcomingPTOCancelled,
+		"only time off starting on or after the termination is cancelled",
+	)
 	require.Len(t, h.pto.cancelled, 2)
 	assert.Equal(t, "Employment ended", h.pto.cancelled[0].Reason)
 	assert.Equal(t, worker.PTOStatusCancelled, h.pto.cancelled[0].Status)
 
-	assert.Equal(t, []int64{effective}, h.ledger.settled, "balances are closed as of the termination")
+	assert.Equal(
+		t,
+		[]int64{effective},
+		h.ledger.settled,
+		"balances are closed as of the termination",
+	)
 	assert.True(t, result.Cascade.PTOPaidOutDays.Equal(decimal.NewFromFloat(6.5)))
 	assert.True(t, result.Cascade.PTOForfeitedDays.Equal(decimal.NewFromInt(2)))
 
@@ -468,9 +504,13 @@ func TestRecord_TerminationCascades(t *testing.T) {
 
 func TestRecord_TerminationNeedsReason(t *testing.T) {
 	h := newHarness(t)
-	_, err := h.record(worker.EmploymentEventTerminated, 1_800_000_000, func(req *workeremploymentservice.RecordRequest) {
-		req.Reason = "  "
-	})
+	_, err := h.record(
+		worker.EmploymentEventTerminated,
+		1_800_000_000,
+		func(req *workeremploymentservice.RecordRequest) {
+			req.Reason = "  "
+		},
+	)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	assert.Equal(t, "reason", multiErr.Errors[0].Field)
@@ -503,9 +543,13 @@ func TestRecord_TransferValidatesFleetAndRecordsBothSides(t *testing.T) {
 		Return(&fleetcode.FleetCode{ID: target, Code: "NORTH"}, nil).
 		Once()
 
-	result, err := h.record(worker.EmploymentEventTransferred, 1_800_000_000, func(req *workeremploymentservice.RecordRequest) {
-		req.FleetCodeID = &target
-	})
+	result, err := h.record(
+		worker.EmploymentEventTransferred,
+		1_800_000_000,
+		func(req *workeremploymentservice.RecordRequest) {
+			req.FleetCodeID = &target
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, target, h.wrk.FleetCodeID)
 	assert.Equal(t, "SOUTH", result.Event.FromValues[worker.EmploymentValueFleetCode])
@@ -513,9 +557,13 @@ func TestRecord_TransferValidatesFleetAndRecordsBothSides(t *testing.T) {
 	require.Len(t, h.workers.updated, 1)
 
 	same := h.wrk.FleetCodeID
-	_, err = h.record(worker.EmploymentEventTransferred, 1_800_100_000, func(req *workeremploymentservice.RecordRequest) {
-		req.FleetCodeID = &same
-	})
+	_, err = h.record(
+		worker.EmploymentEventTransferred,
+		1_800_100_000,
+		func(req *workeremploymentservice.RecordRequest) {
+			req.FleetCodeID = &same
+		},
+	)
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr)
 	assert.Equal(t, "fleetCodeId", verr.Field)
@@ -533,18 +581,26 @@ func TestRecord_LeaveAndSuspensionPairing(t *testing.T) {
 	assert.Equal(t, "leaveType", verr.Field)
 
 	fmla := worker.LeaveTypeFMLA
-	started, err := h.record(worker.EmploymentEventLeaveStarted, 1_800_000_000, func(req *workeremploymentservice.RecordRequest) {
-		req.LeaveType = &fmla
-	})
+	started, err := h.record(
+		worker.EmploymentEventLeaveStarted,
+		1_800_000_000,
+		func(req *workeremploymentservice.RecordRequest) {
+			req.LeaveType = &fmla
+		},
+	)
 	require.NoError(t, err)
 	assert.False(t, h.wrk.CanBeAssigned)
 	assert.Equal(t, domaintypes.StatusActive, h.wrk.Status, "leave keeps the worker employed")
 	assert.Equal(t, worker.LeaveTypeFMLA, h.wrk.LeaveType)
 	assert.Equal(t, "FMLA", started.Event.ToValues[worker.EmploymentValueLeaveType])
 
-	_, err = h.record(worker.EmploymentEventLeaveStarted, 1_800_100_000, func(req *workeremploymentservice.RecordRequest) {
-		req.LeaveType = &fmla
-	})
+	_, err = h.record(
+		worker.EmploymentEventLeaveStarted,
+		1_800_100_000,
+		func(req *workeremploymentservice.RecordRequest) {
+			req.LeaveType = &fmla
+		},
+	)
 	require.ErrorAs(t, err, &verr, "leave cannot stack")
 
 	ended, err := h.record(worker.EmploymentEventLeaveEnded, 1_800_200_000, nil)
@@ -557,17 +613,25 @@ func TestRecord_LeaveAndSuspensionPairing(t *testing.T) {
 func TestRecord_PromotionRequiresAChange(t *testing.T) {
 	h := newHarness(t)
 	local := worker.DriverTypeLocal
-	_, err := h.record(worker.EmploymentEventPromoted, 1_800_000_000, func(req *workeremploymentservice.RecordRequest) {
-		req.DriverType = &local
-	})
+	_, err := h.record(
+		worker.EmploymentEventPromoted,
+		1_800_000_000,
+		func(req *workeremploymentservice.RecordRequest) {
+			req.DriverType = &local
+		},
+	)
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr)
 	assert.Equal(t, "driverType", verr.Field)
 
 	otr := worker.DriverTypeOTR
-	result, err := h.record(worker.EmploymentEventPromoted, 1_800_000_000, func(req *workeremploymentservice.RecordRequest) {
-		req.DriverType = &otr
-	})
+	result, err := h.record(
+		worker.EmploymentEventPromoted,
+		1_800_000_000,
+		func(req *workeremploymentservice.RecordRequest) {
+			req.DriverType = &otr
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, worker.DriverTypeOTR, h.wrk.DriverType)
 	assert.Equal(t, "Local", result.Event.FromValues[worker.EmploymentValueDriverType])
@@ -576,10 +640,14 @@ func TestRecord_PromotionRequiresAChange(t *testing.T) {
 
 func TestRecord_RateChangeIsInformational(t *testing.T) {
 	h := newHarness(t)
-	result, err := h.record(worker.EmploymentEventRateChanged, 1_800_000_000, func(req *workeremploymentservice.RecordRequest) {
-		req.Rate = "0.65"
-		req.RateUnit = "per mile"
-	})
+	result, err := h.record(
+		worker.EmploymentEventRateChanged,
+		1_800_000_000,
+		func(req *workeremploymentservice.RecordRequest) {
+			req.Rate = "0.65"
+			req.RateUnit = "per mile"
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, h.workers.updated, "no worker change for a rate note")
 	assert.Equal(t, "0.65", result.Event.ToValues[worker.EmploymentValueRate])
@@ -616,7 +684,12 @@ func TestAmend_CorrectsNarrativeWithoutReplayingEffects(t *testing.T) {
 	assert.Equal(t, newEffective, amended.EffectiveAt)
 	assert.Equal(t, "Resigned", amended.Reason)
 	assert.True(t, amended.IsAmended())
-	assert.Equal(t, int64(1_800_000_000), *h.wrk.Profile.TerminationDate, "effects are not replayed")
+	assert.Equal(
+		t,
+		int64(1_800_000_000),
+		*h.wrk.Profile.TerminationDate,
+		"effects are not replayed",
+	)
 	assert.Len(t, h.workers.updated, updatesBefore)
 
 	_, err = h.svc.Amend(context.Background(), &workeremploymentservice.AmendRequest{
@@ -635,9 +708,13 @@ func TestAmend_CorrectsNarrativeWithoutReplayingEffects(t *testing.T) {
 func TestRecord_TerminatedClosesStaleChecklistsThenSpawns(t *testing.T) {
 	h := newHarness(t)
 
-	result, err := h.record(worker.EmploymentEventTerminated, 1_700_500_000, func(req *workeremploymentservice.RecordRequest) {
-		req.Reason = "Resigned"
-	})
+	result, err := h.record(
+		worker.EmploymentEventTerminated,
+		1_700_500_000,
+		func(req *workeremploymentservice.RecordRequest) {
+			req.Reason = "Resigned"
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 1, result.Cascade.ChecklistsClosed)
 	assert.True(t, result.Cascade.ChecklistStarted)

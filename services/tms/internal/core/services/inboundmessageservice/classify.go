@@ -101,6 +101,21 @@ func (s *Service) Classify(
 	message *inboundmessage.InboundMessage,
 	tenantInfo pagination.TenantInfo,
 ) Classification {
+	classification, _ := s.classify(ctx, message, tenantInfo)
+
+	return classification
+}
+
+// classify is Classify that also says why the model could not be asked, for a
+// caller that would rather ask again than send the message to review. The
+// classification is the fallback whenever the error is set. A reply the model
+// did give but that cannot be read is not such an error: asking again would
+// not make it readable.
+func (s *Service) classify(
+	ctx context.Context,
+	message *inboundmessage.InboundMessage,
+	tenantInfo pagination.TenantInfo,
+) (Classification, error) {
 	fallback := Classification{
 		Class:      inboundmessage.ClassificationOther,
 		Confidence: 0,
@@ -108,7 +123,7 @@ func (s *Service) Classify(
 	}
 
 	if s.completion == nil {
-		return fallback
+		return fallback, nil
 	}
 
 	result, err := s.completion.CompleteStructured(ctx, &services.StructuredCompletionRequest{
@@ -124,7 +139,7 @@ func (s *Service) Classify(
 		s.l.Warn("inbound classification did not run",
 			zap.String("messageId", message.ID.String()), zap.Error(err))
 
-		return fallback
+		return fallback, err
 	}
 
 	decoded, err := decodeClassification(result.Text)
@@ -134,10 +149,10 @@ func (s *Service) Classify(
 			zap.String("model", result.ModelIdentifier),
 			zap.Error(err))
 
-		return fallback
+		return fallback, nil
 	}
 
-	return decoded
+	return decoded, nil
 }
 
 // decodeClassification reads the reply and refuses anything it cannot vouch for.

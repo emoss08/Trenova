@@ -325,7 +325,8 @@ func (t *WorkerDOTTest) validateSubstanceFields(multiErr *errortypes.MultiError)
 
 func (t *WorkerDOTTest) validateTimeline(multiErr *errortypes.MultiError) {
 	if t.AlcoholConcentration != nil {
-		if t.AlcoholConcentration.IsNegative() || t.AlcoholConcentration.GreaterThan(decimal.NewFromInt(1)) {
+		if t.AlcoholConcentration.IsNegative() ||
+			t.AlcoholConcentration.GreaterThan(decimal.NewFromInt(1)) {
 			multiErr.Add(
 				"alcoholConcentration",
 				errortypes.ErrInvalid,
@@ -348,7 +349,11 @@ func (t *WorkerDOTTest) validateTimeline(multiErr *errortypes.MultiError) {
 			multiErr.Add("result", errortypes.ErrRequired, "A completed test must have a result")
 		}
 		if t.ResultAt == nil || *t.ResultAt <= 0 {
-			multiErr.Add("resultAt", errortypes.ErrRequired, "A completed test must have a result date")
+			multiErr.Add(
+				"resultAt",
+				errortypes.ErrRequired,
+				"A completed test must have a result date",
+			)
 		}
 	}
 

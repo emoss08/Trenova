@@ -14,7 +14,10 @@ import (
 
 // wideRun is wideRuntime wired to a scripted completion, for tests that drive
 // a whole turn rather than one tool set.
-func wideRun(t *testing.T, turns ...*serviceports.ChatCompletionResult) (*Service, *scriptedCompletion, []string) {
+func wideRun(
+	t *testing.T,
+	turns ...*serviceports.ChatCompletionResult,
+) (*Service, *scriptedCompletion, []string) {
 	t.Helper()
 
 	service, names := wideRuntime(t)
@@ -74,7 +77,11 @@ func TestNewToolSet_CarriesWhatTheLastTurnsUsedAndFound(t *testing.T) {
 	history := []conversation.Message{
 		{Role: conversation.RoleUser, Content: "say hello"},
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
-			{ID: "c1", Name: findToolsName, Arguments: map[string]any{"need": "driver medical card expiry"}},
+			{
+				ID:        "c1",
+				Name:      findToolsName,
+				Arguments: map[string]any{"need": "driver medical card expiry"},
+			},
 		}},
 		{Role: conversation.RoleTool, Content: "These tools are now callable"},
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{

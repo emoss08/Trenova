@@ -74,10 +74,18 @@ func billingTransferRunItemToModel(
 		Sequence:             item.Sequence,
 		Status:               item.Status,
 		MarkedReadyToInvoice: item.MarkedReadyToInvoice,
-		MissingRequirements:  make([]*billingtransfer.MissingRequirement, 0, len(item.MissingRequirements)),
-		ValidationFailures:   make([]*billingtransfer.ValidationFailure, 0, len(item.ValidationFailures)),
-		ProcessedAt:          unixPtr(item.ProcessedAt),
-		CreatedAt:            int(item.CreatedAt),
+		MissingRequirements: make(
+			[]*billingtransfer.MissingRequirement,
+			0,
+			len(item.MissingRequirements),
+		),
+		ValidationFailures: make(
+			[]*billingtransfer.ValidationFailure,
+			0,
+			len(item.ValidationFailures),
+		),
+		ProcessedAt: unixPtr(item.ProcessedAt),
+		CreatedAt:   int(item.CreatedAt),
 	}
 
 	if item.ProNumber != "" {

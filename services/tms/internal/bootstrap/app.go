@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/runstepledger"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
@@ -36,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/briefingjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carrierintelligencejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carriersettlementjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/completionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/dispatchjobs"
@@ -50,6 +52,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelcardjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelpricejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/importassistantjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/inboundjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/insightjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
@@ -132,7 +135,10 @@ func Options() fx.Option {
 		telematicsjobs.Module,
 		shipmentjobs.Module,
 		agentjobs.Module,
+		agentflow.Module,
 		assistantjobs.Module,
+		completionjobs.Module,
+		importassistantjobs.Module,
 		agenttoolservice.Module,
 		agentquerytoolservice.Module,
 		agenttoolcatalog.Module,
@@ -144,7 +150,7 @@ func Options() fx.Option {
 		turnstream.Module,
 		watchtowersources.Module,
 		proposalrecorder.Module,
-		fx.Provide(assistantservice.New),
+		assistantservice.Module,
 		assistantturnservice.Module,
 		assistantfollowupservice.Module,
 		completionrouter.Module,
@@ -209,5 +215,6 @@ func WorkerOptions() fx.Option {
 		modulesinfra.TemplatingModule,
 		api.ServiceModule,
 		temporaljobs.WorkerModule,
+		agentjobs.WorkerModule,
 	)
 }

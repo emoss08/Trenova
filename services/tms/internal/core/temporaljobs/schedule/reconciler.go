@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/shared/intutils"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/converter"
 	"go.temporal.io/sdk/temporal"
 	"go.uber.org/zap"
 )
@@ -96,8 +97,11 @@ func (r *Reconciler) Reconcile(ctx context.Context) (*ReconcileResult, error) {
 		}
 	}
 
-	for id := range existingSchedules {
+	for id, existing := range existingSchedules {
 		if _, desired := desiredSchedules[id]; !desired {
+			if !ownedByRegistry(existing) {
+				continue
+			}
 			if err = r.deleteSchedule(ctx, id); err != nil {
 				log.Error("failed to delete orphan schedule", zap.String("id", id), zap.Error(err))
 				result.Errors = append(result.Errors, fmt.Errorf("delete %s: %w", id, err))
@@ -144,6 +148,10 @@ func (r *Reconciler) listExistingSchedules(
 }
 
 func (r *Reconciler) needsUpdate(existing *client.ScheduleListEntry, desired *Schedule) bool {
+	if hash, ok := hashFromNote(existing.Note); ok {
+		return hash != desired.Hash()
+	}
+
 	if existing.Memo != nil && existing.Memo.Fields != nil {
 		if hashPayload, ok := existing.Memo.GetFields()["scheduleHash"]; ok {
 			hash := string(hashPayload.GetData())
@@ -187,6 +195,20 @@ func (r *Reconciler) updateSchedule(ctx context.Context, sched *Schedule) error 
 
 			input.Description.Schedule.Spec = &opts.Spec
 			input.Description.Schedule.Action = opts.Action
+
+			// Overlap and paused are part of the definition too. Leaving them
+			// out meant a change to either was hashed, reported as updated, and
+			// never applied.
+			if input.Description.Schedule.Policy == nil {
+				input.Description.Schedule.Policy = &client.SchedulePolicies{}
+			}
+			input.Description.Schedule.Policy.Overlap = opts.Overlap
+
+			if input.Description.Schedule.State == nil {
+				input.Description.Schedule.State = &client.ScheduleState{}
+			}
+			input.Description.Schedule.State.Paused = opts.Paused
+			input.Description.Schedule.State.Note = opts.Note
 
 			return &client.ScheduleUpdate{
 				Schedule: &input.Description.Schedule,
@@ -254,4 +276,27 @@ func (r *Reconciler) ReconcileWithRetry(
 	}
 
 	return result, nil
+}
+
+// ownedByRegistry reports whether the registry created a schedule and may
+// therefore delete it as an orphan. Schedules created before ownership was
+// recorded carry no marker at all, and back then the registry was the only
+// thing that created schedules, so an unmarked schedule is the registry's.
+// A schedule marked as anything else belongs to whatever marked it.
+func ownedByRegistry(entry *client.ScheduleListEntry) bool {
+	if entry.Memo == nil || entry.Memo.GetFields() == nil {
+		return true
+	}
+
+	payload, ok := entry.Memo.GetFields()[ManagedByMemoKey]
+	if !ok {
+		return true
+	}
+
+	var owner string
+	if err := converter.GetDefaultDataConverter().FromPayload(payload, &owner); err != nil {
+		return false
+	}
+
+	return owner == ManagedByRegistry
 }

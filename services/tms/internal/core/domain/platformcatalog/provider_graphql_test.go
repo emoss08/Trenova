@@ -134,7 +134,14 @@ func TestStaticProvider_GraphQLOwnershipIsUnique(t *testing.T) {
 		}
 		for _, field := range feature.GraphQLRootFields {
 			owner, exists := fields[field.Key()]
-			require.Falsef(t, exists, "field %q owned by %q and %q", field.Key(), owner, feature.Key)
+			require.Falsef(
+				t,
+				exists,
+				"field %q owned by %q and %q",
+				field.Key(),
+				owner,
+				feature.Key,
+			)
 			fields[field.Key()] = feature.Key
 		}
 	}

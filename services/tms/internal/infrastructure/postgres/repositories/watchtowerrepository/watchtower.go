@@ -322,7 +322,8 @@ func (r *repository) GetCursor(
 		NewSelect().
 		Model(cursor).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.CursorScopeTenant(sq, req.TenantInfo).Where(cols.UserID.Eq(), req.UserID)
+			return buncolgen.CursorScopeTenant(sq, req.TenantInfo).
+				Where(cols.UserID.Eq(), req.UserID)
 		}).
 		Scan(ctx)
 	if err != nil {

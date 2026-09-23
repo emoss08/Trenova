@@ -105,8 +105,10 @@ func TestProtocolErrorCode(t *testing.T) {
 			err:  &gqlerror.Error{Extensions: map[string]any{"code": 42}},
 		},
 		{
-			name:     "depth limit",
-			err:      &gqlerror.Error{Extensions: map[string]any{"code": querycost.DepthLimitErrorCode}},
+			name: "depth limit",
+			err: &gqlerror.Error{
+				Extensions: map[string]any{"code": querycost.DepthLimitErrorCode},
+			},
 			expected: querycost.DepthLimitErrorCode,
 			ok:       true,
 		},

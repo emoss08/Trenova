@@ -438,7 +438,8 @@ func (s *Service) project(
 		s.watchtower.Upsert(ctx, watchtowersources.DescribePlan(plan, name))
 	}
 	for _, proposal := range proposals {
-		if proposal == nil || proposal.Status != agent.ProposalStatusPending || proposal.PlanID != nil {
+		if proposal == nil || proposal.Status != agent.ProposalStatusPending ||
+			proposal.PlanID != nil {
 			continue
 		}
 		s.watchtower.Upsert(ctx, watchtowersources.DescribeProposal(proposal, name))

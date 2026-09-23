@@ -283,7 +283,11 @@ func ensureTemplateDatabase(
 		return err
 	}
 	defer func() {
-		_, _ = conn.ExecContext(context.Background(), "SELECT pg_advisory_unlock(?)", templateLockKey)
+		_, _ = conn.ExecContext(
+			context.Background(),
+			"SELECT pg_advisory_unlock(?)",
+			templateLockKey,
+		)
 	}()
 
 	exists, err := databaseExists(ctx, adminDB, templateName)

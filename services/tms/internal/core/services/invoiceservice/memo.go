@@ -35,10 +35,18 @@ func (s *Service) CreateMemo(
 	actor *servicesports.RequestActor,
 ) (*invoice.Invoice, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil {
-		return nil, errortypes.NewValidationError("actor", errortypes.ErrRequired, "Actor is required")
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrRequired,
+			"Actor is required",
+		)
 	}
 	if multiErr := validateMemoRequest(req); multiErr != nil {
 		return nil, multiErr
@@ -104,7 +112,14 @@ func (s *Service) CreateMemo(
 		}
 
 		auditActor := actor.AuditActor()
-		s.logAction(created, auditActor, permission.OpCreate, nil, created, memoAuditComment(req.BillType))
+		s.logAction(
+			created,
+			auditActor,
+			permission.OpCreate,
+			nil,
+			created,
+			memoAuditComment(req.BillType),
+		)
 		s.publishInvalidation(txCtx, created, auditActor, "created", created)
 
 		if !req.AutoPost {
@@ -133,15 +148,25 @@ func validateMemoRequest(req *servicesports.CreateMemoRequest) *errortypes.Multi
 	if req.CustomerID.IsNil() {
 		multiErr.Add("customerId", errortypes.ErrRequired, "Customer is required")
 	}
-	if req.BillType != billingqueue.BillTypeCreditMemo && req.BillType != billingqueue.BillTypeDebitMemo {
-		multiErr.Add("billType", errortypes.ErrInvalid, "A memo must be a credit memo or a debit memo")
+	if req.BillType != billingqueue.BillTypeCreditMemo &&
+		req.BillType != billingqueue.BillTypeDebitMemo {
+		multiErr.Add(
+			"billType",
+			errortypes.ErrInvalid,
+			"A memo must be a credit memo or a debit memo",
+		)
 	}
 	reason := strings.TrimSpace(req.Reason)
 	switch {
 	case reason == "":
 		multiErr.Add("reason", errortypes.ErrRequired, "Say why the memo is being raised")
 	case len(reason) > maxMemoReasonLength:
-		multiErr.Add("reason", errortypes.ErrInvalid, "Reason must be at most {0} characters", maxMemoReasonLength)
+		multiErr.Add(
+			"reason",
+			errortypes.ErrInvalid,
+			"Reason must be at most {0} characters",
+			maxMemoReasonLength,
+		)
 	}
 	if req.MemoKind != "" && !req.MemoKind.IsValid() {
 		multiErr.Add("memoKind", errortypes.ErrInvalid, "Invalid memo kind")
@@ -150,21 +175,30 @@ func validateMemoRequest(req *servicesports.CreateMemoRequest) *errortypes.Multi
 	case len(req.Lines) == 0:
 		multiErr.Add("lines", errortypes.ErrRequired, "A memo needs at least one line")
 	case len(req.Lines) > maxMemoLines:
-		multiErr.Add("lines", errortypes.ErrInvalid, "A memo may carry at most {0} lines", maxMemoLines)
+		multiErr.Add(
+			"lines",
+			errortypes.ErrInvalid,
+			"A memo may carry at most {0} lines",
+			maxMemoLines,
+		)
 	}
 	for idx, line := range req.Lines {
 		if line == nil {
-			multiErr.WithIndex("lines", idx).Add("description", errortypes.ErrRequired, "Line is required")
+			multiErr.WithIndex("lines", idx).
+				Add("description", errortypes.ErrRequired, "Line is required")
 			continue
 		}
 		if strings.TrimSpace(line.Description) == "" {
-			multiErr.WithIndex("lines", idx).Add("description", errortypes.ErrRequired, "Description is required")
+			multiErr.WithIndex("lines", idx).
+				Add("description", errortypes.ErrRequired, "Description is required")
 		}
 		if line.Amount.LessThanOrEqual(decimal.Zero) {
-			multiErr.WithIndex("lines", idx).Add("amount", errortypes.ErrInvalid, "Amount must be greater than zero")
+			multiErr.WithIndex("lines", idx).
+				Add("amount", errortypes.ErrInvalid, "Amount must be greater than zero")
 		}
 		if !line.Quantity.IsZero() && line.Quantity.LessThanOrEqual(decimal.Zero) {
-			multiErr.WithIndex("lines", idx).Add("quantity", errortypes.ErrInvalid, "Quantity must be greater than zero")
+			multiErr.WithIndex("lines", idx).
+				Add("quantity", errortypes.ErrInvalid, "Quantity must be greater than zero")
 		}
 	}
 	if multiErr.HasErrors() {
@@ -216,10 +250,22 @@ func (s *Service) generateMemoNumber(
 	billType billingqueue.BillType,
 ) (string, error) {
 	if billType == billingqueue.BillTypeCreditMemo {
-		return s.sequenceGenerator.GenerateCreditMemoNumber(ctx, tenantInfo.OrgID, tenantInfo.BuID, "", "")
+		return s.sequenceGenerator.GenerateCreditMemoNumber(
+			ctx,
+			tenantInfo.OrgID,
+			tenantInfo.BuID,
+			"",
+			"",
+		)
 	}
 
-	return s.sequenceGenerator.GenerateDebitMemoNumber(ctx, tenantInfo.OrgID, tenantInfo.BuID, "", "")
+	return s.sequenceGenerator.GenerateDebitMemoNumber(
+		ctx,
+		tenantInfo.OrgID,
+		tenantInfo.BuID,
+		"",
+		"",
+	)
 }
 
 // memoLines turns the request lines into invoice lines. A line that names an
@@ -245,10 +291,13 @@ func (s *Service) memoLines(
 			Amount:      amount,
 		}
 		if input.AccessorialChargeID.IsNotNil() && s.accessorialRepo != nil {
-			definition, err := s.accessorialRepo.GetByID(ctx, repositories.GetAccessorialChargeByIDRequest{
-				ID:         input.AccessorialChargeID,
-				TenantInfo: &req.TenantInfo,
-			})
+			definition, err := s.accessorialRepo.GetByID(
+				ctx,
+				repositories.GetAccessorialChargeByIDRequest{
+					ID:         input.AccessorialChargeID,
+					TenantInfo: &req.TenantInfo,
+				},
+			)
 			if err != nil {
 				return nil, err
 			}

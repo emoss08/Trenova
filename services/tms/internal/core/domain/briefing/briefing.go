@@ -83,25 +83,25 @@ type Briefing struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 
-	RoleKey RoleKey `json:"roleKey" bun:"role_key,type:VARCHAR(20),notnull"`
+	RoleKey RoleKey `json:"roleKey"      bun:"role_key,type:VARCHAR(20),notnull"`
 	// UserID is set only where an organization writes a briefing per person
 	// rather than per role. Nil is the role's shared briefing.
-	UserID *pulid.ID `json:"userId" bun:"user_id,type:VARCHAR(100),nullzero"`
+	UserID *pulid.ID `json:"userId"       bun:"user_id,type:VARCHAR(100),nullzero"`
 	// BriefingDate is the organization's local day, as YYYY-MM-DD. It is a
 	// date rather than an instant because "today's briefing" means the
 	// reader's today, not the server's.
 	BriefingDate string   `json:"briefingDate" bun:"briefing_date,type:VARCHAR(10),notnull"`
 	RunID        pulid.ID `json:"runId"        bun:"run_id,type:VARCHAR(100),nullzero"`
 
-	Status   Status `json:"status"   bun:"status,type:VARCHAR(20),notnull"`
-	Headline string `json:"headline" bun:"headline,type:VARCHAR(240),nullzero"`
+	Status   Status `json:"status"        bun:"status,type:VARCHAR(20),notnull"`
+	Headline string `json:"headline"      bun:"headline,type:VARCHAR(240),nullzero"`
 	// Sections is the page. Facts is what the figures were drawn from, kept
 	// so the guard can be re-run and a reader can be shown the working.
-	Sections []Section      `json:"sections" bun:"sections,type:JSONB,notnull,default:'[]'"`
-	Facts    map[string]any `json:"facts"    bun:"facts,type:JSONB,notnull,default:'{}'"`
+	Sections []Section      `json:"sections"      bun:"sections,type:JSONB,notnull,default:'[]'"`
+	Facts    map[string]any `json:"facts"         bun:"facts,type:JSONB,notnull,default:'{}'"`
 	// Narrated says whether the model's wording was accepted. False means
 	// the page is the deterministic one, which is a complete briefing.
-	Narrated bool `json:"narrated" bun:"narrated,type:BOOLEAN,notnull,default:false"`
+	Narrated bool `json:"narrated"      bun:"narrated,type:BOOLEAN,notnull,default:false"`
 	// FailureReason says why the facts could not be gathered, for a failed
 	// briefing.
 	FailureReason string `json:"failureReason" bun:"failure_reason,type:TEXT,nullzero"`

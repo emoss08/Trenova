@@ -132,7 +132,10 @@ func (t *postmarkConnectionTester) Test(ctx context.Context, cfg map[string]stri
 
 type oandaExchangeRatesConnectionTester struct{}
 
-func (t *oandaExchangeRatesConnectionTester) Test(ctx context.Context, cfg map[string]string) error {
+func (t *oandaExchangeRatesConnectionTester) Test(
+	ctx context.Context,
+	cfg map[string]string,
+) error {
 	apiKey := cfg["apiKey"]
 	if apiKey == "" {
 		return fmt.Errorf("API key is required")

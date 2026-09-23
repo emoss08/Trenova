@@ -230,7 +230,10 @@ func hoursOf(millis int64) float64 {
 
 // dispatchPlanner is the auto-assign service's dry run.
 type dispatchPlanner interface {
-	Plan(ctx context.Context, req *serviceports.DispatchPlanRequest) (*serviceports.DispatchPlan, error)
+	Plan(
+		ctx context.Context,
+		req *serviceports.DispatchPlanRequest,
+	) (*serviceports.DispatchPlan, error)
 }
 
 // planDispatchTool runs the auto-assignment planner over a window without

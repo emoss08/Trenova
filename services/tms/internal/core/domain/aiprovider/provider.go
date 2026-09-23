@@ -52,7 +52,7 @@ type Provider struct {
 	BaseURL string `json:"baseUrl" bun:"base_url,type:TEXT,nullzero"`
 	// Model is free text on purpose. Self-hosted deployments name models whatever
 	// they like ("llama3.3:70b", "qwen2.5-coder:32b"), so no closed set can hold.
-	Model string `json:"model" bun:"model,type:VARCHAR(200),notnull"`
+	Model string `json:"model"   bun:"model,type:VARCHAR(200),notnull"`
 
 	// APIKey holds the credential encrypted at rest. It is cleared before the
 	// entity leaves the service layer.
@@ -68,7 +68,7 @@ type Provider struct {
 	MaxTokens            int                  `json:"maxTokens"            bun:"max_tokens,type:INTEGER,notnull"`
 	// ReasoningEffort asks a model that can think to do so before answering.
 	// Off is the default: the parameter is refused by models without it.
-	ReasoningEffort ReasoningEffort `json:"reasoningEffort" bun:"reasoning_effort,type:VARCHAR(50),notnull,nullzero,default:'Off'"`
+	ReasoningEffort ReasoningEffort `json:"reasoningEffort"      bun:"reasoning_effort,type:VARCHAR(50),notnull,nullzero,default:'Off'"`
 
 	// ExtraBody is merged into the request an OpenAI-compatible endpoint
 	// receives, for the fields that are the server's own rather than the

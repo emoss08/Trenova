@@ -66,37 +66,101 @@ func TestListJournalEntries(t *testing.T) {
 	defer cleanup()
 	seedRegistry := seeder.NewRegistry()
 	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(db, seedRegistry, &config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}})
+	engine := seeder.NewEngine(
+		db,
+		seedRegistry,
+		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
+	)
 	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
 	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
-	fpRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()})
+	fpRepo := fiscalperiodrepository.New(
+		fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},
+	)
 
 	var org struct{ ID, BusinessUnitID pulid.ID }
-	require.NoError(t, db.NewSelect().Table("organizations").Column("id", "business_unit_id").Limit(1).Scan(ctx, &org))
+	require.NoError(
+		t,
+		db.NewSelect().
+			Table("organizations").
+			Column("id", "business_unit_id").
+			Limit(1).
+			Scan(ctx, &org),
+	)
 	var user struct{ ID pulid.ID }
-	require.NoError(t, db.NewSelect().Table("users").Column("id").Where("current_organization_id = ?", org.ID).Where("business_unit_id = ?", org.BusinessUnitID).Limit(1).Scan(ctx, &user))
+	require.NoError(
+		t,
+		db.NewSelect().
+			Table("users").
+			Column("id").
+			Where("current_organization_id = ?", org.ID).
+			Where("business_unit_id = ?", org.BusinessUnitID).
+			Limit(1).
+			Scan(ctx, &user),
+	)
 	nowTime := time.Now().UTC()
-	fy, err := fyRepo.Create(ctx, &fiscalyear.FiscalYear{OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, Status: fiscalyear.StatusOpen, Year: nowTime.Year(), Name: "FY", StartDate: nowTime.Add(-24 * time.Hour).Unix(), EndDate: nowTime.Add(24 * time.Hour).Unix(), IsCurrent: true})
+	fy, err := fyRepo.Create(
+		ctx,
+		&fiscalyear.FiscalYear{
+			OrganizationID: org.ID,
+			BusinessUnitID: org.BusinessUnitID,
+			Status:         fiscalyear.StatusOpen,
+			Year:           nowTime.Year(),
+			Name:           "FY",
+			StartDate:      nowTime.Add(-24 * time.Hour).Unix(),
+			EndDate:        nowTime.Add(24 * time.Hour).Unix(),
+			IsCurrent:      true,
+		},
+	)
 	require.NoError(t, err)
-	fp, err := fpRepo.Create(ctx, &fiscalperiod.FiscalPeriod{OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, FiscalYearID: fy.ID, PeriodNumber: 1, PeriodType: fiscalperiod.PeriodTypeMonth, Status: fiscalperiod.StatusOpen, Name: "Period 1", StartDate: nowTime.Add(-24 * time.Hour).Unix(), EndDate: nowTime.Add(24 * time.Hour).Unix()})
+	fp, err := fpRepo.Create(
+		ctx,
+		&fiscalperiod.FiscalPeriod{
+			OrganizationID: org.ID,
+			BusinessUnitID: org.BusinessUnitID,
+			FiscalYearID:   fy.ID,
+			PeriodNumber:   1,
+			PeriodType:     fiscalperiod.PeriodTypeMonth,
+			Status:         fiscalperiod.StatusOpen,
+			Name:           "Period 1",
+			StartDate:      nowTime.Add(-24 * time.Hour).Unix(),
+			EndDate:        nowTime.Add(24 * time.Hour).Unix(),
+		},
+	)
 	require.NoError(t, err)
 
 	batchID := pulid.MustNew("jb_")
 	now := nowTime.Unix()
-	_, err = db.NewInsert().Model(&journalBatchRecord{ID: batchID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BatchNumber: "JB-LIST-1", BatchType: "System", Status: "Posted", Description: "Batch", AccountingDate: now, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, CreatedByID: user.ID}).Exec(ctx)
+	_, err = db.NewInsert().
+		Model(&journalBatchRecord{ID: batchID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BatchNumber: "JB-LIST-1", BatchType: "System", Status: "Posted", Description: "Batch", AccountingDate: now, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, CreatedByID: user.ID}).
+		Exec(ctx)
 	require.NoError(t, err)
 	entryOneID := pulid.MustNew("je_")
 	entryTwoID := pulid.MustNew("je_")
-	_, err = db.NewInsert().Model(&journalEntryRecord{ID: entryOneID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BatchID: batchID, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, EntryNumber: "JE-100", EntryDate: now, EntryType: "Standard", AccountingDate: now, Status: "Posted", ReferenceType: "InvoicePosted", ReferenceID: pulid.MustNew("inv_").String(), Description: "Invoice posting", TotalDebit: 100, TotalCredit: 100, CreatedByID: user.ID}).Exec(ctx)
+	_, err = db.NewInsert().
+		Model(&journalEntryRecord{ID: entryOneID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BatchID: batchID, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, EntryNumber: "JE-100", EntryDate: now, EntryType: "Standard", AccountingDate: now, Status: "Posted", ReferenceType: "InvoicePosted", ReferenceID: pulid.MustNew("inv_").String(), Description: "Invoice posting", TotalDebit: 100, TotalCredit: 100, CreatedByID: user.ID}).
+		Exec(ctx)
 	require.NoError(t, err)
-	_, err = db.NewInsert().Model(&journalEntryRecord{ID: entryTwoID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BatchID: batchID, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, EntryNumber: "JE-200", EntryDate: now + 10, EntryType: "Standard", AccountingDate: now + 10, Status: "Pending", ReferenceType: "ManualJournalPosted", ReferenceID: pulid.MustNew("mjr_").String(), Description: "Manual journal", TotalDebit: 200, TotalCredit: 200, CreatedByID: user.ID}).Exec(ctx)
+	_, err = db.NewInsert().
+		Model(&journalEntryRecord{ID: entryTwoID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BatchID: batchID, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, EntryNumber: "JE-200", EntryDate: now + 10, EntryType: "Standard", AccountingDate: now + 10, Status: "Pending", ReferenceType: "ManualJournalPosted", ReferenceID: pulid.MustNew("mjr_").String(), Description: "Manual journal", TotalDebit: 200, TotalCredit: 200, CreatedByID: user.ID}).
+		Exec(ctx)
 	require.NoError(t, err)
 
-	result, err := repo.List(ctx, &repositories.ListJournalEntriesRequest{Filter: &pagination.QueryOptions{TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}, Pagination: pagination.Info{Limit: 10}}, FiscalPeriodID: fp.ID, Status: "Posted", ReferenceType: "InvoicePosted"})
+	result, err := repo.List(
+		ctx,
+		&repositories.ListJournalEntriesRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
+				Pagination: pagination.Info{Limit: 10},
+			},
+			FiscalPeriodID: fp.ID,
+			Status:         "Posted",
+			ReferenceType:  "InvoicePosted",
+		},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	require.Len(t, result.Items, 1)

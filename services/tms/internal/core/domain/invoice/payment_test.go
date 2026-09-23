@@ -11,7 +11,14 @@ import (
 func TestApplyPaymentMinorUpdatesSettlementState(t *testing.T) {
 	t.Parallel()
 
-	entity := &Invoice{BillType: billingqueue.BillTypeInvoice, TotalAmount: decimal.NewFromInt(100), TotalAmountMinor: 10000, AppliedAmount: decimal.Zero, AppliedAmountMinor: 0, SettlementStatus: SettlementStatusUnpaid}
+	entity := &Invoice{
+		BillType:           billingqueue.BillTypeInvoice,
+		TotalAmount:        decimal.NewFromInt(100),
+		TotalAmountMinor:   10000,
+		AppliedAmount:      decimal.Zero,
+		AppliedAmountMinor: 0,
+		SettlementStatus:   SettlementStatusUnpaid,
+	}
 
 	entity.ApplyPaymentMinor(2500)
 	assert.Equal(t, int64(2500), entity.AppliedAmountMinor)
@@ -28,7 +35,14 @@ func TestApplyPaymentMinorUpdatesSettlementState(t *testing.T) {
 func TestRemovePaymentMinorUpdatesSettlementState(t *testing.T) {
 	t.Parallel()
 
-	entity := &Invoice{BillType: billingqueue.BillTypeInvoice, TotalAmount: decimal.NewFromInt(100), TotalAmountMinor: 10000, AppliedAmount: decimal.RequireFromString("100.00"), AppliedAmountMinor: 10000, SettlementStatus: SettlementStatusPaid}
+	entity := &Invoice{
+		BillType:           billingqueue.BillTypeInvoice,
+		TotalAmount:        decimal.NewFromInt(100),
+		TotalAmountMinor:   10000,
+		AppliedAmount:      decimal.RequireFromString("100.00"),
+		AppliedAmountMinor: 10000,
+		SettlementStatus:   SettlementStatusPaid,
+	}
 
 	entity.RemovePaymentMinor(2500)
 	assert.Equal(t, int64(7500), entity.AppliedAmountMinor)

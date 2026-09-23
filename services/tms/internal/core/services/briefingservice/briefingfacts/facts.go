@@ -367,10 +367,16 @@ func (b *Builder) compliance(ctx context.Context, req Request, facts *Facts) {
 	if expired > 0 || expiring > 0 {
 		parts := make([]string, 0, 2)
 		if expired > 0 {
-			parts = append(parts, plural(expired, "credential", "credentials")+" already past expiry")
+			parts = append(
+				parts,
+				plural(expired, "credential", "credentials")+" already past expiry",
+			)
 		}
 		if expiring > 0 {
-			parts = append(parts, plural(expiring, "credential", "credentials")+" expiring within a month")
+			parts = append(
+				parts,
+				plural(expiring, "credential", "credentials")+" expiring within a month",
+			)
 		}
 		line = strings.Join(parts, ", ") + "."
 	}

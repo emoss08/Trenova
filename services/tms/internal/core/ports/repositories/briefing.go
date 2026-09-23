@@ -48,7 +48,15 @@ type BriefingRepository interface {
 	GetByID(ctx context.Context, req GetBriefingByIDRequest) (*briefing.Briefing, error)
 	GetForDay(ctx context.Context, req GetBriefingForDayRequest) (*briefing.Briefing, error)
 	List(ctx context.Context, req ListBriefingsRequest) ([]*briefing.Briefing, error)
-	MarkRead(ctx context.Context, req GetBriefingByIDRequest, readAt int64) (*briefing.Briefing, error)
-	MarkEmailed(ctx context.Context, req GetBriefingByIDRequest, emailedAt int64) (*briefing.Briefing, error)
+	MarkRead(
+		ctx context.Context,
+		req GetBriefingByIDRequest,
+		readAt int64,
+	) (*briefing.Briefing, error)
+	MarkEmailed(
+		ctx context.Context,
+		req GetBriefingByIDRequest,
+		emailedAt int64,
+	) (*briefing.Briefing, error)
 	DeleteBefore(ctx context.Context, req DeleteBriefingsBeforeRequest) (int, error)
 }

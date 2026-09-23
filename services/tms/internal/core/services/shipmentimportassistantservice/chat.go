@@ -3,238 +3,255 @@ package shipmentimportassistantservice
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
-// maxToolRounds bounds the tool loop. Five rounds is enough for the assistant
+// MaxToolRounds bounds the tool loop. Five rounds is enough for the assistant
 // to search, confirm and set a field; past that it is looping rather than
 // working, and a person is waiting on the reply.
-const maxToolRounds = 5
+const MaxToolRounds = 5
 
-// suggestQuickActionsTool is answered by the loop rather than by a handler: it
+// SuggestQuickActionsTool is answered by the loop rather than by a handler: it
 // carries the reply's follow-up chips, which are part of the turn's result, not
 // a lookup the assistant is asking us to perform.
-const suggestQuickActionsTool = "suggest_quick_actions"
+const SuggestQuickActionsTool = "suggest_quick_actions"
 
-// turnState accumulates what a turn produced across its tool rounds.
-type turnState struct {
-	text        strings.Builder
-	actions     []serviceports.ShipmentImportAction
-	suggestions []serviceports.ShipmentImportSuggestion
-	toolCalls   []serviceports.ShipmentImportToolCallRecord
-	model       string
-}
+// The events a reader of a streamed turn receives, as the client names them.
+const (
+	EventTextDelta     = "text_delta"
+	EventNewMessage    = "new_message"
+	EventToolCallStart = "tool_call_start"
+	EventToolCallDone  = "tool_call_done"
+	EventSuggestions   = "suggestions"
+	EventDone          = "done"
+	EventError         = "error"
+)
 
-func (t *turnState) message() string { return t.text.String() }
-
+// Chat answers one message on a worker and returns the whole reply.
 func (s *Service) Chat(
 	ctx context.Context,
 	req *serviceports.ShipmentImportChatRequest,
+) (*serviceports.ShipmentImportChatResponse, error) {
+	return s.turns.Chat(ctx, req)
+}
+
+// ChatStream answers one message on a worker and hands the reply to emit as
+// it is written.
+func (s *Service) ChatStream(
+	ctx context.Context,
+	req *serviceports.ShipmentImportChatRequest,
+	emit func(serviceports.StreamEvent),
+) error {
+	return s.turns.ChatStream(ctx, req, emit)
+}
+
+// PreparedTurn is everything a turn's model calls need, read once so the
+// workflow driving the turn never reads the database itself.
+type PreparedTurn struct {
+	ConversationID pulid.ID `json:"conversationId"`
+	// RequestConversationID is the handle the turn answers, as the stored
+	// conversation fills it in when the request left it out.
+	RequestConversationID string                  `json:"requestConversationId,omitempty"`
+	System                string                  `json:"system"`
+	Messages              []serviceports.Message  `json:"messages"`
+	Tools                 []serviceports.ToolSpec `json:"tools"`
+}
+
+// PrepareTurn opens the document's conversation and builds the turn's first
+// request: the replayed exchange, the new message, and the system prompt that
+// carries the import's current state.
+func (s *Service) PrepareTurn(
+	ctx context.Context,
+	req *serviceports.ShipmentImportChatRequest,
+) (*PreparedTurn, error) {
+	conversation, err := s.ensureConversation(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PreparedTurn{
+		ConversationID:        conversation.ID,
+		RequestConversationID: req.ConversationID,
+		System:                s.systemMessage(ctx, req),
+		Messages:              s.buildMessages(ctx, req, conversation),
+		Tools:                 buildTools(),
+	}, nil
+}
+
+// ToolOutcome is what one tool call returned: the text the model reads, and
+// the actions the client applies to the draft.
+type ToolOutcome struct {
+	Output  string                              `json:"output"`
+	Status  string                              `json:"status"`
+	Actions []serviceports.ShipmentImportAction `json:"actions,omitempty"`
+}
+
+// RunTool runs one tool call. The call's arguments are already decoded: the
+// protocols disagree about whether they arrive as a JSON string or an object,
+// and the port settled that.
+func (s *Service) RunTool(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	call *serviceports.ToolCall,
+) ToolOutcome {
+	output, actions := s.runToolCall(ctx, tenantInfo, call.Name, call.Arguments)
+
+	return ToolOutcome{
+		Output:  output,
+		Status:  toolCallStatusFromResult(output),
+		Actions: actions,
+	}
+}
+
+// SuggestionsOutcome is what the model reads for a suggest_quick_actions call,
+// whose chips the loop has taken.
+func SuggestionsOutcome() ToolOutcome {
+	return ToolOutcome{Output: `{"ok":true}`, Status: toolStatusCompleted}
+}
+
+// UnavailableToolOutcome is what the model reads for a call that could not be
+// run at all, so it tells the person rather than claiming it happened.
+func UnavailableToolOutcome() ToolOutcome {
+	return ToolOutcome{
+		Output: `{"error":"the tool could not be run just now; tell the person it did not happen"}`,
+		Status: toolStatusError,
+	}
+}
+
+// WritesTool reports whether a tool changes a record rather than reading or
+// proposing one. Such a call is made at most once: retrying it would create
+// the shipment or the location twice.
+func WritesTool(name string) bool {
+	switch name {
+	case "create_shipment", "add_location":
+		return true
+	default:
+		return false
+	}
+}
+
+// ToolRecord is a call as the history panel shows it.
+func ToolRecord(
+	call *serviceports.ToolCall,
+	outcome ToolOutcome,
+) serviceports.ShipmentImportToolCallRecord {
+	return serviceports.ShipmentImportToolCallRecord{
+		Name:   call.Name,
+		CallID: call.ID,
+		Status: outcome.Status,
+		Input:  encodeArguments(call.Arguments),
+		Output: outcome.Output,
+	}
+}
+
+// TurnRecord is what a turn produced across its tool rounds.
+type TurnRecord struct {
+	Message     string                                      `json:"message"`
+	Suggestions []serviceports.ShipmentImportSuggestion     `json:"suggestions,omitempty"`
+	ToolCalls   []serviceports.ShipmentImportToolCallRecord `json:"toolCalls,omitempty"`
+	Actions     []serviceports.ShipmentImportAction         `json:"actions,omitempty"`
+	Model       string                                      `json:"model,omitempty"`
+}
+
+// FinishTurn saves a turn that finished and returns it as the reply.
+func (s *Service) FinishTurn(
+	ctx context.Context,
+	req *serviceports.ShipmentImportChatRequest,
+	record *TurnRecord,
 ) (*serviceports.ShipmentImportChatResponse, error) {
 	conversation, err := s.ensureConversation(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	state := &turnState{}
-	messages := s.buildMessages(ctx, req, conversation)
-	system := s.systemMessage(ctx, req)
-
-	for range maxToolRounds {
-		result, callErr := s.completion.CompleteChat(ctx, &serviceports.ChatCompletionRequest{
-			TenantInfo: req.TenantInfo,
-			System:     system,
-			Messages:   messages,
-			Tools:      buildTools(),
-		})
-		if callErr != nil {
-			return nil, s.failTurn(ctx, req, conversation, state, callErr)
-		}
-
-		state.model = result.ModelIdentifier
-		if strings.TrimSpace(result.Text) != "" {
-			state.text.WriteString(result.Text)
-		}
-
-		if len(result.ToolCalls) == 0 {
-			break
-		}
-
-		messages = append(messages, toolRound(
-			result.ToolCalls,
-			s.runToolCalls(ctx, req.TenantInfo, result.ToolCalls, state, nil),
-		)...)
+	suggestions := NormalizeSuggestions(record.Suggestions)
+	handle := conversationHandle(conversation)
+	if err = s.persistConversationTurn(
+		ctx,
+		req,
+		conversation,
+		handle,
+		record.Message,
+		suggestions,
+		record.ToolCalls,
+		record.Actions,
+		record.Model,
+		shipmentimportchat.TurnResultStatusCompleted,
+		"",
+	); err != nil {
+		return nil, err
 	}
 
-	return s.finishTurn(ctx, req, conversation, state)
+	s.logAICall(ctx, req, record.Message)
+
+	return &serviceports.ShipmentImportChatResponse{
+		Message:        record.Message,
+		ConversationID: handle,
+		Actions:        record.Actions,
+		Suggestions:    suggestions,
+		ToolCalls:      record.ToolCalls,
+	}, nil
 }
 
-func (s *Service) ChatStream(
+// FailTurn saves a turn the model could not finish and returns what the person
+// is told.
+func (s *Service) FailTurn(
 	ctx context.Context,
 	req *serviceports.ShipmentImportChatRequest,
-	emit func(serviceports.StreamEvent),
-) error {
+	record *TurnRecord,
+	cause error,
+) string {
+	message := friendlyCompletionError(cause)
+	s.logger.Error("import assistant completion failed", zap.Error(cause))
+
 	conversation, err := s.ensureConversation(ctx, req)
 	if err != nil {
-		return err
+		s.logger.Warn("a failed import assistant turn could not be recorded", zap.Error(err))
+
+		return message
 	}
+	s.recordFailedTurn(
+		ctx, req, conversation, conversationHandle(conversation),
+		record.Message, record.ToolCalls, record.Actions, message,
+	)
 
-	state := &turnState{}
-	messages := s.buildMessages(ctx, req, conversation)
-	system := s.systemMessage(ctx, req)
-
-	for round := range maxToolRounds {
-		// A round after the first is a fresh answer, not a continuation of the
-		// bubble the reader is already looking at.
-		if round > 0 {
-			emit(serviceports.StreamEvent{Event: "new_message", Data: nil})
-		}
-
-		result, callErr := s.completion.StreamChat(
-			ctx,
-			&serviceports.ChatCompletionRequest{
-				TenantInfo: req.TenantInfo,
-				System:     system,
-				Messages:   messages,
-				Tools:      buildTools(),
-			},
-			func(delta string) {
-				emit(serviceports.StreamEvent{
-					Event: "text_delta",
-					Data:  map[string]string{"delta": delta},
-				})
-			},
-		)
-		if callErr != nil {
-			message := friendlyCompletionError(callErr)
-			s.logger.Error("import assistant completion failed", zap.Error(callErr))
-			s.recordFailedTurn(
-				ctx, req, conversation, conversationHandle(conversation),
-				state.message(), state.toolCalls, state.actions, message,
-			)
-			emit(serviceports.StreamEvent{
-				Event: "error",
-				Data:  map[string]string{"message": message},
-			})
-
-			return nil
-		}
-
-		state.model = result.ModelIdentifier
-		if strings.TrimSpace(result.Text) != "" {
-			state.text.WriteString(result.Text)
-		}
-
-		if len(result.ToolCalls) == 0 {
-			break
-		}
-
-		messages = append(messages, toolRound(
-			result.ToolCalls,
-			s.runToolCalls(ctx, req.TenantInfo, result.ToolCalls, state, emit),
-		)...)
-	}
-
-	state.suggestions = normalizeSuggestions(state.suggestions)
-	if len(state.suggestions) > 0 {
-		emit(serviceports.StreamEvent{
-			Event: "suggestions",
-			Data:  map[string]any{"suggestions": state.suggestions},
-		})
-	}
-
-	emit(serviceports.StreamEvent{Event: "done", Data: map[string]any{
-		"conversationId": conversationHandle(conversation),
-		"actions":        state.actions,
-	}})
-
-	if err = s.persistTurn(ctx, req, conversation, state); err != nil {
-		return err
-	}
-
-	s.logAICall(ctx, req, state.message())
-
-	return nil
+	return message
 }
 
-// runToolCalls executes one round. emit may be nil, which is how the
-// non-streaming path reuses the same body rather than keeping a second copy of
-// it that drifts.
-func (s *Service) runToolCalls(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+// ToolRound appends what a round of tool calls did, in the shape the next call
+// needs: the assistant turn that asked, then one result per call.
+func ToolRound(
 	calls []serviceports.ToolCall,
-	state *turnState,
-	emit func(serviceports.StreamEvent),
-) map[string]toolResult {
-	results := make(map[string]toolResult, len(calls))
+	outcomes map[string]ToolOutcome,
+) []serviceports.Message {
+	messages := make([]serviceports.Message, 0, len(calls)+1)
+	messages = append(messages, serviceports.Message{
+		Role:      serviceports.RoleAssistant,
+		ToolCalls: calls,
+	})
 
 	for _, call := range calls {
-		if call.Name == suggestQuickActionsTool {
-			state.suggestions = readSuggestions(call.Arguments)
-			results[call.ID] = toolResult{output: `{"ok":true}`, status: toolStatusCompleted}
-			continue
-		}
-
-		if emit != nil {
-			emit(serviceports.StreamEvent{
-				Event: "tool_call_start",
-				Data:  map[string]string{"name": call.Name, "callId": call.ID},
-			})
-		}
-
-		output, actions := s.runToolCall(ctx, tenantInfo, call.Name, call.Arguments)
-		status := toolCallStatusFromResult(output)
-		state.actions = append(state.actions, actions...)
-		results[call.ID] = toolResult{output: output, status: status}
-
-		state.toolCalls = append(state.toolCalls, serviceports.ShipmentImportToolCallRecord{
-			Name:   call.Name,
-			CallID: call.ID,
-			Status: status,
-			Input:  encodeArguments(call.Arguments),
-			Output: output,
+		outcome := outcomes[call.ID]
+		messages = append(messages, serviceports.Message{
+			Role:       serviceports.RoleTool,
+			ToolCallID: call.ID,
+			ToolName:   call.Name,
+			Content:    outcome.Output,
+			IsError:    outcome.Status == toolStatusError,
 		})
-
-		if emit != nil {
-			emit(serviceports.StreamEvent{Event: "tool_call_done", Data: map[string]any{
-				"name":    call.Name,
-				"callId":  call.ID,
-				"status":  status,
-				"result":  output,
-				"actions": actions,
-			}})
-		}
 	}
 
-	return results
+	return messages
 }
 
-// runToolCall dispatches a call whose arguments the adapter has already
-// decoded. The protocols disagree about whether arguments arrive as a JSON
-// string or an object; the port settled that, so this no longer parses them.
-func (s *Service) runToolCall(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	name string,
-	arguments map[string]any,
-) (string, []serviceports.ShipmentImportAction) {
-	handler, ok := shipmentImportToolCallHandlers[name]
-	if !ok {
-		return `{"error":"unknown tool"}`, nil
-	}
-
-	return handler(s, ctx, tenantInfo, shipmentImportToolCallArgs{m: arguments})
-}
-
-func readSuggestions(arguments map[string]any) []serviceports.ShipmentImportSuggestion {
+// ReadSuggestions reads the chips a suggest_quick_actions call carries.
+func ReadSuggestions(arguments map[string]any) []serviceports.ShipmentImportSuggestion {
 	raw, err := sonic.Marshal(arguments)
 	if err != nil {
 		return nil
@@ -248,6 +265,21 @@ func readSuggestions(arguments map[string]any) []serviceports.ShipmentImportSugg
 	}
 
 	return decoded.Suggestions
+}
+
+// runToolCall dispatches a call to its handler.
+func (s *Service) runToolCall(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	name string,
+	arguments map[string]any,
+) (string, []serviceports.ShipmentImportAction) {
+	handler, ok := shipmentImportToolCallHandlers[name]
+	if !ok {
+		return `{"error":"unknown tool"}`, nil
+	}
+
+	return handler(s, ctx, tenantInfo, shipmentImportToolCallArgs{m: arguments})
 }
 
 // encodeArguments renders a call's arguments for the stored record, which the
@@ -266,71 +298,10 @@ func encodeArguments(arguments map[string]any) string {
 	return string(encoded)
 }
 
-func (s *Service) finishTurn(
-	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
-	conversation *shipmentimportchat.Conversation,
-	state *turnState,
-) (*serviceports.ShipmentImportChatResponse, error) {
-	state.suggestions = normalizeSuggestions(state.suggestions)
-	if err := s.persistTurn(ctx, req, conversation, state); err != nil {
-		return nil, err
-	}
-
-	s.logAICall(ctx, req, state.message())
-
-	return &serviceports.ShipmentImportChatResponse{
-		Message:        state.message(),
-		ConversationID: conversationHandle(conversation),
-		Actions:        state.actions,
-		Suggestions:    state.suggestions,
-		ToolCalls:      state.toolCalls,
-	}, nil
-}
-
-func (s *Service) persistTurn(
-	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
-	conversation *shipmentimportchat.Conversation,
-	state *turnState,
-) error {
-	return s.persistConversationTurn(
-		ctx,
-		req,
-		conversation,
-		conversationHandle(conversation),
-		state.message(),
-		state.suggestions,
-		state.toolCalls,
-		state.actions,
-		state.model,
-		shipmentimportchat.TurnResultStatusCompleted,
-		"",
-	)
-}
-
-func (s *Service) failTurn(
-	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
-	conversation *shipmentimportchat.Conversation,
-	state *turnState,
-	cause error,
-) error {
-	message := friendlyCompletionError(cause)
-	s.logger.Error("import assistant completion failed", zap.Error(cause))
-	s.recordFailedTurn(
-		ctx, req, conversation, conversationHandle(conversation),
-		state.message(), state.toolCalls, state.actions, message,
-	)
-
-	return errortypes.NewBusinessError(message)
-}
-
 // friendlyCompletionError turns a routing failure into something a dispatcher
-// can act on. It no longer reads HTTP status codes off one vendor's error type:
-// the router has already tried every provider that serves this task, so the
-// distinctions that matter here are "nothing is configured", "the reply did not
-// fit the schema", and "it did not work".
+// can act on. The router has already tried every provider that serves this
+// task, so the distinctions that matter here are "nothing is configured",
+// "the reply did not fit the schema", and "it did not work".
 func friendlyCompletionError(err error) string {
 	switch {
 	case errors.Is(err, serviceports.ErrNoProviderConfigured):

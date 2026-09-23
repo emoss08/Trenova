@@ -53,13 +53,47 @@ func TestReasonCodeAppliesToAllowsExpectedStopTypes(t *testing.T) {
 		stopType shipment.StopType
 		want     bool
 	}{
-		{name: "pickup allows pickup", applies: ReasonCodeAppliesToPickup, stopType: shipment.StopTypePickup, want: true},
-		{name: "pickup allows split pickup", applies: ReasonCodeAppliesToPickup, stopType: shipment.StopTypeSplitPickup, want: true},
-		{name: "pickup rejects delivery", applies: ReasonCodeAppliesToPickup, stopType: shipment.StopTypeDelivery},
-		{name: "delivery allows delivery", applies: ReasonCodeAppliesToDelivery, stopType: shipment.StopTypeDelivery, want: true},
-		{name: "delivery allows split delivery", applies: ReasonCodeAppliesToDelivery, stopType: shipment.StopTypeSplitDelivery, want: true},
-		{name: "both allows pickup", applies: ReasonCodeAppliesToBoth, stopType: shipment.StopTypePickup, want: true},
-		{name: "both allows delivery", applies: ReasonCodeAppliesToBoth, stopType: shipment.StopTypeDelivery, want: true},
+		{
+			name:     "pickup allows pickup",
+			applies:  ReasonCodeAppliesToPickup,
+			stopType: shipment.StopTypePickup,
+			want:     true,
+		},
+		{
+			name:     "pickup allows split pickup",
+			applies:  ReasonCodeAppliesToPickup,
+			stopType: shipment.StopTypeSplitPickup,
+			want:     true,
+		},
+		{
+			name:     "pickup rejects delivery",
+			applies:  ReasonCodeAppliesToPickup,
+			stopType: shipment.StopTypeDelivery,
+		},
+		{
+			name:     "delivery allows delivery",
+			applies:  ReasonCodeAppliesToDelivery,
+			stopType: shipment.StopTypeDelivery,
+			want:     true,
+		},
+		{
+			name:     "delivery allows split delivery",
+			applies:  ReasonCodeAppliesToDelivery,
+			stopType: shipment.StopTypeSplitDelivery,
+			want:     true,
+		},
+		{
+			name:     "both allows pickup",
+			applies:  ReasonCodeAppliesToBoth,
+			stopType: shipment.StopTypePickup,
+			want:     true,
+		},
+		{
+			name:     "both allows delivery",
+			applies:  ReasonCodeAppliesToBoth,
+			stopType: shipment.StopTypeDelivery,
+			want:     true,
+		},
 	}
 
 	for _, tt := range tests {

@@ -119,7 +119,12 @@ func TestStream_EndsAStreamThatGoesSilent(t *testing.T) {
 
 	require.Error(t, err)
 	assert.ErrorIs(t, err, ErrStreamStalled)
-	assert.Less(t, time.Since(started), 5*time.Second, "the idle guard, not a test timeout, ended this")
+	assert.Less(
+		t,
+		time.Since(started),
+		5*time.Second,
+		"the idle guard, not a test timeout, ended this",
+	)
 	// What did arrive is still the reader's: the router keeps it and marks the
 	// reply as cut off rather than discarding a partial answer.
 	assert.Equal(t, []string{"**Dr"}, *deltas)

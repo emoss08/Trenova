@@ -96,20 +96,25 @@ func (h *Handler) listEntries(c *gin.Context) {
 		accountingDateEnd = parsed
 	}
 
-	pagination.List(c, query, h.eh, func() (*pagination.ListResult[*journalentry.JournalEntry], error) {
-		return h.service.ListEntries(
-			c.Request.Context(),
-			&repositories.ListJournalEntriesRequest{
-				Filter:              query,
-				FiscalYearID:        fiscalYearID,
-				FiscalPeriodID:      fiscalPeriodID,
-				ReferenceType:       c.Query("referenceType"),
-				Status:              c.Query("status"),
-				AccountingDateStart: accountingDateStart,
-				AccountingDateEnd:   accountingDateEnd,
-			},
-		)
-	})
+	pagination.List(
+		c,
+		query,
+		h.eh,
+		func() (*pagination.ListResult[*journalentry.JournalEntry], error) {
+			return h.service.ListEntries(
+				c.Request.Context(),
+				&repositories.ListJournalEntriesRequest{
+					Filter:              query,
+					FiscalYearID:        fiscalYearID,
+					FiscalPeriodID:      fiscalPeriodID,
+					ReferenceType:       c.Query("referenceType"),
+					Status:              c.Query("status"),
+					AccountingDateStart: accountingDateStart,
+					AccountingDateEnd:   accountingDateEnd,
+				},
+			)
+		},
+	)
 }
 
 func (h *Handler) getEntry(c *gin.Context) {

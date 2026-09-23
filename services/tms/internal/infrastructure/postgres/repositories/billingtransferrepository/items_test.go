@@ -93,11 +93,17 @@ func recordOne(
 ) {
 	t.Helper()
 
-	_, err := repo.RecordItemOutcomes(t.Context(), &repositories.RecordBillingTransferOutcomesRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
-		RunID:      pulid.MustNew("btr_"),
-		Outcomes:   []repositories.BillingTransferItemOutcome{outcome},
-	})
+	_, err := repo.RecordItemOutcomes(
+		t.Context(),
+		&repositories.RecordBillingTransferOutcomesRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  pulid.MustNew("bu_"),
+			},
+			RunID:    pulid.MustNew("btr_"),
+			Outcomes: []repositories.BillingTransferItemOutcome{outcome},
+		},
+	)
 	require.NoError(t, err)
 }
 

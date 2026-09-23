@@ -372,7 +372,9 @@ func TestBuildServiceFailureShipmentStatusPayload_UsesReasonDefaultsWithoutOverr
 	require.Empty(t, serviceFailurePayloadDiagnostics(payload.ShipmentStatus))
 }
 
-func TestBuildServiceFailureShipmentStatusPayload_UsesServiceFailureTimestampPrecedence(t *testing.T) {
+func TestBuildServiceFailureShipmentStatusPayload_UsesServiceFailureTimestampPrecedence(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	base := &servicefailure.ServiceFailure{

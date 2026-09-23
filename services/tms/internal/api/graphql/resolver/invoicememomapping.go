@@ -19,7 +19,11 @@ func createMemoRequestFromInput(
 ) (*serviceports.CreateMemoRequest, error) {
 	customerID, err := pulid.MustParse(input.CustomerID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("customerId", errortypes.ErrInvalid, "Invalid customer")
+		return nil, errortypes.NewValidationError(
+			"customerId",
+			errortypes.ErrInvalid,
+			"Invalid customer",
+		)
 	}
 
 	var referenceInvoiceID pulid.ID
@@ -61,31 +65,37 @@ func createMemoRequestFromInput(
 	return req, nil
 }
 
-func memoLinesFromInput(inputs []*gqlmodel.MemoLineInput) ([]*serviceports.CreateMemoLineInput, error) {
+func memoLinesFromInput(
+	inputs []*gqlmodel.MemoLineInput,
+) ([]*serviceports.CreateMemoLineInput, error) {
 	lines := make([]*serviceports.CreateMemoLineInput, 0, len(inputs))
 	multiErr := errortypes.NewMultiError()
 	for idx, in := range inputs {
 		if in == nil {
-			multiErr.WithIndex("lines", idx).Add("description", errortypes.ErrRequired, "Line is required")
+			multiErr.WithIndex("lines", idx).
+				Add("description", errortypes.ErrRequired, "Line is required")
 			continue
 		}
 		line := &serviceports.CreateMemoLineInput{Description: in.Description}
 		amount, err := decimal.NewFromString(in.Amount)
 		if err != nil {
-			multiErr.WithIndex("lines", idx).Add("amount", errortypes.ErrInvalid, "Must be a valid decimal number")
+			multiErr.WithIndex("lines", idx).
+				Add("amount", errortypes.ErrInvalid, "Must be a valid decimal number")
 		}
 		line.Amount = amount
 		if in.Quantity != nil && *in.Quantity != "" {
 			quantity, qErr := decimal.NewFromString(*in.Quantity)
 			if qErr != nil {
-				multiErr.WithIndex("lines", idx).Add("quantity", errortypes.ErrInvalid, "Must be a valid decimal number")
+				multiErr.WithIndex("lines", idx).
+					Add("quantity", errortypes.ErrInvalid, "Must be a valid decimal number")
 			}
 			line.Quantity = quantity
 		}
 		if in.AccessorialChargeID != nil && *in.AccessorialChargeID != "" {
 			accessorialID, aErr := pulid.MustParse(*in.AccessorialChargeID)
 			if aErr != nil {
-				multiErr.WithIndex("lines", idx).Add("accessorialChargeId", errortypes.ErrInvalid, "Invalid accessorial charge")
+				multiErr.WithIndex("lines", idx).
+					Add("accessorialChargeId", errortypes.ErrInvalid, "Invalid accessorial charge")
 			}
 			line.AccessorialChargeID = accessorialID
 		}

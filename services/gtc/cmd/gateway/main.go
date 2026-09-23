@@ -151,7 +151,11 @@ func runBackfill(logger *zap.Logger, args []string) error {
 		return err
 	}
 
-	logger.Info("backfill completed", zap.String("projections", projectionArg), zap.String("tables", tableArg))
+	logger.Info(
+		"backfill completed",
+		zap.String("projections", projectionArg),
+		zap.String("tables", tableArg),
+	)
 	return nil
 }
 
@@ -208,7 +212,9 @@ type application struct {
 	runtime *services.Runtime
 }
 
-func buildApplication(logger *zap.Logger) (*application, context.Context, context.CancelFunc, error) {
+func buildApplication(
+	logger *zap.Logger,
+) (*application, context.Context, context.CancelFunc, error) {
 	cfg, err := config.Load()
 	if err != nil {
 		return nil, nil, nil, err
@@ -227,7 +233,12 @@ func buildApplication(logger *zap.Logger) (*application, context.Context, contex
 		return nil, nil, nil, err
 	}
 
-	checkpoints := postgres.NewCheckpointStore(pool, cfg.CheckpointSchema, cfg.CheckpointTable, logger)
+	checkpoints := postgres.NewCheckpointStore(
+		pool,
+		cfg.CheckpointSchema,
+		cfg.CheckpointTable,
+		logger,
+	)
 	metadataStore := postgres.NewMetadataStore(pool, logger)
 	snapshotter := postgres.NewSnapshotReader(
 		pool,

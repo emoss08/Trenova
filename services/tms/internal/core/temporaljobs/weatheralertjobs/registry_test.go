@@ -33,7 +33,11 @@ func TestDomainConfig_MatchesDefaultWorkerConfig(t *testing.T) {
 		DomainConfig.WorkerConfig.MaxConcurrentActivityTaskPollers,
 	)
 	assert.Equal(t, defaultConfig.WorkerStopTimeout, DomainConfig.WorkerConfig.WorkerStopTimeout)
-	assert.Equal(t, defaultConfig.EnableSessionWorker, DomainConfig.WorkerConfig.EnableSessionWorker)
+	assert.Equal(
+		t,
+		defaultConfig.EnableSessionWorker,
+		DomainConfig.WorkerConfig.EnableSessionWorker,
+	)
 }
 
 func TestDomainConfig_DisablesSessionWorker(t *testing.T) {

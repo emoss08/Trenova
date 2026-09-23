@@ -84,11 +84,15 @@ func (l *LiveSimulator) routeContextByVehicleMap() map[string]routeWebhookContex
 		}
 		driverID := nestedString(route, "driver", "id")
 		context := routeWebhookContext{
-			RouteID:           recordID(route),
-			RouteName:         stringValue(route, "name"),
-			RouteExternalIDs:  externalIDsFromRecord(route),
-			DriverID:          driverID,
-			DriverName:        firstNonEmpty(nestedString(route, "driver", "name"), roster[driverID].Name, driverID),
+			RouteID:          recordID(route),
+			RouteName:        stringValue(route, "name"),
+			RouteExternalIDs: externalIDsFromRecord(route),
+			DriverID:         driverID,
+			DriverName: firstNonEmpty(
+				nestedString(route, "driver", "name"),
+				roster[driverID].Name,
+				driverID,
+			),
 			DriverExternalIDs: nestedExternalIDs(route, "driver"),
 		}
 		out[vehicleID] = context

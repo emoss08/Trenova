@@ -80,21 +80,30 @@ func publishOutcome(arguments map[string]any) toolOutcome {
 		problems = append(problems, "body is required")
 	case len(body) > maxDocumentBodyBytes:
 		problems = append(problems, fmt.Sprintf(
-			"body is longer than %d characters; publish the part that matters", maxDocumentBodyBytes))
+			"body is longer than %d characters; publish the part that matters",
+			maxDocumentBodyBytes,
+		))
 	}
 
 	var revises pulid.ID
 	if raw := strings.TrimSpace(stringArg(arguments, "artifactId")); raw != "" {
 		parsed, err := pulid.Parse(raw)
 		if err != nil {
-			problems = append(problems, "artifactId is not an id a publish_artifact result gave you")
+			problems = append(
+				problems,
+				"artifactId is not an id a publish_artifact result gave you",
+			)
 		} else {
 			revises = parsed
 		}
 	}
 
 	if len(problems) > 0 {
-		return failedOutcome("Tool %q was not run: %s.", publishArtifactName, strings.Join(problems, "; "))
+		return failedOutcome(
+			"Tool %q was not run: %s.",
+			publishArtifactName,
+			strings.Join(problems, "; "),
+		)
 	}
 
 	return toolOutcome{

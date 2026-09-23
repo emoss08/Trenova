@@ -5,18 +5,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// TransportInProcess and TransportDurable name where a turn ran.
-//
-// Every figure here carries one of them, and that is the point. The issue this
-// work comes from asks for latency, reliability, recovery and cost compared
-// against the runtime being replaced — a comparison nobody can make from
-// numbers that do not say which runtime produced them. Instrumenting only the
-// new path would have measured it against nothing.
-const (
-	TransportInProcess = "inprocess"
-	TransportDurable   = "durable"
-)
-
 // TurnDurationBuckets span what an answer actually takes.
 //
 // The short end matters because a refusal is decided in milliseconds and a
@@ -32,12 +20,10 @@ type Assistant struct {
 	Base
 
 	turnDuration     *prometheus.HistogramVec
-	firstEvent       *prometheus.HistogramVec
+	firstEvent       prometheus.Histogram
 	turnTotal        *prometheus.CounterVec
 	turnsStopped     *prometheus.CounterVec
 	stepsReplayed    *prometheus.CounterVec
-	streamPublish    *prometheus.CounterVec
-	streamBytes      *prometheus.CounterVec
 	streamAttached   *prometheus.CounterVec
 	trajectoryEvents *prometheus.CounterVec
 }
@@ -56,22 +42,21 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 			Help:      "How long an assistant turn took, end to end",
 			Buckets:   TurnDurationBuckets,
 		},
-		[]string{"transport", "outcome"},
+		[]string{"outcome"},
 	)
 
 	// Separate from the duration because they answer different questions. The
 	// duration says how long the answer took; this says how long the person
-	// stared at nothing, which is what they actually experience and the first
-	// thing a durable hop could plausibly have made worse.
-	m.firstEvent = prometheus.NewHistogramVec(
+	// stared at nothing, which is what they actually experience, and what a
+	// slow worker or a backed-up queue makes worse first.
+	m.firstEvent = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: "assistant",
 			Name:      "turn_first_event_seconds",
-			Help:      "How long a turn took to say anything at all",
+			Help:      "How long a reader watching a turn from its start waited for its first event",
 			Buckets:   TurnDurationBuckets,
 		},
-		[]string{"transport"},
 	)
 
 	m.turnTotal = prometheus.NewCounterVec(
@@ -79,9 +64,9 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 			Namespace: Namespace,
 			Subsystem: "assistant",
 			Name:      "turns_total",
-			Help:      "Assistant turns by where they ran and how they ended",
+			Help:      "Assistant turns by how they ended",
 		},
-		[]string{"transport", "outcome"},
+		[]string{"outcome"},
 	)
 
 	m.turnsStopped = prometheus.NewCounterVec(
@@ -91,7 +76,7 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 			Name:      "turns_stopped_total",
 			Help:      "Turns a person ended themselves, by whether anything had to be cancelled",
 		},
-		[]string{"transport", "result"},
+		[]string{"result"},
 	)
 
 	// The reliability figure the issue asks for: a replayed step is a write a
@@ -104,29 +89,6 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 			Help:      "Operations a later attempt declined to repeat, by what the ledger knew about them",
 		},
 		[]string{"owner_kind", "state"},
-	)
-
-	m.streamPublish = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: Namespace,
-			Subsystem: "assistant",
-			Name:      "stream_events_total",
-			Help:      "Events published to turn streams, by event and whether the write landed",
-		},
-		[]string{"event", "result"},
-	)
-
-	// Sizing, not health: what a turn's stream costs decides the trim bound,
-	// and coalescing text is only justified if this stays far below the
-	// event count.
-	m.streamBytes = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: Namespace,
-			Subsystem: "assistant",
-			Name:      "stream_bytes_total",
-			Help:      "Bytes published to turn streams",
-		},
-		[]string{"event"},
 	)
 
 	// The recovery figure: whether coming back to a reply actually works, and
@@ -160,8 +122,6 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 		m.turnTotal,
 		m.turnsStopped,
 		m.stepsReplayed,
-		m.streamPublish,
-		m.streamBytes,
 		m.streamAttached,
 		m.trajectoryEvents,
 	)
@@ -179,44 +139,35 @@ func (m *Assistant) enabled() bool {
 	return m != nil && m.IsEnabled()
 }
 
-// RecordTurn files one finished turn. firstEvent is negative for a turn that
-// never said anything, which is not the same as one that answered instantly.
-func (m *Assistant) RecordTurn(transport, outcome string, duration, firstEvent float64) {
+// RecordTurn files one finished turn.
+func (m *Assistant) RecordTurn(outcome string, duration float64) {
 	if !m.enabled() {
 		return
 	}
 
-	m.turnTotal.WithLabelValues(transport, outcome).Inc()
-	m.turnDuration.WithLabelValues(transport, outcome).Observe(duration)
-	if firstEvent >= 0 {
-		m.firstEvent.WithLabelValues(transport).Observe(firstEvent)
-	}
+	m.turnTotal.WithLabelValues(outcome).Inc()
+	m.turnDuration.WithLabelValues(outcome).Observe(duration)
 }
 
-// RecordFirstEvent files how long a turn took to say anything.
-//
-// It has its own method rather than riding on RecordTurn because the two are
-// observed at different moments by different callers: this one by whoever
-// holds the stream, as it happens, and the turn's outcome only once it has
-// one. Folding them together would have meant inventing an outcome for a turn
-// that has not finished.
-func (m *Assistant) RecordFirstEvent(transport string, seconds float64) {
+// RecordFirstEvent files how long a reader who attached as a turn began
+// waited for it to say anything.
+func (m *Assistant) RecordFirstEvent(seconds float64) {
 	if !m.enabled() {
 		return
 	}
 
-	m.firstEvent.WithLabelValues(transport).Observe(seconds)
+	m.firstEvent.Observe(seconds)
 }
 
 // RecordTurnStopped files a turn somebody ended. result says whether there was
 // an execution to cancel, which is how a stop that silently did nothing stays
 // visible.
-func (m *Assistant) RecordTurnStopped(transport, result string) {
+func (m *Assistant) RecordTurnStopped(result string) {
 	if !m.enabled() {
 		return
 	}
 
-	m.turnsStopped.WithLabelValues(transport, result).Inc()
+	m.turnsStopped.WithLabelValues(result).Inc()
 }
 
 // RecordStepReplayed files an operation a later attempt did not repeat.
@@ -226,23 +177,6 @@ func (m *Assistant) RecordStepReplayed(ownerKind, state string) {
 	}
 
 	m.stepsReplayed.WithLabelValues(ownerKind, state).Inc()
-}
-
-// RecordStreamPublish files one event written to a turn's stream.
-func (m *Assistant) RecordStreamPublish(event string, bytes int, err error) {
-	if !m.enabled() {
-		return
-	}
-
-	result := metricStatusSuccess
-	if err != nil {
-		result = "error"
-	}
-
-	m.streamPublish.WithLabelValues(event, result).Inc()
-	if err == nil {
-		m.streamBytes.WithLabelValues(event).Add(float64(bytes))
-	}
 }
 
 // RecordTrajectoryWritten files events that reached the database.

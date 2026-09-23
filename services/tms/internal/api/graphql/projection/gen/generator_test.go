@@ -189,7 +189,11 @@ type Mailbox struct {
 	output := runFixture(t, fixture)
 
 	require.Contains(t, output, "var MailboxSpec TypeSpec")
-	require.Contains(t, output, `FieldMap: map[string]string{"id": "id", "senderName": "from_name"}`)
+	require.Contains(
+		t,
+		output,
+		`FieldMap: map[string]string{"id": "id", "senderName": "from_name"}`,
+	)
 	require.Contains(t, output, "FieldMapKey: \"senderName\"")
 }
 
@@ -422,7 +426,11 @@ specials:
 
 	err := run(fixture.options())
 
-	require.ErrorContains(t, err, `type "Parent" field "virtualField" cannot be declared in both virtuals and specials`)
+	require.ErrorContains(
+		t,
+		err,
+		`type "Parent" field "virtualField" cannot be declared in both virtuals and specials`,
+	)
 }
 
 func TestRun_FailsForFieldUnderMultipleSpecialKeys(t *testing.T) {
@@ -451,7 +459,11 @@ specials:
 
 	err := run(fixture.options())
 
-	require.ErrorContains(t, err, `type "Parent" field "virtualField" is listed under multiple special keys`)
+	require.ErrorContains(
+		t,
+		err,
+		`type "Parent" field "virtualField" is listed under multiple special keys`,
+	)
 }
 
 func TestRun_FailsForUnknownVirtualOrSpecialField(t *testing.T) {
@@ -588,7 +600,11 @@ func newGeneratorFixture(t *testing.T, fixture generatorFixture) fixturePaths {
 	}
 
 	writeFile(t, paths.goModPath, "module example.com/app\n\ngo 1.25\n")
-	writeFile(t, filepath.Join(paths.schemaDir, "schema.graphqls"), strings.TrimSpace(fixture.Schema))
+	writeFile(
+		t,
+		filepath.Join(paths.schemaDir, "schema.graphqls"),
+		strings.TrimSpace(fixture.Schema),
+	)
 	writeFile(t, paths.gqlgenPath, strings.TrimSpace(fixture.Gqlgen))
 	writeFile(t, paths.manifestPath, strings.TrimSpace(fixture.Manifest))
 	for name, content := range fixture.DomainFiles {

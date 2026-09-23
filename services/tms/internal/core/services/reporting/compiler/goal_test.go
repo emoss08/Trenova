@@ -13,7 +13,12 @@ import (
 
 // goalCol builds a calculation whose right-hand side is a constant target
 // rather than a second measure — the shape a variance-vs-goal column takes.
-func goalCol(id, label string, op report.ComputedOp, leftID string, goal float64) report.ColumnSpec {
+func goalCol(
+	id, label string,
+	op report.ComputedOp,
+	leftID string,
+	goal float64,
+) report.ColumnSpec {
 	return report.ColumnSpec{
 		ID:    id,
 		Kind:  report.ColumnKindComputed,

@@ -160,7 +160,11 @@ func (s *Service) Replay(
 		return nil, err
 	}
 
-	s.log(updated, actor, fmt.Sprintf("Replay of run %s of agent %s started", run.ID, definition.Name))
+	s.log(
+		updated,
+		actor,
+		fmt.Sprintf("Replay of run %s of agent %s started", run.ID, definition.Name),
+	)
 
 	return updated, nil
 }

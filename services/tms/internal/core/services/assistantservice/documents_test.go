@@ -97,7 +97,9 @@ func TestArtifactRecorder_RefusesARevisionOfSomethingElse(t *testing.T) {
 	repo := &stubArtifactRepo{}
 	recorder, thread := documentRecorder(t, repo)
 	elsewhere := &assistantartifact.Artifact{
-		ID: pulid.MustNew("art_"), ThreadID: pulid.MustNew("athr_"), Kind: assistantartifact.KindDocument,
+		ID: pulid.MustNew(
+			"art_",
+		), ThreadID: pulid.MustNew("athr_"), Kind: assistantartifact.KindDocument,
 	}
 	table := &assistantartifact.Artifact{
 		ID: pulid.MustNew("art_"), ThreadID: thread.ID, Kind: assistantartifact.KindTableView,

@@ -175,7 +175,8 @@ func TestGetMovesByShipmentID_ExpandedDetailsKeepsUnassignedMoves(t *testing.T) 
 			"id", "business_unit_id", "organization_id", "shipment_id", "status", "loaded", "sequence", "version", "created_at", "updated_at",
 		}).
 			AddRow(assignedMoveID, buID, orgID, shipmentID, shipment.MoveStatusAssigned, true, 0, 1, 1, 1).
-			AddRow(unassignedMoveID, buID, orgID, shipmentID, shipment.MoveStatusNew, true, 1, 1, 1, 1))
+			AddRow(unassignedMoveID, buID, orgID, shipmentID, shipment.MoveStatusNew, true, 1, 1, 1, 1),
+		)
 	mock.ExpectQuery(`SELECT .*FROM "stops" AS "stp".*shipment_move_id.*IN.*ORDER BY "stp"\."sequence" ASC`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "shipment_move_id", "location_id", "status", "type", "schedule_type", "sequence", "scheduled_window_start", "scheduled_window_end", "version", "created_at", "updated_at",
@@ -184,20 +185,24 @@ func TestGetMovesByShipmentID_ExpandedDetailsKeepsUnassignedMoves(t *testing.T) 
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "shipment_move_id", "primary_worker_id", "tractor_id", "trailer_id", "secondary_worker_id", "status", "version", "created_at", "updated_at",
 		}).
-			AddRow(activeAssignmentID, buID, orgID, assignedMoveID, nil, nil, nil, nil, shipment.AssignmentStatusNew, 1, 1, 1))
+			AddRow(activeAssignmentID, buID, orgID, assignedMoveID, nil, nil, nil, nil, shipment.AssignmentStatusNew, 1, 1, 1),
+		)
 	mock.ExpectQuery(`SELECT .*FROM "carrier_assignments" AS "casn".*casn\.shipment_move_id IN.*casn\.organization_id = .*casn\.business_unit_id = .*casn\.status != `).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "shipment_move_id", "carrier_id", "status", "version", "created_at", "updated_at",
 		}))
 
-	entities, err := repo.GetMovesByShipmentID(t.Context(), &repositories.GetMovesByShipmentIDRequest{
-		ShipmentID: shipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: orgID,
-			BuID:  buID,
+	entities, err := repo.GetMovesByShipmentID(
+		t.Context(),
+		&repositories.GetMovesByShipmentIDRequest{
+			ShipmentID: shipmentID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: orgID,
+				BuID:  buID,
+			},
+			ExpandMoveDetails: true,
 		},
-		ExpandMoveDetails: true,
-	})
+	)
 
 	require.NoError(t, err)
 	require.Len(t, entities, 2)
@@ -275,7 +280,8 @@ func TestSplitMove_CreatesDownstreamMoveAndUpdatesOriginalStop(t *testing.T) {
 			"id", "business_unit_id", "organization_id", "shipment_move_id", "location_id", "status", "type", "sequence", "scheduled_window_start", "scheduled_window_end", "version", "created_at", "updated_at",
 		}).
 			AddRow(pulid.MustNew("stp_"), buID, orgID, moveID, pickupLocationID, shipment.StopStatusNew, shipment.StopTypePickup, 0, 1, 2, 1, 1, 1).
-			AddRow(pulid.MustNew("stp_"), buID, orgID, moveID, bridgeLocationID, shipment.StopStatusNew, shipment.StopTypeDelivery, 1, 3, 4, 1, 1, 1))
+			AddRow(pulid.MustNew("stp_"), buID, orgID, moveID, bridgeLocationID, shipment.StopStatusNew, shipment.StopTypeDelivery, 1, 3, 4, 1, 1, 1),
+		)
 	mock.ExpectQuery(`SELECT .*FROM "assignments" AS "a".*a\.shipment_move_id IN.*a\.organization_id = .*a\.business_unit_id = .*a\.archived_at IS NULL`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "shipment_move_id", "primary_worker_id", "tractor_id", "trailer_id", "secondary_worker_id", "status", "version", "created_at", "updated_at",

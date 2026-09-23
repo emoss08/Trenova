@@ -43,10 +43,13 @@ func (f *InboundAttachmentCountLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
 ) batchFetchFunc[int] {
 	return batchCountFunc(func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]int, error) {
-		return f.messages.CountAttachmentsByMessageIDs(ctx, repositories.CountInboundAttachmentsRequest{
-			TenantInfo: tenantInfo,
-			MessageIDs: ids,
-		})
+		return f.messages.CountAttachmentsByMessageIDs(
+			ctx,
+			repositories.CountInboundAttachmentsRequest{
+				TenantInfo: tenantInfo,
+				MessageIDs: ids,
+			},
+		)
 	})
 }
 

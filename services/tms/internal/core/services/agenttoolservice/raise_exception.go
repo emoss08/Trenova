@@ -62,7 +62,13 @@ func (t *raiseExceptionTool) ParamSchema() map[string]any {
 				"description": "How many records are affected.",
 			},
 		},
-		"required":             []string{"subjectType", "subjectId", "category", "severity", "attemptSummary"},
+		"required": []string{
+			"subjectType",
+			"subjectId",
+			"category",
+			"severity",
+			"attemptSummary",
+		},
 		"additionalProperties": false,
 	}
 }

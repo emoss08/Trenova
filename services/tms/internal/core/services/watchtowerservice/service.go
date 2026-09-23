@@ -48,7 +48,7 @@ type Params struct {
 	Definitions repositories.AgentDefinitionRepository
 	Runs        services.AgentRunService     `optional:"true"`
 	Events      services.AgentEventPublisher `optional:"true"`
-	Sources     []services.WatchtowerSource  `group:"watchtower_sources"`
+	Sources     []services.WatchtowerSource  `                group:"watchtower_sources"`
 }
 
 // Service is the watchtower's read face: what a reader may see of it, where
@@ -109,7 +109,11 @@ func (s *Service) visibleKinds(
 	kinds := make([]watchtower.SourceKind, 0, len(candidates))
 	for _, kind := range candidates {
 		if !kind.IsValid() {
-			return nil, errortypes.NewValidationError("kinds", errortypes.ErrInvalid, "Unknown watchtower kind")
+			return nil, errortypes.NewValidationError(
+				"kinds",
+				errortypes.ErrInvalid,
+				"Unknown watchtower kind",
+			)
 		}
 		resource := kind.ReadResource()
 		ok, seen := allowed[resource]
@@ -149,7 +153,11 @@ func (s *Service) List(
 	}
 	for _, severity := range req.Severities {
 		if !severity.IsValid() {
-			return nil, errortypes.NewValidationError("severities", errortypes.ErrInvalid, "Unknown severity")
+			return nil, errortypes.NewValidationError(
+				"severities",
+				errortypes.ErrInvalid,
+				"Unknown severity",
+			)
 		}
 	}
 
@@ -185,7 +193,11 @@ func (s *Service) List(
 	if req.After != "" {
 		decoded, dErr := pagination.DecodeCursor(req.After)
 		if dErr != nil {
-			return nil, errortypes.NewValidationError("after", errortypes.ErrInvalid, "Cursor is invalid")
+			return nil, errortypes.NewValidationError(
+				"after",
+				errortypes.ErrInvalid,
+				"Cursor is invalid",
+			)
 		}
 		listReq.BeforeOccurredAt = decoded.CreatedAt
 		listReq.BeforeID = decoded.ID
@@ -296,7 +308,10 @@ func (s *Service) Dismiss(
 	id pulid.ID,
 	actor *services.RequestActor,
 ) (*watchtower.Item, error) {
-	item, err := s.repo.GetByID(ctx, repositories.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant})
+	item, err := s.repo.GetByID(
+		ctx,
+		repositories.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +322,11 @@ func (s *Service) Dismiss(
 		return item, nil
 	}
 
-	resolved, err := s.repo.ResolveByID(ctx, repositories.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant}, s.now())
+	resolved, err := s.repo.ResolveByID(
+		ctx,
+		repositories.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant},
+		s.now(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -316,7 +335,11 @@ func (s *Service) Dismiss(
 	return resolved, nil
 }
 
-func (s *Service) assertMaySee(ctx context.Context, actor *services.RequestActor, item *watchtower.Item) error {
+func (s *Service) assertMaySee(
+	ctx context.Context,
+	actor *services.RequestActor,
+	item *watchtower.Item,
+) error {
 	kinds, err := s.visibleKinds(ctx, actor, []watchtower.SourceKind{item.SourceKind})
 	if err != nil {
 		return err
@@ -337,7 +360,10 @@ func (s *Service) HandOff(
 	req services.HandOffWatchtowerItemRequest,
 	actor *services.RequestActor,
 ) (*services.HandOffWatchtowerItemResult, error) {
-	item, err := s.repo.GetByID(ctx, repositories.GetWatchtowerItemRequest{ID: req.ItemID, TenantInfo: req.TenantInfo})
+	item, err := s.repo.GetByID(
+		ctx,
+		repositories.GetWatchtowerItemRequest{ID: req.ItemID, TenantInfo: req.TenantInfo},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -345,7 +371,9 @@ func (s *Service) HandOff(
 		return nil, err
 	}
 	if item.SubjectType == "" || item.SubjectID.IsNil() {
-		return nil, errortypes.NewBusinessError("This item is not about a record an agent can work on")
+		return nil, errortypes.NewBusinessError(
+			"This item is not about a record an agent can work on",
+		)
 	}
 
 	if req.AgentDefinitionID.IsNotNil() {
@@ -369,11 +397,14 @@ func (s *Service) HandOff(
 
 	result := &services.HandOffWatchtowerItemResult{Item: item}
 	if item.EventKind != "" {
-		subscribers, lErr := s.definitions.ListEnabledByTrigger(ctx, repositories.ListAgentDefinitionsByTriggerRequest{
-			TenantInfo: req.TenantInfo,
-			Mode:       agentdefinition.TriggerEvent,
-			EventKind:  item.EventKind,
-		})
+		subscribers, lErr := s.definitions.ListEnabledByTrigger(
+			ctx,
+			repositories.ListAgentDefinitionsByTriggerRequest{
+				TenantInfo: req.TenantInfo,
+				Mode:       agentdefinition.TriggerEvent,
+				EventKind:  item.EventKind,
+			},
+		)
 		if lErr != nil {
 			return nil, lErr
 		}

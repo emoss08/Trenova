@@ -252,13 +252,16 @@ func TestPreviewServiceFailure214ForLifecycleReadyForGeneration(t *testing.T) {
 		}, nil).
 		Once()
 
-	result, err := svc.PreviewServiceFailure214ForLifecycle(t.Context(), &services.ServiceFailure214LifecycleRequest{
-		TenantInfo:       tenantInfo,
-		ServiceFailureID: failure.ID,
-		ShipmentID:       shipmentID,
-		Trigger:          services.ServiceFailureEDITriggerReviewed,
-		ServiceFailure:   failure,
-	})
+	result, err := svc.PreviewServiceFailure214ForLifecycle(
+		t.Context(),
+		&services.ServiceFailure214LifecycleRequest{
+			TenantInfo:       tenantInfo,
+			ServiceFailureID: failure.ID,
+			ShipmentID:       shipmentID,
+			Trigger:          services.ServiceFailureEDITriggerReviewed,
+			ServiceFailure:   failure,
+		},
+	)
 
 	require.NoError(t, err)
 	require.Equal(t, services.ServiceFailureEDIActionSkipped, result.Action)

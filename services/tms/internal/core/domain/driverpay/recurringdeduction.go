@@ -36,12 +36,12 @@ type RecurringDeduction struct {
 	// CourtOrderNumber, CaseNumber and IssuingAgency are the paperwork behind a
 	// garnishment. Money taken from somebody's pay without a reference to the
 	// order authorising it cannot be defended.
-	CourtOrderNumber string `json:"courtOrderNumber" bun:"court_order_number,type:VARCHAR(100),nullzero"`
-	CaseNumber       string `json:"caseNumber"       bun:"case_number,type:VARCHAR(100),nullzero"`
-	IssuingAgency    string `json:"issuingAgency"    bun:"issuing_agency,type:VARCHAR(150),nullzero"`
+	CourtOrderNumber string `json:"courtOrderNumber"    bun:"court_order_number,type:VARCHAR(100),nullzero"`
+	CaseNumber       string `json:"caseNumber"          bun:"case_number,type:VARCHAR(100),nullzero"`
+	IssuingAgency    string `json:"issuingAgency"       bun:"issuing_agency,type:VARCHAR(150),nullzero"`
 	// Priority is the order deductions are taken in when pay will not cover
 	// them all. Lower goes first.
-	Priority            int16              `json:"priority" bun:"priority,type:SMALLINT,notnull,default:100"`
+	Priority            int16              `json:"priority"            bun:"priority,type:SMALLINT,notnull,default:100"`
 	Frequency           DeductionFrequency `json:"frequency"           bun:"frequency,type:VARCHAR(50),notnull,default:'EverySettlement'"`
 	Description         string             `json:"description"         bun:"description,type:VARCHAR(255),notnull"`
 	AmountMinor         int64              `json:"amountMinor"         bun:"amount_minor,type:BIGINT,notnull"`

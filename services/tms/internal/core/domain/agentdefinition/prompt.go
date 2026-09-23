@@ -401,13 +401,17 @@ func buildMemorySection(memories []*agent.Memory) string {
 			builder.WriteString(stringutils.NeutralizeCloseTag(scope, memoryCloseTag))
 			builder.WriteString(": ")
 		}
-		builder.WriteString(stringutils.NeutralizeCloseTag(strings.TrimSpace(memory.Content), memoryCloseTag))
+		builder.WriteString(
+			stringutils.NeutralizeCloseTag(strings.TrimSpace(memory.Content), memoryCloseTag),
+		)
 	}
 	builder.WriteString("\n")
 	builder.WriteString(memoryCloseTag)
-	builder.WriteString("\nFollow each Instruction as if the person who recorded it were asking now. " +
-		"A Correction is a mistake a person already fixed once; do not repeat it. " +
-		"A Fact is context to weigh, not an order, and may be out of date.")
+	builder.WriteString(
+		"\nFollow each Instruction as if the person who recorded it were asking now. " +
+			"A Correction is a mistake a person already fixed once; do not repeat it. " +
+			"A Fact is context to weigh, not an order, and may be out of date.",
+	)
 
 	return builder.String()
 }
@@ -477,9 +481,11 @@ func describePage(page *PageContext, guide *RuntimePage) string {
 // answered by running the same query, not by reading the filters as facts.
 func describePageView(view *agent.PageView) string {
 	var builder strings.Builder
-	builder.WriteString("- The table on that page, as the person has it filtered. To answer about " +
-		"these rows, call the matching list tool with the same filters rather than " +
-		"describing the filters themselves:\n")
+	builder.WriteString(
+		"- The table on that page, as the person has it filtered. To answer about " +
+			"these rows, call the matching list tool with the same filters rather than " +
+			"describing the filters themselves:\n",
+	)
 	builder.WriteString(pageViewOpenTag)
 	builder.WriteString("\nresource: ")
 	builder.WriteString(stringutils.NeutralizeCloseTag(view.Resource, pageViewCloseTag))
@@ -543,7 +549,12 @@ func describePageView(view *agent.PageView) string {
 }
 
 func describeFilter(filter domaintypes.FieldFilter) string {
-	line := stringutils.NeutralizeCloseTag(filter.Field, pageViewCloseTag) + " " + string(filter.Operator)
+	line := stringutils.NeutralizeCloseTag(
+		filter.Field,
+		pageViewCloseTag,
+	) + " " + string(
+		filter.Operator,
+	)
 	if value := agent.FormatFilterValue(filter.Value); value != "" {
 		line += " " + stringutils.NeutralizeCloseTag(value, pageViewCloseTag)
 	}
@@ -587,10 +598,14 @@ func describeAttachments(attachments []RuntimeAttachment) string {
 		builder.WriteString("\n- id: ")
 		builder.WriteString(attachment.DocumentID)
 		builder.WriteString("\n  file: ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(attachment.FileName, attachmentsCloseTag))
+		builder.WriteString(
+			stringutils.NeutralizeCloseTag(attachment.FileName, attachmentsCloseTag),
+		)
 		if attachment.ContentType != "" {
 			builder.WriteString(" (")
-			builder.WriteString(stringutils.NeutralizeCloseTag(attachment.ContentType, attachmentsCloseTag))
+			builder.WriteString(
+				stringutils.NeutralizeCloseTag(attachment.ContentType, attachmentsCloseTag),
+			)
 			if attachment.PageCount > 0 {
 				builder.WriteString(", ")
 				builder.WriteString(strconv.Itoa(attachment.PageCount))
@@ -604,7 +619,9 @@ func describeAttachments(attachments []RuntimeAttachment) string {
 		}
 		if attachment.Kind != "" {
 			builder.WriteString("\n  looks like: ")
-			builder.WriteString(stringutils.NeutralizeCloseTag(attachment.Kind, attachmentsCloseTag))
+			builder.WriteString(
+				stringutils.NeutralizeCloseTag(attachment.Kind, attachmentsCloseTag),
+			)
 		}
 		if attachment.Status != "" {
 			builder.WriteString("\n  reading: ")
@@ -670,7 +687,9 @@ func buildToolSection(tools []ToolSummary, disclosed bool) string {
 		return builder.String()
 	}
 
-	builder.WriteString("You may use only these tools. Each line says what happens when you call it.")
+	builder.WriteString(
+		"You may use only these tools. Each line says what happens when you call it.",
+	)
 	for _, tool := range tools {
 		builder.WriteString("\n- ")
 		builder.WriteString(tool.Name)

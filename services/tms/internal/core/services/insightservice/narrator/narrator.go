@@ -182,7 +182,10 @@ func (s *Service) applyNarrations(params applyParams) {
 		}
 
 		params.into[finding.DedupeKey] = Narration{
-			Headline:        firstNonEmpty(trim(narrated.Headline, insight.MaxHeadlineLength), finding.Headline),
+			Headline: firstNonEmpty(
+				trim(narrated.Headline, insight.MaxHeadlineLength),
+				finding.Headline,
+			),
 			Narrative:       trim(narrated.Narrative, insight.MaxNarrativeLength),
 			Recommendation:  trim(narrated.Recommendation, insight.MaxRecommendationLength),
 			Narrated:        true,

@@ -73,7 +73,11 @@ func TestListExpiringCredentials_IncludesExpiredOnRequest(t *testing.T) {
 	_, err := tool.Query(t.Context(), testParams(map[string]any{"includeExpired": true}))
 	require.NoError(t, err)
 
-	assert.Positive(t, repo.captured.GraceDays, "a lapsed card is what someone is usually asking about")
+	assert.Positive(
+		t,
+		repo.captured.GraceDays,
+		"a lapsed card is what someone is usually asking about",
+	)
 }
 
 /*

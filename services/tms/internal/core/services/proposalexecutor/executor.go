@@ -126,7 +126,10 @@ func (r runDefinitions) ForRun(
 		return nil, nil
 	}
 
-	run, err := r.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{ID: runID, TenantInfo: &tenant})
+	run, err := r.runs.GetByID(
+		ctx,
+		repositories.GetAgentRunByIDRequest{ID: runID, TenantInfo: &tenant},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +414,12 @@ func (s *Service) assertTargetUnchanged(ctx context.Context, proposal *agent.Age
 		ID:       proposal.TargetID,
 	})
 	if err != nil {
-		return fmt.Errorf("%w: the %s could not be read (%w)", ErrTargetChanged, proposal.TargetResource, err)
+		return fmt.Errorf(
+			"%w: the %s could not be read (%w)",
+			ErrTargetChanged,
+			proposal.TargetResource,
+			err,
+		)
 	}
 
 	if current != proposal.TargetVersion {

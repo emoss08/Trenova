@@ -186,7 +186,10 @@ func TestSubmitBackground_NoProviderConfigured(t *testing.T) {
 	assert.Contains(t, err.Error(), "No AI provider is configured")
 }
 
-func pollService(t *testing.T, poll map[string]any) (*Service, *aiprovider.Provider, *responsesServer) {
+func pollService(
+	t *testing.T,
+	poll map[string]any,
+) (*Service, *aiprovider.Provider, *responsesServer) {
 	t.Helper()
 
 	server := newResponsesServer(t, poll)

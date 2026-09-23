@@ -101,11 +101,11 @@ type ShiftTemplate struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 
-	Status      domaintypes.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code        string             `json:"code"        bun:"code,type:VARCHAR(20),notnull"`
-	Name        string             `json:"name"        bun:"name,type:VARCHAR(100),notnull"`
-	Description string             `json:"description" bun:"description,type:TEXT,nullzero"`
-	Color       string             `json:"color"       bun:"color,type:VARCHAR(10),nullzero"`
+	Status      domaintypes.Status `json:"status"          bun:"status,type:status_enum,notnull,default:'Active'"`
+	Code        string             `json:"code"            bun:"code,type:VARCHAR(20),notnull"`
+	Name        string             `json:"name"            bun:"name,type:VARCHAR(100),notnull"`
+	Description string             `json:"description"     bun:"description,type:TEXT,nullzero"`
+	Color       string             `json:"color"           bun:"color,type:VARCHAR(10),nullzero"`
 	// DaysOfWeek is seven characters indexed from Sunday: 0111110 is Monday to
 	// Friday. A mask rather than an array so a pattern reads at a glance and
 	// compares without unpacking.
@@ -114,7 +114,7 @@ type ShiftTemplate struct {
 	DurationMinutes int16  `json:"durationMinutes" bun:"duration_minutes,type:SMALLINT,notnull,default:600"`
 	// CycleWeeks lets an A/B rotation be one template: the assignment carries
 	// which week of the cycle a worker starts on.
-	CycleWeeks int16 `json:"cycleWeeks" bun:"cycle_weeks,type:SMALLINT,notnull,default:1"`
+	CycleWeeks int16 `json:"cycleWeeks"      bun:"cycle_weeks,type:SMALLINT,notnull,default:1"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -264,8 +264,8 @@ type WorkerShiftAssignment struct {
 	WorkerID        pulid.ID `json:"workerId"        bun:"worker_id,type:VARCHAR(100),notnull"`
 	ShiftTemplateID pulid.ID `json:"shiftTemplateId" bun:"shift_template_id,type:VARCHAR(100),notnull"`
 
-	EffectiveFrom int64  `json:"effectiveFrom" bun:"effective_from,type:BIGINT,notnull"`
-	EffectiveTo   *int64 `json:"effectiveTo"   bun:"effective_to,type:BIGINT,nullzero"`
+	EffectiveFrom int64  `json:"effectiveFrom"    bun:"effective_from,type:BIGINT,notnull"`
+	EffectiveTo   *int64 `json:"effectiveTo"      bun:"effective_to,type:BIGINT,nullzero"`
 	// CycleOffsetWeeks is which week of the template's cycle this worker starts
 	// on, so an A/B rotation is one template and two offsets.
 	CycleOffsetWeeks int16    `json:"cycleOffsetWeeks" bun:"cycle_offset_weeks,type:SMALLINT,notnull"`
@@ -429,7 +429,7 @@ type ShiftSwapRequest struct {
 	RequestingWorkerID   pulid.ID `json:"requestingWorkerId"   bun:"requesting_worker_id,type:VARCHAR(100),notnull"`
 	CounterpartyWorkerID pulid.ID `json:"counterpartyWorkerId" bun:"counterparty_worker_id,type:VARCHAR(100),nullzero"`
 
-	Status ShiftSwapStatus `json:"status" bun:"status,type:shift_swap_status_enum,notnull,default:'Proposed'"`
+	Status ShiftSwapStatus `json:"status"                bun:"status,type:shift_swap_status_enum,notnull,default:'Proposed'"`
 	// ShiftDate is the day being given up; CounterpartyShiftDate is the day
 	// offered back, when the swap is a trade rather than a hand-off.
 	ShiftDate             int64  `json:"shiftDate"             bun:"shift_date,type:BIGINT,notnull"`

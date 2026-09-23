@@ -59,7 +59,8 @@ func (s *Service) DispatchOffer(
 		}, nil
 	}
 
-	if skipped, skipErr := s.skipIneligibleOffer(ctx, tenantInfo, offer); skipErr != nil || skipped != nil {
+	if skipped, skipErr := s.skipIneligibleOffer(ctx, tenantInfo, offer); skipErr != nil ||
+		skipped != nil {
 		return skipped, skipErr
 	}
 

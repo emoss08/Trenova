@@ -241,7 +241,10 @@ func (s *Service) checkNoOverlap(
 	entity *worker.ApprovalDelegation,
 ) error {
 	existing, err := s.repo.ListDelegations(ctx, &repositories.ListApprovalDelegationsRequest{
-		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 		DelegatorID: entity.DelegatorID,
 		DelegateID:  entity.DelegateID,
 		ActiveAt:    entity.StartsAt,

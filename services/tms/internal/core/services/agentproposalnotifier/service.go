@@ -55,7 +55,10 @@ type deciderLister interface {
 }
 
 type notifier interface {
-	Create(ctx context.Context, entity *notification.Notification) (*notification.Notification, error)
+	Create(
+		ctx context.Context,
+		entity *notification.Notification,
+	) (*notification.Notification, error)
 }
 
 type mailer interface {
@@ -63,7 +66,10 @@ type mailer interface {
 }
 
 type renderer interface {
-	RenderMessage(ctx context.Context, req *services.RenderMessageRequest) (*services.RenderedMessage, error)
+	RenderMessage(
+		ctx context.Context,
+		req *services.RenderMessageRequest,
+	) (*services.RenderedMessage, error)
 }
 
 type shadowReader interface {
@@ -83,7 +89,10 @@ type runReader interface {
 }
 
 type definitionReader interface {
-	GetByID(ctx context.Context, req repositories.GetAgentDefinitionByIDRequest) (*agentdefinition.Definition, error)
+	GetByID(
+		ctx context.Context,
+		req repositories.GetAgentDefinitionByIDRequest,
+	) (*agentdefinition.Definition, error)
 }
 
 type Params struct {
@@ -162,7 +171,10 @@ func (s *Service) NotifyPending(ctx context.Context, notice services.PendingProp
 		return nil
 	}
 
-	tenantInfo := pagination.TenantInfo{OrgID: notice.Run.OrganizationID, BuID: notice.Run.BusinessUnitID}
+	tenantInfo := pagination.TenantInfo{
+		OrgID: notice.Run.OrganizationID,
+		BuID:  notice.Run.BusinessUnitID,
+	}
 	shadow, err := s.inShadow(ctx, tenantInfo, notice.Definition)
 	if err != nil || shadow {
 		return err
@@ -210,11 +222,14 @@ func (s *Service) RemindPending(
 	ctx context.Context,
 	req services.RemindPendingProposalsRequest,
 ) (int, error) {
-	proposals, err := s.proposals.ListPendingForReminder(ctx, repositories.ListPendingProposalsForReminderRequest{
-		Before: req.Now - int64(req.OlderThan.Seconds()),
-		Now:    req.Now,
-		Limit:  req.Limit,
-	})
+	proposals, err := s.proposals.ListPendingForReminder(
+		ctx,
+		repositories.ListPendingProposalsForReminderRequest{
+			Before: req.Now - int64(req.OlderThan.Seconds()),
+			Now:    req.Now,
+			Limit:  req.Limit,
+		},
+	)
 	if err != nil {
 		return 0, fmt.Errorf("list proposals for reminder: %w", err)
 	}
@@ -294,8 +309,10 @@ func (s *Service) remindGroup(ctx context.Context, group proposalGroup, now int6
 			priority:  notification.PriorityHigh,
 			title: fmt.Sprintf("%s still has %s waiting after %d hours",
 				agentName, countChanges(len(group.proposals)), waitingHours),
-			message: fmt.Sprintf("It proposed %s. Nobody has decided, and nothing runs until someone does.",
-				describeTools(group.proposals)),
+			message: fmt.Sprintf(
+				"It proposed %s. Nobody has decided, and nothing runs until someone does.",
+				describeTools(group.proposals),
+			),
 		})
 		s.mail(ctx, group, decider, waitingHours)
 	}
@@ -431,7 +448,11 @@ func (s *Service) mail(
 		Locale:            locale,
 	})
 	if err != nil {
-		s.l.Warn("failed to render proposal reminder email", zap.String("run", runID), zap.Error(err))
+		s.l.Warn(
+			"failed to render proposal reminder email",
+			zap.String("run", runID),
+			zap.Error(err),
+		)
 
 		return
 	}
@@ -491,8 +512,11 @@ func groupByRun(proposals []*agent.AgentProposal) []proposalGroup {
 			at = len(groups)
 			index[proposal.RunID] = at
 			groups = append(groups, proposalGroup{
-				tenant: pagination.TenantInfo{OrgID: proposal.OrganizationID, BuID: proposal.BusinessUnitID},
-				runID:  proposal.RunID,
+				tenant: pagination.TenantInfo{
+					OrgID: proposal.OrganizationID,
+					BuID:  proposal.BusinessUnitID,
+				},
+				runID: proposal.RunID,
 			})
 		}
 		groups[at].proposals = append(groups[at].proposals, proposal)

@@ -30,7 +30,9 @@ func TestBulkTransferToBillingToModel(t *testing.T) {
 		errortypes.ErrInvalidOperation,
 		"Shipment billing requirements must be resolved before transfer to billing",
 	)
-	internalErr := errors.New(`pq: duplicate key value violates unique constraint "billing_queue_items_pkey"`)
+	internalErr := errors.New(
+		`pq: duplicate key value violates unique constraint "billing_queue_items_pkey"`,
+	)
 
 	model, err := bulkTransferToBillingToModel(t.Context(), &services.BulkTransferToBillingResponse{
 		TotalCount:   3,
@@ -53,10 +55,18 @@ func TestBulkTransferToBillingToModel(t *testing.T) {
 				Error:       policyErr.Error(),
 				Err:         policyErr,
 				MissingRequirements: []services.ShipmentBillingRequirement{
-					{DocumentTypeID: "dt_1", DocumentTypeCode: "POD", DocumentTypeName: "Proof of Delivery"},
+					{
+						DocumentTypeID:   "dt_1",
+						DocumentTypeCode: "POD",
+						DocumentTypeName: "Proof of Delivery",
+					},
 				},
 				ValidationFailures: []services.ShipmentBillingValidation{
-					{Field: "bol", Code: "missing_bol", Message: "BOL is required before the shipment can be invoiced"},
+					{
+						Field:   "bol",
+						Code:    "missing_bol",
+						Message: "BOL is required before the shipment can be invoiced",
+					},
 				},
 			},
 			{
@@ -97,7 +107,11 @@ func TestBulkTransferToBillingToModel(t *testing.T) {
 	require.NotNil(t, blocked.FailureCode)
 	assert.Equal(t, services.BillingTransferFailureRequirementsUnmet, *blocked.FailureCode)
 	require.NotNil(t, blocked.Error)
-	assert.Equal(t, "Shipment billing requirements must be resolved before transfer to billing", *blocked.Error)
+	assert.Equal(
+		t,
+		"Shipment billing requirements must be resolved before transfer to billing",
+		*blocked.Error,
+	)
 	require.Len(t, blocked.MissingRequirements, 1)
 	assert.Equal(t, "Proof of Delivery", blocked.MissingRequirements[0].DocumentTypeName)
 	require.Len(t, blocked.ValidationFailures, 1)

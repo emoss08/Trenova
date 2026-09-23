@@ -47,10 +47,13 @@ func (f *ShipmentMoveJurisdictionMilesByMoveIDLoaderFactory) batchFunc(
 ) batchFetchFunc[[]*shipment.ShipmentMoveJurisdictionMile] {
 	return batchGroupFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*shipment.ShipmentMoveJurisdictionMile, error) {
-			rows, err := f.miles.ListByMoveIDs(ctx, repositories.ListJurisdictionMilesByMoveIDsRequest{
-				TenantInfo: tenantInfo,
-				MoveIDs:    ids,
-			})
+			rows, err := f.miles.ListByMoveIDs(
+				ctx,
+				repositories.ListJurisdictionMilesByMoveIDsRequest{
+					TenantInfo: tenantInfo,
+					MoveIDs:    ids,
+				},
+			)
 			if err != nil {
 				return nil, err
 			}

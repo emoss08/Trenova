@@ -104,7 +104,11 @@ func TestJSONSinkTruncateDeletesBeyondOneBatch(t *testing.T) {
 	}
 
 	if remaining := server.Keys(); len(remaining) != 0 {
-		t.Fatalf("expected all keys deleted, %d remain: %v", len(remaining), remaining[:min(len(remaining), 5)])
+		t.Fatalf(
+			"expected all keys deleted, %d remain: %v",
+			len(remaining),
+			remaining[:min(len(remaining), 5)],
+		)
 	}
 }
 

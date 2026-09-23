@@ -243,7 +243,10 @@ func TestBillOfLadingSubmissionShape(t *testing.T) {
 				t.Fatal("expected signature media id")
 			}
 			if !strings.HasPrefix(stringValue(Record(media), "url"), formMediaURLPrefix) {
-				t.Fatalf("expected signature media url prefix, got %q", stringValue(Record(media), "url"))
+				t.Fatalf(
+					"expected signature media url prefix, got %q",
+					stringValue(Record(media), "url"),
+				)
 			}
 			if stringValue(Record(media), "urlExpiresAt") == "" {
 				t.Fatal("expected signature media urlExpiresAt")
@@ -267,7 +270,8 @@ func TestProofOfDeliverySubmissionShape(t *testing.T) {
 	if !podSubmitted.After(bolSubmitted) {
 		t.Fatalf("expected POD (%s) after BOL (%s)", podSubmitted, bolSubmitted)
 	}
-	if stopID := stringValue(pod, "routeStopId"); strings.HasSuffix(stopID, "-stop-1") || stopID == "" {
+	if stopID := stringValue(pod, "routeStopId"); strings.HasSuffix(stopID, "-stop-1") ||
+		stopID == "" {
 		t.Fatalf("expected delivery routeStopId at a later stop, got %q", stopID)
 	}
 	if stringValue(pod, "routeId") != "route-1" {

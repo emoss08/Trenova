@@ -36,14 +36,19 @@ func NewTestValidatorWithIntegrationRepository(
 
 func validAccountingControl() *tenant.AccountingControl {
 	return &tenant.AccountingControl{
-		ID:                               pulid.MustNew("ac_"),
-		BusinessUnitID:                   pulid.MustNew("bu_"),
-		OrganizationID:                   pulid.MustNew("org_"),
-		AccountingBasis:                  tenant.AccountingBasisAccrual,
-		RevenueRecognitionPolicy:         tenant.RevenueRecognitionOnInvoicePost,
-		ExpenseRecognitionPolicy:         tenant.ExpenseRecognitionOnVendorBillPost,
-		JournalPostingMode:               tenant.JournalPostingModeAutomatic,
-		AutoPostSourceEvents:             []tenant.JournalSourceEventType{tenant.JournalSourceEventInvoicePosted, tenant.JournalSourceEventCreditMemoPosted, tenant.JournalSourceEventDebitMemoPosted, tenant.JournalSourceEventVendorBillPosted},
+		ID:                       pulid.MustNew("ac_"),
+		BusinessUnitID:           pulid.MustNew("bu_"),
+		OrganizationID:           pulid.MustNew("org_"),
+		AccountingBasis:          tenant.AccountingBasisAccrual,
+		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
+		ExpenseRecognitionPolicy: tenant.ExpenseRecognitionOnVendorBillPost,
+		JournalPostingMode:       tenant.JournalPostingModeAutomatic,
+		AutoPostSourceEvents: []tenant.JournalSourceEventType{
+			tenant.JournalSourceEventInvoicePosted,
+			tenant.JournalSourceEventCreditMemoPosted,
+			tenant.JournalSourceEventDebitMemoPosted,
+			tenant.JournalSourceEventVendorBillPosted,
+		},
 		ManualJournalEntryPolicy:         tenant.ManualJournalEntryPolicyAdjustmentOnly,
 		RequireManualJEApproval:          true,
 		JournalReversalPolicy:            tenant.JournalReversalPolicyNextOpenPeriod,

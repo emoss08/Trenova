@@ -127,8 +127,11 @@ func (c *Customer) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&c.DOTNumber,
 			validation.Length(0, 12).Error("DOT number must be at most 12 characters"),
 			validation.Match(digitsPattern).Error("DOT number must contain only digits"),
-			validation.When(c.BrokerVettingEnabled,
-				validation.Required.Error("A DOT number is required to vet this customer as a broker"),
+			validation.When(
+				c.BrokerVettingEnabled,
+				validation.Required.Error(
+					"A DOT number is required to vet this customer as a broker",
+				),
 			),
 		),
 		validation.Field(&c.MCNumber,

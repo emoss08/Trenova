@@ -91,7 +91,10 @@ func tenant() pagination.TenantInfo {
 }
 
 func userActor() *services.RequestActor {
-	return &services.RequestActor{PrincipalType: services.PrincipalTypeUser, UserID: pulid.MustNew("usr_")}
+	return &services.RequestActor{
+		PrincipalType: services.PrincipalTypeUser,
+		UserID:        pulid.MustNew("usr_"),
+	}
 }
 
 // A memory recorded from inside a run belongs to the agent that ran, whoever
@@ -200,8 +203,12 @@ func TestRecordCorrection_KeepsWhatAPersonChanged(t *testing.T) {
 	p := proposal("assign_move", map[string]any{"workerId": "wrk_a", "trailerId": "trl_1"})
 
 	memory, err := svc.RecordCorrection(t.Context(), p, &agent.AgentDecision{
-		Decision:        agent.DecisionModified,
-		Modifications:   map[string]any{"workerId": "wrk_b", "trailerId": "trl_1", "note": "call first"},
+		Decision: agent.DecisionModified,
+		Modifications: map[string]any{
+			"workerId":  "wrk_b",
+			"trailerId": "trl_1",
+			"note":      "call first",
+		},
 		ReasonCode:      "approved_from_activity",
 		DecidedByUserID: pulid.MustNew("usr_"),
 	})
@@ -211,9 +218,11 @@ func TestRecordCorrection_KeepsWhatAPersonChanged(t *testing.T) {
 	assert.Equal(t, agent.MemoryKindCorrection, memory.Kind)
 	assert.Equal(t, agent.MemorySourceDecision, memory.Source)
 	assert.Equal(t, "assign_move", memory.ToolName)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"When assign_move was proposed, a person changed note to call first and workerId from wrk_a to wrk_b.",
-		memory.Content)
+		memory.Content,
+	)
 	assert.Equal(t, p.ID, *memory.SourceProposalID)
 }
 
@@ -248,7 +257,11 @@ func TestRecordCorrection_SkipsACleanApprovalAndAChangeThatChangedNothing(t *tes
 	svc := newService(&fakeMemoryRepo{}, &fakeRuns{}, &fakeLabeler{})
 	p := proposal("assign_move", map[string]any{"workerId": "wrk_a"})
 
-	approved, err := svc.RecordCorrection(t.Context(), p, &agent.AgentDecision{Decision: agent.DecisionAccepted})
+	approved, err := svc.RecordCorrection(
+		t.Context(),
+		p,
+		&agent.AgentDecision{Decision: agent.DecisionAccepted},
+	)
 	require.NoError(t, err)
 	assert.Nil(t, approved)
 
@@ -266,6 +279,10 @@ func TestHumanReason(t *testing.T) {
 	assert.Empty(t, humanReason("approved_from_activity"))
 	assert.Empty(t, humanReason("decided_as_plan (plan apl_1)"))
 	assert.Empty(t, humanReason("   "))
-	assert.Equal(t, "Driver asked for Fridays off", humanReason("Driver asked for Fridays off (plan apl_1)"))
+	assert.Equal(
+		t,
+		"Driver asked for Fridays off",
+		humanReason("Driver asked for Fridays off (plan apl_1)"),
+	)
 	assert.Equal(t, "Wrong trailer", humanReason("Wrong trailer"))
 }

@@ -136,7 +136,11 @@ func TestJoinPaths(t *testing.T) {
 		{base: "/api/v1", relative: "/workers", want: "/api/v1/workers"},
 		{base: "/api/v1", relative: "/workers/", want: "/api/v1/workers/"},
 		{base: "/api/v1/workers", relative: "/", want: "/api/v1/workers/"},
-		{base: "/api/v1/portal/", relative: "loads/:id/documents/", want: "/api/v1/portal/loads/:id/documents/"},
+		{
+			base:     "/api/v1/portal/",
+			relative: "loads/:id/documents/",
+			want:     "/api/v1/portal/loads/:id/documents/",
+		},
 		{base: "/api/v1/workers", relative: "", want: "/api/v1/workers"},
 		{base: "/api/v1", relative: "/workers/:workerID/", want: "/api/v1/workers/:workerID/"},
 	}
@@ -173,7 +177,10 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	require.NoError(t, os.WriteFile(filepath.Join(apiPath, routerFileName), []byte(router), 0o600))
 
 	handler := "package demohandler\n\n" + handlerBody
-	require.NoError(t, os.WriteFile(filepath.Join(handlerPath, "handler.go"), []byte(handler), 0o600))
+	require.NoError(
+		t,
+		os.WriteFile(filepath.Join(handlerPath, "handler.go"), []byte(handler), 0o600),
+	)
 
 	return apiPath, filepath.Join(root, "api", "handlers")
 }

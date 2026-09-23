@@ -643,15 +643,20 @@ func TestCursorList_UsesTotalCountForRESTCursorResponseCount(t *testing.T) {
 	}
 	total := 42
 
-	CursorList[cursorTestItem](c, opts, eh, func(_ CursorInfo) (*CursorListResult[cursorTestItem], error) {
-		return &CursorListResult[cursorTestItem]{
-			Items: []cursorTestItem{
-				{ID: pulid.MustNew("item_"), CreatedAt: 1710000000000, Name: "Alpha"},
-				{ID: pulid.MustNew("item_"), CreatedAt: 1710000001000, Name: "Beta"},
-			},
-			TotalCount: &total,
-		}, nil
-	})
+	CursorList[cursorTestItem](
+		c,
+		opts,
+		eh,
+		func(_ CursorInfo) (*CursorListResult[cursorTestItem], error) {
+			return &CursorListResult[cursorTestItem]{
+				Items: []cursorTestItem{
+					{ID: pulid.MustNew("item_"), CreatedAt: 1710000000000, Name: "Alpha"},
+					{ID: pulid.MustNew("item_"), CreatedAt: 1710000001000, Name: "Beta"},
+				},
+				TotalCount: &total,
+			}, nil
+		},
+	)
 
 	require.Equal(t, http.StatusOK, w.Code)
 
@@ -676,14 +681,19 @@ func TestCursorList_FallsBackToPageLengthWhenTotalCountIsUnavailable(t *testing.
 		Pagination: Info{Limit: 2, Offset: 0},
 	}
 
-	CursorList[cursorTestItem](c, opts, eh, func(_ CursorInfo) (*CursorListResult[cursorTestItem], error) {
-		return &CursorListResult[cursorTestItem]{
-			Items: []cursorTestItem{
-				{ID: pulid.MustNew("item_"), CreatedAt: 1710000000000, Name: "Alpha"},
-				{ID: pulid.MustNew("item_"), CreatedAt: 1710000001000, Name: "Beta"},
-			},
-		}, nil
-	})
+	CursorList[cursorTestItem](
+		c,
+		opts,
+		eh,
+		func(_ CursorInfo) (*CursorListResult[cursorTestItem], error) {
+			return &CursorListResult[cursorTestItem]{
+				Items: []cursorTestItem{
+					{ID: pulid.MustNew("item_"), CreatedAt: 1710000000000, Name: "Alpha"},
+					{ID: pulid.MustNew("item_"), CreatedAt: 1710000001000, Name: "Beta"},
+				},
+			}, nil
+		},
+	)
 
 	require.Equal(t, http.StatusOK, w.Code)
 
@@ -735,17 +745,22 @@ func TestList_ReturnsCursorEncodeError(t *testing.T) {
 		Pagination: Info{Limit: 10, Offset: 0},
 	}
 
-	List[cursorTestItemWithoutID](c, opts, eh, func() (*ListResult[cursorTestItemWithoutID], error) {
-		opts.CursorSort = []CursorSortField{
-			{Field: "name", Direction: "asc"},
-			{Field: "id", Direction: "asc"},
-		}
+	List[cursorTestItemWithoutID](
+		c,
+		opts,
+		eh,
+		func() (*ListResult[cursorTestItemWithoutID], error) {
+			opts.CursorSort = []CursorSortField{
+				{Field: "name", Direction: "asc"},
+				{Field: "id", Direction: "asc"},
+			}
 
-		return &ListResult[cursorTestItemWithoutID]{
-			Items: []cursorTestItemWithoutID{{Name: "Alpha"}},
-			Total: 1,
-		}, nil
-	})
+			return &ListResult[cursorTestItemWithoutID]{
+				Items: []cursorTestItemWithoutID{{Name: "Alpha"}},
+				Total: 1,
+			}, nil
+		},
+	)
 
 	assert.NotEqual(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "cursor field")

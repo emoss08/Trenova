@@ -381,7 +381,10 @@ func (s *Service) resolveCarryforwardTarget(
 	if first == nil {
 		return nextYear, periodTarget{}, appendBlocker(blockers, accountingBlocker(
 			"nextFiscalYear",
-			fmt.Sprintf("%s has no operating periods to carry opening balances into.", nextYear.Name),
+			fmt.Sprintf(
+				"%s has no operating periods to carry opening balances into.",
+				nextYear.Name,
+			),
 		)), nil
 	}
 

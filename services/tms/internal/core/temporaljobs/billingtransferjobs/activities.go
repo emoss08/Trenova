@@ -367,8 +367,16 @@ func itemOutcomeFrom(
 		MarkedReadyToInvoice: result.MarkedReadyToInvoice,
 		ErrorMessage:         result.Error,
 		ProcessedAt:          timeutils.NowUnix(),
-		MissingRequirements:  make([]billingtransfer.MissingRequirement, 0, len(result.MissingRequirements)),
-		ValidationFailures:   make([]billingtransfer.ValidationFailure, 0, len(result.ValidationFailures)),
+		MissingRequirements: make(
+			[]billingtransfer.MissingRequirement,
+			0,
+			len(result.MissingRequirements),
+		),
+		ValidationFailures: make(
+			[]billingtransfer.ValidationFailure,
+			0,
+			len(result.ValidationFailures),
+		),
 	}
 
 	if result.Success {
@@ -477,7 +485,9 @@ func finishedWording(
 			"Transfer to billing stopped",
 			fmt.Sprintf(
 				"%d of %d shipments were checked before the transfer was stopped. %d moved into the billing queue.",
-				run.ProcessedCount, run.TotalCount, run.TransferredCount,
+				run.ProcessedCount,
+				run.TotalCount,
+				run.TransferredCount,
 			)
 	case billingtransfer.RunStatusFailed:
 		return eventRunFailed, notification.PriorityHigh,

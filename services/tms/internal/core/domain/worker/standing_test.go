@@ -41,11 +41,13 @@ func findConcern(t *testing.T, concerns []worker.Concern, code string) worker.Co
 
 func TestBuildStanding_CleanRecordIsGood(t *testing.T) {
 	standing, concerns := worker.BuildStanding(worker.StandingInput{
-		Worker:      activeWorker(),
-		Credentials: &worker.WorkerCredentialSummary{ComplianceStatus: worker.ComplianceStatusCompliant},
-		Training:    &worker.WorkerTrainingSummary{Compliant: true},
-		Safety:      &worker.SafetyScorecard{Score: 100, Rating: worker.SafetyRatingExcellent},
-		Now:         standingNow,
+		Worker: activeWorker(),
+		Credentials: &worker.WorkerCredentialSummary{
+			ComplianceStatus: worker.ComplianceStatusCompliant,
+		},
+		Training: &worker.WorkerTrainingSummary{Compliant: true},
+		Safety:   &worker.SafetyScorecard{Score: 100, Rating: worker.SafetyRatingExcellent},
+		Now:      standingNow,
 	})
 
 	assert.Equal(t, worker.StandingGood, standing)
@@ -271,7 +273,9 @@ func TestBuildStanding_ClosedChecklistIsSilent(t *testing.T) {
 		Checklist: &worker.WorkerChecklist{
 			Name:   "Driver onboarding",
 			Status: worker.ChecklistStatusCompleted,
-			Items:  []*worker.WorkerChecklistItem{{Required: true, Status: worker.ChecklistItemDone}},
+			Items: []*worker.WorkerChecklistItem{
+				{Required: true, Status: worker.ChecklistItemDone},
+			},
 		},
 		Now: standingNow,
 	})
@@ -300,9 +304,11 @@ func TestBuildStanding_NotAssignableBlocks(t *testing.T) {
 	wrk.CanBeAssigned = false
 
 	standing, concerns := worker.BuildStanding(worker.StandingInput{
-		Worker:      wrk,
-		Credentials: &worker.WorkerCredentialSummary{ComplianceStatus: worker.ComplianceStatusCompliant},
-		Now:         standingNow,
+		Worker: wrk,
+		Credentials: &worker.WorkerCredentialSummary{
+			ComplianceStatus: worker.ComplianceStatusCompliant,
+		},
+		Now: standingNow,
 	})
 
 	assert.Equal(t, worker.StandingBlocked, standing)

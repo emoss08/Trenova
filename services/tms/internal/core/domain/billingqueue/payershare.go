@@ -211,7 +211,8 @@ func payerNameLookup(
 			return PayerRef{ID: id, Name: shp.Customer.Name, Code: shp.Customer.Code}
 		}
 		for _, allocation := range shp.ChargeAllocations {
-			if allocation != nil && allocation.BillToCustomer != nil && allocation.BillToCustomerID == id {
+			if allocation != nil && allocation.BillToCustomer != nil &&
+				allocation.BillToCustomerID == id {
 				return PayerRef{
 					ID:   id,
 					Name: allocation.BillToCustomer.Name,

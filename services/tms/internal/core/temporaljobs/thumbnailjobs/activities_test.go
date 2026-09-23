@@ -29,7 +29,10 @@ type thumbnailStorage struct {
 	metadata    map[string]string
 }
 
-func (s *thumbnailStorage) Upload(_ context.Context, params *storage.UploadParams) (*storage.FileInfo, error) {
+func (s *thumbnailStorage) Upload(
+	_ context.Context,
+	params *storage.UploadParams,
+) (*storage.FileInfo, error) {
 	body, err := io.ReadAll(params.Body)
 	if err != nil {
 		return nil, err
@@ -37,10 +40,17 @@ func (s *thumbnailStorage) Upload(_ context.Context, params *storage.UploadParam
 	s.uploadKey = params.Key
 	s.uploadBody = body
 	s.metadata = params.Metadata
-	return &storage.FileInfo{Key: params.Key, Size: int64(len(body)), ContentType: params.ContentType}, nil
+	return &storage.FileInfo{
+		Key:         params.Key,
+		Size:        int64(len(body)),
+		ContentType: params.ContentType,
+	}, nil
 }
 
-func (s *thumbnailStorage) Download(_ context.Context, key string) (*storage.DownloadResult, error) {
+func (s *thumbnailStorage) Download(
+	_ context.Context,
+	key string,
+) (*storage.DownloadResult, error) {
 	s.downloadKey = key
 	return &storage.DownloadResult{Body: io.NopCloser(bytes.NewReader(s.download))}, nil
 }
@@ -49,25 +59,53 @@ func (s *thumbnailStorage) Delete(context.Context, string) error { return nil }
 func (s *thumbnailStorage) DeleteObject(context.Context, *storage.DeleteObjectParams) error {
 	return nil
 }
-func (s *thumbnailStorage) GetPresignedURL(context.Context, *storage.PresignedURLParams) (string, error) {
+
+func (s *thumbnailStorage) GetPresignedURL(
+	context.Context,
+	*storage.PresignedURLParams,
+) (string, error) {
 	return "", nil
 }
-func (s *thumbnailStorage) GetPresignedUploadURL(context.Context, *storage.PresignedUploadURLParams) (string, error) {
+
+func (s *thumbnailStorage) GetPresignedUploadURL(
+	context.Context,
+	*storage.PresignedUploadURLParams,
+) (string, error) {
 	return "", nil
 }
-func (s *thumbnailStorage) InitiateMultipartUpload(context.Context, *storage.MultipartUploadParams) (string, error) {
+
+func (s *thumbnailStorage) InitiateMultipartUpload(
+	context.Context,
+	*storage.MultipartUploadParams,
+) (string, error) {
 	return "", nil
 }
-func (s *thumbnailStorage) GetMultipartUploadPartURL(context.Context, *storage.MultipartUploadPartURLParams) (string, error) {
+
+func (s *thumbnailStorage) GetMultipartUploadPartURL(
+	context.Context,
+	*storage.MultipartUploadPartURLParams,
+) (string, error) {
 	return "", nil
 }
-func (s *thumbnailStorage) CompleteMultipartUpload(context.Context, *storage.CompleteMultipartUploadParams) error {
+
+func (s *thumbnailStorage) CompleteMultipartUpload(
+	context.Context,
+	*storage.CompleteMultipartUploadParams,
+) error {
 	return nil
 }
-func (s *thumbnailStorage) AbortMultipartUpload(context.Context, *storage.AbortMultipartUploadParams) error {
+
+func (s *thumbnailStorage) AbortMultipartUpload(
+	context.Context,
+	*storage.AbortMultipartUploadParams,
+) error {
 	return nil
 }
-func (s *thumbnailStorage) ListMultipartUploadParts(context.Context, *storage.ListMultipartUploadPartsParams) ([]storage.UploadedPart, error) {
+
+func (s *thumbnailStorage) ListMultipartUploadParts(
+	context.Context,
+	*storage.ListMultipartUploadPartsParams,
+) ([]storage.UploadedPart, error) {
 	return nil, nil
 }
 func (s *thumbnailStorage) Exists(context.Context, string) (bool, error) { return false, nil }
@@ -79,7 +117,9 @@ func TestGenerateThumbnailActivityDecryptsOriginalAndStoresEncryptedPreview(t *t
 	t.Parallel()
 
 	enc := encryptionservice.NewWithKeyManager(
-		encryptionservice.NewLocalKeyManager("thumbnail-test-encryption-key-with-at-least-32-bytes"),
+		encryptionservice.NewLocalKeyManager(
+			"thumbnail-test-encryption-key-with-at-least-32-bytes",
+		),
 	)
 	doc := thumbnailDocument()
 	encrypted, err := enc.EncryptBytesWithAAD(

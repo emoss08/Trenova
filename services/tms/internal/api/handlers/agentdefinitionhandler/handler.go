@@ -54,8 +54,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/templates/", h.pm.RequirePermission(resource, permission.OpRead), h.templates)
 	api.GET("/tools/", h.pm.RequirePermission(resource, permission.OpRead), h.tools)
 	api.GET("/event-kinds/", h.pm.RequirePermission(resource, permission.OpRead), h.eventKinds)
-	api.POST("/preview-prompt/", h.pm.RequirePermission(resource, permission.OpRead), h.previewPrompt)
-	api.GET("/system/:systemKey/", h.pm.RequirePermission(resource, permission.OpRead), h.getBySystemKey)
+	api.POST(
+		"/preview-prompt/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.previewPrompt,
+	)
+	api.GET(
+		"/system/:systemKey/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.getBySystemKey,
+	)
 	api.GET("/:agentID/", h.pm.RequirePermission(resource, permission.OpRead), h.get)
 	api.GET("/:agentID/trust/", h.pm.RequirePermission(resource, permission.OpRead), h.trustLedger)
 	api.GET("/:agentID/budget/", h.pm.RequirePermission(resource, permission.OpRead), h.budget)
@@ -361,10 +369,13 @@ func (h *Handler) budget(c *gin.Context) {
 		return
 	}
 
-	definition, err := h.service.GetByID(c.Request.Context(), repositories.GetAgentDefinitionByIDRequest{
-		ID:         agentID,
-		TenantInfo: tenantFromAuthContext(authCtx),
-	})
+	definition, err := h.service.GetByID(
+		c.Request.Context(),
+		repositories.GetAgentDefinitionByIDRequest{
+			ID:         agentID,
+			TenantInfo: tenantFromAuthContext(authCtx),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

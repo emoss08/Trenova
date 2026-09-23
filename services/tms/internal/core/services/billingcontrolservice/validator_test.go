@@ -20,7 +20,11 @@ func TestValidateUpdate_RejectsAutomaticPostingWithoutAutomaticDrafts(t *testing
 	multiErr := v.ValidateUpdate(t.Context(), entity)
 
 	require.NotNil(t, multiErr)
-	require.Contains(t, multiErr.Error(), "Automatic invoice posting requires invoice draft creation mode AutomaticWhenTransferred")
+	require.Contains(
+		t,
+		multiErr.Error(),
+		"Automatic invoice posting requires invoice draft creation mode AutomaticWhenTransferred",
+	)
 }
 
 func TestValidateUpdate_RejectsAutomaticTransferWithoutScheduleAndBatch(t *testing.T) {

@@ -43,9 +43,11 @@ type ListDueAgentDefinitionsRequest struct {
 	Limit      int
 }
 
-type ListDueAcrossTenantsRequest struct {
-	Now   int64
-	Limit int
+// ListScheduledAcrossTenantsRequest pages through every scheduled or continuous
+// agent in every tenant, enabled or not, in id order.
+type ListScheduledAcrossTenantsRequest struct {
+	AfterID pulid.ID
+	Limit   int
 }
 
 type MarkAgentDefinitionRunRequest struct {
@@ -112,9 +114,9 @@ type AgentDefinitionRepository interface {
 		ctx context.Context,
 		req ListDueAgentDefinitionsRequest,
 	) ([]*agentdefinition.Definition, error)
-	ListDueAcrossTenants(
+	ListScheduledAcrossTenants(
 		ctx context.Context,
-		req ListDueAcrossTenantsRequest,
+		req ListScheduledAcrossTenantsRequest,
 	) ([]*agentdefinition.Definition, error)
 	Create(
 		ctx context.Context,

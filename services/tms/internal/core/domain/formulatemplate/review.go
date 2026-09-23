@@ -90,7 +90,11 @@ func (r *Review) Validate(multiErr *errortypes.MultiError) {
 	))
 
 	if r.Decision != ReviewDecisionExpired && (r.ActorID == nil || r.ActorID.IsNil()) {
-		multiErr.Add("actorId", errortypes.ErrRequired, "Every decision but expiry names who made it")
+		multiErr.Add(
+			"actorId",
+			errortypes.ErrRequired,
+			"Every decision but expiry names who made it",
+		)
 	}
 }
 

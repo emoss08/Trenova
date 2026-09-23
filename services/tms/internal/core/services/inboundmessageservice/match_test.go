@@ -241,7 +241,11 @@ func TestMatch_SurvivesAFailedLookup(t *testing.T) {
 		&stubParties{err: errors.New("database unreachable")},
 	)
 
-	got := svc.Match(t.Context(), message("Load 88213", "", "ops@acme.com"), pagination.TenantInfo{})
+	got := svc.Match(
+		t.Context(),
+		message("Load 88213", "", "ops@acme.com"),
+		pagination.TenantInfo{},
+	)
 
 	assert.True(t, got.ShipmentID.IsNil())
 	assert.Empty(t, got.Reason)

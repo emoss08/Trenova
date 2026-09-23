@@ -24,7 +24,10 @@ type tenderStarter interface {
 		ctx context.Context,
 		req *tenderservice.CreateWaterfallTenderRequest,
 	) (*tenderservice.CreateWaterfallResult, error)
-	CreateSpot(ctx context.Context, req *tenderservice.CreateSpotTenderRequest) (*tender.Tender, error)
+	CreateSpot(
+		ctx context.Context,
+		req *tenderservice.CreateSpotTenderRequest,
+	) (*tender.Tender, error)
 }
 
 // tenderToRoutingGuideTool offers a move down its routing guide, carrier by
@@ -153,8 +156,11 @@ func (t *tenderToCarriersTool) ParamSchema() map[string]any {
 					"get_shipment (its moves).",
 			},
 			"mode": map[string]any{
-				"type":        "string",
-				"enum":        []string{string(tender.ModeSpotBroadcast), string(tender.ModeSpotSequential)},
+				"type": "string",
+				"enum": []string{
+					string(tender.ModeSpotBroadcast),
+					string(tender.ModeSpotSequential),
+				},
 				"description": "Broadcast asks every carrier at once; Sequential asks them in order.",
 			},
 			"lines": map[string]any{
@@ -167,13 +173,22 @@ func (t *tenderToCarriersTool) ParamSchema() map[string]any {
 							"type":        "string",
 							"description": "The carrier, from shop_carriers or list_carriers.",
 						},
-						"rate":       map[string]any{"type": "string", "description": "The offered rate as a decimal string."},
-						"rateMethod": map[string]any{"type": "string", "enum": []string{"Flat", "PerMile"}},
+						"rate": map[string]any{
+							"type":        "string",
+							"description": "The offered rate as a decimal string.",
+						},
+						"rateMethod": map[string]any{
+							"type": "string",
+							"enum": []string{"Flat", "PerMile"},
+						},
 						"offerTtlSeconds": map[string]any{
 							"type":        "integer",
 							"description": "How long the carrier has to accept. Defaults to the organization's setting.",
 						},
-						"channel": map[string]any{"type": "string", "enum": []string{"Email", "EDI"}},
+						"channel": map[string]any{
+							"type": "string",
+							"enum": []string{"Email", "EDI"},
+						},
 						"email": map[string]any{
 							"type":        "string",
 							"description": "Where to send an email offer, when not the carrier's own address.",
@@ -270,11 +285,17 @@ func (t *tenderToCarriersTool) Execute(
 func spotTenderLineOf(idx int, line tenderLineParam) (tenderservice.SpotTenderLine, error) {
 	carrierID, err := pulid.Parse(line.CarrierID)
 	if err != nil {
-		return tenderservice.SpotTenderLine{}, fmt.Errorf("lines[%d].carrierId is not a carrier id", idx)
+		return tenderservice.SpotTenderLine{}, fmt.Errorf(
+			"lines[%d].carrierId is not a carrier id",
+			idx,
+		)
 	}
 	rate, err := decimal.NewFromString(line.Rate)
 	if err != nil {
-		return tenderservice.SpotTenderLine{}, fmt.Errorf("lines[%d].rate is not a decimal amount", idx)
+		return tenderservice.SpotTenderLine{}, fmt.Errorf(
+			"lines[%d].rate is not a decimal amount",
+			idx,
+		)
 	}
 
 	return tenderservice.SpotTenderLine{

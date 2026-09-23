@@ -69,10 +69,16 @@ func (s *Service) Open(
 	actor *servicesports.RequestActor,
 ) (*invoice.InvoiceDispute, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError("Opening a dispute requires an authenticated user")
+		return nil, errortypes.NewAuthorizationError(
+			"Opening a dispute requires an authenticated user",
+		)
 	}
 	if multiErr := validateOpenRequest(req); multiErr != nil {
 		return nil, multiErr
@@ -144,10 +150,16 @@ func (s *Service) Resolve(
 	actor *servicesports.RequestActor,
 ) (*invoice.InvoiceDispute, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError("Resolving a dispute requires an authenticated user")
+		return nil, errortypes.NewAuthorizationError(
+			"Resolving a dispute requires an authenticated user",
+		)
 	}
 	if multiErr := validateResolveRequest(req); multiErr != nil {
 		return nil, multiErr
@@ -215,17 +227,30 @@ func (s *Service) Withdraw(
 	actor *servicesports.RequestActor,
 ) (*invoice.InvoiceDispute, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError("Withdrawing a dispute requires an authenticated user")
+		return nil, errortypes.NewAuthorizationError(
+			"Withdrawing a dispute requires an authenticated user",
+		)
 	}
 	if req.DisputeID.IsNil() {
-		return nil, errortypes.NewValidationError("disputeId", errortypes.ErrRequired, "Dispute is required")
+		return nil, errortypes.NewValidationError(
+			"disputeId",
+			errortypes.ErrRequired,
+			"Dispute is required",
+		)
 	}
 	if len(req.Notes) > maxDisputeNotesLength {
 		return nil, errortypes.NewValidationError(
-			"notes", errortypes.ErrInvalid, "Notes must be at most {0} characters", maxDisputeNotesLength,
+			"notes",
+			errortypes.ErrInvalid,
+			"Notes must be at most {0} characters",
+			maxDisputeNotesLength,
 		)
 	}
 
@@ -442,10 +467,19 @@ func validateOpenRequest(req *servicesports.OpenInvoiceDisputeRequest) *errortyp
 		multiErr.Add("reasonCode", errortypes.ErrInvalid, "Choose a dispute reason")
 	}
 	if req.DisputedAmount.LessThanOrEqual(decimal.Zero) {
-		multiErr.Add("disputedAmount", errortypes.ErrInvalid, "Disputed amount must be greater than zero")
+		multiErr.Add(
+			"disputedAmount",
+			errortypes.ErrInvalid,
+			"Disputed amount must be greater than zero",
+		)
 	}
 	if len(req.Notes) > maxDisputeNotesLength {
-		multiErr.Add("notes", errortypes.ErrInvalid, "Notes must be at most {0} characters", maxDisputeNotesLength)
+		multiErr.Add(
+			"notes",
+			errortypes.ErrInvalid,
+			"Notes must be at most {0} characters",
+			maxDisputeNotesLength,
+		)
 	}
 	if multiErr.HasErrors() {
 		return multiErr
@@ -454,7 +488,9 @@ func validateOpenRequest(req *servicesports.OpenInvoiceDisputeRequest) *errortyp
 	return nil
 }
 
-func validateResolveRequest(req *servicesports.ResolveInvoiceDisputeRequest) *errortypes.MultiError {
+func validateResolveRequest(
+	req *servicesports.ResolveInvoiceDisputeRequest,
+) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req.DisputeID.IsNil() {
 		multiErr.Add("disputeId", errortypes.ErrRequired, "Dispute is required")
@@ -464,7 +500,10 @@ func validateResolveRequest(req *servicesports.ResolveInvoiceDisputeRequest) *er
 	}
 	if len(req.ResolutionNotes) > maxDisputeNotesLength {
 		multiErr.Add(
-			"resolutionNotes", errortypes.ErrInvalid, "Notes must be at most {0} characters", maxDisputeNotesLength,
+			"resolutionNotes",
+			errortypes.ErrInvalid,
+			"Notes must be at most {0} characters",
+			maxDisputeNotesLength,
 		)
 	}
 	if multiErr.HasErrors() {
@@ -477,17 +516,37 @@ func validateResolveRequest(req *servicesports.ResolveInvoiceDisputeRequest) *er
 // validateDisputableInvoice says whether an invoice can carry a dispute: it
 // must be a posted invoice or debit memo with something still owed, and the
 // disputed amount cannot exceed that.
-func validateDisputableInvoice(inv *invoice.Invoice, amount decimal.Decimal) *errortypes.MultiError {
+func validateDisputableInvoice(
+	inv *invoice.Invoice,
+	amount decimal.Decimal,
+) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	switch {
 	case inv.Status == invoice.StatusVoided:
-		multiErr.Add("invoiceId", errortypes.ErrInvalidOperation, "A voided invoice cannot be disputed")
+		multiErr.Add(
+			"invoiceId",
+			errortypes.ErrInvalidOperation,
+			"A voided invoice cannot be disputed",
+		)
 	case inv.Status != invoice.StatusPosted:
-		multiErr.Add("invoiceId", errortypes.ErrInvalidOperation, "Only a posted invoice can be disputed")
+		multiErr.Add(
+			"invoiceId",
+			errortypes.ErrInvalidOperation,
+			"Only a posted invoice can be disputed",
+		)
 	case inv.BillType != billingqueue.BillTypeInvoice && inv.BillType != billingqueue.BillTypeDebitMemo:
-		multiErr.Add("invoiceId", errortypes.ErrInvalidOperation, "Only invoices and debit memos can be disputed")
+		multiErr.Add(
+			"invoiceId",
+			errortypes.ErrInvalidOperation,
+			"Only invoices and debit memos can be disputed",
+		)
 	case inv.OpenBalanceMinor() <= 0:
-		multiErr.Add("invoiceId", errortypes.ErrInvalidOperation, "Invoice {0} has no open balance to dispute", inv.Number)
+		multiErr.Add(
+			"invoiceId",
+			errortypes.ErrInvalidOperation,
+			"Invoice {0} has no open balance to dispute",
+			inv.Number,
+		)
 	case money.MinorUnits(amount) > inv.OpenBalanceMinor():
 		multiErr.Add(
 			"disputedAmount",

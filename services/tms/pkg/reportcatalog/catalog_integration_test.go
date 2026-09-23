@@ -81,7 +81,12 @@ func TestCatalogMatchesLiveSchema(t *testing.T) {
 
 		t.Run(entity.Key, func(t *testing.T) {
 			columns := loadTableColumns(t, ctx, db, entity.Table.Name)
-			require.NotEmpty(t, columns, "table %q does not exist in the migrated schema", entity.Table.Name)
+			require.NotEmpty(
+				t,
+				columns,
+				"table %q does not exist in the migrated schema",
+				entity.Table.Name,
+			)
 
 			for j := range entity.Fields {
 				field := &entity.Fields[j]
@@ -89,9 +94,17 @@ func TestCatalogMatchesLiveSchema(t *testing.T) {
 				require.True(t, exists,
 					"catalog field %s.%s maps to column %q which does not exist on table %q",
 					entity.Key, field.Key, field.Column.Name, entity.Table.Name)
-				require.True(t, typeClassCompatible(field.Type, dataType),
+				require.True(
+					t,
+					typeClassCompatible(field.Type, dataType),
 					"catalog field %s.%s has type %q but column %s.%s is %q",
-					entity.Key, field.Key, field.Type, entity.Table.Name, field.Column.Name, dataType)
+					entity.Key,
+					field.Key,
+					field.Type,
+					entity.Table.Name,
+					field.Column.Name,
+					dataType,
+				)
 			}
 
 			if entity.Tenant.IsTenanted() {
@@ -103,14 +116,24 @@ func TestCatalogMatchesLiveSchema(t *testing.T) {
 
 			if entity.OwnershipColumn != "" {
 				_, hasOwner := columns[entity.OwnershipColumn]
-				require.True(t, hasOwner,
-					"ownership column %q missing on table %q", entity.OwnershipColumn, entity.Table.Name)
+				require.True(
+					t,
+					hasOwner,
+					"ownership column %q missing on table %q",
+					entity.OwnershipColumn,
+					entity.Table.Name,
+				)
 			}
 
 			for j := range entity.Table.PrimaryKey {
 				_, hasPK := columns[entity.Table.PrimaryKey[j]]
-				require.True(t, hasPK,
-					"primary key column %q missing on table %q", entity.Table.PrimaryKey[j], entity.Table.Name)
+				require.True(
+					t,
+					hasPK,
+					"primary key column %q missing on table %q",
+					entity.Table.PrimaryKey[j],
+					entity.Table.Name,
+				)
 			}
 		})
 	}

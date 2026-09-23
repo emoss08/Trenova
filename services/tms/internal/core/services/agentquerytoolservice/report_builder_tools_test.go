@@ -36,13 +36,26 @@ func revenueDefinition() *report.Definition {
 		Filters: &report.FilterGroup{
 			Op: report.BoolOpAnd,
 			Filters: []report.FieldFilter{
-				{Ref: report.FieldRef{Field: "status"}, Operator: dbtype.OpEqual, Value: "Completed"},
-				{Ref: report.FieldRef{Field: "createdAt"}, Operator: dbtype.OpLastNDays, Param: "windowDays"},
+				{
+					Ref:      report.FieldRef{Field: "status"},
+					Operator: dbtype.OpEqual,
+					Value:    "Completed",
+				},
+				{
+					Ref:      report.FieldRef{Field: "createdAt"},
+					Operator: dbtype.OpLastNDays,
+					Param:    "windowDays",
+				},
 			},
 		},
 		Sort: []report.SortSpec{{ColumnID: "c2", Direction: dbtype.SortDirectionDesc}},
 		Parameters: []report.ParameterDef{
-			{Name: "windowDays", Label: "Window (days)", Type: reportcatalog.FieldInt, Required: true},
+			{
+				Name:     "windowDays",
+				Label:    "Window (days)",
+				Type:     reportcatalog.FieldInt,
+				Required: true,
+			},
 		},
 	}
 }
@@ -224,7 +237,11 @@ func TestDescribeReport_ReadsABuiltInReportBack(t *testing.T) {
 	assert.Equal(t, "sum", description.Columns[1].Agg)
 
 	require.Len(t, description.Filters, 1)
-	assert.Equal(t, "status eq Completed AND createdAt lastndays :windowDays", description.Filters[0])
+	assert.Equal(
+		t,
+		"status eq Completed AND createdAt lastndays :windowDays",
+		description.Filters[0],
+	)
 	assert.Equal(t, []string{"c2 desc"}, description.Sort)
 	require.Len(t, description.Parameters, 1)
 	assert.True(t, description.Parameters[0].Required)
@@ -529,7 +546,11 @@ func TestPreviewReport_CapsTheRowsItHandsBack(t *testing.T) {
 		"definition": map[string]any{
 			"entity": "shipment",
 			"columns": []any{
-				map[string]any{"id": "c1", "ref": map[string]any{"field": "id"}, "kind": "dimension"},
+				map[string]any{
+					"id":   "c1",
+					"ref":  map[string]any{"field": "id"},
+					"kind": "dimension",
+				},
 			},
 		},
 	}))
@@ -596,7 +617,11 @@ func TestPreviewReport_ReportsACompileErrorAsItsOwn(t *testing.T) {
 		"definition": map[string]any{
 			"entity": "shipment",
 			"columns": []any{
-				map[string]any{"id": "c1", "ref": map[string]any{"field": "margin"}, "kind": "dimension"},
+				map[string]any{
+					"id":   "c1",
+					"ref":  map[string]any{"field": "margin"},
+					"kind": "dimension",
+				},
 			},
 		},
 	}))
@@ -670,8 +695,20 @@ func TestPreviewReport_WritesDateColumnsAsReadableDates(t *testing.T) {
 		"definition": map[string]any{
 			"entity": "shipment_move",
 			"columns": []any{
-				map[string]any{"id": "c1", "ref": map[string]any{"path": []any{"assignment", "primaryWorker"}, "field": "firstName"}, "kind": "dimension"},
-				map[string]any{"id": "c2", "ref": map[string]any{"field": "createdAt"}, "kind": "measure", "agg": "max"},
+				map[string]any{
+					"id": "c1",
+					"ref": map[string]any{
+						"path":  []any{"assignment", "primaryWorker"},
+						"field": "firstName",
+					},
+					"kind": "dimension",
+				},
+				map[string]any{
+					"id":   "c2",
+					"ref":  map[string]any{"field": "createdAt"},
+					"kind": "measure",
+					"agg":  "max",
+				},
 			},
 		},
 	})

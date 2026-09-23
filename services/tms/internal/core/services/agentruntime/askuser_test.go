@@ -40,7 +40,11 @@ func TestResolveAsk_CarriesTheQuestionAndItsChoices(t *testing.T) {
 	request := decodeAsk(t, content)
 	assert.Equal(t, "Which window should the report cover?", request.Question)
 	require.Len(t, request.Options, 2)
-	assert.Equal(t, askOption{Value: "7", Label: "7 days", Detail: "the last week"}, request.Options[0])
+	assert.Equal(
+		t,
+		askOption{Value: "7", Label: "7 days", Detail: "the last week"},
+		request.Options[0],
+	)
 	assert.Equal(t, "Number of days", request.OtherHint)
 	assert.True(t, request.AllowOther, "a person can type their own value unless told otherwise")
 }

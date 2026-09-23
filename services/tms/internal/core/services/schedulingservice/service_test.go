@@ -173,7 +173,10 @@ func TestAssignShift_EndsThePriorAssignmentTheDayBefore(t *testing.T) {
 		ShiftTemplateID: template.ID,
 		EffectiveFrom:   mondayEpoch() - 30*day,
 	}
-	repo := &fakeSchedulingRepo{template: template, assignments: []*worker.WorkerShiftAssignment{prior}}
+	repo := &fakeSchedulingRepo{
+		template:    template,
+		assignments: []*worker.WorkerShiftAssignment{prior},
+	}
 
 	created, err := newService(repo).AssignShift(t.Context(), &schedulingservice.AssignShiftRequest{
 		Entity: &worker.WorkerShiftAssignment{
@@ -203,7 +206,10 @@ func TestAssignShift_RefusesAnAssignmentStartingLater(t *testing.T) {
 		ShiftTemplateID: template.ID,
 		EffectiveFrom:   mondayEpoch() + 30*day,
 	}
-	repo := &fakeSchedulingRepo{template: template, assignments: []*worker.WorkerShiftAssignment{future}}
+	repo := &fakeSchedulingRepo{
+		template:    template,
+		assignments: []*worker.WorkerShiftAssignment{future},
+	}
 
 	_, err := newService(repo).AssignShift(t.Context(), &schedulingservice.AssignShiftRequest{
 		Entity: &worker.WorkerShiftAssignment{

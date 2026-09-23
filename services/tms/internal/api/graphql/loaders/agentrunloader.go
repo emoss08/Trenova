@@ -13,7 +13,10 @@ import (
 )
 
 type agentRunsByIDsLister interface {
-	ListByIDs(ctx context.Context, req repositories.ListAgentRunsByIDsRequest) ([]*agent.AgentRun, error)
+	ListByIDs(
+		ctx context.Context,
+		req repositories.ListAgentRunsByIDsRequest,
+	) ([]*agent.AgentRun, error)
 }
 
 type AgentRunByIDLoaderFactoryParams struct {

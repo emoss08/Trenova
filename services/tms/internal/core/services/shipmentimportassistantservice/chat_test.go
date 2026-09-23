@@ -153,12 +153,12 @@ func TestToolRound_PairsEveryCallWithItsResult(t *testing.T) {
 		{ID: "call_1", Name: "search_customers"},
 		{ID: "call_2", Name: "set_field_value"},
 	}
-	results := map[string]toolResult{
-		"call_1": {output: `{"customers":[]}`, status: toolStatusCompleted},
-		"call_2": {output: `{"error":"no such field"}`, status: toolStatusError},
+	outcomes := map[string]ToolOutcome{
+		"call_1": {Output: `{"customers":[]}`, Status: toolStatusCompleted},
+		"call_2": {Output: `{"error":"no such field"}`, Status: toolStatusError},
 	}
 
-	messages := toolRound(calls, results)
+	messages := ToolRound(calls, outcomes)
 
 	require.Len(t, messages, 3)
 	assert.Equal(t, serviceports.RoleAssistant, messages[0].Role)
@@ -174,78 +174,51 @@ func TestToolRound_PairsEveryCallWithItsResult(t *testing.T) {
 
 /*
 suggest_quick_actions is not a lookup: it carries the follow-up chips shown
-under the reply. It has no handler, so routing it like any other tool would
-answer the model "unknown tool" and lose the chips.
+under the reply. It has no handler, so the loop reads its chips itself.
 */
-func TestRunToolCalls_AnswersSuggestQuickActionsItself(t *testing.T) {
+func TestReadSuggestions_ReadsTheChipsACallCarries(t *testing.T) {
 	t.Parallel()
 
-	service := &Service{logger: zap.NewNop()}
-	state := &turnState{}
-
-	results := service.runToolCalls(
-		t.Context(),
-		pagination.TenantInfo{},
-		[]serviceports.ToolCall{{
-			ID:   "call_9",
-			Name: suggestQuickActionsTool,
-			Arguments: map[string]any{
-				"suggestions": []any{
-					map[string]any{
-						"label":       "Confirm",
-						"prompt":      "Confirm the customer",
-						"submitLabel": "Confirm",
-						"type":        "Confirm",
-					},
-				},
+	suggestions := ReadSuggestions(map[string]any{
+		"suggestions": []any{
+			map[string]any{
+				"label":       "Confirm",
+				"prompt":      "Confirm the customer",
+				"submitLabel": "Confirm",
+				"type":        "prompt",
 			},
-		}},
-		state,
-		nil,
-	)
+		},
+	})
 
-	require.Len(t, state.suggestions, 1)
-	assert.Equal(t, "Confirm", state.suggestions[0].Label)
-	assert.Equal(t, toolStatusCompleted, results["call_9"].status)
-	assert.Empty(t, state.toolCalls, "it is not a tool call the reader needs to see")
+	require.Len(t, suggestions, 1)
+	assert.Equal(t, "Confirm", suggestions[0].Label)
+	assert.Empty(t, ReadSuggestions(map[string]any{"suggestions": "not a list"}))
 }
 
-func TestRunToolCalls_RecordsAnUnknownTool(t *testing.T) {
+func TestRunTool_ReportsAnUnknownToolAsAnError(t *testing.T) {
 	t.Parallel()
 
 	service := &Service{logger: zap.NewNop()}
-	state := &turnState{}
 
-	results := service.runToolCalls(
-		t.Context(),
-		pagination.TenantInfo{},
-		[]serviceports.ToolCall{{ID: "call_1", Name: "not_a_tool"}},
-		state,
-		nil,
-	)
+	call := &serviceports.ToolCall{ID: "call_1", Name: "not_a_tool"}
+	outcome := service.RunTool(t.Context(), pagination.TenantInfo{}, call)
 
-	assert.Equal(t, toolStatusError, results["call_1"].status)
-	require.Len(t, state.toolCalls, 1)
-	assert.Equal(t, "error", state.toolCalls[0].Status)
+	assert.Equal(t, toolStatusError, outcome.Status)
+	record := ToolRecord(call, outcome)
+	assert.Equal(t, "error", record.Status)
+	assert.JSONEq(t, "{}", record.Input)
 }
 
-// The streamed path emits progress events; the non-streaming one passes nil and
-// runs the same body, so the two cannot drift.
-func TestRunToolCalls_EmitsProgressOnlyWhenStreaming(t *testing.T) {
+// Creating a shipment or a location twice is worse than failing once, so
+// those calls are made at most once; everything else is a read or a proposal
+// the client applies.
+func TestWritesTool_NamesTheCallsThatChangeRecords(t *testing.T) {
 	t.Parallel()
 
-	service := &Service{logger: zap.NewNop()}
-	var events []string
-
-	service.runToolCalls(
-		t.Context(),
-		pagination.TenantInfo{},
-		[]serviceports.ToolCall{{ID: "call_1", Name: "not_a_tool"}},
-		&turnState{},
-		func(event serviceports.StreamEvent) { events = append(events, event.Event) },
-	)
-
-	assert.Equal(t, []string{"tool_call_start", "tool_call_done"}, events)
+	assert.True(t, WritesTool("create_shipment"))
+	assert.True(t, WritesTool("add_location"))
+	assert.False(t, WritesTool("search_customers"))
+	assert.False(t, WritesTool("accept_field"))
 }
 
 func TestEncodeArguments_AlwaysProducesAnObject(t *testing.T) {

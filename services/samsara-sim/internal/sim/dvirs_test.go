@@ -281,7 +281,12 @@ func TestLiveSimulatorDvirsUnsafeRateAndDefects(t *testing.T) {
 
 	fraction := float64(flagged) / float64(len(records))
 	if fraction < 0.02 || fraction > 0.25 {
-		t.Fatalf("expected ~10%% unsafe DVIR rate, got %.3f (%d/%d)", fraction, flagged, len(records))
+		t.Fatalf(
+			"expected ~10%% unsafe DVIR rate, got %.3f (%d/%d)",
+			fraction,
+			flagged,
+			len(records),
+		)
 	}
 	if !sawResolved || !sawUnresolved {
 		t.Fatalf(

@@ -33,7 +33,7 @@ type Params struct {
 
 	FuelCardConnectors     []services.FuelCardProvider                `group:"fuelCardConnectors"`
 	CarrierIntelConnectors []services.CarrierIntelConnector           `group:"carrierIntelConnectors"`
-	CarrierIntelControls   repositories.CarrierIntelControlRepository `optional:"true"`
+	CarrierIntelControls   repositories.CarrierIntelControlRepository `                               optional:"true"`
 }
 
 type Service struct {

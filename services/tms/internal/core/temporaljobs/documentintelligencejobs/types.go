@@ -133,6 +133,19 @@ type ProcessDocumentAIExtractionPayload struct {
 	ExtractedAt int64    `json:"extractedAt"`
 }
 
+// AIExtractionProgress is where an extraction stands after a submit or a poll:
+// its completion once there is one, nil while the model is still working.
+type AIExtractionProgress struct {
+	Completion *AsyncAIExtractionCompletion `json:"completion,omitempty"`
+}
+
+// PollDocumentAIExtractionInput asks once whether an extraction is done.
+// GiveUp is set on the last poll the workflow allows.
+type PollDocumentAIExtractionInput struct {
+	Payload *ProcessDocumentAIExtractionPayload `json:"payload"`
+	GiveUp  bool                                `json:"giveUp"`
+}
+
 type ProcessDocumentAIExtractionResult struct {
 	DocumentID      pulid.ID `json:"documentId"`
 	ExtractedAt     int64    `json:"extractedAt"`

@@ -135,7 +135,11 @@ func ownedReport(owner pulid.ID) *report.ReportDefinition {
 			IRVersion: report.CurrentIRVersion,
 			Entity:    "shipment",
 			Columns: []report.ColumnSpec{
-				{ID: "c1", Ref: report.FieldRef{Field: "proNumber"}, Kind: report.ColumnKindDimension},
+				{
+					ID:   "c1",
+					Ref:  report.FieldRef{Field: "proNumber"},
+					Kind: report.ColumnKindDimension,
+				},
 			},
 		},
 		Version: 4,
@@ -168,7 +172,11 @@ func TestCreateReport_SavesTheDefinitionAsAnActiveCustomReport(t *testing.T) {
 	assert.Equal(t, "Accounting", writer.created.Category)
 	assert.Equal(t, []string{"revenue", "customers"}, writer.created.Tags)
 	assert.Equal(t, report.DefinitionStatusActive, writer.created.Status)
-	assert.Empty(t, writer.created.Visibility, "the service defaults an unset visibility to private")
+	assert.Empty(
+		t,
+		writer.created.Visibility,
+		"the service defaults an unset visibility to private",
+	)
 	assert.Empty(t, writer.created.DefaultFormat, "the service defaults an unset format")
 
 	definition := writer.created.Definition
@@ -207,12 +215,15 @@ func TestCreateReport_PassesAnExplicitVisibilityAndFormat(t *testing.T) {
 	t.Parallel()
 
 	writer := &fakeReportWriter{}
-	require.NoError(t, newCreateReportTool(writer).Execute(t.Context(), executeParams(map[string]any{
-		"name":          "Revenue by customer",
-		"visibility":    "shared",
-		"defaultFormat": "xlsx",
-		"definition":    definitionArgument(),
-	})))
+	require.NoError(
+		t,
+		newCreateReportTool(writer).Execute(t.Context(), executeParams(map[string]any{
+			"name":          "Revenue by customer",
+			"visibility":    "shared",
+			"defaultFormat": "xlsx",
+			"definition":    definitionArgument(),
+		})),
+	)
 
 	assert.Equal(t, report.VisibilityShared, writer.created.Visibility)
 	assert.Equal(t, report.FormatXLSX, writer.created.DefaultFormat)
@@ -389,7 +400,10 @@ func TestUpdateReport_RefusesAnEmptyNameOrUnknownStatus(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "name")
 
-	params.Params = map[string]any{"definitionId": existing.ID.String(), "status": "needs_attention"}
+	params.Params = map[string]any{
+		"definitionId": existing.ID.String(),
+		"status":       "needs_attention",
+	}
 	err = newUpdateReportTool(writer).Execute(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "status")

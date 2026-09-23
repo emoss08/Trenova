@@ -38,19 +38,13 @@ type CompleteAssistantTurnRequest struct {
 	RunID      pulid.ID
 }
 
-// FailStaleAssistantTurnsRequest closes the live in-process turns on one
-// conversation that stopped proving they were alive before Before.
-type FailStaleAssistantTurnsRequest struct {
-	ThreadID   pulid.ID
-	TenantInfo pagination.TenantInfo
-	Before     int64
-	Error      string
-}
-
 type AssistantTurnRepository interface {
 	// Start records a turn about to run. A conversation that already has one
 	// returns ErrTurnAlreadyRunning.
-	Start(ctx context.Context, turn *conversation.AssistantTurn) (*conversation.AssistantTurn, error)
+	Start(
+		ctx context.Context,
+		turn *conversation.AssistantTurn,
+	) (*conversation.AssistantTurn, error)
 	GetByID(ctx context.Context, req GetAssistantTurnRequest) (*conversation.AssistantTurn, error)
 	// Active is the turn a conversation is still producing, nil when it is
 	// not producing one. This is what lets a reopened tab rejoin a reply.
@@ -58,13 +52,10 @@ type AssistantTurnRepository interface {
 	Complete(ctx context.Context, req CompleteAssistantTurnRequest) error
 	// MarkWorkflow records the durable execution carrying the turn, so it can
 	// be cancelled when somebody presses stop.
-	MarkWorkflow(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo, workflowID string) error
-	// Heartbeat records that a live turn running in an API process is still
-	// alive.
-	Heartbeat(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) error
-	// FailStale marks Failed every live turn on a conversation that runs in an
-	// API process and has not heartbeat since the request's cutoff, and
-	// reports how many it closed. A durable turn is never touched: its worker
-	// fails it.
-	FailStale(ctx context.Context, req FailStaleAssistantTurnsRequest) (int, error)
+	MarkWorkflow(
+		ctx context.Context,
+		id pulid.ID,
+		tenant pagination.TenantInfo,
+		workflowID string,
+	) error
 }

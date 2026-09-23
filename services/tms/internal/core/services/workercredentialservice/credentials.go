@@ -222,7 +222,14 @@ func (s *Service) Verify(
 	saved.CredentialType = original.CredentialType
 
 	s.auditCredential(saved, original, permission.OpApprove, req.UserID, "Credential verified", log)
-	s.publish(ctx, credentialTenant(saved), realtimeResource, permission.OpApprove, saved.ID, req.UserID)
+	s.publish(
+		ctx,
+		credentialTenant(saved),
+		realtimeResource,
+		permission.OpApprove,
+		saved.ID,
+		req.UserID,
+	)
 
 	return saved, nil
 }
@@ -297,8 +304,10 @@ func (s *Service) AttachDocument(
 	if err != nil {
 		return nil, err
 	}
-	ownedByCredential := doc.ResourceType == credentialResourceID && doc.ResourceID == original.ID.String()
-	ownedByWorker := doc.ResourceType == workerResourceType && doc.ResourceID == original.WorkerID.String()
+	ownedByCredential := doc.ResourceType == credentialResourceID &&
+		doc.ResourceID == original.ID.String()
+	ownedByWorker := doc.ResourceType == workerResourceType &&
+		doc.ResourceID == original.WorkerID.String()
 	if !ownedByCredential && !ownedByWorker {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -323,7 +332,14 @@ func (s *Service) AttachDocument(
 	saved.Document = doc
 
 	s.auditCredential(saved, original, permission.OpUpdate, req.UserID, "Document attached", log)
-	s.publish(ctx, credentialTenant(saved), realtimeResource, permission.OpUpdate, saved.ID, req.UserID)
+	s.publish(
+		ctx,
+		credentialTenant(saved),
+		realtimeResource,
+		permission.OpUpdate,
+		saved.ID,
+		req.UserID,
+	)
 
 	return saved, nil
 }
@@ -588,7 +604,10 @@ func (s *Service) SyncFromProfile(ctx context.Context, wrk *worker.Worker, userI
 		return nil
 	}
 	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
-	log := s.l.With(zap.String("operation", "SyncFromProfile"), zap.String("workerId", wrk.ID.String()))
+	log := s.l.With(
+		zap.String("operation", "SyncFromProfile"),
+		zap.String("workerId", wrk.ID.String()),
+	)
 
 	types, err := s.ActiveTypes(ctx, tenantInfo)
 	if err != nil {
@@ -634,7 +653,8 @@ func (s *Service) SyncFromProfile(ctx context.Context, wrk *worker.Worker, userI
 			}
 			changed = true
 		default:
-			if equalInt64Ptr(existing.ExpiresAt, expiry) && (number == "" || existing.Number == number) {
+			if equalInt64Ptr(existing.ExpiresAt, expiry) &&
+				(number == "" || existing.Number == number) {
 				continue
 			}
 			if err = s.updateFromProfile(ctx, existing, typ, expiry, number); err != nil {

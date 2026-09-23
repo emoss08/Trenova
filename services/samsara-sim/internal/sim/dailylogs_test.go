@@ -178,7 +178,10 @@ func TestLiveSimulatorHOSDailyLogsDurationsCoverDayWindow(t *testing.T) {
 		if now.Sub(endTime) > dailyLogCertifyGrace {
 			certified, isBool := metadata["isCertified"].(bool)
 			if !isBool || !certified {
-				t.Fatalf("expected day older than 24h to be certified, got %v", metadata["isCertified"])
+				t.Fatalf(
+					"expected day older than 24h to be certified, got %v",
+					metadata["isCertified"],
+				)
 			}
 			if stringValue(Record(metadata), "certifiedAtTime") == "" {
 				t.Fatal("expected certifiedAtTime on certified day")
@@ -237,7 +240,11 @@ func TestLiveSimulatorHOSDailyLogsDriverFilterAndOrder(t *testing.T) {
 		driverID := nestedString(record, "driver", "id")
 		startTime := stringValue(record, "startTime")
 		if driverID < previousDriver {
-			t.Fatalf("expected driver ids in ascending order, got %q after %q", driverID, previousDriver)
+			t.Fatalf(
+				"expected driver ids in ascending order, got %q after %q",
+				driverID,
+				previousDriver,
+			)
 		}
 		if driverID == previousDriver && startTime >= previousStart {
 			t.Fatalf(

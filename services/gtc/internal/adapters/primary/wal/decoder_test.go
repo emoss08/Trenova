@@ -107,7 +107,11 @@ func encodeBeginMessage(finalLSN pglogrepl.LSN, commitTime time.Time, xid uint32
 	return buf
 }
 
-func encodeCommitMessage(commitLSN pglogrepl.LSN, endLSN pglogrepl.LSN, commitTime time.Time) []byte {
+func encodeCommitMessage(
+	commitLSN pglogrepl.LSN,
+	endLSN pglogrepl.LSN,
+	commitTime time.Time,
+) []byte {
 	buf := make([]byte, 1+1+8+8+8)
 	buf[0] = byte(pglogrepl.MessageTypeCommit)
 	buf[1] = 0

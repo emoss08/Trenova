@@ -102,7 +102,8 @@ func (f *fakeRepo) Create(
 	entity *worker.WorkerTrainingRecord,
 ) (*worker.WorkerTrainingRecord, error) {
 	for _, r := range f.records {
-		if r.WorkerID == entity.WorkerID && r.CourseID == entity.CourseID && r.IsOpen() && entity.IsOpen() {
+		if r.WorkerID == entity.WorkerID && r.CourseID == entity.CourseID && r.IsOpen() &&
+			entity.IsOpen() {
 			return nil, errortypes.NewValidationError("courseId", errortypes.ErrDuplicate, "open")
 		}
 	}
@@ -150,7 +151,10 @@ func newHarness(t *testing.T) *harness {
 	workerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(wrk, nil).Maybe()
 	// Every write refreshes the roster cache; the assertions here are about
 	// the change itself, not the cache.
-	workerRepo.EXPECT().UpdateProfileTrainingRollup(mock.Anything, mock.Anything).Return(nil).Maybe()
+	workerRepo.EXPECT().
+		UpdateProfileTrainingRollup(mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
 	docs := mocks.NewMockDocumentRepository(t)
 	audit := mocks.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
@@ -174,7 +178,11 @@ func newHarness(t *testing.T) *harness {
 	}
 }
 
-func (h *harness) course(code string, required bool, mutate func(*worker.TrainingCourse)) *worker.TrainingCourse {
+func (h *harness) course(
+	code string,
+	required bool,
+	mutate func(*worker.TrainingCourse),
+) *worker.TrainingCourse {
 	c := &worker.TrainingCourse{
 		ID:                      pulid.MustNew("trnc_"),
 		OrganizationID:          h.tenant.OrgID,
@@ -219,7 +227,12 @@ func TestAssignRequired_OpensOnlyTheGaps(t *testing.T) {
 	assert.Equal(t, hazmat.ID, created[0].CourseID)
 	assert.Equal(t, worker.TrainingStatusAssigned, created[0].Status)
 	require.NotNil(t, created[0].DueAt)
-	assert.Equal(t, created[0].AssignedAt+30*day, *created[0].DueAt, "due date comes from the course")
+	assert.Equal(
+		t,
+		created[0].AssignedAt+30*day,
+		*created[0].DueAt,
+		"due date comes from the course",
+	)
 
 	again, err := h.svc.AssignRequired(context.Background(), h.tenant, h.wrk.ID, h.userID)
 	require.NoError(t, err)
@@ -228,7 +241,11 @@ func TestAssignRequired_OpensOnlyTheGaps(t *testing.T) {
 
 func TestAssign_RefusesInactiveAndPastDue(t *testing.T) {
 	h := newHarness(t)
-	retired := h.course("OLD", false, func(c *worker.TrainingCourse) { c.Status = domaintypes.StatusInactive })
+	retired := h.course(
+		"OLD",
+		false,
+		func(c *worker.TrainingCourse) { c.Status = domaintypes.StatusInactive },
+	)
 	live := h.course("LIVE", false, nil)
 
 	_, err := h.svc.Assign(context.Background(), &workertrainingservice.AssignRequest{
@@ -292,7 +309,11 @@ func TestComplete_ScoresAndSetsExpiry(t *testing.T) {
 	require.NoError(t, err, "a completion can be filed without an open record")
 	assert.Equal(t, worker.TrainingStatusCompleted, direct.Status)
 	require.NotNil(t, direct.ExpiresAt)
-	assert.Equal(t, time.Date(2027, time.January, 31, 12, 0, 0, 0, time.UTC).Unix(), *direct.ExpiresAt)
+	assert.Equal(
+		t,
+		time.Date(2027, time.January, 31, 12, 0, 0, 0, time.UTC).Unix(),
+		*direct.ExpiresAt,
+	)
 	assert.Equal(t, h.userID, direct.RecordedByID)
 
 	summary, err := h.svc.Summary(context.Background(), h.tenant, h.wrk.ID)
@@ -310,9 +331,11 @@ func TestComplete_DocumentMustBelongToWorker(t *testing.T) {
 	require.NoError(t, err)
 
 	strangerDoc := pulid.MustNew("doc_")
-	h.docs.EXPECT().GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetDocumentByIDRequest) bool {
-		return req.ID == strangerDoc
-	})).Return(&document.Document{ID: strangerDoc, ResourceType: "worker", ResourceID: pulid.MustNew("wrk_").String()}, nil)
+	h.docs.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetDocumentByIDRequest) bool {
+			return req.ID == strangerDoc
+		})).
+		Return(&document.Document{ID: strangerDoc, ResourceType: "worker", ResourceID: pulid.MustNew("wrk_").String()}, nil)
 
 	_, err = h.svc.Complete(context.Background(), &workertrainingservice.CompleteRequest{
 		TenantInfo: h.tenant, ID: record.ID, DocumentID: strangerDoc, UserID: h.userID,
@@ -322,9 +345,11 @@ func TestComplete_DocumentMustBelongToWorker(t *testing.T) {
 	assert.Equal(t, "documentId", verr.Field)
 
 	ownDoc := pulid.MustNew("doc_")
-	h.docs.EXPECT().GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetDocumentByIDRequest) bool {
-		return req.ID == ownDoc
-	})).Return(&document.Document{ID: ownDoc, ResourceType: "worker", ResourceID: h.wrk.ID.String()}, nil)
+	h.docs.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetDocumentByIDRequest) bool {
+			return req.ID == ownDoc
+		})).
+		Return(&document.Document{ID: ownDoc, ResourceType: "worker", ResourceID: h.wrk.ID.String()}, nil)
 	saved, err := h.svc.Complete(context.Background(), &workertrainingservice.CompleteRequest{
 		TenantInfo: h.tenant, ID: record.ID, DocumentID: ownDoc, UserID: h.userID,
 	})
@@ -394,11 +419,21 @@ func TestPortalStartAndAcknowledge(t *testing.T) {
 
 	done, err := h.svc.Acknowledge(context.Background(), h.tenant, open1.ID, h.wrk.ID)
 	require.NoError(t, err)
-	assert.Equal(t, worker.TrainingStatusCompleted, done.Status, "unscored self-serve courses finish on acknowledgement")
+	assert.Equal(
+		t,
+		worker.TrainingStatusCompleted,
+		done.Status,
+		"unscored self-serve courses finish on acknowledgement",
+	)
 	assert.True(t, done.IsAcknowledged())
 
 	pending, err := h.svc.Acknowledge(context.Background(), h.tenant, open2.ID, h.wrk.ID)
 	require.NoError(t, err)
-	assert.Equal(t, worker.TrainingStatusInProgress, pending.Status, "scored courses wait for the office")
+	assert.Equal(
+		t,
+		worker.TrainingStatusInProgress,
+		pending.Status,
+		"scored courses wait for the office",
+	)
 	assert.True(t, pending.IsAcknowledged())
 }

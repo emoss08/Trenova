@@ -101,11 +101,14 @@ func (s *Service) GetForPeriod(
 	if err := period.Validate(); err != nil {
 		return nil, errortypes.NewValidationError("quarter", errortypes.ErrInvalid, err.Error())
 	}
-	latest, err := s.repo.GetLatestReturnForPeriod(ctx, &repositories.GetLatestReturnForPeriodRequest{
-		TenantInfo: tenantInfo,
-		Year:       period.Year,
-		Quarter:    period.Quarter,
-	})
+	latest, err := s.repo.GetLatestReturnForPeriod(
+		ctx,
+		&repositories.GetLatestReturnForPeriodRequest{
+			TenantInfo: tenantInfo,
+			Year:       period.Year,
+			Quarter:    period.Quarter,
+		},
+	)
 	if err != nil || latest == nil {
 		return nil, err
 	}
@@ -413,7 +416,12 @@ func (s *Service) Generate(
 		return nil, err
 	}
 
-	return s.createAndCompute(ctx, draft, req.UserID, "Generated the "+req.Period.Label()+" IFTA return")
+	return s.createAndCompute(
+		ctx,
+		draft,
+		req.UserID,
+		"Generated the "+req.Period.Label()+" IFTA return",
+	)
 }
 
 func (s *Service) Recompute(ctx context.Context, req *ReturnActionRequest) (*ifta.Return, error) {

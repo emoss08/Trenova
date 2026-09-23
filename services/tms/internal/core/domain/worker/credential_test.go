@@ -26,15 +26,60 @@ func TestEvaluateCredentialHealth(t *testing.T) {
 		window int32
 		want   worker.CredentialHealth
 	}{
-		{name: "no expiry never expires", expiry: nil, window: 30, want: worker.CredentialHealthValid},
-		{name: "zero expiry treated as unset", expiry: ptr(0), window: 30, want: worker.CredentialHealthValid},
-		{name: "far future", expiry: ptr(now + 90*day), window: 30, want: worker.CredentialHealthValid},
-		{name: "one day outside window", expiry: ptr(now + 31*day), window: 30, want: worker.CredentialHealthValid},
-		{name: "on window boundary", expiry: ptr(now + 30*day), window: 30, want: worker.CredentialHealthExpiringSoon},
-		{name: "expires today", expiry: ptr(now - 3600 + 1), window: 30, want: worker.CredentialHealthExpiringSoon},
-		{name: "expired yesterday", expiry: ptr(now - day), window: 30, want: worker.CredentialHealthExpired},
-		{name: "zero window only warns on the day", expiry: ptr(now + 1*day), window: 0, want: worker.CredentialHealthValid},
-		{name: "zero window day of", expiry: ptr(now), window: 0, want: worker.CredentialHealthExpiringSoon},
+		{
+			name:   "no expiry never expires",
+			expiry: nil,
+			window: 30,
+			want:   worker.CredentialHealthValid,
+		},
+		{
+			name:   "zero expiry treated as unset",
+			expiry: ptr(0),
+			window: 30,
+			want:   worker.CredentialHealthValid,
+		},
+		{
+			name:   "far future",
+			expiry: ptr(now + 90*day),
+			window: 30,
+			want:   worker.CredentialHealthValid,
+		},
+		{
+			name:   "one day outside window",
+			expiry: ptr(now + 31*day),
+			window: 30,
+			want:   worker.CredentialHealthValid,
+		},
+		{
+			name:   "on window boundary",
+			expiry: ptr(now + 30*day),
+			window: 30,
+			want:   worker.CredentialHealthExpiringSoon,
+		},
+		{
+			name:   "expires today",
+			expiry: ptr(now - 3600 + 1),
+			window: 30,
+			want:   worker.CredentialHealthExpiringSoon,
+		},
+		{
+			name:   "expired yesterday",
+			expiry: ptr(now - day),
+			window: 30,
+			want:   worker.CredentialHealthExpired,
+		},
+		{
+			name:   "zero window only warns on the day",
+			expiry: ptr(now + 1*day),
+			window: 0,
+			want:   worker.CredentialHealthValid,
+		},
+		{
+			name:   "zero window day of",
+			expiry: ptr(now),
+			window: 0,
+			want:   worker.CredentialHealthExpiringSoon,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -52,7 +97,11 @@ func TestDaysUntil(t *testing.T) {
 	assert.Equal(t, int64(-1), worker.DaysUntil(now-1, now))
 }
 
-func credType(code string, required bool, driverTypes ...worker.DriverType) *worker.WorkerCredentialType {
+func credType(
+	code string,
+	required bool,
+	driverTypes ...worker.DriverType,
+) *worker.WorkerCredentialType {
 	return &worker.WorkerCredentialType{
 		ID:                     pulid.MustNew("wct_"),
 		Code:                   code,
@@ -179,18 +228,31 @@ func TestBuildCredentialSummary(t *testing.T) {
 		assert.Equal(t, 1, summary.ExpiredCount)
 	})
 
-	t.Run("credentials of types outside the catalog still show when the relation is loaded", func(t *testing.T) {
-		orphan := credType("LEGACY", false)
-		cred := active(orphan, nil)
-		cred.CredentialType = orphan
-		summary := worker.BuildCredentialSummary(wrk, nil, []*worker.WorkerCredential{cred}, now)
-		require.Len(t, summary.Items, 1)
-		assert.Equal(t, worker.CredentialHealthValid, summary.Items[0].Health)
-		assert.Equal(t, worker.ComplianceStatusCompliant, summary.ComplianceStatus)
-	})
+	t.Run(
+		"credentials of types outside the catalog still show when the relation is loaded",
+		func(t *testing.T) {
+			orphan := credType("LEGACY", false)
+			cred := active(orphan, nil)
+			cred.CredentialType = orphan
+			summary := worker.BuildCredentialSummary(
+				wrk,
+				nil,
+				[]*worker.WorkerCredential{cred},
+				now,
+			)
+			require.Len(t, summary.Items, 1)
+			assert.Equal(t, worker.CredentialHealthValid, summary.Items[0].Health)
+			assert.Equal(t, worker.ComplianceStatusCompliant, summary.ComplianceStatus)
+		},
+	)
 
 	t.Run("no required types is compliant", func(t *testing.T) {
-		summary := worker.BuildCredentialSummary(wrk, []*worker.WorkerCredentialType{twic}, nil, now)
+		summary := worker.BuildCredentialSummary(
+			wrk,
+			[]*worker.WorkerCredentialType{twic},
+			nil,
+			now,
+		)
 		assert.Empty(t, summary.Items)
 		assert.Equal(t, worker.ComplianceStatusCompliant, summary.ComplianceStatus)
 	})

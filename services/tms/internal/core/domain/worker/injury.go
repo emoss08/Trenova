@@ -289,12 +289,16 @@ type WorkerInjury struct {
 }
 
 func (i *WorkerInjury) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(i,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		i,
 		validation.Field(&i.WorkerID, validation.Required.Error("Worker is required")),
 		validation.Field(&i.Description,
 			validation.Required.Error("Describe what happened"),
 		),
-		validation.Field(&i.OccurredAt, validation.Required.Error("Date of the injury is required")),
+		validation.Field(
+			&i.OccurredAt,
+			validation.Required.Error("Date of the injury is required"),
+		),
 		validation.Field(&i.Classification,
 			validation.Required.Error("Classification is required"),
 			domainvalidation.ValidEnum[OSHACaseClassification]("Classification is not valid"),

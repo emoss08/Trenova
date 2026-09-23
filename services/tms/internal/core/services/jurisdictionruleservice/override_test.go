@@ -94,11 +94,26 @@ func TestCreateOverride_RejectsALooserLimit(t *testing.T) {
 		mutate func(*jurisdictionrule.Override)
 		field  string
 	}{
-		"width":    {func(o *jurisdictionrule.Override) { o.MaxWidthFeet = fptr(20) }, "maxWidthFeet"},
-		"height":   {func(o *jurisdictionrule.Override) { o.MaxHeightFeet = fptr(18) }, "maxHeightFeet"},
-		"length":   {func(o *jurisdictionrule.Override) { o.MaxLengthFeet = fptr(90) }, "maxLengthFeet"},
-		"weight":   {func(o *jurisdictionrule.Override) { o.MaxWeightPounds = iptr(120000) }, "maxWeightPounds"},
-		"leadTime": {func(o *jurisdictionrule.Override) { o.PermitLeadTimeDays = i16ptr(0) }, "permitLeadTimeDays"},
+		"width": {
+			func(o *jurisdictionrule.Override) { o.MaxWidthFeet = fptr(20) },
+			"maxWidthFeet",
+		},
+		"height": {
+			func(o *jurisdictionrule.Override) { o.MaxHeightFeet = fptr(18) },
+			"maxHeightFeet",
+		},
+		"length": {
+			func(o *jurisdictionrule.Override) { o.MaxLengthFeet = fptr(90) },
+			"maxLengthFeet",
+		},
+		"weight": {
+			func(o *jurisdictionrule.Override) { o.MaxWeightPounds = iptr(120000) },
+			"maxWeightPounds",
+		},
+		"leadTime": {
+			func(o *jurisdictionrule.Override) { o.PermitLeadTimeDays = i16ptr(0) },
+			"permitLeadTimeDays",
+		},
 	}
 
 	for name, tc := range cases {

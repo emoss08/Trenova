@@ -1713,7 +1713,9 @@ func TestApprovalTransitions(t *testing.T) {
 			var err error
 			switch tt.action {
 			case "submit":
-				deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+				deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).
+					Return(nil, nil).
+					Maybe()
 				result, err = deps.svc.Submit(t.Context(), req)
 			case "approve":
 				result, err = deps.svc.Approve(t.Context(), req)
@@ -1869,7 +1871,12 @@ func TestReject_ClearsSubmissionFields(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, formulatemplate.StatusInactive, result.Status, "a rejection archives the template")
+	assert.Equal(
+		t,
+		formulatemplate.StatusInactive,
+		result.Status,
+		"a rejection archives the template",
+	)
 	assert.Nil(t, result.SubmittedByID)
 	assert.Nil(t, result.SubmittedAt)
 	assert.Equal(t, "expression is wrong", result.ReviewComment)
@@ -2627,6 +2634,9 @@ func newFormulaServiceWithProviders(
 	})
 }
 
-func (*stubMatrixLookupRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
+func (*stubMatrixLookupRepo) GetLookupStamp(
+	context.Context,
+	pagination.TenantInfo,
+) (string, error) {
 	return "", nil
 }

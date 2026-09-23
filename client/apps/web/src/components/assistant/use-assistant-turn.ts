@@ -1,8 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { durableTurnsAvailable, followExistingTurn, runDurableTurn } from "./durable-turn";
-import { AssistantStreamError, type ActiveTurn } from "@/services/assistant";
+import { followTurn, runTurn, turnFailureDetail } from "./follow-turn";
+import type { ActiveTurn } from "@/services/assistant";
 import type {
   AssistantPageContext,
   AssistantStreamEvent,
@@ -219,11 +219,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           return;
         }
         release();
-        const detail =
-          error instanceof AssistantStreamError
-            ? error.message
-            : t("The connection to the assistant was lost.");
-        fail("failed", detail);
+        fail("failed", turnFailureDetail(error, t("The connection to the assistant was lost.")));
         void refreshThread();
         return;
       }
@@ -277,7 +273,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       turnIdRef.current = active.id;
       await follow(
         initialTurnState(followUp ? "" : (active.input ?? ""), null, { followUp }),
-        (onEvent, signal) => followExistingTurn(active.id, { signal, onEvent }),
+        (onEvent, signal) => followTurn(active.id, { signal, onEvent }),
       );
     },
     [follow],
@@ -338,39 +334,31 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       turnIdRef.current = null;
 
       const attachments = (extras.attachments ?? []).map((item) => item.documentId);
-      await follow(initialTurnState(content, pageContext, extras), async (onEvent, signal) => {
-        if (await durableTurnsAvailable()) {
-          await runDurableTurn({
-            threadId,
-            content,
-            context: pageContext,
-            providerId,
-            attachmentDocumentIds: attachments,
-            mentions: extras.mentions ?? [],
+      await follow(initialTurnState(content, pageContext, extras), (onEvent, signal) =>
+        runTurn(
+          () =>
+            apiService.assistantService.startTurn(threadId, content, {
+              context: pageContext,
+              providerId,
+              attachmentDocumentIds: attachments,
+              mentions: extras.mentions ?? [],
+            }),
+          {
             signal,
-            onTurnStarted: (id) => {
-              turnIdRef.current = id;
+            onTurnStarted: (started) => {
+              turnIdRef.current = started.turnId;
             },
             onEvent,
-          });
-          return;
-        }
-        await apiService.assistantService.streamMessage(threadId, content, onEvent, signal, {
-          context: pageContext,
-          providerId,
-          attachmentDocumentIds: attachments,
-          mentions: extras.mentions ?? [],
-        });
-      });
+          },
+        ),
+      );
     },
     [activeTurn, follow, followActive, following, getContext, threadId],
   );
 
   const stop = useCallback(() => {
-    // A turn on a worker has to be told. Aborting the reader used to stop the
-    // model, because the model was running on the request being aborted; with
-    // the work moved off it, abandoning the reader leaves the turn running and
-    // billing for an answer nobody will read.
+    // A turn on a worker has to be told: abandoning the reader leaves the turn
+    // running and billing for an answer nobody will read.
     const running = turnIdRef.current;
     if (running !== null) {
       turnIdRef.current = null;

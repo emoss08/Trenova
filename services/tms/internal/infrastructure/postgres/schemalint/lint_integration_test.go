@@ -67,13 +67,21 @@ func TestBooleanDefaultsAreNotSubstituted(t *testing.T) {
 		if _, allowed := knownUnfixed[field.Key()]; allowed {
 			continue
 		}
-		offenders = append(offenders, fmt.Sprintf("  %s  declared at %s", field.Key(), field.Location()))
+		offenders = append(
+			offenders,
+			fmt.Sprintf("  %s  declared at %s", field.Key(), field.Location()),
+		)
 	}
 
 	sort.Strings(offenders)
-	require.Empty(t, offenders, "these boolean columns default to TRUE and carry a bun default: tag, "+
-		"so false is discarded when the row is created. Drop `default:` from the tag and set the "+
-		"value where the row is built:\n%s", joinLines(offenders))
+	require.Empty(
+		t,
+		offenders,
+		"these boolean columns default to TRUE and carry a bun default: tag, "+
+			"so false is discarded when the row is created. Drop `default:` from the tag and set the "+
+			"value where the row is built:\n%s",
+		joinLines(offenders),
+	)
 
 	// Keep the backlog honest: an entry whose tag is gone must not linger.
 	left := make([]string, 0, len(stale))

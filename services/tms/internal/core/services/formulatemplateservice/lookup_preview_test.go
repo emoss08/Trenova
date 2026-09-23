@@ -461,7 +461,11 @@ func TestTestExpression_ReturnsAReceipt(t *testing.T) {
 		TenantInfo: newTenantInfo(),
 		MinCharge:  decimal.NewNullDecimal(decimal.NewFromInt(5000)),
 		Breakdowns: []*formulatypes.BreakdownDefinition{
-			{Name: "linehaul", Label: "Linehaul", Expression: `lookup("miles", totalDistance) * totalDistance`},
+			{
+				Name:       "linehaul",
+				Label:      "Linehaul",
+				Expression: `lookup("miles", totalDistance) * totalDistance`,
+			},
 		},
 	})
 

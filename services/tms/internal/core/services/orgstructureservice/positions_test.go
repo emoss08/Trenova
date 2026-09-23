@@ -196,8 +196,20 @@ func TestHeadcount_LaysStaffOverTheWorkerGrouping(t *testing.T) {
 		{Key: "Operations", Label: "Operations", Workers: 30, Drivers: 30},
 	}
 	repo.staff = []repositories.StaffCountRow{
-		{PositionID: deskPosition, Title: "Load Planner", Code: "LP", Department: "Operations", Staff: 3},
-		{PositionID: pulid.ID("jpos_ceo"), Title: "Chief Executive", Code: "CEO", Department: "Executive", Staff: 1},
+		{
+			PositionID: deskPosition,
+			Title:      "Load Planner",
+			Code:       "LP",
+			Department: "Operations",
+			Staff:      3,
+		},
+		{
+			PositionID: pulid.ID("jpos_ceo"),
+			Title:      "Chief Executive",
+			Code:       "CEO",
+			Department: "Executive",
+			Staff:      1,
+		},
 	}
 	svc := orgstructureservice.NewWithDeps(orgstructureservice.Deps{Repo: repo})
 
@@ -213,7 +225,12 @@ func TestHeadcount_LaysStaffOverTheWorkerGrouping(t *testing.T) {
 	assert.Equal(t, "Chief Executive", headcount.ByPosition[2].Label)
 
 	require.Len(t, headcount.ByDepartment, 2)
-	assert.Equal(t, 3, headcount.ByDepartment[0].Staff, "staff join the department they share with workers")
+	assert.Equal(
+		t,
+		3,
+		headcount.ByDepartment[0].Staff,
+		"staff join the department they share with workers",
+	)
 	assert.Equal(t, "Executive", headcount.ByDepartment[1].Key)
 	assert.Equal(t, 1, headcount.ByDepartment[1].Staff)
 }

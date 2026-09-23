@@ -307,7 +307,10 @@ func TestServiceUpdate_RejectsReadyToInvoiceBeforeCompletion(t *testing.T) {
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, repositories.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
 		}).
 		Return(&tenant.ShipmentControl{}, nil).
 		Once()
@@ -396,7 +399,10 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, repositories.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
 		}).
 		Return(&tenant.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
@@ -423,7 +429,11 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 		controlRepo:  controlRepo,
 		validator:    NewTestValidator(t),
 		auditService: auditService,
-		commercial:   newTestCommercialCalculator(t, formula, mocks.NewMockAccessorialChargeRepository(t)),
+		commercial: newTestCommercialCalculator(
+			t,
+			formula,
+			mocks.NewMockAccessorialChargeRepository(t),
+		),
 		realtime:     realtime,
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
@@ -503,7 +513,10 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, repositories.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
 		}).
 		Return(&tenant.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
@@ -553,10 +566,14 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 		continuityRepo: continuityRepo,
 		validator:      NewTestValidator(t),
 		auditService:   auditService,
-		commercial:     newTestCommercialCalculator(t, formula, mocks.NewMockAccessorialChargeRepository(t)),
-		realtime:       realtime,
-		eventService:   noopShipmentEventService{},
-		coordinator:    shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
+		commercial: newTestCommercialCalculator(
+			t,
+			formula,
+			mocks.NewMockAccessorialChargeRepository(t),
+		),
+		realtime:     realtime,
+		eventService: noopShipmentEventService{},
+		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
 	userID := pulid.MustNew("usr_")
@@ -614,7 +631,10 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, repositories.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
 		}).
 		Return(&tenant.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
@@ -650,10 +670,14 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 		controlRepo:    controlRepo,
 		validator:      NewTestValidator(t),
 		auditService:   mocks.NewMockAuditService(t),
-		commercial:     newTestCommercialCalculator(t, formula, mocks.NewMockAccessorialChargeRepository(t)),
-		realtime:       mocks.NewMockRealtimeService(t),
-		eventService:   noopShipmentEventService{},
-		coordinator:    shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
+		commercial: newTestCommercialCalculator(
+			t,
+			formula,
+			mocks.NewMockAccessorialChargeRepository(t),
+		),
+		realtime:     mocks.NewMockRealtimeService(t),
+		eventService: noopShipmentEventService{},
+		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
 	userID := pulid.MustNew("usr_")
@@ -669,7 +693,9 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 	assert.Equal(t, "Tractor is currently in progress on another move", err.Error())
 }
 
-func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedWindow(t *testing.T) {
+func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedWindow(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	actualPickupArrival := int64(1773837060)
@@ -712,7 +738,10 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, repositories.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
 		}).
 		Return(&tenant.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
@@ -776,7 +805,11 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 		controlRepo:  controlRepo,
 		validator:    NewTestValidatorWithAssignmentRepo(t, assignmentRepo),
 		auditService: mocks.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(t, formula, mocks.NewMockAccessorialChargeRepository(t)),
+		commercial: newTestCommercialCalculator(
+			t,
+			formula,
+			mocks.NewMockAccessorialChargeRepository(t),
+		),
 		realtime:     mocks.NewMockRealtimeService(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
@@ -848,7 +881,10 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, repositories.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
 		}).
 		Return(&tenant.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
@@ -891,10 +927,14 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 		controlRepo:    controlRepo,
 		validator:      NewTestValidator(t),
 		auditService:   mocks.NewMockAuditService(t),
-		commercial:     newTestCommercialCalculator(t, formula, mocks.NewMockAccessorialChargeRepository(t)),
-		realtime:       mocks.NewMockRealtimeService(t),
-		eventService:   noopShipmentEventService{},
-		coordinator:    shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
+		commercial: newTestCommercialCalculator(
+			t,
+			formula,
+			mocks.NewMockAccessorialChargeRepository(t),
+		),
+		realtime:     mocks.NewMockRealtimeService(t),
+		eventService: noopShipmentEventService{},
+		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
 	userID := pulid.MustNew("usr_")
@@ -958,7 +998,10 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, repositories.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
 		}).
 		Return(&tenant.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
@@ -985,7 +1028,11 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 		controlRepo:  controlRepo,
 		validator:    NewTestValidator(t),
 		auditService: auditService,
-		commercial:   newTestCommercialCalculator(t, formula, mocks.NewMockAccessorialChargeRepository(t)),
+		commercial: newTestCommercialCalculator(
+			t,
+			formula,
+			mocks.NewMockAccessorialChargeRepository(t),
+		),
 		realtime:     realtime,
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
@@ -1030,7 +1077,10 @@ func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, repositories.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
 		}).
 		Return(&tenant.ShipmentControl{}, nil).
 		Once()

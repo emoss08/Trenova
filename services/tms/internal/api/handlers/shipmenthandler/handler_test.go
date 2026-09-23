@@ -528,7 +528,12 @@ func TestShipmentHandler_GetPermitAssessment_Success(t *testing.T) {
 					WeightPounds: 74000,
 				},
 				Jurisdictions: []servicesport.AssessedJurisdiction{
-					{StateCode: "GA", MaxWidthFeet: 8.5, WidthHeadroomFeet: -4, RequiresPermit: true},
+					{
+						StateCode:         "GA",
+						MaxWidthFeet:      8.5,
+						WidthHeadroomFeet: -4,
+						RequiresPermit:    true,
+					},
 				},
 				TotalEscorts:    2,
 				MaxLeadTimeDays: 5,

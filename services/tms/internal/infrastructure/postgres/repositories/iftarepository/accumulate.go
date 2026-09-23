@@ -72,7 +72,10 @@ func buildAccumulationPrefix() string {
 	return "WITH mc AS (" +
 		" SELECT " + smCols.ID.Qualified() + ", " + smCols.OrganizationID.Qualified() + ", " +
 		smCols.BusinessUnitID.Qualified() + ", " + smCols.Loaded.Qualified() + ", " +
-		normalisedMiles(smCols.Distance, smCols.DistanceUnits) + " AS " + smCols.Distance.Name + ", " +
+		normalisedMiles(
+			smCols.Distance,
+			smCols.DistanceUnits,
+		) + " AS " + smCols.Distance.Name + ", " +
 		"COALESCE(MAX(COALESCE(" + stpCols.ActualDeparture.Qualified() + ", " +
 		stpCols.ActualArrival.Qualified() + ")), " + smCols.UpdatedAt.Qualified() + ") AS completed_at" +
 		" FROM " + buncolgen.ShipmentMoveTable.As(buncolgen.ShipmentMoveTable.Alias) +
@@ -141,9 +144,13 @@ func buildRouteRowsBody() string {
 		jmCountry.As("country_code") + ", " + jmCode.As("jurisdiction_code") + ", " +
 		ifjCols.ID.As("jurisdiction_id") + ", " +
 		rounded("COALESCE(SUM("+jmMiles.Qualified()+"), 0)") + " AS miles, " +
-		rounded("COALESCE(SUM("+jmMiles.Qualified()+") FILTER (WHERE "+jmLoaded.Qualified()+"), 0)") +
+		rounded(
+			"COALESCE(SUM("+jmMiles.Qualified()+") FILTER (WHERE "+jmLoaded.Qualified()+"), 0)",
+		) +
 		" AS loaded_miles, " +
-		rounded("COALESCE(SUM("+jmMiles.Qualified()+") FILTER (WHERE NOT "+jmLoaded.Qualified()+"), 0)") +
+		rounded(
+			"COALESCE(SUM("+jmMiles.Qualified()+") FILTER (WHERE NOT "+jmLoaded.Qualified()+"), 0)",
+		) +
 		" AS empty_miles, " +
 		buncolgen.CountDistinct(jmMove, "move_count") +
 		" FROM jm" +

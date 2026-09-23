@@ -291,7 +291,11 @@ func (f *DQFFile) addSafetyHistory(
 		f.markSafetyHistoryLate(now)
 	default:
 		item.Status = DQFSatisfied
-		item.Detail = plural(len(verifications), "previous employer", "previous employers") + " investigated."
+		item.Detail = plural(
+			len(verifications),
+			"previous employer",
+			"previous employers",
+		) + " investigated."
 	}
 
 	f.Items = append(f.Items, item)

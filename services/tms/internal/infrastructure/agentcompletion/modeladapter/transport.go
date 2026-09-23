@@ -34,6 +34,8 @@ func (e *TransportError) ProviderStatus() int { return e.StatusCode }
 
 func (e *TransportError) ProviderRetryable() bool { return e.Retryable }
 
+func (e *TransportError) ProviderRetryAfter() time.Duration { return e.RetryAfter }
+
 // IsRetryable reports whether err is worth another attempt. An error that is not
 // a TransportError is a transport-level failure (dial, TLS, timeout) and is
 // retried, since those are the failures most likely to be transient.

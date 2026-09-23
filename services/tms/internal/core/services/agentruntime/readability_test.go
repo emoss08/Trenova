@@ -162,7 +162,7 @@ func TestDistinctCallIDs_ReplacesAnIDTheConversationAlreadyUsed(t *testing.T) {
 		{ID: "toolu_unique", Name: "get_tractor"},
 	}}
 
-	distinctCallIDs(completion, used)
+	distinctCallIDs(completion, used, NewCallID)
 
 	ids := make(map[string]struct{}, len(completion.ToolCalls))
 	for _, call := range completion.ToolCalls {

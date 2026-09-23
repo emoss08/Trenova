@@ -30,7 +30,11 @@ type SnapshotProgress struct {
 }
 
 type MetadataStore interface {
-	LoadTableMetadata(ctx context.Context, schema string, table string) (domain.TableMetadata, error)
+	LoadTableMetadata(
+		ctx context.Context,
+		schema string,
+		table string,
+	) (domain.TableMetadata, error)
 }
 
 type CheckpointStore interface {

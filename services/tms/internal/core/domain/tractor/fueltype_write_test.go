@@ -37,7 +37,11 @@ func TestTractorNormalizesFuelTypeOnWrite(t *testing.T) {
 		given domaintypes.IFTAFuelType
 		want  domaintypes.IFTAFuelType
 	}{
-		{"keeps a chosen fuel type", domaintypes.IFTAFuelTypeGasoline, domaintypes.IFTAFuelTypeGasoline},
+		{
+			"keeps a chosen fuel type",
+			domaintypes.IFTAFuelTypeGasoline,
+			domaintypes.IFTAFuelTypeGasoline,
+		},
 		{"falls back to diesel when unset", "", domaintypes.IFTAFuelTypeDiesel},
 	}
 

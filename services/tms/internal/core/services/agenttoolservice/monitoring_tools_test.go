@@ -208,7 +208,11 @@ func TestNotifyDriver_SendsThroughTheDispatchMessageTemplate(t *testing.T) {
 	context, ok := drivers.sent.Context.(documenttemplate.DriverNotificationContext)
 	require.True(t, ok)
 	assert.Equal(t, "Delivery moved to 3 PM", context.AlertTitle)
-	assert.Equal(t, "Houston DC moved your appointment to 3 PM. No need to rush.", context.AlertMessage)
+	assert.Equal(
+		t,
+		"Houston DC moved your appointment to 3 PM. No need to rush.",
+		context.AlertMessage,
+	)
 }
 
 func TestNotifyDriver_DefaultsThePriorityAndBoundsTheMessage(t *testing.T) {
@@ -563,7 +567,12 @@ func TestMonitoringActionTools_RejectAMismatchedActor(t *testing.T) {
 	} {
 		params := executeParams(map[string]any{})
 		params.Actor.BusinessUnitID = pulid.MustNew("bu_")
-		require.ErrorIs(t, candidate.Execute(t.Context(), params), ErrTenantMismatch, candidate.Name())
+		require.ErrorIs(
+			t,
+			candidate.Execute(t.Context(), params),
+			ErrTenantMismatch,
+			candidate.Name(),
+		)
 	}
 }
 
@@ -587,9 +596,15 @@ func TestOutboundTools_AreGatedOnTheCommunicationTheySend(t *testing.T) {
 	for _, entry := range tools {
 		assert.Equal(t, entry.resource, entry.tool.PermissionResource(), entry.tool.Name())
 		assert.Equal(t, permission.OpCreate, entry.tool.PermissionOperation(), entry.tool.Name())
-		assert.True(t,
-			permission.IsAgentAllowed(entry.tool.PermissionResource(), entry.tool.PermissionOperation()),
-			"%s must be reachable by an agent principal", entry.tool.Name())
+		assert.True(
+			t,
+			permission.IsAgentAllowed(
+				entry.tool.PermissionResource(),
+				entry.tool.PermissionOperation(),
+			),
+			"%s must be reachable by an agent principal",
+			entry.tool.Name(),
+		)
 	}
 }
 

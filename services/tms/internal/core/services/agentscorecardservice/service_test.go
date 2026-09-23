@@ -99,7 +99,10 @@ func actor() *services.RequestActor {
 
 func request(window agent.ScorecardWindow) services.AgentScorecardRequest {
 	return services.AgentScorecardRequest{
-		TenantInfo:        pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
 		AgentDefinitionID: pulid.MustNew("agd_"),
 		Window:            window,
 	}
@@ -111,7 +114,9 @@ func request(window agent.ScorecardWindow) services.AgentScorecardRequest {
 func TestGet_RefusesAReaderWhoCannotReadTheAgent(t *testing.T) {
 	t.Parallel()
 
-	perms := &agentruntimetest.StubPermissions{Denied: map[string]bool{"agent_definition:read": true}}
+	perms := &agentruntimetest.StubPermissions{
+		Denied: map[string]bool{"agent_definition:read": true},
+	}
 	cards := &stubScorecards{}
 	svc := newService(perms, cards, &stubTrust{}, &stubDefinitions{})
 

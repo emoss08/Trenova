@@ -75,7 +75,9 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 	accountingRepo := accountingcontrolrepository.New(
 		accountingcontrolrepository.Params{DB: conn, Logger: logger},
 	)
-	fiscalYearRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: logger})
+	fiscalYearRepo := fiscalyearrepository.New(
+		fiscalyearrepository.Params{DB: conn, Logger: logger},
+	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
 	)
@@ -120,7 +122,14 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 	control.AutoPostSourceEvents = []tenant.JournalSourceEventType{
 		tenant.JournalSourceEventInvoicePosted,
 	}
-	control.DefaultARAccountID = lookupInvoiceGLAccount(t, ctx, db, org.ID, org.BusinessUnitID, "1110")
+	control.DefaultARAccountID = lookupInvoiceGLAccount(
+		t,
+		ctx,
+		db,
+		org.ID,
+		org.BusinessUnitID,
+		"1110",
+	)
 	control.DefaultRevenueAccountID = lookupInvoiceGLAccount(
 		t, ctx, db, org.ID, org.BusinessUnitID, "4000",
 	)
@@ -221,7 +230,8 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 	invoicedLegs := make(map[pulid.ID]bool)
 	shipmentRepo.EXPECT().
 		UpdateDerivedState(mock.Anything, mock.MatchedBy(func(entity *shipment.Shipment) bool {
-			return entity != nil && entity.Status == shipment.StatusInvoiced && entity.BilledAt != nil
+			return entity != nil && entity.Status == shipment.StatusInvoiced &&
+				entity.BilledAt != nil
 		})).
 		RunAndReturn(func(runCtx context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
 			invoicedLegs[entity.ID] = true
@@ -474,7 +484,12 @@ func runPartialOrderScenario(
 		Column("invoice_id").
 		Where("order_id = ?", ord.ID).
 		Scan(ctx, &stampedInvoiceID))
-	assert.Equal(t, first.ID, stampedInvoiceID, "order charge should be stamped to the first invoice")
+	assert.Equal(
+		t,
+		first.ID,
+		stampedInvoiceID,
+		"order charge should be stamped to the first invoice",
+	)
 
 	// The late leg delivers; the ready leg was settled by billing (simulated here since
 	// the first invoice is left in Draft).
@@ -500,8 +515,12 @@ func runPartialOrderScenario(
 	require.NoError(t, err)
 	assert.Equal(t, ord.ID, second.OrderID, "single-leg invoice should keep the order correlation")
 	assert.Equal(t, "O-TEST-0002", second.OrderNumber)
-	assert.True(t, decimal.NewFromInt(200).Equal(second.TotalAmount),
-		"second pass must bill only the leg — no duplicated order charge, got %s", second.TotalAmount)
+	assert.True(
+		t,
+		decimal.NewFromInt(200).Equal(second.TotalAmount),
+		"second pass must bill only the leg — no duplicated order charge, got %s",
+		second.TotalAmount,
+	)
 	for _, line := range second.Lines {
 		assert.False(t, line.ShipmentID.IsNil(),
 			"second invoice must not carry order-charge lines")

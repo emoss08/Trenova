@@ -220,15 +220,22 @@ func TestHydrateAccessorialsLoadsMissingAndStaleDefinitionsOnce(t *testing.T) {
 	missingA := &shipment.AdditionalCharge{AccessorialChargeID: det.ID}
 	missingB := &shipment.AdditionalCharge{AccessorialChargeID: det.ID}
 	stale := &shipment.AdditionalCharge{AccessorialChargeID: current.ID, AccessorialCharge: det}
-	alreadyLoaded := &shipment.AdditionalCharge{AccessorialChargeID: loaded.ID, AccessorialCharge: loaded}
+	alreadyLoaded := &shipment.AdditionalCharge{
+		AccessorialChargeID: loaded.ID,
+		AccessorialCharge:   loaded,
+	}
 
 	repo := mocks.NewMockAccessorialChargeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.MatchedBy(func(req repositories.GetAccessorialChargeByIDRequest) bool {
 		return req.ID == det.ID && *req.TenantInfo == tenantInfo
-	})).Return(det, nil).Once()
+	})).
+		Return(det, nil).
+		Once()
 	repo.On("GetByID", mock.Anything, mock.MatchedBy(func(req repositories.GetAccessorialChargeByIDRequest) bool {
 		return req.ID == current.ID
-	})).Return(current, nil).Once()
+	})).
+		Return(current, nil).
+		Once()
 
 	err := invoicelines.HydrateAccessorials(
 		t.Context(),
@@ -267,6 +274,14 @@ func TestHydrateAccessorialsWithoutARepositoryLeavesChargesAlone(t *testing.T) {
 
 	charge := &shipment.AdditionalCharge{AccessorialChargeID: pulid.MustNew("acc_")}
 
-	require.NoError(t, invoicelines.HydrateAccessorials(t.Context(), nil, pagination.TenantInfo{}, testShipment(charge)))
+	require.NoError(
+		t,
+		invoicelines.HydrateAccessorials(
+			t.Context(),
+			nil,
+			pagination.TenantInfo{},
+			testShipment(charge),
+		),
+	)
 	assert.Nil(t, charge.AccessorialCharge)
 }

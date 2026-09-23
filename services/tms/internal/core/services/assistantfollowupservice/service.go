@@ -11,8 +11,6 @@ package assistantfollowupservice
 
 import (
 	"context"
-	"errors"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -20,82 +18,44 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-// inProcessTimeout bounds a follow-up answered in this process. It is a
-// sentence or two about something that already happened; a turn still going
-// after this long is stuck, and holding the conversation's one live slot for
-// longer would refuse the person's next question.
-const inProcessTimeout = 5 * time.Minute
 
 type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Config        *config.Config
 	Runs          repositories.AgentRunRepository
 	Conversations repositories.ConversationRepository
-	Assistant     serviceports.AssistantService
 	Turns         *assistantturnservice.Service
-	Workflows     serviceports.WorkflowStarter `optional:"true"`
+	Workflows     serviceports.WorkflowStarter
 }
 
 type Service struct {
 	l             *zap.Logger
-	ai            *config.AIConfig
 	runs          repositories.AgentRunRepository
 	conversations repositories.ConversationRepository
-	assistant     serviceports.AssistantService
 	turns         turnStarter
 	workflows     serviceports.WorkflowStarter
-	// inProcess runs a follow-up that no worker will pick up. It is a field
-	// so a test can run it where it can wait for it.
-	inProcess func(run func())
 }
 
 // turnStarter is the part of the turn service a follow-up needs.
 type turnStarter interface {
-	Start(ctx context.Context, req assistantturnservice.StartRequest) (*conversation.AssistantTurn, error)
-	StartDurable(
+	StartTurn(
 		ctx context.Context,
 		req assistantturnservice.StartRequest,
 		start func(turn *conversation.AssistantTurn) (string, error),
 	) (*conversation.AssistantTurn, error)
-	Observe(
-		ctx context.Context,
-		turn *conversation.AssistantTurn,
-		emit serviceports.AssistantStreamEmitter,
-	) (serviceports.AssistantStreamEmitter, func(serviceports.StreamEvent))
-	Complete(
-		ctx context.Context,
-		turn *conversation.AssistantTurn,
-		status conversation.AssistantTurnStatus,
-		cause error,
-	)
-	Stoppable(
-		ctx context.Context,
-		turn *conversation.AssistantTurn,
-	) (context.Context, context.CancelFunc)
 }
 
 func New(p Params) serviceports.DecisionFollowUps {
-	var ai *config.AIConfig
-	if p.Config != nil {
-		ai = p.Config.GetAIConfig()
-	}
-
 	return &Service{
 		l:             p.Logger.Named("service.assistantfollowup"),
-		ai:            ai,
 		runs:          p.Runs,
 		conversations: p.Conversations,
-		assistant:     p.Assistant,
 		turns:         p.Turns,
 		workflows:     p.Workflows,
-		inProcess:     func(run func()) { go run() },
 	}
 }
 
@@ -137,12 +97,6 @@ func (s *Service) FollowUp(ctx context.Context, req serviceports.DecisionFollowU
 		OrganizationID: thread.OrganizationID,
 		BusinessUnitID: thread.BusinessUnitID,
 	}
-	message := &serviceports.SendMessageRequest{
-		ThreadID:           thread.ID,
-		TenantInfo:         req.TenantInfo,
-		FollowUpProposalID: req.ProposalID,
-		FollowUpPlanID:     req.PlanID,
-	}
 	start := assistantturnservice.StartRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
@@ -150,11 +104,26 @@ func (s *Service) FollowUp(ctx context.Context, req serviceports.DecisionFollowU
 		Origin:     conversation.AssistantTurnOriginDecisionFollowUp,
 	}
 
-	if s.durable() {
-		s.startDurable(ctx, start, actor, message)
-		return
+	// A worker answers it like any other turn, so the report survives the
+	// request that decided and can be watched and stopped like any reply.
+	_, err = s.turns.StartTurn(ctx, start, func(turn *conversation.AssistantTurn) (string, error) {
+		run, startErr := assistantjobs.StartTurnWorkflow(ctx, s.workflows, turn,
+			assistantjobs.TurnStart{
+				Actor: actor,
+				Request: assistantjobs.AssistantTurnRequest{
+					FollowUpProposalID: req.ProposalID,
+					FollowUpPlanID:     req.PlanID,
+				},
+			})
+		if startErr != nil {
+			return "", startErr
+		}
+
+		return run.GetID(), nil
+	})
+	if err != nil {
+		s.logStartFailure(start, err)
 	}
-	s.startInProcess(ctx, start, &actor, message)
 }
 
 // threadFor is the conversation that raised the decided proposal, or nil when
@@ -178,70 +147,6 @@ func (s *Service) threadFor(
 	return s.conversations.GetThreadOwned(ctx, repositories.GetThreadOwnedRequest{
 		ID:         run.SubjectID,
 		TenantInfo: tenant,
-	})
-}
-
-func (s *Service) durable() bool {
-	return s.ai.DurableTurnsEnabled() && s.workflows != nil && s.workflows.Enabled()
-}
-
-func (s *Service) startDurable(
-	ctx context.Context,
-	start assistantturnservice.StartRequest,
-	actor serviceports.RequestActor,
-	message *serviceports.SendMessageRequest,
-) {
-	_, err := s.turns.StartDurable(ctx, start, func(turn *conversation.AssistantTurn) (string, error) {
-		return assistantjobs.StartTurnWorkflow(ctx, s.workflows, turn, assistantjobs.TurnStart{
-			Actor: actor,
-			Request: assistantjobs.AssistantTurnRequest{
-				FollowUpProposalID: message.FollowUpProposalID,
-				FollowUpPlanID:     message.FollowUpPlanID,
-			},
-		})
-	})
-	if err != nil {
-		s.logStartFailure(start, err)
-	}
-}
-
-// startInProcess records the turn now, so a reader asking for the
-// conversation's live reply finds it the moment the decision returns, and
-// answers it off the request.
-func (s *Service) startInProcess(
-	ctx context.Context,
-	start assistantturnservice.StartRequest,
-	actor *serviceports.RequestActor,
-	message *serviceports.SendMessageRequest,
-) {
-	turn, err := s.turns.Start(ctx, start)
-	if err != nil {
-		s.logStartFailure(start, err)
-		return
-	}
-
-	s.inProcess(func() {
-		timed, cancel := context.WithTimeout(ctx, inProcessTimeout)
-		defer cancel()
-		// No request carries this turn, so nothing aborting one can stop it;
-		// a Stop reaches it through its record instead.
-		runCtx, release := s.turns.Stoppable(timed, turn)
-		defer release()
-
-		observed, closeStream := s.turns.Observe(runCtx, turn, nil)
-		result, runErr := s.assistant.SendMessageStream(runCtx, message, actor, observed)
-		closeStream(assistantturnservice.Ending(result, runErr))
-
-		refused := runErr == nil && result != nil && result.Refused
-		// Completing rides the parent context: a turn that timed out still
-		// has to be closed, or it holds the conversation's live slot.
-		s.turns.Complete(ctx, turn, assistantturnservice.StatusFor(refused, runErr), runErr)
-		if runErr != nil && !errors.Is(runErr, context.Canceled) {
-			s.l.Warn("decision follow-up did not finish",
-				zap.String("thread", turn.ThreadID.String()),
-				zap.Error(runErr),
-			)
-		}
 	})
 }
 

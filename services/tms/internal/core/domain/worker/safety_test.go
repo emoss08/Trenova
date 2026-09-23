@@ -15,7 +15,11 @@ import (
 
 const safetyDay = int64(86400)
 
-func safetyEvent(kind worker.SafetyEventKind, occurredAgo int64, mutate func(*worker.WorkerSafetyEvent)) *worker.WorkerSafetyEvent {
+func safetyEvent(
+	kind worker.SafetyEventKind,
+	occurredAgo int64,
+	mutate func(*worker.WorkerSafetyEvent),
+) *worker.WorkerSafetyEvent {
 	now := time.Date(2026, time.September, 2, 12, 0, 0, 0, time.UTC).Unix()
 	e := &worker.WorkerSafetyEvent{
 		ID:          pulid.MustNew("wsev_"),
@@ -34,13 +38,76 @@ func safetyEvent(kind worker.SafetyEventKind, occurredAgo int64, mutate func(*wo
 
 func TestDefaultSafetyPoints(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, int32(2), worker.DefaultSafetyPoints(worker.SafetyEventAccident, worker.SafetySeverityMinor, false, ""))
-	assert.Equal(t, int32(8), worker.DefaultSafetyPoints(worker.SafetyEventAccident, worker.SafetySeverityMajor, true, ""))
-	assert.Equal(t, int32(4), worker.DefaultSafetyPoints(worker.SafetyEventIncident, worker.SafetySeverityCritical, true, ""))
-	assert.Equal(t, int32(3), worker.DefaultSafetyPoints(worker.SafetyEventCitation, worker.SafetySeverityModerate, false, ""))
-	assert.Equal(t, int32(0), worker.DefaultSafetyPoints(worker.SafetyEventNearMiss, worker.SafetySeverityCritical, true, ""))
-	assert.Equal(t, int32(0), worker.DefaultSafetyPoints(worker.SafetyEventInspection, worker.SafetySeverityMinor, false, worker.InspectionResultPass))
-	assert.Equal(t, int32(5), worker.DefaultSafetyPoints(worker.SafetyEventInspection, worker.SafetySeverityMinor, false, worker.InspectionResultOutOfService))
+	assert.Equal(
+		t,
+		int32(2),
+		worker.DefaultSafetyPoints(
+			worker.SafetyEventAccident,
+			worker.SafetySeverityMinor,
+			false,
+			"",
+		),
+	)
+	assert.Equal(
+		t,
+		int32(8),
+		worker.DefaultSafetyPoints(
+			worker.SafetyEventAccident,
+			worker.SafetySeverityMajor,
+			true,
+			"",
+		),
+	)
+	assert.Equal(
+		t,
+		int32(4),
+		worker.DefaultSafetyPoints(
+			worker.SafetyEventIncident,
+			worker.SafetySeverityCritical,
+			true,
+			"",
+		),
+	)
+	assert.Equal(
+		t,
+		int32(3),
+		worker.DefaultSafetyPoints(
+			worker.SafetyEventCitation,
+			worker.SafetySeverityModerate,
+			false,
+			"",
+		),
+	)
+	assert.Equal(
+		t,
+		int32(0),
+		worker.DefaultSafetyPoints(
+			worker.SafetyEventNearMiss,
+			worker.SafetySeverityCritical,
+			true,
+			"",
+		),
+	)
+	assert.Equal(
+		t,
+		int32(0),
+		worker.DefaultSafetyPoints(
+			worker.SafetyEventInspection,
+			worker.SafetySeverityMinor,
+			false,
+			worker.InspectionResultPass,
+		),
+	)
+	assert.Equal(
+		t,
+		int32(5),
+		worker.DefaultSafetyPoints(
+			worker.SafetyEventInspection,
+			worker.SafetySeverityMinor,
+			false,
+			worker.InspectionResultOutOfService,
+		),
+	)
 }
 
 func TestSafetyEventValidate(t *testing.T) {
@@ -84,10 +151,19 @@ func TestSafetyEventValidate(t *testing.T) {
 func TestSafetyEventPoints(t *testing.T) {
 	t.Parallel()
 	now := time.Date(2026, time.September, 2, 12, 0, 0, 0, time.UTC).Unix()
-	e := safetyEvent(worker.SafetyEventAccident, 10, func(e *worker.WorkerSafetyEvent) { e.Points = 4 })
+	e := safetyEvent(
+		worker.SafetyEventAccident,
+		10,
+		func(e *worker.WorkerSafetyEvent) { e.Points = 4 },
+	)
 	e.DefaultPointsExpiry()
 	require.NotNil(t, e.PointsExpireAt)
-	assert.Equal(t, timeutils.AddMonthsUTC(e.OccurredAt, 24), *e.PointsExpireAt, "points roll off after two years")
+	assert.Equal(
+		t,
+		timeutils.AddMonthsUTC(e.OccurredAt, 24),
+		*e.PointsExpireAt,
+		"points roll off after two years",
+	)
 	assert.Equal(t, int32(4), e.ActivePoints(now))
 	assert.Equal(t, int32(0), e.ActivePoints(*e.PointsExpireAt), "expired on the day")
 
@@ -110,62 +186,85 @@ func TestBuildSafetyScorecard(t *testing.T) {
 		assert.Nil(t, card.DaysSinceLastEvent)
 	})
 
-	t.Run("points, preventable accidents, out-of-service and discipline all cost", func(t *testing.T) {
-		t.Parallel()
-		expired := now - 30*safetyDay
-		events := []*worker.WorkerSafetyEvent{
-			safetyEvent(worker.SafetyEventAccident, 40, func(e *worker.WorkerSafetyEvent) {
-				e.Points = 4
-				e.Preventable = true
-				e.Status = worker.SafetyEventStatusOpen
-			}),
-			safetyEvent(worker.SafetyEventInspection, 20, func(e *worker.WorkerSafetyEvent) {
-				e.InspectionResult = worker.InspectionResultOutOfService
-				e.Points = 5
-			}),
-			safetyEvent(worker.SafetyEventInspection, 100, func(e *worker.WorkerSafetyEvent) {
-				e.InspectionResult = worker.InspectionResultPass
-			}),
-			safetyEvent(worker.SafetyEventCitation, 500, func(e *worker.WorkerSafetyEvent) {
-				e.Points = 3
-				e.PointsExpireAt = &expired
-			}),
-			safetyEvent(worker.SafetyEventNearMiss, 5, nil),
-		}
-		actions := []*worker.WorkerDisciplinaryAction{
-			{Level: worker.DisciplinaryLevelWrittenWarning, Status: worker.DisciplinaryStatusActive, IssuedAt: now - 10*safetyDay},
-			{Level: worker.DisciplinaryLevelSuspension, Status: worker.DisciplinaryStatusRescinded, IssuedAt: now - 5*safetyDay},
-		}
-		recognitions := []*worker.WorkerRecognition{{OccurredAt: now - 3*safetyDay}, {OccurredAt: now - 500*safetyDay}}
+	t.Run(
+		"points, preventable accidents, out-of-service and discipline all cost",
+		func(t *testing.T) {
+			t.Parallel()
+			expired := now - 30*safetyDay
+			events := []*worker.WorkerSafetyEvent{
+				safetyEvent(worker.SafetyEventAccident, 40, func(e *worker.WorkerSafetyEvent) {
+					e.Points = 4
+					e.Preventable = true
+					e.Status = worker.SafetyEventStatusOpen
+				}),
+				safetyEvent(worker.SafetyEventInspection, 20, func(e *worker.WorkerSafetyEvent) {
+					e.InspectionResult = worker.InspectionResultOutOfService
+					e.Points = 5
+				}),
+				safetyEvent(worker.SafetyEventInspection, 100, func(e *worker.WorkerSafetyEvent) {
+					e.InspectionResult = worker.InspectionResultPass
+				}),
+				safetyEvent(worker.SafetyEventCitation, 500, func(e *worker.WorkerSafetyEvent) {
+					e.Points = 3
+					e.PointsExpireAt = &expired
+				}),
+				safetyEvent(worker.SafetyEventNearMiss, 5, nil),
+			}
+			actions := []*worker.WorkerDisciplinaryAction{
+				{
+					Level:    worker.DisciplinaryLevelWrittenWarning,
+					Status:   worker.DisciplinaryStatusActive,
+					IssuedAt: now - 10*safetyDay,
+				},
+				{
+					Level:    worker.DisciplinaryLevelSuspension,
+					Status:   worker.DisciplinaryStatusRescinded,
+					IssuedAt: now - 5*safetyDay,
+				},
+			}
+			recognitions := []*worker.WorkerRecognition{
+				{OccurredAt: now - 3*safetyDay},
+				{OccurredAt: now - 500*safetyDay},
+			}
 
-		card := worker.BuildSafetyScorecard(workerID, events, actions, recognitions, now)
+			card := worker.BuildSafetyScorecard(workerID, events, actions, recognitions, now)
 
-		assert.Equal(t, int32(9), card.ActivePoints, "the expired citation no longer counts")
-		assert.Equal(t, int32(1), card.Accidents)
-		assert.Equal(t, int32(1), card.PreventableAccidents)
-		assert.Equal(t, int32(0), card.Citations, "the citation is older than twelve months")
-		assert.Equal(t, int32(2), card.Inspections)
-		assert.Equal(t, int32(1), card.InspectionsPassed)
-		assert.Equal(t, int32(1), card.OutOfServiceOrders)
-		assert.Equal(t, int32(1), card.NearMisses)
-		assert.Equal(t, int32(1), card.OpenEvents)
-		assert.Equal(t, int32(1), card.ActiveDiscipline, "rescinded actions are off the ladder")
-		assert.Equal(t, worker.DisciplinaryLevelWrittenWarning, card.HighestDiscipline)
-		assert.Equal(t, int32(1), card.Recognitions)
-		require.NotNil(t, card.CleanInspectionRate)
-		assert.InDelta(t, 0.5, *card.CleanInspectionRate, 0.001)
-		require.NotNil(t, card.DaysSinceLastEvent)
-		assert.Equal(t, int64(40), *card.DaysSinceLastEvent, "near misses and inspections do not reset the streak")
+			assert.Equal(t, int32(9), card.ActivePoints, "the expired citation no longer counts")
+			assert.Equal(t, int32(1), card.Accidents)
+			assert.Equal(t, int32(1), card.PreventableAccidents)
+			assert.Equal(t, int32(0), card.Citations, "the citation is older than twelve months")
+			assert.Equal(t, int32(2), card.Inspections)
+			assert.Equal(t, int32(1), card.InspectionsPassed)
+			assert.Equal(t, int32(1), card.OutOfServiceOrders)
+			assert.Equal(t, int32(1), card.NearMisses)
+			assert.Equal(t, int32(1), card.OpenEvents)
+			assert.Equal(t, int32(1), card.ActiveDiscipline, "rescinded actions are off the ladder")
+			assert.Equal(t, worker.DisciplinaryLevelWrittenWarning, card.HighestDiscipline)
+			assert.Equal(t, int32(1), card.Recognitions)
+			require.NotNil(t, card.CleanInspectionRate)
+			assert.InDelta(t, 0.5, *card.CleanInspectionRate, 0.001)
+			require.NotNil(t, card.DaysSinceLastEvent)
+			assert.Equal(
+				t,
+				int64(40),
+				*card.DaysSinceLastEvent,
+				"near misses and inspections do not reset the streak",
+			)
 
-		// 100 - 9*5 - 1*10 - 1*15 - 1*5 = 25
-		assert.Equal(t, int32(25), card.Score)
-		assert.Equal(t, worker.SafetyRatingAtRisk, card.Rating)
-	})
+			// 100 - 9*5 - 1*10 - 1*15 - 1*5 = 25
+			assert.Equal(t, int32(25), card.Score)
+			assert.Equal(t, worker.SafetyRatingAtRisk, card.Rating)
+		},
+	)
 
 	t.Run("points alone can put a worker on watch", func(t *testing.T) {
 		t.Parallel()
 		events := []*worker.WorkerSafetyEvent{
-			safetyEvent(worker.SafetyEventCitation, 400, func(e *worker.WorkerSafetyEvent) { e.Points = 6 }),
+			safetyEvent(
+				worker.SafetyEventCitation,
+				400,
+				func(e *worker.WorkerSafetyEvent) { e.Points = 6 },
+			),
 		}
 		card := worker.BuildSafetyScorecard(workerID, events, nil, nil, now)
 		assert.Equal(t, int32(70), card.Score)
@@ -183,17 +282,39 @@ func TestDisciplinaryLadder(t *testing.T) {
 
 	lapsed := now - safetyDay
 	actions := []*worker.WorkerDisciplinaryAction{
-		{Level: worker.DisciplinaryLevelCoaching, Status: worker.DisciplinaryStatusActive, IssuedAt: now - 300*safetyDay},
-		{Level: worker.DisciplinaryLevelFinalWarning, Status: worker.DisciplinaryStatusActive, IssuedAt: now - 400*safetyDay, ExpiresAt: &lapsed},
-		{Level: worker.DisciplinaryLevelWrittenWarning, Status: worker.DisciplinaryStatusActive, IssuedAt: now - 60*safetyDay},
+		{
+			Level:    worker.DisciplinaryLevelCoaching,
+			Status:   worker.DisciplinaryStatusActive,
+			IssuedAt: now - 300*safetyDay,
+		},
+		{
+			Level:     worker.DisciplinaryLevelFinalWarning,
+			Status:    worker.DisciplinaryStatusActive,
+			IssuedAt:  now - 400*safetyDay,
+			ExpiresAt: &lapsed,
+		},
+		{
+			Level:    worker.DisciplinaryLevelWrittenWarning,
+			Status:   worker.DisciplinaryStatusActive,
+			IssuedAt: now - 60*safetyDay,
+		},
 	}
 	ladder := worker.BuildDisciplinaryLadder(actions, now)
 	require.Len(t, ladder.ActiveActions, 2)
-	assert.Equal(t, worker.DisciplinaryLevelWrittenWarning, ladder.HighestLevel, "the lapsed final warning is off the ladder")
+	assert.Equal(
+		t,
+		worker.DisciplinaryLevelWrittenWarning,
+		ladder.HighestLevel,
+		"the lapsed final warning is off the ladder",
+	)
 	assert.Equal(t, worker.DisciplinaryLevelFinalWarning, ladder.SuggestedLevel)
 
 	top := worker.BuildDisciplinaryLadder([]*worker.WorkerDisciplinaryAction{
-		{Level: worker.DisciplinaryLevelSuspension, Status: worker.DisciplinaryStatusActive, IssuedAt: now - safetyDay},
+		{
+			Level:    worker.DisciplinaryLevelSuspension,
+			Status:   worker.DisciplinaryStatusActive,
+			IssuedAt: now - safetyDay,
+		},
 	}, now)
 	assert.Equal(t, worker.DisciplinaryLevelTermination, top.SuggestedLevel)
 	assert.True(t, top.AtFinalStep)
@@ -211,7 +332,10 @@ func TestDisciplinaryLadder(t *testing.T) {
 	require.NotNil(t, action.ExpiresAt)
 	assert.Equal(t, timeutils.AddMonthsUTC(now, 12), *action.ExpiresAt)
 
-	termination := &worker.WorkerDisciplinaryAction{Level: worker.DisciplinaryLevelTermination, IssuedAt: now}
+	termination := &worker.WorkerDisciplinaryAction{
+		Level:    worker.DisciplinaryLevelTermination,
+		IssuedAt: now,
+	}
 	termination.DefaultExpiry()
 	assert.Nil(t, termination.ExpiresAt, "terminations never roll off")
 }
@@ -239,7 +363,9 @@ func TestPerformanceReviewScoring(t *testing.T) {
 	assert.Equal(t, "4.17", score.Decimal.StringFixed(2))
 
 	review := &worker.PerformanceReview{
-		WorkerID: pulid.MustNew("wrk_"), TemplateID: pulid.MustNew("prt_"), Status: worker.ReviewStatusDraft,
+		WorkerID: pulid.MustNew(
+			"wrk_",
+		), TemplateID: pulid.MustNew("prt_"), Status: worker.ReviewStatusDraft,
 		Title: "H1 2026", PeriodStart: 1_700_000_000, PeriodEnd: 1_710_000_000,
 		Ratings: worker.RatingsFromTemplate(template),
 	}

@@ -26,11 +26,13 @@ func workerCredentialTypeFromInput(
 		Status:                 input.Status,
 		IsRequired:             input.IsRequired,
 		RequiredForDriverTypes: input.RequiredForDriverTypes,
-		RenewalWindowDays:      int32(input.RenewalWindowDays), //nolint:gosec // bounded by validation
-		RequiresNumber:         input.RequiresNumber,
-		RequiresDocument:       input.RequiresDocument,
-		SortOrder:              int32(intValue(input.SortOrder)), //nolint:gosec // small ordinal
-		Version:                int64(intValue(input.Version)),
+		RenewalWindowDays: int32(
+			input.RenewalWindowDays,
+		), //nolint:gosec // bounded by validation
+		RequiresNumber:   input.RequiresNumber,
+		RequiresDocument: input.RequiresDocument,
+		SortOrder:        int32(intValue(input.SortOrder)), //nolint:gosec // small ordinal
+		Version:          int64(intValue(input.Version)),
 	}
 	if entity.RequiredForDriverTypes == nil {
 		entity.RequiredForDriverTypes = []worker.DriverType{}
@@ -48,7 +50,11 @@ func workerCredentialFromInput(
 ) (*worker.WorkerCredential, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
+		return nil, errortypes.NewValidationError(
+			"workerId",
+			errortypes.ErrInvalid,
+			"Worker is invalid",
+		)
 	}
 	typeID, err := pulid.MustParse(input.CredentialTypeID)
 	if err != nil {
@@ -60,7 +66,11 @@ func workerCredentialFromInput(
 	}
 	documentID, err := optionalID(input.DocumentID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Document is invalid")
+		return nil, errortypes.NewValidationError(
+			"documentId",
+			errortypes.ErrInvalid,
+			"Document is invalid",
+		)
 	}
 
 	return &worker.WorkerCredential{
@@ -88,7 +98,11 @@ func workerCredentialFromUpdateInput(
 	}
 	documentID, err := optionalID(input.DocumentID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Document is invalid")
+		return nil, errortypes.NewValidationError(
+			"documentId",
+			errortypes.ErrInvalid,
+			"Document is invalid",
+		)
 	}
 
 	return &worker.WorkerCredential{

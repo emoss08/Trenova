@@ -41,7 +41,12 @@ func (s *MetadataStore) LoadTableMetadata(
 
 	rows, err := s.pool.Query(ctx, query, schema, table)
 	if err != nil {
-		return domain.TableMetadata{}, fmt.Errorf("load primary keys for %s.%s: %w", schema, table, err)
+		return domain.TableMetadata{}, fmt.Errorf(
+			"load primary keys for %s.%s: %w",
+			schema,
+			table,
+			err,
+		)
 	}
 	defer rows.Close()
 
@@ -49,12 +54,22 @@ func (s *MetadataStore) LoadTableMetadata(
 	for rows.Next() {
 		var key string
 		if err := rows.Scan(&key); err != nil {
-			return domain.TableMetadata{}, fmt.Errorf("scan primary key for %s.%s: %w", schema, table, err)
+			return domain.TableMetadata{}, fmt.Errorf(
+				"scan primary key for %s.%s: %w",
+				schema,
+				table,
+				err,
+			)
 		}
 		keys = append(keys, key)
 	}
 	if err := rows.Err(); err != nil {
-		return domain.TableMetadata{}, fmt.Errorf("iterate primary keys for %s.%s: %w", schema, table, err)
+		return domain.TableMetadata{}, fmt.Errorf(
+			"iterate primary keys for %s.%s: %w",
+			schema,
+			table,
+			err,
+		)
 	}
 	if len(keys) == 0 {
 		return domain.TableMetadata{}, fmt.Errorf("table %s.%s has no primary key", schema, table)

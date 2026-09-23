@@ -39,7 +39,9 @@ func TestGetCarrierIntelEvent_ReadsOneThroughTheBatchReader(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("cievt_")
-	repo := &stubCarrierIntelEvents{events: []*carrierintel.CarrierIntelEvent{{ID: id, Summary: "Insurance lapsed"}}}
+	repo := &stubCarrierIntelEvents{
+		events: []*carrierintel.CarrierIntelEvent{{ID: id, Summary: "Insurance lapsed"}},
+	}
 	tool := newGetCarrierIntelEventTool(repo)
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{"eventId": id.String()}))
@@ -79,8 +81,11 @@ func sampleCredential() *worker.WorkerCredential {
 		Number:           "D1234567",
 		IssuingAuthority: "TX DPS",
 		ExpiresAt:        &expires,
-		CredentialType:   &worker.WorkerCredentialType{Name: "CDL", Category: worker.CredentialCategoryLicense},
-		Worker:           &worker.Worker{FirstName: "Maria", LastName: "Ortiz"},
+		CredentialType: &worker.WorkerCredentialType{
+			Name:     "CDL",
+			Category: worker.CredentialCategoryLicense,
+		},
+		Worker: &worker.Worker{FirstName: "Maria", LastName: "Ortiz"},
 	}
 }
 
@@ -127,8 +132,20 @@ func TestGetWorkerCredential_IsGatedOnTheCredentialResource(t *testing.T) {
 func TestDeskGetTools_AreGatedOnTheirRecordsResource(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, permission.ResourceDetentionPolicy, newGetDetentionOccurrenceTool(nil).PermissionResource())
-	assert.Equal(t, permission.ResourceCarrierIntelligence, newGetCarrierIntelEventTool(nil).PermissionResource())
+	assert.Equal(
+		t,
+		permission.ResourceDetentionPolicy,
+		newGetDetentionOccurrenceTool(nil).PermissionResource(),
+	)
+	assert.Equal(
+		t,
+		permission.ResourceCarrierIntelligence,
+		newGetCarrierIntelEventTool(nil).PermissionResource(),
+	)
 	assert.Equal(t, permission.ResourceAgentRun, newGetAgentRunTool(nil).PermissionResource())
-	assert.Equal(t, permission.ResourceServiceFailure, newGetServiceFailureTool(nil).PermissionResource())
+	assert.Equal(
+		t,
+		permission.ResourceServiceFailure,
+		newGetServiceFailureTool(nil).PermissionResource(),
+	)
 }

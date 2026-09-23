@@ -437,7 +437,11 @@ func TestBulkTransferToBilling_ReportsAQueueConflictAsAlreadyTransferred(t *test
 
 	require.NoError(t, err)
 	require.Len(t, response.Results, 1)
-	assert.Equal(t, services.BillingTransferFailureAlreadyTransferred, response.Results[0].FailureCode)
+	assert.Equal(
+		t,
+		services.BillingTransferFailureAlreadyTransferred,
+		response.Results[0].FailureCode,
+	)
 }
 
 func TestBulkTransferToBilling_TransfersADuplicatedIDOnce(t *testing.T) {
@@ -503,7 +507,9 @@ func TestBulkTransferToBilling_RejectsEmptyAndOversizedRequests(t *testing.T) {
 func TestBillingTransferPolicyViolation(t *testing.T) {
 	t.Parallel()
 
-	missingDocument := []services.ShipmentBillingRequirement{{DocumentTypeName: "Proof of Delivery"}}
+	missingDocument := []services.ShipmentBillingRequirement{
+		{DocumentTypeName: "Proof of Delivery"},
+	}
 	rateFailure := []services.ShipmentBillingValidation{{Code: "rate_variance_requires_action"}}
 
 	tests := []struct {
@@ -777,7 +783,11 @@ func TestBulkTransferToBilling_SuppressesExceptionNotificationsWhenAsked(t *test
 		response.Results[0].FailureCode,
 	)
 	require.Len(t, response.Results[0].MissingRequirements, 1)
-	assert.Equal(t, "Proof of Delivery", response.Results[0].MissingRequirements[0].DocumentTypeName)
+	assert.Equal(
+		t,
+		"Proof of Delivery",
+		response.Results[0].MissingRequirements[0].DocumentTypeName,
+	)
 
 	notificationRepo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
 }

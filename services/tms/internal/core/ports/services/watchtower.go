@@ -32,7 +32,12 @@ type WatchtowerItemInput struct {
 // the write that raised it.
 type WatchtowerProjector interface {
 	Upsert(ctx context.Context, input WatchtowerItemInput)
-	Resolve(ctx context.Context, tenant pagination.TenantInfo, kind watchtower.SourceKind, sourceID string)
+	Resolve(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		kind watchtower.SourceKind,
+		sourceID string,
+	)
 }
 
 // WatchtowerSource is a source that can say what is open right now, so the
@@ -99,11 +104,33 @@ type WatchtowerSweepResult struct {
 }
 
 type WatchtowerService interface {
-	List(ctx context.Context, req ListWatchtowerItemsRequest, actor *RequestActor) (*WatchtowerPage, error)
-	Counts(ctx context.Context, tenant pagination.TenantInfo, actor *RequestActor) (*WatchtowerCounts, error)
-	MarkSeen(ctx context.Context, tenant pagination.TenantInfo, actor *RequestActor, seenAt int64) (*WatchtowerCounts, error)
-	Dismiss(ctx context.Context, tenant pagination.TenantInfo, id pulid.ID, actor *RequestActor) (*watchtower.Item, error)
-	HandOff(ctx context.Context, req HandOffWatchtowerItemRequest, actor *RequestActor) (*HandOffWatchtowerItemResult, error)
+	List(
+		ctx context.Context,
+		req ListWatchtowerItemsRequest,
+		actor *RequestActor,
+	) (*WatchtowerPage, error)
+	Counts(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		actor *RequestActor,
+	) (*WatchtowerCounts, error)
+	MarkSeen(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		actor *RequestActor,
+		seenAt int64,
+	) (*WatchtowerCounts, error)
+	Dismiss(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		id pulid.ID,
+		actor *RequestActor,
+	) (*watchtower.Item, error)
+	HandOff(
+		ctx context.Context,
+		req HandOffWatchtowerItemRequest,
+		actor *RequestActor,
+	) (*HandOffWatchtowerItemResult, error)
 	// Backfill fills the feed from every source's snapshot; Reconcile
 	// resolves what the sources no longer report as open and adds what they
 	// do. Both run per tenant.

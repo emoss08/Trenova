@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/shopspring/decimal"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -82,7 +83,7 @@ type ChatCompletionRequest struct {
 	// provider lets it through. Optional, and separate from the text sink
 	// because thinking is not the reply: it is shown differently and never
 	// becomes the message.
-	ReasoningSink ChatStreamSink
+	ReasoningSink ChatStreamSink `json:"-"`
 	// PinPreferred restricts the turn to the preferred provider when it is
 	// usable, instead of trying it first and falling through. A person who
 	// picked a model in the composer asked for that model, not for whatever
@@ -91,7 +92,7 @@ type ChatCompletionRequest struct {
 	// RetrySink is told when a provider died partway through a reply and the
 	// turn is starting over on another attempt. Whatever reached the text
 	// sink before it is being discarded, and the reader should see that.
-	RetrySink func(ChatRetryNotice)
+	RetrySink func(ChatRetryNotice) `json:"-"`
 }
 
 // ChatRetryNotice says a reply is starting again after a provider failed
@@ -194,6 +195,17 @@ type BackgroundOutcome struct {
 	FailureMessage  string
 }
 
+// StructuredCompleter answers one structured question. A service answering a
+// person's request takes this rather than the CompletionService: the call runs
+// as a workflow on a worker, retried the way the provider's answer says, and
+// the request waits for its result.
+type StructuredCompleter interface {
+	CompleteStructured(
+		ctx context.Context,
+		req *StructuredCompletionRequest,
+	) (*StructuredCompletionResult, error)
+}
+
 type CompletionService interface {
 	CompleteStructured(
 		ctx context.Context,
@@ -240,4 +252,12 @@ type ProviderFailure interface {
 	error
 	ProviderStatus() int
 	ProviderRetryable() bool
+}
+
+// ProviderBackoff is a provider failure that said how long to wait before
+// asking again, from a Retry-After header or its equivalent. Zero means it
+// said nothing.
+type ProviderBackoff interface {
+	error
+	ProviderRetryAfter() time.Duration
 }

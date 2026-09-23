@@ -31,8 +31,11 @@ func TestValidateAttachmentsNeverRequiresDocuments(t *testing.T) {
 			preview := newAttachmentPreview()
 
 			svc.validateAttachments(t.Context(), &serviceports.InvoiceAdjustmentRequest{
-				Kind:       kind,
-				TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+				Kind: kind,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: pulid.MustNew("org_"),
+					BuID:  pulid.MustNew("bu_"),
+				},
 			}, preview)
 
 			assert.Empty(t, preview.Errors)

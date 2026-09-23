@@ -96,7 +96,10 @@ func TestBuySideRating_TakesAccessorialsFromTheCarriersContract(t *testing.T) {
 				AutoApply:           true,
 				Method:              accessorialcharge.MethodFlat,
 				Amount:              money("125"),
-				AccessorialCharge:   &accessorialcharge.AccessorialCharge{ID: chargeID, Code: "LUMP"},
+				AccessorialCharge: &accessorialcharge.AccessorialCharge{
+					ID:   chargeID,
+					Code: "LUMP",
+				},
 			},
 		},
 	}
@@ -264,7 +267,10 @@ func TestEnforceMarginFloor_BlocksABreachWhenEnforcementIsOn(t *testing.T) {
 	t.Parallel()
 
 	err := enforceMarginFloor(
-		ratetypes.MarginVerdict{BelowFloor: true, Explanation: "margin of 5% is below the 15% this contract requires"},
+		ratetypes.MarginVerdict{
+			BelowFloor:  true,
+			Explanation: "margin of 5% is below the 15% this contract requires",
+		},
 		true,
 		false,
 	)

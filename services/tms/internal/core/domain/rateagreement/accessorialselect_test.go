@@ -155,7 +155,10 @@ func TestAutoApplyAccessorials_SkipsNilRows(t *testing.T) {
 	t.Parallel()
 
 	agreement := &rateagreement.RateAgreement{
-		Accessorials: []*rateagreement.RateAgreementAccessorial{nil, autoRow(pulid.MustNew("raga_"))},
+		Accessorials: []*rateagreement.RateAgreementAccessorial{
+			nil,
+			autoRow(pulid.MustNew("raga_")),
+		},
 	}
 
 	assert.Len(t, agreement.AutoApplyAccessorials(selectFacts()), 1)

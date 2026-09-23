@@ -54,7 +54,11 @@ type LateChargeRepository interface {
 	// SetDebitMemoLines stamps the memo line each assessment was billed on.
 	SetDebitMemoLines(ctx context.Context, assessments []*latecharge.LateChargeAssessment) error
 	// DeleteByRunKey undoes a run whose memo could not be raised.
-	DeleteByRunKey(ctx context.Context, tenantInfo pagination.TenantInfo, runKey string) (int64, error)
+	DeleteByRunKey(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		runKey string,
+	) (int64, error)
 	ListBySourceInvoiceIDs(
 		ctx context.Context,
 		req *ListLateChargeAssessmentsByInvoiceIDsRequest,
@@ -65,7 +69,11 @@ type LateChargeRepository interface {
 	) (map[pulid.ID][]*latecharge.LateChargeAssessment, error)
 	// CountBySourceInvoiceID says whether an invoice has been late-charged, which
 	// blocks voiding it while its late-charge memos stand.
-	CountBySourceInvoiceID(ctx context.Context, tenantInfo pagination.TenantInfo, invoiceID pulid.ID) (int64, error)
+	CountBySourceInvoiceID(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		invoiceID pulid.ID,
+	) (int64, error)
 	// ListLateChargeTenants returns every tenant whose billing control has late
 	// charge assessment switched on.
 	ListLateChargeTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)

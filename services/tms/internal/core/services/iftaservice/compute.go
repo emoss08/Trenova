@@ -112,7 +112,10 @@ func Compute(in ComputeInput) ComputeResult {
 	return c.finish()
 }
 
-func (c *computation) line(j *ifta.Jurisdiction, fuelType domaintypes.IFTAFuelType) *lineAccumulator {
+func (c *computation) line(
+	j *ifta.Jurisdiction,
+	fuelType domaintypes.IFTAFuelType,
+) *lineAccumulator {
 	key := lineKey{JurisdictionID: j.ID, FuelType: fuelType}
 	acc, ok := c.lines[key]
 	if !ok {
@@ -314,7 +317,9 @@ func (c *computation) buildLine(
 	}
 
 	line.RatePerGallon = decimal.NewNullDecimal(rate.RatePerGallon)
-	line.TaxDueMinor = money.MinorUnits(line.NetTaxableGallons.Mul(rate.RatePerGallon).Round(moneyScale))
+	line.TaxDueMinor = money.MinorUnits(
+		line.NetTaxableGallons.Mul(rate.RatePerGallon).Round(moneyScale),
+	)
 
 	switch {
 	case rate.HasSurcharge():
@@ -375,8 +380,12 @@ func (c *computation) finish() ComputeResult {
 			continue
 		}
 		result.Totals.TotalTaxableMiles = result.Totals.TotalTaxableMiles.Add(line.TaxableMiles)
-		result.Totals.TotalTaxPaidGallons = result.Totals.TotalTaxPaidGallons.Add(line.TaxPaidGallons)
-		result.Totals.NetTaxableGallons = result.Totals.NetTaxableGallons.Add(line.NetTaxableGallons)
+		result.Totals.TotalTaxPaidGallons = result.Totals.TotalTaxPaidGallons.Add(
+			line.TaxPaidGallons,
+		)
+		result.Totals.NetTaxableGallons = result.Totals.NetTaxableGallons.Add(
+			line.NetTaxableGallons,
+		)
 		result.Totals.TaxDueMinor += line.TaxDueMinor
 		result.Totals.SurchargeDueMinor += line.SurchargeDueMinor
 	}

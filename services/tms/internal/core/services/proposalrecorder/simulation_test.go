@@ -17,8 +17,10 @@ func TestRecord_KeepsASimulatedWriteAsSimulated(t *testing.T) {
 	simulated.Tier = agent.TierAutoExecute
 	simulated.Simulated = true
 	simulated.Simulation = &agent.ToolSimulation{
-		Summary:   "Would set 1 tractor to OutOfService.",
-		Changes:   []agent.FieldChange{{Field: "tractor 101", From: "Available", To: "OutOfService"}},
+		Summary: "Would set 1 tractor to OutOfService.",
+		Changes: []agent.FieldChange{
+			{Field: "tractor 101", From: "Available", To: "OutOfService"},
+		},
 		Previewed: true,
 	}
 

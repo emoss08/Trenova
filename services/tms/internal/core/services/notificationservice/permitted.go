@@ -57,13 +57,16 @@ func (s *Service) NotifyPermitted(ctx context.Context, req NotifyPermittedReques
 		}
 	}
 
-	recipients, err := s.roles.ListUsersWithPermission(ctx, repositories.ListUsersWithPermissionRequest{
-		OrganizationID: req.Tenant.OrgID,
-		BusinessUnitID: req.Tenant.BuID,
-		Resource:       req.Resource,
-		Operation:      req.Operation,
-		Now:            req.Now,
-	})
+	recipients, err := s.roles.ListUsersWithPermission(
+		ctx,
+		repositories.ListUsersWithPermissionRequest{
+			OrganizationID: req.Tenant.OrgID,
+			BusinessUnitID: req.Tenant.BuID,
+			Resource:       req.Resource,
+			Operation:      req.Operation,
+			Now:            req.Now,
+		},
+	)
 	if err != nil {
 		return 0, err
 	}

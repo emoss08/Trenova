@@ -74,11 +74,13 @@ func newCreditMemoFixture(t *testing.T) *creditMemoFixture {
 	f.paymentRepo = mocks.NewMockCustomerPaymentRepository(t)
 	f.fiscalRepo = mocks.NewMockFiscalPeriodRepository(t)
 	f.svc = &Service{
-		l:            zap.NewNop(),
-		db:           fakePaymentDB{},
-		repo:         f.paymentRepo,
-		invoiceRepo:  f.invoiceRepo,
-		validator:    NewValidator(ValidatorParams{InvoiceRepo: f.invoiceRepo, FiscalPeriodRepo: f.fiscalRepo}),
+		l:           zap.NewNop(),
+		db:          fakePaymentDB{},
+		repo:        f.paymentRepo,
+		invoiceRepo: f.invoiceRepo,
+		validator: NewValidator(
+			ValidatorParams{InvoiceRepo: f.invoiceRepo, FiscalPeriodRepo: f.fiscalRepo},
+		),
 		auditService: &mocks.NoopAuditService{},
 	}
 
@@ -120,12 +122,34 @@ func TestApplyCreditMemoValidatesTheRequestShape(t *testing.T) {
 		mutate  func(req *serviceports.ApplyCreditMemoRequest)
 		wantErr string
 	}{
-		{"missing memo", func(req *serviceports.ApplyCreditMemoRequest) { req.CreditMemoID = pulid.Nil }, "Credit memo is required"},
-		{"missing accounting date", func(req *serviceports.ApplyCreditMemoRequest) { req.AccountingDate = 0 }, "Accounting date is required"},
-		{"no applications", func(req *serviceports.ApplyCreditMemoRequest) { req.Applications = nil }, "At least one application"},
-		{"zero amount", func(req *serviceports.ApplyCreditMemoRequest) { req.Applications[0].AppliedAmountMinor = 0 }, "greater than zero"},
+		{
+			"missing memo",
+			func(req *serviceports.ApplyCreditMemoRequest) { req.CreditMemoID = pulid.Nil },
+			"Credit memo is required",
+		},
+		{
+			"missing accounting date",
+			func(req *serviceports.ApplyCreditMemoRequest) { req.AccountingDate = 0 },
+			"Accounting date is required",
+		},
+		{
+			"no applications",
+			func(req *serviceports.ApplyCreditMemoRequest) { req.Applications = nil },
+			"At least one application",
+		},
+		{
+			"zero amount",
+			func(req *serviceports.ApplyCreditMemoRequest) { req.Applications[0].AppliedAmountMinor = 0 },
+			"greater than zero",
+		},
 		{"duplicate invoice", func(req *serviceports.ApplyCreditMemoRequest) {
-			req.Applications = append(req.Applications, &serviceports.CreditMemoApplicationInput{InvoiceID: f.target.ID, AppliedAmountMinor: 100})
+			req.Applications = append(
+				req.Applications,
+				&serviceports.CreditMemoApplicationInput{
+					InvoiceID:          f.target.ID,
+					AppliedAmountMinor: 100,
+				},
+			)
 		}, "once"},
 	}
 	for _, tt := range tests {
@@ -165,10 +189,26 @@ func TestApplyCreditMemoSourceMustBeAPostedCreditMemoWithCreditLeft(t *testing.T
 		mutate  func(memo *invoice.Invoice)
 		wantErr string
 	}{
-		{"an invoice is not a credit memo", func(m *invoice.Invoice) { m.BillType = billingqueue.BillTypeInvoice }, "Only a credit memo"},
-		{"a draft memo", func(m *invoice.Invoice) { m.Status = invoice.StatusDraft }, "posted credit memo"},
-		{"a voided memo", func(m *invoice.Invoice) { m.Status = invoice.StatusVoided }, "posted credit memo"},
-		{"a fully applied memo", func(m *invoice.Invoice) { m.AppliedAmountMinor = 8000 }, "nothing left to apply"},
+		{
+			"an invoice is not a credit memo",
+			func(m *invoice.Invoice) { m.BillType = billingqueue.BillTypeInvoice },
+			"Only a credit memo",
+		},
+		{
+			"a draft memo",
+			func(m *invoice.Invoice) { m.Status = invoice.StatusDraft },
+			"posted credit memo",
+		},
+		{
+			"a voided memo",
+			func(m *invoice.Invoice) { m.Status = invoice.StatusVoided },
+			"posted credit memo",
+		},
+		{
+			"a fully applied memo",
+			func(m *invoice.Invoice) { m.AppliedAmountMinor = 8000 },
+			"nothing left to apply",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -209,11 +249,36 @@ func TestApplyCreditMemoTargetRules(t *testing.T) {
 		amount  int64
 		wantErr string
 	}{
-		{"another customer", func(inv *invoice.Invoice) { inv.CustomerID = pulid.MustNew("cus_") }, 1000, "customer must match"},
-		{"a draft target", func(inv *invoice.Invoice) { inv.Status = invoice.StatusDraft }, 1000, "Only posted invoices"},
-		{"a voided target", func(inv *invoice.Invoice) { inv.Status = invoice.StatusVoided }, 1000, "Only posted invoices"},
-		{"a credit memo target", func(inv *invoice.Invoice) { inv.BillType = billingqueue.BillTypeCreditMemo }, 1000, "invoices and debit memos only"},
-		{"over the open balance", func(inv *invoice.Invoice) { inv.AppliedAmountMinor = 9500 }, 1000, "exceeds the invoice open balance by 500"},
+		{
+			"another customer",
+			func(inv *invoice.Invoice) { inv.CustomerID = pulid.MustNew("cus_") },
+			1000,
+			"customer must match",
+		},
+		{
+			"a draft target",
+			func(inv *invoice.Invoice) { inv.Status = invoice.StatusDraft },
+			1000,
+			"Only posted invoices",
+		},
+		{
+			"a voided target",
+			func(inv *invoice.Invoice) { inv.Status = invoice.StatusVoided },
+			1000,
+			"Only posted invoices",
+		},
+		{
+			"a credit memo target",
+			func(inv *invoice.Invoice) { inv.BillType = billingqueue.BillTypeCreditMemo },
+			1000,
+			"invoices and debit memos only",
+		},
+		{
+			"over the open balance",
+			func(inv *invoice.Invoice) { inv.AppliedAmountMinor = 9500 },
+			1000,
+			"exceeds the invoice open balance by 500",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -273,7 +338,10 @@ func TestApplyCreditMemoSettlesInvoicesAndRecordsApplications(t *testing.T) {
 		Once()
 
 	req := f.applyRequest(5000)
-	req.Applications = append(req.Applications, &serviceports.CreditMemoApplicationInput{InvoiceID: second.ID, AppliedAmountMinor: 3000})
+	req.Applications = append(
+		req.Applications,
+		&serviceports.CreditMemoApplicationInput{InvoiceID: second.ID, AppliedAmountMinor: 3000},
+	)
 
 	applied, err := f.svc.ApplyCreditMemo(t.Context(), req, f.actor)
 
@@ -348,11 +416,15 @@ func TestUnapplyCreditMemoApplicationRestoresBothBalances(t *testing.T) {
 		}).
 		Once()
 
-	updated, err := f.svc.UnapplyCreditMemoApplication(t.Context(), &serviceports.UnapplyCreditMemoApplicationRequest{
-		ApplicationID: application.ID,
-		Reason:        "  Applied to the wrong invoice ",
-		TenantInfo:    f.tenantInfo,
-	}, f.actor)
+	updated, err := f.svc.UnapplyCreditMemoApplication(
+		t.Context(),
+		&serviceports.UnapplyCreditMemoApplicationRequest{
+			ApplicationID: application.ID,
+			Reason:        "  Applied to the wrong invoice ",
+			TenantInfo:    f.tenantInfo,
+		},
+		f.actor,
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, customerpayment.CreditApplicationStatusUnapplied, updated.Status)
@@ -370,12 +442,19 @@ func TestUnapplyCreditMemoApplicationRefusesAnUnappliedRow(t *testing.T) {
 		ID:     pulid.MustNew("cma_"),
 		Status: customerpayment.CreditApplicationStatusUnapplied,
 	}
-	f.paymentRepo.EXPECT().GetCreditMemoApplicationByID(mock.Anything, mock.Anything).Return(application, nil).Once()
+	f.paymentRepo.EXPECT().
+		GetCreditMemoApplicationByID(mock.Anything, mock.Anything).
+		Return(application, nil).
+		Once()
 
-	_, err := f.svc.UnapplyCreditMemoApplication(t.Context(), &serviceports.UnapplyCreditMemoApplicationRequest{
-		ApplicationID: application.ID,
-		TenantInfo:    f.tenantInfo,
-	}, f.actor)
+	_, err := f.svc.UnapplyCreditMemoApplication(
+		t.Context(),
+		&serviceports.UnapplyCreditMemoApplicationRequest{
+			ApplicationID: application.ID,
+			TenantInfo:    f.tenantInfo,
+		},
+		f.actor,
+	)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "already been unapplied")
@@ -393,14 +472,21 @@ func TestUnapplyCreditMemoApplicationRefusesAVoidedTarget(t *testing.T) {
 		AppliedAmountMinor:  5000,
 		Status:              customerpayment.CreditApplicationStatusApplied,
 	}
-	f.paymentRepo.EXPECT().GetCreditMemoApplicationByID(mock.Anything, mock.Anything).Return(application, nil).Once()
+	f.paymentRepo.EXPECT().
+		GetCreditMemoApplicationByID(mock.Anything, mock.Anything).
+		Return(application, nil).
+		Once()
 	f.lock(f.memo)
 	f.lock(f.target)
 
-	_, err := f.svc.UnapplyCreditMemoApplication(t.Context(), &serviceports.UnapplyCreditMemoApplicationRequest{
-		ApplicationID: application.ID,
-		TenantInfo:    f.tenantInfo,
-	}, f.actor)
+	_, err := f.svc.UnapplyCreditMemoApplication(
+		t.Context(),
+		&serviceports.UnapplyCreditMemoApplicationRequest{
+			ApplicationID: application.ID,
+			TenantInfo:    f.tenantInfo,
+		},
+		f.actor,
+	)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "has been voided")

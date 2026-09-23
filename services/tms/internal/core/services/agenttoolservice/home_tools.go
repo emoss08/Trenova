@@ -388,13 +388,19 @@ func (t *addHomeWidgetTool) edit(params serviceports.ToolExecuteParams) homeEdit
 
 		position := len(layout.Widgets)
 		if _, given := params.Params["position"]; given {
-			position = min(max(int(optionalInt64(params.Params, "position")), 0), len(layout.Widgets))
+			position = min(
+				max(int(optionalInt64(params.Params, "position")), 0),
+				len(layout.Widgets),
+			)
 		}
 		layout.Widgets = slices.Insert(layout.Widgets, position, widget)
 	}
 }
 
-func (t *addHomeWidgetTool) Validate(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *addHomeWidgetTool) Validate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	_, err := t.editor.plan(ctx, params, t.edit(params))
 	return err
 }
@@ -406,7 +412,10 @@ func (t *addHomeWidgetTool) Simulate(
 	return t.editor.simulate(ctx, params, t.edit(params))
 }
 
-func (t *addHomeWidgetTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *addHomeWidgetTool) Execute(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
 	}
@@ -430,7 +439,10 @@ func offeredWidget(
 // widgetConfigFrom reads the config the model sent. An id that is not an id
 // is refused here, by name, rather than stored as a widget that renders an
 // error forever.
-func widgetConfigFrom(params map[string]any, multiErr *errortypes.MultiError) homelayout.WidgetConfig {
+func widgetConfigFrom(
+	params map[string]any,
+	multiErr *errortypes.MultiError,
+) homelayout.WidgetConfig {
 	raw, _ := params["config"].(map[string]any)
 	config := homelayout.WidgetConfig{
 		Metric:     optionalString(raw, "metric"),
@@ -612,7 +624,10 @@ func (t *removeHomeWidgetTool) edit(params serviceports.ToolExecuteParams) homeE
 	}
 }
 
-func (t *removeHomeWidgetTool) Validate(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *removeHomeWidgetTool) Validate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	_, err := t.editor.plan(ctx, params, t.edit(params))
 	return err
 }
@@ -624,7 +639,10 @@ func (t *removeHomeWidgetTool) Simulate(
 	return t.editor.simulate(ctx, params, t.edit(params))
 }
 
-func (t *removeHomeWidgetTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *removeHomeWidgetTool) Execute(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
 	}
@@ -711,7 +729,10 @@ func (t *arrangeHomeLayoutTool) edit(params serviceports.ToolExecuteParams) home
 	}
 }
 
-func (t *arrangeHomeLayoutTool) Validate(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *arrangeHomeLayoutTool) Validate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	_, err := t.editor.plan(ctx, params, t.edit(params))
 	return err
 }
@@ -723,7 +744,10 @@ func (t *arrangeHomeLayoutTool) Simulate(
 	return t.editor.simulate(ctx, params, t.edit(params))
 }
 
-func (t *arrangeHomeLayoutTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *arrangeHomeLayoutTool) Execute(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
 	}

@@ -107,7 +107,12 @@ func NewProposalSource(
 	runs repositories.AgentRunRepository,
 	definitions repositories.AgentDefinitionRepository,
 ) services.WatchtowerSource {
-	return &DecisionSource{queue: queue, runs: runs, definitions: definitions, kind: watchtower.SourceAgentProposal}
+	return &DecisionSource{
+		queue:       queue,
+		runs:        runs,
+		definitions: definitions,
+		kind:        watchtower.SourceAgentProposal,
+	}
 }
 
 func NewPlanSource(
@@ -115,7 +120,12 @@ func NewPlanSource(
 	runs repositories.AgentRunRepository,
 	definitions repositories.AgentDefinitionRepository,
 ) services.WatchtowerSource {
-	return &DecisionSource{queue: queue, runs: runs, definitions: definitions, kind: watchtower.SourceAgentPlan}
+	return &DecisionSource{
+		queue:       queue,
+		runs:        runs,
+		definitions: definitions,
+		kind:        watchtower.SourceAgentPlan,
+	}
 }
 
 func (s *DecisionSource) Kind() watchtower.SourceKind { return s.kind }
@@ -157,7 +167,10 @@ func (s *DecisionSource) Snapshot(
 	for _, decision := range pending {
 		switch {
 		case decision.Proposal != nil && s.kind == watchtower.SourceAgentProposal:
-			items = append(items, DescribeProposal(decision.Proposal, names[decision.Proposal.RunID]))
+			items = append(
+				items,
+				DescribeProposal(decision.Proposal, names[decision.Proposal.RunID]),
+			)
 		case decision.Plan != nil && s.kind == watchtower.SourceAgentPlan:
 			items = append(items, DescribePlan(decision.Plan, names[decision.Plan.RunID]))
 		}
@@ -277,10 +290,13 @@ func (s *FailedRunSource) Snapshot(
 	}
 	names := map[pulid.ID]string{}
 	if len(definitionIDs) > 0 && s.definitions != nil {
-		definitions, dErr := s.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
-			IDs:        unique(definitionIDs),
-			TenantInfo: tenant,
-		})
+		definitions, dErr := s.definitions.ListByIDs(
+			ctx,
+			repositories.ListAgentDefinitionsByIDsRequest{
+				IDs:        unique(definitionIDs),
+				TenantInfo: tenant,
+			},
+		)
 		if dErr == nil {
 			for _, definition := range definitions {
 				if definition != nil {
@@ -379,7 +395,9 @@ type CarrierIntelSource struct {
 	repo repositories.CarrierIntelEventRepository
 }
 
-func NewCarrierIntelSource(repo repositories.CarrierIntelEventRepository) services.WatchtowerSource {
+func NewCarrierIntelSource(
+	repo repositories.CarrierIntelEventRepository,
+) services.WatchtowerSource {
 	return &CarrierIntelSource{repo: repo}
 }
 
@@ -462,10 +480,13 @@ func (s *EDIQuarantineSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) ([]services.WatchtowerItemInput, error) {
-	files, err := s.repo.ListRecentQuarantined(ctx, repositories.ListRecentQuarantinedEDIInboundFilesRequest{
-		TenantInfo: tenant,
-		Limit:      snapshotLimit,
-	})
+	files, err := s.repo.ListRecentQuarantined(
+		ctx,
+		repositories.ListRecentQuarantinedEDIInboundFilesRequest{
+			TenantInfo: tenant,
+			Limit:      snapshotLimit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

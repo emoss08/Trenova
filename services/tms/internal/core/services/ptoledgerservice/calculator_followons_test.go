@@ -47,16 +47,31 @@ func TestSchedule_PerPayPeriodFollowsTheSettlementCalendar(t *testing.T) {
 		assert.Equal(t, worker.PTOLedgerEntryAccrual, entry.EntryType)
 		assert.True(t, entry.NominalDays.Equal(decimal.RequireFromString("0.5")))
 		day := time.Unix(entry.EffectiveAt, 0).UTC()
-		assert.Equal(t, time.Sunday, day.Weekday(), "period ends are the midnight after the Saturday close")
+		assert.Equal(
+			t,
+			time.Sunday,
+			day.Weekday(),
+			"period ends are the midnight after the Saturday close",
+		)
 		assert.True(t, entry.EffectiveAt > in.HireDate)
 		assert.True(t, entry.EffectiveAt <= in.AsOf)
 	}
 	for i := 1; i < len(plan); i++ {
-		assert.Equal(t, int64(14*86400), plan[i].EffectiveAt-plan[i-1].EffectiveAt, "biweekly spacing")
+		assert.Equal(
+			t,
+			int64(14*86400),
+			plan[i].EffectiveAt-plan[i-1].EffectiveAt,
+			"biweekly spacing",
+		)
 	}
 
 	in.LastAccrualKey = keys[len(keys)-2]
-	assert.Equal(t, keys[len(keys)-1:], keysOf(Schedule(in)), "the cursor skips already-posted periods")
+	assert.Equal(
+		t,
+		keys[len(keys)-1:],
+		keysOf(Schedule(in)),
+		"the cursor skips already-posted periods",
+	)
 
 	in.PayPeriod = nil
 	assert.Empty(t, Schedule(in), "no settlement calendar, nothing to post")
@@ -76,7 +91,11 @@ func TestSchedule_TenureTiersRaiseAccrualAndCap(t *testing.T) {
 		AccrualAmountDays: decimal.NewFromInt(1),
 		MaxBalanceDays:    decimal.NewNullDecimal(decimal.NewFromInt(10)),
 		Tiers: []worker.PTOAccrualTier{
-			{MinMonths: 12, AccrualAmountDays: decimal.NewFromInt(2), MaxBalanceDays: decimal.NewNullDecimal(decimal.NewFromInt(20))},
+			{
+				MinMonths:         12,
+				AccrualAmountDays: decimal.NewFromInt(2),
+				MaxBalanceDays:    decimal.NewNullDecimal(decimal.NewFromInt(20)),
+			},
 		},
 	}
 	in := CalcInput{

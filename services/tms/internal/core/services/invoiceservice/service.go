@@ -1131,7 +1131,10 @@ func applyShipper(entity *invoice.Invoice, p *buildInvoiceParams) {
 	}
 }
 
-func sharesForLeg(shp *shipment.Shipment, share *shipment.PayerShare) map[pulid.ID]*shipment.PayerShare {
+func sharesForLeg(
+	shp *shipment.Shipment,
+	share *shipment.PayerShare,
+) map[pulid.ID]*shipment.PayerShare {
 	if shp == nil || share == nil {
 		return nil
 	}

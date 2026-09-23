@@ -85,7 +85,8 @@ func normalize(entity *worker.OrgHoliday) {
 	entity.Description = strings.TrimSpace(entity.Description)
 	if entity.HolidayDate > 0 {
 		day := time.Unix(entity.HolidayDate, 0).UTC()
-		entity.HolidayDate = time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC).Unix()
+		entity.HolidayDate = time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC).
+			Unix()
 	}
 	if entity.Kind == "" {
 		entity.Kind = worker.HolidayKindHoliday

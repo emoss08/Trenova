@@ -195,7 +195,11 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 	hasID := m.SubjectID != nil && m.SubjectID.IsNotNil()
 	switch {
 	case hasType && !hasID:
-		multiErr.Add("subjectId", errortypes.ErrRequired, "A subject type needs the record it names")
+		multiErr.Add(
+			"subjectId",
+			errortypes.ErrRequired,
+			"A subject type needs the record it names",
+		)
 	case hasID && !hasType:
 		multiErr.Add("subjectType", errortypes.ErrRequired, "A subject id needs its type")
 	}

@@ -59,11 +59,11 @@ type Invoice struct {
 	// the invoice is created, not read back at render time. A customer who
 	// changes their preference next month must not silently change how an invoice
 	// they were already sent reads.
-	Detail    customer.InvoiceDetail     `json:"detail"    bun:"detail,type:invoice_detail_enum,notnull,default:'Detailed'"`
-	SectionBy customer.InvoiceSectionKey `json:"sectionBy" bun:"section_by,type:invoice_section_key_enum,notnull,default:'Shipment'"`
+	Detail    customer.InvoiceDetail     `json:"detail"                    bun:"detail,type:invoice_detail_enum,notnull,default:'Detailed'"`
+	SectionBy customer.InvoiceSectionKey `json:"sectionBy"                 bun:"section_by,type:invoice_section_key_enum,notnull,default:'Shipment'"`
 	// OffCycleReason is why this invoice was cut for a customer whose freight was
 	// supposed to accumulate onto a statement. Empty on every ordinary invoice.
-	OffCycleReason            string                `json:"offCycleReason" bun:"off_cycle_reason,type:TEXT,nullzero"`
+	OffCycleReason            string                `json:"offCycleReason"            bun:"off_cycle_reason,type:TEXT,nullzero"`
 	Number                    string                `json:"number"                    bun:"number,type:VARCHAR(100),notnull"`
 	BillType                  billingqueue.BillType `json:"billType"                  bun:"bill_type,type:VARCHAR(50),notnull"`
 	Status                    Status                `json:"status"                    bun:"status,type:VARCHAR(50),notnull,default:'Draft'"`
@@ -171,9 +171,9 @@ type InvoiceLine struct {
 	AllocationPercent   decimal.NullDecimal        `json:"allocationPercent"   bun:"allocation_percent,type:NUMERIC(9,6),nullzero"`
 	ChargeAllocationID  pulid.ID                   `json:"chargeAllocationId"  bun:"charge_allocation_id,type:VARCHAR(100),nullzero"`
 
-	Version   int64 `json:"version"           bun:"version,type:BIGINT,notnull"`
-	CreatedAt int64 `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Invoice *Invoice `json:"-" bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 }

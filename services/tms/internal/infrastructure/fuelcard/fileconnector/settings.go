@@ -86,7 +86,9 @@ func settingsFrom(config map[string]string) (*settings, error) {
 		return resolved, nil
 	}
 
-	layout, err := fuelimport.ParseFixedWidthLayout(config[integration.ConfigKeyFuelFixedWidthLayout])
+	layout, err := fuelimport.ParseFixedWidthLayout(
+		config[integration.ConfigKeyFuelFixedWidthLayout],
+	)
 	if err != nil {
 		return nil, err
 	}

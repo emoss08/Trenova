@@ -945,15 +945,27 @@ func (r *Registry) registerWorkerResources() {
 		ParentResource: ResourceWorker.String(),
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View worker credentials"},
-			{Operation: OpCreate, DisplayName: "Create", Description: "Add or renew worker credentials"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Add or renew worker credentials",
+			},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify worker credentials"},
-			{Operation: OpExport, DisplayName: "Export", Description: "Export worker credential data"},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export worker credential data",
+			},
 			{
 				Operation:   OpApprove,
 				DisplayName: "Verify",
 				Description: "Mark a credential as verified against its document",
 			},
-			{Operation: OpArchive, DisplayName: "Archive", Description: "Archive worker credentials"},
+			{
+				Operation:   OpArchive,
+				DisplayName: "Archive",
+				Description: "Archive worker credentials",
+			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -965,13 +977,21 @@ func (r *Registry) registerWorkerResources() {
 		Category:       "Workers",
 		ParentResource: ResourceWorker.String(),
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View a worker's employment timeline"},
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View a worker's employment timeline",
+			},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Record",
 				Description: "Record employment events, including terminations and rehires",
 			},
-			{Operation: OpUpdate, DisplayName: "Amend", Description: "Correct recorded employment events"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Amend",
+				Description: "Correct recorded employment events",
+			},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export employment history"},
 		},
 		DefaultSensitivity: SensitivityRestricted,
@@ -985,7 +1005,11 @@ func (r *Registry) registerWorkerResources() {
 		ParentResource: ResourceWorker.String(),
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View a worker's checklists"},
-			{Operation: OpCreate, DisplayName: "Start", Description: "Start a checklist for a worker"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Start",
+				Description: "Start a checklist for a worker",
+			},
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Complete",
@@ -1005,8 +1029,16 @@ func (r *Registry) registerWorkerResources() {
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create checklist templates"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify checklist templates"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export checklist templates"},
-			{Operation: OpArchive, DisplayName: "Archive", Description: "Deactivate checklist templates"},
-			{Operation: OpRestore, DisplayName: "Restore", Description: "Reactivate checklist templates"},
+			{
+				Operation:   OpArchive,
+				DisplayName: "Archive",
+				Description: "Deactivate checklist templates",
+			},
+			{
+				Operation:   OpRestore,
+				DisplayName: "Restore",
+				Description: "Reactivate checklist templates",
+			},
 		},
 	})
 
@@ -1017,9 +1049,21 @@ func (r *Registry) registerWorkerResources() {
 		Category:    "Workers",
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View the holiday calendar"},
-			{Operation: OpCreate, DisplayName: "Create", Description: "Add holidays and blackout dates"},
-			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify holidays and blackout dates"},
-			{Operation: OpDelete, DisplayName: "Delete", Description: "Remove holidays and blackout dates"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Add holidays and blackout dates",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Modify holidays and blackout dates",
+			},
+			{
+				Operation:   OpDelete,
+				DisplayName: "Delete",
+				Description: "Remove holidays and blackout dates",
+			},
 		},
 	})
 
@@ -1032,9 +1076,21 @@ func (r *Registry) registerWorkerResources() {
 			{Operation: OpRead, DisplayName: "Read", Description: "View training courses"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create training courses"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify training courses"},
-			{Operation: OpExport, DisplayName: "Export", Description: "Export training course data"},
-			{Operation: OpArchive, DisplayName: "Archive", Description: "Deactivate training courses"},
-			{Operation: OpRestore, DisplayName: "Restore", Description: "Reactivate training courses"},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export training course data",
+			},
+			{
+				Operation:   OpArchive,
+				DisplayName: "Archive",
+				Description: "Deactivate training courses",
+			},
+			{
+				Operation:   OpRestore,
+				DisplayName: "Restore",
+				Description: "Reactivate training courses",
+			},
 		},
 	})
 
@@ -1057,7 +1113,11 @@ func (r *Registry) registerWorkerResources() {
 				DisplayName: "Waive or cancel",
 				Description: "Waive a required course or withdraw an assignment",
 			},
-			{Operation: OpExport, DisplayName: "Export", Description: "Export worker training data"},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export worker training data",
+			},
 		},
 	})
 
@@ -1113,7 +1173,11 @@ func (r *Registry) registerWorkerResources() {
 		DefaultSensitivity: SensitivityRestricted,
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View leave cases and balances"},
-			{Operation: OpCreate, DisplayName: "Record", Description: "Open a leave case and record days"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Record",
+				Description: "Open a leave case and record days",
+			},
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
@@ -1385,11 +1449,23 @@ func (r *Registry) registerWorkerResources() {
 		Category:       "Workers",
 		ParentResource: ResourceWorker.String(),
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View safety events and scorecards"},
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View safety events and scorecards",
+			},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Record safety events"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Edit safety events"},
-			{Operation: OpClose, DisplayName: "Close", Description: "Resolve, review and reopen safety events"},
-			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete open safety events recorded in error"},
+			{
+				Operation:   OpClose,
+				DisplayName: "Close",
+				Description: "Resolve, review and reopen safety events",
+			},
+			{
+				Operation:   OpDelete,
+				DisplayName: "Delete",
+				Description: "Delete open safety events recorded in error",
+			},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export safety data"},
 		},
 	})
@@ -1403,7 +1479,11 @@ func (r *Registry) registerWorkerResources() {
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View disciplinary actions"},
 			{Operation: OpCreate, DisplayName: "Issue", Description: "Issue disciplinary actions"},
-			{Operation: OpCancel, DisplayName: "Rescind", Description: "Rescind disciplinary actions"},
+			{
+				Operation:   OpCancel,
+				DisplayName: "Rescind",
+				Description: "Rescind disciplinary actions",
+			},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export disciplinary data"},
 		},
 	})
@@ -1430,8 +1510,16 @@ func (r *Registry) registerWorkerResources() {
 			{Operation: OpRead, DisplayName: "Read", Description: "View review templates"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create review templates"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify review templates"},
-			{Operation: OpArchive, DisplayName: "Archive", Description: "Deactivate review templates"},
-			{Operation: OpRestore, DisplayName: "Restore", Description: "Reactivate review templates"},
+			{
+				Operation:   OpArchive,
+				DisplayName: "Archive",
+				Description: "Deactivate review templates",
+			},
+			{
+				Operation:   OpRestore,
+				DisplayName: "Restore",
+				Description: "Reactivate review templates",
+			},
 		},
 	})
 
@@ -1445,7 +1533,11 @@ func (r *Registry) registerWorkerResources() {
 			{Operation: OpRead, DisplayName: "Read", Description: "View performance reviews"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Start reviews"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Edit review drafts"},
-			{Operation: OpSubmit, DisplayName: "Submit", Description: "Submit reviews to the worker"},
+			{
+				Operation:   OpSubmit,
+				DisplayName: "Submit",
+				Description: "Submit reviews to the worker",
+			},
 			{Operation: OpClose, DisplayName: "Close", Description: "Close and reopen reviews"},
 			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete review drafts"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export review data"},
@@ -1461,9 +1553,21 @@ func (r *Registry) registerWorkerResources() {
 			{Operation: OpRead, DisplayName: "Read", Description: "View credential types"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create credential types"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify credential types"},
-			{Operation: OpExport, DisplayName: "Export", Description: "Export credential type data"},
-			{Operation: OpArchive, DisplayName: "Archive", Description: "Deactivate credential types"},
-			{Operation: OpRestore, DisplayName: "Restore", Description: "Reactivate credential types"},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export credential type data",
+			},
+			{
+				Operation:   OpArchive,
+				DisplayName: "Archive",
+				Description: "Deactivate credential types",
+			},
+			{
+				Operation:   OpRestore,
+				DisplayName: "Restore",
+				Description: "Reactivate credential types",
+			},
 		},
 	})
 
@@ -2173,7 +2277,11 @@ func (r *Registry) registerBillingResources() {
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View what agents remember"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Record a memory for agents"},
-			{Operation: OpUpdate, DisplayName: "Update", Description: "Change, retire or restore a memory"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Change, retire or restore a memory",
+			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -3129,7 +3237,11 @@ func (r *Registry) registerAccountingResources() {
 			{Operation: OpLock, DisplayName: "Lock", Description: "Lock fiscal years"},
 			{Operation: OpUnlock, DisplayName: "Unlock", Description: "Unlock fiscal years"},
 			{Operation: OpActivate, DisplayName: "Activate", Description: "Activate fiscal years"},
-			{Operation: OpExport, DisplayName: "Export", Description: "Export fiscal calendar data"},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export fiscal calendar data",
+			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{
@@ -3172,8 +3284,16 @@ func (r *Registry) registerAccountingResources() {
 			{Operation: OpReopen, DisplayName: "Reopen", Description: "Reopen fiscal periods"},
 			{Operation: OpLock, DisplayName: "Lock", Description: "Lock fiscal periods"},
 			{Operation: OpUnlock, DisplayName: "Unlock", Description: "Unlock fiscal periods"},
-			{Operation: OpActivate, DisplayName: "Open", Description: "Open inactive fiscal periods"},
-			{Operation: OpExport, DisplayName: "Export", Description: "Export fiscal calendar data"},
+			{
+				Operation:   OpActivate,
+				DisplayName: "Open",
+				Description: "Open inactive fiscal periods",
+			},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export fiscal calendar data",
+			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{
@@ -4019,7 +4139,11 @@ func (r *Registry) registerCommunicationResources() {
 		Description: "Emails and notices sent to customers and other outside parties",
 		Category:    "Communications",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View what was sent to customers"},
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View what was sent to customers",
+			},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Send",

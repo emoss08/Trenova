@@ -44,8 +44,8 @@ type AIUsageRecord struct {
 	ThreadID          pulid.ID `json:"threadId"          bun:"thread_id,type:VARCHAR(100),nullzero"`
 	RunID             pulid.ID `json:"runId"             bun:"run_id,type:VARCHAR(100),nullzero"`
 
-	Succeeded  bool   `json:"succeeded"  bun:"succeeded,type:BOOLEAN,notnull"`
-	ErrorClass string `json:"errorClass" bun:"error_class,type:VARCHAR(50),nullzero"`
+	Succeeded  bool   `json:"succeeded"    bun:"succeeded,type:BOOLEAN,notnull"`
+	ErrorClass string `json:"errorClass"   bun:"error_class,type:VARCHAR(50),nullzero"`
 	// ErrorMessage is the provider's own words for a failed attempt, cut to
 	// fit. The class says what kind of failure it was; this says why, which
 	// is what an administrator needs when a provider refuses every request.
@@ -58,7 +58,7 @@ type AIUsageRecord struct {
 	ReasoningTokens int   `json:"reasoningTokens" bun:"reasoning_tokens,type:INTEGER,notnull,default:0"`
 	// CostUSD is nil when the provider carries no pricing. It is not zero:
 	// a call that cost something unknown must not be summed as free.
-	CostUSD *decimal.Decimal `json:"costUsd" bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
+	CostUSD *decimal.Decimal `json:"costUsd"         bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
 
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

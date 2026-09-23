@@ -71,7 +71,14 @@ func setupTest(t *testing.T) *testDeps {
 		realtime:                  &mocks.NoopRealtimeService{},
 		customFieldsValuesService: cfService,
 	}
-	return &testDeps{repo: repo, audit: auditSvc, valueRepo: valueRepo, defRepo: defRepo, cacheRepo: cacheRepo, svc: svc}
+	return &testDeps{
+		repo:      repo,
+		audit:     auditSvc,
+		valueRepo: valueRepo,
+		defRepo:   defRepo,
+		cacheRepo: cacheRepo,
+		svc:       svc,
+	}
 }
 
 func newTestWorker() *worker.Worker {
@@ -235,7 +242,10 @@ func TestGet(t *testing.T) {
 			},
 		}
 
-		deps.cacheRepo.EXPECT().GetByID(mock.Anything, req).Return(nil, repositories.ErrCacheMiss).Once()
+		deps.cacheRepo.EXPECT().
+			GetByID(mock.Anything, req).
+			Return(nil, repositories.ErrCacheMiss).
+			Once()
 		deps.repo.On("GetByID", mock.Anything, req).Return(entity, nil)
 		deps.valueRepo.On("GetByResource", mock.Anything, mock.Anything).
 			Return([]*customfield.CustomFieldValue{}, nil)
@@ -286,7 +296,10 @@ func TestGet(t *testing.T) {
 		}
 
 		notFoundErr := errors.New("worker not found")
-		deps.cacheRepo.EXPECT().GetByID(mock.Anything, req).Return(nil, repositories.ErrCacheMiss).Once()
+		deps.cacheRepo.EXPECT().
+			GetByID(mock.Anything, req).
+			Return(nil, repositories.ErrCacheMiss).
+			Once()
 		deps.repo.On("GetByID", mock.Anything, req).Return(nil, notFoundErr)
 
 		result, err := deps.svc.Get(t.Context(), req)
@@ -311,7 +324,10 @@ func TestGet(t *testing.T) {
 			IncludeProfile: true,
 		}
 
-		deps.cacheRepo.EXPECT().GetByID(mock.Anything, req).Return(nil, repositories.ErrCacheMiss).Once()
+		deps.cacheRepo.EXPECT().
+			GetByID(mock.Anything, req).
+			Return(nil, repositories.ErrCacheMiss).
+			Once()
 		deps.repo.On("GetByID", mock.Anything, req).Return(entity, nil)
 		deps.valueRepo.On("GetByResource", mock.Anything, mock.Anything).
 			Return([]*customfield.CustomFieldValue{}, nil)
@@ -336,7 +352,10 @@ func TestGet(t *testing.T) {
 		}
 
 		dbErr := errors.New("connection timeout")
-		deps.cacheRepo.EXPECT().GetByID(mock.Anything, req).Return(nil, repositories.ErrCacheMiss).Once()
+		deps.cacheRepo.EXPECT().
+			GetByID(mock.Anything, req).
+			Return(nil, repositories.ErrCacheMiss).
+			Once()
 		deps.repo.On("GetByID", mock.Anything, req).Return(nil, dbErr)
 
 		result, err := deps.svc.Get(t.Context(), req)
@@ -359,7 +378,10 @@ func TestGet(t *testing.T) {
 			},
 		}
 
-		deps.cacheRepo.EXPECT().GetByID(mock.Anything, req).Return(nil, repositories.ErrCacheMiss).Once()
+		deps.cacheRepo.EXPECT().
+			GetByID(mock.Anything, req).
+			Return(nil, repositories.ErrCacheMiss).
+			Once()
 		deps.repo.On("GetByID", mock.Anything, req).Return(entity, nil)
 		deps.valueRepo.On("GetByResource", mock.Anything, mock.Anything).
 			Return([]*customfield.CustomFieldValue{}, nil)

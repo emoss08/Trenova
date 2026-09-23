@@ -28,10 +28,39 @@ func checklistTemplate() *worker.WorkerChecklistTemplate {
 		Status:         domaintypes.StatusActive,
 		IsDefault:      true,
 		Items: []*worker.WorkerChecklistTemplateItem{
-			{ID: pulid.MustNew("wclti_"), Label: "CDL on file", Kind: worker.ChecklistItemCredential, Required: true, Owner: worker.ChecklistOwnerSafety, CredentialTypeID: credType, DueOffsetDays: 3},
-			{ID: pulid.MustNew("wclti_"), Label: "Drug test result", Kind: worker.ChecklistItemDocument, Required: true, Owner: worker.ChecklistOwnerSafety, DocumentTypeID: docType, DueOffsetDays: 7},
-			{ID: pulid.MustNew("wclti_"), Label: "Dash invite", Kind: worker.ChecklistItemPortalAccess, Required: false, Owner: worker.ChecklistOwnerDispatch},
-			{ID: pulid.MustNew("wclti_"), Label: "Fuel card issued", Kind: worker.ChecklistItemEquipment, Required: true, Owner: worker.ChecklistOwnerFleet, DueOffsetDays: 1},
+			{
+				ID:               pulid.MustNew("wclti_"),
+				Label:            "CDL on file",
+				Kind:             worker.ChecklistItemCredential,
+				Required:         true,
+				Owner:            worker.ChecklistOwnerSafety,
+				CredentialTypeID: credType,
+				DueOffsetDays:    3,
+			},
+			{
+				ID:             pulid.MustNew("wclti_"),
+				Label:          "Drug test result",
+				Kind:           worker.ChecklistItemDocument,
+				Required:       true,
+				Owner:          worker.ChecklistOwnerSafety,
+				DocumentTypeID: docType,
+				DueOffsetDays:  7,
+			},
+			{
+				ID:       pulid.MustNew("wclti_"),
+				Label:    "Dash invite",
+				Kind:     worker.ChecklistItemPortalAccess,
+				Required: false,
+				Owner:    worker.ChecklistOwnerDispatch,
+			},
+			{
+				ID:            pulid.MustNew("wclti_"),
+				Label:         "Fuel card issued",
+				Kind:          worker.ChecklistItemEquipment,
+				Required:      true,
+				Owner:         worker.ChecklistOwnerFleet,
+				DueOffsetDays: 1,
+			},
 		},
 	}
 }
@@ -101,7 +130,12 @@ func TestChecklist_ProgressAndAutoSatisfy(t *testing.T) {
 	assert.Equal(t, 4, progress.Total)
 	assert.Equal(t, 0, progress.Settled)
 	assert.Equal(t, 3, progress.RequiredTotal)
-	assert.Equal(t, 2, progress.Overdue, "CDL (3d) and fuel card (1d) are past due, drug test (7d) is not")
+	assert.Equal(
+		t,
+		2,
+		progress.Overdue,
+		"CDL (3d) and fuel card (1d) are past due, drug test (7d) is not",
+	)
 	assert.False(t, progress.Complete())
 
 	credID := pulid.MustNew("wcred_")
@@ -109,7 +143,11 @@ func TestChecklist_ProgressAndAutoSatisfy(t *testing.T) {
 	docID := pulid.MustNew("doc_")
 	changed := checklist.AutoSatisfy(worker.ChecklistEvidence{
 		CredentialsByType: map[pulid.ID]*worker.WorkerCredential{
-			template.Items[0].CredentialTypeID: {ID: credID, Status: worker.CredentialStatusActive, ExpiresAt: &expiry},
+			template.Items[0].CredentialTypeID: {
+				ID:        credID,
+				Status:    worker.CredentialStatusActive,
+				ExpiresAt: &expiry,
+			},
 		},
 		DocumentsByType: map[pulid.ID]*document.Document{
 			template.Items[1].DocumentTypeID: {ID: docID},
@@ -120,7 +158,12 @@ func TestChecklist_ProgressAndAutoSatisfy(t *testing.T) {
 	assert.Equal(t, credID, checklist.Items[0].EvidenceCredentialID)
 	assert.Equal(t, docID, checklist.Items[1].EvidenceDocumentID)
 	assert.True(t, checklist.Items[2].AutoCompleted)
-	assert.Equal(t, worker.ChecklistItemPending, checklist.Items[3].Status, "equipment is never auto-completed")
+	assert.Equal(
+		t,
+		worker.ChecklistItemPending,
+		checklist.Items[3].Status,
+		"equipment is never auto-completed",
+	)
 
 	progress = checklist.Progress(now)
 	assert.Equal(t, 3, progress.Settled)
@@ -137,7 +180,9 @@ func TestChecklist_ProgressAndAutoSatisfy(t *testing.T) {
 	assert.Empty(t, again, "settled items are not re-evaluated")
 }
 
-func TestChecklist_AutoSatisfyIgnoresExpiredCredentialAndFlipsPortalRuleForOffboarding(t *testing.T) {
+func TestChecklist_AutoSatisfyIgnoresExpiredCredentialAndFlipsPortalRuleForOffboarding(
+	t *testing.T,
+) {
 	template := checklistTemplate()
 	template.Kind = worker.ChecklistKindOffboarding
 	now := int64(1_800_000_000)
@@ -146,11 +191,19 @@ func TestChecklist_AutoSatisfyIgnoresExpiredCredentialAndFlipsPortalRuleForOffbo
 
 	changed := checklist.AutoSatisfy(worker.ChecklistEvidence{
 		CredentialsByType: map[pulid.ID]*worker.WorkerCredential{
-			template.Items[0].CredentialTypeID: {ID: pulid.MustNew("wcred_"), Status: worker.CredentialStatusActive, ExpiresAt: &expired},
+			template.Items[0].CredentialTypeID: {
+				ID:        pulid.MustNew("wcred_"),
+				Status:    worker.CredentialStatusActive,
+				ExpiresAt: &expired,
+			},
 		},
 		HasPortalAccess: true,
 	}, now)
-	assert.Empty(t, changed, "an expired credential is not evidence, and portal access still granted does not settle offboarding")
+	assert.Empty(
+		t,
+		changed,
+		"an expired credential is not evidence, and portal access still granted does not settle offboarding",
+	)
 
 	changed = checklist.AutoSatisfy(worker.ChecklistEvidence{HasPortalAccess: false}, now)
 	require.Len(t, changed, 1)

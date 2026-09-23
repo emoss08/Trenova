@@ -202,7 +202,10 @@ func draftViewOf(draft *documentshipmentdraft.DocumentShipmentDraft) (*draftView
 // shipmentQuoter and carrierShopper are the two questions the rating tools
 // ask: what would we charge, and what would a carrier charge us.
 type shipmentQuoter interface {
-	Quote(ctx context.Context, req *ratequoteservice.QuoteRequest) (*serviceports.RatedShipment, error)
+	Quote(
+		ctx context.Context,
+		req *ratequoteservice.QuoteRequest,
+	) (*serviceports.RatedShipment, error)
 }
 
 type carrierShopper interface {
@@ -210,7 +213,10 @@ type carrierShopper interface {
 }
 
 type locationReader interface {
-	GetByIDs(ctx context.Context, req repositories.GetLocationsByIDsRequest) ([]*location.Location, error)
+	GetByIDs(
+		ctx context.Context,
+		req repositories.GetLocationsByIDsRequest,
+	) ([]*location.Location, error)
 }
 
 // draftReviewNeeded is the review status document intelligence writes when
@@ -234,7 +240,10 @@ type quoteShipmentTool struct {
 	locations locationReader
 }
 
-func newQuoteShipmentTool(quotes shipmentQuoter, locations locationReader) serviceports.AgentQueryTool {
+func newQuoteShipmentTool(
+	quotes shipmentQuoter,
+	locations locationReader,
+) serviceports.AgentQueryTool {
 	return &quoteShipmentTool{quotes: quotes, locations: locations}
 }
 
@@ -258,15 +267,24 @@ func (t *quoteShipmentTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "The customer being billed, from list_customers.",
 			},
-			"serviceTypeId":  map[string]any{"type": "string", "description": "The service type, from list_service_types."},
-			"shipmentTypeId": map[string]any{"type": "string", "description": "The shipment type, from list_shipment_types."},
+			"serviceTypeId": map[string]any{
+				"type":        "string",
+				"description": "The service type, from list_service_types.",
+			},
+			"shipmentTypeId": map[string]any{
+				"type":        "string",
+				"description": "The shipment type, from list_shipment_types.",
+			},
 			"stops": map[string]any{
 				"type":        "array",
 				"description": "The stops in travel order: at least a pickup and a delivery.",
 				"items": map[string]any{
 					"type": "object",
 					"properties": map[string]any{
-						"locationId": map[string]any{"type": "string", "description": "A location id from list_locations."},
+						"locationId": map[string]any{
+							"type":        "string",
+							"description": "A location id from list_locations.",
+						},
 						"type": map[string]any{
 							"type": "string",
 							"enum": []string{"Pickup", "Delivery", "SplitPickup", "SplitDelivery"},
@@ -280,9 +298,18 @@ func (t *quoteShipmentTool) ParamSchema() map[string]any {
 					"additionalProperties": false,
 				},
 			},
-			"pieces":     map[string]any{"type": "integer", "description": "Piece count, when known."},
-			"weight":     map[string]any{"type": "integer", "description": "Weight in pounds, when known."},
-			"ratingUnit": map[string]any{"type": "integer", "description": "Rating units; defaults to 1."},
+			"pieces": map[string]any{
+				"type":        "integer",
+				"description": "Piece count, when known.",
+			},
+			"weight": map[string]any{
+				"type":        "integer",
+				"description": "Weight in pounds, when known.",
+			},
+			"ratingUnit": map[string]any{
+				"type":        "integer",
+				"description": "Rating units; defaults to 1.",
+			},
 			"asOf": map[string]any{
 				"type":        "string",
 				"description": "Rate as of this date, YYYY-MM-DD. Defaults to the first stop's date, then today.",
@@ -431,7 +458,11 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 	for idx, stop := range stopParams {
 		loc, ok := byID[ids[idx]]
 		if !ok {
-			return nil, nil, fmt.Errorf("stops[%d].locationId %s is not a location in this organization", idx, ids[idx])
+			return nil, nil, fmt.Errorf(
+				"stops[%d].locationId %s is not a location in this organization",
+				idx,
+				ids[idx],
+			)
 		}
 		stopType := shipment.StopType(stop.Type)
 		if !stopType.IsValid() {
