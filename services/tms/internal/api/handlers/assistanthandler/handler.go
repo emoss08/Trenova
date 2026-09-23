@@ -1,6 +1,8 @@
 package assistanthandler
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -660,11 +662,19 @@ func (h *Handler) sendMessageStream(c *gin.Context) {
 		Data:  serviceports.AssistantTurnEvent{TurnID: turn.ID, ThreadID: threadID},
 	})
 
-	observed, closeStream := h.turns.Observe(c.Request.Context(), turn, emit)
+	// Aborting this request stops the turn, and so does a Stop asked from
+	// anywhere else — a second tab, or this one after a reload rejoined it.
+	runCtx, release := h.turns.Stoppable(c.Request.Context(), turn)
+	defer release()
+	// The record is closed whatever ended the turn, including the reader
+	// leaving; a record left Running holds the conversation's one live slot.
+	closeCtx := context.WithoutCancel(c.Request.Context())
+
+	observed, closeStream := h.turns.Observe(runCtx, turn, emit)
 
 	actor := requestActorFromAuthContext(authCtx)
 	providerID, providerChosen := body.provider()
-	result, err := h.service.SendMessageStream(c.Request.Context(), &serviceports.SendMessageRequest{
+	result, err := h.service.SendMessageStream(runCtx, &serviceports.SendMessageRequest{
 		ThreadID:              threadID,
 		Content:               body.Content,
 		Page:                  body.page(),
@@ -676,13 +686,16 @@ func (h *Handler) sendMessageStream(c *gin.Context) {
 		FollowUpProposalID:    body.FollowUpProposalID,
 	}, &actor, observed)
 	if err != nil {
-		ending := serviceports.StreamEvent{
-			Event: serviceports.AssistantEventError,
-			Data:  gin.H{"message": h.streamErrorMessage(err)},
+		ending := assistantturnservice.Ending(nil, err)
+		if !errors.Is(err, context.Canceled) {
+			ending = serviceports.StreamEvent{
+				Event: serviceports.AssistantEventError,
+				Data:  gin.H{"message": h.streamErrorMessage(err)},
+			}
 		}
 		emit(ending)
 		closeStream(ending)
-		h.turns.Complete(c.Request.Context(), turn, assistantturnservice.StatusFor(false, err), err)
+		h.turns.Complete(closeCtx, turn, assistantturnservice.StatusFor(false, err), err)
 
 		return
 	}
@@ -690,9 +703,7 @@ func (h *Handler) sendMessageStream(c *gin.Context) {
 	ending := serviceports.StreamEvent{Event: serviceports.AssistantEventDone, Data: result}
 	emit(ending)
 	closeStream(ending)
-	h.turns.Complete(
-		c.Request.Context(), turn, assistantturnservice.StatusFor(result.Refused, nil), nil,
-	)
+	h.turns.Complete(closeCtx, turn, assistantturnservice.StatusFor(result.Refused, nil), nil)
 }
 
 // ask streams a quick question's answer. The thread it runs on is announced

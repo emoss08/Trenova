@@ -410,6 +410,27 @@ describe("reduceTurn artifacts", () => {
   });
 });
 
+describe("a replayed ending", () => {
+  // A reader who attaches to a turn that already ended gets its ending from
+  // the turn's record, which carries no reply. It still ends the turn; the
+  // conversation is refetched for what was said.
+  it("parses to an ending with no result", () => {
+    const parsed = parseAssistantStreamEvent(
+      "done",
+      JSON.stringify({ turnId: "atrn_1", threadId: "athr_1", status: "Completed", replay: true }),
+    );
+
+    expect(parsed).toEqual({ event: "done", data: null });
+  });
+
+  it("ends the turn without inventing a result", () => {
+    const state = run([accepted, { event: "done", data: null }]);
+
+    expect(state.status).toBe("done");
+    expect(state.result).toBeNull();
+  });
+});
+
 describe("a turn's context", () => {
   it("starts with what the person handed over, shown on their provisional turn", () => {
     const state = initialTurnState("Read this", null, {

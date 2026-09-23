@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -36,6 +37,7 @@ type Service struct {
 	reader     serviceports.TurnStreamReader
 	metrics    *metrics.Assistant
 	trajectory serviceports.AgentRunEventRecorder
+	running    *runningTurns
 }
 
 func New(p Params) *Service {
@@ -46,6 +48,7 @@ func New(p Params) *Service {
 		reader:     p.Reader,
 		metrics:    assistantMetrics(p.Metrics),
 		trajectory: p.Trajectory,
+		running:    newRunningTurns(),
 	}
 }
 
@@ -337,12 +340,7 @@ func (s *Service) Stop(
 	}
 
 	if turn.WorkflowID == "" {
-		// A turn still running in the request that asked for it. Its reader
-		// aborting is what stops it, exactly as before, and there is no
-		// execution to cancel.
-		s.metrics.RecordTurnStopped(metrics.TransportInProcess, "no_execution")
-
-		return nil
+		return s.stopInProcess(ctx, turn)
 	}
 
 	if err := cancel(turn.WorkflowID); err != nil {
@@ -354,6 +352,106 @@ func (s *Service) Stop(
 	s.metrics.RecordTurnStopped(metrics.TransportDurable, "cancelled")
 
 	return nil
+}
+
+// stopInProcess ends a turn running inside an API process rather than on a
+// worker. Aborting the reader used to be the only way to stop one, which
+// left a turn nobody's request carried — a decision's follow-up, or one a
+// reader rejoined after a reload — impossible to stop at all.
+//
+// The record is marked first, so every instance's Stoppable sees it; the
+// turn is then cancelled directly when it happens to be running here.
+func (s *Service) stopInProcess(ctx context.Context, turn *conversation.AssistantTurn) error {
+	err := s.turns.Complete(ctx, repositories.CompleteAssistantTurnRequest{
+		ID:         turn.ID,
+		TenantInfo: tenantOf(turn),
+		Status:     conversation.AssistantTurnStatusStopped,
+	})
+	if err != nil {
+		s.metrics.RecordTurnStopped(metrics.TransportInProcess, "error")
+
+		return fmt.Errorf("stop this reply: %w", err)
+	}
+
+	s.running.cancel(turn.ID)
+	s.metrics.RecordTurnStopped(metrics.TransportInProcess, "cancelled")
+
+	return nil
+}
+
+// stopPollInterval is how often a turn running in-process re-reads its record
+// to learn it was stopped from another instance.
+const stopPollInterval = 2 * time.Second
+
+// Stoppable derives the context an in-process turn runs on, one that a Stop
+// cancels wherever it was asked. A Stop reaching this instance cancels it at
+// once; one reaching another instance is seen on the next read of the turn's
+// record.
+//
+// The returned cancel must be called when the turn ends.
+func (s *Service) Stoppable(
+	ctx context.Context,
+	turn *conversation.AssistantTurn,
+) (context.Context, context.CancelFunc) {
+	runCtx, cancel := context.WithCancel(ctx)
+	release := s.running.add(turn.ID, cancel)
+
+	// The poll reads a copy: stillRunning writes what it learns back onto
+	// the turn it is given, and the caller still holds the original.
+	watched := *turn
+	go func() {
+		ticker := time.NewTicker(stopPollInterval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-runCtx.Done():
+				return
+			case <-ticker.C:
+				if !s.stillRunning(runCtx, &watched) {
+					cancel()
+					return
+				}
+			}
+		}
+	}()
+
+	return runCtx, func() {
+		release()
+		cancel()
+	}
+}
+
+// runningTurns holds how to cancel each turn running in this process.
+type runningTurns struct {
+	mu      sync.Mutex
+	cancels map[pulid.ID]context.CancelFunc
+}
+
+func newRunningTurns() *runningTurns {
+	return &runningTurns{cancels: make(map[pulid.ID]context.CancelFunc)}
+}
+
+func (r *runningTurns) add(id pulid.ID, cancel context.CancelFunc) func() {
+	r.mu.Lock()
+	r.cancels[id] = cancel
+	r.mu.Unlock()
+
+	return func() {
+		r.mu.Lock()
+		delete(r.cancels, id)
+		r.mu.Unlock()
+	}
+}
+
+func (r *runningTurns) cancel(id pulid.ID) {
+	r.mu.Lock()
+	cancel, ok := r.cancels[id]
+	r.mu.Unlock()
+
+	if ok {
+		cancel()
+	}
 }
 
 // Ending is the event that closes a turn's stream: the saved result, or a

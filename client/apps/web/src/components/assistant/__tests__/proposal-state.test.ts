@@ -8,6 +8,7 @@ import {
   humanizeToolName,
   isDecidable,
   pollIntervalFor,
+  turnEndByMessage,
 } from "../proposal-state";
 
 function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal {
@@ -149,12 +150,39 @@ describe("groupProposalsByMessage", () => {
 
     const { byMessage, orphans } = groupProposalsByMessage(
       [first, second, third],
-      [message({ id: "amsg_1" }), message({ id: "amsg_2" })],
+      [
+        message({ id: "amsg_1" }),
+        message({ id: "amsg_u", role: "User" }),
+        message({ id: "amsg_2" }),
+      ],
     );
 
     expect(byMessage.get("amsg_1")).toEqual([first, third]);
     expect(byMessage.get("amsg_2")).toEqual([second]);
     expect(orphans).toEqual([]);
+  });
+
+  // The message that called the tool is the model's "let me set that up", not
+  // its question. The card belongs under the words that ask for the decision,
+  // which are the turn's last.
+  it("shows a proposal under the last thing the turn said", () => {
+    const made = proposal({ id: "ap_1", sourceMessageId: "amsg_call" });
+
+    const { byMessage } = groupProposalsByMessage(
+      [made],
+      [
+        message({ id: "amsg_ask", role: "User" }),
+        message({ id: "amsg_call" }),
+        message({ id: "amsg_tool", role: "Tool" }),
+        message({ id: "amsg_final" }),
+        message({ id: "amsg_next", role: "User" }),
+        message({ id: "amsg_later" }),
+      ],
+    );
+
+    expect(byMessage.get("amsg_final")).toEqual([made]);
+    expect(byMessage.has("amsg_call")).toBe(false);
+    expect(byMessage.has("amsg_later")).toBe(false);
   });
 
   // A pending write nobody can see is worse than one shown out of position.
@@ -176,6 +204,25 @@ describe("groupProposalsByMessage", () => {
     const { orphans } = groupProposalsByMessage([untied], [message({ id: "amsg_1" })]);
 
     expect(orphans).toEqual([untied]);
+  });
+});
+
+describe("turnEndByMessage", () => {
+  it("maps every assistant message to the last one before the next question", () => {
+    const ends = turnEndByMessage([
+      message({ id: "u1", role: "User" }),
+      message({ id: "a1" }),
+      message({ id: "t1", role: "Tool" }),
+      message({ id: "a2" }),
+      message({ id: "u2", role: "User" }),
+      message({ id: "a3" }),
+    ]);
+
+    expect(ends.get("a1")).toBe("a2");
+    expect(ends.get("a2")).toBe("a2");
+    expect(ends.get("a3")).toBe("a3");
+    expect(ends.has("u1")).toBe(false);
+    expect(ends.has("t1")).toBe(false);
   });
 });
 

@@ -728,7 +728,12 @@ export type AssistantStreamEvent =
   | { event: "retrying"; data: z.infer<typeof assistantRetryingEventSchema> }
   | { event: "artifact"; data: z.infer<typeof assistantArtifactEventSchema> }
   | { event: "thread"; data: AssistantThread }
-  | { event: "done"; data: SendMessageResult }
+  /**
+   * The saved turn, or null when the ending was rebuilt from the turn's record
+   * because its stream could not supply one: the reader then reads the
+   * conversation rather than trusting what it has on screen.
+   */
+  | { event: "done"; data: SendMessageResult | null }
   | { event: "error"; data: z.infer<typeof assistantErrorEventSchema> };
 
 /**
@@ -737,6 +742,17 @@ export type AssistantStreamEvent =
  * older reader; a known event with a malformed body throws, because that is a
  * contract violation rather than an extension.
  */
+/**
+ * An ending the server rebuilt from a turn's record (`replay: true`) rather
+ * than forwarded from the turn: it names the turn and how it ended, not what
+ * was said, so it is not a saved result and must not be parsed as one.
+ */
+function isReplayedEnding(data: unknown): boolean {
+  return (
+    typeof data === "object" && data !== null && (data as { replay?: unknown }).replay === true
+  );
+}
+
 export function parseAssistantStreamEvent(event: string, raw: string): AssistantStreamEvent | null {
   const data: unknown = raw === "" ? {} : JSON.parse(raw);
   switch (event) {
@@ -761,7 +777,10 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
     case "thread":
       return { event, data: assistantThreadSchema.parse(data) };
     case "done":
-      return { event, data: sendMessageResultSchema.parse(data) };
+      return {
+        event,
+        data: isReplayedEnding(data) ? null : sendMessageResultSchema.parse(data),
+      };
     case "error":
       return { event, data: assistantErrorEventSchema.parse(data) };
     default:

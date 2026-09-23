@@ -3,6 +3,7 @@ package assistantturnservice
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -56,10 +57,30 @@ func (s *Service) Relay(
 	if err != nil {
 		return err
 	}
+	// No stream is not the same as an expired one. A turn's stream is made by
+	// its first event, and a reader attaches the moment the turn exists: the
+	// follow-up to a decision is recorded before the decision returns, and a
+	// model can think for a minute before it says anything. A turn still
+	// running is followed from wherever its stream begins; the read blocks
+	// until it does, and the idle check below still ends it if the turn dies
+	// first.
 	if !live {
-		s.metrics.RecordStreamAttach("expired")
+		if !s.stillRunning(ctx, turn) {
+			s.metrics.RecordStreamAttach("expired")
 
-		return onFrame(s.expiredFrame(ctx, turn))
+			return onFrame(closingFrame(turn))
+		}
+		if streamAgedOut(turn) {
+			// Running long past the point its stream would have begun, and
+			// there is none: the events aged out from under a turn still
+			// going. Say the live view is gone rather than invent an ending.
+			s.metrics.RecordStreamAttach("expired")
+
+			return onFrame(errorFrame(
+				"This reply is still being written, but the live view of it has expired. " +
+					"It will appear in the conversation when it finishes.",
+			))
+		}
 	}
 
 	if req.Cursor == "" {
@@ -139,22 +160,16 @@ func (s *Service) stillRunning(ctx context.Context, turn *conversation.Assistant
 	return true
 }
 
-// expiredFrame explains a turn whose events are gone.
-func (s *Service) expiredFrame(
-	ctx context.Context,
-	turn *conversation.AssistantTurn,
-) serviceports.TurnStreamFrame {
-	if s.stillRunning(ctx, turn) {
-		// Running, with no stream to follow. Rare — it means the events aged
-		// out from under a turn still going — and the honest thing is to say
-		// the live view is gone rather than invent an ending.
-		return errorFrame(
-			"This reply is still being written, but the live view of it has expired. " +
-				"It will appear in the conversation when it finishes.",
-		)
+// streamStartGrace is how long a running turn may go without a stream before
+// its absence means the stream expired rather than has not begun.
+const streamStartGrace = 2 * time.Minute
+
+func streamAgedOut(turn *conversation.AssistantTurn) bool {
+	if turn.StartedAt <= 0 {
+		return false
 	}
 
-	return closingFrame(turn)
+	return time.Since(time.Unix(turn.StartedAt, 0)) > streamStartGrace
 }
 
 // closingFrame is the ending a reader gets when the stream could not supply

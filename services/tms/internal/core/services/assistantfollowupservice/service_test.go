@@ -96,6 +96,13 @@ func (f *fakeTurns) Observe(
 	return func(serviceports.StreamEvent) {}, func(serviceports.StreamEvent) {}
 }
 
+func (f *fakeTurns) Stoppable(
+	ctx context.Context,
+	_ *conversation.AssistantTurn,
+) (context.Context, context.CancelFunc) {
+	return context.WithCancel(ctx)
+}
+
 func (f *fakeTurns) Complete(
 	_ context.Context,
 	_ *conversation.AssistantTurn,
