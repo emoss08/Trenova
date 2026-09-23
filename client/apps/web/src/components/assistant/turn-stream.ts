@@ -57,6 +57,23 @@ function closeReasoning(segments: TurnSegment[]): TurnSegment[] {
   return segments;
 }
 
+/**
+ * Withdraws what the attempt being retried had streamed: the open reply and
+ * the thinking that led into it. Everything up to the last finished message
+ * or tool call belongs to model calls that completed, so it stays.
+ */
+function withdrawAttempt(segments: TurnSegment[]): TurnSegment[] {
+  let end = segments.length;
+  while (end > 0) {
+    const segment = segments[end - 1];
+    if (segment.kind === "tool" || (segment.kind === "text" && segment.closed)) {
+      break;
+    }
+    end -= 1;
+  }
+  return end === segments.length ? segments : segments.slice(0, end);
+}
+
 export type TurnState = {
   status: TurnStatus;
   userContent: string;
@@ -210,10 +227,11 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
     }
 
     case "retrying":
-      // A restart withdraws the words that arrived, so the reader is not
-      // left holding half of one answer under another; the tools that ran
-      // are kept, because they did run. A busy retry happened before any
-      // word arrived, so there is nothing to withdraw.
+      // A restart withdraws what the retried attempt streamed, so the reader
+      // is not left holding half of one answer under another. The messages
+      // finished before it and the tools that ran are kept, because they did
+      // happen. A busy retry happened before any word arrived, so there is
+      // nothing to withdraw.
       return {
         ...state,
         status: "working",
@@ -223,10 +241,7 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
           kind: event.data.kind,
           waitSeconds: event.data.waitSeconds,
         },
-        segments:
-          event.data.kind === "busy"
-            ? state.segments
-            : state.segments.filter((segment) => segment.kind === "tool"),
+        segments: event.data.kind === "busy" ? state.segments : withdrawAttempt(state.segments),
       };
 
     case "artifact": {

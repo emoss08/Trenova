@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { followTurn, runTurn, turnFailureDetail } from "./follow-turn";
+import { followTurn, runTurn, stopTurnQuietly, turnFailureDetail } from "./follow-turn";
 import type { ActiveTurn } from "@/services/assistant";
 import type {
   AssistantPageContext,
@@ -22,6 +22,9 @@ import {
   type TurnFailureKind,
   type TurnState,
 } from "./turn-stream";
+
+/** A send not yet taken by a worker, and whether Stop was pressed on it. */
+type PendingSend = { stopped: boolean };
 
 /**
  * Drives one turn at a time for a thread: opens the stream, folds its events
@@ -47,6 +50,19 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
   // What the last send handed over, so a retry carries the same files and
   // records.
   const lastContextExtrasRef = useRef<TurnContext>({});
+  // A send between the click and the worker taking the question. The ref
+  // refuses a second send in the same frame, before any render could disable
+  // the composer; the state is what disables it. Stop marks the pending send
+  // so a question still on its way is withdrawn rather than asked.
+  const startingRef = useRef<PendingSend | null>(null);
+  const [starting, setStarting] = useState(false);
+
+  const endStarting = useCallback((pending: PendingSend) => {
+    if (startingRef.current === pending) {
+      startingRef.current = null;
+      setStarting(false);
+    }
+  }, []);
 
   const failureMessage = useCallback(
     (kind: TurnFailureKind) => {
@@ -298,12 +314,13 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
    * already following one. Nothing happens when the conversation is quiet.
    */
   const rejoin = useCallback(async () => {
-    if (following()) {
+    // A send under way follows whatever the conversation is producing itself.
+    if (following() || startingRef.current !== null) {
       return;
     }
     const active = await activeTurn();
     // A question sent while the lookup was out owns the view now.
-    if (active === null || following()) {
+    if (active === null || following() || startingRef.current !== null) {
       return;
     }
     await followActive(active);
@@ -316,53 +333,108 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       providerId = "",
       extras: TurnContext = {},
     ) => {
-      // A reply the server is producing that this view has not picked up — the
-      // agent answering a decision made elsewhere, most often — is followed to
-      // its end first. Asking over it used to fail with "already working on a
-      // reply" while nothing on screen said anything was.
-      if (!following()) {
-        const running = await activeTurn();
-        if (running !== null && !following()) {
-          await followActive(running);
-        }
+      // One question at a time: a second Enter or click before the first
+      // reached a worker used to send the message twice, and the server either
+      // refused the second or queued it behind the first.
+      if (startingRef.current !== null) {
+        return;
       }
+      const pending: PendingSend = { stopped: false };
+      startingRef.current = pending;
+      setStarting(true);
 
       const pageContext = context === undefined ? (getContext?.() ?? null) : context;
       lastContextRef.current = pageContext;
       lastProviderRef.current = providerId;
       lastContextExtrasRef.current = extras;
-      turnIdRef.current = null;
+      const initial = initialTurnState(content, pageContext, extras);
 
-      const attachments = (extras.attachments ?? []).map((item) => item.documentId);
-      await follow(initialTurnState(content, pageContext, extras), (onEvent, signal) =>
-        runTurn(
-          () =>
-            apiService.assistantService.startTurn(threadId, content, {
-              context: pageContext,
-              providerId,
-              attachmentDocumentIds: attachments,
-              mentions: extras.mentions ?? [],
-            }),
-          {
-            signal,
-            onTurnStarted: (started) => {
-              turnIdRef.current = started.turnId;
+      try {
+        // A reply the server is producing that this view has not picked up —
+        // the agent answering a decision made elsewhere, most often — is
+        // followed to its end first. Asking over it used to fail with "already
+        // working on a reply" while nothing on screen said anything was.
+        if (!following()) {
+          const running = await activeTurn();
+          if (running !== null && !following() && !pending.stopped) {
+            await followActive(running);
+          }
+        }
+
+        // Stopped before the question left: it is kept on screen as stopped,
+        // so it can be sent again, and never reaches the server.
+        if (pending.stopped) {
+          setTurn({
+            ...initial,
+            status: "error",
+            error: failureMessage("stopped-before-start"),
+          });
+          return;
+        }
+
+        turnIdRef.current = null;
+        const attachments = (extras.attachments ?? []).map((item) => item.documentId);
+        await follow(initial, (onEvent, signal) =>
+          runTurn(
+            (startSignal) =>
+              apiService.assistantService.startTurn(
+                threadId,
+                content,
+                {
+                  context: pageContext,
+                  providerId,
+                  attachmentDocumentIds: attachments,
+                  mentions: extras.mentions ?? [],
+                },
+                { signal: startSignal },
+              ),
+            {
+              signal,
+              onTurnStarted: (started) => {
+                turnIdRef.current = started.turnId;
+                endStarting(pending);
+              },
+              onEvent,
+              findWithdrawn: async () => {
+                const active = await activeTurn();
+                return active !== null &&
+                  active.origin !== "DecisionFollowUp" &&
+                  active.input === content
+                  ? active.id
+                  : null;
+              },
             },
-            onEvent,
-          },
-        ),
-      );
+          ),
+        );
+      } finally {
+        endStarting(pending);
+      }
     },
-    [activeTurn, follow, followActive, following, getContext, threadId],
+    [
+      activeTurn,
+      endStarting,
+      failureMessage,
+      follow,
+      followActive,
+      following,
+      getContext,
+      threadId,
+    ],
   );
 
   const stop = useCallback(() => {
+    const pending = startingRef.current;
+    if (pending !== null) {
+      pending.stopped = true;
+      endStarting(pending);
+    }
+
     // A turn on a worker has to be told: abandoning the reader leaves the turn
     // running and billing for an answer nobody will read.
     const running = turnIdRef.current;
     if (running !== null) {
       turnIdRef.current = null;
-      void apiService.assistantService.stopTurn(running).catch(() => undefined);
+      stopTurnQuietly(running);
     }
 
     abortRef.current?.abort();
@@ -371,7 +443,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
     // shows it under the notice rather than leaving it to the next turn.
     void refreshThread();
     fail("stopped");
-  }, [fail, refreshThread]);
+  }, [endStarting, fail, refreshThread]);
 
   const dismiss = useCallback(async () => {
     await refreshThread();
@@ -380,7 +452,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
 
   return {
     turn,
-    isActive: isTurnActive(turn),
+    isActive: starting || isTurnActive(turn),
     send,
     rejoin,
     stop,

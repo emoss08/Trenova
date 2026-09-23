@@ -8,7 +8,7 @@ import type {
 } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { runTurn, turnFailureDetail } from "./follow-turn";
+import { runTurn, stopTurnQuietly, turnFailureDetail } from "./follow-turn";
 import { initialTurnState, isTurnActive, reduceTurn, type TurnState } from "./turn-stream";
 
 /**
@@ -48,18 +48,21 @@ export function useAsk() {
 
       turnIdRef.current = null;
       try {
-        await runTurn(() => apiService.assistantService.startAsk(content, options), {
-          signal: controller.signal,
-          onTurnStarted: (started) => {
-            turnIdRef.current = started.turnId;
-            // The thread is named before the answer, so the question can be
-            // kept whatever happens to the answer.
-            if (started.thread) {
-              onEvent({ event: "thread", data: started.thread });
-            }
+        await runTurn(
+          (signal) => apiService.assistantService.startAsk(content, options, { signal }),
+          {
+            signal: controller.signal,
+            onTurnStarted: (started) => {
+              turnIdRef.current = started.turnId;
+              // The thread is named before the answer, so the question can be
+              // kept whatever happens to the answer.
+              if (started.thread) {
+                onEvent({ event: "thread", data: started.thread });
+              }
+            },
+            onEvent,
           },
-          onEvent,
-        });
+        );
       } catch (error) {
         if (controller.signal.aborted) {
           return;
@@ -86,7 +89,7 @@ export function useAsk() {
     const running = turnIdRef.current;
     if (running !== null) {
       turnIdRef.current = null;
-      void apiService.assistantService.stopTurn(running).catch(() => undefined);
+      stopTurnQuietly(running);
     }
     abortRef.current?.abort();
     abortRef.current = null;

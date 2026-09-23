@@ -14,11 +14,26 @@ import type { AssistantStreamEvent } from "@/types/assistant";
 const reattachDelaysMs = [250, 750, 2000, 5000, 5000];
 
 export type RunTurnOptions = {
+  /** Aborting it before the turn is known withdraws the question; after, it lets go of the reply. */
   signal: AbortSignal;
   /** Called once a worker has the question, before any of the answer. */
   onTurnStarted?: (turn: StartedTurn) => void;
   onEvent: (event: AssistantStreamEvent) => void;
+  /**
+   * Finds the turn a withdrawn question made anyway: the server can record it
+   * before the aborted request reaches it, and the id went down with the
+   * response. Null when there is none.
+   */
+  findWithdrawn?: () => Promise<string | null>;
 };
+
+/**
+ * Tells the server a turn is no longer wanted. The reader has already let go,
+ * so a stop that fails has nobody to report to; the turn then ends on its own.
+ */
+export function stopTurnQuietly(turnId: string): void {
+  void apiService.assistantService.stopTurn(turnId).catch(() => undefined);
+}
 
 /**
  * Asks a question and follows the answer.
@@ -31,10 +46,27 @@ export type RunTurnOptions = {
  * side never folded in, and resuming past it would silently skip it.
  */
 export async function runTurn(
-  start: () => Promise<StartedTurn>,
+  start: (signal: AbortSignal) => Promise<StartedTurn>,
   options: RunTurnOptions,
 ): Promise<void> {
-  const started = await start();
+  let started: StartedTurn;
+  try {
+    started = await start(options.signal);
+  } catch (error) {
+    if (options.signal.aborted) {
+      await stopWithdrawn(options.findWithdrawn);
+      return;
+    }
+    throw error;
+  }
+
+  // Stop was pressed while the question was on its way. The turn exists now
+  // and would answer a question nobody is waiting on, so it is stopped rather
+  // than followed.
+  if (options.signal.aborted) {
+    stopTurnQuietly(started.turnId);
+    return;
+  }
   options.onTurnStarted?.(started);
 
   await followTurn(started.turnId, options);
@@ -54,6 +86,10 @@ export async function followTurn(
   let attempt = 0;
 
   const apply = (event: AssistantStreamEvent, id: string) => {
+    // A frame arriving means the last reattach worked. The allowance is for
+    // drops in a row, not over the whole reply: a long answer that survives a
+    // blip every few minutes must not run out of reconnects.
+    attempt = 0;
     options.onEvent(event);
     // Only after the event has been folded in. A cursor moved on receipt
     // would skip whatever arrived in a frame this side never processed.
@@ -122,6 +158,21 @@ export function turnFailureDetail(error: unknown, fallback: string): string {
   }
 
   return fallback;
+}
+
+async function stopWithdrawn(findWithdrawn: RunTurnOptions["findWithdrawn"]): Promise<void> {
+  if (!findWithdrawn) {
+    return;
+  }
+  let turnId: string | null;
+  try {
+    turnId = await findWithdrawn();
+  } catch {
+    return;
+  }
+  if (turnId !== null) {
+    stopTurnQuietly(turnId);
+  }
 }
 
 function delay(ms: number, signal: AbortSignal): Promise<void> {

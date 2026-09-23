@@ -278,6 +278,80 @@ describe("reduceTurn restarts and refusals", () => {
     expect(resumed.segments.at(-1)).toMatchObject({ kind: "text", text: "S1 is in Dallas." });
   });
 
+  // A retry starts one model call over, not the turn. A message the model
+  // finished before asking for a tool came from a call that completed, and
+  // withdrawing it left a lookup with no sentence explaining why it ran.
+  it("keeps finished messages on retrying and withdraws only the attempt's own output", () => {
+    const state = run([
+      accepted,
+      { event: "reasoning", data: { text: "Look it up first." } },
+      { event: "delta", data: { text: "Let me check S1." } },
+      {
+        event: "message",
+        data: {
+          content: "Let me check S1.",
+          toolCalls: [{ id: "c1", name: "get_shipment" }],
+          model: "m",
+        },
+      },
+      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+      {
+        event: "tool_finished",
+        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+      },
+      { event: "reasoning", data: { text: "It is in Dallas." } },
+      { event: "delta", data: { text: "S1 is in " } },
+      {
+        event: "retrying",
+        data: { attempt: 1, provider: "Backup", reason: "", kind: "restart", waitSeconds: 0 },
+      },
+    ]);
+
+    expect(state.segments).toEqual([
+      { kind: "reasoning", text: "Look it up first.", closed: true },
+      { kind: "text", text: "Let me check S1.", closed: true },
+      {
+        kind: "tool",
+        callId: "c1",
+        name: "get_shipment",
+        arguments: {},
+        status: "done",
+        content: "{}",
+      },
+    ]);
+  });
+
+  it("withdraws thinking still open when the retry comes before any word", () => {
+    const state = run([
+      accepted,
+      {
+        event: "message",
+        data: { content: "Checking.", toolCalls: [{ id: "c1", name: "get_shipment" }], model: "m" },
+      },
+      { event: "reasoning", data: { text: "Hmm" } },
+      {
+        event: "retrying",
+        data: { attempt: 1, provider: "Backup", reason: "", kind: "restart", waitSeconds: 0 },
+      },
+    ]);
+
+    expect(state.segments).toEqual([{ kind: "text", text: "Checking.", closed: true }]);
+  });
+
+  it("withdraws everything when nothing had finished before the retry", () => {
+    const state = run([
+      accepted,
+      { event: "reasoning", data: { text: "Thinking" } },
+      { event: "delta", data: { text: "Half an" } },
+      {
+        event: "retrying",
+        data: { attempt: 1, provider: "Backup", reason: "", kind: "restart", waitSeconds: 0 },
+      },
+    ]);
+
+    expect(state.segments).toEqual([]);
+  });
+
   // A busy provider being asked again is not a reply starting over: nothing
   // arrived, nothing is withdrawn, and the reader is told how long the wait
   // is rather than that the model stopped partway.

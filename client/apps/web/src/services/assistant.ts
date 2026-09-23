@@ -230,15 +230,20 @@ export class AssistantService {
    * The reply is not on this response. It arrives on the turn's stream, which
    * means it survives this request ending — a deploy, a dropped connection, or
    * somebody closing the tab.
+   *
+   * Aborting `signal` withdraws the question while it is on its way; once the
+   * turn is returned, only stopping it ends the reply.
    */
   public async startTurn(
     threadId: AssistantThread["id"],
     content: string,
     options: SendMessageOptions = {},
+    { signal }: { signal?: AbortSignal } = {},
   ): Promise<StartedTurn> {
     const response = await api.post(
       `/assistant/threads/${threadId}/turns/`,
       messageBody(content, options),
+      { signal },
     );
 
     return safeParse(startedTurnSchema, response, "Assistant Turn");
@@ -249,12 +254,20 @@ export class AssistantService {
    * server makes for it, returned with the turn so the reader can keep the
    * conversation even when the answer fails partway.
    */
-  public async startAsk(content: string, options: AskOptions = {}): Promise<StartedTurn> {
-    const response = await api.post("/assistant/ask/", {
-      content,
-      context: options.context ?? null,
-      mentions: options.mentions ?? [],
-    });
+  public async startAsk(
+    content: string,
+    options: AskOptions = {},
+    { signal }: { signal?: AbortSignal } = {},
+  ): Promise<StartedTurn> {
+    const response = await api.post(
+      "/assistant/ask/",
+      {
+        content,
+        context: options.context ?? null,
+        mentions: options.mentions ?? [],
+      },
+      { signal },
+    );
 
     return safeParse(startedTurnSchema, response, "Assistant Turn");
   }
