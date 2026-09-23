@@ -1,13 +1,12 @@
-import { AgentTile } from "@/components/agent-identity/agent-tile";
-import { AskBox } from "@/components/assistant/ask-box";
+import { AgentAsk, type AgentAskHandle } from "@/components/assistant/agent-ask";
+import { useAskableAgent } from "@/components/assistant/use-askable-agent";
 import { LiveReplyLabel } from "@/components/assistant/live-reply-label";
 import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
 import { conversationPath } from "@/lib/conversation-path";
 import { queries } from "@/lib/queries";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
-import { useAssistantStore } from "@/stores/assistant-store";
+import type { AgentChoice, AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -19,9 +18,10 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ArrowRightIcon, BotIcon, InboxIcon, PlugZapIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { BriefingPanel } from "./briefing-panel";
+import { DeskAgentDirectory } from "./desk-agent-directory";
 import { usePendingDecisionSummary } from "./decisions/use-pending-decisions";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
@@ -52,7 +52,6 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   const t = useT();
   const [now] = useState(nowInSeconds);
   const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
-  const lastAgentId = useAssistantStore((state) => state.lastAgentId);
   const liveThreadIds = useLiveThreadIds();
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
@@ -65,6 +64,14 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   const summaryQuery = usePendingDecisionSummary(canDecide);
   const waiting = summaryQuery.data?.total ?? attention?.agentDecisions ?? 0;
   const recent = threads.slice(0, RECENT_LIMIT);
+  const askable = useAskableAgent({ threads });
+  const askRef = useRef<AgentAskHandle>(null);
+  const noAgents = !isLoading && (agents.length === 0 || askable.noneAvailable);
+
+  const chooseAgent = (agent: AgentChoice) => {
+    askable.choose(agent);
+    askRef.current?.focus();
+  };
 
   const dateline = useMemo(
     () =>
@@ -92,24 +99,29 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
                   "{0, plural, one {One decision is waiting on you.} other {# decisions are waiting on you.}}",
                   waiting,
                 )
-              : agents.length === 0
+              : noAgents
                 ? t("Nothing is running here yet.")
                 : t("Nothing is waiting on you."))}
         </h1>
         <p className="text-muted-foreground text-sm">
-          {agents.length === 0
+          {noAgents
             ? t("The Desk comes alive once an agent is enabled.")
             : t("Ask an agent about the work in front of you. What it makes opens beside you.")}
         </p>
       </header>
 
-      {agents.length > 0 && (
-        <AskBox
-          agents={agents}
-          defaultAgentId={lastAgentId}
+      {askable.agent ? (
+        <AgentAsk
+          ref={askRef}
+          agent={askable.agent}
+          onAgentChange={askable.choose}
+          recentIds={askable.recency.ids}
+          lastUsedAt={askable.recency.lastUsedAt}
           disabled={isStarting}
           onAsk={(agentId, question) => onStart(agentId, question)}
         />
+      ) : (
+        !noAgents && <Skeleton className="h-28" />
       )}
 
       {briefing && <BriefingPanel briefing={briefing} />}
@@ -136,29 +148,16 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
         </Link>
       )}
 
-      <section className="flex flex-col gap-3">
-        <SectionLabel>{t("Who you can ask")}</SectionLabel>
-        {isLoading ? (
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Skeleton className="h-16" />
-            <Skeleton className="h-16" />
-          </div>
-        ) : agents.length === 0 ? (
-          <NoAgents canManageAgents={canManageAgents} />
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-2">
-            {agents.map((agent, index) => (
-              <AgentCard
-                key={agent.id}
-                agent={agent}
-                index={index}
-                disabled={isStarting}
-                onStart={() => onStart(agent.id)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+      {noAgents ? (
+        <NoAgents canManageAgents={canManageAgents} />
+      ) : (
+        <DeskAgentDirectory
+          recency={askable.recency}
+          selectedId={askable.agent?.id ?? null}
+          disabled={isStarting}
+          onChoose={chooseAgent}
+        />
+      )}
 
       {recent.length > 0 && (
         <section className="flex flex-col gap-3">
@@ -196,50 +195,6 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <h2 className="text-muted-foreground text-xs font-medium">{children}</h2>;
-}
-
-function AgentCard({
-  agent,
-  index,
-  disabled,
-  onStart,
-}: {
-  agent: AgentDefinitionRow;
-  index: number;
-  disabled: boolean;
-  onStart: () => void;
-}) {
-  const t = useT();
-
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onStart}
-      style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
-      className={cn(
-        "animate-land ui-focus-ring ui-press border-desk-hairline group rounded-surface",
-        "hover:bg-surface-hover flex items-center gap-3 border px-3 py-2.5 text-left",
-        "transition-colors outline-none disabled:opacity-60",
-      )}
-    >
-      <AgentTile agent={agent} size="lg" />
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="flex items-center gap-1.5 text-sm font-medium">
-          <span className="truncate">{agent.name}</span>
-          <Badge variant="neutral" className="text-2xs h-4 px-1">
-            {agent.toolNames.length === 0
-              ? t("No task tools")
-              : t("{0, plural, one {# tool} other {# tools}}", agent.toolNames.length)}
-          </Badge>
-        </span>
-        {agent.description && (
-          <span className="text-muted-foreground line-clamp-1 text-xs">{agent.description}</span>
-        )}
-      </span>
-      <ArrowRightIcon className="text-muted-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
-    </button>
-  );
 }
 
 function NoAgents({ canManageAgents }: { canManageAgents: boolean }) {

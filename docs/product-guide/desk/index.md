@@ -11,7 +11,7 @@ covers:
 ---
 
 ## What it's for
-The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page shows an ask box, **Your day** (a short briefing), a link to changes **Waiting on your decision**, the agents under **Who you can ask** with the tools each can use, and **Where you left off** with your recent conversations. The left side lists your **Conversations**, grouped by agent with pinned ones first, plus links to **Watchtower** and **Decisions**.
+The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page shows an ask box with the agent it will ask and a few starter questions that agent can answer, **Your day** (a short briefing), a link to changes **Waiting on your decision**, **Agents** (every agent you can ask, the ones you use most first, with **Search agents** and a filter for agents made from a template or built by hand), and **Where you left off** with your recent conversations. **Conversations** at the top lists your conversations, grouped by agent with pinned ones first, plus **New conversation** and links to **Watchtower** and **Decisions**.
 
 Each conversation opens in the middle, and anything an agent produces (a table, a draft, a document) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own; they wait on [Decisions](/desk/decisions) for someone to approve.
 
@@ -20,8 +20,14 @@ Each conversation opens in the middle, and anything an agent produces (a table, 
 ### Ask an agent a question
 Keywords: chat with AI, ask the assistant, start a conversation
 1. Open [Desk](/desk).
-2. Type your question in the ask box and send it, or pick an agent under **Who you can ask** to start a conversation with it.
-3. Keep asking follow-ups in the conversation. Open anything the agent produces in the workspace beside it.
+2. The ask box shows which agent it will ask. To ask a different one, select the agent's name in the box and pick another, or select a card under **Agents**; use **Search agents** when there are many.
+3. Type your question and send it, or select one of the starter questions under the box.
+4. Keep asking follow-ups in the conversation. Open anything the agent produces in the workspace beside it.
+
+### Start a conversation without asking a question yet
+Keywords: new chat, blank conversation
+1. Open [Desk](/desk) and select **Conversations** at the top.
+2. Select **New conversation**, then search for and pick the agent.
 
 ### Go back to an earlier conversation
 Keywords: find chat, previous conversation, conversation history

@@ -9,8 +9,9 @@ import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { BotIcon, ChevronRightIcon, PlugZapIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
-import { AskBox } from "./ask-box";
+import { AgentAsk } from "./agent-ask";
 import { LiveReplyLabel } from "./live-reply-label";
+import { useAskableAgent } from "./use-askable-agent";
 
 type AssistantHomeProps = {
   agents: AgentDefinitionRow[];
@@ -33,7 +34,8 @@ const RECENT_LIMIT = 4;
  * It used to be a card per agent and then a list of recent threads: two
  * directories stacked in a 400px column, with the thing they both lead to —
  * typing a question — always one click away. So it is the question now, with
- * the agent picker inside the box, and the recent conversations reduced to a
+ * one searchable agent picker inside the box and the chosen agent's own
+ * starter questions under it, and the recent conversations reduced to a
  * short list underneath for the times you meant to go back rather than ask.
  */
 export function AssistantHome({
@@ -48,10 +50,10 @@ export function AssistantHome({
 }: AssistantHomeProps) {
   const t = useT();
   const closeWidget = useAssistantStore((state) => state.closeWidget);
-  const lastAgentId = useAssistantStore((state) => state.lastAgentId);
   const [now] = useState(nowInSeconds);
+  const askable = useAskableAgent({ threads });
 
-  if (!isLoading && agents.length === 0) {
+  if ((!isLoading && agents.length === 0) || askable.noneAvailable) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-10 text-center">
         <span className="bg-sunken text-muted-foreground flex size-12 items-center justify-center rounded-lg">
@@ -92,14 +94,25 @@ export function AssistantHome({
           </p>
         </div>
 
-        {isLoading ? (
+        {askable.agent === null && askable.choices.isError ? (
+          <div className="ring-foreground/10 rounded-surface flex items-center gap-3 px-3 py-2.5 ring-1">
+            <p className="text-muted-foreground min-w-0 flex-1 text-xs">
+              {t("The agents could not be loaded.")}
+            </p>
+            <Button size="xs" variant="outline" onClick={askable.choices.refetch}>
+              {t("Try again")}
+            </Button>
+          </div>
+        ) : isLoading || askable.agent === null ? (
           <Skeleton className="h-32" />
         ) : (
-          <AskBox
-            agents={agents}
-            defaultAgentId={lastAgentId}
+          <AgentAsk
+            variant="compact"
+            agent={askable.agent}
+            onAgentChange={askable.choose}
+            recentIds={askable.recency.ids}
+            lastUsedAt={askable.recency.lastUsedAt}
             disabled={isStarting}
-            compact
             onAsk={onAsk}
           />
         )}

@@ -6172,7 +6172,7 @@ export type DecideAgentProposalsMutationVariables = Exact<{
 
 export type DecideAgentProposalsMutation = { decideAgentProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, createdAt: number } | null }> };
 
-export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
+export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number, starters: Array<{ label: string, prompt: string }> } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
 
 export type AgentDefinitionCardsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -6181,6 +6181,16 @@ export type AgentDefinitionCardsQueryVariables = Exact<{
 
 
 export type AgentDefinitionCardsQuery = { agentDefinitions: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentDefinitionCardFieldsFragment': AgentDefinitionCardFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AgentChoiceFieldsFragment = { id: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, toolNames: Array<string>, systemKey: string, starters: Array<{ label: string, prompt: string }> } & { ' $fragmentName'?: 'AgentChoiceFieldsFragment' };
+
+export type AgentChoicesQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AgentChoicesQuery = { agentDefinitions: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentChoiceFieldsFragment': AgentChoiceFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentDefinitionCountQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -12501,6 +12511,10 @@ export const AgentDefinitionCardFieldsFragmentDoc = new TypedDocumentString(`
   outputMode
   preferredProviderId
   systemKey
+  starters {
+    label
+    prompt
+  }
   lastRunAt
   nextRunAt
   pendingProposals
@@ -12510,6 +12524,22 @@ export const AgentDefinitionCardFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AgentDefinitionCardFields"}) as unknown as TypedDocumentString<AgentDefinitionCardFieldsFragment, unknown>;
+export const AgentChoiceFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentChoiceFields on AgentDefinition {
+  id
+  name
+  description
+  template
+  icon
+  accent
+  toolNames
+  systemKey
+  starters {
+    label
+    prompt
+  }
+}
+    `, {"fragmentName":"AgentChoiceFields"}) as unknown as TypedDocumentString<AgentChoiceFieldsFragment, unknown>;
 export const AgentEvaluationTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentEvaluationTableRowFields on AgentEvaluation {
   id
@@ -19375,7 +19405,8 @@ export const PendingDecisionsDocument = {"__meta__":{"kind":"query","name":"Pend
 export const PendingDecisionSummaryDocument = {"__meta__":{"kind":"query","name":"PendingDecisionSummary","hash":"sha256:4da8f1517d5269e2a6a982d9b22085d0fc060aad3115dfe942ffbbb4318f0aa6"}} as unknown as TypedDocumentString<PendingDecisionSummaryQuery, PendingDecisionSummaryQueryVariables>;
 export const PlanStepsDocument = {"__meta__":{"kind":"query","name":"PlanSteps","hash":"sha256:8e998d8ca99ecb3ec7ccb8444e779245bf0b12661400fe1e4ddee2e86cd22472"}} as unknown as TypedDocumentString<PlanStepsQuery, PlanStepsQueryVariables>;
 export const DecideAgentProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposals","hash":"sha256:59304c594ac96561580ae98bff8ecf6ac041a40f45487c9319485de537cef971"}} as unknown as TypedDocumentString<DecideAgentProposalsMutation, DecideAgentProposalsMutationVariables>;
-export const AgentDefinitionCardsDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCards","hash":"sha256:08ba6a60cbf9b307dba848db43ab05c79979d87a5e80033fb1cc8e7f1a5fb407"}} as unknown as TypedDocumentString<AgentDefinitionCardsQuery, AgentDefinitionCardsQueryVariables>;
+export const AgentDefinitionCardsDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCards","hash":"sha256:e48f561393811bb3f25405543344f1e41ea80a72389c02786169694e1a7562b2"}} as unknown as TypedDocumentString<AgentDefinitionCardsQuery, AgentDefinitionCardsQueryVariables>;
+export const AgentChoicesDocument = {"__meta__":{"kind":"query","name":"AgentChoices","hash":"sha256:6bb1514f9329e2c8e1ed77638129117516e2d14d070b7502591fbc60fbe83130"}} as unknown as TypedDocumentString<AgentChoicesQuery, AgentChoicesQueryVariables>;
 export const AgentDefinitionCountDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCount","hash":"sha256:daacf568820fcf8bddb93d6841d154a39ae37f4f40aab47e3e127efda1270831"}} as unknown as TypedDocumentString<AgentDefinitionCountQuery, AgentDefinitionCountQueryVariables>;
 export const AgentRunCountDocument = {"__meta__":{"kind":"query","name":"AgentRunCount","hash":"sha256:e5f44d80150fa3a53684e90b45779a0d12a9c75150f2ed16c1b816d22edb905e"}} as unknown as TypedDocumentString<AgentRunCountQuery, AgentRunCountQueryVariables>;
 export const AgentProposalCountDocument = {"__meta__":{"kind":"query","name":"AgentProposalCount","hash":"sha256:2eded728747d5256e64b681abdec7d5ec92e8868262c03bea6249352bc3deb28"}} as unknown as TypedDocumentString<AgentProposalCountQuery, AgentProposalCountQueryVariables>;

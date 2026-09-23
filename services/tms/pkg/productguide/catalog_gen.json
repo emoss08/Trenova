@@ -1,5 +1,5 @@
 {
-  "version": "sha256:5cd0d840c1580f113be49667b62307e7bc2f87bfda894272a75ad2b9cac264ca",
+  "version": "sha256:092e663521f629a8a435977dffc496489f88b919f94a661ee5998bd1dba784c0",
   "modules": [
     {
       "id": "home",
@@ -6668,7 +6668,7 @@
         "Desk"
       ],
       "description": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app.",
-      "summary": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page shows an ask box, **Your day** (a short briefing), a link to changes **Waiting on your decision**, the agents under **Who you can ask** with the tools each can use, and **Where you left off** with your recent conversations. The left side lists your **Conversations**, grouped by agent with pinned ones first, plus links to **Watchtower** and **Decisions**.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own; they wait on [Decisions](/desk/decisions) for someone to approve.",
+      "summary": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page shows an ask box with the agent it will ask and a few starter questions that agent can answer, **Your day** (a short briefing), a link to changes **Waiting on your decision**, **Agents** (every agent you can ask, the ones you use most first, with **Search agents** and a filter for agents made from a template or built by hand), and **Where you left off** with your recent conversations. **Conversations** at the top lists your conversations, grouped by agent with pinned ones first, plus **New conversation** and links to **Watchtower** and **Decisions**.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own; they wait on [Decisions](/desk/decisions) for someone to approve.",
       "requires": [
         {
           "resource": "assistant",
@@ -6696,8 +6696,20 @@
           ],
           "steps": [
             "Open [Desk](/desk).",
-            "Type your question in the ask box and send it, or pick an agent under **Who you can ask** to start a conversation with it.",
+            "The ask box shows which agent it will ask. To ask a different one, select the agent's name in the box and pick another, or select a card under **Agents**; use **Search agents** when there are many.",
+            "Type your question and send it, or select one of the starter questions under the box.",
             "Keep asking follow-ups in the conversation. Open anything the agent produces in the workspace beside it."
+          ]
+        },
+        {
+          "title": "Start a conversation without asking a question yet",
+          "keywords": [
+            "new chat",
+            "blank conversation"
+          ],
+          "steps": [
+            "Open [Desk](/desk) and select **Conversations** at the top.",
+            "Select **New conversation**, then search for and pick the agent."
           ]
         },
         {

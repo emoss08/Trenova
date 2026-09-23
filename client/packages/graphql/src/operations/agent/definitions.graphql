@@ -32,6 +32,10 @@ fragment AgentDefinitionCardFields on AgentDefinition {
   outputMode
   preferredProviderId
   systemKey
+  starters {
+    label
+    prompt
+  }
   lastRunAt
   nextRunAt
   pendingProposals
@@ -46,6 +50,35 @@ query AgentDefinitionCards($input: DataTableConnectionInput!, $includeTotalCount
     edges {
       node {
         ...AgentDefinitionCardFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+fragment AgentChoiceFields on AgentDefinition {
+  id
+  name
+  description
+  template
+  icon
+  accent
+  toolNames
+  systemKey
+  starters {
+    label
+    prompt
+  }
+}
+
+query AgentChoices($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
+  agentDefinitions(input: $input) {
+    edges {
+      node {
+        ...AgentChoiceFields
       }
     }
     totalCount @include(if: $includeTotalCount)

@@ -627,6 +627,7 @@ type ComplexityRoot struct {
 		RunTimeoutSeconds      func(childComplexity int) int
 		ShadowMode             func(childComplexity int) int
 		SimulationMode         func(childComplexity int) int
+		Starters               func(childComplexity int) int
 		SystemKey              func(childComplexity int) int
 		Template               func(childComplexity int) int
 		ToolDailyLimits        func(childComplexity int) int
@@ -940,6 +941,11 @@ type ComplexityRoot struct {
 		Day       func(childComplexity int) int
 		Proposals func(childComplexity int) int
 		Runs      func(childComplexity int) int
+	}
+
+	AgentStarter struct {
+		Label  func(childComplexity int) int
+		Prompt func(childComplexity int) int
 	}
 
 	AgentToolOutcome struct {
@@ -13756,6 +13762,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDefinition.SimulationMode(childComplexity), true
+	case "AgentDefinition.starters":
+		if e.ComplexityRoot.AgentDefinition.Starters == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.Starters(childComplexity), true
 	case "AgentDefinition.systemKey":
 		if e.ComplexityRoot.AgentDefinition.SystemKey == nil {
 			break
@@ -15158,6 +15170,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentScorecardPoint.Runs(childComplexity), true
+
+	case "AgentStarter.label":
+		if e.ComplexityRoot.AgentStarter.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentStarter.Label(childComplexity), true
+	case "AgentStarter.prompt":
+		if e.ComplexityRoot.AgentStarter.Prompt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentStarter.Prompt(childComplexity), true
 
 	case "AgentToolOutcome.approved":
 		if e.ComplexityRoot.AgentToolOutcome.Approved == nil {
@@ -72553,6 +72578,17 @@ enum AgentContextProvider {
 }
 
 """
+An opening question that shows what an agent is for. Each one is answerable
+with the tools the agent holds.
+"""
+type AgentStarter {
+  "What the suggestion says."
+  label: String!
+  "The question sent when the suggestion is chosen."
+  prompt: String!
+}
+
+"""
 An organization's own agent: who it is, which tools it may call, how much it
 may do on its own, and when it runs.
 """
@@ -72599,6 +72635,12 @@ type AgentDefinition {
   preferredProviderId: ID!
   "Set on the agents the platform itself creates and fires; they cannot be deleted."
   systemKey: String!
+  """
+  Up to four opening questions: the template's own when the agent was made from
+  one, otherwise drawn from the tools it holds. Only questions the agent can
+  answer with its tools are offered.
+  """
+  starters: [AgentStarter!]!
   lastRunAt: Timestamp
   nextRunAt: Timestamp
   "Proposals raised by this agent that still await a person's decision."
@@ -93935,6 +93977,8 @@ func (ec *executionContext) childFields_AgentDefinition(ctx context.Context, fie
 		return ec.fieldContext_AgentDefinition_preferredProviderId(ctx, field)
 	case "systemKey":
 		return ec.fieldContext_AgentDefinition_systemKey(ctx, field)
+	case "starters":
+		return ec.fieldContext_AgentDefinition_starters(ctx, field)
 	case "lastRunAt":
 		return ec.fieldContext_AgentDefinition_lastRunAt(ctx, field)
 	case "nextRunAt":
@@ -94561,6 +94605,16 @@ func (ec *executionContext) childFields_AgentScorecardPoint(ctx context.Context,
 		return ec.fieldContext_AgentScorecardPoint_approved(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentScorecardPoint", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentStarter(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "label":
+		return ec.fieldContext_AgentStarter_label(ctx, field)
+	case "prompt":
+		return ec.fieldContext_AgentStarter_prompt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentStarter", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentToolOutcome(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

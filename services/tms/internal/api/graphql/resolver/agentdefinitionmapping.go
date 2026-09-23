@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 func agentDefinitionColumns(ctx context.Context, nodePathPrefix string) []string {
@@ -21,8 +23,16 @@ func agentDefinitionColumns(ctx context.Context, nodePathPrefix string) []string
 		},
 		projection.SelectOptions{PathPrefix: nodePathPrefix},
 	)
+	if !selection.HasSpecial("starters") {
+		return selection.Columns
+	}
 
-	return selection.Columns
+	columns := sliceutils.AppendIfMissing(
+		selection.Columns,
+		buncolgen.DefinitionColumns.Template.Bare(),
+	)
+
+	return sliceutils.AppendIfMissing(columns, buncolgen.DefinitionColumns.ToolNames.Bare())
 }
 
 func agentDefinitionConnectionToModel(

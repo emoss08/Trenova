@@ -100,6 +100,7 @@ virtuals:
   AgentDefinition:
     - pendingProposals
     - openRuns
+    - starters
   AIProvider:
     - hasApiKey
   Carrier:

@@ -1040,6 +1040,10 @@ func init() {
 				FieldMapKey: "systemKey",
 			},
 			{
+				Name:    "starters",
+				Special: "starters",
+			},
+			{
 				Name:        "lastRunAt",
 				FieldMapKey: "lastRunAt",
 			},

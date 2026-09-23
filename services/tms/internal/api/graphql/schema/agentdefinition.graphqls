@@ -39,6 +39,17 @@ enum AgentContextProvider {
 }
 
 """
+An opening question that shows what an agent is for. Each one is answerable
+with the tools the agent holds.
+"""
+type AgentStarter {
+  "What the suggestion says."
+  label: String!
+  "The question sent when the suggestion is chosen."
+  prompt: String!
+}
+
+"""
 An organization's own agent: who it is, which tools it may call, how much it
 may do on its own, and when it runs.
 """
@@ -85,6 +96,12 @@ type AgentDefinition {
   preferredProviderId: ID!
   "Set on the agents the platform itself creates and fires; they cannot be deleted."
   systemKey: String!
+  """
+  Up to four opening questions: the template's own when the agent was made from
+  one, otherwise drawn from the tools it holds. Only questions the agent can
+  answer with its tools are offered.
+  """
+  starters: [AgentStarter!]!
   lastRunAt: Timestamp
   nextRunAt: Timestamp
   "Proposals raised by this agent that still await a person's decision."

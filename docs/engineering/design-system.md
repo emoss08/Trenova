@@ -714,9 +714,14 @@ The conversation list is a switcher behind one control, not a rail. A person
 picks a conversation perhaps twice an hour and then reads and writes in it for
 the rest of the hour; a permanent 260px column answers a question asked twice.
 
-Both the Desk's front page and the corner panel open onto the same `AskBox`
-(`components/assistant/ask-box.tsx`) rather than a directory. An empty text
-field is a better first screen than a good menu.
+Both the Desk's front page and the corner panel open onto the same `AgentAsk`
+(`components/assistant/agent-ask.tsx`) rather than a directory. An empty text
+field is a better first screen than a good menu. Who is being asked is one
+control inside the box, `AgentPicker`: a searchable, virtualised list read from
+the server a page at a time, recent agents first — never a chip per agent, which
+is a wall once an organization has sixty. The questions under the box are the
+agent's own `starters`, from the server, and they trade places when the agent
+changes.
 
 ## Checking your work
 

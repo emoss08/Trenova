@@ -1,4 +1,8 @@
-import { fetchAgentDefinitions } from "@/lib/graphql/agent-definition";
+import {
+  fetchAgentChoicesByIds,
+  fetchAgentDefinitions,
+  type AgentChoiceQuery,
+} from "@/lib/graphql/agent-definition";
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -50,6 +54,19 @@ export const assistant = createQueryKeys("assistant", {
     queryKey: ["agent-definitions", enabledOnly, chatOnly],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       fetchAgentDefinitions({ enabledOnly, chatOnly }, { signal }),
+  }),
+  // Paged: read by useAgentChoices as an infinite query, one cursor at a time.
+  agentChoices: (query: AgentChoiceQuery) => ({
+    queryKey: [
+      "agent-choices",
+      query.search?.trim() ?? "",
+      query.origin ?? "all",
+      [...(query.excludeIds ?? [])],
+    ],
+  }),
+  agentChoicesByIds: (ids: readonly string[]) => ({
+    queryKey: ["agent-choices-by-id", [...ids]],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAgentChoicesByIds(ids, { signal }),
   }),
   systemAgent: (systemKey: string) => ({
     queryKey: ["agent-definition-system", systemKey],

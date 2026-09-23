@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { suggestionsFor } from "../suggestions";
+import { agentSuggestions, suggestionsFor } from "../suggestions";
 
 /**
  * The starter questions follow the page. On a filtered table the first
@@ -57,5 +57,42 @@ describe("suggestionsFor with a page", () => {
       suggestionsFor("DispatchAssistant", { path: "/", entityType: "", entityId: "", title: "" })[0]
         .label,
     ).toBe("Where is a shipment right now?");
+  });
+});
+
+/**
+ * An agent's own starters come from the server and win over the template
+ * table, so an agent built by hand is offered questions it can answer.
+ */
+describe("agentSuggestions", () => {
+  it("uses the starters the server sent", () => {
+    const suggestions = agentSuggestions({
+      template: null,
+      starters: [{ label: "Build a report", prompt: "Build a report of in-transit shipments." }],
+    });
+
+    expect(suggestions).toEqual([
+      { label: "Build a report", prompt: "Build a report of in-transit shipments." },
+    ]);
+  });
+
+  it("falls back to the template's questions when there are no starters", () => {
+    const suggestions = agentSuggestions({ template: "BillingAssistant", starters: [] });
+
+    expect(suggestions[0].label).toBe("What is blocking an invoice?");
+  });
+
+  it("puts the page's questions ahead of the agent's", () => {
+    const suggestions = agentSuggestions(
+      { template: null, starters: [{ label: "Own", prompt: "Own question" }] },
+      { path: "/shipments", entityType: "shipment", entityId: "shp_1", title: "S1" },
+    );
+
+    expect(suggestions[0].label).toBe("Why is this shipment flagged?");
+    expect(suggestions.at(-1)?.label).toBe("Own");
+  });
+
+  it("offers only the page's questions when there is no agent", () => {
+    expect(agentSuggestions(null)).toEqual([]);
   });
 });

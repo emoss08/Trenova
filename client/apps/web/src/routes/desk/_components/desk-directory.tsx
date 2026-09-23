@@ -1,4 +1,6 @@
 import { AgentTile } from "@/components/agent-identity/agent-tile";
+import { AgentPicker } from "@/components/assistant/agent-picker";
+import { RECENT_AGENT_LIMIT } from "@/components/assistant/use-askable-agent";
 import { LiveReplyLabel } from "@/components/assistant/live-reply-label";
 import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
 import { conversationPath } from "@/lib/conversation-path";
@@ -6,6 +8,8 @@ import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
+import { agentRecency } from "@/lib/recent-agents";
+import { useAssistantStore } from "@/stores/assistant-store";
 import type { AssistantThread } from "@/types/assistant";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -17,6 +21,7 @@ import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
+  ChevronsUpDownIcon,
   HomeIcon,
   InboxIcon,
   MessageSquareIcon,
@@ -155,7 +160,7 @@ export function DeskDirectory({
       </div>
 
       <div className="border-border/60 border-t px-2 py-2">
-        <AgentPicker agents={agents} disabled={isStarting} onStart={onStart} />
+        <NewConversationPicker threads={threads} disabled={isStarting} onStart={onStart} />
       </div>
 
       <ScrollArea
@@ -233,53 +238,48 @@ function DirectoryLink({
 }
 
 /**
- * Which agent to talk to. Shown open rather than behind a second menu: from
- * inside a switcher, one more click to reach the thing the switcher exists
- * to start is a click too many.
+ * Which agent to start a conversation with. One control that opens the
+ * searchable picker, rather than a chip per agent: a switcher that listed
+ * every agent grew with the organization until the conversations it exists
+ * to switch between were pushed out of view.
  */
-function AgentPicker({
-  agents,
+function NewConversationPicker({
+  threads,
   disabled,
   onStart,
 }: {
-  agents: AgentDefinitionRow[];
+  threads: AssistantThread[];
   disabled: boolean;
   onStart: (agentId: string) => void;
 }) {
   const t = useT();
-
-  if (agents.length === 0) {
-    return (
-      <p className="text-muted-foreground px-2 py-1.5 text-xs">
-        {t("No agents are available to talk to yet.")}
-      </p>
-    );
-  }
+  const lastAgentId = useAssistantStore((state) => state.lastAgentId);
+  const recency = useMemo(
+    () => agentRecency(threads, { limit: RECENT_AGENT_LIMIT, preferId: lastAgentId }),
+    [lastAgentId, threads],
+  );
 
   return (
-    <>
-      <p className="text-muted-foreground flex items-center gap-1.5 px-2 pb-1.5 text-xs">
-        <PlusIcon className="size-3" />
-        {t("Start a conversation with")}
-      </p>
-      <div className="flex flex-wrap gap-1">
-        {agents.map((agent) => (
-          <button
-            key={agent.id}
-            type="button"
-            disabled={disabled}
-            onClick={() => onStart(agent.id)}
-            className={cn(
-              "hover:bg-surface-hover ui-focus-ring flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1",
-              "ring-foreground/10 text-sm ring-1 transition-colors disabled:opacity-50",
-            )}
-          >
-            <AgentTile agent={agent} size="xs" />
-            <span className="max-w-40 truncate">{agent.name}</span>
-          </button>
-        ))}
-      </div>
-    </>
+    <AgentPicker
+      agent={null}
+      recentIds={recency.ids}
+      lastUsedAt={recency.lastUsedAt}
+      disabled={disabled}
+      onSelect={(agent) => onStart(agent.id)}
+      trigger={
+        <button
+          type="button"
+          className={cn(
+            "ui-focus-ring hover:bg-surface-hover data-popup-open:bg-surface-active flex h-8 w-full",
+            "items-center gap-2 rounded-md px-2 text-left text-sm transition-colors disabled:opacity-50",
+          )}
+        >
+          <PlusIcon className="text-muted-foreground size-4 shrink-0" />
+          <span className="min-w-0 flex-1 truncate">{t("New conversation")}</span>
+          <ChevronsUpDownIcon className="text-muted-foreground size-3.5 shrink-0" />
+        </button>
+      }
+    />
   );
 }
 

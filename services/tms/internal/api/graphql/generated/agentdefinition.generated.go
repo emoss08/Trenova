@@ -801,6 +801,38 @@ func (ec *executionContext) fieldContext_AgentDefinition_systemKey(_ context.Con
 	return graphql.NewScalarFieldContext("AgentDefinition", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _AgentDefinition_starters(ctx context.Context, field graphql.CollectedField, obj *agentdefinition.Definition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentDefinition_starters(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Starters(), nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []agentdefinition.Starter) graphql.Marshaler {
+			return ec.marshalNAgentStarter2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐStarterᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentDefinition_starters(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AgentDefinition",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AgentStarter(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AgentDefinition_lastRunAt(ctx context.Context, field graphql.CollectedField, obj *agentdefinition.Definition) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1102,6 +1134,52 @@ func (ec *executionContext) _AgentDefinitionEdge_cursor(ctx context.Context, fie
 }
 func (ec *executionContext) fieldContext_AgentDefinitionEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AgentDefinitionEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentStarter_label(ctx context.Context, field graphql.CollectedField, obj *agentdefinition.Starter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentStarter_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentStarter_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentStarter", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentStarter_prompt(ctx context.Context, field graphql.CollectedField, obj *agentdefinition.Starter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentStarter_prompt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Prompt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentStarter_prompt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentStarter", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 // endregion **************************** field.gotpl *****************************
@@ -1458,6 +1536,11 @@ func (ec *executionContext) _AgentDefinition(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "starters":
+			out.Values[i] = ec._AgentDefinition_starters(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "lastRunAt":
 			out.Values[i] = ec._AgentDefinition_lastRunAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
@@ -1671,6 +1754,49 @@ func (ec *executionContext) _AgentDefinitionEdge(ctx context.Context, sel ast.Se
 	return out
 }
 
+var agentStarterImplementors = []string{"AgentStarter"}
+
+func (ec *executionContext) _AgentStarter(ctx context.Context, sel ast.SelectionSet, obj *agentdefinition.Starter) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, agentStarterImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AgentStarter")
+		case "label":
+			out.Values[i] = ec._AgentStarter_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "prompt":
+			out.Values[i] = ec._AgentStarter_prompt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
@@ -1799,6 +1925,26 @@ func (ec *executionContext) marshalNAgentOutputMode2githubᚗcomᚋemoss08ᚋtre
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNAgentStarter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐStarter(ctx context.Context, sel ast.SelectionSet, v agentdefinition.Starter) graphql.Marshaler {
+	return ec._AgentStarter(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAgentStarter2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐStarterᚄ(ctx context.Context, sel ast.SelectionSet, v []agentdefinition.Starter) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAgentStarter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐStarter(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNAgentTriggerMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐTriggerMode(ctx context.Context, v any) (agentdefinition.TriggerMode, error) {

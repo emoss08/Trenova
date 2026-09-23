@@ -129,3 +129,31 @@ export function suggestionsFor(
 
   return [...pageSuggestions(page), ...own];
 }
+
+type SuggestionSource = {
+  template?: AgentTemplateKind | null;
+  /** The agent's own opening questions, from the server. */
+  starters?: readonly Suggestion[] | null;
+};
+
+/**
+ * The opening questions for one agent: the page's own first, then the
+ * agent's. The agent's come from the server, which draws them from its
+ * template or, for an agent built by hand, from the tools it holds, so the
+ * Report Builder is never offered "Where is a shipment?". The template table
+ * above only answers for a definition read before the server sent starters.
+ */
+export function agentSuggestions(
+  agent: SuggestionSource | null | undefined,
+  page?: AssistantPageContext | null,
+): Suggestion[] {
+  if (!agent) {
+    return pageSuggestions(page);
+  }
+  const own =
+    agent.starters && agent.starters.length > 0
+      ? agent.starters
+      : (agent.template && SUGGESTIONS[agent.template]) || DEFAULT_SUGGESTIONS;
+
+  return [...pageSuggestions(page), ...own];
+}

@@ -141,6 +141,7 @@ func (d *Definition) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig 
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "name", Type: domaintypes.FieldTypeText},
+			{Name: "description", Type: domaintypes.FieldTypeText},
 			{Name: "template", Type: domaintypes.FieldTypeEnum},
 			{Name: "trigger_mode", Type: domaintypes.FieldTypeEnum},
 		},

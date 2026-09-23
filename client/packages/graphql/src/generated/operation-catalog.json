@@ -1,6 +1,6 @@
 {
-  "operationCount": 799,
-  "fragmentCount": 209,
+  "operationCount": 800,
+  "fragmentCount": 210,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -429,6 +429,34 @@
       "sdl": "mutation AdjustWorkerPtoBalance($input: AdjustWorkerPTOBalanceInput!) {\n  adjustWorkerPtoBalance(input: $input) {\n    ...WorkerPtoLedgerEntryFields\n  }\n}\n\nfragment WorkerPtoLedgerEntryFields on WorkerPTOLedgerEntry {\n  id\n  workerId\n  ptoType\n  entryType\n  amountDays\n  balanceAfterDays\n  sequence\n  effectiveAt\n  periodKey\n  sourcePtoId\n  assignmentId\n  ptoPolicyId\n  actorType\n  createdById\n  note\n  createdAt\n}"
     },
     {
+      "name": "AgentChoices",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/definitions.graphql",
+      "hash": "sha256:6bb1514f9329e2c8e1ed77638129117516e2d14d070b7502591fbc60fbe83130",
+      "rootFields": [
+        "agentDefinitions"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "false"
+        }
+      ],
+      "fragments": [
+        "AgentChoiceFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentChoices($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {\n  agentDefinitions(input: $input) {\n    edges {\n      node {\n        ...AgentChoiceFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentChoiceFields on AgentDefinition {\n  id\n  name\n  description\n  template\n  icon\n  accent\n  toolNames\n  systemKey\n  starters {\n    label\n    prompt\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
       "name": "AgentControlSettings",
       "kind": "query",
       "domain": "agent",
@@ -449,7 +477,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/definitions.graphql",
-      "hash": "sha256:08ba6a60cbf9b307dba848db43ab05c79979d87a5e80033fb1cc8e7f1a5fb407",
+      "hash": "sha256:e48f561393811bb3f25405543344f1e41ea80a72389c02786169694e1a7562b2",
       "rootFields": [
         "agentDefinitions"
       ],
@@ -470,7 +498,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentDefinitionCards($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentDefinitions(input: $input) {\n    edges {\n      node {\n        ...AgentDefinitionCardFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  icon\n  accent\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  monthlyBudgetUsd\n  dailyRunLimit\n  toolDailyLimits\n  simulationMode\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentDefinitionCards($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentDefinitions(input: $input) {\n    edges {\n      node {\n        ...AgentDefinitionCardFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  icon\n  accent\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  monthlyBudgetUsd\n  dailyRunLimit\n  toolDailyLimits\n  simulationMode\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  starters {\n    label\n    prompt\n  }\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentDefinitionCount",
@@ -18360,6 +18388,18 @@
       "sdl": "fragment AccountTypeTableRowFields on AccountType {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  name\n  description\n  category\n  color\n  isSystem\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentChoiceFields",
+      "typeCondition": "AgentDefinition",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/definitions.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentChoices"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentChoiceFields on AgentDefinition {\n  id\n  name\n  description\n  template\n  icon\n  accent\n  toolNames\n  systemKey\n  starters {\n    label\n    prompt\n  }\n}"
+    },
+    {
       "name": "AgentControlFields",
       "typeCondition": "AgentControl",
       "domain": "agent",
@@ -18382,7 +18422,7 @@
         "AgentDefinitionCards"
       ],
       "usages": [],
-      "sdl": "fragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  icon\n  accent\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  monthlyBudgetUsd\n  dailyRunLimit\n  toolDailyLimits\n  simulationMode\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  icon\n  accent\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  monthlyBudgetUsd\n  dailyRunLimit\n  toolDailyLimits\n  simulationMode\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  starters {\n    label\n    prompt\n  }\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentEvaluationTableRowFields",
@@ -18989,6 +19029,7 @@
       "usedByOperations": [
         "AccessorialChargeTable",
         "AccountTypeTable",
+        "AgentChoices",
         "AgentDefinitionCards",
         "AgentEvaluationTable",
         "AgentExceptionTable",
