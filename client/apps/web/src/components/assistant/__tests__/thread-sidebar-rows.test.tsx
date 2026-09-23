@@ -85,7 +85,12 @@ describe("ThreadSidebar rows with a reply being written", () => {
     const { container } = renderSidebar(new Set(["athr_1", "athr_2"]));
 
     expect(screen.getAllByText("Writing a reply")).toHaveLength(2);
-    expect(container.querySelector(".animate-breathe")).toBeNull();
+    const marks = container.querySelectorAll('[data-slot="desk-mark"]');
+    expect(marks).toHaveLength(2);
+    for (const mark of marks) {
+      expect(mark).toHaveAttribute("data-motion", "still");
+    }
+    expect(container.querySelector('[class*="animate-desk-"]')).toBeNull();
   });
 
   it("marks nothing when no reply is being written", () => {

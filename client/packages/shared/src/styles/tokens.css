@@ -305,6 +305,16 @@
   --desk-glow-opacity: 0.055;
   --desk-spine: color-mix(in oklch, var(--foreground) 11%, transparent);
 
+  /* The drawn desk: the mark that says an agent is at work, and the one the
+     Desk's greeting sits beside. It is line work in the ink, so the only
+     colour it carries is these three. The monitor's screen is the agent's
+     accent at a whisper, lifted while words are arriving; the lamp throws a
+     warm cone in the evening. Both stay small enough that the drawing reads
+     as ink with a light on, not as an illustration in colour. */
+  --desk-screen-rest: 0.16;
+  --desk-screen-lit: 0.6;
+  --desk-lamp-light: color-mix(in oklch, var(--highlight) 45%, transparent);
+
   /* Charts ---------------------------------------------------------------
      Eight series on the categorical hue family. Light and dark differ only in
      lightness, never in hue, so a series keeps its identity when the theme
@@ -637,6 +647,13 @@
   --desk-hairline: color-mix(in oklch, var(--foreground) 12%, transparent);
   --desk-glow-opacity: 0.1;
   --desk-spine: color-mix(in oklch, var(--foreground) 16%, transparent);
+
+  /* A lit screen in a dark room is brighter against it, so the rest is
+     higher and the lift reaches further; the lamp's cone is thinner,
+     because warm light on a near-black ground carries further than on white. */
+  --desk-screen-rest: 0.24;
+  --desk-screen-lit: 0.78;
+  --desk-lamp-light: color-mix(in oklch, var(--highlight) 24%, transparent);
 
   --lift-ring: 0 0 0 1px color-mix(in oklch, var(--foreground) 12%, transparent);
   --lift-whisper: var(--lift-ring), 0 1px 2px -1px oklch(0 0 0 / 0.4);
@@ -975,15 +992,40 @@
        land        a step of an agent's work arrives in the ledger
        materialise something the agent produced appears in the workspace
        draw        the spine extends as a turn grows
-       breathe     an agent is working; the ONLY loop in the system, and it
-                   runs on a live indicator that stops when the work does
+       work        an agent is at its desk; the ONLY loops in the system,
+                   and they run on a live indicator that stops when the
+                   work does
 
      Everything else on a working screen still answers an action. */
   --animate-land: land 200ms var(--ease-settle) both;
   --animate-materialise: materialise 320ms var(--ease-settle) both;
   --animate-draw: draw 280ms var(--ease-swift) both;
-  --animate-breathe: breathe 2.4s ease-in-out infinite;
   --animate-caret: caret 1.1s steps(2, start) infinite;
+
+  /* The drawn desk at work. One pose per phase of a turn, so the mark says
+     what kind of waiting this is without a word:
+
+       desk-roll    waiting on the model: the chair rolls out, someone sits,
+                    and it rolls back in
+       desk-shake   a tool is running: the desk gives a small busy shake,
+                    then holds still for most of the beat
+       desk-screen  the answer is arriving: the monitor pulses softly
+
+     Each is slow and eased both ways, because a loop that hurries reads as
+     a fault rather than as work. They stop the instant the turn does, and
+     the two one-shots below close the scene:
+
+       desk-settle  the turn is over: the chair tucks in on the confirm
+                    spring, and then the mark is gone
+       desk-arrive  the greeting's desk: the chair settles in once as the
+                    page opens
+       desk-lamp    the evening lamp switches on, with one flicker, once */
+  --animate-desk-roll: desk-roll 3.6s ease-in-out infinite;
+  --animate-desk-shake: desk-shake 2.4s ease-in-out infinite;
+  --animate-desk-screen: desk-screen 1.8s ease-in-out infinite;
+  --animate-desk-settle: desk-settle 320ms var(--ease-spring) both;
+  --animate-desk-arrive: desk-arrive 720ms var(--ease-settle) 180ms both;
+  --animate-desk-lamp: desk-lamp 1s var(--ease-swift) 520ms both;
 
   --lift-whisper-shadow: var(--lift-whisper);
   --lift-card-shadow: var(--lift-card);
@@ -1029,15 +1071,93 @@
   }
 }
 
-@keyframes breathe {
+/* The chair's round trip: out, a small dip as someone sits, a beat, and
+   back under the desk. Lengths inside an SVG are user units, so the travel
+   scales with the drawing rather than with the screen. */
+@keyframes desk-roll {
   0%,
   100% {
-    opacity: 0.35;
-    transform: scale(0.82);
+    transform: none;
+  }
+  30% {
+    transform: translate3d(3.5px, 0, 0);
+  }
+  42% {
+    transform: translate3d(3.5px, 0.6px, 0);
+  }
+  54% {
+    transform: translate3d(3.5px, 0, 0);
+  }
+  84% {
+    transform: none;
+  }
+}
+
+/* A burst in the first third of the beat and stillness for the rest, so it
+   reads as someone busy at the desk rather than as a desk that is broken.
+   The pivot is the foot of the desk, set by the element. */
+@keyframes desk-shake {
+  0%,
+  36%,
+  100% {
+    transform: none;
+  }
+  7% {
+    transform: translate3d(-0.35px, 0, 0) rotate(-1.4deg);
+  }
+  15% {
+    transform: translate3d(0.35px, 0, 0) rotate(1.2deg);
+  }
+  23% {
+    transform: translate3d(-0.2px, 0, 0) rotate(-0.7deg);
+  }
+  30% {
+    transform: rotate(0.3deg);
+  }
+}
+
+@keyframes desk-screen {
+  0%,
+  100% {
+    opacity: var(--desk-screen-rest);
   }
   50% {
+    opacity: var(--desk-screen-lit);
+  }
+}
+
+@keyframes desk-settle {
+  from {
+    transform: translate3d(3px, 0, 0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes desk-arrive {
+  from {
+    transform: translate3d(5px, 0, 0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* A lamp does not fade on; it catches, dips once, and holds. */
+@keyframes desk-lamp {
+  0% {
+    opacity: 0;
+  }
+  16% {
+    opacity: 0.85;
+  }
+  26% {
+    opacity: 0.2;
+  }
+  42%,
+  100% {
     opacity: 1;
-    transform: scale(1);
   }
 }
 
@@ -1215,7 +1335,7 @@
     animation-delay: 0ms !important;
   }
 
-  [class*="animate-breathe"],
+  [class*="animate-desk-"],
   .ui-stream-caret::after {
     animation: none !important;
   }
