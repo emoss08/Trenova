@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
@@ -58,7 +60,9 @@ func NewActivities(p ActivitiesParams) *Activities {
 }
 
 // WriteDueBriefingsActivity writes the morning for every organization whose
-// local clock has just reached its briefing hour.
+// local clock has just reached its briefing hour, in one activity. It serves
+// only sweeps started before the sweep fanned out to a child per
+// organization.
 //
 // The whole sweep is anchored to one instant so every organization written
 // in it describes the same moment; the hour each is compared against is
@@ -120,6 +124,62 @@ func (a *Activities) WriteDueBriefingsActivity(
 	)
 
 	return result, nil
+}
+
+// ListDueOrganizationsActivity decides which organizations' briefing hour has
+// come as of the sweep's instant. One whose hour cannot be decided is named,
+// and the rest are still listed.
+func (a *Activities) ListDueOrganizationsActivity(
+	ctx context.Context,
+	input *DueOrganizationsInput,
+) (*DueOrganizations, error) {
+	organizations, err := a.tenants.ListOrganizations(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list organizations: %w", err)
+	}
+
+	result := &DueOrganizations{Due: make([]temporaljobs.TenantWorkItem, 0)}
+	for _, org := range organizations {
+		activity.RecordHeartbeat(ctx, org.ID.String())
+
+		tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+		due, dErr := a.isDue(ctx, tenantInfo, input.Now)
+		if dErr != nil {
+			a.l.Warn("could not decide whether a briefing is due",
+				zap.String("organization", org.ID.String()),
+				zap.Error(dErr),
+			)
+			result.Failed = append(result.Failed, org.ID.String())
+
+			continue
+		}
+		if due {
+			result.Due = append(result.Due, temporaljobs.NewTenantWorkItem(tenantInfo, 1))
+		}
+	}
+
+	return result, nil
+}
+
+// WriteOrganizationBriefingActivity writes one organization's morning as of
+// the sweep's instant. It heartbeats on a timer, because a model call per
+// role can outlast the heartbeat timeout without producing anything.
+func (a *Activities) WriteOrganizationBriefingActivity(
+	ctx context.Context,
+	input *OrganizationBriefingInput,
+) (*OrganizationBriefingResult, error) {
+	stop := modelcall.Heartbeat(ctx)
+	defer stop()
+
+	written, err := a.briefings.WriteForDay(ctx, services.WriteBriefingRequest{
+		TenantInfo: input.TenantInfo(),
+		Now:        input.Now,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("write the morning briefing: %w", err)
+	}
+
+	return &OrganizationBriefingResult{Written: written.Written, Narrated: written.Narrated}, nil
 }
 
 // BriefingRetentionActivity removes briefings older than the window a reader can
