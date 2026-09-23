@@ -136093,6 +136093,15 @@
       "routes/detention-policy"
     ]
   },
+  "Run the detention report for last week.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Run the operation to see the response": {
     "sites": 1,
     "scope": [
@@ -147508,6 +147517,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Show me shipment SEED-SHP-008.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Show more": {
     "sites": 1,
     "scope": [
@@ -154944,6 +154962,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Tell the customer their load is running late.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Tell us what looks wrong so your carrier can fix it.": {
@@ -165463,6 +165490,15 @@
       "routes/shipment"
     ]
   },
+  "This conversation's artifacts could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This course is no longer open": {
     "sites": 1,
     "scope": [
@@ -171907,7 +171943,7 @@
     ]
   },
   "Try again": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "ts"
     ],
@@ -171917,6 +171953,7 @@
       "routes/accept.tsx",
       "routes/admin",
       "routes/billing-queue",
+      "routes/desk",
       "routes/detention-desk",
       "routes/detention-intelligence",
       "routes/hos.tsx",
@@ -182816,6 +182853,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Which shipments are in transit?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Which stage this notice is: Warning, Started, Update, or Final. Required, because one template covers all four and the recipient must be able to tell them apart.": {
@@ -198198,15 +198244,6 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/desk"
-    ]
-  },
-  "“{example}”": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
       "routes/desk"
     ]
   },

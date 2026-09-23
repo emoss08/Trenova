@@ -9,10 +9,11 @@ import { apiService } from "@/services/api";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { PanelRightCloseIcon, PinIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo } from "react";
@@ -48,12 +49,14 @@ export function defaultArtifactId(
  * could already see. Naming what will appear says what the pane is for and,
  * more usefully, what to ask for to fill it.
  */
-const ARTIFACT_PROMISES = [
-  { kind: "table_view", example: "Which shipments are in transit?" },
-  { kind: "report_run", example: "Run the detention report for last week." },
-  { kind: "entity_card", example: "Show me shipment SEED-SHP-008." },
-  { kind: "email_draft", example: "Tell the customer their load is running late." },
-] as const;
+function artifactPromises(t: TranslateFn) {
+  return [
+    { kind: "table_view", example: t("Which shipments are in transit?") },
+    { kind: "report_run", example: t("Run the detention report for last week.") },
+    { kind: "entity_card", example: t("Show me shipment SEED-SHP-008.") },
+    { kind: "email_draft", example: t("Tell the customer their load is running late.") },
+  ] as const;
+}
 
 function ArtifactsEmpty() {
   const t = useT();
@@ -70,7 +73,7 @@ function ArtifactsEmpty() {
       </div>
 
       <ul className="space-y-1.5">
-        {ARTIFACT_PROMISES.map(({ kind, example }, index) => (
+        {artifactPromises(t).map(({ kind, example }, index) => (
           <li
             key={kind}
             style={{ animationDelay: `${index * 45}ms` }}
@@ -85,9 +88,7 @@ function ArtifactsEmpty() {
             />
             <span className="min-w-0 flex-1">
               <span className="block text-xs">{t(ARTIFACT_KINDS[kind].label)}</span>
-              <span className="text-muted-foreground block text-2xs">
-                {t("“{example}”", { example })}
-              </span>
+              <span className="text-muted-foreground block text-2xs">{t("“{0}”", example)}</span>
             </span>
           </li>
         ))}
@@ -218,6 +219,19 @@ export function ArtifactsPane({
         <div className="flex flex-col gap-2 px-3">
           <Skeleton className="h-8" />
           <Skeleton className="h-48" />
+        </div>
+      ) : artifactsQuery.isError ? (
+        <div className="px-3">
+          <Alert size="sm" variant="destructive">
+            <AlertDescription>
+              {t("This conversation's artifacts could not be loaded.")}
+            </AlertDescription>
+            <AlertAction>
+              <Button variant="outline" size="xs" onClick={() => void artifactsQuery.refetch()}>
+                {t("Try again")}
+              </Button>
+            </AlertAction>
+          </Alert>
         </div>
       ) : artifacts.length === 0 ? (
         <ArtifactsEmpty />

@@ -75,21 +75,7 @@ func (r *repository) Upsert(
 		return nil, err
 	}
 
-	cols := buncolgen.ArtifactColumns
-	if _, err = r.db.DBForContext(ctx).
-		NewInsert().
-		Model(artifact).
-		On(target).
-		Set(cols.MessageID.SetExcluded()).
-		Set(cols.RunID.SetExcluded()).
-		Set(cols.Status.SetExcluded()).
-		Set(cols.Title.SetExcluded()).
-		Set(cols.Payload.SetExcluded()).
-		Set(cols.SourceToolCallID.SetExcluded()).
-		Set(cols.Version.SetExpr("{} + 1")).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Returning("*").
-		Exec(ctx); err != nil {
+	if _, err = buildUpsert(r.db.DBForContext(ctx), artifact, target).Exec(ctx); err != nil {
 		r.l.Error("failed to upsert assistant artifact",
 			zap.String("threadId", artifact.ThreadID.String()),
 			zap.String("kind", string(artifact.Kind)),
@@ -99,6 +85,23 @@ func (r *repository) Upsert(
 	}
 
 	return artifact, nil
+}
+
+func buildUpsert(db bun.IDB, artifact *assistantartifact.Artifact, target string) *bun.InsertQuery {
+	cols := buncolgen.ArtifactColumns
+
+	return db.NewInsert().
+		Model(artifact).
+		On(target).
+		Set(cols.MessageID.SetExcluded()).
+		Set(cols.RunID.SetExcluded()).
+		Set(cols.Status.SetExcluded()).
+		Set(cols.Title.SetExcluded()).
+		Set(cols.Payload.SetExcluded()).
+		Set(cols.SourceToolCallID.SetExcluded()).
+		Set(cols.Version.IncConflict(1)).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Returning("*")
 }
 
 func (r *repository) ListByThread(
