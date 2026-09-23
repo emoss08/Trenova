@@ -260,6 +260,13 @@ func (a *Activities) alreadySaved(
 	if err == nil {
 		turn = current
 	}
+	if !turn.Status.Terminal() {
+		// The attempt that saved it was lost before closing the record. Left
+		// open, the record would hold the conversation's one live slot for
+		// ever; what the turn came to is in the conversation either way.
+		a.turns.Complete(ctx, turn, conversation.AssistantTurnStatusCompleted, nil)
+		turn.Status = conversation.AssistantTurnStatusCompleted
+	}
 
 	event := assistantturnservice.ClosingEvent(turn)
 
@@ -267,6 +274,39 @@ func (a *Activities) alreadySaved(
 		Result: AssistantTurnResult{Status: string(turn.Status)},
 		Event:  temporaltype.StreamItem{Event: event.Event, Data: event.Data},
 	}
+}
+
+// CloseTurnActivity closes a turn's record the save could not close. It is
+// the last thing a turn does when saving it failed on every attempt, and it
+// never touches the conversation, only the record, which is what frees the
+// conversation for its next question.
+func (a *Activities) CloseTurnActivity(
+	ctx context.Context,
+	payload *AssistantTurnPayload,
+	message string,
+) error {
+	turn, err := a.turnRepo.GetByID(ctx, repositories.GetAssistantTurnRequest{
+		ID:         payload.TurnID,
+		TenantInfo: payload.tenantInfo(),
+	})
+	if err != nil {
+		return fmt.Errorf("read this turn's record: %w", err)
+	}
+	if turn.Status.Terminal() {
+		return nil
+	}
+
+	err = a.turnRepo.Complete(ctx, repositories.CompleteAssistantTurnRequest{
+		ID:         turn.ID,
+		TenantInfo: payload.tenantInfo(),
+		Status:     conversation.AssistantTurnStatusFailed,
+		Error:      message,
+	})
+	if err != nil {
+		return fmt.Errorf("close this turn's record: %w", err)
+	}
+
+	return nil
 }
 
 // claimSave reserves saving the turn for this attempt, and reports whether

@@ -247,9 +247,16 @@ func TestFinishTurn_DoesNotRepeatASaveThatMayHaveLanded(t *testing.T) {
 	})
 	a, records := finishActivities(turn, steps)
 
-	finish(t, a, finishInput(turn))
+	ending := finish(t, a, finishInput(turn))
 
-	assert.Empty(t, records.completed)
+	/*
+		The attempt that began the save was lost before closing the record.
+		Nothing is saved again, but the record is closed: left Running it held
+		the conversation's one live slot, and refused every later question.
+	*/
+	require.Len(t, records.completed, 1)
+	assert.Equal(t, conversation.AssistantTurnStatusCompleted, records.completed[0].Status)
+	assert.Equal(t, serviceports.AssistantEventDone, ending.Event.Event)
 }
 
 // A save that failed cleanly appended nothing, so a later attempt saves.
@@ -267,4 +274,41 @@ func TestFinishTurn_SavesAfterAnAttemptThatFailedCleanly(t *testing.T) {
 	finish(t, a, finishInput(turn))
 
 	require.Len(t, records.completed, 1)
+}
+
+func closeTurn(t *testing.T, a *Activities, turn *conversation.AssistantTurn) {
+	t.Helper()
+
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestActivityEnvironment()
+	env.RegisterActivity(a)
+
+	payload := finishInput(turn).Payload
+	_, err := env.ExecuteActivity(a.CloseTurnActivity, payload, "This reply could not be saved: db")
+	require.NoError(t, err)
+}
+
+func TestCloseTurn_ClosesARecordTheSaveCouldNotClose(t *testing.T) {
+	t.Parallel()
+
+	turn := runningTurn()
+	a, records := finishActivities(turn, newLedger())
+
+	closeTurn(t, a, turn)
+
+	require.Len(t, records.completed, 1)
+	assert.Equal(t, conversation.AssistantTurnStatusFailed, records.completed[0].Status)
+	assert.Contains(t, records.completed[0].Error, "could not be saved")
+}
+
+func TestCloseTurn_LeavesARecordThatAlreadyEnded(t *testing.T) {
+	t.Parallel()
+
+	turn := runningTurn()
+	turn.Status = conversation.AssistantTurnStatusCompleted
+	a, records := finishActivities(turn, newLedger())
+
+	closeTurn(t, a, turn)
+
+	assert.Empty(t, records.completed)
 }

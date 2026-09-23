@@ -243,3 +243,39 @@ func TestRelay_AnswersATurnThatWasAlreadyOverWithoutReadingTheStream(t *testing.
 	assert.Contains(t, string(seen[0].Data), string(conversation.AssistantTurnStatusRefused))
 	assert.Zero(t, reader.reads)
 }
+
+// A turn's execution is named after the turn, so a turn whose start was not
+// recorded is still followed rather than reported as over.
+func TestRelay_FollowsATurnWhoseStartWasNotRecorded(t *testing.T) {
+	t.Parallel()
+
+	turn := runningTurn()
+	turn.WorkflowID = ""
+	reader := &stubReader{frames: []serviceports.TurnStreamFrame{
+		{ID: "0", Event: serviceports.AssistantEventDelta},
+		{ID: "1", Event: serviceports.AssistantEventDone},
+	}}
+	svc := newRelay(&stubTurns{turn: turn}, reader)
+
+	seen := collect(t, svc, turn)
+
+	assert.Equal(t, 1, reader.reads)
+	assert.Equal(t, conversation.AssistantTurnWorkflowID(turn.ID), reader.ref.WorkflowID)
+	require.Len(t, seen, 2)
+}
+
+// An execution that cannot be read is no error when the record already says
+// how the turn ended.
+func TestRelay_ClosesWhenTheStreamIsGoneButTheRecordSaysItEnded(t *testing.T) {
+	t.Parallel()
+
+	turn := runningTurn()
+	ended := *turn
+	ended.Status = conversation.AssistantTurnStatusCompleted
+	svc := newRelay(&stubTurns{turn: &ended}, &stubReader{err: errors.New("workflow not found")})
+
+	seen := collect(t, svc, turn)
+
+	require.Len(t, seen, 1)
+	assert.True(t, seen[0].Terminal())
+}

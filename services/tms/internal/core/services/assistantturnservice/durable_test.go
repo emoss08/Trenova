@@ -3,6 +3,7 @@ package assistantturnservice
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -164,15 +165,78 @@ func TestStop_ClosesTheRecordOfATurnNothingPickedUp(t *testing.T) {
 		Status: conversation.AssistantTurnStatusRunning,
 	}
 
-	called := false
 	require.NoError(t, svc.Stop(t.Context(), turn, func(string) error {
-		called = true
+		return ErrNoExecution
+	}))
+
+	require.Len(t, turns.completed, 1)
+	assert.Equal(t, turn.ID, turns.completed[0].ID)
+	assert.Equal(t, conversation.AssistantTurnStatusStopped, turns.completed[0].Status)
+}
+
+/*
+A turn whose start was not recorded used to be closed without cancelling
+anything, on the reading that nothing had started it. The start is recorded
+after the workflow begins, so the workflow could be running: the record said
+Stopped while the reply went on writing into the conversation.
+*/
+func TestStop_CancelsATurnWhoseStartWasNotRecorded(t *testing.T) {
+	t.Parallel()
+
+	turns := &recordingTurns{}
+	svc := newDurable(turns)
+	turn := &conversation.AssistantTurn{
+		ID:     pulid.MustNew("atrn_"),
+		Status: conversation.AssistantTurnStatusRunning,
+	}
+
+	cancelled := ""
+	require.NoError(t, svc.Stop(t.Context(), turn, func(id string) error {
+		cancelled = id
 
 		return nil
 	}))
 
-	assert.False(t, called, "there is no workflow to cancel")
+	assert.Equal(t, conversation.AssistantTurnWorkflowID(turn.ID), cancelled)
+	assert.Empty(t, turns.completed, "the execution closes the record as it stops")
+}
+
+// An execution that ended without closing the record leaves nothing to
+// cancel. The stop still frees the conversation.
+func TestStop_ClosesTheRecordWhenTheExecutionIsGone(t *testing.T) {
+	t.Parallel()
+
+	turns := &recordingTurns{}
+	svc := newDurable(turns)
+	turn := &conversation.AssistantTurn{
+		ID:         pulid.MustNew("atrn_"),
+		Status:     conversation.AssistantTurnStatusRunning,
+		WorkflowID: "assistant-turn:atrn_1",
+	}
+
+	require.NoError(t, svc.Stop(t.Context(), turn, func(string) error {
+		return fmt.Errorf("cancel: %w", ErrNoExecution)
+	}))
+
 	require.Len(t, turns.completed, 1)
-	assert.Equal(t, turn.ID, turns.completed[0].ID)
 	assert.Equal(t, conversation.AssistantTurnStatusStopped, turns.completed[0].Status)
+}
+
+func TestStop_ReportsACancelThatFailed(t *testing.T) {
+	t.Parallel()
+
+	turns := &recordingTurns{}
+	svc := newDurable(turns)
+	turn := &conversation.AssistantTurn{
+		ID:         pulid.MustNew("atrn_"),
+		Status:     conversation.AssistantTurnStatusRunning,
+		WorkflowID: "assistant-turn:atrn_1",
+	}
+
+	err := svc.Stop(t.Context(), turn, func(string) error {
+		return errors.New("temporal is down")
+	})
+
+	require.Error(t, err)
+	assert.Empty(t, turns.completed)
 }

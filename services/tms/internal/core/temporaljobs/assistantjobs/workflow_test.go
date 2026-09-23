@@ -261,8 +261,20 @@ func (s *AssistantTurnWorkflowTestSuite) TestFailsLoudlyWhenTheTurnCannotBeSaved
 	s.prepares(s.plan(), nil)
 	s.answers("Done.")
 	s.finishes(nil, errors.New("database is down"))
+	closed := ""
+	var a *Activities
+	s.env.OnActivity(a.CloseTurnActivity, mock.Anything, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, payload *AssistantTurnPayload, message string) error {
+			closed = message
+			s.Equal(s.payload.TurnID, payload.TurnID)
+
+			return nil
+		},
+	).Once()
 
 	s.run()
 
 	s.Error(s.env.GetWorkflowError())
+	s.Contains(closed, "database is down",
+		"a turn that could not be saved still closes its record, or the conversation stays locked")
 }

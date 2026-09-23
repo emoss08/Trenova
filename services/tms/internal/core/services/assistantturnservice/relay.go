@@ -42,7 +42,7 @@ func (s *Service) Relay(
 	// A turn that was already over before anybody attached needs no stream at
 	// all: the answer is written down, and saying so immediately beats
 	// reading a workflow that has closed.
-	if turn.Status.Terminal() || turn.WorkflowID == "" {
+	if turn.Status.Terminal() {
 		s.metrics.RecordStreamAttach("already_ended")
 
 		return onFrame(closingFrame(s.current(ctx, turn)))
@@ -84,6 +84,12 @@ func (s *Service) Relay(
 	case sawTerminal:
 		return nil
 	default:
+		// A turn whose execution is gone, or never started, cannot be
+		// followed. When its record says it is over, that is the answer.
+		if current := s.current(ctx, turn); current.Status.Terminal() {
+			return onFrame(closingFrame(current))
+		}
+
 		return err
 	}
 

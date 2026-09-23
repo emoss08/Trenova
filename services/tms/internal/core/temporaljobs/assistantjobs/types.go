@@ -20,6 +20,7 @@ package assistantjobs
 import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
@@ -28,17 +29,11 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const (
-	AssistantTurnWorkflowName = "AssistantTurnWorkflow"
-
-	// workflowIDPrefix makes a turn's execution findable from its record, and
-	// its id unique: one turn, one execution, for ever.
-	workflowIDPrefix = "assistant-turn:"
-)
+const AssistantTurnWorkflowName = "AssistantTurnWorkflow"
 
 // WorkflowIDFor names the execution carrying a turn.
 func WorkflowIDFor(turnID pulid.ID) string {
-	return workflowIDPrefix + turnID.String()
+	return conversation.AssistantTurnWorkflowID(turnID)
 }
 
 // AssistantTurnPayload is one question and everything needed to answer it.

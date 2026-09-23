@@ -173,7 +173,7 @@ func streamRef(turn *conversation.AssistantTurn) serviceports.TurnStreamRef {
 	return serviceports.TurnStreamRef{
 		TenantInfo: tenantOf(turn),
 		TurnID:     turn.ID,
-		WorkflowID: turn.WorkflowID,
+		WorkflowID: turn.ExecutionID(),
 	}
 }
 
@@ -214,6 +214,11 @@ func (s *Service) StartTurn(
 	return turn, nil
 }
 
+// ErrNoExecution is what a cancel reports when no execution carries the
+// turn, which is how Stop tells a turn it must close itself from one it asked
+// to stop.
+var ErrNoExecution = errors.New("no execution carries this turn")
+
 // Stop ends a turn somebody is no longer waiting for.
 //
 // Closing a reader stops nothing: the turn runs on a worker, and bills for it.
@@ -231,26 +236,26 @@ func (s *Service) Stop(
 		return nil
 	}
 
-	if turn.WorkflowID == "" {
-		// Recorded but never handed to a worker, so there is no execution to
-		// cancel. Closing the record is what frees the conversation's one
-		// live slot for the next question.
-		err := s.turns.Complete(ctx, repositories.CompleteAssistantTurnRequest{
+	err := cancel(turn.ExecutionID())
+	switch {
+	case err == nil:
+	case errors.Is(err, ErrNoExecution):
+		// Nothing carries the turn: it was never handed to a worker, or its
+		// execution ended without closing the record. Closing it here is what
+		// frees the conversation's one live slot for the next question.
+		if cErr := s.turns.Complete(ctx, repositories.CompleteAssistantTurnRequest{
 			ID:         turn.ID,
 			TenantInfo: tenantOf(turn),
 			Status:     conversation.AssistantTurnStatusStopped,
-		})
-		if err != nil {
+		}); cErr != nil {
 			s.metrics.RecordTurnStopped("error")
 
-			return fmt.Errorf("stop this reply: %w", err)
+			return fmt.Errorf("stop this reply: %w", cErr)
 		}
 		s.metrics.RecordTurnStopped("no_execution")
 
 		return nil
-	}
-
-	if err := cancel(turn.WorkflowID); err != nil {
+	default:
 		s.metrics.RecordTurnStopped("error")
 
 		return fmt.Errorf("stop this reply: %w", err)

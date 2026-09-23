@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -86,6 +87,15 @@ func (r *repository) GetByID(
 	return turn, nil
 }
 
+// liveStatuses are a turn still producing its reply. A write that marks a
+// turn live must be limited to them: a fast turn can finish before the
+// request that started it records its workflow, and marking it Running after
+// that would hold the conversation's one live slot for ever.
+var liveStatuses = []conversation.AssistantTurnStatus{
+	conversation.AssistantTurnStatusPending,
+	conversation.AssistantTurnStatusRunning,
+}
+
 func (r *repository) Active(
 	ctx context.Context,
 	req repositories.ActiveAssistantTurnRequest,
@@ -98,10 +108,7 @@ func (r *repository) Active(
 		Apply(buncolgen.AssistantTurnApplyTenant(req.TenantInfo)).
 		Where(cols.ThreadID.Eq(), req.ThreadID).
 		Where(cols.UserID.Eq(), req.UserID).
-		Where(cols.Status.In(), []conversation.AssistantTurnStatus{
-			conversation.AssistantTurnStatusPending,
-			conversation.AssistantTurnStatusRunning,
-		}).
+		Where(cols.Status.In(), bun.List(liveStatuses)).
 		Scan(ctx)
 	if err != nil {
 		if dberror.IsNotFoundError(err) {
@@ -162,7 +169,8 @@ func (r *repository) MarkWorkflow(
 		Set(cols.WorkflowID.Set(), workflowID).
 		Set(cols.Status.Set(), conversation.AssistantTurnStatusRunning).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Where(cols.ID.Eq(), id)
+		Where(cols.ID.Eq(), id).
+		Where(cols.Status.In(), bun.List(liveStatuses))
 
 	_, err := buncolgen.AssistantTurnScopeTenantUpdate(q, tenant).Exec(ctx)
 	if err != nil {

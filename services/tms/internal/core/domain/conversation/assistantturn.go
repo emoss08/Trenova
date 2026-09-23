@@ -95,8 +95,8 @@ type AssistantTurn struct {
 	// RunID points at the agent run opened for this turn, which happens only
 	// when it proposed a change somebody has to decide on.
 	RunID pulid.ID `json:"runId"      bun:"run_id,type:VARCHAR(100),nullzero"`
-	// WorkflowID is the durable execution carrying the turn, empty while it
-	// still runs in the request that asked for it.
+	// WorkflowID is the durable execution carrying the turn, empty until its
+	// start is recorded. ExecutionID answers for a turn either way.
 	WorkflowID string `json:"workflowId" bun:"workflow_id,type:VARCHAR(255),nullzero"`
 
 	// Origin and Input say what the turn answers, so a reader who rejoins a
@@ -132,6 +132,26 @@ func (t *AssistantTurn) Validate(multiErr *errortypes.MultiError) {
 			domainvalidation.ValidEnum[AssistantTurnOrigin]("Invalid origin"),
 		),
 	))
+}
+
+// AssistantTurnWorkflowPrefix makes a turn's execution findable from its
+// record, and its id unique: one turn, one execution, for ever.
+const AssistantTurnWorkflowPrefix = "assistant-turn:"
+
+// AssistantTurnWorkflowID names the execution carrying a turn.
+func AssistantTurnWorkflowID(turnID pulid.ID) string {
+	return AssistantTurnWorkflowPrefix + turnID.String()
+}
+
+// ExecutionID is the execution carrying the turn. The id is derived from the
+// turn, so it is known before the start is recorded, and a turn whose start
+// was never written down can still be followed and stopped.
+func (t *AssistantTurn) ExecutionID() string {
+	if t.WorkflowID != "" {
+		return t.WorkflowID
+	}
+
+	return AssistantTurnWorkflowID(t.ID)
 }
 
 func (t *AssistantTurn) GetID() pulid.ID {

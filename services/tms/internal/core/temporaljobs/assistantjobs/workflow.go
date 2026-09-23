@@ -49,6 +49,23 @@ var finishOptions = workflow.ActivityOptions{
 	},
 }
 
+// closeOptions retry briefly. Closing is one row, and a turn whose save just
+// failed ten times gains nothing from waiting longer on the same database.
+var closeOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: 30 * time.Second,
+	Summary:             "Close the turn's record",
+	RetryPolicy: &temporal.RetryPolicy{
+		InitialInterval:    time.Second,
+		BackoffCoefficient: 2,
+		MaximumInterval:    10 * time.Second,
+		MaximumAttempts:    5,
+	},
+}
+
+// changeCloseUnsavedTurn closes a turn's record when saving the turn failed on
+// every attempt. Executions that began before it replay without the step.
+const changeCloseUnsavedTurn = "assistant-turn-close-unsaved"
+
 // Workflows are the assistant's workflows. They hold the agent runtime
 // because the agent loop runs in workflow code, and the loop is the runtime's.
 type Workflows struct {
@@ -92,6 +109,7 @@ func (w *Workflows) AssistantTurnWorkflow(
 			"error", err.Error(),
 		)
 		ending = *failedEnding("Failed", failedMessage)
+		w.closeRecord(keep, payload, err)
 	}
 
 	stream.Publish(keep, ending.Event)
@@ -178,4 +196,28 @@ func withPriority(
 	}
 
 	return options
+}
+
+// closeRecord closes the record of a turn that could not be saved, so the
+// conversation is not left refusing every later question.
+func (w *Workflows) closeRecord(
+	ctx workflow.Context,
+	payload *AssistantTurnPayload,
+	cause error,
+) {
+	if workflow.GetVersion(ctx, changeCloseUnsavedTurn, workflow.DefaultVersion, 1) != 1 {
+		return
+	}
+
+	var a *Activities
+	err := workflow.ExecuteActivity(
+		workflow.WithActivityOptions(ctx, closeOptions),
+		a.CloseTurnActivity, payload, "This reply could not be saved: "+cause.Error(),
+	).Get(ctx, nil)
+	if err != nil {
+		workflow.GetLogger(ctx).Error("assistant turn record could not be closed",
+			"turnId", payload.TurnID.String(),
+			"error", err.Error(),
+		)
+	}
 }

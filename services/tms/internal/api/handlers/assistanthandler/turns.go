@@ -1,6 +1,7 @@
 package assistanthandler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
+	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
 	"go.uber.org/zap"
@@ -340,7 +342,13 @@ func (h *Handler) stopTurn(c *gin.Context) {
 	}
 
 	err = h.turns.Stop(c.Request.Context(), turn, func(workflowID string) error {
-		return h.workflows.CancelWorkflow(c.Request.Context(), workflowID, "")
+		cErr := h.workflows.CancelWorkflow(c.Request.Context(), workflowID, "")
+		var gone *serviceerror.NotFound
+		if errors.As(cErr, &gone) {
+			return assistantturnservice.ErrNoExecution
+		}
+
+		return cErr
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
