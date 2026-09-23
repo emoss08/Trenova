@@ -7,6 +7,21 @@ import (
 	"time"
 )
 
+// The span of epoch seconds a record could plausibly be reporting as a date.
+// The bound is what separates a timestamp from a large quantity that happens to
+// share a date-like name: an invoice total in cents can land in this range, a
+// due date cannot land outside it.
+const (
+	earliestPlausibleInstant int64 = 946684800  // 2000-01-01
+	latestPlausibleInstant   int64 = 4102444800 // 2100-01-01
+)
+
+// IsPlausibleInstant reports whether seconds could be a date a record holds.
+// Zero, which the row types use for "not set", never is.
+func IsPlausibleInstant(seconds int64) bool {
+	return seconds >= earliestPlausibleInstant && seconds <= latestPlausibleInstant
+}
+
 func NowUnix() int64 {
 	return time.Now().Unix()
 }

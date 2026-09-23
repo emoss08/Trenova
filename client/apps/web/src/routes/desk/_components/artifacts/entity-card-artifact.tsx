@@ -1,39 +1,41 @@
-import { JsonViewer } from "@/components/elements/json-viewer";
+import { DisplayValue } from "@/components/assistant/display-value";
 import { humanizeToolName } from "@/components/assistant/proposal-state";
+import { isDetailType, isFigureType } from "@/components/assistant/readable-values";
+import { ArtifactNotice } from "@/components/assistant/voice/artifact-chrome";
+import type { AssistantArtifact } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
-import type { AssistantArtifact } from "@/types/assistant";
-import { ArrowUpRightIcon, CodeIcon } from "lucide-react";
+import { ArrowUpRightIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { entityCardFrom } from "./artifact-payloads";
 
-/** The most a card lists before the rest is behind the raw view. */
-const FACT_LIMIT = 16;
+/** The most a card lists before the rest wait behind "Show more". */
+const FIELD_LIMIT = 12;
 
 /**
- * One record the assistant looked up, as a person reads one: labelled
- * values first, the whole record a click away. The labels are the record's
- * own field names read as words; the card does not know every entity.
+ * One record the assistant looked up, as a person reads one: its values
+ * labelled and formatted — a status as a badge, a date in the reader's own
+ * timezone, money as money — with the prose and measurements set out below
+ * them, and the way into the record itself. Its id is how the card opens and
+ * is never shown.
  */
 export function EntityCardArtifact({ artifact }: { artifact: AssistantArtifact }) {
   const t = useT();
   const card = useMemo(() => entityCardFrom(artifact), [artifact]);
-  const [raw, setRaw] = useState(false);
-  const shown = card.facts.slice(0, FACT_LIMIT);
+  const [everything, setEverything] = useState(false);
+
+  const facts = card.fields.filter((field) => !isDetailType(field.type));
+  const detail = card.fields.filter((field) => isDetailType(field.type));
+  const shown = everything ? facts : facts.slice(0, FIELD_LIMIT);
+  const more = facts.length - shown.length;
 
   return (
-    <div className="animate-rise flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+    <div className="animate-rise flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
       <div className="flex min-w-0 items-center gap-2">
-        <span className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
-          <span className="shrink-0">{humanizeToolName(card.entity)}</span>
-          {card.id !== "" && (
-            <span className="bg-sunken text-foreground-muted truncate rounded-md px-1.5 py-0.5 font-mono text-2xs tabular-nums">
-              {card.id}
-            </span>
-          )}
+        <span className="text-foreground-subtle truncate text-xs">
+          {humanizeToolName(card.entity)}
         </span>
         {card.path !== "" && (
           <Button
@@ -46,38 +48,61 @@ export function EntityCardArtifact({ artifact }: { artifact: AssistantArtifact }
             {t("Open")}
           </Button>
         )}
-        <Button
-          size="xs"
-          variant="ghost"
-          className={cn("text-muted-foreground h-6 px-1.5 text-2xs", card.path === "" && "ml-auto")}
-          onClick={() => setRaw((value) => !value)}
-        >
-          <CodeIcon className="size-3" />
-          {raw ? t("Show fields") : t("Show raw")}
-        </Button>
       </div>
 
-      {raw ? (
-        <div className="bg-sunken scrollbar-overlay animate-rise max-h-[60vh] overflow-auto rounded-lg p-2">
-          <JsonViewer data={card.record as never} collapsed={2} />
-        </div>
-      ) : shown.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          {t("A structured record; use Show raw to read it.")}
-        </p>
+      {card.fields.length === 0 ? (
+        <ArtifactNotice kind={artifact.kind}>
+          {card.path === ""
+            ? t("This record has nothing more to show here.")
+            : t("This record has nothing more to show here; open it to see all of it.")}
+        </ArtifactNotice>
       ) : (
-        <DescriptionList layout="inline">
-          {shown.map((fact) => (
-            <DescriptionItem key={fact.key} label={humanizeToolName(fact.key)}>
-              <span className="break-words">{fact.value}</span>
-            </DescriptionItem>
-          ))}
-        </DescriptionList>
-      )}
-      {!raw && card.facts.length > FACT_LIMIT && (
-        <p className="text-muted-foreground text-xs">
-          {t("{0} more fields in the raw view.", card.facts.length - FACT_LIMIT)}
-        </p>
+        <>
+          {facts.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <DescriptionList layout="inline">
+                {shown.map((field, index) => (
+                  <DescriptionItem
+                    key={field.key}
+                    label={field.label}
+                    numeric={isFigureType(field.type)}
+                    className={index >= FIELD_LIMIT ? "animate-rise" : undefined}
+                    valueClassName={index >= FIELD_LIMIT ? "animate-rise" : undefined}
+                  >
+                    <DisplayValue type={field.type} value={field.value} label={field.label} />
+                  </DescriptionItem>
+                ))}
+              </DescriptionList>
+              {(more > 0 || everything) && facts.length > FIELD_LIMIT && (
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  className="text-foreground-subtle hover:text-foreground -ml-1.5 h-6 w-fit px-1.5 text-2xs"
+                  aria-expanded={everything}
+                  onClick={() => setEverything((value) => !value)}
+                >
+                  {everything
+                    ? t("Show fewer")
+                    : t("{0, plural, one {Show # more field} other {Show # more fields}}", more)}
+                </Button>
+              )}
+            </div>
+          )}
+
+          {detail.length > 0 && (
+            <DescriptionList
+              layout="stacked"
+              columns={1}
+              className="border-border-subtle border-t pt-4"
+            >
+              {detail.map((field) => (
+                <DescriptionItem key={field.key} label={field.label}>
+                  <DisplayValue type={field.type} value={field.value} label={field.label} />
+                </DescriptionItem>
+              ))}
+            </DescriptionList>
+          )}
+        </>
       )}
     </div>
   );

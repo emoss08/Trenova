@@ -1,5 +1,17 @@
-import { toSentenceFragment, toTitleCase } from "@trenova/shared/lib/utils";
 import { humanizeToolName } from "./proposal-state";
+import {
+  classifyValues,
+  displayLabel,
+  humanizeKey,
+  isHiddenKey,
+  isRecordId,
+  leadFirst,
+  projectValue,
+  recordLabel,
+  type DisplayType,
+} from "./readable-values";
+
+export { humanizeKey, recordLabel };
 
 /**
  * How a known tool reads to a person. Anything not listed falls back to its
@@ -217,9 +229,12 @@ function describeFilters(raw: unknown): string {
 /**
  * The one line a reader sees for a tool call: what was done, and to what.
  *
- * A search shows the text it searched for in quotes; a lookup shows the
- * identifier; anything else shows its first scalar argument, which is the best
- * guess at what the call was about without pretending to understand it.
+ * A search shows the text it searched for in quotes; a lookup shows what the
+ * record is called; anything else shows its first scalar argument, which is
+ * the best guess at what the call was about without pretending to understand
+ * it. A record's id is never the subject — "Read insight
+ * inst_01M37R101VKZTB7TSKR30FJ0AT" names nothing a person can use, so the line
+ * says "Read insight" and stops.
  */
 export function describeToolCall(
   name: string,
@@ -235,7 +250,7 @@ export function describeToolCall(
 
   for (const key of SUBJECT_KEYS) {
     const value = values[key];
-    if (typeof value === "string" && value.trim() !== "") {
+    if (typeof value === "string" && value.trim() !== "" && !isRecordId(value)) {
       return {
         title,
         subject: key === "query" || key === "search" || key === "question" ? `“${value}”` : value,
@@ -248,7 +263,7 @@ export function describeToolCall(
   }
 
   const firstScalar = Object.values(values).find(
-    (value) => typeof value === "string" && value.trim() !== "",
+    (value) => typeof value === "string" && value.trim() !== "" && !isRecordId(value),
   );
   if (typeof firstScalar === "string") {
     return { title, subject: firstScalar };
@@ -335,52 +350,56 @@ export function parseToolResult(content: string): ParsedToolResult {
   return { kind: "text", text: body, truncated };
 }
 
-/** A value as the details show it: text, or the shape of something nested. */
+/**
+ * A value as the details show it: plain words, a typed value drawn the way its
+ * type reads (a date in the reader's timezone, a status as a badge, a list of
+ * measurements as label and value), or the size of something nested — never
+ * its JSON.
+ */
 export type ReadableValue =
   | { kind: "text"; text: string }
+  | { kind: "value"; type: DisplayType; value: unknown }
   | { kind: "items"; count: number }
   | { kind: "fields"; count: number };
 
 export type ReadableEntry = { key: string; label: string; value: ReadableValue };
 
 /**
- * A key as a label: "customerId" reads "Customer ID", "proNumber" reads
- * "Pro number". Sentence case, and an initialism is left standing.
+ * One value by the rules an artifact reads by. An id — under any name, or
+ * shaped like one under any other — is left out, as are the tenant and a
+ * write's version; an epoch reads as a date; a list of measurements reads as
+ * measurements. What those rules have no reading for is described by its
+ * size, and the literal stays behind Details.
  */
-export function humanizeKey(key: string): string {
-  const fragment = toSentenceFragment(toTitleCase(key));
-
-  return fragment.charAt(0).toUpperCase() + fragment.slice(1);
-}
-
 function readableValue(key: string, value: unknown): ReadableValue | null {
-  if (value === null || value === undefined || value === "") {
+  if (value === null || value === undefined || value === "" || isHiddenKey(key)) {
     return null;
   }
-  if (typeof value === "string") {
-    return { kind: "text", text: value };
+  if (isRecordId(value)) {
+    return null;
   }
-  if (typeof value === "number" || typeof value === "boolean") {
-    return { kind: "text", text: String(value) };
+  if (key === "filters" && Array.isArray(value)) {
+    const filters = describeFilters(value);
+    if (filters !== "") {
+      return { kind: "text", text: filters };
+    }
+  }
+
+  const type = classifyValues(key, [value]);
+  if (type !== null) {
+    const projected = projectValue(type, value);
+    if (projected === undefined) {
+      return null;
+    }
+    return type === "text" && typeof projected === "string"
+      ? { kind: "text", text: projected }
+      : { kind: "value", type, value: projected };
   }
   if (Array.isArray(value)) {
-    if (key === "filters") {
-      const filters = describeFilters(value);
-      if (filters !== "") {
-        return { kind: "text", text: filters };
-      }
-    }
-    if (
-      value.length > 0 &&
-      value.every((item) => typeof item === "string" || typeof item === "number")
-    ) {
-      return { kind: "text", text: value.join(", ") };
-    }
-    return value.length === 0 ? null : { kind: "items", count: value.length };
+    return { kind: "items", count: value.length };
   }
   if (typeof value === "object") {
-    const count = Object.keys(value).length;
-    return count === 0 ? null : { kind: "fields", count };
+    return { kind: "fields", count: Object.keys(value).length };
   }
 
   return null;
@@ -390,52 +409,34 @@ function readableValue(key: string, value: unknown): ReadableValue | null {
 export const READABLE_LIMIT = 10;
 
 /**
- * An object as labelled values in its own order, empty values left out and
- * nested values reduced to their shape, so a person reads a record rather
- * than a wall of JSON. The whole object stays behind Details.
+ * An object as labelled values, its name first and the rest in its own
+ * order, with empty values, ids and bookkeeping left out and nested values
+ * reduced to their shape, so a person reads a record rather than a wall of
+ * JSON. The whole object stays behind Details.
+ *
+ * `leadWithName` puts the keys that name a record first, for a result; what a
+ * call was asked keeps the order it was asked in.
  */
 export function readableEntries(
   value: Record<string, unknown> | null | undefined,
   limit: number = READABLE_LIMIT,
+  leadWithName = false,
 ): { entries: ReadableEntry[]; hidden: number } {
+  const record = value ?? {};
+  const keys = leadWithName ? leadFirst(Object.keys(record)) : Object.keys(record);
   const all: ReadableEntry[] = [];
-  for (const [key, entry] of Object.entries(value ?? {})) {
-    const readable = readableValue(key, entry);
+  for (const key of keys) {
+    const readable = readableValue(key, record[key]);
     if (readable !== null) {
-      all.push({ key, label: humanizeKey(key), value: readable });
+      all.push({
+        key,
+        label: readable.kind === "value" ? displayLabel(key, readable.type) : humanizeKey(key),
+        value: readable,
+      });
     }
   }
 
   return { entries: all.slice(0, limit), hidden: Math.max(0, all.length - limit) };
-}
-
-const LABEL_KEYS = [
-  "name",
-  "displayName",
-  "fullName",
-  "title",
-  "label",
-  "proNumber",
-  "code",
-  "number",
-];
-
-/** What a record in a list is called, for naming the first few. */
-export function recordLabel(record: unknown): string {
-  if (typeof record !== "object" || record === null) {
-    return typeof record === "string" || typeof record === "number" ? String(record) : "";
-  }
-  const fields = record as Record<string, unknown>;
-  for (const key of LABEL_KEYS) {
-    const value = fields[key];
-    if (typeof value === "string" && value.trim() !== "") {
-      return value.trim();
-    }
-  }
-  const first = typeof fields.firstName === "string" ? fields.firstName : "";
-  const last = typeof fields.lastName === "string" ? fields.lastName : "";
-
-  return `${first} ${last}`.trim();
 }
 
 /** What a tool returned, shaped for reading. */
@@ -472,5 +473,5 @@ export function readableResult(value: unknown): ReadableResult {
     return readableList(record.items, declared, record.hasMore === true);
   }
 
-  return { kind: "record", ...readableEntries(record) };
+  return { kind: "record", ...readableEntries(record, READABLE_LIMIT, true) };
 }

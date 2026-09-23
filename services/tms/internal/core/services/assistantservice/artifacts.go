@@ -3,6 +3,8 @@ package assistantservice
 import (
 	"context"
 	"errors"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/bytedance/sonic"
@@ -67,15 +69,22 @@ var draftSpecs = map[string]draftSpec{
 
 // recordLabelKeys are tried in order for the words that name a record on
 // its card: a shipment by its PRO, an invoice by its number, a person by
-// their name, a unit by its number.
+// their name, a unit by its number, a finding by its headline.
 var recordLabelKeys = []string{
 	"proNumber",
 	"invoiceNumber",
 	"referenceNumber",
 	"name",
+	"displayName",
+	"fullName",
 	"code",
 	"unitNumber",
 	"licenseNumber",
+	"number",
+	"title",
+	"label",
+	"headline",
+	"subject",
 }
 
 // artifactRecorder collects what one turn produced. It saves each artifact
@@ -355,10 +364,11 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 		return nil
 	}
 
-	result, ok := toJSONMap(observation.Data)
+	document, ok := toJSONDocument(observation.Data)
 	if !ok {
 		return nil
 	}
+	result := document.fields
 
 	name := observation.Call.Name
 	switch {
@@ -367,7 +377,7 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 	case name == toolRunReport || name == toolGetReportRun:
 		return runArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, getToolPrefix):
-		return entityCardArtifact(observation.Call.ID, name, result)
+		return entityCardArtifact(observation.Call.ID, name, document)
 	case name == toolComposeView:
 		return composedViewArtifact(observation.Call.ID, result)
 	case name == toolExplainRate:
@@ -395,24 +405,37 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 // outcome type, but "list" is a common enough verb that a tool named for it
 // could return something else entirely. A result without both rows and their
 // declared column order is not a table, whatever it is called.
+//
+// The rows are the projection a person reads, not the ones the model did:
+// see artifact_display.go. A table with nothing readable left in it is not
+// one either.
 func tableArtifact(callID, toolName string, result map[string]any) *assistantartifact.Artifact {
 	rows, ok := result["items"].([]any)
 	if !ok || len(rows) == 0 {
 		return nil
 	}
-	columns := stringsOf(result["columns"])
-	if len(columns) == 0 {
+	declared := stringsOf(result["columns"])
+	if len(declared) == 0 {
 		return nil
 	}
 
 	entity := strings.TrimPrefix(strings.TrimPrefix(toolName, listToolPrefix), searchToolPrefix)
+	projection := projectTable(entity, declared, rows)
+	if len(projection.columns) == 0 {
+		return nil
+	}
+
 	payload := map[string]any{
+		"display":     assistantartifact.DisplayVersion,
 		"tool":        toolName,
 		"entity":      entity,
-		"columns":     columns,
-		"rows":        rows,
+		"columns":     projection.columns,
+		"rows":        projection.rows,
 		"rowCount":    result["count"],
 		"searchedFor": stringsOf(result["searchedFor"]),
+	}
+	if projection.recordEntity != "" {
+		payload["recordEntity"] = projection.recordEntity
 	}
 	fitRows(payload, "rows")
 
@@ -546,7 +569,7 @@ func runDiffArtifact(callID string, result map[string]any) *assistantartifact.Ar
 // reopening a conversation never drags anybody anywhere.
 func navigationArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
 	path := stringOf(result["path"])
-	if !strings.HasPrefix(path, "/") || strings.HasPrefix(path, "//") {
+	if !isAppPath(path) {
 		return nil
 	}
 
@@ -682,18 +705,24 @@ func runStatus(finished bool, status string) assistantartifact.Status {
 // entityCardArtifact shows one record a get tool fetched. A result without
 // an id is a view rather than a record (a board, a schedule) and is left to
 // the transcript.
+//
+// The card keeps the record's readable fields, not the record: its id is how
+// the Open link is built and is not shown, and its tenancy, version and
+// nested structure are the model's business.
 func entityCardArtifact(
 	callID, toolName string,
-	result map[string]any,
+	document jsonDocument,
 ) *assistantartifact.Artifact {
+	result := document.fields
 	if stringOf(result["id"]) == "" {
 		return nil
 	}
 
 	entity := strings.TrimPrefix(toolName, getToolPrefix)
 	payload := map[string]any{
-		"entity": entity,
-		"record": result,
+		"display": assistantartifact.DisplayVersion,
+		"entity":  entity,
+		"fields":  projectRecord(result, document.keyOrder()),
 	}
 	// Where the record opens, from the same registry the app's own links
 	// use, so the card leads to the record rather than only describing it.
@@ -707,13 +736,10 @@ func entityCardArtifact(
 	return &assistantartifact.Artifact{
 		Kind:   assistantartifact.KindEntityCard,
 		Status: assistantartifact.StatusReady,
-		Title: artifactTitle(
-			stringutils.CapitalizeFirst(
-				stringutils.HumanizeSnakeCase(entity),
-			) + " " + recordLabel(
-				result,
-			),
-		),
+		Title: artifactTitle(strings.TrimSpace(
+			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)) +
+				" " + recordLabel(result),
+		)),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
@@ -856,37 +882,55 @@ func payloadSize(payload map[string]any) int {
 	return len(encoded)
 }
 
-// toJSONMap reads a tool result in its JSON form, which is the contract the
-// tool publishes; its Go type is the tool's own business.
-func toJSONMap(data any) (map[string]any, bool) {
+// jsonDocument is a tool result in its JSON form, which is the contract the
+// tool publishes; its Go type is the tool's own business. The encoding is
+// kept for the one reader that needs the order the fields were written in.
+type jsonDocument struct {
+	fields  map[string]any
+	encoded []byte
+}
+
+func toJSONDocument(data any) (jsonDocument, bool) {
 	if m, ok := data.(map[string]any); ok {
-		return m, true
+		return jsonDocument{fields: m}, true
 	}
 
 	encoded, err := sonic.Marshal(data)
 	if err != nil {
-		return nil, false
+		return jsonDocument{}, false
 	}
 	var out map[string]any
 	if err = sonic.Unmarshal(encoded, &out); err != nil || out == nil {
-		return nil, false
+		return jsonDocument{}, false
 	}
 
-	return out, true
+	return jsonDocument{fields: out, encoded: encoded}, true
 }
 
+// keyOrder is the order the result declared its fields in, or alphabetical
+// when it arrived as a map and so declared none.
+func (d jsonDocument) keyOrder() []string {
+	if len(d.encoded) > 0 {
+		if keys := objectKeyOrder(d.encoded); len(keys) == len(d.fields) {
+			return keys
+		}
+	}
+
+	return slices.Sorted(maps.Keys(d.fields))
+}
+
+// recordLabel is the words that name a record, or "" when nothing does. A
+// record's id is never its name: a card titled "Insight inst_01M37R…" says
+// nothing a person can use.
 func recordLabel(record map[string]any) string {
 	for _, key := range recordLabelKeys {
-		if value := stringOf(record[key]); value != "" {
+		if value := readableString(record[key]); value != "" {
 			return value
 		}
 	}
-	if first, last := stringOf(record["firstName"]), stringOf(record["lastName"]); first != "" ||
-		last != "" {
-		return strings.TrimSpace(first + " " + last)
-	}
+	first, last := readableString(record["firstName"]), readableString(record["lastName"])
 
-	return stringOf(record["id"])
+	return strings.TrimSpace(first + " " + last)
 }
 
 func artifactTitle(title string) string {

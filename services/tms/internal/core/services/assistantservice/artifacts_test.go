@@ -427,7 +427,15 @@ func TestArtifactFromObservation_AListBecomesATable(t *testing.T) {
 	assert.Equal(t, "Shipments", artifact.Title)
 	assert.Equal(t, "shipments", artifact.Payload["entity"])
 	assert.Equal(t, "list_shipments", artifact.Payload["tool"])
-	assert.Equal(t, []string{"proNumber", "customer", "status"}, artifact.Payload["columns"])
+	assert.Equal(t, assistantartifact.DisplayVersion, artifact.Payload["display"])
+	assert.Equal(t, "shipment", artifact.Payload["recordEntity"])
+	columns, ok := artifact.Payload["columns"].([]assistantartifact.DisplayColumn)
+	require.True(t, ok)
+	assert.Equal(t, []assistantartifact.DisplayColumn{
+		{Key: "proNumber", Label: "Pro number", Type: assistantartifact.DisplayText},
+		{Key: "customer", Label: "Customer", Type: assistantartifact.DisplayText},
+		{Key: "status", Label: "Status", Type: assistantartifact.DisplayStatus},
+	}, columns)
 	assert.Len(t, artifact.Payload["rows"], 2)
 	// The terms that were applied, so the table says what it is a table of.
 	assert.Equal(t, []string{"status is InTransit"}, artifact.Payload["searchedFor"])

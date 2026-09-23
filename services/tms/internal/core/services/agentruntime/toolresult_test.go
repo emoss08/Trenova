@@ -120,6 +120,36 @@ func TestHumanizeDates_DoesNotMatchAWordThatMerelyEndsLikeOne(t *testing.T) {
 	assert.InDelta(t, 1791591001.0, humanized["season"], 0)
 }
 
+/*
+The insight list reported windowStart as a date and detectedOn, beside it, as
+1790187600: "on" is not a suffix the pass matched, because "reason" ends in it.
+A date spelled as its own camel-case word is one, and a word that merely ends
+in the same letters still is not.
+*/
+func TestHumanizeDates_ReadsACamelCaseDateWord(t *testing.T) {
+	t.Parallel()
+
+	humanized, _ := humanizeDates(map[string]any{
+		"detectedOn":      float64(1791591001),
+		"nextTrainingDue": float64(1791591001),
+		"lastMvrCheck":    float64(1791591001),
+		"effectiveFrom":   float64(1791591001),
+		"asOf":            float64(1791591001),
+		"dob":             float64(1791591001),
+		"season":          float64(1791591001),
+		"overdue":         float64(1791591001),
+	}, transcriptNow, "").(map[string]any)
+
+	assert.Equal(t, "2026-10-10 (in 21 days)", humanized["detectedOn"])
+	assert.Equal(t, "2026-10-10 (in 21 days)", humanized["nextTrainingDue"])
+	assert.Equal(t, "2026-10-10 (in 21 days)", humanized["lastMvrCheck"])
+	assert.Equal(t, "2026-10-10 (in 21 days)", humanized["effectiveFrom"])
+	assert.Equal(t, "2026-10-10 (in 21 days)", humanized["asOf"])
+	assert.Equal(t, "2026-10-10 (in 21 days)", humanized["dob"])
+	assert.InDelta(t, 1791591001.0, humanized["season"], 0)
+	assert.InDelta(t, 1791591001.0, humanized["overdue"], 0)
+}
+
 // A zero is how the row types spell "not set". Rendering it as 1970 would
 // invent a lapsed credential for every driver who has not filed one.
 func TestHumanizeDates_LeavesAnUnsetDateAlone(t *testing.T) {

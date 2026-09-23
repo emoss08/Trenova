@@ -46,6 +46,7 @@ import {
   type ReadableEntry,
   type ReadableValue,
 } from "./tool-presentation";
+import { DisplayValue } from "./display-value";
 import { WorkingDot } from "./voice/working-dot";
 
 export type { ToolActivityStatus, ToolStep } from "./activity";
@@ -370,7 +371,7 @@ function ReadableList({ entries, hidden }: { entries: ReadableEntry[]; hidden: n
       >
         {entries.map((entry) => (
           <DescriptionItem key={entry.key} label={entry.label} valueClassName="text-xs">
-            <ReadableValueText value={entry.value} />
+            <ReadableValueText label={entry.label} value={entry.value} />
           </DescriptionItem>
         ))}
       </DescriptionList>
@@ -379,10 +380,12 @@ function ReadableList({ entries, hidden }: { entries: ReadableEntry[]; hidden: n
   );
 }
 
-function ReadableValueText({ value }: { value: ReadableValue }) {
+function ReadableValueText({ label, value }: { label: string; value: ReadableValue }) {
   const t = useT();
 
   switch (value.kind) {
+    case "value":
+      return <DisplayValue type={value.type} value={value.value} label={label} />;
     case "items":
       return (
         <span className="text-foreground-muted">

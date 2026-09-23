@@ -298,6 +298,20 @@ describe("describeToolCall for navigation and the guide", () => {
     });
   });
 
+  // A record's id names nothing a person can use, so the line says what was
+  // done and stops rather than ending in "inst_01M37R…".
+  it("never makes a record's id the subject", () => {
+    expect(
+      describeToolCall("get_insight", { insightId: "inst_01M37R101VKZTB7TSKR30FJ0AT" }),
+    ).toEqual({ title: "Read insight", subject: "" });
+    expect(
+      describeToolCall("get_customer", {
+        customerId: "cus_01M37R101VKZTB7TSKR30FJ0AT",
+        name: "Peak Distributing",
+      }).subject,
+    ).toBe("Peak Distributing");
+  });
+
   it("does not take a page of results for a page of the app", () => {
     expect(describeToolCall("list_customers", { page: 2, query: "Peak" }).subject).toBe("“Peak”");
   });
@@ -329,12 +343,59 @@ describe("readableEntries", () => {
 
     expect(hidden).toBe(0);
     expect(entries).toEqual([
-      { key: "customerId", label: "Customer ID", value: { kind: "text", text: "cus_1" } },
       { key: "tags", label: "Tags", value: { kind: "text", text: "hazmat, team" } },
       { key: "filters", label: "Filters", value: { kind: "text", text: "status Delivered" } },
       { key: "definition", label: "Definition", value: { kind: "fields", count: 2 } },
       { key: "rows", label: "Rows", value: { kind: "items", count: 2 } },
-      { key: "archived", label: "Archived", value: { kind: "text", text: "false" } },
+      {
+        key: "archived",
+        label: "Archived",
+        value: { kind: "value", type: "boolean", value: false },
+      },
+    ]);
+  });
+
+  /*
+   * The owner's report: the details showed a record's id, a detected date of
+   * 1790187600 and a metrics list as JSON. An id under any key — or shaped like
+   * one under a key that does not say so — is left out, the epoch reads as a
+   * date, the metrics as measurements, and which way is worse not at all.
+   */
+  it("never shows an id, an epoch or a list of objects as text", () => {
+    const { entries } = readableEntries({
+      id: "inst_01M37R101VKZTB7TSKR30FJ0AT",
+      insightId: "inst_01M37R101VKZTB7TSKR30FJ0AT",
+      assignedTo: "wrk_01M37R101VKZTB7TSKR30FJ0AT",
+      organizationId: "org_01M37R101VKZTB7TSKR30FJ0AT",
+      severity: "Critical",
+      detectedOn: 1_790_187_600,
+      metrics: [
+        { direction: "HigherIsWorse", label: "Workers affected", unit: "Count", value: "3" },
+      ],
+      direction: "HigherIsWorse",
+      stale: false,
+    });
+
+    expect(entries).toEqual([
+      {
+        key: "severity",
+        label: "Severity",
+        value: { kind: "value", type: "status", value: "Critical" },
+      },
+      {
+        key: "detectedOn",
+        label: "Detected",
+        value: { kind: "value", type: "date", value: 1_790_187_600 },
+      },
+      {
+        key: "metrics",
+        label: "Metrics",
+        value: {
+          kind: "value",
+          type: "metrics",
+          value: [{ label: "Workers affected", value: "3", unit: "Count" }],
+        },
+      },
     ]);
   });
 
@@ -375,14 +436,29 @@ describe("readableResult", () => {
     });
   });
 
-  it("reads a record as labelled values", () => {
-    expect(readableResult({ name: "Peak", status: "Active" })).toEqual({
+  it("reads a record as labelled values, its name first", () => {
+    expect(
+      readableResult({ id: "cus_01M37R101VKZTB7TSKR30FJ0AT", status: "Active", name: "Peak" }),
+    ).toEqual({
       kind: "record",
       entries: [
         { key: "name", label: "Name", value: { kind: "text", text: "Peak" } },
-        { key: "status", label: "Status", value: { kind: "text", text: "Active" } },
+        {
+          key: "status",
+          label: "Status",
+          value: { kind: "value", type: "status", value: "Active" },
+        },
       ],
       hidden: 0,
     });
+  });
+
+  it("never names a record in a list by its id", () => {
+    expect(
+      readableResult({
+        items: [{ id: "inst_01M37R101VKZTB7TSKR30FJ0AT", headline: "3 cards expire" }],
+        count: 1,
+      }),
+    ).toEqual({ kind: "list", count: 1, more: false, labels: ["3 cards expire"] });
   });
 });

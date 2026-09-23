@@ -406,3 +406,28 @@ func TestMap(t *testing.T) {
 		assert.Empty(t, result)
 	})
 }
+
+func TestLooksLike(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, pulid.LooksLike(pulid.MustNew("inst_").String()))
+	assert.True(t, pulid.LooksLike("inst_01M37R101VKZTB7TSKR30FJ0AT"))
+	assert.True(t, pulid.LooksLike("a2b_01M37R101VKZTB7TSKR30FJ0AT"))
+
+	for _, value := range []string{
+		"",
+		"shp_1",
+		"PRO-778",
+		"01M37R101VKZTB7TSKR30FJ0AT",
+		"_01M37R101VKZTB7TSKR30FJ0AT",
+		"Inst_01M37R101VKZTB7TSKR30FJ0AT",
+		"2nd_01M37R101VKZTB7TSKR30FJ0AT",
+		"inst-01M37R101VKZTB7TSKR30FJ0AT",
+		"inst_01m37r101vkztb7tskr30fj0at",
+		"inst_01M37R101VKZTB7TSKR30FJ0AI",
+		"a_very_long_prefix_01M37R101VKZTB7TSKR30FJ0AT",
+		"Three workers' medical cards expire",
+	} {
+		assert.False(t, pulid.LooksLike(value), value)
+	}
+}

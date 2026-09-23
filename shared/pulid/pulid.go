@@ -165,6 +165,46 @@ func (u ID) Time() (time.Time, error) {
 	return time.UnixMilli(safeMs), nil
 }
 
+const (
+	ulidLength      = 26
+	maxPrefixLength = 12
+)
+
+// LooksLike reports whether value has the shape of a PULID: a lowercase
+// prefix ending in an underscore, then a 26-character Crockford ULID. It reads
+// the shape only, for telling a record's identifier apart from words a person
+// can use.
+func LooksLike(value string) bool {
+	prefixLength := len(value) - ulidLength
+	if prefixLength < 2 || prefixLength > maxPrefixLength || value[prefixLength-1] != '_' {
+		return false
+	}
+	for i := range prefixLength - 1 {
+		c := value[i]
+		if (c < 'a' || c > 'z') && (i == 0 || c < '0' || c > '9') {
+			return false
+		}
+	}
+	for i := prefixLength; i < len(value); i++ {
+		if !isCrockford(value[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isCrockford(c byte) bool {
+	switch {
+	case c >= '0' && c <= '9':
+		return true
+	case c < 'A' || c > 'Z':
+		return false
+	default:
+		return c != 'I' && c != 'L' && c != 'O' && c != 'U'
+	}
+}
+
 func (u ID) Prefix() string {
 	if u.IsNil() {
 		return ""

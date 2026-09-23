@@ -9,21 +9,25 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-// Epoch seconds a tool could plausibly be reporting as a date. The bound is what
-// separates a timestamp from a large quantity that happens to share a column
-// name: an invoice total in cents can land in this range, a due date cannot land
-// outside it.
-const (
-	earliestPlausibleInstant int64 = 946684800  // 2000-01-01
-	latestPlausibleInstant   int64 = 4102444800 // 2100-01-01
-)
-
 // dateKeySuffixes are the field-name endings that mean an instant. Matching on
 // the name as well as the range is belt and braces: either test alone has a
 // false positive the other rules out.
 //
 // "on" is deliberately absent — "reason" ends in it.
 var dateKeySuffixes = []string{"at", "date", "expiry", "expires"}
+
+// camelDateSuffixes are date endings too short or too common to match on the
+// lowered name: "reason" and "season" end in "on", "overdue" in "due". Each
+// counts only as its own camel-case word, or as the whole key — detectedOn,
+// nextTrainingDue, effectiveFrom, asOf, dob — which is how the records spell a
+// date that is not an "at".
+var camelDateSuffixes = []string{
+	"On", "Due", "Check", "From", "To", "Through", "Deadline", "Of", "Dob",
+}
+
+// camelInstantSuffixes are the same for instants whose hour matters: an
+// appointment's start, a cutoff, what a run is scheduled for.
+var camelInstantSuffixes = []string{"Start", "End", "Cutoff", "For", "Since", "Until", "Timestamp"}
 
 // instantKeySuffixes are the field-name endings of an instant whose hour
 // matters. A delivery window read as a date alone told the model the stop had
@@ -113,8 +117,10 @@ func trimRecord(value any, depth int) any {
 // compliance questions live: a card expiring at 00:30 local time is tomorrow's
 // problem to the person asking, whatever a UTC clock says.
 func describeInstant(key string, value any, now int64, timezone string) (string, bool) {
-	withClock := hasKeySuffix(key, instantKeySuffixes)
-	if !withClock && !hasKeySuffix(key, dateKeySuffixes) {
+	withClock := hasKeySuffix(key, instantKeySuffixes) ||
+		hasCamelSuffix(key, camelInstantSuffixes)
+	dated := hasKeySuffix(key, dateKeySuffixes) || hasCamelSuffix(key, camelDateSuffixes)
+	if !withClock && !dated {
 		return "", false
 	}
 
@@ -126,7 +132,7 @@ func describeInstant(key string, value any, now int64, timezone string) (string,
 	// A count that shares a date-like name — daysUntilExpiry is the one we
 	// already ship — is never in epoch range, so the range check is what keeps
 	// this from turning 21 into 1970.
-	if seconds < earliestPlausibleInstant || seconds > latestPlausibleInstant {
+	if !timeutils.IsPlausibleInstant(seconds) {
 		return "", false
 	}
 
@@ -141,6 +147,26 @@ func hasKeySuffix(key string, suffixes []string) bool {
 	lowered := strings.ToLower(key)
 	for _, suffix := range suffixes {
 		if strings.HasSuffix(lowered, suffix) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// hasCamelSuffix reports whether key is one of suffixes, or ends in one as a
+// camel-case word of its own: a lowercase letter or digit, then the suffix.
+func hasCamelSuffix(key string, suffixes []string) bool {
+	for _, suffix := range suffixes {
+		if strings.EqualFold(key, suffix) {
+			return true
+		}
+		start := len(key) - len(suffix)
+		if start < 1 || key[start:] != suffix {
+			continue
+		}
+		if previous := key[start-1]; previous >= 'a' && previous <= 'z' ||
+			previous >= '0' && previous <= '9' {
 			return true
 		}
 	}

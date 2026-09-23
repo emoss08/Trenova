@@ -29,6 +29,14 @@ var humanizeSpecialWords = map[string]string{
 	"pdf":  "PDF",
 	"csv":  "CSV",
 	"json": "JSON",
+	"bol":  "BOL",
+	"cdl":  "CDL",
+	"mvr":  "MVR",
+	"twic": "TWIC",
+	"eta":  "ETA",
+	"hos":  "HOS",
+	"mc":   "MC",
+	"un":   "UN",
 }
 
 func HumanizeCamelCase(s string) string {

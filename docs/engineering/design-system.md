@@ -650,6 +650,20 @@ come from `ARTIFACT_KINDS`, once, for every surface that names one; a body with 
 show is `ArtifactNotice`, never a bare grey sentence. Status is a tone
 (Pending is `info`, Sent is `success`, Failed is `danger`); the kind is never coloured.
 
+**An artifact shows what a person can reason with, never what the model worked from.** A
+tool's result carries ids, the tenant, a write's version and which way a metric counts as
+worse; the artifact stores a projection of it instead (`assistantservice/artifact_display.go`,
+mirrored for older payloads and the step details in `components/assistant/readable-values.ts`).
+Every column and field has a display type — text, prose, date, date and time, money, number,
+percent, category, status, yes/no, flag, measurements, links — and anything without one is
+left out rather than printed as JSON. A record's id survives only as the key its row's link is
+built from, through `recordPath`. Drawn, a table is the row tokens at the compact rhythm: the
+record's name first and pinned while the rest scroll sideways, a status as a phase-toned badge,
+a category as words, figures right-aligned in tabular numerals, dates in the reader's own
+timezone, and prose and measurements in the row's detail (a `bg-sunken` well) rather than in a
+cell. A card is a `DescriptionList` with the same values, its prose set out below the fields.
+A flag that does not hold — "stale: no" — is not drawn at all.
+
 **The conversation says what the agent did, in the words of what it did.** A person's
 message sits in a `bg-sunken` well under "You" — never their name and avatar, which read
 as someone else once the thread was shared. The reply runs open across the column under

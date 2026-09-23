@@ -1,7 +1,18 @@
+import {
+  RECORD_ID_KEY,
+  projectColumns,
+  projectRecord,
+  projectValue,
+  readDisplayColumns,
+  readDisplayFields,
+  sortKey,
+  type DisplayColumn,
+  type DisplayField,
+} from "@/components/assistant/readable-values";
+import { isRecordEntityType, recordPath, type RecordEntityType } from "@/config/record-links";
 import { isAppPath } from "@/lib/app-path";
 import type { ReportPreviewColumn } from "@/lib/graphql/reports";
 import type { AssistantArtifact } from "@/types/assistant";
-import { toTitleCase } from "@trenova/shared/lib/utils";
 
 /*
  * The server stores each artifact's payload in the shape the tool published
@@ -79,42 +90,93 @@ export function reportPreviewFrom(artifact: AssistantArtifact): ReportPreviewArt
   };
 }
 
+/** One row of a list result: its values by column, and where its record opens. */
+export type TableViewRow = {
+  key: string;
+  values: Record<string, unknown>;
+  /** The record's page, built from the registry; empty when it has none. */
+  path: string;
+};
+
 export type TableViewArtifact = {
   tool: string;
   entity: string;
   searchedFor: string[];
-  columns: ReportPreviewColumn[];
-  rows: unknown[][];
+  columns: DisplayColumn[];
+  rows: TableViewRow[];
   rowCount: number;
   truncated: boolean;
 };
 
+function singular(plural: string): string {
+  if (plural.endsWith("ices")) return `${plural.slice(0, -4)}ix`;
+  if (plural.endsWith("ies")) return `${plural.slice(0, -3)}y`;
+  if (plural.endsWith("sses")) return plural.slice(0, -2);
+  if (plural.endsWith("s")) return plural.slice(0, -1);
+  return plural;
+}
+
 /**
- * A list or search result as a table.
+ * The kind of record a table's rows are, when they have a page to open. A
+ * projected payload says so itself, and says nothing when they have none; one
+ * stored before the projection is read from the list it came from.
+ */
+function tableRecordEntity(payload: Record<string, unknown>): RecordEntityType | null {
+  const declared = stringOf(payload.recordEntity);
+  if (declared !== "" || payload.display !== undefined) {
+    return isRecordEntityType(declared) ? declared : null;
+  }
+  const entity = stringOf(payload.entity);
+  for (const candidate of [entity, singular(entity)]) {
+    if (candidate !== "" && isRecordEntityType(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * A list or search result as a table a person reads.
  *
- * The columns come from the server in the order the row projection declares
- * them, because a JSON object has no order and the pane would otherwise draw
- * "pro number, customer, status" in whatever order the payload happened to
- * serialize. The rows are keyed objects, so they are read positionally
- * against those columns; a row missing a column reads as an empty cell, never
- * as a shifted one.
+ * The server stores the projection — the columns a person can reason with,
+ * each typed, and rows holding only those — so a new payload is read as it
+ * is. One stored before that holds the tool's own columns and rows, ids and
+ * JSON and all, and is projected here by the same rules, so an old table
+ * reads the same as a new one. Either way a cell is read against its column,
+ * so a row missing a value leaves a hole rather than shifting its neighbours.
+ *
+ * A row's record id is kept only to build the link to its page, from the
+ * record-link registry, and is never a column.
  */
 export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
   const payload = artifact.payload;
-  const columns = listOf(payload.columns)
-    .filter((name): name is string => typeof name === "string" && name !== "")
-    .map(
-      (name) =>
-        ({
-          id: name,
-          label: toTitleCase(name),
-          type: "string",
-          format: null,
-        }) as ReportPreviewColumn,
+  const raw = listOf(payload.rows).filter(isRecord);
+  const columns =
+    readDisplayColumns(payload.columns) ??
+    projectColumns(
+      listOf(payload.columns).filter(
+        (name): name is string => typeof name === "string" && name !== "",
+      ),
+      raw,
     );
-  const rows = listOf(payload.rows)
-    .filter(isRecord)
-    .map((row) => columns.map((column) => cell(row[column.id])));
+  const entity = tableRecordEntity(payload);
+  const rows = raw.map((row, index) => {
+    const values: Record<string, unknown> = {};
+    for (const column of columns) {
+      const value = projectValue(column.type, row[column.key]);
+      if (value !== undefined) {
+        values[column.key] = value;
+      }
+    }
+    const id = stringOf(row[RECORD_ID_KEY]);
+
+    return {
+      key: String(index),
+      values,
+      path: entity !== null && id !== "" ? recordPath(entity, id) : "",
+    };
+  });
   const rowCount = numberOf(payload.rowCount) || rows.length;
 
   return {
@@ -132,16 +194,37 @@ export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
   };
 }
 
-/**
- * One value as the grid can draw it. A nested object or list is a cell the
- * grid has no column layout for, so it is rendered as its JSON rather than
- * as "[object Object]".
- */
-function cell(value: unknown): unknown {
-  if (value === undefined) return null;
-  if (value === null || typeof value !== "object") return value;
+export type TableSort = { key: string; direction: "asc" | "desc" };
 
-  return JSON.stringify(value);
+/**
+ * Rows in a column's order: figures and instants by value, a status by how
+ * much it needs a person, words alphabetically. An empty cell sorts last
+ * either way, because a blank at the top of a sorted column reads as the
+ * answer.
+ */
+export function sortTableRows(
+  rows: readonly TableViewRow[],
+  columns: readonly DisplayColumn[],
+  sort: TableSort | null,
+): TableViewRow[] {
+  const column = sort ? columns.find((candidate) => candidate.key === sort.key) : undefined;
+  if (!sort || !column) {
+    return [...rows];
+  }
+  const direction = sort.direction === "asc" ? 1 : -1;
+  const keyed = rows.map((row) => ({ row, key: sortKey(column.type, row.values[column.key]) }));
+  keyed.sort((a, b) => {
+    if (a.key === null || b.key === null) {
+      return a.key === b.key ? 0 : a.key === null ? 1 : -1;
+    }
+    if (typeof a.key === "number" && typeof b.key === "number") {
+      return (a.key - b.key) * direction;
+    }
+
+    return String(a.key).localeCompare(String(b.key)) * direction;
+  });
+
+  return keyed.map((entry) => entry.row);
 }
 
 /** A described view, as something to open rather than rows to read. */
@@ -325,13 +408,10 @@ export function documentFrom(artifact: AssistantArtifact): DocumentArtifact {
   return { body: stringOf(artifact.payload.body) };
 }
 
-export type EntityFact = { key: string; value: string };
-
 export type EntityCardArtifact = {
   entity: string;
-  id: string;
-  facts: EntityFact[];
-  record: Record<string, unknown>;
+  /** The record's readable fields, its name first; never its id. */
+  fields: DisplayField[];
   /** Where the record opens in the app; empty when its kind has no page. */
   path: string;
 };
@@ -343,38 +423,25 @@ function appPathOf(value: unknown): string {
   return isAppPath(path) ? path : "";
 }
 
-/** Keys every record carries that say nothing about it. */
-const STRUCTURAL_KEYS = new Set(["id", "organizationId", "businessUnitId", "version"]);
-
-function scalar(value: unknown): string | null {
-  if (value === null || value === undefined || value === "") return null;
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  return null;
-}
-
 /**
- * A record as a handful of labelled values, which is how a person reads one.
- * Nested records and lists are left to the raw view; the id and tenancy are
- * structure, not facts.
+ * A record as labelled values, which is how a person reads one.
+ *
+ * The server stores the fields it projected, so a new card is read as it is;
+ * one stored before that holds the whole record and is projected here by the
+ * same rules. The id is how the card opens, the tenancy and version are the
+ * model's business, and nested structure is left out rather than shown as
+ * JSON.
  */
 export function entityCardFrom(artifact: AssistantArtifact): EntityCardArtifact {
-  const record = isRecord(artifact.payload.record) ? artifact.payload.record : {};
-  const facts: EntityFact[] = [];
-  for (const [key, value] of Object.entries(record)) {
-    if (STRUCTURAL_KEYS.has(key)) continue;
-    const text = scalar(value);
-    if (text !== null) {
-      facts.push({ key, value: text });
-    }
-  }
+  const payload = artifact.payload;
+  const fields =
+    readDisplayFields(payload.fields) ??
+    projectRecord(isRecord(payload.record) ? payload.record : {});
 
   return {
-    entity: stringOf(artifact.payload.entity),
-    id: stringOf(record.id),
-    facts,
-    record,
-    path: appPathOf(artifact.payload.path),
+    entity: stringOf(payload.entity),
+    fields,
+    path: appPathOf(payload.path),
   };
 }
 
