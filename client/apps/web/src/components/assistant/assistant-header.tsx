@@ -29,6 +29,8 @@ type AssistantHeaderProps = {
   activeAgent: AgentDefinitionRow | null;
   activeThread: AssistantThread | null;
   threads: AssistantThread[];
+  /** Conversations with a reply still being written. */
+  liveThreadIds?: ReadonlySet<string>;
   expanded: boolean;
   isStarting: boolean;
   onStart: (agentId: string) => void;
@@ -58,6 +60,7 @@ export function AssistantHeader({
   activeAgent,
   activeThread,
   threads,
+  liveThreadIds,
   expanded,
   isStarting,
   onStart,
@@ -182,6 +185,7 @@ export function AssistantHeader({
                   groups={groups}
                   agentsById={agentsById}
                   activeThreadId={activeThread?.id ?? null}
+                  liveThreadIds={liveThreadIds}
                   now={now}
                   emptyText={t("No conversations yet.")}
                   onSelect={(id) => {

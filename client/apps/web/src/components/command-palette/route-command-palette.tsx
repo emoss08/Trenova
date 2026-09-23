@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { conversationPath } from "@/lib/conversation-path";
 import Highlight from "@trenova/shared/components/highlight";
 import {
   CommandDialog,
@@ -153,7 +154,7 @@ export function RouteCommandPalette() {
   const handleOpenInDesk = () => {
     void keepAsk().then((threadId) => {
       if (threadId !== null) {
-        handleNavigate(`/desk/t/${threadId}`);
+        handleNavigate(conversationPath(threadId));
       }
     });
   };

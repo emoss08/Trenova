@@ -27,12 +27,13 @@ const agent = {
   toolNames: [],
 } as unknown as AgentDefinitionRow;
 
-function renderSidebar() {
+function renderSidebar(liveThreadIds?: ReadonlySet<string>) {
   return render(
     <ThreadSidebar
       threads={[thread({}), thread({ id: "athr_2", title: "Where is SEED-SHP-001?" })]}
       agentsById={new Map([[agent.id, agent]])}
       activeThreadId="athr_1"
+      liveThreadIds={liveThreadIds}
       isLoading={false}
       canStart
       onSelect={() => {}}
@@ -61,5 +62,35 @@ describe("ThreadSidebar rows", () => {
     expect(screen.getByText("Blocked invoices this week")).toBeInTheDocument();
     expect(screen.getByText("Where is SEED-SHP-001?")).toBeInTheDocument();
     expect(screen.getAllByText(/Billing exceptions/).length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * A conversation whose reply is still being written says so in its row, in
+ * words a screen reader reads as part of the row, with a mark that does not
+ * move: a list is somewhere a person works, not something to watch.
+ */
+describe("ThreadSidebar rows with a reply being written", () => {
+  it("marks only the conversations with a live reply", () => {
+    renderSidebar(new Set(["athr_2"]));
+
+    const live = screen.getByRole("button", { name: /Where is SEED-SHP-001\?/ });
+    const quiet = screen.getByRole("button", { name: /Blocked invoices this week/ });
+
+    expect(live).toHaveAccessibleName(/Writing a reply/);
+    expect(quiet).not.toHaveAccessibleName(/Writing a reply/);
+  });
+
+  it("draws the marker still", () => {
+    const { container } = renderSidebar(new Set(["athr_1", "athr_2"]));
+
+    expect(screen.getAllByText("Writing a reply")).toHaveLength(2);
+    expect(container.querySelector(".animate-breathe")).toBeNull();
+  });
+
+  it("marks nothing when no reply is being written", () => {
+    renderSidebar();
+
+    expect(screen.queryByText("Writing a reply")).toBeNull();
   });
 });

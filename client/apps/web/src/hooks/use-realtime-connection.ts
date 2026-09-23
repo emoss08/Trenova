@@ -27,6 +27,10 @@ import {
   handleShipmentCommentEvent,
   isShipmentCommentEvent,
 } from "@/lib/shipment-comment-realtime";
+import { isOtherUsersTurnEvent } from "@/lib/assistant-turn-realtime";
+import { parseReplyReady } from "@/components/assistant/reply-ready";
+import { announceReplyReady } from "@/components/assistant/reply-ready-toast";
+import { releaseTurnReaders } from "@/components/assistant/turn-readers";
 
 const COALESCE_DELAY_MS = 300;
 
@@ -63,6 +67,9 @@ export function useRealtimeConnection() {
     ) {
       apiService.realtimeService.safeClose();
       useRealtimeStore.getState().setConnectionState("disconnected");
+      // The session is gone, and with it every reply the person had open:
+      // a reader left behind would keep reattaching against a dead session.
+      releaseTurnReaders();
       return;
     }
 
@@ -170,6 +177,7 @@ export function useRealtimeConnection() {
             // Ignore notifications from other tenants
           } else {
             const notif = notifEvt.entity as {
+              id?: string;
               targetUserId?: string | null;
               eventType?: string;
               title?: string;
@@ -178,8 +186,17 @@ export function useRealtimeConnection() {
             };
 
             const isForCurrentUser = !notif.targetUserId || notif.targetUserId === user.id;
+            const replyReady = isForCurrentUser ? parseReplyReady(notif) : null;
 
-            if (isForCurrentUser && notif.title) {
+            if (replyReady) {
+              void announceReplyReady({
+                reply: replyReady,
+                notificationId: notif.id ?? null,
+                queryClient,
+                navigate: (to) => void navigateRef.current(to),
+                t,
+              });
+            } else if (isForCurrentUser && notif.title) {
               const runId =
                 notif.eventType === "report_run_completed" && typeof notif.data?.runId === "string"
                   ? notif.data.runId
@@ -234,6 +251,10 @@ export function useRealtimeConnection() {
 
       if (isShipmentCommentEvent(evt)) {
         handleShipmentCommentEvent(queryClient, evt, user.id);
+        return;
+      }
+
+      if (isOtherUsersTurnEvent(evt, user.id)) {
         return;
       }
 

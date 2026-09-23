@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { releaseTurnReaders } from "@/components/assistant/turn-readers";
 import { LanguageSubmenu } from "@/components/navigation/language-submenu";
 import { SidebarLayoutSubmenu } from "@/components/navigation/sidebar-variant-menu";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
@@ -99,6 +100,10 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
   const displayName = user?.name ?? user?.username ?? "User";
 
   const handleLogout = async () => {
+    // Let go of any reply being read before the session ends. The server
+    // stops the person's replies as it signs them out; a reader still open
+    // would take that for a dropped connection and keep reattaching.
+    releaseTurnReaders();
     await logout();
     void navigate("/login");
   };

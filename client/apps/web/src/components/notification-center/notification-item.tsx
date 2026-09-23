@@ -8,7 +8,7 @@ import type { Notification } from "@trenova/shared/types/notification";
 import { ArchiveIcon, ArchiveRestoreIcon, CheckIcon, MailIcon } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { NotificationContent } from "./notification-content";
-import { getNotificationDescriptor, getNotificationLink } from "./notification-registry";
+import { getNotificationLink, resolveNotificationDescriptor } from "./notification-registry";
 
 export interface NotificationItemActions {
   markRead: (ids: string[]) => void;
@@ -59,7 +59,7 @@ export function NotificationItem({
 }) {
   const t = useT();
 
-  const descriptor = getNotificationDescriptor(notification.eventType);
+  const descriptor = resolveNotificationDescriptor(notification);
   const link = getNotificationLink(notification);
   const isUnread = notification.readAt === null;
   const isArchived = notification.dismissedAt !== null;

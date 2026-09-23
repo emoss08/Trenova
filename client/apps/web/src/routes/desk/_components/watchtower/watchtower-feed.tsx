@@ -1,4 +1,5 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { conversationPath } from "@/lib/conversation-path";
 import {
   dismissWatchtowerItem,
   handOffWatchtowerItem,
@@ -132,7 +133,7 @@ export function WatchtowerFeed() {
         subjectId: item.subjectId ?? undefined,
       });
     },
-    onSuccess: (thread) => navigate(`/desk/t/${thread.id}`),
+    onSuccess: (thread) => navigate(conversationPath(thread.id)),
     resourceName: "Conversation",
   });
 

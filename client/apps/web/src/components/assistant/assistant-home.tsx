@@ -10,10 +10,13 @@ import { BotIcon, ChevronRightIcon, PlugZapIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { AskBox } from "./ask-box";
+import { LiveReplyLabel } from "./live-reply-label";
 
 type AssistantHomeProps = {
   agents: AgentDefinitionRow[];
   threads: AssistantThread[];
+  /** Conversations with a reply still being written. */
+  liveThreadIds?: ReadonlySet<string>;
   isLoading: boolean;
   isStarting: boolean;
   canManageAgents: boolean;
@@ -36,6 +39,7 @@ const RECENT_LIMIT = 4;
 export function AssistantHome({
   agents,
   threads,
+  liveThreadIds,
   isLoading,
   isStarting,
   canManageAgents,
@@ -121,7 +125,11 @@ export function AssistantHome({
                         {thread.title || t("Untitled conversation")}
                       </span>
                       <span className="text-muted-foreground block text-xs">
-                        {formatSecondsAgo(now - touched)}
+                        {liveThreadIds?.has(thread.id) ? (
+                          <LiveReplyLabel />
+                        ) : (
+                          formatSecondsAgo(now - touched)
+                        )}
                       </span>
                     </span>
                     <ChevronRightIcon className="text-muted-foreground size-4 shrink-0" />

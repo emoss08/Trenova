@@ -82,6 +82,15 @@ describe("derivePageContext", () => {
     expect(context?.path.startsWith("/hr/workers")).toBe(true);
   });
 
+  // A conversation has a record link so notices can open it, but the server
+  // does not take it as a page record, and it is where the question is asked
+  // rather than what it is about. Naming it would refuse every Desk message.
+  it("never names the conversation being typed into as the record", () => {
+    expect(
+      derivePageContext({ pathname: "/desk/t/athr_1", search: "", title: "Desk | Acme" }),
+    ).toEqual({ path: "/desk/t/athr_1", entityType: "", entityId: "", title: "Desk" });
+  });
+
   it("returns null outside the application shell", () => {
     expect(derivePageContext({ pathname: "", search: "", title: "" })).toBeNull();
   });

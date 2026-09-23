@@ -1,4 +1,5 @@
 import { AGENT_ACCENTS, resolveAgentIdentity } from "@/components/agent-identity/agent-identity";
+import { conversationPath } from "@/lib/conversation-path";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
@@ -43,6 +44,12 @@ import { DeskWorkspaceEmpty } from "./desk-workspace-empty";
 
 export type DeskContextValue = {
   threads: AssistantThread[];
+  /**
+   * The open conversation: from the list, or read on its own when the list
+   * does not carry it — a palette question that was never kept, opened from
+   * the notice that its answer is in.
+   */
+  activeThread: AssistantThread | null;
   agents: AgentDefinitionRow[];
   agentsById: Map<string, AgentDefinitionRow>;
   agentsUnavailable: boolean;
@@ -105,10 +112,23 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const agents = useMemo(() => agentsQuery.data ?? [], [agentsQuery.data]);
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
 
-  const activeThread = useMemo(
+  const listedThread = useMemo(
     () => threads.find((thread) => thread.id === activeThreadId) ?? null,
     [activeThreadId, threads],
   );
+  // The list leaves out quick questions nobody kept, and a finished answer's
+  // notice links to one. Read on its own only once the list has said it does
+  // not have it, so a listed conversation never costs a second request.
+  const unlistedQuery = useQuery({
+    ...queries.assistant.thread(activeThreadId ?? ""),
+    enabled: activeThreadId !== null && threadsQuery.isSuccess && listedThread === null,
+    retry: false,
+  });
+  const activeThread =
+    listedThread ??
+    (activeThreadId !== null && unlistedQuery.data?.id === activeThreadId
+      ? unlistedQuery.data
+      : null);
   const activeAgent = activeThread
     ? (agentsById.get(activeThread.agentDefinitionId) ?? null)
     : null;
@@ -125,8 +145,14 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     setLiveArtifactIds([]);
   }
 
+  // An unlisted conversation is cached on its own, so a rename or a pin has
+  // to refresh that copy as well as the list.
   const refreshThreads = useCallback(
-    () => queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
+    () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
+        queryClient.invalidateQueries({ queryKey: queries.assistant.thread._def }),
+      ]),
     [queryClient],
   );
 
@@ -142,7 +168,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
         setOpeningQuestion({ threadId: thread.id, text: question });
       }
       await refreshThreads();
-      void navigate(`/desk/t/${thread.id}`);
+      void navigate(conversationPath(thread.id));
     },
     resourceName: "Conversation",
   });
@@ -195,10 +221,11 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const value = useMemo<DeskContextValue>(
     () => ({
       threads,
+      activeThread,
       agents,
       agentsById,
       agentsUnavailable: agentsQuery.isError,
-      isLoading: threadsQuery.isLoading || agentsQuery.isLoading,
+      isLoading: threadsQuery.isLoading || agentsQuery.isLoading || unlistedQuery.isLoading,
       isStarting: startMutation.isPending,
       start: (agentId, question) => startMutation.mutate({ agentId, question }),
       remove: setDeleting,
@@ -208,6 +235,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       openArtifact,
     }),
     [
+      activeThread,
       agents,
       agentsById,
       agentsQuery.isError,
@@ -218,6 +246,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       startMutation,
       threads,
       threadsQuery.isLoading,
+      unlistedQuery.isLoading,
     ],
   );
 

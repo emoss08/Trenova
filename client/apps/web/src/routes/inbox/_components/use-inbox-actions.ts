@@ -1,4 +1,5 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { conversationPath } from "@/lib/conversation-path";
 import { reviewInboundMessage, type InboundMessageDetail } from "@/lib/graphql/inbox";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -64,7 +65,7 @@ export function useInboxActions({ onReviewed }: { onReviewed: (id: string) => vo
         subjectId: message.id,
       });
     },
-    onSuccess: (thread) => navigate(`/desk/t/${thread.id}`),
+    onSuccess: (thread) => navigate(conversationPath(thread.id)),
     resourceName: "Conversation",
   });
 

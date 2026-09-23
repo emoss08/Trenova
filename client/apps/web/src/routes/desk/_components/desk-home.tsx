@@ -1,5 +1,8 @@
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { AskBox } from "@/components/assistant/ask-box";
+import { LiveReplyLabel } from "@/components/assistant/live-reply-label";
+import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
+import { conversationPath } from "@/lib/conversation-path";
 import { queries } from "@/lib/queries";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
@@ -50,6 +53,7 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   const [now] = useState(nowInSeconds);
   const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
   const lastAgentId = useAssistantStore((state) => state.lastAgentId);
+  const liveThreadIds = useLiveThreadIds();
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { data: attention } = useAttentionSummary();
@@ -166,14 +170,18 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
               return (
                 <li key={thread.id}>
                   <Link
-                    to={`/desk/t/${thread.id}`}
+                    to={conversationPath(thread.id)}
                     className="hover:bg-surface-hover ui-focus-ring flex items-center gap-3 rounded-md px-2 py-1.5 transition-colors"
                   >
                     <span className="min-w-0 flex-1 truncate text-sm">
                       {thread.title || t("Untitled conversation")}
                     </span>
                     <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
-                      {formatSecondsAgo(now - touched)}
+                      {liveThreadIds.has(thread.id) ? (
+                        <LiveReplyLabel />
+                      ) : (
+                        formatSecondsAgo(now - touched)
+                      )}
                     </span>
                   </Link>
                 </li>

@@ -1,4 +1,4 @@
-import { recordAtLocation } from "@/config/record-links";
+import { recordAtLocation, type RecordEntityType } from "@/config/record-links";
 
 /**
  * What the person is looking at, in the shape the server accepts.
@@ -24,6 +24,14 @@ const MAX_TITLE_LENGTH = 200;
 const LEGACY_ENTITY_ID_PARAM = "entityId";
 const MAX_ENTITY_ID_LENGTH = 100;
 
+/**
+ * Records the registry can open that are never what a question is about.
+ * The conversation being typed into is the place the question is asked, not
+ * its subject, and the server does not accept it as a page record: sending
+ * it would refuse every message asked from the Desk.
+ */
+const NOT_A_SUBJECT: ReadonlySet<RecordEntityType> = new Set(["assistant_thread"]);
+
 export function stripAppTitle(title: string): string {
   const trimmed = title.trim();
   const separator = trimmed.lastIndexOf(" | ");
@@ -34,7 +42,7 @@ export function stripAppTitle(title: string): string {
 
 function recordAt(pathname: string, search: string): { entityType: string; entityId: string } {
   const record = recordAtLocation(pathname, search);
-  if (record === null) {
+  if (record === null || NOT_A_SUBJECT.has(record.entityType)) {
     return { entityType: "", entityId: "" };
   }
 

@@ -14,6 +14,7 @@ import {
   assistantMessagePageSchema,
   assistantArtifactListSchema,
   assistantArtifactSchema,
+  assistantLiveTurnListSchema,
   agentBudgetStatusSchema,
   assistantPlanListSchema,
   assistantProposalListSchema,
@@ -324,6 +325,17 @@ export class AssistantService {
    */
   public async stopTurn(turnId: string): Promise<void> {
     await api.post(`/assistant/turns/${turnId}/stop/`, {});
+  }
+
+  /**
+   * Every reply this person's conversations are still producing. A reply runs
+   * on a worker until it ends or is stopped, whether or not anything is
+   * reading it, so this is the one place that knows what is under way when
+   * the panel is closed or the conversation was left.
+   */
+  public async listActiveTurns(options?: { signal?: AbortSignal }) {
+    const response = await api.get("/assistant/turns/active/", { signal: options?.signal });
+    return safeParse(assistantLiveTurnListSchema, response, "Assistant Turns");
   }
 
   /** The reply a conversation is still producing, if it is producing one. */

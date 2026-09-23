@@ -1,5 +1,5 @@
 {
-  "version": "sha256:6baae26e0526a73da5c77c4457c4331fa2d6ec154fa738dc00437c9521af702d",
+  "version": "sha256:5cd0d840c1580f113be49667b62307e7bc2f87bfda894272a75ad2b9cac264ca",
   "modules": [
     {
       "id": "home",
@@ -13987,6 +13987,12 @@
         "activity": "runs",
         "fieldFilters": "[{\"field\":\"id\",\"operator\":\"eq\",\"value\":\"{id}\"}]"
       }
+    },
+    {
+      "entity": "assistant_thread",
+      "label": "Conversation",
+      "path": "/desk/t/{id}",
+      "params": {}
     },
     {
       "entity": "billing_queue_item",

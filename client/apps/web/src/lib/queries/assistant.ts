@@ -22,6 +22,13 @@ export const assistant = createQueryKeys("assistant", {
         signal,
       }),
   }),
+  // Every reply the person's conversations are still writing. Kept fresh by
+  // the "assistant_turns" realtime event and by the turn hooks, not polled.
+  activeTurns: () => ({
+    queryKey: ["assistant-active-turns"],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.listActiveTurns({ signal }),
+  }),
   providers: () => ({
     queryKey: ["assistant-providers"],
     queryFn: () => apiService.assistantService.listProviders(),

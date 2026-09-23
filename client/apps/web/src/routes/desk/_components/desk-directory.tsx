@@ -1,4 +1,7 @@
 import { AgentTile } from "@/components/agent-identity/agent-tile";
+import { LiveReplyLabel } from "@/components/assistant/live-reply-label";
+import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
+import { conversationPath } from "@/lib/conversation-path";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
@@ -78,6 +81,7 @@ export function DeskDirectory({
     enabled: canWatch,
   });
   const decisions = attention?.agentDecisions ?? 0;
+  const liveThreadIds = useLiveThreadIds();
   const unseen = watchtowerCounts?.unseen ?? 0;
 
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
@@ -180,6 +184,7 @@ export function DeskDirectory({
                 group={group}
                 agentsById={agentsById}
                 activeThreadId={activeThreadId}
+                liveThreadIds={liveThreadIds}
                 now={now}
                 onDelete={onDelete}
                 onTogglePin={onTogglePin}
@@ -282,6 +287,7 @@ function DirectoryGroup({
   group,
   agentsById,
   activeThreadId,
+  liveThreadIds,
   now,
   onDelete,
   onTogglePin,
@@ -290,6 +296,7 @@ function DirectoryGroup({
   group: DeskThreadGroup;
   agentsById: Map<string, AgentDefinitionRow>;
   activeThreadId: string | null;
+  liveThreadIds: ReadonlySet<string>;
   now: number;
   onDelete: (thread: AssistantThread) => void;
   onTogglePin: (thread: AssistantThread) => void;
@@ -320,6 +327,7 @@ function DirectoryGroup({
           showAgent={group.kind === "pinned"}
           agentName={agentsById.get(thread.agentDefinitionId)?.name}
           active={thread.id === activeThreadId}
+          live={liveThreadIds.has(thread.id)}
           now={now}
           onDelete={() => onDelete(thread)}
           onTogglePin={() => onTogglePin(thread)}
@@ -335,6 +343,7 @@ function DirectoryRow({
   showAgent,
   agentName,
   active,
+  live,
   now,
   onDelete,
   onTogglePin,
@@ -344,6 +353,7 @@ function DirectoryRow({
   showAgent: boolean;
   agentName: string | undefined;
   active: boolean;
+  live: boolean;
   now: number;
   onDelete: () => void;
   onTogglePin: () => void;
@@ -360,7 +370,7 @@ function DirectoryRow({
       )}
     >
       <NavLink
-        to={`/desk/t/${thread.id}`}
+        to={conversationPath(thread.id)}
         data-thread-row
         onClick={onNavigate}
         className="ui-focus-ring min-w-0 flex-1 rounded-md py-1.5 text-left"
@@ -369,7 +379,7 @@ function DirectoryRow({
         <span className="block truncate text-sm">{thread.title || t("Untitled conversation")}</span>
         <span className="text-muted-foreground block truncate text-xs">
           {showAgent && agentName ? `${agentName} · ` : ""}
-          {formatSecondsAgo(now - touched)}
+          {live ? <LiveReplyLabel /> : formatSecondsAgo(now - touched)}
         </span>
       </NavLink>
       <Button

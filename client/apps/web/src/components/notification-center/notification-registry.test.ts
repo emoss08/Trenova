@@ -1,6 +1,11 @@
 import type { Notification } from "@trenova/shared/types/notification";
 import { describe, expect, it } from "vitest";
-import { getNotificationDescriptor, getNotificationLink } from "./notification-registry";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import {
+  getNotificationDescriptor,
+  getNotificationLink,
+  resolveNotificationDescriptor,
+} from "./notification-registry";
 
 const DISPATCH_EVENT_TYPES = [
   "tender_accepted",
@@ -245,5 +250,72 @@ describe("notification registry — earned autonomy", () => {
     expect(getNotificationLink(notification({ eventType: "agent.tool_demoted" }))).toBe(
       "/admin/agent-control",
     );
+  });
+});
+
+/*
+A finished reply nobody was watching: data carries kind "assistant_reply_ready",
+threadId, turnId, status (Completed | Refused | Failed) and link.
+*/
+describe("notification registry — assistant replies", () => {
+  const replyData = {
+    kind: "assistant_reply_ready",
+    threadId: "athr_1",
+    turnId: "atrn_1",
+    status: "Completed",
+    link: "/desk/t/athr_1",
+  };
+
+  it("opens the conversation the reply was written in", () => {
+    expect(
+      getNotificationLink(notification({ eventType: "assistant_reply_ready", data: replyData })),
+    ).toBe("/desk/t/athr_1");
+  });
+
+  it("recognises the reply by its data when the event type is something else", () => {
+    const n = notification({ eventType: "assistant.turn_finished", data: replyData });
+
+    expect(getNotificationLink(n)).toBe("/desk/t/athr_1");
+    expect(resolveNotificationDescriptor(n).icon).toBe(AssistMark);
+  });
+
+  it("never navigates off the app on the strength of the notice's link", () => {
+    expect(
+      getNotificationLink(
+        notification({
+          eventType: "assistant_reply_ready",
+          data: { ...replyData, link: "https://example.com" },
+        }),
+      ),
+    ).toBe("/desk/t/athr_1");
+  });
+
+  it("wears the assistant's mark, neutral for a completed or refused reply", () => {
+    for (const status of ["Completed", "Refused"]) {
+      const descriptor = resolveNotificationDescriptor(
+        notification({ eventType: "assistant_reply_ready", data: { ...replyData, status } }),
+      );
+
+      expect(descriptor.icon).toBe(AssistMark);
+      expect(descriptor.tileClass).toBe("bg-muted");
+    }
+  });
+
+  it("takes the danger tone for a reply that failed", () => {
+    const descriptor = resolveNotificationDescriptor(
+      notification({
+        eventType: "assistant_reply_ready",
+        data: { ...replyData, status: "Failed" },
+      }),
+    );
+
+    expect(descriptor.tileClass).toBe("bg-danger-subtle");
+    expect(descriptor.iconClass).toBe("text-destructive");
+  });
+
+  it("leaves every other kind's descriptor as its event type has it", () => {
+    const n = notification({ eventType: "tender_accepted" });
+
+    expect(resolveNotificationDescriptor(n)).toBe(getNotificationDescriptor("tender_accepted"));
   });
 });

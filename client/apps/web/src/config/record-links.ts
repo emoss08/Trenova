@@ -94,6 +94,10 @@ export const RECORD_LINKS = {
     label: "Dashboard",
     path: "/reports/dashboards/{id}",
   },
+  assistant_thread: {
+    label: "Conversation",
+    path: "/desk/t/{id}",
+  },
   agent_run: {
     label: "Agent run",
     path: "/admin/agent-control",

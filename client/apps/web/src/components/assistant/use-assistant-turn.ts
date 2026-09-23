@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { appendToHistory, continuesHistory, type ThreadHistory } from "./thread-history";
+import { registerTurnReader } from "./turn-readers";
 import {
   describeTurnFailure,
   initialTurnState,
@@ -101,8 +102,12 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
     return () => abortRef.current?.abort();
   }, []);
 
+  // Every ending — saved, refused, failed, stopped — also moves the "writing"
+  // markers, so they clear with the reply on screen rather than a round-trip
+  // after it.
   const refreshThread = useCallback(async () => {
     await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queries.assistant.activeTurns().queryKey }),
       queryClient.invalidateQueries({ queryKey: queries.assistant.messages(threadId).queryKey }),
       queryClient.invalidateQueries({ queryKey: queries.assistant.proposals(threadId).queryKey }),
       queryClient.invalidateQueries({ queryKey: queries.assistant.plans(threadId).queryKey }),
@@ -152,6 +157,9 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           appendToHistory(history, result.messages),
         );
         await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: queries.assistant.activeTurns().queryKey,
+          }),
           queryClient.invalidateQueries({
             queryKey: queries.assistant.proposals(threadId).queryKey,
           }),
@@ -206,7 +214,10 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       }
       const controller = new AbortController();
       abortRef.current = controller;
+      // Signing out lets go of every reader at once; see turn-readers.
+      const unregister = registerTurnReader(controller);
       const release = () => {
+        unregister();
         if (abortRef.current === controller) {
           abortRef.current = null;
         }
@@ -393,6 +404,9 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
               onTurnStarted: (started) => {
                 turnIdRef.current = started.turnId;
                 endStarting(pending);
+                void queryClient.invalidateQueries({
+                  queryKey: queries.assistant.activeTurns().queryKey,
+                });
               },
               onEvent,
               findWithdrawn: async () => {
@@ -418,6 +432,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       followActive,
       following,
       getContext,
+      queryClient,
       threadId,
     ],
   );

@@ -45,6 +45,12 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   ],
   agent_run: ["agent-run-list", ["assistant", "agents"]],
   assistant_artifact: [["assistant", "artifacts"]],
+  // A reply starting or closing moves the "writing" markers and the
+  // conversation's place in the list together.
+  assistant_turns: [
+    ["assistant", "activeTurns"],
+    ["assistant", "threads"],
+  ],
   // The feed and its counts live under one key root from the query factory
   // (createQueryKeys("watchtower")), so invalidating the root catches both the
   // list and every filtered variant of it.

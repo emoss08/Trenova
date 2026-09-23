@@ -1,4 +1,5 @@
 import { AgentTile } from "@/components/agent-identity/agent-tile";
+import { conversationPath } from "@/lib/conversation-path";
 import { SimulationLine } from "@/components/assistant/proposal-card";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { argumentRows } from "@/components/assistant/proposal-state";
@@ -83,7 +84,7 @@ function Provenance({ node }: { node: PendingDecisionNode }) {
       </span>
       <span>{formatUnixDateTimeMedium(node.createdAt)}</span>
       {conversationId && (
-        <Link to={`/desk/t/${conversationId}`} className="text-brand hover:underline">
+        <Link to={conversationPath(conversationId)} className="text-brand hover:underline">
           {t("Open the conversation")}
         </Link>
       )}

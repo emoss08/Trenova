@@ -10,7 +10,7 @@ export function DeskConversationPage() {
   const t = useT();
   const { threadId } = useParams<{ threadId: string }>();
   const desk = useDesk();
-  const thread = desk.threads.find((candidate) => candidate.id === threadId) ?? null;
+  const thread = desk.activeThread?.id === threadId ? desk.activeThread : null;
 
   if (desk.isLoading) {
     return (

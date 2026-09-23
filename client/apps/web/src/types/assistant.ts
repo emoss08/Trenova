@@ -476,6 +476,30 @@ export const assistantThreadListSchema = z.object({
   total: z.number().default(0),
 });
 
+/** What started a turn: the person, or the application reporting a decision. */
+export const turnOriginSchema = z.enum(["Person", "DecisionFollowUp"]);
+
+/**
+ * A reply the person's assistant is still writing, in any of their
+ * conversations. It keeps going whether or not anything is reading it, so
+ * this is what the launcher and the conversation lists say is under way.
+ */
+export const assistantLiveTurnSchema = z.object({
+  turnId: z.string(),
+  threadId: z.string(),
+  threadTitle: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  origin: turnOriginSchema,
+  /** Unix seconds. */
+  startedAt: z.number(),
+});
+
+export const assistantLiveTurnListSchema = z.object({
+  items: nullableList(assistantLiveTurnSchema),
+});
+
 /**
  * One page of a thread in reading order. `hasMore` says a page exists above
  * the first message here; `total` is the whole thread's length and `limit` is
@@ -806,6 +830,9 @@ export type AgentEventDescriptor = z.infer<typeof agentEventDescriptorSchema>;
 export type SaveAgentDefinitionRequest = z.infer<typeof saveAgentDefinitionRequestSchema>;
 export type AssistantThread = z.infer<typeof assistantThreadSchema>;
 export type ThreadOrigin = z.infer<typeof threadOriginSchema>;
+export type TurnOrigin = z.infer<typeof turnOriginSchema>;
+export type AssistantLiveTurn = z.infer<typeof assistantLiveTurnSchema>;
+export type AssistantLiveTurnList = z.infer<typeof assistantLiveTurnListSchema>;
 export type AssistantArtifact = z.infer<typeof assistantArtifactSchema>;
 export type ArtifactKind = z.infer<typeof artifactKindSchema>;
 export type ArtifactStatus = z.infer<typeof artifactStatusSchema>;

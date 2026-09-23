@@ -77,6 +77,7 @@ var noMessage = map[string]struct{}{
 	"NewThrottleError":                {},
 	"NewConcurrentAccessError":        {},
 	"NewContinueAsNewError":           {},
+	"NewCanceledError":                {},
 }
 
 func isErrortypesConstructor(name string) bool {

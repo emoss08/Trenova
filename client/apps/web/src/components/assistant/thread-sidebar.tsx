@@ -11,14 +11,18 @@ import { cn } from "@trenova/shared/lib/utils";
 import { MessageSquareIcon, PlusIcon, SearchIcon, Trash2Icon } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
+import { LiveReplyLabel } from "./live-reply-label";
 import { groupThreadsByRecency, type ThreadGroup } from "./thread-grouping";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
+const NO_LIVE_THREADS: ReadonlySet<string> = new Set();
 
 export type ThreadSidebarProps = {
   threads: AssistantThread[];
   agentsById: Map<string, AgentDefinitionRow>;
   activeThreadId: string | null;
+  /** Conversations with a reply still being written. */
+  liveThreadIds?: ReadonlySet<string>;
   isLoading: boolean;
   canStart: boolean;
   onSelect: (id: string) => void;
@@ -35,6 +39,7 @@ export function ThreadSidebar({
   threads,
   agentsById,
   activeThreadId,
+  liveThreadIds = NO_LIVE_THREADS,
   isLoading,
   canStart,
   onSelect,
@@ -100,6 +105,7 @@ export function ThreadSidebar({
             groups={groups}
             agentsById={agentsById}
             activeThreadId={activeThreadId}
+            liveThreadIds={liveThreadIds}
             now={now}
             emptyText={
               query.trim() === ""
@@ -136,6 +142,8 @@ export type ThreadListProps = {
   groups: ThreadGroup[];
   agentsById: Map<string, AgentDefinitionRow>;
   activeThreadId: string | null;
+  /** Conversations with a reply still being written. */
+  liveThreadIds?: ReadonlySet<string>;
   now: number;
   emptyText: string;
   onSelect: (id: string) => void;
@@ -153,6 +161,7 @@ export function ThreadList({
   groups,
   agentsById,
   activeThreadId,
+  liveThreadIds = NO_LIVE_THREADS,
   now,
   emptyText,
   onSelect,
@@ -208,6 +217,7 @@ export function ThreadList({
                   thread={thread}
                   agentName={agentsById.get(thread.agentDefinitionId)?.name}
                   active={thread.id === activeThreadId}
+                  live={liveThreadIds.has(thread.id)}
                   now={now}
                   onSelect={() => onSelect(thread.id)}
                   onDelete={() => onDelete(thread)}
@@ -225,6 +235,7 @@ function ThreadRow({
   thread,
   agentName,
   active,
+  live,
   now,
   onSelect,
   onDelete,
@@ -232,6 +243,7 @@ function ThreadRow({
   thread: AssistantThread;
   agentName: string | undefined;
   active: boolean;
+  live: boolean;
   now: number;
   onSelect: () => void;
   onDelete: () => void;
@@ -255,7 +267,8 @@ function ThreadRow({
       >
         <span className="block truncate text-sm">{thread.title || t("Untitled conversation")}</span>
         <span className="text-muted-foreground block truncate text-xs">
-          {agentName ?? t("Agent unavailable")} · {formatSecondsAgo(now - touched)}
+          {agentName ?? t("Agent unavailable")} ·{" "}
+          {live ? <LiveReplyLabel /> : formatSecondsAgo(now - touched)}
         </span>
       </button>
       <Button

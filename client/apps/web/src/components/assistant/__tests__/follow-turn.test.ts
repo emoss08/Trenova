@@ -197,3 +197,106 @@ describe("runTurn withdrawn before it started", () => {
     expect(stopTurn).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * A reader let go of is not a question taken back. The palette closing while
+ * its question is on the way, or the page it was asked on changing, must leave
+ * the question asked and its answer written: it arrives as a notification.
+ * Only the withdraw signal — Stop — takes a question back.
+ */
+describe("runTurn with the reader let go of but the question kept", () => {
+  it("hands the withdraw signal, not the reader's, to the start request", async () => {
+    attachTurn.mockImplementation(async (_turnId, onEvent) => onEvent(done, "e1"));
+    const reader = new AbortController();
+    const withdraw = new AbortController();
+    const start = vi.fn(async (_signal: AbortSignal) => started);
+
+    await runTurn(start, {
+      signal: reader.signal,
+      withdrawSignal: withdraw.signal,
+      onEvent: vi.fn(),
+    });
+
+    expect(start).toHaveBeenCalledWith(withdraw.signal);
+  });
+
+  it("neither stops nor follows a turn whose reader was let go of on the way", async () => {
+    const reader = new AbortController();
+    const withdraw = new AbortController();
+    const onTurnStarted = vi.fn();
+    const start = vi.fn(async () => {
+      reader.abort();
+      return started;
+    });
+
+    await runTurn(start, {
+      signal: reader.signal,
+      withdrawSignal: withdraw.signal,
+      onTurnStarted,
+      onEvent: vi.fn(),
+    });
+
+    expect(stopTurn).not.toHaveBeenCalled();
+    expect(onTurnStarted).not.toHaveBeenCalled();
+    expect(attachTurn).not.toHaveBeenCalled();
+  });
+
+  it("does not go looking for a turn to stop when only the reader let go", async () => {
+    const reader = new AbortController();
+    const withdraw = new AbortController();
+    const findWithdrawn = vi.fn(async () => "atrn_orphan");
+    const start = vi.fn(async () => {
+      reader.abort();
+      throw new TypeError("network error");
+    });
+
+    await expect(
+      runTurn(start, {
+        signal: reader.signal,
+        withdrawSignal: withdraw.signal,
+        onEvent: vi.fn(),
+        findWithdrawn,
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(findWithdrawn).not.toHaveBeenCalled();
+    expect(stopTurn).not.toHaveBeenCalled();
+  });
+
+  it("still stops a turn when the question was taken back", async () => {
+    const reader = new AbortController();
+    const withdraw = new AbortController();
+    const start = vi.fn(async () => {
+      withdraw.abort();
+      reader.abort();
+      return started;
+    });
+
+    await runTurn(start, {
+      signal: reader.signal,
+      withdrawSignal: withdraw.signal,
+      onEvent: vi.fn(),
+    });
+
+    expect(stopTurn).toHaveBeenCalledWith("atrn_1");
+    expect(attachTurn).not.toHaveBeenCalled();
+  });
+
+  it("stops the turn a withdrawn request made anyway, found by findWithdrawn", async () => {
+    const reader = new AbortController();
+    const withdraw = new AbortController();
+    const start = vi.fn(async () => {
+      withdraw.abort();
+      throw new DOMException("The operation was aborted.", "AbortError");
+    });
+
+    await runTurn(start, {
+      signal: reader.signal,
+      withdrawSignal: withdraw.signal,
+      onEvent: vi.fn(),
+      findWithdrawn: async () => "atrn_orphan",
+    });
+
+    expect(stopTurn).toHaveBeenCalledWith("atrn_orphan");
+  });
+});

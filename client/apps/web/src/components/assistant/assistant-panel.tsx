@@ -14,6 +14,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
+import { conversationPath } from "@/lib/conversation-path";
 import { downloadAssistantTranscript } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
 import type { AssistantThread } from "@/types/assistant";
@@ -27,6 +28,7 @@ import { AssistantHeader } from "./assistant-header";
 import { AssistantHome } from "./assistant-home";
 import { MessageThread } from "./message-thread";
 import { ThreadSidebar } from "./thread-sidebar";
+import { useLiveThreadIds } from "./use-active-turns";
 import { useOpeningQuestion } from "./use-opening-question";
 
 type AssistantPanelProps = {
@@ -55,6 +57,7 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
 
   const threads = useMemo(() => threadsQuery.data?.items ?? [], [threadsQuery.data?.items]);
+  const liveThreadIds = useLiveThreadIds();
   const agents = useMemo(() => agentsQuery.data ?? [], [agentsQuery.data]);
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
 
@@ -110,6 +113,7 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
         activeAgent={activeAgent}
         activeThread={activeThread}
         threads={threads}
+        liveThreadIds={liveThreadIds}
         expanded={expanded}
         isStarting={startMutation.isPending}
         onStart={(agentId) => startMutation.mutate({ agentId })}
@@ -118,7 +122,7 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
         onDownloadTranscript={(thread) => downloadAssistantTranscript(thread.id)}
         onOpenInDesk={(thread) => {
           onClose();
-          void navigate(`/desk/t/${thread.id}`);
+          void navigate(conversationPath(thread.id));
         }}
         onToggleExpanded={onToggleExpanded}
         onClose={onClose}
@@ -130,6 +134,7 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
             threads={threads}
             agentsById={agentsById}
             activeThreadId={activeThreadId}
+            liveThreadIds={liveThreadIds}
             isLoading={threadsQuery.isLoading}
             canStart={agents.length > 0 && !startMutation.isPending}
             onSelect={setActiveThreadId}
@@ -166,6 +171,7 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
             <AssistantHome
               agents={agents}
               threads={threads}
+              liveThreadIds={liveThreadIds}
               isLoading={isLoading}
               isStarting={startMutation.isPending}
               canManageAgents={canManageAgents}

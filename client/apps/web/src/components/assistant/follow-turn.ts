@@ -14,8 +14,21 @@ import type { AssistantStreamEvent } from "@/types/assistant";
 const reattachDelaysMs = [250, 750, 2000, 5000, 5000];
 
 export type RunTurnOptions = {
-  /** Aborting it before the turn is known withdraws the question; after, it lets go of the reply. */
+  /**
+   * Aborting it lets go of the reply. Unless `withdrawSignal` is given, it
+   * also withdraws a question the server has not yet handed back a turn for.
+   */
   signal: AbortSignal;
+  /**
+   * Aborting it withdraws the question: before the turn is known the request
+   * is cancelled and any turn it made anyway is stopped, and a turn returned
+   * after it was aborted is stopped rather than followed.
+   *
+   * Given separately when letting go of the reader must not cost the answer —
+   * a palette closed while its question is on the way has not asked for the
+   * question to be taken back, and the answer arrives as a notification.
+   */
+  withdrawSignal?: AbortSignal;
   /** Called once a worker has the question, before any of the answer. */
   onTurnStarted?: (turn: StartedTurn) => void;
   onEvent: (event: AssistantStreamEvent) => void;
@@ -49,12 +62,16 @@ export async function runTurn(
   start: (signal: AbortSignal) => Promise<StartedTurn>,
   options: RunTurnOptions,
 ): Promise<void> {
+  const withdraw = options.withdrawSignal ?? options.signal;
   let started: StartedTurn;
   try {
-    started = await start(options.signal);
+    started = await start(withdraw);
   } catch (error) {
-    if (options.signal.aborted) {
+    if (withdraw.aborted) {
       await stopWithdrawn(options.findWithdrawn);
+      return;
+    }
+    if (options.signal.aborted) {
       return;
     }
     throw error;
@@ -63,8 +80,14 @@ export async function runTurn(
   // Stop was pressed while the question was on its way. The turn exists now
   // and would answer a question nobody is waiting on, so it is stopped rather
   // than followed.
-  if (options.signal.aborted) {
+  if (withdraw.aborted) {
     stopTurnQuietly(started.turnId);
+    return;
+  }
+  // The reader was let go of while the question was on its way, but nobody
+  // took the question back: the turn runs to its end on the server without
+  // a reader, and its answer is kept.
+  if (options.signal.aborted) {
     return;
   }
   options.onTurnStarted?.(started);

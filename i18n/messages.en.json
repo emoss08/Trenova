@@ -11671,6 +11671,15 @@
       "service/agentrunservice"
     ]
   },
+  "Agent {0} runs on its own and cannot be talked to": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "Agent-proposed resolutions awaiting human decision": {
     "sites": 1,
     "scope": [
@@ -15098,6 +15107,15 @@
       "apps/web/components"
     ]
   },
+  "Answer one message to the shipment import assistant, streaming the reply": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Answer one question in a conversation, publishing the reply as it is written": {
     "sites": 1,
     "scope": [
@@ -17800,6 +17818,24 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Ask the model": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Ask the model one structured question for a person waiting on the answer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Ask the recipient's email client to send a delivery/read confirmation. Note: many email clients and corporate mail servers silently ignore read receipt requests.": {
@@ -21515,6 +21551,15 @@
     ],
     "areas": [
       "service/distancecalculationservice"
+    ]
+  },
+  "Background work is temporarily unavailable. Try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/workflowstarter"
     ]
   },
   "Backtest": {
@@ -32473,6 +32518,15 @@
       "apps/web/config"
     ]
   },
+  "Close the turn's record": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Close the {0} case(s) still accruing days before certifying the summary": {
     "sites": 1,
     "scope": [
@@ -37052,11 +37106,12 @@
     ]
   },
   "Conversation": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/agent-control"
     ]
   },
@@ -42786,12 +42841,13 @@
     ]
   },
   "Daily briefing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "api/handlers",
+      "go/other"
     ]
   },
   "Daily cost": {
@@ -57747,6 +57803,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Enter the API key again: the endpoint changed, and the saved key is not sent to a new one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
     ]
   },
   "Enter the address you sign in with and we'll send you a link to choose a new password.": {
@@ -76641,6 +76706,15 @@
       "api/handlers"
     ]
   },
+  "Insight refresh": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Insights": {
     "sites": 5,
     "scope": [
@@ -80940,6 +81014,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Keep one schedule behind every scheduled or continuous agent": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Keep order": {
@@ -106385,7 +106468,7 @@
     ]
   },
   "Open": {
-    "sites": 42,
+    "sites": 43,
     "scope": [
       "ts"
     ],
@@ -107100,7 +107183,25 @@
       "apps/web/components"
     ]
   },
+  "Open the assistant, {0, plural, one {# reply is} other {# replies are}} being written": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Open the assistant, {0} changes await your decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Open the assistant, {0} changes await your decision, {1, plural, one {# reply is} other {# replies are}} being written": {
     "sites": 1,
     "scope": [
       "ts"
@@ -119309,6 +119410,15 @@
       "domain/documenttemplate"
     ]
   },
+  "Probe an AI provider once and record whether it answered": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Problem": {
     "sites": 1,
     "scope": [
@@ -120736,6 +120846,15 @@
     "areas": [
       "routes/admin",
       "routes/policies"
+    ]
+  },
+  "Publish a document": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Publish a handbook or a policy and everybody it applies to is asked to read and sign it from Dash.": {
@@ -123889,6 +124008,15 @@
       "domain/permission"
     ]
   },
+  "Read the question": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Read transactions on a schedule and post the ones that resolve.": {
     "sites": 1,
     "scope": [
@@ -125483,6 +125611,15 @@
     ]
   },
   "Recompute home-screen operational insights for every organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Recompute one organization's operational insights": {
     "sites": 1,
     "scope": [
       "go"
@@ -137840,6 +137977,15 @@
       "routes/formula-template"
     ]
   },
+  "Save the turn": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Save these inputs and this result as a scenario that must keep passing": {
     "sites": 1,
     "scope": [
@@ -139416,6 +139562,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Search for tools": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Search hazardous materials...": {
@@ -150659,6 +150814,15 @@
       "routes/agent-control"
     ]
   },
+  "Start a scheduled or continuous agent's run on the slot its schedule fired for": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Start agent runs": {
     "sites": 1,
     "scope": [
@@ -150750,15 +150914,6 @@
       "packages/shared/types"
     ]
   },
-  "Start every scheduled or continuous agent whose slot has come": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Start from": {
     "sites": 1,
     "scope": [
@@ -150823,15 +150978,6 @@
     ],
     "areas": [
       "domain/permission"
-    ]
-  },
-  "Start scheduled and continuous agents whose slot has come": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Start sync": {
@@ -152468,7 +152614,7 @@
     ]
   },
   "Streaming is not supported": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -154685,15 +154831,6 @@
       "domain/aiprovider"
     ]
   },
-  "Task token is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/documentaiextraction"
-    ]
-  },
   "Tax": {
     "sites": 2,
     "scope": [
@@ -155032,6 +155169,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Tell the person their reply is ready": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Tell us what looks wrong so your carrier can fix it.": {
@@ -156762,6 +156908,15 @@
       "go/other"
     ]
   },
+  "The AI request timed out. Please try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The AP account credited when a settlement posts and debited when it is paid.": {
     "sites": 1,
     "scope": [
@@ -157291,6 +157446,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The assistant declined to answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The assistant is still answering the last message about this document.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The assistant proposed a change that could not be saved for approval": {
@@ -167181,6 +167354,15 @@
       "apps/web/components"
     ]
   },
+  "This reply was stopped. What was said so far has been kept in the conversation.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "This report artifact has expired — run the report again": {
     "sites": 1,
     "scope": [
@@ -167486,6 +167668,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "This server does not allow providers on private network addresses": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
     ]
   },
   "This settlement does not belong to you": {
@@ -174505,7 +174696,7 @@
     ]
   },
   "Untitled conversation": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -183324,6 +183515,15 @@
       "routes/settlement.tsx"
     ]
   },
+  "Whose records this change is for is set when it is proposed and cannot be changed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalexecutor"
+    ]
+  },
   "Why": {
     "sites": 9,
     "scope": [
@@ -184837,6 +185037,15 @@
       "apps/web/config"
     ]
   },
+  "Write a day's briefing again for a person who asked": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Write a summary the worker will read": {
     "sites": 1,
     "scope": [
@@ -184898,6 +185107,15 @@
     ],
     "areas": [
       "routes/pay-advance"
+    ]
+  },
+  "Write one organization's morning briefing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Write the announcement": {
@@ -185027,6 +185245,24 @@
       "routes/invoice-adjustment-batch",
       "routes/invoice-approval",
       "routes/invoice-reconciliation"
+    ]
+  },
+  "Writing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Writing a reply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Written by {0}": {
@@ -185582,6 +185818,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "You do not have access to the record this conversation would be about": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
     ]
   },
   "You do not have access to this organization": {
@@ -186461,6 +186706,24 @@
     ]
   },
   "Your profile settings have been saved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Your reply could not finish": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Your reply is ready": {
     "sites": 1,
     "scope": [
       "ts"

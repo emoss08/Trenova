@@ -52,6 +52,7 @@ import { usePageContext } from "./use-page-context";
 import { useThreadHistory } from "./use-thread-history";
 import { VirtualThread, type VirtualThreadRow } from "./virtual-thread";
 import { useFollowNavigation } from "./follow-navigation";
+import { useLiveThreadIds } from "./use-active-turns";
 
 /**
  * Space between the last message and the composer's fade, beyond the
@@ -471,6 +472,17 @@ export function MessageThread({
       void rejoin();
     }
   }, [history.isLoading, rejoin]);
+
+  // A reply this view did not start and is not following — asked from another
+  // tab or device while this conversation sat open — is picked up when the
+  // list of live replies says it has begun. Rejoining a reply already being
+  // followed does nothing.
+  const liveHere = useLiveThreadIds().has(thread.id);
+  useEffect(() => {
+    if (liveHere && !history.isLoading) {
+      void rejoin();
+    }
+  }, [history.isLoading, liveHere, rejoin]);
 
   const decidedKey = decidedSignature(
     proposalsQuery.data?.results ?? [],

@@ -1,4 +1,6 @@
+import { ASSISTANT_REPLY_READY, parseReplyReady } from "@/components/assistant/reply-ready";
 import { invoicePanelPath } from "@/lib/invoice-links";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import type { Notification } from "@trenova/shared/types/notification";
 import {
   ArrowLeftRightIcon,
@@ -96,6 +98,10 @@ export interface NotificationDescriptor {
   disableRowNavigation?: boolean;
   avatar?: (notification: Notification) => NotificationAvatar | null;
   getLink?: (notification: Notification) => string | null;
+  /** The look for one notification, when its kind alone does not settle it. */
+  refine?: (
+    notification: Notification,
+  ) => Partial<Pick<NotificationDescriptor, "icon" | "iconClass" | "tileClass">> | null;
 }
 
 const reportRunsLink = () => "/reports/runs";
@@ -138,7 +144,25 @@ function workerCredentialsLink(notification: Pick<Notification, "data">): string
 const aiControlLink = (notification: Notification) =>
   notificationDataString(notification, "link") ?? "/admin/agent-control";
 
+/**
+ * A reply the person walked away from, finished. The mark is the assistant's
+ * own; a reply that failed takes the danger tone because it needs asking
+ * again, while a completed or refused one is simply news.
+ */
+const ASSISTANT_REPLY_DESCRIPTOR: NotificationDescriptor = {
+  category: "Assistant",
+  icon: AssistMark,
+  iconClass: "text-muted-foreground",
+  tileClass: "bg-muted",
+  getLink: (n) => parseReplyReady(n)?.link ?? null,
+  refine: (n) =>
+    parseReplyReady(n)?.status === "Failed"
+      ? { iconClass: "text-destructive", tileClass: "bg-danger-subtle" }
+      : null,
+};
+
 const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
+  [ASSISTANT_REPLY_READY]: ASSISTANT_REPLY_DESCRIPTOR,
   "agent.proposals_pending": {
     category: "AI Control",
     icon: ListChecksIcon,
@@ -418,6 +442,21 @@ export function getNotificationDescriptor(eventType: string): NotificationDescri
   return FALLBACK_DESCRIPTOR;
 }
 
+/**
+ * The descriptor for one notification: its kind's, refined by what it says.
+ * A finished reply is recognised by the kind its data carries as well as by
+ * its event type, since both name it.
+ */
+export function resolveNotificationDescriptor(notification: Notification): NotificationDescriptor {
+  const base =
+    parseReplyReady(notification) !== null
+      ? ASSISTANT_REPLY_DESCRIPTOR
+      : getNotificationDescriptor(notification.eventType);
+  const refined = base.refine?.(notification);
+
+  return refined ? { ...base, ...refined } : base;
+}
+
 export function getNotificationLink(notification: Notification): string | null {
-  return getNotificationDescriptor(notification.eventType).getLink?.(notification) ?? null;
+  return resolveNotificationDescriptor(notification).getLink?.(notification) ?? null;
 }

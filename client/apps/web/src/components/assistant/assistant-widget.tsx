@@ -11,6 +11,7 @@ import { useSearchParams } from "react-router";
 import { AssistantLauncher } from "./assistant-launcher";
 import { ASSISTANT_SURFACE_ID } from "./assistant-surface";
 import { AssistantPanel } from "./assistant-panel";
+import { useLiveReplyCount } from "./use-active-turns";
 
 const OPEN_PARAM = "assistant";
 
@@ -68,6 +69,9 @@ export function AssistantWidget() {
   // once through the attention summary rather than polled on its own.
   const { data: attention } = useAttentionSummary();
   const pendingCount = allowed && canSeeProposals ? (attention?.agentDecisions ?? 0) : 0;
+  // Replies keep being written with the panel closed; the launcher is where
+  // that shows until the panel is opened again.
+  const writingCount = useLiveReplyCount();
 
   if (!allowed) {
     return null;
@@ -125,7 +129,12 @@ export function AssistantWidget() {
           </m.section>
         </Fragment>
       ) : (
-        <AssistantLauncher key="launcher" pendingCount={pendingCount} onClick={openWidget} />
+        <AssistantLauncher
+          key="launcher"
+          pendingCount={pendingCount}
+          writingCount={writingCount}
+          onClick={openWidget}
+        />
       )}
     </AnimatePresence>
   );
