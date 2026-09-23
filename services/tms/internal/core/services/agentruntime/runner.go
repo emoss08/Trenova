@@ -128,6 +128,7 @@ func (s *Service) Run(
 	retries := 0
 	asked := false
 	questions := askedQuestions(req.History)
+	callIDs := usedCallIDs(req.History)
 	for result.ToolCallsUsed < budget {
 		streamCtx, cancelStream := context.WithCancel(ctx)
 		guard := newReplyGuard(cancelStream)
@@ -204,6 +205,7 @@ func (s *Service) Run(
 		result.ProviderID = completion.ProviderID
 		tagReasoning(completion)
 		tagToolCalls(completion)
+		distinctCallIDs(completion, callIDs)
 
 		if len(completion.ToolCalls) == 0 {
 			// A turn that ends in silence reads as a hung screen. One that
@@ -625,6 +627,39 @@ func preferredProvider(
 func tagToolCalls(completion *serviceports.ChatCompletionResult) {
 	for idx := range completion.ToolCalls {
 		completion.ToolCalls[idx].ProviderID = completion.ProviderID
+	}
+}
+
+// usedCallIDs is every tool call id the conversation already holds.
+func usedCallIDs(history []conversation.Message) map[string]struct{} {
+	used := make(map[string]struct{})
+	for idx := range history {
+		for _, call := range history[idx].ToolCalls {
+			if call.ID != "" {
+				used[call.ID] = struct{}{}
+			}
+		}
+	}
+
+	return used
+}
+
+// distinctCallIDs gives every call in a completion an id no other call in the
+// conversation has.
+//
+// Providers that return no id get one synthesized from the call's position,
+// call_0 in every completion, so the same id named a different call on every
+// turn. The artifacts a call produces are keyed on it, the transcript pairs
+// results with calls by it, and a provider handed a history with two calls
+// under one id pairs the wrong result with the wrong call. A provider's own
+// unique ids are kept as they are.
+func distinctCallIDs(completion *serviceports.ChatCompletionResult, used map[string]struct{}) {
+	for idx := range completion.ToolCalls {
+		call := &completion.ToolCalls[idx]
+		if _, taken := used[call.ID]; call.ID == "" || taken {
+			call.ID = "call_" + pulid.MustNew("tc_").String()
+		}
+		used[call.ID] = struct{}{}
 	}
 }
 

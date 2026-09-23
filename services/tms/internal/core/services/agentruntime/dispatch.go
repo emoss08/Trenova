@@ -68,6 +68,8 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			}
 		}
 
+		call.Arguments = aliasedArguments(tool.ParamSchema(), call.Arguments)
+
 		return s.runQueryTool(ctx, req, tool, call)
 	}
 
@@ -83,7 +85,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	}
 
 	tier := req.Definition.EffectiveTier(call.Name, tool.DefaultAutonomyTier())
-	call.Arguments = declaredArguments(tool.ParamSchema(), call.Arguments)
+	call.Arguments = declaredArguments(tool.ParamSchema(), aliasedArguments(tool.ParamSchema(), call.Arguments))
 	if selfScoped {
 		// Whose records these are is the runtime's to say, not the model's:
 		// anything the model sent under this key is overwritten. A copy, so
