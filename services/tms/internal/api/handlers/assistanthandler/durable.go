@@ -6,12 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/authctx"
-	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/gin-gonic/gin"
-	"go.temporal.io/api/enums/v1"
-	"go.temporal.io/sdk/client"
 )
 
 // turnStarter builds the call that hands a turn to a worker.
@@ -27,25 +23,10 @@ func (h *Handler) turnStarter(
 ) func(*conversation.AssistantTurn) (string, error) {
 	return func(turn *conversation.AssistantTurn) (string, error) {
 		providerID, providerChosen := body.provider()
-		workflowID := assistantjobs.WorkflowIDFor(turn.ID)
 
-		_, err := h.workflows.StartWorkflow(c.Request.Context(), client.StartWorkflowOptions{
-			ID:        workflowID,
-			TaskQueue: temporaltype.TaskQueueAgentChat.String(),
-			// One turn, one execution. A duplicate start is a bug rather than
-			// a second question, and rejecting it is how it stays visible.
-			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
-		}, assistantjobs.AssistantTurnWorkflowName, &assistantjobs.AssistantTurnPayload{
-			BasePayload: temporaltype.BasePayload{
-				OrganizationID: authCtx.OrganizationID,
-				BusinessUnitID: authCtx.BusinessUnitID,
-				UserID:         authCtx.UserID,
-				Timestamp:      timeutils.NowUnix(),
-			},
-			TurnID:   turn.ID,
-			ThreadID: threadID,
-			Actor:    requestActorFromAuthContext(authCtx),
-			Content:  body.Content,
+		return assistantjobs.StartTurnWorkflow(c.Request.Context(), h.workflows, turn, assistantjobs.TurnStart{
+			Actor:   requestActorFromAuthContext(authCtx),
+			Content: body.Content,
 			Request: assistantjobs.AssistantTurnRequest{
 				Page:                  body.page(),
 				Mentions:              body.Mentions,
@@ -55,11 +36,6 @@ func (h *Handler) turnStarter(
 				FollowUpProposalID:    body.FollowUpProposalID,
 			},
 		})
-		if err != nil {
-			return "", err
-		}
-
-		return workflowID, nil
 	}
 }
 

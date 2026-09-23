@@ -98,6 +98,28 @@ func (r *repository) GetThread(
 	return entity, nil
 }
 
+func (r *repository) GetThreadOwned(
+	ctx context.Context,
+	req repositories.GetThreadOwnedRequest,
+) (*conversation.Thread, error) {
+	cols := buncolgen.ThreadColumns
+	entity := new(conversation.Thread)
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ThreadScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		}).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "Thread")
+	}
+
+	return entity, nil
+}
+
 func (r *repository) ListThreads(
 	ctx context.Context,
 	req repositories.ListThreadsRequest,

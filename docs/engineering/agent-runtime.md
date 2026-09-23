@@ -81,7 +81,9 @@ the flag on without a worker polling `agent-chat-queue` means nothing is
 answered durably, but nothing breaks either.
 
 `assistant_turns` gives a reply an identity while it is still being written.
-A partial unique index enforces one live turn per thread.
+A partial unique index enforces one live turn per thread. Its `origin` and
+`input` say what the turn answers, so a reader who rejoins it shows the right
+heading: the person's question, or the decision it reports.
 
 ### Stopping
 
@@ -111,6 +113,31 @@ it silently.
 
 Workflow history is deliberately not used for this. Sixty tokens a second is not
 what a workflow history is for, and the issue this came from says so directly.
+
+### Decision follow-ups
+
+A decision on a proposal or plan that a conversation raised is answered in that
+conversation, whoever decided it and wherever: the card in the thread, the
+Desk's decisions, AI Control, or a plan's approval.
+
+`agentdecisionservice` and `agentplanservice` call `DecisionFollowUps` after the
+decision is recorded **and the change has run or failed**, so the report is of
+the outcome, not the click. A plan's steps are decided with `WithinPlan` and
+start nothing of their own; the plan reports once, after its last step.
+`assistantfollowupservice` finds the conversation through the run
+(`subject_type = AssistantThread`) and opens a turn with origin
+`DecisionFollowUp`, **as the thread's owner** — the decider may be someone else,
+but the report is addressed to the owner with the owner's access. The turn's
+input is a `DecisionNote` the assistant service writes from the decision.
+
+The turn follows `ai.durableTurns` like any other: on a worker when it is on,
+off the request in this process when it is off. Either way it is recorded and
+published to its stream before the decision returns, so the client rejoins it
+through `GET /assistant/threads/:id/turns/active/` — which it also does when a
+thread opens, and whenever one of the thread's proposals or plans stops waiting.
+A conversation already producing a reply is not interrupted: the follow-up is
+skipped and the outcome reaches the agent on that turn, since every turn is told
+what became of the conversation's proposals.
 
 ## What is written down
 
@@ -183,6 +210,9 @@ design — the run carries on — so this is the only place they show up at all.
   own words on a background run are still thrown away.
 - **Permission denials are not distinct events.** A refusal arrives as a failed
   tool result whose content is prose, so it is recorded as one.
+- **An in-process follow-up cannot be stopped from the client.** It has no
+  execution to cancel and no request whose abort would stop it, so it runs to
+  its end, bounded at five minutes. A durable one is stopped like any turn.
 - **Redis is on the chat path.** An outage silences in-flight replies. The
   transcript still saves and the relay degrades to reading the turn record, but
   that is a fallback, not equivalence.

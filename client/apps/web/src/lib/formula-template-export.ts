@@ -3,7 +3,7 @@ import type {
   FormulaTemplateVersion,
   FormulaTestCase,
 } from "@trenova/shared/types/formula-template";
-import { downloadJsonFile } from "@trenova/shared/lib/utils";
+import { downloadJsonFile, slugify } from "@trenova/shared/lib/utils";
 
 export const FORMULA_TEMPLATE_EXPORT_VERSION = "1.3";
 
@@ -64,13 +64,6 @@ export type BulkFormulaTemplateExport = {
   exportedAt: string;
   templates: Array<FormulaTemplateExportPayload>;
 };
-
-export function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 export function downloadJson(data: unknown, filename: string): void {
   downloadJsonFile(filename, data);

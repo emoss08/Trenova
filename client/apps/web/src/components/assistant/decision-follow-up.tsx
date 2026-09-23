@@ -1,9 +1,10 @@
 import { createContext, useContext, type ReactNode } from "react";
 
 /**
- * Asks for the turn that follows a decision on one of the thread's proposals.
- * Null outside a conversation that can answer one — a Desk artifact or the
- * decisions queue records the decision and stops there.
+ * Tells the conversation a card in it was just decided, so it picks up the
+ * turn the server starts to report the outcome without waiting for its lists
+ * to refetch. Null outside a conversation; a decision made there still
+ * reaches the thread, which notices the proposal stop waiting.
  */
 export type DecisionFollowUp = (proposalId: string) => void;
 

@@ -646,6 +646,7 @@ func (h *Handler) sendMessageStream(c *gin.Context) {
 		ThreadID:   threadID,
 		UserID:     authCtx.UserID,
 		TenantInfo: tenantFromAuthContext(authCtx),
+		Input:      body.Content,
 	})
 	if err != nil {
 		emit(serviceports.StreamEvent{

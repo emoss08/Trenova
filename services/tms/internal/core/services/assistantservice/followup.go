@@ -27,6 +27,7 @@ const followUpInstruction = "Tell the person in one or two sentences what happen
 type decisionNoteParams struct {
 	thread     *conversation.Thread
 	proposalID pulid.ID
+	planID     pulid.ID
 	history    []conversation.Message
 	tenant     pagination.TenantInfo
 }
@@ -42,6 +43,9 @@ type decisionNoteParams struct {
 // Its first line is the person-readable record of the decision, which is what
 // the thread shows in place of a message they did not type.
 func (s *Service) decisionNote(ctx context.Context, p decisionNoteParams) (string, error) {
+	if p.planID.IsNotNil() {
+		return s.planDecisionNote(ctx, p)
+	}
 	if s.proposals == nil {
 		return "", errortypes.NewBusinessError("Decisions cannot be followed up here")
 	}
@@ -70,7 +74,7 @@ func (s *Service) decisionNote(ctx context.Context, p decisionNoteParams) (strin
 		multiErr.Add("followUpProposalId", errortypes.ErrInvalid,
 			"That proposal has not been decided yet")
 	}
-	if alreadyFollowedUp(p.history, proposal.ID) {
+	if alreadyFollowedUp(p.history, "proposal "+proposal.ID.String()) {
 		multiErr.Add("followUpProposalId", errortypes.ErrDuplicate,
 			"That decision has already been answered")
 	}
@@ -110,11 +114,84 @@ func decisionLine(proposal *agent.AgentProposal) string {
 	}
 }
 
+// planDecisionNote writes the input of the turn that follows a decision on
+// one of the thread's plans: what was decided, and how far the steps got.
+func (s *Service) planDecisionNote(ctx context.Context, p decisionNoteParams) (string, error) {
+	if s.plans == nil {
+		return "", errortypes.NewBusinessError("Decisions cannot be followed up here")
+	}
+
+	plans, err := s.plans.ListByThread(ctx, repositories.ListAgentPlansByThreadRequest{
+		ThreadID:   p.thread.ID,
+		TenantInfo: p.tenant,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	var plan *agent.AgentPlan
+	for _, candidate := range plans {
+		if candidate != nil && candidate.ID == p.planID {
+			plan = candidate
+			break
+		}
+	}
+	if plan == nil {
+		return "", errortypes.NewNotFoundError("That plan is not part of this conversation")
+	}
+
+	multiErr := errortypes.NewMultiError()
+	if plan.Status == agent.PlanStatusPending {
+		multiErr.Add("followUpPlanId", errortypes.ErrInvalid, "That plan has not been decided yet")
+	}
+	if alreadyFollowedUp(p.history, "plan "+plan.ID.String()) {
+		multiErr.Add("followUpPlanId", errortypes.ErrDuplicate,
+			"That decision has already been answered")
+	}
+	if multiErr.HasErrors() {
+		return "", multiErr
+	}
+
+	return fmt.Sprintf("%s\nDecision on plan %s (%d steps). %s",
+		planDecisionLine(plan), plan.ID, plan.StepCount, followUpInstruction), nil
+}
+
+// planDecisionLine says in one line what was decided on a plan and how far
+// its steps got.
+func planDecisionLine(plan *agent.AgentPlan) string {
+	title := plan.Title
+	switch plan.Status {
+	case agent.PlanStatusCompleted:
+		return fmt.Sprintf("Approved the plan %q, and all %d steps ran.", title, plan.StepCount)
+	case agent.PlanStatusFailed:
+		reason, _, _ := strings.Cut(strings.TrimSpace(plan.FailureError), "\n")
+		reason = stringutils.TruncateRunes(reason, maxFollowUpErrorChars)
+		step := plan.CompletedSteps + 1
+		if plan.FailedStep != nil {
+			step = *plan.FailedStep
+		}
+		if reason == "" {
+			return fmt.Sprintf("Approved the plan %q, but step %d failed and the steps after it "+
+				"were skipped.", title, step)
+		}
+		return fmt.Sprintf("Approved the plan %q, but step %d failed (%s) and the steps after "+
+			"it were skipped.", title, step, reason)
+	case agent.PlanStatusApproved:
+		return fmt.Sprintf("Approved the plan %q; %d of %d steps have run so far.",
+			title, plan.CompletedSteps, plan.StepCount)
+	case agent.PlanStatusRejected:
+		return fmt.Sprintf("Rejected the plan %q.", title)
+	case agent.PlanStatusExpired:
+		return fmt.Sprintf("The plan %q expired before anyone decided it.", title)
+	default:
+		return fmt.Sprintf("The plan %q is now %s.", title, plan.Status)
+	}
+}
+
 // alreadyFollowedUp reports whether the thread already carries the note for
-// this proposal, so a double click or a retried request cannot start two
+// this decision, so a double click or a retried request cannot start two
 // turns about one decision.
-func alreadyFollowedUp(history []conversation.Message, proposalID pulid.ID) bool {
-	marker := "proposal " + proposalID.String()
+func alreadyFollowedUp(history []conversation.Message, marker string) bool {
 	for idx := range history {
 		message := &history[idx]
 		if message.Kind == conversation.MessageKindDecisionNote &&

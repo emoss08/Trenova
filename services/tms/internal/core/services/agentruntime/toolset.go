@@ -84,6 +84,9 @@ type toolSetRequest struct {
 	// do it" does not reopen with a toolbox that has forgotten the work.
 	history    []conversation.Message
 	unattended bool
+	// publishes says the turn has somewhere to put a document: a
+	// conversation with artifacts beside it.
+	publishes bool
 }
 
 // toolSet is the live set of tools a turn may call. It starts from the agent's
@@ -132,9 +135,7 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 		for _, name := range selected {
 			s.load(set, name)
 		}
-		if !req.unattended {
-			set.add(askUserSpec())
-		}
+		set.addConversational(req)
 
 		return set
 	}
@@ -149,14 +150,23 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	}
 	s.carryOver(set, req.history)
 	set.add(findToolsSpec())
-	// A background run has nobody to ask. Offering the question tool anyway
-	// let an event-driven agent end its run on a question no one would see,
-	// recorded as complete.
-	if !req.unattended {
-		set.add(askUserSpec())
-	}
+	set.addConversational(req)
 
 	return set
+}
+
+// addConversational adds the tools that only mean something with a person
+// reading. A background run has nobody to ask: offering the question tool
+// anyway let an event-driven agent end its run on a question no one would
+// see, recorded as complete. Nor has it anywhere to publish a document.
+func (t *toolSet) addConversational(req toolSetRequest) {
+	if req.unattended {
+		return
+	}
+	t.add(askUserSpec())
+	if req.publishes {
+		t.add(publishArtifactSpec())
+	}
 }
 
 func (t *toolSet) add(spec serviceports.ToolSpec) bool {
@@ -219,7 +229,7 @@ func (s *Service) carryOver(set *toolSet, history []conversation.Message) {
 		}
 		for _, call := range message.ToolCalls {
 			switch call.Name {
-			case askUserName:
+			case askUserName, publishArtifactName:
 			case findToolsName:
 				need, _ := call.Arguments["need"].(string)
 				if strings.TrimSpace(need) == "" {

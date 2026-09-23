@@ -447,7 +447,7 @@ describe("a turn's context", () => {
 
 describe("a decision follow-up turn", () => {
   it("starts with no words of the person's own", () => {
-    const state = initialTurnState("", null, { followUpProposalId: "ap_1" });
+    const state = initialTurnState("", null, { followUp: true });
 
     expect(state.followUp).toBe(true);
     expect(state.userContent).toBe("");

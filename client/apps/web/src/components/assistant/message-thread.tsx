@@ -35,7 +35,7 @@ import { DecisionFollowUpProvider } from "./decision-follow-up";
 import { PlanCard } from "./plan-card";
 import { groupPlans } from "./plan-state";
 import { ProposalCard } from "./proposal-card";
-import { groupProposalsByMessage, pollIntervalFor } from "./proposal-state";
+import { decidedSignature, groupProposalsByMessage, pollIntervalFor } from "./proposal-state";
 import {
   modelSwitchNotice,
   type ModelSwitchNotice as ModelSwitchNoticeValue,
@@ -220,7 +220,7 @@ export function MessageThread({
     () => (contextIncluded ? getPageContext() : null),
     [contextIncluded, getPageContext],
   );
-  const { turn, isActive, send, stop, dismiss, retry } = useAssistantTurn(
+  const { turn, isActive, send, rejoin, stop, dismiss, retry } = useAssistantTurn(
     thread.id,
     getTurnContext,
   );
@@ -445,18 +445,34 @@ export function MessageThread({
     turn,
   ]);
 
-  // After a decision on one of this thread's proposals the agent says what
-  // came of it. A reply still arriving is left alone: the decision rides into
-  // whatever the person asks next, as every outcome does.
-  const followUpDecision = useCallback(
-    (proposalId: string) => {
-      if (isActive) {
-        return;
-      }
-      void send("", undefined, providerId, { followUpProposalId: proposalId });
-    },
-    [isActive, providerId, send],
+  // The server starts the turn in which the agent reports a decision, once
+  // the change has run, wherever the decision was made. This view only has to
+  // pick it up: when the thread opens, when a card in it is decided, and when
+  // a proposal or plan in it stops waiting because somebody decided it
+  // elsewhere — the Desk's decisions, AI Control, another tab.
+  const followUpDecision = useCallback(() => void rejoin(), [rejoin]);
+
+  useEffect(() => {
+    if (!history.isLoading) {
+      void rejoin();
+    }
+  }, [history.isLoading, rejoin]);
+
+  const decidedKey = decidedSignature(
+    proposalsQuery.data?.results ?? [],
+    plansQuery.data?.results ?? [],
   );
+  const seenDecided = useRef<string | null>(null);
+  useEffect(() => {
+    if (proposalsQuery.isPending || plansQuery.isPending) {
+      return;
+    }
+    const previous = seenDecided.current;
+    seenDecided.current = decidedKey;
+    if (previous !== null && previous !== decidedKey) {
+      void rejoin();
+    }
+  }, [decidedKey, plansQuery.isPending, proposalsQuery.isPending, rejoin]);
 
   const body = (
     <div className="relative flex min-h-0 flex-1 flex-col">

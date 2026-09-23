@@ -43,6 +43,26 @@ func (s AssistantTurnStatus) IsValid() bool {
 	}
 }
 
+// AssistantTurnOrigin is what started a turn: a person asking, or the
+// application following up a decision on one of the conversation's proposals.
+type AssistantTurnOrigin string
+
+const (
+	AssistantTurnOriginPerson = AssistantTurnOrigin("Person")
+	// AssistantTurnOriginDecisionFollowUp is the turn in which the agent says
+	// what came of a proposal somebody decided, wherever they decided it.
+	AssistantTurnOriginDecisionFollowUp = AssistantTurnOrigin("DecisionFollowUp")
+)
+
+func (o AssistantTurnOrigin) IsValid() bool {
+	switch o {
+	case AssistantTurnOriginPerson, AssistantTurnOriginDecisionFollowUp:
+		return true
+	default:
+		return false
+	}
+}
+
 // Terminal reports a turn that will produce nothing more.
 func (s AssistantTurnStatus) Terminal() bool {
 	switch s {
@@ -76,6 +96,12 @@ type AssistantTurn struct {
 	// still runs in the request that asked for it.
 	WorkflowID string `json:"workflowId" bun:"workflow_id,type:VARCHAR(255),nullzero"`
 
+	// Origin and Input say what the turn answers, so a reader who rejoins a
+	// reply already being written can show it under the right heading: the
+	// person's question, or the decision it follows up.
+	Origin AssistantTurnOrigin `json:"origin" bun:"origin,type:VARCHAR(30),notnull,default:'Person'"`
+	Input  string              `json:"input"  bun:"input,type:TEXT,nullzero"`
+
 	Status       AssistantTurnStatus `json:"status"       bun:"status,type:VARCHAR(20),notnull,default:'Pending'"`
 	ErrorMessage string              `json:"errorMessage" bun:"error_message,type:TEXT,nullzero"`
 	StartedAt    int64               `json:"startedAt"    bun:"started_at,type:BIGINT,nullzero"`
@@ -97,6 +123,10 @@ func (t *AssistantTurn) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&t.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[AssistantTurnStatus]("Invalid status"),
+		),
+		validation.Field(&t.Origin,
+			validation.Required.Error("Origin is required"),
+			domainvalidation.ValidEnum[AssistantTurnOrigin]("Invalid origin"),
 		),
 	))
 }
@@ -127,6 +157,9 @@ func (t *AssistantTurn) BeforeAppendModel(_ context.Context, query bun.Query) er
 		}
 		if t.Status == "" {
 			t.Status = AssistantTurnStatusPending
+		}
+		if t.Origin == "" {
+			t.Origin = AssistantTurnOriginPerson
 		}
 		if t.StartedAt == 0 {
 			t.StartedAt = now

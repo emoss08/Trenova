@@ -231,6 +231,14 @@ export function isAbsoluteUrl(value?: string | null) {
   return Boolean(value) && (value!.startsWith("http://") || value!.startsWith("https://"));
 }
 
+/** Lower-case words joined by hyphens, for a file name or a URL segment. */
+export function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export function downloadTextFile(filename: string, contents: string, type = "text/plain"): void {
   const blob = new Blob([contents], { type });
   const url = URL.createObjectURL(blob);

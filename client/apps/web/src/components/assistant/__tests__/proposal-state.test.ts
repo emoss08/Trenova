@@ -1,8 +1,9 @@
-import type { AssistantMessage, AssistantProposal } from "@/types/assistant";
+import type { AssistantMessage, AssistantPlan, AssistantProposal } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import {
   argumentRows,
   classifyProposal,
+  decidedSignature,
   groupProposalsByMessage,
   humanizeToolName,
   isDecidable,
@@ -272,5 +273,46 @@ describe("pollIntervalFor", () => {
     expect(pollIntervalFor([], [plan({ failedStep: 1 })])).toBe(false);
     expect(pollIntervalFor([], [plan({ status: "Completed", completedSteps: 2 })])).toBe(false);
     expect(pollIntervalFor([], [plan({ status: "Pending" })])).toBe(false);
+  });
+});
+
+/**
+ * A decision made anywhere changes what the thread watches.
+ *
+ * The server starts the turn reporting a decision; the thread picks it up when
+ * this changes, which is how a proposal approved from the Desk's decisions or
+ * AI Control is answered in the conversation that raised it.
+ */
+describe("decidedSignature", () => {
+  const plan = (overrides: Partial<AssistantPlan>) =>
+    ({ id: "apl_1", status: "Pending", ...overrides }) as AssistantPlan;
+
+  it("ignores what is still waiting and a refetch that changed nothing", () => {
+    const waiting = decidedSignature([proposal()], [plan({})]);
+
+    expect(waiting).toBe("");
+    expect(decidedSignature([proposal()], [plan({})])).toBe(waiting);
+  });
+
+  it("changes when a proposal is decided, and again when its outcome lands", () => {
+    const pending = decidedSignature([proposal()], []);
+    const accepted = decidedSignature([proposal({ status: "Accepted" })], []);
+    const executed = decidedSignature([proposal({ status: "Executed" })], []);
+
+    expect(accepted).not.toBe(pending);
+    expect(executed).not.toBe(accepted);
+  });
+
+  it("changes when a plan is decided", () => {
+    expect(decidedSignature([], [plan({ status: "Approved" })])).not.toBe(
+      decidedSignature([], [plan({})]),
+    );
+  });
+
+  it("does not depend on the order the server listed them in", () => {
+    const first = proposal({ id: "ap_1", status: "Rejected" });
+    const second = proposal({ id: "ap_2", status: "Executed" });
+
+    expect(decidedSignature([first, second], [])).toBe(decidedSignature([second, first], []));
   });
 });

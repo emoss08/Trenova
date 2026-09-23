@@ -264,7 +264,7 @@ func (s *Service) SendMessageStream(
 	emit services.AssistantStreamEmitter,
 ) (*services.SendMessageResult, error) {
 	content := strings.TrimSpace(req.Content)
-	followUp := req.FollowUpProposalID.IsNotNil()
+	followUp := req.FollowUpProposalID.IsNotNil() || req.FollowUpPlanID.IsNotNil()
 	multiErr := errortypes.NewMultiError()
 	switch {
 	case content == "" && !followUp:
@@ -272,6 +272,9 @@ func (s *Service) SendMessageStream(
 	case content != "" && followUp:
 		multiErr.Add("content", errortypes.ErrInvalid,
 			"A decision follow-up carries no message; the decision is its input")
+	case req.FollowUpProposalID.IsNotNil() && req.FollowUpPlanID.IsNotNil():
+		multiErr.Add("followUpPlanId", errortypes.ErrInvalid,
+			"A follow-up answers one decision: a proposal or a plan, not both")
 	}
 	page := req.Page.Normalized()
 	if page != nil {
@@ -339,6 +342,7 @@ func (s *Service) SendMessageStream(
 		content, err = s.decisionNote(ctx, decisionNoteParams{
 			thread:     thread,
 			proposalID: req.FollowUpProposalID,
+			planID:     req.FollowUpPlanID,
 			history:    history,
 			tenant:     req.TenantInfo,
 		})

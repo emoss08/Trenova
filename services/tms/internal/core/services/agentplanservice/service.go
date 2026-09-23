@@ -66,6 +66,8 @@ type Params struct {
 	Activity     services.AgentActivityPublisher `optional:"true"`
 	// Watchtower takes a decided plan off the feed.
 	Watchtower services.WatchtowerProjector `optional:"true"`
+	// FollowUps has the conversation that raised the plan report its outcome.
+	FollowUps services.DecisionFollowUps `optional:"true"`
 }
 
 type Service struct {
@@ -77,6 +79,7 @@ type Service struct {
 	audit      actionLogger
 	activity   services.AgentActivityPublisher
 	watchtower services.WatchtowerProjector
+	followUps  services.DecisionFollowUps
 }
 
 func New(p Params) services.AgentPlanService {
@@ -91,6 +94,7 @@ func New(p Params) services.AgentPlanService {
 		audit:      p.AuditService,
 		activity:   p.Activity,
 		watchtower: p.Watchtower,
+		followUps:  p.FollowUps,
 	}
 }
 
@@ -209,6 +213,7 @@ func (s *Service) Decide(
 		s.rejectSteps(ctx, req, steps, actor)
 		s.logDecision(plan, actor, "Agent plan rejected")
 		s.announce(ctx, plan, actor)
+		s.followUp(ctx, plan, req.TenantInfo)
 
 		return plan, nil
 	}
@@ -216,8 +221,24 @@ func (s *Service) Decide(
 	plan = s.runSteps(ctx, req, plan, steps, actor)
 	s.logDecision(plan, actor, "Agent plan approved and executed")
 	s.announce(ctx, plan, actor)
+	s.followUp(ctx, plan, req.TenantInfo)
 
 	return plan, nil
+}
+
+// followUp has the conversation that raised the plan report how it went,
+// once, after every step has run or been skipped. Each step is decided with
+// WithinPlan set, so the steps start none of their own.
+func (s *Service) followUp(ctx context.Context, plan *agent.AgentPlan, tenant pagination.TenantInfo) {
+	if s.followUps == nil || plan == nil {
+		return
+	}
+
+	s.followUps.FollowUp(ctx, services.DecisionFollowUpRequest{
+		TenantInfo: tenant,
+		RunID:      plan.RunID,
+		PlanID:     plan.ID,
+	})
 }
 
 // clearFromWatchtower takes a decided plan off the feed. Its steps were

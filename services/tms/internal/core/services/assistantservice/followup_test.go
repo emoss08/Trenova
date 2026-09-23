@@ -1,10 +1,12 @@
 package assistantservice
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -132,5 +134,85 @@ func TestSendMessageStream_RefusesAFollowUpThatCannotBeAnswered(t *testing.T) {
 	})
 	require.ErrorAs(t, send(svc, conversations.thread.ID, decided.ID, ""), &multiErr,
 		"a decision is answered once, however many times the client asks")
+	assert.Nil(t, completion.LastReq)
+}
+
+type stubPlanStore struct {
+	plans []*agent.AgentPlan
+}
+
+func (s *stubPlanStore) ListByThread(
+	_ context.Context,
+	_ repositories.ListAgentPlansByThreadRequest,
+) ([]*agent.AgentPlan, error) {
+	return s.plans, nil
+}
+
+/*
+A plan is answered once, as a plan.
+
+Approving a plan decides every step, and each step used to be a proposal the
+client could ask about on its own. The server now asks once, for the plan,
+after its last step, and the agent is told how far the steps got.
+*/
+func TestSendMessageStream_AnswersAPlanDecision(t *testing.T) {
+	t.Parallel()
+
+	failedStep := 2
+	plan := &agent.AgentPlan{
+		ID:             pulid.MustNew("apl_"),
+		Title:          "Recover load 4471",
+		Status:         agent.PlanStatusFailed,
+		StepCount:      3,
+		CompletedSteps: 1,
+		FailedStep:     &failedStep,
+		FailureError:   "the driver is out of hours\nwrapped: cause",
+	}
+	svc, conversations, _ := followUpService(t, &agent.AgentProposal{ID: pulid.MustNew("ap_")})
+	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{plan}}
+	actor := testActor()
+
+	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+		ThreadID:       conversations.thread.ID,
+		FollowUpPlanID: plan.ID,
+		TenantInfo:     actor.TenantInfo(),
+	}, actor, nil)
+	require.NoError(t, err)
+
+	note := conversations.appended[0]
+	assert.Equal(t, conversation.MessageKindDecisionNote, note.Kind)
+	assert.Contains(t, note.Content,
+		`Approved the plan "Recover load 4471", but step 2 failed (the driver is out of hours)`)
+	assert.Contains(t, note.Content, "plan "+plan.ID.String())
+}
+
+// A follow-up names one decision. A plan still waiting has nothing to report,
+// and a request naming a proposal and a plan at once is refused.
+func TestSendMessageStream_RefusesAPlanFollowUpThatCannotBeAnswered(t *testing.T) {
+	t.Parallel()
+
+	pending := &agent.AgentPlan{ID: pulid.MustNew("apl_"), Status: agent.PlanStatusPending}
+	svc, conversations, completion := followUpService(t, &agent.AgentProposal{
+		ID:     pulid.MustNew("ap_"),
+		Status: agent.ProposalStatusExecuted,
+	})
+	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{pending}}
+	actor := testActor()
+
+	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+		ThreadID:       conversations.thread.ID,
+		FollowUpPlanID: pending.ID,
+		TenantInfo:     actor.TenantInfo(),
+	}, actor, nil)
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+
+	_, err = svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+		ThreadID:           conversations.thread.ID,
+		FollowUpPlanID:     pending.ID,
+		FollowUpProposalID: pulid.MustNew("ap_"),
+		TenantInfo:         actor.TenantInfo(),
+	}, actor, nil)
+	require.ErrorAs(t, err, &multiErr)
 	assert.Nil(t, completion.LastReq)
 }
