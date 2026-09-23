@@ -21,7 +21,7 @@ import (
 An agent built by hand with no accent could not be saved again.
 
 The update bound each column's value explicitly, so an agent with no accent,
-icon or starter template wrote ” where the check constraints allow only NULL
+icon or starter template wrote an empty string where the check constraints allow only NULL
 or a known value, and every edit failed chk_agent_definitions_accent.
 */
 func TestUpdate_SavesAnAgentWithNoAccentIconOrTemplate(t *testing.T) {
