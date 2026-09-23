@@ -48,7 +48,8 @@ type guardedDispatchParams struct {
 	call           serviceports.ToolCall
 	completionText string
 	proposedSoFar  []serviceports.PendingAction
-	ordinals       *ordinals
+	// ordinal numbers this exact call within the run; the loop assigns it.
+	ordinal int
 }
 
 // guardedDispatch runs one tool call at most once across every attempt of a
@@ -74,7 +75,7 @@ func (s *Service) guardedDispatch(
 			OwnerID:  req.StepOwner.ID,
 			ToolName: p.call.Name,
 			Args:     p.call.Arguments,
-			Ordinal:  p.ordinals.next(p.call),
+			Ordinal:  p.ordinal,
 		})
 	}
 

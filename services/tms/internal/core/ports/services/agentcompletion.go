@@ -82,7 +82,7 @@ type ChatCompletionRequest struct {
 	// provider lets it through. Optional, and separate from the text sink
 	// because thinking is not the reply: it is shown differently and never
 	// becomes the message.
-	ReasoningSink ChatStreamSink
+	ReasoningSink ChatStreamSink `json:"-"`
 	// PinPreferred restricts the turn to the preferred provider when it is
 	// usable, instead of trying it first and falling through. A person who
 	// picked a model in the composer asked for that model, not for whatever
@@ -91,7 +91,7 @@ type ChatCompletionRequest struct {
 	// RetrySink is told when a provider died partway through a reply and the
 	// turn is starting over on another attempt. Whatever reached the text
 	// sink before it is being discarded, and the reader should see that.
-	RetrySink func(ChatRetryNotice)
+	RetrySink func(ChatRetryNotice) `json:"-"`
 }
 
 // ChatRetryNotice says a reply is starting again after a provider failed

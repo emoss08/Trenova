@@ -1,0 +1,358 @@
+package agentruntime
+
+import (
+	"context"
+	"maps"
+	"slices"
+
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+)
+
+// Turn is one turn's working state: what the model is shown, what it may call,
+// and what it has done so far.
+//
+// The loop that drives it is written once. Run drives a Turn in process, with
+// every effect a direct call. The durable runtime drives the same Turn from
+// workflow code, with every model call and every tool call its own activity.
+// Everything a Turn does outside itself goes through TurnEffects, so the loop
+// never reads a clock, a database or the network, which is what lets it replay.
+type Turn struct {
+	s         *Service
+	req       *serviceports.RunRequest
+	budget    int
+	system    string
+	messages  []serviceports.Message
+	tools     *toolSet
+	repeats   *repeatGuard
+	counts    *ordinals
+	questions map[string]struct{}
+	result    *serviceports.RunResult
+}
+
+// TurnEffects is everything a turn does outside itself.
+type TurnEffects interface {
+	// Complete asks the model for the next step, streaming the reply as it
+	// arrives. Looped reports the reply fell into a repetition and was
+	// stopped; it is only meaningful when the error is nil.
+	Complete(t *Turn, req *serviceports.ChatCompletionRequest) (ModelReply, error)
+	// Dispatch runs one tool call the loop has decided to make.
+	Dispatch(t *Turn, call DispatchCall) ToolOutcome
+	// Find answers find_tools and loads what it found into the turn.
+	Find(t *Turn, arguments map[string]any) string
+	Emit(event serviceports.StreamEvent)
+	Observe(observation serviceports.ToolObservation)
+}
+
+// ModelReply is one completion as the loop sees it.
+type ModelReply struct {
+	Completion *serviceports.ChatCompletionResult `json:"completion"`
+	Looped     bool                               `json:"looped"`
+}
+
+// DispatchCall is one tool call the loop has decided to run.
+type DispatchCall struct {
+	Call           serviceports.ToolCall        `json:"call"`
+	CompletionText string                       `json:"completionText"`
+	ProposedSoFar  []serviceports.PendingAction `json:"proposedSoFar,omitempty"`
+	// Ordinal numbers this exact call within the run, so the step key of a
+	// legitimately repeated call differs from the first one's.
+	Ordinal int `json:"ordinal"`
+}
+
+// ToolOutcome is what one tool call came to.
+type ToolOutcome struct {
+	Content string                      `json:"content"`
+	Failed  bool                        `json:"failed"`
+	Action  *serviceports.PendingAction `json:"action,omitempty"`
+	// Data is what a query tool returned before it was encoded for the model.
+	// It never crosses a durable boundary: whatever needs it runs where the
+	// tool ran.
+	Data any `json:"-"`
+}
+
+func (o toolOutcome) exported() ToolOutcome {
+	return ToolOutcome{Content: o.content, Failed: o.failed, Action: o.action, Data: o.data}
+}
+
+func (o ToolOutcome) internal() toolOutcome {
+	return toolOutcome{content: o.Content, failed: o.Failed, action: o.Action, data: o.Data}
+}
+
+// Request is what the turn was asked. Effects read it; the loop does not
+// change it.
+func (t *Turn) Request() *serviceports.RunRequest { return t.req }
+
+// Definition is the agent the turn runs as.
+func (t *Turn) Definition() *agentdefinition.Definition { return t.req.Definition }
+
+// TurnState is a Turn as data, for handing a turn built in one place to a loop
+// running in another: built by an activity, which may read permissions and
+// history, and driven by workflow code, which may not.
+type TurnState struct {
+	Budget    int                    `json:"budget"`
+	System    string                 `json:"system"`
+	Messages  []serviceports.Message `json:"messages"`
+	Tools     ToolSetState           `json:"tools"`
+	Failures  map[string]string      `json:"failures,omitempty"`
+	Ordinals  map[string]int         `json:"ordinals,omitempty"`
+	Questions []string               `json:"questions,omitempty"`
+	Result    serviceports.RunResult `json:"result"`
+}
+
+// ToolSetState is a turn's tool set as data. Which tools are loaded follows
+// from Specs.
+type ToolSetState struct {
+	Specs      []serviceports.ToolSpec `json:"specs"`
+	Allowed    []string                `json:"allowed"`
+	Disclosed  bool                    `json:"disclosed"`
+	Unattended bool                    `json:"unattended"`
+	FindCalls  int                     `json:"findCalls"`
+}
+
+// State captures the turn as data.
+func (t *Turn) State() TurnState {
+	// Sorted, because a map ranges in a different order every time and this
+	// may be built in workflow code, which has to replay identically.
+	questions := slices.Sorted(maps.Keys(t.questions))
+
+	return TurnState{
+		Budget:    t.budget,
+		System:    t.system,
+		Messages:  t.messages,
+		Tools:     t.tools.state(),
+		Failures:  maps.Clone(t.repeats.failures),
+		Ordinals:  maps.Clone(t.counts.seen),
+		Questions: questions,
+		Result:    *t.result,
+	}
+}
+
+// ToolsState is the turn's current tool set as data, for answering find_tools
+// somewhere that may check permissions.
+func (t *Turn) ToolsState() ToolSetState { return t.tools.state() }
+
+// LoadTools makes the named tools callable, as a find_tools answered elsewhere
+// found them. A name the turn may not call is ignored.
+func (t *Turn) LoadTools(names []string) {
+	for _, name := range names {
+		t.s.load(t.tools, name)
+	}
+}
+
+// RestoreTurn rebuilds a Turn from its state. The rebuilt tool set cannot check
+// permissions, so whatever answers its find_tools must: see TurnEffects.Find.
+func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Turn {
+	result := state.Result
+	questions := make(map[string]struct{}, len(state.Questions))
+	for _, question := range state.Questions {
+		questions[question] = struct{}{}
+	}
+
+	failures := state.Failures
+	if failures == nil {
+		failures = make(map[string]string, 4)
+	}
+	seen := state.Ordinals
+	if seen == nil {
+		seen = make(map[string]int, 4)
+	}
+
+	return &Turn{
+		s:         s,
+		req:       req,
+		budget:    state.Budget,
+		system:    state.System,
+		messages:  state.Messages,
+		tools:     restoreToolSet(state.Tools),
+		repeats:   &repeatGuard{failures: failures},
+		counts:    &ordinals{seen: seen},
+		questions: questions,
+		result:    &result,
+	}
+}
+
+func (t *toolSet) state() ToolSetState {
+	return ToolSetState{
+		Specs:      append([]serviceports.ToolSpec(nil), t.specs...),
+		Allowed:    append([]string(nil), t.allowed...),
+		Disclosed:  t.disclosed,
+		Unattended: t.unattended,
+		FindCalls:  t.findCalls,
+	}
+}
+
+func restoreToolSet(state ToolSetState) *toolSet {
+	set := &toolSet{
+		loaded:     make(map[string]struct{}, len(state.Specs)),
+		allowed:    state.Allowed,
+		disclosed:  state.Disclosed,
+		unattended: state.Unattended,
+		findCalls:  state.FindCalls,
+	}
+	for _, spec := range state.Specs {
+		set.add(spec)
+	}
+
+	return set
+}
+
+// OpenTurn builds a turn: the tool set the actor may use, what earlier attempts
+// of the run already learned, and the prompt. It reads permissions and the
+// ledger, so it runs where those can be read: in process, or in an activity.
+func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *Turn {
+	definition := req.Definition
+	budget := definition.MaxToolCalls
+	if budget <= 0 {
+		budget = agentdefinition.DefaultMaxToolCalls
+	}
+
+	runtimeContext := req.Context
+	if len(runtimeContext.Tools) == 0 {
+		runtimeContext.Tools = s.ToolSummaries(definition)
+	}
+
+	tools := s.newToolSet(ctx, toolSetRequest{
+		definition: definition,
+		actor:      req.Actor,
+		input:      req.Input,
+		history:    req.History,
+		unattended: req.Unattended,
+	})
+	runtimeContext.ToolsDisclosed = tools.disclosed
+	// The prompt describes the set the person may use, not the agent's whole
+	// configuration: a tool named there and refused when called reads as
+	// the system refusing rather than the person lacking the right.
+	runtimeContext.Tools = usableSummaries(runtimeContext.Tools, tools)
+	repeats := newRepeatGuard()
+	counts := newOrdinals()
+	s.seedFromLedger(ctx, req, repeats, counts)
+
+	messages := toAdapterMessages(req.History, req.Proposals)
+	messages = append(messages, serviceports.Message{
+		Role:    serviceports.RoleUser,
+		Content: req.Input,
+	})
+
+	return &Turn{
+		s:         s,
+		req:       req,
+		budget:    budget,
+		system:    definition.BuildSystemPrompt(runtimeContext),
+		messages:  messages,
+		tools:     tools,
+		repeats:   repeats,
+		counts:    counts,
+		questions: askedQuestions(req.History),
+		result: &serviceports.RunResult{
+			Messages: []conversation.Message{{
+				Role:    conversation.RoleUser,
+				Content: req.Input,
+			}},
+		},
+	}
+}
+
+// completionRequest is what the turn is ready to send the model now.
+func (t *Turn) completionRequest() *serviceports.ChatCompletionRequest {
+	req := t.req
+	definition := req.Definition
+
+	return &serviceports.ChatCompletionRequest{
+		TenantInfo:          req.Actor.TenantInfo(),
+		System:              t.system,
+		Messages:            t.messages,
+		Tools:               t.tools.specs,
+		PreferredProviderID: preferredProvider(req, definition),
+		PinPreferred:        req.PinProvider && !req.PreferredProviderID.IsNil(),
+		Attribution: serviceports.AIUsageAttribution{
+			UserID:            req.Actor.UserID,
+			AgentDefinitionID: definition.ID,
+			ThreadID:          req.ThreadID,
+			RunID:             req.RunID,
+		},
+	}
+}
+
+// localEffects runs every effect in process, as a turn always did before it
+// could run durably.
+type localEffects struct {
+	s        *Service
+	ctx      context.Context
+	emit     serviceports.AssistantStreamEmitter
+	observer serviceports.ToolObserver
+}
+
+func (fx *localEffects) Complete(
+	t *Turn,
+	req *serviceports.ChatCompletionRequest,
+) (ModelReply, error) {
+	streamCtx, cancelStream := context.WithCancel(fx.ctx)
+	defer cancelStream()
+
+	guard := newReplyGuard(cancelStream)
+	req.ReasoningSink = func(delta string) { fx.Emit(reasoningEvent(delta)) }
+	req.RetrySink = func(notice serviceports.ChatRetryNotice) { fx.Emit(retryEvent(notice)) }
+
+	completion, err := fx.s.completion.StreamChat(streamCtx, req, func(delta string) {
+		if guard.feed(delta) {
+			fx.Emit(deltaEvent(delta))
+		}
+	})
+	cancelStream()
+	if err != nil {
+		return ModelReply{Completion: completion}, err
+	}
+
+	return ModelReply{Completion: completion, Looped: guard.looped(completion.Text)}, nil
+}
+
+func (fx *localEffects) Dispatch(t *Turn, call DispatchCall) ToolOutcome {
+	return fx.s.guardedDispatch(fx.ctx, guardedDispatchParams{
+		req:            t.req,
+		call:           call.Call,
+		completionText: call.CompletionText,
+		proposedSoFar:  call.ProposedSoFar,
+		ordinal:        call.Ordinal,
+	}).exported()
+}
+
+func (fx *localEffects) Find(t *Turn, arguments map[string]any) string {
+	return fx.s.resolveFind(t.tools, arguments)
+}
+
+func (fx *localEffects) Emit(event serviceports.StreamEvent) { fx.emit(event) }
+
+func (fx *localEffects) Observe(observation serviceports.ToolObservation) {
+	if fx.observer != nil {
+		fx.observer(observation)
+	}
+}
+
+func deltaEvent(text string) serviceports.StreamEvent {
+	return serviceports.StreamEvent{
+		Event: serviceports.AssistantEventDelta,
+		Data:  serviceports.AssistantDeltaEvent{Text: text},
+	}
+}
+
+func reasoningEvent(text string) serviceports.StreamEvent {
+	return serviceports.StreamEvent{
+		Event: serviceports.AssistantEventReasoning,
+		Data:  serviceports.AssistantReasoningEvent{Text: text},
+	}
+}
+
+func retryEvent(notice serviceports.ChatRetryNotice) serviceports.StreamEvent {
+	return serviceports.StreamEvent{
+		Event: serviceports.AssistantEventRetrying,
+		Data: serviceports.AssistantRetryingEvent{
+			Attempt:     notice.Attempt,
+			Provider:    notice.Provider,
+			Reason:      notice.Reason,
+			Kind:        notice.Kind,
+			WaitSeconds: notice.WaitSeconds,
+		},
+	}
+}
