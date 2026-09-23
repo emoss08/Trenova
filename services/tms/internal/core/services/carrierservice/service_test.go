@@ -72,7 +72,11 @@ func TestServiceCreate(t *testing.T) {
 		created, err := deps.svc.Create(
 			t.Context(),
 			entity,
-			internaltestutil.NewSessionActor(pulid.MustNew("usr_"), entity.OrganizationID, entity.BusinessUnitID),
+			internaltestutil.NewSessionActor(
+				pulid.MustNew("usr_"),
+				entity.OrganizationID,
+				entity.BusinessUnitID,
+			),
 		)
 		require.Error(t, err)
 		assert.Nil(t, created)
@@ -93,7 +97,11 @@ func TestServiceCreate(t *testing.T) {
 		created, err := deps.svc.Create(
 			t.Context(),
 			entity,
-			internaltestutil.NewSessionActor(pulid.MustNew("usr_"), entity.OrganizationID, entity.BusinessUnitID),
+			internaltestutil.NewSessionActor(
+				pulid.MustNew("usr_"),
+				entity.OrganizationID,
+				entity.BusinessUnitID,
+			),
 		)
 		require.NoError(t, err)
 		require.NotNil(t, created)
@@ -110,7 +118,11 @@ func TestServiceCreate(t *testing.T) {
 		created, err := deps.svc.Create(
 			t.Context(),
 			entity,
-			internaltestutil.NewSessionActor(pulid.MustNew("usr_"), entity.OrganizationID, entity.BusinessUnitID),
+			internaltestutil.NewSessionActor(
+				pulid.MustNew("usr_"),
+				entity.OrganizationID,
+				entity.BusinessUnitID,
+			),
 		)
 		require.ErrorIs(t, err, repoErr)
 		assert.Nil(t, created)
@@ -136,7 +148,11 @@ func TestServiceUpdate(t *testing.T) {
 		updated, err := deps.svc.Update(
 			t.Context(),
 			entity,
-			internaltestutil.NewSessionActor(pulid.MustNew("usr_"), entity.OrganizationID, entity.BusinessUnitID),
+			internaltestutil.NewSessionActor(
+				pulid.MustNew("usr_"),
+				entity.OrganizationID,
+				entity.BusinessUnitID,
+			),
 		)
 		require.NoError(t, err)
 		assert.Equal(t, entity.Name, updated.Name)
@@ -152,7 +168,11 @@ func TestServiceUpdate(t *testing.T) {
 		updated, err := deps.svc.Update(
 			t.Context(),
 			entity,
-			internaltestutil.NewSessionActor(pulid.MustNew("usr_"), entity.OrganizationID, entity.BusinessUnitID),
+			internaltestutil.NewSessionActor(
+				pulid.MustNew("usr_"),
+				entity.OrganizationID,
+				entity.BusinessUnitID,
+			),
 		)
 		require.ErrorIs(t, err, repoErr)
 		assert.Nil(t, updated)

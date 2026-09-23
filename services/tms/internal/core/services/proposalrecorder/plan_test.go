@@ -44,20 +44,28 @@ func recordActions(
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
 	store := &capturingStore{}
-	result, err := NewWithStores(nil, nil, store).WithPlans(plans).Record(t.Context(), &RecordRequest{
-		Actor:      &serviceports.RequestActor{OrganizationID: orgID, BusinessUnitID: buID},
-		Definition: &agentdefinition.Definition{ID: pulid.MustNew("agdef_"), Name: "Dispatch coverage"},
-		Run: &agent.AgentRun{
-			ID:             pulid.MustNew("arun_"),
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			Summary:        "Cover the two open moves",
-		},
-		Actions: actions,
-		Evidence: func(serviceports.PendingAction, pulid.ID) []agent.EvidenceRef {
-			return []agent.EvidenceRef{{Type: "message", ID: "amsg_1"}}
-		},
-	})
+	result, err := NewWithStores(
+		nil,
+		nil,
+		store,
+	).WithPlans(plans).
+		Record(t.Context(), &RecordRequest{
+			Actor: &serviceports.RequestActor{OrganizationID: orgID, BusinessUnitID: buID},
+			Definition: &agentdefinition.Definition{
+				ID:   pulid.MustNew("agdef_"),
+				Name: "Dispatch coverage",
+			},
+			Run: &agent.AgentRun{
+				ID:             pulid.MustNew("arun_"),
+				OrganizationID: orgID,
+				BusinessUnitID: buID,
+				Summary:        "Cover the two open moves",
+			},
+			Actions: actions,
+			Evidence: func(serviceports.PendingAction, pulid.ID) []agent.EvidenceRef {
+				return []agent.EvidenceRef{{Type: "message", ID: "amsg_1"}}
+			},
+		})
 	require.NoError(t, err)
 
 	return result

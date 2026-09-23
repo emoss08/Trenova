@@ -174,8 +174,18 @@ func TestBacktest_TierChangeIsAttributableToTheLadderAlone(t *testing.T) {
 	tiered := baseSnapshot()
 	tiered.RateSource = detention.RateSourceTiers
 	tiered.Tiers = []detention.TierSnapshot{
-		{FromMinute: 0, ToMinute: ptr(int32(120)), Rate: money("75.00"), RateUnit: detention.TierRateUnitHour},
-		{FromMinute: 120, ToMinute: nil, Rate: money("110.00"), RateUnit: detention.TierRateUnitHour},
+		{
+			FromMinute: 0,
+			ToMinute:   ptr(int32(120)),
+			Rate:       money("75.00"),
+			RateUnit:   detention.TierRateUnitHour,
+		},
+		{
+			FromMinute: 120,
+			ToMinute:   nil,
+			Rate:       money("110.00"),
+			RateUnit:   detention.TierRateUnitHour,
+		},
 	}
 
 	flatResult := replay(flat, arrival, departure, decimal.NullDecimal{})

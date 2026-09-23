@@ -60,16 +60,26 @@ func (a *CreditMemoApplication) Validate(multiErr *errortypes.MultiError) {
 		a,
 		validation.Field(&a.OrganizationID, validation.Required),
 		validation.Field(&a.BusinessUnitID, validation.Required),
-		validation.Field(&a.CreditMemoInvoiceID, validation.Required.Error("Credit memo is required")),
+		validation.Field(
+			&a.CreditMemoInvoiceID,
+			validation.Required.Error("Credit memo is required"),
+		),
 		validation.Field(&a.InvoiceID, validation.Required.Error("Invoice is required")),
 		validation.Field(
 			&a.AppliedAmountMinor,
 			validation.Min(int64(1)).Error("Applied amount must be greater than zero"),
 		),
-		validation.Field(&a.AccountingDate, validation.Required.Error("Accounting date is required")),
+		validation.Field(
+			&a.AccountingDate,
+			validation.Required.Error("Accounting date is required"),
+		),
 	))
 	if a.CreditMemoInvoiceID == a.InvoiceID {
-		multiErr.Add("invoiceId", errortypes.ErrInvalid, "A credit memo cannot be applied to itself")
+		multiErr.Add(
+			"invoiceId",
+			errortypes.ErrInvalid,
+			"A credit memo cannot be applied to itself",
+		)
 	}
 }
 

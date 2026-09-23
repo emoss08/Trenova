@@ -47,7 +47,7 @@ type Service struct {
 	budgets     serviceports.AgentBudgetService
 }
 
-func New(p Params) serviceports.AgentRuntime {
+func New(p Params) *Service {
 	return &Service{
 		logger:      p.Logger.Named("service.agentruntime"),
 		completion:  p.Completion,
@@ -69,102 +69,31 @@ func (s *Service) Run(
 		emit = func(serviceports.StreamEvent) {}
 	}
 
-	definition := req.Definition
-	budget := definition.MaxToolCalls
-	if budget <= 0 {
-		budget = agentdefinition.DefaultMaxToolCalls
-	}
-
-	runtimeContext := req.Context
-	if len(runtimeContext.Tools) == 0 {
-		runtimeContext.Tools = s.ToolSummaries(definition)
-	}
-
-	result := &serviceports.RunResult{
-		Messages: []conversation.Message{{
-			Role:    conversation.RoleUser,
-			Content: req.Input,
-		}},
-	}
-
-	tools := s.newToolSet(ctx, toolSetRequest{
-		definition: definition,
-		actor:      req.Actor,
-		input:      req.Input,
-		history:    req.History,
-		unattended: req.Unattended,
-		publishes:  req.ToolObserver != nil,
+	return s.Drive(s.OpenTurn(ctx, req), &localEffects{
+		s:        s,
+		ctx:      ctx,
+		emit:     emit,
+		observer: req.ToolObserver,
 	})
-	runtimeContext.ToolsDisclosed = tools.disclosed
-	runtimeContext.Artifacts = tools.offers(publishArtifactName)
-	// The prompt describes the set the person may use, not the agent's whole
-	// configuration: a tool named there and refused when called reads as
-	// the system refusing rather than the person lacking the right.
-	runtimeContext.Tools = usableSummaries(runtimeContext.Tools, tools)
-	repeats := newRepeatGuard()
-	counts := newOrdinals()
-	s.seedFromLedger(ctx, req, repeats, counts)
+}
 
-	system := definition.BuildSystemPrompt(runtimeContext)
-	messages := toAdapterMessages(req.History, req.Proposals)
-	messages = append(messages, serviceports.Message{
-		Role:    serviceports.RoleUser,
-		Content: req.Input,
-	})
-
-	sink := func(delta string) {
-		emit(serviceports.StreamEvent{
-			Event: serviceports.AssistantEventDelta,
-			Data:  serviceports.AssistantDeltaEvent{Text: delta},
-		})
-	}
-	reasoningSink := func(delta string) {
-		emit(serviceports.StreamEvent{
-			Event: serviceports.AssistantEventReasoning,
-			Data:  serviceports.AssistantReasoningEvent{Text: delta},
-		})
-	}
+// Drive runs a turn to its end: the model is asked, the tools it calls are run,
+// and it is asked again, until it answers or runs out of tool calls.
+//
+// Nothing here reaches outside the turn except through fx, which is what lets
+// the same loop run in process and as durable workflow code.
+func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error) {
+	definition := t.req.Definition
+	budget := t.budget
+	result := t.result
+	tools := t.tools
 
 	retries := 0
 	asked := false
-	questions := askedQuestions(req.History)
-	callIDs := usedCallIDs(req.History)
 	for result.ToolCallsUsed < budget {
-		streamCtx, cancelStream := context.WithCancel(ctx)
-		guard := newReplyGuard(cancelStream)
-		completion, err := s.completion.StreamChat(streamCtx, &serviceports.ChatCompletionRequest{
-			TenantInfo:          req.Actor.TenantInfo(),
-			System:              system,
-			Messages:            messages,
-			Tools:               tools.specs,
-			PreferredProviderID: preferredProvider(req, definition),
-			PinPreferred:        req.PinProvider && !req.PreferredProviderID.IsNil(),
-			ReasoningSink:       reasoningSink,
-			RetrySink: func(notice serviceports.ChatRetryNotice) {
-				emit(serviceports.StreamEvent{
-					Event: serviceports.AssistantEventRetrying,
-					Data: serviceports.AssistantRetryingEvent{
-						Attempt:     notice.Attempt,
-						Provider:    notice.Provider,
-						Reason:      notice.Reason,
-						Kind:        notice.Kind,
-						WaitSeconds: notice.WaitSeconds,
-					},
-				})
-			},
-			Attribution: serviceports.AIUsageAttribution{
-				UserID:            req.Actor.UserID,
-				AgentDefinitionID: definition.ID,
-				ThreadID:          req.ThreadID,
-				RunID:             req.RunID,
-			},
-		}, func(delta string) {
-			if guard.feed(delta) {
-				sink(delta)
-			}
-		})
-		cancelStream()
-		if err == nil && guard.looped(completion.Text) {
+		reply, err := fx.Complete(t, t.completionRequest())
+		completion := reply.Completion
+		if err == nil && reply.Looped {
 			s.logger.Warn("agent reply fell into a loop; discarding it",
 				zap.String("agent", definition.Name),
 				zap.String("model", completion.ModelIdentifier),
@@ -172,7 +101,7 @@ func (s *Service) Run(
 			)
 			if retries < maxReplyRetries {
 				retries++
-				emit(serviceports.StreamEvent{
+				fx.Emit(serviceports.StreamEvent{
 					Event: serviceports.AssistantEventRetrying,
 					Data: serviceports.AssistantRetryingEvent{
 						Attempt: retries,
@@ -182,7 +111,7 @@ func (s *Service) Run(
 				})
 				continue
 			}
-			emit(serviceports.StreamEvent{
+			fx.Emit(serviceports.StreamEvent{
 				Event: serviceports.AssistantEventRetrying,
 				Data: serviceports.AssistantRetryingEvent{
 					Attempt: retries + 1,
@@ -190,8 +119,8 @@ func (s *Service) Run(
 					Kind:    serviceports.RetryKindRestart,
 				},
 			})
-			sink(loopedReply)
-			return s.finish(result, cannedCompletion(completion, loopedReply), emit), nil
+			fx.Emit(deltaEvent(loopedReply))
+			return s.finish(result, cannedCompletion(completion, loopedReply), fx), nil
 		}
 		if err != nil {
 			// What ran travels with the error. The caller decides whether to
@@ -205,7 +134,7 @@ func (s *Service) Run(
 		result.ProviderID = completion.ProviderID
 		tagReasoning(completion)
 		tagToolCalls(completion)
-		distinctCallIDs(completion, callIDs)
+		distinctCallIDs(completion, t.callIDs, fx.NewCallID)
 
 		if len(completion.ToolCalls) == 0 {
 			// A turn that ends in silence reads as a hung screen. One that
@@ -216,11 +145,11 @@ func (s *Service) Run(
 					retries++
 					continue
 				}
-				sink(emptyReply)
-				return s.finish(result, cannedCompletion(completion, emptyReply), emit), nil
+				fx.Emit(deltaEvent(emptyReply))
+				return s.finish(result, cannedCompletion(completion, emptyReply), fx), nil
 			}
 
-			return s.finish(result, completion, emit), nil
+			return s.finish(result, completion, fx), nil
 		}
 
 		assistantTurn := conversation.Message{
@@ -238,13 +167,13 @@ func (s *Service) Run(
 		result.Messages = append(result.Messages, assistantTurn)
 		// The thinking goes back with the calls it produced. Anthropic and the
 		// Responses API both refuse a tool result whose reasoning is missing.
-		messages = append(messages, serviceports.Message{
+		t.messages = append(t.messages, serviceports.Message{
 			Role:      serviceports.RoleAssistant,
 			Content:   completion.Text,
 			ToolCalls: completion.ToolCalls,
 			Reasoning: completion.Reasoning,
 		})
-		emit(serviceports.StreamEvent{
+		fx.Emit(serviceports.StreamEvent{
 			Event: serviceports.AssistantEventMessage,
 			Data: serviceports.AssistantMessageEvent{
 				Content:   assistantTurn.Content,
@@ -254,7 +183,7 @@ func (s *Service) Run(
 		})
 
 		for _, call := range completion.ToolCalls {
-			emit(serviceports.StreamEvent{
+			fx.Emit(serviceports.StreamEvent{
 				Event: serviceports.AssistantEventToolStarted,
 				Data: serviceports.AssistantToolStartedEvent{
 					CallID:    call.ID,
@@ -273,7 +202,7 @@ func (s *Service) Run(
 						"the call. Send it again with complete arguments.",
 					call.Name, call.ArgumentsError,
 				)
-				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
+				s.recordToolResult(t, fx, call, outcome)
 				continue
 			}
 
@@ -287,7 +216,7 @@ func (s *Service) Run(
 						"Answer with what you have.",
 					call.Name, budget,
 				)
-				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
+				s.recordToolResult(t, fx, call, outcome)
 				continue
 			}
 
@@ -304,15 +233,15 @@ func (s *Service) Run(
 						maxFindCalls,
 					)
 				} else {
-					outcome = toolOutcome{content: s.resolveFind(tools, call.Arguments)}
+					outcome = toolOutcome{content: fx.Find(t, call.Arguments)}
 				}
-				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
+				s.recordToolResult(t, fx, call, outcome)
 				continue
 			}
 
 			if call.Name == askUserName {
 				question := comparableQuestion(stringArg(call.Arguments, "question"))
-				_, repeated := questions[question]
+				_, repeated := t.questions[question]
 				outcome := toolOutcome{content: resolveAsk(call.Arguments)}
 				switch {
 				case !tools.offers(askUserName):
@@ -322,11 +251,11 @@ func (s *Service) Run(
 				default:
 					asked = true
 					if question != "" {
-						questions[question] = struct{}{}
+						t.questions[question] = struct{}{}
 					}
 				}
 				result.ToolCallsUsed++
-				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
+				s.recordToolResult(t, fx, call, outcome)
 				continue
 			}
 
@@ -336,14 +265,14 @@ func (s *Service) Run(
 					outcome = failedOutcome("%s", unpublishableRefusal)
 				}
 				result.ToolCallsUsed++
-				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
+				s.recordToolResult(t, fx, call, outcome)
 				continue
 			}
 
 			if !s.holds(definition, call.Name) {
 				outcome := failedOutcome("%s", s.unheldRefusal(tools, call.Name))
 				result.ToolCallsUsed++
-				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
+				s.recordToolResult(t, fx, call, outcome)
 				continue
 			}
 			// A tool the agent holds but was not sent runs anyway — the
@@ -351,25 +280,24 @@ func (s *Service) Run(
 			// shown — and is loaded, so the next request carries its schema.
 			s.load(tools, call.Name)
 
-			if previous, repeated := repeats.seen(call); repeated {
+			if previous, repeated := t.repeats.seen(call); repeated {
 				outcome := failedOutcome("%s", repeatRefusal(call.Name, previous))
 				result.ToolCallsUsed++
-				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
+				s.recordToolResult(t, fx, call, outcome)
 				continue
 			}
 
-			outcome := s.guardedDispatch(ctx, guardedDispatchParams{
-				req:            req,
-				call:           call,
-				completionText: completion.Text,
-				proposedSoFar:  result.Actions,
-				ordinals:       counts,
-			})
+			outcome := fx.Dispatch(t, DispatchCall{
+				Call:           call,
+				CompletionText: completion.Text,
+				ProposedSoFar:  result.Actions,
+				Ordinal:        t.counts.next(call),
+			}).internal()
 			if outcome.failed {
-				repeats.record(call, outcome.content)
+				t.repeats.record(call, outcome.content)
 			}
 			result.ToolCallsUsed++
-			s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
+			s.recordToolResult(t, fx, call, outcome)
 		}
 
 		s.logger.Debug("agent tool iteration",
@@ -385,10 +313,7 @@ func (s *Service) Run(
 		Role:    conversation.RoleAssistant,
 		Content: exhaustedReply,
 	})
-	emit(serviceports.StreamEvent{
-		Event: serviceports.AssistantEventDelta,
-		Data:  serviceports.AssistantDeltaEvent{Text: exhaustedReply},
-	})
+	fx.Emit(deltaEvent(exhaustedReply))
 
 	return result, nil
 }
@@ -398,19 +323,18 @@ func (s *Service) Run(
 // loaded-tools answer is recorded exactly like any other tool result — it is one
 // to the model, and a transcript that hid it would not explain the turn.
 func (s *Service) recordToolResult(
-	result *serviceports.RunResult,
-	messages *[]serviceports.Message,
+	t *Turn,
+	fx TurnEffects,
 	call serviceports.ToolCall,
 	outcome toolOutcome,
-	emit serviceports.AssistantStreamEmitter,
-	observe serviceports.ToolObserver,
 ) {
+	result := t.result
 	if outcome.action != nil {
 		result.Actions = append(result.Actions, *outcome.action)
 	}
-	outcome = s.observe(observe, call, outcome)
+	outcome = fx.Observe(t, &call, outcome.exported()).internal()
 
-	emit(serviceports.StreamEvent{
+	fx.Emit(serviceports.StreamEvent{
 		Event: serviceports.AssistantEventToolFinished,
 		Data: serviceports.AssistantToolFinishedEvent{
 			CallID:   call.ID,
@@ -428,7 +352,7 @@ func (s *Service) recordToolResult(
 		ToolName:   call.Name,
 		ToolFailed: outcome.failed,
 	})
-	*messages = append(*messages, serviceports.Message{
+	t.messages = append(t.messages, serviceports.Message{
 		Role:       serviceports.RoleTool,
 		Content:    outcome.content,
 		ToolCallID: call.ID,
@@ -436,6 +360,9 @@ func (s *Service) recordToolResult(
 		IsError:    outcome.failed,
 	})
 }
+
+// NewCallID mints a tool call id no provider will have used.
+func NewCallID() string { return "call_" + pulid.MustNew("tc_").String() }
 
 // observe hands a finished call to the observer and folds what it showed the
 // person back into the result the model reads.
@@ -477,7 +404,7 @@ func (s *Service) observe(
 func (s *Service) finish(
 	result *serviceports.RunResult,
 	completion *serviceports.ChatCompletionResult,
-	emit serviceports.AssistantStreamEmitter,
+	fx TurnEffects,
 ) *serviceports.RunResult {
 	outputDecision := agentguard.EvaluateOutput(completion.Text)
 	if !outputDecision.Allowed {
@@ -501,7 +428,7 @@ func (s *Service) finish(
 			InputTokens:   completion.InputTokens,
 			OutputTokens:  completion.OutputTokens,
 		})
-		emit(serviceports.StreamEvent{
+		fx.Emit(serviceports.StreamEvent{
 			Event: serviceports.AssistantEventRefused,
 			Data: serviceports.AssistantRefusedEvent{
 				Message:  outputDecision.Message,
@@ -645,7 +572,8 @@ func usedCallIDs(history []conversation.Message) map[string]struct{} {
 }
 
 // distinctCallIDs gives every call in a completion an id no other call in the
-// conversation has.
+// conversation has. newID mints one: the turn's effects supply it, because a
+// fresh id is random and workflow code may not be.
 //
 // Providers that return no id get one synthesized from the call's position,
 // call_0 in every completion, so the same id named a different call on every
@@ -653,11 +581,15 @@ func usedCallIDs(history []conversation.Message) map[string]struct{} {
 // results with calls by it, and a provider handed a history with two calls
 // under one id pairs the wrong result with the wrong call. A provider's own
 // unique ids are kept as they are.
-func distinctCallIDs(completion *serviceports.ChatCompletionResult, used map[string]struct{}) {
+func distinctCallIDs(
+	completion *serviceports.ChatCompletionResult,
+	used map[string]struct{},
+	newID func() string,
+) {
 	for idx := range completion.ToolCalls {
 		call := &completion.ToolCalls[idx]
 		if _, taken := used[call.ID]; call.ID == "" || taken {
-			call.ID = "call_" + pulid.MustNew("tc_").String()
+			call.ID = newID()
 		}
 		used[call.ID] = struct{}{}
 	}

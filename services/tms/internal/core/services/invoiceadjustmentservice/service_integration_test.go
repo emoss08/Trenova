@@ -1098,8 +1098,11 @@ func newIntegrationHarness(
 		AuditService:     noopAuditService{},
 		WorkflowStarter:  starter,
 		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      rateengine.NewFallbackEngine(t, &fakeFormulaCalculator{amount: formulaAmount}),
+			Logger: zap.NewNop(),
+			RateEngine: rateengine.NewFallbackEngine(
+				t,
+				&fakeFormulaCalculator{amount: formulaAmount},
+			),
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
 		Generator:         &fakeGenerator{},
@@ -1151,8 +1154,11 @@ func (h *integrationHarness) buildService(
 		AuditService:    noopAuditService{},
 		WorkflowStarter: starter,
 		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      rateengine.NewFallbackEngine(t, &fakeFormulaCalculator{amount: formulaAmount}),
+			Logger: zap.NewNop(),
+			RateEngine: rateengine.NewFallbackEngine(
+				t,
+				&fakeFormulaCalculator{amount: formulaAmount},
+			),
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
 		Generator:         &fakeGenerator{},
@@ -1177,15 +1183,19 @@ func (h *integrationHarness) buildBillingQueueService() servicesports.BillingQue
 	})
 
 	return billingqueueservice.New(billingqueueservice.Params{
-		Logger:         logger,
-		DB:             h.conn,
-		Repo:           h.billingQueueRepo,
-		ShipmentRepo:   shipmentRepo,
-		CommentRepo:    shipmentcommentrepository.New(shipmentcommentrepository.Params{DB: h.conn, Logger: logger}),
+		Logger:       logger,
+		DB:           h.conn,
+		Repo:         h.billingQueueRepo,
+		ShipmentRepo: shipmentRepo,
+		CommentRepo: shipmentcommentrepository.New(
+			shipmentcommentrepository.Params{DB: h.conn, Logger: logger},
+		),
 		AdjustmentRepo: h.adjustmentRepo,
 		AuditService:   noopAuditService{},
 		Realtime:       noopRealtimeService{},
-		Validator:      billingqueueservice.NewValidator(billingqueueservice.ValidatorParams{DB: h.conn}),
+		Validator: billingqueueservice.NewValidator(
+			billingqueueservice.ValidatorParams{DB: h.conn},
+		),
 	})
 }
 

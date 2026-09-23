@@ -50,7 +50,10 @@ type AssistantArtifactRepository interface {
 		req ListArtifactsRequest,
 	) ([]*assistantartifact.Artifact, error)
 	GetByID(ctx context.Context, req GetArtifactRequest) (*assistantartifact.Artifact, error)
-	SetPinned(ctx context.Context, req SetArtifactPinnedRequest) (*assistantartifact.Artifact, error)
+	SetPinned(
+		ctx context.Context,
+		req SetArtifactPinnedRequest,
+	) (*assistantartifact.Artifact, error)
 	UpdateStatus(
 		ctx context.Context,
 		req UpdateArtifactStatusRequest,

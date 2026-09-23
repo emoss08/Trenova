@@ -364,7 +364,9 @@ func (l *LiveSimulator) dailyLogCertification(
 }
 
 func (l *LiveSimulator) dailyLogHomeTerminal(driverID string) string {
-	index := int(float64(len(dailyLogHomeTerminals)) * l.hashFraction("daily-log-terminal", driverID))
+	index := int(
+		float64(len(dailyLogHomeTerminals)) * l.hashFraction("daily-log-terminal", driverID),
+	)
 	if index >= len(dailyLogHomeTerminals) {
 		index = len(dailyLogHomeTerminals) - 1
 	}

@@ -33,7 +33,10 @@ func wideRuntime(t *testing.T) (*Service, []string) {
 		describedTool("list_locations", "List locations by status or city."),
 		describedTool("list_invoices", "List invoices by status or due date."),
 		describedTool("list_carriers", "List carriers by status or authority."),
-		describedTool("list_expiring_credentials", "Worker credentials falling due: medical cards, licences, hazmat."),
+		describedTool(
+			"list_expiring_credentials",
+			"Worker credentials falling due: medical cards, licences, hazmat.",
+		),
 		describedTool("get_shipment", "Retrieve one shipment by id."),
 		describedTool("get_worker", "Retrieve one worker by id."),
 		describedTool("search_worker", "Search workers by name."),
@@ -86,7 +89,15 @@ func TestNewToolSet_SendsEverythingForASmallAgent(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names[:4]...)
 
-	set := service.newToolSet(t.Context(), toolSetRequest{definition: definition, actor: testActor(), input: "which drivers are available", unattended: false})
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: definition,
+			actor:      testActor(),
+			input:      "which drivers are available",
+			unattended: false,
+		},
+	)
 
 	assert.False(t, set.disclosed)
 	assert.Len(t, set.specs, 5, "the agent's four tools plus ask_user")
@@ -101,7 +112,15 @@ func TestNewToolSet_NarrowsAndOffersFindToolsForALargeAgent(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
 
-	set := service.newToolSet(t.Context(), toolSetRequest{definition: definition, actor: testActor(), input: "which drivers are available", unattended: false})
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: definition,
+			actor:      testActor(),
+			input:      "which drivers are available",
+			unattended: false,
+		},
+	)
 
 	require.True(t, set.disclosed)
 	assert.Len(t, set.specs, preselectedTools+2, "the preselected tools, find_tools and ask_user")
@@ -122,13 +141,43 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
 
-	drivers := specNames(service.newToolSet(t.Context(), toolSetRequest{definition: definition, actor: testActor(), input: "which drivers are on the roster", unattended: false}).specs)
+	drivers := specNames(
+		service.newToolSet(
+			t.Context(),
+			toolSetRequest{
+				definition: definition,
+				actor:      testActor(),
+				input:      "which drivers are on the roster",
+				unattended: false,
+			},
+		).specs,
+	)
 	assert.Contains(t, drivers, "list_workers")
 
-	trucks := specNames(service.newToolSet(t.Context(), toolSetRequest{definition: definition, actor: testActor(), input: "which trucks are out of service", unattended: false}).specs)
+	trucks := specNames(
+		service.newToolSet(
+			t.Context(),
+			toolSetRequest{
+				definition: definition,
+				actor:      testActor(),
+				input:      "which trucks are out of service",
+				unattended: false,
+			},
+		).specs,
+	)
 	assert.Contains(t, trucks, "list_tractors")
 
-	billing := specNames(service.newToolSet(t.Context(), toolSetRequest{definition: definition, actor: testActor(), input: "unpaid invoices for this customer", unattended: false}).specs)
+	billing := specNames(
+		service.newToolSet(
+			t.Context(),
+			toolSetRequest{
+				definition: definition,
+				actor:      testActor(),
+				input:      "unpaid invoices for this customer",
+				unattended: false,
+			},
+		).specs,
+	)
 	assert.Contains(t, billing, "list_invoices")
 }
 
@@ -140,7 +189,15 @@ func TestResolveFind_MakesTheMissingToolCallable(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
 
-	set := service.newToolSet(t.Context(), toolSetRequest{definition: definition, actor: testActor(), input: "say hello", unattended: false})
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: definition,
+			actor:      testActor(),
+			input:      "say hello",
+			unattended: false,
+		},
+	)
 	require.NotContains(t, specNames(set.specs), "list_trailers",
 		"the fixture depends on this one not being preselected")
 
@@ -163,7 +220,15 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 	service, _ := wideRuntime(t)
 	definition := testDefinition("list_customers", "list_locations")
 
-	set := service.newToolSet(t.Context(), toolSetRequest{definition: definition, actor: testActor(), input: "anything", unattended: false})
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: definition,
+			actor:      testActor(),
+			input:      "anything",
+			unattended: false,
+		},
+	)
 	set.disclosed = true
 
 	service.resolveFind(set, map[string]any{"need": "driver medical card expiry"})
@@ -188,7 +253,15 @@ func TestResolveFind_DoesNotReloadWhatIsAlreadyThere(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
 
-	set := service.newToolSet(t.Context(), toolSetRequest{definition: definition, actor: testActor(), input: "driver medical card expiry", unattended: false})
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: definition,
+			actor:      testActor(),
+			input:      "driver medical card expiry",
+			unattended: false,
+		},
+	)
 	before := len(set.specs)
 
 	answer := service.resolveFind(set, map[string]any{"need": "driver medical card expiry"})
@@ -201,7 +274,15 @@ func TestResolveFind_AsksForWordsWhenGivenNone(t *testing.T) {
 	t.Parallel()
 
 	service, names := wideRuntime(t)
-	set := service.newToolSet(t.Context(), toolSetRequest{definition: testDefinition(names...), actor: testActor(), input: "hello", unattended: false})
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: testDefinition(names...),
+			actor:      testActor(),
+			input:      "hello",
+			unattended: false,
+		},
+	)
 
 	assert.Contains(t, service.resolveFind(set, map[string]any{}), "what you need")
 }
@@ -260,7 +341,15 @@ func TestResolveFind_SaysAToolExistsButIsNotEnabled(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := testDefinition("list_customers", "list_locations")
 
-	set := service.newToolSet(t.Context(), toolSetRequest{definition: definition, actor: testActor(), input: "anything", unattended: false})
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: definition,
+			actor:      testActor(),
+			input:      "anything",
+			unattended: false,
+		},
+	)
 	set.disclosed = true
 
 	answer := service.resolveFind(set, map[string]any{"need": "driver medical card expiry"})
@@ -280,7 +369,15 @@ func TestResolveFind_DoesNotClaimTheSystemLacksSomethingItDidNotSearchFor(t *tes
 	t.Parallel()
 
 	service, _ := wideRuntime(t)
-	set := service.newToolSet(t.Context(), toolSetRequest{definition: testDefinition("list_customers"), actor: testActor(), input: "anything", unattended: false})
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: testDefinition("list_customers"),
+			actor:      testActor(),
+			input:      "anything",
+			unattended: false,
+		},
+	)
 	set.disclosed = true
 
 	answer := service.resolveFind(set, map[string]any{"need": "zzzz no such thing zzzz"})
@@ -296,10 +393,26 @@ func TestNewToolSet_WithholdsAskUserFromAnUnattendedRun(t *testing.T) {
 
 	service, names := wideRuntime(t)
 
-	small := service.newToolSet(t.Context(), toolSetRequest{definition: testDefinition(names[:4]...), actor: testActor(), input: "anything", unattended: true})
+	small := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: testDefinition(names[:4]...),
+			actor:      testActor(),
+			input:      "anything",
+			unattended: true,
+		},
+	)
 	assert.NotContains(t, specNames(small.specs), askUserName)
 
-	large := service.newToolSet(t.Context(), toolSetRequest{definition: testDefinition(names...), actor: testActor(), input: "anything", unattended: true})
+	large := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: testDefinition(names...),
+			actor:      testActor(),
+			input:      "anything",
+			unattended: true,
+		},
+	)
 	assert.NotContains(t, specNames(large.specs), askUserName)
 	assert.Contains(t, specNames(large.specs), findToolsName, "finding tools needs no person")
 }
@@ -333,7 +446,13 @@ func TestRun_TellsThePromptWhichToolsAreLoaded(t *testing.T) {
 	require.Len(t, after, 2)
 	for _, name := range names {
 		if _, isLoaded := loaded[name]; isLoaded {
-			assert.NotContains(t, after[1], "- "+name+"\n", "%s is loaded, not offered through find_tools", name)
+			assert.NotContains(
+				t,
+				after[1],
+				"- "+name+"\n",
+				"%s is loaded, not offered through find_tools",
+				name,
+			)
 		} else {
 			assert.Contains(t, after[1], "- "+name, "%s is not loaded and must be findable", name)
 		}
@@ -354,13 +473,22 @@ func TestNewToolSet_OffersOnlyWhatThePersonMayUse(t *testing.T) {
 	// to leave standing.
 	for _, tool := range service.queryTools.(*stubQueryRegistry).Tools {
 		stub := tool.(*agentruntimetest.StubQueryTool)
-		if strings.Contains(stub.ToolName, "worker") || strings.Contains(stub.ToolName, "credential") {
+		if strings.Contains(stub.ToolName, "worker") ||
+			strings.Contains(stub.ToolName, "credential") {
 			stub.Resource = permission.ResourceWorker
 		}
 	}
 	definition := testDefinition(names...)
 
-	set := service.newToolSet(t.Context(), toolSetRequest{definition: definition, actor: testActor(), input: "which shipments are late", unattended: false})
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: definition,
+			actor:      testActor(),
+			input:      "which shipments are late",
+			unattended: false,
+		},
+	)
 
 	offered := specNames(set.specs)
 	assert.NotContains(t, offered, "list_shipments")
@@ -369,17 +497,35 @@ func TestNewToolSet_OffersOnlyWhatThePersonMayUse(t *testing.T) {
 	assert.Contains(t, set.allowed, "list_workers")
 
 	answer := service.resolveFind(set, map[string]any{"need": "search shipments by pro number"})
-	assert.NotContains(t, answer, "search_shipments", "find_tools cannot reach a tool the person may not use")
+	assert.NotContains(
+		t,
+		answer,
+		"search_shipments",
+		"find_tools cannot reach a tool the person may not use",
+	)
 }
 
 func TestNewToolSet_OffersNothingWithoutAnActor(t *testing.T) {
 	t.Parallel()
 
 	service, names := wideRuntime(t)
-	set := service.newToolSet(t.Context(), toolSetRequest{definition: testDefinition(names...), actor: nil, input: "anything", unattended: false})
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: testDefinition(names...),
+			actor:      nil,
+			input:      "anything",
+			unattended: false,
+		},
+	)
 
 	assert.Empty(t, set.allowed)
-	assert.Equal(t, []string{askUserName}, specNames(set.specs), "only the question tool, which reads nothing")
+	assert.Equal(
+		t,
+		[]string{askUserName},
+		specNames(set.specs),
+		"only the question tool, which reads nothing",
+	)
 }
 
 // coreRuntime is wideRuntime with two of the core tools registered, as they are
@@ -414,7 +560,15 @@ func TestNewToolSet_CarriesTheCoreToolsForAnAgentThatSelectedNone(t *testing.T) 
 	service, names := coreRuntime(t)
 	definition := testDefinition(names[:4]...)
 
-	set := service.newToolSet(t.Context(), toolSetRequest{definition: definition, actor: testActor(), input: "which drivers are available", unattended: false})
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: definition,
+			actor:      testActor(),
+			input:      "which drivers are available",
+			unattended: false,
+		},
+	)
 
 	sent := specNames(set.specs)
 	assert.Contains(t, sent, "recall_memory")
@@ -429,10 +583,30 @@ func TestNewToolSet_CoreToolsDoNotCountTowardNarrowing(t *testing.T) {
 
 	service, names := coreRuntime(t)
 
-	small := service.newToolSet(t.Context(), toolSetRequest{definition: testDefinition(names[:disclosureThreshold]...), actor: testActor(), input: "which drivers are available", unattended: false})
-	assert.False(t, small.disclosed, "twelve selected tools plus the core ones is still a small agent")
+	small := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: testDefinition(names[:disclosureThreshold]...),
+			actor:      testActor(),
+			input:      "which drivers are available",
+			unattended: false,
+		},
+	)
+	assert.False(
+		t,
+		small.disclosed,
+		"twelve selected tools plus the core ones is still a small agent",
+	)
 
-	large := service.newToolSet(t.Context(), toolSetRequest{definition: testDefinition(names...), actor: testActor(), input: "which drivers are available", unattended: false})
+	large := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: testDefinition(names...),
+			actor:      testActor(),
+			input:      "which drivers are available",
+			unattended: false,
+		},
+	)
 	require.True(t, large.disclosed)
 	sent := specNames(large.specs)
 	assert.Contains(t, sent, "recall_memory")

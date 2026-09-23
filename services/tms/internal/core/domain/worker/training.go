@@ -240,17 +240,26 @@ func (c *TrainingCourse) Validate(multiErr *errortypes.MultiError) {
 	if c.PassingScore.Valid {
 		score := c.PassingScore.Decimal
 		if score.IsNegative() || score.GreaterThan(decimal.NewFromInt(100)) {
-			multiErr.Add("passingScore", errortypes.ErrInvalid, "Passing score must be between 0 and 100")
+			multiErr.Add(
+				"passingScore",
+				errortypes.ErrInvalid,
+				"Passing score must be between 0 and 100",
+			)
 		}
 	}
 	if c.ContentURL != "" {
 		parsed, err := url.Parse(c.ContentURL)
-		if err != nil || (parsed.Scheme != "https" && parsed.Scheme != "http") || parsed.Host == "" {
+		if err != nil || (parsed.Scheme != "https" && parsed.Scheme != "http") ||
+			parsed.Host == "" {
 			multiErr.Add("contentUrl", errortypes.ErrInvalid, "Link must be a full http(s) address")
 		}
 	}
 	if c.Delivery == TrainingDeliveryOnline && c.ContentURL == "" {
-		multiErr.Add("contentUrl", errortypes.ErrRequired, "Online courses need a link the driver can open")
+		multiErr.Add(
+			"contentUrl",
+			errortypes.ErrRequired,
+			"Online courses need a link the driver can open",
+		)
 	}
 	for i, driverType := range c.RequiredForDriverTypes {
 		if !driverType.IsValid() {

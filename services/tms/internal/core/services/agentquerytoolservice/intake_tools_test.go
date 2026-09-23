@@ -99,7 +99,10 @@ func TestGetShipmentDraft_SaysWhenTheDraftWasAlreadyUsed(t *testing.T) {
 	}}
 	tool := newGetShipmentDraftTool(drafts)
 
-	result, err := tool.Query(t.Context(), testParams(map[string]any{"documentId": drafts.draft.DocumentID.String()}))
+	result, err := tool.Query(
+		t.Context(),
+		testParams(map[string]any{"documentId": drafts.draft.DocumentID.String()}),
+	)
 	require.NoError(t, err)
 
 	view := result.(*draftView)
@@ -127,7 +130,10 @@ type fakeQuoter struct {
 	lastReq *ratequoteservice.QuoteRequest
 }
 
-func (f *fakeQuoter) Quote(_ context.Context, req *ratequoteservice.QuoteRequest) (*serviceports.RatedShipment, error) {
+func (f *fakeQuoter) Quote(
+	_ context.Context,
+	req *ratequoteservice.QuoteRequest,
+) (*serviceports.RatedShipment, error) {
 	f.lastReq = req
 
 	return f.rated, nil
@@ -154,10 +160,20 @@ func (f *fakeLocations) GetByIDs(
 func TestQuoteShipment_BuildsTheLaneFromLocationsAndNeverPersists(t *testing.T) {
 	t.Parallel()
 
-	origin := &location.Location{ID: pulid.MustNew("loc_"), Name: "Dallas Yard", City: "Dallas", PostalCode: "75201",
-		State: &usstate.UsState{Abbreviation: "TX"}}
-	destination := &location.Location{ID: pulid.MustNew("loc_"), Name: "Houston DC", City: "Houston", PostalCode: "77001",
-		State: &usstate.UsState{Abbreviation: "TX"}}
+	origin := &location.Location{
+		ID:         pulid.MustNew("loc_"),
+		Name:       "Dallas Yard",
+		City:       "Dallas",
+		PostalCode: "75201",
+		State:      &usstate.UsState{Abbreviation: "TX"},
+	}
+	destination := &location.Location{
+		ID:         pulid.MustNew("loc_"),
+		Name:       "Houston DC",
+		City:       "Houston",
+		PostalCode: "77001",
+		State:      &usstate.UsState{Abbreviation: "TX"},
+	}
 	agreementID := pulid.MustNew("ragr_")
 	quoter := &fakeQuoter{rated: &serviceports.RatedShipment{
 		Amount: decimal.NewFromInt(1450), Currency: "USD", Outcome: ratequote.OutcomeRated,
@@ -174,7 +190,11 @@ func TestQuoteShipment_BuildsTheLaneFromLocationsAndNeverPersists(t *testing.T) 
 		"customerId":    customerID.String(),
 		"serviceTypeId": serviceTypeID.String(),
 		"stops": []any{
-			map[string]any{"locationId": origin.ID.String(), "type": "Pickup", "date": "2026-10-02"},
+			map[string]any{
+				"locationId": origin.ID.String(),
+				"type":       "Pickup",
+				"date":       "2026-10-02",
+			},
 			map[string]any{"locationId": destination.ID.String(), "type": "Delivery"},
 		},
 		"pieces": 12,
@@ -196,7 +216,12 @@ func TestQuoteShipment_BuildsTheLaneFromLocationsAndNeverPersists(t *testing.T) 
 	assert.Equal(t, serviceTypeID, sent.ServiceTypeID)
 	require.Len(t, sent.Moves, 1)
 	require.Len(t, sent.Moves[0].Stops, 2)
-	assert.Same(t, origin, sent.Moves[0].Stops[0].Location, "the engine reads the lane off the loaded locations")
+	assert.Same(
+		t,
+		origin,
+		sent.Moves[0].Stops[0].Location,
+		"the engine reads the lane off the loaded locations",
+	)
 	assert.EqualValues(t, 18_000, *sent.Weight)
 	assert.Equal(t, sent.Moves[0].Stops[0].ScheduledWindowStart, quoter.lastReq.AsOf,
 		"rated as of the first stop's date, read in the organization's zone")
@@ -206,13 +231,20 @@ func TestQuoteShipment_BuildsTheLaneFromLocationsAndNeverPersists(t *testing.T) 
 func TestQuoteShipment_RefusesAnUnknownLocationAndAThinLane(t *testing.T) {
 	t.Parallel()
 
-	tool := newQuoteShipmentTool(&fakeQuoter{}, &fakeLocations{byID: map[pulid.ID]*location.Location{}})
+	tool := newQuoteShipmentTool(
+		&fakeQuoter{},
+		&fakeLocations{byID: map[pulid.ID]*location.Location{}},
+	)
 	base := map[string]any{
 		"customerId":    pulid.MustNew("cust_").String(),
 		"serviceTypeId": pulid.MustNew("st_").String(),
 	}
 
-	one := map[string]any{"stops": []any{map[string]any{"locationId": pulid.MustNew("loc_").String(), "type": "Pickup"}}}
+	one := map[string]any{
+		"stops": []any{
+			map[string]any{"locationId": pulid.MustNew("loc_").String(), "type": "Pickup"},
+		},
+	}
 	for k, v := range base {
 		one[k] = v
 	}
@@ -248,7 +280,10 @@ type fakeShopper struct {
 	lastReq *ratequoteservice.ShopRequest
 }
 
-func (f *fakeShopper) Shop(_ context.Context, req *ratequoteservice.ShopRequest) (*serviceports.ShopResult, error) {
+func (f *fakeShopper) Shop(
+	_ context.Context,
+	req *ratequoteservice.ShopRequest,
+) (*serviceports.ShopResult, error) {
 	f.lastReq = req
 
 	return f.result, nil
@@ -263,9 +298,19 @@ func TestShopCarriers_RanksOptionsWithMarginAndPassesTheShortlist(t *testing.T) 
 		Strategy:  serviceports.ShopStrategyBestMargin,
 		SellTotal: decimal.NewNullDecimal(decimal.NewFromInt(2000)),
 		Options: []*serviceports.ShopOption{
-			{Rank: 1, CarrierID: carrierA, CarrierName: "Blue Ridge", Outcome: ratequote.OutcomeRated,
-				Cost: decimal.NewFromInt(1500), Currency: "USD", GuideRank: 2,
-				Margin: ratetypes.MarginVerdict{Amount: decimal.NewFromInt(500), Percent: decimal.NewFromInt(25)}},
+			{
+				Rank:        1,
+				CarrierID:   carrierA,
+				CarrierName: "Blue Ridge",
+				Outcome:     ratequote.OutcomeRated,
+				Cost:        decimal.NewFromInt(1500),
+				Currency:    "USD",
+				GuideRank:   2,
+				Margin: ratetypes.MarginVerdict{
+					Amount:  decimal.NewFromInt(500),
+					Percent: decimal.NewFromInt(25),
+				},
+			},
 			{
 				Rank: 2, CarrierID: carrierB, CarrierName: "No Contract Inc",
 				Outcome: ratequote.OutcomeNoRateFound, Note: "no contract",

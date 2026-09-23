@@ -364,7 +364,10 @@ func (r *repository) SetStatus(
 		return nil, err
 	}
 
-	return r.GetByID(ctx, repositories.GetAgentMemoryByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo})
+	return r.GetByID(
+		ctx,
+		repositories.GetAgentMemoryByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
+	)
 }
 
 func (r *repository) MarkUsed(

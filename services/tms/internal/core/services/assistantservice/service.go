@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"go.uber.org/fx"
@@ -15,7 +16,7 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Guard         *agentguard.Service
-	Runtime       serviceports.AgentRuntime
+	Runtime       *agentruntime.Service
 	Contexts      serviceports.RuntimeContextBuilder
 	Conversations repositories.ConversationRepository
 	Definitions   repositories.AgentDefinitionRepository
@@ -40,10 +41,16 @@ type Params struct {
 	Contents  serviceports.DocumentContentService `optional:"true"`
 }
 
+// Module provides the assistant once, as itself for the worker that runs its
+// turns and as the AssistantService port for everything else.
+var Module = fx.Module("assistant",
+	fx.Provide(fx.Annotate(New, fx.As(fx.Self()), fx.As(new(serviceports.AssistantService)))),
+)
+
 type Service struct {
 	logger        *zap.Logger
 	guard         *agentguard.Service
-	runtime       serviceports.AgentRuntime
+	runtime       *agentruntime.Service
 	contexts      serviceports.RuntimeContextBuilder
 	conversations repositories.ConversationRepository
 	definitions   repositories.AgentDefinitionRepository
@@ -62,7 +69,7 @@ type Service struct {
 	contents      serviceports.DocumentContentService
 }
 
-func New(p Params) serviceports.AssistantService {
+func New(p Params) *Service {
 	return &Service{
 		logger:        p.Logger.Named("service.assistant"),
 		guard:         p.Guard,

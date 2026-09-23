@@ -219,8 +219,15 @@ func DefinitionJSONSchema() map[string]any {
 							"enum": []string{"dimension", "measure", "computed"},
 						},
 						"agg": map[string]any{
-							"type":        "string",
-							"enum":        []string{"count", "count_distinct", "sum", "avg", "min", "max"},
+							"type": "string",
+							"enum": []string{
+								"count",
+								"count_distinct",
+								"sum",
+								"avg",
+								"min",
+								"max",
+							},
 							"description": "Required for a measure; the field must support it.",
 						},
 						"bucket": map[string]any{
@@ -250,8 +257,11 @@ func DefinitionJSONSchema() map[string]any {
 				"items": map[string]any{
 					"type": "object",
 					"properties": map[string]any{
-						"columnId":  map[string]any{"type": "string"},
-						"direction": map[string]any{"type": "string", "enum": []string{"asc", "desc"}},
+						"columnId": map[string]any{"type": "string"},
+						"direction": map[string]any{
+							"type": "string",
+							"enum": []string{"asc", "desc"},
+						},
 					},
 					"required":             []string{"columnId", "direction"},
 					"additionalProperties": false,
@@ -268,13 +278,24 @@ func DefinitionJSONSchema() map[string]any {
 						"label": map[string]any{"type": "string"},
 						"type": map[string]any{
 							"type": "string",
-							"enum": []string{"string", "int", "decimal", "bool", "enum", "epoch", "ref"},
+							"enum": []string{
+								"string",
+								"int",
+								"decimal",
+								"bool",
+								"enum",
+								"epoch",
+								"ref",
+							},
 						},
-						"required":      map[string]any{"type": "boolean"},
-						"default":       map[string]any{},
-						"multi":         map[string]any{"type": "boolean"},
-						"allowedValues": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-						"refEntity":     map[string]any{"type": "string"},
+						"required": map[string]any{"type": "boolean"},
+						"default":  map[string]any{},
+						"multi":    map[string]any{"type": "boolean"},
+						"allowedValues": map[string]any{
+							"type":  "array",
+							"items": map[string]any{"type": "string"},
+						},
+						"refEntity": map[string]any{"type": "string"},
 					},
 					"required":             []string{"name", "type"},
 					"additionalProperties": false,

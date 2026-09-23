@@ -343,9 +343,21 @@ func TestIsConstraintViolation(t *testing.T) {
 		err  error
 		want bool
 	}{
-		{name: "unique violation", err: &pgconn.PgError{Code: pgerrcode.UniqueViolation}, want: true},
-		{name: "foreign key violation", err: &pgconn.PgError{Code: pgerrcode.ForeignKeyViolation}, want: true},
-		{name: "non-constraint violation", err: &pgconn.PgError{Code: pgerrcode.SerializationFailure}, want: false},
+		{
+			name: "unique violation",
+			err:  &pgconn.PgError{Code: pgerrcode.UniqueViolation},
+			want: true,
+		},
+		{
+			name: "foreign key violation",
+			err:  &pgconn.PgError{Code: pgerrcode.ForeignKeyViolation},
+			want: true,
+		},
+		{
+			name: "non-constraint violation",
+			err:  &pgconn.PgError{Code: pgerrcode.SerializationFailure},
+			want: false,
+		},
 		{name: "generic error", err: errors.New("boom"), want: false},
 	}
 
@@ -360,8 +372,14 @@ func TestIsConstraintViolation(t *testing.T) {
 func TestConstraintSpecificHelpers(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, IsForeignKeyConstraintViolation(&pgconn.PgError{Code: pgerrcode.ForeignKeyViolation}))
-	assert.False(t, IsForeignKeyConstraintViolation(&pgconn.PgError{Code: pgerrcode.UniqueViolation}))
+	assert.True(
+		t,
+		IsForeignKeyConstraintViolation(&pgconn.PgError{Code: pgerrcode.ForeignKeyViolation}),
+	)
+	assert.False(
+		t,
+		IsForeignKeyConstraintViolation(&pgconn.PgError{Code: pgerrcode.UniqueViolation}),
+	)
 
 	assert.True(t, IsNotNullConstraintViolation(&pgconn.PgError{Code: pgerrcode.NotNullViolation}))
 	assert.False(t, IsNotNullConstraintViolation(&pgconn.PgError{Code: pgerrcode.UniqueViolation}))
@@ -378,12 +396,28 @@ func TestIsRetryableTransactionError(t *testing.T) {
 		err  error
 		want bool
 	}{
-		{name: "serialization failure", err: &pgconn.PgError{Code: pgerrcode.SerializationFailure}, want: true},
-		{name: "deadlock detected", err: &pgconn.PgError{Code: pgerrcode.DeadlockDetected}, want: true},
-		{name: "lock not available", err: &pgconn.PgError{Code: pgerrcode.LockNotAvailable}, want: true},
+		{
+			name: "serialization failure",
+			err:  &pgconn.PgError{Code: pgerrcode.SerializationFailure},
+			want: true,
+		},
+		{
+			name: "deadlock detected",
+			err:  &pgconn.PgError{Code: pgerrcode.DeadlockDetected},
+			want: true,
+		},
+		{
+			name: "lock not available",
+			err:  &pgconn.PgError{Code: pgerrcode.LockNotAvailable},
+			want: true,
+		},
 		{name: "query canceled", err: &pgconn.PgError{Code: pgerrcode.QueryCanceled}, want: true},
 		{name: "context deadline", err: context.DeadlineExceeded, want: true},
-		{name: "other pg error", err: &pgconn.PgError{Code: pgerrcode.UniqueViolation}, want: false},
+		{
+			name: "other pg error",
+			err:  &pgconn.PgError{Code: pgerrcode.UniqueViolation},
+			want: false,
+		},
 		{name: "generic error", err: errors.New("boom"), want: false},
 	}
 
@@ -401,7 +435,10 @@ func TestMapRetryableTransactionError(t *testing.T) {
 	t.Run("maps retryable postgres errors to conflict errors", func(t *testing.T) {
 		t.Parallel()
 
-		err := MapRetryableTransactionError(&pgconn.PgError{Code: pgerrcode.LockNotAvailable}, "busy")
+		err := MapRetryableTransactionError(
+			&pgconn.PgError{Code: pgerrcode.LockNotAvailable},
+			"busy",
+		)
 		require.Error(t, err)
 
 		var conflictErr *errortypes.ConflictError
@@ -490,7 +527,11 @@ func TestExtractConstraintName(t *testing.T) {
 func TestExtractCode(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, pgerrcode.UniqueViolation, ExtractCode(&pgconn.PgError{Code: pgerrcode.UniqueViolation}))
+	assert.Equal(
+		t,
+		pgerrcode.UniqueViolation,
+		ExtractCode(&pgconn.PgError{Code: pgerrcode.UniqueViolation}),
+	)
 	assert.Equal(t, "", ExtractCode(errors.New("generic error")))
 	assert.Equal(t, "", ExtractCode(nil))
 }
@@ -498,6 +539,10 @@ func TestExtractCode(t *testing.T) {
 func TestExtractCodeName(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "UniqueViolation", ExtractCodeName(&pgconn.PgError{Code: pgerrcode.UniqueViolation}))
+	assert.Equal(
+		t,
+		"UniqueViolation",
+		ExtractCodeName(&pgconn.PgError{Code: pgerrcode.UniqueViolation}),
+	)
 	assert.Equal(t, "", ExtractCodeName(errors.New("generic error")))
 }

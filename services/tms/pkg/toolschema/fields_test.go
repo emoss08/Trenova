@@ -19,8 +19,11 @@ func notifyDriverSchema() map[string]any {
 			},
 			"withinDays": map[string]any{"type": "integer", "minimum": 1, "maximum": 365},
 			"urgent":     map[string]any{"type": "boolean"},
-			"codes":      map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-			"extra":      map[string]any{"type": "object"},
+			"codes": map[string]any{
+				"type":  "array",
+				"items": map[string]any{"type": "string"},
+			},
+			"extra": map[string]any{"type": "object"},
 		},
 		"required":             []string{"workerId", "title", "message"},
 		"additionalProperties": false,
@@ -40,8 +43,12 @@ func TestFields_DerivesEditableFieldsFromTheSchema(t *testing.T) {
 	}
 
 	require.Len(t, fields, 8)
-	assert.Equal(t, []string{"message", "title", "workerId"}, []string{fields[0].Name, fields[1].Name, fields[2].Name},
-		"required fields come first, by name")
+	assert.Equal(
+		t,
+		[]string{"message", "title", "workerId"},
+		[]string{fields[0].Name, fields[1].Name, fields[2].Name},
+		"required fields come first, by name",
+	)
 
 	assert.Equal(t, KindText, byName["workerId"].Kind)
 	assert.Equal(t, "Worker ID", byName["workerId"].Label)
@@ -73,8 +80,11 @@ func TestFields_ReadsATypeListAndAnEnumList(t *testing.T) {
 	fields := Fields(map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"note":  map[string]any{"type": []any{"string", "null"}},
-			"kinds": map[string]any{"type": "array", "items": map[string]any{"enum": []any{"A", "B"}}},
+			"note": map[string]any{"type": []any{"string", "null"}},
+			"kinds": map[string]any{
+				"type":  "array",
+				"items": map[string]any{"enum": []any{"A", "B"}},
+			},
 		},
 	})
 

@@ -197,7 +197,14 @@ func (s *Service) DeleteMileageEntry(ctx context.Context, req *DeleteMileageEntr
 		comment: "Deleted " + existing.Miles.StringFixed(milesScale) + " miles from " +
 			existing.Period().Label(),
 	})
-	s.publish(ctx, req.TenantInfo, realtimeMileageEntry, permission.OpDelete, existing.ID, req.UserID)
+	s.publish(
+		ctx,
+		req.TenantInfo,
+		realtimeMileageEntry,
+		permission.OpDelete,
+		existing.ID,
+		req.UserID,
+	)
 
 	return nil
 }

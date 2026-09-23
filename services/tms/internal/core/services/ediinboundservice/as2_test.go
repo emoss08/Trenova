@@ -378,7 +378,11 @@ func TestSendAsyncAS2MDNRequiresPayload(t *testing.T) {
 		EDIService: ediservice.New(ediservice.Params{Logger: zap.NewNop()}),
 	})
 
-	err := service.SendAsyncAS2MDN(t.Context(), "https://partner.example/mdn", &ReceiveAS2MessageResult{})
+	err := service.SendAsyncAS2MDN(
+		t.Context(),
+		"https://partner.example/mdn",
+		&ReceiveAS2MessageResult{},
+	)
 	require.Error(t, err)
 }
 

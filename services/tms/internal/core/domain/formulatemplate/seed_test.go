@@ -40,16 +40,18 @@ func TestSeedFromTemplate_CopiesContentAndPointsAtTheSource(t *testing.T) {
 	sourceID := pulid.MustNew("ft_")
 	approver := pulid.MustNew("usr_")
 	source := &formulatemplate.FormulaTemplate{
-		ID:                   sourceID,
-		OrganizationID:       pulid.MustNew("org_"),
-		BusinessUnitID:       pulid.MustNew("bu_"),
-		Name:                 "Acme Lane",
-		Description:          "Acme's lane rate",
-		Type:                 formulatemplate.TemplateTypeFreightCharge,
-		Expression:           "lookup('lane', laneCode)",
-		Status:               formulatemplate.StatusActive,
-		SchemaID:             "shipment",
-		BreakdownDefinitions: []*formulatypes.BreakdownDefinition{{Name: "linehaul", Expression: "1"}},
+		ID:             sourceID,
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		Name:           "Acme Lane",
+		Description:    "Acme's lane rate",
+		Type:           formulatemplate.TemplateTypeFreightCharge,
+		Expression:     "lookup('lane', laneCode)",
+		Status:         formulatemplate.StatusActive,
+		SchemaID:       "shipment",
+		BreakdownDefinitions: []*formulatypes.BreakdownDefinition{
+			{Name: "linehaul", Expression: "1"},
+		},
 		MinCharge:            decimal.NewNullDecimal(decimal.NewFromInt(250)),
 		RoundingMode:         ratetypes.RoundingModeUp,
 		RoundingPrecision:    0,

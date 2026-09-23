@@ -638,7 +638,9 @@ func TestChangeMyPassword_Success(t *testing.T) {
 			req.MustChangePassword == false &&
 			req.Password != "" &&
 			req.Password != "new-password"
-	})).Return(nil).Once()
+	})).
+		Return(nil).
+		Once()
 	deps.repo.On("GetByID", mock.Anything, repositories.GetUserByIDRequest{
 		TenantInfo:         tenantInfo,
 		IncludeMemberships: true,
@@ -690,11 +692,15 @@ func TestChangeMyPassword_ValidationFailure(t *testing.T) {
 
 	deps := setupTest(t)
 
-	result, err := deps.svc.ChangeMyPassword(t.Context(), pagination.TenantInfo{}, ChangeMyPasswordRequest{
-		CurrentPassword: "same-password",
-		NewPassword:     "same-password",
-		ConfirmPassword: "different-password",
-	})
+	result, err := deps.svc.ChangeMyPassword(
+		t.Context(),
+		pagination.TenantInfo{},
+		ChangeMyPasswordRequest{
+			CurrentPassword: "same-password",
+			NewPassword:     "same-password",
+			ConfirmPassword: "different-password",
+		},
+	)
 
 	require.Error(t, err)
 	assert.Nil(t, result)

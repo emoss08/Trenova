@@ -66,17 +66,20 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 		Logger:       zap.NewNop(),
 	})
 
-	result, err := activities.BulkDuplicateShipmentsActivity(t.Context(), &BulkDuplicateShipmentsPayload{
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			UserID:         userID,
+	result, err := activities.BulkDuplicateShipmentsActivity(
+		t.Context(),
+		&BulkDuplicateShipmentsPayload{
+			BasePayload: temporaltype.BasePayload{
+				OrganizationID: orgID,
+				BusinessUnitID: buID,
+				UserID:         userID,
+			},
+			ShipmentID:    sourceID,
+			Count:         2,
+			OverrideDates: true,
+			RequestedBy:   userID,
 		},
-		ShipmentID:    sourceID,
-		Count:         2,
-		OverrideDates: true,
-		RequestedBy:   userID,
-	})
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -188,9 +191,24 @@ func TestActivitiesAutoCancelShipmentsActivity_PublishesPerAffectedTenant(t *tes
 	repo.EXPECT().
 		RunAutoCancelShipments(mock.Anything).
 		Return([]*shipment.Shipment{
-			{ID: pulid.MustNew("shp_"), OrganizationID: orgOne, BusinessUnitID: buOne, Status: shipment.StatusCanceled},
-			{ID: pulid.MustNew("shp_"), OrganizationID: orgOne, BusinessUnitID: buOne, Status: shipment.StatusCanceled},
-			{ID: pulid.MustNew("shp_"), OrganizationID: orgTwo, BusinessUnitID: buTwo, Status: shipment.StatusCanceled},
+			{
+				ID:             pulid.MustNew("shp_"),
+				OrganizationID: orgOne,
+				BusinessUnitID: buOne,
+				Status:         shipment.StatusCanceled,
+			},
+			{
+				ID:             pulid.MustNew("shp_"),
+				OrganizationID: orgOne,
+				BusinessUnitID: buOne,
+				Status:         shipment.StatusCanceled,
+			},
+			{
+				ID:             pulid.MustNew("shp_"),
+				OrganizationID: orgTwo,
+				BusinessUnitID: buTwo,
+				Status:         shipment.StatusCanceled,
+			},
 		}, nil).
 		Once()
 	realtime.EXPECT().

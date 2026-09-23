@@ -207,7 +207,8 @@ func TestExecute_UsesTheProposalIdAsIdempotencyKey(t *testing.T) {
 	proposal := testProposal("reassign_move", map[string]any{})
 
 	require.NoError(t, newExecutor(tool, &fakeProposalRepo{}, &fakePermissions{allowed: true}).
-		Execute(t.Context(), proposal, nil, testActor(proposal.OrganizationID, proposal.BusinessUnitID)))
+		Execute(t.Context(), proposal, nil, testActor(proposal.OrganizationID, proposal.BusinessUnitID)),
+	)
 
 	assert.Equal(t, proposal.ID.String(), tool.lastParams.IdempotencyKey)
 }
@@ -254,7 +255,8 @@ func TestExecute_ChecksTheToolsOwnPermission(t *testing.T) {
 	proposal := testProposal("update_customer", map[string]any{})
 
 	require.NoError(t, newExecutor(tool, &fakeProposalRepo{}, perms).
-		Execute(t.Context(), proposal, nil, testActor(proposal.OrganizationID, proposal.BusinessUnitID)))
+		Execute(t.Context(), proposal, nil, testActor(proposal.OrganizationID, proposal.BusinessUnitID)),
+	)
 
 	require.NotNil(t, perms.lastReq)
 	assert.Equal(t, permission.ResourceCustomer.String(), perms.lastReq.Resource)
@@ -348,7 +350,11 @@ func (r *fakeProposalRepo) RecordSimulation(
 func TestExecute_RefusesAnApproverFromAnotherOrganization(t *testing.T) {
 	t.Parallel()
 
-	tool := &recordingTool{name: "reassign_move", resource: permission.ResourceShipmentMove, operation: permission.OpUpdate}
+	tool := &recordingTool{
+		name:      "reassign_move",
+		resource:  permission.ResourceShipmentMove,
+		operation: permission.OpUpdate,
+	}
 	repo := &fakeProposalRepo{}
 	perms := &fakePermissions{allowed: true}
 	proposal := testProposal("reassign_move", map[string]any{})

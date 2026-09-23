@@ -88,7 +88,11 @@ func TestBuild_ReadsStopsInOrderAndFlagsTheLateOne(t *testing.T) {
 
 	require.NotNil(t, snapshot.NextStop)
 	assert.Equal(t, "Houston DC", snapshot.NextStop.Location)
-	assert.Contains(t, snapshot.Flags, "Stop 0 (Pickup at Dallas Yard in Dallas, TX) arrived 60 minutes late")
+	assert.Contains(
+		t,
+		snapshot.Flags,
+		"Stop 0 (Pickup at Dallas Yard in Dallas, TX) arrived 60 minutes late",
+	)
 	assert.Contains(t, snapshot.Summary, "PRO S12345 is InTransit for Acme.")
 	assert.Contains(t, snapshot.Summary, "Next: delivery Houston DC in Houston, TX")
 }
@@ -150,7 +154,12 @@ func TestBuild_EstimatesArrivalFromTheTractorsPosition(t *testing.T) {
 	assert.Positive(t, snapshot.Estimate.SlackMinutes)
 	assert.Contains(t, snapshot.Estimate.Basis, "Not routed")
 	assert.Equal(t, "driver", snapshot.Moves[0].Coverage)
-	assert.Len(t, snapshot.Flags, 1, "only the late pickup; the position is fresh and the move covered")
+	assert.Len(
+		t,
+		snapshot.Flags,
+		1,
+		"only the late pickup; the position is fresh and the move covered",
+	)
 }
 
 func TestBuild_CallsAnEstimatePastTheWindowLateAndAStalePositionStale(t *testing.T) {
@@ -220,9 +229,18 @@ func TestBuild_FlagsAnOverdueStopAndAnUncoveredMove(t *testing.T) {
 	assert.True(t, next.Overdue)
 	assert.EqualValues(t, 45, next.LateMinutes)
 	assert.Contains(t, snapshot.Flags, "Move 0 has no driver or carrier")
-	assert.Contains(t, snapshot.Flags, "Stop 1 (Delivery at Houston DC in Houston, TX) is 45 minutes past its window with no arrival recorded")
+	assert.Contains(
+		t,
+		snapshot.Flags,
+		"Stop 1 (Delivery at Houston DC in Houston, TX) is 45 minutes past its window with no arrival recorded",
+	)
 	require.NotNil(t, snapshot.Estimate)
-	assert.Equal(t, VerdictUnknown, snapshot.Estimate.Verdict, "nobody is on the move, so nothing to estimate from")
+	assert.Equal(
+		t,
+		VerdictUnknown,
+		snapshot.Estimate.Verdict,
+		"nobody is on the move, so nothing to estimate from",
+	)
 }
 
 func TestBuild_ADeliveredShipmentHasNoNextStop(t *testing.T) {

@@ -90,7 +90,11 @@ type WatchtowerRepository interface {
 	// was already there. It reports whether the row is new.
 	Upsert(ctx context.Context, item *watchtower.Item) (*watchtower.Item, bool, error)
 	Resolve(ctx context.Context, req ResolveWatchtowerItemRequest) (*watchtower.Item, error)
-	ResolveByID(ctx context.Context, req GetWatchtowerItemRequest, resolvedAt int64) (*watchtower.Item, error)
+	ResolveByID(
+		ctx context.Context,
+		req GetWatchtowerItemRequest,
+		resolvedAt int64,
+	) (*watchtower.Item, error)
 	ResolveMissing(ctx context.Context, req ResolveMissingWatchtowerItemsRequest) (int, error)
 	GetByID(ctx context.Context, req GetWatchtowerItemRequest) (*watchtower.Item, error)
 	List(ctx context.Context, req ListWatchtowerItemsRequest) ([]*watchtower.Item, error)

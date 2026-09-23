@@ -56,7 +56,10 @@ func newTransitionFixture(t *testing.T, yearStatus fiscalyear.Status) *transitio
 	}
 }
 
-func (f *transitionFixture) period(number int, status fiscalperiod.Status) *fiscalperiod.FiscalPeriod {
+func (f *transitionFixture) period(
+	number int,
+	status fiscalperiod.Status,
+) *fiscalperiod.FiscalPeriod {
 	return &fiscalperiod.FiscalPeriod{
 		ID:             pulid.MustNew("fp_"),
 		OrganizationID: f.tenant.OrgID,

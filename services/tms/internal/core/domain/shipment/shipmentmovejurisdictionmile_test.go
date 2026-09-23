@@ -248,9 +248,19 @@ func TestShipmentMove_JurisdictionMilesSumMiles(t *testing.T) {
 
 	move := &ShipmentMove{
 		JurisdictionMiles: []*ShipmentMoveJurisdictionMile{
-			{CountryCode: "US", JurisdictionCode: "TX", Distance: 100, DistanceUnits: JurisdictionDistanceUnitsMiles},
+			{
+				CountryCode:      "US",
+				JurisdictionCode: "TX",
+				Distance:         100,
+				DistanceUnits:    JurisdictionDistanceUnitsMiles,
+			},
 			nil,
-			{CountryCode: "US", JurisdictionCode: "OK", Distance: 160.9344, DistanceUnits: JurisdictionDistanceUnitsKilometers},
+			{
+				CountryCode:      "US",
+				JurisdictionCode: "OK",
+				Distance:         160.9344,
+				DistanceUnits:    JurisdictionDistanceUnitsKilometers,
+			},
 		},
 	}
 	assert.InDelta(t, 200.0, move.JurisdictionMilesSumMiles(), 0.000001)

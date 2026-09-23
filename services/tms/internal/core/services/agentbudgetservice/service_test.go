@@ -35,7 +35,10 @@ type fakeRuns struct {
 	since   int64
 }
 
-func (f *fakeRuns) CountSince(_ context.Context, req repositories.CountAgentRunsSinceRequest) (int, error) {
+func (f *fakeRuns) CountSince(
+	_ context.Context,
+	req repositories.CountAgentRunsSinceRequest,
+) (int, error) {
 	f.since = req.Since
 
 	return f.started, nil
@@ -45,7 +48,10 @@ type fakeTools struct {
 	used map[string]int
 }
 
-func (f *fakeTools) CountExecutedTool(_ context.Context, req repositories.CountExecutedToolRequest) (int, error) {
+func (f *fakeTools) CountExecutedTool(
+	_ context.Context,
+	req repositories.CountExecutedToolRequest,
+) (int, error) {
 	return f.used[req.ToolName], nil
 }
 
@@ -101,7 +107,9 @@ func TestWindows_AreDrawnInTheOrganizationsZone(t *testing.T) {
 func TestCheckRun_RefusesWhenTheMonthlyBudgetIsSpent(t *testing.T) {
 	t.Parallel()
 
-	cost := &fakeCost{cost: &repositories.AIUsageCost{CostUSD: decimal.RequireFromString("25.50"), Calls: 40}}
+	cost := &fakeCost{
+		cost: &repositories.AIUsageCost{CostUSD: decimal.RequireFromString("25.50"), Calls: 40},
+	}
 	svc := newService(cost, &fakeRuns{}, &fakeTools{})
 	d := definition()
 	d.MonthlyBudgetUSD = money("25")
@@ -112,7 +120,11 @@ func TestCheckRun_RefusesWhenTheMonthlyBudgetIsSpent(t *testing.T) {
 	assert.Equal(t, services.BudgetCapMonthly, refusal.Cap)
 	assert.Equal(t, "25.50", refusal.Spent)
 	assert.Equal(t, "25.00", refusal.Limit)
-	assert.Contains(t, refusal.Message("Night desk"), "spent its monthly budget (25.50 of 25.00 USD)")
+	assert.Contains(
+		t,
+		refusal.Message("Night desk"),
+		"spent its monthly budget (25.50 of 25.00 USD)",
+	)
 	assert.Equal(t, svc.windows(t.Context(), pagination.TenantInfo{}).monthStart, cost.since)
 }
 
@@ -171,7 +183,11 @@ func TestStatus_ReportsEveryCapAndTheUnpricedCalls(t *testing.T) {
 	cost := &fakeCost{cost: &repositories.AIUsageCost{
 		CostUSD: decimal.RequireFromString("12.345"), Calls: 20, UnpricedCalls: 4,
 	}}
-	svc := newService(cost, &fakeRuns{started: 1}, &fakeTools{used: map[string]int{"assign_move": 2}})
+	svc := newService(
+		cost,
+		&fakeRuns{started: 1},
+		&fakeTools{used: map[string]int{"assign_move": 2}},
+	)
 	d := definition()
 	d.MonthlyBudgetUSD = money("50")
 	d.DailyRunLimit = 10
@@ -185,6 +201,10 @@ func TestStatus_ReportsEveryCapAndTheUnpricedCalls(t *testing.T) {
 	assert.Equal(t, "50.00", *status.MonthlyBudget)
 	assert.Equal(t, 4, status.UnpricedCalls)
 	assert.Equal(t, 1, status.RunsToday)
-	assert.Equal(t, []services.ToolBudgetUse{{Tool: "assign_move", Used: 2, Limit: 8}}, status.Tools)
+	assert.Equal(
+		t,
+		[]services.ToolBudgetUse{{Tool: "assign_move", Used: 2, Limit: 8}},
+		status.Tools,
+	)
 	assert.True(t, status.SimulationMode)
 }

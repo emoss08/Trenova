@@ -86,7 +86,10 @@ type fakeControls struct {
 	control *tenant.AgentControl
 }
 
-func (f fakeControls) GetOrCreate(context.Context, pagination.TenantInfo) (*tenant.AgentControl, error) {
+func (f fakeControls) GetOrCreate(
+	context.Context,
+	pagination.TenantInfo,
+) (*tenant.AgentControl, error) {
 	return f.control, nil
 }
 
@@ -95,7 +98,10 @@ type fakeRuns struct {
 	run *agent.AgentRun
 }
 
-func (f fakeRuns) GetByID(context.Context, repositories.GetAgentRunByIDRequest) (*agent.AgentRun, error) {
+func (f fakeRuns) GetByID(
+	context.Context,
+	repositories.GetAgentRunByIDRequest,
+) (*agent.AgentRun, error) {
 	return f.run, nil
 }
 
@@ -205,8 +211,10 @@ func newHarness(t *testing.T, opts harnessOptions) *harness {
 			EarnedAutonomy:     opts.earned,
 			PromotionThreshold: opts.threshold,
 		}},
-		runs:          fakeRuns{run: &agent.AgentRun{ID: runID, AgentDefinitionID: definitionID}},
-		tools:         fakeRegistry{tools: map[string]agent.AutonomyTier{"assign_move": agent.TierActWithApproval}},
+		runs: fakeRuns{run: &agent.AgentRun{ID: runID, AgentDefinitionID: definitionID}},
+		tools: fakeRegistry{
+			tools: map[string]agent.AutonomyTier{"assign_move": agent.TierActWithApproval},
+		},
 		audit:         h.audit,
 		notifications: h.notifier,
 	}
@@ -269,7 +277,10 @@ func TestRecordDecision_NeverPromotesWhenTheOrganizationHasNotOptedIn(t *testing
 func TestRecordDecision_StopsAtTheCeiling(t *testing.T) {
 	t.Parallel()
 
-	h := newHarness(t, harnessOptions{earned: true, threshold: 1, ceiling: agent.TierActWithApproval})
+	h := newHarness(
+		t,
+		harnessOptions{earned: true, threshold: 1, ceiling: agent.TierActWithApproval},
+	)
 
 	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, accepted(nil)))
 
@@ -287,7 +298,14 @@ func TestRecordDecision_ModificationResetsWithoutDemoting(t *testing.T) {
 		row:       &agent.ToolTrust{Streak: 4, EarnedTier: agent.TierAutoExecute},
 	})
 
-	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, accepted(map[string]any{"workerId": "other"})))
+	require.NoError(
+		t,
+		h.svc.RecordDecision(
+			t.Context(),
+			h.proposal,
+			accepted(map[string]any{"workerId": "other"}),
+		),
+	)
 
 	assert.Equal(t, 0, h.trust.row.Streak)
 	assert.Empty(t, h.definitions.tiers, "a modification is not a setback")

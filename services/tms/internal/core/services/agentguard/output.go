@@ -9,14 +9,18 @@ import "regexp"
 // unmistakable source syntax counts.
 var outputRules = []rule{
 	{
-		name:     "output_code_fence_with_language",
-		pattern:  regexp.MustCompile("(?i)```[ \\t]*(python|py|javascript|js|typescript|ts|go|golang|java|c\\+\\+|cpp|csharp|c#|ruby|rust|php|bash|sh|shell|sql|powershell|perl|swift|kotlin|scala|html|css)\\b"),
+		name: "output_code_fence_with_language",
+		pattern: regexp.MustCompile(
+			"(?i)```[ \\t]*(python|py|javascript|js|typescript|ts|go|golang|java|c\\+\\+|cpp|csharp|c#|ruby|rust|php|bash|sh|shell|sql|powershell|perl|swift|kotlin|scala|html|css)\\b",
+		),
 		reason:   ReasonCodeGeneration,
 		category: CategoryCodeGeneration,
 	},
 	{
-		name:     "output_function_syntax",
-		pattern:  regexp.MustCompile(`(?m)^\s*(def\s+\w+\s*\(|function\s+\w+\s*\(|public\s+static\s+void\s+main|func\s+\w+\s*\([^)]*\)\s*\w*\s*{)`),
+		name: "output_function_syntax",
+		pattern: regexp.MustCompile(
+			`(?m)^\s*(def\s+\w+\s*\(|function\s+\w+\s*\(|public\s+static\s+void\s+main|func\s+\w+\s*\([^)]*\)\s*\w*\s*{)`,
+		),
 		reason:   ReasonCodeGeneration,
 		category: CategoryCodeGeneration,
 	},

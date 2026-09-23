@@ -375,7 +375,8 @@ func TestGetTomorrowsPickups_ReturnsPickupRowsWithStatusMapping(t *testing.T) {
 		}).
 			AddRow("sp_1", "PRO-1001", pickupStart, "Acme Manufacturing", "TERM-LA", "DC-CHI", "M. Alvarez", shipment.StatusAssigned, true).
 			AddRow("sp_2", "PRO-1002", pickupStart+3600, "FreshHaul Foods", "COLD-SEA", "DC-PDX", "", shipment.StatusNew, false).
-			AddRow("sp_3", "PRO-1003", pickupStart+7200, "Range Logistics", "ATL", "CLT", "A. Romero", shipment.StatusPartiallyAssigned, true))
+			AddRow("sp_3", "PRO-1003", pickupStart+7200, "Range Logistics", "ATL", "CLT", "A. Romero", shipment.StatusPartiallyAssigned, true),
+		)
 
 	card, err := provider.getTomorrowsPickups(t.Context(), tomorrowsPickupsRequest{
 		orgID:  orgID,

@@ -21,13 +21,17 @@ var errNoDocument = errors.New("upload finalization produced no document")
 // generous because a provider under load is slow rather than broken, and the
 // retry is bounded because a message that will not classify after four tries
 // wants a person, not a fifth.
+// settleAttempts bounds the settle's retries. A model that cannot be asked is
+// asked again on each of them; on the last, the message goes to review.
+const settleAttempts = 4
+
 var settleOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: 3 * time.Minute,
 	RetryPolicy: &temporal.RetryPolicy{
 		InitialInterval:    5 * time.Second,
 		BackoffCoefficient: 2,
 		MaximumInterval:    time.Minute,
-		MaximumAttempts:    4,
+		MaximumAttempts:    settleAttempts,
 	},
 }
 

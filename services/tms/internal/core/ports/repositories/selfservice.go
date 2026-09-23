@@ -69,7 +69,10 @@ type GetProfileChangeRequestByIDRequest struct {
 }
 
 type SelfServiceRepository interface {
-	ListPolicies(ctx context.Context, req *ListWorkerPoliciesRequest) ([]*worker.WorkerPolicy, error)
+	ListPolicies(
+		ctx context.Context,
+		req *ListWorkerPoliciesRequest,
+	) ([]*worker.WorkerPolicy, error)
 	GetPolicyByID(
 		ctx context.Context,
 		req *GetWorkerPolicyByIDRequest,

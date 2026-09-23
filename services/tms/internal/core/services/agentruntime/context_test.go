@@ -39,7 +39,12 @@ func TestContextBuilder_ResolvesTheTimezoneWhateverThePromptWants(t *testing.T) 
 	builder := &ContextBuilder{
 		logger:        zap.NewNop(),
 		organizations: orgs,
-		runtime:       newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil),
+		runtime: newRuntime(
+			&scriptedCompletion{},
+			&stubQueryRegistry{},
+			&stubActionRegistry{},
+			nil,
+		),
 	}
 
 	// An empty provider list means every provider. This is the set that used

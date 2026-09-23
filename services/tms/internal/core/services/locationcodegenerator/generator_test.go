@@ -135,7 +135,10 @@ func TestGeneratorBuildPrefix(t *testing.T) {
 				StateAbbreviation: "TX",
 			},
 			strategy: &tenant.LocationCodeStrategy{
-				Components:     []tenant.LocationCodeComponent{tenant.LocationCodeComponentName, tenant.LocationCodeComponentCity},
+				Components: []tenant.LocationCodeComponent{
+					tenant.LocationCodeComponentName,
+					tenant.LocationCodeComponentCity,
+				},
 				ComponentWidth: 2,
 				SequenceDigits: 2,
 				Separator:      "",
@@ -151,7 +154,10 @@ func TestGeneratorBuildPrefix(t *testing.T) {
 				PostalCode: "75201-1234",
 			},
 			strategy: &tenant.LocationCodeStrategy{
-				Components:     []tenant.LocationCodeComponent{tenant.LocationCodeComponentName, tenant.LocationCodeComponentPostalCode},
+				Components: []tenant.LocationCodeComponent{
+					tenant.LocationCodeComponentName,
+					tenant.LocationCodeComponentPostalCode,
+				},
 				ComponentWidth: 3,
 				SequenceDigits: 3,
 				Separator:      "_",

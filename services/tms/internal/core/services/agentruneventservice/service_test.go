@@ -68,7 +68,10 @@ func (f *fakeRepo) ListConnection(
 	return nil, nil
 }
 
-func (f *fakeRepo) Prune(_ context.Context, _ repositories.PruneAgentRunEventsRequest) (int, error) {
+func (f *fakeRepo) Prune(
+	_ context.Context,
+	_ repositories.PruneAgentRunEventsRequest,
+) (int, error) {
 	return 0, nil
 }
 

@@ -397,14 +397,17 @@ func (a *Activities) alertCompliance(
 	correlationID := correlation
 	name := cred.Worker.FirstName + " " + cred.Worker.LastName
 	entity := &notification.Notification{
-		OrganizationID:  tenantInfo.OrgID,
-		BusinessUnitID:  &buID,
-		EventType:       eventType,
-		Channel:         notification.ChannelGlobal,
-		Data:            map[string]any{"link": complianceLink, "workerId": cred.WorkerID.String()},
-		RelatedEntities: map[string]any{"workerId": cred.WorkerID.String(), "credentialId": cred.ID.String()},
-		CorrelationID:   &correlationID,
-		Source:          "compliance_sweep",
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: &buID,
+		EventType:      eventType,
+		Channel:        notification.ChannelGlobal,
+		Data:           map[string]any{"link": complianceLink, "workerId": cred.WorkerID.String()},
+		RelatedEntities: map[string]any{
+			"workerId":     cred.WorkerID.String(),
+			"credentialId": cred.ID.String(),
+		},
+		CorrelationID: &correlationID,
+		Source:        "compliance_sweep",
 	}
 	if expired {
 		entity.Priority = notification.PriorityCritical

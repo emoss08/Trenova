@@ -48,7 +48,10 @@ func newSplitShipment() *splitShipment {
 		Method:              accessorialcharge.MethodFlat,
 		Amount:              decimal.RequireFromString("1154.38"),
 		Unit:                1,
-		AccessorialCharge:   &accessorialcharge.AccessorialCharge{Code: "DET", Description: "Detention Fee"},
+		AccessorialCharge: &accessorialcharge.AccessorialCharge{
+			Code:        "DET",
+			Description: "Detention Fee",
+		},
 	}
 	shp := &shipment.Shipment{
 		ID:                  shipmentID,
@@ -140,11 +143,20 @@ func TestReconcileQueueItems_CreatesForNewPayersAndCancelsForPayersWithNothing(t
 	carrier := pulid.MustNew("cus_")
 	resolution := &shipment.ShareResolution{Shares: []*shipment.PayerShare{
 		{PayerID: f.acme},
-		{PayerID: f.peak, Charges: []shipment.AllocatedCharge{{Kind: shipment.ChargeAllocationKindFreight}}},
-		{PayerID: carrier, Charges: []shipment.AllocatedCharge{{Kind: shipment.ChargeAllocationKindAccessorial}}},
+		{
+			PayerID: f.peak,
+			Charges: []shipment.AllocatedCharge{{Kind: shipment.ChargeAllocationKindFreight}},
+		},
+		{
+			PayerID: carrier,
+			Charges: []shipment.AllocatedCharge{{Kind: shipment.ChargeAllocationKindAccessorial}},
+		},
 	}}
 
-	toCreate, toCancel := reconcileQueueItems(resolution, []*billingqueue.BillingQueueItem{f.acmeItem, f.peakItem})
+	toCreate, toCancel := reconcileQueueItems(
+		resolution,
+		[]*billingqueue.BillingQueueItem{f.acmeItem, f.peakItem},
+	)
 
 	require.Len(t, toCreate, 1)
 	assert.Equal(t, carrier, toCreate[0].PayerID)
@@ -277,7 +289,10 @@ func newReassignHarness(t *testing.T) *reassignHarness {
 	h.customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
-			return &customer.Customer{ID: req.ID, BillingProfile: &customer.CustomerBillingProfile{}}, nil
+			return &customer.Customer{
+				ID:             req.ID,
+				BillingProfile: &customer.CustomerBillingProfile{},
+			}, nil
 		}).
 		Maybe()
 	h.allocRepo.EXPECT().LockedIDs(mock.Anything, mock.Anything, mock.Anything).
@@ -367,7 +382,10 @@ func TestReassignCharge_GivingPeakFreightBackToAcmeCancelsPeaksItem(t *testing.T
 	f := h.f
 	h.expectItem(f.peakItem)
 	h.expectActive(f.acmeItem, f.peakItem)
-	h.allocRepo.EXPECT().SyncForShipment(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	h.allocRepo.EXPECT().
+		SyncForShipment(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).
+		Once()
 
 	var updated *billingqueue.BillingQueueItem
 	h.repo.EXPECT().
@@ -405,11 +423,18 @@ func TestReassignCharge_ANewPayerGetsTheirOwnQueueItem(t *testing.T) {
 		Return(activeCustomers(f.tenantInfo, f.acme, f.peak, carrier), nil).Maybe()
 	h.customerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
-			return &customer.Customer{ID: req.ID, BillingProfile: &customer.CustomerBillingProfile{}}, nil
-		}).Maybe()
+			return &customer.Customer{
+				ID:             req.ID,
+				BillingProfile: &customer.CustomerBillingProfile{},
+			}, nil
+		}).
+		Maybe()
 	h.expectItem(f.acmeItem)
 	h.expectActive(f.acmeItem, f.peakItem)
-	h.allocRepo.EXPECT().SyncForShipment(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	h.allocRepo.EXPECT().
+		SyncForShipment(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).
+		Once()
 
 	var created *billingqueue.BillingQueueItem
 	h.repo.EXPECT().
@@ -606,7 +631,12 @@ func TestUpdateCharges_ConvertsTheStaleSplitAndSavesWhenAsked(t *testing.T) {
 	var percents []string
 	for _, row := range saved.ChargeAllocations {
 		if row.ChargeKind != shipment.ChargeAllocationKindAccessorial {
-			assert.Equal(t, shipment.ChargeAllocationMethodAmount, row.Method, "the balanced freight split is left alone")
+			assert.Equal(
+				t,
+				shipment.ChargeAllocationMethodAmount,
+				row.Method,
+				"the balanced freight split is left alone",
+			)
 			continue
 		}
 		assert.Equal(t, shipment.ChargeAllocationMethodPercent, row.Method)
@@ -633,8 +663,11 @@ func TestUpdateCharges_ConvertsAStaleAmountSplitWhenAsked(t *testing.T) {
 
 	assert.Equal(t, 1, shipment.ConvertAmountSplitsToPercent(stale, stale.ChargeAllocations))
 	assert.Empty(t, shipment.FindStaleAmountSplits(stale, stale.ChargeAllocations))
-	assert.Equal(t, "Charges updated from billing queue; 1 amount split(s) converted to percentages",
-		chargesUpdatedComment(1))
+	assert.Equal(
+		t,
+		"Charges updated from billing queue; 1 amount split(s) converted to percentages",
+		chargesUpdatedComment(1),
+	)
 }
 
 func TestGetByID_AttachesTheItemsOwnBill(t *testing.T) {

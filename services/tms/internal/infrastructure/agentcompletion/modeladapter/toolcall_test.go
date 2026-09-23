@@ -128,9 +128,18 @@ func TestAnthropicAdapter_SendsToolResultAsUserBlock(t *testing.T) {
 			Messages: []Message{
 				{Role: RoleUser, Content: "Where is S12345?"},
 				{Role: RoleAssistant, ToolCalls: []ToolCall{
-					{ID: "toolu_1", Name: "lookup_shipment", Arguments: map[string]any{"number": "S12345"}},
+					{
+						ID:        "toolu_1",
+						Name:      "lookup_shipment",
+						Arguments: map[string]any{"number": "S12345"},
+					},
 				}},
-				{Role: RoleTool, ToolCallID: "toolu_1", ToolName: "lookup_shipment", Content: `{"city":"Memphis"}`},
+				{
+					Role:       RoleTool,
+					ToolCallID: "toolu_1",
+					ToolName:   "lookup_shipment",
+					Content:    `{"city":"Memphis"}`,
+				},
 			},
 			Tools: lookupTool(),
 		},
@@ -318,7 +327,11 @@ func TestOpenAIResponsesAdapter_SendsToolResultAsFunctionCallOutput(t *testing.T
 			Messages: []Message{
 				{Role: RoleUser, Content: "Where is S12345?"},
 				{Role: RoleAssistant, ToolCalls: []ToolCall{
-					{ID: "fc_1", Name: "lookup_shipment", Arguments: map[string]any{"number": "S12345"}},
+					{
+						ID:        "fc_1",
+						Name:      "lookup_shipment",
+						Arguments: map[string]any{"number": "S12345"},
+					},
 				}},
 				{Role: RoleTool, ToolCallID: "fc_1", Content: `{"city":"Memphis"}`},
 			},
@@ -417,9 +430,12 @@ func TestOpenAIChatAdapter_ReplaysProviderDataOnlyToTheProviderThatMadeTheCall(t
 				"role":    "assistant",
 				"content": "",
 				"tool_calls": []map[string]any{{
-					"id":            "call_1",
-					"type":          "function",
-					"function":      map[string]any{"name": "lookup_shipment", "arguments": `{"number":"S1"}`},
+					"id":   "call_1",
+					"type": "function",
+					"function": map[string]any{
+						"name":      "lookup_shipment",
+						"arguments": `{"number":"S1"}`,
+					},
 					"extra_content": signature,
 				}},
 			},
@@ -441,7 +457,12 @@ func TestOpenAIChatAdapter_ReplaysProviderDataOnlyToTheProviderThatMadeTheCall(t
 	followUp := []Message{
 		{Role: RoleUser, Content: "Where is S1?"},
 		{Role: RoleAssistant, ToolCalls: []ToolCall{call}},
-		{Role: RoleTool, ToolCallID: "call_1", ToolName: "lookup_shipment", Content: `{"status":"InTransit"}`},
+		{
+			Role:       RoleTool,
+			ToolCallID: "call_1",
+			ToolName:   "lookup_shipment",
+			Content:    `{"status":"InTransit"}`,
+		},
 	}
 
 	gemini.Request = &Request{Messages: followUp, Tools: lookupTool()}
@@ -450,7 +471,11 @@ func TestOpenAIChatAdapter_ReplaysProviderDataOnlyToTheProviderThatMadeTheCall(t
 	assert.Equal(t, signature, capturedToolCallExtra(t, *captured),
 		"the provider that signed the call gets its signature back")
 
-	other := callFor(aiprovider.KindOpenAIChat, server.URL, &Request{Messages: followUp, Tools: lookupTool()})
+	other := callFor(
+		aiprovider.KindOpenAIChat,
+		server.URL,
+		&Request{Messages: followUp, Tools: lookupTool()},
+	)
 	other.Provider.ID = pulid.MustNew("aip_")
 	_, err = NewOpenAIChatAdapter().Complete(t.Context(), other)
 	require.NoError(t, err)
@@ -490,7 +515,12 @@ func TestOpenAIChatAdapter_SendsGeminiTheBypassForAnUnsignedCall(t *testing.T) {
 
 	history := []Message{
 		{Role: RoleUser, Content: "Where is S1?"},
-		{Role: RoleAssistant, ToolCalls: []ToolCall{{ID: "call_1", Name: "lookup_shipment", Arguments: map[string]any{"number": "S1"}}}},
+		{
+			Role: RoleAssistant,
+			ToolCalls: []ToolCall{
+				{ID: "call_1", Name: "lookup_shipment", Arguments: map[string]any{"number": "S1"}},
+			},
+		},
 		{Role: RoleTool, ToolCallID: "call_1", ToolName: "lookup_shipment", Content: "{}"},
 	}
 

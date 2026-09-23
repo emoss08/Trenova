@@ -117,7 +117,10 @@ type TimesheetRepository interface {
 		from, to int64,
 	) (int, error)
 
-	ListExports(ctx context.Context, req *ListPayrollExportsRequest) ([]*worker.PayrollExport, error)
+	ListExports(
+		ctx context.Context,
+		req *ListPayrollExportsRequest,
+	) ([]*worker.PayrollExport, error)
 	GetExportByID(
 		ctx context.Context,
 		req *GetPayrollExportByIDRequest,

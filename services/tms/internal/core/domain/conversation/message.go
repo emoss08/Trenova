@@ -35,13 +35,13 @@ type Message struct {
 	Role     Role `json:"role"     bun:"role,type:VARCHAR(50),notnull"`
 	// Kind is Message for everything but the note that starts the turn after
 	// a decision; see MessageKind.
-	Kind MessageKind `json:"kind" bun:"kind,type:VARCHAR(50),notnull,default:'Message'"`
+	Kind MessageKind `json:"kind"     bun:"kind,type:VARCHAR(50),notnull,default:'Message'"`
 
 	Content string `json:"content" bun:"content,type:TEXT,nullzero"`
 
 	// ToolCalls is what an assistant turn asked for, stored as the normalized
 	// shape rather than any one provider's wire format.
-	ToolCalls []ToolCallRecord `json:"toolCalls" bun:"tool_calls,type:jsonb,nullzero"`
+	ToolCalls []ToolCallRecord `json:"toolCalls"  bun:"tool_calls,type:jsonb,nullzero"`
 	// ToolCallID and ToolName tie a Tool-role message to the call it answers.
 	ToolCallID string `json:"toolCallId" bun:"tool_call_id,type:VARCHAR(200),nullzero"`
 	ToolName   string `json:"toolName"   bun:"tool_name,type:VARCHAR(200),nullzero"`
@@ -76,8 +76,8 @@ type Message struct {
 	OutputTokens int      `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0"`
 	// LatencyMs is how long the model took to answer this turn; CostUSD is
 	// what it cost at the provider's price, nil where no price is configured.
-	LatencyMs int64            `json:"latencyMs" bun:"latency_ms,type:BIGINT,nullzero"`
-	CostUSD   *decimal.Decimal `json:"costUsd"   bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
+	LatencyMs int64            `json:"latencyMs"    bun:"latency_ms,type:BIGINT,nullzero"`
+	CostUSD   *decimal.Decimal `json:"costUsd"      bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
 
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

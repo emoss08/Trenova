@@ -64,13 +64,20 @@ func pendingUnion(req repositories.ListPendingDecisionsRequest) *unionQuery {
 			" ON " + runs.ID.Qualified() + " = " + ownerRun +
 			" AND " + runs.OrganizationID.Qualified() + " = " + ownerOrg +
 			" AND " + runs.BusinessUnitID.Qualified() + " = " + ownerBU)
-		u.write(" LEFT JOIN " + buncolgen.DefinitionTable.Name + " AS " + buncolgen.DefinitionTable.Alias +
-			" ON " + definitions.ID.Qualified() + " = " + runs.AgentDefinitionID.Qualified() +
-			" AND " + definitions.OrganizationID.Qualified() + " = " + runs.OrganizationID.Qualified() +
-			" AND " + definitions.BusinessUnitID.Qualified() + " = " + runs.BusinessUnitID.Qualified())
+		u.write(
+			" LEFT JOIN " + buncolgen.DefinitionTable.Name + " AS " + buncolgen.DefinitionTable.Alias +
+				" ON " + definitions.ID.Qualified() + " = " + runs.AgentDefinitionID.Qualified() +
+				" AND " + definitions.OrganizationID.Qualified() + " = " + runs.OrganizationID.Qualified() +
+				" AND " + definitions.BusinessUnitID.Qualified() + " = " + runs.BusinessUnitID.Qualified(),
+		)
 	}
 	commonWhere := func(org, bu, status, expiresAt string) {
-		u.write(" WHERE "+org+" = ? AND "+bu+" = ? AND "+status+" = ?", req.TenantInfo.OrgID, req.TenantInfo.BuID, agent.ProposalStatusPending)
+		u.write(
+			" WHERE "+org+" = ? AND "+bu+" = ? AND "+status+" = ?",
+			req.TenantInfo.OrgID,
+			req.TenantInfo.BuID,
+			agent.ProposalStatusPending,
+		)
 		u.write(" AND ("+expiresAt+" IS NULL OR "+expiresAt+" = 0 OR "+expiresAt+" > ?)", req.Now)
 		if !req.AgentDefinitionID.IsNil() {
 			u.write(" AND "+runs.AgentDefinitionID.Qualified()+" = ?", req.AgentDefinitionID)

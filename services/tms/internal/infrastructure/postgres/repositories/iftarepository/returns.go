@@ -324,7 +324,10 @@ func (r *repository) ReplaceReturnLines(
 	return ret, nil
 }
 
-func (r *repository) DeleteReturn(ctx context.Context, req *repositories.DeleteReturnRequest) error {
+func (r *repository) DeleteReturn(
+	ctx context.Context,
+	req *repositories.DeleteReturnRequest,
+) error {
 	cols := buncolgen.ReturnColumns
 	lineCols := buncolgen.ReturnLineColumns
 

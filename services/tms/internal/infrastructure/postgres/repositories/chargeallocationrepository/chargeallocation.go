@@ -140,7 +140,10 @@ func (r *repository) syncShipmentRows(
 // normalize seats tenancy and the charge target on a row. A row that arrived
 // pointing at a charge by position takes that charge's freshly minted id, which
 // is what lets a new accessorial and its split be saved together.
-func (r *repository) normalize(entity *shipment.Shipment, allocation *shipment.ChargeAllocation) error {
+func (r *repository) normalize(
+	entity *shipment.Shipment,
+	allocation *shipment.ChargeAllocation,
+) error {
 	allocation.OrganizationID = entity.OrganizationID
 	allocation.BusinessUnitID = entity.BusinessUnitID
 	shipmentID := entity.ID
@@ -154,7 +157,8 @@ func (r *repository) normalize(entity *shipment.Shipment, allocation *shipment.C
 	case shipment.ChargeAllocationKindAccessorial:
 		if allocation.AdditionalChargeIndex != nil {
 			idx := *allocation.AdditionalChargeIndex
-			if idx < 0 || idx >= len(entity.AdditionalCharges) || entity.AdditionalCharges[idx] == nil ||
+			if idx < 0 || idx >= len(entity.AdditionalCharges) ||
+				entity.AdditionalCharges[idx] == nil ||
 				entity.AdditionalCharges[idx].ID.IsNil() {
 				return errortypes.NewValidationError(
 					"chargeAllocations",
@@ -193,7 +197,11 @@ func (r *repository) normalize(entity *shipment.Shipment, allocation *shipment.C
 	return nil
 }
 
-func (r *repository) insert(ctx context.Context, tx bun.IDB, allocation *shipment.ChargeAllocation) error {
+func (r *repository) insert(
+	ctx context.Context,
+	tx bun.IDB,
+	allocation *shipment.ChargeAllocation,
+) error {
 	if _, err := tx.NewInsert().Model(allocation).Returning("*").Exec(ctx); err != nil {
 		return fmt.Errorf("insert charge allocation %s: %w", allocation.ID, err)
 	}

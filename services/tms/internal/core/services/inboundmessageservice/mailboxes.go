@@ -150,7 +150,10 @@ func (s *Service) getMailbox(
 	id pulid.ID,
 	tenant pagination.TenantInfo,
 ) (*inboundmessage.Mailbox, error) {
-	return s.mailboxRepo.GetByID(ctx, repositories.GetMailboxByIDRequest{ID: id, TenantInfo: tenant})
+	return s.mailboxRepo.GetByID(
+		ctx,
+		repositories.GetMailboxByIDRequest{ID: id, TenantInfo: tenant},
+	)
 }
 
 // CreateMailbox mints the mailbox's webhook token and returns it once. Only its
@@ -255,7 +258,13 @@ func (s *Service) RotateMailboxToken(
 		return nil, err
 	}
 
-	s.auditMailbox(req.Actor, permission.OpUpdate, original, updated, "Mailbox webhook token rotated")
+	s.auditMailbox(
+		req.Actor,
+		permission.OpUpdate,
+		original,
+		updated,
+		"Mailbox webhook token rotated",
+	)
 
 	return &MailboxCredentials{Mailbox: updated, Token: token}, nil
 }

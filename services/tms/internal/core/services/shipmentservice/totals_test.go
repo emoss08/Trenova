@@ -207,7 +207,9 @@ func TestServiceCalculateTotals_CalculatesPerUnitAndPercentageCharges(t *testing
 	assert.True(t, decimal.NewFromInt(43).Equal(resp.TotalChargeAmount))
 }
 
-func TestServiceCalculateTotals_UsesAdditionalChargeOverridesForFormulaOtherChargeAmount(t *testing.T) {
+func TestServiceCalculateTotals_UsesAdditionalChargeOverridesForFormulaOtherChargeAmount(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	entity := validShipmentForValidation()

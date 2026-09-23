@@ -95,9 +95,17 @@ func TestBuildInvoiceEntityLeavesTheShipperOffAConsolidatedInvoice(t *testing.T)
 	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(params)
 
 	require.NotNil(t, entity)
-	assert.True(t, entity.ShipperCustomerID.IsNil(), "a statement spans shippers; the lines carry it")
+	assert.True(
+		t,
+		entity.ShipperCustomerID.IsNil(),
+		"a statement spans shippers; the lines carry it",
+	)
 	assert.True(t, entity.IsSplitBill)
-	assert.True(t, entity.TotalAmount.Equal(decimal.NewFromInt(200)), "half of 100 plus half of 300")
+	assert.True(
+		t,
+		entity.TotalAmount.Equal(decimal.NewFromInt(200)),
+		"half of 100 plus half of 300",
+	)
 	require.Len(t, entity.Lines, 2)
 	for _, line := range entity.Lines {
 		assert.True(t, line.IsPartialShare())
@@ -140,7 +148,9 @@ func TestBuildInvoiceEntityBillsTheOrderChargeShare(t *testing.T) {
 		},
 	}
 	// Legacy order charges are ignored once a share is supplied.
-	params.OrderCharges = []*order.OrderCharge{{Description: "Ignored", Amount: decimal.NewFromInt(999)}}
+	params.OrderCharges = []*order.OrderCharge{
+		{Description: "Ignored", Amount: decimal.NewFromInt(999)},
+	}
 
 	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(params)
 
@@ -160,7 +170,11 @@ func TestOrderChargeShareFor(t *testing.T) {
 	other := pulid.MustNew("cus_")
 	fuelID := pulid.MustNew("ordchg_")
 	charges := []*order.OrderCharge{
-		{ID: pulid.MustNew("ordchg_"), Description: "Customs brokerage", Amount: decimal.NewFromInt(250)},
+		{
+			ID:          pulid.MustNew("ordchg_"),
+			Description: "Customs brokerage",
+			Amount:      decimal.NewFromInt(250),
+		},
 		{
 			ID:          fuelID,
 			Description: "Order fuel",

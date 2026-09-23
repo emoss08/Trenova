@@ -47,13 +47,21 @@ func TestStepKey_SeparatesRunsAndRepeats(t *testing.T) {
 	t.Parallel()
 
 	args := map[string]any{"to": "ops@example.com"}
-	mine := StepKey(StepKeyParams{OwnerID: pulid.MustNew("ar_"), ToolName: "email_customer", Args: args})
-	theirs := StepKey(StepKeyParams{OwnerID: pulid.MustNew("ar_"), ToolName: "email_customer", Args: args})
+	mine := StepKey(
+		StepKeyParams{OwnerID: pulid.MustNew("ar_"), ToolName: "email_customer", Args: args},
+	)
+	theirs := StepKey(
+		StepKeyParams{OwnerID: pulid.MustNew("ar_"), ToolName: "email_customer", Args: args},
+	)
 	assert.NotEqual(t, mine, theirs, "two runs asking for the same write are two writes")
 
 	owner := pulid.MustNew("ar_")
-	first := StepKey(StepKeyParams{OwnerID: owner, ToolName: "email_customer", Args: args, Ordinal: 0})
-	again := StepKey(StepKeyParams{OwnerID: owner, ToolName: "email_customer", Args: args, Ordinal: 1})
+	first := StepKey(
+		StepKeyParams{OwnerID: owner, ToolName: "email_customer", Args: args, Ordinal: 0},
+	)
+	again := StepKey(
+		StepKeyParams{OwnerID: owner, ToolName: "email_customer", Args: args, Ordinal: 1},
+	)
 	assert.NotEqual(t, first, again,
 		"two identical reminders are two reminders, not one asked for twice")
 }

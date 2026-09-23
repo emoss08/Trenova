@@ -24,7 +24,10 @@ const (
 // bankReceiptMatcher is the slice of the bank receipt service the write
 // tools use: read one receipt, and match it to a payment.
 type bankReceiptMatcher interface {
-	Get(ctx context.Context, req *serviceports.GetBankReceiptRequest) (*bankreceipt.BankReceipt, error)
+	Get(
+		ctx context.Context,
+		req *serviceports.GetBankReceiptRequest,
+	) (*bankreceipt.BankReceipt, error)
 	Match(
 		ctx context.Context,
 		req *serviceports.MatchBankReceiptRequest,
@@ -33,7 +36,10 @@ type bankReceiptMatcher interface {
 }
 
 type customerPaymentReader interface {
-	Get(ctx context.Context, req *serviceports.GetCustomerPaymentRequest) (*customerpayment.Payment, error)
+	Get(
+		ctx context.Context,
+		req *serviceports.GetCustomerPaymentRequest,
+	) (*customerpayment.Payment, error)
 }
 
 type customerPaymentPoster interface {
@@ -45,7 +51,10 @@ type customerPaymentPoster interface {
 }
 
 type workItemResolver interface {
-	Get(ctx context.Context, req *serviceports.GetBankReceiptWorkItemRequest) (*bankreceiptworkitem.WorkItem, error)
+	Get(
+		ctx context.Context,
+		req *serviceports.GetBankReceiptWorkItemRequest,
+	) (*bankreceiptworkitem.WorkItem, error)
 	Resolve(
 		ctx context.Context,
 		req *serviceports.ResolveBankReceiptWorkItemRequest,
@@ -126,7 +135,10 @@ func (t *matchBankReceiptTool) Target(params map[string]any) (serviceports.ToolT
 	return serviceports.ToolTarget{Resource: permission.ResourceBankReceipt, ID: id}, true
 }
 
-func (t *matchBankReceiptTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *matchBankReceiptTool) Execute(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	receiptID, paymentID, err := t.arguments(params)
 	if err != nil {
 		return err
@@ -151,7 +163,10 @@ func (t *matchBankReceiptTool) Simulate(
 	}
 
 	tenant := tenantFrom(params)
-	receipt, err := t.receipts.Get(ctx, &serviceports.GetBankReceiptRequest{ReceiptID: receiptID, TenantInfo: tenant})
+	receipt, err := t.receipts.Get(
+		ctx,
+		&serviceports.GetBankReceiptRequest{ReceiptID: receiptID, TenantInfo: tenant},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -159,12 +174,19 @@ func (t *matchBankReceiptTool) Simulate(
 		return nil, fmt.Errorf("bank receipt %s is already matched", receiptID)
 	}
 
-	payment, err := t.payments.Get(ctx, &serviceports.GetCustomerPaymentRequest{PaymentID: paymentID, TenantInfo: tenant})
+	payment, err := t.payments.Get(
+		ctx,
+		&serviceports.GetCustomerPaymentRequest{PaymentID: paymentID, TenantInfo: tenant},
+	)
 	if err != nil {
 		return nil, err
 	}
 	if payment.Status != customerpayment.StatusPosted {
-		return nil, fmt.Errorf("customer payment %s is %s, and only a posted payment can be matched", paymentID, payment.Status)
+		return nil, fmt.Errorf(
+			"customer payment %s is %s, and only a posted payment can be matched",
+			paymentID,
+			payment.Status,
+		)
 	}
 	if payment.AmountMinor != receipt.AmountMinor {
 		return nil, fmt.Errorf(
@@ -182,13 +204,19 @@ func (t *matchBankReceiptTool) Simulate(
 		Changes: []agent.FieldChange{
 			{Field: "status", From: string(receipt.Status), To: string(bankreceipt.StatusMatched)},
 			{Field: "matchedCustomerPaymentId", From: "", To: paymentID.String()},
-			{Field: "workItem", From: "active", To: string(bankreceiptworkitem.ResolutionMatchedToPayment)},
+			{
+				Field: "workItem",
+				From:  "active",
+				To:    string(bankreceiptworkitem.ResolutionMatchedToPayment),
+			},
 		},
 		Previewed: true,
 	}, nil
 }
 
-func (t *matchBankReceiptTool) arguments(params serviceports.ToolExecuteParams) (pulid.ID, pulid.ID, error) {
+func (t *matchBankReceiptTool) arguments(
+	params serviceports.ToolExecuteParams,
+) (pulid.ID, pulid.ID, error) {
 	if err := guardExecute(t, params); err != nil {
 		return "", "", err
 	}
@@ -221,7 +249,11 @@ func newPostCustomerPaymentTool(
 	receipts bankReceiptMatcher,
 	permissions serviceports.PermissionEngine,
 ) serviceports.AgentTool {
-	return &postCustomerPaymentTool{payments: payments, receipts: receipts, permissions: permissions}
+	return &postCustomerPaymentTool{
+		payments:    payments,
+		receipts:    receipts,
+		permissions: permissions,
+	}
 }
 
 func (t *postCustomerPaymentTool) Name() string { return "post_customer_payment" }
@@ -333,7 +365,10 @@ type postPaymentArgs struct {
 	receiptID pulid.ID
 }
 
-func (t *postCustomerPaymentTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *postCustomerPaymentTool) Execute(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	args, err := t.arguments(ctx, params)
 	if err != nil {
 		return err
@@ -374,22 +409,34 @@ func (t *postCustomerPaymentTool) Simulate(
 	req := args.request
 	applied := int64(0)
 	changes := make([]agent.FieldChange, 0, len(req.Applications)+3)
-	changes = append(changes,
-		agent.FieldChange{Field: "customer " + req.CustomerID.String(), To: "payment of " + money.DecimalFromMinor(req.AmountMinor).StringFixed(2)},
+	changes = append(
+		changes,
+		agent.FieldChange{
+			Field: "customer " + req.CustomerID.String(),
+			To:    "payment of " + money.DecimalFromMinor(req.AmountMinor).StringFixed(2),
+		},
 	)
 	for _, application := range req.Applications {
 		applied += application.AppliedAmountMinor
 		change := agent.FieldChange{
 			Field: "invoice " + application.InvoiceID.String(),
-			To:    "applied " + money.DecimalFromMinor(application.AppliedAmountMinor).StringFixed(2),
+			To: "applied " + money.DecimalFromMinor(application.AppliedAmountMinor).
+				StringFixed(2),
 		}
 		if application.ShortPayAmountMinor > 0 {
-			change.To += ", short pay " + money.DecimalFromMinor(application.ShortPayAmountMinor).StringFixed(2)
+			change.To += ", short pay " + money.DecimalFromMinor(application.ShortPayAmountMinor).
+				StringFixed(2)
 		}
 		changes = append(changes, change)
 	}
 	if unapplied := req.AmountMinor - applied; unapplied > 0 {
-		changes = append(changes, agent.FieldChange{Field: "unapplied cash", To: money.DecimalFromMinor(unapplied).StringFixed(2)})
+		changes = append(
+			changes,
+			agent.FieldChange{
+				Field: "unapplied cash",
+				To:    money.DecimalFromMinor(unapplied).StringFixed(2),
+			},
+		)
 	}
 	summary := fmt.Sprintf(
 		"Would record a %s %s payment from customer %s applied to %s.",
@@ -433,7 +480,11 @@ func (t *postCustomerPaymentTool) arguments(
 	if raw := optionalString(params.Params, "paymentMethod"); raw != "" {
 		method = customerpayment.Method(raw)
 		if !method.IsValid() {
-			return postPaymentArgs{}, fmt.Errorf("paymentMethod %q is not one of %s", raw, strings.Join(paymentMethodNames(), ", "))
+			return postPaymentArgs{}, fmt.Errorf(
+				"paymentMethod %q is not one of %s",
+				raw,
+				strings.Join(paymentMethodNames(), ", "),
+			)
 		}
 	}
 
@@ -468,7 +519,10 @@ func (t *postCustomerPaymentTool) arguments(
 	if err = t.authorizeMatch(ctx, params.Actor); err != nil {
 		return postPaymentArgs{}, err
 	}
-	receipt, err := t.receipts.Get(ctx, &serviceports.GetBankReceiptRequest{ReceiptID: receiptID, TenantInfo: tenant})
+	receipt, err := t.receipts.Get(
+		ctx,
+		&serviceports.GetBankReceiptRequest{ReceiptID: receiptID, TenantInfo: tenant},
+	)
 	if err != nil {
 		return postPaymentArgs{}, err
 	}
@@ -490,9 +544,14 @@ func (t *postCustomerPaymentTool) arguments(
 	return args, nil
 }
 
-func (t *postCustomerPaymentTool) authorizeMatch(ctx context.Context, actor *serviceports.RequestActor) error {
+func (t *postCustomerPaymentTool) authorizeMatch(
+	ctx context.Context,
+	actor *serviceports.RequestActor,
+) error {
 	if t.permissions == nil {
-		return fmt.Errorf("matching the bank receipt could not be authorized; post the payment without bankReceiptId and match it with match_bank_receipt")
+		return fmt.Errorf(
+			"matching the bank receipt could not be authorized; post the payment without bankReceiptId and match it with match_bank_receipt",
+		)
 	}
 
 	result, err := t.permissions.Check(ctx, &serviceports.PermissionCheckRequest{
@@ -509,7 +568,9 @@ func (t *postCustomerPaymentTool) authorizeMatch(ctx context.Context, actor *ser
 		return fmt.Errorf("authorize bank receipt match: %w", err)
 	}
 	if !result.Allowed {
-		return fmt.Errorf("the person you are working for may not match bank receipts; post the payment without bankReceiptId")
+		return fmt.Errorf(
+			"the person you are working for may not match bank receipts; post the payment without bankReceiptId",
+		)
 	}
 
 	return nil
@@ -528,7 +589,11 @@ func paymentApplications(
 		return nil, fmt.Errorf("applications must be a list of {invoiceId, amount}")
 	}
 	if len(entries) > maxPaymentApplications {
-		return nil, fmt.Errorf("applications lists %d invoices; at most %d can be applied in one payment", len(entries), maxPaymentApplications)
+		return nil, fmt.Errorf(
+			"applications lists %d invoices; at most %d can be applied in one payment",
+			len(entries),
+			maxPaymentApplications,
+		)
 	}
 
 	applications := make([]*serviceports.CustomerPaymentApplicationInput, 0, len(entries))
@@ -537,7 +602,10 @@ func paymentApplications(
 	for idx, entry := range entries {
 		fields, ok := entry.(map[string]any)
 		if !ok {
-			return nil, fmt.Errorf("applications[%d] must be an object with invoiceId and amount", idx)
+			return nil, fmt.Errorf(
+				"applications[%d] must be an object with invoiceId and amount",
+				idx,
+			)
 		}
 		invoiceID, err := requirePulid(fields, "invoiceId")
 		if err != nil {
@@ -565,7 +633,9 @@ func paymentApplications(
 	if total > amount {
 		return nil, fmt.Errorf(
 			"the applications total %s, more than the %s payment",
-			money.DecimalFromMinor(total).StringFixed(2), money.DecimalFromMinor(amount).StringFixed(2),
+			money.DecimalFromMinor(total).
+				StringFixed(2),
+			money.DecimalFromMinor(amount).StringFixed(2),
 		)
 	}
 
@@ -609,7 +679,10 @@ func (t *resolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"workItemId": map[string]any{"type": "string", "description": "The work item's id, from get_bank_receipt."},
+			"workItemId": map[string]any{
+				"type":        "string",
+				"description": "The work item's id, from get_bank_receipt.",
+			},
 			"resolution": map[string]any{
 				"type": "string",
 				"enum": []string{
@@ -620,8 +693,11 @@ func (t *resolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
 					"RequiresExternalFollowUp when a person must ask the payer.",
 			},
 			"note": map[string]any{
-				"type":        "string",
-				"description": fmt.Sprintf("Why, and what a person should do next, at most %d characters.", maxResolutionNoteChars),
+				"type": "string",
+				"description": fmt.Sprintf(
+					"Why, and what a person should do next, at most %d characters.",
+					maxResolutionNoteChars,
+				),
 			},
 		},
 		"required":             []string{"workItemId", "resolution", "note"},
@@ -645,7 +721,9 @@ func (t *resolveBankReceiptWorkItemTool) DefaultAutonomyTier() agent.AutonomyTie
 	return agent.TierActWithApproval
 }
 
-func (t *resolveBankReceiptWorkItemTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *resolveBankReceiptWorkItemTool) Target(
+	params map[string]any,
+) (serviceports.ToolTarget, bool) {
 	id, err := requirePulid(params, "workItemId")
 	if err != nil {
 		return serviceports.ToolTarget{}, false
@@ -660,7 +738,10 @@ type resolveWorkItemArgs struct {
 	note       string
 }
 
-func (t *resolveBankReceiptWorkItemTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *resolveBankReceiptWorkItemTool) Execute(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	args, err := t.arguments(params)
 	if err != nil {
 		return err
@@ -716,14 +797,20 @@ func (t *resolveBankReceiptWorkItemTool) Simulate(
 		Summary: fmt.Sprintf("Would close work item %s as %s.", args.id, args.resolution),
 		Changes: []agent.FieldChange{
 			{Field: "status", From: string(item.Status), To: string(to)},
-			{Field: "resolutionType", From: string(item.ResolutionType), To: string(args.resolution)},
+			{
+				Field: "resolutionType",
+				From:  string(item.ResolutionType),
+				To:    string(args.resolution),
+			},
 			{Field: "resolutionNote", From: item.ResolutionNote, To: args.note},
 		},
 		Previewed: true,
 	}, nil
 }
 
-func (t *resolveBankReceiptWorkItemTool) arguments(params serviceports.ToolExecuteParams) (resolveWorkItemArgs, error) {
+func (t *resolveBankReceiptWorkItemTool) arguments(
+	params serviceports.ToolExecuteParams,
+) (resolveWorkItemArgs, error) {
 	if err := guardExecute(t, params); err != nil {
 		return resolveWorkItemArgs{}, err
 	}
@@ -735,7 +822,8 @@ func (t *resolveBankReceiptWorkItemTool) arguments(params serviceports.ToolExecu
 
 	resolution := bankreceiptworkitem.ResolutionType(optionalString(params.Params, "resolution"))
 	switch resolution {
-	case bankreceiptworkitem.ResolutionRequiresExternalFollowUp, bankreceiptworkitem.ResolutionMarkedFalsePositive:
+	case bankreceiptworkitem.ResolutionRequiresExternalFollowUp,
+		bankreceiptworkitem.ResolutionMarkedFalsePositive:
 	default:
 		return resolveWorkItemArgs{}, fmt.Errorf(
 			"resolution must be %s or %s; to match the receipt use match_bank_receipt",
@@ -750,7 +838,10 @@ func (t *resolveBankReceiptWorkItemTool) arguments(params serviceports.ToolExecu
 	}
 	note = strings.TrimSpace(note)
 	if len(note) > maxResolutionNoteChars {
-		return resolveWorkItemArgs{}, fmt.Errorf("note must be at most %d characters", maxResolutionNoteChars)
+		return resolveWorkItemArgs{}, fmt.Errorf(
+			"note must be at most %d characters",
+			maxResolutionNoteChars,
+		)
 	}
 
 	return resolveWorkItemArgs{id: id, resolution: resolution, note: note}, nil

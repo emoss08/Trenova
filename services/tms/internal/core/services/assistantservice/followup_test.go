@@ -50,7 +50,7 @@ func TestSendMessageStream_AnswersADecision(t *testing.T) {
 	svc, conversations, completion := followUpService(t, proposal)
 	actor := testActor()
 
-	result, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	result, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:           conversations.thread.ID,
 		FollowUpProposalID: proposal.ID,
 		TenantInfo:         actor.TenantInfo(),
@@ -81,7 +81,7 @@ func TestSendMessageStream_SaysWhyAnApprovedChangeFailed(t *testing.T) {
 	svc, conversations, _ := followUpService(t, proposal)
 	actor := testActor()
 
-	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:           conversations.thread.ID,
 		FollowUpProposalID: proposal.ID,
 		TenantInfo:         actor.TenantInfo(),
@@ -107,7 +107,7 @@ func TestSendMessageStream_RefusesAFollowUpThatCannotBeAnswered(t *testing.T) {
 	}
 	actor := testActor()
 	send := func(svc *Service, threadID, proposalID pulid.ID, content string) error {
-		_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+		_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 			ThreadID:           threadID,
 			Content:            content,
 			FollowUpProposalID: proposalID,
@@ -172,7 +172,7 @@ func TestSendMessageStream_AnswersAPlanDecision(t *testing.T) {
 	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{plan}}
 	actor := testActor()
 
-	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:       conversations.thread.ID,
 		FollowUpPlanID: plan.ID,
 		TenantInfo:     actor.TenantInfo(),
@@ -199,7 +199,7 @@ func TestSendMessageStream_RefusesAPlanFollowUpThatCannotBeAnswered(t *testing.T
 	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{pending}}
 	actor := testActor()
 
-	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:       conversations.thread.ID,
 		FollowUpPlanID: pending.ID,
 		TenantInfo:     actor.TenantInfo(),
@@ -207,7 +207,7 @@ func TestSendMessageStream_RefusesAPlanFollowUpThatCannotBeAnswered(t *testing.T
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 
-	_, err = svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	_, err = svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:           conversations.thread.ID,
 		FollowUpPlanID:     pending.ID,
 		FollowUpProposalID: pulid.MustNew("ap_"),

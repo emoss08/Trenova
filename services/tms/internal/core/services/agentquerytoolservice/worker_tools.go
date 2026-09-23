@@ -132,7 +132,10 @@ func workerDetailFrom(
 		if access.visible(permission.ResourceWorker, field, ceiling) {
 			return true
 		}
-		if access.registry.GetFieldSensitivity(permission.ResourceWorker.String(), field) != permission.SensitivityConfidential {
+		if access.registry.GetFieldSensitivity(
+			permission.ResourceWorker.String(),
+			field,
+		) != permission.SensitivityConfidential {
 			row.Withheld = append(row.Withheld, field)
 		}
 
@@ -155,7 +158,9 @@ func workerDetailFrom(
 		row.PhoneNumber = entity.PhoneNumber
 	}
 	if show("emergencyContactName") && show("emergencyContactPhone") {
-		row.Emergency = strings.TrimSpace(entity.EmergencyContactName + " " + entity.EmergencyContactPhone)
+		row.Emergency = strings.TrimSpace(
+			entity.EmergencyContactName + " " + entity.EmergencyContactPhone,
+		)
 	}
 
 	profile := entity.Profile

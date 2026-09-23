@@ -23,22 +23,28 @@ func trainingCourseFromInput(
 	}
 
 	entity := &worker.TrainingCourse{
-		ID:                      id,
-		OrganizationID:          tenantInfo.OrgID,
-		BusinessUnitID:          tenantInfo.BuID,
-		Code:                    strings.TrimSpace(input.Code),
-		Name:                    strings.TrimSpace(input.Name),
-		Description:             strings.TrimSpace(stringValue(input.Description)),
-		Category:                input.Category,
-		Status:                  input.Status,
-		Delivery:                input.Delivery,
-		ContentURL:              strings.TrimSpace(stringValue(input.ContentURL)),
-		DurationMinutes:         int32(input.DurationMinutes), //nolint:gosec // bounded by validation
-		PassingScore:            passingScore,
-		RenewalWindowDays:       int32(input.RenewalWindowDays), //nolint:gosec // bounded by validation
-		IsRequired:              input.IsRequired,
-		RequiredForDriverTypes:  input.RequiredForDriverTypes,
-		DueDaysAfterAssignment:  int32(input.DueDaysAfterAssignment), //nolint:gosec // bounded by validation
+		ID:             id,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		Code:           strings.TrimSpace(input.Code),
+		Name:           strings.TrimSpace(input.Name),
+		Description:    strings.TrimSpace(stringValue(input.Description)),
+		Category:       input.Category,
+		Status:         input.Status,
+		Delivery:       input.Delivery,
+		ContentURL:     strings.TrimSpace(stringValue(input.ContentURL)),
+		DurationMinutes: int32(
+			input.DurationMinutes,
+		), //nolint:gosec // bounded by validation
+		PassingScore: passingScore,
+		RenewalWindowDays: int32(
+			input.RenewalWindowDays,
+		), //nolint:gosec // bounded by validation
+		IsRequired:             input.IsRequired,
+		RequiredForDriverTypes: input.RequiredForDriverTypes,
+		DueDaysAfterAssignment: int32(
+			input.DueDaysAfterAssignment,
+		), //nolint:gosec // bounded by validation
 		RequiresAcknowledgement: input.RequiresAcknowledgement,
 		SortOrder:               int32(intValue(input.SortOrder)), //nolint:gosec // small ordinal
 		Version:                 int64(intValue(input.Version)),
@@ -63,19 +69,35 @@ func completeTrainingRequestFromInput(
 ) (*workertrainingservice.CompleteRequest, error) {
 	recordID, err := optionalID(input.ID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Training record is invalid")
+		return nil, errortypes.NewValidationError(
+			"id",
+			errortypes.ErrInvalid,
+			"Training record is invalid",
+		)
 	}
 	workerID, err := optionalID(input.WorkerID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
+		return nil, errortypes.NewValidationError(
+			"workerId",
+			errortypes.ErrInvalid,
+			"Worker is invalid",
+		)
 	}
 	courseID, err := optionalID(input.CourseID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("courseId", errortypes.ErrInvalid, "Course is invalid")
+		return nil, errortypes.NewValidationError(
+			"courseId",
+			errortypes.ErrInvalid,
+			"Course is invalid",
+		)
 	}
 	documentID, err := optionalID(input.DocumentID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Document is invalid")
+		return nil, errortypes.NewValidationError(
+			"documentId",
+			errortypes.ErrInvalid,
+			"Document is invalid",
+		)
 	}
 	score, err := parseNullDecimalField("score", input.Score)
 	if err != nil {

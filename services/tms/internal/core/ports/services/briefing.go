@@ -46,13 +46,41 @@ type ListBriefingsRequest struct {
 	Limit      int
 }
 
+// BriefingDayWriter writes a day's briefing on a worker, for a person waiting
+// on the page.
+type BriefingDayWriter interface {
+	WriteForDay(ctx context.Context, req WriteBriefingRequest) (*WriteBriefingResult, error)
+}
+
 type BriefingService interface {
 	WriteForDay(ctx context.Context, req WriteBriefingRequest) (*WriteBriefingResult, error)
 	// Today is the reader's page for the organization's current day, or
 	// nil when the morning job has not run yet.
-	Today(ctx context.Context, req GetBriefingRequest, actor *RequestActor) (*briefing.Briefing, error)
-	Get(ctx context.Context, tenant pagination.TenantInfo, id pulid.ID, actor *RequestActor) (*briefing.Briefing, error)
-	List(ctx context.Context, req ListBriefingsRequest, actor *RequestActor) ([]*briefing.Briefing, error)
-	MarkRead(ctx context.Context, tenant pagination.TenantInfo, id pulid.ID, actor *RequestActor) (*briefing.Briefing, error)
-	Regenerate(ctx context.Context, req GetBriefingRequest, actor *RequestActor) (*briefing.Briefing, error)
+	Today(
+		ctx context.Context,
+		req GetBriefingRequest,
+		actor *RequestActor,
+	) (*briefing.Briefing, error)
+	Get(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		id pulid.ID,
+		actor *RequestActor,
+	) (*briefing.Briefing, error)
+	List(
+		ctx context.Context,
+		req ListBriefingsRequest,
+		actor *RequestActor,
+	) ([]*briefing.Briefing, error)
+	MarkRead(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		id pulid.ID,
+		actor *RequestActor,
+	) (*briefing.Briefing, error)
+	Regenerate(
+		ctx context.Context,
+		req GetBriefingRequest,
+		actor *RequestActor,
+	) (*briefing.Briefing, error)
 }

@@ -403,7 +403,11 @@ func TestServerFormSubmissionListIncludesFixtureAndGeneratedRecords(t *testing.T
 	byID := performAuthorizedRequest(srv, http.MethodGet, "/form-submissions?ids="+generatedID)
 	byIDRecords := mustReadDataRecords(t, byID.Body.Bytes())
 	if len(byIDRecords) != 1 || stringValue(byIDRecords[0], "id") != generatedID {
-		t.Fatalf("expected generated submission %q via ids lookup, got %v", generatedID, byIDRecords)
+		t.Fatalf(
+			"expected generated submission %q via ids lookup, got %v",
+			generatedID,
+			byIDRecords,
+		)
 	}
 }
 

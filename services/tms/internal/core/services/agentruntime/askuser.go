@@ -271,9 +271,12 @@ func askOptionsFrom(arguments map[string]any) []askOption {
 		}
 
 		options = append(options, askOption{
-			Value:  value,
-			Label:  truncateRunes(label, maxAskLabelChars),
-			Detail: truncateRunes(strings.TrimSpace(stringArg(fields, "detail")), maxAskLabelChars*2),
+			Value: value,
+			Label: truncateRunes(label, maxAskLabelChars),
+			Detail: truncateRunes(
+				strings.TrimSpace(stringArg(fields, "detail")),
+				maxAskLabelChars*2,
+			),
 		})
 	}
 

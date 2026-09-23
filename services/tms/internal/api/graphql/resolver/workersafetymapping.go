@@ -34,11 +34,19 @@ type safetyEventFields struct {
 func applySafetyEventFields(entity *worker.WorkerSafetyEvent, f *safetyEventFields) error {
 	shipmentID, err := optionalID(f.shipmentID)
 	if err != nil {
-		return errortypes.NewValidationError("shipmentId", errortypes.ErrInvalid, "Shipment is invalid")
+		return errortypes.NewValidationError(
+			"shipmentId",
+			errortypes.ErrInvalid,
+			"Shipment is invalid",
+		)
 	}
 	documentID, err := optionalID(f.documentID)
 	if err != nil {
-		return errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Document is invalid")
+		return errortypes.NewValidationError(
+			"documentId",
+			errortypes.ErrInvalid,
+			"Document is invalid",
+		)
 	}
 	fine, err := parseNullDecimalField("fineAmount", f.fineAmount)
 	if err != nil {
@@ -92,7 +100,11 @@ func safetyEventFromInput(
 ) (*worker.WorkerSafetyEvent, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
+		return nil, errortypes.NewValidationError(
+			"workerId",
+			errortypes.ErrInvalid,
+			"Worker is invalid",
+		)
 	}
 	entity := &worker.WorkerSafetyEvent{
 		OrganizationID: tenantInfo.OrgID,
@@ -119,7 +131,11 @@ func safetyEventFromUpdateInput(
 ) (*worker.WorkerSafetyEvent, error) {
 	id, err := pulid.MustParse(input.ID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Safety event is invalid")
+		return nil, errortypes.NewValidationError(
+			"id",
+			errortypes.ErrInvalid,
+			"Safety event is invalid",
+		)
 	}
 	points := input.Points
 	entity := &worker.WorkerSafetyEvent{
@@ -149,7 +165,11 @@ func safetyEventStatusRequest(
 ) (*workersafetyservice.EventStatusRequest, error) {
 	id, err := pulid.MustParse(input.ID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Safety event is invalid")
+		return nil, errortypes.NewValidationError(
+			"id",
+			errortypes.ErrInvalid,
+			"Safety event is invalid",
+		)
 	}
 	return &workersafetyservice.EventStatusRequest{
 		ID:         id,
@@ -167,15 +187,27 @@ func issueActionRequestFromInput(
 ) (*workersafetyservice.IssueActionRequest, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
+		return nil, errortypes.NewValidationError(
+			"workerId",
+			errortypes.ErrInvalid,
+			"Worker is invalid",
+		)
 	}
 	eventID, err := optionalID(input.SafetyEventID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("safetyEventId", errortypes.ErrInvalid, "Safety event is invalid")
+		return nil, errortypes.NewValidationError(
+			"safetyEventId",
+			errortypes.ErrInvalid,
+			"Safety event is invalid",
+		)
 	}
 	documentID, err := optionalID(input.DocumentID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Document is invalid")
+		return nil, errortypes.NewValidationError(
+			"documentId",
+			errortypes.ErrInvalid,
+			"Document is invalid",
+		)
 	}
 	req := &workersafetyservice.IssueActionRequest{
 		TenantInfo:            tenantInfo,
@@ -203,7 +235,11 @@ func recognitionFromInput(
 ) (*worker.WorkerRecognition, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
+		return nil, errortypes.NewValidationError(
+			"workerId",
+			errortypes.ErrInvalid,
+			"Worker is invalid",
+		)
 	}
 	visible := true
 	if input.VisibleToWorker != nil {

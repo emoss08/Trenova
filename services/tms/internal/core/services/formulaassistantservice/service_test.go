@@ -362,7 +362,11 @@ func TestGenerateFormula_PricesProposedScenarios(t *testing.T) {
 	assert.True(t, short.Valid)
 	require.NotNil(t, short.ExpectedAmount)
 	assert.InDelta(t, 200, *short.ExpectedAmount, 0.001)
-	assert.Equal(t, map[string]any{"baseRate": float64(2), "totalDistance": float64(100)}, short.Variables)
+	assert.Equal(
+		t,
+		map[string]any{"baseRate": float64(2), "totalDistance": float64(100)},
+		short.Variables,
+	)
 
 	broken := result.Scenarios[1]
 	assert.False(t, broken.Valid)

@@ -2,6 +2,7 @@ package inboundmessageservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
@@ -22,6 +23,25 @@ type ProcessResult struct {
 	Matched        bool
 }
 
+// ErrClassificationUnavailable is a message left unsettled because the model
+// could not be asked and the caller would rather ask again.
+var ErrClassificationUnavailable = errors.New("the message could not be classified just now")
+
+// ProcessOption changes how ProcessMessage treats a model it could not ask.
+type ProcessOption func(*processOptions)
+
+type processOptions struct {
+	retryModel func(error) bool
+}
+
+// RetryModelFailures leaves a message unsettled, and returns
+// ErrClassificationUnavailable, when the model could not be asked and retry
+// says the failure is worth another attempt. Without it, or when retry says
+// no, the message goes to review as Other, as it always has.
+func RetryModelFailures(retry func(error) bool) ProcessOption {
+	return func(o *processOptions) { o.retryModel = retry }
+}
+
 // ProcessMessage reads a staged message and settles it.
 //
 // It is idempotent by status: a message that has already been dealt with is
@@ -31,7 +51,13 @@ func (s *Service) ProcessMessage(
 	ctx context.Context,
 	messageID pulid.ID,
 	tenantInfo pagination.TenantInfo,
+	opts ...ProcessOption,
 ) (*ProcessResult, error) {
+	var options processOptions
+	for _, opt := range opts {
+		opt(&options)
+	}
+
 	message, err := s.messageRepo.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
 		ID:                 messageID,
 		TenantInfo:         tenantInfo,
@@ -54,7 +80,10 @@ func (s *Service) ProcessMessage(
 		return nil, fmt.Errorf("message %s has no mailbox to read its policy from", message.ID)
 	}
 
-	classification := s.Classify(ctx, message, tenantInfo)
+	classification, modelErr := s.classify(ctx, message, tenantInfo)
+	if modelErr != nil && options.retryModel != nil && options.retryModel(modelErr) {
+		return nil, fmt.Errorf("%w: %w", ErrClassificationUnavailable, modelErr)
+	}
 	match := s.Match(ctx, message, tenantInfo)
 	outcome := Settle(message.Mailbox, classification)
 

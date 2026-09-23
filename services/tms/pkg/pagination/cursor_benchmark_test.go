@@ -68,7 +68,11 @@ func BenchmarkCursorListResultWithCursorValues(b *testing.B) {
 
 			b.ReportAllocs()
 			for b.Loop() {
-				result := NewCursorListResultWithTotalCount(items, limit, &total).WithCursorSort(sort)
+				result := NewCursorListResultWithTotalCount(
+					items,
+					limit,
+					&total,
+				).WithCursorSort(sort)
 				if err := result.WithCursorValues(values); err != nil {
 					b.Fatal(err)
 				}

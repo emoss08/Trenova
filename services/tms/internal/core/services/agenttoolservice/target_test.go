@@ -14,7 +14,11 @@ func TestTargetOf_NamesTheRecordFromItsArgument(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("shp_")
-	target, ok := targetOf(map[string]any{"shipmentId": id.String()}, "shipmentId", permission.ResourceShipment)
+	target, ok := targetOf(
+		map[string]any{"shipmentId": id.String()},
+		"shipmentId",
+		permission.ResourceShipment,
+	)
 
 	require.True(t, ok)
 	assert.Equal(t, serviceports.ToolTarget{Resource: permission.ResourceShipment, ID: id}, target)

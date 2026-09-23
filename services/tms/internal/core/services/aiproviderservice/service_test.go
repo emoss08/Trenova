@@ -20,6 +20,7 @@ type fakeProviderRepo struct {
 	repositories.AIProviderRepository
 
 	provider *aiprovider.Provider
+	getErr   error
 	marked   []repositories.MarkAIProviderTestedRequest
 	markErr  error
 }
@@ -28,6 +29,10 @@ func (f *fakeProviderRepo) GetByID(
 	_ context.Context,
 	_ repositories.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
+	if f.getErr != nil {
+		return nil, f.getErr
+	}
+
 	return f.provider, nil
 }
 
@@ -55,10 +60,12 @@ func (f *fakeProber) Probe(
 
 func newTestService(repo *fakeProviderRepo, prober *fakeProber) *Service {
 	return &Service{
-		l:          zap.NewNop(),
-		repo:       repo,
-		encryption: encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes")),
-		prober:     prober,
+		l:    zap.NewNop(),
+		repo: repo,
+		encryption: encryptionservice.NewWithKeyManager(
+			encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+		),
+		prober: prober,
 	}
 }
 
@@ -78,7 +85,7 @@ func testProvider(t *testing.T, svc *Service) *aiprovider.Provider {
 	return provider
 }
 
-func TestTestRecordsProbeOutcomeOnProvider(t *testing.T) {
+func TestRunTestRecordsProbeOutcomeOnProvider(t *testing.T) {
 	repo := &fakeProviderRepo{}
 	prober := &fakeProber{result: &services.TestAIProviderResult{
 		Success:         true,
@@ -90,9 +97,12 @@ func TestTestRecordsProbeOutcomeOnProvider(t *testing.T) {
 	svc := newTestService(repo, prober)
 	repo.provider = testProvider(t, svc)
 
-	result, err := svc.Test(t.Context(), repositories.GetAIProviderByIDRequest{
-		ID:         repo.provider.ID,
-		TenantInfo: pagination.TenantInfo{OrgID: repo.provider.OrganizationID, BuID: repo.provider.BusinessUnitID},
+	result, err := svc.RunTest(t.Context(), repositories.GetAIProviderByIDRequest{
+		ID: repo.provider.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: repo.provider.OrganizationID,
+			BuID:  repo.provider.BusinessUnitID,
+		},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "sk-live", prober.seen, "the decrypted credential reaches the probe")
@@ -110,19 +120,77 @@ func TestTestRecordsProbeOutcomeOnProvider(t *testing.T) {
 	assert.Positive(t, marked.Outcome.TestedAt)
 }
 
-func TestTestStillReturnsProbeResultWhenRecordingFails(t *testing.T) {
+func TestRunTestStillReturnsProbeResultWhenRecordingFails(t *testing.T) {
 	repo := &fakeProviderRepo{markErr: errors.New("db down")}
-	prober := &fakeProber{result: &services.TestAIProviderResult{Success: false, Message: "Refused"}}
+	prober := &fakeProber{
+		result: &services.TestAIProviderResult{Success: false, Message: "Refused"},
+	}
 	svc := newTestService(repo, prober)
 	repo.provider = testProvider(t, svc)
 
-	result, err := svc.Test(t.Context(), repositories.GetAIProviderByIDRequest{
-		ID:         repo.provider.ID,
-		TenantInfo: pagination.TenantInfo{OrgID: repo.provider.OrganizationID, BuID: repo.provider.BusinessUnitID},
+	result, err := svc.RunTest(t.Context(), repositories.GetAIProviderByIDRequest{
+		ID: repo.provider.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: repo.provider.OrganizationID,
+			BuID:  repo.provider.BusinessUnitID,
+		},
 	})
 	require.NoError(t, err)
 	assert.False(t, result.Success)
 	assert.Equal(t, "Refused", result.Message)
 	require.Len(t, repo.marked, 1)
 	assert.False(t, repo.marked[0].Outcome.Success)
+}
+
+type fakeTester struct {
+	asked  []repositories.GetAIProviderByIDRequest
+	result *services.TestAIProviderResult
+}
+
+func (f *fakeTester) Test(
+	_ context.Context,
+	req repositories.GetAIProviderByIDRequest,
+) (*services.TestAIProviderResult, error) {
+	f.asked = append(f.asked, req)
+
+	return f.result, nil
+}
+
+// A test waits on a worker, which runs the probe. The request only confirms
+// the provider exists and hands it over.
+func TestTestHandsTheProbeToAWorker(t *testing.T) {
+	repo := &fakeProviderRepo{}
+	tester := &fakeTester{result: &services.TestAIProviderResult{Success: true}}
+	svc := newTestService(repo, &fakeProber{})
+	svc.tester = tester
+	repo.provider = testProvider(t, svc)
+	req := repositories.GetAIProviderByIDRequest{
+		ID: repo.provider.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: repo.provider.OrganizationID,
+			BuID:  repo.provider.BusinessUnitID,
+		},
+	}
+
+	result, err := svc.Test(t.Context(), req)
+	require.NoError(t, err)
+	assert.True(t, result.Success)
+	require.Len(t, tester.asked, 1)
+	assert.Equal(t, req, tester.asked[0])
+	assert.Empty(t, repo.marked, "recording is the worker's, in RunTest")
+}
+
+// A provider that does not exist is reported as missing, not as a test that
+// failed, and nothing is handed to a worker.
+func TestTestOfAMissingProviderStartsNothing(t *testing.T) {
+	repo := &fakeProviderRepo{getErr: errors.New("not found")}
+	tester := &fakeTester{}
+	svc := newTestService(repo, &fakeProber{})
+	svc.tester = tester
+
+	_, err := svc.Test(t.Context(), repositories.GetAIProviderByIDRequest{
+		ID: pulid.MustNew("aiprv_"),
+	})
+	require.Error(t, err)
+	assert.Empty(t, tester.asked)
 }

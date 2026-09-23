@@ -25,7 +25,11 @@ func TestNormalizeEmailAddresses(t *testing.T) {
 func TestFormatEmailAddress(t *testing.T) {
 	t.Parallel()
 
-	require.Equal(t, "Billing <billing@example.com>", FormatEmailAddress(" Billing ", " billing@example.com "))
+	require.Equal(
+		t,
+		"Billing <billing@example.com>",
+		FormatEmailAddress(" Billing ", " billing@example.com "),
+	)
 	require.Equal(t, "billing@example.com", FormatEmailAddress("", " billing@example.com "))
 }
 
@@ -36,6 +40,8 @@ func TestSplitEmailList(t *testing.T) {
 	require.Equal(
 		t,
 		[]string{"billing@example.com", "ops@example.com", "ap@example.com"},
-		SplitEmailList("Billing@Example.COM, ops@example.com;\nap@example.com\tbilling@example.com"),
+		SplitEmailList(
+			"Billing@Example.COM, ops@example.com;\nap@example.com\tbilling@example.com",
+		),
 	)
 }

@@ -119,14 +119,17 @@ func TestRecordTenderedShipmentStatus_RequiresOfferWithTender(t *testing.T) {
 	offer := acceptedTenderOfferForTest()
 	offer.Tender = nil
 
-	_, err := service.RecordTenderedShipmentStatus(t.Context(), &RecordTenderedShipmentStatusRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: pulid.MustNew("org_"),
-			BuID:  pulid.MustNew("bu_"),
+	_, err := service.RecordTenderedShipmentStatus(
+		t.Context(),
+		&RecordTenderedShipmentStatusRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  pulid.MustNew("bu_"),
+			},
+			Offer:      offer,
+			StatusCode: "AF",
 		},
-		Offer:      offer,
-		StatusCode: "AF",
-	})
+	)
 
 	require.Error(t, err)
 }

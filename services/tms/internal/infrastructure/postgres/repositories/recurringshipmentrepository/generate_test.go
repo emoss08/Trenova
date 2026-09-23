@@ -167,7 +167,11 @@ func TestDeriveRecurringBOL(t *testing.T) {
 
 	occurrence := mustUnix(t, "2026-07-20 08:00", "America/New_York")
 
-	assert.Equal(t, "ACME-100-20260720", deriveRecurringBOL("ACME-100", occurrence, "America/New_York"))
+	assert.Equal(
+		t,
+		"ACME-100-20260720",
+		deriveRecurringBOL("ACME-100", occurrence, "America/New_York"),
+	)
 	assert.Empty(t, deriveRecurringBOL("  ", occurrence, "America/New_York"))
 
 	long := make([]rune, 120)

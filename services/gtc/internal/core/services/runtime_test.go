@@ -22,7 +22,11 @@ type fakeTailReader struct {
 	advanceErr   error
 }
 
-func (f *fakeTailReader) Start(ctx context.Context, startLSN string, handler ports.TransactionHandler) error {
+func (f *fakeTailReader) Start(
+	ctx context.Context,
+	startLSN string,
+	handler ports.TransactionHandler,
+) error {
 	f.startLSN = startLSN
 	f.currentLSN = startLSN
 	f.handler = handler
@@ -119,7 +123,12 @@ func (f *fakeCheckpointStore) SaveBootstrapLSN(ctx context.Context, lsn string) 
 	f.bootstrapLSN = lsn
 	return nil
 }
-func (f *fakeCheckpointStore) LoadWALLSN(ctx context.Context) (string, error) { return f.walLSN, nil }
+
+func (f *fakeCheckpointStore) LoadWALLSN(
+	ctx context.Context,
+) (string, error) {
+	return f.walLSN, nil
+}
 func (f *fakeCheckpointStore) SaveWALLSN(ctx context.Context, lsn string) error {
 	if f.onSaveWALLSN != nil {
 		f.onSaveWALLSN(lsn)
@@ -172,7 +181,12 @@ type fakeSink struct {
 func (f *fakeSink) Kind() domain.DestinationKind         { return f.kind }
 func (f *fakeSink) Name() string                         { return string(f.kind) }
 func (f *fakeSink) Initialize(ctx context.Context) error { return nil }
-func (f *fakeSink) Write(ctx context.Context, projection domain.Projection, record domain.SourceRecord) error {
+
+func (f *fakeSink) Write(
+	ctx context.Context,
+	projection domain.Projection,
+	record domain.SourceRecord,
+) error {
 	if f.delay > 0 {
 		select {
 		case <-ctx.Done():
@@ -269,7 +283,14 @@ func TestRuntimeBootstrapsSnapshotsAndTailing(t *testing.T) {
 	meiliSink := &fakeSink{kind: domain.DestinationMeilisearch}
 	redisSink := &fakeSink{kind: domain.DestinationRedisJSON}
 
-	params := baseRuntimeParams(tailer, snapshotter, checkpoints, metadataStore, meiliSink, redisSink)
+	params := baseRuntimeParams(
+		tailer,
+		snapshotter,
+		checkpoints,
+		metadataStore,
+		meiliSink,
+		redisSink,
+	)
 	params.Projections = []domain.Projection{
 		{
 			Name:         "shipment-search",
@@ -605,13 +626,22 @@ func TestRuntimeAdvancesCheckpointPastDeadLetteredRecord(t *testing.T) {
 	}
 
 	if dlq.count() != 2 {
-		t.Fatalf("expected snapshot and transaction records to be dead-lettered, got %d", dlq.count())
+		t.Fatalf(
+			"expected snapshot and transaction records to be dead-lettered, got %d",
+			dlq.count(),
+		)
 	}
 	if checkpoints.walLSN != "0/20" {
-		t.Fatalf("expected checkpoint to advance past dead-lettered transaction, got %s", checkpoints.walLSN)
+		t.Fatalf(
+			"expected checkpoint to advance past dead-lettered transaction, got %s",
+			checkpoints.walLSN,
+		)
 	}
 	if tailer.CurrentLSN() != "0/20" {
-		t.Fatalf("expected tailer lsn to advance past dead-lettered transaction, got %s", tailer.CurrentLSN())
+		t.Fatalf(
+			"expected tailer lsn to advance past dead-lettered transaction, got %s",
+			tailer.CurrentLSN(),
+		)
 	}
 }
 
@@ -735,7 +765,10 @@ func TestRuntimeReplayDeadLettersSurfacesFailures(t *testing.T) {
 		t.Fatalf("expected replay to surface the sink failure")
 	}
 	if dlq.count() != 0 {
-		t.Fatalf("expected replay failures to not be re-parked in the dlq, got %d entries", dlq.count())
+		t.Fatalf(
+			"expected replay failures to not be re-parked in the dlq, got %d entries",
+			dlq.count(),
+		)
 	}
 }
 
@@ -830,7 +863,10 @@ func TestRuntimeDoesNotAdvanceTailLSNDuringCheckpointSave(t *testing.T) {
 	checkpoints := &fakeCheckpointStore{bootstrapLSN: "0/10", walLSN: "0/10"}
 	checkpoints.onSaveWALLSN = func(lsn string) {
 		if current := tailer.CurrentLSN(); current != "0/10" {
-			t.Fatalf("expected tailer lsn to remain at prior checkpoint during save, got %s", current)
+			t.Fatalf(
+				"expected tailer lsn to remain at prior checkpoint during save, got %s",
+				current,
+			)
 		}
 		if lsn != "0/20" {
 			t.Fatalf("expected checkpoint save lsn 0/20, got %s", lsn)
@@ -896,7 +932,13 @@ func TestRuntimeReprocessesTransactionAfterCheckpointFailureOnRestart(t *testing
 		checkpoints.saveErr = nil
 	}
 
-	firstParams := baseRuntimeParams(firstTailer, firstSnapshotter, checkpoints, metadataStore, meiliSink)
+	firstParams := baseRuntimeParams(
+		firstTailer,
+		firstSnapshotter,
+		checkpoints,
+		metadataStore,
+		meiliSink,
+	)
 	firstParams.Projections = []domain.Projection{
 		{
 			Name:         "shipment-search",
@@ -927,7 +969,13 @@ func TestRuntimeReprocessesTransactionAfterCheckpointFailureOnRestart(t *testing
 
 	secondTailer := &fakeTailReader{transactions: []domain.TransactionRecords{transaction}}
 	secondSnapshotter := &fakeSnapshotReader{currentLSN: "0/10"}
-	secondParams := baseRuntimeParams(secondTailer, secondSnapshotter, checkpoints, metadataStore, meiliSink)
+	secondParams := baseRuntimeParams(
+		secondTailer,
+		secondSnapshotter,
+		checkpoints,
+		metadataStore,
+		meiliSink,
+	)
 	secondParams.Projections = firstParams.Projections
 
 	secondRuntime, err := NewRuntime(secondParams)
@@ -951,7 +999,10 @@ func TestRuntimeReprocessesTransactionAfterCheckpointFailureOnRestart(t *testing
 		t.Fatalf("expected restarted tailer to start from 0/10, got %s", secondTailer.startLSN)
 	}
 	if checkpoints.walLSN != "0/20" {
-		t.Fatalf("expected replayed transaction to advance checkpoint to 0/20, got %s", checkpoints.walLSN)
+		t.Fatalf(
+			"expected replayed transaction to advance checkpoint to 0/20, got %s",
+			checkpoints.walLSN,
+		)
 	}
 	txWrites := 0
 	for _, entry := range meiliSink.writeLog {
@@ -960,7 +1011,11 @@ func TestRuntimeReprocessesTransactionAfterCheckpointFailureOnRestart(t *testing
 		}
 	}
 	if txWrites != 2 {
-		t.Fatalf("expected transaction at 0/20 to be replayed twice across restart, got %d writes (%v)", txWrites, meiliSink.writeLog)
+		t.Fatalf(
+			"expected transaction at 0/20 to be replayed twice across restart, got %d writes (%v)",
+			txWrites,
+			meiliSink.writeLog,
+		)
 	}
 }
 
@@ -1072,7 +1127,10 @@ func TestRuntimeFailsWhenTailLSNAdvanceFails(t *testing.T) {
 	}
 
 	if checkpoints.walLSN != "0/20" {
-		t.Fatalf("expected checkpoint to be saved before advance failure, got %s", checkpoints.walLSN)
+		t.Fatalf(
+			"expected checkpoint to be saved before advance failure, got %s",
+			checkpoints.walLSN,
+		)
 	}
 	if tailer.CurrentLSN() != "0/10" {
 		t.Fatalf("expected tailer lsn to remain at prior checkpoint, got %s", tailer.CurrentLSN())
@@ -1091,7 +1149,14 @@ func TestRuntimeBackfillFiltersProjection(t *testing.T) {
 	meiliSink := &fakeSink{kind: domain.DestinationMeilisearch}
 	redisSink := &fakeSink{kind: domain.DestinationRedisJSON}
 
-	params := baseRuntimeParams(tailer, snapshotter, checkpoints, metadataStore, meiliSink, redisSink)
+	params := baseRuntimeParams(
+		tailer,
+		snapshotter,
+		checkpoints,
+		metadataStore,
+		meiliSink,
+		redisSink,
+	)
 	params.Projections = []domain.Projection{
 		{
 			Name:         "shipment-search",

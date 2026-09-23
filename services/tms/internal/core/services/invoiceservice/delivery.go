@@ -670,7 +670,11 @@ func (s *Service) createOrderInvoicesTx(
 		if err != nil {
 			return nil, err
 		}
-		chargeShare, chargeSplit, err := orderChargeShareFor(charges, defaultOrderPayer, bucket.PayerID)
+		chargeShare, chargeSplit, err := orderChargeShareFor(
+			charges,
+			defaultOrderPayer,
+			bucket.PayerID,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -889,12 +893,15 @@ func (s *Service) markOrderChargeSharesInvoiced(
 	}); err != nil {
 		return err
 	}
-	_, err := s.orderRepo.MarkChargesFullyInvoicedWhereComplete(ctx, &repositories.MarkChargesFullyInvoicedRequest{
-		TenantInfo: tenantInfo,
-		OrderID:    orderID,
-		InvoiceID:  created.ID,
-		InvoicedAt: created.InvoiceDate,
-	})
+	_, err := s.orderRepo.MarkChargesFullyInvoicedWhereComplete(
+		ctx,
+		&repositories.MarkChargesFullyInvoicedRequest{
+			TenantInfo: tenantInfo,
+			OrderID:    orderID,
+			InvoiceID:  created.ID,
+			InvoicedAt: created.InvoiceDate,
+		},
+	)
 	return err
 }
 

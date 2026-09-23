@@ -114,10 +114,18 @@ func newAgentProposalReminderSampleContext() any {
 		PendingCount:       2,
 		WaitingHours:       6,
 		Proposals: []ProposalReminderLine{
-			{Tool: "assign move", Rationale: "Dana Ortiz has 7 hours left and is 12 miles from the pickup."},
-			{Tool: "add shipment comment", Rationale: "Record that the customer asked for a morning delivery."},
+			{
+				Tool:      "assign move",
+				Rationale: "Dana Ortiz has 7 hours left and is 12 miles from the pickup.",
+			},
+			{
+				Tool:      "add shipment comment",
+				Rationale: "Record that the customer asked for a morning delivery.",
+			},
 		},
-		ReviewURL:   template.URL("https://app.example.com/admin/agent-control?tab=activity&activity=proposals"),
+		ReviewURL: template.URL(
+			"https://app.example.com/admin/agent-control?tab=activity&activity=proposals",
+		),
 		CompanyName: sampleCompanyName,
 		//nolint:gosec // A compile-time constant data: URI; see the field's doc comment.
 		LogoDataURI: template.URL(sampleLogoDataURI),
@@ -152,7 +160,11 @@ func agentProposalReminderVariables() []VariableDefinition {
 			Type:        VariableCollection,
 			Description: "Each waiting change. Range over it: Tool is what the agent asked to do and Rationale is why.",
 			Fields: []VariableDefinition{
-				{Path: "Tool", Type: VariableString, Description: "What the agent asked to do, in words."},
+				{
+					Path:        "Tool",
+					Type:        VariableString,
+					Description: "What the agent asked to do, in words.",
+				},
 				{Path: "Rationale", Type: VariableString, Description: "The agent's reason."},
 			},
 		},
@@ -259,8 +271,14 @@ func (r *Registry) registerAgentKinds() {
 				Description: "The answer the agent composed. Required: this is the substance of the message.",
 			},
 			companyNameVariable(),
-			customerNameVariable(false, "The customer the sender belongs to, when the message was matched to one."),
-			proNumberVariable(false, "The shipment the message is about, when it was matched to one."),
+			customerNameVariable(
+				false,
+				"The customer the sender belongs to, when the message was matched to one.",
+			),
+			proNumberVariable(
+				false,
+				"The shipment the message is about, when it was matched to one.",
+			),
 			{
 				Path:        "RequestedDocuments",
 				Type:        VariableStringList,

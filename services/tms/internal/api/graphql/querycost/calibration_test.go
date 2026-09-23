@@ -173,7 +173,13 @@ func TestPersistedDocumentBudget(t *testing.T) {
 		"persisted operation %q costs %d, above the %d limit; it would be rejected in production",
 		measured[0].name, measured[0].cost, MaxOperationCost)
 
-	require.LessOrEqual(t, byDepth[0].depth, MaxOperationDepth,
+	require.LessOrEqual(
+		t,
+		byDepth[0].depth,
+		MaxOperationDepth,
 		"persisted operation %q has depth %d, above the %d limit; it would be rejected in production",
-		byDepth[0].name, byDepth[0].depth, MaxOperationDepth)
+		byDepth[0].name,
+		byDepth[0].depth,
+		MaxOperationDepth,
+	)
 }

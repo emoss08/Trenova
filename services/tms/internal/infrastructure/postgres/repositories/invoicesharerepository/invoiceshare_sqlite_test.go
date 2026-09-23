@@ -132,7 +132,12 @@ func (f *fixture) insertUser(t *testing.T, name, username string) *tenant.User {
 	return user
 }
 
-func (f *fixture) share(recipient *tenant.User, note string, tab invoice.ShareTab, at int64) *invoice.InvoiceShare {
+func (f *fixture) share(
+	recipient *tenant.User,
+	note string,
+	tab invoice.ShareTab,
+	at int64,
+) *invoice.InvoiceShare {
 	return &invoice.InvoiceShare{
 		OrganizationID: f.tenant.OrgID,
 		BusinessUnitID: f.tenant.BuID,

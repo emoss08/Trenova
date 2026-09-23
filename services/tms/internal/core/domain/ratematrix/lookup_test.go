@@ -11,7 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func dim(position int16, kind ratematrix.DimensionKind, mode ratematrix.MatchMode) *ratematrix.RateMatrixDimension {
+func dim(
+	position int16,
+	kind ratematrix.DimensionKind,
+	mode ratematrix.MatchMode,
+) *ratematrix.RateMatrixDimension {
 	return &ratematrix.RateMatrixDimension{Position: position, Kind: kind, MatchMode: mode}
 }
 
@@ -61,7 +65,11 @@ func TestSelectCellAcrossZoneAndWeightBreak(t *testing.T) {
 		quantity("4200"),
 	}
 
-	match, err := ratematrix.SelectCell(dimensions, []*ratematrix.RateMatrixCell{light, heavy}, &values)
+	match, err := ratematrix.SelectCell(
+		dimensions,
+		[]*ratematrix.RateMatrixCell{light, heavy},
+		&values,
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, heavy.ID, match.Cell.ID)

@@ -136,7 +136,8 @@ func (s *Service) Counts(
 }
 
 func waitingCount(row repositories.InboundMessageCount) int {
-	if row.Status == inboundmessage.StatusInReview || row.Status == inboundmessage.StatusQuarantined {
+	if row.Status == inboundmessage.StatusInReview ||
+		row.Status == inboundmessage.StatusQuarantined {
 		return row.Count
 	}
 

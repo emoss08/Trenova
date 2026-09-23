@@ -77,7 +77,11 @@ func TestWorstHealth_IgnoresOptionalCourses(t *testing.T) {
 }
 
 func TestWorstHealth_EmptyAndNilAreCurrent(t *testing.T) {
-	assert.Equal(t, worker.TrainingHealthCurrent, (*worker.WorkerTrainingSummary)(nil).WorstHealth())
+	assert.Equal(
+		t,
+		worker.TrainingHealthCurrent,
+		(*worker.WorkerTrainingSummary)(nil).WorstHealth(),
+	)
 	assert.Equal(
 		t,
 		worker.TrainingHealthCurrent,

@@ -1,11 +1,17 @@
 package agentjobs
 
 import (
+	"time"
+
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
-	"time"
 )
+
+// reconcileEvery is how often every agent's schedule is checked against the
+// agent. A save syncs its own schedule at once; this repairs one a failed save
+// left behind, and catches an agent changed by anything other than a save.
+const reconcileEvery = 15 * time.Minute
 
 type ScheduleProvider struct{}
 
@@ -16,14 +22,14 @@ func NewScheduleProvider() *ScheduleProvider {
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
-			ID:            SweepScheduleID,
-			Description:   "Start scheduled and continuous agents whose slot has come",
-			Spec:          schedule.Cron("* * * * *"),
-			Workflow:      AgentSweepWorkflow,
+			ID:            ReconcileSchedulesScheduleID,
+			Description:   "Keep one schedule behind every scheduled or continuous agent",
+			Spec:          schedule.Every(reconcileEvery),
+			Workflow:      ReconcileDefinitionSchedulesWorkflow,
 			TaskQueue:     temporaltype.TaskQueueAgentBackground.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
-				"purpose": SweepScheduleID,
+				"purpose": ReconcileSchedulesScheduleID,
 			},
 		},
 		{

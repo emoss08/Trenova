@@ -31,7 +31,10 @@ func TestEveryCatalogResourceCanBeExported(t *testing.T) {
 		if !slices.Contains(registry.GetOperationsForResource(resource), permission.OpExport) {
 			t.Errorf(
 				"resource %q (%s) backs catalog entity %q but does not declare OpExport, so no role can grant it and every export of a report on %s will fail",
-				resource, definition.DisplayName, entity.Key, entity.PluralLabel,
+				resource,
+				definition.DisplayName,
+				entity.Key,
+				entity.PluralLabel,
 			)
 		}
 	}

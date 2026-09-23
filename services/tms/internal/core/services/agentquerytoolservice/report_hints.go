@@ -127,11 +127,18 @@ func unknownEdgeHint(catalog *reportcatalog.Catalog, entityKey, edgeName string)
 		}
 	}
 	if len(names) == 0 {
-		return fmt.Sprintf("The %s dataset has no edge %q and no edges at all.", entity.Key, edgeName)
+		return fmt.Sprintf(
+			"The %s dataset has no edge %q and no edges at all.",
+			entity.Key,
+			edgeName,
+		)
 	}
 
 	return fmt.Sprintf(
-		"The %s dataset has no edge %q. Its edges: %s.", entity.Key, edgeName, strings.Join(names, ", "),
+		"The %s dataset has no edge %q. Its edges: %s.",
+		entity.Key,
+		edgeName,
+		strings.Join(names, ", "),
 	)
 }
 

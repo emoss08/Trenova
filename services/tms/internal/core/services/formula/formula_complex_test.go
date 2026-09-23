@@ -485,7 +485,11 @@ func TestComplex_FullFreightBillCalculation(t *testing.T) {
 				Type:         formulatypes.VariableValueTypeNumber,
 				DefaultValue: 10000.00,
 			},
-			{Name: "startingRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 125.00},
+			{
+				Name:         "startingRate",
+				Type:         formulatypes.VariableValueTypeNumber,
+				DefaultValue: 125.00,
+			},
 			{Name: "ratePerMile", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 3.25},
 			{Name: "ratePerStop", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 45.00},
 			{Name: "fuelSurcharge", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 22.0},
@@ -535,7 +539,11 @@ func TestComplex_DistanceBasedTiers(t *testing.T) {
 			startingRate + 100 * shortHaulRate + 400 * mediumHaulRate + (totalDistance - 500) * longHaulRate
 		`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{
-			{Name: "startingRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 100.00},
+			{
+				Name:         "startingRate",
+				Type:         formulatypes.VariableValueTypeNumber,
+				DefaultValue: 100.00,
+			},
 			{Name: "shortHaulRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 4.50},
 			{
 				Name:         "mediumHaulRate",
@@ -668,7 +676,11 @@ func TestComplex_NestedConditionals(t *testing.T) {
 			)
 		`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{
-			{Name: "startingRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 1000.00},
+			{
+				Name:         "startingRate",
+				Type:         formulatypes.VariableValueTypeNumber,
+				DefaultValue: 1000.00,
+			},
 			{
 				Name:         "standardMultiplier",
 				Type:         formulatypes.VariableValueTypeNumber,
@@ -921,7 +933,11 @@ func TestComplex_NilShipmentFieldsGracefulHandling(t *testing.T) {
 			(requiresTemperatureControl ? tempFee : 0)
 		`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{
-			{Name: "startingRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 100.00},
+			{
+				Name:         "startingRate",
+				Type:         formulatypes.VariableValueTypeNumber,
+				DefaultValue: 100.00,
+			},
 			{Name: "ratePerMile", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 2.00},
 			{Name: "hazmatFee", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 150.00},
 			{Name: "tempFee", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 200.00},

@@ -223,7 +223,8 @@ func TestApplyManualDistanceClearsJurisdictionRows(t *testing.T) {
 func TestLocationToPCMilerStopCountry(t *testing.T) {
 	t.Parallel()
 
-	options := distanceprofile.NewDefault(pulid.MustNew("org_"), pulid.MustNew("bu_")).RouteOptions()
+	options := distanceprofile.NewDefault(pulid.MustNew("org_"), pulid.MustNew("bu_")).
+		RouteOptions()
 	tests := []struct {
 		iso3 string
 		want string
@@ -494,7 +495,10 @@ func TestJurisdictionAttributionStates(t *testing.T) {
 	assert.Equal(t, JurisdictionAttributionMismatch, attribution)
 	assert.Equal(t, 90.0, sum)
 
-	rows = append(rows, &shipment.ShipmentMoveJurisdictionMile{Distance: 10, DistanceUnits: "Miles"})
+	rows = append(
+		rows,
+		&shipment.ShipmentMoveJurisdictionMile{Distance: 10, DistanceUnits: "Miles"},
+	)
 	attribution, _ = jurisdictionAttribution(100, "Miles", rows)
 	assert.Equal(t, JurisdictionAttributionAttributed, attribution)
 }

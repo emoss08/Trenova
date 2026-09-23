@@ -69,10 +69,13 @@ func TestDocumentPacketRuleRepositoryCRUD_Integration(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Worker", byID.ResourceType)
 
-	listed, err := repo.ListByResourceType(ctx, &repositories.ListDocumentPacketRulesByResourceRequest{
-		TenantInfo:   tenantInfo,
-		ResourceType: "Worker",
-	})
+	listed, err := repo.ListByResourceType(
+		ctx,
+		&repositories.ListDocumentPacketRulesByResourceRequest{
+			TenantInfo:   tenantInfo,
+			ResourceType: "Worker",
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, listed, 1)
 	assert.Equal(t, created.ID, listed[0].ID)
@@ -86,13 +89,16 @@ func TestDocumentPacketRuleRepositoryCRUD_Integration(t *testing.T) {
 	assert.Equal(t, 99, updated.DisplayOrder)
 	assert.Equal(t, 10, updated.ExpirationWarningDays)
 
-	otherTenantListed, err := repo.ListByResourceType(ctx, &repositories.ListDocumentPacketRulesByResourceRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: pulid.MustNew("org_"),
-			BuID:  pulid.MustNew("bu_"),
+	otherTenantListed, err := repo.ListByResourceType(
+		ctx,
+		&repositories.ListDocumentPacketRulesByResourceRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  pulid.MustNew("bu_"),
+			},
+			ResourceType: "Worker",
 		},
-		ResourceType: "Worker",
-	})
+	)
 	require.NoError(t, err)
 	assert.Len(t, otherTenantListed, 0)
 

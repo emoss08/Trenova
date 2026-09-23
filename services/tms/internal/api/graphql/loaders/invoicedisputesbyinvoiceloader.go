@@ -45,10 +45,13 @@ func (f *InvoiceDisputesByInvoiceIDLoaderFactory) batchFunc(
 ) batchFetchFunc[[]*invoice.InvoiceDispute] {
 	return batchGroupFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*invoice.InvoiceDispute, error) {
-			return f.disputes.ListByInvoiceIDs(ctx, &repositories.ListInvoiceDisputesByInvoiceIDsRequest{
-				TenantInfo: tenantInfo,
-				InvoiceIDs: ids,
-			})
+			return f.disputes.ListByInvoiceIDs(
+				ctx,
+				&repositories.ListInvoiceDisputesByInvoiceIDsRequest{
+					TenantInfo: tenantInfo,
+					InvoiceIDs: ids,
+				},
+			)
 		},
 	)
 }

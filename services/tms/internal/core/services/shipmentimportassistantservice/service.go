@@ -51,6 +51,9 @@ type Params struct {
 	LocationService      *locationservice.Service
 	UsStateRepo          repositories.UsStateRepository
 	LocationCategoryRepo repositories.LocationCategoryRepository
+	// Turns answers a message on a worker, which runs the turn through this
+	// service's steps.
+	Turns serviceports.ShipmentImportTurns
 }
 
 type Service struct {
@@ -71,11 +74,14 @@ type Service struct {
 	locationService      *locationservice.Service
 	usStateRepo          repositories.UsStateRepository
 	locationCategoryRepo repositories.LocationCategoryRepository
+	turns                serviceports.ShipmentImportTurns
 }
+
+var _ serviceports.ShipmentImportAssistantService = (*Service)(nil)
 
 func New(
 	p Params, //nolint:gocritic // stable API shape
-) serviceports.ShipmentImportAssistantService {
+) *Service {
 	return &Service{
 		logger:               p.Logger.Named("service.shipment-import-assistant"),
 		cfg:                  p.Config.GetAIConfig(),
@@ -94,6 +100,7 @@ func New(
 		locationService:      p.LocationService,
 		usStateRepo:          p.UsStateRepo,
 		locationCategoryRepo: p.LocationCategoryRepo,
+		turns:                p.Turns,
 	}
 }
 
@@ -349,7 +356,8 @@ func (s *Service) ensureConversation(
 	})
 }
 
-func normalizeSuggestions(
+// NormalizeSuggestions cleans the chips a model suggested for display.
+func NormalizeSuggestions(
 	suggestions []serviceports.ShipmentImportSuggestion,
 ) []serviceports.ShipmentImportSuggestion {
 	normalized := make([]serviceports.ShipmentImportSuggestion, 0, len(suggestions))
@@ -698,17 +706,18 @@ func (s *Service) updateConversationStatus(
 
 func toolCallStatusFromResult(result string) string {
 	if result == "" || result[0] != '{' {
-		return "completed" //nolint:goconst // local literal
+		return toolStatusCompleted
 	}
 
 	var check map[string]any
 	if json.Unmarshal([]byte(result), &check) != nil {
-		return "completed"
+		return toolStatusCompleted
 	}
 	if _, hasErr := check["error"]; hasErr {
-		return "error"
+		return toolStatusError
 	}
-	return "completed"
+
+	return toolStatusCompleted
 }
 
 func (s *Service) executeToolCall(

@@ -159,7 +159,11 @@ func TestAttachLineageToResourceRefusesAShipmentTheTenantDoesNotHave(t *testing.
 	moved := false
 	repo := &mockDocRepo{
 		GetByIDFn: func(context.Context, repositories.GetDocumentByIDRequest) (*document.Document, error) {
-			return &document.Document{ID: documentID, ResourceType: "worker", ResourceID: "wrk_1"}, nil
+			return &document.Document{
+				ID:           documentID,
+				ResourceType: "worker",
+				ResourceID:   "wrk_1",
+			}, nil
 		},
 		MoveLineageToResourceFn: func(context.Context, *repositories.MoveDocumentLineageRequest) error {
 			moved = true

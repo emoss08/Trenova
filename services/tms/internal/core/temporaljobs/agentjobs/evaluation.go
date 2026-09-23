@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -18,18 +19,25 @@ import (
 	"go.temporal.io/sdk/temporal"
 )
 
-// ReplayRunActivity replays the evaluation's source run against its agent as
-// it is now and stores what the replay would have done beside what the
-// original did.
+// replay is an evaluation opened for replaying: the evaluation, what the source
+// run proposed, and the run request that replays it.
+type replay struct {
+	evaluation *agent.Evaluation
+	originals  []agent.OriginalProposal
+	request    *serviceports.RunRequest
+}
+
+// openReplay reads what an evaluation replays and marks it running. It returns
+// nil for an evaluation that has already finished.
 //
 // The replay runs with simulation forced on, so an automatic write is
 // previewed and a proposal is only collected, never recorded for anyone to
 // decide. Nothing it does reaches a record, and nothing it does reaches the
 // activity feed: the evaluation row is the only thing it writes.
-func (a *Activities) ReplayRunActivity(
+func (a *Activities) openReplay(
 	ctx context.Context,
 	payload *AgentEvaluationPayload,
-) (*ReplayRunResult, error) {
+) (*replay, error) {
 	tenant := payload.tenantInfo()
 
 	evaluation, err := a.evaluations.GetByID(ctx, repositories.GetAgentEvaluationByIDRequest{
@@ -42,7 +50,7 @@ func (a *Activities) ReplayRunActivity(
 		)
 	}
 	if evaluation.Status.Terminal() {
-		return &ReplayRunResult{Model: evaluation.Model, ToolCallsUsed: evaluation.ToolCallsUsed}, nil
+		return nil, nil
 	}
 
 	source, err := a.runRepo.GetByID(ctx, repositories.GetAgentRunByIDRequest{
@@ -70,7 +78,7 @@ func (a *Activities) ReplayRunActivity(
 		return nil, err
 	}
 
-	replay, err := a.replayInput(ctx, tenant, source, definition)
+	input, err := a.replayInput(ctx, tenant, source, definition)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +86,7 @@ func (a *Activities) ReplayRunActivity(
 	startedAt := timeutils.NowUnix()
 	evaluation.Status = agent.EvaluationStatusRunning
 	evaluation.StartedAt = &startedAt
-	evaluation.Input = replay.input
+	evaluation.Input = input.input
 	evaluation.DefinitionVersion = definition.Version
 	evaluation.PromptVersion = promptVersion
 	evaluation.OriginalProposals = len(originals)
@@ -86,31 +94,35 @@ func (a *Activities) ReplayRunActivity(
 		return nil, fmt.Errorf("mark evaluation running: %w", err)
 	}
 
-	activity.RecordHeartbeat(ctx, "replaying")
-
 	// The replay's agent is the current one with simulation forced on. The
 	// copy keeps the stored definition as it is: an evaluation must not
 	// switch the live agent into simulation.
 	replayed := *definition
 	replayed.SimulationMode = true
 
-	actor := agentActor(tenant)
-	outcome, err := a.runtime.Run(ctx, &serviceports.RunRequest{
-		Definition: &replayed,
-		Actor:      actor,
-		Context:    replay.context,
-		History:    replay.history,
-		Input:      replay.input,
-		RunID:      evaluation.ID,
-		Unattended: true,
-		Emit: func(serviceports.StreamEvent) {
-			activity.RecordHeartbeat(ctx, "replaying")
+	return &replay{
+		evaluation: evaluation,
+		originals:  originals,
+		request: &serviceports.RunRequest{
+			Definition: &replayed,
+			Actor:      agentActor(tenant),
+			Context:    input.context,
+			History:    input.history,
+			Input:      input.input,
+			RunID:      evaluation.ID,
+			Unattended: true,
 		},
-	})
-	if err != nil {
-		return nil, err
-	}
+	}, nil
+}
 
+// storeReplay files what the replay would have done beside what the original
+// did.
+func (a *Activities) storeReplay(
+	ctx context.Context,
+	evaluation *agent.Evaluation,
+	originals []agent.OriginalProposal,
+	outcome *serviceports.RunResult,
+) (*ReplayRunResult, error) {
 	actions := make([]agent.ReplayAction, 0, len(outcome.Actions))
 	for _, action := range outcome.Actions {
 		actions = append(actions, agent.ReplayAction{
@@ -131,7 +143,7 @@ func (a *Activities) ReplayRunActivity(
 	evaluation.Actions = actions
 	evaluation.Comparison = agent.CompareReplay(originals, actions)
 	evaluation.ToolCallsUsed = outcome.ToolCallsUsed
-	if _, err = a.evaluations.Update(ctx, evaluation); err != nil {
+	if _, err := a.evaluations.Update(ctx, evaluation); err != nil {
 		return nil, fmt.Errorf("store evaluation outcome: %w", err)
 	}
 
@@ -140,6 +152,98 @@ func (a *Activities) ReplayRunActivity(
 		ToolCallsUsed: outcome.ToolCallsUsed,
 		Actions:       len(actions),
 	}, nil
+}
+
+// ReplayRunActivity replays a run in one activity, as an evaluation did before
+// the loop moved into workflow code. Only evaluations that started on that
+// code call it.
+func (a *Activities) ReplayRunActivity(
+	ctx context.Context,
+	payload *AgentEvaluationPayload,
+) (*ReplayRunResult, error) {
+	opened, err := a.openReplay(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
+	if opened == nil {
+		return a.finishedReplay(ctx, payload)
+	}
+
+	activity.RecordHeartbeat(ctx, "replaying")
+	opened.request.Emit = func(serviceports.StreamEvent) {
+		activity.RecordHeartbeat(ctx, "replaying")
+	}
+
+	outcome, err := a.runtime.Run(ctx, opened.request)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.storeReplay(ctx, opened.evaluation, opened.originals, outcome)
+}
+
+// finishedReplay is what an evaluation that already finished came to.
+func (a *Activities) finishedReplay(
+	ctx context.Context,
+	payload *AgentEvaluationPayload,
+) (*ReplayRunResult, error) {
+	evaluation, err := a.evaluations.GetByID(ctx, repositories.GetAgentEvaluationByIDRequest{
+		ID:         payload.EvaluationID,
+		TenantInfo: payload.tenantInfo(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &ReplayRunResult{Model: evaluation.Model, ToolCallsUsed: evaluation.ToolCallsUsed}, nil
+}
+
+// OpenReplayActivity opens an evaluation's replay as a turn for workflow code
+// to drive. Done is set for an evaluation that has already finished.
+func (a *Activities) OpenReplayActivity(
+	ctx context.Context,
+	payload *AgentEvaluationPayload,
+) (*OpenReplayResult, error) {
+	opened, err := a.openReplay(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
+	if opened == nil {
+		return &OpenReplayResult{Done: true}, nil
+	}
+
+	return &OpenReplayResult{
+		Run:       agentflow.NewRunContext(opened.request, agentflow.PriorityEvaluation),
+		Turn:      a.runtime.OpenTurn(ctx, opened.request).State(),
+		Originals: opened.originals,
+	}, nil
+}
+
+// FinishReplayActivity files what a replay driven in workflow code came to.
+func (a *Activities) FinishReplayActivity(
+	ctx context.Context,
+	input *FinishReplayInput,
+) (*ReplayRunResult, error) {
+	evaluation, err := a.evaluations.GetByID(ctx, repositories.GetAgentEvaluationByIDRequest{
+		ID:         input.Payload.EvaluationID,
+		TenantInfo: input.Payload.tenantInfo(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if evaluation.Status.Terminal() {
+		return &ReplayRunResult{
+			Model:         evaluation.Model,
+			ToolCallsUsed: evaluation.ToolCallsUsed,
+		}, nil
+	}
+
+	outcome := input.Run
+	if outcome == nil {
+		outcome = &serviceports.RunResult{}
+	}
+
+	return a.storeReplay(ctx, evaluation, input.Originals, outcome)
 }
 
 // FailEvaluationActivity records why a replay did not finish, so the row

@@ -123,7 +123,8 @@ func (r *Runtime) Start(ctx context.Context) error {
 		return err
 	}
 
-	if checkpointLSN, loadErr := r.checkpoints.LoadWALLSN(ctx); loadErr == nil && checkpointLSN == "" {
+	if checkpointLSN, loadErr := r.checkpoints.LoadWALLSN(ctx); loadErr == nil &&
+		checkpointLSN == "" {
 		if err := r.checkpoints.SaveWALLSN(ctx, startLSN); err != nil {
 			return fmt.Errorf("save initial wal checkpoint: %w", err)
 		}
@@ -185,7 +186,11 @@ func (r *Runtime) Validate(ctx context.Context) error {
 	return r.prepare(ctx, false)
 }
 
-func (r *Runtime) Backfill(ctx context.Context, projectionNames []string, tableNames []string) error {
+func (r *Runtime) Backfill(
+	ctx context.Context,
+	projectionNames []string,
+	tableNames []string,
+) error {
 	if err := r.prepare(ctx, false); err != nil {
 		return err
 	}
@@ -195,9 +200,13 @@ func (r *Runtime) Backfill(ctx context.Context, projectionNames []string, tableN
 		return err
 	}
 
-	return r.snapshotter.Backfill(ctx, uniqueBindings(projections), func(runCtx context.Context, record domain.SourceRecord) error {
-		return r.handleRecordWithProjections(runCtx, projections, record)
-	})
+	return r.snapshotter.Backfill(
+		ctx,
+		uniqueBindings(projections),
+		func(runCtx context.Context, record domain.SourceRecord) error {
+			return r.handleRecordWithProjections(runCtx, projections, record)
+		},
+	)
 }
 
 func (r *Runtime) ReplayDeadLetters(ctx context.Context, entries []domain.DeadLetterRecord) error {
@@ -403,10 +412,18 @@ func (r *Runtime) writeProjectionOrDeadLetter(
 	return nil
 }
 
-func (r *Runtime) writeProjection(ctx context.Context, projection domain.Projection, record domain.SourceRecord) error {
+func (r *Runtime) writeProjection(
+	ctx context.Context,
+	projection domain.Projection,
+	record domain.SourceRecord,
+) error {
 	sink, ok := r.sinks[projection.Destination.Kind]
 	if !ok {
-		return fmt.Errorf("projection %s uses unknown sink kind %q", projection.Name, projection.Destination.Kind)
+		return fmt.Errorf(
+			"projection %s uses unknown sink kind %q",
+			projection.Name,
+			projection.Destination.Kind,
+		)
 	}
 
 	var lastErr error
@@ -443,7 +460,12 @@ func (r *Runtime) writeProjection(ctx context.Context, projection domain.Project
 		}
 	}
 
-	return fmt.Errorf("projection %s failed after %d attempts: %w", projection.Name, r.retryMax, lastErr)
+	return fmt.Errorf(
+		"projection %s failed after %d attempts: %w",
+		projection.Name,
+		r.retryMax,
+		lastErr,
+	)
 }
 
 func (r *Runtime) matchingProjections(fullTableName string) []domain.Projection {
@@ -500,14 +522,19 @@ func (r *Runtime) resolveProjections(ctx context.Context) error {
 		metadata, ok := metadataCache[key]
 		if !ok {
 			var err error
-			metadata, err = r.metadataStore.LoadTableMetadata(ctx, projection.SourceSchema, projection.SourceTable)
+			metadata, err = r.metadataStore.LoadTableMetadata(
+				ctx,
+				projection.SourceSchema,
+				projection.SourceTable,
+			)
 			if err != nil {
 				return err
 			}
 			metadataCache[key] = metadata
 		}
 
-		if len(projection.PrimaryKeys) > 0 && !domain.EqualStringSlices(projection.PrimaryKeys, metadata.PrimaryKeys) {
+		if len(projection.PrimaryKeys) > 0 &&
+			!domain.EqualStringSlices(projection.PrimaryKeys, metadata.PrimaryKeys) {
 			return fmt.Errorf(
 				"projection %s primary keys %v do not match discovered keys %v",
 				projection.Name,
@@ -545,7 +572,10 @@ func uniqueBindings(projections []domain.Projection) []domain.SnapshotBinding {
 	return bindings
 }
 
-func (r *Runtime) filterProjections(projectionNames []string, tableNames []string) ([]domain.Projection, error) {
+func (r *Runtime) filterProjections(
+	projectionNames []string,
+	tableNames []string,
+) ([]domain.Projection, error) {
 	if len(projectionNames) == 0 && len(tableNames) == 0 {
 		return slices.Clone(r.projections), nil
 	}

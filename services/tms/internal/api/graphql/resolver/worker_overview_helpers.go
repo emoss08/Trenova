@@ -18,11 +18,36 @@ func (r *Resolver) overviewSections(
 	authCtx *authctx.AuthContext,
 ) workeroverviewservice.Sections {
 	return workeroverviewservice.Sections{
-		Credentials: r.hasPermission(ctx, authCtx, permission.ResourceWorkerCredential, permission.OpRead),
-		Training:    r.hasPermission(ctx, authCtx, permission.ResourceWorkerTraining, permission.OpRead),
-		Safety:      r.hasPermission(ctx, authCtx, permission.ResourceWorkerSafetyEvent, permission.OpRead),
-		Checklists:  r.hasPermission(ctx, authCtx, permission.ResourceWorkerChecklist, permission.OpRead),
-		PTO:         r.hasPermission(ctx, authCtx, permission.ResourceWorkerPTO, permission.OpRead),
-		Reviews:     r.hasPermission(ctx, authCtx, permission.ResourcePerformanceReview, permission.OpRead),
+		Credentials: r.hasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceWorkerCredential,
+			permission.OpRead,
+		),
+		Training: r.hasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceWorkerTraining,
+			permission.OpRead,
+		),
+		Safety: r.hasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceWorkerSafetyEvent,
+			permission.OpRead,
+		),
+		Checklists: r.hasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceWorkerChecklist,
+			permission.OpRead,
+		),
+		PTO: r.hasPermission(ctx, authCtx, permission.ResourceWorkerPTO, permission.OpRead),
+		Reviews: r.hasPermission(
+			ctx,
+			authCtx,
+			permission.ResourcePerformanceReview,
+			permission.OpRead,
+		),
 	}
 }

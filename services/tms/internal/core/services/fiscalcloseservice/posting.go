@@ -175,9 +175,11 @@ func (s *Service) postPlanEntry(
 	lines := make([]repositories.JournalPostingLine, 0, len(req.entry.Lines))
 	for idx, line := range req.entry.Lines {
 		lines = append(lines, repositories.JournalPostingLine{
-			ID:           pulid.MustNew("jel_"),
-			GLAccountID:  line.GLAccountID,
-			LineNumber:   int16(idx + 1), //nolint:gosec // line counts never approach int16 overflow
+			ID:          pulid.MustNew("jel_"),
+			GLAccountID: line.GLAccountID,
+			LineNumber: int16(
+				idx + 1,
+			), //nolint:gosec // line counts never approach int16 overflow
 			Description:  planLineDescription(req.entry, line, req.fiscalYear),
 			DebitAmount:  line.DebitMinor,
 			CreditAmount: line.CreditMinor,

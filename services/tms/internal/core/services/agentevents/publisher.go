@@ -2,6 +2,7 @@ package agentevents
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -16,14 +17,12 @@ type Params struct {
 
 	Logger      *zap.Logger
 	Definitions repositories.AgentDefinitionRepository
-	Runs        repositories.AgentRunRepository
 	RunService  services.AgentRunService
 }
 
 type Publisher struct {
 	l           *zap.Logger
 	definitions repositories.AgentDefinitionRepository
-	runs        repositories.AgentRunRepository
 	runService  services.AgentRunService
 }
 
@@ -31,7 +30,6 @@ func New(p Params) services.AgentEventPublisher {
 	return &Publisher{
 		l:           p.Logger.Named("service.agentevents"),
 		definitions: p.Definitions,
-		runs:        p.Runs,
 		runService:  p.RunService,
 	}
 }
@@ -78,21 +76,10 @@ func (p *Publisher) startFor(
 ) {
 	log = log.With(zap.String("definitionId", definition.ID.String()))
 
-	open, err := p.runs.CountOpen(ctx, repositories.CountOpenAgentRunsRequest{
-		TenantInfo:   event.TenantInfo,
-		DefinitionID: definition.ID,
-		SubjectID:    event.SubjectID,
-	})
-	if err != nil {
-		log.Error("failed to count open agent runs for subject", zap.Error(err))
-		return
-	}
-	if open > 0 {
-		log.Debug("agent already has an open run for this subject; event skipped")
-		return
-	}
-
-	if _, err = p.runService.StartForDefinition(
+	// A subject takes one open run at a time. That is enforced where the run
+	// starts, by its workflow id, so two events arriving together cannot both
+	// pass a check and start two.
+	_, err := p.runService.StartForDefinition(
 		ctx,
 		&services.StartAgentRunForDefinitionRequest{
 			DefinitionID: definition.ID,
@@ -103,7 +90,11 @@ func (p *Publisher) startFor(
 			TenantInfo:   event.TenantInfo,
 		},
 		nil,
-	); err != nil {
+	)
+	switch {
+	case errors.Is(err, services.ErrAgentRunAlreadyOpen):
+		log.Debug("agent already has an open run for this subject; event skipped")
+	case err != nil:
 		log.Error("failed to start agent run for event", zap.Error(err))
 	}
 }

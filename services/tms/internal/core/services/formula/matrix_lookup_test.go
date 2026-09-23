@@ -693,7 +693,13 @@ func TestMatrixLookup_TwoAxisRowOverflowAndColumnNormalization(t *testing.T) {
 
 	value, err := lookup.Lookup2("weight_zone", 9000, "SE")
 	require.NoError(t, err)
-	assert.InDelta(t, 15, value, 0.0001, "row clamps to the top band and the column key is upper-cased")
+	assert.InDelta(
+		t,
+		15,
+		value,
+		0.0001,
+		"row clamps to the top band and the column key is upper-cased",
+	)
 
 	_, err = lookup.Lookup2("weight_zone", 9000, "MW")
 	require.ErrorIs(t, err, formulatemplatetypes.ErrRateTableMiss, "clamping never invents a cell")
@@ -801,8 +807,16 @@ func TestMatrixLookup_TwoAxisRangeRowsResolveAcrossManyBandsAndOverlaps(t *testi
 			ID:   matrixID,
 			Code: "big_grid",
 			Dimensions: []*ratematrix.RateMatrixDimension{
-				{Position: 0, Kind: ratematrix.DimensionKindWeightBreak, MatchMode: ratematrix.MatchModeRange},
-				{Position: 1, Kind: ratematrix.DimensionKindZone, MatchMode: ratematrix.MatchModeExact},
+				{
+					Position:  0,
+					Kind:      ratematrix.DimensionKindWeightBreak,
+					MatchMode: ratematrix.MatchModeRange,
+				},
+				{
+					Position:  1,
+					Kind:      ratematrix.DimensionKindZone,
+					MatchMode: ratematrix.MatchModeExact,
+				},
 			},
 		},
 		Cells: cells,
@@ -814,12 +828,29 @@ func TestMatrixLookup_TwoAxisRangeRowsResolveAcrossManyBandsAndOverlaps(t *testi
 
 	value, err = lookup.Lookup2("big_grid", 4999, "HEAVY")
 	require.NoError(t, err)
-	assert.InDelta(t, 999999, value, 0.0001, "the open catch-all band still matches alongside the fixed bands")
+	assert.InDelta(
+		t,
+		999999,
+		value,
+		0.0001,
+		"the open catch-all band still matches alongside the fixed bands",
+	)
 
 	value, err = lookup.Lookup2("big_grid", 4999, "Z00")
 	require.NoError(t, err)
-	assert.InDelta(t, 49000, value, 0.0001, "overlapping bands are both candidates; the zone decides")
+	assert.InDelta(
+		t,
+		49000,
+		value,
+		0.0001,
+		"overlapping bands are both candidates; the zone decides",
+	)
 
 	_, err = lookup.Lookup2("big_grid", 5000, "Z00")
-	require.ErrorIs(t, err, formulatemplatetypes.ErrRateTableMiss, "past every fixed band with no policy")
+	require.ErrorIs(
+		t,
+		err,
+		formulatemplatetypes.ErrRateTableMiss,
+		"past every fixed band with no policy",
+	)
 }

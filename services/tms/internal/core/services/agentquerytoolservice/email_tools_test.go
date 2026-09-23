@@ -33,8 +33,19 @@ func TestListEmailProfiles_ListsActiveSendingProfiles(t *testing.T) {
 	t.Parallel()
 
 	profiles := &fakeProfiles{profiles: []*email.Profile{
-		{ID: pulid.MustNew("emp_"), Name: "Operations", SenderName: "Acme Dispatch", SenderEmail: "dispatch@acme.example", Status: email.ProfileStatusActive},
-		{ID: pulid.MustNew("emp_"), Name: "Retired", SenderEmail: "old@acme.example", Status: email.ProfileStatusInactive},
+		{
+			ID:          pulid.MustNew("emp_"),
+			Name:        "Operations",
+			SenderName:  "Acme Dispatch",
+			SenderEmail: "dispatch@acme.example",
+			Status:      email.ProfileStatusActive,
+		},
+		{
+			ID:          pulid.MustNew("emp_"),
+			Name:        "Retired",
+			SenderEmail: "old@acme.example",
+			Status:      email.ProfileStatusInactive,
+		},
 	}}
 	tool := newListEmailProfilesTool(profiles)
 

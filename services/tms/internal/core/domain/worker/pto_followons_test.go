@@ -16,11 +16,31 @@ func TestTenureMonths(t *testing.T) {
 
 	assert.Equal(t, int32(0), TenureMonths(0, hire, loc))
 	assert.Equal(t, int32(0), TenureMonths(hire, hire, loc))
-	assert.Equal(t, int32(0), TenureMonths(hire, time.Date(2024, time.April, 14, 0, 0, 0, 0, loc).Unix(), loc))
-	assert.Equal(t, int32(1), TenureMonths(hire, time.Date(2024, time.April, 15, 0, 0, 0, 0, loc).Unix(), loc))
-	assert.Equal(t, int32(11), TenureMonths(hire, time.Date(2025, time.March, 14, 0, 0, 0, 0, loc).Unix(), loc))
-	assert.Equal(t, int32(12), TenureMonths(hire, time.Date(2025, time.March, 15, 0, 0, 0, 0, loc).Unix(), loc))
-	assert.Equal(t, int32(24), TenureMonths(hire, time.Date(2026, time.March, 15, 12, 0, 0, 0, loc).Unix(), loc))
+	assert.Equal(
+		t,
+		int32(0),
+		TenureMonths(hire, time.Date(2024, time.April, 14, 0, 0, 0, 0, loc).Unix(), loc),
+	)
+	assert.Equal(
+		t,
+		int32(1),
+		TenureMonths(hire, time.Date(2024, time.April, 15, 0, 0, 0, 0, loc).Unix(), loc),
+	)
+	assert.Equal(
+		t,
+		int32(11),
+		TenureMonths(hire, time.Date(2025, time.March, 14, 0, 0, 0, 0, loc).Unix(), loc),
+	)
+	assert.Equal(
+		t,
+		int32(12),
+		TenureMonths(hire, time.Date(2025, time.March, 15, 0, 0, 0, 0, loc).Unix(), loc),
+	)
+	assert.Equal(
+		t,
+		int32(24),
+		TenureMonths(hire, time.Date(2026, time.March, 15, 12, 0, 0, 0, loc).Unix(), loc),
+	)
 }
 
 func TestPTOPolicyRule_Tiers(t *testing.T) {
@@ -32,7 +52,11 @@ func TestPTOPolicyRule_Tiers(t *testing.T) {
 		OnTermination:     PTOTerminationPayOut,
 		Tiers: []PTOAccrualTier{
 			{MinMonths: 12, AccrualAmountDays: decimal.RequireFromString("1.25")},
-			{MinMonths: 60, AccrualAmountDays: decimal.RequireFromString("1.67"), MaxBalanceDays: decimal.NewNullDecimal(decimal.NewFromInt(25))},
+			{
+				MinMonths:         60,
+				AccrualAmountDays: decimal.RequireFromString("1.67"),
+				MaxBalanceDays:    decimal.NewNullDecimal(decimal.NewFromInt(25)),
+			},
 		},
 	}
 
@@ -41,7 +65,11 @@ func TestPTOPolicyRule_Tiers(t *testing.T) {
 	assert.True(t, rule.AmountFor(12).Equal(decimal.RequireFromString("1.25")))
 	assert.True(t, rule.AmountFor(59).Equal(decimal.RequireFromString("1.25")))
 	assert.True(t, rule.AmountFor(60).Equal(decimal.RequireFromString("1.67")))
-	assert.True(t, rule.MaxBalanceFor(12).Decimal.Equal(decimal.NewFromInt(15)), "a tier without a cap inherits the rule's")
+	assert.True(
+		t,
+		rule.MaxBalanceFor(12).Decimal.Equal(decimal.NewFromInt(15)),
+		"a tier without a cap inherits the rule's",
+	)
 	assert.True(t, rule.MaxBalanceFor(72).Decimal.Equal(decimal.NewFromInt(25)))
 
 	multiErr := errortypes.NewMultiError()
@@ -82,16 +110,34 @@ func TestHolidayCalendar_AndComputePTODays(t *testing.T) {
 	day := func(y int, m time.Month, d int) int64 { return time.Date(y, m, d, 0, 0, 0, 0, time.UTC).Unix() }
 
 	cal := NewHolidayCalendar([]*OrgHoliday{
-		{Name: "Independence Day", HolidayDate: day(2000, time.July, 4), Kind: HolidayKindHoliday, RecursAnnually: true},
+		{
+			Name:           "Independence Day",
+			HolidayDate:    day(2000, time.July, 4),
+			Kind:           HolidayKindHoliday,
+			RecursAnnually: true,
+		},
 		{Name: "Company picnic", HolidayDate: day(2026, time.July, 6), Kind: HolidayKindHoliday},
 		{Name: "Peak freeze", HolidayDate: day(2026, time.July, 7), Kind: HolidayKindBlackout},
-		{Name: "Christmas Eve freeze", HolidayDate: day(2000, time.December, 24), Kind: HolidayKindBlackout, RecursAnnually: true},
+		{
+			Name:           "Christmas Eve freeze",
+			HolidayDate:    day(2000, time.December, 24),
+			Kind:           HolidayKindBlackout,
+			RecursAnnually: true,
+		},
 	})
 	assert.False(t, cal.IsEmpty())
 
-	assert.True(t, cal.HolidayOn(time.Date(2026, time.July, 4, 0, 0, 0, 0, ny)), "recurring holiday matches any year")
+	assert.True(
+		t,
+		cal.HolidayOn(time.Date(2026, time.July, 4, 0, 0, 0, 0, ny)),
+		"recurring holiday matches any year",
+	)
 	assert.True(t, cal.HolidayOn(time.Date(2026, time.July, 6, 0, 0, 0, 0, ny)))
-	assert.False(t, cal.HolidayOn(time.Date(2027, time.July, 6, 0, 0, 0, 0, ny)), "one-off holidays do not repeat")
+	assert.False(
+		t,
+		cal.HolidayOn(time.Date(2027, time.July, 6, 0, 0, 0, 0, ny)),
+		"one-off holidays do not repeat",
+	)
 	assert.NotNil(t, cal.BlackoutOn(time.Date(2026, time.July, 7, 0, 0, 0, 0, ny)))
 	assert.NotNil(t, cal.BlackoutOn(time.Date(2031, time.December, 24, 0, 0, 0, 0, ny)))
 	assert.Nil(t, cal.BlackoutOn(time.Date(2026, time.July, 8, 0, 0, 0, 0, ny)))

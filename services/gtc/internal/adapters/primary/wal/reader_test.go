@@ -148,7 +148,10 @@ func TestObserveSlotStateLagThreshold(t *testing.T) {
 	}
 
 	if err := reader.observeSlotState(slotState{Active: true, LagBytes: 101}, false); err != nil {
-		t.Fatalf("expected lag threshold breach to update health without returning error, got %v", err)
+		t.Fatalf(
+			"expected lag threshold breach to update health without returning error, got %v",
+			err,
+		)
 	}
 
 	statuses := reader.HealthStatuses()

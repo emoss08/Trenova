@@ -59,7 +59,12 @@ func TestRegistry_CoversAllDeclaredResources(t *testing.T) {
 			continue
 		}
 		assert.NotEmpty(t, def.Operations, "resource %q registered without operations", resource)
-		assert.NotEmpty(t, def.DisplayName, "resource %q registered without a display name", resource)
+		assert.NotEmpty(
+			t,
+			def.DisplayName,
+			"resource %q registered without a display name",
+			resource,
+		)
 		assert.NotEmpty(t, def.Category, "resource %q registered without a category", resource)
 	}
 }
@@ -92,8 +97,13 @@ func TestRegistry_OperationsHaveClientBits(t *testing.T) {
 	for _, def := range NewRegistry().All() {
 		for _, op := range def.Operations {
 			_, ok := OperationToBit[op.Operation]
-			assert.True(t, ok,
-				"resource %q operation %q has no client bitmask mapping", def.Resource, op.Operation)
+			assert.True(
+				t,
+				ok,
+				"resource %q operation %q has no client bitmask mapping",
+				def.Resource,
+				op.Operation,
+			)
 		}
 	}
 }

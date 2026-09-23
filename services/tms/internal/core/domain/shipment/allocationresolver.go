@@ -390,11 +390,23 @@ func ValidateAllocations(p *ValidateAllocationsParams) *errortypes.MultiError {
 		payer, ok := p.Customers[allocation.BillToCustomerID]
 		switch {
 		case !ok || payer == nil:
-			multiErr.Add(field+".billToCustomerId", errortypes.ErrInvalid, "Bill-to customer was not found")
+			multiErr.Add(
+				field+".billToCustomerId",
+				errortypes.ErrInvalid,
+				"Bill-to customer was not found",
+			)
 		case payer.OrganizationID != p.TenantOrgID || payer.BusinessUnitID != p.TenantBuID:
-			multiErr.Add(field+".billToCustomerId", errortypes.ErrInvalid, "Bill-to customer belongs to another organization")
+			multiErr.Add(
+				field+".billToCustomerId",
+				errortypes.ErrInvalid,
+				"Bill-to customer belongs to another organization",
+			)
 		case payer.Status != domaintypes.StatusActive:
-			multiErr.Add(field+".billToCustomerId", errortypes.ErrInvalid, "Bill-to customer is not active")
+			multiErr.Add(
+				field+".billToCustomerId",
+				errortypes.ErrInvalid,
+				"Bill-to customer is not active",
+			)
 		}
 	}
 

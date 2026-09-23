@@ -21,7 +21,10 @@ func (r *recordingPublisher) Publish(_ context.Context, event services.AgentEven
 	r.events = append(r.events, event)
 }
 
-func findingOf(severity carrierintel.Severity, status carrierintel.EventStatus) *carrierintel.CarrierIntelEvent {
+func findingOf(
+	severity carrierintel.Severity,
+	status carrierintel.EventStatus,
+) *carrierintel.CarrierIntelEvent {
 	return &carrierintel.CarrierIntelEvent{
 		ID:       pulid.MustNew("ciev_"),
 		Severity: severity,

@@ -3,21 +3,32 @@ package agentjobs
 import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+// Workflow names. A workflow a schedule starts is started by its function, so
+// its name is the function's name: the SDK derives one from the other.
 const (
+	// agentflowChange marks where a run's loop moved into workflow code. A run
+	// that started before it replays on the code it started on.
+	agentflowChange = "agent-loop-in-workflow"
+
 	AgentRunWorkflowName              = "AgentRunWorkflow"
 	AgentEvaluationWorkflowName       = "AgentEvaluationWorkflow"
-	AgentSweepWorkflowName            = "AgentSweepWorkflow"
-	ExpireStaleProposalsWorkflowName  = "ExpireStaleAgentProposalsWorkflow"
+	AgentScheduledRunWorkflowName     = "AgentScheduledRunWorkflow"
+	ReconcileSchedulesWorkflowName    = "ReconcileDefinitionSchedulesWorkflow"
+	ReconcileSchedulesScheduleID      = "agent-definition-schedules"
+	ExpireStaleProposalsWorkflowName  = "ExpireStaleProposalsWorkflow"
 	ExpireStaleProposalsScheduleID    = "agent-proposal-expiry"
 	DeleteStaleAskThreadsWorkflowName = "DeleteStaleAskThreadsWorkflow"
 	DeleteStaleAskThreadsScheduleID   = "assistant-ask-thread-retention"
 	AgentDecisionSignalName           = "agent-decision"
-	SweepScheduleID                   = "agent-definition-sweep"
 )
 
 type AgentRunPayload struct {
@@ -59,6 +70,41 @@ type RunAgentInput struct {
 	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
 }
 
+// OpenRunInput is a prepared run, to be opened as a turn.
+type OpenRunInput struct {
+	Payload    *AgentRunPayload                `json:"payload"`
+	Definition *agentdefinition.Definition     `json:"definition"`
+	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
+	Shadow     bool                            `json:"shadow"`
+}
+
+// OpenRunResult is the run as the workflow drives it.
+type OpenRunResult struct {
+	Run  agentflow.RunContext   `json:"run"`
+	Turn agentruntime.TurnState `json:"turn"`
+}
+
+// FinishRunInput is what a run's loop came to.
+type FinishRunInput struct {
+	Payload    *AgentRunPayload                `json:"payload"`
+	Definition *agentdefinition.Definition     `json:"definition"`
+	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
+	Run        *serviceports.RunResult         `json:"run,omitempty"`
+	Failure    *modelcall.Failure              `json:"failure,omitempty"`
+	Events     []temporaltype.StreamItem       `json:"events,omitempty"`
+}
+
+// FinishRunResult is what a finished run left for a person to decide.
+type FinishRunResult struct {
+	ProposalsRaised  int `json:"proposalsRaised"`
+	PendingProposals int `json:"pendingProposals"`
+}
+
+type PendingProposalsInput struct {
+	RunID      pulid.ID              `json:"runId"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type RunAgentResult struct {
 	Reply            string `json:"reply"`
 	Model            string `json:"model"`
@@ -80,33 +126,19 @@ type ExpireProposalsInput struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
-type DueDefinition struct {
+// ScheduledRunPayload is what a definition's schedule fires with. Slot is the
+// time the schedule fired for, filled in by the workflow it starts.
+type ScheduledRunPayload struct {
 	DefinitionID   pulid.ID `json:"definitionId"`
 	OrganizationID pulid.ID `json:"organizationId"`
 	BusinessUnitID pulid.ID `json:"businessUnitId"`
-	NextRunAt      int64    `json:"nextRunAt"`
+	Slot           int64    `json:"slot,omitempty"`
 }
 
-type ListDueDefinitionsInput struct {
-	Now   int64 `json:"now"`
-	Limit int   `json:"limit"`
-}
-
-type ListDueDefinitionsResult struct {
-	Due []DueDefinition `json:"due"`
-}
-
-type StartDueRunResult struct {
+type StartScheduledRunResult struct {
 	Started bool   `json:"started"`
 	RunID   string `json:"runId,omitempty"`
 	Skipped string `json:"skipped,omitempty"`
-}
-
-type SweepResult struct {
-	Found   int `json:"found"`
-	Started int `json:"started"`
-	Skipped int `json:"skipped"`
-	Failed  int `json:"failed"`
 }
 
 // ExpireStaleProposalsResult is what one expiry sweep did.
@@ -156,6 +188,22 @@ func (p *AgentEvaluationPayload) tenantInfo() pagination.TenantInfo {
 		OrgID: p.OrganizationID,
 		BuID:  p.BusinessUnitID,
 	}
+}
+
+// OpenReplayResult is an evaluation's replay as the workflow drives it. Done
+// is set for an evaluation that had already finished.
+type OpenReplayResult struct {
+	Done      bool                     `json:"done"`
+	Run       agentflow.RunContext     `json:"run"`
+	Turn      agentruntime.TurnState   `json:"turn"`
+	Originals []agent.OriginalProposal `json:"originals,omitempty"`
+}
+
+// FinishReplayInput is what a replay's loop came to.
+type FinishReplayInput struct {
+	Payload   *AgentEvaluationPayload  `json:"payload"`
+	Originals []agent.OriginalProposal `json:"originals,omitempty"`
+	Run       *serviceports.RunResult  `json:"run,omitempty"`
 }
 
 type ReplayRunResult struct {

@@ -41,10 +41,26 @@ func TestBillingControl_Validate(t *testing.T) {
 		wantErr bool
 	}{
 		{"valid entity passes", func(_ *BillingControl) {}, false},
-		{"missing payment term fails", func(bc *BillingControl) { bc.DefaultPaymentTerm = "" }, true},
-		{"missing ready to bill assignment mode fails", func(bc *BillingControl) { bc.ReadyToBillAssignmentMode = "" }, true},
-		{"missing billing queue transfer mode fails", func(bc *BillingControl) { bc.BillingQueueTransferMode = "" }, true},
-		{"missing invoice posting mode fails", func(bc *BillingControl) { bc.InvoicePostingMode = "" }, true},
+		{
+			"missing payment term fails",
+			func(bc *BillingControl) { bc.DefaultPaymentTerm = "" },
+			true,
+		},
+		{
+			"missing ready to bill assignment mode fails",
+			func(bc *BillingControl) { bc.ReadyToBillAssignmentMode = "" },
+			true,
+		},
+		{
+			"missing billing queue transfer mode fails",
+			func(bc *BillingControl) { bc.BillingQueueTransferMode = "" },
+			true,
+		},
+		{
+			"missing invoice posting mode fails",
+			func(bc *BillingControl) { bc.InvoicePostingMode = "" },
+			true,
+		},
 	}
 
 	for _, tt := range tests {

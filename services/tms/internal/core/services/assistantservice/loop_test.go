@@ -89,7 +89,7 @@ func TestRun_AnswersAnInScopeQuestion(t *testing.T) {
 	}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
 
-	result, err := svc.Run(t.Context(), &TurnRequest{
+	result, err := svc.run(t.Context(), &TurnRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Who is on load 12345?",
@@ -114,7 +114,7 @@ func TestRun_RefusesBeforeCallingTheChatModel(t *testing.T) {
 	}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
 
-	result, err := svc.Run(t.Context(), &TurnRequest{
+	result, err := svc.run(t.Context(), &TurnRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Write me a Python script to export loads",
@@ -145,7 +145,7 @@ func TestRun_RunsAnEnabledQueryToolAndAnswersFromIt(t *testing.T) {
 	svc := newService(completion, &stubQueryRegistry{Tools: []serviceports.AgentQueryTool{tool}},
 		&stubActionRegistry{})
 
-	result, err := svc.Run(t.Context(), &TurnRequest{
+	result, err := svc.run(t.Context(), &TurnRequest{
 		Definition: testDefinition("get_shipment"),
 		Actor:      testActor(),
 		Input:      "Where is S12345?",
@@ -170,7 +170,7 @@ func TestRun_TurnsAWriteToolIntoAnAction(t *testing.T) {
 	svc := newService(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []serviceports.AgentTool{action}})
 
-	result, err := svc.Run(t.Context(), &TurnRequest{
+	result, err := svc.run(t.Context(), &TurnRequest{
 		Definition: testDefinition("reassign_move"),
 		Actor:      testActor(),
 		Input:      "Reassign move mv_1",
@@ -197,7 +197,7 @@ func TestRun_ReportsToolFailureToTheModel(t *testing.T) {
 	svc := newService(completion, &stubQueryRegistry{Tools: []serviceports.AgentQueryTool{tool}},
 		&stubActionRegistry{})
 
-	result, err := svc.Run(t.Context(), &TurnRequest{
+	result, err := svc.run(t.Context(), &TurnRequest{
 		Definition: testDefinition("get_shipment"),
 		Actor:      testActor(),
 		Input:      "Where is bogus?",
@@ -220,7 +220,7 @@ func TestRun_RefusesAReplyContainingCode(t *testing.T) {
 	}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
 
-	result, err := svc.Run(t.Context(), &TurnRequest{
+	result, err := svc.run(t.Context(), &TurnRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "How do I check a load status?",
@@ -257,7 +257,7 @@ func TestRunObserved_ReportsTheTurnInOrder(t *testing.T) {
 		&stubActionRegistry{})
 
 	var names []string
-	result, err := svc.RunObserved(t.Context(), &TurnRequest{
+	result, err := svc.runObserved(t.Context(), &TurnRequest{
 		Definition: testDefinition("get_shipment"),
 		Actor:      testActor(),
 		Input:      "Where is S12345?",
@@ -290,7 +290,7 @@ func TestRunObserved_ReportsARefusalAndNothingElse(t *testing.T) {
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
 
 	var events []serviceports.StreamEvent
-	_, err := svc.RunObserved(t.Context(), &TurnRequest{
+	_, err := svc.runObserved(t.Context(), &TurnRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Write me a Python script to export loads",

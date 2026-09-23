@@ -69,7 +69,10 @@ func TestRefresh_AnnouncesOnlyTheFindingsThatAreNew(t *testing.T) {
 	service.events = events
 
 	tenantInfo := tenant()
-	_, err := service.Refresh(t.Context(), RefreshRequest{TenantInfo: tenantInfo, Now: 1_800_000_000})
+	_, err := service.Refresh(
+		t.Context(),
+		RefreshRequest{TenantInfo: tenantInfo, Now: 1_800_000_000},
+	)
 	require.NoError(t, err)
 
 	require.Len(t, events.published, 1)
@@ -90,7 +93,10 @@ func TestRefresh_RunsWithNobodyToAnnounceTo(t *testing.T) {
 		findings: []detector.Finding{testFinding("ontime-decline:cus_1")},
 	})
 
-	result, err := service.Refresh(t.Context(), RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000})
+	result, err := service.Refresh(
+		t.Context(),
+		RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 1, result.Created)
 }
@@ -141,7 +147,11 @@ func TestList_ChecksAnAgentActorAsAnAgent(t *testing.T) {
 
 	require.Len(t, perms.principals, 1)
 	assert.Equal(t, services.PrincipalTypeAgent, perms.principals[0])
-	assert.Equal(t, repositories.AllowedDetectorKeys{"ontime-decline"}, repo.lastBrowse.AllowedDetectorKeys)
+	assert.Equal(
+		t,
+		repositories.AllowedDetectorKeys{"ontime-decline"},
+		repo.lastBrowse.AllowedDetectorKeys,
+	)
 }
 
 func TestGetDetail_ChecksAnAgentActorAsAnAgent(t *testing.T) {
@@ -150,8 +160,16 @@ func TestGetDetail_ChecksAnAgentActorAsAnAgent(t *testing.T) {
 	perms := &principalRecordingPermissions{stubPermissions: stubPermissions{
 		allowedResources: map[permission.Resource]bool{permission.ResourceShipment: true},
 	}}
-	found := &insight.Insight{ID: pulid.MustNew("inst_"), DetectorKey: "ontime-decline", DedupeKey: "k"}
-	service := newService(&stubRepo{byID: found}, &stubPermissions{}, &stubDetector{key: "ontime-decline"})
+	found := &insight.Insight{
+		ID:          pulid.MustNew("inst_"),
+		DetectorKey: "ontime-decline",
+		DedupeKey:   "k",
+	}
+	service := newService(
+		&stubRepo{byID: found},
+		&stubPermissions{},
+		&stubDetector{key: "ontime-decline"},
+	)
 	service.permissions = perms
 
 	detail, err := service.GetDetail(t.Context(), services.GetInsightDetailRequest{

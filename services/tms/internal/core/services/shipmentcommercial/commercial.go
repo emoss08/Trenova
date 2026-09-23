@@ -167,7 +167,10 @@ func (c *Calculator) calculateCommercialTotals(
 	// stored freight amount, the only base there is before the linehaul is
 	// priced; the authoritative total is returned below, against the real base.
 	entity.OtherChargeAmount = decimal.NewNullDecimal(
-		shipment.AdditionalChargesTotal(entity.AdditionalCharges, entity.FreightChargeAmount.Decimal),
+		shipment.AdditionalChargesTotal(
+			entity.AdditionalCharges,
+			entity.FreightChargeAmount.Decimal,
+		),
 	)
 
 	baseCharge, ratingDetail, err := c.calculateBaseCharge(ctx, entity, userID)

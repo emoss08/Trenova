@@ -300,12 +300,14 @@ added to `virtuals`.
 
 ## Agent Runtime
 
-How agent and assistant work executes — the three task queues and why they are
-split, the step ledger that makes a retried run safe, durable chat turns behind
-`ai.durableTurns`, the resumable turn stream, and the append-only trajectory log.
+How every AI feature executes on Temporal — the queues and why they are split,
+the agent loop in workflow code (one activity per model and tool call), the
+HTTP-derived retry mapping, the step ledger that makes a retried write safe, the
+turn stream, per-agent schedules, the one-shot and batch workflows, and the
+`GetVersion` branches waiting on in-flight executions to drain.
 **Read [docs/engineering/agent-runtime.md](docs/engineering/agent-runtime.md)
 before changing anything under `internal/core/services/agentruntime/`,
-`assistantservice/`, or `internal/core/temporaljobs/{agentjobs,assistantjobs}/`.**
+`assistantservice/`, or `internal/core/temporaljobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs,importassistantjobs}/`.**
 
 ## Bun ORM
 

@@ -8,8 +8,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func original(tool string, params map[string]any, status ProposalStatus, decision DecisionType) OriginalProposal {
-	return OriginalProposal{ID: pulid.MustNew("aprop_"), ToolName: tool, Params: params, Status: status, Decision: decision}
+func original(
+	tool string,
+	params map[string]any,
+	status ProposalStatus,
+	decision DecisionType,
+) OriginalProposal {
+	return OriginalProposal{
+		ID:       pulid.MustNew("aprop_"),
+		ToolName: tool,
+		Params:   params,
+		Status:   status,
+		Decision: decision,
+	}
 }
 
 // The decisions people made on the original are the yardstick. A change a
@@ -19,13 +30,36 @@ func TestCompareReplay_JudgesByHowAPersonDecided(t *testing.T) {
 	t.Parallel()
 
 	originals := []OriginalProposal{
-		original("assign_move", map[string]any{"shipmentMoveId": "smv_1", "primaryWorkerId": "wrk_a"}, ProposalStatusExecuted, DecisionAccepted),
-		original("cancel_shipment", map[string]any{"shipmentId": "shp_1"}, ProposalStatusRejected, DecisionRejected),
-		original("place_shipment_hold", map[string]any{"shipmentId": "shp_2"}, ProposalStatusExecuted, DecisionAccepted),
-		original("add_shipment_comment", map[string]any{"shipmentId": "shp_3"}, ProposalStatusExpired, ""),
+		original(
+			"assign_move",
+			map[string]any{"shipmentMoveId": "smv_1", "primaryWorkerId": "wrk_a"},
+			ProposalStatusExecuted,
+			DecisionAccepted,
+		),
+		original(
+			"cancel_shipment",
+			map[string]any{"shipmentId": "shp_1"},
+			ProposalStatusRejected,
+			DecisionRejected,
+		),
+		original(
+			"place_shipment_hold",
+			map[string]any{"shipmentId": "shp_2"},
+			ProposalStatusExecuted,
+			DecisionAccepted,
+		),
+		original(
+			"add_shipment_comment",
+			map[string]any{"shipmentId": "shp_3"},
+			ProposalStatusExpired,
+			"",
+		),
 	}
 	replay := []ReplayAction{
-		{ToolName: "assign_move", Arguments: map[string]any{"primaryWorkerId": "wrk_a", "shipmentMoveId": "smv_1"}},
+		{
+			ToolName:  "assign_move",
+			Arguments: map[string]any{"primaryWorkerId": "wrk_a", "shipmentMoveId": "smv_1"},
+		},
 		{ToolName: "notify_driver", Arguments: map[string]any{"workerId": "wrk_a"}},
 	}
 
@@ -57,17 +91,37 @@ func TestCompareReplay_ShowsWhatChangedOnTheSameTool(t *testing.T) {
 	t.Parallel()
 
 	originals := []OriginalProposal{
-		original("assign_move", map[string]any{"shipmentMoveId": "smv_1", "primaryWorkerId": "wrk_a", "tractorId": "trc_1"}, ProposalStatusExecuted, DecisionAccepted),
+		original(
+			"assign_move",
+			map[string]any{
+				"shipmentMoveId":  "smv_1",
+				"primaryWorkerId": "wrk_a",
+				"tractorId":       "trc_1",
+			},
+			ProposalStatusExecuted,
+			DecisionAccepted,
+		),
 	}
 	replay := []ReplayAction{
-		{ToolName: "assign_move", Arguments: map[string]any{"shipmentMoveId": "smv_1", "primaryWorkerId": "wrk_b", "tractorId": "trc_1"}},
+		{
+			ToolName: "assign_move",
+			Arguments: map[string]any{
+				"shipmentMoveId":  "smv_1",
+				"primaryWorkerId": "wrk_b",
+				"tractorId":       "trc_1",
+			},
+		},
 	}
 
 	comparison := CompareReplay(originals, replay)
 
 	require.Len(t, comparison.Matches, 1)
 	assert.Equal(t, VerdictChanged, comparison.Matches[0].Verdict)
-	assert.Equal(t, []FieldChange{{Field: "primaryWorkerId", From: "wrk_a", To: "wrk_b"}}, comparison.Matches[0].Changes)
+	assert.Equal(
+		t,
+		[]FieldChange{{Field: "primaryWorkerId", From: "wrk_a", To: "wrk_b"}},
+		comparison.Matches[0].Changes,
+	)
 	assert.Equal(t, 1, comparison.Changed)
 	assert.Nil(t, comparison.Score, "a changed proposal is not scored either way")
 }
@@ -78,12 +132,25 @@ func TestCompareReplay_ReadsNumbersAndOrderAsTheSame(t *testing.T) {
 	t.Parallel()
 
 	originals := []OriginalProposal{
-		original("update_tractor_status", map[string]any{"tractorIds": []any{"trc_1"}, "status": "Available", "note": ""}, ProposalStatusExecuted, DecisionAccepted),
-		original("request_missing_docs", map[string]any{"count": float64(2)}, ProposalStatusRejected, DecisionRejected),
+		original(
+			"update_tractor_status",
+			map[string]any{"tractorIds": []any{"trc_1"}, "status": "Available", "note": ""},
+			ProposalStatusExecuted,
+			DecisionAccepted,
+		),
+		original(
+			"request_missing_docs",
+			map[string]any{"count": float64(2)},
+			ProposalStatusRejected,
+			DecisionRejected,
+		),
 	}
 	replay := []ReplayAction{
 		{ToolName: "request_missing_docs", Arguments: map[string]any{"count": 2}},
-		{ToolName: "update_tractor_status", Arguments: map[string]any{"status": "Available", "tractorIds": []string{"trc_1"}}},
+		{
+			ToolName:  "update_tractor_status",
+			Arguments: map[string]any{"status": "Available", "tractorIds": []string{"trc_1"}},
+		},
 	}
 
 	comparison := CompareReplay(originals, replay)

@@ -116,7 +116,11 @@ func (r *mutationResolver) checklistItemRequest(
 	ctx context.Context,
 	input gqlmodel.WorkerChecklistItemActionInput,
 ) (*workerchecklistservice.ItemRequest, error) {
-	authCtx, err := r.requirePermission(ctx, permission.ResourceWorkerChecklist, permission.OpUpdate)
+	authCtx, err := r.requirePermission(
+		ctx,
+		permission.ResourceWorkerChecklist,
+		permission.OpUpdate,
+	)
 	if err != nil {
 		return nil, err
 	}

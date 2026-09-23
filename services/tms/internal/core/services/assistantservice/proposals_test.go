@@ -180,7 +180,10 @@ func newProposalServiceBehind(
 	}
 }
 
-func proposalTestParams(actions []serviceports.PendingAction, saved []conversation.Message) persistProposalsParams {
+func proposalTestParams(
+	actions []serviceports.PendingAction,
+	saved []conversation.Message,
+) persistProposalsParams {
 	return persistProposalsParams{
 		Definition: &agentdefinition.Definition{
 			ID:              pulid.MustNew("agd_"),
@@ -476,7 +479,11 @@ func TestPersistProposals_HoldsAProposalBehindTheOrganizationPause(t *testing.T)
 		shadowSwitches{organizationPaused: true})
 
 	saved, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
-		{ToolName: "reassign_move", Arguments: map[string]any{"moveId": "mv_1"}, Rationale: "Driver is out of hours"},
+		{
+			ToolName:  "reassign_move",
+			Arguments: map[string]any{"moveId": "mv_1"},
+			Rationale: "Driver is out of hours",
+		},
 	}, nil))
 	require.NoError(t, err)
 
@@ -492,7 +499,11 @@ func TestPersistProposals_HoldsAProposalBehindTheAgentSwitch(t *testing.T) {
 	t.Parallel()
 
 	params := proposalTestParams([]serviceports.PendingAction{
-		{ToolName: "reassign_move", Arguments: map[string]any{"moveId": "mv_1"}, Rationale: "Driver is out of hours"},
+		{
+			ToolName:  "reassign_move",
+			Arguments: map[string]any{"moveId": "mv_1"},
+			Rationale: "Driver is out of hours",
+		},
 	}, nil)
 	params.Definition.ShadowMode = true
 	svc := newProposalServiceBehind(&stubRunRepo{}, &stubProposalRepo{}, &stubConversationRepo{},
@@ -513,7 +524,11 @@ func TestPersistProposals_LeavesALiveProposalUnheld(t *testing.T) {
 	svc := newProposalService(&stubRunRepo{}, &stubProposalRepo{}, &stubConversationRepo{})
 
 	saved, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
-		{ToolName: "reassign_move", Arguments: map[string]any{"moveId": "mv_1"}, Rationale: "Driver is out of hours"},
+		{
+			ToolName:  "reassign_move",
+			Arguments: map[string]any{"moveId": "mv_1"},
+			Rationale: "Driver is out of hours",
+		},
 	}, nil))
 	require.NoError(t, err)
 
@@ -528,17 +543,37 @@ func TestPersistProposals_LeavesALiveProposalUnheld(t *testing.T) {
 func TestListThreadProposals_HoldsOnlyWhatIsStillPending(t *testing.T) {
 	t.Parallel()
 
-	def := &agentdefinition.Definition{ID: pulid.MustNew("agd_"), Name: "Dispatch desk", ShadowMode: true}
+	def := &agentdefinition.Definition{
+		ID:         pulid.MustNew("agd_"),
+		Name:       "Dispatch desk",
+		ShadowMode: true,
+	}
 	heldRun := &agent.AgentRun{ID: pulid.MustNew("ar_"), AgentDefinitionID: def.ID}
 	decidedRun := &agent.AgentRun{ID: pulid.MustNew("ar_"), AgentDefinitionID: def.ID}
-	runs := &stubRunRepo{byID: map[pulid.ID]*agent.AgentRun{heldRun.ID: heldRun, decidedRun.ID: decidedRun}}
+	runs := &stubRunRepo{
+		byID: map[pulid.ID]*agent.AgentRun{heldRun.ID: heldRun, decidedRun.ID: decidedRun},
+	}
 	threadID := pulid.MustNew("thr_")
 	proposals := &stubProposalRepo{byThread: []*agent.AgentProposal{
-		{ID: pulid.MustNew("ap_"), RunID: heldRun.ID, ToolName: "reassign_move", Status: agent.ProposalStatusPending},
-		{ID: pulid.MustNew("ap_"), RunID: decidedRun.ID, ToolName: "hold_shipment", Status: agent.ProposalStatusRejected},
+		{
+			ID:       pulid.MustNew("ap_"),
+			RunID:    heldRun.ID,
+			ToolName: "reassign_move",
+			Status:   agent.ProposalStatusPending,
+		},
+		{
+			ID:       pulid.MustNew("ap_"),
+			RunID:    decidedRun.ID,
+			ToolName: "hold_shipment",
+			Status:   agent.ProposalStatusRejected,
+		},
 	}}
-	svc := newProposalServiceBehind(runs, proposals, &stubConversationRepo{thread: &conversation.Thread{ID: threadID}},
-		shadowSwitches{definition: def})
+	svc := newProposalServiceBehind(
+		runs,
+		proposals,
+		&stubConversationRepo{thread: &conversation.Thread{ID: threadID}},
+		shadowSwitches{definition: def},
+	)
 
 	result, err := svc.ListThreadProposals(t.Context(), repositories.GetThreadRequest{ID: threadID})
 	require.NoError(t, err)

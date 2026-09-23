@@ -74,15 +74,18 @@ func (h *Handler) receive(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.ReceiveWebhook(c.Request.Context(), &inboundmessageservice.ReceiveWebhookRequest{
-		MailboxToken:       c.Param("mailboxToken"),
-		Body:               body,
-		SignatureID:        c.GetHeader("svix-id"),
-		SignatureTimestamp: c.GetHeader("svix-timestamp"),
-		Signature:          c.GetHeader("svix-signature"),
-		Authorization:      c.GetHeader("Authorization"),
-		ReceivedAt:         time.Now(),
-	})
+	result, err := h.service.ReceiveWebhook(
+		c.Request.Context(),
+		&inboundmessageservice.ReceiveWebhookRequest{
+			MailboxToken:       c.Param("mailboxToken"),
+			Body:               body,
+			SignatureID:        c.GetHeader("svix-id"),
+			SignatureTimestamp: c.GetHeader("svix-timestamp"),
+			Signature:          c.GetHeader("svix-signature"),
+			Authorization:      c.GetHeader("Authorization"),
+			ReceivedAt:         time.Now(),
+		},
+	)
 	if err != nil {
 		h.reject(c, err)
 

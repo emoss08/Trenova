@@ -74,7 +74,10 @@ func recordRequest(
 	}
 
 	return &services.RecordDeviationsRequest{
-		TenantInfo:   pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
 		ResourceType: ResourceTypeShipment,
 		ResourceID:   pulid.MustNew("shp_"),
 		Policy:       policy,
@@ -95,7 +98,11 @@ func TestRecordDeviations_KeepsTheRulesThatFiredAgain(t *testing.T) {
 
 	err := newTestService(repo).RecordDeviations(
 		t.Context(),
-		recordRequest(policy, modeprofile.RuleKeyTemperatureRange, modeprofile.RuleKeyHazmatSegregation),
+		recordRequest(
+			policy,
+			modeprofile.RuleKeyTemperatureRange,
+			modeprofile.RuleKeyHazmatSegregation,
+		),
 	)
 	require.NoError(t, err)
 	require.NotNil(t, repo.superseded)
@@ -120,7 +127,11 @@ func TestRecordDeviations_DoesNotReinsertADeviationAlreadyOnRecord(t *testing.T)
 
 	err := newTestService(repo).RecordDeviations(
 		t.Context(),
-		recordRequest(policy, modeprofile.RuleKeyTemperatureRange, modeprofile.RuleKeyHazmatSegregation),
+		recordRequest(
+			policy,
+			modeprofile.RuleKeyTemperatureRange,
+			modeprofile.RuleKeyHazmatSegregation,
+		),
 	)
 	require.NoError(t, err)
 
@@ -167,7 +178,10 @@ func TestRecordDeviations_IgnoresAnAdvisoryTheProfileDoesNotGovern(t *testing.T)
 
 	err := newTestService(repo).RecordDeviations(
 		t.Context(),
-		recordRequest(policyWith(modeprofile.RuleKeyTemperatureRange), modeprofile.RuleKeyMoveRemoval),
+		recordRequest(
+			policyWith(modeprofile.RuleKeyTemperatureRange),
+			modeprofile.RuleKeyMoveRemoval,
+		),
 	)
 	require.NoError(t, err)
 

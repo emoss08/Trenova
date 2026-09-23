@@ -88,11 +88,31 @@ func TestCountsFoldsTheBreakdownIntoLanesKindsAndMailboxes(t *testing.T) {
 	billing := pulid.MustNew("imbx_")
 
 	repo := &readStubMessageRepo{breakdown: []repositories.InboundMessageCount{
-		{Status: inboundmessage.StatusInReview, Classification: inboundmessage.ClassificationTender, MailboxID: intake, Count: 3},
-		{Status: inboundmessage.StatusActioned, Classification: inboundmessage.ClassificationTender, MailboxID: intake, Count: 5},
+		{
+			Status:         inboundmessage.StatusInReview,
+			Classification: inboundmessage.ClassificationTender,
+			MailboxID:      intake,
+			Count:          3,
+		},
+		{
+			Status:         inboundmessage.StatusActioned,
+			Classification: inboundmessage.ClassificationTender,
+			MailboxID:      intake,
+			Count:          5,
+		},
 		{Status: inboundmessage.StatusQuarantined, Classification: "", MailboxID: intake, Count: 2},
-		{Status: inboundmessage.StatusActioned, Classification: inboundmessage.ClassificationInvoice, MailboxID: billing, Count: 4},
-		{Status: inboundmessage.StatusIgnored, Classification: inboundmessage.ClassificationOther, MailboxID: billing, Count: 1},
+		{
+			Status:         inboundmessage.StatusActioned,
+			Classification: inboundmessage.ClassificationInvoice,
+			MailboxID:      billing,
+			Count:          4,
+		},
+		{
+			Status:         inboundmessage.StatusIgnored,
+			Classification: inboundmessage.ClassificationOther,
+			MailboxID:      billing,
+			Count:          1,
+		},
 	}}
 	svc := &Service{messageRepo: repo}
 
@@ -105,7 +125,10 @@ func TestCountsFoldsTheBreakdownIntoLanesKindsAndMailboxes(t *testing.T) {
 	assert.Equal(t, 2, counts.Quarantined)
 	assert.Equal(t, 15, counts.Total)
 
-	byKind := make(map[inboundmessage.Classification]ClassificationCount, len(counts.ByClassification))
+	byKind := make(
+		map[inboundmessage.Classification]ClassificationCount,
+		len(counts.ByClassification),
+	)
 	for _, row := range counts.ByClassification {
 		byKind[row.Classification] = row
 	}

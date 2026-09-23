@@ -737,12 +737,6 @@ export type AssistantStreamEvent =
   | { event: "error"; data: z.infer<typeof assistantErrorEventSchema> };
 
 /**
- * Parses one raw SSE frame into a typed event. An event name this client does
- * not know returns null so a newer server can add events without breaking an
- * older reader; a known event with a malformed body throws, because that is a
- * contract violation rather than an extension.
- */
-/**
  * An ending the server rebuilt from a turn's record (`replay: true`) rather
  * than forwarded from the turn: it names the turn and how it ended, not what
  * was said, so it is not a saved result and must not be parsed as one.
@@ -753,6 +747,12 @@ function isReplayedEnding(data: unknown): boolean {
   );
 }
 
+/**
+ * Parses one raw SSE frame into a typed event. An event name this client does
+ * not know returns null so a newer server can add events without breaking an
+ * older reader; a known event with a malformed body throws, because that is a
+ * contract violation rather than an extension.
+ */
 export function parseAssistantStreamEvent(event: string, raw: string): AssistantStreamEvent | null {
   const data: unknown = raw === "" ? {} : JSON.parse(raw);
   switch (event) {

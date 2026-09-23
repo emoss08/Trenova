@@ -62,7 +62,8 @@ const (
 )
 
 func (ac *AgentControl) Validate(multiErr *errortypes.MultiError) {
-	if ac.PromotionThreshold < minPromotionThreshold || ac.PromotionThreshold > maxPromotionThreshold {
+	if ac.PromotionThreshold < minPromotionThreshold ||
+		ac.PromotionThreshold > maxPromotionThreshold {
 		multiErr.Add(
 			"promotionThreshold",
 			errortypes.ErrInvalid,

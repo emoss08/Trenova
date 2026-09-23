@@ -11,12 +11,22 @@ func AddMonthsUTC(ts int64, months int) int64 {
 	}
 	t := time.Unix(ts, 0).UTC()
 	year, month, day := t.Date()
-	target := time.Date(year, month+time.Month(months), 1, t.Hour(), t.Minute(), t.Second(), 0, time.UTC)
+	target := time.Date(
+		year,
+		month+time.Month(months),
+		1,
+		t.Hour(),
+		t.Minute(),
+		t.Second(),
+		0,
+		time.UTC,
+	)
 	lastDay := time.Date(target.Year(), target.Month()+1, 0, 0, 0, 0, 0, time.UTC).Day()
 	if day > lastDay {
 		day = lastDay
 	}
-	return time.Date(target.Year(), target.Month(), day, t.Hour(), t.Minute(), t.Second(), 0, time.UTC).Unix()
+	return time.Date(target.Year(), target.Month(), day, t.Hour(), t.Minute(), t.Second(), 0, time.UTC).
+		Unix()
 }
 
 // YearOfUnix is the UTC calendar year an instant falls in. Regulatory logs are

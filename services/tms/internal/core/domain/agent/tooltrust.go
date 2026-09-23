@@ -82,7 +82,10 @@ const (
 
 func (o TrustOutcome) IsValid() bool {
 	switch o {
-	case TrustOutcomeApproved, TrustOutcomeModified, TrustOutcomeRejected, TrustOutcomeExecutionFailed:
+	case TrustOutcomeApproved,
+		TrustOutcomeModified,
+		TrustOutcomeRejected,
+		TrustOutcomeExecutionFailed:
 		return true
 	default:
 		return false

@@ -172,7 +172,9 @@ func TestScheduleReport_RefusesAReportThatDoesNotExistBeforeProposing(t *testing
 	t.Parallel()
 
 	known := pulid.MustNew("rdef_")
-	tool := &scheduleReportTool{schedules: &fakeScheduleReports{known: map[pulid.ID]bool{known: true}}}
+	tool := &scheduleReportTool{
+		schedules: &fakeScheduleReports{known: map[pulid.ID]bool{known: true}},
+	}
 	args := func(id string) map[string]any {
 		return map[string]any{
 			"definitionId":    id,

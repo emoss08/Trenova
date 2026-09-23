@@ -37,8 +37,11 @@ func setupAccessPolicyService(t *testing.T) accessPolicyServiceDeps {
 		svc: &service{
 			repo:        repo,
 			policyCache: policyCache,
-			validator:   newValidator(&accessPolicyValidatorRepo{}, &accessPolicyUniquenessChecker{}),
-			l:           zap.NewNop(),
+			validator: newValidator(
+				&accessPolicyValidatorRepo{},
+				&accessPolicyUniquenessChecker{},
+			),
+			l: zap.NewNop(),
 		},
 		repo:        repo,
 		policyCache: policyCache,

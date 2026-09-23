@@ -64,7 +64,13 @@ func (s *Service) prepareEvent(ctx context.Context, entity *worker.WorkerSafetyE
 		return multiErr
 	}
 	if !entity.DocumentID.IsNil() {
-		return s.requireWorkerDocument(ctx, eventTenant(entity), entity.WorkerID, entity.ID, entity.DocumentID)
+		return s.requireWorkerDocument(
+			ctx,
+			eventTenant(entity),
+			entity.WorkerID,
+			entity.ID,
+			entity.DocumentID,
+		)
 	}
 	return nil
 }
@@ -81,7 +87,8 @@ func (s *Service) requireWorkerDocument(
 	if err != nil {
 		return err
 	}
-	ownedByRecord := !ownerID.IsNil() && doc.ResourceType == safetyResourceType && doc.ResourceID == ownerID.String()
+	ownedByRecord := !ownerID.IsNil() && doc.ResourceType == safetyResourceType &&
+		doc.ResourceID == ownerID.String()
 	ownedByWorker := doc.ResourceType == workerResourceType && doc.ResourceID == workerID.String()
 	if !ownedByRecord && !ownedByWorker {
 		return errortypes.NewValidationError(
@@ -100,7 +107,10 @@ func (s *Service) CreateEvent(
 	entity *worker.WorkerSafetyEvent,
 	userID pulid.ID,
 ) (*worker.WorkerSafetyEvent, error) {
-	log := s.l.With(zap.String("operation", "CreateEvent"), zap.String("workerId", entity.WorkerID.String()))
+	log := s.l.With(
+		zap.String("operation", "CreateEvent"),
+		zap.String("workerId", entity.WorkerID.String()),
+	)
 
 	if _, err := s.loadWorker(ctx, eventTenant(entity), entity.WorkerID); err != nil {
 		return nil, err
@@ -129,7 +139,14 @@ func (s *Service) CreateEvent(
 		operation: permission.OpCreate, userID: userID, tenant: eventTenant(created),
 		current: created, comment: "Safety event recorded: " + created.Kind.String(), log: log,
 	})
-	s.publish(ctx, eventTenant(created), realtimeSafetyEvent, permission.OpCreate, created.ID, userID)
+	s.publish(
+		ctx,
+		eventTenant(created),
+		realtimeSafetyEvent,
+		permission.OpCreate,
+		created.ID,
+		userID,
+	)
 	s.refreshRollupQuietly(ctx, eventTenant(created), created.WorkerID)
 	return created, nil
 }
@@ -182,7 +199,14 @@ func (s *Service) UpdateEvent(
 		operation: permission.OpUpdate, userID: userID, tenant: eventTenant(updated),
 		current: updated, previous: original, comment: "Safety event updated", log: log,
 	})
-	s.publish(ctx, eventTenant(updated), realtimeSafetyEvent, permission.OpUpdate, updated.ID, userID)
+	s.publish(
+		ctx,
+		eventTenant(updated),
+		realtimeSafetyEvent,
+		permission.OpUpdate,
+		updated.ID,
+		userID,
+	)
 	s.refreshRollupQuietly(ctx, eventTenant(updated), updated.WorkerID)
 	return updated, nil
 }
@@ -200,7 +224,13 @@ func (s *Service) CloseEvent(
 	ctx context.Context,
 	req *EventStatusRequest,
 ) (*worker.WorkerSafetyEvent, error) {
-	return s.moveEvent(ctx, req, worker.SafetyEventStatusClosed, permission.OpClose, "Safety event closed")
+	return s.moveEvent(
+		ctx,
+		req,
+		worker.SafetyEventStatusClosed,
+		permission.OpClose,
+		"Safety event closed",
+	)
 }
 
 // ReviewEvent flags an event as being looked into.
@@ -208,7 +238,13 @@ func (s *Service) ReviewEvent(
 	ctx context.Context,
 	req *EventStatusRequest,
 ) (*worker.WorkerSafetyEvent, error) {
-	return s.moveEvent(ctx, req, worker.SafetyEventStatusUnderReview, permission.OpUpdate, "Safety event under review")
+	return s.moveEvent(
+		ctx,
+		req,
+		worker.SafetyEventStatusUnderReview,
+		permission.OpUpdate,
+		"Safety event under review",
+	)
 }
 
 // ReopenEvent puts a closed event back on the open list.
@@ -216,7 +252,13 @@ func (s *Service) ReopenEvent(
 	ctx context.Context,
 	req *EventStatusRequest,
 ) (*worker.WorkerSafetyEvent, error) {
-	return s.moveEvent(ctx, req, worker.SafetyEventStatusOpen, permission.OpReopen, "Safety event reopened")
+	return s.moveEvent(
+		ctx,
+		req,
+		worker.SafetyEventStatusOpen,
+		permission.OpReopen,
+		"Safety event reopened",
+	)
 }
 
 func (s *Service) moveEvent(

@@ -242,53 +242,113 @@ func NewFactory(p FactoryParams) *Factory {
 
 func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 	return &Loaders{
-		OrganizationByID:                          f.organizationByID.NewForTenant(tenantInfo),
-		LocationByID:                              f.locationByID.NewForTenant(tenantInfo),
-		OrderByID:                                 f.orderByID.NewForTenant(tenantInfo),
-		ShipmentProfitabilityByID:                 f.shipmentProfitabilityByID.NewForTenant(tenantInfo),
-		EDIPartnerByCustomerID:                    f.ediPartnerByCustomerID.NewForTenant(tenantInfo),
-		FormulaTemplateStatsByID:                  f.formulaTemplateStatsByID.NewForTenant(tenantInfo),
-		AgentDefinitionStatsByID:                  f.agentDefinitionStatsByID.NewForTenant(tenantInfo),
-		PayProfileActiveAssignmentCount:           f.payProfileActiveAssignmentCount.NewForTenant(tenantInfo),
-		PTOPolicyOpenAssignmentCount:              f.pTOPolicyOpenAssignmentCount.NewForTenant(tenantInfo),
-		ShiftTemplateActiveAssignmentCount:        f.shiftTemplateActiveAssignmentCount.NewForTenant(tenantInfo),
-		WorkerChecklistTemplateOpenChecklistCount: f.workerChecklistTemplateOpenChecklistCount.NewForTenant(tenantInfo),
-		WorkerCredentialTypeActiveCredentialCount: f.workerCredentialTypeActiveCredentialCount.NewForTenant(tenantInfo),
-		TrainingCourseOpenRecordCount:             f.trainingCourseOpenRecordCount.NewForTenant(tenantInfo),
-		PerformanceReviewTemplateOpenReviewCount:  f.performanceReviewTemplateOpenReviewCount.NewForTenant(tenantInfo),
-		CustomerByID:                              f.customerByID.NewForTenant(tenantInfo),
-		InvoiceByID:                               f.invoiceByID.NewForTenant(tenantInfo),
-		GLAccountByID:                             f.gLAccountByID.NewForTenant(tenantInfo),
-		RoutingGuideWithEntriesByID:               f.routingGuideWithEntriesByID.NewForTenant(tenantInfo),
-		WorkerDQFVerificationsByWorkerID:          f.workerDQFVerificationsByWorkerID.NewForTenant(tenantInfo),
-		WorkerLeaveEntriesByCaseID:                f.workerLeaveEntriesByCaseID.NewForTenant(tenantInfo),
-		FiscalPeriodsByFiscalYearID:               f.fiscalPeriodsByFiscalYearID.NewForTenant(tenantInfo),
-		AgentDecisionsByProposalID:                f.agentDecisionsByProposalID.NewForTenant(tenantInfo),
-		AgentRunByID:                              f.agentRunByID.NewForTenant(tenantInfo),
-		AgentDefinitionByID:                       f.agentDefinitionByID.NewForTenant(tenantInfo),
-		DocumentTemplateKindByTemplateID:          f.documentTemplateKindByTemplateID.NewForTenant(tenantInfo),
-		IFTAJurisdictionByID:                      f.iFTAJurisdictionByID.NewForTenant(tenantInfo),
-		IFTAReturnByID:                            f.iFTAReturnByID.NewForTenant(tenantInfo),
-		FuelCardByID:                              f.fuelCardByID.NewForTenant(tenantInfo),
-		TractorByID:                               f.tractorByID.NewForTenant(tenantInfo),
-		ShipmentMoveJurisdictionMilesByMoveID:     f.shipmentMoveJurisdictionMilesByMoveID.NewForTenant(tenantInfo),
-		UserByID:                                  f.userByID.NewForTenant(tenantInfo),
-		DocumentByID:                              f.documentByID.NewForTenant(tenantInfo),
-		UsStateByID:                               f.usStateByID.NewForTenant(tenantInfo),
-		InvoicesByShipmentID:                      f.invoicesByShipmentID.NewForTenant(tenantInfo),
-		ChargeAllocationsByShipmentID:             f.chargeAllocationsByShipmentID.NewForTenant(tenantInfo),
-		ChargeAllocationsByOrderChargeID:          f.chargeAllocationsByOrderChargeID.NewForTenant(tenantInfo),
-		CustomerPaymentApplicationsByInvoiceID:    f.customerPaymentApplicationsByInvoiceID.NewForTenant(tenantInfo),
-		CreditMemoApplicationsByInvoiceID:         f.creditMemoApplicationsByInvoiceID.NewForTenant(tenantInfo),
-		InvoiceDisputesByInvoiceID:                f.invoiceDisputesByInvoiceID.NewForTenant(tenantInfo),
-		LateChargeAssessmentsByInvoiceID:          f.lateChargeAssessmentsByInvoiceID.NewForTenant(tenantInfo),
-		InvoiceEDISendPlanByInvoiceID:             f.invoiceEDISendPlanByInvoiceID.NewForTenant(tenantInfo),
-		CarrierIntelSnapshotByCarrierID:           f.carrierIntelSnapshotByCarrierID.NewForTenant(tenantInfo),
-		CarrierIntelSnapshotByCustomerID:          f.carrierIntelSnapshotByCustomerID.NewForTenant(tenantInfo),
-		CarrierIntelOpenEventCount:                f.carrierIntelOpenEventCount.NewForTenant(tenantInfo),
-		InboundAttachmentCount:                    f.inboundAttachmentCount.NewForTenant(tenantInfo),
-		ShipmentSummaryByID:                       f.shipmentSummaryByID.NewForTenant(tenantInfo),
-		CarrierMonitoringEnrollmentByCarrierID:    f.carrierMonitoringEnrollmentByCarrierID.NewForTenant(tenantInfo),
+		OrganizationByID: f.organizationByID.NewForTenant(tenantInfo),
+		LocationByID:     f.locationByID.NewForTenant(tenantInfo),
+		OrderByID:        f.orderByID.NewForTenant(tenantInfo),
+		ShipmentProfitabilityByID: f.shipmentProfitabilityByID.NewForTenant(
+			tenantInfo,
+		),
+		EDIPartnerByCustomerID: f.ediPartnerByCustomerID.NewForTenant(
+			tenantInfo,
+		),
+		FormulaTemplateStatsByID: f.formulaTemplateStatsByID.NewForTenant(
+			tenantInfo,
+		),
+		AgentDefinitionStatsByID: f.agentDefinitionStatsByID.NewForTenant(
+			tenantInfo,
+		),
+		PayProfileActiveAssignmentCount: f.payProfileActiveAssignmentCount.NewForTenant(
+			tenantInfo,
+		),
+		PTOPolicyOpenAssignmentCount: f.pTOPolicyOpenAssignmentCount.NewForTenant(
+			tenantInfo,
+		),
+		ShiftTemplateActiveAssignmentCount: f.shiftTemplateActiveAssignmentCount.NewForTenant(
+			tenantInfo,
+		),
+		WorkerChecklistTemplateOpenChecklistCount: f.workerChecklistTemplateOpenChecklistCount.NewForTenant(
+			tenantInfo,
+		),
+		WorkerCredentialTypeActiveCredentialCount: f.workerCredentialTypeActiveCredentialCount.NewForTenant(
+			tenantInfo,
+		),
+		TrainingCourseOpenRecordCount: f.trainingCourseOpenRecordCount.NewForTenant(
+			tenantInfo,
+		),
+		PerformanceReviewTemplateOpenReviewCount: f.performanceReviewTemplateOpenReviewCount.NewForTenant(
+			tenantInfo,
+		),
+		CustomerByID:  f.customerByID.NewForTenant(tenantInfo),
+		InvoiceByID:   f.invoiceByID.NewForTenant(tenantInfo),
+		GLAccountByID: f.gLAccountByID.NewForTenant(tenantInfo),
+		RoutingGuideWithEntriesByID: f.routingGuideWithEntriesByID.NewForTenant(
+			tenantInfo,
+		),
+		WorkerDQFVerificationsByWorkerID: f.workerDQFVerificationsByWorkerID.NewForTenant(
+			tenantInfo,
+		),
+		WorkerLeaveEntriesByCaseID: f.workerLeaveEntriesByCaseID.NewForTenant(
+			tenantInfo,
+		),
+		FiscalPeriodsByFiscalYearID: f.fiscalPeriodsByFiscalYearID.NewForTenant(
+			tenantInfo,
+		),
+		AgentDecisionsByProposalID: f.agentDecisionsByProposalID.NewForTenant(
+			tenantInfo,
+		),
+		AgentRunByID:        f.agentRunByID.NewForTenant(tenantInfo),
+		AgentDefinitionByID: f.agentDefinitionByID.NewForTenant(tenantInfo),
+		DocumentTemplateKindByTemplateID: f.documentTemplateKindByTemplateID.NewForTenant(
+			tenantInfo,
+		),
+		IFTAJurisdictionByID: f.iFTAJurisdictionByID.NewForTenant(tenantInfo),
+		IFTAReturnByID:       f.iFTAReturnByID.NewForTenant(tenantInfo),
+		FuelCardByID:         f.fuelCardByID.NewForTenant(tenantInfo),
+		TractorByID:          f.tractorByID.NewForTenant(tenantInfo),
+		ShipmentMoveJurisdictionMilesByMoveID: f.shipmentMoveJurisdictionMilesByMoveID.NewForTenant(
+			tenantInfo,
+		),
+		UserByID:             f.userByID.NewForTenant(tenantInfo),
+		DocumentByID:         f.documentByID.NewForTenant(tenantInfo),
+		UsStateByID:          f.usStateByID.NewForTenant(tenantInfo),
+		InvoicesByShipmentID: f.invoicesByShipmentID.NewForTenant(tenantInfo),
+		ChargeAllocationsByShipmentID: f.chargeAllocationsByShipmentID.NewForTenant(
+			tenantInfo,
+		),
+		ChargeAllocationsByOrderChargeID: f.chargeAllocationsByOrderChargeID.NewForTenant(
+			tenantInfo,
+		),
+		CustomerPaymentApplicationsByInvoiceID: f.customerPaymentApplicationsByInvoiceID.NewForTenant(
+			tenantInfo,
+		),
+		CreditMemoApplicationsByInvoiceID: f.creditMemoApplicationsByInvoiceID.NewForTenant(
+			tenantInfo,
+		),
+		InvoiceDisputesByInvoiceID: f.invoiceDisputesByInvoiceID.NewForTenant(
+			tenantInfo,
+		),
+		LateChargeAssessmentsByInvoiceID: f.lateChargeAssessmentsByInvoiceID.NewForTenant(
+			tenantInfo,
+		),
+		InvoiceEDISendPlanByInvoiceID: f.invoiceEDISendPlanByInvoiceID.NewForTenant(
+			tenantInfo,
+		),
+		CarrierIntelSnapshotByCarrierID: f.carrierIntelSnapshotByCarrierID.NewForTenant(
+			tenantInfo,
+		),
+		CarrierIntelSnapshotByCustomerID: f.carrierIntelSnapshotByCustomerID.NewForTenant(
+			tenantInfo,
+		),
+		CarrierIntelOpenEventCount: f.carrierIntelOpenEventCount.NewForTenant(
+			tenantInfo,
+		),
+		InboundAttachmentCount: f.inboundAttachmentCount.NewForTenant(
+			tenantInfo,
+		),
+		ShipmentSummaryByID: f.shipmentSummaryByID.NewForTenant(tenantInfo),
+		CarrierMonitoringEnrollmentByCarrierID: f.carrierMonitoringEnrollmentByCarrierID.NewForTenant(
+			tenantInfo,
+		),
 	}
 }
 

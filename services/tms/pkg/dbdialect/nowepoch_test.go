@@ -17,7 +17,8 @@ func TestNowEpoch(t *testing.T) {
 }
 
 func TestMonthStartEpoch(t *testing.T) {
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"extract(epoch from date_trunc('month', to_timestamp(wsev.occurred_at) at time zone 'UTC'))::bigint",
 		dbdialect.Postgres.MonthStartEpoch("wsev.occurred_at"),
 	)
@@ -42,43 +43,47 @@ func TestNoHardcodedEpochExpression(t *testing.T) {
 	helper := filepath.Join(root, "pkg", "dbdialect", "dbdialect.go")
 
 	for _, dir := range []string{"internal", "pkg"} {
-		err := filepath.WalkDir(filepath.Join(root, dir), func(path string, entry os.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if entry.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
-				return nil
-			}
-			if path == helper {
-				return nil
-			}
-
-			contents, readErr := os.ReadFile(path) //nolint:gosec // walking our own source tree
-			if readErr != nil {
-				return readErr
-			}
-
-			// Files that are deliberately Postgres-only opt out with a marker.
-			// They must gate themselves on a capability instead.
-			if strings.Contains(string(contents), postgresOnlyMarker) {
-				return nil
-			}
-
-			for i, line := range strings.Split(string(contents), "\n") {
-				lower := strings.ToLower(line)
-				if !strings.Contains(lower, "extract(epoch") {
-					continue
+		err := filepath.WalkDir(
+			filepath.Join(root, dir),
+			func(path string, entry os.DirEntry, err error) error {
+				if err != nil {
+					return err
 				}
-				if strings.Contains(lower, "default:extract(epoch") {
-					continue
+				if entry.IsDir() || !strings.HasSuffix(path, ".go") ||
+					strings.HasSuffix(path, "_test.go") {
+					return nil
+				}
+				if path == helper {
+					return nil
 				}
 
-				rel, _ := filepath.Rel(root, path)
-				offenders = append(offenders, rel+":"+itoa(i+1))
-			}
+				contents, readErr := os.ReadFile(path) //nolint:gosec // walking our own source tree
+				if readErr != nil {
+					return readErr
+				}
 
-			return nil
-		})
+				// Files that are deliberately Postgres-only opt out with a marker.
+				// They must gate themselves on a capability instead.
+				if strings.Contains(string(contents), postgresOnlyMarker) {
+					return nil
+				}
+
+				for i, line := range strings.Split(string(contents), "\n") {
+					lower := strings.ToLower(line)
+					if !strings.Contains(lower, "extract(epoch") {
+						continue
+					}
+					if strings.Contains(lower, "default:extract(epoch") {
+						continue
+					}
+
+					rel, _ := filepath.Rel(root, path)
+					offenders = append(offenders, rel+":"+itoa(i+1))
+				}
+
+				return nil
+			},
+		)
 		require.NoError(t, err)
 	}
 

@@ -105,7 +105,9 @@ func agentMemoryConnectionToModel(
 
 // agentMemorySubject reads the optional subject pair from an input,
 // refusing half of one.
-func agentMemorySubject(input gqlmodel.AgentMemoryInput) (agent.MemorySubjectType, pulid.ID, error) {
+func agentMemorySubject(
+	input gqlmodel.AgentMemoryInput,
+) (agent.MemorySubjectType, pulid.ID, error) {
 	hasType := input.SubjectType != nil && *input.SubjectType != ""
 	hasID := input.SubjectID != nil && strings.TrimSpace(*input.SubjectID) != ""
 	switch {

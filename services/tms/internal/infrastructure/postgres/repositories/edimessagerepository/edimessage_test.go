@@ -85,12 +85,15 @@ func TestGetServiceFailure214LifecycleMessageMatchesLifecycleIdentity(t *testing
 			"1",
 			1,
 			"ST*214~",
-			`{"transactionSet":"214","shipmentStatus":{"serviceFailureId":"`+serviceFailureID.String()+`","references":{"serviceFailureId":"`+serviceFailureID.String()+`","serviceFailure214Trigger":"Reviewed"}}}`,
+			`{"transactionSet":"214","shipmentStatus":{"serviceFailureId":"`+serviceFailureID.String()+
+				`","references":{"serviceFailureId":"`+serviceFailureID.String()+
+				`","serviceFailure214Trigger":"Reviewed"}}}`,
 			1,
 			0,
 			1,
 			1,
-		))
+		),
+		)
 
 	message, err := repo.GetServiceFailure214LifecycleMessage(
 		t.Context(),
@@ -107,7 +110,9 @@ func TestGetServiceFailure214LifecycleMessageMatchesLifecycleIdentity(t *testing
 	require.Equal(t, profileID, message.PartnerDocumentProfileID)
 }
 
-func TestGetServiceFailure214LifecycleMessageReturnsNotFoundForNonMatchingLifecycleIdentity(t *testing.T) {
+func TestGetServiceFailure214LifecycleMessageReturnsNotFoundForNonMatchingLifecycleIdentity(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	repo, mock := newEDIMessageTestRepository(t)

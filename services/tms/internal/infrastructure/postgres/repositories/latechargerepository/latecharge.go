@@ -225,9 +225,14 @@ func (r *repository) ListBySourceInvoiceIDs(
 	req *repositories.ListLateChargeAssessmentsByInvoiceIDsRequest,
 ) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {
 	cols := buncolgen.LateChargeAssessmentColumns
-	return r.listGrouped(ctx, req, cols.SourceInvoiceID, func(a *latecharge.LateChargeAssessment) pulid.ID {
-		return a.SourceInvoiceID
-	})
+	return r.listGrouped(
+		ctx,
+		req,
+		cols.SourceInvoiceID,
+		func(a *latecharge.LateChargeAssessment) pulid.ID {
+			return a.SourceInvoiceID
+		},
+	)
 }
 
 func (r *repository) ListByDebitMemoIDs(
@@ -235,9 +240,14 @@ func (r *repository) ListByDebitMemoIDs(
 	req *repositories.ListLateChargeAssessmentsByInvoiceIDsRequest,
 ) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {
 	cols := buncolgen.LateChargeAssessmentColumns
-	return r.listGrouped(ctx, req, cols.DebitMemoInvoiceID, func(a *latecharge.LateChargeAssessment) pulid.ID {
-		return a.DebitMemoInvoiceID
-	})
+	return r.listGrouped(
+		ctx,
+		req,
+		cols.DebitMemoInvoiceID,
+		func(a *latecharge.LateChargeAssessment) pulid.ID {
+			return a.DebitMemoInvoiceID
+		},
+	)
 }
 
 func (r *repository) listGrouped(

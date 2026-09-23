@@ -32,7 +32,12 @@ func TestEmploymentEventKind_CanRecord(t *testing.T) {
 		state worker.EmploymentState
 		ok    bool
 	}{
-		{"hire a brand new worker", worker.EmploymentEventHired, worker.EmploymentState{Status: domaintypes.StatusActive}, true},
+		{
+			"hire a brand new worker",
+			worker.EmploymentEventHired,
+			worker.EmploymentState{Status: domaintypes.StatusActive},
+			true,
+		},
 		{"cannot hire twice", worker.EmploymentEventHired, activeState(), false},
 		{"rehire only when inactive", worker.EmploymentEventRehired, inactive, true},
 		{"cannot rehire an active worker", worker.EmploymentEventRehired, activeState(), false},
@@ -95,7 +100,10 @@ func TestWorkerEmploymentEvent_Apply(t *testing.T) {
 
 	t.Run("terminate closes employment and dispatch", func(t *testing.T) {
 		wrk := newWorker()
-		event := &worker.WorkerEmploymentEvent{Kind: worker.EmploymentEventTerminated, EffectiveAt: 1_800_000_000}
+		event := &worker.WorkerEmploymentEvent{
+			Kind:        worker.EmploymentEventTerminated,
+			EffectiveAt: 1_800_000_000,
+		}
 		assert.True(t, event.Apply(wrk))
 		assert.Equal(t, domaintypes.StatusInactive, wrk.Status)
 		assert.False(t, wrk.CanBeAssigned)
@@ -109,7 +117,10 @@ func TestWorkerEmploymentEvent_Apply(t *testing.T) {
 		wrk.Status = domaintypes.StatusInactive
 		term := int64(1_700_000_000)
 		wrk.Profile.TerminationDate = &term
-		event := &worker.WorkerEmploymentEvent{Kind: worker.EmploymentEventRehired, EffectiveAt: 1_750_000_000}
+		event := &worker.WorkerEmploymentEvent{
+			Kind:        worker.EmploymentEventRehired,
+			EffectiveAt: 1_750_000_000,
+		}
 		assert.True(t, event.Apply(wrk))
 		assert.Equal(t, domaintypes.StatusActive, wrk.Status)
 		assert.True(t, wrk.CanBeAssigned)
@@ -119,10 +130,16 @@ func TestWorkerEmploymentEvent_Apply(t *testing.T) {
 
 	t.Run("suspend and reinstate toggle dispatch but not status", func(t *testing.T) {
 		wrk := newWorker()
-		assert.True(t, (&worker.WorkerEmploymentEvent{Kind: worker.EmploymentEventSuspended}).Apply(wrk))
+		assert.True(
+			t,
+			(&worker.WorkerEmploymentEvent{Kind: worker.EmploymentEventSuspended}).Apply(wrk),
+		)
 		assert.Equal(t, domaintypes.StatusActive, wrk.Status)
 		assert.False(t, wrk.CanBeAssigned)
-		assert.True(t, (&worker.WorkerEmploymentEvent{Kind: worker.EmploymentEventReinstated}).Apply(wrk))
+		assert.True(
+			t,
+			(&worker.WorkerEmploymentEvent{Kind: worker.EmploymentEventReinstated}).Apply(wrk),
+		)
 		assert.True(t, wrk.CanBeAssigned)
 	})
 
@@ -156,8 +173,14 @@ func TestWorkerEmploymentEvent_Apply(t *testing.T) {
 
 	t.Run("informational kinds do not touch the worker", func(t *testing.T) {
 		wrk := newWorker()
-		assert.False(t, (&worker.WorkerEmploymentEvent{Kind: worker.EmploymentEventRateChanged}).Apply(wrk))
-		assert.False(t, (&worker.WorkerEmploymentEvent{Kind: worker.EmploymentEventProbationEnded}).Apply(wrk))
+		assert.False(
+			t,
+			(&worker.WorkerEmploymentEvent{Kind: worker.EmploymentEventRateChanged}).Apply(wrk),
+		)
+		assert.False(
+			t,
+			(&worker.WorkerEmploymentEvent{Kind: worker.EmploymentEventProbationEnded}).Apply(wrk),
+		)
 	})
 }
 
@@ -191,6 +214,11 @@ func TestTenure(t *testing.T) {
 	term := now - 4*day
 	assert.Equal(t, 6*24*time.Hour, worker.Tenure(now-10*day, &term, now))
 	future := now + 5*day
-	assert.Equal(t, 10*24*time.Hour, worker.Tenure(now-10*day, &future, now), "a future end date is ignored")
+	assert.Equal(
+		t,
+		10*24*time.Hour,
+		worker.Tenure(now-10*day, &future, now),
+		"a future end date is ignored",
+	)
 	assert.Equal(t, time.Duration(0), worker.Tenure(now+day, nil, now))
 }

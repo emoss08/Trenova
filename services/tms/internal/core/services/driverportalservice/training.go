@@ -69,7 +69,10 @@ func portalTrainingView(item *worker.TrainingSummaryItem) *PortalTraining {
 	return view
 }
 
-func portalTrainingFromRecord(record *worker.WorkerTrainingRecord, wrk *worker.Worker) *PortalTraining {
+func portalTrainingFromRecord(
+	record *worker.WorkerTrainingRecord,
+	wrk *worker.Worker,
+) *PortalTraining {
 	now := timeutils.NowUnix()
 	return portalTrainingView(&worker.TrainingSummaryItem{
 		Course:          record.Course,

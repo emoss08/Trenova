@@ -549,7 +549,11 @@ func (h *Handler) createMemo(c *gin.Context) {
 	req.ID = pulid.Nil
 	req.TenantInfo = tenantInfo(authCtx)
 
-	entity, err := h.service.CreateMemo(c.Request.Context(), req, actorutil.FromAuthContext(authCtx))
+	entity, err := h.service.CreateMemo(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

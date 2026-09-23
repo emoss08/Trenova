@@ -99,7 +99,10 @@ func rootField(name string, source string) *ast.Field {
 	}
 }
 
-func newOperationContext(operation ast.Operation, selections ...ast.Selection) *gqlgen.OperationContext {
+func newOperationContext(
+	operation ast.Operation,
+	selections ...ast.Selection,
+) *gqlgen.OperationContext {
 	return &gqlgen.OperationContext{
 		OperationName: "TestOperation",
 		Operation: &ast.OperationDefinition{
@@ -590,7 +593,10 @@ func TestFeatureAccess_SelectOptionsUnresolvableResourceIsDenied(t *testing.T) {
 
 	err := extension.MutateOperationContext(
 		newAuthedContext(),
-		newOperationContext(ast.Query, rootField(selectOptionsFieldName, "select_options.graphqls")),
+		newOperationContext(
+			ast.Query,
+			rootField(selectOptionsFieldName, "select_options.graphqls"),
+		),
 	)
 
 	require.Error(t, err)

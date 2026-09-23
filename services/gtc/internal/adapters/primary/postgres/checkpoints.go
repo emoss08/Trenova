@@ -119,7 +119,8 @@ func (s *CheckpointStore) LoadSnapshotProgress(
 	)
 
 	var progress ports.SnapshotProgress
-	err := s.pool.QueryRow(ctx, query, tableName).Scan(&progress.TableName, &progress.Cursor, &progress.Completed)
+	err := s.pool.QueryRow(ctx, query, tableName).
+		Scan(&progress.TableName, &progress.Cursor, &progress.Completed)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return ports.SnapshotProgress{TableName: tableName}, nil

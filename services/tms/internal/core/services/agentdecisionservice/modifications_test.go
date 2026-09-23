@@ -22,18 +22,36 @@ func TestSettleModifications_RecordsOnlyRealChangesAndAnUnchangedFormAsApproval(
 	}
 	service := &Service{}
 
-	unchanged, err := service.settleModifications(t.Context(), proposal, &services.DecideAgentProposalRequest{
-		Decision:      agent.DecisionModified,
-		Modifications: map[string]any{"workerId": "wrk_1", "message": "Call in", "priority": "medium"},
-	}, nil)
+	unchanged, err := service.settleModifications(
+		t.Context(),
+		proposal,
+		&services.DecideAgentProposalRequest{
+			Decision: agent.DecisionModified,
+			Modifications: map[string]any{
+				"workerId": "wrk_1",
+				"message":  "Call in",
+				"priority": "medium",
+			},
+		},
+		nil,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, agent.DecisionAccepted, unchanged.Decision)
 	assert.Nil(t, unchanged.Modifications)
 
-	changed, err := service.settleModifications(t.Context(), proposal, &services.DecideAgentProposalRequest{
-		Decision:      agent.DecisionModified,
-		Modifications: map[string]any{"workerId": "wrk_1", "message": "Call dispatch now", "priority": "medium"},
-	}, nil)
+	changed, err := service.settleModifications(
+		t.Context(),
+		proposal,
+		&services.DecideAgentProposalRequest{
+			Decision: agent.DecisionModified,
+			Modifications: map[string]any{
+				"workerId": "wrk_1",
+				"message":  "Call dispatch now",
+				"priority": "medium",
+			},
+		},
+		nil,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, agent.DecisionModified, changed.Decision)
 	assert.Equal(t, map[string]any{"message": "Call dispatch now"}, changed.Modifications)

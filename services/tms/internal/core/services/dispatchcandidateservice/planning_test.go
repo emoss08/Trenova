@@ -129,8 +129,17 @@ func TestCommitPlannedMove_IgnoresIncompleteRequests(t *testing.T) {
 		req  *CommitPlannedMoveRequest
 	}{
 		{name: "nil request"},
-		{name: "nil snapshot", req: &CommitPlannedMoveRequest{Move: move, Score: &CandidateScore{WorkerID: workerID}}},
-		{name: "nil move", req: &CommitPlannedMoveRequest{Snapshot: &FleetSnapshot{}, Score: &CandidateScore{WorkerID: workerID}}},
+		{
+			name: "nil snapshot",
+			req:  &CommitPlannedMoveRequest{Move: move, Score: &CandidateScore{WorkerID: workerID}},
+		},
+		{
+			name: "nil move",
+			req: &CommitPlannedMoveRequest{
+				Snapshot: &FleetSnapshot{},
+				Score:    &CandidateScore{WorkerID: workerID},
+			},
+		},
 		{name: "nil score", req: &CommitPlannedMoveRequest{Snapshot: &FleetSnapshot{}, Move: move}},
 		{
 			name: "score without a worker",

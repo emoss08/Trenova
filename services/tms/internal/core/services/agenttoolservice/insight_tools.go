@@ -86,7 +86,10 @@ func (t *dismissInsightTool) Target(params map[string]any) (serviceports.ToolTar
 	return serviceports.ToolTarget{Resource: permission.ResourceInsight, ID: id}, true
 }
 
-func (t *dismissInsightTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *dismissInsightTool) Execute(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
 	id, reason, err := t.arguments(params)
 	if err != nil {
 		return err
@@ -115,7 +118,11 @@ func (t *dismissInsightTool) Simulate(
 		Summary:   fmt.Sprintf("Would dismiss insight %s.", id),
 		Previewed: true,
 		Changes: []agent.FieldChange{
-			{Field: "status", From: string(insight.StatusActive), To: string(insight.StatusDismissed)},
+			{
+				Field: "status",
+				From:  string(insight.StatusActive),
+				To:    string(insight.StatusDismissed),
+			},
 			{Field: "dismissReason", From: "", To: reason},
 		},
 	}, nil

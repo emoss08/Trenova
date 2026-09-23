@@ -18,7 +18,11 @@ func TestIsDelayedEligibleShipmentStatus(t *testing.T) {
 		{name: "new is eligible", status: shipment.StatusNew, want: true},
 		{name: "in transit is eligible", status: shipment.StatusInTransit, want: true},
 		{name: "delayed is not eligible", status: shipment.StatusDelayed, want: false},
-		{name: "ready to invoice is not eligible", status: shipment.StatusReadyToInvoice, want: false},
+		{
+			name:   "ready to invoice is not eligible",
+			status: shipment.StatusReadyToInvoice,
+			want:   false,
+		},
 		{name: "completed is not eligible", status: shipment.StatusCompleted, want: false},
 		{name: "invoiced is not eligible", status: shipment.StatusInvoiced, want: false},
 		{name: "canceled is not eligible", status: shipment.StatusCanceled, want: false},

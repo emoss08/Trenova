@@ -40,7 +40,9 @@ type tenderedCarrierFixture struct {
 	matcher       *mocks.MockCarrierInvoiceAutoMatcher
 }
 
-func (f *tenderedCarrierFixture) withInvoiceMatcher(t *testing.T) *mocks.MockCarrierInvoiceAutoMatcher {
+func (f *tenderedCarrierFixture) withInvoiceMatcher(
+	t *testing.T,
+) *mocks.MockCarrierInvoiceAutoMatcher {
 	t.Helper()
 	f.matcher = mocks.NewMockCarrierInvoiceAutoMatcher(t)
 	f.service.invoiceMatcher = f.matcher

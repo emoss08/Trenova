@@ -31,7 +31,11 @@ func TestInvoiceDaysPastDue(t *testing.T) {
 
 	paid := open()
 	paid.AppliedAmountMinor = 10000
-	assert.Nil(t, invoiceDaysPastDue(paid, due+10*secondsPerDay), "nothing owed means nothing overdue")
+	assert.Nil(
+		t,
+		invoiceDaysPastDue(paid, due+10*secondsPerDay),
+		"nothing owed means nothing overdue",
+	)
 
 	memo := open()
 	memo.BillType = billingqueue.BillTypeCreditMemo
@@ -42,7 +46,11 @@ func TestInvoiceDaysPastDue(t *testing.T) {
 	assert.Nil(t, invoiceDaysPastDue(noDue, due+10*secondsPerDay))
 
 	assert.Nil(t, invoiceDaysPastDue(open(), due-1), "not yet due")
-	assert.Nil(t, invoiceDaysPastDue(open(), due+secondsPerDay-1), "less than a whole day late reads as current")
+	assert.Nil(
+		t,
+		invoiceDaysPastDue(open(), due+secondsPerDay-1),
+		"less than a whole day late reads as current",
+	)
 
 	oneDay := invoiceDaysPastDue(open(), due+secondsPerDay)
 	require.NotNil(t, oneDay)
@@ -77,7 +85,12 @@ func TestCreateMemoRequestFromInput(t *testing.T) {
 		AutoPost:           &autoPost,
 		Lines: []*gqlmodel.MemoLineInput{
 			{Description: "Returned cheque", Amount: "35.00"},
-			{Description: "Detention", Amount: "12.5", Quantity: &quantity, AccessorialChargeID: ptr(accessorialID.String())},
+			{
+				Description:         "Detention",
+				Amount:              "12.5",
+				Quantity:            &quantity,
+				AccessorialChargeID: ptr(accessorialID.String()),
+			},
 		},
 	}, tenantInfo)
 
@@ -103,7 +116,10 @@ func TestCreateMemoRequestFromInputRejectsBadIDs(t *testing.T) {
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_")}
 
-	_, err := createMemoRequestFromInput(&gqlmodel.CreateMemoInput{CustomerID: "nope", BillType: billingqueue.BillTypeCreditMemo}, tenantInfo)
+	_, err := createMemoRequestFromInput(
+		&gqlmodel.CreateMemoInput{CustomerID: "nope", BillType: billingqueue.BillTypeCreditMemo},
+		tenantInfo,
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Invalid customer")
 

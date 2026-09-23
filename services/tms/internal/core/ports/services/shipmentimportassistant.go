@@ -74,6 +74,13 @@ type StreamEvent struct {
 	Data  any    `json:"data"`
 }
 
+// ShipmentImportTurns answers one import assistant message on a worker: in
+// full, or handed to emit as it is written.
+type ShipmentImportTurns interface {
+	Chat(ctx context.Context, req *ShipmentImportChatRequest) (*ShipmentImportChatResponse, error)
+	ChatStream(ctx context.Context, req *ShipmentImportChatRequest, emit func(StreamEvent)) error
+}
+
 type ShipmentImportAssistantService interface {
 	Chat(ctx context.Context, req *ShipmentImportChatRequest) (*ShipmentImportChatResponse, error)
 	ChatStream(ctx context.Context, req *ShipmentImportChatRequest, emit func(StreamEvent)) error

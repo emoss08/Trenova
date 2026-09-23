@@ -30,7 +30,12 @@ type fakeInvoiceDB struct{}
 
 func (fakeInvoiceDB) DB() *bun.DB                          { return nil }
 func (fakeInvoiceDB) DBForContext(context.Context) bun.IDB { return nil }
-func (fakeInvoiceDB) WithTx(ctx context.Context, _ ports.TxOptions, fn func(context.Context, bun.Tx) error) error {
+
+func (fakeInvoiceDB) WithTx(
+	ctx context.Context,
+	_ ports.TxOptions,
+	fn func(context.Context, bun.Tx) error,
+) error {
 	return fn(ctx, bun.Tx{})
 }
 func (fakeInvoiceDB) HealthCheck(context.Context) error { return nil }
@@ -88,7 +93,9 @@ func (f voidFixture) invoice(status invoice.Status) *invoice.Invoice {
 	}
 }
 
-func (f voidFixture) request(disposition invoice.VoidDisposition) *servicesports.VoidInvoiceRequest {
+func (f voidFixture) request(
+	disposition invoice.VoidDisposition,
+) *servicesports.VoidInvoiceRequest {
 	return &servicesports.VoidInvoiceRequest{
 		InvoiceID:   f.invoiceID,
 		TenantInfo:  f.tenantInfo,
@@ -97,7 +104,10 @@ func (f voidFixture) request(disposition invoice.VoidDisposition) *servicesports
 	}
 }
 
-func newVoidService(repo *mocks.MockInvoiceRepository, queueRepo *mocks.MockBillingQueueRepository) *Service {
+func newVoidService(
+	repo *mocks.MockInvoiceRepository,
+	queueRepo *mocks.MockBillingQueueRepository,
+) *Service {
 	return &Service{
 		l:                zap.NewNop(),
 		db:               fakeInvoiceDB{},
@@ -161,7 +171,10 @@ func TestVoidInvoiceDraftRebillReleasesQueueItemsForRebilling(t *testing.T) {
 		}).
 		Once()
 
-	released := &billingqueue.BillingQueueItem{ID: f.queueItemID, Status: billingqueue.StatusApproved}
+	released := &billingqueue.BillingQueueItem{
+		ID:     f.queueItemID,
+		Status: billingqueue.StatusApproved,
+	}
 	queueRepo := mocks.NewMockBillingQueueRepository(t)
 	queueRepo.EXPECT().
 		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *repositories.ReleaseForInvoiceRequest) bool {
@@ -175,7 +188,10 @@ func TestVoidInvoiceDraftRebillReleasesQueueItemsForRebilling(t *testing.T) {
 		Return([]*billingqueue.BillingQueueItem{released}, nil).
 		Once()
 
-	result, err := newVoidService(repo, queueRepo).VoidInvoice(t.Context(), f.request(invoice.VoidDispositionRebill), f.actor)
+	result, err := newVoidService(
+		repo,
+		queueRepo,
+	).VoidInvoice(t.Context(), f.request(invoice.VoidDispositionRebill), f.actor)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -208,7 +224,10 @@ func TestVoidInvoiceDraftDoNotRebillCancelsQueueItems(t *testing.T) {
 		Return([]*billingqueue.BillingQueueItem{{ID: f.queueItemID, Status: billingqueue.StatusCanceled}}, nil).
 		Once()
 
-	result, err := newVoidService(repo, queueRepo).VoidInvoice(t.Context(), f.request(invoice.VoidDispositionDoNotRebill), f.actor)
+	result, err := newVoidService(
+		repo,
+		queueRepo,
+	).VoidInvoice(t.Context(), f.request(invoice.VoidDispositionDoNotRebill), f.actor)
 
 	require.NoError(t, err)
 	assert.Equal(t, invoice.VoidDispositionDoNotRebill, result.Invoice.VoidDisposition)
@@ -325,7 +344,11 @@ func TestVoidInvoicePostedExecutedReversalIsNotPending(t *testing.T) {
 	svc := newVoidService(repo, mocks.NewMockBillingQueueRepository(t))
 	svc.adjustmentService = adjustments
 
-	result, err := svc.VoidInvoice(t.Context(), f.request(invoice.VoidDispositionDoNotRebill), f.actor)
+	result, err := svc.VoidInvoice(
+		t.Context(),
+		f.request(invoice.VoidDispositionDoNotRebill),
+		f.actor,
+	)
 
 	require.NoError(t, err)
 	assert.False(t, result.PendingApproval)
@@ -336,7 +359,10 @@ func TestVoidInvoicePostedWithoutAdjustmentEngineIsRefused(t *testing.T) {
 
 	f := newVoidFixture()
 	repo := mocks.NewMockInvoiceRepository(t)
-	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(f.invoice(invoice.StatusPosted), nil).Once()
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(f.invoice(invoice.StatusPosted), nil).
+		Once()
 
 	_, err := newVoidService(repo, mocks.NewMockBillingQueueRepository(t)).
 		VoidInvoice(t.Context(), f.request(invoice.VoidDispositionDoNotRebill), f.actor)
@@ -350,7 +376,10 @@ func TestVoidInvoiceAlreadyVoidedIsRefused(t *testing.T) {
 
 	f := newVoidFixture()
 	repo := mocks.NewMockInvoiceRepository(t)
-	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(f.invoice(invoice.StatusVoided), nil).Once()
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(f.invoice(invoice.StatusVoided), nil).
+		Once()
 
 	_, err := newVoidService(repo, mocks.NewMockBillingQueueRepository(t)).
 		VoidInvoice(t.Context(), f.request(invoice.VoidDispositionRebill), f.actor)
@@ -364,11 +393,18 @@ func TestPostRefusesAVoidedInvoice(t *testing.T) {
 
 	f := newVoidFixture()
 	repo := mocks.NewMockInvoiceRepository(t)
-	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(f.invoice(invoice.StatusVoided), nil).Once()
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(f.invoice(invoice.StatusVoided), nil).
+		Once()
 
 	_, err := newVoidService(repo, mocks.NewMockBillingQueueRepository(t)).Post(
 		t.Context(),
-		&servicesports.PostInvoiceRequest{InvoiceID: f.invoiceID, TenantInfo: f.tenantInfo, TriggeredBy: "manual"},
+		&servicesports.PostInvoiceRequest{
+			InvoiceID:   f.invoiceID,
+			TenantInfo:  f.tenantInfo,
+			TriggeredBy: "manual",
+		},
 		f.actor,
 	)
 
@@ -383,7 +419,10 @@ func TestVoidInvoiceRefusedWhileALateChargeMemoStands(t *testing.T) {
 	memoID := pulid.MustNew("inv_")
 
 	repo := mocks.NewMockInvoiceRepository(t)
-	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(f.invoice(invoice.StatusDraft), nil).Once()
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(f.invoice(invoice.StatusDraft), nil).
+		Once()
 	repo.EXPECT().
 		GetByIDs(mock.Anything, repositories.GetInvoicesByIDsRequest{TenantInfo: f.tenantInfo, InvoiceIDs: []pulid.ID{memoID}}).
 		Return([]*invoice.Invoice{{ID: memoID, Number: "DM-77", Status: invoice.StatusPosted}}, nil).
@@ -437,7 +476,9 @@ func TestVoidInvoiceProceedsWhenLateChargeMemosAreVoided(t *testing.T) {
 	lateChargeRepo.EXPECT().
 		ListBySourceInvoiceIDs(mock.Anything, mock.Anything).
 		Return(map[pulid.ID][]*latecharge.LateChargeAssessment{
-			f.invoiceID: {{SourceInvoiceID: f.invoiceID, PeriodIndex: 1, DebitMemoInvoiceID: memoID}},
+			f.invoiceID: {
+				{SourceInvoiceID: f.invoiceID, PeriodIndex: 1, DebitMemoInvoiceID: memoID},
+			},
 		}, nil).
 		Once()
 

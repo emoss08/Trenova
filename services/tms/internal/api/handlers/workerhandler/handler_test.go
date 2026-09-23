@@ -109,19 +109,20 @@ func TestWorkerHandler_List_Success(t *testing.T) {
 	wkrID := pulid.MustNew("wrk_")
 	repo := mocks.NewMockWorkerRepository(t)
 	total := 42
-	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.CursorListResult[*worker.Worker]{
-		Items: []*worker.Worker{
-			{
-				ID:             wkrID,
-				OrganizationID: testutil.TestOrgID,
-				BusinessUnitID: testutil.TestBuID,
-				FirstName:      "John",
-				LastName:       "Doe",
-				Status:         domaintypes.StatusActive,
+	repo.On("List", mock.Anything, mock.Anything).
+		Return(&pagination.CursorListResult[*worker.Worker]{
+			Items: []*worker.Worker{
+				{
+					ID:             wkrID,
+					OrganizationID: testutil.TestOrgID,
+					BusinessUnitID: testutil.TestBuID,
+					FirstName:      "John",
+					LastName:       "Doe",
+					Status:         domaintypes.StatusActive,
+				},
 			},
-		},
-		TotalCount: &total,
-	}, nil)
+			TotalCount: &total,
+		}, nil)
 
 	deps := setupWorkerHandler(t, repo)
 	deps.valueRepo.On("GetByResources", mock.Anything, mock.Anything).

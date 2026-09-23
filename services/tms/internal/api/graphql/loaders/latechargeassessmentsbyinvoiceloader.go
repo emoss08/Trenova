@@ -45,10 +45,13 @@ func (f *LateChargeAssessmentsByInvoiceIDLoaderFactory) batchFunc(
 ) batchFetchFunc[[]*latecharge.LateChargeAssessment] {
 	return batchGroupFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {
-			return f.assessments.ListBySourceInvoiceIDs(ctx, &repositories.ListLateChargeAssessmentsByInvoiceIDsRequest{
-				TenantInfo: tenantInfo,
-				InvoiceIDs: ids,
-			})
+			return f.assessments.ListBySourceInvoiceIDs(
+				ctx,
+				&repositories.ListLateChargeAssessmentsByInvoiceIDsRequest{
+					TenantInfo: tenantInfo,
+					InvoiceIDs: ids,
+				},
+			)
 		},
 	)
 }

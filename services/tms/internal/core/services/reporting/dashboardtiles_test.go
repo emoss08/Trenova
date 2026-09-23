@@ -155,7 +155,10 @@ func sharedDefinition(entity string, filters *report.FilterGroup) *report.Report
 	}
 }
 
-func dashboardWith(tiles []report.DashboardTile, filters []report.DashboardFilter) *report.Dashboard {
+func dashboardWith(
+	tiles []report.DashboardTile,
+	filters []report.DashboardFilter,
+) *report.Dashboard {
 	return &report.Dashboard{
 		OwnerID:    tileViewerID,
 		Visibility: report.VisibilityShared,
@@ -200,7 +203,12 @@ func TestResolveDashboardTilesFoldsFiltersAndParams(t *testing.T) {
 	require.NotNil(t, resolved[0].Definition.Filters)
 	assert.Equal(t, "Completed", resolved[0].Definition.Filters.Filters[0].Value)
 	assert.Equal(t, map[string]any{"windowDays": 90}, resolved[0].Params)
-	assert.Equal(t, "Shipment Volume", resolved[0].Title, "an untitled tile falls back to the report")
+	assert.Equal(
+		t,
+		"Shipment Volume",
+		resolved[0].Title,
+		"an untitled tile falls back to the report",
+	)
 }
 
 // A text tile is a note on the canvas; querying for it would be meaningless.

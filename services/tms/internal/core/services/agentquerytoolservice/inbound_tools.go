@@ -79,7 +79,10 @@ func sender(message *inboundmessage.InboundMessage) string {
 	return stringutils.FormatEmailAddress(message.FromName, message.FromAddress)
 }
 
-func toInboundMessageView(message *inboundmessage.InboundMessage, timezone string) inboundMessageView {
+func toInboundMessageView(
+	message *inboundmessage.InboundMessage,
+	timezone string,
+) inboundMessageView {
 	body := stringutils.TruncateRunes(message.TextBody, inboundBodyChars)
 	view := inboundMessageView{
 		ID:                message.ID.String(),
@@ -258,7 +261,10 @@ func (t *listInboundMessagesTool) PermissionResource() permission.Resource {
 
 func inboundStatusFilter(value string) []inboundmessage.Status {
 	if strings.EqualFold(value, inboundWaitingStatus) {
-		return []inboundmessage.Status{inboundmessage.StatusInReview, inboundmessage.StatusQuarantined}
+		return []inboundmessage.Status{
+			inboundmessage.StatusInReview,
+			inboundmessage.StatusQuarantined,
+		}
 	}
 	for _, status := range inboundmessage.AllStatuses() {
 		if strings.EqualFold(string(status), value) {
@@ -287,7 +293,10 @@ func (t *listInboundMessagesTool) Query(
 		return nil, err
 	}
 
-	limit := min(max(optionalInt(params.Params, "limit", inboundListDefaultLimit), 1), inboundListLimit)
+	limit := min(
+		max(optionalInt(params.Params, "limit", inboundListDefaultLimit), 1),
+		inboundListLimit,
+	)
 	status := optionalString(params.Params, "status")
 	classification := inboundClassificationFilter(optionalString(params.Params, "classification"))
 	query := optionalString(params.Params, "query")

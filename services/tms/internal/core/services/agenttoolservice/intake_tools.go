@@ -56,7 +56,11 @@ func newCreateShipmentTool(
 		logger = zap.NewNop()
 	}
 
-	return &createShipmentTool{shipments: shipments, imports: imports, logger: logger.Named("tool.create-shipment")}
+	return &createShipmentTool{
+		shipments: shipments,
+		imports:   imports,
+		logger:    logger.Named("tool.create-shipment"),
+	}
 }
 
 func (t *createShipmentTool) Name() string { return "create_shipment" }
@@ -100,12 +104,24 @@ func (t *createShipmentTool) ParamSchema() map[string]any {
 						"type":        "string",
 						"description": "A trailer equipment type, from list_equipment_types.",
 					},
-					"bol":            map[string]any{"type": "string", "description": "The customer's BOL or reference."},
-					"pieces":         map[string]any{"type": "integer"},
-					"weight":         map[string]any{"type": "integer", "description": "Pounds."},
-					"temperatureMin": map[string]any{"type": "integer", "description": "Fahrenheit, for reefer freight."},
-					"temperatureMax": map[string]any{"type": "integer", "description": "Fahrenheit, for reefer freight."},
-					"ratingUnit":     map[string]any{"type": "integer", "description": "Defaults to 1."},
+					"bol": map[string]any{
+						"type":        "string",
+						"description": "The customer's BOL or reference.",
+					},
+					"pieces": map[string]any{"type": "integer"},
+					"weight": map[string]any{"type": "integer", "description": "Pounds."},
+					"temperatureMin": map[string]any{
+						"type":        "integer",
+						"description": "Fahrenheit, for reefer freight.",
+					},
+					"temperatureMax": map[string]any{
+						"type":        "integer",
+						"description": "Fahrenheit, for reefer freight.",
+					},
+					"ratingUnit": map[string]any{
+						"type":        "integer",
+						"description": "Defaults to 1.",
+					},
 					"freightChargeAmount": map[string]any{
 						"type":        "string",
 						"description": "The agreed freight charge as a decimal string, only when the customer gave one.",
@@ -126,20 +142,44 @@ func (t *createShipmentTool) ParamSchema() map[string]any {
 											"locationId": map[string]any{"type": "string"},
 											"type": map[string]any{
 												"type": "string",
-												"enum": []string{"Pickup", "Delivery", "SplitPickup", "SplitDelivery"},
+												"enum": []string{
+													"Pickup",
+													"Delivery",
+													"SplitPickup",
+													"SplitDelivery",
+												},
 											},
 											"scheduleType": map[string]any{
 												"type": "string",
 												"enum": []string{"Open", "Appointment"},
 											},
-											"sequence":             map[string]any{"type": "integer"},
-											"scheduledWindowStart": map[string]any{"type": "integer", "description": "Unix seconds."},
-											"scheduledWindowEnd":   map[string]any{"type": "integer", "description": "Unix seconds."},
-											"pieces":               map[string]any{"type": "integer"},
-											"weight":               map[string]any{"type": "integer"},
-											"addressLine":          map[string]any{"type": "string"},
+											"sequence": map[string]any{
+												"type": "integer",
+											},
+											"scheduledWindowStart": map[string]any{
+												"type":        "integer",
+												"description": "Unix seconds.",
+											},
+											"scheduledWindowEnd": map[string]any{
+												"type":        "integer",
+												"description": "Unix seconds.",
+											},
+											"pieces": map[string]any{
+												"type": "integer",
+											},
+											"weight": map[string]any{
+												"type": "integer",
+											},
+											"addressLine": map[string]any{
+												"type": "string",
+											},
 										},
-										"required":             []string{"locationId", "type", "sequence", "scheduledWindowStart"},
+										"required": []string{
+											"locationId",
+											"type",
+											"sequence",
+											"scheduledWindowStart",
+										},
 										"additionalProperties": false,
 									},
 								},

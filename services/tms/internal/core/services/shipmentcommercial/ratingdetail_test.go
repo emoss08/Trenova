@@ -29,7 +29,12 @@ func TestRecalculate_ContractRatingLeavesResolvedVariablesEmptyNotNil(t *testing
 
 	require.NoError(
 		t,
-		calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")),
+		calculator.Recalculate(
+			t.Context(),
+			entity,
+			&tenant.ShipmentControl{},
+			pulid.MustNew("usr_"),
+		),
 	)
 
 	require.NotNil(t, entity.RatingDetail)
@@ -84,7 +89,12 @@ func TestRecalculate_FormulaPricedShipmentNamesItsTemplate(t *testing.T) {
 
 	require.NoError(
 		t,
-		calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")),
+		calculator.Recalculate(
+			t.Context(),
+			entity,
+			&tenant.ShipmentControl{},
+			pulid.MustNew("usr_"),
+		),
 	)
 
 	detail := entity.RatingDetail
@@ -147,7 +157,12 @@ func TestRecalculate_ClampedRateRecordsTheGuardrailThatDecidedIt(t *testing.T) {
 
 	require.NoError(
 		t,
-		calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")),
+		calculator.Recalculate(
+			t.Context(),
+			entity,
+			&tenant.ShipmentControl{},
+			pulid.MustNew("usr_"),
+		),
 	)
 
 	require.NotNil(t, entity.RatingDetail)

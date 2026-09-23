@@ -138,7 +138,13 @@ func TestRunTestCases_CaseVariablesOverrideCandidateDefaults(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, 1, result.Total)
-	assert.Equal(t, 1, result.Passed, "case variables must beat candidate defaults: %+v", result.Results[0])
+	assert.Equal(
+		t,
+		1,
+		result.Passed,
+		"case variables must beat candidate defaults: %+v",
+		result.Results[0],
+	)
 }
 
 func TestRunTestCases_InvalidExpressionRecordsError(t *testing.T) {

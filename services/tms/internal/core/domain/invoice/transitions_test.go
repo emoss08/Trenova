@@ -15,13 +15,43 @@ func TestIsAllowedTransition(t *testing.T) {
 		want bool
 	}{
 		{name: "draft posts", from: invoice.StatusDraft, to: invoice.StatusPosted, want: true},
-		{name: "draft voids directly", from: invoice.StatusDraft, to: invoice.StatusVoided, want: true},
+		{
+			name: "draft voids directly",
+			from: invoice.StatusDraft,
+			to:   invoice.StatusVoided,
+			want: true,
+		},
 		{name: "posted voids", from: invoice.StatusPosted, to: invoice.StatusVoided, want: true},
-		{name: "posted never returns to draft", from: invoice.StatusPosted, to: invoice.StatusDraft, want: false},
-		{name: "voided is terminal", from: invoice.StatusVoided, to: invoice.StatusPosted, want: false},
-		{name: "voided stays voided", from: invoice.StatusVoided, to: invoice.StatusDraft, want: false},
-		{name: "same status is a no-op", from: invoice.StatusPosted, to: invoice.StatusPosted, want: true},
-		{name: "unknown status goes nowhere", from: invoice.Status("Bogus"), to: invoice.StatusPosted, want: false},
+		{
+			name: "posted never returns to draft",
+			from: invoice.StatusPosted,
+			to:   invoice.StatusDraft,
+			want: false,
+		},
+		{
+			name: "voided is terminal",
+			from: invoice.StatusVoided,
+			to:   invoice.StatusPosted,
+			want: false,
+		},
+		{
+			name: "voided stays voided",
+			from: invoice.StatusVoided,
+			to:   invoice.StatusDraft,
+			want: false,
+		},
+		{
+			name: "same status is a no-op",
+			from: invoice.StatusPosted,
+			to:   invoice.StatusPosted,
+			want: true,
+		},
+		{
+			name: "unknown status goes nowhere",
+			from: invoice.Status("Bogus"),
+			to:   invoice.StatusPosted,
+			want: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

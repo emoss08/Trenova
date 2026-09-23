@@ -52,16 +52,19 @@ func Release(ctx context.Context, deps Deps, p Params) ([]pulid.ID, error) {
 	}
 	rebill := p.Disposition == invoice.VoidDispositionRebill
 
-	released, err := deps.BillingQueueRepo.ReleaseForInvoice(ctx, &repositories.ReleaseForInvoiceRequest{
-		TenantInfo:   tenantInfo,
-		InvoiceID:    entity.ID,
-		AnchorItemID: entity.BillingQueueItemID,
-		Rebill:       rebill,
-		CanceledByID: pulid.PtrOrNil(p.ActorUserID),
-		CanceledAt:   p.Now,
-		CancelReason: cancelReason(p.Reason),
-		RenumberFn:   deps.Renumber,
-	})
+	released, err := deps.BillingQueueRepo.ReleaseForInvoice(
+		ctx,
+		&repositories.ReleaseForInvoiceRequest{
+			TenantInfo:   tenantInfo,
+			InvoiceID:    entity.ID,
+			AnchorItemID: entity.BillingQueueItemID,
+			Rebill:       rebill,
+			CanceledByID: pulid.PtrOrNil(p.ActorUserID),
+			CanceledAt:   p.Now,
+			CancelReason: cancelReason(p.Reason),
+			RenumberFn:   deps.Renumber,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -118,10 +121,13 @@ func restoreShipments(
 	otherInvoices := map[pulid.ID][]*invoice.Invoice{}
 	if deps.InvoiceRepo != nil {
 		var err error
-		otherInvoices, err = deps.InvoiceRepo.ListByShipmentIDs(ctx, repositories.ListInvoicesByShipmentIDsRequest{
-			TenantInfo:  tenantInfo,
-			ShipmentIDs: legIDs,
-		})
+		otherInvoices, err = deps.InvoiceRepo.ListByShipmentIDs(
+			ctx,
+			repositories.ListInvoicesByShipmentIDsRequest{
+				TenantInfo:  tenantInfo,
+				ShipmentIDs: legIDs,
+			},
+		)
 		if err != nil {
 			return err
 		}

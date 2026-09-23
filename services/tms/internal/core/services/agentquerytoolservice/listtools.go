@@ -195,7 +195,10 @@ func (t *listTool) ParamSchema() map[string]any {
 				"items": map[string]any{
 					"type": "object",
 					"properties": map[string]any{
-						"field":    map[string]any{"type": "string", "enum": t.resource.FieldNames()},
+						"field": map[string]any{
+							"type": "string",
+							"enum": t.resource.FieldNames(),
+						},
 						"operator": map[string]any{"type": "string", "enum": t.operators},
 						"value":    map[string]any{"type": "string"},
 						"values": map[string]any{

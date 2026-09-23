@@ -86,7 +86,11 @@ func DaysUntil(expiresAt, now int64) int64 {
 
 // EvaluateCredentialHealth grades an expiry against a renewal window. A nil
 // expiry never expires and is always Valid.
-func EvaluateCredentialHealth(expiresAt *int64, renewalWindowDays int32, now int64) CredentialHealth {
+func EvaluateCredentialHealth(
+	expiresAt *int64,
+	renewalWindowDays int32,
+	now int64,
+) CredentialHealth {
 	if expiresAt == nil || *expiresAt <= 0 {
 		return CredentialHealthValid
 	}

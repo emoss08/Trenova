@@ -33,18 +33,44 @@ func TestHandlerCloseBlockers(t *testing.T) {
 	fyRepo := mocks.NewMockFiscalYearRepository(t)
 	fpRepo := mocks.NewMockFiscalPeriodRepository(t)
 	fiscalYearID := pulid.MustNew("fy_")
-	fiscalYear := &fiscalyear.FiscalYear{ID: fiscalYearID, OrganizationID: sharedtestutil.TestOrgID, BusinessUnitID: sharedtestutil.TestBuID, Status: fiscalyear.StatusOpen}
-	fyRepo.EXPECT().GetByID(mock.Anything, repositories.GetFiscalYearByIDRequest{ID: fiscalYearID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}}).Return(fiscalYear, nil).Once()
-	fpRepo.EXPECT().CountUnclosedPeriodsByFiscalYear(mock.Anything, repositories.CountUnclosedPeriodsByFiscalYearRequest{FiscalYearID: fiscalYearID, OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}).Return(2, nil).Once()
-	fpRepo.EXPECT().ListByFiscalYearID(mock.Anything, mock.Anything).Return([]*fiscalperiod.FiscalPeriod{}, nil).Once()
-	fyRepo.EXPECT().GetNextFiscalYear(mock.Anything, mock.Anything).Return(nil, errortypes.NewNotFoundError("FiscalYear not found")).Once()
+	fiscalYear := &fiscalyear.FiscalYear{
+		ID:             fiscalYearID,
+		OrganizationID: sharedtestutil.TestOrgID,
+		BusinessUnitID: sharedtestutil.TestBuID,
+		Status:         fiscalyear.StatusOpen,
+	}
+	fyRepo.EXPECT().
+		GetByID(mock.Anything, repositories.GetFiscalYearByIDRequest{ID: fiscalYearID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}}).
+		Return(fiscalYear, nil).
+		Once()
+	fpRepo.EXPECT().
+		CountUnclosedPeriodsByFiscalYear(mock.Anything, repositories.CountUnclosedPeriodsByFiscalYearRequest{FiscalYearID: fiscalYearID, OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}).
+		Return(2, nil).
+		Once()
+	fpRepo.EXPECT().
+		ListByFiscalYearID(mock.Anything, mock.Anything).
+		Return([]*fiscalperiod.FiscalPeriod{}, nil).
+		Once()
+	fyRepo.EXPECT().
+		GetNextFiscalYear(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("FiscalYear not found")).
+		Once()
 
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(nil, errortypes.NewNotFoundError("AccountingControl not found")).Once()
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("AccountingControl not found")).
+		Once()
 	balanceRepo := mocks.NewMockGLBalanceRepository(t)
-	balanceRepo.EXPECT().ListYearToDateBalances(mock.Anything, mock.Anything).Return([]*repositories.GLPeriodAccountBalance{}, nil).Once()
+	balanceRepo.EXPECT().
+		ListYearToDateBalances(mock.Anything, mock.Anything).
+		Return([]*repositories.GLPeriodAccountBalance{}, nil).
+		Once()
 	sourceRepo := mocks.NewMockJournalSourceRepository(t)
-	sourceRepo.EXPECT().ListByObject(mock.Anything, mock.Anything).Return([]*journalsource.Source{}, nil).Once()
+	sourceRepo.EXPECT().
+		ListByObject(mock.Anything, mock.Anything).
+		Return([]*journalsource.Source{}, nil).
+		Once()
 
 	closeService := fiscalcloseservice.New(fiscalcloseservice.Params{
 		Logger:           zap.NewNop(),
@@ -56,7 +82,10 @@ func TestHandlerCloseBlockers(t *testing.T) {
 	})
 
 	handler := newFiscalYearHandler(t, fyRepo, fpRepo, closeService)
-	ginCtx := sharedtestutil.NewGinTestContext().WithMethod(http.MethodGet).WithPath("/api/v1/fiscal-years/" + fiscalYearID.String() + "/close-blockers/").WithDefaultAuthContext()
+	ginCtx := sharedtestutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/fiscal-years/" + fiscalYearID.String() + "/close-blockers/").
+		WithDefaultAuthContext()
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
@@ -88,9 +117,33 @@ func newFiscalYearHandler(
 	t.Helper()
 
 	logger := zap.NewNop()
-	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, Config: &config.Config{App: config.AppConfig{Debug: true}}})
-	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{PermissionEngine: &mocks.AllowAllPermissionEngine{}, ErrorHandler: errorHandler})
-	service := fiscalyearservice.New(fiscalyearservice.Params{Logger: logger, Repo: fyRepo, FiscalPeriodRepo: fpRepo, AuditService: &mocks.NoopAuditService{}, CloseService: closeService})
+	errorHandler := helpers.NewErrorHandler(
+		helpers.ErrorHandlerParams{
+			Logger: logger,
+			Config: &config.Config{App: config.AppConfig{Debug: true}},
+		},
+	)
+	pm := middleware.NewPermissionMiddleware(
+		middleware.PermissionMiddlewareParams{
+			PermissionEngine: &mocks.AllowAllPermissionEngine{},
+			ErrorHandler:     errorHandler,
+		},
+	)
+	service := fiscalyearservice.New(
+		fiscalyearservice.Params{
+			Logger:           logger,
+			Repo:             fyRepo,
+			FiscalPeriodRepo: fpRepo,
+			AuditService:     &mocks.NoopAuditService{},
+			CloseService:     closeService,
+		},
+	)
 
-	return fiscalyearhandler.New(fiscalyearhandler.Params{Service: service, ErrorHandler: errorHandler, PermissionMiddleware: pm})
+	return fiscalyearhandler.New(
+		fiscalyearhandler.Params{
+			Service:              service,
+			ErrorHandler:         errorHandler,
+			PermissionMiddleware: pm,
+		},
+	)
 }

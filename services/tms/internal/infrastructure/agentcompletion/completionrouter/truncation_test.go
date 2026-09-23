@@ -158,7 +158,11 @@ func TestStreamChat_StartsOverOnTheNextProviderWhenAReplyDies(t *testing.T) {
 	request.RetrySink = func(notice serviceports.ChatRetryNotice) { notices = append(notices, notice) }
 
 	var streamed strings.Builder
-	result, err := service.StreamChat(t.Context(), request, func(delta string) { streamed.WriteString(delta) })
+	result, err := service.StreamChat(
+		t.Context(),
+		request,
+		func(delta string) { streamed.WriteString(delta) },
+	)
 	require.NoError(t, err)
 
 	assert.False(t, result.Truncated)
@@ -166,7 +170,12 @@ func TestStreamChat_StartsOverOnTheNextProviderWhenAReplyDies(t *testing.T) {
 	require.Len(t, notices, 1)
 	assert.Equal(t, 1, notices[0].Attempt)
 	assert.Equal(t, "finishes", notices[0].Provider)
-	assert.Contains(t, streamed.String(), "endorsement X.", "the partial text did reach the sink before the retry")
+	assert.Contains(
+		t,
+		streamed.String(),
+		"endorsement X.",
+		"the partial text did reach the sink before the retry",
+	)
 }
 
 // With nowhere else to go, the retries are spent on the same provider and

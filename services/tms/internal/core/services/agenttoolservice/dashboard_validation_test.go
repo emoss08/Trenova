@@ -77,7 +77,9 @@ func TestCreateDashboard_RefusesAReportIDThatDoesNotExistBeforeProposing(t *test
 
 	known := pulid.MustNew("rdef_")
 	unknown := pulid.MustNew("rdef_")
-	tool := &createDashboardTool{dashboards: &fakeDashboards{reports: map[pulid.ID]bool{known: true}}}
+	tool := &createDashboardTool{
+		dashboards: &fakeDashboards{reports: map[pulid.ID]bool{known: true}},
+	}
 
 	err := tool.Validate(t.Context(), executeParams(map[string]any{
 		"name": "Operations",
@@ -100,7 +102,9 @@ func TestCreateDashboard_RefusesAReportIDThatDoesNotExistBeforeProposing(t *test
 func TestCreateDashboard_DrawsABuiltInReportByKey(t *testing.T) {
 	t.Parallel()
 
-	tool := &createDashboardTool{dashboards: &fakeDashboards{canned: map[string]bool{"ar_aging": true}}}
+	tool := &createDashboardTool{
+		dashboards: &fakeDashboards{canned: map[string]bool{"ar_aging": true}},
+	}
 
 	require.NoError(t, tool.Validate(t.Context(), executeParams(map[string]any{
 		"name":  "Receivables",

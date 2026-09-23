@@ -133,7 +133,10 @@ func newActivities(t *testing.T) (*Activities, *activityMocks) {
 	}), deps
 }
 
-func planWithRun(assignments, uncovered int, tours ...*portservices.DispatchTour) *portservices.DispatchPlan {
+func planWithRun(
+	assignments, uncovered int,
+	tours ...*portservices.DispatchTour,
+) *portservices.DispatchPlan {
 	return &portservices.DispatchPlan{
 		RunID:       pulid.MustNew("arun_"),
 		Assignments: make([]*portservices.DispatchPlannedAssignment, assignments),

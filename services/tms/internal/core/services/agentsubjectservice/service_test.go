@@ -55,7 +55,12 @@ func TestService_DescribesADocumentByItsDraft(t *testing.T) {
 	subjects := &Service{content: content, logger: zap.NewNop()}
 
 	docID := pulid.MustNew("doc_")
-	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectDocument, docID)
+	subject, err := subjects.Describe(
+		t.Context(),
+		pagination.TenantInfo{},
+		agent.SubjectDocument,
+		docID,
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, docID, content.lastID)
@@ -71,7 +76,12 @@ func TestService_DocumentWithoutContentServiceStillHasAnID(t *testing.T) {
 	subjects := &Service{logger: zap.NewNop()}
 	docID := pulid.MustNew("doc_")
 
-	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectDocument, docID)
+	subject, err := subjects.Describe(
+		t.Context(),
+		pagination.TenantInfo{},
+		agent.SubjectDocument,
+		docID,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, docID.String(), subject.ID)
 	assert.Equal(t, "Document", subject.Label)
@@ -107,12 +117,19 @@ func TestService_DescribesAnInsightByItsFinding(t *testing.T) {
 		Subject:        "Acme Foods",
 		Headline:       "$48,200 of delivered work for Acme Foods is not yet billed",
 		Recommendation: "Move the ready items through the billing queue.",
-		Metrics:        []insight.Metric{{Key: "unbilled", Label: "Unbilled", Value: decimal.NewFromInt(48200)}},
+		Metrics: []insight.Metric{
+			{Key: "unbilled", Label: "Unbilled", Value: decimal.NewFromInt(48200)},
+		},
 	}
 	repo := &fakeInsightRepo{found: found}
 	subjects := &Service{insights: repo, logger: zap.NewNop()}
 
-	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectInsight, found.ID)
+	subject, err := subjects.Describe(
+		t.Context(),
+		pagination.TenantInfo{},
+		agent.SubjectInsight,
+		found.ID,
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, found.ID, repo.lastID)
@@ -133,7 +150,12 @@ func TestService_WarnsWhenTheInsightIsNoLongerActive(t *testing.T) {
 	}
 	subjects := &Service{insights: &fakeInsightRepo{found: found}, logger: zap.NewNop()}
 
-	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectInsight, found.ID)
+	subject, err := subjects.Describe(
+		t.Context(),
+		pagination.TenantInfo{},
+		agent.SubjectInsight,
+		found.ID,
+	)
 	require.NoError(t, err)
 	assert.Contains(t, subject.Notes, "no longer active")
 }
@@ -144,7 +166,12 @@ func TestService_InsightWithoutRepositoryStillHasAnID(t *testing.T) {
 	subjects := &Service{logger: zap.NewNop()}
 	id := pulid.MustNew("inst_")
 
-	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectInsight, id)
+	subject, err := subjects.Describe(
+		t.Context(),
+		pagination.TenantInfo{},
+		agent.SubjectInsight,
+		id,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, id.String(), subject.ID)
 	assert.Equal(t, "Insight", subject.Label)
@@ -203,16 +230,28 @@ func TestService_DescribesABankReceiptWithItsCandidates(t *testing.T) {
 		ExceptionReason: "No unique customer payment match found for bank receipt",
 	}
 	paymentID := pulid.MustNew("cpay_")
-	item := &bankreceiptworkitem.WorkItem{ID: pulid.MustNew("brwi_"), BankReceiptID: receipt.ID, Status: bankreceiptworkitem.StatusOpen}
+	item := &bankreceiptworkitem.WorkItem{
+		ID:            pulid.MustNew("brwi_"),
+		BankReceiptID: receipt.ID,
+		Status:        bankreceiptworkitem.StatusOpen,
+	}
 	subjects := &Service{
-		receipts: &fakeReceiptService{receipt: receipt, suggestions: []*serviceports.BankReceiptMatchSuggestion{{
-			CustomerPaymentID: paymentID, AmountMinor: 125_000, Score: 60, Reason: "Reference matches",
-		}}},
+		receipts: &fakeReceiptService{
+			receipt: receipt,
+			suggestions: []*serviceports.BankReceiptMatchSuggestion{{
+				CustomerPaymentID: paymentID, AmountMinor: 125_000, Score: 60, Reason: "Reference matches",
+			}},
+		},
 		workItems: &fakeWorkItemRepo{item: item},
 		logger:    zap.NewNop(),
 	}
 
-	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectBankReceipt, receipt.ID)
+	subject, err := subjects.Describe(
+		t.Context(),
+		pagination.TenantInfo{},
+		agent.SubjectBankReceipt,
+		receipt.ID,
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, "Bank receipt 1250.00 ref ACH 4471", subject.Label)
@@ -225,14 +264,23 @@ func TestService_DescribesABankReceiptWithItsCandidates(t *testing.T) {
 func TestService_WarnsWhenTheReceiptIsAlreadyMatched(t *testing.T) {
 	t.Parallel()
 
-	receipt := &bankreceipt.BankReceipt{ID: pulid.MustNew("brcpt_"), AmountMinor: 5_000, Status: bankreceipt.StatusMatched}
+	receipt := &bankreceipt.BankReceipt{
+		ID:          pulid.MustNew("brcpt_"),
+		AmountMinor: 5_000,
+		Status:      bankreceipt.StatusMatched,
+	}
 	subjects := &Service{
 		receipts:  &fakeReceiptService{receipt: receipt},
 		workItems: &fakeWorkItemRepo{},
 		logger:    zap.NewNop(),
 	}
 
-	subject, err := subjects.Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectBankReceipt, receipt.ID)
+	subject, err := subjects.Describe(
+		t.Context(),
+		pagination.TenantInfo{},
+		agent.SubjectBankReceipt,
+		receipt.ID,
+	)
 	require.NoError(t, err)
 	assert.Contains(t, subject.Notes, "already matched")
 	assert.NotContains(t, subject.Notes, "workItem")

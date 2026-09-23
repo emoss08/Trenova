@@ -85,7 +85,8 @@ func TestInstallStandards_FillsOnlyGaps(t *testing.T) {
 	deps.repo.On("Create", mock.Anything, mock.Anything).
 		Return(func(_ context.Context, entity *formulatemplate.FormulaTemplate) (*formulatemplate.FormulaTemplate, error) {
 			return entity, nil
-		}).Times(len(catalog) - 1)
+		}).
+		Times(len(catalog) - 1)
 	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
 		Return(&formulatemplate.FormulaTemplateVersion{}, nil).
 		Times(len(catalog) - 1)

@@ -28,8 +28,18 @@ func TestSelectOptionRegistry_CoversEverySchemaResource(t *testing.T) {
 	for _, value := range definition.EnumValues {
 		t.Run(value.Name, func(t *testing.T) {
 			entry, registered := registry[gqlmodel.SelectOptionResource(value.Name)]
-			require.Truef(t, registered, "SelectOptionResource %q has no registry entry", value.Name)
-			require.NotNilf(t, entry.resolve, "SelectOptionResource %q has a nil resolver", value.Name)
+			require.Truef(
+				t,
+				registered,
+				"SelectOptionResource %q has no registry entry",
+				value.Name,
+			)
+			require.NotNilf(
+				t,
+				entry.resolve,
+				"SelectOptionResource %q has a nil resolver",
+				value.Name,
+			)
 		})
 	}
 }
@@ -223,8 +233,16 @@ func TestSelectOptionInt16Filter(t *testing.T) {
 
 	// GraphQL JSON scalars decode numbers as float64, so that is the shape the
 	// planYear filter actually arrives in.
-	assert.Equal(t, int16(2026), selectOptionInt16Filter(map[string]any{"planYear": 2026.0}, "planYear"))
-	assert.Equal(t, int16(2026), selectOptionInt16Filter(map[string]any{"planYear": "2026"}, "planYear"))
+	assert.Equal(
+		t,
+		int16(2026),
+		selectOptionInt16Filter(map[string]any{"planYear": 2026.0}, "planYear"),
+	)
+	assert.Equal(
+		t,
+		int16(2026),
+		selectOptionInt16Filter(map[string]any{"planYear": "2026"}, "planYear"),
+	)
 	assert.Equal(t, int16(0), selectOptionInt16Filter(map[string]any{"planYear": true}, "planYear"))
 	assert.Equal(t, int16(0), selectOptionInt16Filter(map[string]any{}, "planYear"))
 }

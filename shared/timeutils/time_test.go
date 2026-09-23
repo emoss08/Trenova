@@ -248,7 +248,21 @@ func TestDescribeUnixDateIn_DrawsTheDayBoundaryInTheZone(t *testing.T) {
 	ts := now + 3600             // 00:30 EDT on the 20th
 
 	assert.Equal(t, "2026-09-20 (today)", timeutils.DescribeUnixDateIn(ts, now, "UTC"))
-	assert.Equal(t, "2026-09-20 (tomorrow)", timeutils.DescribeUnixDateIn(ts, now, "America/New_York"))
-	assert.Equal(t, timeutils.DescribeUnixDate(ts, now), timeutils.DescribeUnixDateIn(ts, now, ""), "no zone is UTC")
-	assert.Equal(t, timeutils.DescribeUnixDate(ts, now), timeutils.DescribeUnixDateIn(ts, now, "Mars/Olympus"), "an unknown zone is UTC")
+	assert.Equal(
+		t,
+		"2026-09-20 (tomorrow)",
+		timeutils.DescribeUnixDateIn(ts, now, "America/New_York"),
+	)
+	assert.Equal(
+		t,
+		timeutils.DescribeUnixDate(ts, now),
+		timeutils.DescribeUnixDateIn(ts, now, ""),
+		"no zone is UTC",
+	)
+	assert.Equal(
+		t,
+		timeutils.DescribeUnixDate(ts, now),
+		timeutils.DescribeUnixDateIn(ts, now, "Mars/Olympus"),
+		"an unknown zone is UTC",
+	)
 }

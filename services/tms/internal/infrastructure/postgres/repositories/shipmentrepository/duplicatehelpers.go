@@ -149,7 +149,8 @@ func duplicateChargeAllocations(
 		if sourceCharge == nil {
 			continue
 		}
-		if position < len(duplicated.AdditionalCharges) && duplicated.AdditionalCharges[position] != nil {
+		if position < len(duplicated.AdditionalCharges) &&
+			duplicated.AdditionalCharges[position] != nil {
 			copiedChargeBySource[sourceCharge.ID] = duplicated.AdditionalCharges[position].ID
 		}
 		position++

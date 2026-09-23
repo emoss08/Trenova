@@ -142,86 +142,6 @@ func TestTemporalInterceptorConfig_GetLogLevel(t *testing.T) {
 	})
 }
 
-func TestTemporalWorkerConfig_GetMaxConcurrentActivities(t *testing.T) {
-	t.Parallel()
-
-	t.Run("default", func(t *testing.T) {
-		t.Parallel()
-		c := &TemporalWorkerConfig{}
-		assert.Equal(t, 10, c.GetMaxConcurrentActivities())
-	})
-
-	t.Run("custom", func(t *testing.T) {
-		t.Parallel()
-		c := &TemporalWorkerConfig{MaxConcurrentActivities: 50}
-		assert.Equal(t, 50, c.GetMaxConcurrentActivities())
-	})
-}
-
-func TestTemporalWorkerConfig_GetMaxConcurrentWorkflows(t *testing.T) {
-	t.Parallel()
-
-	t.Run("default", func(t *testing.T) {
-		t.Parallel()
-		c := &TemporalWorkerConfig{}
-		assert.Equal(t, 10, c.GetMaxConcurrentWorkflows())
-	})
-
-	t.Run("custom", func(t *testing.T) {
-		t.Parallel()
-		c := &TemporalWorkerConfig{MaxConcurrentWorkflows: 25}
-		assert.Equal(t, 25, c.GetMaxConcurrentWorkflows())
-	})
-}
-
-func TestTemporalWorkerConfig_GetMaxActivityPollers(t *testing.T) {
-	t.Parallel()
-
-	t.Run("default", func(t *testing.T) {
-		t.Parallel()
-		c := &TemporalWorkerConfig{}
-		assert.Equal(t, 2, c.GetMaxActivityPollers())
-	})
-
-	t.Run("custom", func(t *testing.T) {
-		t.Parallel()
-		c := &TemporalWorkerConfig{MaxActivityPollers: 8}
-		assert.Equal(t, 8, c.GetMaxActivityPollers())
-	})
-}
-
-func TestTemporalWorkerConfig_GetMaxWorkflowPollers(t *testing.T) {
-	t.Parallel()
-
-	t.Run("default", func(t *testing.T) {
-		t.Parallel()
-		c := &TemporalWorkerConfig{}
-		assert.Equal(t, 2, c.GetMaxWorkflowPollers())
-	})
-
-	t.Run("custom", func(t *testing.T) {
-		t.Parallel()
-		c := &TemporalWorkerConfig{MaxWorkflowPollers: 6}
-		assert.Equal(t, 6, c.GetMaxWorkflowPollers())
-	})
-}
-
-func TestTemporalWorkerConfig_GetWorkerStopTimeout(t *testing.T) {
-	t.Parallel()
-
-	t.Run("default", func(t *testing.T) {
-		t.Parallel()
-		c := &TemporalWorkerConfig{}
-		assert.Equal(t, 30*time.Second, c.GetWorkerStopTimeout())
-	})
-
-	t.Run("custom", func(t *testing.T) {
-		t.Parallel()
-		c := &TemporalWorkerConfig{WorkerStopTimeout: 60 * time.Second}
-		assert.Equal(t, 60*time.Second, c.GetWorkerStopTimeout())
-	})
-}
-
 func TestStorageConfig_GetMaxFileSize(t *testing.T) {
 	t.Parallel()
 
@@ -500,8 +420,16 @@ func TestAppConfig_GetWebBaseURL(t *testing.T) {
 		expected string
 	}{
 		{name: "unset", base: "", expected: ""},
-		{name: "without trailing slash", base: "https://app.example.com", expected: "https://app.example.com"},
-		{name: "with trailing slash", base: "https://app.example.com/", expected: "https://app.example.com"},
+		{
+			name:     "without trailing slash",
+			base:     "https://app.example.com",
+			expected: "https://app.example.com",
+		},
+		{
+			name:     "with trailing slash",
+			base:     "https://app.example.com/",
+			expected: "https://app.example.com",
+		},
 	}
 
 	for _, tt := range tests {

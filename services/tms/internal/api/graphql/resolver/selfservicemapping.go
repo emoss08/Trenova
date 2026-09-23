@@ -38,7 +38,9 @@ func workerPolicyFromInput(
 	}, nil
 }
 
-func policyComplianceToGQL(compliance *selfserviceservice.PolicyCompliance) *gqlmodel.PolicyCompliance {
+func policyComplianceToGQL(
+	compliance *selfserviceservice.PolicyCompliance,
+) *gqlmodel.PolicyCompliance {
 	out := &gqlmodel.PolicyCompliance{
 		Policy:      compliance.Policy,
 		Signed:      compliance.Signed,

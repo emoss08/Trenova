@@ -118,7 +118,11 @@ func TestPipelineArgumentOrder(t *testing.T) {
 func TestJoinNonEmptyDropsBlanks(t *testing.T) {
 	// An address block with no second street line must not leave a dangling comma
 	// on a customer's invoice.
-	assert.Equal(t, "1 Main St, Austin, TX", joinNonEmpty(", ", []string{"1 Main St", "", "Austin, TX"}))
+	assert.Equal(
+		t,
+		"1 Main St, Austin, TX",
+		joinNonEmpty(", ", []string{"1 Main St", "", "Austin, TX"}),
+	)
 	assert.Empty(t, joinNonEmpty(", ", []string{"", ""}))
 	assert.Empty(t, joinNonEmpty(", ", nil))
 }

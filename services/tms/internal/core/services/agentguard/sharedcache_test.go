@@ -26,7 +26,10 @@ type fakeShared struct {
 }
 
 func newFakeShared() *fakeShared {
-	return &fakeShared{rows: map[string]*repositories.CachedScopeVerdict{}, ttls: map[string]time.Duration{}}
+	return &fakeShared{
+		rows: map[string]*repositories.CachedScopeVerdict{},
+		ttls: map[string]time.Duration{},
+	}
 }
 
 func (f *fakeShared) Get(_ context.Context, key string) (*repositories.CachedScopeVerdict, error) {
@@ -40,7 +43,12 @@ func (f *fakeShared) Get(_ context.Context, key string) (*repositories.CachedSco
 	return f.rows[key], nil
 }
 
-func (f *fakeShared) Set(_ context.Context, key string, v *repositories.CachedScopeVerdict, ttl time.Duration) error {
+func (f *fakeShared) Set(
+	_ context.Context,
+	key string,
+	v *repositories.CachedScopeVerdict,
+	ttl time.Duration,
+) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.sets++
@@ -53,7 +61,11 @@ func (f *fakeShared) Set(_ context.Context, key string, v *repositories.CachedSc
 	return nil
 }
 
-func guardSharing(t *testing.T, stub *stubCompletion, shared repositories.ScopeVerdictCacheRepository) *agentguard.Service {
+func guardSharing(
+	t *testing.T,
+	stub *stubCompletion,
+	shared repositories.ScopeVerdictCacheRepository,
+) *agentguard.Service {
 	t.Helper()
 
 	return agentguard.New(agentguard.Params{
@@ -76,14 +88,20 @@ func TestEvaluate_AReplicaReusesAnotherReplicasVerdict(t *testing.T) {
 
 	first := &stubCompletion{category: string(agentguard.CategoryTransportationOperations)}
 	replicaA := guardSharing(t, first, shared)
-	decisionA := replicaA.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: hazmat})
+	decisionA := replicaA.Evaluate(
+		t.Context(),
+		agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: hazmat},
+	)
 	require.True(t, decisionA.Allowed)
 	require.Equal(t, 1, first.calls)
 	require.Equal(t, 1, shared.sets, "the verdict is shared")
 
 	second := &stubCompletion{category: string(agentguard.CategoryTransportationOperations)}
 	replicaB := guardSharing(t, second, shared)
-	decisionB := replicaB.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: hazmat})
+	decisionB := replicaB.Evaluate(
+		t.Context(),
+		agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: hazmat},
+	)
 
 	require.True(t, decisionB.Allowed)
 	assert.Zero(t, second.calls, "the other replica never asks the model")
@@ -91,7 +109,10 @@ func TestEvaluate_AReplicaReusesAnotherReplicasVerdict(t *testing.T) {
 
 	// And having read it once, the replica keeps it locally: replica A's own
 	// miss and replica B's hit are the only two reads, however often B is asked.
-	replicaB.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: hazmat})
+	replicaB.Evaluate(
+		t.Context(),
+		agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: hazmat},
+	)
 	assert.Equal(t, 2, shared.gets, "a local hit does not go back to the store")
 }
 
@@ -99,7 +120,11 @@ func TestEvaluate_SharesTheVerdictForADayByDefault(t *testing.T) {
 	t.Parallel()
 
 	shared := newFakeShared()
-	guard := guardSharing(t, &stubCompletion{category: string(agentguard.CategoryTransportationOperations)}, shared)
+	guard := guardSharing(
+		t,
+		&stubCompletion{category: string(agentguard.CategoryTransportationOperations)},
+		shared,
+	)
 
 	guard.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenant(), Input: hazmat})
 
@@ -122,7 +147,10 @@ func TestEvaluate_ClassifiesWhenTheSharedStoreIsDown(t *testing.T) {
 	guard := guardSharing(t, stub, shared)
 	tenantInfo := tenant()
 
-	decision := guard.Evaluate(t.Context(), agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: hazmat})
+	decision := guard.Evaluate(
+		t.Context(),
+		agentguard.EvaluateRequest{TenantInfo: tenantInfo, Input: hazmat},
+	)
 	require.True(t, decision.Allowed)
 	assert.Equal(t, 1, stub.calls)
 

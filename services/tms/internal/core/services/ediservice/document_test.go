@@ -38,7 +38,11 @@ func TestResolvePayloadInvoiceIDResolves210Payload(t *testing.T) {
 			CurrencyCode: "USD",
 			TotalAmount:  decimal.NewFromInt(100),
 			Lines: []*invoice.InvoiceLine{
-				{LineNumber: 1, Type: invoice.InvoiceLineTypeFreight, Amount: decimal.NewFromInt(100)},
+				{
+					LineNumber: 1,
+					Type:       invoice.InvoiceLineTypeFreight,
+					Amount:     decimal.NewFromInt(100),
+				},
 			},
 		}, nil).
 		Once()
@@ -214,7 +218,17 @@ func TestUpsertPartnerDocumentProfile_AllowsInactiveProfileWithoutActiveTemplate
 		}, nil).
 		Once()
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo, validator: NewValidator()}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+		validator:           NewValidator(),
+	}
 	profile, err := service.UpsertPartnerDocumentProfile(
 		t.Context(),
 		&UpsertEDIPartnerDocumentProfileRequest{
@@ -254,7 +268,17 @@ func TestUpsertPartnerDocumentProfile_ActiveProfileRequiresActiveTemplateVersion
 		Return(nil, errortypes.NewNotFoundError("template version not found")).
 		Once()
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo, validator: NewValidator()}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+		validator:           NewValidator(),
+	}
 	_, err := service.UpsertPartnerDocumentProfile(
 		t.Context(),
 		&UpsertEDIPartnerDocumentProfileRequest{

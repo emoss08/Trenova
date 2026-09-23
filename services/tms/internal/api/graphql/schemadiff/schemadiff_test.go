@@ -189,7 +189,10 @@ func TestCompare_ListShapeChangeIsBreaking(t *testing.T) {
 func TestCompare_InterfaceDropped(t *testing.T) {
 	t.Parallel()
 
-	base := load(t, `interface Node { id: ID! } type T implements Node { id: ID! } type Query { t: T }`)
+	base := load(
+		t,
+		`interface Node { id: ID! } type T implements Node { id: ID! } type Query { t: T }`,
+	)
 	head := load(t, `interface Node { id: ID! } type T { id: ID! } type Query { t: T }`)
 
 	report := Compare(base, head)
@@ -213,7 +216,10 @@ func TestCompare_AdditionsAreReportedButSafe(t *testing.T) {
 	t.Parallel()
 
 	base := load(t, `type Query { a: Int }`)
-	head := load(t, `type New { x: Int } type Query { a: Int b: Int @deprecated(reason: "use c") c: New }`)
+	head := load(
+		t,
+		`type New { x: Int } type Query { a: Int b: Int @deprecated(reason: "use c") c: New }`,
+	)
 
 	report := Compare(base, head)
 

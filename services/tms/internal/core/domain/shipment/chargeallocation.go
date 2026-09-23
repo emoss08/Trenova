@@ -24,7 +24,9 @@ const (
 
 func (k ChargeAllocationKind) IsValid() bool {
 	switch k {
-	case ChargeAllocationKindFreight, ChargeAllocationKindAccessorial, ChargeAllocationKindOrderCharge:
+	case ChargeAllocationKindFreight,
+		ChargeAllocationKindAccessorial,
+		ChargeAllocationKindOrderCharge:
 		return true
 	default:
 		return false
@@ -138,7 +140,11 @@ func (a *ChargeAllocation) Validate(multiErr *errortypes.MultiError) {
 			)
 		}
 		if a.Amount.Valid {
-			multiErr.Add("amount", errortypes.ErrInvalid, "A percent allocation cannot carry an amount")
+			multiErr.Add(
+				"amount",
+				errortypes.ErrInvalid,
+				"A percent allocation cannot carry an amount",
+			)
 		}
 	case ChargeAllocationMethodAmount:
 		switch {
@@ -148,28 +154,53 @@ func (a *ChargeAllocation) Validate(multiErr *errortypes.MultiError) {
 			multiErr.Add("amount", errortypes.ErrInvalid, "Amount must be greater than zero")
 		}
 		if a.Percent.Valid {
-			multiErr.Add("percent", errortypes.ErrInvalid, "An amount allocation cannot carry a percent")
+			multiErr.Add(
+				"percent",
+				errortypes.ErrInvalid,
+				"An amount allocation cannot carry a percent",
+			)
 		}
 	}
 
 	switch a.ChargeKind {
 	case ChargeAllocationKindFreight:
 		if a.AdditionalChargeID != nil || a.OrderChargeID != nil {
-			multiErr.Add("chargeKind", errortypes.ErrInvalid, "A freight allocation targets only the shipment")
+			multiErr.Add(
+				"chargeKind",
+				errortypes.ErrInvalid,
+				"A freight allocation targets only the shipment",
+			)
 		}
 	case ChargeAllocationKindAccessorial:
 		if a.OrderChargeID != nil {
-			multiErr.Add("chargeKind", errortypes.ErrInvalid, "An accessorial allocation cannot target an order charge")
+			multiErr.Add(
+				"chargeKind",
+				errortypes.ErrInvalid,
+				"An accessorial allocation cannot target an order charge",
+			)
 		}
-		if (a.AdditionalChargeID == nil || a.AdditionalChargeID.IsNil()) && a.AdditionalChargeIndex == nil {
-			multiErr.Add("additionalChargeId", errortypes.ErrRequired, "An accessorial allocation must name its charge")
+		if (a.AdditionalChargeID == nil || a.AdditionalChargeID.IsNil()) &&
+			a.AdditionalChargeIndex == nil {
+			multiErr.Add(
+				"additionalChargeId",
+				errortypes.ErrRequired,
+				"An accessorial allocation must name its charge",
+			)
 		}
 	case ChargeAllocationKindOrderCharge:
 		if a.OrderChargeID == nil || a.OrderChargeID.IsNil() {
-			multiErr.Add("orderChargeId", errortypes.ErrRequired, "An order charge allocation must name its charge")
+			multiErr.Add(
+				"orderChargeId",
+				errortypes.ErrRequired,
+				"An order charge allocation must name its charge",
+			)
 		}
 		if a.ShipmentID != nil || a.AdditionalChargeID != nil {
-			multiErr.Add("chargeKind", errortypes.ErrInvalid, "An order charge allocation targets only the order charge")
+			multiErr.Add(
+				"chargeKind",
+				errortypes.ErrInvalid,
+				"An order charge allocation targets only the order charge",
+			)
 		}
 	}
 }

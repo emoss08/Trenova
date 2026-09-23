@@ -195,14 +195,21 @@ func composeFleet(in *fleetInput) *worker.FleetSafety {
 	for _, row := range in.terminals {
 		workers := int32(row.Workers) //nolint:gosec // a headcount
 		out.Terminals = append(out.Terminals, worker.FleetSafetyTerminal{
-			FleetCodeID:  row.FleetCodeID,
-			Code:         row.FleetCodeCode,
-			Description:  row.FleetCodeDescription,
-			Color:        row.FleetCodeColor,
-			Workers:      workers,
-			AtRisk:       int32(row.AtRisk),                                   //nolint:gosec // a count
-			Watch:        int32(row.Watch),                                    //nolint:gosec // a count
-			AverageScore: worker.AverageScore(int32(row.TotalScore), workers), //nolint:gosec // a score sum
+			FleetCodeID: row.FleetCodeID,
+			Code:        row.FleetCodeCode,
+			Description: row.FleetCodeDescription,
+			Color:       row.FleetCodeColor,
+			Workers:     workers,
+			AtRisk: int32(
+				row.AtRisk,
+			), //nolint:gosec // a count
+			Watch: int32(
+				row.Watch,
+			), //nolint:gosec // a count
+			AverageScore: worker.AverageScore(
+				int32(row.TotalScore),
+				workers,
+			), //nolint:gosec // a score sum
 		})
 	}
 

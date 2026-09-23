@@ -124,17 +124,82 @@ func TestEvaluateTrainingHealth(t *testing.T) {
 		want   worker.TrainingHealth
 	}{
 		{"nothing", nil, worker.TrainingHealthMissing},
-		{"assigned without due", &worker.WorkerTrainingRecord{Status: worker.TrainingStatusAssigned}, worker.TrainingHealthScheduled},
-		{"assigned due in 20", &worker.WorkerTrainingRecord{Status: worker.TrainingStatusAssigned, DueAt: trainingTS(now + 20*trainingDay)}, worker.TrainingHealthScheduled},
-		{"in progress due in 3", &worker.WorkerTrainingRecord{Status: worker.TrainingStatusInProgress, DueAt: trainingTS(now + 3*trainingDay)}, worker.TrainingHealthDueSoon},
-		{"due today", &worker.WorkerTrainingRecord{Status: worker.TrainingStatusAssigned, DueAt: trainingTS(now)}, worker.TrainingHealthDueSoon},
-		{"overdue", &worker.WorkerTrainingRecord{Status: worker.TrainingStatusAssigned, DueAt: trainingTS(now - trainingDay)}, worker.TrainingHealthOverdue},
-		{"completed one-time", &worker.WorkerTrainingRecord{Status: worker.TrainingStatusCompleted, CompletedAt: trainingTS(now - 400*trainingDay)}, worker.TrainingHealthCurrent},
-		{"completed expiring", &worker.WorkerTrainingRecord{Status: worker.TrainingStatusCompleted, ExpiresAt: trainingTS(now + 10*trainingDay)}, worker.TrainingHealthExpiringSoon},
-		{"completed expired", &worker.WorkerTrainingRecord{Status: worker.TrainingStatusCompleted, ExpiresAt: trainingTS(now - trainingDay)}, worker.TrainingHealthExpired},
-		{"waived", &worker.WorkerTrainingRecord{Status: worker.TrainingStatusWaived}, worker.TrainingHealthCurrent},
-		{"failed", &worker.WorkerTrainingRecord{Status: worker.TrainingStatusFailed}, worker.TrainingHealthFailed},
-		{"cancelled", &worker.WorkerTrainingRecord{Status: worker.TrainingStatusCancelled}, worker.TrainingHealthMissing},
+		{
+			"assigned without due",
+			&worker.WorkerTrainingRecord{Status: worker.TrainingStatusAssigned},
+			worker.TrainingHealthScheduled,
+		},
+		{
+			"assigned due in 20",
+			&worker.WorkerTrainingRecord{
+				Status: worker.TrainingStatusAssigned,
+				DueAt:  trainingTS(now + 20*trainingDay),
+			},
+			worker.TrainingHealthScheduled,
+		},
+		{
+			"in progress due in 3",
+			&worker.WorkerTrainingRecord{
+				Status: worker.TrainingStatusInProgress,
+				DueAt:  trainingTS(now + 3*trainingDay),
+			},
+			worker.TrainingHealthDueSoon,
+		},
+		{
+			"due today",
+			&worker.WorkerTrainingRecord{
+				Status: worker.TrainingStatusAssigned,
+				DueAt:  trainingTS(now),
+			},
+			worker.TrainingHealthDueSoon,
+		},
+		{
+			"overdue",
+			&worker.WorkerTrainingRecord{
+				Status: worker.TrainingStatusAssigned,
+				DueAt:  trainingTS(now - trainingDay),
+			},
+			worker.TrainingHealthOverdue,
+		},
+		{
+			"completed one-time",
+			&worker.WorkerTrainingRecord{
+				Status:      worker.TrainingStatusCompleted,
+				CompletedAt: trainingTS(now - 400*trainingDay),
+			},
+			worker.TrainingHealthCurrent,
+		},
+		{
+			"completed expiring",
+			&worker.WorkerTrainingRecord{
+				Status:    worker.TrainingStatusCompleted,
+				ExpiresAt: trainingTS(now + 10*trainingDay),
+			},
+			worker.TrainingHealthExpiringSoon,
+		},
+		{
+			"completed expired",
+			&worker.WorkerTrainingRecord{
+				Status:    worker.TrainingStatusCompleted,
+				ExpiresAt: trainingTS(now - trainingDay),
+			},
+			worker.TrainingHealthExpired,
+		},
+		{
+			"waived",
+			&worker.WorkerTrainingRecord{Status: worker.TrainingStatusWaived},
+			worker.TrainingHealthCurrent,
+		},
+		{
+			"failed",
+			&worker.WorkerTrainingRecord{Status: worker.TrainingStatusFailed},
+			worker.TrainingHealthFailed,
+		},
+		{
+			"cancelled",
+			&worker.WorkerTrainingRecord{Status: worker.TrainingStatusCancelled},
+			worker.TrainingHealthMissing,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -159,12 +224,34 @@ func TestBuildTrainingSummary(t *testing.T) {
 	defensive := course("DEFENSIVE", false)
 
 	records := []*worker.WorkerTrainingRecord{
-		{CourseID: orientation.ID, Status: worker.TrainingStatusCompleted, CompletedAt: trainingTS(now - 300*trainingDay)},
-		{CourseID: hazmat.ID, Status: worker.TrainingStatusCompleted, CompletedAt: trainingTS(now - 400*trainingDay), ExpiresAt: trainingTS(now - 35*trainingDay)},
-		{CourseID: hazmat.ID, Status: worker.TrainingStatusAssigned, AssignedAt: now - 10*trainingDay, DueAt: trainingTS(now + 5*trainingDay)},
+		{
+			CourseID:    orientation.ID,
+			Status:      worker.TrainingStatusCompleted,
+			CompletedAt: trainingTS(now - 300*trainingDay),
+		},
+		{
+			CourseID:    hazmat.ID,
+			Status:      worker.TrainingStatusCompleted,
+			CompletedAt: trainingTS(now - 400*trainingDay),
+			ExpiresAt:   trainingTS(now - 35*trainingDay),
+		},
+		{
+			CourseID:   hazmat.ID,
+			Status:     worker.TrainingStatusAssigned,
+			AssignedAt: now - 10*trainingDay,
+			DueAt:      trainingTS(now + 5*trainingDay),
+		},
 		{CourseID: forklift.ID, Status: worker.TrainingStatusCancelled},
-		{CourseID: defensive.ID, Status: worker.TrainingStatusFailed, UpdatedAt: now - 2*trainingDay},
-		{CourseID: defensive.ID, Status: worker.TrainingStatusCompleted, CompletedAt: trainingTS(now - 30*trainingDay)},
+		{
+			CourseID:  defensive.ID,
+			Status:    worker.TrainingStatusFailed,
+			UpdatedAt: now - 2*trainingDay,
+		},
+		{
+			CourseID:    defensive.ID,
+			Status:      worker.TrainingStatusCompleted,
+			CompletedAt: trainingTS(now - 30*trainingDay),
+		},
 	}
 
 	summary := worker.BuildTrainingSummary(
@@ -174,26 +261,55 @@ func TestBuildTrainingSummary(t *testing.T) {
 		now,
 	)
 
-	require.Len(t, summary.Items, 3, "Local-only course and the cancelled forklift record are left out")
+	require.Len(
+		t,
+		summary.Items,
+		3,
+		"Local-only course and the cancelled forklift record are left out",
+	)
 	assert.Equal(t, 2, summary.RequiredCount)
-	assert.True(t, summary.Compliant, "an open renewal that is not overdue keeps the worker compliant")
+	assert.True(
+		t,
+		summary.Compliant,
+		"an open renewal that is not overdue keeps the worker compliant",
+	)
 
 	byCode := map[string]*worker.TrainingSummaryItem{}
 	for _, item := range summary.Items {
 		byCode[item.Course.Code] = item
 	}
 	assert.Equal(t, worker.TrainingHealthCurrent, byCode["ORIENT"].Health)
-	assert.Equal(t, worker.TrainingHealthDueSoon, byCode["HAZMAT"].Health, "the open assignment speaks for the course, not the expired completion")
+	assert.Equal(
+		t,
+		worker.TrainingHealthDueSoon,
+		byCode["HAZMAT"].Health,
+		"the open assignment speaks for the course, not the expired completion",
+	)
 	assert.Equal(t, worker.TrainingStatusAssigned, byCode["HAZMAT"].Record.Status)
-	assert.Equal(t, worker.TrainingHealthCurrent, byCode["DEFENSIVE"].Health, "the newest closed record wins")
+	assert.Equal(
+		t,
+		worker.TrainingHealthCurrent,
+		byCode["DEFENSIVE"].Health,
+		"the newest closed record wins",
+	)
 	assert.False(t, byCode["DEFENSIVE"].Required)
-	assert.Equal(t, "ORIENT", summary.Items[0].Course.Code, "required first, then by sort order and name")
+	assert.Equal(
+		t,
+		"ORIENT",
+		summary.Items[0].Course.Code,
+		"required first, then by sort order and name",
+	)
 
 	assert.Equal(t, 2, summary.CurrentCount)
 	assert.Equal(t, 1, summary.DueCount)
 	assert.Empty(t, summary.RequiredGaps())
 
-	missing := worker.BuildTrainingSummary(wrk, []*worker.TrainingCourse{orientation, hazmat}, nil, now)
+	missing := worker.BuildTrainingSummary(
+		wrk,
+		[]*worker.TrainingCourse{orientation, hazmat},
+		nil,
+		now,
+	)
 	assert.False(t, missing.Compliant)
 	assert.Equal(t, 2, missing.MissingCount)
 	gaps := missing.RequiredGaps()

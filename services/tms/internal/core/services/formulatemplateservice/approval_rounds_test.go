@@ -219,13 +219,23 @@ func TestExpireStaleSubmissions_ReturnsTemplatesToDraftAndRecordsIt(t *testing.T
 
 	deps.repo.On("Update", mock.Anything, mock.MatchedBy(func(t *formulatemplate.FormulaTemplate) bool {
 		return t.ID == stale.ID
-	})).Return(stale, nil).Once()
+	})).
+		Return(stale, nil).
+		Once()
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	result, err := deps.svc.ExpireStaleSubmissions(t.Context(), &ExpireStaleSubmissionsRequest{Now: now})
+	result, err := deps.svc.ExpireStaleSubmissions(
+		t.Context(),
+		&ExpireStaleSubmissionsRequest{Now: now},
+	)
 	require.NoError(t, err)
 
-	assert.Equal(t, []pulid.ID{stale.ID}, result.Expired, "a fresh submission the repo returned by mistake is left alone")
+	assert.Equal(
+		t,
+		[]pulid.ID{stale.ID},
+		result.Expired,
+		"a fresh submission the repo returned by mistake is left alone",
+	)
 	assert.Equal(t, formulatemplate.StatusDraft, stale.Status)
 	assert.Nil(t, stale.SubmittedByID)
 	assert.Nil(t, stale.SubmittedAt)

@@ -192,7 +192,11 @@ func TestResolveShipmentCharge_ModeGatesApplication(t *testing.T) {
 		wantNil bool
 	}{
 		{"none mode skips even with program assigned", customer.FuelSurchargeModeNone, true},
-		{"fuel included skips even with program assigned", customer.FuelSurchargeModeFuelIncluded, true},
+		{
+			"fuel included skips even with program assigned",
+			customer.FuelSurchargeModeFuelIncluded,
+			true,
+		},
 		{"program mode applies", customer.FuelSurchargeModeProgram, false},
 	}
 

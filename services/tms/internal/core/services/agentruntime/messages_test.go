@@ -22,7 +22,11 @@ func TestProposalRationale_UsesTheModelsOwnWordsWhenItGaveAny(t *testing.T) {
 		Input:     "ignored while the model narrated",
 	})
 
-	assert.Equal(t, "Reassigning to the Dallas terminal because the driver is out of hours.", rationale)
+	assert.Equal(
+		t,
+		"Reassigning to the Dallas terminal because the driver is out of hours.",
+		rationale,
+	)
 }
 
 func TestProposalRationale_SaysSoWhenTheModelExplainedNothing(t *testing.T) {
@@ -111,7 +115,9 @@ func TestProposalRationale_TruncatesNarration(t *testing.T) {
 		long[i] = 'a'
 	}
 
-	rationale := proposalRationale(rationaleInput{Narration: string(long), ToolName: "reassign_move"})
+	rationale := proposalRationale(
+		rationaleInput{Narration: string(long), ToolName: "reassign_move"},
+	)
 
 	assert.LessOrEqual(t, len([]rune(rationale)), maxRationaleChars+1)
 }
@@ -125,7 +131,12 @@ func TestToAdapterMessages_StartsAtAUserTurn(t *testing.T) {
 	t.Parallel()
 
 	history := []conversation.Message{
-		{Role: conversation.RoleTool, ToolCallID: "call_0", ToolName: "get_shipment", Content: "{}"},
+		{
+			Role:       conversation.RoleTool,
+			ToolCallID: "call_0",
+			ToolName:   "get_shipment",
+			Content:    "{}",
+		},
 		{Role: conversation.RoleAssistant, Content: "It is in Dallas."},
 		{Role: conversation.RoleUser, Content: "And the driver?"},
 		{Role: conversation.RoleAssistant, Content: "Sarah Williams."},
@@ -143,7 +154,10 @@ func TestToAdapterMessages_KeepsAWholeHistoryThatAlreadyStartsRight(t *testing.T
 
 	history := []conversation.Message{
 		{Role: conversation.RoleUser, Content: "Where is S1?"},
-		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "get_shipment"}}},
+		{
+			Role:      conversation.RoleAssistant,
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "get_shipment"}},
+		},
 		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "get_shipment", Content: "{}"},
 		{Role: conversation.RoleAssistant, Content: "Dallas."},
 	}
@@ -158,7 +172,11 @@ func TestToAdapterMessages_CarriesReasoning(t *testing.T) {
 
 	messages := toAdapterMessages([]conversation.Message{
 		{Role: conversation.RoleUser, Content: "hold it"},
-		{Role: conversation.RoleAssistant, Content: "Done.", Reasoning: &conversation.ReasoningTrace{Text: "t", Signature: "s"}},
+		{
+			Role:      conversation.RoleAssistant,
+			Content:   "Done.",
+			Reasoning: &conversation.ReasoningTrace{Text: "t", Signature: "s"},
+		},
 	}, nil)
 
 	require.Len(t, messages, 2)
@@ -179,7 +197,12 @@ func TestToAdapterMessages_DropsTheResultsOfARefusedTurnsCalls(t *testing.T) {
 			Refused:   true,
 			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "search_shipments"}},
 		},
-		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "search_shipments", Content: "{}"},
+		{
+			Role:       conversation.RoleTool,
+			ToolCallID: "c1",
+			ToolName:   "search_shipments",
+			Content:    "{}",
+		},
 		{Role: conversation.RoleUser, Content: "Fine, where is S1?"},
 		{Role: conversation.RoleAssistant, Content: "Dallas."},
 	}
@@ -203,16 +226,28 @@ func TestToAdapterMessages_CompactsToolResultsFromOlderTurns(t *testing.T) {
 	big := strings.Repeat("row,", 2000)
 	history := []conversation.Message{
 		{Role: conversation.RoleUser, Content: "List shipments."},
-		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "list_shipments"}}},
+		{
+			Role:      conversation.RoleAssistant,
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "list_shipments"}},
+		},
 		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "list_shipments", Content: big},
 		{Role: conversation.RoleAssistant, Content: "Here they are."},
 	}
 	for turn := range recentToolTurns {
 		id := fmt.Sprintf("c%d", turn+2)
-		history = append(history,
+		history = append(
+			history,
 			conversation.Message{Role: conversation.RoleUser, Content: "And again."},
-			conversation.Message{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{ID: id, Name: "list_shipments"}}},
-			conversation.Message{Role: conversation.RoleTool, ToolCallID: id, ToolName: "list_shipments", Content: big},
+			conversation.Message{
+				Role:      conversation.RoleAssistant,
+				ToolCalls: []conversation.ToolCallRecord{{ID: id, Name: "list_shipments"}},
+			},
+			conversation.Message{
+				Role:       conversation.RoleTool,
+				ToolCallID: id,
+				ToolName:   "list_shipments",
+				Content:    big,
+			},
 			conversation.Message{Role: conversation.RoleAssistant, Content: "Here they are."},
 		)
 	}
@@ -239,13 +274,25 @@ func TestToAdapterMessages_LeavesShortOldResultsAlone(t *testing.T) {
 
 	history := []conversation.Message{
 		{Role: conversation.RoleUser, Content: "Where is S1?"},
-		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "get_shipment"}}},
-		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "get_shipment", Content: `{"status":"InTransit"}`},
+		{
+			Role:      conversation.RoleAssistant,
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "get_shipment"}},
+		},
+		{
+			Role:       conversation.RoleTool,
+			ToolCallID: "c1",
+			ToolName:   "get_shipment",
+			Content:    `{"status":"InTransit"}`,
+		},
 		{Role: conversation.RoleAssistant, Content: "In transit."},
 	}
 	for turn := range recentToolTurns + 1 {
-		history = append(history,
-			conversation.Message{Role: conversation.RoleUser, Content: fmt.Sprintf("Turn %d", turn)},
+		history = append(
+			history,
+			conversation.Message{
+				Role:    conversation.RoleUser,
+				Content: fmt.Sprintf("Turn %d", turn),
+			},
 			conversation.Message{Role: conversation.RoleAssistant, Content: "Noted."},
 		)
 	}
@@ -274,12 +321,20 @@ func TestToAdapterMessages_DropsCallsNothingAnswered(t *testing.T) {
 		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "get_shipment", Content: "{}"},
 		{Role: conversation.RoleAssistant, Content: "The run stopped before it finished."},
 		{Role: conversation.RoleUser, Content: "Try again."},
-		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{ID: "c3", Name: "get_shipment"}}},
+		{
+			Role:      conversation.RoleAssistant,
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c3", Name: "get_shipment"}},
+		},
 	}
 
 	messages := toAdapterMessages(history, nil)
 
-	require.Len(t, messages, 5, "the assistant turn with nothing but an unanswered call is left out")
+	require.Len(
+		t,
+		messages,
+		5,
+		"the assistant turn with nothing but an unanswered call is left out",
+	)
 	require.Len(t, messages[1].ToolCalls, 1)
 	assert.Equal(t, "c1", messages[1].ToolCalls[0].ID)
 	assert.Equal(t, "Looking.", messages[1].Content)

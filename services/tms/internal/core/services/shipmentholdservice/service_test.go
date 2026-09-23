@@ -45,16 +45,29 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 	overrideSeverity := holdreason.HoldSeverityBlocking
 	overrideVisible := true
 
-	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
-		return req.ID == shipmentID && req.TenantInfo.OrgID == testutil.TestOrgID && req.TenantInfo.BuID == testutil.TestBuID
-	})).Return(&shipment.Shipment{ID: shipmentID}, nil).Once()
+	shipmentRepo.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+			return req.ID == shipmentID && req.TenantInfo.OrgID == testutil.TestOrgID &&
+				req.TenantInfo.BuID == testutil.TestBuID
+		})).
+		Return(&shipment.Shipment{ID: shipmentID}, nil).
+		Once()
 
-	holdReasonRepo.EXPECT().GetByID(mock.Anything, repositories.GetHoldReasonByIDRequest{ID: reasonID, TenantInfo: pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID}}).
+	holdReasonRepo.EXPECT().
+		GetByID(mock.Anything, repositories.GetHoldReasonByIDRequest{ID: reasonID, TenantInfo: pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID}}).
 		Return(&holdreason.HoldReason{ID: reasonID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Code: "APPT_PENDING", Active: true, DefaultSeverity: holdreason.HoldSeverityAdvisory, DefaultBlocksDispatch: true, DefaultBlocksDelivery: false, DefaultBlocksBilling: false, DefaultVisibleToCustomer: false}, nil).
 		Once()
 
 	repo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(entity *shipment.ShipmentHold) bool {
-		return entity.ShipmentID == shipmentID && entity.Type == holdreason.HoldTypeOperational && entity.ReasonCode == "APPT_PENDING" && entity.Severity == overrideSeverity && entity.VisibleToCustomer == overrideVisible && entity.BlocksDispatch && entity.Source == shipment.HoldSourceUser && entity.StartedAt == startedAt && entity.CreatedByID != nil && *entity.CreatedByID == testutil.TestUserID
+		return entity.ShipmentID == shipmentID && entity.Type == holdreason.HoldTypeOperational &&
+			entity.ReasonCode == "APPT_PENDING" &&
+			entity.Severity == overrideSeverity &&
+			entity.VisibleToCustomer == overrideVisible &&
+			entity.BlocksDispatch &&
+			entity.Source == shipment.HoldSourceUser &&
+			entity.StartedAt == startedAt &&
+			entity.CreatedByID != nil &&
+			*entity.CreatedByID == testutil.TestUserID
 	})).RunAndReturn(func(_ context.Context, entity *shipment.ShipmentHold) (*shipment.ShipmentHold, error) {
 		entity.ID = pulid.MustNew("shh_")
 		return entity, nil
@@ -66,12 +79,20 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 		}).
 		Return(nil).Once()
 
-	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *servicesport.PublishResourceInvalidationRequest) bool {
-		return req.Resource == permission.ResourceShipmentHold.String() && req.Action == "created" && req.RecordID == shipmentID
-	})).Return(nil).Once()
+	realtime.EXPECT().
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *servicesport.PublishResourceInvalidationRequest) bool {
+			return req.Resource == permission.ResourceShipmentHold.String() &&
+				req.Action == "created" &&
+				req.RecordID == shipmentID
+		})).
+		Return(nil).
+		Once()
 
 	created, err := svc.Create(t.Context(), &repositories.CreateShipmentHoldRequest{
-		TenantInfo:        pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: testutil.TestOrgID,
+			BuID:  testutil.TestBuID,
+		},
 		ShipmentID:        shipmentID,
 		HoldReasonID:      reasonID,
 		Severity:          &overrideSeverity,
@@ -108,9 +129,30 @@ func TestUpdate_RejectsReleasedHold(t *testing.T) {
 	shipmentID := pulid.MustNew("shp_")
 	releasedAt := int64(500)
 
-	repo.EXPECT().GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentHoldByIDRequest")).Return(&shipment.ShipmentHold{ID: holdID, ShipmentID: shipmentID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Severity: holdreason.HoldSeverityAdvisory, Source: shipment.HoldSourceUser, StartedAt: 100, ReleasedAt: &releasedAt, Version: 1}, nil).Once()
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentHoldByIDRequest")).
+		Return(&shipment.ShipmentHold{ID: holdID, ShipmentID: shipmentID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Severity: holdreason.HoldSeverityAdvisory, Source: shipment.HoldSourceUser, StartedAt: 100, ReleasedAt: &releasedAt, Version: 1}, nil).
+		Once()
 
-	updated, err := svc.Update(t.Context(), &repositories.UpdateShipmentHoldRequest{TenantInfo: pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID}, HoldID: holdID, ShipmentID: shipmentID, Severity: holdreason.HoldSeverityBlocking, BlocksDispatch: true, BlocksDelivery: false, BlocksBilling: false, VisibleToCustomer: false, StartedAt: 100, Version: 1}, testHoldActor())
+	updated, err := svc.Update(
+		t.Context(),
+		&repositories.UpdateShipmentHoldRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: testutil.TestOrgID,
+				BuID:  testutil.TestBuID,
+			},
+			HoldID:            holdID,
+			ShipmentID:        shipmentID,
+			Severity:          holdreason.HoldSeverityBlocking,
+			BlocksDispatch:    true,
+			BlocksDelivery:    false,
+			BlocksBilling:     false,
+			VisibleToCustomer: false,
+			StartedAt:         100,
+			Version:           1,
+		},
+		testHoldActor(),
+	)
 
 	require.Error(t, err)
 	assert.Nil(t, updated)
@@ -139,10 +181,14 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 	holdID := pulid.MustNew("shh_")
 	shipmentID := pulid.MustNew("shp_")
 
-	repo.EXPECT().GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentHoldByIDRequest")).Return(&shipment.ShipmentHold{ID: holdID, ShipmentID: shipmentID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Severity: holdreason.HoldSeverityBlocking, Source: shipment.HoldSourceUser, StartedAt: 100, Version: 1}, nil).Once()
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentHoldByIDRequest")).
+		Return(&shipment.ShipmentHold{ID: holdID, ShipmentID: shipmentID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Severity: holdreason.HoldSeverityBlocking, Source: shipment.HoldSourceUser, StartedAt: 100, Version: 1}, nil).
+		Once()
 
 	repo.EXPECT().Release(mock.Anything, mock.MatchedBy(func(entity *shipment.ShipmentHold) bool {
-		return entity.ReleasedAt != nil && entity.ReleasedByID != nil && *entity.ReleasedByID == testutil.TestUserID
+		return entity.ReleasedAt != nil && entity.ReleasedByID != nil &&
+			*entity.ReleasedByID == testutil.TestUserID
 	})).RunAndReturn(func(_ context.Context, entity *shipment.ShipmentHold) (*shipment.ShipmentHold, error) {
 		return entity, nil
 	}).Once()
@@ -154,11 +200,24 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 		}).
 		Return(nil).Once()
 
-	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *servicesport.PublishResourceInvalidationRequest) bool {
-		return req.Resource == permission.ResourceShipmentHold.String() && req.Action == "released" && req.RecordID == shipmentID
-	})).Return(nil).Once()
+	realtime.EXPECT().
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *servicesport.PublishResourceInvalidationRequest) bool {
+			return req.Resource == permission.ResourceShipmentHold.String() &&
+				req.Action == "released" &&
+				req.RecordID == shipmentID
+		})).
+		Return(nil).
+		Once()
 
-	released, err := svc.Release(t.Context(), &repositories.ReleaseShipmentHoldRequest{TenantInfo: pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID}, HoldID: holdID, ShipmentID: shipmentID}, testHoldActor())
+	released, err := svc.Release(
+		t.Context(),
+		&repositories.ReleaseShipmentHoldRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID},
+			HoldID:     holdID,
+			ShipmentID: shipmentID,
+		},
+		testHoldActor(),
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, released.ReleasedAt)
@@ -167,5 +226,9 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 }
 
 func testHoldActor() *servicesport.RequestActor {
-	return &servicesport.RequestActor{UserID: testutil.TestUserID, PrincipalID: testutil.TestUserID, PrincipalType: servicesport.PrincipalTypeUser}
+	return &servicesport.RequestActor{
+		UserID:        testutil.TestUserID,
+		PrincipalID:   testutil.TestUserID,
+		PrincipalType: servicesport.PrincipalTypeUser,
+	}
 }

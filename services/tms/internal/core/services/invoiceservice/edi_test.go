@@ -26,9 +26,20 @@ import (
 func TestBuildEDISendPlanBlockers(t *testing.T) {
 	t.Parallel()
 
-	posted := &invoice.Invoice{ID: pulid.MustNew("inv_"), Status: invoice.StatusPosted, EDISendStatus: invoice.EDISendStatusNotSent}
-	enabled := &customer.CustomerBillingProfile{EDIInvoiceEnabled: true, AutoSendInvoiceOnGeneration: true}
-	partner := &edi.EDIPartner{ID: pulid.MustNew("edip_"), Name: "AMD EDI", Kind: edi.PartnerKindExternal}
+	posted := &invoice.Invoice{
+		ID:            pulid.MustNew("inv_"),
+		Status:        invoice.StatusPosted,
+		EDISendStatus: invoice.EDISendStatusNotSent,
+	}
+	enabled := &customer.CustomerBillingProfile{
+		EDIInvoiceEnabled:           true,
+		AutoSendInvoiceOnGeneration: true,
+	}
+	partner := &edi.EDIPartner{
+		ID:   pulid.MustNew("edip_"),
+		Name: "AMD EDI",
+		Kind: edi.PartnerKindExternal,
+	}
 	profile := &edi.EDIPartnerDocumentProfile{ID: pulid.MustNew("epdp_")}
 
 	t.Run("profile switched off", func(t *testing.T) {
@@ -41,22 +52,37 @@ func TestBuildEDISendPlanBlockers(t *testing.T) {
 
 	t.Run("no profile at all", func(t *testing.T) {
 		t.Parallel()
-		plan := buildEDISendPlan(&invoice.Invoice{ID: posted.ID, Status: invoice.StatusPosted}, nil, nil)
+		plan := buildEDISendPlan(
+			&invoice.Invoice{ID: posted.ID, Status: invoice.StatusPosted},
+			nil,
+			nil,
+		)
 		assert.False(t, plan.Enabled)
 		assert.Equal(t, invoice.EDISendStatusNotSent, plan.Status, "an empty status reads NotSent")
 	})
 
 	t.Run("voided", func(t *testing.T) {
 		t.Parallel()
-		plan := buildEDISendPlan(&invoice.Invoice{ID: posted.ID, Status: invoice.StatusVoided}, enabled, nil)
+		plan := buildEDISendPlan(
+			&invoice.Invoice{ID: posted.ID, Status: invoice.StatusVoided},
+			enabled,
+			nil,
+		)
 		assert.True(t, plan.Enabled)
 		assert.Equal(t, []string{ediBlockerVoided, ediBlockerNoPartner}, plan.Blockers)
 	})
 
 	t.Run("draft", func(t *testing.T) {
 		t.Parallel()
-		plan := buildEDISendPlan(&invoice.Invoice{ID: posted.ID, Status: invoice.StatusDraft}, enabled,
-			&ediPartnerTarget{Partner: partner, DocumentProfile: profile, CommunicationMethod: edi.ConnectionMethodAS2})
+		plan := buildEDISendPlan(
+			&invoice.Invoice{ID: posted.ID, Status: invoice.StatusDraft},
+			enabled,
+			&ediPartnerTarget{
+				Partner:             partner,
+				DocumentProfile:     profile,
+				CommunicationMethod: edi.ConnectionMethodAS2,
+			},
+		)
 		assert.Equal(t, []string{ediBlockerNotPosted}, plan.Blockers)
 	})
 
@@ -76,7 +102,11 @@ func TestBuildEDISendPlanBlockers(t *testing.T) {
 		assert.Equal(t, partner.ID, plan.PartnerID)
 		assert.Equal(t, "AMD EDI", plan.PartnerName)
 		assert.True(t, plan.DocumentProfileID.IsNil())
-		assert.Equal(t, []string{ediBlockerNoDocumentProfile, ediBlockerNoCommunication}, plan.Blockers)
+		assert.Equal(
+			t,
+			[]string{ediBlockerNoDocumentProfile, ediBlockerNoCommunication},
+			plan.Blockers,
+		)
 	})
 
 	t.Run("ready external partner", func(t *testing.T) {
@@ -152,7 +182,11 @@ func TestResolvePartnerTargetReportsMissingProfiles(t *testing.T) {
 	target, err := svc.resolvePartnerTarget(t.Context(), tenantInfo, partner)
 
 	require.NoError(t, err)
-	assert.Equal(t, []string{ediBlockerNoDocumentProfile, ediBlockerNoCommunication}, target.Blockers)
+	assert.Equal(
+		t,
+		[]string{ediBlockerNoDocumentProfile, ediBlockerNoCommunication},
+		target.Blockers,
+	)
 }
 
 func TestResolveEDISendPlansWithoutEDIWiringNeverTouchesCustomers(t *testing.T) {
@@ -160,12 +194,19 @@ func TestResolveEDISendPlansWithoutEDIWiringNeverTouchesCustomers(t *testing.T) 
 
 	customerRepo := mocks.NewMockCustomerRepository(t)
 	svc := &Service{l: zap.NewNop(), customerRepo: customerRepo}
-	inv := &invoice.Invoice{ID: pulid.MustNew("inv_"), CustomerID: pulid.MustNew("cus_"), EDISendStatus: invoice.EDISendStatusFailed}
+	inv := &invoice.Invoice{
+		ID:            pulid.MustNew("inv_"),
+		CustomerID:    pulid.MustNew("cus_"),
+		EDISendStatus: invoice.EDISendStatusFailed,
+	}
 
-	plans, err := svc.ResolveEDISendPlans(t.Context(), &servicesports.ResolveInvoiceEDISendPlansRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_")},
-		Invoices:   []*invoice.Invoice{inv, nil},
-	})
+	plans, err := svc.ResolveEDISendPlans(
+		t.Context(),
+		&servicesports.ResolveInvoiceEDISendPlansRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_")},
+			Invoices:   []*invoice.Invoice{inv, nil},
+		},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, plans, 1)
@@ -205,8 +246,11 @@ func newEDIWiredFixture(t *testing.T, status invoice.EDISendStatus) *ediWiredFix
 			CustomerFilterOptions: repositories.CustomerFilterOptions{IncludeBillingProfile: true},
 		}).
 		Return([]*customer.Customer{{
-			ID:             customerID,
-			BillingProfile: &customer.CustomerBillingProfile{EDIInvoiceEnabled: true, AutoSendInvoiceOnGeneration: true},
+			ID: customerID,
+			BillingProfile: &customer.CustomerBillingProfile{
+				EDIInvoiceEnabled:           true,
+				AutoSendInvoiceOnGeneration: true,
+			},
 		}}, nil).
 		Maybe()
 
@@ -301,7 +345,11 @@ func TestSendEDIRefusesADraft(t *testing.T) {
 	f.inv.Status = invoice.StatusDraft
 	f.expectLoad()
 
-	_, err := f.svc.SendEDI(t.Context(), &servicesports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo}, f.actor)
+	_, err := f.svc.SendEDI(
+		t.Context(),
+		&servicesports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo},
+		f.actor,
+	)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Only a posted invoice")
@@ -316,7 +364,11 @@ func TestSendEDIRefusesAnInFlightSendUnlessForced(t *testing.T) {
 			f := newEDIWiredFixture(t, status)
 			f.expectLoad()
 
-			_, err := f.svc.SendEDI(t.Context(), &servicesports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo}, f.actor)
+			_, err := f.svc.SendEDI(
+				t.Context(),
+				&servicesports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo},
+				f.actor,
+			)
 
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), "already in progress")
@@ -330,7 +382,11 @@ func TestSendEDIRefusesASentInvoiceUnlessForced(t *testing.T) {
 	f := newEDIWiredFixture(t, invoice.EDISendStatusSent)
 	f.expectLoad()
 
-	_, err := f.svc.SendEDI(t.Context(), &servicesports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo}, f.actor)
+	_, err := f.svc.SendEDI(
+		t.Context(),
+		&servicesports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo},
+		f.actor,
+	)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "resend it with force")
@@ -343,13 +399,26 @@ func TestSendEDIForceQueuesTheWorkflow(t *testing.T) {
 	f.expectLoad()
 	f.expectWorkflowStart(t, true)
 
-	result, err := f.svc.SendEDI(t.Context(), &servicesports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo, Force: true}, f.actor)
+	result, err := f.svc.SendEDI(
+		t.Context(),
+		&servicesports.SendInvoiceEDIRequest{
+			InvoiceID:  f.inv.ID,
+			TenantInfo: f.tenantInfo,
+			Force:      true,
+		},
+		f.actor,
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, invoice.EDISendStatusQueued, result.Status)
 	assert.Equal(t, "wf-edi", result.WorkflowID)
 	assert.Equal(t, "run-edi", result.WorkflowRunID)
-	assert.Equal(t, invoice.EDISendStatusQueued, f.inv.EDISendStatus, "the in-memory invoice follows the write")
+	assert.Equal(
+		t,
+		invoice.EDISendStatusQueued,
+		f.inv.EDISendStatus,
+		"the in-memory invoice follows the write",
+	)
 }
 
 func TestSendEDIRefusesWhenTheChannelIsBlocked(t *testing.T) {
@@ -359,7 +428,11 @@ func TestSendEDIRefusesWhenTheChannelIsBlocked(t *testing.T) {
 	f.svc.ediPartnerRepo = nil
 	f.expectLoad()
 
-	_, err := f.svc.SendEDI(t.Context(), &servicesports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo}, f.actor)
+	_, err := f.svc.SendEDI(
+		t.Context(),
+		&servicesports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo},
+		f.actor,
+	)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), ediBlockerNotWired)
@@ -395,7 +468,14 @@ func TestEnqueueEDIAfterPostRecordsTheFirstBlocker(t *testing.T) {
 
 	assert.Equal(t, invoice.EDISendStatusNotConfigured, f.inv.EDISendStatus)
 	assert.Equal(t, ediBlockerNoDocumentProfile, f.inv.LastEDIError)
-	f.starter.AssertNotCalled(t, "StartWorkflow", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	f.starter.AssertNotCalled(
+		t,
+		"StartWorkflow",
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+	)
 }
 
 func TestEnqueueEDIAfterPostMarksFailedWhenTheWorkflowCannotStart(t *testing.T) {
@@ -437,5 +517,12 @@ func TestEnqueueEDIAfterPostIsSilentWhenAutoSendIsOff(t *testing.T) {
 	f.svc.enqueueEDIAfterPost(t.Context(), f.inv, f.tenantInfo, f.actor)
 
 	assert.Equal(t, invoice.EDISendStatusNotSent, f.inv.EDISendStatus)
-	f.starter.AssertNotCalled(t, "StartWorkflow", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	f.starter.AssertNotCalled(
+		t,
+		"StartWorkflow",
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+	)
 }

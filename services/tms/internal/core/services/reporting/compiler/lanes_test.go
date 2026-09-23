@@ -32,8 +32,11 @@ func TestOriginStopEmitsOrderedLateral(t *testing.T) {
 	assert.Contains(t, sql, "LEFT JOIN LATERAL (SELECT t1p1.*")
 	assert.Contains(t, sql, "FROM shipment_moves AS t1p0")
 	assert.Contains(t, sql, "LEFT JOIN stops AS t1p1")
-	assert.Contains(t, sql,
-		"ORDER BY t1p0.sequence ASC NULLS LAST, t1p1.sequence ASC NULLS LAST LIMIT 1) AS t1 ON TRUE")
+	assert.Contains(
+		t,
+		sql,
+		"ORDER BY t1p0.sequence ASC NULLS LAST, t1p1.sequence ASC NULLS LAST LIMIT 1) AS t1 ON TRUE",
+	)
 }
 
 // Destination is the same walk in reverse. NULLS LAST is what keeps a move with

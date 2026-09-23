@@ -533,7 +533,13 @@ func TestStart_RefusesTriggeredTemplateByHand(t *testing.T) {
 		Trigger:        worker.ChecklistTriggerManual,
 		Status:         domaintypes.StatusActive,
 		Items: []*worker.WorkerChecklistTemplateItem{
-			{ID: pulid.MustNew("wclti_"), Label: "Review file", Kind: worker.ChecklistItemTask, Required: true, Owner: worker.ChecklistOwnerHR},
+			{
+				ID:       pulid.MustNew("wclti_"),
+				Label:    "Review file",
+				Kind:     worker.ChecklistItemTask,
+				Required: true,
+				Owner:    worker.ChecklistOwnerHR,
+			},
 		},
 	}
 	h.repo.templates[manual.ID] = manual
@@ -579,7 +585,12 @@ func TestSpawnForEvent_OncePerEvent(t *testing.T) {
 
 	again, err := h.svc.SpawnForEvent(context.Background(), hired, h.wrk, h.userID)
 	require.NoError(t, err)
-	assert.Equal(t, first.ID, again.ID, "the same event returns the checklist it already spawned, closed or not")
+	assert.Equal(
+		t,
+		first.ID,
+		again.ID,
+		"the same event returns the checklist it already spawned, closed or not",
+	)
 
 	rehired := &worker.WorkerEmploymentEvent{
 		ID:          pulid.MustNew("wee_"),
@@ -606,7 +617,10 @@ func TestCloseForEvent_CancelsWhatTheEventMakesMoot(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, worker.ChecklistStatusOpen, onboarding.Status)
 
-	promoted := &worker.WorkerEmploymentEvent{ID: pulid.MustNew("wee_"), Kind: worker.EmploymentEventPromoted}
+	promoted := &worker.WorkerEmploymentEvent{
+		ID:   pulid.MustNew("wee_"),
+		Kind: worker.EmploymentEventPromoted,
+	}
 	closed, err := h.svc.CloseForEvent(context.Background(), promoted, h.wrk, h.userID)
 	require.NoError(t, err)
 	assert.Equal(t, 0, closed, "a promotion leaves onboarding running")

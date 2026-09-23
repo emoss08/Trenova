@@ -258,7 +258,14 @@ func (l *LiveSimulator) buildDvirRecord(
 		}
 	}
 	if isUnsafe {
-		record["vehicleDefects"] = l.dvirDefects(ctx, driverDay, dvirID, dvirType, endTime, resolved)
+		record["vehicleDefects"] = l.dvirDefects(
+			ctx,
+			driverDay,
+			dvirID,
+			dvirType,
+			endTime,
+			resolved,
+		)
 	}
 	return record
 }
@@ -273,7 +280,12 @@ func (l *LiveSimulator) dvirDefects(
 ) []any {
 	dayKey := driverDay.Day.Format("2006-01-02")
 	count := 1
-	if l.hashFraction("dvir-defect-count", driverDay.DriverID, dayKey, dvirType) < dvirSecondDefectRate {
+	if l.hashFraction(
+		"dvir-defect-count",
+		driverDay.DriverID,
+		dayKey,
+		dvirType,
+	) < dvirSecondDefectRate {
 		count = 2
 	}
 	baseIndex := int(

@@ -78,7 +78,11 @@ func (s *JSONSink) Initialize(ctx context.Context) error {
 	return s.client.Ping(ctx).Err()
 }
 
-func (s *JSONSink) Write(ctx context.Context, projection domain.Projection, record domain.SourceRecord) error {
+func (s *JSONSink) Write(
+	ctx context.Context,
+	projection domain.Projection,
+	record domain.SourceRecord,
+) error {
 	return s.writeJSON(ctx, projection, record)
 }
 
@@ -90,12 +94,21 @@ func (s *JSONSink) Shutdown(ctx context.Context) error {
 	return s.client.Close()
 }
 
-func (s *JSONSink) writeJSON(ctx context.Context, projection domain.Projection, record domain.SourceRecord) error {
+func (s *JSONSink) writeJSON(
+	ctx context.Context,
+	projection domain.Projection,
+	record domain.SourceRecord,
+) error {
 	if record.Operation == domain.OperationTruncate {
 		return s.truncateJSON(ctx, projection, record)
 	}
 
-	key, err := s.renderTemplate(projection.Name, projection.Destination.KeyTemplate, projection.PrimaryKeys, record)
+	key, err := s.renderTemplate(
+		projection.Name,
+		projection.Destination.KeyTemplate,
+		projection.PrimaryKeys,
+		record,
+	)
 	if err != nil {
 		return err
 	}
@@ -104,11 +117,17 @@ func (s *JSONSink) writeJSON(ctx context.Context, projection domain.Projection, 
 		return s.client.Del(ctx, key).Err()
 	}
 
-	if record.Operation == domain.OperationUpdate && record.OldData != nil && record.NewData != nil {
+	if record.Operation == domain.OperationUpdate && record.OldData != nil &&
+		record.NewData != nil {
 		oldOnlyRecord := record
 		oldOnlyRecord.NewData = nil
 
-		oldKey, err := s.renderTemplate(projection.Name, projection.Destination.KeyTemplate, projection.PrimaryKeys, oldOnlyRecord)
+		oldKey, err := s.renderTemplate(
+			projection.Name,
+			projection.Destination.KeyTemplate,
+			projection.PrimaryKeys,
+			oldOnlyRecord,
+		)
 		if err != nil {
 			return err
 		}
@@ -219,7 +238,11 @@ func (s *StreamSink) Initialize(ctx context.Context) error {
 	return s.client.Ping(ctx).Err()
 }
 
-func (s *StreamSink) Write(ctx context.Context, projection domain.Projection, record domain.SourceRecord) error {
+func (s *StreamSink) Write(
+	ctx context.Context,
+	projection domain.Projection,
+	record domain.SourceRecord,
+) error {
 	return s.writeStream(ctx, projection, record)
 }
 
@@ -231,8 +254,17 @@ func (s *StreamSink) Shutdown(ctx context.Context) error {
 	return s.client.Close()
 }
 
-func (s *StreamSink) writeStream(ctx context.Context, projection domain.Projection, record domain.SourceRecord) error {
-	stream, err := s.renderTemplate(projection.Name, projection.Destination.Stream, projection.PrimaryKeys, record)
+func (s *StreamSink) writeStream(
+	ctx context.Context,
+	projection domain.Projection,
+	record domain.SourceRecord,
+) error {
+	stream, err := s.renderTemplate(
+		projection.Name,
+		projection.Destination.Stream,
+		projection.PrimaryKeys,
+		record,
+	)
 	if err != nil {
 		return err
 	}
@@ -253,7 +285,12 @@ func (s *StreamSink) writeStream(ctx context.Context, projection domain.Projecti
 	return s.client.XAdd(ctx, streamArgs(stream, string(payload))).Err()
 }
 
-func (s *baseSink) renderTemplate(name string, pattern string, primaryKeys []string, record domain.SourceRecord) (string, error) {
+func (s *baseSink) renderTemplate(
+	name string,
+	pattern string,
+	primaryKeys []string,
+	record domain.SourceRecord,
+) (string, error) {
 	tmpl, err := s.template(name, pattern)
 	if err != nil {
 		return "", err

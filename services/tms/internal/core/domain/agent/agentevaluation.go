@@ -83,7 +83,7 @@ type Evaluation struct {
 	DefinitionVersion int64    `json:"definitionVersion" bun:"definition_version,type:BIGINT,notnull"`
 	PromptVersion     string   `json:"promptVersion"     bun:"prompt_version,type:VARCHAR(100),nullzero"`
 	Model             string   `json:"model"             bun:"model,type:VARCHAR(255),nullzero"`
-	ProviderID        pulid.ID `json:"providerId"      bun:"provider_id,type:VARCHAR(100),nullzero"`
+	ProviderID        pulid.ID `json:"providerId"        bun:"provider_id,type:VARCHAR(100),nullzero"`
 	Reply             string   `json:"reply"             bun:"reply,type:TEXT,nullzero"`
 
 	Actions           []ReplayAction    `json:"actions"           bun:"actions,type:JSONB,notnull,default:'[]'"`

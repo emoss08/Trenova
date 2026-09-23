@@ -37,7 +37,10 @@ func New(p Params) repositories.AgentEvaluationRepository {
 	}
 }
 
-func (r *repository) Create(ctx context.Context, entity *agent.Evaluation) (*agent.Evaluation, error) {
+func (r *repository) Create(
+	ctx context.Context,
+	entity *agent.Evaluation,
+) (*agent.Evaluation, error) {
 	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
 		r.l.Error("failed to create agent evaluation", zap.Error(err))
 
@@ -49,7 +52,10 @@ func (r *repository) Create(ctx context.Context, entity *agent.Evaluation) (*age
 
 // Update writes the whole outcome under the version, since one workflow
 // owns an evaluation from start to finish and nothing else edits it.
-func (r *repository) Update(ctx context.Context, entity *agent.Evaluation) (*agent.Evaluation, error) {
+func (r *repository) Update(
+	ctx context.Context,
+	entity *agent.Evaluation,
+) (*agent.Evaluation, error) {
 	cols := buncolgen.EvaluationColumns
 	ov := entity.Version
 	entity.Version++

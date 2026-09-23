@@ -296,7 +296,10 @@ func toBoardDriverRow(driver *dispatchconsoleservice.BoardDriver, timezone strin
 		row.PositionAt = timeutils.FormatUnixDateTimeIn(driver.PositionAt, timezone)
 	}
 	if driver.ProjectedTimeAvailable > 0 {
-		row.ProjectedAvailable = timeutils.FormatUnixDateTimeIn(driver.ProjectedTimeAvailable, timezone)
+		row.ProjectedAvailable = timeutils.FormatUnixDateTimeIn(
+			driver.ProjectedTimeAvailable,
+			timezone,
+		)
 	}
 	for _, finding := range driver.Findings {
 		if finding.Message != "" {

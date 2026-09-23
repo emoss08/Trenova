@@ -185,9 +185,13 @@ func applyPollableDocumentAIExtractionFilters(
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
 		cols := buncolgen.ExtractionColumns
 
+		// Only an execution waiting on a task token needs the poller. One
+		// that polls on its own timer keeps no token, and the poller must
+		// not settle its record out from under it.
 		return q.
 			Where(cols.Status.Eq(), documentaiextraction.StatusPending).
 			Where(cols.ResponseID.NotEq(), "").
+			Where(cols.TaskToken.NotEq(), []byte{}).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.WhereGroup(" OR ", func(orq *bun.SelectQuery) *bun.SelectQuery {
 					return orq.

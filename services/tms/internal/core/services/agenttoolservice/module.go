@@ -207,7 +207,9 @@ func providePostCustomerPaymentTool(
 	return newPostCustomerPaymentTool(payments, receipts, permissions)
 }
 
-func provideResolveBankReceiptWorkItemTool(items *bankreceiptworkitemservice.Service) services.AgentTool {
+func provideResolveBankReceiptWorkItemTool(
+	items *bankreceiptworkitemservice.Service,
+) services.AgentTool {
 	return newResolveBankReceiptWorkItemTool(items)
 }
 

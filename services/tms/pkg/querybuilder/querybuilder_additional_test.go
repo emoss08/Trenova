@@ -576,27 +576,48 @@ func TestQueryBuilder_ResolveShipmentDestinationLocationUsesLastMoveAndStop(t *t
 	assert.Equal(t, "shipment_moves", joinDefs[0].Table)
 	assert.Equal(t, "sm_dest", joinDefs[0].Alias)
 	assert.Contains(t, joinDefs[0].Condition, "sp.id = sm_dest.shipment_id")
-	assert.Contains(t, joinDefs[0].Condition, "sm_dest.sequence = (SELECT MAX(sm2.sequence) FROM shipment_moves AS sm2 WHERE sm2.shipment_id = sp.id)")
+	assert.Contains(
+		t,
+		joinDefs[0].Condition,
+		"sm_dest.sequence = (SELECT MAX(sm2.sequence) FROM shipment_moves AS sm2 WHERE sm2.shipment_id = sp.id)",
+	)
 	assert.Equal(t, "stops", joinDefs[1].Table)
 	assert.Equal(t, "stop_dest", joinDefs[1].Alias)
 	assert.Contains(t, joinDefs[1].Condition, "sm_dest.id = stop_dest.shipment_move_id")
-	assert.Contains(t, joinDefs[1].Condition, "stop_dest.sequence = (SELECT MAX(stp2.sequence) FROM stops AS stp2 WHERE stp2.shipment_move_id = sm_dest.id)")
+	assert.Contains(
+		t,
+		joinDefs[1].Condition,
+		"stop_dest.sequence = (SELECT MAX(stp2.sequence) FROM stops AS stp2 WHERE stp2.shipment_move_id = sm_dest.id)",
+	)
 	assert.NotContains(t, joinDefs[1].Condition, "stop_dest.type")
 	assert.Equal(t, "locations", joinDefs[2].Table)
 	assert.Equal(t, "dest_loc", joinDefs[2].Alias)
 
 	fieldConfig := GetFieldConfiguration(entity)
 	filterQuery := db.NewSelect().Model((*shipment.Shipment)(nil)).ModelTableExpr("shipments AS sp")
-	filterQB := NewWithPostgresSearch(filterQuery, "sp", fieldConfig, entity).WithTraversalSupport(true)
+	filterQB := NewWithPostgresSearch(
+		filterQuery,
+		"sp",
+		fieldConfig,
+		entity,
+	).WithTraversalSupport(true)
 	filterQB.ApplyFilters([]domaintypes.FieldFilter{
 		{Field: "destinationLocation.name", Operator: dbtype.OpContains, Value: "Dallas"},
 	})
 
 	sql := filterQB.GetQuery().String()
 	assert.Contains(t, sql, `LEFT JOIN shipment_moves AS sm_dest`)
-	assert.Contains(t, sql, `sm_dest.sequence = (SELECT MAX(sm2.sequence) FROM shipment_moves AS sm2 WHERE sm2.shipment_id = sp.id)`)
+	assert.Contains(
+		t,
+		sql,
+		`sm_dest.sequence = (SELECT MAX(sm2.sequence) FROM shipment_moves AS sm2 WHERE sm2.shipment_id = sp.id)`,
+	)
 	assert.Contains(t, sql, `LEFT JOIN stops AS stop_dest`)
-	assert.Contains(t, sql, `stop_dest.sequence = (SELECT MAX(stp2.sequence) FROM stops AS stp2 WHERE stp2.shipment_move_id = sm_dest.id)`)
+	assert.Contains(
+		t,
+		sql,
+		`stop_dest.sequence = (SELECT MAX(stp2.sequence) FROM stops AS stp2 WHERE stp2.shipment_move_id = sm_dest.id)`,
+	)
 	assert.NotContains(t, sql, `stop_dest.type`)
 }
 
@@ -618,7 +639,9 @@ func TestQueryBuilder_ResolveShipmentAppointmentRelationships(t *testing.T) {
 		appliedJoins: make(map[string]bool),
 	}
 
-	pickupSQLField, pickupJoinDefs := qb.resolveNestedField("pickupAppointment.scheduledWindowStart")
+	pickupSQLField, pickupJoinDefs := qb.resolveNestedField(
+		"pickupAppointment.scheduledWindowStart",
+	)
 	assert.Equal(t, "pickup_appt.scheduled_window_start", pickupSQLField)
 	require.Len(t, pickupJoinDefs, 2)
 	assert.Equal(t, "sm_pickup_appt", pickupJoinDefs[0].Alias)
@@ -628,13 +651,19 @@ func TestQueryBuilder_ResolveShipmentAppointmentRelationships(t *testing.T) {
 	assert.Contains(t, pickupJoinDefs[1].Condition, "pickup_appt.schedule_type = 'Appointment'")
 	assert.Contains(t, pickupJoinDefs[1].Condition, "SELECT MIN(stp2.sequence)")
 
-	deliverySQLField, deliveryJoinDefs := qb.resolveNestedField("deliveryAppointment.scheduledWindowStart")
+	deliverySQLField, deliveryJoinDefs := qb.resolveNestedField(
+		"deliveryAppointment.scheduledWindowStart",
+	)
 	assert.Equal(t, "delivery_appt.scheduled_window_start", deliverySQLField)
 	require.Len(t, deliveryJoinDefs, 2)
 	assert.Equal(t, "sm_delivery_appt", deliveryJoinDefs[0].Alias)
 	assert.Contains(t, deliveryJoinDefs[0].Condition, "SELECT MAX(sm2.sequence)")
 	assert.Equal(t, "delivery_appt", deliveryJoinDefs[1].Alias)
-	assert.Contains(t, deliveryJoinDefs[1].Condition, "delivery_appt.type IN ('Delivery', 'SplitDelivery')")
+	assert.Contains(
+		t,
+		deliveryJoinDefs[1].Condition,
+		"delivery_appt.type IN ('Delivery', 'SplitDelivery')",
+	)
 	assert.Contains(t, deliveryJoinDefs[1].Condition, "delivery_appt.schedule_type = 'Appointment'")
 	assert.Contains(t, deliveryJoinDefs[1].Condition, "SELECT MAX(stp2.sequence)")
 

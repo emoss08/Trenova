@@ -70,7 +70,10 @@ func (d *Decoder) Reset() {
 	d.currentTransaction = transactionState{}
 }
 
-func (d *Decoder) decodeWALData(walData []byte, lsn pglogrepl.LSN) (*domain.TransactionRecords, error) {
+func (d *Decoder) decodeWALData(
+	walData []byte,
+	lsn pglogrepl.LSN,
+) (*domain.TransactionRecords, error) {
 	logicalMsg, err := pglogrepl.ParseV2(walData, false)
 	if err != nil {
 		return nil, err

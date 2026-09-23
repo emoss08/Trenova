@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -13,6 +14,11 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+// ErrAgentRunAlreadyOpen is a start refused because the agent already has a
+// run open for that subject. The open run will see what the new one would
+// have; it is a skip, not a failure.
+var ErrAgentRunAlreadyOpen = errors.New("this agent already has an open run for that subject")
+
 // StartAgentRunForDefinitionRequest starts a background run of one agent.
 // The definition is named by id or by its system key; the subject is optional
 // and defaults to the organization itself.
@@ -23,8 +29,8 @@ type StartAgentRunForDefinitionRequest struct {
 	SubjectID    pulid.ID
 	Trigger      agent.RunTrigger
 	EventKind    agent.EventKind
-	// Slot is the schedule slot a sweep claimed. It keys the workflow id so two
-	// sweeps that both see the slot start one run, not two.
+	// Slot is the schedule slot the run fills. It keys the workflow id, so a
+	// slot starts one run however often its start is retried.
 	Slot       int64
 	TenantInfo pagination.TenantInfo
 }
@@ -189,9 +195,16 @@ type AgentProposalNotifier interface {
 // tier on the agent when the organization allows it, and a setback takes an
 // earned tier back.
 type AgentTrustService interface {
-	RecordDecision(ctx context.Context, proposal *agent.AgentProposal, decision *agent.AgentDecision) error
+	RecordDecision(
+		ctx context.Context,
+		proposal *agent.AgentProposal,
+		decision *agent.AgentDecision,
+	) error
 	RecordExecutionFailure(ctx context.Context, proposal *agent.AgentProposal) error
-	ListForDefinition(ctx context.Context, req repositories.ListToolTrustRequest) ([]*agent.ToolTrust, error)
+	ListForDefinition(
+		ctx context.Context,
+		req repositories.ListToolTrustRequest,
+	) ([]*agent.ToolTrust, error)
 }
 
 // DecisionOutcome is a recorded decision plus what happened when it ran.
@@ -316,7 +329,12 @@ type AgentBudgetService interface {
 // changed, so a queue or a pane refreshes without polling. Every method is
 // best effort: a lost invalidation costs a refresh, never the write.
 type AgentActivityPublisher interface {
-	ProposalChanged(ctx context.Context, proposal *agent.AgentProposal, actor AuditActor, action string)
+	ProposalChanged(
+		ctx context.Context,
+		proposal *agent.AgentProposal,
+		actor AuditActor,
+		action string,
+	)
 	PlanChanged(ctx context.Context, plan *agent.AgentPlan, actor AuditActor, action string)
 	RunChanged(ctx context.Context, run *agent.AgentRun, actor AuditActor, action string)
 	ArtifactChanged(
@@ -384,7 +402,10 @@ type AgentDecisionQueueService interface {
 	ListPending(ctx context.Context, req ListPendingDecisionsRequest) (*PendingDecisionsPage, error)
 	// Count is the size of the queue, for a badge.
 	Count(ctx context.Context, tenant pagination.TenantInfo) (int, error)
-	Summary(ctx context.Context, tenant pagination.TenantInfo) (*repositories.PendingDecisionSummary, error)
+	Summary(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) (*repositories.PendingDecisionSummary, error)
 	DecideMany(
 		ctx context.Context,
 		req *DecideAgentProposalsRequest,

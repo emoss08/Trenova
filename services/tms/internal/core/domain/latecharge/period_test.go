@@ -69,7 +69,11 @@ func TestChargeMinor(t *testing.T) {
 
 func TestPendingPeriods(t *testing.T) {
 	start := int64(1_700_000_000)
-	assert.Nil(t, latecharge.PendingPeriods(start, start-1, nil), "nothing is due before overdue starts")
+	assert.Nil(
+		t,
+		latecharge.PendingPeriods(start, start-1, nil),
+		"nothing is due before overdue starts",
+	)
 	assert.Equal(t, []int{1}, latecharge.PendingPeriods(start, start, nil))
 	assert.Equal(t, []int{1, 2, 3}, latecharge.PendingPeriods(start, start+61*day, nil))
 	assert.Equal(t, []int{3}, latecharge.PendingPeriods(start, start+61*day, []int{1, 2}),

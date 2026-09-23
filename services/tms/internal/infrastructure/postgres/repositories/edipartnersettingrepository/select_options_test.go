@@ -159,7 +159,12 @@ func TestPartnerSettingSeedMigrationUsesPublicPaths(t *testing.T) {
 		"defaults.commodityDescription",
 		"accessorial.codes",
 	} {
-		require.False(t, strings.Contains(sql, "'"+oldPath+"'"), "old path %s is still seeded", oldPath)
+		require.False(
+			t,
+			strings.Contains(sql, "'"+oldPath+"'"),
+			"old path %s is still seeded",
+			oldPath,
+		)
 	}
 }
 

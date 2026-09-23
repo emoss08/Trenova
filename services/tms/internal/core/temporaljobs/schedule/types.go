@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -191,6 +192,8 @@ func (s *Schedule) ToScheduleOptions() client.ScheduleOptions {
 		ID:     s.ID,
 		Spec:   spec,
 		Paused: s.Paused,
+		Note:   registryNote(s.Hash()),
+		Memo:   map[string]any{ManagedByMemoKey: ManagedByRegistry},
 		Action: &client.ScheduleWorkflowAction{
 			ID:        fmt.Sprintf("%s-%d", workflowIDPrefix, timeutils.NowUnix()),
 			Workflow:  s.Workflow,
@@ -200,4 +203,30 @@ func (s *Schedule) ToScheduleOptions() client.ScheduleOptions {
 		},
 		Overlap: overlapPolicy,
 	}
+}
+
+// ManagedByMemoKey marks, on the schedule itself, what created it. The memo is
+// written once at creation and returned by List, so ownership is known without
+// describing every schedule. The reconciler only ever deletes schedules marked
+// as its own, which is what lets other code keep schedules of its own in the
+// same namespace.
+const (
+	ManagedByMemoKey  = "managedBy"
+	ManagedByRegistry = "schedule-registry"
+)
+
+// registryNotePrefix carries the registry's change hash in the schedule's note.
+// The note, unlike the schedule memo, can be changed by an update and is
+// returned by List, so a schedule's current definition can be compared with the
+// desired one without a describe call per schedule, and the comparison stays
+// right after the schedule has been updated.
+const registryNotePrefix = "Managed by the schedule registry. hash="
+
+func registryNote(hash string) string {
+	return registryNotePrefix + hash
+}
+
+func hashFromNote(note string) (string, bool) {
+	hash, ok := strings.CutPrefix(note, registryNotePrefix)
+	return hash, ok && hash != ""
 }

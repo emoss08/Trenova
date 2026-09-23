@@ -302,7 +302,10 @@ func TestValidateUpdate_RequiresCashAccountForCustomerPaymentPosting(t *testing.
 	v := NewTestValidator()
 	entity := validAccountingControl()
 	entity.DefaultCashAccountID = pulid.Nil
-	entity.AutoPostSourceEvents = append(entity.AutoPostSourceEvents, tenant.JournalSourceEventCustomerPaymentPosted)
+	entity.AutoPostSourceEvents = append(
+		entity.AutoPostSourceEvents,
+		tenant.JournalSourceEventCustomerPaymentPosted,
+	)
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
 
@@ -316,7 +319,10 @@ func TestValidateUpdate_RequiresUnappliedCashAccountForCustomerPaymentPosting(t 
 	v := NewTestValidator()
 	entity := validAccountingControl()
 	entity.DefaultUnappliedCashAccountID = pulid.Nil
-	entity.AutoPostSourceEvents = append(entity.AutoPostSourceEvents, tenant.JournalSourceEventCustomerPaymentPosted)
+	entity.AutoPostSourceEvents = append(
+		entity.AutoPostSourceEvents,
+		tenant.JournalSourceEventCustomerPaymentPosted,
+	)
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
 

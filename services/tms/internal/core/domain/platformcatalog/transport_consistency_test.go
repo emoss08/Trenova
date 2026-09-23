@@ -29,7 +29,10 @@ func domainTransportPairs() []transportPair {
 		{routePrefix: "/api/v1/document-types/", source: "document_type.graphqls"},
 		{routePrefix: "/api/v1/edi/", source: "edi.graphqls"},
 		{routePrefix: "/api/v1/email-profiles/", source: "email_profile.graphqls"},
-		{routePrefix: "/api/v1/equipment-manufacturers/", source: "equipment_manufacturer.graphqls"},
+		{
+			routePrefix: "/api/v1/equipment-manufacturers/",
+			source:      "equipment_manufacturer.graphqls",
+		},
 		{routePrefix: "/api/v1/equipment-types/", source: "equipment_type.graphqls"},
 		{routePrefix: "/api/v1/fiscal-periods/", source: "fiscal_period.graphqls"},
 		{routePrefix: "/api/v1/fiscal-years/", source: "fiscal_year.graphqls"},

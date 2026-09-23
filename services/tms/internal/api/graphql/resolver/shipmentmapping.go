@@ -355,7 +355,10 @@ func shipmentAdditionalChargesFromInput(
 		if err != nil {
 			return nil, err
 		}
-		accessorialChargeID, err := requiredID(path+".accessorialChargeId", input.AccessorialChargeID)
+		accessorialChargeID, err := requiredID(
+			path+".accessorialChargeId",
+			input.AccessorialChargeID,
+		)
 		if err != nil {
 			return nil, err
 		}

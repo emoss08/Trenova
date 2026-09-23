@@ -908,8 +908,20 @@ func TestUpsertTaxRates_ValidatesEachRowAndRejectsDuplicates(t *testing.T) {
 		TenantInfo: h.tenant,
 		UserID:     h.userID,
 		Rates: []*ifta.TaxRate{
-			{JurisdictionID: h.tx.ID, Year: 2026, Quarter: 2, FuelType: diesel, RatePerGallon: dec("0.21")},
-			{JurisdictionID: h.tx.ID, Year: 2026, Quarter: 2, FuelType: diesel, RatePerGallon: dec("0.22")},
+			{
+				JurisdictionID: h.tx.ID,
+				Year:           2026,
+				Quarter:        2,
+				FuelType:       diesel,
+				RatePerGallon:  dec("0.21"),
+			},
+			{
+				JurisdictionID: h.tx.ID,
+				Year:           2026,
+				Quarter:        2,
+				FuelType:       diesel,
+				RatePerGallon:  dec("0.22"),
+			},
 			{JurisdictionID: pulid.MustNew("ifj_"), Year: 2026, Quarter: 2, FuelType: diesel},
 		},
 	})
@@ -925,7 +937,13 @@ func TestUpsertTaxRates_ValidatesEachRowAndRejectsDuplicates(t *testing.T) {
 		TenantInfo: h.tenant,
 		UserID:     h.userID,
 		Rates: []*ifta.TaxRate{
-			{JurisdictionID: h.ok.ID, Year: 2026, Quarter: 2, FuelType: diesel, RatePerGallon: dec("0.19")},
+			{
+				JurisdictionID: h.ok.ID,
+				Year:           2026,
+				Quarter:        2,
+				FuelType:       diesel,
+				RatePerGallon:  dec("0.19"),
+			},
 		},
 	})
 	require.NoError(t, err)

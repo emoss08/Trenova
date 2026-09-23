@@ -18,6 +18,7 @@ type Registry struct {
 	cfg      *config.Config
 	logger   *zap.Logger
 	enabled  bool
+	otel     meterProviderOnce
 
 	HTTP       *HTTP
 	Error      *Error

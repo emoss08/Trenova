@@ -120,7 +120,12 @@ func formatPages(pages []serviceports.AIDocumentPage, limit int) string {
 
 	for i := range pages {
 		page := &pages[i]
-		fmt.Fprintf(&b, "[Page %d]\n%s\n\n", page.PageNumber, stringutils.Truncate(page.Text, limit))
+		fmt.Fprintf(
+			&b,
+			"[Page %d]\n%s\n\n",
+			page.PageNumber,
+			stringutils.Truncate(page.Text, limit),
+		)
 	}
 
 	return strings.TrimSpace(b.String())

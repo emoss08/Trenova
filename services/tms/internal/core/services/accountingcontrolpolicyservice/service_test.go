@@ -19,15 +19,27 @@ func TestCanCreateInvoiceLedgerEntry(t *testing.T) {
 	}
 
 	assert.True(t, svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventInvoicePosted))
-	assert.True(t, svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventCreditMemoPosted))
-	assert.False(t, svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventCustomerPaymentPosted))
+	assert.True(
+		t,
+		svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventCreditMemoPosted),
+	)
+	assert.False(
+		t,
+		svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventCustomerPaymentPosted),
+	)
 
 	control.AccountingBasis = tenant.AccountingBasisCash
-	assert.False(t, svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventInvoicePosted))
+	assert.False(
+		t,
+		svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventInvoicePosted),
+	)
 
 	control.AccountingBasis = tenant.AccountingBasisAccrual
 	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnCashReceipt
-	assert.False(t, svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventInvoicePosted))
+	assert.False(
+		t,
+		svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventInvoicePosted),
+	)
 }
 
 func TestCanUseAutomaticSourcePosting(t *testing.T) {
@@ -38,14 +50,25 @@ func TestCanUseAutomaticSourcePosting(t *testing.T) {
 		AccountingBasis:          tenant.AccountingBasisAccrual,
 		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
 		JournalPostingMode:       tenant.JournalPostingModeAutomatic,
-		AutoPostSourceEvents:     []tenant.JournalSourceEventType{tenant.JournalSourceEventInvoicePosted},
+		AutoPostSourceEvents: []tenant.JournalSourceEventType{
+			tenant.JournalSourceEventInvoicePosted,
+		},
 	}
 
-	assert.True(t, svc.CanUseAutomaticSourcePosting(control, tenant.JournalSourceEventInvoicePosted))
-	assert.False(t, svc.CanUseAutomaticSourcePosting(control, tenant.JournalSourceEventCreditMemoPosted))
+	assert.True(
+		t,
+		svc.CanUseAutomaticSourcePosting(control, tenant.JournalSourceEventInvoicePosted),
+	)
+	assert.False(
+		t,
+		svc.CanUseAutomaticSourcePosting(control, tenant.JournalSourceEventCreditMemoPosted),
+	)
 
 	control.JournalPostingMode = tenant.JournalPostingModeManual
-	assert.False(t, svc.CanUseAutomaticSourcePosting(control, tenant.JournalSourceEventInvoicePosted))
+	assert.False(
+		t,
+		svc.CanUseAutomaticSourcePosting(control, tenant.JournalSourceEventInvoicePosted),
+	)
 }
 
 func TestValidateManualPeriodClose(t *testing.T) {
@@ -53,9 +76,27 @@ func TestValidateManualPeriodClose(t *testing.T) {
 
 	svc := New(Params{Logger: zap.NewNop()})
 	require.NoError(t, svc.ValidateManualPeriodClose(nil))
-	require.NoError(t, svc.ValidateManualPeriodClose(&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeManualOnly}))
-	require.Error(t, svc.ValidateManualPeriodClose(&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeSystemScheduled}))
-	require.Error(t, svc.ValidateManualPeriodClose(&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeManualOnly, RequirePeriodCloseApproval: true}))
+	require.NoError(
+		t,
+		svc.ValidateManualPeriodClose(
+			&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeManualOnly},
+		),
+	)
+	require.Error(
+		t,
+		svc.ValidateManualPeriodClose(
+			&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeSystemScheduled},
+		),
+	)
+	require.Error(
+		t,
+		svc.ValidateManualPeriodClose(
+			&tenant.AccountingControl{
+				PeriodCloseMode:            tenant.PeriodCloseModeManualOnly,
+				RequirePeriodCloseApproval: true,
+			},
+		),
+	)
 }
 
 func TestResolveFXQuoteDate(t *testing.T) {

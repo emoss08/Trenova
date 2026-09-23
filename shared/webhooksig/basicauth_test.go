@@ -28,10 +28,22 @@ func TestVerifyBasicAuth(t *testing.T) {
 		want   error
 	}{
 		{"accepts the configured credentials", basic(secret), nil},
-		{"accepts the scheme in any case", "basic " + base64.StdEncoding.EncodeToString([]byte(secret)), nil},
+		{
+			"accepts the scheme in any case",
+			"basic " + base64.StdEncoding.EncodeToString([]byte(secret)),
+			nil,
+		},
 		{"refuses a wrong password", basic("postmark:wrong"), webhooksig.ErrNoMatch},
-		{"refuses a wrong user", basic("someone:correct-horse-battery-staple"), webhooksig.ErrNoMatch},
-		{"refuses a password that only starts the same", basic("postmark:correct-horse"), webhooksig.ErrNoMatch},
+		{
+			"refuses a wrong user",
+			basic("someone:correct-horse-battery-staple"),
+			webhooksig.ErrNoMatch,
+		},
+		{
+			"refuses a password that only starts the same",
+			basic("postmark:correct-horse"),
+			webhooksig.ErrNoMatch,
+		},
 		{"refuses a missing header", "", webhooksig.ErrMissingHeaders},
 		{"refuses another scheme", "Bearer " + secret, webhooksig.ErrNoMatch},
 		{"refuses a header that is not base64", "Basic !!!", webhooksig.ErrNoMatch},

@@ -447,6 +447,9 @@ func (moveIntgStubMatrixRepo) GetLookupData(
 	return nil, nil
 }
 
-func (moveIntgStubMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
+func (moveIntgStubMatrixRepo) GetLookupStamp(
+	context.Context,
+	pagination.TenantInfo,
+) (string, error) {
 	return "", nil
 }

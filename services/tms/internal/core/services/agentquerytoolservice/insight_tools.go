@@ -96,7 +96,10 @@ func insightRowFrom(entity *insight.Insight, now int64) insightRow {
 	if len(entity.Links) > 0 {
 		row.Links = make([]insightLinkRow, 0, len(entity.Links))
 		for _, link := range entity.Links {
-			row.Links = append(row.Links, insightLinkRow{Label: link.Label, Path: link.Path, Count: link.Count})
+			row.Links = append(
+				row.Links,
+				insightLinkRow{Label: link.Label, Path: link.Path, Count: link.Count},
+			)
 		}
 	}
 
@@ -181,7 +184,11 @@ func (t *listInsightsTool) Query(
 	if raw := optionalString(params.Params, "category"); raw != "" {
 		category := insight.Category(raw)
 		if !category.IsValid() {
-			return nil, fmt.Errorf("category %q is not one of %s", raw, strings.Join(insightCategoryNames(), ", "))
+			return nil, fmt.Errorf(
+				"category %q is not one of %s",
+				raw,
+				strings.Join(insightCategoryNames(), ", "),
+			)
 		}
 		req.Categories = []insight.Category{category}
 		criteria.Field("category", raw)
@@ -190,7 +197,11 @@ func (t *listInsightsTool) Query(
 	if raw := optionalString(params.Params, "severity"); raw != "" {
 		severity := insight.Severity(raw)
 		if !severity.IsValid() {
-			return nil, fmt.Errorf("severity %q is not one of %s", raw, strings.Join(insightSeverityNames(), ", "))
+			return nil, fmt.Errorf(
+				"severity %q is not one of %s",
+				raw,
+				strings.Join(insightSeverityNames(), ", "),
+			)
 		}
 		req.Severities = []insight.Severity{severity}
 		criteria.Field("severity", raw)
@@ -200,7 +211,11 @@ func (t *listInsightsTool) Query(
 	if raw := optionalString(params.Params, "status"); raw != "" {
 		status = insight.Status(raw)
 		if !status.IsValid() {
-			return nil, fmt.Errorf("status %q is not one of %s", raw, strings.Join(insightStatusNames(), ", "))
+			return nil, fmt.Errorf(
+				"status %q is not one of %s",
+				raw,
+				strings.Join(insightStatusNames(), ", "),
+			)
 		}
 	}
 	req.Statuses = []insight.Status{status}

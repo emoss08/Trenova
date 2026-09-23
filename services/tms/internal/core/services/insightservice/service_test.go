@@ -229,7 +229,10 @@ func TestRefresh_StoresWhatTheDetectorsFound(t *testing.T) {
 		findings: []detector.Finding{testFinding("ontime-decline:cus_1")},
 	})
 
-	result, err := svc.Refresh(t.Context(), RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000})
+	result, err := svc.Refresh(
+		t.Context(),
+		RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, result.Created)
@@ -328,7 +331,10 @@ func TestRefresh_DropsAMalformedFindingAndKeepsTheRest(t *testing.T) {
 		findings: []detector.Finding{malformed, testFinding("good:cus_1")},
 	})
 
-	result, err := svc.Refresh(t.Context(), RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000})
+	result, err := svc.Refresh(
+		t.Context(),
+		RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, result.Created)
@@ -579,7 +585,11 @@ func TestListActive_ResolvesEachDetectorsPermissionOnce(t *testing.T) {
 		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
 	).ListActive(
 		t.Context(),
-		services.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_"), Limit: 10},
+		services.ListInsightsRequest{
+			TenantInfo: tenant(),
+			UserID:     pulid.MustNew("usr_"),
+			Limit:      10,
+		},
 	)
 	require.NoError(t, err)
 

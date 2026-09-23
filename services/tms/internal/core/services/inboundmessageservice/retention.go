@@ -31,11 +31,14 @@ type PurgeSettledRequest struct {
 // Messages still waiting on a person — held for review or quarantined — are
 // never old enough to go.
 func (s *Service) PurgeSettled(ctx context.Context, req PurgeSettledRequest) (int, error) {
-	settled, err := s.messageRepo.ListSettledBefore(ctx, repositories.ListSettledInboundMessagesRequest{
-		TenantInfo: req.TenantInfo,
-		Before:     req.Before,
-		Limit:      req.Limit,
-	})
+	settled, err := s.messageRepo.ListSettledBefore(
+		ctx,
+		repositories.ListSettledInboundMessagesRequest{
+			TenantInfo: req.TenantInfo,
+			Before:     req.Before,
+			Limit:      req.Limit,
+		},
+	)
 	if err != nil {
 		return 0, fmt.Errorf("list settled inbound messages: %w", err)
 	}

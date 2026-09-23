@@ -42,20 +42,48 @@ func TestSanitizeHTMLRejectsXSSCorpus(t *testing.T) {
 		{"mixed case script", `<ScRiPt>alert(1)</ScRiPt>`, CodeForbiddenElement},
 
 		// Inline event handlers.
-		{"img onerror", `<img src="data:image/png;base64,AA" onerror="alert(1)">`, CodeForbiddenAttribute},
+		{
+			"img onerror",
+			`<img src="data:image/png;base64,AA" onerror="alert(1)">`,
+			CodeForbiddenAttribute,
+		},
 		{"body onload", `<body onload="alert(1)">x</body>`, CodeForbiddenAttribute},
 		{"div onmouseover", `<div onmouseover="alert(1)">x</div>`, CodeForbiddenAttribute},
-		{"uppercase ONERROR", `<img src="data:image/png;base64,AA" ONERROR="alert(1)">`, CodeForbiddenAttribute},
-		{"onfocus with autofocus", `<span onfocus="alert(1)" autofocus>x</span>`, CodeForbiddenAttribute},
+		{
+			"uppercase ONERROR",
+			`<img src="data:image/png;base64,AA" ONERROR="alert(1)">`,
+			CodeForbiddenAttribute,
+		},
+		{
+			"onfocus with autofocus",
+			`<span onfocus="alert(1)" autofocus>x</span>`,
+			CodeForbiddenAttribute,
+		},
 
 		// Dangerous URL schemes.
 		{"javascript href", `<a href="javascript:alert(1)">x</a>`, CodeForbiddenURLScheme},
 		{"javascript uppercase", `<a href="JAVASCRIPT:alert(1)">x</a>`, CodeForbiddenURLScheme},
 		{"javascript with spaces", `<a href="  javascript:alert(1)">x</a>`, CodeForbiddenURLScheme},
-		{"javascript entity encoded colon", `<a href="javascript&#58;alert(1)">x</a>`, CodeForbiddenURLScheme},
-		{"javascript percent encoded colon", `<a href="javascript%3aalert(1)">x</a>`, CodeForbiddenURLScheme},
-		{"javascript with embedded newline", "<a href=\"java\nscript:alert(1)\">x</a>", CodeForbiddenURLScheme},
-		{"javascript with embedded tab", "<a href=\"java\tscript:alert(1)\">x</a>", CodeForbiddenURLScheme},
+		{
+			"javascript entity encoded colon",
+			`<a href="javascript&#58;alert(1)">x</a>`,
+			CodeForbiddenURLScheme,
+		},
+		{
+			"javascript percent encoded colon",
+			`<a href="javascript%3aalert(1)">x</a>`,
+			CodeForbiddenURLScheme,
+		},
+		{
+			"javascript with embedded newline",
+			"<a href=\"java\nscript:alert(1)\">x</a>",
+			CodeForbiddenURLScheme,
+		},
+		{
+			"javascript with embedded tab",
+			"<a href=\"java\tscript:alert(1)\">x</a>",
+			CodeForbiddenURLScheme,
+		},
 		{"vbscript href", `<a href="vbscript:msgbox(1)">x</a>`, CodeForbiddenURLScheme},
 		{"file src", `<img src="file:///etc/passwd">`, CodeForbiddenURLScheme},
 		{"about src", `<img src="about:blank">`, CodeForbiddenURLScheme},
@@ -67,12 +95,24 @@ func TestSanitizeHTMLRejectsXSSCorpus(t *testing.T) {
 		{"absolute http image", `<img src="http://evil.example/x.png">`, CodeForbiddenURLScheme},
 		{"absolute https image", `<img src="https://evil.example/x.png">`, CodeForbiddenURLScheme},
 		{"protocol relative image", `<img src="//evil.example/x.png">`, CodeForbiddenURLScheme},
-		{"metadata endpoint", `<img src="http://169.254.169.254/latest/meta-data/">`, CodeForbiddenURLScheme},
+		{
+			"metadata endpoint",
+			`<img src="http://169.254.169.254/latest/meta-data/">`,
+			CodeForbiddenURLScheme,
+		},
 		{"relative path image", `<img src="/assets/logo.png">`, CodeForbiddenURLScheme},
 
 		// data: URIs that are not images.
-		{"data html", `<img src="data:text/html,<script>alert(1)</script>">`, CodeForbiddenURLScheme},
-		{"data html base64", `<img src="data:text/html;base64,PHNjcmlwdD4=">`, CodeForbiddenURLScheme},
+		{
+			"data html",
+			`<img src="data:text/html,<script>alert(1)</script>">`,
+			CodeForbiddenURLScheme,
+		},
+		{
+			"data html base64",
+			`<img src="data:text/html;base64,PHNjcmlwdD4=">`,
+			CodeForbiddenURLScheme,
+		},
 		{"data svg", `<img src="data:image/svg+xml;base64,PHN2Zz4=">`, CodeForbiddenURLScheme},
 		{"data javascript", `<img src="data:text/javascript,alert(1)">`, CodeForbiddenURLScheme},
 
@@ -85,7 +125,11 @@ func TestSanitizeHTMLRejectsXSSCorpus(t *testing.T) {
 		// Document-level rewrites.
 		{"base element", `<base href="http://evil.example/">`, CodeForbiddenElement},
 		{"link stylesheet", `<link rel="stylesheet" href="data:text/css,x">`, CodeForbiddenElement},
-		{"meta refresh", `<meta http-equiv="refresh" content="0;url=http://evil.example">`, CodeForbiddenAttribute},
+		{
+			"meta refresh",
+			`<meta http-equiv="refresh" content="0;url=http://evil.example">`,
+			CodeForbiddenAttribute,
+		},
 
 		// SVG and MathML are script vectors.
 		{"svg element", `<svg><circle r="1"/></svg>`, CodeForbiddenElement},
@@ -97,16 +141,48 @@ func TestSanitizeHTMLRejectsXSSCorpus(t *testing.T) {
 		{"bare input", `<input type="text" name="a">`, CodeForbiddenElement},
 
 		// Legacy conditional comments execute in some mail clients.
-		{"conditional comment", `<!--[if IE]><script>alert(1)</script><![endif]-->`, CodeForbiddenElement},
+		{
+			"conditional comment",
+			`<!--[if IE]><script>alert(1)</script><![endif]-->`,
+			CodeForbiddenElement,
+		},
 
 		// CSS that fetches or executes.
-		{"style attribute import", `<div style="@import url(http://evil.example/x.css)">y</div>`, CodeForbiddenCSS},
-		{"style attribute expression", `<div style="width:expression(alert(1))">y</div>`, CodeForbiddenCSS},
-		{"style attribute behavior", `<div style="behavior:url(#default#x)">y</div>`, CodeForbiddenCSS},
-		{"style attribute moz binding", `<div style="-moz-binding:url(http://evil.example/x)">y</div>`, CodeForbiddenCSS},
-		{"style attribute remote background", `<div style="background-image:url(http://evil.example/x.png)">y</div>`, CodeForbiddenCSS},
-		{"style block import", `<style>@import "http://evil.example/x.css";</style>`, CodeForbiddenCSS},
-		{"style block remote url", `<style>body{background:url(https://evil.example/x.png)}</style>`, CodeForbiddenCSS},
+		{
+			"style attribute import",
+			`<div style="@import url(http://evil.example/x.css)">y</div>`,
+			CodeForbiddenCSS,
+		},
+		{
+			"style attribute expression",
+			`<div style="width:expression(alert(1))">y</div>`,
+			CodeForbiddenCSS,
+		},
+		{
+			"style attribute behavior",
+			`<div style="behavior:url(#default#x)">y</div>`,
+			CodeForbiddenCSS,
+		},
+		{
+			"style attribute moz binding",
+			`<div style="-moz-binding:url(http://evil.example/x)">y</div>`,
+			CodeForbiddenCSS,
+		},
+		{
+			"style attribute remote background",
+			`<div style="background-image:url(http://evil.example/x.png)">y</div>`,
+			CodeForbiddenCSS,
+		},
+		{
+			"style block import",
+			`<style>@import "http://evil.example/x.css";</style>`,
+			CodeForbiddenCSS,
+		},
+		{
+			"style block remote url",
+			`<style>body{background:url(https://evil.example/x.png)}</style>`,
+			CodeForbiddenCSS,
+		},
 	}
 
 	for _, tt := range tests {
@@ -135,14 +211,23 @@ func TestSanitizeHTMLAcceptsLegitimateDocumentMarkup(t *testing.T) {
 		{"inline styles", `<div style="font-weight:600;color:#111;margin-top:8px">Remit To</div>`},
 		{"style block", `<style>body{font-family:Helvetica,Arial,sans-serif}
 			.total{font-variant-numeric:tabular-nums}</style>`},
-		{"data uri image with dimensions", `<img src="data:image/png;base64,iVBORw0KGgo=" width="120" height="40" alt="logo">`},
+		{
+			"data uri image with dimensions",
+			`<img src="data:image/png;base64,iVBORw0KGgo=" width="120" height="40" alt="logo">`,
+		},
 		{"data uri jpeg", `<img src="data:image/jpeg;base64,/9j/4AAQ" alt="logo">`},
 		{"mailto link", `<a href="mailto:billing@example.com">Contact billing</a>`},
 		{"tel link", `<a href="tel:+15125551234">Call dispatch</a>`},
 		{"anchor without href", `<a name="top">Top</a>`},
-		{"data uri in css", `<style>.logo{background-image:url(data:image/png;base64,iVBORw0KGgo=)}</style>`},
+		{
+			"data uri in css",
+			`<style>.logo{background-image:url(data:image/png;base64,iVBORw0KGgo=)}</style>`,
+		},
 		{"css with page rule", `<style>@page{size:letter;margin:20mm}</style>`},
-		{"semantic markup", `<section><article><span class="muted">Terms</span></article></section>`},
+		{
+			"semantic markup",
+			`<section><article><span class="muted">Terms</span></article></section>`,
+		},
 		{"template variable in url position", `<img src="{{ .LogoDataURI }}" alt="logo">`},
 		{"template variable in css url", `<style>.l{background:url({{ .LogoDataURI }})}</style>`},
 		{"empty", ``},

@@ -17,7 +17,10 @@ func TestOpenAIChatAdapter_StreamReportsAMaxTokensStopAsTruncated(t *testing.T) 
 	t.Parallel()
 
 	server, _ := streamServer(t, "text/event-stream", sse(
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"content":"The drivers with"},"finish_reason":null}]}`},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"content":"The drivers with"},"finish_reason":null}]}`,
+		},
 		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{},"finish_reason":"length"}]}`},
 		[2]string{"", "[DONE]"},
 	))
@@ -37,7 +40,10 @@ func TestOpenAIChatAdapter_StreamMarksToolArgumentsCutByTheOutputLimit(t *testin
 	t.Parallel()
 
 	server, _ := streamServer(t, "text/event-stream", sse(
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"list_shipments","arguments":"{\"filters\":[{\"field\":\"sta"}}]},"finish_reason":null}]}`},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"list_shipments","arguments":"{\"filters\":[{\"field\":\"sta"}}]},"finish_reason":null}]}`,
+		},
 		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{},"finish_reason":"length"}]}`},
 		[2]string{"", "[DONE]"},
 	))
@@ -59,9 +65,18 @@ func TestOpenAIChatAdapter_StreamSeparatesCallsThatShareAnIndex(t *testing.T) {
 	t.Parallel()
 
 	server, _ := streamServer(t, "text/event-stream", sse(
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_a","type":"function","function":{"name":"get_worker","arguments":"{\"id\":\"w1\"}"}}]},"finish_reason":null}]}`},
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_b","type":"function","function":{"name":"get_worker","arguments":"{\"id\":\"w2\"}"}}]},"finish_reason":null}]}`},
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}`},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_a","type":"function","function":{"name":"get_worker","arguments":"{\"id\":\"w1\"}"}}]},"finish_reason":null}]}`,
+		},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_b","type":"function","function":{"name":"get_worker","arguments":"{\"id\":\"w2\"}"}}]},"finish_reason":null}]}`,
+		},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}`,
+		},
 		[2]string{"", "[DONE]"},
 	))
 
@@ -82,8 +97,14 @@ func TestOpenAIChatAdapter_StreamStillAssemblesFragmentsByIndex(t *testing.T) {
 	t.Parallel()
 
 	server, _ := streamServer(t, "text/event-stream", sse(
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"get_worker","arguments":"{\"id\":"}}]},"finish_reason":null}]}`},
-		[2]string{"", `{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\"w1\"}"}}]},"finish_reason":null}]}`},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"get_worker","arguments":"{\"id\":"}}]},"finish_reason":null}]}`,
+		},
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\"w1\"}"}}]},"finish_reason":null}]}`,
+		},
 		[2]string{"", "[DONE]"},
 	))
 
@@ -102,11 +123,23 @@ func TestAnthropicAdapter_StreamReportsAMaxTokensStopAsTruncated(t *testing.T) {
 	t.Parallel()
 
 	server, _ := streamServer(t, "text/event-stream", sse(
-		[2]string{"message_start", `{"type":"message_start","message":{"model":"claude-x","usage":{"input_tokens":9}}}`},
-		[2]string{"content_block_start", `{"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}`},
-		[2]string{"content_block_delta", `{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"The drivers with"}}`},
+		[2]string{
+			"message_start",
+			`{"type":"message_start","message":{"model":"claude-x","usage":{"input_tokens":9}}}`,
+		},
+		[2]string{
+			"content_block_start",
+			`{"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}`,
+		},
+		[2]string{
+			"content_block_delta",
+			`{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"The drivers with"}}`,
+		},
 		[2]string{"content_block_stop", `{"type":"content_block_stop","index":0}`},
-		[2]string{"message_delta", `{"type":"message_delta","delta":{"stop_reason":"max_tokens"},"usage":{"output_tokens":12}}`},
+		[2]string{
+			"message_delta",
+			`{"type":"message_delta","delta":{"stop_reason":"max_tokens"},"usage":{"output_tokens":12}}`,
+		},
 		[2]string{"message_stop", `{"type":"message_stop"}`},
 	))
 
@@ -124,8 +157,14 @@ func TestOpenAIResponsesAdapter_StreamReportsAnIncompleteResponseAsTruncated(t *
 
 	server, _ := streamServer(t, "text/event-stream", sse(
 		[2]string{"response.created", `{"type":"response.created","response":{"model":"gpt-x"}}`},
-		[2]string{"response.output_text.delta", `{"type":"response.output_text.delta","delta":"The drivers with"}`},
-		[2]string{"response.incomplete", `{"type":"response.incomplete","response":{"model":"gpt-x","status":"incomplete","incomplete_details":{"reason":"max_output_tokens"},"output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"The drivers with"}]}],"usage":{"input_tokens":3,"output_tokens":8}}}`},
+		[2]string{
+			"response.output_text.delta",
+			`{"type":"response.output_text.delta","delta":"The drivers with"}`,
+		},
+		[2]string{
+			"response.incomplete",
+			`{"type":"response.incomplete","response":{"model":"gpt-x","status":"incomplete","incomplete_details":{"reason":"max_output_tokens"},"output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"The drivers with"}]}],"usage":{"input_tokens":3,"output_tokens":8}}}`,
+		},
 	))
 
 	resp, _ := streamWith(t, NewOpenAIResponsesAdapter(), callFor(

@@ -14,7 +14,10 @@ import (
 
 type capturingStore struct{ created []*agent.AgentProposal }
 
-func (s *capturingStore) Create(_ context.Context, p *agent.AgentProposal) (*agent.AgentProposal, error) {
+func (s *capturingStore) Create(
+	_ context.Context,
+	p *agent.AgentProposal,
+) (*agent.AgentProposal, error) {
 	s.created = append(s.created, p)
 
 	return p, nil
@@ -58,7 +61,11 @@ func TestRecord_KeepsThePinnedTargetOnTheProposal(t *testing.T) {
 		Arguments: map[string]any{"shipmentId": id.String()},
 		Rationale: "it is late",
 		Tier:      agent.TierPropose,
-		Target:    &serviceports.ProposalTarget{Resource: permission.ResourceShipment, ID: id, Version: 4},
+		Target: &serviceports.ProposalTarget{
+			Resource: permission.ResourceShipment,
+			ID:       id,
+			Version:  4,
+		},
 	})
 
 	assert.Equal(t, string(permission.ResourceShipment), proposal.TargetResource)

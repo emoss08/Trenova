@@ -48,7 +48,7 @@ type ServiceParams struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Completion    serviceports.CompletionService
+	Completion    serviceports.StructuredCompleter
 	Permissions   serviceports.PermissionEngine
 	Catalog       *filtercatalog.Catalog
 	Organizations repositories.OrganizationRepository
@@ -56,7 +56,7 @@ type ServiceParams struct {
 
 type Service struct {
 	logger        *zap.Logger
-	completion    serviceports.CompletionService
+	completion    serviceports.StructuredCompleter
 	permissions   serviceports.PermissionEngine
 	catalog       *filtercatalog.Catalog
 	organizations repositories.OrganizationRepository
@@ -136,16 +136,19 @@ func (s *Service) Compose(ctx context.Context, req *ComposeRequest) (*ComposeRes
 		)
 	}
 
-	completion, err := s.completion.CompleteStructured(ctx, &serviceports.StructuredCompletionRequest{
-		TenantInfo:   req.TenantInfo,
-		Task:         aiprovider.TaskQueryCompose,
-		System:       systemPrompt,
-		Context:      buildContext(resource, prompt, req.Current),
-		OutputSchema: outputSchema(resource),
-		SchemaName:   "table_query",
-		MaxTokens:    maxOutputTokens,
-		Attribution:  serviceports.AIUsageAttribution{UserID: req.Actor.UserID},
-	})
+	completion, err := s.completion.CompleteStructured(
+		ctx,
+		&serviceports.StructuredCompletionRequest{
+			TenantInfo:   req.TenantInfo,
+			Task:         aiprovider.TaskQueryCompose,
+			System:       systemPrompt,
+			Context:      buildContext(resource, prompt, req.Current),
+			OutputSchema: outputSchema(resource),
+			SchemaName:   "table_query",
+			MaxTokens:    maxOutputTokens,
+			Attribution:  serviceports.AIUsageAttribution{UserID: req.Actor.UserID},
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +270,10 @@ func (s *Service) compile(
 			continue
 		}
 
-		filters, err := resource.Compile([]filtercatalog.Condition{condition.toCondition()}, criteria)
+		filters, err := resource.Compile(
+			[]filtercatalog.Condition{condition.toCondition()},
+			criteria,
+		)
 		if err != nil {
 			result.Unresolved = append(result.Unresolved, Unresolved{
 				Phrase: condition.describe(),

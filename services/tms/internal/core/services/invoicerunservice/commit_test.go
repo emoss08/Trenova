@@ -45,7 +45,12 @@ func TestResolveGroupLegsSkipsAnItemReallocatedToAnotherPayer(t *testing.T) {
 
 	svc := &Service{l: zap.NewNop(), billingQueueRepo: billingQueueRepo}
 
-	legs, items, reason, err := svc.resolveGroupLegs(t.Context(), tenantInfo, group, []*invoicerun.InvoiceRunGroupItem{item})
+	legs, items, reason, err := svc.resolveGroupLegs(
+		t.Context(),
+		tenantInfo,
+		group,
+		[]*invoicerun.InvoiceRunGroupItem{item},
+	)
 	require.NoError(t, err)
 	assert.Nil(t, legs)
 	assert.Nil(t, items)
@@ -83,7 +88,12 @@ func TestResolveGroupLegsLoadsLegsForThePayersItems(t *testing.T) {
 
 	svc := &Service{l: zap.NewNop(), billingQueueRepo: billingQueueRepo, shipmentRepo: shipmentRepo}
 
-	legs, items, reason, err := svc.resolveGroupLegs(t.Context(), tenantInfo, group, []*invoicerun.InvoiceRunGroupItem{item})
+	legs, items, reason, err := svc.resolveGroupLegs(
+		t.Context(),
+		tenantInfo,
+		group,
+		[]*invoicerun.InvoiceRunGroupItem{item},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, reason)
 	require.Len(t, legs, 1)

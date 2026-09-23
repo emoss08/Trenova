@@ -35,10 +35,18 @@ func (s *Service) VoidInvoice(
 	actor *servicesports.RequestActor,
 ) (*servicesports.VoidInvoiceResult, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil {
-		return nil, errortypes.NewValidationError("actor", errortypes.ErrRequired, "Actor is required")
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrRequired,
+			"Actor is required",
+		)
 	}
 	if multiErr := validateVoidRequest(req); multiErr != nil {
 		return nil, multiErr
@@ -83,10 +91,19 @@ func validateVoidRequest(req *servicesports.VoidInvoiceRequest) *errortypes.Mult
 	case reason == "":
 		multiErr.Add("reason", errortypes.ErrRequired, "Say why the invoice is being voided")
 	case len(reason) > maxVoidReasonLength:
-		multiErr.Add("reason", errortypes.ErrInvalid, "Reason must be at most {0} characters", maxVoidReasonLength)
+		multiErr.Add(
+			"reason",
+			errortypes.ErrInvalid,
+			"Reason must be at most {0} characters",
+			maxVoidReasonLength,
+		)
 	}
 	if !req.Disposition.IsValid() {
-		multiErr.Add("disposition", errortypes.ErrInvalid, "Disposition must be Rebill or DoNotRebill")
+		multiErr.Add(
+			"disposition",
+			errortypes.ErrInvalid,
+			"Disposition must be Rebill or DoNotRebill",
+		)
 	}
 	if multiErr.HasErrors() {
 		return multiErr
@@ -141,14 +158,18 @@ func (s *Service) voidDraft(
 			return txErr
 		}
 
-		released, txErr := invoicevoid.Release(txCtx, s.voidDeps(req.TenantInfo), invoicevoid.Params{
-			Invoice:     updated,
-			Disposition: req.Disposition,
-			ActorUserID: actor.UserID,
-			Reason:      entity.VoidReason,
-			WasPosted:   false,
-			Now:         now,
-		})
+		released, txErr := invoicevoid.Release(
+			txCtx,
+			s.voidDeps(req.TenantInfo),
+			invoicevoid.Params{
+				Invoice:     updated,
+				Disposition: req.Disposition,
+				ActorUserID: actor.UserID,
+				Reason:      entity.VoidReason,
+				WasPosted:   false,
+				Now:         now,
+			},
+		)
 		if txErr != nil {
 			return txErr
 		}
@@ -187,7 +208,9 @@ func (s *Service) voidPosted(
 		)
 	}
 	if s.adjustmentService == nil {
-		return nil, errortypes.NewConflictError("Invoice adjustments are unavailable; a posted invoice cannot be voided")
+		return nil, errortypes.NewConflictError(
+			"Invoice adjustments are unavailable; a posted invoice cannot be voided",
+		)
 	}
 
 	// The reason and disposition are recorded before the reversal runs, so an
@@ -257,11 +280,29 @@ func (s *Service) renumberBillingItem(
 ) (string, error) {
 	switch billType {
 	case billingqueue.BillTypeCreditMemo:
-		return s.sequenceGenerator.GenerateCreditMemoNumber(ctx, tenantInfo.OrgID, tenantInfo.BuID, "", "")
+		return s.sequenceGenerator.GenerateCreditMemoNumber(
+			ctx,
+			tenantInfo.OrgID,
+			tenantInfo.BuID,
+			"",
+			"",
+		)
 	case billingqueue.BillTypeDebitMemo:
-		return s.sequenceGenerator.GenerateDebitMemoNumber(ctx, tenantInfo.OrgID, tenantInfo.BuID, "", "")
+		return s.sequenceGenerator.GenerateDebitMemoNumber(
+			ctx,
+			tenantInfo.OrgID,
+			tenantInfo.BuID,
+			"",
+			"",
+		)
 	default:
-		return s.sequenceGenerator.GenerateInvoiceNumber(ctx, tenantInfo.OrgID, tenantInfo.BuID, "", "")
+		return s.sequenceGenerator.GenerateInvoiceNumber(
+			ctx,
+			tenantInfo.OrgID,
+			tenantInfo.BuID,
+			"",
+			"",
+		)
 	}
 }
 

@@ -38,7 +38,9 @@ func buildTools(t *testing.T) []describedTool {
 	// A tool whose schema is built from a catalog needs the catalog; the
 	// production one takes no connection.
 	supplied := map[reflect.Type]reflect.Value{
-		reflect.TypeFor[*filtercatalog.Catalog](): reflect.ValueOf(agentquerytoolservice.FilterCatalog()),
+		reflect.TypeFor[*filtercatalog.Catalog](): reflect.ValueOf(
+			agentquerytoolservice.FilterCatalog(),
+		),
 	}
 
 	providers := append(agentquerytoolservice.ToolProviders(), agenttoolservice.ToolProviders()...)
@@ -121,7 +123,11 @@ func TestEveryToolDescribesItselfWellEnoughToBeChosen(t *testing.T) {
 		}
 		if len(description) > maxDescription {
 			problems = append(problems, fmt.Sprintf(
-				"%s: description is %d characters, over %d", name, len(description), maxDescription))
+				"%s: description is %d characters, over %d",
+				name,
+				len(description),
+				maxDescription,
+			))
 		}
 
 		properties, _ := tool.ParamSchema()["properties"].(map[string]any)

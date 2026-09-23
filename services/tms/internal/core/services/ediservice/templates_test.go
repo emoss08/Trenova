@@ -268,7 +268,16 @@ func TestService_CertifyTemplateVersionRequiresCleanValidation(t *testing.T) {
 		}).
 		Return(version, nil)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	_, err := service.CertifyTemplateVersion(
 		t.Context(),
 		&EDIActionNotesRequest{
@@ -301,7 +310,16 @@ func TestService_CertifyTemplateVersionMarksDraftCertified(t *testing.T) {
 		})).
 		Return(version, nil)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	updated, err := service.CertifyTemplateVersion(
 		t.Context(),
 		&EDIActionNotesRequest{
@@ -325,7 +343,16 @@ func TestService_ActivateTemplateVersionRequiresCertified(t *testing.T) {
 		GetTemplateVersionByID(mock.Anything, mock.Anything).
 		Return(version, nil)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	_, err := service.ActivateTemplateVersion(
 		t.Context(),
 		&EDIActionNotesRequest{
@@ -359,7 +386,16 @@ func TestService_ActivateTemplateVersionPromotesCertified(t *testing.T) {
 		})).
 		Return(&active, nil)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	updated, err := service.ActivateTemplateVersion(
 		t.Context(),
 		&EDIActionNotesRequest{
@@ -403,7 +439,16 @@ func TestService_ReplaceDraftScriptLibrariesReplacesAuthoritatively(t *testing.T
 		).
 		Return(version, nil)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	updated, err := service.ReplaceDraftScriptLibraries(
 		t.Context(),
 		&ReplaceEDITemplateScriptLibrariesRequest{
@@ -438,7 +483,16 @@ func TestService_ReplaceDraftScriptLibrariesRejectsNonDraft(t *testing.T) {
 		GetTemplateVersionByID(mock.Anything, mock.Anything).
 		Return(version, nil)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	_, err := service.ReplaceDraftScriptLibraries(
 		t.Context(),
 		&ReplaceEDITemplateScriptLibrariesRequest{
@@ -487,7 +541,16 @@ func TestService_CreateDraftVersionClonesScriptLibraries(t *testing.T) {
 		).
 		Return(&edi.EDITemplateVersion{Status: edi.TemplateStatusDraft}, nil)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	_, err := service.CreateDraftVersion(
 		t.Context(),
 		&CreateEDITemplateDraftRequest{
@@ -578,7 +641,16 @@ func TestService_CertifyTemplateVersionAcceptsValidScriptLibraries(t *testing.T)
 		UpdateTemplateVersionMetadata(mock.Anything, mock.Anything).
 		Return(version, nil)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	_, err := service.CertifyTemplateVersion(
 		t.Context(),
 		&EDIActionNotesRequest{
@@ -626,7 +698,16 @@ func TestService_CreateTemplateAcceptsMatchingDocumentType(t *testing.T) {
 			nil,
 		)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	created, err := service.CreateTemplate(
 		t.Context(),
 		&CreateEDITemplateRequest{
@@ -656,7 +737,16 @@ func TestService_CreateTemplateRejectsMismatchedDocumentType(t *testing.T) {
 		}).
 		Return([]*edi.EDIDocumentType{{ID: pulid.MustNew("edidt_")}}, nil)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	_, err := service.CreateTemplate(
 		t.Context(),
 		&CreateEDITemplateRequest{
@@ -700,7 +790,16 @@ func TestService_CreateTemplateReturnsDraftWithoutActiveVersion(t *testing.T) {
 			nil,
 		)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	created, err := service.CreateTemplate(
 		t.Context(),
 		&CreateEDITemplateRequest{
@@ -745,7 +844,16 @@ func TestService_CreateTemplateReturnsActiveVersionWhenRepositoryCreatesActiveVe
 			nil,
 		)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	created, err := service.CreateTemplate(
 		t.Context(),
 		&CreateEDITemplateRequest{
@@ -776,7 +884,16 @@ func TestService_UpdateTemplateRejectsUnknownStatus(t *testing.T) {
 			Status:         edi.TemplateStatusDraft,
 		}, nil)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	_, err := service.UpdateTemplate(
 		t.Context(),
 		&UpdateEDITemplateRequest{
@@ -806,7 +923,16 @@ func TestService_UpdateTemplateRejectsArchivedTemplate(t *testing.T) {
 			Status:         edi.TemplateStatusArchived,
 		}, nil)
 
-	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+	}
 	_, err := service.UpdateTemplate(
 		t.Context(),
 		&UpdateEDITemplateRequest{
@@ -901,85 +1027,480 @@ func validTemplateVersion(tenantInfo pagination.TenantInfo) *edi.EDITemplateVers
 
 func testSourceContextIndex() *sourceContextIndex {
 	fields := []*edi.EDISourceContextField{
-		sourceContextField("shipment.shipmentId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipment.purposeCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipment.bol", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipment.tenderOfferId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipment.weight", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipment.pieces", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipment.totalChargeAmount", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipment.ratingDetail.paymentMethod", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipment.ratingDetail.note", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.shipmentId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.bol", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.proNumber", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.statusCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.statusReasonCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.eventDate", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.eventTime", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.eventTimeCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.stopId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.stopType", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.stopSequence", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.locationId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.locationName", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.locationCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.addressLine", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.city", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.stateCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.postalCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.countryCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.appointmentNumber", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.scheduledWindowStart", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.scheduledWindowEnd", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.actualArrival", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.actualDeparture", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.equipmentNumber", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.equipmentType", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.exceptionCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.reasonCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.reasonDescription", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.lateMinutes", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.serviceFailureId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.serviceFailureNumber", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.serviceFailureReasonCodeId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("shipmentStatus.serviceFailureReasonCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
-		sourceContextField("repeat.locationName", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
-		sourceContextField("repeat.locationAddressLine1", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
-		sourceContextField("repeat.locationAddressLine2", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
-		sourceContextField("repeat.locationCity", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
-		sourceContextField("repeat.locationStateCode", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
-		sourceContextField("repeat.locationPostalCode", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
-		sourceContextField("repeat.sequence", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
-		sourceContextField("repeat.sequence", "commodities", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
-		sourceContextField("repeat.type", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
-		sourceContextField("repeat.scheduledWindowStart", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
-		sourceContextField("repeat.weight", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
-		sourceContextField("repeat.pieces", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
-		sourceContextField("repeat.commodityDescription", "commodities", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
-		sourceContextField("partner.carrier.scac", "", edi.SourceContextKindPartner, edi.SourceContextFieldStatusActive),
-		sourceContextField("partner.contact.name", "", edi.SourceContextKindPartner, edi.SourceContextFieldStatusActive),
-		sourceContextField("partner.contact.phone", "", edi.SourceContextKindPartner, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.interchangeSenderQualifier", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.interchangeReceiverQualifier", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.interchangeSenderId", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.interchangeReceiverId", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.interchangeDate", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.interchangeTime", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.repetitionSeparator", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.componentSeparator", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.usageIndicator", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.applicationSenderCode", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.applicationReceiverCode", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.groupDate", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.groupTime", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.groupControlNumber", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.transactionControlNumber", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.functionalGroupId", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.x12Version", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.isaControlNumber", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("runtime.transactionSegmentCount", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
-		sourceContextField("mapping.customer", "", edi.SourceContextKindMapping, edi.SourceContextFieldStatusFuture),
+		sourceContextField(
+			"shipment.shipmentId",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipment.purposeCode",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipment.bol",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipment.tenderOfferId",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipment.weight",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipment.pieces",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipment.totalChargeAmount",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipment.ratingDetail.paymentMethod",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipment.ratingDetail.note",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.shipmentId",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.bol",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.proNumber",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.statusCode",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.statusReasonCode",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.eventDate",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.eventTime",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.eventTimeCode",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.stopId",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.stopType",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.stopSequence",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.locationId",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.locationName",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.locationCode",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.addressLine",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.city",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.stateCode",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.postalCode",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.countryCode",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.appointmentNumber",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.scheduledWindowStart",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.scheduledWindowEnd",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.actualArrival",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.actualDeparture",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.equipmentNumber",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.equipmentType",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.exceptionCode",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.reasonCode",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.reasonDescription",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.lateMinutes",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.serviceFailureId",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.serviceFailureNumber",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.serviceFailureReasonCodeId",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.serviceFailureReasonCode",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"repeat.locationName",
+			"moves.0.stops",
+			edi.SourceContextKindRepeat,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"repeat.locationAddressLine1",
+			"moves.0.stops",
+			edi.SourceContextKindRepeat,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"repeat.locationAddressLine2",
+			"moves.0.stops",
+			edi.SourceContextKindRepeat,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"repeat.locationCity",
+			"moves.0.stops",
+			edi.SourceContextKindRepeat,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"repeat.locationStateCode",
+			"moves.0.stops",
+			edi.SourceContextKindRepeat,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"repeat.locationPostalCode",
+			"moves.0.stops",
+			edi.SourceContextKindRepeat,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"repeat.sequence",
+			"moves.0.stops",
+			edi.SourceContextKindRepeat,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"repeat.sequence",
+			"commodities",
+			edi.SourceContextKindRepeat,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"repeat.type",
+			"moves.0.stops",
+			edi.SourceContextKindRepeat,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"repeat.scheduledWindowStart",
+			"moves.0.stops",
+			edi.SourceContextKindRepeat,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"repeat.weight",
+			"moves.0.stops",
+			edi.SourceContextKindRepeat,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"repeat.pieces",
+			"moves.0.stops",
+			edi.SourceContextKindRepeat,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"repeat.commodityDescription",
+			"commodities",
+			edi.SourceContextKindRepeat,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"partner.carrier.scac",
+			"",
+			edi.SourceContextKindPartner,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"partner.contact.name",
+			"",
+			edi.SourceContextKindPartner,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"partner.contact.phone",
+			"",
+			edi.SourceContextKindPartner,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.interchangeSenderQualifier",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.interchangeReceiverQualifier",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.interchangeSenderId",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.interchangeReceiverId",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.interchangeDate",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.interchangeTime",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.repetitionSeparator",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.componentSeparator",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.usageIndicator",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.applicationSenderCode",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.applicationReceiverCode",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.groupDate",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.groupTime",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.groupControlNumber",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.transactionControlNumber",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.functionalGroupId",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.x12Version",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.isaControlNumber",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"runtime.transactionSegmentCount",
+			"",
+			edi.SourceContextKindRuntime,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"mapping.customer",
+			"",
+			edi.SourceContextKindMapping,
+			edi.SourceContextFieldStatusFuture,
+		),
 	}
 	return newSourceContextIndex(fields)
 }

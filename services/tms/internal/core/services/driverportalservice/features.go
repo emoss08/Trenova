@@ -107,7 +107,12 @@ func (s *Service) MyPortalFeatures(
 	}
 	ptoBalances := false
 	if control.AllowPtoRequests && s.ptoLedger != nil {
-		resolved, resolveErr := s.ptoLedger.ResolvePolicy(ctx, tenantInfo, wrk.ID, time.Now().Unix())
+		resolved, resolveErr := s.ptoLedger.ResolvePolicy(
+			ctx,
+			tenantInfo,
+			wrk.ID,
+			time.Now().Unix(),
+		)
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
@@ -126,15 +131,17 @@ func (s *Service) MyPortalFeatures(
 		return nil, err
 	}
 	return &PortalFeatures{
-		RequireLoadAcknowledgment:    control.RequireLoadAcknowledgment,
-		AllowLoadRefusals:            control.RequireLoadAcknowledgment && control.AllowLoadRefusals,
-		AllowStopActions:             control.AllowStopActions,
-		AllowLoadDocumentUpload:      control.AllowLoadDocumentUpload,
-		AllowLoadComments:            control.AllowLoadComments,
-		ShowLoadPay:                  control.ShowLoadPay,
-		ShowPayEstimates:             control.ShowLoadPay && control.ShowPayEstimates,
-		AllowExpenseSubmission:       control.AllowExpenseSubmission,
-		RequireExpenseReceipt:        control.AllowExpenseSubmission && control.RequireExpenseReceipt,
+		RequireLoadAcknowledgment: control.RequireLoadAcknowledgment,
+		AllowLoadRefusals: control.RequireLoadAcknowledgment &&
+			control.AllowLoadRefusals,
+		AllowStopActions:        control.AllowStopActions,
+		AllowLoadDocumentUpload: control.AllowLoadDocumentUpload,
+		AllowLoadComments:       control.AllowLoadComments,
+		ShowLoadPay:             control.ShowLoadPay,
+		ShowPayEstimates:        control.ShowLoadPay && control.ShowPayEstimates,
+		AllowExpenseSubmission:  control.AllowExpenseSubmission,
+		RequireExpenseReceipt: control.AllowExpenseSubmission &&
+			control.RequireExpenseReceipt,
 		AllowSettlementDisputes:      control.AllowSettlementDisputes,
 		AllowProfileDocumentUpload:   control.AllowProfileDocumentUpload,
 		AllowContactInfoEdit:         control.AllowContactInfoEdit,

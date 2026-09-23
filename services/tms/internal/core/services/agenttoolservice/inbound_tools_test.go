@@ -37,7 +37,10 @@ func (f *fakeInboundDesk) GetByID(
 	return f.message, nil
 }
 
-func (f *fakeInboundDesk) CheckLink(_ context.Context, req inboundmessageservice.LinkRequest) error {
+func (f *fakeInboundDesk) CheckLink(
+	_ context.Context,
+	req inboundmessageservice.LinkRequest,
+) error {
 	f.checked = &req
 	return f.linkErr
 }
@@ -183,14 +186,21 @@ func TestMarkInboundMessage_Refuses(t *testing.T) {
 			tc.params["messageId"] = tc.message.ID.String()
 			tool := newMarkInboundMessageTool(desk)
 
-			require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), deskParams(tc.params)))
+			require.Error(
+				t,
+				tool.(serviceports.ToolValidator).Validate(t.Context(), deskParams(tc.params)),
+			)
 			require.Error(t, tool.Execute(t.Context(), deskParams(tc.params)))
 			assert.Nil(t, desk.reviewed)
 		})
 	}
 }
 
-func replyTool(desk *fakeInboundDesk, mailer *fakeMailer, renderer *fakeRenderer) serviceports.AgentTool {
+func replyTool(
+	desk *fakeInboundDesk,
+	mailer *fakeMailer,
+	renderer *fakeRenderer,
+) serviceports.AgentTool {
 	return &replyToInboundMessageTool{
 		inbox: desk,
 		deps:  inboundReplier{email: mailer, templates: renderer},
@@ -246,11 +256,14 @@ func TestReplyToInboundMessage_LeavesTheThreadWhenTheSendersIDIsUnsafe(t *testin
 	desk.message.MessageID = "abc@shipper.example>\r\nBcc: someone@else.example"
 	mailer := &fakeMailer{}
 
-	require.NoError(t, replyTool(desk, mailer, &fakeRenderer{}).Execute(t.Context(), deskParams(map[string]any{
-		"messageId": desk.message.ID.String(),
-		"profileId": pulid.MustNew("emp_").String(),
-		"body":      "Answer.",
-	})))
+	require.NoError(
+		t,
+		replyTool(desk, mailer, &fakeRenderer{}).Execute(t.Context(), deskParams(map[string]any{
+			"messageId": desk.message.ID.String(),
+			"profileId": pulid.MustNew("emp_").String(),
+			"body":      "Answer.",
+		})),
+	)
 
 	require.NotNil(t, mailer.sent)
 	assert.Nil(t, mailer.sent.Headers)
@@ -414,5 +427,8 @@ func TestCreateShipment_IsNeverCreatedUnattended(t *testing.T) {
 	var tool serviceports.AgentTool = &createShipmentTool{}
 	limiter, ok := tool.(serviceports.ToolTierLimiter)
 	require.True(t, ok)
-	assert.False(t, limiter.TierLimit(t.Context(), deskParams(nil)).Above(agent.TierActWithApproval))
+	assert.False(
+		t,
+		limiter.TierLimit(t.Context(), deskParams(nil)).Above(agent.TierActWithApproval),
+	)
 }

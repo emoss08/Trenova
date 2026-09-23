@@ -354,7 +354,10 @@ func (r *repository) ListPendingForReminder(
 	ctx context.Context,
 	req repositories.ListPendingProposalsForReminderRequest,
 ) ([]*agent.AgentProposal, error) {
-	log := r.l.With(zap.String("operation", "ListPendingForReminder"), zap.Int64("before", req.Before))
+	log := r.l.With(
+		zap.String("operation", "ListPendingForReminder"),
+		zap.Int64("before", req.Before),
+	)
 
 	cols := buncolgen.AgentProposalColumns
 	runCols := buncolgen.AgentRunColumns

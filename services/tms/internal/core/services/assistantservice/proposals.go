@@ -298,10 +298,13 @@ func (s *Service) modificationsFor(
 		return nil
 	}
 
-	decisions, err := s.decisions.ListByProposals(ctx, repositories.ListAgentDecisionsByProposalsRequest{
-		ProposalIDs: ids,
-		TenantInfo:  tenant,
-	})
+	decisions, err := s.decisions.ListByProposals(
+		ctx,
+		repositories.ListAgentDecisionsByProposalsRequest{
+			ProposalIDs: ids,
+			TenantInfo:  tenant,
+		},
+	)
 	if err != nil {
 		s.logger.Warn("could not read the decisions behind the thread's proposals", zap.Error(err))
 
@@ -310,7 +313,8 @@ func (s *Service) modificationsFor(
 
 	out := make(map[pulid.ID]map[string]any, len(decisions))
 	for _, decision := range decisions {
-		if decision == nil || decision.ProposalID == nil || decision.Decision != agent.DecisionModified ||
+		if decision == nil || decision.ProposalID == nil ||
+			decision.Decision != agent.DecisionModified ||
 			len(decision.Modifications) == 0 {
 			continue
 		}

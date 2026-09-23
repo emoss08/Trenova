@@ -31,13 +31,17 @@ func TestListForTaskSendsAPostgresArrayNotJSON(t *testing.T) {
 	t.Parallel()
 
 	entities := make([]*aiprovider.Provider, 0, 1)
-	sql := buildProvidersForTaskQuery(renderDB(), &entities, repositories.ListAIProvidersForTaskRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: pulid.MustNew("org_"),
-			BuID:  pulid.MustNew("bu_"),
+	sql := buildProvidersForTaskQuery(
+		renderDB(),
+		&entities,
+		repositories.ListAIProvidersForTaskRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  pulid.MustNew("bu_"),
+			},
+			Task: aiprovider.TaskAssistantChat,
 		},
-		Task: aiprovider.TaskAssistantChat,
-	}).String()
+	).String()
 
 	assert.Contains(t, sql, `'{"AssistantChat"}'`, sql)
 	assert.NotContains(t, sql, `["AssistantChat"]`,
@@ -50,13 +54,17 @@ func TestListForTaskUsesTheContainmentOperator(t *testing.T) {
 	t.Parallel()
 
 	entities := make([]*aiprovider.Provider, 0, 1)
-	sql := buildProvidersForTaskQuery(renderDB(), &entities, repositories.ListAIProvidersForTaskRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: pulid.MustNew("org_"),
-			BuID:  pulid.MustNew("bu_"),
+	sql := buildProvidersForTaskQuery(
+		renderDB(),
+		&entities,
+		repositories.ListAIProvidersForTaskRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  pulid.MustNew("bu_"),
+			},
+			Task: aiprovider.TaskAssistantChat,
 		},
-		Task: aiprovider.TaskAssistantChat,
-	}).String()
+	).String()
 
 	assert.Contains(t, sql, "@>", sql)
 	assert.Contains(t, sql, "enabled", sql)

@@ -44,7 +44,10 @@ func TestWriteInvoicePDFPreview(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.NotEmpty(t, content)
-	require.NoError(t, os.WriteFile(filepath.Join(outputDir, "invoice-preview.pdf"), content, 0o644))
+	require.NoError(
+		t,
+		os.WriteFile(filepath.Join(outputDir, "invoice-preview.pdf"), content, 0o644),
+	)
 }
 
 func previewInvoicePDFEntity() *invoice.Invoice {

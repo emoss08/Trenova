@@ -18,14 +18,29 @@ func descriptor(name, description string) serviceports.AgentToolDescriptor {
 
 func testCatalog() *Catalog {
 	return New([]serviceports.AgentToolDescriptor{
-		descriptor("list_workers", "List workers (drivers) narrowed by status, employment type or fleet."),
-		descriptor("list_shipments", "List shipments narrowed by status, billing state, dates or charges."),
-		descriptor("list_tractors", "List tractors (power units) narrowed by status or registration date."),
+		descriptor(
+			"list_workers",
+			"List workers (drivers) narrowed by status, employment type or fleet.",
+		),
+		descriptor(
+			"list_shipments",
+			"List shipments narrowed by status, billing state, dates or charges.",
+		),
+		descriptor(
+			"list_tractors",
+			"List tractors (power units) narrowed by status or registration date.",
+		),
 		descriptor("list_customers", "List customers narrowed by status, code, name or city."),
-		descriptor("list_expiring_credentials", "Worker credentials falling due: medical cards, licences, hazmat endorsements."),
+		descriptor(
+			"list_expiring_credentials",
+			"Worker credentials falling due: medical cards, licences, hazmat endorsements.",
+		),
 		descriptor("run_report", "Start one of the reports from list_reports."),
 		descriptor("assign_move", "Assign a driver and tractor to a shipment move."),
-		descriptor("list_time_off", "List worker time-off requests: who is out, who is asking to be."),
+		descriptor(
+			"list_time_off",
+			"List worker time-off requests: who is out, who is asking to be.",
+		),
 		descriptor("update_tractor_status", "Change the status of one or more tractors."),
 	})
 }
@@ -81,7 +96,9 @@ func TestRank_FindsTheCredentialToolForAnEndorsementQuestion(t *testing.T) {
 func TestRank_StaysInsideTheAllowedNames(t *testing.T) {
 	t.Parallel()
 
-	ranked := names(testCatalog().Rank([]string{"list_customers", "run_report"}, "which drivers", 5))
+	ranked := names(
+		testCatalog().Rank([]string{"list_customers", "run_report"}, "which drivers", 5),
+	)
 
 	assert.NotContains(t, ranked, "list_workers",
 		"a tool the agent does not hold is never offered, however relevant")
@@ -246,7 +263,10 @@ func TestFind_ReachesAToolThroughItsParameters(t *testing.T) {
 	shipments.Parameters = map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"customerId": map[string]any{"type": "string", "description": "The customer, from list_customers."},
+			"customerId": map[string]any{
+				"type":        "string",
+				"description": "The customer, from list_customers.",
+			},
 		},
 	}
 	catalog := New([]serviceports.AgentToolDescriptor{

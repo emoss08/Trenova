@@ -59,7 +59,8 @@ func TestListApprovalQueuePagesByKeysetInsteadOfOffset(t *testing.T) {
 	).WillReturnRows(approvalQueueRows().
 		AddRow(newest.String(), "WriteOff", int64(1_700_000_300), int64(1_600_000_000), int64(1_700_000_300), newest.String()).
 		AddRow(middle.String(), "CreditOnly", nil, int64(1_700_000_200), int64(1_700_000_200), middle.String()).
-		AddRow(oldest.String(), "CreditOnly", int64(1_700_000_100), int64(1_600_000_000), int64(1_700_000_100), oldest.String()))
+		AddRow(oldest.String(), "CreditOnly", int64(1_700_000_100), int64(1_600_000_000), int64(1_700_000_100), oldest.String()),
+	)
 
 	firstCursor, err := pagination.NewCursorInfo(2, "")
 	require.NoError(t, err)
@@ -87,7 +88,8 @@ func TestListApprovalQueuePagesByKeysetInsteadOfOffset(t *testing.T) {
 	dbMock.ExpectQuery(
 		`(?s)WHERE .*\(ia\.status = 'PendingApproval'\) AND \(\(COALESCE\(ia\.submitted_at, ia\.created_at\), ia\.id\) < \(1700000200, '` + middle.String() + `'\)\) ORDER BY COALESCE\(ia\.submitted_at, ia\.created_at\) DESC, ia\.id DESC LIMIT 3$`,
 	).WillReturnRows(approvalQueueRows().
-		AddRow(oldest.String(), "CreditOnly", int64(1_700_000_100), int64(1_600_000_000), int64(1_700_000_100), oldest.String()))
+		AddRow(oldest.String(), "CreditOnly", int64(1_700_000_100), int64(1_600_000_000), int64(1_700_000_100), oldest.String()),
+	)
 
 	nextCursor, err := pagination.NewCursorInfo(2, endCursor)
 	require.NoError(t, err)
@@ -127,7 +129,11 @@ func TestListApprovalQueueCountsOnlyWhenAskedWithTheSameFilters(t *testing.T) {
 			TenantInfo: tenant,
 			Query:      "ACME",
 			FieldFilters: []domaintypes.FieldFilter{
-				{Field: "kind", Operator: dbtype.OpEqual, Value: string(invoiceadjustment.KindWriteOff)},
+				{
+					Field:    "kind",
+					Operator: dbtype.OpEqual,
+					Value:    string(invoiceadjustment.KindWriteOff),
+				},
 				{Field: "submittedById", Operator: dbtype.OpEqual, Value: submitter.String()},
 			},
 		},

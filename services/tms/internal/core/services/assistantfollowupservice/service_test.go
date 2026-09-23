@@ -10,10 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
 
@@ -44,79 +46,61 @@ func (f *fakeConversations) GetThreadOwned(
 	return f.thread, nil
 }
 
-type fakeAssistant struct {
-	serviceports.AssistantService
-	requests []*serviceports.SendMessageRequest
-	actors   []*serviceports.RequestActor
+// fakeWorkflows records the turn handed to a worker.
+type fakeWorkflows struct {
+	serviceports.WorkflowStarter
+	payloads []*assistantjobs.AssistantTurnPayload
 }
 
-func (f *fakeAssistant) SendMessageStream(
+func (f *fakeWorkflows) StartWorkflow(
 	_ context.Context,
-	req *serviceports.SendMessageRequest,
-	actor *serviceports.RequestActor,
-	_ serviceports.AssistantStreamEmitter,
-) (*serviceports.SendMessageResult, error) {
-	f.requests = append(f.requests, req)
-	f.actors = append(f.actors, actor)
+	options client.StartWorkflowOptions,
+	_ any,
+	args ...any,
+) (client.WorkflowRun, error) {
+	f.payloads = append(f.payloads, args[0].(*assistantjobs.AssistantTurnPayload))
 
-	return &serviceports.SendMessageResult{}, nil
+	return startedRun{id: options.ID}, nil
 }
+
+type startedRun struct {
+	client.WorkflowRun
+	id string
+}
+
+func (r startedRun) GetID() string { return r.id }
 
 type fakeTurns struct {
-	startErr  error
-	started   []assistantturnservice.StartRequest
-	completed []conversation.AssistantTurnStatus
+	startErr error
+	started  []assistantturnservice.StartRequest
+	workflow []string
 }
 
-func (f *fakeTurns) Start(
+func (f *fakeTurns) StartTurn(
 	_ context.Context,
 	req assistantturnservice.StartRequest,
+	start func(turn *conversation.AssistantTurn) (string, error),
 ) (*conversation.AssistantTurn, error) {
 	f.started = append(f.started, req)
 	if f.startErr != nil {
 		return nil, f.startErr
 	}
 
-	return &conversation.AssistantTurn{ID: pulid.MustNew("atrn_"), ThreadID: req.ThreadID}, nil
-}
+	turn := &conversation.AssistantTurn{ID: pulid.MustNew("atrn_"), ThreadID: req.ThreadID}
+	workflowID, err := start(turn)
+	if err != nil {
+		return nil, err
+	}
+	f.workflow = append(f.workflow, workflowID)
 
-func (f *fakeTurns) StartDurable(
-	context.Context,
-	assistantturnservice.StartRequest,
-	func(turn *conversation.AssistantTurn) (string, error),
-) (*conversation.AssistantTurn, error) {
-	return nil, errors.New("not durable in these tests")
-}
-
-func (f *fakeTurns) Observe(
-	_ context.Context,
-	_ *conversation.AssistantTurn,
-	_ serviceports.AssistantStreamEmitter,
-) (serviceports.AssistantStreamEmitter, func(serviceports.StreamEvent)) {
-	return func(serviceports.StreamEvent) {}, func(serviceports.StreamEvent) {}
-}
-
-func (f *fakeTurns) Stoppable(
-	ctx context.Context,
-	_ *conversation.AssistantTurn,
-) (context.Context, context.CancelFunc) {
-	return context.WithCancel(ctx)
-}
-
-func (f *fakeTurns) Complete(
-	_ context.Context,
-	_ *conversation.AssistantTurn,
-	status conversation.AssistantTurnStatus,
-	_ error,
-) {
-	f.completed = append(f.completed, status)
+	return turn, nil
 }
 
 type fixture struct {
 	service       *Service
 	runs          *fakeRuns
 	conversations *fakeConversations
-	assistant     *fakeAssistant
+	workflows     *fakeWorkflows
 	turns         *fakeTurns
 	tenant        pagination.TenantInfo
 	thread        *conversation.Thread
@@ -137,7 +121,7 @@ func newFixture(subject agent.SubjectType) *fixture {
 			SubjectID:   thread.ID,
 		}},
 		conversations: &fakeConversations{thread: thread},
-		assistant:     &fakeAssistant{},
+		workflows:     &fakeWorkflows{},
 		turns:         &fakeTurns{},
 		tenant:        tenant,
 		thread:        thread,
@@ -146,9 +130,8 @@ func newFixture(subject agent.SubjectType) *fixture {
 		l:             zap.NewNop(),
 		runs:          f.runs,
 		conversations: f.conversations,
-		assistant:     f.assistant,
 		turns:         f.turns,
-		inProcess:     func(run func()) { run() },
+		workflows:     f.workflows,
 	}
 
 	return f
@@ -179,15 +162,16 @@ func TestFollowUp_ReportsTheDecisionInTheConversationAsItsOwner(t *testing.T) {
 	assert.Equal(t, f.thread.UserID, started.UserID)
 	assert.Equal(t, f.thread.ID, started.ThreadID)
 
-	require.Len(t, f.assistant.requests, 1)
-	assert.Equal(t, proposalID, f.assistant.requests[0].FollowUpProposalID)
-	assert.True(t, f.assistant.requests[0].FollowUpPlanID.IsNil())
-	assert.Empty(t, f.assistant.requests[0].Content)
-	assert.Equal(t, f.thread.UserID, f.assistant.actors[0].UserID)
-	assert.Equal(t, serviceports.PrincipalTypeUser, f.assistant.actors[0].PrincipalType)
-
-	assert.Equal(t, []conversation.AssistantTurnStatus{conversation.AssistantTurnStatusCompleted},
-		f.turns.completed, "the turn is closed, or it holds the conversation's live slot")
+	require.Len(t, f.workflows.payloads, 1, "a worker answers it, like any turn")
+	payload := f.workflows.payloads[0]
+	assert.Equal(t, proposalID, payload.Request.FollowUpProposalID)
+	assert.True(t, payload.Request.FollowUpPlanID.IsNil())
+	assert.Empty(t, payload.Content)
+	assert.Equal(t, f.thread.UserID, payload.Actor.UserID)
+	assert.Equal(t, serviceports.PrincipalTypeUser, payload.Actor.PrincipalType)
+	require.Len(t, f.turns.workflow, 1)
+	assert.Equal(t, assistantjobs.WorkflowIDFor(payload.TurnID), f.turns.workflow[0],
+		"the turn's record names the execution carrying it")
 }
 
 // A plan reports once, as a plan.
@@ -203,9 +187,9 @@ func TestFollowUp_ReportsAPlanByItsID(t *testing.T) {
 		PlanID:     planID,
 	})
 
-	require.Len(t, f.assistant.requests, 1)
-	assert.Equal(t, planID, f.assistant.requests[0].FollowUpPlanID)
-	assert.True(t, f.assistant.requests[0].FollowUpProposalID.IsNil())
+	require.Len(t, f.workflows.payloads, 1)
+	assert.Equal(t, planID, f.workflows.payloads[0].Request.FollowUpPlanID)
+	assert.True(t, f.workflows.payloads[0].Request.FollowUpProposalID.IsNil())
 }
 
 // A background run's proposal belongs to no conversation, so nothing is
@@ -223,7 +207,7 @@ func TestFollowUp_LeavesDecisionsOutsideAConversationAlone(t *testing.T) {
 
 	assert.Empty(t, f.conversations.asked)
 	assert.Empty(t, f.turns.started)
-	assert.Empty(t, f.assistant.requests)
+	assert.Empty(t, f.workflows.payloads)
 }
 
 // A conversation already producing a reply is not interrupted. The outcome
@@ -241,8 +225,7 @@ func TestFollowUp_DoesNotInterruptAConversationMidReply(t *testing.T) {
 	})
 
 	assert.Len(t, f.turns.started, 1)
-	assert.Empty(t, f.assistant.requests)
-	assert.Empty(t, f.turns.completed)
+	assert.Empty(t, f.workflows.payloads)
 }
 
 // A request that names both a proposal and a plan, or neither, is a bug in

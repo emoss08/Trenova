@@ -192,24 +192,39 @@ services:
             retries: 5
 
     temporal:
-        # The durable side of the product runs here: agent runs, the nightly
-        # sweeps, and — once ai.durableTurns is on — every assistant reply.
+        # Every AI feature runs here: each assistant reply, every desk, and the
+        # sweeps that narrate insights and write briefings.
         #
-        # The dev server keeps its state in memory, which is the right trade
-        # locally: a workflow history is an execution artifact, and losing it
-        # on a restart costs nothing that the database does not already hold.
+        # This is the Temporal CLI's dev server, the supported way to run
+        # Temporal locally now that auto-setup stopped at 1.29. It bundles the
+        # server, the UI and an in-memory store. State lives in memory, which is
+        # the right trade locally: a workflow history is an execution artifact,
+        # and losing it on a restart costs nothing the database does not hold.
         # It is emphatically not the right trade anywhere else.
-        image: temporalio/auto-setup:1.29
+        #
+        # Fairness is off by default in the server and on here, so a busy
+        # organization cannot starve the others on a shared queue. The search
+        # attributes let an operator find an organization's or a thread's work
+        # in the UI. Production needs the same two settings; see
+        # docs/engineering/agent-runtime.md.
+        image: temporalio/temporal:1.9.1
         container_name: temporal
+        command:
+            - server
+            - start-dev
+            - --ip=0.0.0.0
+            - --ui-port=8233
+            - --dynamic-config-value=matching.enableFairness=true
+            - --search-attribute=TrenovaOrganizationId=Keyword
+            - --search-attribute=TrenovaAIFeature=Keyword
+            - --search-attribute=TrenovaThreadId=Keyword
+            - --search-attribute=TrenovaAgentDefinitionId=Keyword
         ports:
             - "7233:7233"
-        environment:
-            # Sqlite rather than the postgres above, so bringing temporal up
-            # cannot touch the product's own database.
-            DB: sqlite
-            SQLITE_MODE: memory
-            SKIP_DEFAULT_NAMESPACE_CREATION: "false"
-            DEFAULT_NAMESPACE: default
+            # Reading a stuck reply's history is most of how this work gets
+            # debugged, so the UI comes up with the server rather than behind a
+            # profile.
+            - "8233:8233"
         restart: unless-stopped
         deploy:
             resources:
@@ -220,23 +235,6 @@ services:
             interval: 15s
             timeout: 5s
             retries: 10
-
-    temporal-ui:
-        # Reading a stuck turn's history is most of how this work gets
-        # debugged, so the UI is not optional equipment.
-        image: temporalio/ui:2.42.0
-        container_name: temporal-ui
-        profiles:
-            - temporal-ui
-        ports:
-            - "8233:8080"
-        environment:
-            TEMPORAL_ADDRESS: temporal:7233
-            TEMPORAL_CORS_ORIGINS: http://localhost:3000
-        depends_on:
-            temporal:
-                condition: service_started
-        restart: unless-stopped
 
     samsara-sim:
         build:

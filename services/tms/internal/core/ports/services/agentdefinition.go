@@ -89,6 +89,14 @@ type PreviewPromptRequest struct {
 	Actor      *RequestActor
 }
 
+// AgentDefinitionScheduler keeps the schedule behind a scheduled or continuous
+// agent in line with the agent. Neither call fails the save that made it: a
+// schedule a failed call left behind is repaired by the next reconcile.
+type AgentDefinitionScheduler interface {
+	Sync(ctx context.Context, definition *agentdefinition.Definition)
+	Remove(ctx context.Context, definitionID pulid.ID)
+}
+
 type AgentDefinitionService interface {
 	List(
 		ctx context.Context,

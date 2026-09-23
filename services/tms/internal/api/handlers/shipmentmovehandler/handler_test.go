@@ -115,7 +115,9 @@ func TestShipmentMoveHandler_RecordStopActual_Success(t *testing.T) {
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath(
-			"/api/v1/shipment-moves/" + moveID.String() + "/stops/" + stopID.String() + "/record-actual/",
+			"/api/v1/shipment-moves/" + moveID.String() +
+				"/stops/" + stopID.String() +
+				"/record-actual/",
 		).
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{"action": "Arrive", "occurredAt": occurredAt})
@@ -151,7 +153,9 @@ func TestShipmentMoveHandler_RecordStopActual_DepartWithoutOccurredAt(t *testing
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath(
-			"/api/v1/shipment-moves/" + moveID.String() + "/stops/" + stopID.String() + "/record-actual/",
+			"/api/v1/shipment-moves/" + moveID.String() +
+				"/stops/" + stopID.String() +
+				"/record-actual/",
 		).
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{"action": "Depart"})
@@ -177,7 +181,9 @@ func TestShipmentMoveHandler_RecordStopActual_BusinessErrorPassthrough(t *testin
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath(
-			"/api/v1/shipment-moves/" + moveID.String() + "/stops/" + stopID.String() + "/record-actual/",
+			"/api/v1/shipment-moves/" + moveID.String() +
+				"/stops/" + stopID.String() +
+				"/record-actual/",
 		).
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{"action": "Arrive"})
@@ -197,7 +203,9 @@ func TestShipmentMoveHandler_RecordStopActual_BadJSON(t *testing.T) {
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath(
-			"/api/v1/shipment-moves/" + moveID.String() + "/stops/" + stopID.String() + "/record-actual/",
+			"/api/v1/shipment-moves/" + moveID.String() +
+				"/stops/" + stopID.String() +
+				"/record-actual/",
 		).
 		WithDefaultAuthContext().
 		WithBody("{invalid")

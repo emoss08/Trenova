@@ -207,7 +207,8 @@ func pendingDuplicate(
 		if key == "" {
 			return false
 		}
-		if outcome.Pending() && outcome.ToolName == call.Name && argumentsKey(outcome.ToolParams) == key {
+		if outcome.Pending() && outcome.ToolName == call.Name &&
+			argumentsKey(outcome.ToolParams) == key {
 			return true
 		}
 	}

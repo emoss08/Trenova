@@ -24,9 +24,13 @@ func TestGetAutoCancelableShipments_UsesTenantAndThreshold(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "organization_id", "business_unit_id", "status"}).
 			AddRow(shipmentID, orgID, buID, shipment.StatusNew))
 
-	entities, err := repo.GetAutoCancelableShipments(t.Context(), &repositories.GetAutoCancelableShipmentsRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-	}, 30)
+	entities, err := repo.GetAutoCancelableShipments(
+		t.Context(),
+		&repositories.GetAutoCancelableShipmentsRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		},
+		30,
+	)
 
 	require.NoError(t, err)
 	require.Len(t, entities, 1)

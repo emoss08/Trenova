@@ -210,14 +210,25 @@ func TestShipment_PayerID(t *testing.T) {
 	billTo := pulid.MustNew("cus_")
 
 	require.Equal(t, customerID, (&Shipment{CustomerID: customerID}).PayerID())
-	require.Equal(t, billTo, (&Shipment{CustomerID: customerID, BillToCustomerID: &billTo}).PayerID())
+	require.Equal(
+		t,
+		billTo,
+		(&Shipment{CustomerID: customerID, BillToCustomerID: &billTo}).PayerID(),
+	)
 	nilID := pulid.Nil
-	require.Equal(t, customerID, (&Shipment{CustomerID: customerID, BillToCustomerID: &nilID}).PayerID())
+	require.Equal(
+		t,
+		customerID,
+		(&Shipment{CustomerID: customerID, BillToCustomerID: &nilID}).PayerID(),
+	)
 	var none *Shipment
 	require.True(t, none.PayerID().IsNil())
 	require.False(t, none.HasExplicitBillTo())
 	require.False(t, (&Shipment{CustomerID: customerID}).HasExplicitBillTo())
-	require.True(t, (&Shipment{CustomerID: customerID, BillToCustomerID: &billTo}).HasExplicitBillTo())
+	require.True(
+		t,
+		(&Shipment{CustomerID: customerID, BillToCustomerID: &billTo}).HasExplicitBillTo(),
+	)
 }
 
 func TestShipment_NormalizeBillTo(t *testing.T) {

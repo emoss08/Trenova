@@ -99,7 +99,12 @@ func call(t *testing.T, method, path, body string) (*reachedService, int) {
 
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
-		authctx.SetAuthContext(c, pulid.MustNew("usr_"), pulid.MustNew("bu_"), pulid.MustNew("org_"))
+		authctx.SetAuthContext(
+			c,
+			pulid.MustNew("usr_"),
+			pulid.MustNew("bu_"),
+			pulid.MustNew("org_"),
+		)
 		c.Next()
 	})
 	handler.RegisterRoutes(router.Group(""))

@@ -62,7 +62,9 @@ func (f *invoiceAdjustmentResolverFixture) auth(t *testing.T) *authctx.AuthConte
 	}
 }
 
-func TestQueryResolver_InvoiceAdjustmentApprovals_MapsTypedFiltersAndEncodesKeysetCursors(t *testing.T) {
+func TestQueryResolver_InvoiceAdjustmentApprovals_MapsTypedFiltersAndEncodesKeysetCursors(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	f := newInvoiceAdjustmentResolverFixture(t)
@@ -172,7 +174,9 @@ func TestQueryResolver_InvoiceAdjustmentApprovals_SendsNoFiltersWhenUnfiltered(t
 	assert.Nil(t, conn.PageInfo.EndCursor)
 }
 
-func TestQueryResolver_InvoiceAdjustmentApprovals_RejectsMalformedInputBeforeQuerying(t *testing.T) {
+func TestQueryResolver_InvoiceAdjustmentApprovals_RejectsMalformedInputBeforeQuerying(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	badID := "not-an-id"
@@ -184,9 +188,21 @@ func TestQueryResolver_InvoiceAdjustmentApprovals_RejectsMalformedInputBeforeQue
 		input gqlmodel.InvoiceAdjustmentApprovalsInput
 		field string
 	}{
-		{name: "submitter id", input: gqlmodel.InvoiceAdjustmentApprovalsInput{SubmittedByID: &badID}, field: "submittedById"},
-		{name: "cursor", input: gqlmodel.InvoiceAdjustmentApprovalsInput{After: &badCursor}, field: "after"},
-		{name: "kind", input: gqlmodel.InvoiceAdjustmentApprovalsInput{Kind: &unknownKind}, field: "kind"},
+		{
+			name:  "submitter id",
+			input: gqlmodel.InvoiceAdjustmentApprovalsInput{SubmittedByID: &badID},
+			field: "submittedById",
+		},
+		{
+			name:  "cursor",
+			input: gqlmodel.InvoiceAdjustmentApprovalsInput{After: &badCursor},
+			field: "after",
+		},
+		{
+			name:  "kind",
+			input: gqlmodel.InvoiceAdjustmentApprovalsInput{Kind: &unknownKind},
+			field: "kind",
+		},
 	}
 
 	for _, tt := range tests {
@@ -329,18 +345,27 @@ func TestInvoiceAdjustmentFieldResolvers_SerializeDecimalsAndBlankRebillStrategy
 	require.NoError(t, err)
 	assert.Equal(t, "-125.5", net)
 
-	strategy, err := (&invoiceAdjustmentApprovalQueueItemResolver{r}).RebillStrategy(t.Context(), item)
+	strategy, err := (&invoiceAdjustmentApprovalQueueItemResolver{r}).RebillStrategy(
+		t.Context(),
+		item,
+	)
 	require.NoError(t, err)
 	assert.Nil(t, strategy)
 
 	item.RebillStrategy = invoiceadjustment.RebillStrategyRerate
-	strategy, err = (&invoiceAdjustmentApprovalQueueItemResolver{r}).RebillStrategy(t.Context(), item)
+	strategy, err = (&invoiceAdjustmentApprovalQueueItemResolver{r}).RebillStrategy(
+		t.Context(),
+		item,
+	)
 	require.NoError(t, err)
 	require.NotNil(t, strategy)
 	assert.Equal(t, invoiceadjustment.RebillStrategyRerate, *strategy)
 
 	adjustment := &invoiceadjustment.InvoiceAdjustment{}
-	adjustmentStrategy, err := (&invoiceAdjustmentResolver{r}).RebillStrategy(t.Context(), adjustment)
+	adjustmentStrategy, err := (&invoiceAdjustmentResolver{r}).RebillStrategy(
+		t.Context(),
+		adjustment,
+	)
 	require.NoError(t, err)
 	assert.Nil(t, adjustmentStrategy)
 }

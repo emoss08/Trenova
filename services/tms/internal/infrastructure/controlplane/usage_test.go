@@ -117,11 +117,14 @@ func TestCloudUsageProvider_FailOpenOnlyInDevelopment(t *testing.T) {
 				Client: failingClient{},
 			})
 
-			result, err := provider.CheckLimit(context.Background(), &services.UsageLimitCheckRequest{
-				MeterKey:       platformcatalog.MeterAPIRequests,
-				Quantity:       1,
-				IdempotencyKey: "request-1",
-			})
+			result, err := provider.CheckLimit(
+				context.Background(),
+				&services.UsageLimitCheckRequest{
+					MeterKey:       platformcatalog.MeterAPIRequests,
+					Quantity:       1,
+					IdempotencyKey: "request-1",
+				},
+			)
 
 			if tt.wantErr {
 				require.Nil(t, result)

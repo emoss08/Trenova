@@ -150,10 +150,14 @@ func TestRaiseCoverageRisk_LeavesUndatedMovesAlone(t *testing.T) {
 
 	activities, publisher, projector := coverageActivities(t, 12)
 
-	raised := activities.raiseCoverageRisk(t.Context(), tenant(), []*portservices.DispatchUncoveredMove{
-		nil,
-		{MoveID: pulid.MustNew("mov_"), StartsAt: 0},
-	})
+	raised := activities.raiseCoverageRisk(
+		t.Context(),
+		tenant(),
+		[]*portservices.DispatchUncoveredMove{
+			nil,
+			{MoveID: pulid.MustNew("mov_"), StartsAt: 0},
+		},
+	)
 
 	require.Zero(t, raised)
 	require.Empty(t, publisher.events)
@@ -165,10 +169,14 @@ func TestRaiseCoverageRisk_SeverityRisesAsTheMoveNears(t *testing.T) {
 
 	activities, _, projector := coverageActivities(t, 12)
 
-	raised := activities.raiseCoverageRisk(t.Context(), tenant(), []*portservices.DispatchUncoveredMove{
-		uncoveredAt(2),
-		uncoveredAt(10),
-	})
+	raised := activities.raiseCoverageRisk(
+		t.Context(),
+		tenant(),
+		[]*portservices.DispatchUncoveredMove{
+			uncoveredAt(2),
+			uncoveredAt(10),
+		},
+	)
 
 	require.Equal(t, 2, raised)
 	require.Equal(t, watchtower.SeverityCritical, projector.items[0].Severity)

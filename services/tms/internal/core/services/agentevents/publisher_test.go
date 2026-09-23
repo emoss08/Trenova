@@ -30,22 +30,13 @@ func (f *fakeDefinitions) ListEnabledByTrigger(
 	return f.items, nil
 }
 
-type fakeRuns struct {
-	repositories.AgentRunRepository
-	open map[pulid.ID]int
-}
-
-func (f *fakeRuns) CountOpen(
-	_ context.Context,
-	req repositories.CountOpenAgentRunsRequest,
-) (int, error) {
-	return f.open[req.DefinitionID], nil
-}
-
 type fakeRunService struct {
 	serviceports.AgentRunService
 	started []*serviceports.StartAgentRunForDefinitionRequest
 	err     error
+	// open are the definitions with a run already open, which the run
+	// service refuses to start again.
+	open map[pulid.ID]bool
 }
 
 func (f *fakeRunService) StartForDefinition(
@@ -54,6 +45,9 @@ func (f *fakeRunService) StartForDefinition(
 	_ *serviceports.RequestActor,
 ) (*agent.AgentRun, error) {
 	f.started = append(f.started, req)
+	if f.open[req.DefinitionID] {
+		return nil, serviceports.ErrAgentRunAlreadyOpen
+	}
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -64,7 +58,6 @@ var tenantInfo = pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid
 
 type fixture struct {
 	definitions *fakeDefinitions
-	runs        *fakeRuns
 	runService  *fakeRunService
 	publisher   serviceports.AgentEventPublisher
 }
@@ -72,13 +65,11 @@ type fixture struct {
 func newFixture(defs ...*agentdefinition.Definition) *fixture {
 	f := &fixture{
 		definitions: &fakeDefinitions{items: defs},
-		runs:        &fakeRuns{open: map[pulid.ID]int{}},
-		runService:  &fakeRunService{},
+		runService:  &fakeRunService{open: map[pulid.ID]bool{}},
 	}
 	f.publisher = agentevents.New(agentevents.Params{
 		Logger:      zap.NewNop(),
 		Definitions: f.definitions,
-		Runs:        f.runs,
 		RunService:  f.runService,
 	})
 	return f
@@ -111,13 +102,15 @@ func TestPublish_StartsEachSubscribedDefinition(t *testing.T) {
 	}
 }
 
+// A definition with a run already open for the subject is refused where the
+// run starts; the refusal is a skip, and the other definitions still run.
 func TestPublish_SkipsDefinitionWithOpenRunForSubject(t *testing.T) {
 	t.Parallel()
 
 	busy := &agentdefinition.Definition{ID: pulid.MustNew("agd_")}
 	idle := &agentdefinition.Definition{ID: pulid.MustNew("agd_")}
 	f := newFixture(busy, idle)
-	f.runs.open[busy.ID] = 1
+	f.runService.open[busy.ID] = true
 
 	f.publisher.Publish(t.Context(), serviceports.AgentEvent{
 		Kind:       agent.EventShipmentMoveUnassigned,
@@ -125,8 +118,7 @@ func TestPublish_SkipsDefinitionWithOpenRunForSubject(t *testing.T) {
 		TenantInfo: tenantInfo,
 	})
 
-	require.Len(t, f.runService.started, 1)
-	require.Equal(t, idle.ID, f.runService.started[0].DefinitionID)
+	require.Len(t, f.runService.started, 2, "both are asked; the open one refuses")
 }
 
 func TestPublish_IgnoresUnknownKind(t *testing.T) {

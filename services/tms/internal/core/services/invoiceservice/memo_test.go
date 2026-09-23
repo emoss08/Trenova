@@ -24,7 +24,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func memoRequest(tenantInfo pagination.TenantInfo, customerID pulid.ID, billType billingqueue.BillType) *servicesports.CreateMemoRequest {
+func memoRequest(
+	tenantInfo pagination.TenantInfo,
+	customerID pulid.ID,
+	billType billingqueue.BillType,
+) *servicesports.CreateMemoRequest {
 	return &servicesports.CreateMemoRequest{
 		TenantInfo: tenantInfo,
 		CustomerID: customerID,
@@ -32,7 +36,11 @@ func memoRequest(tenantInfo pagination.TenantInfo, customerID pulid.ID, billType
 		Reason:     "Goodwill credit after a late delivery",
 		Lines: []*servicesports.CreateMemoLineInput{
 			{Description: "Late delivery goodwill", Amount: decimal.NewFromInt(50)},
-			{Description: "Detention waived", Amount: decimal.RequireFromString("25.5"), Quantity: decimal.NewFromInt(1)},
+			{
+				Description: "Detention waived",
+				Amount:      decimal.RequireFromString("25.5"),
+				Quantity:    decimal.NewFromInt(1),
+			},
 		},
 	}
 }
@@ -107,7 +115,12 @@ func TestValidateMemoRequest(t *testing.T) {
 
 	t.Run("a valid request passes", func(t *testing.T) {
 		t.Parallel()
-		assert.Nil(t, validateMemoRequest(memoRequest(tenantInfo, customerID, billingqueue.BillTypeDebitMemo)))
+		assert.Nil(
+			t,
+			validateMemoRequest(
+				memoRequest(tenantInfo, customerID, billingqueue.BillTypeDebitMemo),
+			),
+		)
 	})
 }
 
@@ -197,7 +210,9 @@ func newMemoFixture(t *testing.T, number string) *memoFixture {
 			AddressLine1:   "1 Chip Way",
 			City:           "Austin",
 			PostalCode:     "78701",
-			BillingProfile: &customer.CustomerBillingProfile{PaymentTerm: customer.PaymentTermNet15},
+			BillingProfile: &customer.CustomerBillingProfile{
+				PaymentTerm: customer.PaymentTermNet15,
+			},
 		}, nil).
 		Once()
 
@@ -268,14 +283,33 @@ func TestCreateMemoBuildsASignedCreditMemoOnItsOwnQueueItem(t *testing.T) {
 	assert.Equal(t, "Approved by AR lead", created.Memo)
 	assert.Equal(t, "AMD", created.BillToName)
 	assert.Equal(t, "AMD01", created.BillToCode)
-	assert.Equal(t, invoice.PaymentTermNet15, created.PaymentTerm, "the customer's term beats the tenant default")
+	assert.Equal(
+		t,
+		invoice.PaymentTermNet15,
+		created.PaymentTerm,
+		"the customer's term beats the tenant default",
+	)
 	require.NotNil(t, created.DueDate)
-	assert.Equal(t, int64(1_700_000_000), *created.DueDate, "a credit memo is due on its invoice date")
+	assert.Equal(
+		t,
+		int64(1_700_000_000),
+		*created.DueDate,
+		"a credit memo is due on its invoice date",
+	)
 	require.Len(t, created.Lines, 2)
 	assert.Equal(t, invoice.InvoiceLineTypeMemo, created.Lines[0].Type)
-	assert.True(t, created.Lines[0].Amount.Equal(decimal.NewFromInt(-50)), "credit lines are negative")
+	assert.True(
+		t,
+		created.Lines[0].Amount.Equal(decimal.NewFromInt(-50)),
+		"credit lines are negative",
+	)
 	assert.True(t, created.Lines[1].Amount.Equal(decimal.RequireFromString("-25.5")))
-	assert.True(t, created.TotalAmount.Equal(decimal.RequireFromString("-75.5")), "got %s", created.TotalAmount)
+	assert.True(
+		t,
+		created.TotalAmount.Equal(decimal.RequireFromString("-75.5")),
+		"got %s",
+		created.TotalAmount,
+	)
 	assert.Equal(t, int64(-7550), created.TotalAmountMinor)
 }
 

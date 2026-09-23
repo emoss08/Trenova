@@ -76,7 +76,12 @@ func TestValidate_AcceptsAnythingForAnEmptySchema(t *testing.T) {
 func TestChanged_KeepsOnlyWhatDiffers(t *testing.T) {
 	t.Parallel()
 
-	proposed := map[string]any{"title": "A", "withinDays": float64(3), "codes": []any{"x"}, "note": nil}
+	proposed := map[string]any{
+		"title":      "A",
+		"withinDays": float64(3),
+		"codes":      []any{"x"},
+		"note":       nil,
+	}
 	changed := Changed(proposed, map[string]any{
 		"title":      "A",
 		"withinDays": 3,

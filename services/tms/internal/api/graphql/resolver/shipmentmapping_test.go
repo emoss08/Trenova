@@ -136,7 +136,11 @@ func TestShipmentFromInput_MapsNestedPayloads(t *testing.T) {
 	assert.Equal(t, locationID, entity.Moves[0].Stops[0].LocationID)
 	assert.Equal(t, shipmentdomain.StopStatusInTransit, entity.Moves[0].Stops[0].Status)
 	assert.Equal(t, shipmentdomain.StopTypeDelivery, entity.Moves[0].Stops[0].Type)
-	assert.Equal(t, shipmentdomain.StopScheduleTypeAppointment, entity.Moves[0].Stops[0].ScheduleType)
+	assert.Equal(
+		t,
+		shipmentdomain.StopScheduleTypeAppointment,
+		entity.Moves[0].Stops[0].ScheduleType,
+	)
 	assert.Equal(t, int64(3), entity.Moves[0].Stops[0].Sequence)
 	assert.Equal(t, int64(1_800_000_000), entity.Moves[0].Stops[0].ScheduledWindowStart)
 
@@ -673,7 +677,16 @@ func TestShipmentAnalyticsToModel_MapsTypedCards(t *testing.T) {
 		"tomorrowsPickups": map[string]any{
 			"date": "2026-06-07",
 			"pickups": []any{
-				map[string]any{"shipmentId": "shp_1", "proNumber": "PRO-1", "pickupWindowStart": 10, "customer": "Acme", "origin": "CHI", "destination": "DAL", "driver": "Alex", "status": "scheduled"},
+				map[string]any{
+					"shipmentId":        "shp_1",
+					"proNumber":         "PRO-1",
+					"pickupWindowStart": 10,
+					"customer":          "Acme",
+					"origin":            "CHI",
+					"destination":       "DAL",
+					"driver":            "Alex",
+					"status":            "scheduled",
+				},
 			},
 		},
 		"laneHeatmap": map[string]any{

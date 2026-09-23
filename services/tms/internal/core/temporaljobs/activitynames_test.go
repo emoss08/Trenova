@@ -60,7 +60,10 @@ func TestActivityNamesDoNotCollideOnAQueue(t *testing.T) {
 		}
 		packages++
 		for _, activity := range activityMethodsIn(t, dir) {
-			byQueue[queue] = append(byQueue[queue], activityOwner{pkg: entry.Name(), activity: activity})
+			byQueue[queue] = append(
+				byQueue[queue],
+				activityOwner{pkg: entry.Name(), activity: activity},
+			)
 		}
 	}
 

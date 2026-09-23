@@ -37,7 +37,10 @@ type Service struct {
 }
 
 type costReader interface {
-	CostByDefinition(ctx context.Context, req repositories.AIUsageCostRequest) (*repositories.AIUsageCost, error)
+	CostByDefinition(
+		ctx context.Context,
+		req repositories.AIUsageCostRequest,
+	) (*repositories.AIUsageCost, error)
 }
 
 type runCounter interface {
@@ -207,7 +210,10 @@ func (s *Service) Status(
 		if cErr != nil {
 			return nil, cErr
 		}
-		status.Tools = append(status.Tools, services.ToolBudgetUse{Tool: tool, Used: used, Limit: limit})
+		status.Tools = append(
+			status.Tools,
+			services.ToolBudgetUse{Tool: tool, Used: used, Limit: limit},
+		)
 	}
 
 	return status, nil

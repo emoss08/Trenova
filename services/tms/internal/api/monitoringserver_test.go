@@ -198,7 +198,9 @@ func startTestMonitoringServer(t *testing.T, server *MonitoringServer) {
 	})
 
 	require.Eventually(t, func() bool {
-		resp, err := http.Get("http://" + server.server.Addr + server.cfg.Monitoring.Health.LivenessPath)
+		resp, err := http.Get(
+			"http://" + server.server.Addr + server.cfg.Monitoring.Health.LivenessPath,
+		)
 		if err != nil {
 			return false
 		}

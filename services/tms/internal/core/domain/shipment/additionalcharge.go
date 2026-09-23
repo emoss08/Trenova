@@ -17,18 +17,18 @@ import (
 type AdditionalCharge struct {
 	bun.BaseModel `bun:"table:additional_charges,alias:ac" json:"-"`
 
-	ID                     pulid.ID                 `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID         pulid.ID                 `json:"businessUnitId"         bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID         pulid.ID                 `json:"organizationId"         bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	ShipmentID             pulid.ID                 `json:"shipmentId"             bun:"shipment_id,type:VARCHAR(100),notnull"`
-	AccessorialChargeID    pulid.ID                 `json:"accessorialChargeId"    bun:"accessorial_charge_id,type:VARCHAR(100),notnull"`
-	IsSystemGenerated      bool                     `json:"isSystemGenerated"      bun:"is_system_generated,type:BOOLEAN,notnull"`
-	Method                 accessorialcharge.Method `json:"method"                 bun:"method,type:accessorial_method_enum,notnull"`
-	Amount                 decimal.Decimal          `json:"amount"                 bun:"amount,type:NUMERIC(19,4),notnull"`
-	Unit                   int16                    `json:"unit"                   bun:"unit,type:INTEGER,notnull"`
-	FuelSurchargeProgramID *pulid.ID                `json:"fuelSurchargeProgramId" bun:"fuel_surcharge_program_id,type:VARCHAR(100),nullzero"`
-	FuelSurchargeDetail    *FuelSurchargeDetail     `json:"fuelSurchargeDetail"    bun:"fuel_surcharge_detail,type:JSONB,nullzero"`
-	IsDetention            bool                     `json:"isDetention" bun:"is_detention,type:BOOLEAN,notnull"`
+	ID                     pulid.ID                 `json:"id"                         bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID         pulid.ID                 `json:"businessUnitId"             bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
+	OrganizationID         pulid.ID                 `json:"organizationId"             bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ShipmentID             pulid.ID                 `json:"shipmentId"                 bun:"shipment_id,type:VARCHAR(100),notnull"`
+	AccessorialChargeID    pulid.ID                 `json:"accessorialChargeId"        bun:"accessorial_charge_id,type:VARCHAR(100),notnull"`
+	IsSystemGenerated      bool                     `json:"isSystemGenerated"          bun:"is_system_generated,type:BOOLEAN,notnull"`
+	Method                 accessorialcharge.Method `json:"method"                     bun:"method,type:accessorial_method_enum,notnull"`
+	Amount                 decimal.Decimal          `json:"amount"                     bun:"amount,type:NUMERIC(19,4),notnull"`
+	Unit                   int16                    `json:"unit"                       bun:"unit,type:INTEGER,notnull"`
+	FuelSurchargeProgramID *pulid.ID                `json:"fuelSurchargeProgramId"     bun:"fuel_surcharge_program_id,type:VARCHAR(100),nullzero"`
+	FuelSurchargeDetail    *FuelSurchargeDetail     `json:"fuelSurchargeDetail"        bun:"fuel_surcharge_detail,type:JSONB,nullzero"`
+	IsDetention            bool                     `json:"isDetention"                bun:"is_detention,type:BOOLEAN,notnull"`
 	// RateAgreementAccessorialID marks a charge the contract's own accessorial
 	// schedule produced, and is what its reconciliation pass matches on.
 	RateAgreementAccessorialID *pulid.ID `json:"rateAgreementAccessorialId" bun:"rate_agreement_accessorial_id,type:VARCHAR(100),nullzero"`

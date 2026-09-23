@@ -77,7 +77,11 @@ func TestMeasureFilterOnToManyPathPushesIntoLateral(t *testing.T) {
 		},
 	})
 
-	assert.Contains(t, compiled.SQL, "LEFT JOIN LATERAL (SELECT SUM(w0.distance) FILTER (WHERE w0.loaded = ?)")
+	assert.Contains(
+		t,
+		compiled.SQL,
+		"LEFT JOIN LATERAL (SELECT SUM(w0.distance) FILTER (WHERE w0.loaded = ?)",
+	)
 	assert.Contains(t, compiled.SQL, "SUM(w0.distance) FILTER (WHERE w0.loaded = ?) AS agg_1")
 	// Both filters bind inside the single lateral, ahead of its tenant scope.
 	assert.Equal(t, []any{true, false, testOrgID, testBuID, testOrgID, testBuID}, compiled.Args)

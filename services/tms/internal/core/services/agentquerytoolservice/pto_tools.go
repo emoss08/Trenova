@@ -212,10 +212,16 @@ func applyTimeOffWindow(
 		request.StartDateFrom = from
 		request.StartDateTo = before
 		if from > 0 {
-			criteria.Field("starting on or after", timeutils.FormatUnixDateIn(from, criteria.Clock.Timezone))
+			criteria.Field(
+				"starting on or after",
+				timeutils.FormatUnixDateIn(from, criteria.Clock.Timezone),
+			)
 		}
 		if before > 0 {
-			criteria.Field("starting on or before", timeutils.FormatUnixDateIn(before, criteria.Clock.Timezone))
+			criteria.Field(
+				"starting on or before",
+				timeutils.FormatUnixDateIn(before, criteria.Clock.Timezone),
+			)
 		}
 
 		return

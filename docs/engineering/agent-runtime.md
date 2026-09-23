@@ -1,183 +1,272 @@
 # The agent runtime
 
-How an agent's work actually executes: where it runs, what makes it safe to
-retry, what survives a crash, and what is written down afterwards.
+How AI work actually executes: where it runs, what makes it safe to retry,
+what survives a crash, and what is written down afterwards.
 
 Read this before changing anything under `internal/core/services/agentruntime/`,
-`internal/core/services/assistantservice/`, or `internal/core/temporaljobs/agentjobs/`
-and `assistantjobs/`.
+`internal/core/services/assistantservice/`, or any of the Temporal packages
+named below.
 
-## Where work runs
+## Everything is a workflow
 
-Agent work is Temporal work. The API server authenticates the request, persists
-a record, and starts or signals a workflow; workers execute the steps.
+Every AI feature runs on Temporal. The API authenticates the request, records
+what it needs to, starts or signals a workflow, and either waits for its result
+or relays its stream. Workers do the work. There is no in-request path and no
+flag that brings one back: an outage of Temporal is reported as such, and the
+client connects lazily, so the API still starts and the first call after
+Temporal returns succeeds.
 
-Three queues carry agent work, and the split exists so one class of work cannot
-starve another:
-
-| Queue | Carries | Who is waiting |
+| Feature | Workflow | Queue |
 |---|---|---|
-| `agent-chat-queue` | interactive assistant turns | a person, right now |
-| `agent-background-queue` | event-driven and scheduled runs | nobody |
-| `agent-heavy-queue` | run replays | nobody, and they are slow |
+| Assistant chat, Ask, decision follow-ups | `AssistantTurnWorkflow`, one per turn | `agent-chat-queue` |
+| Import assistant | `ImportAssistantTurnWorkflow`, one per document at a time | `agent-chat-queue` |
+| Table compose, formula generate and explain | `StructuredCompletionWorkflow` | `agent-chat-queue` |
+| Briefing regenerate | `WriteBriefingWorkflow` | `agent-chat-queue` |
+| AI provider test | `TestAIProviderWorkflow` | `agent-chat-queue` |
+| Event-driven and scheduled agent runs | `AgentRunWorkflow` | `agent-background-queue` |
+| An agent's schedule firing | `AgentScheduledRunWorkflow` | `agent-background-queue` |
+| Agent evaluations (replays) | `AgentEvaluationWorkflow` | `agent-heavy-queue` |
+| Reports and dispatch planning called as tools | the tool's activity | `agent-heavy-queue` |
+| Insights, daily briefing | a parent plus one child per organization | `system-queue` |
+| Document extraction | `ProcessDocumentAIExtractionWorkflow` | document intelligence |
+| Inbound email | `ProcessInboundMessageWorkflow` | `system-queue` |
 
-A worker polls all three unless told otherwise:
+The queues are split so one class of work cannot starve another: a person
+watching a reply must not wait behind a ten-minute scheduled run, and an
+evaluation sweep must not fill the queue a scheduled run needs. A worker polls
+every queue unless told otherwise:
 
 ```
 trenova worker run                                   # every queue
-trenova worker run --queues=agent-chat-queue         # only interactive turns
+trenova worker run --queues=agent-chat-queue         # only what a person waits on
 ```
 
-Run interactive turns on their own workers if you want the split to mean
-anything. A single worker pool polling everything can still fill with replays
-while somebody waits for an answer.
+Inside a queue, work is ordered by **priority** and shared out by **fairness**.
+Every AI start and activity carries a priority key (interactive 1, one-shot 2,
+background 3, evaluation 5) and a fairness key, the organization, so one busy
+tenant cannot queue everybody else's replies behind its own. Fairness needs
+`matching.enableFairness=true` on the server; without it the keys are ignored
+and nothing breaks.
 
-`agent-queue` is the queue these were split out of. A drain registry still polls
-it so runs started before the split are not stranded; it has no new work and is
-deleted once no in-flight run can still be on it.
+## The agent loop runs in workflow code
 
-Desks and the nightly sweeps run on `system-queue` and sit outside this
-entirely. A desk that raises work publishes a domain event, which starts a run
-on `agent-background-queue` — the correct destination, since nobody is waiting.
+`agentflow` drives the same loop the runtime has always had (`agentruntime.Drive`
+over a `Turn`) from workflow code, through the `TurnEffects` seam:
+
+- **Each model call is an activity** (`ModelCallActivity`). It streams the
+  reply to the run's Workflow Stream when somebody is reading, and heartbeats
+  on a ten-second timer, so a model thinking silently is not mistaken for a
+  lost worker.
+- **Each tool call is an activity** named for the tool: the worker's dynamic
+  activity, so the Temporal UI and the SDK's metrics show each tool as itself.
+  A tool that fails after its retries is reported to the model as a failed
+  call and the turn goes on. `run_report`, `compare_report_runs` and
+  `plan_dispatch` run on the heavy queue whichever queue called them.
+- `find_tools` and `publish_artifact` are activities of their own. Call ids
+  are minted through `workflow.SideEffect`, so a replay reads back the same id.
+- Anything that reads a clock or the database happens in an activity. The
+  workflow holds only the turn and what its activities returned.
+
+A failure retries only the call that failed, and a lost worker's turn resumes
+from its last completed step.
+
+### Model failures are retried the way the provider says
+
+`modelcall` is the one mapping every model activity uses, the Temporal AI
+cookbook's retry-from-HTTP-response recipe:
+
+- A rejected request (4xx other than 408, 409 and 429), a refusal and a missing
+  provider are **not retried**: they fail the same way however often they are
+  sent.
+- A rate limit waits out the provider's `Retry-After`, capped at a minute.
+  Resting providers are asked again after their rest.
+- Everything else is retried on the policy's own backoff.
+
+The kind of failure travels in the error's details (`modelcall.Failure`), so
+whoever reads it afterwards — the saved turn, a request waiting on a one-shot
+call — still knows whether the provider refused, was unreachable, timed out, or
+no provider was configured, and a refusal keeps its own words.
+
+An activity with a deterministic fallback — document routing, inbound email
+classification — leaves a transient failure to Temporal and falls back only on
+its last attempt (`modelcall.Transient`, `modelcall.FinalAttempt`).
 
 ## What makes a retry safe
 
-A Temporal activity can run more than once. The agent loop is one activity, so
-without help a retry would re-run every tool call the first attempt made —
-and the tools do not dedupe. `RequiresIdempotencyKey` is checked for presence
-and, bar the two that forward it to an email provider, never looked up.
+A tool call is an activity, and an activity can run more than once. The tools do
+not dedupe: `RequiresIdempotencyKey` is checked for presence and, bar the two
+that forward it to an email provider, never looked up.
 
 `agent_run_steps` is what makes it safe. Every operation is **claimed before it
 runs** and settled after:
 
 - The key is derived from what the model asked for — owner, tool name,
-  arguments, and an ordinal — not from the provider's call id, which changes on
-  every attempt and would make each retry look like new work.
+  arguments, and the ordinal the workflow assigned — not from the provider's
+  call id, which changes on every attempt.
 - A claim that finds the key already settled returns the recorded outcome
   instead of running again.
 - A claim that finds it still `Started` means the previous attempt died between
   executing and recording. The model is told the operation began and its outcome
   is unknown, rather than being silently replayed.
 
-That last case is the honest limit: resume is **at-most-once, not lossless**. A
-crash in the execute→settle window surfaces as "began, outcome unknown". The
-alternative — assuming it failed and retrying — would double a write.
+That last case is the honest limit: resume is **at-most-once, not lossless**.
 
 Outcomes over 64 KiB are dropped rather than truncated, because half a fenced
-JSON document handed back to a model is worse than none.
+JSON document handed back to a model is worse than none. The import assistant's
+tools that create a shipment or a location are never retried at all.
 
-## Durable chat turns
+## Chat turns
 
-A reply can run in the request that asked for it, or on a worker.
+Every assistant question is answered by `AssistantTurnWorkflow`, ID
+`assistant-turn:<turnID>`. The API records the turn, starts the workflow and
+returns the turn to watch. `POST /threads/:id/messages/` starts the same
+workflow and waits for its result; `POST /ask/` opens the hidden thread and
+starts a turn on it.
 
-`ai.durableTurns` decides, and it defaults to **off**. Off is the original
-behaviour and is what an installation without a reachable Temporal gets. On
-hands the turn to `agent-chat-queue`, so the reply survives an API restart and
-somebody who closes the tab can come back to it.
+1. **Prepare** reads the thread, history, files and mentions, checks budget and
+   room, and runs the scope guard. A refusal the person can act on is
+   non-retryable and its message reaches the reader as written.
+2. **The loop** runs in workflow code, as above.
+3. **Finish** saves the turn, its proposals and artifacts, closes the turn's
+   record and writes the trajectory. It claims one ledger key per attempt, after
+   checking no earlier attempt saved, so a retried save never appends twice.
 
-The client does not assume. It asks `GET /assistant/capabilities/` once per
-session and falls back to the in-request path when the answer is no — turning
-the flag on without a worker polling `agent-chat-queue` means nothing is
-answered durably, but nothing breaks either.
+A partial unique index on `assistant_turns` enforces one live turn per thread;
+its `origin` and `input` say what the turn answers.
 
-`assistant_turns` gives a reply an identity while it is still being written.
-A partial unique index enforces one live turn per thread. Its `origin` and
-`input` say what the turn answers, so a reader who rejoins it shows the right
-heading: the person's question, or the decision it reports.
-
-### Stopping
-
-Stop is an operation now, not an abandonment. It used to work by aborting the
-reader, because the model ran on the context that abort cancelled. With the work
-on a worker, abandoning the reader stops nothing and the turn keeps billing, so
-`POST /assistant/turns/:id/stop/` cancels the execution. The local abort stays,
-so the person sees it stop immediately rather than waiting for a round trip to
-confirm what they already decided.
-
-The activity heartbeats on every event, because Temporal only delivers
-cancellation through a heartbeat.
-
-A turn running in an API process — the in-request path, or a decision
-follow-up with durable turns off — has no execution to cancel, and may have no
-request carrying it: a follow-up never had one, and a reader who reloads
-rejoins through the relay rather than the request. So Stop closes the turn's
-record as `Stopped`, and the turn runs on a context from
-`assistantturnservice.Stoppable`, which is cancelled directly when the Stop
-lands on the same instance and otherwise on its next read of the record (every
-two seconds). The in-request path closes its record on a context the reader's
-abort cannot reach, so a closed tab no longer leaves the thread's one live
-slot held.
+**Stopping** cancels the workflow. What had happened by then is saved on a
+disconnected context and the execution is recorded as cancelled. A turn recorded
+but never handed to a worker has no execution to cancel; Stop closes its record
+as `Stopped`.
 
 ### The turn stream
 
-A turn's events go to a Redis stream, one per turn, keyed `<prefix>:<org>:<turn>`.
-It is a **tail buffer, never the transcript** — the transcript is in postgres and
-outlives all of this. The stream is trimmed by length and dropped a quarter of an
-hour after the turn ends.
+A run's events go to a **Workflow Stream** its own workflow hosts
+(`agentflow.HostStream`, on `go.temporal.io/sdk/contrib/workflowstreams`). The
+model activity publishes the reply as it streams, batched every 100 ms; the
+workflow publishes every other event. The stream exists as soon as the workflow
+does, so a reader can never attach ahead of it.
 
-A stream rather than pub/sub, because a reader needs to resume. Each event
-carries the Redis entry id as its SSE event id, and a reader returns it as
-`Last-Event-ID` to pick up where it stopped. The cursor is the last event the
-reader **applied**, not the last it received: a connection that dies mid-frame
-delivers something the client never folded in, and resuming past it would skip
-it silently.
+Each event's offset is its SSE event id, returned as `Last-Event-ID` to resume.
+The cursor is the last event the reader **applied**, not the last it received.
 
-No stream is not an expired stream. A turn's stream is made by its first event,
-and a reader can attach before that — a follow-up is recorded before the
-decision that caused it returns. The relay follows a running turn whose stream
-has not begun and waits for it; only a turn running for longer than two minutes
-with no stream is reported as having lost its live view. An ending rebuilt from
-the record carries `replay: true` and no result, and the client refetches the
-conversation for what was said.
+A stream is read by polling the workflow, so a closed workflow cannot be read.
+When the relay forwards the last event it signals `stream-drained`; the workflow
+waits for that, at most 15 s, before it closes. A reader who arrives after the
+workflow closed gets an ending rebuilt from the record, which tells the client
+to read the conversation.
 
-Before sending, the client asks for the thread's active turn and follows it to
-its end first, so a question asked while a follow-up is still answering waits
-for it on screen instead of failing with "already working on a reply".
-
-Workflow history is deliberately not used for this. Sixty tokens a second is not
-what a workflow history is for, and the issue this came from says so directly.
+Each publish is a signal in the turn's history and each read a poll update, so a
+streamed reply adds a few hundred history events. That is why chat is one
+workflow per turn rather than one per thread, and why a run nobody watches
+publishes nothing.
 
 ### Decision follow-ups
 
-A decision on a proposal or plan that a conversation raised is answered in that
-conversation, whoever decided it and wherever: the card in the thread, the
-Desk's decisions, AI Control, or a plan's approval.
+A decision on a proposal or plan a conversation raised is answered in that
+conversation, whoever decided it and wherever. `agentdecisionservice` and
+`agentplanservice` call `DecisionFollowUps` once the change has run or failed;
+`assistantfollowupservice` opens a turn with origin `DecisionFollowUp`, as the
+thread's owner. A conversation already producing a reply is not interrupted.
 
-`agentdecisionservice` and `agentplanservice` call `DecisionFollowUps` after the
-decision is recorded **and the change has run or failed**, so the report is of
-the outcome, not the click. A plan's steps are decided with `WithinPlan` and
-start nothing of their own; the plan reports once, after its last step.
-`assistantfollowupservice` finds the conversation through the run
-(`subject_type = AssistantThread`) and opens a turn with origin
-`DecisionFollowUp`, **as the thread's owner** — the decider may be someone else,
-but the report is addressed to the owner with the owner's access. The turn's
-input is a `DecisionNote` the assistant service writes from the decision.
+## Agent runs
 
-The turn follows `ai.durableTurns` like any other: on a worker when it is on,
-off the request in this process when it is off. Either way it is recorded and
-published to its stream before the decision returns, so the client rejoins it
-through `GET /assistant/threads/:id/turns/active/` — which it also does when a
-thread opens, and whenever one of the thread's proposals or plans stops waiting.
-A conversation already producing a reply is not interrupted: the follow-up is
-skipped and the outcome reaches the agent on that turn, since every turn is told
-what became of the conversation's proposals.
+`AgentRunWorkflow` runs one agent definition against its subject.
+
+1. **Prepare** loads the definition, the organization's control and the
+   subject, and marks the run diagnosing.
+2. **Open** builds the turn: permissions, memory, what the ledger already knows.
+   A definition in **shadow mode is opened in simulation**, so an automatic
+   write is previewed rather than made — shadow mode exists to withhold it.
+3. **The loop** runs in workflow code under the definition's run timeout.
+4. **Finish** files the proposals, the summary and the trajectory. It runs
+   however the loop ended, so a write made before a failure is on the record.
+5. The run then waits until **every** proposal is decided, or the decision
+   window closes and the rest expire. A decision signal says something was
+   decided; the run recounts what is still pending after each one, which is
+   right for a plan that decides several steps under one signal and for a
+   proposal decided twice in a race.
+
+An approved proposal is executed by the decision service, not by the run: that
+path carries the modification checks, the trust ledger, memory and follow-ups,
+the approval UI reads its result synchronously, and a chat proposal has no run
+to execute it.
+
+### Starting runs
+
+- **Events.** A run is keyed by its subject:
+  `agent-run-<definition>-subject-<subject>`. The workflow starts before the run
+  is recorded, with conflict policy FAIL and
+  `WorkflowExecutionErrorWhenAlreadyStarted`, so a second event about a subject
+  whose run is still open is refused by Temporal, where two requests reading a
+  count of open runs could both have passed. The refusal is
+  `ErrAgentRunAlreadyOpen`, which the publisher treats as a skip.
+- **Schedules.** Every scheduled or continuous agent has its own Temporal
+  Schedule, `agent-definition/<id>`: its cron in its own timezone or its
+  interval, ending at its end date, paused while it is disabled, overlap
+  skipped, catch-up window five minutes. Saving an agent syncs its schedule;
+  `ReconcileDefinitionSchedulesWorkflow` runs when a worker starts and every
+  quarter hour, backfilling schedules and removing orphans. A firing starts
+  `AgentScheduledRunWorkflow`, which checks the agent may run now and starts
+  the run for that slot; the slot keys the run, so it starts once however often
+  the start is retried. The static schedule registry leaves these alone: they
+  carry `managedBy=agent-definitions` in their memo.
+
+### Evaluations
+
+`AgentEvaluationWorkflow` replays a run's input against the agent as it is now,
+with simulation forced on, through the same loop, on the heavy queue. It runs the
+loop itself rather than as a child `AgentRunWorkflow`: a replay files nothing,
+waits on no decision and must never touch the live run's record, which is
+everything a run workflow exists to do.
+
+## One-shot calls
+
+`completionjobs` runs the model calls a person waits on outside a conversation.
+The request starts a short workflow on the chat queue and waits for its result;
+the workflow's budget is the request's own deadline less the margin the handler
+needs to answer, so a call never outlives the request waiting on it. A person who
+stops waiting cancels a call that was theirs alone.
+
+- `StructuredCompletionWorkflow` asks one structured question (table compose,
+  formula generate and explain), retried the `modelcall` way.
+- `TestAIProviderWorkflow` probes once and never retries: the administrator is
+  asking whether the connection works now.
+- `WriteBriefingWorkflow` rewrites a day's page.
+
+Two people testing the same provider, or rewriting the same page, share one
+execution. The caller gets the call's own error back.
+
+## The import assistant
+
+`ImportAssistantTurnWorkflow` answers one message about one document, the loop in
+workflow code: a prepare activity, one activity per model call, one per tool
+call, and a finish that saves the turn. The reply streams through the turn's
+Workflow Stream with the events the client has always read; the request relays it
+frame for frame with the reader chat uses. A document answers one message at a
+time.
+
+## Batch work
+
+- **Insights and the daily briefing** fan out: a parent lists organizations,
+  in pages carried across continue-as-new, and starts one child per organization,
+  four at a time, keyed for fairness by organization. One tenant's failure is
+  its child's — retried on its own and named in the result — and costs no other
+  tenant its run. The sweep is anchored to one instant.
+- **Document extraction** submits once and then waits on a durable timer,
+  polling the provider until it answers or the longest wait passes, all in one
+  execution's history.
+- **Inbound email** carries each attachment through the document pipeline and
+  polls its extraction on a durable timer. It polls rather than waiting on a
+  signal because extraction can end, or never begin, in places that would never
+  send one.
 
 ## What is written down
 
 The runtime narrates its own work — every tool it reaches for, every refusal,
-every give-up — and `agent_run_events` is what keeps that narration.
+every give-up — and `agent_run_events` keeps that narration.
 
-Before it existed, a conversation's events went to the stream above and were
-gone within the hour, and a background run's went to a function that used them
-as a heartbeat tick and dropped them. A background run's durable record was its
-final reply, cut to two thousand characters: what it concluded, never what it
-did.
-
-The table is **append-only**. Its repository has no update path at all, and that
-absence is what makes it a log rather than a table that happens to be
-insert-heavy.
-
-How it relates to the ledger beside it:
+The table is **append-only**: its repository has no update path at all.
 
 | | `agent_run_steps` | `agent_run_events` |
 |---|---|---|
@@ -185,57 +274,76 @@ How it relates to the ledger beside it:
 | Rows | one per operation, mutated Started→Completed | one per occurrence, never revised |
 | Ordering | none needed | `sequence`, per owner |
 
-They join on `step_key` wherever a tool is involved.
+They join on `step_key` wherever a tool is involved. Ordering is by `sequence`,
+not time, and the sequence resumes from what is stored, because a retried run
+opens a fresh writer.
 
-Ordering is by `sequence`, not time. Several events share a second easily, and a
-trajectory read back in the wrong order is worse than none — it reports the agent
-doing things in an order it never did. The sequence resumes from what is stored
-rather than restarting at one, because a retried run opens a fresh writer that
-would otherwise collide with its own earlier attempt.
-
-Two rules govern the writer, and both matter more than completeness:
-
-- **Recording must never be why a run fails.** A write that cannot happen is
-  logged and dropped. An agent that finishes its work and then dies filing the
-  paperwork is worse than one that files none.
-- **Recording must not slow the run down.** Events are buffered and written in
-  batches, because a run emits them far faster than a round trip to postgres.
+Two rules govern the writer: **recording must never be why a run fails**, and
+**recording must not slow the run down**. A run's trajectory is written by the
+activity that files it, last, so a retry of the filing does not write it twice.
 
 Read a trajectory through the `agentRunEvents` GraphQL connection, gated on
-reading an agent run: these events are what a run did, so anyone who may see the
-run may see how it got there.
+reading an agent run.
 
 ## Measuring it
 
-Every turn metric carries `transport="inprocess"|"durable"`, and the in-process
-path is instrumented too. A comparison cannot be made from figures that do not
-say which runtime produced them.
-
 `turn_first_event_seconds` is separate from `turn_duration_seconds` on purpose:
-duration says how long the answer took, first-event says how long the person
-stared at nothing, and that is the one thing a durable hop plus event coalescing
-could plausibly have made worse.
+duration says how long the answer took, first-event says how long a reader who
+attached as the turn began stared at nothing.
 
 `trajectory_events_total{result}` counts dropped events. They are invisible by
-design — the run carries on — so this is the only place they show up at all.
+design — the run carries on — so this is the only place they show up.
+
+## Running it in production
+
+- **Server.** Workflow Streams uses Updates and Signals, on by default from
+  server 1.29. Fairness needs `matching.enableFairness=true`. The local dev
+  server (`temporalio/temporal`) sets it.
+- **Workers.** Run the chat queue on workers of its own if the queue split is to
+  mean anything. A worker that polls no heavy queue leaves heavy tools waiting;
+  after fifteen minutes the model is told the tool could not be run.
+- **Schedules.** Agent schedules are created by saves and the reconcile, not by
+  the static registry; a worker's start reconciles them once.
+- **Workflow Streams is Public Preview** (`contrib/workflowstreams` v0.1.1). It
+  is used only through `agentflow.HostStream`/`OpenStream` and the
+  `turnstream` reader, so an upgrade is local to those.
+
+### Waiting on in-flight executions
+
+Workflow code changed shape behind `workflow.GetVersion`, so executions started
+before a change finish on the code they started on. Each old branch, and what it
+alone still needs, can be deleted once Temporal shows no open execution started
+before the change:
+
+| Change id | Old branch | Kept only for it |
+|---|---|---|
+| `agent-loop-in-workflow` | `runInOneActivity`, `replayInOneActivity` | `RunAgentActivity`, `ReplayRunActivity`, `awaitDecision` |
+| `insight-refresh-per-organization` | `refreshInOneActivity` | `RefreshInsightsActivity` |
+| `daily-briefing-per-organization` | `writeInOneActivity` | `WriteDueBriefingsActivity` |
+| `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |
+
+Runs parked in a day-long decision wait are the slowest to drain; the recorded
+histories under `agentjobs/testdata/replay` replay against the old branch and must
+keep passing until it goes. The `agent-queue` drain registry goes on the same
+condition: no open execution on `agent-queue`.
+
+`workflowstarter.Enabled()` is always true now that the client connects lazily;
+the branches that test it are dead and can go with the next change that touches
+each of them.
 
 ## Known limits
 
-- **Resume is at-most-once.** Described above. A crash in the execute→settle
-  window reports "began, outcome unknown" rather than replaying.
+- **Resume is at-most-once.** A crash in the execute→settle window reports
+  "began, outcome unknown" rather than replaying.
 - **Scheduled runs authorize as `PrincipalTypeAgent`** against the static
-  `permission.IsAgentAllowed` table. Per-call actor context is satisfied and
-  chat asserts a real actor, but "not implicitly a system administrator" is not
-  yet true for unattended runs.
-- **Background runs discard their transcript.** They produce the same rich
-  message values chat persists — reasoning, per-call tokens, latency, cost — and
-  keep only the summary. The event log now records what happened; the model's
-  own words on a background run are still thrown away.
+  `permission.IsAgentAllowed` table; "not implicitly a system administrator" is
+  not yet true for unattended runs.
+- **Background runs discard their transcript** beyond the summary and the event
+  log.
 - **Permission denials are not distinct events.** A refusal arrives as a failed
-  tool result whose content is prose, so it is recorded as one.
-- **Stopping an in-process turn on another instance takes up to two
-  seconds.** The record is closed at once, so the conversation is free, but the
-  model runs until that instance next reads it.
-- **Redis is on the chat path.** An outage silences in-flight replies. The
-  transcript still saves and the relay degrades to reading the turn record, but
-  that is a fallback, not equivalence.
+  tool result and is recorded as one.
+- **Search attributes are not set.** Organization, feature, thread and
+  definition are carried in workflow ids, summaries and fairness keys; typed
+  search attributes need registering on the server first.
+- **The provider circuit breaker is per worker.** Temporal's retries cover what
+  it compensated for; sharing it across workers is a separate change.

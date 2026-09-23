@@ -61,16 +61,22 @@ func TestGetDocumentSummary_ReadsTextAndFieldsInWindows(t *testing.T) {
 
 	doc := summaryDocument()
 	text := strings.Repeat("a", maxDocumentSummaryRunes) + "TAIL OF THE DOCUMENT"
-	tool := newGetDocumentSummaryTool(&stubDocumentRepo{doc: doc}, &stubContentReader{content: &documentcontent.Content{
-		Status:                   documentcontent.StatusExtracted,
-		PageCount:                3,
-		DetectedDocumentKind:     "tender",
-		ClassificationConfidence: 0.91,
-		ContentText:              text,
-		StructuredData:           map[string]any{"bol": "BOL-1"},
-	}})
+	tool := newGetDocumentSummaryTool(
+		&stubDocumentRepo{doc: doc},
+		&stubContentReader{content: &documentcontent.Content{
+			Status:                   documentcontent.StatusExtracted,
+			PageCount:                3,
+			DetectedDocumentKind:     "tender",
+			ClassificationConfidence: 0.91,
+			ContentText:              text,
+			StructuredData:           map[string]any{"bol": "BOL-1"},
+		}},
+	)
 
-	result, err := tool.Query(t.Context(), testParams(map[string]any{"documentId": doc.ID.String()}))
+	result, err := tool.Query(
+		t.Context(),
+		testParams(map[string]any{"documentId": doc.ID.String()}),
+	)
 	require.NoError(t, err)
 	summary := result.(*documentSummary)
 	assert.Equal(t, "tender.pdf", summary.FileName)
@@ -101,18 +107,30 @@ func TestGetDocumentSummary_SaysWhenNothingHasBeenReadYet(t *testing.T) {
 	t.Parallel()
 
 	doc := summaryDocument()
-	tool := newGetDocumentSummaryTool(&stubDocumentRepo{doc: doc}, &stubContentReader{err: errors.New("no row")})
+	tool := newGetDocumentSummaryTool(
+		&stubDocumentRepo{doc: doc},
+		&stubContentReader{err: errors.New("no row")},
+	)
 
-	result, err := tool.Query(t.Context(), testParams(map[string]any{"documentId": doc.ID.String()}))
+	result, err := tool.Query(
+		t.Context(),
+		testParams(map[string]any{"documentId": doc.ID.String()}),
+	)
 	require.NoError(t, err)
 	summary := result.(*documentSummary)
 	assert.Equal(t, "Pending", summary.Reading)
 	assert.Contains(t, summary.Note, "ask again shortly")
 
-	pending := newGetDocumentSummaryTool(&stubDocumentRepo{doc: doc}, &stubContentReader{content: &documentcontent.Content{
-		Status: documentcontent.StatusExtracting,
-	}})
-	result, err = pending.Query(t.Context(), testParams(map[string]any{"documentId": doc.ID.String()}))
+	pending := newGetDocumentSummaryTool(
+		&stubDocumentRepo{doc: doc},
+		&stubContentReader{content: &documentcontent.Content{
+			Status: documentcontent.StatusExtracting,
+		}},
+	)
+	result, err = pending.Query(
+		t.Context(),
+		testParams(map[string]any{"documentId": doc.ID.String()}),
+	)
 	require.NoError(t, err)
 	assert.Contains(t, result.(*documentSummary).Note, "still running")
 }

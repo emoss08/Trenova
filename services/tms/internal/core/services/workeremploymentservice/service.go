@@ -446,7 +446,10 @@ func (s *Service) populateValues(
 	switch req.Kind {
 	case worker.EmploymentEventHired, worker.EmploymentEventRehired:
 		if wrk.Profile != nil && wrk.Profile.HireDate > 0 {
-			event.FromValues[worker.EmploymentValueHireDate] = fmt.Sprintf("%d", wrk.Profile.HireDate)
+			event.FromValues[worker.EmploymentValueHireDate] = fmt.Sprintf(
+				"%d",
+				wrk.Profile.HireDate,
+			)
 		}
 		event.ToValues[worker.EmploymentValueHireDate] = fmt.Sprintf("%d", req.EffectiveAt)
 		event.FromValues[worker.EmploymentValueStatus] = wrk.Status.String()
@@ -485,7 +488,11 @@ func (s *Service) populateValues(
 	case worker.EmploymentEventRateChanged:
 		rate := strings.TrimSpace(req.Rate)
 		if rate == "" {
-			return errortypes.NewValidationError("rate", errortypes.ErrRequired, "Enter the new rate")
+			return errortypes.NewValidationError(
+				"rate",
+				errortypes.ErrRequired,
+				"Enter the new rate",
+			)
 		}
 		event.ToValues[worker.EmploymentValueRate] = rate
 		if unit := strings.TrimSpace(req.RateUnit); unit != "" {
@@ -562,7 +569,11 @@ func populatePromotion(
 	changed := false
 	if req.DriverType != nil {
 		if !req.DriverType.IsValid() {
-			return errortypes.NewValidationError("driverType", errortypes.ErrInvalid, "Unknown driver type")
+			return errortypes.NewValidationError(
+				"driverType",
+				errortypes.ErrInvalid,
+				"Unknown driver type",
+			)
 		}
 		if *req.DriverType != wrk.DriverType {
 			event.FromValues[worker.EmploymentValueDriverType] = wrk.DriverType.String()
@@ -572,7 +583,11 @@ func populatePromotion(
 	}
 	if req.WorkerType != nil {
 		if !req.WorkerType.IsValid() {
-			return errortypes.NewValidationError("workerType", errortypes.ErrInvalid, "Unknown worker type")
+			return errortypes.NewValidationError(
+				"workerType",
+				errortypes.ErrInvalid,
+				"Unknown worker type",
+			)
 		}
 		if *req.WorkerType != wrk.Type {
 			event.FromValues[worker.EmploymentValueWorkerType] = wrk.Type.String()

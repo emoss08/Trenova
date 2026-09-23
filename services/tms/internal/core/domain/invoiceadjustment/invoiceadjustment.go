@@ -31,46 +31,46 @@ var (
 type InvoiceAdjustment struct {
 	bun.BaseModel `bun:"table:invoice_adjustments,alias:ia" json:"-"`
 
-	ID                              pulid.ID                `json:"id"                               bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID                  pulid.ID                `json:"organizationId"                   bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID                  pulid.ID                `json:"businessUnitId"                   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	CorrectionGroupID               pulid.ID                `json:"correctionGroupId"                bun:"correction_group_id,type:VARCHAR(100),notnull"`
-	OriginalInvoiceID               pulid.ID                `json:"originalInvoiceId"                bun:"original_invoice_id,type:VARCHAR(100),notnull"`
-	CreditMemoInvoiceID             pulid.ID                `json:"creditMemoInvoiceId"              bun:"credit_memo_invoice_id,type:VARCHAR(100),nullzero"`
-	ReplacementInvoiceID            pulid.ID                `json:"replacementInvoiceId"             bun:"replacement_invoice_id,type:VARCHAR(100),nullzero"`
-	RebillQueueItemID               pulid.ID                `json:"rebillQueueItemId"                bun:"rebill_queue_item_id,type:VARCHAR(100),nullzero"`
-	BatchID                         pulid.ID                `json:"batchId"                          bun:"batch_id,type:VARCHAR(100),nullzero"`
-	Kind                            Kind                    `json:"kind"                             bun:"kind,type:VARCHAR(50),notnull"`
-	Status                          Status                  `json:"status"                           bun:"status,type:VARCHAR(50),notnull"`
-	ApprovalStatus                  ApprovalStatus          `json:"approvalStatus"                   bun:"approval_status,type:VARCHAR(50),notnull,default:'NotRequired'"`
-	ReplacementReviewStatus         ReplacementReviewStatus `json:"replacementReviewStatus"          bun:"replacement_review_status,type:VARCHAR(50),notnull,default:'NotRequired'"`
-	RebillStrategy                  RebillStrategy          `json:"rebillStrategy"                   bun:"rebill_strategy,type:VARCHAR(50),nullzero"`
-	Reason                          string                  `json:"reason"                           bun:"reason,type:TEXT,nullzero"`
-	PolicyReason                    string                  `json:"policyReason"                     bun:"policy_reason,type:TEXT,nullzero"`
-	IdempotencyKey                  string                  `json:"idempotencyKey"                   bun:"idempotency_key,type:VARCHAR(200),notnull"`
-	AccountingDate                  int64                   `json:"accountingDate"                   bun:"accounting_date,type:BIGINT,notnull"`
-	CreditTotalAmount               decimal.Decimal         `json:"creditTotalAmount"                bun:"credit_total_amount,type:NUMERIC(19,4),notnull,default:0"`
-	CreditTotalAmountMinor          int64                   `json:"creditTotalAmountMinor"           bun:"credit_total_amount_minor,type:BIGINT,notnull"`
-	RebillTotalAmount               decimal.Decimal         `json:"rebillTotalAmount"                bun:"rebill_total_amount,type:NUMERIC(19,4),notnull,default:0"`
-	RebillTotalAmountMinor          int64                   `json:"rebillTotalAmountMinor"           bun:"rebill_total_amount_minor,type:BIGINT,notnull"`
-	NetDeltaAmount                  decimal.Decimal         `json:"netDeltaAmount"                   bun:"net_delta_amount,type:NUMERIC(19,4),notnull,default:0"`
-	NetDeltaAmountMinor             int64                   `json:"netDeltaAmountMinor"              bun:"net_delta_amount_minor,type:BIGINT,notnull"`
-	RerateVariancePercent           decimal.Decimal         `json:"rerateVariancePercent"            bun:"rerate_variance_percent,type:NUMERIC(9,6),notnull,default:0"`
-	WouldCreateUnappliedCredit      bool                    `json:"wouldCreateUnappliedCredit"       bun:"would_create_unapplied_credit,type:BOOLEAN,notnull"`
-	RequiresReconciliationException bool                    `json:"requiresReconciliationException"  bun:"requires_reconciliation_exception,type:BOOLEAN,notnull"`
-	ApprovalRequired                bool                    `json:"approvalRequired"                 bun:"approval_required,type:BOOLEAN,notnull"`
-	SubmittedByID                   pulid.ID                `json:"submittedById"                    bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
-	SubmittedAt                     *int64                  `json:"submittedAt"                      bun:"submitted_at,type:BIGINT,nullzero"`
-	ApprovedByID                    pulid.ID                `json:"approvedById"                     bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	ApprovedAt                      *int64                  `json:"approvedAt"                       bun:"approved_at,type:BIGINT,nullzero"`
-	RejectedByID                    pulid.ID                `json:"rejectedById"                     bun:"rejected_by_id,type:VARCHAR(100),nullzero"`
-	RejectedAt                      *int64                  `json:"rejectedAt"                       bun:"rejected_at,type:BIGINT,nullzero"`
-	RejectionReason                 string                  `json:"rejectionReason"                  bun:"rejection_reason,type:TEXT,nullzero"`
-	ExecutionError                  string                  `json:"executionError"                   bun:"execution_error,type:TEXT,nullzero"`
-	Metadata                        map[string]any          `json:"metadata"                         bun:"metadata,type:JSONB,notnull,default:'{}'"`
-	Version                         int64                   `json:"version"                          bun:"version,type:BIGINT,notnull"`
-	CreatedAt                       int64                   `json:"createdAt"                        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                       int64                   `json:"updatedAt"                        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                              pulid.ID                `json:"id"                              bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID                  pulid.ID                `json:"organizationId"                  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID                  pulid.ID                `json:"businessUnitId"                  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	CorrectionGroupID               pulid.ID                `json:"correctionGroupId"               bun:"correction_group_id,type:VARCHAR(100),notnull"`
+	OriginalInvoiceID               pulid.ID                `json:"originalInvoiceId"               bun:"original_invoice_id,type:VARCHAR(100),notnull"`
+	CreditMemoInvoiceID             pulid.ID                `json:"creditMemoInvoiceId"             bun:"credit_memo_invoice_id,type:VARCHAR(100),nullzero"`
+	ReplacementInvoiceID            pulid.ID                `json:"replacementInvoiceId"            bun:"replacement_invoice_id,type:VARCHAR(100),nullzero"`
+	RebillQueueItemID               pulid.ID                `json:"rebillQueueItemId"               bun:"rebill_queue_item_id,type:VARCHAR(100),nullzero"`
+	BatchID                         pulid.ID                `json:"batchId"                         bun:"batch_id,type:VARCHAR(100),nullzero"`
+	Kind                            Kind                    `json:"kind"                            bun:"kind,type:VARCHAR(50),notnull"`
+	Status                          Status                  `json:"status"                          bun:"status,type:VARCHAR(50),notnull"`
+	ApprovalStatus                  ApprovalStatus          `json:"approvalStatus"                  bun:"approval_status,type:VARCHAR(50),notnull,default:'NotRequired'"`
+	ReplacementReviewStatus         ReplacementReviewStatus `json:"replacementReviewStatus"         bun:"replacement_review_status,type:VARCHAR(50),notnull,default:'NotRequired'"`
+	RebillStrategy                  RebillStrategy          `json:"rebillStrategy"                  bun:"rebill_strategy,type:VARCHAR(50),nullzero"`
+	Reason                          string                  `json:"reason"                          bun:"reason,type:TEXT,nullzero"`
+	PolicyReason                    string                  `json:"policyReason"                    bun:"policy_reason,type:TEXT,nullzero"`
+	IdempotencyKey                  string                  `json:"idempotencyKey"                  bun:"idempotency_key,type:VARCHAR(200),notnull"`
+	AccountingDate                  int64                   `json:"accountingDate"                  bun:"accounting_date,type:BIGINT,notnull"`
+	CreditTotalAmount               decimal.Decimal         `json:"creditTotalAmount"               bun:"credit_total_amount,type:NUMERIC(19,4),notnull,default:0"`
+	CreditTotalAmountMinor          int64                   `json:"creditTotalAmountMinor"          bun:"credit_total_amount_minor,type:BIGINT,notnull"`
+	RebillTotalAmount               decimal.Decimal         `json:"rebillTotalAmount"               bun:"rebill_total_amount,type:NUMERIC(19,4),notnull,default:0"`
+	RebillTotalAmountMinor          int64                   `json:"rebillTotalAmountMinor"          bun:"rebill_total_amount_minor,type:BIGINT,notnull"`
+	NetDeltaAmount                  decimal.Decimal         `json:"netDeltaAmount"                  bun:"net_delta_amount,type:NUMERIC(19,4),notnull,default:0"`
+	NetDeltaAmountMinor             int64                   `json:"netDeltaAmountMinor"             bun:"net_delta_amount_minor,type:BIGINT,notnull"`
+	RerateVariancePercent           decimal.Decimal         `json:"rerateVariancePercent"           bun:"rerate_variance_percent,type:NUMERIC(9,6),notnull,default:0"`
+	WouldCreateUnappliedCredit      bool                    `json:"wouldCreateUnappliedCredit"      bun:"would_create_unapplied_credit,type:BOOLEAN,notnull"`
+	RequiresReconciliationException bool                    `json:"requiresReconciliationException" bun:"requires_reconciliation_exception,type:BOOLEAN,notnull"`
+	ApprovalRequired                bool                    `json:"approvalRequired"                bun:"approval_required,type:BOOLEAN,notnull"`
+	SubmittedByID                   pulid.ID                `json:"submittedById"                   bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
+	SubmittedAt                     *int64                  `json:"submittedAt"                     bun:"submitted_at,type:BIGINT,nullzero"`
+	ApprovedByID                    pulid.ID                `json:"approvedById"                    bun:"approved_by_id,type:VARCHAR(100),nullzero"`
+	ApprovedAt                      *int64                  `json:"approvedAt"                      bun:"approved_at,type:BIGINT,nullzero"`
+	RejectedByID                    pulid.ID                `json:"rejectedById"                    bun:"rejected_by_id,type:VARCHAR(100),nullzero"`
+	RejectedAt                      *int64                  `json:"rejectedAt"                      bun:"rejected_at,type:BIGINT,nullzero"`
+	RejectionReason                 string                  `json:"rejectionReason"                 bun:"rejection_reason,type:TEXT,nullzero"`
+	ExecutionError                  string                  `json:"executionError"                  bun:"execution_error,type:TEXT,nullzero"`
+	Metadata                        map[string]any          `json:"metadata"                        bun:"metadata,type:JSONB,notnull,default:'{}'"`
+	Version                         int64                   `json:"version"                         bun:"version,type:BIGINT,notnull"`
+	CreatedAt                       int64                   `json:"createdAt"                       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                       int64                   `json:"updatedAt"                       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Lines                    []*InvoiceAdjustmentLine                    `json:"lines,omitempty"                    bun:"rel:has-many,join:id=adjustment_id"`
 	Snapshots                []*InvoiceAdjustmentSnapshot                `json:"snapshots,omitempty"                bun:"rel:has-many,join:id=adjustment_id"`

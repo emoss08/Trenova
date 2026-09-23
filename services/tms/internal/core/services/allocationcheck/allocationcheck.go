@@ -193,7 +193,8 @@ func PreviewForResolution(entity *shipment.Shipment) *shipment.Shipment {
 		if copied.ChargeKind == shipment.ChargeAllocationKindAccessorial &&
 			copied.AdditionalChargeIndex != nil {
 			idx := *copied.AdditionalChargeIndex
-			if idx >= 0 && idx < len(preview.AdditionalCharges) && preview.AdditionalCharges[idx] != nil {
+			if idx >= 0 && idx < len(preview.AdditionalCharges) &&
+				preview.AdditionalCharges[idx] != nil {
 				id := preview.AdditionalCharges[idx].ID
 				copied.AdditionalChargeID = &id
 			}

@@ -6,7 +6,7 @@ import (
 )
 
 var Module = fx.Module("assistant-jobs",
-	fx.Provide(NewActivities),
+	fx.Provide(NewActivities, NewWorkflows, newArtifactObserver),
 	fx.Provide(
 		fx.Annotate(
 			NewRegistry,

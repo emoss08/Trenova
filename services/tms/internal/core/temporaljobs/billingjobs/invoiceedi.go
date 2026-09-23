@@ -114,10 +114,13 @@ func (a *Activities) SendInvoiceEDIActivity(
 		}, nil
 	}
 
-	plans, err := a.invoiceService.ResolveEDISendPlans(ctx, &services.ResolveInvoiceEDISendPlansRequest{
-		TenantInfo: tenantInfo,
-		Invoices:   []*invoice.Invoice{current},
-	})
+	plans, err := a.invoiceService.ResolveEDISendPlans(
+		ctx,
+		&services.ResolveInvoiceEDISendPlansRequest{
+			TenantInfo: tenantInfo,
+			Invoices:   []*invoice.Invoice{current},
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

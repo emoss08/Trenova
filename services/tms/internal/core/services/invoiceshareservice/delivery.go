@@ -185,8 +185,10 @@ func (s *Service) sendEmail(ctx context.Context, p *emailParams) bool {
 			InvoiceNumber:      p.delivery.invoice.Number,
 			CustomerName:       p.delivery.invoice.BillToName,
 			Note:               p.delivery.note,
-			InvoiceURL:         template.URL(p.invoiceURL), //nolint:gosec // configured base URL + server-encoded path
-			CompanyName:        p.companyName,
+			InvoiceURL: template.URL(
+				p.invoiceURL,
+			), //nolint:gosec // configured base URL + server-encoded path
+			CompanyName: p.companyName,
 		},
 		ReferenceID:       p.delivery.invoice.ID,
 		UserID:            p.recipient.ID,

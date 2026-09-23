@@ -70,7 +70,12 @@ func TestRun_WritesAgainAReplyThatLooped(t *testing.T) {
 func TestRun_EndsOnAPlainLineWhenTheReplyLoopsAgain(t *testing.T) {
 	t.Parallel()
 
-	result, completion, _ := runReplies(t, loopingTurn(), loopingTurn(), textTurn("never asked for"))
+	result, completion, _ := runReplies(
+		t,
+		loopingTurn(),
+		loopingTurn(),
+		textTurn("never asked for"),
+	)
 
 	assert.Equal(t, loopedReply, result.Reply)
 	assert.Equal(t, 2, completion.CallCount)

@@ -76,18 +76,18 @@ type JobPosition struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 
-	Status      domaintypes.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code        string             `json:"code"        bun:"code,type:VARCHAR(20),notnull"`
-	Title       string             `json:"title"       bun:"title,type:VARCHAR(100),notnull"`
-	Description string             `json:"description" bun:"description,type:TEXT,nullzero"`
-	Department  JobDepartment      `json:"department"  bun:"department,type:job_department_enum,notnull,default:'Operations'"`
+	Status      domaintypes.Status `json:"status"              bun:"status,type:status_enum,notnull,default:'Active'"`
+	Code        string             `json:"code"                bun:"code,type:VARCHAR(20),notnull"`
+	Title       string             `json:"title"               bun:"title,type:VARCHAR(100),notnull"`
+	Description string             `json:"description"         bun:"description,type:TEXT,nullzero"`
+	Department  JobDepartment      `json:"department"          bun:"department,type:job_department_enum,notnull,default:'Operations'"`
 	// FLSAExempt says the position is exempt from overtime. It lives on the
 	// position because that is where the duties test is applied — two people
 	// doing the same job are exempt or not together.
-	FLSAExempt bool `json:"flsaExempt" bun:"flsa_exempt,type:BOOLEAN,notnull"`
+	FLSAExempt bool `json:"flsaExempt"          bun:"flsa_exempt,type:BOOLEAN,notnull"`
 	// IsDrivingPosition separates the roster that needs a CDL from the one that
 	// does not, which is the line most compliance rules are drawn along.
-	IsDrivingPosition bool `json:"isDrivingPosition" bun:"is_driving_position,type:BOOLEAN,notnull"`
+	IsDrivingPosition bool `json:"isDrivingPosition"   bun:"is_driving_position,type:BOOLEAN,notnull"`
 	// ReportsToPositionID is the shape of the org chart. A person's own manager
 	// is on the worker, because two people in the same position can report to
 	// different managers.

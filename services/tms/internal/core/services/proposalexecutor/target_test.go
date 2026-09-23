@@ -45,13 +45,22 @@ func pinnedProposal(tool string, version int64) *agent.AgentProposal {
 func TestExecute_RefusesWhenTheRecordChangedSinceTheProposal(t *testing.T) {
 	t.Parallel()
 
-	tool := &recordingTool{name: "place_shipment_hold", resource: permission.ResourceShipment, operation: permission.OpUpdate}
+	tool := &recordingTool{
+		name:      "place_shipment_hold",
+		resource:  permission.ResourceShipment,
+		operation: permission.OpUpdate,
+	}
 	repo := &fakeProposalRepo{}
 	executor := newExecutor(tool, repo, &fakePermissions{allowed: true})
 	executor.versions = &fakeVersions{version: 5}
 
 	proposal := pinnedProposal("place_shipment_hold", 3)
-	err := executor.Execute(t.Context(), proposal, nil, testActor(proposal.OrganizationID, proposal.BusinessUnitID))
+	err := executor.Execute(
+		t.Context(),
+		proposal,
+		nil,
+		testActor(proposal.OrganizationID, proposal.BusinessUnitID),
+	)
 
 	require.ErrorIs(t, err, ErrTargetChanged)
 	assert.Contains(t, err.Error(), "version 5")
@@ -64,13 +73,25 @@ func TestExecute_RefusesWhenTheRecordChangedSinceTheProposal(t *testing.T) {
 func TestExecute_RunsWhenTheRecordIsUnchanged(t *testing.T) {
 	t.Parallel()
 
-	tool := &recordingTool{name: "place_shipment_hold", resource: permission.ResourceShipment, operation: permission.OpUpdate}
+	tool := &recordingTool{
+		name:      "place_shipment_hold",
+		resource:  permission.ResourceShipment,
+		operation: permission.OpUpdate,
+	}
 	executor := newExecutor(tool, &fakeProposalRepo{}, &fakePermissions{allowed: true})
 	versions := &fakeVersions{version: 3}
 	executor.versions = versions
 
 	proposal := pinnedProposal("place_shipment_hold", 3)
-	require.NoError(t, executor.Execute(t.Context(), proposal, nil, testActor(proposal.OrganizationID, proposal.BusinessUnitID)))
+	require.NoError(
+		t,
+		executor.Execute(
+			t.Context(),
+			proposal,
+			nil,
+			testActor(proposal.OrganizationID, proposal.BusinessUnitID),
+		),
+	)
 
 	assert.Equal(t, 1, tool.calls)
 	require.Len(t, versions.asked, 1)
@@ -82,12 +103,21 @@ func TestExecute_RunsWhenTheRecordIsUnchanged(t *testing.T) {
 func TestExecute_RefusesWhenTheRecordCannotBeRead(t *testing.T) {
 	t.Parallel()
 
-	tool := &recordingTool{name: "place_shipment_hold", resource: permission.ResourceShipment, operation: permission.OpUpdate}
+	tool := &recordingTool{
+		name:      "place_shipment_hold",
+		resource:  permission.ResourceShipment,
+		operation: permission.OpUpdate,
+	}
 	executor := newExecutor(tool, &fakeProposalRepo{}, &fakePermissions{allowed: true})
 	executor.versions = &fakeVersions{err: errors.New("no rows")}
 
 	proposal := pinnedProposal("place_shipment_hold", 3)
-	err := executor.Execute(t.Context(), proposal, nil, testActor(proposal.OrganizationID, proposal.BusinessUnitID))
+	err := executor.Execute(
+		t.Context(),
+		proposal,
+		nil,
+		testActor(proposal.OrganizationID, proposal.BusinessUnitID),
+	)
 
 	require.ErrorIs(t, err, ErrTargetChanged)
 	assert.Zero(t, tool.calls)
@@ -99,13 +129,25 @@ func TestExecute_RefusesWhenTheRecordCannotBeRead(t *testing.T) {
 func TestExecute_RunsAnUnpinnedProposalUnchecked(t *testing.T) {
 	t.Parallel()
 
-	tool := &recordingTool{name: "raise_exception", resource: permission.ResourceShipment, operation: permission.OpUpdate}
+	tool := &recordingTool{
+		name:      "raise_exception",
+		resource:  permission.ResourceShipment,
+		operation: permission.OpUpdate,
+	}
 	executor := newExecutor(tool, &fakeProposalRepo{}, &fakePermissions{allowed: true})
 	versions := &fakeVersions{version: 99}
 	executor.versions = versions
 
 	proposal := testProposal("raise_exception", map[string]any{})
-	require.NoError(t, executor.Execute(t.Context(), proposal, nil, testActor(proposal.OrganizationID, proposal.BusinessUnitID)))
+	require.NoError(
+		t,
+		executor.Execute(
+			t.Context(),
+			proposal,
+			nil,
+			testActor(proposal.OrganizationID, proposal.BusinessUnitID),
+		),
+	)
 
 	assert.Equal(t, 1, tool.calls)
 	assert.Empty(t, versions.asked, "nothing to compare, nothing asked")

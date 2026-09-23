@@ -26,8 +26,14 @@ const (
 // bankReceiptReader is the slice of the bank receipt service the read tools
 // use: one receipt, the exceptions, and the scored candidates for one.
 type bankReceiptReader interface {
-	Get(ctx context.Context, req *serviceports.GetBankReceiptRequest) (*bankreceipt.BankReceipt, error)
-	ListExceptions(ctx context.Context, tenant pagination.TenantInfo) ([]*bankreceipt.BankReceipt, error)
+	Get(
+		ctx context.Context,
+		req *serviceports.GetBankReceiptRequest,
+	) (*bankreceipt.BankReceipt, error)
+	ListExceptions(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) ([]*bankreceipt.BankReceipt, error)
 	SuggestMatches(
 		ctx context.Context,
 		req *serviceports.GetBankReceiptRequest,
@@ -36,7 +42,10 @@ type bankReceiptReader interface {
 
 // workItemReader reads the reconciliation queue entry behind a receipt.
 type workItemReader interface {
-	ListActive(ctx context.Context, tenant pagination.TenantInfo) ([]*bankreceiptworkitem.WorkItem, error)
+	ListActive(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) ([]*bankreceiptworkitem.WorkItem, error)
 	GetActiveByReceiptID(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
@@ -75,7 +84,10 @@ type workItemRow struct {
 	ResolutionNote   string `json:"resolutionNote,omitempty"`
 }
 
-func bankReceiptRowFrom(entity *bankreceipt.BankReceipt, item *bankreceiptworkitem.WorkItem) bankReceiptRow {
+func bankReceiptRowFrom(
+	entity *bankreceipt.BankReceipt,
+	item *bankreceiptworkitem.WorkItem,
+) bankReceiptRow {
 	row := bankReceiptRow{
 		ID:              entity.ID.String(),
 		ReceiptDate:     recordedDate(entity.ReceiptDate),
@@ -262,7 +274,10 @@ type getBankReceiptTool struct {
 	items    workItemReader
 }
 
-func newGetBankReceiptTool(receipts bankReceiptReader, items workItemReader) serviceports.AgentQueryTool {
+func newGetBankReceiptTool(
+	receipts bankReceiptReader,
+	items workItemReader,
+) serviceports.AgentQueryTool {
 	return &getBankReceiptTool{receipts: receipts, items: items}
 }
 
@@ -414,7 +429,8 @@ func customerPaymentRowFrom(payment *customerpayment.Payment) customerPaymentRow
 				Amount:    money.DecimalFromMinor(application.AppliedAmountMinor).StringFixed(2),
 			}
 			if application.ShortPayAmountMinor > 0 {
-				entry.ShortPayAmount = money.DecimalFromMinor(application.ShortPayAmountMinor).StringFixed(2)
+				entry.ShortPayAmount = money.DecimalFromMinor(application.ShortPayAmountMinor).
+					StringFixed(2)
 			}
 			row.Applications = append(row.Applications, entry)
 		}
@@ -456,8 +472,11 @@ func (t *listCustomerPaymentsTool) ParamSchema() map[string]any {
 					"list_customers or a candidate's customerId in get_bank_receipt.",
 			},
 			"status": map[string]any{
-				"type":        "string",
-				"enum":        []string{string(customerpayment.StatusPosted), string(customerpayment.StatusReversed)},
+				"type": "string",
+				"enum": []string{
+					string(customerpayment.StatusPosted),
+					string(customerpayment.StatusReversed),
+				},
 				"description": "Which payments to list. Defaults to Posted.",
 			},
 			"limit": map[string]any{

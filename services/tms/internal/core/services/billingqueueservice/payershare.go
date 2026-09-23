@@ -74,7 +74,11 @@ func (s *service) payerNames(
 			continue
 		}
 		if allocation.BillToCustomer != nil {
-			remember(allocation.BillToCustomerID, allocation.BillToCustomer.Name, allocation.BillToCustomer.Code)
+			remember(
+				allocation.BillToCustomerID,
+				allocation.BillToCustomer.Name,
+				allocation.BillToCustomer.Code,
+			)
 			continue
 		}
 		if allocation.ChargeKind != shipment.ChargeAllocationKindOrderCharge {
